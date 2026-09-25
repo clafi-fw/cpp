@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{5aac71d2-53f9-4806-98a0-fdd54c61ecd9}</ItemsProjectGuid>
+    <ItemsProjectName>WhatsClip_Lib</ItemsProjectName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <!--
+    The viewer without its entry points. A project importing this alongside ClaFi.vcxitems
+    adds one file - the entry point for its platform, which builds the pick lists and calls
+    runWhatsClip - and is a clipboard viewer of its own, with whatever encodings and
+    languages it added.
+    WhatsClip_Win32.cpp and WhatsClip_Wayland.cpp beside these are the two this tree
+    ships, and are not listed here so that an importing project can carry its own.
+  -->
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Encodings.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Encodings.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Languages.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Languages.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Main.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Main.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Icon.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_AutoPick.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_AutoPick.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_BytesPage.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_BytesPage.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_FormatView.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_EncodingPick.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_EncodingPick.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_FormatView.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_HandlePage.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_HandlePage.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_LanguagePick.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_LanguagePick.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_Page.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_Page.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_PicturePage.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_PicturePage.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_TextPreviewPage.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_TextPreviewPage.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_TextPage.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_TextPage.cpp" />
+  </ItemGroup>
+</Project>

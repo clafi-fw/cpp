@@ -1,0 +1,24 @@
+# Visual Studio build output and per-user state
+x64/
+.vs/
+*.user
+
+# clang/CMake build trees
+build*/
+out/
+
+# Scratch and generated
+_to_delete/
+*.log
+*.mp4
+
+# Resource editor intermediate, regenerated from the .rc beside it
+*.aps
+.__probe
+
+# Surface Scanner, regenerated from the source by scan.py
+Tools/Surface Scanner/surface.json
+__pycache__/
+
+# Mockups and screenshots the desktop app mirrors into the tree; the kept copies live outside it
+Claude outputs/

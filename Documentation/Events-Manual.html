@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi Events - Developer Manual</title>
+    <style>
+        :root {
+            --bg-color: #f9f9fb;
+            --text-color: #333;
+            --accent-color: #0066cc;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        /* --- Sidebar & Collapsible Layout --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: #fff;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-left: 0.5rem;
+            color: #111;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Top-level list items (root nodes) */
+        .sidebar > ul > li {
+            margin-bottom: 0.8rem;
+        }
+
+        /* Group wrapper for link + toggle button */
+        .nav-item-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-item-wrapper:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        /* Root-level link styling */
+        .sidebar > ul > li > .nav-item-wrapper > a {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111;
+            flex-grow: 1;
+        }
+
+        /* Sub-level lists */
+        .sidebar ul ul {
+            padding-left: 0.8rem;
+            margin-top: 0.3rem;
+            margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color);
+            margin-left: 1.1rem;
+        }
+
+        .sidebar ul ul li {
+            margin-bottom: 0.4rem;
+        }
+
+        .sidebar ul ul a {
+            font-size: 0.9rem;
+            color: #555;
+            display: block;
+            padding: 0.15rem 0;
+            transition: color 0.15s ease;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            display: block;
+            transition: color 0.2s ease;
+        }
+
+        .sidebar a:hover,
+        .sidebar ul ul a:hover {
+            color: var(--accent-color);
+        }
+
+        /* Toggle Button styling */
+        .toggle-btn {
+            background: none;
+            border: none;
+            padding: 4px;
+            margin: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+            outline: none;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--accent-color);
+        }
+
+        .toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            transform: rotate(90deg); /* Points down when expanded */
+            transition: transform 0.2s ease;
+        }
+
+        /* Interactive Collapsible states managed by JS */
+        .sidebar li.has-children.collapsed ul {
+            display: none !important;
+        }
+
+        .sidebar li.has-children.collapsed .toggle-btn svg {
+            transform: rotate(0deg); /* Points right when collapsed */
+        }
+
+        /* --- Base Page Layout --- */
+        .page-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        header {
+            background-color: #fff;
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        h1, h2, h3, h4 {
+            color: #111;
+            margin-top: 2rem;
+        }
+
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+
+        main {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            padding-bottom: 2rem;
+        }
+
+        p, li { font-size: 1.1rem; }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background-color: rgba(0,0,0,0.05);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.9em;
+            color: #d14;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        .kw { color: #569cd6; }
+        .tp { color: #4ec9b0; }
+        .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; }
+        .fn { color: #dcdcaa; }
+
+        .warning {
+            background-color: #fff3f3;
+            border-left: 4px solid #cc0000;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .rule-card {
+            padding: 1.2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .rule-card.dos {
+            background-color: #f4faf4;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .rule-card.donts {
+            background-color: #fff8f8;
+            border-left: 4px solid #c62828;
+        }
+
+        .rule-card h4 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .rule-card ul {
+            margin: 0;
+            padding-left: 1.2rem;
+        }
+
+        .rule-card li {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .sidebar {
+                display: none;
+            }
+            .page-content {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="sidebar-header">Contents</div>
+        <ul>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#introduction">Introduction</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#basic-usage">Basic Usage Example</a>
+                </div>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#handling">Handling an Event</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#three-spellings">The Three Spellings</a></li>
+                    <li><a href="#which-spelling">Which One to Use</a></li>
+                    <li><a href="#connecting-later">Connecting Later</a></li>
+                    <li><a href="#methods">Member Functions as Handlers</a></li>
+                    <li><a href="#disconnecting">Disconnecting</a></li>
+                    <li><a href="#forms">Form Events</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#declaring">Declaring Your Own Event</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#event-types">Writing the Event Type</a></li>
+                    <li><a href="#declare-event">DECLARE_EVENT</a></li>
+                    <li><a href="#emitting">Emitting</a></li>
+                    <li><a href="#custom-emitters">Making Any Class an Emitter</a></li>
+                </ul>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#not-events">Callbacks That Are Not Events</a>
+                </div>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#internals">How It Works</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#dispatcher">One Dispatcher per Object</a></li>
+                    <li><a href="#deduction">Reading the Event off the Handler</a></li>
+                    <li><a href="#one-channel">One Event Type, One Channel</a></li>
+                </ul>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#reference">Reference</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="page-content">
+        <header>
+            <h1>Events Subsystem</h1>
+            <p>ClaFi Framework Developer Manual</p>
+        </header>
+
+        <main>
+            <h2 id="introduction">Introduction</h2>
+            <p>The <code>Events</code> subsystem is how one object tells others that something happened. A type
+            emits a strongly typed event; any number of listeners connect to it, each can disconnect, and any
+            listener can stop the event travelling further.</p>
+
+            <div class="info">
+                <strong>Module Import:</strong>
+                <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
+<span class="kw">import</span> <span class="tp">ClaFi.Core.System.Events</span>;</pre>
+            </div>
+
+            <p>Every control in the framework already emits its events - there is nothing to switch on and nothing
+            to register. Most of the time you will only connect handlers, which is what the first half of this
+            manual covers. Declaring events of your own comes later, and is only needed when you write a control or
+            another emitter.</p>
+
+            <p>One rule is worth carrying from the start: an event is identified by <strong>its type</strong>, not
+            by a name or a channel. The event type written in your handler's parameter is what decides which event
+            you are connecting to.</p>
+
+            <h2 id="basic-usage">Basic Usage Example</h2>
+            <p>Handlers can be given to a control when it is built, or attached at any time afterwards:</p>
+<pre><span class="cm">// at construction - the handler's parameter says which event it is</span>
+<span class="tp">Button</span>&amp; save = toolbar.add&lt;<span class="tp">Button</span>&gt;(
+    L<span class="st">"Save"</span>,
+    <span class="tp">Padding</span>{ <span class="fn">8.0f</span> },
+    <span class="tp">OnEvent</span>{ [<span class="kw">this</span>](<span class="tp">ClickEvent</span>&amp;) { saveDocument(); } }
+);
+
+<span class="cm">// afterwards - same event, same control</span>
+save.<span class="fn">onGetState</span>([<span class="kw">this</span>](<span class="tp">GetStateEvent</span>&amp; event) {
+    event.state.enabled = m_document.isModified();
+});</pre>
+
+            <h2 id="handling">Handling an Event</h2>
+
+            <h3 id="three-spellings">The Three Spellings</h3>
+            <p>All three do exactly the same thing - they are one mechanism with three ways to write it.</p>
+<pre><span class="cm">// 1. named alias - says which event at the call site</span>
+<span class="tp">Button</span>{ params, <span class="tp">Button</span>::<span class="tp">OnClick</span>{ handler } }
+
+<span class="cm">// 2. unnamed - the handler's parameter already says it</span>
+<span class="tp">Button</span>{ params, <span class="tp">OnEvent</span>{ [](<span class="tp">ClickEvent</span>&amp; event) { ... } } }
+
+<span class="cm">// 3. a list - several handlers without repeating OnEvent</span>
+<span class="tp">Button</span>{ params, <span class="tp">Events</span>{
+    [](<span class="tp">ClickEvent</span>&amp; event) { ... },
+    [](<span class="tp">PaintIconEvent</span>&amp; event) { ... },
+} }</pre>
+            <p>An <code>Events</code> list is heterogeneous and its order means nothing. It accepts already-wrapped
+            handlers next to bare ones, so you can name the one that needs naming:</p>
+<pre><span class="tp">Events</span>{ <span class="tp">Button</span>::<span class="tp">OnPaintIcon</span>{ <span class="tp">Icons</span>::<span class="tp">SaveIcon</span>::paint }, [](<span class="tp">ClickEvent</span>&amp; event) { ... } }</pre>
+            <div class="info">A named alias such as <code>OnClick</code> is a member of the control that declares
+            it. <code>Button::OnClick</code> resolves anywhere; a bare <code>OnClick</code> resolves only inside a
+            class that inherits it. At namespace scope, qualify it or use <code>OnEvent</code>.</div>
+
+            <h3 id="which-spelling">Which One to Use</h3>
+            <ul>
+                <li>Use <code>OnEvent</code> when the handler is a lambda - its parameter names the event.</li>
+                <li>Use the named alias when the handler is a bare function pointer, where nothing at the call
+                site would otherwise say which event it is.</li>
+                <li>Use <code>Events{ ... }</code> when a control takes more than one handler.</li>
+            </ul>
+            <p>The difference is only readability. This is the case the second rule is about:</p>
+<pre><span class="tp">OnEvent</span>{ <span class="tp">Icons</span>::<span class="tp">SaveIcon</span>::paintSaveIcon }              <span class="cm">// which event? unclear</span>
+<span class="tp">FlatButton</span>::<span class="tp">OnPaintIcon</span>{ <span class="tp">Icons</span>::<span class="tp">SaveIcon</span>::paintSaveIcon }  <span class="cm">// clear</span></pre>
+
+            <h3 id="connecting-later">Connecting Later</h3>
+            <p>Every event has a connect method named after it, and <code>connectEvent</code> works for any event
+            the emitter can raise:</p>
+<pre>slider.<span class="fn">onChange</span>([](<span class="tp">SliderChangeEvent</span>&amp; event) { ... });         <span class="cm">// the named connector</span>
+panel.<span class="fn">connectEvent</span>([](<span class="tp">PaintEvent</span>&amp; event) { ... });            <span class="cm">// deduced from the handler</span>
+panel.<span class="fn">connectEvent</span>&lt;<span class="tp">PaintEvent</span>&gt;(handler);                     <span class="cm">// event named explicitly</span></pre>
+            <p>The explicit form is still the answer when a handler cannot name its own event - a generic lambda, or
+            one taking a base of the event type.</p>
+
+            <h3 id="methods">Member Functions as Handlers</h3>
+            <p>A pointer-to-member pair works in both places. The event comes off the method's own signature:</p>
+<pre>m_darkButton.<span class="fn">connectEvent</span>(<span class="kw">this</span>, &amp;<span class="tp">ThemePage</span>::onColorModeClick);      <span class="cm">// connect later</span>
+<span class="tp">Button</span>{ params, <span class="fn">makeOnEvent</span>(<span class="kw">this</span>, &amp;<span class="tp">ThemePage</span>::onColorModeClick) }  <span class="cm">// at construction</span></pre>
+            <div class="info"><code>makeOnEvent</code> is a function rather than a constructor because a deduction
+            guide cannot synthesise the <code>std::function</code> wrapper the object/method pair needs.</div>
+
+            <h3 id="disconnecting">Disconnecting</h3>
+            <p>Every connect call returns an <code>EventConnection</code>. Ignore it and the handler lives as long
+            as the emitter; keep it and you can disconnect:</p>
+<pre><span class="tp">EventConnection</span> conn = form.<span class="fn">onClose</span>([](<span class="tp">FormCloseEvent</span>&amp; event) { ... });
+conn.<span class="fn">disconnect</span>();</pre>
+            <p>For a handler that must not outlive the listener, store a <code>ScopedEventConnection</code>, which
+            disconnects in its destructor. It takes an r-value only, so a connection cannot be scoped twice:</p>
+<pre><span class="kw">class</span> <span class="tp">FormBase</span>
+{
+<span class="kw">private</span>:
+    <span class="tp">ScopedEventConnection</span> m_colorModeConnection;
+};
+
+<span class="cm">// built in the constructor's initializer list, so it dies with the listener</span>
+<span class="tp">FormBase</span>::<span class="fn">FormBase</span>(<span class="tp">AppContext</span>&amp; appContext, ...)
+    :
+    m_colorModeConnection{
+        appContext.<span class="fn">colorMode</span>().<span class="fn">connectEvent</span>(<span class="kw">this</span>, &amp;<span class="tp">FormBase</span>::colorModeChanged)
+    }
+{
+}</pre>
+
+            <div class="rules-grid">
+                <div class="rule-card dos">
+                    <h4>DO:</h4>
+                    <ul>
+                        <li>Hold a <code>ScopedEventConnection</code> when the <em>listener</em> dies first, and
+                        store it as a member of that listener.</li>
+                        <li>Let the connection go when the emitter owns the handler outright - a control's own
+                        handler lives and dies with the control.</li>
+                        <li>Capture by value, or capture <code>this</code> only from an object that outlives the
+                        emitter.</li>
+                    </ul>
+                </div>
+                <div class="rule-card donts">
+                    <h4>DON'T:</h4>
+                    <ul>
+                        <li>Don't let a <code>ScopedEventConnection</code> outlive the emitter it points at. Its
+                        destructor calls <code>disconnect()</code> through a raw pointer to the dispatcher, and
+                        nothing clears that pointer when the emitter is destroyed. It compiles, it usually appears
+                        to work, and it is undefined behaviour.</li>
+                        <li>Don't connect a lambda capturing something shorter-lived than the emitter and then
+                        drop the connection. The handler stays live and the capture does not.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 id="forms">Form Events</h3>
+            <p>A form raises <code>FormCloseEvent</code>, <code>FormFocusChangeEvent</code> and
+            <code>FormPositionChangeEvent</code>, each carrying the form as <code>sender()</code>. They are
+            connected exactly like a control's events, either way round:</p>
+<pre><span class="cm">// as a construction property</span>
+<span class="kw">auto</span> form = application.createDialog&lt;<span class="tp">Panel</span>&gt;(
+    <span class="tp">MinSize</span>{ <span class="fn">640.0f</span>, <span class="fn">480.0f</span> },
+    <span class="tp">OnEvent</span>{ [](<span class="tp">FormCloseEvent</span>&amp; event) { ... } }
+);
+
+<span class="cm">// or afterwards</span>
+form-&gt;<span class="fn">onClose</span>([](<span class="tp">FormCloseEvent</span>&amp; event) { ... });</pre>
+            <div class="info">A form is a window and its root control in one object, and they share a single
+            dispatcher - the control's. The form raises its own events on it, so a form event is connected exactly
+            like a control event, from either side and at either time.</div>
+
+            <h2 id="declaring">Declaring Your Own Event</h2>
+            <p>Everything above is about using events that already exist. This part is for writing a control, or
+            another type, that raises events of its own.</p>
+
+            <div class="info">
+                <strong>Extra include:</strong> declaring an event uses the <code>DECLARE_EVENT</code> macro, which
+                lives in a plain header because macros are not exported by modules. Include it in the global module
+                fragment, above the module declaration:
+                <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
+<span class="kw">module</span>;
+<span class="cm">#include "../Y-Core/System/EventBindings.h"</span>
+<span class="kw">export module</span> <span class="tp">ClaFi.Controls.MyControl</span>;</pre>
+            </div>
+
+            <h3 id="event-types">Writing the Event Type</h3>
+            <p>An event is a class derived from <code>Event</code>. Give it whatever the handler needs to read or
+            write. If the handler should be able to reach the object that raised it, derive from
+            <code>EventOf&lt;Sender&gt;</code> instead, which adds <code>sender()</code>.</p>
+<pre><span class="cm">// carries data of its own</span>
+<span class="kw">export class</span> <span class="tp">SliderChangeEvent</span> : <span class="kw">public</span> <span class="tp">Event</span>
+{
+<span class="kw">public</span>:
+    <span class="fn">SliderChangeEvent</span>(<span class="kw">const</span> <span class="tp">SliderBase</span>&amp; slider, <span class="kw">float</span> newPosition, <span class="kw">float</span> previousPosition);
+    <span class="kw">const</span> <span class="tp">SliderBase</span>&amp; slider;
+    <span class="kw">const</span> <span class="kw">float</span> newPosition;
+    <span class="kw">const</span> <span class="kw">float</span> previousPosition;
+};
+
+<span class="cm">// carries only its sender</span>
+<span class="kw">export class</span> <span class="tp">TimerEvent</span> : <span class="kw">public</span> <span class="tp">EventOf</span>&lt;<span class="tp">UiTimer</span>&gt;
+{
+    <span class="kw">using</span> <span class="tp">EventOf</span>&lt;<span class="tp">UiTimer</span>&gt;::<span class="tp">EventOf</span>;
+};</pre>
+            <div class="info"><strong>Note:</strong> the inherited-constructor <code>using</code> is written in the
+            private section by convention. That is deliberate and correct - the accessibility of an inherited
+            constructor comes from the base's constructor, not from the <code>using</code> declaration.</div>
+
+            <h3 id="declare-event">DECLARE_EVENT</h3>
+            <p>One line in the class body declares an event completely:</p>
+<pre><span class="cm">//            event type,   handler alias,  connect method</span>
+<span class="fn">DECLARE_EVENT</span>(<span class="tp">ClickEvent</span>, <span class="tp">OnClick</span>, onClick)</pre>
+            <p>The arguments run widest to narrowest, so a column of declarations lines up by event type. The macro
+            generates the handler alias and the connect helper, which is what makes both call-site spellings work.</p>
+            <p><strong>There is nothing else to write.</strong> No per-event property type, no binding line in the
+            constructor. The alias is a spelling of <code>OnEvent</code>, and every emitter's constructor connects
+            every <code>OnEvent</code> it is handed.</p>
+
+            <h3 id="emitting">Emitting</h3>
+            <p><code>emitEvent</code> deduces the event type from the object you hand it:</p>
+<pre><span class="kw">void</span> <span class="tp">Combobox</span>::<span class="fn">itemIndexChanged</span>()
+{
+    <span class="tp">ComboboxChangeEvent</span> event{ *<span class="kw">this</span> };
+    <span class="fn">emitEvent</span>(event);
+}</pre>
+            <p>There is also a construct-in-place form, <code>emitEvent&lt;TEvent&gt;(args...)</code>, for an event
+            you do not need to inspect afterwards. Emission is cheap when nobody is listening: the dispatcher
+            returns immediately if it holds no listeners at all.</p>
+            <p>A handler can call <code>event.stopPropagation()</code>. The emit loop stops at that handler, and the
+            emitter can test <code>event.propagationStopped()</code> to decide whether to run its own default
+            behaviour - this is how a control lets a caller override it:</p>
+<pre><span class="kw">void</span> <span class="tp">TextBox</span>::<span class="fn">contextPopup</span>(<span class="tp">ContextPopupEvent</span>&amp; event)
+{
+    <span class="fn">setCaretPosFromMouse</span>();
+    <span class="tp">Label</span>::<span class="fn">contextPopup</span>(event);     <span class="cm">// emits; a handler may stop it</span>
+    <span class="kw">if</span> (event.<span class="fn">propagationStopped</span>())
+        <span class="kw">return</span>;                    <span class="cm">// the caller replaced the menu</span>
+    <span class="cm">// ... otherwise show the built-in one</span>
+}</pre>
+            <div class="warning"><strong>Don't emit from a constructor.</strong> Handlers passed as
+            construction properties are connected by <code>EventComponent</code>'s constructor, which runs before
+            any derived constructor body. An event raised while the object is still being built reaches handlers
+            that will see a half-initialised object.</div>
+
+            <div class="info">A control needs no constructor code to accept handlers for the events it declares -
+            not even for events its base classes know nothing about. <code>Control</code>'s constructor connects a
+            <code>ComboboxChangeEvent</code> handler perfectly well, for the reason given in
+            <a href="#dispatcher">One Dispatcher per Object</a>.</div>
+
+            <h3 id="custom-emitters">Making Any Class an Emitter</h3>
+            <p>A type that is not a control becomes an emitter by deriving from <code>EventComponent</code> and
+            forwarding its constructor pack to it:</p>
+<pre><span class="kw">export class</span> <span class="tp">UiTimer</span> : <span class="kw">public</span> <span class="tp">EventComponent</span>
+{
+<span class="kw">public</span>:
+    <span class="kw">template</span> &lt;<span class="kw">typename</span>... <span class="tp">Args</span>&gt;
+        <span class="kw">requires</span> <span class="tp">NotSelfCopy</span>&lt;<span class="tp">UiTimer</span>, <span class="tp">Args</span>...&gt;
+    <span class="kw">explicit</span> <span class="fn">UiTimer</span>(<span class="kw">const</span> <span class="tp">Args</span>&amp;... args)
+        :
+        <span class="tp">EventComponent</span>{ args... }
+    {
+    }
+<span class="kw">public</span>:
+    <span class="fn">DECLARE_EVENT</span>(<span class="tp">TimerEvent</span>, <span class="tp">OnTick</span>, onTick)
+};
+
+<span class="cm">// and then</span>
+<span class="tp">UiTimer</span> timer{ <span class="tp">OnEvent</span>{ [<span class="kw">this</span>](<span class="tp">TimerEvent</span>&amp;) { <span class="fn">tick</span>(); } } };</pre>
+            <div class="warning"><strong>The <code>NotSelfCopy</code> guard is not optional.</strong> A variadic
+            constructor is greedy and will otherwise swallow the class's own copy constructor. For the same reason,
+            declare <code>MyType() = default;</code> explicitly if the type needs a default constructor - declaring
+            any constructor suppresses the implicit one.</div>
+            <p><code>Scaler</code>, <code>DirWatch</code>, <code>UiTimer</code>, <code>FormBase</code> and the Dom
+            nodes are all emitters this way.</p>
+            <p>A class of statics hands out a dispatcher in place of being one: a static <code>events()</code>
+            answers a dispatcher that stands for the whole process, and a listener connects to it by naming the
+            event:</p>
+<pre><span class="tp">EventConnection</span> connection = <span class="tp">Platform</span>::<span class="fn">events</span>().<span class="fn">connect</span>&lt;<span class="tp">SystemColorModeEvent</span>&gt;(
+    [](<span class="tp">SystemColorModeEvent</span>&amp;) {
+        ...
+    });</pre>
+            <p>An object that serves the whole process hands out its dispatcher the same way. The clipboard is one:
+            the platform owns it, a form's context hands it out as <code>formContext().clipboard()</code>, and its
+            <code>events()</code> is where <code>ClipboardChangeEvent</code> is raised:</p>
+<pre><span class="tp">EventConnection</span> connection = <span class="fn">formContext</span>().<span class="fn">clipboard</span>().<span class="fn">events</span>().<span class="fn">connect</span>&lt;<span class="tp">ClipboardChangeEvent</span>&gt;(
+    [](<span class="tp">ClipboardChangeEvent</span>&amp;) {
+        ...
+    });</pre>
+            <p>Both dispatchers outlive every window - the platform stands before the first window and after the
+            last - so a listener that goes first holds its connection in a
+            <code>ScopedEventConnection</code> - see <a href="#disconnecting">Disconnecting</a>.</p>
+
+            <h2 id="not-events">Callbacks That Are Not Events</h2>
+            <p>A few things in the framework take a <code>std::function</code> and are deliberately <em>not</em>
+            events. You cannot connect a second one, and there is nothing to disconnect:</p>
+            <table>
+                <tr><th>Callback</th><th>Why it is not an event</th></tr>
+                <tr><td><code>TraversalContext::OnVisitControl</code></td><td>A visitor passed into one tree walk. It is an argument, not a subscription.</td></tr>
+                <tr><td><code>DirWatchManager::OnWatchEvent</code></td><td>Registered per watched path and removed by descriptor. A dispatcher keyed by event type cannot tell paths apart. The <code>DirWatch</code> above it <em>is</em> an emitter, with <code>onChange</code>.</td></tr>
+                <tr><td><code>Animation::OnAnimate</code></td><td>Belongs to one animation, keyed by control and slot, and runs in the per-frame tick loop.</td></tr>
+            </table>
+            <p>The distinction to carry: a <strong>subscription point</strong> is an event; a <strong>value one
+            object owns</strong> stays a <code>std::function</code>. If you find a
+            <code>std::vector&lt;std::function&lt;...&gt;&gt;</code> being appended to and looped over, that is a
+            dispatcher written by hand and should become an event.</p>
+
+            <h2 id="internals">How It Works</h2>
+
+            <h3 id="dispatcher">One Dispatcher per Object</h3>
+            <p><code>EventComponent</code> contributes a single <code>EventDispatcher</code> - a map from an event
+            type's identity to a list of listeners. The identity is the address of a <code>static</code> byte unique
+            to each instantiation of an internal template, so it needs no registry and no manual registration.</p>
+            <p>Because the key is the <em>type</em>, it does not matter which class in a hierarchy declares an event,
+            connects a handler, or emits it. They all meet in the one dispatcher the object owns. That is why a base
+            class constructor can connect a handler for an event only a derived class will ever raise.</p>
+
+            <p>A <code>Form</code> is the case worth knowing: it derives from both <code>FormBase</code> and
+            its root control, but only the control is an <code>EventComponent</code>. <code>FormBase</code> holds a
+            pointer to that control - it is the same object's other half - and forwards its own connects and emits
+            there. One object, one dispatcher, whichever half you reach it through.</p>
+
+            <h3 id="deduction">Reading the Event off the Handler</h3>
+            <p><code>OnEvent</code> and the deducing <code>connectEvent</code> inspect the handler's own parameter
+            list to find the event type. <code>EventParamOf</code> matches a lambda, a functor, a function pointer
+            or a pointer-to-member; <code>event_param_t</code> extracts the type; <code>NamesAnEvent</code> is
+            satisfied when the handler names exactly one parameter and that parameter is an <code>Event</code>.</p>
+            <p>Anything else - a generic <code>[](auto&amp;)</code>, wrong arity, an overloaded
+            <code>operator()</code> - fails there rather than deep inside the dispatcher, with a
+            <code>static_assert</code> that says what to do about it.</p>
+            <p>The connectors that name their event explicitly are kept alongside, and are selected by a guard on
+            the first template parameter, so both spellings coexist without ambiguity.</p>
+
+            <h3 id="one-channel">One Event Type, One Channel</h3>
+            <p>An event type <em>is</em> a channel. There is no way to open a second one on a type already in use,
+            and that is deliberate: a channel with no name of its own tells a reader nothing at the connect site,
+            and a handler attached to one nobody raises is silently never called.</p>
+            <p>So <strong>two handlers that mean different things get two event types.</strong> The type is what a
+            reader sees where the handler is written, and the only thing that says which of the two they are on.</p>
+            <p><code>ContextPopupEvent</code> and <code>EditContextPopupEvent</code> are the worked example. One
+            gesture - a right-click on a text box - but two audiences: a caller replacing the control's menu
+            outright, and a caller adjusting the standard edit menu the control would otherwise show. Two
+            intentions, two types, and each connect site says which one it means.</p>
+
+            <h2 id="reference">Reference</h2>
+            <p>Exported from <code>ClaFi.Core.System.Events</code>:</p>
+            <table>
+                <tr><th>Name</th><th>What it is</th></tr>
+                <tr><td><code>Event</code></td><td>Base for every event. Carries <code>stopPropagation()</code> and <code>propagationStopped()</code>.</td></tr>
+                <tr><td><code>EventOf&lt;Sender&gt;</code></td><td>Event base that also carries <code>sender()</code>.</td></tr>
+                <tr><td><code>EventComponent</code></td><td>Base that makes a type an emitter. Protected constructors; the variadic one connects handlers from a pack.</td></tr>
+                <tr><td><code>EventDispatcher</code></td><td>The listener map. Reached through <code>events()</code>; rarely used directly.</td></tr>
+                <tr><td><code>EventConnection</code></td><td>Move-only handle returned by every connect call. <code>disconnect()</code>.</td></tr>
+                <tr><td><code>ScopedEventConnection</code></td><td>RAII wrapper that disconnects on destruction. R-value construction only.</td></tr>
+                <tr><td><code>OnEvent{ handler }</code></td><td>One handler as a construction property. Deduces its event.</td></tr>
+                <tr><td><code>Events{ h1, h2, ... }</code></td><td>Several handlers as one construction property.</td></tr>
+                <tr><td><code>makeOnEvent(obj, method)</code></td><td>An <code>OnEvent</code> from an object and a member function.</td></tr>
+                <tr><td><code>IsEvent&lt;T&gt;</code></td><td>T derives from <code>Event</code>.</td></tr>
+                <tr><td><code>NamesAnEvent&lt;F&gt;</code></td><td>F takes exactly one parameter and it is an event.</td></tr>
+                <tr><td><code>IsOnEvent&lt;T&gt;</code></td><td>T is an <code>OnEvent</code>, an <code>Events</code> list, or a named alias of one.</td></tr>
+                <tr><td><code>IsHandler&lt;T&gt;</code></td><td>Either of the two above - what a handler position accepts.</td></tr>
+                <tr><td><code>NotSelfCopy&lt;Self, Args...&gt;</code></td><td>Guard for a greedy variadic constructor.</td></tr>
+                <tr><td><code>EventParamOf&lt;F&gt;</code>, <code>event_param_t&lt;F&gt;</code></td><td>The event type a handler names.</td></tr>
+            </table>
+
+            <p>Macros from <code>EventBindings.h</code>:</p>
+            <table>
+                <tr><th>Macro</th><th>What it does</th></tr>
+                <tr><td><code>DECLARE_EVENT(Event, OnAlias, onMethod)</code></td><td>Declares an event on a class: the handler alias and the connect helper.</td></tr>
+                <tr><td><code>BIND_MEMBER(Type, member)</code></td><td>Assigns a construction property to a member.</td></tr>
+                <tr><td><code>BIND_CALL(Type, func)</code></td><td>Passes a construction property to a setter.</td></tr>
+                <tr><td><code>BIND_CALL_VALUE(Type, func)</code></td><td>Same, for property wrappers carrying their payload in <code>value</code>.</td></tr>
+                <tr><td><code>BIND_ACTION(Type, action)</code></td><td>Runs arbitrary code with the property named <code>p</code>.</td></tr>
+            </table>
+            <div class="info">The <code>BIND_</code> macros are for plain construction properties - padding, colours,
+            text. Handlers never go through them: they arrive as <code>OnEvent</code> and
+            <code>EventComponent</code>'s constructor connects them.</div>
+        </main>
+    </div>
+
+    <!-- Collapsible Sidebar Logic Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const collapsibleElements = document.querySelectorAll('.sidebar li.has-children');
+            collapsibleElements.forEach(li => {
+                const btn = li.querySelector('.toggle-btn');
+                const link = li.querySelector('.nav-item-wrapper > a');
+
+                const toggle = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    li.classList.toggle('collapsed');
+                };
+
+                if (btn) {
+                    btn.addEventListener('click', toggle);
+                }
+
+                // Allow clicking the primary root link to expand the node if it's currently collapsed
+                if (link) {
+                    link.addEventListener('click', () => {
+                        if (li.classList.contains('collapsed')) {
+                            li.classList.remove('collapsed');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

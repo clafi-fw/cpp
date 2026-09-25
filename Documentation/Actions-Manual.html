@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi Actions - Developer Manual</title>
+    <style>
+        :root {
+            --bg-color: #f9f9fb;
+            --text-color: #333;
+            --accent-color: #0066cc;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        /* --- Sidebar & Collapsible Layout --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: #fff;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-left: 0.5rem;
+            color: #111;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Top-level list items (root nodes) */
+        .sidebar > ul > li {
+            margin-bottom: 0.8rem;
+        }
+
+        /* Group wrapper for link + toggle button */
+        .nav-item-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-item-wrapper:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        /* Root-level link styling */
+        .sidebar > ul > li > .nav-item-wrapper > a {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111;
+            flex-grow: 1;
+        }
+
+        /* Sub-level lists */
+        .sidebar ul ul {
+            padding-left: 0.8rem;
+            margin-top: 0.3rem;
+            margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color);
+            margin-left: 1.1rem;
+        }
+
+        .sidebar ul ul li {
+            margin-bottom: 0.4rem;
+        }
+
+        .sidebar ul ul a {
+            font-size: 0.9rem;
+            color: #555;
+            display: block;
+            padding: 0.15rem 0;
+            transition: color 0.15s ease;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            display: block;
+            transition: color 0.2s ease;
+        }
+
+        .sidebar a:hover,
+        .sidebar ul ul a:hover {
+            color: var(--accent-color);
+        }
+
+        /* Toggle Button styling */
+        .toggle-btn {
+            background: none;
+            border: none;
+            padding: 4px;
+            margin: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+            outline: none;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--accent-color);
+        }
+
+        .toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            transform: rotate(90deg); /* Points down when expanded */
+            transition: transform 0.2s ease;
+        }
+
+        /* Interactive Collapsible states managed by JS */
+        .sidebar li.has-children.collapsed ul {
+            display: none !important;
+        }
+
+        .sidebar li.has-children.collapsed .toggle-btn svg {
+            transform: rotate(0deg); /* Points right when collapsed */
+        }
+
+        /* --- Base Page Layout --- */
+        .page-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        header {
+            background-color: #fff;
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        h1, h2, h3, h4 {
+            color: #111;
+            margin-top: 2rem;
+        }
+
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+
+        main {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            padding-bottom: 2rem;
+        }
+
+        p, li { font-size: 1.1rem; }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background-color: rgba(0,0,0,0.05);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.9em;
+            color: #d14;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        .kw { color: #569cd6; }
+        .tp { color: #4ec9b0; }
+        .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; }
+        .fn { color: #dcdcaa; }
+
+        .warning {
+            background-color: #fff3f3;
+            border-left: 4px solid #cc0000;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .rule-card {
+            padding: 1.2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .rule-card.dos {
+            background-color: #f4faf4;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .rule-card.donts {
+            background-color: #fff8f8;
+            border-left: 4px solid #c62828;
+        }
+
+        .rule-card h4 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .rule-card ul {
+            margin: 0;
+            padding-left: 1.2rem;
+        }
+
+        .rule-card li {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .sidebar {
+                display: none;
+            }
+            .page-content {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<
+<body>
+
+    <nav class="sidebar">
+        <div class="sidebar-header">Contents</div>
+        <ul>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#introduction">Introduction</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#basic-usage">Basic Usage Example</a>
+                </div>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#giving">Giving an Action to a Control</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#ownership">Who Owns an Action</a></li>
+                    <li><a href="#giving-to-control">Handing It to a Control</a></li>
+                    <li><a href="#what-it-supplies">What the Control Takes From It</a></li>
+                    <li><a href="#presenter-rules">What a Presenter Has to Be</a></li>
+                    <li><a href="#state">State</a></li>
+                    <li><a href="#invalidating">Saying the Answer Changed</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#answering">Answering an Action</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#claiming">Claiming</a></li>
+                    <li><a href="#textbox">Worked Example: TextBox</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#shortcuts">Shortcuts</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#declaring-shortcut">Declaring One</a></li>
+                    <li><a href="#scopes">Scopes, and the Order They Are Asked</a></li>
+                </ul>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#framework-actions">The Framework's Own Actions</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#writing">Writing an Action of Your Own</a>
+                </div>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#internals">How It Works</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#resolving">Resolving the Subject</a></li>
+                    <li><a href="#attachments">Attachments and Lifetime</a></li>
+                    <li><a href="#two-events">Two Events, and Identity by Address</a></li>
+                </ul>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#reference">Reference</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="page-content">
+        <header>
+            <h1>Actions Subsystem</h1>
+            <p>ClaFi Framework Developer Manual</p>
+        </header>
+
+        <main>
+            <h2 id="introduction">Introduction</h2>
+            <p>An <code>Action</code> is a named command: what it says, what it draws, what it does, and whether it
+            is available now. Save, Copy, Reload. One action serves as many controls as you like - a toolbar
+            button, a menu item, a keyboard shortcut - and all of them stay in step because there is one object
+            behind them.</p>
+
+            <div class="info">
+                <strong>Module Import:</strong>
+                <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
+<span class="kw">import</span> <span class="tp">ClaFi.Core.Foundation</span>;</pre>
+            </div>
+
+            <p>Two words run through the whole subsystem, and everything is easier once they are apart:</p>
+            <ul>
+                <li>The <strong>presenter</strong> - the button in the toolbar, the item in the menu. It shows the
+                action's text, tooltip and icon, carries its state, and delivers the click. You attach it.</li>
+                <li>The <strong>subject</strong> - the control the action acts <em>on</em>. The text box Copy copies
+                from. You never attach it: it is found, because the user chose it by putting the focus there.</li>
+            </ul>
+
+            <p>Many actions have no subject at all - Save acts on a document, not on a control - and those are the
+            simpler case. An action's own handler is what runs when nothing else claims the action, so a command
+            with no subject needs nothing extra.</p>
+
+            <p>One rule is worth carrying from the start: <strong>an action stores no state.</strong> Whether it is
+            enabled, whether it is selected - these are properties of whatever it acts on, so they are asked for
+            every time and never kept.</p>
+
+            <h2 id="basic-usage">Basic Usage Example</h2>
+            <p>An action is an ordinary object. Hold it wherever the thing it acts on is held - a window class is
+            the usual place - and hand it to as many controls as you like:</p>
+<pre><span class="cm">// a member of the window, next to the document it acts on. The window's scope owns it</span>
+<span class="cm">// and hands back a reference, so declaring it and putting its key in reach are one line.</span>
+<span class="tp">Action</span>&amp; m_save{ <span class="fn">actions</span>().<span class="fn">add</span>(
+    <span class="tp">Text</span>{ L<span class="st">"Save"</span> },
+    <span class="tp">TooltipText</span>{ L<span class="st">"Write the document to disk"</span> },
+    <span class="tp">Shortcut</span>{ L<span class="st">'S'</span>, { .ctrl = <span class="kw">true</span> } },
+    <span class="tp">Events</span>{
+        [<span class="kw">this</span>](<span class="tp">ActionClickEvent</span>&amp;) { m_document.<span class="fn">save</span>(); },
+        [<span class="kw">this</span>](<span class="tp">GetActionStateEvent</span>&amp; event) {
+            event.<span class="fn">claim</span>({ .enabled = m_document.<span class="fn">modified</span>() });
+        },
+    }
+) };
+
+<span class="cm">// ...and in the window's constructor</span>
+toolbar.add&lt;<span class="tp">Button</span>&gt;(m_save, <span class="tp">ButtonViewMode</span>::IconOnly);   <span class="cm">// a presenter</span>
+menu.add&lt;<span class="tp">MenuItem</span>&gt;(m_save);                          <span class="cm">// and another</span></pre>
+
+            <p>That is the whole of it. The button shows "Save", disables itself while the document is unmodified,
+            and saves when clicked. The menu item does the same and prints <code>Ctrl+S</code> in its shortcut
+            column. The key works whether either of them is on screen.</p>
+
+            <h2 id="giving">Giving an Action to a Control</h2>
+
+            <h3 id="ownership">Who Owns an Action</h3>
+            <p>The scope it is added to, which is the ordinary case. Its commands belong to that window, they go
+            when it goes, and there is nothing to remember. <code>add</code> hands back a reference for you to
+            keep, so one line both creates the action and puts its key in reach.</p>
+            <p>An action owned elsewhere - by a document, or shared between two windows - is registered instead of
+            created:</p>
+<pre><span class="fn">actions</span>().<span class="fn">add</span>(m_document.saveAction);</pre>
+            <div class="warning"><strong>Registering is what puts a shortcut in reach.</strong> Attaching an action
+            to a button is not enough - a button that has been scrolled away, or a menu that is closed, would take
+            the key with it. An action created by <code>add</code> is already registered; one owned elsewhere is
+            not until you say so. See <a href="#scopes">Scopes</a>.</div>
+
+            <h3 id="giving-to-control">Handing It to a Control</h3>
+            <p>An action is a construction property, so a control takes one the way it takes a text:</p>
+<pre>toolbar.add&lt;<span class="tp">Button</span>&gt;(m_save, <span class="tp">ButtonViewMode</span>::LeftIcon);</pre>
+            <p>It can also be done afterwards, and undone:</p>
+<pre>m_save.<span class="fn">attach</span>(someButton);
+m_save.<span class="fn">detach</span>(someButton);</pre>
+
+            <h3 id="what-it-supplies">What the Control Takes From It</h3>
+            <table>
+                <tr><th>The action's</th><th>Becomes the presenter's</th></tr>
+                <tr><td><code>text()</code></td><td>Text - but only if the control has none of its own.</td></tr>
+                <tr><td><code>tooltipText()</code></td><td>Tooltip, with the shortcut appended to it.</td></tr>
+                <tr><td><code>OnPaintIcon</code></td><td>Icon, wherever that control paints one.</td></tr>
+                <tr><td>state</td><td>Enabled and selected.</td></tr>
+                <tr><td>-</td><td>A click on the presenter runs the action.</td></tr>
+                <tr><td><code>shortcut()</code></td><td>The key it prints beside itself, if it prints one.</td></tr>
+            </table>
+            <div class="info"><strong>A control's own text wins.</strong> The action supplies the words for a
+            presenter that has none, which is the ordinary case; a presenter that spells its own text is stating a
+            local exception, and gets it.</div>
+
+            <h3 id="presenter-rules">What a Presenter Has to Be</h3>
+            <div class="rules-grid">
+                <div class="rule-card dos">
+                    <h4>Do</h4>
+                    <ul>
+                        <li>Give a presenter <code>Interactivity::MouseOnly</code> when its action has a subject,
+                        so pressing it never moves the focus.</li>
+                        <li>Let menu items be as they are - a menu takes the pointer without taking the focus
+                        already, so they need nothing.</li>
+                    </ul>
+                </div>
+                <div class="rule-card donts">
+                    <h4>Don't</h4>
+                    <ul>
+                        <li>Make a subject-taking presenter focusable. Pressing it takes the focus off the subject,
+                        so the action resolves to the button itself or to nothing - and disables under its own
+                        press.</li>
+                        <li>Attach to a control that is never clicked. See below.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="warning">A presenter whose <code>interactivity()</code> is <code>None</code> can never
+            deliver a click, so attaching one is a mistake with no correct reading. It is caught on that control's
+            first state query - which happens before its first paint - with
+            <code>unreachable("An action was attached to a control that never delivers a click")</code>.</div>
+
+            <h3 id="state">State</h3>
+            <p>An action's state is <code>ActionState</code> - <code>enabled</code> and <code>selected</code> - and
+            it is arrived at by asking, in this order, with the last answer winning:</p>
+            <ol>
+                <li>the first control up from the focus that claims the action - its answer;</li>
+                <li>nothing claimed, so the action's own <code>GetActionStateEvent</code> handler;</li>
+                <li>neither, so the action is enabled if it has anything to run at all.</li>
+            </ol>
+            <p>You do not have to write a state handler. An action that carries its own work and says nothing about
+            when it is available is available.</p>
+            <p><code>Control::canClick</code> already tests <code>enabled</code>, so a disabled action's presenter
+            refuses its own click without anything being written to make that happen.</p>
+
+            <h3 id="invalidating">Saying the Answer Changed</h3>
+            <p>Nothing is stored, so nothing goes stale on its own - but a presenter has already been painted with
+            an answer that was true when it was asked. Three calls say what changed:</p>
+            <table>
+                <tr><th>Call</th><th>When</th></tr>
+                <tr><td><code>invalidateState()</code></td><td>What the action reads has changed, so enabled or selected may be different. Every presenter is asked again and animates the difference.</td></tr>
+                <tr><td><code>invalidate()</code></td><td>The icon would draw something new.</td></tr>
+                <tr><td><code>invalidateText()</code></td><td>The text changed, so the size every presenter asked for is stale.</td></tr>
+            </table>
+<pre><span class="kw">void</span> <span class="tp">Window</span>::<span class="fn">documentChanged</span>()
+{
+    m_save.<span class="fn">invalidateState</span>();
+}</pre>
+
+            <h2 id="answering">Answering an Action</h2>
+            <p>A control volunteers to be a subject by answering two events. Any control can - the connectors are on
+            <code>Control</code>.</p>
+
+            <h3 id="claiming">Claiming</h3>
+            <p><code>GetActionStateEvent</code> is asked of every control from the focused one upwards.
+            <strong>Claiming it is how a control says the action is about it</strong>, and the first control that
+            claims is the subject - which is also the control the click will go to.</p>
+            <p>Claiming is a separate statement from what the state says:</p>
+<pre>event.<span class="fn">claim</span>({ .enabled = <span class="fn">hasSelection</span>() });</pre>
+            <div class="rules-grid">
+                <div class="rule-card dos">
+                    <h4>Do</h4>
+                    <ul>
+                        <li>Claim an action you understand even when you cannot run it right now, and report it
+                        disabled. A text box with nothing selected <em>is</em> what Cut is about.</li>
+                        <li>Answer <code>ActionClickEvent</code> for exactly the actions you claim.</li>
+                    </ul>
+                </div>
+                <div class="rule-card donts">
+                    <h4>Don't</h4>
+                    <ul>
+                        <li>Skip the claim because you cannot act. That hands the action to whatever is further up
+                        the chain, which will answer for a control the user is not in.</li>
+                        <li>Do work in the state pass. It runs on every state invalidation; keep it to a test.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 id="textbox">Worked Example: TextBox</h3>
+            <p>The framework's own subject. Its constructor calls <code>connectEditActions</code>, which connects
+            both handlers:</p>
+<pre><span class="fn">onGetActionState</span>([<span class="kw">this</span>](<span class="tp">GetActionStateEvent</span>&amp; event) {
+    <span class="kw">const</span> <span class="kw">bool</span> hasSelection = m_editProps.selRange.length != 0;
+    <span class="kw">if</span> (&amp;event.action == &amp;<span class="tp">StdActions</span>::cut)
+        event.<span class="fn">claim</span>({ .enabled = hasSelection });
+    <span class="kw">else</span> <span class="kw">if</span> (&amp;event.action == &amp;<span class="tp">StdActions</span>::copy)
+        event.<span class="fn">claim</span>({ .enabled = !<span class="fn">text</span>().<span class="fn">plainText</span>().<span class="fn">empty</span>() });
+    <span class="kw">else</span> <span class="kw">if</span> (&amp;event.action == &amp;<span class="tp">StdActions</span>::paste)
+        event.<span class="fn">claim</span>({ .enabled = !clp.<span class="fn">empty</span>() || <span class="tp">Platform</span>::<span class="fn">clipboardHasText</span>() });
+    <span class="kw">else</span> <span class="kw">if</span> (&amp;event.action == &amp;<span class="tp">StdActions</span>::del)
+        event.<span class="fn">claim</span>({ .enabled = hasSelection });
+});
+
+<span class="fn">onActionClick</span>([<span class="kw">this</span>](<span class="tp">ActionClickEvent</span>&amp; event) {
+    <span class="kw">if</span> (&amp;event.action == &amp;<span class="tp">StdActions</span>::cut)
+        <span class="fn">cutSelectedText</span>();
+    <span class="kw">else</span> <span class="kw">if</span> (&amp;event.action == &amp;<span class="tp">StdActions</span>::copy)
+        <span class="fn">copySelectedText</span>();
+    <span class="kw">else</span> <span class="kw">if</span> (&amp;event.action == &amp;<span class="tp">StdActions</span>::paste)
+        <span class="fn">pasteClipboardText</span>();
+    <span class="kw">else</span> <span class="kw">if</span> (&amp;event.action == &amp;<span class="tp">StdActions</span>::del)
+        <span class="fn">deleteSelectedText</span>();
+});</pre>
+            <p>An action is recognised by <strong>its address</strong>. There are no ids, no tags and no type tests
+            anywhere in the subsystem, which is why the actions a framework control answers have to be objects the
+            framework owns - see <a href="#framework-actions">below</a>.</p>
+
+            <h2 id="shortcuts">Shortcuts</h2>
+
+            <h3 id="declaring-shortcut">Declaring One</h3>
+<pre><span class="tp">Shortcut</span>{ L<span class="st">'S'</span>, { .ctrl = <span class="kw">true</span> } }        <span class="cm">// Ctrl+S</span>
+<span class="tp">Shortcut</span>{ vkF2 }                          <span class="cm">// F2, no modifiers</span>
+<span class="tp">Shortcut</span>{ vkDelete, { .shift = <span class="kw">true</span> } }   <span class="cm">// Shift+Delete</span></pre>
+            <p>The virtual key code of a letter is its own uppercase character, so <code>L'S'</code> is the key
+            marked S. <code>Shortcut::text()</code> spells the whole thing the way the keyboard in front of the
+            user is labelled - modifiers included - so a German layout reads <code>Strg+S</code> and nothing in
+            your code has to know.</p>
+
+            <h3 id="scopes">Scopes, and the Order They Are Asked</h3>
+            <p>A shortcut belongs to a scope, never to a control: bound to a control it would stop working the
+            moment that control was scrolled away or its menu closed. There are two scopes:</p>
+<pre><span class="fn">actions</span>()                    <span class="cm">// on a form - the commands that belong to this window</span>
+<span class="tp">AppActions</span>::<span class="fn">get</span>()          <span class="cm">// the application's, and where the standard actions are registered</span></pre>
+            <p>A key is offered around in this order:</p>
+            <ol>
+                <li>the control that holds the focus, then each of its parents;</li>
+                <li>this form's scope;</li>
+                <li>the application's scope;</li>
+                <li>the focus navigator.</li>
+            </ol>
+            <p><strong>A control with a meaning of its own for the key keeps it</strong> - a shortcut is what a key
+            means when nothing else wants it. A disabled action leaves the key alone rather than swallowing it, so
+            the next scope still gets to answer, and so does a second action sharing the shortcut.</p>
+            <div class="info">While a popup is open the key goes to the popup, which runs the same pipeline and so
+            asks its own scope and then the application's. The form behind it does not answer: the popup is the
+            window taking input.</div>
+
+            <h2 id="framework-actions">The Framework's Own Actions</h2>
+            <p>Cut, copy, paste, delete, select all, undo and redo are objects the framework owns. They live in
+            <code>ClaFi.StdActions</code>, in the <code>StdActions</code> namespace:</p>
+<pre><span class="kw">import</span> ClaFi.StdActions;
+
+<span class="tp">StdActions</span>::cut;
+<span class="tp">StdActions</span>::copy;
+<span class="tp">StdActions</span>::paste;
+<span class="tp">StdActions</span>::del;          <span class="cm">// Delete. Spelt short because `delete` is a keyword</span>
+<span class="tp">StdActions</span>::selectAll;
+<span class="tp">StdActions</span>::undo;         <span class="cm">// Ctrl+Z</span>
+<span class="tp">StdActions</span>::redo;         <span class="cm">// Ctrl+Y</span></pre>
+            <p><code>ApplicationBase::initialize</code> calls <code>StdActions::registerAll()</code>, which puts
+            all seven in the application's scope. Every application has the standard keys from there; one that
+            wants a key for itself clears that action's shortcut.</p>
+            <div class="info"><strong>They sit above Core because an action carries an icon.</strong>
+            <code>AppActions</code> is the scope and stays in Core, which cannot see <code>Icons</code>. Delete
+            carries <code>Icons::DeleteIcon</code>, so a button or a menu item that presents it draws that icon
+            with nothing written.</div>
+            <div class="info"><strong>Delete carries the Delete key, and a control whose Delete key means more
+            than the command keeps the key.</strong> A text box with nothing selected deletes forward, by a
+            character or by a word, so it answers that key itself; the action removes the selection, and that is
+            what its menu item and its toolbar button run.</div>
+            <div class="info"><strong>Undo and redo say only which direction to travel.</strong> What a step is,
+            and how many of them there are, belongs to the subject: a text box keeps its own history and reports
+            whether there is anything either way. A control that keeps none claims neither action, so the keys
+            fall through to whatever does.</div>
+            <p>They are ordinary objects. Translate them, give them icons, or clear their shortcuts by writing to
+            them:</p>
+<pre><span class="tp">StdActions</span>::copy.<span class="fn">text</span>().<span class="fn">clear</span>();
+<span class="tp">StdActions</span>::copy.<span class="fn">text</span>() &lt;&lt; <span class="fn">tr</span>(L<span class="st">"Copy"</span>);
+<span class="tp">StdActions</span>::copy.<span class="fn">setShortcut</span>({});   <span class="cm">// and now Ctrl+C is yours to use</span></pre>
+            <p>Put them on a menu the way you would any action:</p>
+<pre>editMenu.add&lt;<span class="tp">MenuItem</span>&gt;(<span class="tp">StdActions</span>::copy);</pre>
+            <p>They work on whatever text box has the focus, including one a grid opened for in-place editing,
+            because the subject is found rather than wired.</p>
+            <div class="info"><strong>A command framework controls answer is a framework object. Anything else is
+            yours, end to end</strong> - you declare the action and you write the control side that answers it, so
+            both ends see the same object. A context menu that wants its own wording declares its own action rather
+            than a second Copy.</div>
+
+            <h2 id="writing">Writing an Action of Your Own</h2>
+            <p>If nothing else answers it, the action's own handler is the implementation and there is no subject to
+            think about:</p>
+<pre><span class="tp">Action</span> m_reload{
+    <span class="tp">Text</span>{ L<span class="st">"Reload"</span> },
+    <span class="tp">Shortcut</span>{ vkF5 },
+    <span class="tp">OnEvent</span>{ [<span class="kw">this</span>](<span class="tp">ActionClickEvent</span>&amp;) { <span class="fn">reload</span>(); } },
+};</pre>
+            <p>If it should act on whatever the user is in, write both sides - the action, and the answer in your
+            control:</p>
+<pre><span class="cm">// the action, held by the window</span>
+<span class="tp">Action</span> m_zoomIn{ <span class="tp">Text</span>{ L<span class="st">"Zoom in"</span> }, <span class="tp">Shortcut</span>{ L<span class="st">'='</span>, { .ctrl = <span class="kw">true</span> } } };
+
+<span class="cm">// the answer, in the view that can zoom - it sees the same object</span>
+view.<span class="fn">onGetActionState</span>([&amp;](<span class="tp">GetActionStateEvent</span>&amp; event) {
+    <span class="kw">if</span> (&amp;event.action == &amp;m_zoomIn)
+        event.<span class="fn">claim</span>({ .enabled = view.<span class="fn">canZoomIn</span>() });
+});
+view.<span class="fn">onActionClick</span>([&amp;](<span class="tp">ActionClickEvent</span>&amp; event) {
+    <span class="kw">if</span> (&amp;event.action == &amp;m_zoomIn)
+        view.<span class="fn">zoomIn</span>();
+});</pre>
+            <p>Two views written this way share one action, and whichever the user is in answers.</p>
+            <div class="warning">An <code>Action</code> cannot be copied or moved - every connection it holds
+            captures its address. Hold it by value as a member, or let a scope own it with
+            <code>actions().add(...)</code>, which returns a reference. Never put actions in a container that
+            reallocates.</div>
+
+            <h2 id="internals">How It Works</h2>
+
+            <h3 id="resolving">Resolving the Subject</h3>
+            <p>The walk starts at the control holding the focus and climbs the parent chain - the same path a key
+            takes. Each control is asked <code>GetActionStateEvent</code>, and the first that claims ends it. A
+            control with no handler for that event is stepped over without an event being built, so a form of
+            ordinary controls costs a pointer chase per level.</p>
+            <p>The walk runs when a state is invalidated rather than per frame, and again when the action is
+            actually run. Nothing is stored: two calls a frame apart may answer differently, which is the point -
+            the answer belongs to whatever the user is in now.</p>
+            <p>Because a menu takes the pointer without taking the focus, a menu item's action resolves to the
+            control in the window behind it, with nothing written to make that happen.</p>
+
+            <h3 id="attachments">Attachments and Lifetime</h3>
+            <p>The action holds a list of its presenters; a presenter holds nothing, and neither does a subject -
+            no member was added to <code>Control</code> for any of this. Attaching connects handlers on the
+            presenter's own dispatcher and records the connections.</p>
+            <p>Both directions of death are covered. When a presenter is destroyed - a menu rebuilt, a toolbar
+            repopulated - <code>~Control</code> emits <code>DestroyEvent</code> and the action drops that
+            attachment. When the action goes first, it disconnects from every presenter still alive.</p>
+            <p>A subject needs none of this: it was found by a walk rather than registered, so there is nothing to
+            undo when one is destroyed.</p>
+
+            <h3 id="two-events">Two Events, and Identity by Address</h3>
+            <p>Whatever an action needs to know it asks with <code>GetActionStateEvent</code> or
+            <code>ActionClickEvent</code>, and there will never be a third. That is why every action-aware control's
+            handler is called for every action, and why each handler's first move is to work out whether this one
+            is its own by comparing the address.</p>
+            <p>The alternative - an event type or an id per command - would make that distinction at compile time,
+            and costs a declaration for every command in the application. Comparing addresses costs one branch in
+            one place per control, and the framework ships two event types instead of a growing family.</p>
+
+            <h2 id="reference">Reference</h2>
+            <p>Exported from <code>ClaFi.Core.Foundation</code>:</p>
+            <table>
+                <tr><th>Name</th><th>What it is</th></tr>
+                <tr><td><code>Action</code></td><td>A named command. Non-copyable, non-movable.</td></tr>
+                <tr><td><code>Actions</code></td><td>A scope a shortcut is looked up in.</td></tr>
+                <tr><td><code>AppActions</code></td><td>The application's scope. <code>AppActions::get()</code>.</td></tr>
+                <tr><td><code>StdActions</code></td><td>The namespace holding the standard commands - cut, copy, paste, del, selectAll, undo, redo - and <code>registerAll()</code>.</td></tr>
+                <tr><td><code>Shortcut</code></td><td><code>{ KeyCode key; KeyModifiers modifiers; }</code>, plus <code>empty()</code>, <code>matches()</code> and <code>text()</code>.</td></tr>
+                <tr><td><code>ActionState</code></td><td><code>{ bool enabled; bool selected; }</code> - what an application knows about a control, as opposed to <code>VisualState</code>, which is what is drawn.</td></tr>
+                <tr><td><code>GetActionStateEvent</code></td><td>Can this be run, and by whom. <code>claim()</code>, <code>claimed()</code>, <code>state()</code>.</td></tr>
+                <tr><td><code>ActionClickEvent</code></td><td>Run it. Carries <code>form</code>.</td></tr>
+                <tr><td><code>GetShortcutEvent</code></td><td>What key runs this control, for a control that prints it. Carries <code>shortcut</code>.</td></tr>
+                <tr><td><code>ActionEventBase</code></td><td>Base of the two action events. Carries <code>action</code> and <code>control</code>.</td></tr>
+            </table>
+
+            <p><code>Action</code>:</p>
+            <table>
+                <tr><th>Member</th><th>What it does</th></tr>
+                <tr><td><code>OnClick</code>, <code>onClick</code></td><td>Run it - the fallback when no subject claims.</td></tr>
+                <tr><td><code>OnGetState</code>, <code>onGetState</code></td><td>Its own answer for its state.</td></tr>
+                <tr><td><code>OnPaintIcon</code>, <code>onPaintIcon</code></td><td>Its icon.</td></tr>
+                <tr><td><code>text()</code>, <code>tooltipText()</code></td><td>Mutable. Follow a change with <code>invalidateText()</code> or <code>invalidate()</code>.</td></tr>
+                <tr><td><code>shortcut()</code>, <code>setShortcut()</code></td><td>The key, if it has one.</td></tr>
+                <tr><td><code>subject(form)</code></td><td>What would answer for it in that form, or null.</td></tr>
+                <tr><td><code>state(form)</code>, <code>enabled(form)</code></td><td>Ask for the state now.</td></tr>
+                <tr><td><code>invoke(form)</code></td><td>Run it, on the subject if there is one. Answers whether it ran.</td></tr>
+                <tr><td><code>attach()</code>, <code>detach()</code>, <code>attachedCount()</code></td><td>Presenters.</td></tr>
+                <tr><td><code>invalidateState()</code>, <code>invalidate()</code>, <code>invalidateText()</code></td><td>Say what changed.</td></tr>
+            </table>
+
+            <p><code>Actions</code>:</p>
+            <table>
+                <tr><th>Member</th><th>What it does</th></tr>
+                <tr><td><code>add(args...)</code></td><td>Takes an action of its own and hands it back.</td></tr>
+                <tr><td><code>add(action)</code></td><td>Registers one owned elsewhere.</td></tr>
+                <tr><td><code>remove(action)</code></td><td>Drops it, and destroys it if the scope owned it.</td></tr>
+                <tr><td><code>runShortcut(key, form)</code></td><td>Runs the action this key belongs to. Answers whether one ran.</td></tr>
+            </table>
+
+            <p>Connectors on <code>Control</code>, for a control answering an action rather than presenting one:</p>
+            <table>
+                <tr><th>Connector</th><th>What it answers</th></tr>
+                <tr><td><code>onGetActionState</code></td><td>Whether this control is the action's subject, and what its state is.</td></tr>
+                <tr><td><code>onActionClick</code></td><td>Run it. Reaches the control that claimed the state.</td></tr>
+                <tr><td><code>onGetShortcut</code></td><td>What key runs this control - answered by whatever action is attached.</td></tr>
+                <tr><td><code>onDestroy</code></td><td>This control is going away. Identity only: the derived parts are already gone.</td></tr>
+            </table>
+        </main>
+    </div>
+
+    <!-- Collapsible Sidebar Logic Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const collapsibleElements = document.querySelectorAll('.sidebar li.has-children');
+            collapsibleElements.forEach(li => {
+                const btn = li.querySelector('.toggle-btn');
+                const link = li.querySelector('.nav-item-wrapper > a');
+
+                const toggle = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    li.classList.toggle('collapsed');
+                };
+
+                if (btn) {
+                    btn.addEventListener('click', toggle);
+                }
+
+                // Allow clicking the primary root link to expand the node if it's currently collapsed
+                if (link) {
+                    link.addEventListener('click', () => {
+                        if (li.classList.contains('collapsed')) {
+                            li.classList.remove('collapsed');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1143 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Application">
+      <UniqueIdentifier>{e649fc45-ed7b-44df-bc68-2ece0a21a956}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Controls">
+      <UniqueIdentifier>{436e55be-ce09-466b-9acc-0ba253125fba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Controls\Browser">
+      <UniqueIdentifier>{499a6635-145c-407b-9910-0e577ec9c8cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Controls\Grids">
+      <UniqueIdentifier>{dd091bb7-c874-4034-a95a-58be39a27b75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Diagnostic">
+      <UniqueIdentifier>{cd06c1ca-c9e6-4627-99ff-a660bd22b28a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dom">
+      <UniqueIdentifier>{3544546b-5c53-4d8a-8134-407e3c36ef1c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dom\Formats">
+      <UniqueIdentifier>{4efdaa1d-f453-4867-924f-c4b4ca76fb63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Icons">
+      <UniqueIdentifier>{309b863f-3b53-4728-b62d-cbe72fa07de0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PathArt">
+      <UniqueIdentifier>{ea10e18a-8a3c-4c7c-81cc-5bbb0ba877dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{3ff8f9fa-880c-4d27-b664-9494a30de026}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform\Linux">
+      <UniqueIdentifier>{83e69b9d-d6e7-42d6-b4ed-920b85695e11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform\Wayland">
+      <UniqueIdentifier>{b5d1f2a4-7c3e-4a91-8f26-1d4c9e0b7a53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform\Windows">
+      <UniqueIdentifier>{07e159c0-18e1-48dc-90c0-32bd2ffb2db0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="StdActions">
+      <UniqueIdentifier>{f67d9ba4-bb5c-4413-ba34-7806a051bd53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Y_Core">
+      <UniqueIdentifier>{63882578-e9b7-49c4-afc1-47b6146521b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Y_Core\AppTheme">
+      <UniqueIdentifier>{511e8e0d-683a-41ad-a8b2-e4877e17299f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Y_Core\Context">
+      <UniqueIdentifier>{e4d91d78-c8ba-400c-898d-cce015dcad9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Y_Core\Dom">
+      <UniqueIdentifier>{c6ae508f-4563-4eae-9dd7-05d51fd3310f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Y_Core\Foundation">
+      <UniqueIdentifier>{0e9a3b8f-8529-4c57-aa9b-b523e9a69db3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Y_Core\Graphics">
+      <UniqueIdentifier>{8d5921d3-fa1d-4f44-9a08-638f600fb90e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Y_Core\System">
+      <UniqueIdentifier>{cb24f8db-86e1-4b97-9424-dd67edf9c8ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Y_Core\TextEngine">
+      <UniqueIdentifier>{b6b1dbc8-3159-4d16-b390-bd2817a9955b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Y_Core\Transfer">
+      <UniqueIdentifier>{c25c33ff-6530-4aff-a8cb-4790ea2f54c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Y_Core\Syntax">
+      <UniqueIdentifier>{284dc6f8-b77b-4ed8-a933-bf73d3248513}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Controls\Dialogs">
+      <UniqueIdentifier>{07c88a9c-e0d0-46da-96ee-d1df90d91603}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Controls\Containers">
+      <UniqueIdentifier>{1a499fc8-5ccf-44e7-8913-e6bba2511f15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Controls\Y-Base">
+      <UniqueIdentifier>{43c8d7ba-ba96-4115-bb9c-599af41069e2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\ClaFi_Facade.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.AppMenu.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.AppMenu.cppm">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.cppm">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Information.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Information.cppm">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Settings.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Settings.cppm">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesManager.cppm">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesManager_Elements.cppm">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesManager_Serializers.cppm">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.AppButton.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Button.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CheckBox.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ColorSlider.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ComboBox.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ComboBox.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Divider.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.FormTitle.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.InPlaceEdit.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.InPlaceEdit.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Label.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.LabeledDivider.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.RadioButton.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Slider.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Spacer.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.SplitButton.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TextBox.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Actions.cpp">
+      <Filter>Controls\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Actions.cppm">
+      <Filter>Controls\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Application.cppm">
+      <Filter>Controls\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.BreadCrumbBar.cppm">
+      <Filter>Controls\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Consts.cppm">
+      <Filter>Controls\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Control.cppm">
+      <Filter>Controls\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.PageData.cppm">
+      <Filter>Controls\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Settings.cppm">
+      <Filter>Controls\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser_Facade.cppm">
+      <Filter>Controls\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Cell.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Columns.cpp">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Columns.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Descriptor.cpp">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Descriptor.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Facade.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Grid.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-GridBase.cpp">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-GridBase.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-GridHeader.cpp">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-GridHeader.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Row.cpp">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Row.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowBase.cpp">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowBase.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowContainer.cpp">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowContainer.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowDivider.cpp">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowDivider.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowExpander.cpp">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowExpander.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowGroup.cpp">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowGroup.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowGroupBase.cpp">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowGroupBase.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-SubGrid.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids_Dt.cppm">
+      <Filter>Controls\Grids</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Benchmark.cppm">
+      <Filter>Diagnostic</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.FpsChart.cppm">
+      <Filter>Diagnostic</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.FpsPage.cpp">
+      <Filter>Diagnostic</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.FpsPage.cppm">
+      <Filter>Diagnostic</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Log.cpp">
+      <Filter>Diagnostic</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Log.cppm">
+      <Filter>Diagnostic</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Options.cppm">
+      <Filter>Diagnostic</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_Facade.cppm">
+      <Filter>Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_StdSerializers.cppm">
+      <Filter>Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_TextSerializers.cpp">
+      <Filter>Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_TextSerializers.cppm">
+      <Filter>Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Formats\Formats_ClaFi.cppm">
+      <Filter>Dom\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Formats\Formats_Json.cppm">
+      <Filter>Dom\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Formats\Formats_Xml.cppm">
+      <Filter>Dom\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\BrowseUpIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\ChannelTile.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\CheckMark.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\Chevron.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\ColorChannelSweep.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\CopyIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\CutIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\DeleteIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\DialogIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\DoorIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\DotMark.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\ErrorIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\ExpanderMark.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\Eye.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\GaugeIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\GearIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\Gears.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\HomeIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\HueIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\InformationIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\LuminosityIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\Magnifier.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\MessageBadge.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\MoonIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OjIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OkIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OpenInExplorerIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\PasteIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\PlusMark.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\QuestionIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\RedoIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\RenameIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\RestartIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SaturationIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SaveIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\ScrollMark.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SelectAllIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SideBar.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SunIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SunMoonIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\UndoIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\WarningIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\WipeIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\XMark.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\MillScene.cpp">
+      <Filter>PathArt</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\MillScene.cppm">
+      <Filter>PathArt</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Themes.cppm">
+      <Filter>PathArt</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Types.cppm">
+      <Filter>PathArt</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows_Facade.cppm">
+      <Filter>Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Composition.cppm">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.D2D.cpp">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.D2D.cppm">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Diagnostic.cppm">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.DirWatch.cpp">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.DWrite.cppm">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.DWrite.Renderer.cppm">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.FormWindow.cpp">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.FormWindow.cppm">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.IconFileWriter.cppm">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.ShadowWindow.cppm">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Timer.cppm">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Transfer.cpp">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Png.cpp">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Window.cppm">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\StdActions\StdActions.cpp">
+      <Filter>StdActions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\StdActions\StdActions.cppm">
+      <Filter>StdActions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\StdActions\StdActions.Transfer.cpp">
+      <Filter>StdActions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\StdActions\StdActions.Transfer.cppm">
+      <Filter>StdActions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme_Facade.cppm">
+      <Filter>Y_Core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation_Facade.cppm">
+      <Filter>Y_Core</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_AnimationSlots.cppm">
+      <Filter>Y_Core\AppTheme</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Baked.cppm">
+      <Filter>Y_Core\AppTheme</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Colors.cppm">
+      <Filter>Y_Core\AppTheme</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Metrics.cppm">
+      <Filter>Y_Core\AppTheme</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Palette.cppm">
+      <Filter>Y_Core\AppTheme</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Theme.cppm">
+      <Filter>Y_Core\AppTheme</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\AppContext.cppm">
+      <Filter>Y_Core\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\Context_Facade.cppm">
+      <Filter>Y_Core\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\ControlContext.cppm">
+      <Filter>Y_Core\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\FormContext.cpp">
+      <Filter>Y_Core\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\FormContext.cppm">
+      <Filter>Y_Core\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\PaintIconEvent.cppm">
+      <Filter>Y_Core\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine-Core.cppm">
+      <Filter>Y_Core\Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine-Defaults.cppm">
+      <Filter>Y_Core\Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine-Section.cppm">
+      <Filter>Y_Core\Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine-Sequence.cppm">
+      <Filter>Y_Core\Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine-Serialization.cppm">
+      <Filter>Y_Core\Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine-Value.cppm">
+      <Filter>Y_Core\Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine_Document.cppm">
+      <Filter>Y_Core\Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine_Dt.cppm">
+      <Filter>Y_Core\Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine_Rt_Facade.cppm">
+      <Filter>Y_Core\Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Action.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Action.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\ContextMessage.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\ContextMessage.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Control.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Control.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Fit.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Form.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Form.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Input.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Input.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Navigation.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Navigation.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\PaintEvent.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\PaintEvent.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\RichControl.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\RichControl.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Spatial.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Spatial.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Tooltip.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Tooltip.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\TooltipForm.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Traversal.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Traversal.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\WithTextLayout.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Backend.cpp">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Backend.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_FuncPainter.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_GlyphCompositor.cpp">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_GlyphCompositor.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Painter_Circle.cpp">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Painter_Circle.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Painter_CircleFunc.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Painter_Rect.cpp">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Painter_Rect.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Painter_RoundedRect.cpp">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Painter_RoundedRect.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_PathPainter.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Rasterizer.cpp">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Rasterizer.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_Canvas.cpp">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_Canvas.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_ShadowPainter.cpp">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_ShadowPainter.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_TabRenderer.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_Types-PixelView.cpp">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_Types-PixelView.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_Types.Bitmap.cpp">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_Types.Bitmap.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_Dib.cpp">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_Dib.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_Png.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_Types.cpp">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_Types.cppm">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Animation.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Csv.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\DirWatch.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Dt.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Events.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\InkWell.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Props.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\RingBuffer.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Scaler.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Serialization.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\StdLib.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTimer.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.Color.cpp">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.Color.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.Keys.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.Point.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.Rect.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.TextTypes.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Utils.cpp">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Utils.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.BakedText.cppm">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.cppm">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Fmt.cppm">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.History.cpp">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.History.cppm">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Layout.cpp">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Layout.cppm">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Mono.cpp">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Mono.cppm">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Tags.cpp">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Tags.cppm">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Text.cpp">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Text.cppm">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Types.cppm">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Bytes.cpp">
+      <Filter>Y_Core\Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Bytes.cppm">
+      <Filter>Y_Core\Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Clipboard.cpp">
+      <Filter>Y_Core\Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Clipboard.cppm">
+      <Filter>Y_Core\Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Conversion.cpp">
+      <Filter>Y_Core\Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Conversion.cppm">
+      <Filter>Y_Core\Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Formats.cpp">
+      <Filter>Y_Core\Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Formats.cppm">
+      <Filter>Y_Core\Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Offer.cpp">
+      <Filter>Y_Core\Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Offer.cppm">
+      <Filter>Y_Core\Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Source.cpp">
+      <Filter>Y_Core\Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Source.cppm">
+      <Filter>Y_Core\Transfer</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.PictureView.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.PictureView.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Colorize.cpp">
+      <Filter>Y_Core\Syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Colorize.cppm">
+      <Filter>Y_Core\Syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Languages.cpp">
+      <Filter>Y_Core\Syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Languages.cppm">
+      <Filter>Y_Core\Syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Lexer.cpp">
+      <Filter>Y_Core\Syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Lexer.cppm">
+      <Filter>Y_Core\Syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Lines.cpp">
+      <Filter>Y_Core\Syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Lines.cppm">
+      <Filter>Y_Core\Syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Types.cppm">
+      <Filter>Y_Core\Syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CodeBox.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CodeBox.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HexView.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HexView.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TextBox.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ScrollBar.cppm">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ScrollBox.cppm">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.StackPanel.cppm">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.StackView.cpp">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.StackView.cppm">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TabbedBox.cppm">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TabStrip.cppm">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Expander.cppm">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.PageControl.cppm">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Panel.cppm">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\ButtonBase.cpp">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\ButtonBase.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\ContainerBase.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\DropdownControlBase.cpp">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\DropdownControlBase.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\ExpanderBase.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\MessageBoxBase.cpp">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\MessageBoxBase.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\PanelBase.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\SliderBase.cpp">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\SliderBase.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\SpacerBase.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\SplitButtonBase.cpp">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\SplitButtonBase.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackPanelBase.cpp">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackPanelBase.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TextItems.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\ColorEditDialog.cpp">
+      <Filter>Controls\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\ColorEditDialog.cppm">
+      <Filter>Controls\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\Menu.cppm">
+      <Filter>Controls\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\MessageDialog.cpp">
+      <Filter>Controls\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\MessageDialog.cppm">
+      <Filter>Controls\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\PromptDialog.cpp">
+      <Filter>Controls\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\PromptDialog.cppm">
+      <Filter>Controls\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemeIcon.cppm">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Themes.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Themes.cppm">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesList.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesList.cppm">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemePick.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemePick.cppm">
+      <Filter>Application</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Headers.h">
+      <Filter>Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\EventBindings.h">
+      <Filter>Y_Core\System</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland_Facade.cppm">
+      <Filter>Platform</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Appearance.cpp">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Appearance.cppm">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.DirWatch.cpp">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.DirWatch.cppm">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Fonts.cpp">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Fonts.cppm">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Timer.cppm">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.TextHeaders.h">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.TextLayout.cpp">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.TextLayout.cppm">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.TextLayout.Factory.cpp">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.MonoFont.Factory.cpp">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Timer.cpp">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland\Wayland.Display.cppm">
+      <Filter>Platform\Wayland</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland\Wayland.FormWindow.cppm">
+      <Filter>Platform\Wayland</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland\Wayland.Headers.h">
+      <Filter>Platform\Wayland</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland\Wayland.Keyboard.cppm">
+      <Filter>Platform\Wayland</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland\Wayland.Platform.cpp">
+      <Filter>Platform\Wayland</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland\Wayland.ShmBuffer.cppm">
+      <Filter>Platform\Wayland</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland\Wayland.Transfer.cpp">
+      <Filter>Platform\Wayland</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland\Wayland.Window.cppm">
+      <Filter>Platform\Wayland</Filter>
+    </None>
+  </ItemGroup>
+</Project>

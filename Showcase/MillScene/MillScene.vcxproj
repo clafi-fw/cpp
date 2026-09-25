@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{2f6a1d8b-4c93-4e17-9b5a-7d0c3e81a462}</ProjectGuid>
+    <RootNamespace>MillScene</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+    <Import Project="..\..\Visual Studio Shared Items\ClaFi.vcxitems" Label="Shared" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_ITERATOR_DEBUG_LEVEL=2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <TranslateIncludes>false</TranslateIncludes>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <AdditionalOptions>/w14242 /w14254 /w14263 /w14265 /w14287 /w14296 /w14311 /w14545 /w14546 /w14547 /w14549 /w14555 /w14619 /w14640 /w14826 /w14905 /w14906 /w14928 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <SmallerTypeCheck>false</SmallerTypeCheck>
+      <BuildStlModules>true</BuildStlModules>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <TranslateIncludes>false</TranslateIncludes>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <AdditionalOptions>/w14242 /w14254 /w14263 /w14265 /w14287 /w14296 /w14311 /w14545 /w14546 /w14547 /w14549 /w14555 /w14619 /w14640 /w14826 /w14905 /w14906 /w14928 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <BuildStlModules>true</BuildStlModules>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_ITERATOR_DEBUG_LEVEL=2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <TranslateIncludes>false</TranslateIncludes>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <AdditionalOptions>/w14242 /w14254 /w14263 /w14265 /w14287 /w14296 /w14311 /w14545 /w14546 /w14547 /w14549 /w14555 /w14619 /w14640 /w14826 /w14905 /w14906 /w14928 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <SmallerTypeCheck>false</SmallerTypeCheck>
+      <BuildStlModules>true</BuildStlModules>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <TranslateIncludes>false</TranslateIncludes>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <AdditionalOptions>/w14242 /w14254 /w14263 /w14265 /w14287 /w14296 /w14311 /w14545 /w14546 /w14547 /w14549 /w14555 /w14619 /w14640 /w14826 /w14905 /w14906 /w14928 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <BuildStlModules>true</BuildStlModules>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="MillScene_Icon.cppm" />
+    <ClCompile Include="MillScene_Showcase.cppm" />
+    <ClCompile Include="MillScene_Main.cppm" />
+    <ClCompile Include="MillScene_Icon.cpp" />
+    <ClCompile Include="MillScene_Showcase.cpp" />
+    <ClCompile Include="MillScene_Win32.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MillScene.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Update="..\..\Source\Application\Application.ThemesManager.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Application\Application.ThemesManager_Serializers.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.AppButton.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.Button.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.CheckBox.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.CodeBox.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.ColorSlider.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.ComboBox.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.Divider.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.Expander.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.FormTitle.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.HexView.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.InPlaceEdit.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.Label.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.LabeledDivider.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.PageControl.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.Panel.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.PictureView.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.RadioButton.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.ScrollBar.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.ScrollBox.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.Slider.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.Spacer.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.SplitButton.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.StackPanel.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.StackView.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.TabbedBox.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.TabStrip.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.TextBox.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Controls\Controls.TextItems.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Diagnostic\Diagnostic.Log.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Dom\Formats\Formats_ClaFi.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Dom\Formats\Formats_Json.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Dom\Formats\Formats_Xml.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Platform\Windows_Facade.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Y-Core\Dom\DomEngine-Core.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Y-Core\Dom\DomEngine-Defaults.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Y-Core\Dom\DomEngine-Section.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Y-Core\Dom\DomEngine-Sequence.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Y-Core\Dom\DomEngine-Serialization.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Y-Core\Dom\DomEngine-Value.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Y-Core\Dom\DomEngine_Document.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Y-Core\Dom\DomEngine_Dt.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="..\..\Source\Y-Core\Dom\DomEngine_Rt_Facade.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

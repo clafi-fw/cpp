@@ -1,0 +1,94 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Src">
+      <UniqueIdentifier>{8b1f0e64-2c3a-4d5e-9f70-1a2b3c4d5e6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Pages">
+      <UniqueIdentifier>{c7d8e9f0-1a2b-4c3d-8e4f-5a6b7c8d9e0f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Encodings.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Encodings.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Languages.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Languages.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Main.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Main.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Icon.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_AutoPick.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_AutoPick.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_BytesPage.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_BytesPage.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_PicturePage.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_PicturePage.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_FormatView.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_FormatView.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_HandlePage.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_HandlePage.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_EncodingPick.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_EncodingPick.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_LanguagePick.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_LanguagePick.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_Page.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_Page.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_TextPreviewPage.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_TextPreviewPage.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_TextPage.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Src\Pages\WhatsClip_TextPage.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

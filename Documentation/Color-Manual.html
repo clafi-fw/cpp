@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi Colour - Developer Manual</title>
+    <style>
+        :root {
+            --bg-color: #f9f9fb; --text-color: #333; --accent-color: #0066cc;
+            --code-bg: #1e1e1e; --code-text: #d4d4d4; --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6; color: var(--text-color); background-color: var(--bg-color);
+            margin: 0; padding: 0; display: flex;
+        }
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;
+            background-color: #fff; border-right: 1px solid var(--border-color);
+            overflow-y: auto; padding: 2rem 1rem; box-sizing: border-box; z-index: 100;
+        }
+        .sidebar-brand { padding: 0 0.5rem 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); }
+        .sidebar-brand-text {
+            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            font-size: 2.0rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            background: linear-gradient(90deg, #4EC9B0, #A6E22E);
+            -webkit-background-clip: text;
+            /*
+            background-clip: text;
+            */
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 8px rgba(78, 201, 176, 0.25);
+        }
+        .sidebar-brand-text::after {
+            content: "::";
+            margin-left: 0.2em;
+            font-weight: 400;
+        }
+        .sidebar-header { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; padding-left: 0.5rem; color: #111; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar > ul > li { margin-bottom: 0.8rem; }
+        .nav-item-wrapper {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.25rem 0.5rem; border-radius: 6px; transition: background-color 0.2s ease;
+        }
+        .nav-item-wrapper:hover { background-color: rgba(0, 0, 0, 0.02); }
+        .sidebar > ul > li > .nav-item-wrapper > a { font-size: 1rem; font-weight: 600; color: #111; flex-grow: 1; }
+        .sidebar ul ul {
+            padding-left: 0.8rem; margin-top: 0.3rem; margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color); margin-left: 1.1rem;
+        }
+        .sidebar ul ul li { margin-bottom: 0.4rem; }
+        .sidebar ul ul a { font-size: 0.9rem; color: #555; display: block; padding: 0.15rem 0; transition: color 0.15s ease; }
+        .sidebar a { text-decoration: none; display: block; transition: color 0.2s ease; }
+        .sidebar a:hover, .sidebar ul ul a:hover { color: var(--accent-color); }
+        .toggle-btn {
+            background: none; border: none; padding: 4px; margin: 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; color: #888;
+            border-radius: 4px; transition: background-color 0.2s, color 0.2s; outline: none;
+        }
+        .toggle-btn:hover { background-color: rgba(0, 0, 0, 0.05); color: var(--accent-color); }
+        .toggle-btn svg { width: 16px; height: 16px; fill: currentColor; transform: rotate(90deg); transition: transform 0.2s ease; }
+        .sidebar li.has-children.collapsed ul { display: none !important; }
+        .sidebar li.has-children.collapsed .toggle-btn svg { transform: rotate(0deg); }
+        .page-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        header { background-color: #fff; padding: 2rem; border-bottom: 1px solid var(--border-color); text-align: center; }
+        h1, h2, h3, h4 { color: #111; margin-top: 2rem; }
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+        main {
+            max-width: 900px; margin: 2rem auto; padding: 0 2rem; background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; padding-bottom: 2rem;
+        }
+        p, li { font-size: 1.1rem; }
+        pre {
+            background-color: var(--code-bg); color: var(--code-text); padding: 1.5rem;
+            border-radius: 8px; overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.95rem; line-height: 1.5;
+        }
+        code {
+            background-color: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.9em; color: #d14;
+        }
+        pre code { background-color: transparent; padding: 0; color: inherit; }
+        .kw { color: #569cd6; } .tp { color: #4ec9b0; } .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; } .fn { color: #dcdcaa; }
+        .warning { background-color: #fff3f3; border-left: 4px solid #cc0000; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .info { background-color: #f0f7ff; border-left: 4px solid #0066cc; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0; }
+        .rule-card { padding: 1.2rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .rule-card.dos { background-color: #f4faf4; border-left: 4px solid #2e7d32; }
+        .rule-card.donts { background-color: #fff8f8; border-left: 4px solid #c62828; }
+        .rule-card h4 { margin-top: 0; margin-bottom: 0.5rem; }
+        .rule-card ul { margin: 0; padding-left: 1.2rem; }
+        .rule-card li { font-size: 1rem; margin-bottom: 0.5rem; }
+        table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 0.98rem; }
+        th, td { border: 1px solid var(--border-color); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+        th { background-color: #f6f8fa; font-weight: 600; }
+        td code { font-size: 0.85em; }
+        .grid-fig { width: 100%; max-width: 720px; margin: 1.5rem 0; display: block; }
+        @media (max-width: 1200px) { .sidebar { display: none; } .page-content { margin-left: 0; width: 100%; } }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand"><span class="sidebar-brand-text">ClaFi</span></div>
+        <div class="sidebar-header">Contents</div>
+        <ul>
+            <li><div class="nav-item-wrapper"><a href="#introduction">Introduction</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#quickstart">Quick Start</a></div></li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#concepts">Core Concepts</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#surface-and-ink">Surface and ink</a></li>
+                    <li><a href="#grades">Grades</a></li>
+                    <li><a href="#slots">Semantic colours</a></li>
+                    <li><a href="#accent-and-spot">Accent and spot</a></li>
+                    <li><a href="#elevation">Elevation and colour mode</a></li>
+                    <li><a href="#app-mode">The application's mode</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#reference">Reference</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#ref-inkwell">InkWell</a></li>
+                    <li><a href="#ref-grades">InkGrade</a></li>
+                    <li><a href="#ref-slots">ColorSlot and InkTone</a></li>
+                    <li><a href="#ref-resolving">Resolving an ink</a></li>
+                    <li><a href="#ref-text">Naming an ink in text</a></li>
+                    <li><a href="#ref-app-mode">The application's mode</a></li>
+                </ul>
+            </li>
+            <li><div class="nav-item-wrapper"><a href="#icons">Writing an icon</a></div></li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#theming">What a Theme Owns</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#palette">The palette</a></li>
+                    <li><a href="#color-rules">Colour rules</a></li>
+                    <li><a href="#control-rules">Element rules</a></li>
+                </ul>
+            </li>
+            <li><div class="nav-item-wrapper"><a href="#do-dont">Do and Don't</a></div></li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#howitworks">How It Works</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#hiw-resolution">The resolver</a></li>
+                    <li><a href="#hiw-transform">The transform</a></li>
+                    <li><a href="#hiw-chain">The chain a control carries</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <div class="page-content">
+        <header>
+            <h1>ClaFi Colour</h1>
+            <p>The theme states hues; every colour is decided where it is used</p>
+        </header>
+        <main>
+<h2 id="introduction">Introduction</h2>
+
+<p>Nothing in the framework paints in a colour it wrote down. It paints in an <strong>ink</strong>: a
+name for a colour, resolved against the surface the painter stands on, in the colour mode it stands
+in, under the theme in effect. <code>InkWell::textInk(InkGrade::Muted)</code> is a quiet ink over
+whatever is behind it - grey text on a plain page, and a tinted grey on a tinted card, without the
+caller knowing which it landed on.</p>
+
+<p>Every ink is an <code>InkColor</code> at a <strong>grade</strong> - a share of the distance
+between the surface and an ink. The colour says which ink the grade runs toward, and a caller
+cannot tell the families apart at the call site:</p>
+
+<ul>
+    <li><strong>Text</strong> - the ink the paint chain arrived at. All text is this colour at one
+        grade or another.</li>
+    <li><strong>The semantic colours</strong> - <code>Yellow</code>, <code>Green</code>,
+        <code>Blue</code> and <code>Red</code>, the theme's four meaning-carrying hues, each drawn at a
+        tone the framework states for either side of the theme. Warnings and errors are these.</li>
+    <li><strong>Black and white</strong> - pure, and the same on either side of the theme.</li>
+    <li><strong>Accent and spot</strong> - one of the theme's own colour rules, laid over the text
+        ink.</li>
+</ul>
+
+<div class="info">
+<strong>Module imports:</strong> naming an ink needs <code>ClaFi.Core.System.InkWell</code>. The
+types the names are built from - <code>Ink</code>, <code>InkColor</code>, <code>InkGrade</code>, <code>ColorSlot</code>,
+<code>InkTone</code>, <code>ColorMode</code> - come with
+<code>ClaFi.Core.System.UiTypes</code>. A theme's own rules live in
+<code>ClaFi.Core.AppTheme_Colors</code>, which only a theme editor and the paint chain need.
+</div>
+
+<h2 id="quickstart">Quick Start</h2>
+
+<p>An ink becomes a colour where it is used. Every paint event answers <code>ink()</code>, and every
+<code>Ink</code> answers <code>toColor()</code> - the two are the same call written from either
+end.</p>
+
+<pre><code><span class="cm">// In a control's paint handler, or an icon's.</span>
+<span class="tp">Color</span> body = <span class="tp">InkWell</span>::<span class="fn">textInk</span>().<span class="fn">toColor</span>(event);                 <span class="cm">// the full ink</span>
+<span class="tp">Color</span> quiet = <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Muted).<span class="fn">toColor</span>(event);  <span class="cm">// a step down toward the surface</span>
+<span class="tp">Color</span> mark = <span class="tp">InkWell</span>::<span class="fn">accentInk</span>().<span class="fn">toColor</span>(event);               <span class="cm">// the theme's accent</span>
+<span class="tp">Color</span> warn = <span class="tp">InkWell</span>::Yellow.<span class="fn">toColor</span>(event);                      <span class="cm">// a semantic hue</span>
+
+event.<span class="fn">canvas</span>().<span class="fn">drawPath</span>(path, { <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(mark, event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin)) });</code></pre>
+
+<p>Text takes the ink itself rather than a colour, so a run keeps its meaning until the layout is
+drawn:</p>
+
+<pre><code>text &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Muted) &lt;&lt; <span class="st">L"Ping "</span>
+     &lt;&lt; <span class="tp">PopColor</span>{} &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">accentInk</span>() &lt;&lt; <span class="st">L"24 ms"</span>;
+
+<span class="cm">// The same thing from a format string.</span>
+text &lt;&lt; <span class="tp">Fmt</span>{ <span class="st">L"[color muted]Ping [/color][color accent]{} ms[/color]"</span>, ping };</code></pre>
+
+<h2 id="concepts">Core Concepts</h2>
+
+<h3 id="surface-and-ink">Surface and ink</h3>
+
+<p>Two colours travel down the control tree with every paint: the <strong>surface</strong>, which is
+the background in effect under the brush, and the <strong>ink</strong>, which is what the theme says
+text on that surface is drawn in. A control that fills its own background becomes the surface for
+its children. A control that states a text rule changes the ink for everything inside it.</p>
+
+<p>Both are carried as <code>Hsl</code> in the <code>TextColorTheme</code> the event hands out:
+<code>surfaceHsl</code> is where a grade of 0 lands, <code>inkHsl</code> where a grade of 1 lands.
+Nothing derives from "the theme's background" - what a colour is measured against is what is
+actually behind it.</p>
+
+<h3 id="grades">Grades</h3>
+
+<p>A grade is a share of the gap between those two ends. It owns no hue and no tone of its own: at
+0 it lies flush with the surface and cannot be seen, at 1 it is the ink exactly. Stated as a share
+rather than as a luminosity, so a theme with quiet contrast keeps it - every step scales with what
+that theme declared readable.</p>
+
+<p>Five steps are named, and a caller wanting one of its own states the share instead. Nothing
+rounds a stated grade to the nearest named one.</p>
+
+<pre><code><span class="tp">InkWell</span>::<span class="fn">textInk</span>()                     <span class="cm">// Strongest, the ink the chain arrived at</span>
+<span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Subtle)     <span class="cm">// a named step</span>
+<span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="kw">0.45f</span>)                <span class="cm">// a share of your own</span>
+<span class="tp">InkWell</span>::<span class="fn">surfaceInk</span>()                  <span class="cm">// 0 - the surface itself</span></code></pre>
+
+<p>The whole colour is mixed, not the luminosity alone, so a grade loses its colour as it loses its
+contrast. A quiet ink over a surface the palette has tinted picks that tint up on the way down.
+That is the mechanism working rather than an allowance made for it: grey text is not grey because
+the surface under it is not.</p>
+
+<div class="info">
+<code>surfaceInk()</code> is what something drawn in its own backdrop's colour asks for - a knockout
+band under a line that crosses another. It is invisible on the surface it was resolved against, and
+only there.
+</div>
+
+<h3 id="slots">Semantic colours</h3>
+
+<p>Four colours carry meaning rather than emphasis: <code>InkColor::Yellow</code>,
+<code>Green</code>, <code>Blue</code> and <code>Red</code>. Each takes its hue from a slot of the
+theme's harmony - a region of the wheel that every theme fills its own way - so it carries the
+colour its name states whatever the anchor is.</p>
+
+<p>The theme supplies the hue and nothing else. How colourful the colour is and where it sits are
+the framework's to state, <strong>once for each colour mode</strong>, as a pair of
+<code>InkTone</code> in <code>InkWell::slotTones</code>. A semantic ink therefore reads the same on
+every surface in the form - which is the point. A yellow border going brown on a dark theme is a
+border doing its job; a warning icon going brown is one failing at it.</p>
+
+<p>The grade fades a semantic colour toward the surface the way it fades the text ink, so at
+<code>Strongest</code> the colour stands at its own tone.</p>
+
+<pre><code><span class="tp">InkWell</span>::Yellow                          <span class="cm">// a warning, at its own tone</span>
+<span class="tp">InkWell</span>::<span class="fn">redInk</span>(<span class="tp">InkGrade</span>::Muted)         <span class="cm">// a quiet red, part of the way back to the surface</span></code></pre>
+
+<div class="warning">
+<strong>A semantic colour states no elevation.</strong> Elevation is oriented by the colour mode by
+construction, which is right for a control element and wrong for a colour carrying a meaning. If you
+find yourself reaching for one, what you want is a grade.
+</div>
+
+<h3 id="accent-and-spot">Accent and spot</h3>
+
+<p>The palette carries two accent hues, and the theme states a rule for each. An accent or spot ink
+is a grade of the text ink with that rule applied to it, so what comes out is where the theme says
+such a colour lands rather than a relative of the ink underneath.</p>
+
+<table>
+<tr><th>Ink</th><th>Rule</th><th>What it is for</th></tr>
+<tr><td><code>InkWell::accentInk()</code></td><td><code>ThemeColors::accent</code></td>
+    <td>The colour the interface answers with. It is the palette hue a button under the pointer, a
+    checked mark and the band behind selected text all move toward, so an icon or a run drawn in it
+    belongs to the controls around it.</td></tr>
+<tr><td><code>InkWell::spotInk()</code></td><td><code>ThemeColors::spot</code></td>
+    <td>The second accent, for what stands apart from the interface rather than answers to it: a
+    brand mark, the application's own name, a run of emphasised text. Spent sparingly, which is a
+    decision the theme makes once rather than each caller remaking it.</td></tr>
+</table>
+
+<p>Both take a grade, and the grade names the ink the rule is applied to rather than where the
+result ends up. A theme whose accent rule sets both saturation and luminosity outright therefore
+answers the same colour at every grade, which is the usual case.</p>
+
+<h3 id="elevation">Elevation and colour mode</h3>
+
+<p><strong>Elevation is an absolute coordinate</strong>, not a relation: 0 is the mode's floor, 1 its
+ceiling, and two elements at 0.6 stand at the same luminosity whatever each is drawn on. The colour
+mode orients it - up from the dark end on a dark theme, down from the light end on a light one - so
+one number serves both sides of the theme.</p>
+
+<p>The direction is the <strong>element's</strong> own, not the theme's. An element that carries the
+theme across itself - a dark strip on a light theme - stands in the flipped mode, and everything
+drawn from that surface answers to it. <code>PaintEvent::lightness()</code> is the side that element
+stands on - 0 the dark end, 1 the light one, anything between a crossing part way through.</p>
+
+<pre><code><span class="cm">// The two directions of one mapping. The lightness is the element's, the floor the theme's.</span>
+<span class="kw">float</span> <span class="fn">elevationOf</span>(<span class="kw">float</span> luminosity, <span class="tp">Lightness</span> lightness, <span class="kw">float</span> luminosityFloor);
+<span class="kw">float</span> <span class="fn">luminosityOf</span>(<span class="kw">float</span> elevation, <span class="tp">Lightness</span> lightness, <span class="kw">float</span> luminosityFloor);</code></pre>
+
+<p>A grade is not an elevation. A grade is a share of a journey between two colours the chain
+supplies; an elevation is a place on the luminosity axis. <code>gradeOf(InkGrade)</code> names the
+first, <code>elevationOf</code> the second.</p>
+
+<h3 id="app-mode">The application's mode</h3>
+
+<p><strong>The side of the theme the application is drawn on is the user's choice</strong>, kept in
+its config beside the theme's path, and every theme is worn in it. <code>ColorModeSetting</code> holds
+that choice, and it has three answers:</p>
+
+<table>
+<tr><th>Setting</th><th>What the application wears</th></tr>
+<tr><td><code>ColorModeSetting::Auto</code></td><td>The mode the desktop asks for, followed while the
+    application runs. The first answer and the default: a config that states nothing holds it.</td></tr>
+<tr><td><code>ColorModeSetting::Dark</code></td><td>Dark, whatever the desktop asks for.</td></tr>
+<tr><td><code>ColorModeSetting::Light</code></td><td>Light, whatever the desktop asks for.</td></tr>
+</table>
+
+<p>A setting is a choice and a <code>ColorMode</code> is a side. The setting is read into a mode where
+a theme is put on, so everything that paints holds a <code>ColorMode</code> and Auto never reaches a
+painter. <code>wornColorMode</code> is that reading, and the call to make when the question is which
+side the application stands on:</p>
+
+<pre><code><span class="cm">// The user's choice, stated the way a mode button states it. The config node's change puts</span>
+<span class="cm">// the theme on again, and the application crosses to the side the choice names.</span>
+<span class="fn">applyColorMode</span>(<span class="fn">appContext</span>(), <span class="tp">ColorModeSetting</span>::Auto);
+
+<span class="cm">// The side the application is drawn on - under Auto, the desktop's.</span>
+<span class="tp">ColorMode</span> mode = <span class="fn">wornColorMode</span>(<span class="fn">appContext</span>());</code></pre>
+
+<p><strong>Auto follows the desktop while the application runs.</strong> A change of the desktop's
+mode crosses every window to the other side of the theme, as a click on a mode button does, with no
+restart and nothing for a control to do. Windows answers with its app mode - <em>Choose your default
+app mode</em> in the colour settings, which is kept apart from the mode the taskbar wears. Wayland
+answers with the <code>color-scheme</code> the XDG desktop portal serves. A desktop stating no
+preference reads as Light: GNOME's default look states none, and so does a session without a
+portal.</p>
+
+<div class="info">
+The first window opens in the desktop's mode rather than crossing to it, because the desktop is
+asked before any window exists. On Wayland that first ask waits up to a second for the portal, and
+an answer later than that crosses the window when it comes.
+</div>
+
+<p>An application may state a first-run default of its own, and states it only where the user has
+made no choice yet. The config is loaded before any application code runs, so a default written over
+a loaded choice would undo the Settings page on every start:</p>
+
+<pre><code><span class="kw">if</span> (!application.<span class="fn">configFolderExists</span>())
+    <span class="fn">applyColorMode</span>(application.<span class="fn">context</span>(), <span class="tp">ColorModeSetting</span>::Light);</code></pre>
+
+<p>What the theme does not reach - a picture chosen for each side, a scene with colours of its own -
+listens on <code>Platform::events()</code> for the desktop moving. The event carries nothing: it says
+ask again, and <code>Platform::systemColorMode()</code> answers. It is raised whatever the setting
+holds, so a listener asking which side the application wears asks <code>wornColorMode</code>:</p>
+
+<pre><code><span class="cm">// A member of the listener, so the connection goes when the listener does.</span>
+<span class="tp">ScopedEventConnection</span> m_desktopMode{
+    <span class="tp">Platform</span>::<span class="fn">events</span>().<span class="fn">connect</span>&lt;<span class="tp">SystemColorModeEvent</span>&gt;([<span class="kw">this</span>](<span class="tp">SystemColorModeEvent</span>&amp;) {
+        <span class="fn">pickPicture</span>(<span class="fn">wornColorMode</span>(<span class="fn">appContext</span>()));
+    })
+};</code></pre>
+
+<div class="info">
+<strong>Module imports:</strong> <code>ColorModeSetting</code> comes with
+<code>ClaFi.Core.System.UiTypes</code>, <code>applyColorMode</code> and <code>wornColorMode</code>
+with <code>ClaFi.App.Themes</code>, and <code>Platform</code> and <code>SystemColorModeEvent</code>
+with <code>ClaFi.Core.Context.FormContext</code>. A file reading the config node itself -
+<code>appContext().colorMode()</code> - imports <code>ClaFi.Core.Dom_StdSerializers</code> and
+<code>ClaFi.Core.AppTheme_Colors</code> as well: the setting's serializer and its names are declared
+there, and the node is an incomplete type without them.
+</div>
+
+<h2 id="reference">Reference</h2>
+
+<h3 id="ref-inkwell">InkWell</h3>
+
+<p>The one place the framework's colours are written down, and the whole of what a caller names.
+One entry per colour rather than one per icon, so two icons meaning the same thing cannot arrive at
+two yellows.</p>
+
+<table>
+<tr><th>Name</th><th>Answers</th></tr>
+<tr><td><code>textInk(InkGrade = Strongest)</code></td><td>A named step between the surface and the ink.</td></tr>
+<tr><td><code>textInk(float grade)</code></td><td>A share of your own, for a step the framework does not draw in.</td></tr>
+<tr><td><code>surfaceInk()</code></td><td>Grade 0 - flush with the surface, and so invisible on it.</td></tr>
+<tr><td><code>accentInk(InkGrade = Strongest)</code></td><td>The theme's accent rule, at that grade.</td></tr>
+<tr><td><code>spotInk(InkGrade = Strongest)</code></td><td>The theme's spot rule, at that grade.</td></tr>
+<tr><td><code>yellowInk</code>, <code>greenInk</code>, <code>blueInk</code>, <code>redInk</code> <code>(InkGrade = Strongest)</code></td><td>A semantic colour at that grade.</td></tr>
+<tr><td><code>blackInk</code>, <code>whiteInk</code> <code>(InkGrade = Strongest)</code></td><td>Pure black or white at that grade, the same in both colour modes.</td></tr>
+<tr><td><code>slotTones(ColorSlot)</code></td><td>The tone a semantic colour is drawn at on each side of the theme.</td></tr>
+<tr><td><code>InkWell::Yellow</code></td><td>Warning. Drawn, never read - see below.</td></tr>
+<tr><td><code>InkWell::Green</code></td><td>Success, present, on.</td></tr>
+<tr><td><code>InkWell::Blue</code></td><td>Information, a link, a thing named.</td></tr>
+<tr><td><code>InkWell::Red</code></td><td>Error, destructive, off.</td></tr>
+<tr><td><code>InkWell::Black</code>, <code>InkWell::White</code></td><td>Pure black and white, for a mark that has to read the same under every theme.</td></tr>
+</table>
+
+<p>Every accessor that takes an <code>InkGrade</code> also takes a <code>float</code>, for a share of
+your own. The named colours are their accessors at <code>Strongest</code>.</p>
+
+<div class="warning">
+<strong>Yellow is not a text colour.</strong> At the 4.5:1 reading threshold on a light page the
+whole warm arc from 40 to 120 degrees collapses to brown, so there is no colour in the yellow family
+that is both legible as text and recognisable as yellow.
+<code>[color yellow]</code> reads, so that a text built from code can be written out and read back,
+and is not an invitation.
+</div>
+
+<h3 id="ref-grades">InkGrade</h3>
+
+<table>
+<tr><th>Grade</th><th>Share</th><th>Reads as</th></tr>
+<tr><td><code>InkGrade::Faint</code></td><td>0.12</td><td>Barely present - a hairline, a disabled mark.</td></tr>
+<tr><td><code>InkGrade::Subtle</code></td><td>0.27</td><td>A border, a divider.</td></tr>
+<tr><td><code>InkGrade::Muted</code></td><td>0.60</td><td>Secondary text.</td></tr>
+<tr><td><code>InkGrade::Strong</code></td><td>0.80</td><td>An object an accent is drawn on top of.</td></tr>
+<tr><td><code>InkGrade::Strongest</code></td><td>1.00</td><td>Body text - the ink itself.</td></tr>
+</table>
+
+<h3 id="ref-slots">ColorSlot and InkTone</h3>
+
+<p><code>ColorSlot</code> is <code>Yellowish</code>, <code>Greenish</code>, <code>Blueish</code>,
+<code>Reddish</code> - the harmony's hue regions, one behind each semantic colour, never a place in
+an order. <code>InkTone</code> is the pair that says how colourful and how light: the two travel
+together because a hue needs a different amount of colour to read at one luminosity than at
+another, so stating either without the other names half a colour. <code>SlotTones</code> states one
+<code>InkTone</code> for each side of the theme.</p>
+
+<pre><code><span class="kw">struct</span> <span class="tp">InkTone</span> { <span class="kw">float</span> saturation{ <span class="kw">1.0f</span> }; <span class="kw">float</span> luminosity{ <span class="kw">0.5f</span> }; };
+<span class="kw">struct</span> <span class="tp">SlotTones</span> { <span class="tp">InkTone</span> dark{}; <span class="tp">InkTone</span> light{}; };
+
+<span class="cm">// Declared once and serving both modes from that one declaration.</span>
+<span class="kw">constexpr</span> <span class="tp">SlotTones</span> <span class="tp">InkWell</span>::<span class="fn">slotTones</span>(<span class="tp">ColorSlot</span>);
+
+<span class="cm">// The slot a semantic colour takes its hue from, and none for the other colours.</span>
+<span class="kw">constexpr</span> <span class="tp">std</span>::<span class="tp">optional</span>&lt;<span class="tp">ColorSlot</span>&gt; <span class="fn">slotOf</span>(<span class="tp">InkColor</span>);</code></pre>
+
+<p>The tones the four semantic colours are drawn at, measured at the 3:1 graphics threshold against
+pages at luminosity 0.13 and 0.87:</p>
+
+<table>
+<tr><th>Colour</th><th>Dark tone</th><th>Light tone</th></tr>
+<tr><td><code>Yellow</code></td><td>1.00 / 0.90</td><td>1.00 / 0.51</td></tr>
+<tr><td><code>Green</code></td><td>1.00 / 0.84</td><td>1.00 / 0.49</td></tr>
+<tr><td><code>Blue</code></td><td>1.00 / 0.47</td><td>1.00 / 0.41</td></tr>
+<tr><td><code>Red</code></td><td>1.00 / 0.56</td><td>1.00 / 0.55</td></tr>
+</table>
+
+<p>A yellow's light tone reads as amber rather than lemon because nothing brighter clears 3:1 on a
+light page - a bright yellow is a light one - which is why every system draws that icon amber on
+light and lemon on dark.</p>
+
+<h3 id="ref-resolving">Resolving an ink</h3>
+
+<p><code>Ink::toColor</code> is a template over anything that answers <code>ink(Ink)</code>,
+which <code>PaintEvent</code>, <code>PaintIconEvent</code> and <code>FormContext</code> all are. So an
+icon can name a colour without knowing what kind of event is behind it.</p>
+
+<table>
+<tr><th>Call</th><th>Use</th></tr>
+<tr><td><code>ref.toColor(event)</code></td><td>The usual spelling, and the only one an icon needs.</td></tr>
+<tr><td><code>event.ink(ref)</code></td><td>The same call from the other end.</td></tr>
+<tr><td><code>event.ink(slot, tone)</code></td><td>A slot's hue at a tone stated outright, with nothing placing it.</td></tr>
+<tr><td><code>event.ink(slot, saturation, elevation)</code></td><td>A slot placed by elevation, with the mode doing the orienting.</td></tr>
+<tr><td><code>themeColors().inkHsl(ref, textColor)</code></td><td>The resolution before it becomes a <code>Color</code>. Take this when a colour rule is applied next.</td></tr>
+</table>
+
+<div class="warning">
+<strong>The pipeline runs one way.</strong> <code>Hsl</code> becomes <code>Color</code> where a canvas
+method needs one, and never back. <code>explicit Hsl(const Color&amp;)</code> exists to ingest a
+colour a caller stated, not to read back one the model produced - the backward half of that trip is
+lossy, and a rule applied to the result is a rule applied to a rounding error.
+</div>
+
+<h3 id="ref-text">Naming an ink in text</h3>
+
+<p>A text run carries the <code>Ink</code> itself, so it is recoloured by the control it lands in
+and by the theme in effect. Streamed in code, an ink can be written as the one part that differs
+from the text ink at <code>Strongest</code>:</p>
+
+<pre><code>text &lt;&lt; <span class="tp">InkGrade</span>::Muted &lt;&lt; <span class="st">L"Ping "</span> &lt;&lt; <span class="tp">PopColor</span>{}           <span class="cm">// the text ink at a step</span>
+     &lt;&lt; <span class="tp">InkColor</span>::Accent &lt;&lt; <span class="st">L"24 ms"</span> &lt;&lt; <span class="tp">PopColor</span>{}         <span class="cm">// a colour at Strongest</span>
+     &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">redInk</span>(<span class="tp">InkGrade</span>::Muted) &lt;&lt; <span class="st">L" late"</span>;   <span class="cm">// anything else, as the Ink it is</span></code></pre>
+
+<p>A format tag names an ink by its colour and grade and states no tone of its own - the tones are
+<code>InkWell</code>'s. Both are spelt as their members in lower case, the colour first, and either
+can be left out: the colour is then <code>text</code> and the grade <code>strongest</code>.</p>
+
+<table>
+<tr><th>Tag</th><th>Ink</th></tr>
+<tr><td><code>[color strongest]</code></td><td><code>textInk()</code></td></tr>
+<tr><td><code>[color muted]</code></td><td><code>textInk(InkGrade::Muted)</code></td></tr>
+<tr><td><code>[color accent]</code></td><td><code>accentInk()</code></td></tr>
+<tr><td><code>[color spot]</code></td><td><code>spotInk()</code></td></tr>
+<tr><td><code>[color green]</code>, <code>[color blue]</code>, <code>[color red]</code></td><td>The semantic inks of those names.</td></tr>
+<tr><td><code>[color red muted]</code></td><td><code>redInk(InkGrade::Muted)</code> - any colour at any step.</td></tr>
+<tr><td><code>[color accent 0.45]</code></td><td><code>accentInk(0.45f)</code> - a share between the steps.</td></tr>
+<tr><td><code>[color #RRGGBB]</code>, <code>[color {}]</code></td><td>A colour stated outright, which the theme does not touch.</td></tr>
+</table>
+
+<p>See the <em>TextEngine</em> manual for the rest of the format language.</p>
+
+<h3 id="ref-app-mode">The application's mode</h3>
+
+<table>
+<tr><th>Name</th><th>Answers</th></tr>
+<tr><td><code>ColorModeSetting</code></td><td><code>Auto</code>, <code>Dark</code> or
+    <code>Light</code> - the user's choice, as the config's <code>ColorMode</code> node holds it.
+    Kept in the file by name: <code>ColorMode=Auto</code>.</td></tr>
+<tr><td><code>AppContext::colorMode()</code></td><td>That node. Its change puts the stored theme on
+    again.</td></tr>
+<tr><td><code>applyColorMode(AppContext&amp;, ColorModeSetting)</code></td><td>States the choice in the
+    config, which keeps it between sessions where the user allowed storing.</td></tr>
+<tr><td><code>wornColorMode(const AppContext&amp;)</code></td><td>The side the application is drawn on:
+    the setting's, or the desktop's under Auto. Asked each time rather than kept, so it moves with
+    the desktop.</td></tr>
+<tr><td><code>Platform::systemColorMode()</code></td><td>The mode the desktop asks applications to be
+    drawn in, whatever the setting holds. Light where the desktop states no preference.</td></tr>
+<tr><td><code>Platform::events()</code></td><td>Where <code>SystemColorModeEvent</code> is raised,
+    once for each change of the desktop's mode.</td></tr>
+</table>
+
+<h2 id="icons">Writing an Icon</h2>
+
+<p>An icon states inks, never colours. Which ink depends on what the shape means:</p>
+
+<ul>
+    <li><strong>The object</strong> an icon draws - the sheet, the bin, the arrow's shaft - is a
+        grade. <code>InkGrade::Strong</code> is the usual one.</li>
+    <li><strong>The part that names the command</strong> - the front sheet in a copy, the head of an
+        arrow, the trail behind an eraser - is the accent, so the icon says which of its shapes
+        carries the verb.</li>
+    <li><strong>A meaning</strong> - warning, error, present, absent - is a semantic ink.</li>
+    <li><strong>A brand mark</strong> - the application's own icon and name - is the spot.</li>
+</ul>
+
+<pre><code><span class="kw">void</span> <span class="fn">paint</span>(<span class="tp">PaintIconEvent</span>&amp; event)
+{
+    <span class="kw">const float</span> strokeWidth = event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin);
+    <span class="tp">Color</span> body = <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Strong).<span class="fn">toColor</span>(event);
+    <span class="tp">Color</span> accent = <span class="tp">InkWell</span>::<span class="fn">accentInk</span>().<span class="fn">toColor</span>(event);
+
+    canvas.<span class="fn">drawPath</span>(bodyPath, { <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(body, strokeWidth) }, &amp;transform);
+    canvas.<span class="fn">drawPath</span>(headPath, { <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(accent, strokeWidth) }, &amp;transform);
+}</code></pre>
+
+<div class="info">
+<strong>Two things stand outside the model.</strong> <em>PathArt</em> is painting rather than
+interface and is free to use any colours it likes. Brand marks are a fixed identity, and answer to
+whoever owns the brand rather than to the theme.
+</div>
+
+<h2 id="theming">What a Theme Owns</h2>
+
+<h3 id="palette">The palette</h3>
+
+<p>A palette is strictly a set of hues. No saturation, no luminosity - those belong to whoever knows
+what the colour means. <code>ThemeColors::paletteHues</code> holds three, and all three are
+assigned:</p>
+
+<table>
+<tr><th>Index</th><th>Named by a rule as</th><th>What it is</th></tr>
+<tr><td><code>paletteHues[0]</code></td><td><code>ColorRuleHueOp::PalleteColor1</code></td>
+    <td>The hue that tints surfaces, and so the hue every grey in the form is made of.</td></tr>
+<tr><td><code>paletteHues[1]</code></td><td><code>ColorRuleHueOp::PalleteColor2</code></td>
+    <td>The accent - the hue the interactive states and the accent ink are drawn from.</td></tr>
+<tr><td><code>paletteHues[2]</code></td><td><code>ColorRuleHueOp::PalleteColor3</code></td>
+    <td>The spot - the second accent, and the tooltip's tint.</td></tr>
+</table>
+
+<p>Separately, <code>anchorHue</code> and <code>harmonyKind</code> derive the harmony the four
+semantic slots are taken from. The harmony is derived rather than stored, so a file carries the two
+inputs and not the result.</p>
+
+<h3 id="color-rules">Colour rules</h3>
+
+<p>A <code>ColorRule</code> is three channels - hue, saturation, elevation - each stating what
+happens to the colour handed to it. Everything a theme says about an element is said in these.</p>
+
+<table>
+<tr><th>Operation</th><th>Effect</th></tr>
+<tr><td><code>ColorRuleOp::NoChange</code></td><td>Leaves the channel as it arrived.</td></tr>
+<tr><td><code>ColorRuleOp::Offset</code></td><td>Moves it by a distance. A relation between two colours.</td></tr>
+<tr><td><code>ColorRuleOp::Scale</code></td><td>Multiplies it.</td></tr>
+<tr><td><code>ColorRuleOp::Set</code></td><td>States where it lands, absolutely, read in the element's own direction.</td></tr>
+</table>
+
+<p>The hue channel is its own type, because a hue is chosen from a short list rather than moved:
+<code>PalleteColor1</code>, <code>PalleteColor2</code>, <code>PalleteColor3</code>,
+<code>NoChange</code>, or <code>ExactValue</code> with a hue written into the rule.</p>
+
+<pre><code><span class="tp">ColorRule</span> accent{
+    { <span class="tp">ColorRuleHueOp</span>::PalleteColor2 },   <span class="cm">// H - the palette's accent hue</span>
+    { <span class="tp">ColorRuleOp</span>::Set, <span class="kw">0.61449593f</span> },   <span class="cm">// S</span>
+    { <span class="tp">ColorRuleOp</span>::Set, <span class="kw">0.5606192f</span> }     <span class="cm">// E - an elevation, not a luminosity</span>
+};</code></pre>
+
+<p>All three operations run in elevation space, so what a rule states is read in the direction the
+element it belongs to stands in. <code>Set 0.0</code> comes out at the floor on a dark theme and
+white on a light one, which is how a mark gets ink that contrasts with it under either mode without
+the element having to state a flip.</p>
+
+<h3 id="control-rules">Element rules</h3>
+
+<p><code>ControlColorRules</code> is what an element wears: one rule per state, plus
+<code>flip</code>, the one fact that is not a colour.</p>
+
+<table>
+<tr><th>Member</th><th>What it states</th></tr>
+<tr><td><code>flip</code></td><td>That this element stands on the far side of the theme. Every rule it carries, every ink resolved on it and every control inside it is then read from that side.</td></tr>
+<tr><td><code>surface</code></td><td>The colour the element itself paints. <code>active</code>, <code>hovered</code> and <code>pressed</code> are applied over it.</td></tr>
+<tr><td><code>stroke</code></td><td>The element's border, applied to whichever stands higher: the element's surface or the surface it stands on.</td></tr>
+<tr><td><code>active</code></td><td>The element while it is the one in effect - the open tab, the mark that is on, the selection the keys act on. Applied over <code>surface</code> by the factor that says so.</td></tr>
+<tr><td><code>hovered</code>, <code>pressed</code></td><td>What the pointer does.</td></tr>
+<tr><td><code>text</code></td><td>The ink everything inside the element starts from.</td></tr>
+<tr><td><code>activeText</code></td><td>What being in effect does to that ink, at the same factor <code>active</code> is taken at.</td></tr>
+<tr><td><code>shadow</code></td><td>The shadow a window casts, read from the three sets a window wears: <code>form</code>, <code>menu</code> and <code>tooltip</code>. It is applied to black carrying the form surface's hue rather than over <code>surface</code>, and read at the dark end in both modes with no floor and no flip, so elevation here is luminosity and <code>{}</code> is plain black. Its blur, offset, spread and opacity are metrics, in <code>WindowShadow</code>.</td></tr>
+</table>
+
+<p>Hover and press are momentary and the background says them, which is why the ink pair stops at
+<code>text</code> and <code>activeText</code> and there is no <code>hoveredText</code>.</p>
+
+<h2 id="do-dont">Do and Don't</h2>
+
+<div class="rules-grid">
+    <div class="rule-card dos">
+        <h4>Do</h4>
+        <ul>
+            <li><strong>Name the ink, resolve where you paint.</strong> The same <code>Ink</code> is right on every surface; a <code>Color</code> is right on one.</li>
+            <li><strong>Use a grade for anything grey.</strong> Grey is the ladder between the surface and the ink, not a colour.</li>
+            <li><strong>Name a meaning with a semantic colour</strong> - <code>InkWell::Red</code>, or <code>redInk(grade)</code> for a quieter one - and leave its tones to <code>InkWell::slotTones</code>, the one declaration serving both modes.</li>
+            <li><strong>Take <code>inkHsl</code> when a rule comes next</strong>, and let the last step be the one that makes a <code>Color</code>.</li>
+            <li><strong>Reach for the accent for interface emphasis</strong> and the spot for what stands apart from the interface.</li>
+            <li><strong>Ask <code>wornColorMode</code> which side the application is on.</strong> Under Auto the answer is the desktop's, and it moves while the application runs.</li>
+        </ul>
+    </div>
+    <div class="rule-card donts">
+        <h4>Don't</h4>
+        <ul>
+            <li><strong>Don't convert a produced colour back.</strong> <code>Hsl{ someResolvedColor }</code> is a round trip through the lossy direction.</li>
+            <li><strong>Don't cache a resolved colour</strong> across surfaces or across a theme change. Resolving is cheap; being wrong is not.</li>
+            <li><strong>Don't give a semantic ink an elevation.</strong> An icon that means something means it on both sides of the theme.</li>
+            <li><strong>Don't write a hex literal in a control or an icon.</strong> If the model cannot say it, that is a gap in the model.</li>
+            <li><strong>Don't ask for yellow text.</strong> There is no legible yellow; use the shape or the icon to carry it.</li>
+            <li><strong>Don't read the setting as a side.</strong> <code>colorMode().get() == ColorModeSetting::Dark</code> is false on a dark desktop under Auto.</li>
+        </ul>
+    </div>
+</div>
+
+<h2 id="howitworks">How It Works</h2>
+
+<h3 id="hiw-resolution">The resolver</h3>
+
+<p><code>ControlPaintContext::inkHsl</code> is the one place a name becomes a colour. Every ink is
+read the same way: its colour picks the far end of the mix, and the grade mixes toward that end
+from the surface. For the accent and the spot the far end is the theme's rule laid over the chain's
+ink - laid over the mixed ink, a rule that sets its channels outright would answer the same colour
+at every grade.</p>
+
+<pre><code><span class="cm">// The far end of the mix: a semantic colour's hue, pure black or white, the theme's accent</span>
+<span class="cm">// or spot rule over the chain's ink, or the chain's ink itself.</span>
+<span class="tp">Hsl</span> inkEnd = textHsl;
+<span class="kw">const</span> <span class="tp">std</span>::<span class="tp">optional</span>&lt;<span class="tp">ColorSlot</span>&gt; slot = <span class="fn">slotOf</span>(ink.color);
+<span class="kw">if</span> (slot)
+    inkEnd = m_bakedColors-&gt;<span class="fn">slotHsl</span>(*slot, lightness);
+<span class="kw">else if</span> (ink.color == <span class="tp">InkColor</span>::Black)
+    inkEnd = { <span class="kw">0.0f</span>, <span class="kw">0.0f</span>, <span class="kw">0.0f</span> };
+<span class="kw">else if</span> (ink.color == <span class="tp">InkColor</span>::White)
+    inkEnd = { <span class="kw">0.0f</span>, <span class="kw">0.0f</span>, <span class="kw">1.0f</span> };
+<span class="kw">else if</span> (ink.color == <span class="tp">InkColor</span>::Accent <span class="kw">or</span> ink.color == <span class="tp">InkColor</span>::Spot)
+    m_bakedColors-&gt;<span class="fn">ruleOf</span>(ink.color).<span class="fn">applyTo</span>(inkEnd, <span class="kw">1.0f</span>, lightness);
+
+<span class="tp">Hsl</span> result;
+<span class="kw">if</span> (ink.grade == <span class="kw">1.0f</span>)
+    result = inkEnd;
+<span class="kw">else if</span> (ink.grade == <span class="kw">0.0f</span>)
+    result = surfaceHsl;
+<span class="kw">else</span>
+    result = <span class="tp">Hsl</span>{ surfaceHsl, inkEnd, ink.grade };
+
+<span class="kw">if</span> (disabledAmount)
+    <span class="kw">return</span> <span class="tp">Hsl</span>{ result, surfaceHsl, disabledAmount };</code></pre>
+
+<p>Two properties follow from the shape. A semantic colour, black and white read nothing of the chain
+but the surface they fade toward, so at <code>Strongest</code> each is the same colour under every
+element in the form.
+And the disabled fade travels in the colour model like every other move here - an ink that cannot be
+used slides toward the surface it stands on, round the hue wheel rather than through grey.</p>
+
+<h3 id="hiw-transform">The transform</h3>
+
+<p>A theme's transform shapes the elevation axis its rules are read on, and the Themes app edits it
+in its Transform section. It states one value, <code>ThemeColors::darkModeFloor</code>: the
+luminosity elevation 0 is lifted to at the dark end. There the axis runs from the floor to white
+rather than from black - the luminosity an elevation names is taken to
+<code>floor + (1 - floor) * luminosity</code> - so every elevation stays reachable,
+<code>elevationOf</code> stays the inverse of <code>luminosityOf</code>, and each step a theme
+states is scaled by <code>1 - floor</code>.</p>
+
+<p>The floor is taken by <code>1 - lightness</code>. Light mode is left as it is, a crossing between
+the modes fades the floor in or out, and a flipped element takes it by the side it stands on: a dark
+tooltip in light mode is lifted, a light one in dark mode is not. With the dark end lifted, one
+design reads right at both ends, which is why a theme states no mode of its own.</p>
+
+<p>Every elevation a theme states is lifted - surfaces, strokes, bare rules and text rules alike -
+so a check, a caret, a focus ring and accented text rise with the surfaces around them. Text stands
+near the top of the axis, where the lift barely moves it: the ink on a dark page still reaches
+white, and only an ink set low, such as the one over a check mark, lands on the floor rather than on
+black. The floor lifts elevations only: saturations and a window's shadow are read without it.</p>
+
+<p>A colour below the floor has no elevation and clamps to the end it lies past. The floor itself
+lies below 1, where the axis would have no room left, and the Themes app's slider stops at 0.5.</p>
+
+<h3 id="hiw-chain">The chain a control carries</h3>
+
+<p><code>PaintEvent</code> accumulates the chain on the way down. Each control applies its own
+element rules to what it was handed, and what it passes on is what its children measure against:</p>
+
+<ul>
+    <li>The <strong>surface</strong> is the background rule's result, accumulated - a control that
+        paints nothing contributes nothing to it.</li>
+    <li>The <strong>ink</strong> is the parent's ink with this control's own <code>text</code> rule
+        applied, at full strength and with no state term in it.</li>
+    <li>The <strong>mode</strong> is inherited and flipped by any element on the way down that states
+        <code>flip</code>. A control that knows better states it outright through
+        <code>AdjustPaintEvent::setColorMode</code>, and a stated mode is not flipped again.</li>
+    <li>The <strong>disabled amount</strong> is applied as the chain is built, so an ink asked for on
+        demand matches one that was resolved ahead of time.</li>
+</ul>
+
+<p>Everything else in <code>TextColorTheme</code> - <code>selection</code>, <code>caret</code>,
+<code>hotLink</code> - is resolved once per paint from the rules that state them, because a layout
+needs them whether or not it uses them. The theme hands over resolved colours and never states, so
+by the time a run is drawn there is nothing left to decide.</p>
+        </main>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const collapsibleElements = document.querySelectorAll('.sidebar li.has-children');
+            collapsibleElements.forEach(li => {
+                const btn = li.querySelector('.toggle-btn');
+                const link = li.querySelector('.nav-item-wrapper > a');
+                const toggle = (e) => { e.preventDefault(); e.stopPropagation(); li.classList.toggle('collapsed'); };
+                if (btn) btn.addEventListener('click', toggle);
+                if (link) link.addEventListener('click', () => {
+                    if (li.classList.contains('collapsed')) li.classList.remove('collapsed');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

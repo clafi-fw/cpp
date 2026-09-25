@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ClaFi - build settings MSBuild picks up on its own.
+
+  MSBuild walks UP from each .vcxproj directory looking for Directory.Build.props,
+  imports the first one it finds, and stops. The import happens after
+  Microsoft.Common.props and before Microsoft.Cpp.props - that is, before the
+  project body declares its ClCompile items - which is what makes the
+  ItemDefinitionGroup below apply to every source without anyone editing a .vcxproj.
+
+  PLACEMENT MATTERS: this only takes effect if the file sits in an ancestor
+  directory of the .vcxproj that compiles these sources. See the notes at the end
+  if yours lives somewhere else.
+-->
+<Project>
+
+  <!--
+    If a Directory.Build.props already exists further up, MSBuild would stop at this
+    one and silently ignore it. Chain to it rather than shadowing it.
+  -->
+  <PropertyGroup>
+    <ParentDirectoryBuildProps Condition="'$(ParentDirectoryBuildProps)' == ''">$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)..'))</ParentDirectoryBuildProps>
+  </PropertyGroup>
+  <Import Project="$(ParentDirectoryBuildProps)" Condition="'$(ParentDirectoryBuildProps)' != ''" />
+
+  <!--
+    Mirror the source tree inside the intermediate directory.
+
+    By default MSBuild writes every object into one flat $(IntDir), so two sources
+    sharing a basename collide - MSB8027. Controls\Grid.cppm and
+    Controls\Grid\Engine\Grid.cppm both want Grid.obj.
+
+    This is not a C++20 modules problem. MSVC derives BMI names from the *module*
+    name (ClaFi.Controls.Grid.Engine-Grid.ifc), so .ifc files never collide. The
+    collision is purely the object file, it hits plain .cpp identically, and it has
+    behaved this way for twenty years. CMake and Bazel derive object paths from the
+    source path already and need none of this.
+
+    The trailing separator is required: it tells cl.exe that /Fo names a directory
+    rather than a file. MSBuild's MakeDirsForCl target creates the subdirectories.
+  -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!--
+    Opt-in build timing. Off unless the build is started with -p:ClaFiBuildTiming=true,
+    so a normal build is unaffected.
+
+    /Bt+ makes cl.exe print the wall time each phase spent on every translation unit -
+    c1xx for the front end, c2 for the back end. /d1reportTime adds the front end's
+    breakdown per template and per function, which is what identifies a single
+    pathological instantiation rather than a broadly slow file.
+
+    Both write to stdout, so the numbers land in whatever log the build is capturing.
+  -->
+  <ItemDefinitionGroup Condition="'$(ClaFiBuildTiming)' == 'true'">
+    <ClCompile>
+      <AdditionalOptions>%(AdditionalOptions) /Bt+ /d1reportTime</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+</Project>
+
+<!--
+  NOTES
+
+  1. Sources outside the project directory.
+     %(RelativeDir) for a file referenced as ..\..\Shared\Foo.cpp expands to a path
+     containing "..\", so its object lands outside $(IntDir). Harmless when every
+     ClCompile item sits at or below the .vcxproj directory, which is the normal
+     arrangement. If you do pull sources in from above the project, give those
+     specific items an explicit <ObjectFileName> in the .vcxproj.
+
+  2. The .vcxproj is not below this file.
+     If the project file sits above the framework folder, MSBuild never sees this
+     file. Two options, both fine:
+       - move Directory.Build.props up to the solution root, covering every project;
+       - or rename it ClaFi.props and import it explicitly from the .vcxproj:
+             <Import Project="..\ClaFi\ClaFi.props" />
+         after the Microsoft.Cpp.props import. View > Property Manager writes that
+         same import for you if you'd rather click.
+
+  3. CMake builds.
+     CMake generates .vcxproj files into the build directory, so this file is not an
+     ancestor of them and will not be imported. That is fine - CMake gives each
+     object a path-derived name and has no collision to fix.
+
+  4. Verifying it took effect.
+     Build, then look in the intermediate directory: you should see IntDir\Controls\
+     and IntDir\Controls\Grid\Engine\ each holding their own Grid.obj. If everything
+     is still flat, the file is not an ancestor of the .vcxproj - see note 2.
+-->

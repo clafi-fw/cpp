@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi Layout - Developer Manual</title>
+    <style>
+        :root {
+            --bg-color: #f9f9fb; --text-color: #333; --accent-color: #0066cc;
+            --code-bg: #1e1e1e; --code-text: #d4d4d4; --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6; color: var(--text-color); background-color: var(--bg-color);
+            margin: 0; padding: 0; display: flex;
+        }
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;
+            background-color: #fff; border-right: 1px solid var(--border-color);
+            overflow-y: auto; padding: 2rem 1rem; box-sizing: border-box; z-index: 100;
+        }
+        .sidebar-brand { padding: 0 0.5rem 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); }
+        .sidebar-brand-text {
+            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            font-size: 2.0rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            background: linear-gradient(90deg, #4EC9B0, #A6E22E);
+            -webkit-background-clip: text;
+            /*
+            background-clip: text;
+            */
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 8px rgba(78, 201, 176, 0.25);
+        }
+        .sidebar-brand-text::after {
+            content: "::";
+            margin-left: 0.2em;
+            font-weight: 400;
+        }
+        .sidebar-header { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; padding-left: 0.5rem; color: #111; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar > ul > li { margin-bottom: 0.8rem; }
+        .nav-item-wrapper {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.25rem 0.5rem; border-radius: 6px; transition: background-color 0.2s ease;
+        }
+        .nav-item-wrapper:hover { background-color: rgba(0, 0, 0, 0.02); }
+        .sidebar > ul > li > .nav-item-wrapper > a { font-size: 1rem; font-weight: 600; color: #111; flex-grow: 1; }
+        .sidebar ul ul {
+            padding-left: 0.8rem; margin-top: 0.3rem; margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color); margin-left: 1.1rem;
+        }
+        .sidebar ul ul li { margin-bottom: 0.4rem; }
+        .sidebar ul ul a { font-size: 0.9rem; color: #555; display: block; padding: 0.15rem 0; transition: color 0.15s ease; }
+        .sidebar a { text-decoration: none; display: block; transition: color 0.2s ease; }
+        .sidebar a:hover, .sidebar ul ul a:hover { color: var(--accent-color); }
+        .toggle-btn {
+            background: none; border: none; padding: 4px; margin: 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; color: #888;
+            border-radius: 4px; transition: background-color 0.2s, color 0.2s; outline: none;
+        }
+        .toggle-btn:hover { background-color: rgba(0, 0, 0, 0.05); color: var(--accent-color); }
+        .toggle-btn svg { width: 16px; height: 16px; fill: currentColor; transform: rotate(90deg); transition: transform 0.2s ease; }
+        .sidebar li.has-children.collapsed ul { display: none !important; }
+        .sidebar li.has-children.collapsed .toggle-btn svg { transform: rotate(0deg); }
+        .page-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        header { background-color: #fff; padding: 2rem; border-bottom: 1px solid var(--border-color); text-align: center; }
+        h1, h2, h3, h4 { color: #111; margin-top: 2rem; }
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+        main {
+            max-width: 900px; margin: 2rem auto; padding: 0 2rem; background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; padding-bottom: 2rem;
+        }
+        p, li { font-size: 1.1rem; }
+        pre {
+            background-color: var(--code-bg); color: var(--code-text); padding: 1.5rem;
+            border-radius: 8px; overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.95rem; line-height: 1.5;
+        }
+        code {
+            background-color: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.9em; color: #d14;
+        }
+        pre code { background-color: transparent; padding: 0; color: inherit; }
+        .kw { color: #569cd6; } .tp { color: #4ec9b0; } .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; } .fn { color: #dcdcaa; }
+        .warning { background-color: #fff3f3; border-left: 4px solid #cc0000; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .info { background-color: #f0f7ff; border-left: 4px solid #0066cc; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0; }
+        .rule-card { padding: 1.2rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .rule-card.dos { background-color: #f4faf4; border-left: 4px solid #2e7d32; }
+        .rule-card.donts { background-color: #fff8f8; border-left: 4px solid #c62828; }
+        .rule-card h4 { margin-top: 0; margin-bottom: 0.5rem; }
+        .rule-card ul { margin: 0; padding-left: 1.2rem; }
+        .rule-card li { font-size: 1rem; margin-bottom: 0.5rem; }
+        table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 0.98rem; }
+        th, td { border: 1px solid var(--border-color); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+        th { background-color: #f6f8fa; font-weight: 600; }
+        td code { font-size: 0.85em; }
+        .grid-fig { width: 100%; max-width: 720px; margin: 1.5rem 0; display: block; }
+        @media (max-width: 1200px) { .sidebar { display: none; } .page-content { margin-left: 0; width: 100%; } }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand"><span class="sidebar-brand-text">ClaFi</span></div>
+        <div class="sidebar-header">Contents</div>
+        <ul>
+            <li><div class="nav-item-wrapper"><a href="#introduction">Introduction</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#quickstart">Quick Start</a></div></li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#model">The Model</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#two-passes">The two passes</a></li>
+                    <li><a href="#box">The box of a control</a></li>
+                    <li><a href="#align">Alignment</a></li>
+                    <li><a href="#minsize">What a control can be cut to</a></li>
+                    <li><a href="#units">Design units and scale</a></li>
+                    <li><a href="#strokes">Stroke thickness</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#sizing">Sizing a Control</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#metrics">The metric properties</a></li>
+                    <li><a href="#which-size">Which size to state</a></li>
+                    <li><a href="#spacers">Spacer and FlexSpacer</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#containers">Arranging Children</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#stackpanel">StackPanel</a></li>
+                    <li><a href="#wrapping">Wrapping stacks</a></li>
+                    <li><a href="#panel">Panel and its five slots</a></li>
+                    <li><a href="#withbody">WithBody, HostProps, BodyProps</a></li>
+                    <li><a href="#scrollbox">ScrollBox</a></li>
+                    <li><a href="#others">Expander, tabs, pages</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#content">Content That Sizes Itself</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#text">Text</a></li>
+                    <li><a href="#grid-columns">Grid columns</a></li>
+                    <li><a href="#window">The window</a></li>
+                </ul>
+            </li>
+            <li><div class="nav-item-wrapper"><a href="#choosing">Choosing an Arrangement</a></div></li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#recipes">Recipes</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#r-toolbar">Commands at the far end of a strip</a></li>
+                    <li><a href="#r-center">One item in the middle</a></li>
+                    <li><a href="#r-footer">A footer that stays at the foot</a></li>
+                    <li><a href="#r-scroll">A page that scrolls</a></li>
+                    <li><a href="#r-tiles">A wrapping grid of equal tiles</a></li>
+                    <li><a href="#r-sections">Collapsible sections</a></li>
+                    <li><a href="#r-split">Two panes side by side</a></li>
+                    <li><a href="#r-fit">A window sized by its content</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#troubleshooting">Troubleshooting</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#t-symptoms">Symptoms</a></li>
+                    <li><a href="#t-rules">Do / Don't</a></li>
+                </ul>
+            </li>
+            <li><div class="nav-item-wrapper"><a href="#appendix">Appendix &middot; Quick reference</a></div></li>
+        </ul>
+    </nav>
+    <div class="page-content">
+        <header>
+            <h1>ClaFi Layout</h1>
+            <p>Where everything ends up, and why</p>
+        </header>
+        <main>
+<h2 id="introduction">Introduction</h2>
+
+<p>A control in ClaFi is laid out by two things: what it says about itself, and what the
+control above it does with that answer. Everything in this manual is one of those two.</p>
+
+<p>Both halves are stated where the control is built, as ordinary construction properties:</p>
+
+<pre><code><span class="tp">StackPanel</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+    <span class="tp">Orientation</span>::Horizontal,   <span class="cm">// what this panel does with its children</span>
+    <span class="tp">Padding</span>{ <span class="st">4.0f</span> },             <span class="cm">// what this panel says about itself</span>
+    <span class="tp">Spacing</span>{ <span class="st">4.0f</span> }
+) };</code></pre>
+
+<p>There is no separate layout object to build, nothing to attach afterwards, and no pass to
+run by hand. A control that is added, hidden, resized or re-aligned asks the form for a pass,
+and the form runs one before the next paint.</p>
+
+<div class="info">
+This manual covers the layout. The other manuals cover what the controls <em>are</em>:
+<em>Grids-Manual</em> for grids, <em>TextEngine</em> for text, <em>Events-Manual</em> for
+handlers, <em>Color-Manual</em> for how a control is painted.
+</div>
+
+<h2 id="quickstart">Quick Start</h2>
+
+<p>A window with a toolbar across the top, a scrolling body, and a strip at the foot. It is
+the shape most applications open with, and it is four controls.</p>
+
+<pre><code><span class="kw">class</span> <span class="tp">MainPanel</span> : <span class="kw">public</span> <span class="tp">Panel</span>
+{
+    <span class="kw">using</span> <span class="tp">Panel</span>::Panel;
+<span class="kw">private</span>:
+    <span class="cm">// Across the top, left to right.</span>
+    <span class="tp">StackPanel</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+        <span class="tp">Orientation</span>::Horizontal,
+        <span class="tp">Padding</span>{ <span class="st">4.0f</span> },
+        <span class="tp">Spacing</span>{ <span class="st">4.0f</span> }
+    ) };
+    <span class="tp">Button</span>&amp; m_open{ m_toolBar.<span class="fn">add</span>&lt;<span class="tp">Button</span>&gt;(<span class="st">L"Open"</span>) };
+    <span class="tp">Button</span>&amp; m_save{ m_toolBar.<span class="fn">add</span>&lt;<span class="tp">Button</span>&gt;(<span class="st">L"Save"</span>) };
+    <span class="cm">// Takes whatever the strip has over, so Close sits at the right-hand end.</span>
+    <span class="tp">FlexSpacer</span>&amp; m_gap{ m_toolBar.<span class="fn">add</span>&lt;<span class="tp">FlexSpacer</span>&gt;() };
+    <span class="tp">Button</span>&amp; m_close{ m_toolBar.<span class="fn">add</span>&lt;<span class="tp">Button</span>&gt;(<span class="st">L"Close"</span>) };
+
+    <span class="cm">// The middle. It fills whatever the toolbar and the strip leave.</span>
+    <span class="tp">ScrollBoxWith</span>&lt;<span class="tp">TextBox</span>&gt;&amp; m_box{ <span class="fn">createBody</span>&lt;<span class="tp">ScrollBoxWith</span>&lt;<span class="tp">TextBox</span>&gt;&gt;(
+        <span class="tp">HostProps</span>{ <span class="tp">ScrollBars</span>::Vertical },
+        <span class="tp">BodyProps</span>{ <span class="tp">Padding</span>{ <span class="st">8.0f</span> } }
+    ) };
+
+    <span class="cm">// Across the foot, as tall as what stands in it.</span>
+    <span class="tp">StackPanel</span>&amp; m_status{ <span class="fn">createBottomBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+        <span class="tp">Orientation</span>::Horizontal,
+        <span class="tp">Padding</span>{ <span class="st">4.0f</span> }
+    ) };
+};</code></pre>
+
+<p>Three rules account for everything that happens here, and they are the whole of the next
+section:</p>
+
+<ul>
+<li>A control is as big as what it holds, unless it states otherwise.</li>
+<li>A container hands each child a box. What the child does inside that box is the child's
+own alignment to say.</li>
+<li>Fill takes the box. Any other alignment keeps the size the control measured and stands
+somewhere in it.</li>
+</ul>
+
+<h2 id="model">The Model</h2>
+
+<h3 id="two-passes">The two passes</h3>
+
+<p>A layout is two walks over the same tree, in opposite directions.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="The measure pass runs from the leaves up, each control answering a size; the align pass runs from the root down, each control handing its children a box.">
+  <style>
+    .lp-box   { fill:#ffffff; stroke:#c9cfd6; stroke-width:1.2; }
+    .lp-up    { fill:#eef4fb; stroke:#0066cc; stroke-width:1.4; }
+    .lp-dn    { fill:#f2f7f2; stroke:#2e7d32; stroke-width:1.4; }
+    .lp-t     { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11.5px; fill:#333; }
+    .lp-th    { font-family:-apple-system,"Segoe UI",sans-serif; font-size:12.5px; fill:#111; font-weight:600; }
+    .lp-m     { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .lp-ab    { stroke:#0066cc; stroke-width:1.6; fill:none; }
+    .lp-ag    { stroke:#2e7d32; stroke-width:1.6; fill:none; }
+  </style>
+  <defs>
+    <marker id="ab" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="#0066cc"/>
+    </marker>
+    <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="#2e7d32"/>
+    </marker>
+  </defs>
+
+  <text class="lp-th" x="10" y="20">1 &middot; The measure - calculate()</text>
+  <rect class="lp-up" x="10"  y="30"  width="130" height="28" rx="4"/><text class="lp-t" x="22"  y="48">Form root</text>
+  <rect class="lp-up" x="40"  y="80"  width="130" height="28" rx="4"/><text class="lp-t" x="52"  y="98">Panel</text>
+  <rect class="lp-up" x="70"  y="130" width="130" height="28" rx="4"/><text class="lp-t" x="82"  y="148">StackPanel</text>
+  <rect class="lp-up" x="100" y="180" width="130" height="28" rx="4"/><text class="lp-t" x="112" y="198">Button</text>
+  <path class="lp-ab" marker-end="url(#ab)" d="M150,180 L150,160"/>
+  <path class="lp-ab" marker-end="url(#ab)" d="M120,130 L120,110"/>
+  <path class="lp-ab" marker-end="url(#ab)" d="M90,80 L90,60"/>
+  <text class="lp-m" x="250" y="50">children first, then the control itself</text>
+  <text class="lp-m" x="250" y="72">every control writes its own dimensions()</text>
+  <text class="lp-m" x="250" y="94">and its calculatedMinSize()</text>
+  <text class="lp-m" x="250" y="116">nobody knows yet what room they will get</text>
+
+  <text class="lp-th" x="10" y="228">2 &middot; The align - align()</text>
+  <rect class="lp-dn" x="10"  y="240" width="130" height="30" rx="4"/><text class="lp-t" x="22" y="259">Form root</text>
+  <rect class="lp-dn" x="160" y="240" width="130" height="30" rx="4"/><text class="lp-t" x="172" y="259">Panel</text>
+  <rect class="lp-dn" x="310" y="240" width="130" height="30" rx="4"/><text class="lp-t" x="322" y="259">StackPanel</text>
+  <rect class="lp-dn" x="460" y="240" width="130" height="30" rx="4"/><text class="lp-t" x="472" y="259">Button</text>
+  <path class="lp-ag" marker-end="url(#ag)" d="M140,255 L156,255"/>
+  <path class="lp-ag" marker-end="url(#ag)" d="M290,255 L306,255"/>
+  <path class="lp-ag" marker-end="url(#ag)" d="M440,255 L456,255"/>
+  <text class="lp-m" x="10" y="292">each control is handed a position and a box, and hands its own children theirs</text>
+</svg>
+
+<p><strong>The measure runs bottom-up.</strong> <code>Control::calculate</code> walks the
+children first, then asks the control what its content came to -
+<code>calculateContent</code> - and writes the answer into <code>dimensions()</code>. Nothing
+in the tree knows yet how much room it will be given. A stack of buttons measures the widest
+button; a panel measures its bars and its body; a label measures its text.</p>
+
+<p><strong>The align runs top-down.</strong> <code>Control::align</code> hands a control a
+position and a box, the control's <code>alignContent</code> cuts that box up among its
+children, and each child is aligned into its part. The root is aligned into the window.</p>
+
+<p>The two answers meet in <code>Control::align</code>. A control handed more room than it
+measured either takes it or gives it back, and that is what the alignment decides. Nothing
+else in the framework makes that choice.</p>
+
+<div class="info">
+A control's <code>width()</code> and <code>height()</code> hold the measure's answer between
+the two passes and the align's answer after them. Reading either from outside a pass is
+reading the last completed layout, which is normally what you want. Reading one while a pass
+is running - from inside a handler the pass raised - may be reading the half of it that has
+not been redone yet.
+</div>
+
+<h4>Asking for a pass</h4>
+
+<p>Nothing lays out on the spot. Every change asks the form for a pass, and the form runs a
+pass before the next paint however many things asked:</p>
+
+<table>
+<tr><th>Call</th><th>What it asks for</th></tr>
+<tr><td><code>control.invalidate()</code></td><td>a repaint of that control, no layout</td></tr>
+<tr><td><code>control.invalidateFormAlign()</code></td><td>a layout pass, then a paint</td></tr>
+<tr><td><code>form.invalidateAlign()</code></td><td>the same, said to the form</td></tr>
+<tr><td><code>control.setVisible(...)</code></td><td>a layout pass - hiding is a layout change</td></tr>
+<tr><td><code>setHorizontalAlign</code>, <code>setVerticalAlign</code>, <code>setOrientation</code>, <code>setItemSizing</code></td><td>a layout pass, when the value actually changes</td></tr>
+<tr><td><code>control.scrollIntoViewOnAlign()</code></td><td>a reveal measured against the layout the next pass produces</td></tr>
+<tr><td><code>event.invalidatePass()</code></td><td>from <em>inside</em> a pass: run the tree again before this frame goes out</td></tr>
+</table>
+
+<div class="info">
+<code>invalidateAlign()</code> is the route from outside a pass, and it is dropped when it is
+raised inside one: the form marks itself aligned before the walk begins. Inside a pass the
+channel is the event - a control that finds while being laid out that it was measured against
+the wrong width says <code>event.invalidatePass()</code>, and the form walks the tree again
+before the frame goes out. The two cannot be confused, because
+<code>invalidatePass()</code> is reachable only where an <code>AlignEvent</code> is. It must
+converge - see <a href="#t-loop">a layout that never settles</a>.
+</div>
+
+<p>A frame therefore shows a settled layout rather than the first attempt at one. The number of
+passes a single frame may spend is bounded: past it the frame goes out on what the last pass
+produced and the next one carries on, so a request that cannot converge costs frames rather
+than the application.</p>
+
+<h3 id="box">The box of a control</h3>
+
+<p><code>Control</code> is the layout node: a box, a place in the tree, and the events that
+reach it. <code>RichControl</code> adds the appearance a control stores - metrics, colours,
+text - and is what nearly everything is built on. The properties below are its.</p>
+
+<svg class="grid-fig" viewBox="0 0 660 230" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A control's box: the border it paints, the padding inside it, the content, and the spacing between two children.">
+  <style>
+    .bx-o  { fill:#ffffff; stroke:#0066cc; stroke-width:1.6; }
+    .bx-p  { fill:#f4f8fd; stroke:#9dc2e8; stroke-width:1; stroke-dasharray:3 3; }
+    .bx-c  { fill:#eef4fb; stroke:#0066cc; stroke-width:1; }
+    .bx-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .bx-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#0066cc; }
+    .bx-l  { stroke:#5a6b7d; stroke-width:0.9; }
+  </style>
+  <rect class="bx-o" x="30" y="30" width="330" height="160" rx="6"/>
+  <rect class="bx-p" x="54" y="50" width="282" height="120" rx="3"/>
+  <rect class="bx-c" x="54" y="50" width="130" height="120" rx="3"/>
+  <rect class="bx-c" x="206" y="50" width="130" height="120" rx="3"/>
+  <text class="bx-t" x="92"  y="115">child</text>
+  <text class="bx-t" x="244" y="115">child</text>
+  <path class="bx-l" d="M30,205 L54,205 M30,201 L30,209 M54,201 L54,209"/>
+  <text class="bx-m" x="16" y="224">padding.x</text>
+  <path class="bx-l" d="M184,205 L206,205 M184,201 L184,209 M206,201 L206,209"/>
+  <text class="bx-m" x="160" y="224">spacing.x</text>
+  <path class="bx-l" d="M375,30 L375,50 M371,30 L379,30 M371,50 L379,50"/>
+  <text class="bx-m" x="386" y="45">padding.y</text>
+  <text class="bx-m" x="386" y="90">border and radius are painted here</text>
+  <text class="bx-m" x="386" y="112">and never measured</text>
+  <text class="bx-m" x="386" y="140">minSize / preferredSize / maxSize</text>
+  <text class="bx-m" x="386" y="162">hold the whole box, padding included</text>
+</svg>
+
+<ul>
+<li><code>Padding</code> is kept inside the control, around its content. Children and text
+both start at it.</li>
+<li><code>Spacing</code> is kept <em>between</em> the parts a control lays out - its children,
+or the icon, indicator and text a button draws. One part spends none of it.</li>
+<li><code>Border</code> and <code>Radius</code> are painted, never measured. The layout pass
+is not given them at all, so changing either moves nothing.</li>
+<li><code>MinSize</code>, <code>PreferredSize</code>, <code>MaxSize</code> and
+<code>FixedSize</code> are the whole box, padding included, and not the content inside it.</li>
+</ul>
+
+<p>A button is where the two read most clearly. It draws up to three parts in a row - an
+indicator, an icon, its text - and lays them out itself rather than holding them as children:
+<code>Padding</code> is the inset from its edge to that run, <code>Spacing</code> is the gap
+between each part and the next.</p>
+
+<svg class="grid-fig" viewBox="0 0 660 180" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A button: padding insets its edge from the content, and spacing separates the icon area from the text area.">
+  <style>
+    .bt-o { fill:#ffffff; stroke:#0066cc; stroke-width:1.6; }
+    .bt-p { fill:none; stroke:#9dc2e8; stroke-width:1; stroke-dasharray:3 3; }
+    .bt-a { fill:#eef4fb; stroke:#0066cc; stroke-width:1; }
+    .bt-t { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .bt-m { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#0066cc; }
+    .bt-l { stroke:#5a6b7d; stroke-width:0.9; }
+  </style>
+  <rect class="bt-o" x="40" y="28" width="330" height="92" rx="6"/>
+  <rect class="bt-p" x="58" y="42" width="294" height="64" rx="3"/>
+  <rect class="bt-a" x="58" y="50" width="48" height="48" rx="3"/>
+  <text class="bt-t" x="68" y="79">icon</text>
+  <rect class="bt-a" x="122" y="50" width="230" height="48" rx="3"/>
+  <text class="bt-t" x="210" y="79">its text</text>
+  <path class="bt-l" d="M40,133 L58,133 M40,129 L40,137 M58,129 L58,137"/>
+  <text class="bt-m" x="14" y="152">padding.x</text>
+  <path class="bt-l" d="M106,133 L122,133 M106,129 L106,137 M122,129 L122,137"/>
+  <text class="bt-m" x="100" y="152">spacing.x</text>
+  <path class="bt-l" d="M385,28 L385,42 M381,28 L389,28 M381,42 L389,42"/>
+  <text class="bt-m" x="396" y="40">padding.y</text>
+  <text class="bt-m" x="396" y="75">the same two properties a container</text>
+  <text class="bt-m" x="396" y="91">spends on its children</text>
+</svg>
+
+<p>The measure adds them in one order and it is worth knowing which: the content is measured,
+ceiled to whole pixels, grown by the padding on both sides, then raised to
+<code>minSize</code> and held down to <code>maxSize</code>.</p>
+
+<div class="info">
+Padding is what separates <em>this</em> control's edge from its content. There is no margin
+property: room <em>between</em> two controls is the parent's <code>Spacing</code>, and room
+in one particular place is a <a href="#spacers"><code>Spacer</code></a>. Two ways to say one
+thing would be two ways for them to disagree.
+</div>
+
+<h3 id="align">Alignment</h3>
+
+<p>Two properties, four values each, and they decide one question: what the control does with
+a box larger than the size it measured.</p>
+
+<table>
+<tr><th>Value</th><th>What the control comes out as</th></tr>
+<tr><td><code>HorizontalAlign::Fill</code> / <code>VerticalAlign::Fill</code></td><td>the box it was handed. <strong>This is the default on both axes.</strong></td></tr>
+<tr><td><code>Left</code> / <code>Top</code></td><td>the size it measured, at the near edge of the box</td></tr>
+<tr><td><code>Center</code></td><td>the size it measured, in the middle of the box</td></tr>
+<tr><td><code>Right</code> / <code>Bottom</code></td><td>the size it measured, at the far edge</td></tr>
+</table>
+
+<svg class="grid-fig" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="One slot, four alignments: Fill takes the whole slot, Left, Center and Right keep the measured size and sit at the near edge, the middle, and the far edge.">
+  <style>
+    .al-s { fill:#f7f9fc; stroke:#9dc2e8; stroke-width:1; stroke-dasharray:3 3; }
+    .al-c { fill:#eef4fb; stroke:#0066cc; stroke-width:1.3; }
+    .al-f { fill:#e3edfa; stroke:#0066cc; stroke-width:1.6; }
+    .al-t { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .al-k { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#0066cc; }
+    .al-n { font-family:"Fira Code",Consolas,monospace; font-size:10px; fill:#5a6b7d; }
+  </style>
+  <text class="al-n" x="150" y="18">the slot its parent gave it</text>
+  <path d="M148,22 L148,32" stroke="#5a6b7d" stroke-width="0.9"/>
+
+  <rect class="al-s" x="150" y="32" width="430" height="40" rx="3"/>
+  <rect class="al-f" x="150" y="32" width="430" height="40" rx="3"/>
+  <text class="al-t" x="340" y="57">the control</text>
+  <text class="al-k" x="16" y="57">Fill</text>
+
+  <rect class="al-s" x="150" y="86" width="430" height="40" rx="3"/>
+  <rect class="al-c" x="150" y="86" width="150" height="40" rx="3"/>
+  <text class="al-t" x="192" y="111">measured</text>
+  <text class="al-k" x="16" y="111">Left</text>
+
+  <rect class="al-s" x="150" y="140" width="430" height="40" rx="3"/>
+  <rect class="al-c" x="290" y="140" width="150" height="40" rx="3"/>
+  <text class="al-t" x="332" y="165">measured</text>
+  <text class="al-k" x="16" y="165">Center</text>
+
+  <rect class="al-s" x="150" y="194" width="430" height="40" rx="3"/>
+  <rect class="al-c" x="430" y="194" width="150" height="40" rx="3"/>
+  <text class="al-t" x="472" y="219">measured</text>
+  <text class="al-k" x="16" y="219">Right</text>
+</svg>
+
+<pre><code><span class="tp">Label</span>&amp; m_title{ m_stack.<span class="fn">add</span>&lt;<span class="tp">Label</span>&gt;(
+    <span class="tp">Text</span>{ <span class="tp">TextAlign</span>::Center, <span class="st">L"Live preview"</span> },
+    <span class="tp">HorizontalAlign</span>::Center,   <span class="cm">// the LABEL sits in the middle of its slot</span>
+    <span class="tp">VerticalAlign</span>::Center
+) };</code></pre>
+
+<div class="info">
+<code>HorizontalAlign</code> places the <em>control</em> inside the room its parent gave it.
+<code>TextAlign</code> and <code>HorizontalTextAnchor</code> place the <em>text</em> inside
+the control. A label stretched across a row and a label sitting in the middle of one are
+different arrangements, and a centred text in a stretched label is a third.
+</div>
+
+<h4>The surplus is handed back</h4>
+
+<p>This is the rule to keep in mind whenever something does not move where it was expected
+to. A control that is not aligned Fill on an axis is given <em>back</em> the room it did not
+ask for: it comes out at the size it measured, and the rest of the slot stays empty. That is
+what Left, Center and Right mean, and it is also why two things that look like size
+statements behave differently:</p>
+
+<div class="rules-grid">
+<div class="rule-card dos">
+<h4>Fill</h4>
+<ul>
+<li>The control is the width of its slot.</li>
+<li>Its own children are laid out in that width.</li>
+<li>A wrapping panel inside it wraps at that width.</li>
+</ul>
+</div>
+<div class="rule-card donts">
+<h4>Left, Center, Right</h4>
+<ul>
+<li>The control is the width its content came to.</li>
+<li>Everything inside it is inside that measurement.</li>
+<li>A wrapping panel inside it wraps at its own natural width, whatever the window is.</li>
+</ul>
+</div>
+</div>
+
+<div class="warning">
+<strong>Fill and MaxSize on the same axis is a caller error.</strong> Fill says take the whole
+slot and a maximum says never be this big. Fill is what stands, and the measure still clamps
+to the maximum - so the control carries a content measured against its cap inside a box that
+ignores the cap. State one or the other.
+</div>
+
+<h3 id="minsize">What a control can be cut to</h3>
+
+<p>Beside the size it came to, the measure writes a second number:
+<code>calculatedMinSize()</code> - the least the control may be made. It is composed the same
+way the size is, out of the <code>MinSize</code> this control was given and the floor its
+content built from its children's.</p>
+
+<p><strong>A measurement never raises it.</strong> A control is as wide as it is because of
+what it holds today, and cutting it back is what leaves a strip of tabs or a run of columns
+the room to fit into a narrower box. So the floor is a <code>MinSize</code> somebody set, here
+or below, and a tree nobody set one in can be cut to nothing.</p>
+
+<p>What reads it is whoever divides space and has less of it than was asked for - today, the
+window placement, which cuts a window to the room its side of the screen has and no further
+than this.</p>
+
+<div class="info">
+A <code>ScrollBox</code> states that its scrolled body gives way entirely: a box that scrolls
+can be made as small as the parts of it that do not scroll and still show everything it holds,
+because what falls past the edge is reached by scrolling. That is how a menu says it would
+rather be short than stand over the button it dropped from - nobody asks it, it states it.
+</div>
+
+<h3 id="units">Design units and scale</h3>
+
+<p>Every number written into a layout property is in <strong>design units</strong>. The
+framework scales them into device pixels per form, from the monitor the form was placed on
+and the application's own zoom, and it rounds each one to a whole pixel as it does so.</p>
+
+<pre><code><span class="tp">Padding</span>{ <span class="st">8.0f</span> }   <span class="cm">// 8 units - 8 pixels at 100%, 10 at 125%, 20 at 200%</span></code></pre>
+
+<p>That is the whole of it. <strong>The way to get a layout that scales is to not think about
+scaling at all.</strong> State the sizes the design should have and every form draws them at
+whatever the screen it landed on asks for. Dragging a window to another monitor, or changing
+the application's zoom while it is open, lays the form out again at the new factor with
+nothing in the application taking part.</p>
+
+<div class="warning">
+Scaling something by hand is how that stops working, and it does not fail loudly - a number
+scaled at one factor and read back at another leaves a control at a fraction of the size it
+should have, and a form taken to 250% and back keeps it there. There is nothing for an
+application to scale.
+</div>
+
+<h3 id="strokes">Stroke thickness</h3>
+
+<p>Every line the framework draws - a control's border, a divider, the line along the open tab,
+an icon's outline - is stated as a <code>Thickness</code> grade rather than as a length. The
+grade decides the width in device pixels.</p>
+
+<table>
+<tr><th><code>Thickness</code></th><th>Design width</th><th>Drawn for</th></tr>
+<tr><td><code>None</code></td><td>0</td><td>no stroke. The default of every metric block.</td></tr>
+<tr><td><code>Hairline</code></td><td>0.51</td><td>a check mark's ring, the rectangle a selection is dragged out with</td></tr>
+<tr><td><code>Thin</code></td><td>0.83</td><td>control and window borders, dividers, the tab line, icon outlines, the caret</td></tr>
+<tr><td><code>Regular</code></td><td>1.5</td><td>the border of a control holding the focus</td></tr>
+<tr><td><code>Bold</code></td><td>2.0</td><td>a tab line that carries the window's main navigation</td></tr>
+<tr><td><code>Heavy</code></td><td>4.0</td><td>the tab indicator, a divider that breaks a strip into sections</td></tr>
+</table>
+
+<p>A grade is drawn in whole pixels and never under one. From <code>Thin</code> up, each grade is
+at least one pixel wider than the grade below it, so no two of them draw alike at any scale.
+<code>Hairline</code> and <code>Thin</code> can both land on one pixel, which is the least a
+line can be.</p>
+
+<table>
+<tr><th>Scale</th><th>Hairline</th><th>Thin</th><th>Regular</th><th>Bold</th><th>Heavy</th></tr>
+<tr><td>100%</td><td>1</td><td>1</td><td>2</td><td>3</td><td>4</td></tr>
+<tr><td>150%</td><td>1</td><td>1</td><td>2</td><td>3</td><td>6</td></tr>
+<tr><td>250%</td><td>1</td><td>2</td><td>4</td><td>5</td><td>10</td></tr>
+</table>
+
+<p>Three properties state a grade: <code>Border{ Thickness::Thin }</code> on any control,
+a bare <code>Thickness</code> on a <code>Divider</code>, and <code>TabLineThickness</code> on a
+<code>TabbedBox</code> or a <code>TabStrip</code>. A paint handler asks the event for the pixel
+width, and a size stated in design units asks the free function for the design width:</p>
+
+<pre><code><span class="kw">const float</span> line = event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin);  <span class="cm">// device pixels, rounded as above</span>
+<span class="kw">const float</span> inset = <span class="fn">strokeWidth</span>(<span class="tp">Thickness</span>::Thin);         <span class="cm">// design units - a padding one border wide</span>
+<span class="kw">const float</span> ring = event.<span class="fn">borderWidth</span>();                         <span class="cm">// this control's own border in this frame</span></code></pre>
+
+<p><code>borderWidth()</code> is the control's own grade, grown toward <code>Regular</code> while
+it holds the focus. The growth is the one width that passes through fractions of a pixel.</p>
+
+<div class="warning">
+A stroke written as a float and scaled by hand takes no part in the rounding. Two such lines at
+different weights can come out the same width, and a focus ring built on one does not grow.
+</div>
+
+<h2 id="sizing">Sizing a Control</h2>
+
+<h3 id="metrics">The metric properties</h3>
+
+<p>All of these are construction properties on any control built on
+<code>RichControl</code>. Each has a setter of the same name for changing it later.</p>
+
+<table>
+<tr><th>Property</th><th>Means</th><th>Setter</th></tr>
+<tr><td><code>Padding{ x, y }</code></td><td>room kept inside the control, around its content</td><td><code>setPadding</code></td></tr>
+<tr><td><code>Spacing{ x, y }</code></td><td>room kept between the parts the control lays out</td><td><code>setSpacing</code></td></tr>
+<tr><td><code>MinSize{ x, y }</code></td><td>the smallest the control may be made</td><td><code>setMinSize</code></td></tr>
+<tr><td><code>MaxSize{ x, y }</code></td><td>the largest it may grow to</td><td><code>setMaxSize</code></td></tr>
+<tr><td><code>PreferredSize{ x, y }</code></td><td>what it asks for when it is free to choose</td><td><code>setPreferredSize</code>, <code>setPreferredWidth</code>, <code>setPreferredHeight</code></td></tr>
+<tr><td><code>FixedSize{ x, y }</code></td><td>writes <code>MinSize</code> and <code>MaxSize</code> to one value - no size of its own</td><td><code>setFixedSize</code>, <code>setFixedWidth</code>, <code>setFixedHeight</code></td></tr>
+<tr><td><code>Border{ Thickness }</code></td><td>how heavy the control's border is, as a <a href="#strokes">grade</a> - no effect on layout</td><td><code>setBorder</code></td></tr>
+<tr><td><code>Radius{ r }</code></td><td>its corner radius - no effect on layout</td><td><code>setRadius</code></td></tr>
+<tr><td><code>ControlMetrics</code></td><td>the whole block at once, from the theme</td><td><code>setMetrics</code></td></tr>
+</table>
+
+<p>A single float fills both axes, so <code>Padding{ 8.0f }</code> is
+<code>Padding{ 8.0f, 8.0f }</code>. A themed block is passed as itself, and a single metric
+stated beside it wins whichever order the two are written in - the block is read first and the
+separate properties are laid over it. Two properties of the <em>same</em> type in one pack are
+settled by order, and the last one wins:</p>
+
+<pre><code><span class="tp">Panel</span>&amp; m_card{ m_stack.<span class="fn">add</span>&lt;<span class="tp">Panel</span>&gt;(
+    <span class="fn">themeMetrics</span>().page,      <span class="cm">// the whole metric block the theme designs for a page</span>
+    <span class="fn">themeColors</span>().section,
+    <span class="tp">Padding</span>{ <span class="st">12.0f</span> }          <span class="cm">// and this padding instead of the block's</span>
+) };</code></pre>
+
+<div class="info">
+A few controls are built on <code>Control</code> directly rather than on
+<code>RichControl</code>, because they store no appearance of their own, and none of them
+takes the metric block. <code>Spacer</code> and <code>FlexSpacer</code> take no properties at
+all - their size is a constructor argument. <code>Divider</code> takes properties, and its own
+<code>Padding</code> means something different there: it shortens the drawn line without
+moving what stands either side of it. Its weight is a bare <code>Thickness</code>,
+<code>Thin</code> unless one is stated.
+</div>
+
+<h3 id="which-size">Which size to state</h3>
+
+<p><code>MinSize</code>, <code>PreferredSize</code> and <code>MaxSize</code> are three
+different statements and none of them says what another does.</p>
+
+<div class="rules-grid">
+<div class="rule-card dos">
+<h4>Reach for</h4>
+<ul>
+<li><code>MinSize</code> when the control must not lose what it shows. It is also the floor
+that survives a window being cut down.</li>
+<li><code>MaxSize</code> when the control must stop growing - a text column that must stay
+readable, a dropdown that must not cover the screen.</li>
+<li><code>PreferredSize</code> for "this size, unless something with a better claim decides
+otherwise" - a dialog that opens at a stated size and is still resizable, a pane that starts
+at a third of a split.</li>
+<li><code>FixedSize</code> for something whose size is not a question at all: a swatch, an
+icon well, a fixed-height strip.</li>
+</ul>
+</div>
+<div class="rule-card donts">
+<h4>Do not reach for</h4>
+<ul>
+<li><code>MinSize</code> to make something a size. It is a floor, and a control with more
+content grows past it.</li>
+<li><code>MaxSize</code> together with Fill on the same axis.</li>
+<li><code>PreferredSize</code> where Fill would do. A preference is what a control would
+like; Fill is what its parent gives it.</li>
+<li>A stated size to fix a layout that came out wrong. Find which control is not aligned the
+way it needs to be - that is nearly always the real answer.</li>
+</ul>
+</div>
+</div>
+
+<p><code>PreferredSize</code> is read per axis: zero on an axis means the content decides that
+axis, which is the usual case. A stated one stands in place of what the content measured -
+the content is still measured, and the children are still laid out - and it is held between
+<code>minSize</code> and <code>maxSize</code> like any other answer.</p>
+
+<p><code>FixedSize</code> stores nothing of its own. It writes <code>MinSize</code> and
+<code>MaxSize</code> to the same value, and <code>setFixedWidth</code> and
+<code>setFixedHeight</code> do the same on one axis. It is applied after both of them whichever
+order the properties are written in, so a fixed size beside a maximum wins.</p>
+
+<p>Pinning the two together has one more consequence worth knowing: a control whose minimum
+and maximum agree has its own content measured by neither pass, so neither of them shapes its
+text. Its children are still laid out. For a list of a hundred thousand fixed-size items that
+is the difference between a layout and a stall.</p>
+
+<h3 id="spacers">Spacer and FlexSpacer</h3>
+
+<p>Two controls that draw nothing and take room.</p>
+
+<pre><code><span class="cm">// A gap of a stated size.</span>
+m_strip.<span class="fn">add</span>&lt;<span class="tp">Spacer</span>&gt;(<span class="st">12.0f</span>);              <span class="cm">// 12 units both ways</span>
+m_strip.<span class="fn">add</span>&lt;<span class="tp">Spacer</span>&gt;(<span class="st">12.0f</span>, <span class="st">4.0f</span>);        <span class="cm">// x, y</span>
+
+<span class="cm">// The room nobody else claimed.</span>
+m_strip.<span class="fn">add</span>&lt;<span class="tp">FlexSpacer</span>&gt;();              <span class="cm">// takes what its lane has over</span>
+m_strip.<span class="fn">add</span>&lt;<span class="tp">FlexSpacer</span>&gt;(<span class="st">8.0f</span>);          <span class="cm">// and never less than 8</span></code></pre>
+
+<p><code>Spacer</code> keeps the size it was given. <code>FlexSpacer</code> takes whatever
+the lane has left over, split evenly where there is more than one of them. So one puts
+everything after it at the far end, two either side of an item centre that item, and two at
+one end share what is left.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="The same row twice: with a Spacer the gap stays 12 units and the slack collects at the far end; with a FlexSpacer the gap takes the slack and the last button moves to the end.">
+  <style>
+    .sp-l { fill:#f7f9fc; stroke:#9dc2e8; stroke-width:1; stroke-dasharray:3 3; }
+    .sp-i { fill:#eef4fb; stroke:#0066cc; stroke-width:1.2; }
+    .sp-g { fill:#f2f7f2; stroke:#2e7d32; stroke-width:1.3; stroke-dasharray:4 3; }
+    .sp-o { fill:#fbfbfb; stroke:#c9cfd6; stroke-width:1; }
+    .sp-t { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .sp-k { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#0066cc; }
+    .sp-n { font-family:"Fira Code",Consolas,monospace; font-size:10px; fill:#5a6b7d; }
+  </style>
+  <text class="sp-k" x="16" y="48">Spacer</text>
+  <rect class="sp-l" x="130" y="28" width="470" height="44" rx="3"/>
+  <rect class="sp-i" x="136" y="34" width="86" height="32" rx="3"/><text class="sp-t" x="164" y="55">Open</text>
+  <rect class="sp-i" x="228" y="34" width="86" height="32" rx="3"/><text class="sp-t" x="258" y="55">Save</text>
+  <rect class="sp-g" x="320" y="34" width="22" height="32" rx="3"/>
+  <rect class="sp-i" x="348" y="34" width="86" height="32" rx="3"/><text class="sp-t" x="374" y="55">Close</text>
+  <rect class="sp-o" x="440" y="34" width="154" height="32" rx="3"/>
+  <text class="sp-n" x="462" y="55">left over</text>
+
+  <text class="sp-k" x="16" y="136">FlexSpacer</text>
+  <rect class="sp-l" x="130" y="116" width="470" height="44" rx="3"/>
+  <rect class="sp-i" x="136" y="122" width="86" height="32" rx="3"/><text class="sp-t" x="164" y="143">Open</text>
+  <rect class="sp-i" x="228" y="122" width="86" height="32" rx="3"/><text class="sp-t" x="258" y="143">Save</text>
+  <rect class="sp-g" x="320" y="122" width="182" height="32" rx="3"/>
+  <text class="sp-n" x="360" y="143">takes the slack</text>
+  <rect class="sp-i" x="508" y="122" width="86" height="32" rx="3"/><text class="sp-t" x="534" y="143">Close</text>
+
+  <text class="sp-n" x="130" y="186">the lane, as wide as the stack was granted</text>
+</svg>
+
+<div class="warning">
+A lane only has something left over when the stack was given more room than it measured. A
+<code>FlexSpacer</code> in a stack nothing stretched has nothing to take, and what you get is
+the minimum size it was built with. If a flex spacer appears to do nothing, the question is
+not about the spacer - it is whether its stack fills the room it stands in. See
+<a href="#t-flex">a FlexSpacer that does nothing</a>.
+</div>
+
+<div class="info">
+The same idea exists one level down, inside text: a menu item's shortcut key rides on a flex
+space in its own line, which is what lands every key on the same edge. See the
+<em>TextEngine</em> manual.
+</div>
+
+<h2 id="containers">Arranging Children</h2>
+
+<p>Four containers account for nearly every arrangement. Each answers one question:</p>
+
+<table>
+<tr><th>Container</th><th>Arranges by</th><th>Reach for it when</th></tr>
+<tr><td><code>StackPanel</code></td><td>lanes - a row, a column, or a wrap of either</td><td>things follow one another in order</td></tr>
+<tr><td><code>Panel</code></td><td>five named slots around a body</td><td>something frames something else</td></tr>
+<tr><td><code>ScrollBox</code></td><td>a viewport over a body laid out whole</td><td>the content outruns the room</td></tr>
+<tr><td><code>Grid</code></td><td>columns shared by every row</td><td>values line up across rows</td></tr>
+</table>
+
+<h3 id="stackpanel">StackPanel</h3>
+
+<p>A container that places its items in lanes. Three properties say how.</p>
+
+<pre><code><span class="tp">StackPanel</span>&amp; m_column{ <span class="fn">createBody</span>&lt;<span class="tp">StackPanel</span>&gt;(
+    <span class="tp">Orientation</span>::Vertical,
+    <span class="tp">Padding</span>{ <span class="st">12.0f</span> },
+    <span class="tp">Spacing</span>{ <span class="st">8.0f</span> }
+) };
+<span class="tp">Button</span>&amp; m_first{ m_column.<span class="fn">add</span>&lt;<span class="tp">Button</span>&gt;(<span class="st">L"First"</span>) };</code></pre>
+
+<table>
+<tr><th>Property</th><th>Values</th><th>Default</th></tr>
+<tr><td><code>Orientation</code></td><td><code>Horizontal</code>, <code>Vertical</code>, <code>HorizontalWrap</code>, <code>VerticalWrap</code></td><td><code>VerticalWrap</code></td></tr>
+<tr><td><code>LaneSize{ n }</code></td><td>how many items one lane takes before the next begins</td><td>no limit</td></tr>
+<tr><td><code>ItemSizing</code></td><td><code>Natural</code>, <code>Equal</code></td><td><code>Natural</code></td></tr>
+</table>
+
+<p><code>Horizontal</code> and <code>Vertical</code> are one lane. Everything goes in it,
+however long it gets. <code>HorizontalWrap</code> lays rows and breaks into a new one;
+<code>VerticalWrap</code> lays columns and breaks into a new one.</p>
+
+<p><strong>What a lane hands each item.</strong> Along the lane, the size the item measured.
+Across the lane, the whole thickness of the lane - which is as thick as the largest item in
+it. What the item does with the box it is given is its own alignment's answer, as always: a
+row of buttons aligned Fill are all as tall as the tallest, and the same buttons aligned
+<code>VerticalAlign::Center</code> keep their own heights and sit in the middle of the row.</p>
+
+<p><strong>What is left over.</strong> A stack given more room than it measured shares it out,
+and the sharing has two steps:</p>
+
+<ul>
+<li>A flex spacer in the lane takes it, split evenly where there is more than one.</li>
+<li>Where nothing asked, a single lane leaves it at the far end and every item stands at the
+size it measured. A <em>wrapping</em> stack shares it among its items instead - see
+<a href="#wrapping">below</a> - and only where the stack itself was told to fill that way.</li>
+</ul>
+
+<p><code>ItemSizing::Equal</code> is the other way to divide a lane: every item is handed the
+same share, whatever it measured, and the lane is as long as the largest item times the count.
+A row of answers reads as one band that way rather than as buttons of three widths. A share is
+a box like any other, so the items in it need <code>HorizontalAlign::Fill</code> to actually
+be the same width - one aligned to an edge keeps its own size and the row goes ragged inside
+a set of equal shares.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="One lane three ways: Natural packs items at their measured widths; Equal cuts the lane into shares as wide as the largest item; Equal with items not aligned Fill leaves them ragged inside those shares.">
+  <style>
+    .is-l { fill:#f7f9fc; stroke:#9dc2e8; stroke-width:1; stroke-dasharray:3 3; }
+    .is-s { fill:none; stroke:#9dc2e8; stroke-width:1; stroke-dasharray:2 3; }
+    .is-i { fill:#eef4fb; stroke:#0066cc; stroke-width:1.2; }
+    .is-t { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .is-k { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#0066cc; }
+    .is-n { font-family:"Fira Code",Consolas,monospace; font-size:10px; fill:#5a6b7d; }
+  </style>
+  <text class="is-k" x="16" y="42">Natural</text>
+  <rect class="is-i" x="150" y="24" width="72"  height="32" rx="3"/><text class="is-t" x="168" y="45">Save</text>
+  <rect class="is-i" x="230" y="24" width="106" height="32" rx="3"/><text class="is-t" x="250" y="45">Discard</text>
+  <rect class="is-i" x="344" y="24" width="88"  height="32" rx="3"/><text class="is-t" x="364" y="45">Cancel</text>
+  <text class="is-n" x="450" y="45">each item the width it measured</text>
+
+  <text class="is-k" x="16" y="122">Equal</text>
+  <rect class="is-l" x="150" y="98" width="342" height="44" rx="3"/>
+  <rect class="is-s" x="154" y="102" width="106" height="36" rx="3"/>
+  <rect class="is-s" x="268" y="102" width="106" height="36" rx="3"/>
+  <rect class="is-s" x="382" y="102" width="106" height="36" rx="3"/>
+  <rect class="is-i" x="154" y="102" width="106" height="36" rx="3"/><text class="is-t" x="188" y="125">Save</text>
+  <rect class="is-i" x="268" y="102" width="106" height="36" rx="3"/><text class="is-t" x="294" y="125">Discard</text>
+  <rect class="is-i" x="382" y="102" width="106" height="36" rx="3"/><text class="is-t" x="410" y="125">Cancel</text>
+  <text class="is-n" x="504" y="118">three shares, each as wide</text>
+  <text class="is-n" x="504" y="134">as the largest item</text>
+
+  <text class="is-k" x="16" y="202">Equal,</text>
+  <text class="is-k" x="16" y="216">items not Fill</text>
+  <rect class="is-l" x="150" y="182" width="342" height="44" rx="3"/>
+  <rect class="is-s" x="154" y="186" width="106" height="36" rx="3"/>
+  <rect class="is-s" x="268" y="186" width="106" height="36" rx="3"/>
+  <rect class="is-s" x="382" y="186" width="106" height="36" rx="3"/>
+  <rect class="is-i" x="154" y="186" width="72"  height="36" rx="3"/><text class="is-t" x="172" y="209">Save</text>
+  <rect class="is-i" x="268" y="186" width="106" height="36" rx="3"/><text class="is-t" x="294" y="209">Discard</text>
+  <rect class="is-i" x="382" y="186" width="88"  height="36" rx="3"/><text class="is-t" x="402" y="209">Cancel</text>
+  <text class="is-n" x="504" y="202">the shares are still equal,</text>
+  <text class="is-n" x="504" y="218">what stands in them is not</text>
+</svg>
+
+<pre><code><span class="cm">// Save, Discard and Cancel as one band, each as wide as the widest.</span>
+<span class="tp">StackPanel</span>&amp; m_answers{ <span class="fn">createBottomBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+    <span class="tp">Orientation</span>::Horizontal,
+    <span class="tp">ItemSizing</span>::Equal,
+    <span class="tp">Spacing</span>{ <span class="st">8.0f</span> }
+) };</code></pre>
+
+<h3 id="wrapping">Wrapping stacks</h3>
+
+<p>A wrapping stack reads everything through two words. <strong>Main is the way a lane runs,
+cross is the way the lanes stack.</strong> One routine serves both orientations, so whatever
+is true of rows is true of columns with the axes swapped.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A wrapping stack of rows: items run along the main axis, lanes stack along the cross axis, the surplus along the lane is divided per item and the slack across the lanes is shared between them.">
+  <style>
+    .wr-l  { fill:#f4f8fd; stroke:#9dc2e8; stroke-width:1; stroke-dasharray:3 3; }
+    .wr-i  { fill:#eef4fb; stroke:#0066cc; stroke-width:1.2; }
+    .wr-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .wr-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .wr-a  { stroke:#2e7d32; stroke-width:1.4; fill:none; }
+  </style>
+  <defs>
+    <marker id="wg" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="#2e7d32"/>
+    </marker>
+  </defs>
+  <rect class="wr-l" x="30" y="40"  width="400" height="46" rx="3"/>
+  <rect class="wr-l" x="30" y="100" width="400" height="46" rx="3"/>
+  <rect class="wr-l" x="30" y="160" width="400" height="34" rx="3"/>
+  <rect class="wr-i" x="38" y="46" width="90" height="34" rx="3"/>
+  <rect class="wr-i" x="138" y="46" width="90" height="34" rx="3"/>
+  <rect class="wr-i" x="238" y="46" width="90" height="34" rx="3"/>
+  <rect class="wr-i" x="338" y="46" width="90" height="34" rx="3"/>
+  <rect class="wr-i" x="38" y="106" width="90" height="34" rx="3"/>
+  <rect class="wr-i" x="138" y="106" width="90" height="34" rx="3"/>
+  <rect class="wr-i" x="238" y="106" width="90" height="34" rx="3"/>
+  <rect class="wr-i" x="338" y="106" width="90" height="34" rx="3"/>
+  <rect class="wr-i" x="38" y="164" width="90" height="26" rx="3"/>
+  <rect class="wr-i" x="138" y="164" width="90" height="26" rx="3"/>
+  <path class="wr-a" marker-end="url(#wg)" d="M38,26 L428,26"/>
+  <text class="wr-m" x="180" y="20">main</text>
+  <path class="wr-a" marker-end="url(#wg)" d="M452,44 L452,192"/>
+  <text class="wr-m" x="460" y="120">cross</text>
+  <text class="wr-m" x="500" y="52">a lane is as thick as</text>
+  <text class="wr-m" x="500" y="68">its largest item</text>
+  <text class="wr-m" x="500" y="104">the surplus along the lane</text>
+  <text class="wr-m" x="500" y="120">is divided per ITEM, so the</text>
+  <text class="wr-m" x="500" y="136">fullest lane ends on the edge</text>
+  <text class="wr-m" x="500" y="172">a short last lane stays short</text>
+</svg>
+
+<p>A lane breaks on two things: the <code>LaneSize</code> count, or the length running out.
+Whichever comes first, and never on the lane's own first item, which stands however long it
+is.</p>
+
+<div class="info">
+<strong>A stated <code>LaneSize</code> is a break, not a hint.</strong> Both passes read it,
+so a stack stated four to a lane stands four to a lane in a window of any size, and what a
+larger host gives it is room around the lane rather than a fifth item in it. Hidden items are
+passed over by both passes, so a lane holds the number it was measured to hold whatever has
+been hidden since.
+</div>
+
+<p><strong>The surplus across the lanes</strong> - whatever is left once every lane stands at
+its own thickness - goes to the lanes in equal parts. A list dropped into a window wider than
+its columns fills it, and a stack of rows told to fill a taller box spreads its rows down it
+the same way.</p>
+
+<p><strong>The surplus along the lanes</strong> is one number for the whole stack, and it is
+divided <em>per item</em>: what the length has over the longest lane, over the count of items
+on the fullest one. Every item then grows by the same amount, the fullest lane comes out
+exactly at the length, and a short last lane simply stays short rather than being stretched across the
+room for five.</p>
+
+<h4>The width a wrapping panel wraps at</h4>
+
+<p>This is the one place where the two passes have to be told about each other, and it is
+worth understanding because it explains the single most common layout surprise.</p>
+
+<p>The measure runs bottom-up, before anyone knows what width the panel will be handed. So a
+wrapping panel measured on its own reports one lane holding everything, and the align breaks
+that into as many lanes as the width allows. The panel carries the width over: it remembers
+the content width it broke its rows at, the next measure breaks them at that same width, and
+where the width has changed it asks for one more pass. The pass after hands back the same
+number, which is what ends it.</p>
+
+<div class="warning">
+<strong>Every host between it and the window must be aligned Fill.</strong> The remembered
+width is kept only where the panel's width really comes from outside, and a control that is
+not Fill keeps what it measured - so everything inside such a host is inside that measurement,
+and the wrapping panel under it wraps at its own natural width whatever the window is.
+</div>
+
+<pre><code><span class="cm">// A section whose body is a wrapping panel of tiles.</span>
+<span class="kw">using</span> <span class="tp">ThemesGroup</span> = <span class="tp">ExpanderWith</span>&lt;<span class="tp">StackPanel</span>&gt;;
+
+<span class="tp">ThemesGroup</span>&amp; m_group{ <span class="fn">add</span>&lt;<span class="tp">ThemesGroup</span>&gt;(
+    <span class="tp">HostProps</span>{
+        <span class="tp">VerticalAlign</span>::Top,          <span class="cm">// the section follows the tiles as they wrap</span>
+        <span class="tp">ExpanderViewMode</span>::Divider,
+        <span class="tp">HeaderText</span>{ <span class="st">L"User Themes"</span> }
+    },
+    <span class="tp">BodyProps</span>{
+        <span class="tp">Orientation</span>::HorizontalWrap,
+        <span class="tp">ItemSizing</span>::Equal,
+        <span class="tp">Padding</span>{ <span class="st">12.0f</span>, <span class="st">4.0f</span> },
+        <span class="tp">Spacing</span>{ <span class="st">4.0f</span> }
+    }
+) };</code></pre>
+
+<div class="info">
+Rows alone carry this. The width is the extent the measure runs against; a stack of columns
+takes no such maximum, so it has nothing to carry back and nothing to ask another pass about.
+</div>
+
+<h3 id="panel">Panel and its five slots</h3>
+
+<p>A <code>Panel</code> holds bars around a body. The slots are named, each takes at most one
+control, and the slot decides where the control goes - not the order the controls were
+created in.</p>
+
+<svg class="grid-fig" viewBox="0 0 660 280" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Panel slots: a top bar across the content, a bottom bar across the content, left and right bars as wide as they measured, and the body taking what is left.">
+  <style>
+    .pn-o { fill:#ffffff; stroke:#c9cfd6; stroke-width:1.4; }
+    .pn-b { fill:#eef4fb; stroke:#0066cc; stroke-width:1.2; }
+    .pn-y { fill:#f2f7f2; stroke:#2e7d32; stroke-width:1.4; }
+    .pn-t { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11.5px; fill:#111; }
+    .pn-m { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+  </style>
+  <rect class="pn-o" x="20" y="20" width="400" height="240" rx="6"/>
+  <rect class="pn-b" x="34" y="34" width="372" height="36" rx="3"/><text class="pn-t" x="170" y="57">Top</text>
+  <rect class="pn-b" x="34" y="210" width="372" height="36" rx="3"/><text class="pn-t" x="164" y="233">Bottom</text>
+  <rect class="pn-b" x="34" y="80" width="70" height="120" rx="3"/><text class="pn-t" x="48" y="145">Left</text>
+  <rect class="pn-b" x="336" y="80" width="70" height="120" rx="3"/><text class="pn-t" x="348" y="145">Right</text>
+  <rect class="pn-y" x="114" y="80" width="212" height="120" rx="3"/><text class="pn-t" x="198" y="145">Body</text>
+  <text class="pn-m" x="440" y="52">spans the content width</text>
+  <text class="pn-m" x="440" y="94">as wide as it measured,</text>
+  <text class="pn-m" x="440" y="110">as tall as the middle row</text>
+  <text class="pn-m" x="440" y="150">whatever is left, and the</text>
+  <text class="pn-m" x="440" y="166">one slot that can make</text>
+  <text class="pn-m" x="440" y="182">the panel taller</text>
+  <text class="pn-m" x="440" y="228">spans the content width</text>
+</svg>
+
+<pre><code><span class="tp">StackPanel</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">StackPanel</span>&gt;(<span class="tp">Orientation</span>::Horizontal) };
+<span class="tp">StackView</span>&amp;  m_tree{    <span class="fn">createLeftBar</span>&lt;<span class="tp">StackView</span>&gt;(<span class="tp">MinSize</span>{ <span class="st">180.0f</span>, <span class="st">0.0f</span> }) };
+<span class="tp">ScrollBox</span>&amp;  m_view{    <span class="fn">createBody</span>&lt;<span class="tp">ScrollBox</span>&gt;() };
+<span class="tp">StackPanel</span>&amp; m_status{  <span class="fn">createBottomBar</span>&lt;<span class="tp">StackPanel</span>&gt;(<span class="tp">Orientation</span>::Horizontal) };</code></pre>
+
+<p>The order the slots are settled in is fixed: top, bottom, left, right, body. A top or
+bottom bar spans the content width and is as tall as it measured. A left or right bar is as
+wide as <em>it</em> measured - it is the one place in a panel where a child's width is its own
+answer - and as tall as the middle row. The body gets what is left.</p>
+
+<p>The panel's <code>Spacing</code> is what stands between a bar and the body. A bar that
+measured nothing takes its gap with it, so an empty or hidden bar leaves no trace.</p>
+
+<div class="info">
+<strong>A body may make its panel taller.</strong> If the body comes out taller than the slot
+it was offered, the panel grows to hold it - unless the panel's own height is dictated from
+outside, which is either <code>VerticalAlign::Fill</code> or the panel itself standing in
+somebody else's body slot. That is what lets a column of sections grow as sections are opened
+while the same column inside a window simply fills the window.
+</div>
+
+<h3 id="withbody">WithBody, HostProps and BodyProps</h3>
+
+<p><code>createBody&lt;T&gt;</code> gives the slot a control but leaves
+<code>body()</code> answering a plain <code>Control*</code>.
+<code>WithBody&lt;Host, Body&gt;</code> puts a static type over the slot, so
+<code>body()</code> answers the type you named. Two aliases already exist for the common
+hosts:</p>
+
+<pre><code><span class="tp">ScrollBoxWith</span>&lt;<span class="tp">OptionsPage</span>&gt;    <span class="cm">// a scroll box whose body is an OptionsPage</span>
+<span class="tp">ExpanderWith</span>&lt;<span class="tp">StackPanel</span>&gt;      <span class="cm">// a section whose body is a stack</span></code></pre>
+
+<p>Two controls are being built, so the properties arrive in two bags. Each bag routes by
+type, and a bag must not carry the same property type twice.</p>
+
+<pre><code><span class="tp">ScrollBoxWith</span>&lt;<span class="tp">OptionsPage</span>&gt;&amp; m_optionsBox{ <span class="fn">createBody</span>&lt;<span class="tp">ScrollBoxWith</span>&lt;<span class="tp">OptionsPage</span>&gt;&gt;(
+    <span class="tp">HostProps</span>{                       <span class="cm">// for the box</span>
+        <span class="tp">ScrollBars</span>::Auto,
+        <span class="tp">MaxSize</span>{ k_maxFloat, k_optionsHeight }
+    },
+    <span class="tp">BodyProps</span>&lt;&gt;{}                    <span class="cm">// for the page - nothing to say here</span>
+) };
+<span class="tp">OptionsPage</span>&amp; m_options{ m_optionsBox.<span class="fn">body</span>() };</code></pre>
+
+<h3 id="scrollbox">ScrollBox</h3>
+
+<p>A <code>ScrollBox</code> is a <code>PanelBase</code> whose right and bottom bars are its
+scroll bars. Its body is laid out to the whole of its content and carried under the slot by the
+scroll position, which is why the body's own rect says where the content has reached rather
+than where it shows.</p>
+
+<div class="info">
+<strong>It is the only control in the framework that scrolls.</strong> Nothing else implements
+scrolling of its own, and anything at all can be put in one. That is why a view is written
+without a box - a grid, a text box, a list of tiles are each just as tall as their content -
+and whoever decides how much room it gets is who wraps it.
+</div>
+
+<pre><code><span class="tp">ScrollBoxWith</span>&lt;<span class="tp">HexView</span>&gt;&amp; m_box{ <span class="fn">createBody</span>&lt;<span class="tp">ScrollBoxWith</span>&lt;<span class="tp">HexView</span>&gt;&gt;(
+    <span class="tp">HostProps</span>{ <span class="tp">ScrollBars</span>::Vertical },
+    <span class="tp">BodyProps</span>{ <span class="tp">Padding</span>{ <span class="st">4.0f</span> } }
+) };</code></pre>
+
+<table>
+<tr><th><code>ScrollBars</code></th><th>Means</th></tr>
+<tr><td><code>Both</code></td><td>both bars stand whatever the content is. The default.</td></tr>
+<tr><td><code>Vertical</code> / <code>Horizontal</code></td><td>that one bar</td></tr>
+<tr><td><code>None</code></td><td>no bars - the box still clips, and still scrolls to a control brought into view</td></tr>
+<tr><td><code>Auto</code></td><td>a bar on whichever axis the content overruns</td></tr>
+</table>
+
+<div class="warning">
+<code>Auto</code> is answered during the measure, against the box's <em>own</em> maximum
+size. So it is for a box that measures itself: one under a <code>MaxSize</code>, or one that
+is an auto-fitting window's whole content. A box whose size comes from what contains it has
+no maximum of its own and never puts up an <code>Auto</code> bar - state the bars you want
+there.
+</div>
+
+<svg class="grid-fig" viewBox="0 0 700 290" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A scroll box: the slot is the window the body is seen through, the body is laid out to its whole content and carried under the slot by the scroll position.">
+  <style>
+    .sb-o { fill:#ffffff; stroke:#c9cfd6; stroke-width:1.4; }
+    .sb-b { fill:#f1f4f8; stroke:#9dc2e8; stroke-width:1; }
+    .sb-v { fill:#eef4fb; stroke:#0066cc; stroke-width:1.6; }
+    .sb-h { fill:none; stroke:#0066cc; stroke-width:1.1; stroke-dasharray:4 3; }
+    .sb-r { fill:#dfe8f5; stroke:#9dc2e8; stroke-width:0.8; }
+    .sb-th{ fill:#b9c8dc; stroke:#8fa4bf; stroke-width:0.8; }
+    .sb-t { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .sb-n { font-family:"Fira Code",Consolas,monospace; font-size:10px; fill:#5a6b7d; }
+    .sb-a { stroke:#2e7d32; stroke-width:1.4; fill:none; }
+  </style>
+  <defs>
+    <marker id="sba" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="#2e7d32"/>
+    </marker>
+  </defs>
+
+  <rect class="sb-h" x="60" y="14" width="250" height="262" rx="3"/>
+  <text class="sb-n" x="60" y="10">the body, laid out to its whole content</text>
+
+  <rect class="sb-o" x="46" y="60" width="300" height="170" rx="5"/>
+  <rect class="sb-v" x="60" y="74" width="250" height="130" rx="3"/>
+  <rect class="sb-b" x="316" y="74" width="16" height="130" rx="3"/>
+  <rect class="sb-th" x="318" y="108" width="12" height="52" rx="5"/>
+  <rect class="sb-b" x="60" y="210" width="250" height="16" rx="3"/>
+  <rect class="sb-th" x="70" y="212" width="120" height="12" rx="5"/>
+  <rect class="sb-r" x="316" y="210" width="16" height="16" rx="3"/>
+  <text class="sb-t" x="140" y="145">the slot</text>
+
+  <path class="sb-a" marker-end="url(#sba)" d="M400,90 L400,200"/>
+  <text class="sb-n" x="410" y="100">the scroll position</text>
+  <text class="sb-n" x="410" y="116">carries the body</text>
+  <text class="sb-n" x="410" y="132">under the slot</text>
+  <text class="sb-n" x="410" y="164">the slot holds still;</text>
+  <text class="sb-n" x="410" y="180">the body travels</text>
+  <text class="sb-n" x="410" y="212">the corner shows only</text>
+  <text class="sb-n" x="410" y="228">while both bars are up</text>
+</svg>
+
+<p>Two things follow from the body being laid out whole, and both are useful:</p>
+
+<ul>
+<li><strong>A scrolled body keeps what it measured.</strong> The align pass normally cuts a
+control to the slot it was given; a body on a scroll box is exempt, which is what gives the
+bars a range to carry the view across.</li>
+<li><strong>A wrapping or word-wrapping body is broken at the viewport.</strong> The box
+states the viewport as that body's maximum width, so the body shapes its text once, at the
+width it will be drawn at, rather than at a width no line reaches.</li>
+</ul>
+
+<p><code>createCorner&lt;T&gt;</code> fills the square the two bars leave between them. What
+is put there stands only while both bars are up.</p>
+
+<h3 id="others">Expander, tabs, pages</h3>
+
+<p><strong><code>Expander</code></strong> - a panel whose body is shown and hidden by its
+header. The header owns the open state; the body is the panel's to show, so collapsing the
+header takes the whole body with it and the panel shrinks to the header. The header is held
+against the top of the view while what it heads is scrolled under it.
+<code>ExpanderWith&lt;T&gt;</code> types the body.
+<code>ExpanderViewMode</code> picks what the expander draws of itself:
+<code>Section</code>, <code>Divider</code> or <code>TreeNode</code>.</p>
+
+<p><strong><code>PageControl</code></strong> - a stack showing one of its pages at a time.
+Pages are hidden as they are added and the current one is shown, and a hidden control is not
+measured - so under the default sizing a page nobody is looking at costs no layout at all.
+<code>PageSizing</code> says what the control answers for its own size with:</p>
+
+<table>
+<tr><th><code>PageSizing</code></th><th>Means</th></tr>
+<tr><td><code>CurrentPage</code></td><td>the page that shows, and nothing about the ones that do not. The default.</td></tr>
+<tr><td><code>WidestPage</code></td><td>the largest of them all, both extents - so turning a page does not resize what holds it. The hidden pages are measured for this, once per page set and once per scale.</td></tr>
+</table>
+
+<p><strong><code>TabbedBox</code></strong> - a strip of tabs over a page control that follows
+the open one. <code>TabsOrientation</code> says which edge the strip runs along:
+<code>HorizontalTop</code>, <code>HorizontalBottom</code>, <code>VerticalLeft</code>,
+<code>VerticalRight</code>. <code>TabLineThickness</code> says how heavy the line along the open
+tab is - <code>Thin</code> unless stated, <code>Bold</code> for a strip that is the window's main
+navigation.</p>
+
+<p><strong><code>StackView</code></strong> - a <code>StackPanel</code> that holds several
+items selected at once. Every layout property of <code>StackPanel</code> reads on it
+unchanged; what it adds is selection, which is a different manual.</p>
+
+<p><strong><code>Divider</code></strong> - a line across whatever it stands in. It measures its
+<code>Thickness</code> both ways, so in a column it is a horizontal rule and in a row it is a
+vertical one. Its ends are rounded to half its width. A section break is
+<code>Thickness::Heavy</code>:</p>
+
+<pre><code>strip.<span class="fn">add</span>&lt;<span class="tp">Divider</span>&gt;(<span class="tp">Thickness</span>::Heavy, <span class="tp">Padding</span>{ <span class="st">8.0f</span>, <span class="st">4.0f</span> });</code></pre>
+
+<h2 id="content">Content That Sizes Itself</h2>
+
+<p>Three things in a layout answer with a size of their own rather than taking one. They are
+where most of the remaining surprises live.</p>
+
+<h3 id="text">Text</h3>
+
+<p>A control's text is measured on the measure pass and, where it wraps, measured again on the
+align pass at the width it was actually granted. A narrower box breaks more lines out of a
+paragraph and a wider one joins them, so the height is not knowable until the width is.</p>
+
+<table>
+<tr><th>Property</th><th>Values</th><th>Default</th></tr>
+<tr><td><code>WordWrap</code></td><td><code>Yes</code>, <code>No</code></td><td><code>Yes</code></td></tr>
+<tr><td><code>HorizontalTextAnchor</code></td><td><code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>Left</code></td></tr>
+<tr><td><code>VerticalTextAnchor</code></td><td><code>Top</code>, <code>Center</code>, <code>Bottom</code></td><td><code>Top</code></td></tr>
+</table>
+
+<p><code>WordWrap::No</code> is not only a drawing choice, it changes what the control
+measures. A text that does not wrap is measured against no width at all, so the control is as
+wide as its longest line whatever it is offered - which is exactly what a horizontal scroll
+bar needs to have a range to carry the view across. A text that wraps is measured against the
+box, and a box it cannot fit into shortens it rather than widening the control.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="The same text in the same slot: WordWrap No measures against no width and stays one long line the bar carries the view across; WordWrap Yes breaks to the slot and the control grows taller.">
+  <style>
+    .ww-s { fill:none; stroke:#9dc2e8; stroke-width:1; stroke-dasharray:3 3; }
+    .ww-c { fill:#eef4fb; stroke:#0066cc; stroke-width:1.3; }
+    .ww-x { fill:#f6f9fd; stroke:#9dc2e8; stroke-width:1; stroke-dasharray:2 3; }
+    .ww-g { fill:#7f96ad; }
+    .ww-b { fill:#dfe8f5; stroke:#9dc2e8; stroke-width:0.8; }
+    .ww-th{ fill:#b9c8dc; stroke:#8fa4bf; stroke-width:0.8; }
+    .ww-k { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#0066cc; }
+    .ww-n { font-family:"Fira Code",Consolas,monospace; font-size:10px; fill:#5a6b7d; }
+  </style>
+  <text class="ww-k" x="16" y="52">WordWrap::No</text>
+  <rect class="ww-s" x="180" y="28" width="230" height="46" rx="3"/>
+  <rect class="ww-c" x="180" y="28" width="360" height="46" rx="3"/>
+  <rect class="ww-g" x="192" y="47" width="336" height="7" rx="3"/>
+  <rect class="ww-b" x="180" y="80" width="230" height="12" rx="3"/>
+  <rect class="ww-th" x="182" y="82" width="140" height="8" rx="4"/>
+  <text class="ww-n" x="180" y="108">as wide as its longest line, whatever the slot is</text>
+  <text class="ww-n" x="180" y="124">the bar is what reaches the rest</text>
+
+  <text class="ww-k" x="16" y="172">WordWrap::Yes</text>
+  <rect class="ww-s" x="180" y="148" width="230" height="46" rx="3"/>
+  <rect class="ww-c" x="180" y="148" width="230" height="74" rx="3"/>
+  <rect class="ww-g" x="192" y="160" width="206" height="7" rx="3"/>
+  <rect class="ww-g" x="192" y="178" width="206" height="7" rx="3"/>
+  <rect class="ww-g" x="192" y="196" width="120" height="7" rx="3"/>
+  <text class="ww-n" x="430" y="172">broken to the slot,</text>
+  <text class="ww-n" x="430" y="188">so a narrower box</text>
+  <text class="ww-n" x="430" y="204">is a taller one</text>
+</svg>
+
+<pre><code><span class="tp">CodeBox</span>&amp; m_source{ m_box.<span class="fn">createBody</span>&lt;<span class="tp">CodeBox</span>&gt;(
+    <span class="cm">// Source is lines. The box is as wide as its longest one and the bar reaches it.</span>
+    <span class="tp">WordWrap</span>::No,
+    <span class="tp">Padding</span>{ <span class="st">6.0f</span> }
+) };</code></pre>
+
+<div class="info">
+The three anchors place the measured text <em>block</em> inside the control's own box, as a
+whole. <code>TextAlign</code>, written inside a <code>Text</code>, places the lines inside
+that block. A centred paragraph in a left-anchored label is both, and they do not mean the
+same thing.
+</div>
+
+<p>One measuring rule is worth knowing because it reaches a level away: a button whose
+<code>ButtonViewMode</code> puts the picture above the words - <code>TopLeftIcon</code> and
+<code>TopCenterIcon</code> - measures its caption at the
+<em>icon's</em> width, so the caption wraps under the picture rather than making the button as
+wide as its name. In a wrapping stack under <code>ItemSizing::Equal</code>, where every share
+is as long as the largest item, one long caption measured on one line would size every share
+in the stack and can drop a whole column out of the grid.</p>
+
+<h3 id="grid-columns">Grid columns</h3>
+
+<p>A grid is the one container whose arrangement is shared between children: every row is cut
+by the same columns, so a value in the third column lines up down the whole grid. Each column
+resolves its own width:</p>
+
+<table>
+<tr><th><code>ColumnWidthMode</code></th><th>Means</th></tr>
+<tr><td><code>FitContent</code></td><td>wide enough for its widest cell across all rows. The default.</td></tr>
+<tr><td><code>Fixed</code></td><td>the width stated, in design units</td></tr>
+<tr><td><code>Fill</code></td><td>content sets the floor, then the stated width divides the remainder as a ratio against the other <code>Fill</code> columns</td></tr>
+</table>
+
+<svg class="grid-fig" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A grid at full width and narrowed: the Fill column takes the remainder, and narrowing eats the widest column first while the short ones keep their width.">
+  <style>
+    .gc-h { fill:#f6f8fa; stroke:#c9cfd6; stroke-width:1; }
+    .gc-c { fill:#ffffff; stroke:#dfe3e8; stroke-width:1; }
+    .gc-f { fill:#eef4fb; stroke:#0066cc; stroke-width:1.2; }
+    .gc-t { font-family:-apple-system,"Segoe UI",sans-serif; font-size:10.5px; fill:#111; }
+    .gc-n { font-family:"Fira Code",Consolas,monospace; font-size:10px; fill:#5a6b7d; }
+    .gc-k { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#0066cc; }
+    .gc-a { stroke:#c62828; stroke-width:1.4; fill:none; }
+  </style>
+  <defs>
+    <marker id="gca" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="#c62828"/>
+    </marker>
+  </defs>
+  <text class="gc-k" x="16" y="44">room enough</text>
+  <rect class="gc-h" x="150" y="24" width="150" height="22"/><text class="gc-t" x="158" y="39">Name</text>
+  <rect class="gc-h" x="300" y="24" width="60"  height="22"/><text class="gc-t" x="308" y="39">Level</text>
+  <rect class="gc-f" x="360" y="24" width="190" height="22"/><text class="gc-t" x="368" y="39">Notes</text>
+  <rect class="gc-h" x="550" y="24" width="70"  height="22"/><text class="gc-t" x="558" y="39">Value</text>
+  <rect class="gc-c" x="150" y="46" width="150" height="20"/>
+  <rect class="gc-c" x="300" y="46" width="60"  height="20"/>
+  <rect class="gc-f" x="360" y="46" width="190" height="20"/>
+  <rect class="gc-c" x="550" y="46" width="70"  height="20"/>
+  <text class="gc-n" x="152" y="82">FitContent</text>
+  <text class="gc-n" x="302" y="82">Fixed</text>
+  <text class="gc-n" x="362" y="82">Fill - takes the remainder</text>
+  <text class="gc-n" x="552" y="82">FitContent</text>
+
+  <path class="gc-a" marker-end="url(#gca)" d="M620,110 L470,110"/>
+  <text class="gc-n" x="480" y="104">narrowed</text>
+
+  <text class="gc-k" x="16" y="154">narrowed</text>
+  <rect class="gc-h" x="150" y="134" width="118" height="22"/><text class="gc-t" x="158" y="149">Name</text>
+  <rect class="gc-h" x="268" y="134" width="60"  height="22"/><text class="gc-t" x="276" y="149">Level</text>
+  <rect class="gc-f" x="328" y="134" width="72"  height="22"/><text class="gc-t" x="336" y="149">Notes</text>
+  <rect class="gc-h" x="400" y="134" width="70"  height="22"/><text class="gc-t" x="408" y="149">Value</text>
+  <rect class="gc-c" x="150" y="156" width="118" height="20"/>
+  <rect class="gc-c" x="268" y="156" width="60"  height="20"/>
+  <rect class="gc-f" x="328" y="156" width="72"  height="20"/>
+  <rect class="gc-c" x="400" y="156" width="70"  height="20"/>
+  <text class="gc-n" x="152" y="192">the widest gives way first</text>
+  <text class="gc-n" x="400" y="192">the short ones are left alone</text>
+  <text class="gc-n" x="150" y="216">no column goes below its own minimum</text>
+</svg>
+
+<p>When the grid has less room than its columns asked for, the width is taken off the
+<em>widest</em> column first, then off the widest two together once they are level, and so on
+down - never below a column's own minimum. Narrowing a grid therefore eats the long columns
+and leaves the short ones alone.</p>
+
+<div class="info">
+The grid's own arrangement, its blueprint, its cells and their controls are the
+<em>Grids-Manual</em>'s subject. What belongs here is the one thing a grid is from the
+outside: a control that measures to the sum of its columns, and that wants a
+<code>ScrollBox</code> around it whenever the rows can outrun the room.
+</div>
+
+<h3 id="window">The window</h3>
+
+<p>A form's root control is laid out into the window's geometry, and that is the whole of the
+connection. The root is an ordinary control in every other way - it has padding, it has a
+<code>MinSize</code>, it arranges its children like anything else.</p>
+
+<ul>
+<li><strong>The window is a ceiling, not a setting.</strong> What the root may grow to is the
+window it has.</li>
+<li><strong>The floor is the root's <code>calculatedMinSize()</code>.</strong> That is what a
+placement cuts a window down to and no further, and it is composed from the
+<code>MinSize</code> values set in the tree - never from what anything measured.</li>
+<li><strong><code>AutoFit::Yes</code> turns the relationship round.</strong> Every alignment
+of the form becomes a placement: the window's bounds are recomputed from the content instead
+of the content being cut to fit the window. It is what a menu, a tooltip and a dropdown
+are.</li>
+</ul>
+
+<svg class="grid-fig" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="AutoFit No: the window is fixed and the content is laid out into it. AutoFit Yes: the content is measured and the window is placed around what it came to.">
+  <style>
+    .wn-w { fill:#ffffff; stroke:#0066cc; stroke-width:1.8; }
+    .wn-c { fill:#eef4fb; stroke:#9dc2e8; stroke-width:1; }
+    .wn-d { fill:none; stroke:#2e7d32; stroke-width:1.4; stroke-dasharray:4 3; }
+    .wn-t { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .wn-k { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#0066cc; }
+    .wn-n { font-family:"Fira Code",Consolas,monospace; font-size:10px; fill:#5a6b7d; }
+    .wn-a { stroke:#5a6b7d; stroke-width:1.2; fill:none; }
+  </style>
+  <defs>
+    <marker id="wna" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="#5a6b7d"/>
+    </marker>
+  </defs>
+  <text class="wn-k" x="30" y="30">AutoFit::No</text>
+  <rect class="wn-w" x="30" y="44" width="260" height="130" rx="5"/>
+  <rect class="wn-c" x="44" y="58" width="232" height="60" rx="3"/>
+  <text class="wn-t" x="120" y="93">the content</text>
+  <path class="wn-a" marker-end="url(#wna)" d="M160,140 L160,120"/>
+  <text class="wn-n" x="44" y="158">the window is the ceiling;</text>
+  <text class="wn-n" x="44" y="196">the content is laid out into it,</text>
+  <text class="wn-n" x="44" y="212">and cut to it where it does not fit</text>
+
+  <text class="wn-k" x="390" y="30">AutoFit::Yes</text>
+  <rect class="wn-c" x="404" y="58" width="232" height="96" rx="3"/>
+  <text class="wn-t" x="480" y="111">the content</text>
+  <rect class="wn-d" x="390" y="44" width="260" height="124" rx="5"/>
+  <text class="wn-n" x="404" y="196">the content is measured first,</text>
+  <text class="wn-n" x="404" y="212">and the window placed around it</text>
+</svg>
+
+<pre><code><span class="cm">// A main window that may be dragged down to this and no further.</span>
+<span class="kw">constexpr</span> <span class="tp">MinSize</span> k_mainFormMinSize{ <span class="st">960.0f</span>, <span class="st">640.0f</span> };
+
+<span class="kw">const</span> std::unique_ptr&lt;<span class="tp">Form</span>&lt;<span class="tp">ThemesBrowser</span>&gt;&gt; form = <span class="kw">this</span>-&gt;<span class="fn">createMainForm</span>(k_mainFormMinSize);
+<span class="kw">return</span> form-&gt;<span class="fn">execute</span>();</code></pre>
+
+<div class="warning">
+Under <code>AutoFit::Yes</code> the window is the content's own answer, all the way down. The
+remembered wrap width is not kept in such a form, because there is no outside width for a
+wrapping panel to be measured against - it would be bounding the very thing it is measured
+from. A wrapping panel in an auto-fitting window therefore stands at its
+<code>LaneSize</code>, which is the right answer: there is no width to fill.
+</div>
+
+<h2 id="choosing">Choosing an Arrangement</h2>
+
+<p>Most layout questions in ClaFi are settled by answering two questions in this order.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="The four arrangements side by side: a stack lays items in a lane, a panel puts bars around a body, a scroll box shows a window onto content larger than itself, a grid cuts every row by the same columns.">
+  <style>
+    .ch-o { fill:#ffffff; stroke:#c9cfd6; stroke-width:1.2; }
+    .ch-i { fill:#eef4fb; stroke:#0066cc; stroke-width:1; }
+    .ch-y { fill:#f2f7f2; stroke:#2e7d32; stroke-width:1.2; }
+    .ch-b { fill:#dfe8f5; stroke:#9dc2e8; stroke-width:0.8; }
+    .ch-g { fill:#ffffff; stroke:#dfe3e8; stroke-width:0.9; }
+    .ch-k { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#0066cc; }
+    .ch-n { font-family:"Fira Code",Consolas,monospace; font-size:9.5px; fill:#5a6b7d; }
+  </style>
+
+  <text class="ch-k" x="20" y="20">StackPanel</text>
+  <rect class="ch-o" x="20" y="30" width="130" height="94" rx="4"/>
+  <rect class="ch-i" x="30" y="40" width="110" height="22" rx="2"/>
+  <rect class="ch-i" x="30" y="68" width="110" height="22" rx="2"/>
+  <rect class="ch-i" x="30" y="96" width="110" height="18" rx="2"/>
+  <text class="ch-n" x="20" y="146">one after another,</text>
+  <text class="ch-n" x="20" y="160">in a lane</text>
+
+  <text class="ch-k" x="190" y="20">Panel</text>
+  <rect class="ch-o" x="190" y="30" width="130" height="94" rx="4"/>
+  <rect class="ch-i" x="198" y="38" width="114" height="16" rx="2"/>
+  <rect class="ch-i" x="198" y="58" width="26"  height="42" rx="2"/>
+  <rect class="ch-y" x="228" y="58" width="84"  height="42" rx="2"/>
+  <rect class="ch-i" x="198" y="104" width="114" height="14" rx="2"/>
+  <text class="ch-n" x="190" y="146">bars around</text>
+  <text class="ch-n" x="190" y="160">a body</text>
+
+  <text class="ch-k" x="360" y="20">ScrollBox</text>
+  <rect class="ch-o" x="360" y="30" width="130" height="94" rx="4"/>
+  <rect class="ch-y" x="368" y="24" width="102" height="106" rx="2" opacity="0.35"/>
+  <rect class="ch-y" x="368" y="38" width="102" height="78" rx="2"/>
+  <rect class="ch-b" x="474" y="38" width="10" height="78" rx="4"/>
+  <rect class="ch-i" x="476" y="50" width="6" height="30" rx="3"/>
+  <text class="ch-n" x="360" y="146">a window onto</text>
+  <text class="ch-n" x="360" y="160">something larger</text>
+
+  <text class="ch-k" x="530" y="20">Grid</text>
+  <rect class="ch-o" x="530" y="30" width="150" height="94" rx="4"/>
+  <rect class="ch-b" x="538" y="38" width="134" height="16"/>
+  <rect class="ch-g" x="538" y="54" width="50" height="20"/><rect class="ch-g" x="588" y="54" width="34" height="20"/><rect class="ch-g" x="622" y="54" width="50" height="20"/>
+  <rect class="ch-g" x="538" y="74" width="50" height="20"/><rect class="ch-g" x="588" y="74" width="34" height="20"/><rect class="ch-g" x="622" y="74" width="50" height="20"/>
+  <rect class="ch-g" x="538" y="94" width="50" height="20"/><rect class="ch-g" x="588" y="94" width="34" height="20"/><rect class="ch-g" x="622" y="94" width="50" height="20"/>
+  <text class="ch-n" x="530" y="146">every row cut by</text>
+  <text class="ch-n" x="530" y="160">the same columns</text>
+</svg>
+
+<p><strong>First: what is the relationship between these controls?</strong></p>
+
+<table>
+<tr><th>If the controls...</th><th>Reach for</th></tr>
+<tr><td>follow one another in reading order</td><td><code>StackPanel</code>, <code>Horizontal</code> or <code>Vertical</code></td></tr>
+<tr><td>are a set that should flow to fill the room</td><td><code>StackPanel</code>, <code>HorizontalWrap</code> or <code>VerticalWrap</code></td></tr>
+<tr><td>frame something - a strip over a view, a bar beside it</td><td><code>Panel</code>, with the framed thing in the body</td></tr>
+<tr><td>are one thing that may outrun its room</td><td><code>ScrollBox</code> around it</td></tr>
+<tr><td>are values that must line up across rows</td><td><code>Grid</code></td></tr>
+<tr><td>are one of several views of the same place</td><td><code>PageControl</code>, or <code>TabbedBox</code> with a strip</td></tr>
+<tr><td>are a group the user should be able to put away</td><td><code>ExpanderWith&lt;StackPanel&gt;</code></td></tr>
+</table>
+
+<p><strong>Then: for each control, who decides its size?</strong> That is the alignment, and
+it is one question per axis:</p>
+
+<ul>
+<li>It should be as big as the room it is given - <code>Fill</code>, which is the default and
+usually right for the thing in a body slot.</li>
+<li>It should be as big as what it holds - <code>Left</code>, <code>Top</code>,
+<code>Center</code>, <code>Right</code> or <code>Bottom</code>, and the one you pick says
+where it then sits.</li>
+<li>It should be a stated size - a metric property, and then the alignment says where the
+surplus goes.</li>
+</ul>
+
+<div class="info">
+Nest rather than reach. A row of buttons where two are grouped is a
+<code>StackPanel</code> inside a <code>StackPanel</code>, not a special property on either.
+Nesting costs one control, and each level answers one question - which is what keeps a layout
+readable a year later.
+</div>
+
+<h2 id="recipes">Recipes</h2>
+
+<h3 id="r-toolbar">Commands at the far end of a strip</h3>
+
+<p>One <code>FlexSpacer</code>. Everything after it is pushed to the end of the lane.</p>
+
+<pre><code><span class="tp">StackPanel</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+    <span class="tp">Orientation</span>::Horizontal,
+    <span class="tp">Spacing</span>{ <span class="st">4.0f</span> }
+) };
+<span class="tp">Button</span>&amp; m_new{ m_toolBar.<span class="fn">add</span>&lt;<span class="tp">ToolButton</span>&gt;(<span class="st">L"New"</span>) };
+<span class="tp">Button</span>&amp; m_open{ m_toolBar.<span class="fn">add</span>&lt;<span class="tp">ToolButton</span>&gt;(<span class="st">L"Open"</span>) };
+<span class="tp">FlexSpacer</span>&amp; m_gap{ m_toolBar.<span class="fn">add</span>&lt;<span class="tp">FlexSpacer</span>&gt;() };
+<span class="tp">Button</span>&amp; m_settings{ m_toolBar.<span class="fn">add</span>&lt;<span class="tp">ToolButton</span>&gt;(<span class="st">L"Settings"</span>) };</code></pre>
+
+<p>This works because the strip is a top bar, which a panel hands the whole content width -
+so the strip has room over what its buttons measured, and the spacer is what asked for it.</p>
+
+<h3 id="r-center">One item in the middle</h3>
+
+<p>Two flex spacers, one either side. They share the surplus evenly, so what stands between
+them is centred whatever else is in the lane.</p>
+
+<pre><code>m_strip.<span class="fn">add</span>&lt;<span class="tp">FlexSpacer</span>&gt;();
+<span class="tp">Label</span>&amp; m_title{ m_strip.<span class="fn">add</span>&lt;<span class="tp">Label</span>&gt;(<span class="st">L"Untitled"</span>) };
+m_strip.<span class="fn">add</span>&lt;<span class="tp">FlexSpacer</span>&gt;();</code></pre>
+
+<p>For a control that is alone in its slot, the alignment says it directly and no spacer is
+needed:</p>
+
+<pre><code><span class="tp">Label</span>&amp; m_empty{ <span class="fn">createBody</span>&lt;<span class="tp">Label</span>&gt;(
+    <span class="st">L"Nothing selected"</span>,
+    <span class="tp">HorizontalAlign</span>::Center,
+    <span class="tp">VerticalAlign</span>::Center
+) };</code></pre>
+
+<h3 id="r-footer">A footer that stays at the foot</h3>
+
+<p>Not a flex spacer - a slot. A bottom bar is laid out against the bottom edge of the panel's
+content, and the body takes what is left between the two.</p>
+
+<pre><code><span class="tp">StackPanel</span>&amp; m_footer{ <span class="fn">createBottomBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+    <span class="tp">Orientation</span>::Vertical,
+    <span class="tp">Padding</span>{ <span class="st">12.0f</span> },
+    <span class="tp">Spacing</span>{ <span class="st">10.0f</span> }
+) };
+<span class="tp">Divider</span>&amp; m_rule{ m_footer.<span class="fn">add</span>&lt;<span class="tp">Divider</span>&gt;() };
+<span class="tp">Checkbox</span>&amp; m_keep{ m_footer.<span class="fn">add</span>&lt;<span class="tp">Checkbox</span>&gt;(<span class="st">L"Keep settings on this PC"</span>) };</code></pre>
+
+<div class="info">
+Use a slot when the thing is structurally a band of the panel, and a flex spacer when it is
+one more item in a lane that happens to want the far end. A footer that must stay put while
+the body scrolls has to be a slot: a flex spacer inside a scrolled body scrolls with it.
+</div>
+
+<h3 id="r-scroll">A page that scrolls</h3>
+
+<p>The box is the page's, not the content's. A view that may be dropped into a window, into a
+dropdown or into a settings panel should not carry a box of its own - whoever places it knows
+how much room it gets.</p>
+
+<pre><code><span class="tp">ScrollBoxWith</span>&lt;<span class="tp">OptionsPage</span>&gt;&amp; m_optionsBox{ <span class="fn">createBody</span>&lt;<span class="tp">ScrollBoxWith</span>&lt;<span class="tp">OptionsPage</span>&gt;&gt;(
+    <span class="tp">HostProps</span>{
+        <span class="cm">// A bar only where the options outrun this height, and none while they fit.</span>
+        <span class="tp">ScrollBars</span>::Auto,
+        <span class="tp">MaxSize</span>{ k_maxFloat, k_optionsHeight }
+    },
+    <span class="tp">BodyProps</span>&lt;&gt;{}
+) };
+<span class="tp">OptionsPage</span>&amp; m_options{ m_optionsBox.<span class="fn">body</span>() };</code></pre>
+
+<p><code>ScrollBars::Auto</code> reads here because the box states a maximum height of its
+own. In a window, where the box simply fills whatever it is given, state
+<code>ScrollBars::Vertical</code> instead.</p>
+
+<h3 id="r-tiles">A wrapping grid of equal tiles</h3>
+
+<p>Three things together, and each of them is doing one job.</p>
+
+<pre><code><span class="tp">StackPanel</span>&amp; m_tiles{ <span class="fn">createBody</span>&lt;<span class="tp">StackPanel</span>&gt;(
+    <span class="tp">Orientation</span>::HorizontalWrap,   <span class="cm">// rows that break when the width runs out</span>
+    <span class="tp">ItemSizing</span>::Equal,             <span class="cm">// every tile the width of the widest</span>
+    <span class="tp">Padding</span>{ <span class="st">12.0f</span>, <span class="st">4.0f</span> },
+    <span class="tp">Spacing</span>{ <span class="st">4.0f</span> }
+) };</code></pre>
+
+<p>And the tile itself states <code>HorizontalAlign::Fill</code>, so it takes the whole of the
+share it is handed. Without that the tiles are each as wide as their own caption and the
+tracks go ragged inside a set of equal shares. The tile states it ahead of its caller's
+properties, so a caller is free to say otherwise:</p>
+
+<pre><code><span class="kw">template</span>&lt;<span class="kw">typename</span>... <span class="tp">Args</span>&gt;
+<span class="tp">ThemeTile</span>::<span class="fn">ThemeTile</span>(<span class="kw">const</span> <span class="tp">CreateParams</span>&amp; params, <span class="tp">Args</span>&amp;&amp;... args)
+    :
+    <span class="tp">WithInPlaceEdit</span>&lt;<span class="tp">Button</span>&gt;{
+        params,
+        <span class="tp">HorizontalAlign</span>::Fill,   <span class="cm">// take the whole share the lane hands over</span>
+        std::forward&lt;<span class="tp">Args</span>&gt;(args)...
+    }
+{
+}</code></pre>
+
+<p>Add <code>LaneSize{ 4 }</code> if the count is a design decision rather than a consequence
+of the width. It caps the lane in both passes, so the stack stands four to a lane in a window
+of any size and a wider host gives it room around the lane instead of a fifth tile.</p>
+
+<h3 id="r-sections">Collapsible sections</h3>
+
+<p>A section is an <code>Expander</code> whose body is the column its options stand in, so
+collapsing the header takes the options with it.</p>
+
+<pre><code><span class="kw">using</span> <span class="tp">Section</span> = <span class="tp">ExpanderWith</span>&lt;<span class="tp">StackPanel</span>&gt;;
+
+<span class="tp">Section</span>&amp; <span class="tp">OptionsPage</span>::<span class="fn">addSection</span>(<span class="kw">const</span> std::wstring_view caption)
+{
+    <span class="kw">return</span> <span class="fn">add</span>&lt;<span class="tp">Section</span>&gt;(
+        <span class="tp">HostProps</span>{
+            <span class="tp">VerticalAlign</span>::Top,
+            <span class="tp">ExpanderViewMode</span>::Section,
+            <span class="tp">HeaderText</span>{ <span class="tp">InkGrade</span>::Strong, caption }
+        },
+        <span class="tp">BodyProps</span>{
+            <span class="tp">Orientation</span>::Vertical,
+            k_groupPadding,
+            <span class="tp">Spacing</span>{ k_captionSpacing }
+        }
+    );
+}</code></pre>
+
+<p><code>VerticalAlign::Top</code> on the section is what lets it grow. A section is a panel,
+and a panel grows to hold a body that came out taller than the slot it was offered - unless
+its own height is dictated from outside, which <code>VerticalAlign::Fill</code> is. The body
+here is a column of options that gets taller as a control inside it wraps, so the section has
+to be free to follow. See <a href="#t-grow">a panel that will not grow to its body</a>.</p>
+
+<h3 id="r-split">Two panes side by side</h3>
+
+<p>A <code>Panel</code> with one pane in a side bar and the other in the body. The side bar is
+as wide as it measured, so it is the one that states a width; the body takes what is left.</p>
+
+<pre><code><span class="tp">ScrollBoxWith</span>&lt;<span class="tp">StackView</span>&gt;&amp; m_nav{ <span class="fn">createLeftBar</span>&lt;<span class="tp">ScrollBoxWith</span>&lt;<span class="tp">StackView</span>&gt;&gt;(
+    <span class="tp">HostProps</span>{
+        <span class="tp">ScrollBars</span>::Vertical,
+        <span class="tp">PreferredSize</span>{ <span class="st">220.0f</span>, <span class="st">0.0f</span> },   <span class="cm">// where it starts</span>
+        <span class="tp">MinSize</span>{ <span class="st">120.0f</span>, <span class="st">0.0f</span> }          <span class="cm">// and the least it may be cut to</span>
+    },
+    <span class="tp">BodyProps</span>&lt;&gt;{}
+) };
+<span class="tp">ScrollBoxWith</span>&lt;<span class="tp">CodeBox</span>&gt;&amp; m_view{ <span class="fn">createBody</span>&lt;<span class="tp">ScrollBoxWith</span>&lt;<span class="tp">CodeBox</span>&gt;&gt;(
+    <span class="tp">HostProps</span>{ <span class="tp">ScrollBars</span>::Both },
+    <span class="tp">BodyProps</span>&lt;&gt;{}
+) };</code></pre>
+
+<p>Zero on an axis of a metric says nothing about that axis, so
+<code>MinSize{ 120.0f, 0.0f }</code> states a width floor and leaves the height alone.</p>
+
+<h3 id="r-fit">A window sized by its content</h3>
+
+<p>Popups do this by being popups. For a form of your own:</p>
+
+<pre><code>form.<span class="fn">setAutoFit</span>(<span class="tp">AutoFit</span>::Yes);</code></pre>
+
+<p>Every alignment then recomputes the window's bounds from the content rather than cutting
+the content to the window. State a <code>MaxSize</code> on the root, or on whatever inside it
+can grow without limit, or a long enough list will ask for a window taller than the screen.</p>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="t-symptoms">Symptoms</h3>
+
+<h4 id="t-grow">A panel will not grow to hold its body</h4>
+
+<p>The symptom is content cut off at the foot of a section or a card - a wrapping panel
+showing one row of what it holds, a column of options with the last of them missing.</p>
+
+<p>A panel grows to hold a body that came out taller than the slot it was offered, and a
+wrapping body is the usual way that happens: it re-wraps during the align and ends up taller
+than it measured. The panel refuses to grow when its own height is dictated from outside, and
+two things dictate it:</p>
+
+<ul>
+<li><code>VerticalAlign::Fill</code> - a parent stretched the panel to the room it had. Fill
+is the default, so this is what you get by saying nothing.</li>
+<li>The panel is itself somebody's body. Its host handed it exact dimensions and has already
+laid the rest of itself out around that height.</li>
+</ul>
+
+<p>Give the panel <code>VerticalAlign::Top</code>. It is the <em>host</em> that needs it, not
+the wrapping panel inside - a <code>StackPanel</code> grows to its lanes whatever its own
+alignment says.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A section whose body wrapped into three rows: aligned Fill the section keeps the height it was given and the rows below the first are cut off, aligned Top it grows to hold them.">
+  <style>
+    .tb-p { fill:#ffffff; stroke:#c9cfd6; stroke-width:1.3; }
+    .tb-hd{ fill:#eceef2; stroke:#c9cfd6; stroke-width:1; }
+    .tb-i { fill:#eef4fb; stroke:#0066cc; stroke-width:1.1; }
+    .tb-x { fill:#faf0f0; stroke:#e0b4b4; stroke-width:1; stroke-dasharray:3 3; }
+    .tb-t { font-family:-apple-system,"Segoe UI",sans-serif; font-size:10px; fill:#333; }
+    .tb-k { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#0066cc; }
+    .tb-n { font-family:"Fira Code",Consolas,monospace; font-size:10px; fill:#5a6b7d; }
+    .tb-e { font-family:"Fira Code",Consolas,monospace; font-size:10px; fill:#c62828; }
+  </style>
+  <text class="tb-k" x="20" y="26">the section, VerticalAlign::Fill</text>
+  <rect class="tb-p" x="20" y="34" width="300" height="74" rx="4"/>
+  <rect class="tb-hd" x="20" y="34" width="300" height="18" rx="4"/>
+  <text class="tb-t" x="30" y="47">Section</text>
+  <rect class="tb-i" x="30"  y="60" width="66" height="38" rx="3"/>
+  <rect class="tb-i" x="104" y="60" width="66" height="38" rx="3"/>
+  <rect class="tb-i" x="178" y="60" width="66" height="38" rx="3"/>
+  <rect class="tb-i" x="252" y="60" width="58" height="38" rx="3"/>
+  <rect class="tb-x" x="20" y="114" width="300" height="80" rx="4"/>
+  <text class="tb-e" x="78" y="148">the body wrapped taller,</text>
+  <text class="tb-e" x="78" y="164">the section did not follow</text>
+  <text class="tb-n" x="20" y="218">its height was dictated from</text>
+  <text class="tb-n" x="20" y="234">outside, so it kept it</text>
+
+  <text class="tb-k" x="390" y="26">the section, VerticalAlign::Top</text>
+  <rect class="tb-p" x="390" y="34" width="300" height="160" rx="4"/>
+  <rect class="tb-hd" x="390" y="34" width="300" height="18" rx="4"/>
+  <text class="tb-t" x="400" y="47">Section</text>
+  <rect class="tb-i" x="400" y="60" width="66" height="38" rx="3"/>
+  <rect class="tb-i" x="474" y="60" width="66" height="38" rx="3"/>
+  <rect class="tb-i" x="548" y="60" width="66" height="38" rx="3"/>
+  <rect class="tb-i" x="622" y="60" width="58" height="38" rx="3"/>
+  <rect class="tb-i" x="400" y="104" width="66" height="38" rx="3"/>
+  <rect class="tb-i" x="474" y="104" width="66" height="38" rx="3"/>
+  <rect class="tb-i" x="548" y="104" width="66" height="38" rx="3"/>
+  <rect class="tb-i" x="622" y="104" width="58" height="38" rx="3"/>
+  <rect class="tb-i" x="400" y="148" width="66" height="38" rx="3"/>
+  <rect class="tb-i" x="474" y="148" width="66" height="38" rx="3"/>
+  <text class="tb-n" x="390" y="218">it grows by what the body</text>
+  <text class="tb-n" x="390" y="234">came out taller by</text>
+</svg>
+
+<div class="info">
+<strong>None of this reaches a body on a <code>ScrollBox</code>.</strong> A scrolled body is
+laid out to the whole of its content and its own alignment is overridden, so a wrapping panel
+dropped straight into a scroll box wraps and grows however it is aligned. If your wrapping
+panel is the thing being scrolled, this is not your problem.
+</div>
+
+<h4 id="t-flex">A FlexSpacer does nothing</h4>
+
+<p>A flex spacer takes what its lane has <em>over</em>, and a lane that measured exactly what
+it was given has nothing over. Work outwards:</p>
+
+<ul>
+<li>Is the stack itself aligned Fill along the lane it runs? A stack aligned Left keeps the
+width it measured and there is no surplus to hand out.</li>
+<li>Is the stack in a slot that gives it room - a top or bottom bar, a body - or is it one
+item in another lane that only gave it its own measurement?</li>
+<li>Is the spacer inside the lane it is meant to stretch? A flex spacer in a nested stack
+stretches that stack, not the one above it.</li>
+</ul>
+
+<h4>A control ignores its MaxSize</h4>
+
+<p>It is aligned <code>Fill</code> on that axis. Fill takes the slot and the maximum is not
+consulted. Pick one: <code>MaxSize</code> with an edge alignment, or Fill with no maximum.</p>
+
+<h4>A control set to MinSize comes out bigger</h4>
+
+<p><code>MinSize</code> is a floor, not a size. A control with more content grows past it.
+<code>FixedSize</code> pins both bounds; <code>PreferredSize</code> states a size the content
+does not override.</p>
+
+<h4>Captions are cut off inside equal shares</h4>
+
+<p>Under <code>ItemSizing::Equal</code>, every share is as long as the largest item. An item
+that is not aligned Fill keeps its own measured size inside its share, so a set of them comes
+out ragged; an item whose <em>content</em> was measured at a different width than the share it
+was given is drawn clipped, because a width its text was never broken at is not a width its
+text fits. Align the items Fill.</p>
+
+<h4>Nothing moved after a change</h4>
+
+<p>The change did not ask for a pass. Property setters the framework owns ask for one;
+anything of your own that affects a size has to say <code>invalidateFormAlign()</code>. A
+repaint - <code>invalidate()</code> - is not a layout.</p>
+
+<h4>A scroll box will not put up a bar</h4>
+
+<p><code>ScrollBars::Auto</code> is answered against the box's own maximum size. A box whose
+size comes from its parent has no maximum of its own and therefore no overrun to detect. State
+the bars you want, or give the box a <code>MaxSize</code>.</p>
+
+<h4 id="t-loop">A layout that never settles</h4>
+
+<p>Something is calling <code>invalidatePass()</code> on a condition that never comes true.
+The condition must be one the next pass answers with the same number. Each frame spends a
+bounded number of passes, so the symptom is a layout that keeps changing under a still window
+rather than a hang.</p>
+
+<div class="warning">
+Never ask for another pass by comparing what a control <em>came to</em> against what it
+<em>measured</em>. The measure ceils the content it answers and the align does not, so a value
+with a fraction in it disagrees by up to a whole unit for ever - every pass asks for another,
+and the program lays itself out until it is killed. Compare a width against the width the
+previous pass recorded, in design units: that converges in one step, because the pass measured
+against it hands back the same number.
+</div>
+
+<h4>A left or right bar is the wrong width</h4>
+
+<p>A left or right bar is as wide as <em>it</em> measured - it is the one place in a panel
+where a child's width is its own answer, and the panel will not stretch it. State the width on
+the bar: <code>MinSize{ w, 0.0f }</code> for a floor, <code>PreferredSize{ w, 0.0f }</code>
+for a starting width, <code>FixedSize</code> to pin it.</p>
+
+<h4>A control paints nothing and has no height</h4>
+
+<p>It measured nothing. A control with no text, no children and no stated size is zero by
+zero, and a control with no height paints nothing at all. Give it a
+<code>MinSize</code>, put something in it, or check that what should be in it is visible.</p>
+
+<h3 id="t-rules">Do / Don't</h3>
+
+<div class="rules-grid">
+<div class="rule-card dos">
+<h4>Do</h4>
+<ul>
+<li>State properties where the control is built, in its member initializer.</li>
+<li>Let a control be as big as what it holds, and say otherwise only where you mean it.</li>
+<li>Give a panel <code>VerticalAlign::Top</code> where its body can come out taller than the
+slot it was offered.</li>
+<li>Put the <code>ScrollBox</code> where the room is decided, not inside the view.</li>
+<li>State a <code>MinSize</code> on anything that must survive a window being cut down.</li>
+<li>Nest a second <code>StackPanel</code> rather than looking for a property.</li>
+<li>Write every number in design units, and forget that scaling exists.</li>
+</ul>
+</div>
+<div class="rule-card donts">
+<h4>Don't</h4>
+<ul>
+<li>Fill and <code>MaxSize</code> on the same axis.</li>
+<li><code>MinSize</code> used as "the size it should be".</li>
+<li>Scale anything by hand.</li>
+<li>Lay out from inside a layout pass - ask for one.</li>
+<li>Read <code>width()</code> of something that has not been laid out yet and expect an
+answer. Use <code>scrollIntoViewOnAlign()</code> and <code>OnAligned</code> for work that
+needs a finished layout.</li>
+<li>Give a scrolled body a maximum that comes from the box scrolling it. That is a ratchet -
+the framework states the one case that is safe, and it states it in design units for a
+reason.</li>
+</ul>
+</div>
+</div>
+
+<h2 id="appendix">Appendix &middot; Quick reference</h2>
+
+<h3>Properties a control takes</h3>
+
+<p>Every control built on <code>RichControl</code>, which is all but the few noted
+<a href="#metrics">above</a>.</p>
+
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th></tr>
+<tr><td><code>HorizontalAlign</code></td><td><code>Fill</code>, <code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>Fill</code></td></tr>
+<tr><td><code>VerticalAlign</code></td><td><code>Fill</code>, <code>Top</code>, <code>Center</code>, <code>Bottom</code></td><td><code>Fill</code></td></tr>
+<tr><td><code>WordWrap</code></td><td><code>Yes</code>, <code>No</code></td><td><code>Yes</code></td></tr>
+<tr><td><code>HorizontalTextAnchor</code></td><td><code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>Left</code></td></tr>
+<tr><td><code>VerticalTextAnchor</code></td><td><code>Top</code>, <code>Center</code>, <code>Bottom</code></td><td><code>Top</code></td></tr>
+<tr><td><code>Padding</code>, <code>Spacing</code></td><td><code>{ x, y }</code> or one float</td><td>the theme block's, or zero</td></tr>
+<tr><td><code>MinSize</code></td><td><code>{ x, y }</code></td><td>zero</td></tr>
+<tr><td><code>MaxSize</code></td><td><code>{ x, y }</code></td><td>no limit</td></tr>
+<tr><td><code>PreferredSize</code></td><td><code>{ x, y }</code>, zero means "content decides"</td><td>zero</td></tr>
+<tr><td><code>FixedSize</code></td><td><code>{ x, y }</code> - sets min and max together</td><td>unset</td></tr>
+<tr><td><code>Border</code></td><td><code>{ Thickness }</code></td><td><code>None</code>, or the theme block's where one was passed</td></tr>
+<tr><td><code>Radius</code></td><td><code>{ value }</code></td><td>zero, or the theme block's where one was passed</td></tr>
+<tr><td><code>ControlMetrics</code></td><td>the whole block, from <code>themeMetrics()</code></td><td>zero on every field but <code>maxSize</code></td></tr>
+</table>
+
+<h3>Container properties</h3>
+
+<table>
+<tr><th>Container</th><th>Property</th><th>Values</th></tr>
+<tr><td rowspan="3"><code>StackPanel</code></td><td><code>Orientation</code></td><td><code>Horizontal</code>, <code>Vertical</code>, <code>HorizontalWrap</code>, <code>VerticalWrap</code></td></tr>
+<tr><td><code>LaneSize</code></td><td><code>{ n }</code> - items per lane</td></tr>
+<tr><td><code>ItemSizing</code></td><td><code>Natural</code>, <code>Equal</code></td></tr>
+<tr><td><code>ScrollBox</code></td><td><code>ScrollBars</code></td><td><code>Both</code>, <code>Vertical</code>, <code>Horizontal</code>, <code>None</code>, <code>Auto</code></td></tr>
+<tr><td><code>PageControl</code></td><td><code>PageSizing</code></td><td><code>CurrentPage</code>, <code>WidestPage</code></td></tr>
+<tr><td rowspan="2"><code>TabbedBox</code></td><td><code>TabsOrientation</code></td><td><code>HorizontalTop</code>, <code>HorizontalBottom</code>, <code>VerticalLeft</code>, <code>VerticalRight</code></td></tr>
+<tr><td><code>TabLineThickness</code></td><td><code>{ Thickness }</code> - <code>Thin</code> unless stated</td></tr>
+<tr><td><code>Expander</code></td><td><code>ExpanderViewMode</code></td><td><code>Section</code>, <code>Divider</code>, <code>TreeNode</code></td></tr>
+<tr><td><code>PanelBase</code></td><td><code>TextPlacement</code></td><td><code>Body</code>, <code>Top</code>, <code>Left</code></td></tr>
+<tr><td>a grid column</td><td><code>ColumnWidthMode</code></td><td><code>FitContent</code>, <code>Fixed</code>, <code>Fill</code></td></tr>
+</table>
+
+<h3>Building the tree</h3>
+
+<table>
+<tr><th>Call</th><th>Answers</th></tr>
+<tr><td><code>container.add&lt;T&gt;(props...)</code></td><td><code>T&amp;</code> - one more child, at the end</td></tr>
+<tr><td><code>container.moveControl(child, index)</code></td><td>puts a child at a place in the order</td></tr>
+<tr><td><code>panel.createTopBar&lt;T&gt;(props...)</code></td><td><code>T&amp;</code> in the Top slot</td></tr>
+<tr><td><code>panel.createLeftBar&lt;T&gt;</code>, <code>createRightBar&lt;T&gt;</code>, <code>createBottomBar&lt;T&gt;</code></td><td>the other bars</td></tr>
+<tr><td><code>panel.createBody&lt;T&gt;(props...)</code></td><td><code>T&amp;</code> in the Body slot</td></tr>
+<tr><td><code>scrollBox.createCorner&lt;T&gt;(props...)</code></td><td>the square between the two bars</td></tr>
+<tr><td><code>WithBody&lt;Host, Body&gt;</code>, <code>ScrollBoxWith&lt;T&gt;</code>, <code>ExpanderWith&lt;T&gt;</code></td><td>a typed <code>body()</code>, built from <code>BodyProps</code></td></tr>
+</table>
+
+<div class="warning">
+Controls are never constructed directly. Every control is built by the
+<code>add-</code> or <code>create-</code> call of the control that will own it, which is what
+gives it its parent and its form.
+</div>
+
+<h3>Reading a layout</h3>
+
+<table>
+<tr><th>Member</th><th>Answers</th></tr>
+<tr><td><code>width()</code>, <code>height()</code>, <code>dimensions()</code></td><td>the size the last pass gave it</td></tr>
+<tr><td><code>left()</code>, <code>top()</code>, <code>topLeft()</code>, <code>boundsInParent()</code></td><td>where it sits in its parent's content space</td></tr>
+<tr><td><code>boundsInForm()</code></td><td>the same, in form coordinates</td></tr>
+<tr><td><code>visibleRectInForm()</code></td><td>what of it lies inside every viewport above it</td></tr>
+<tr><td><code>calculatedMinSize()</code></td><td>the least it may be made</td></tr>
+<tr><td><code>isHostedAsBody()</code></td><td>whether its size is its host's to give</td></tr>
+<tr><td><code>isWidthGivenByParent()</code></td><td>whether its width is decided above it or by what it holds</td></tr>
+<tr><td><code>scrollIntoView()</code>, <code>scrollIntoViewOnAlign()</code></td><td>bring it into view now, or once the pass it is waiting for has run</td></tr>
+<tr><td><code>form().onAligned(...)</code></td><td>the form has been laid out and nothing asked for another pass</td></tr>
+</table>
+        </main>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const collapsibleElements = document.querySelectorAll('.sidebar li.has-children');
+            collapsibleElements.forEach(li => {
+                const btn = li.querySelector('.toggle-btn');
+                const link = li.querySelector('.nav-item-wrapper > a');
+                const toggle = (e) => { e.preventDefault(); e.stopPropagation(); li.classList.toggle('collapsed'); };
+                if (btn) btn.addEventListener('click', toggle);
+                if (link) link.addEventListener('click', () => {
+                    if (li.classList.contains('collapsed')) li.classList.remove('collapsed');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

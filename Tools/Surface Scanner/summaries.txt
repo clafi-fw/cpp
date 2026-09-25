@@ -1,0 +1,96 @@
+# One line per declaration whose own first sentence will not fit the column limit.
+# <path>:<line of the comment block> | the one line
+Source/Application/Application.ThemesManager_Elements.cppm:23 | The states an element paints with, in the order PaintEvent applies them.
+Source/Application/Application.ThemesManager_Elements.cppm:124 | Every element a theme colours, in ThemeColors declaration order.
+Source/Application/Application.ThemesManager_Elements.cppm:151 | What one element is: its spellings, the ThemeColors member, and its rules.
+Source/Controls/Base/DropdownControlBase.cppm:66 | A control that drops a popup, and the strip that says so.
+Source/Controls/Base/MessageBoxBase.cppm:45 | The shell every dialog of this family is - title, middle, answers.
+Source/Controls/Base/SplitButtonBase.cppm:16 | A button carrying a second target that is pressed on its own account.
+Source/Controls/Browser/Browser.BreadCrumbBar.cppm:44 | A crumb is about to drop its list, and asks what pages lie under this one.
+Source/Controls/Grids/Grids-Cell.cppm:42 | The text an in-place edit was left with, on its way back to the cell's source.
+Source/Controls/Grids/Grids-Columns.cppm:42 | What an in-place editor over this column's cells is for, and whether one opens.
+Source/Controls/Grids/Grids-Descriptor.cppm:30 | Which of a grid's inner lines are drawn, the frame around it aside.
+Source/Controls/Grids/Grids-RowBase.cppm:34 | One cell of one row, as the cell walk reports it.
+Source/Controls/Grids/Grids-RowExpander.cppm:28 | A row whose header is held at the top of the view while its body scrolls under.
+Source/Controls/Grids/Grids-RowGroupBase.cppm:15 | A row made of a header row and a grid of rows, laid over each other.
+Source/Controls/Grids/Grids-SubGrid.cppm:10 | The body of a group or a section, filling the columns of the grid it stands in.
+Source/Controls/Grids/Grids_Dt.cppm:184 | One column of the described grid, and any sub-columns nested in it.
+Source/Controls/Grids/Grids_Dt.cppm:219 | An anonymous group whose children are spliced into the enclosing collection.
+Source/Controls/Grids/Grids_Dt.cppm:242 | One cell of a described row: the column it fills, and where its text comes from.
+Source/Controls/Grids/Grids_Dt.cppm:281 | A reusable bundle of cells, referenced from every row that shares it.
+Source/Controls/Grids/Grids_Dt.cppm:303 | One row of the described grid, an ordinary RowContainer with its cells.
+Source/Controls/Grids/Grids_Dt.cppm:327 | A described expander: a header of text alone, and the rows of its body.
+Source/Controls/Grids/Grids_Dt.cppm:352 | A described group: a header row sectioned by the same columns, and its rows.
+Source/Controls/HexView.cppm:36 | The selection has come to rest somewhere new.
+Source/Controls/HexView.cppm:49 | Bytes drawn as the three columns a hex dump has: offset, digits, characters.
+Source/Controls/InPlaceEdit.cppm:55 | What an in-place editor is placed over, and how far it may grow.
+Source/Controls/MessageDialog.cppm:43 | A short question and a row of answers, dropped under the control that raised it.
+Source/Controls/PromptDialog.cppm:22 | A question with one line of text for its answer, dropped under its control.
+Source/Controls/ScrollBox.cppm:22 | A bar on whichever axis the content overruns, and none on the axis it fits.
+Source/Controls/TextBox.cppm:46 | The caret has come to rest somewhere new.
+Source/Diagnostic/Diagnostic.Benchmark.cppm:18 | A running aggregate of one measured quantity - last, extremes, mean.
+Source/Diagnostic/Diagnostic.Benchmark.cppm:44 | The share of one core this process is taking, sampled once a second at most.
+Source/Diagnostic/Diagnostic.Benchmark.cppm:88 | The frames measured inside one slice of the history, held as their totals.
+Source/Diagnostic/Diagnostic.Benchmark.cppm:114 | Times a piece of work, keeping a running aggregate and the last two seconds.
+Source/Diagnostic/Diagnostic.FpsChart.cppm:42 | The frame rate over the last two seconds, drawn against an axis that names it.
+Source/Diagnostic/Diagnostic.FpsPage.cppm:24 | What the framework window under the pointer costs to paint.
+Source/Icons/ColorChannelSweep.cppm:39 | Whether the wedges of a pie meet, or stop short and let the backdrop through.
+Source/Icons/ColorChannelSweep.cppm:44 | Wedges stop short, leaving the surface behind the icon showing as spokes.
+Source/Icons/ColorChannelSweep.cppm:63 | The channel wraps: the colour at the seam is the same from both sides.
+Source/Icons/Magnifier.cppm:29 | A band of theme surface round the outside, so the glass reads as lying on top.
+Source/Icons/MessageBadge.cppm:21 | Where a glyph goes and what it is drawn with, as fractions of the whole badge.
+Source/Platform/Linux/Linux.Fonts.cppm:63 | The faces fontconfig answers for one family at one weight and slant.
+Source/Platform/Wayland/Wayland.Display.cppm:19 | What the display delivers to, knowing nothing of what a window is.
+Source/Platform/Wayland/Wayland.Display.cppm:69 | A selection, and which of the two clipboard channels it arrived on.
+Source/Platform/Wayland/Wayland.Display.cppm:83 | The connection, the globals and the loop, one per process.
+Source/Platform/Wayland/Wayland.FormWindow.cppm:18 | Where a compositor event becomes something the framework understands.
+Source/Platform/Wayland/Wayland.Keyboard.cppm:12 | One press as the framework hears it: the key, the modifiers, the character.
+Source/Platform/Wayland/Wayland.Keyboard.cppm:66 | The keyboard as xkbcommon describes it, and nothing of the protocol.
+Source/Platform/Wayland/Wayland.ShmBuffer.cppm:15 | Pixels the compositor can read without being sent them.
+Source/Platform/Wayland_Facade.cppm:13 | What an application is built against on Wayland.
+Source/Platform/Windows/Windows.Composition.cppm:19 | The pixels of a composed window, hung on a DirectComposition visual.
+Source/StdActions/StdActions.Transfer.cppm:10 | The framework's own rich text on the clipboard, as a named format.
+Source/Y-Core/AppTheme/AppTheme_Metrics.cppm:48 | The shadow a window casts, in logical pixels.
+Source/Y-Core/Context/AppContext.cppm:146 | The application wears the colours it is leaving for as long as this is alive.
+Source/Y-Core/Context/FormContext.cppm:133 | What the display server called this press, for a request the key justifies.
+Source/Y-Core/Context/FormContext.cppm:150 | The frame a window wears, in real pixels: margins, border ring, corner radius.
+Source/Y-Core/Context/FormContext.cppm:204 | What a window asks to be placed by, all of it the form's own knowledge.
+Source/Y-Core/Context/PaintIconEvent.cppm:10 | An icon being painted, from a control's paint or from a text run.
+Source/Y-Core/Dom/DomEngine_Dt.cppm:102 | A section of the described tree, keyed or a grouping in the source alone.
+Source/Y-Core/Foundation/Action.cppm:80 | What key runs a control's action, asked by whatever shows the key.
+Source/Y-Core/Foundation/Action.cppm:92 | A named command: what it says, what it draws, and what it does.
+Source/Y-Core/Foundation/Action.cppm:236 | The application's own scope of commands.
+Source/Y-Core/Foundation/ContextMessage.cppm:9 | Something said about a control without stopping the user.
+Source/Y-Core/Foundation/Input.cppm:21 | The input state the whole framework reads.
+Source/Y-Core/Foundation/Spatial.cppm:28 | A rectangle turned so travel runs up the primary axis.
+Source/Y-Core/Foundation/Spatial.cppm:45 | How one candidate is ranked against another.
+Source/Y-Core/Foundation/Tooltip.cppm:17 | One per form, built with it: the window a hint shows in.
+Source/Y-Core/Foundation/Traversal.cppm:11 | Whether the visitor walks the children or the traversal does.
+Source/Y-Core/Foundation/Traversal.cppm:82 | Every control in the subtree, whatever the geometry says.
+Source/Y-Core/Graphics/Graphics.Cpu_Painter_Circle.cppm:10 | Circles, with pivots and radii already in buffer coordinates.
+Source/Y-Core/Graphics/Graphics.Cpu_Painter_Rect.cppm:10 | Rects, already in buffer coordinates when they reach here.
+Source/Y-Core/Graphics/Graphics.Cpu_Painter_RoundedRect.cppm:10 | Rounded rects, bounds and radius alike already in buffer coordinates.
+Source/Y-Core/Graphics/Graphics.Y_Canvas.cppm:135 | Composes a transform onto the canvas for as long as it is alive.
+Source/Y-Core/Graphics/Graphics.Y_Canvas.cppm:163 | Draws into the kept image at this index for as long as it is alive.
+Source/Y-Core/Graphics/Graphics.Y_Types.cppm:31 | Everything about rasterizing a run of text that a backend has to be told.
+Source/Y-Core/Graphics/Graphics.Y_Types.cppm:148 | The shape's own coverage, solid, and the ramp outward from it.
+Source/Y-Core/Graphics/Graphics.Y_Types.cppm:373 | What a graphics backend provides, every stroke laid inside its bounds.
+Source/Y-Core/System/UiTimer.cppm:29 | A timer that never ticks while user input is still being delivered.
+Source/Y-Core/System/UiTypes.Color.cppm:224 | A colour on three channels, each a fraction of its range, over Oklab.
+Source/Y-Core/System/UiTypes.TextTypes.cppm:45 | A shade of the ink, as a share of the gap between the surface and the ink.
+Source/Y-Core/System/UiTypes.TextTypes.cppm:77 | The three things an ink can be, and the only question the resolver asks.
+Source/Y-Core/System/UiTypes.TextTypes.cppm:83 | One of the palette's semantic hues, at the tone this states.
+Source/Y-Core/System/UiTypes.TextTypes.cppm:92 | The hue the theme's own live states are drawn from.
+Source/Y-Core/System/UiTypes.TextTypes.cppm:96 | The second accent, for what stands apart from the interface.
+Source/Y-Core/TextEngine/TextEngine.History.cppm:12 | Where the caret stood, so an undone step puts the user back.
+Source/Y-Core/TextEngine/TextEngine.History.cppm:22 | What made an edit, which decides whether it joins the one before it.
+Source/Y-Core/TextEngine/TextEngine.History.cppm:32 | The undo history of one editable text.
+Source/Y-Core/TextEngine/TextEngine.Layout.cppm:131 | What one edit did, in the coordinates of the text before it.
+Source/Y-Core/TextEngine/TextEngine.Text.cppm:135 | A text a control keeps, asked about on every measurement and paint.
+Source/Y-Core/TextEngine/TextEngine.Types.cppm:31 | Where a position stands as a reader counts it, both numbers from one.
+Source/Y-Core/TextEngine/TextEngine.Types.cppm:204 | One pop for both, because one stack holds them.
+Source/Y-Core/TextEngine/TextEngine.Types.cppm:234 | What a control's text has to survive, stated as three cases.
+Source/Y-Core/Transfer/Transfer.Clipboard.cppm:18 | The one way on and off the system clipboard.
+Source/Y-Core/Transfer/Transfer.Formats.cppm:59 | The one format the core ships.
+Source/Y-Core/Transfer/Transfer.Offer.cppm:23 | What arrives from outside: the formats advertised, and a way to ask for one.
+Source/Y-Core/Transfer/Transfer.Source.cppm:9 | What leaves the application: the content captured when the user copied.

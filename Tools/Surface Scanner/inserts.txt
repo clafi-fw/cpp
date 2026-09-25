@@ -1,0 +1,3 @@
+Source/Controls/Combobox.cppm:85 | How many items one lane of a popup list takes.
+Source/Controls/TextItems.cppm:52 | The size the items of a list draw their icons at.
+Source/Controls/TextItems.cppm:57 | How those items lay an icon out against their text.

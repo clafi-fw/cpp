@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi FAQ</title>
+    <style>
+        :root {
+            --bg-color: #f9f9fb; --text-color: #333; --accent-color: #0066cc;
+            --code-bg: #1e1e1e; --code-text: #d4d4d4; --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6; color: var(--text-color); background-color: var(--bg-color);
+            margin: 0; padding: 0; display: flex;
+        }
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;
+            background-color: #fff; border-right: 1px solid var(--border-color);
+            overflow-y: auto; padding: 2rem 1rem; box-sizing: border-box; z-index: 100;
+        }
+        .sidebar-brand { padding: 0 0.5rem 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); }
+        .sidebar-brand-text {
+            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            font-size: 2.0rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            background: linear-gradient(90deg, #4EC9B0, #A6E22E);
+            -webkit-background-clip: text;
+            /*
+            background-clip: text;
+            */
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 8px rgba(78, 201, 176, 0.25);
+        }
+        .sidebar-brand-text::after {
+            content: "::";
+            margin-left: 0.2em;
+            font-weight: 400;
+        }
+        .sidebar-header { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; padding-left: 0.5rem; color: #111; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar > ul > li { margin-bottom: 0.8rem; }
+        .nav-item-wrapper {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.25rem 0.5rem; border-radius: 6px; transition: background-color 0.2s ease;
+        }
+        .nav-item-wrapper:hover { background-color: rgba(0, 0, 0, 0.02); }
+        .sidebar > ul > li > .nav-item-wrapper > a { font-size: 1rem; font-weight: 600; color: #111; flex-grow: 1; }
+        .sidebar ul ul {
+            padding-left: 0.8rem; margin-top: 0.3rem; margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color); margin-left: 1.1rem;
+        }
+        .sidebar ul ul li { margin-bottom: 0.4rem; }
+        .sidebar ul ul a { font-size: 0.9rem; color: #555; display: block; padding: 0.15rem 0; transition: color 0.15s ease; }
+        .sidebar a { text-decoration: none; display: block; transition: color 0.2s ease; }
+        .sidebar a:hover, .sidebar ul ul a:hover { color: var(--accent-color); }
+        .toggle-btn {
+            background: none; border: none; padding: 4px; margin: 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; color: #888;
+            border-radius: 4px; transition: background-color 0.2s, color 0.2s; outline: none;
+        }
+        .toggle-btn:hover { background-color: rgba(0, 0, 0, 0.05); color: var(--accent-color); }
+        .toggle-btn svg { width: 16px; height: 16px; fill: currentColor; transform: rotate(90deg); transition: transform 0.2s ease; }
+        .sidebar li.has-children.collapsed ul { display: none !important; }
+        .sidebar li.has-children.collapsed .toggle-btn svg { transform: rotate(0deg); }
+        .page-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        header { background-color: #fff; padding: 2rem; border-bottom: 1px solid var(--border-color); text-align: center; }
+        h1, h2, h3, h4 { color: #111; margin-top: 2rem; }
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+        main {
+            max-width: 900px; margin: 2rem auto; padding: 0 2rem; background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; padding-bottom: 2rem;
+        }
+        p, li { font-size: 1.1rem; }
+        pre {
+            background-color: var(--code-bg); color: var(--code-text); padding: 1.5rem;
+            border-radius: 8px; overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.95rem; line-height: 1.5;
+        }
+        code {
+            background-color: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.9em; color: #d14;
+        }
+        pre code { background-color: transparent; padding: 0; color: inherit; }
+        .kw { color: #569cd6; } .tp { color: #4ec9b0; } .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; } .fn { color: #dcdcaa; }
+        .warning { background-color: #fff3f3; border-left: 4px solid #cc0000; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .info { background-color: #f0f7ff; border-left: 4px solid #0066cc; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0; }
+        .rule-card { padding: 1.2rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .rule-card.dos { background-color: #f4faf4; border-left: 4px solid #2e7d32; }
+        .rule-card.donts { background-color: #fff8f8; border-left: 4px solid #c62828; }
+        .rule-card h4 { margin-top: 0; margin-bottom: 0.5rem; }
+        .rule-card ul { margin: 0; padding-left: 1.2rem; }
+        .rule-card li { font-size: 1rem; margin-bottom: 0.5rem; }
+        table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 0.98rem; }
+        th, td { border: 1px solid var(--border-color); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+        th { background-color: #f6f8fa; font-weight: 600; }
+        td code { font-size: 0.85em; }
+        .grid-fig { width: 100%; max-width: 720px; margin: 1.5rem 0; display: block; }
+        @media (max-width: 1200px) { .sidebar { display: none; } .page-content { margin-left: 0; width: 100%; } }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand"><span class="sidebar-brand-text">ClaFi</span></div>
+        <div class="sidebar-header">Contents</div>
+        <ul>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#tooling">Editors and tooling</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#red-squiggles">Why is the source covered in red squiggles?</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#layout">Layout and scrolling</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#scrollbars-missing">Why are scrollbars missing?</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#colour">Colour and themes</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#desktop-mode">Why doesn't the application follow the desktop's dark mode?</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#text">Text and links</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#link-click-caret">Why doesn't clicking a link open it?</a></li>
+                    <li><a href="#file-link">Why does a file: link do nothing?</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <div class="page-content">
+        <header>
+            <h1>ClaFi FAQ</h1>
+            <p>The question, the answer, and the reasoning folded away</p>
+        </header>
+        <main>
+<style>
+    /* THE SHAPE OF AN ENTRY: a question, one line that answers it, and everything else behind a
+       fold. What a reader who already knows the symptom needs is the one line. */
+    .faq h3 { margin-bottom: 0; }
+    .faq-a {
+        font-size: 1.15rem; margin: 0.6rem 0 0.9rem; padding-left: 0.9rem;
+        border-left: 3px solid var(--accent-color);
+    }
+    .faq-more { margin: 0 0 2.75rem; }
+    .faq-more > summary {
+        cursor: pointer; list-style: none; display: inline-flex; align-items: center;
+        gap: 0.45rem; font-size: 0.95rem; color: var(--accent-color);
+        padding: 0.15rem 0; user-select: none; -webkit-user-select: none;
+    }
+    .faq-more > summary::-webkit-details-marker { display: none; }
+    .faq-more > summary::before {
+        content: ""; width: 0; height: 0; border-left: 6px solid currentColor;
+        border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+        transition: transform 0.2s ease;
+    }
+    .faq-more[open] > summary::before { transform: rotate(90deg); }
+    .faq-more > summary:hover { text-decoration: underline; }
+    .faq-more > .faq-body { padding-top: 0.25rem; }
+    .faq-more > .faq-body > h4:first-child { margin-top: 1rem; }
+</style>
+
+<h2 id="tooling">Editors and tooling</h2>
+
+<div class="faq">
+<h3 id="red-squiggles">Why is the source covered in red squiggles?</h3>
+
+<p class="faq-a">Because MS sucks.</p>
+
+<details class="faq-more">
+<summary>Why</summary>
+<div class="faq-body">
+
+<p>
+Visual Studio's own C++ IntelliSense does not understand C++20 modules - it has called that support
+experimental for years - so it paints the source red however healthy the code is. Nothing in the
+code it marks is wrong, and nothing you write there will make the marks go away.
+</p>
+
+<p>
+Two editors read ClaFi properly. ReSharper C++ does, with no setup. So does clangd: configure the
+CMake build once and point your editor at the <code>compile_commands.json</code> it writes into the
+build directory.
+</p>
+
+</div>
+</details>
+</div>
+
+<h2 id="layout">Layout and scrolling</h2>
+
+<div class="faq">
+<h3 id="scrollbars-missing">Why are scrollbars missing?</h3>
+
+<p class="faq-a">State <code>WordWrap::No</code> on the scrolled control.</p>
+
+<details class="faq-more">
+<summary>Why</summary>
+<div class="faq-body">
+
+<p>
+The symptom: a control inside a <code>ScrollBox</code> draws its content correctly, is visibly cut
+off at the edge of the box, and neither bar is on screen &mdash; including under
+<code>ScrollBars::Both</code>, where both bars were asked for by name.
+</p>
+
+<p>
+Under <code>Both</code> the bars <em>are</em> up. A bar with nothing to carry reports disabled
+(<code>SliderBase::getControlState</code> answers <code>maxPos() &gt; 0</code>), and a disabled bar
+paints its thumb and its buttons away whatever their own states say. So an empty view is not the
+box refusing to make a bar. It is the box saying the content is no larger than the view, and the
+question is why the content came out that size.
+</p>
+
+<h4>The body wraps</h4>
+
+<p>
+This is the usual answer, and it is silent. <code>Control::wordWrap()</code> is
+<code>!(m_flags2 &amp; cfNoWordWrap)</code> &mdash; <strong>true for every control by
+default</strong>, including one that holds no text at all. <code>Control::alignContent</code> then
+reads it:
+</p>
+
+<pre><code><span class="kw">if</span> (<span class="fn">wordWrap</span>())
+{
+    <span class="cm">// Measured again against the slot it was granted, and the slot is the viewport.</span>
+}
+<span class="kw">else if</span> (<span class="fn">isOnScrollBox</span>())
+{
+    <span class="cm">// A scrolled body keeps the size it measured.</span>
+    newDimensions.y = std::<span class="fn">max</span>(calculatedContentHeight, newDimensions.y);
+}</code></pre>
+
+<p>
+&quot;A scrolled body keeps what it measured&quot; lives in the second branch only. A wrapping body
+never reaches it: it is measured again against the slot, so it can never come out larger than the
+view. For a control that draws its own content and holds no text the re-measurement answers
+<code>{0, 0}</code>, which is discarded rather than taken, so nothing overrules the slot either and
+the body ends up exactly the viewport. <code>max == page</code>, nothing to carry, both bars paint
+away.
+</p>
+
+<p>
+The flag belongs to the body, and there are three places to state it. As a construction property
+where the body is made, which is how a stock control such as a <code>TextBox</code> takes it:
+</p>
+
+<pre><code><span class="tp">BodyProps</span>{ <span class="tp">ReadOnly</span>::Yes, <span class="tp">WordWrap</span>::No, <span class="tp">Padding</span>{ 12.0f } }</code></pre>
+
+<p>
+In the constructor of a control you are writing that can never wrap, ahead of the forwarded
+arguments so that <code>Props</code> still takes a stated one &mdash; it reads the last match:
+</p>
+
+<pre><code><span class="kw">template</span> &lt;<span class="kw">typename</span>... Args&gt;
+HexView::<span class="fn">HexView</span>(<span class="kw">const</span> <span class="tp">CreateParams</span>&amp; params, Args&amp;&amp;... args)
+    :
+    <span class="tp">Control</span>{
+        params,
+        <span class="cm">// A line is a fixed grid of characters and nothing about it can be broken to a box.</span>
+        <span class="tp">WordWrap</span>::No,
+        std::<span class="fn">forward</span>&lt;Args&gt;(args)... }
+{
+}</code></pre>
+
+<p>
+Or through <code>setWordWrap(WordWrap::No)</code> on a control already built.
+</p>
+
+<div class="rules-grid">
+    <div class="rule-card dos">
+        <h4>Do</h4>
+        <ul>
+            <li>State it where the body is made, in the properties that build it. That is the
+                answer for any control whose source you are not editing.</li>
+            <li>A control that can <em>never</em> wrap says so in its own constructor instead, so
+                that no caller has to remember. <code>Combobox</code> and <code>HexView</code>
+                both do.</li>
+        </ul>
+    </div>
+    <div class="rule-card donts">
+        <h4>Don't</h4>
+        <ul>
+            <li>Assume a control holding no text is unaffected. <code>wordWrap()</code> is true by
+                default for every control, and one that draws its own content is exactly the case
+                where the wrapping branch measures <code>{0, 0}</code> and the slot stands.</li>
+            <li>Reach for <code>MinSize</code> to force the body taller. The size it measured is
+                already right; what is missing is permission to keep it.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="info">
+The same flag decides the width. <code>ScrollBox::adjustChildMetrics</code> states the viewport as
+a <em>wrapping</em> body's maximum width, so such a body is never wider than the view and the
+horizontal bar has nothing to carry either. One flag, both bars.
+</div>
+
+<h4>ScrollBars::Auto on a box that does not measure itself</h4>
+
+<p>
+The other cause, and the one <code>WordWrap::No</code> does not answer. <code>Auto</code> is
+decided in <code>ScrollBox::calculateContent</code>, against the box's own maximum size &mdash;
+that is what lets the measuring pass answer it in one go, with no correction afterwards. So it
+reaches a box that measures itself: one under a <code>MaxSize</code>, or one that is an
+auto-fitting window's whole content. <strong>A box sized by whatever contains it has no maximum of
+its own and never shows an <code>Auto</code> bar.</strong> Such a box states the bars it wants
+instead, with <code>Both</code>, <code>Vertical</code> or <code>Horizontal</code>.
+</p>
+
+<div class="warning">
+<code>wordWrap</code> is a text property standing in for a question about reflow &mdash; does this
+control's measurement depend on the width it is given? Anything whose answer is no has the trap
+waiting, not just a control that draws its own content: a container of naturally-sized items in a
+scroll box is the other shape it takes.
+</div>
+
+</div>
+</details>
+</div>
+
+<h2 id="colour">Colour and themes</h2>
+
+<div class="faq">
+<h3 id="desktop-mode">Why doesn't the application follow the desktop's dark mode?</h3>
+
+<p class="faq-a">Choose Auto (Follows System) on the Settings page.</p>
+
+<details class="faq-more">
+<summary>Why</summary>
+<div class="faq-body">
+
+<p>
+The symptom: the desktop is dark and the application opens light, or the desktop changes mode and
+the application stays on the side it was.
+</p>
+
+<h4>The config states a mode outright</h4>
+
+<p>
+Auto is the default of a config that states nothing. A config stating <code>ColorMode=Dark</code> or
+<code>ColorMode=Light</code> keeps that side whatever the desktop does: a click on a mode button
+stores one, and an application may state its own first-run default - the TextEngine showcase states
+Light. Stating Auto is the whole of the fix:
+</p>
+
+<pre><code><span class="fn">applyColorMode</span>(<span class="fn">appContext</span>(), <span class="tp">ColorModeSetting</span>::Auto);</code></pre>
+
+<h4>Windows is asked for its app mode</h4>
+
+<p>
+Windows keeps two modes: one for Windows itself - the taskbar and the Start menu - and one for
+applications. Auto follows the second, <em>Choose your default app mode</em> in the colour
+settings. A dark taskbar over a Light app mode is a light desktop to every application.
+</p>
+
+<h4>A Linux session without a portal</h4>
+
+<p>
+On Wayland the mode comes from the XDG desktop portal, which GNOME, KDE Plasma and most desktops
+start with the session. A session without a portal, or with a portal whose backend serves no
+<code>org.freedesktop.appearance</code>, states no preference, and no preference reads as Light.
+What the portal says is one call away:
+</p>
+
+<pre><code>busctl --user call org.freedesktop.portal.Desktop /org/freedesktop/portal/desktop \
+    org.freedesktop.portal.Settings ReadOne ss org.freedesktop.appearance color-scheme</code></pre>
+
+<p>
+It answers <code>v u 1</code> for dark and <code>v u 2</code> for light. <code>v u 0</code> is no
+preference, and it is what GNOME answers for its default light look.
+</p>
+
+<div class="rules-grid">
+    <div class="rule-card dos">
+        <h4>Do</h4>
+        <ul>
+            <li>Leave the choice to the user. Auto is the default because the desktop already says
+                what the user wants.</li>
+            <li>State a first-run default only where the application needs one side, and only
+                where <code>configFolderExists()</code> is false.</li>
+            <li>Ask <code>wornColorMode</code> for the side the application is drawn on.</li>
+        </ul>
+    </div>
+    <div class="rule-card donts">
+        <h4>Don't</h4>
+        <ul>
+            <li>Write a mode over a loaded config at start. The user's choice arrives with the load,
+                and a mode written after it undoes the Settings page on every run.</li>
+            <li>Read the setting as a side. Under Auto it names none, and a test for
+                <code>ColorModeSetting::Dark</code> is false on a dark desktop.</li>
+        </ul>
+    </div>
+</div>
+
+</div>
+</details>
+</div>
+
+<h2 id="text">Text and links</h2>
+
+<div class="faq">
+<h3 id="link-click-caret">Why doesn't clicking a link open it?</h3>
+
+<p class="faq-a">Hold Ctrl while you click.</p>
+
+<details class="faq-more">
+<summary>Why</summary>
+<div class="faq-body">
+
+<p>
+The symptom: a link in a <code>TextBox</code> is drawn in the accent ink, but a click on it puts the
+caret there and nothing opens. The pointer stays an I-beam over it and no underline appears.
+</p>
+
+<h4>The box is one the user types into</h4>
+
+<p>
+This is the usual answer. In a box the user can edit, a plain click places the caret, the way it
+does anywhere else in the text - a link is a word the user may want to change. Ctrl+click follows
+it, and with Ctrl held, a link the pointer moves onto is underlined and the pointer becomes a hand.
+The hint over the link says so too: in an editable box it ends with a muted <em>Ctrl+click to
+follow</em>.
+</p>
+
+<p>
+A box that is there to be read follows a link on a plain click. That is a property of the box:
+</p>
+
+<pre><code><span class="tp">BodyProps</span>{ text, <span class="tp">ReadOnly</span>::Yes, <span class="tp">Padding</span>{ 16.0f } }</code></pre>
+
+<h4>The press became a drag</h4>
+
+<p>
+A press that selects text between going down and coming up was a drag, and follows nothing - even
+when it starts and ends on the same link. A pointer that moves a few pixels while the button is down
+can select a character.
+</p>
+
+<h4>The box is disabled</h4>
+
+<p>
+A disabled box takes no input, so it follows nothing, underlines nothing, and shows the arrow over
+its links.
+</p>
+
+<div class="info">
+The underline and the hand are the test: they appear exactly when a click would follow the link. A
+link that shows both and still opens nothing is the next question.
+</div>
+
+<div class="rules-grid">
+    <div class="rule-card dos">
+        <h4>Do</h4>
+        <ul>
+            <li>Make a box that is there to be read <code>ReadOnly::Yes</code>. Its links then
+                follow on a plain click, and its caret and selection still work.</li>
+        </ul>
+    </div>
+    <div class="rule-card donts">
+        <h4>Don't</h4>
+        <ul>
+            <li>Follow a link on a plain click in a box the user types into. Every click that
+                meant to place the caret inside a link would leave the page.</li>
+        </ul>
+    </div>
+</div>
+
+</div>
+</details>
+</div>
+
+<div class="faq">
+<h3 id="file-link">Why does a file: link do nothing?</h3>
+
+<p class="faq-a">Answer it in <code>OnLinkClick</code>.</p>
+
+<details class="faq-more">
+<summary>Why</summary>
+<div class="faq-body">
+
+<p>
+The symptom: the link is underlined under the pointer and the pointer is a hand, so a click follows
+it - and nothing opens.
+</p>
+
+<h4>The box opens three schemes</h4>
+
+<p>
+A followed link raises <code>OnLinkClick</code> with its target. What no handler stops, the box
+opens through the shell - but only a target starting with <code>http:</code>, <code>https:</code> or
+<code>mailto:</code>. A text can come out of a file or off the clipboard and name anything, and the
+shell runs a program it is handed, so every other target - <code>file:</code>, a bare path, a scheme
+of the application's own - goes nowhere until the application answers it:
+</p>
+
+<pre><code>box.<span class="fn">onLinkClick</span>([](<span class="tp">LinkClickEvent</span>&amp; event) {
+    <span class="kw">if</span> (!event.target.<span class="fn">starts_with</span>(<span class="st">L"file:"</span>))
+        <span class="kw">return</span>;
+    <span class="cm">// Open what the application trusts, and only that.</span>
+    <span class="fn">openDocument</span>(event.target);
+    event.<span class="fn">stopPropagation</span>();
+    });</code></pre>
+
+<h4>A # link to an anchor the box does not hold</h4>
+
+<p>
+A <code>#name</code> the box's own text holds is followed by the box, with no event raised. A name
+it does not hold is raised to <code>OnLinkClick</code> like any other target, which is how a link
+reaches an anchor on another page: the handler opens that page and calls <code>goToAnchor</code> on
+its box. With no handler, it goes nowhere.
+</p>
+
+<div class="rules-grid">
+    <div class="rule-card dos">
+        <h4>Do</h4>
+        <ul>
+            <li>Stop the event once a handler has answered the target, so the box does not act on
+                it as well.</li>
+            <li>Check a target before opening it. The text it came from may not be the
+                application's own.</li>
+        </ul>
+    </div>
+    <div class="rule-card donts">
+        <h4>Don't</h4>
+        <ul>
+            <li>Hand every target to the shell from a handler. That undoes the one guard the box
+                keeps, for every text that ever reaches it.</li>
+            <li>Leave the event running after opening an <code>https:</code> link yourself. The box
+                opens it a second time.</li>
+        </ul>
+    </div>
+</div>
+
+<p>
+The whole of what a followed link does is in the TextEngine manual, under
+<a href="TextEngine.html#links-following">Following a link in a TextBox</a>.
+</p>
+
+</div>
+</details>
+</div>
+        </main>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const collapsibleElements = document.querySelectorAll('.sidebar li.has-children');
+            collapsibleElements.forEach(li => {
+                const btn = li.querySelector('.toggle-btn');
+                const link = li.querySelector('.nav-item-wrapper > a');
+                const toggle = (e) => { e.preventDefault(); e.stopPropagation(); li.classList.toggle('collapsed'); };
+                if (btn) btn.addEventListener('click', toggle);
+                if (link) link.addEventListener('click', () => {
+                    if (li.classList.contains('collapsed')) li.classList.remove('collapsed');
+                });
+            });
+            // A link into a folded answer opens it, so an anchor never lands on a closed entry.
+            const openTarget = () => {
+                if (!location.hash) return;
+                const target = document.querySelector(location.hash);
+                if (!target) return;
+                const details = target.closest('.faq')?.querySelector('.faq-more');
+                if (details) details.open = true;
+            };
+            window.addEventListener('hashchange', openTarget);
+            openTarget();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+# ClaFi - editor configuration
+#
+# Read by Visual Studio and by ReSharper C++. An EditorConfig property overrides the
+# same setting in either tool's own options for every file in scope, so this file is
+# the single source of truth and neither tool can reformat against it.
+#
+# This file belongs at the ClaFi root and should stay there. ClaFi is shared
+# between solutions that sit beside it, not above it. EditorConfig resolves by walking
+# up from the path of the file being edited - never from the solution - so a source
+# file under ClaFi finds this config whichever solution has it open, and `root = true`
+# stops the walk here. The style therefore travels with the library, and no consuming
+# solution's own .editorconfig can reach in and change how ClaFi sources are
+# formatted.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+tab_width = 4
+
+[*.{c,cc,cpp,cxx,h,hh,hpp,hxx,ixx,cppm,inl}]
+indent_style = space
+indent_size = 4
+tab_width = 4
+
+# --- Braces: Allman, except lambdas ---
+# One property covers namespace, type, function, case and other blocks.
+cpp_brace_style = next_line
+resharper_cpp_brace_style = next_line
+
+# A lambda keeps its brace on the declaration line, matching brace-init layout.
+cpp_anonymous_method_declaration_braces = end_of_line
+resharper_cpp_anonymous_method_declaration_braces = end_of_line
+
+# Nested namespaces each get their own line.
+cpp_place_namespace_definitions_on_same_line = false
+resharper_cpp_place_namespace_definitions_on_same_line = false
+
+# --- Braces: initialiser lists and empty bodies ---
+# Brace initialisation is not an indenting construct.
+cpp_expression_braces = none
+resharper_cpp_expression_braces = none
+
+# Empty braces are written {} with nothing between them.
+cpp_empty_block_style = together
+resharper_cpp_empty_block_style = together
+
+# Leave one-line getters and setters alone - neither explode nor collapse bodies.
+cpp_simple_block_style = do_not_change
+resharper_cpp_simple_block_style = do_not_change
+
+[*.{md,markdown}]
+# A trailing double space is a hard line break in Markdown.
+trim_trailing_whitespace = false
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+[*.{cmd,bat,ps1}]
+end_of_line = crlf

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi configuration format 1.0 - The Handbook</title>
+    <style>
+        :root {
+            --bg-color: #fdfdfd;
+            --text-color: #2c3e50;
+            --sidebar-bg: #ffffff;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --border-color: #e0e0e0;
+
+            /* Syntax Highlighting Colors (VS Code style but adapted for light/dark) */
+            --accent-color: #2980b9;
+            --syntax-key: #2c3e50;
+            --syntax-marker: #2980b9;
+            --syntax-comment: #7f8c8d;
+            --syntax-string: #e67e22;
+        }
+
+        html { scroll-behavior: smooth; }
+        h2, h3, h4, section { scroll-margin-top: 30px; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.7;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+        }
+
+        /* --- Sidebar --- */
+        nav {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 40px 25px;
+            overflow-y: auto;
+            box-sizing: border-box;
+            z-index: 100;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.85em;
+        }
+
+        .nav-bracket {
+            color: var(--syntax-marker);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .nav-close {
+            color: var(--syntax-marker);
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        nav h2 {
+            font-size: 1.1em;
+            color: var(--syntax-key);
+            margin: 0;
+            display: inline;
+        }
+        nav ul { list-style: none; padding: 0; margin: 0; padding-left: 15px; }
+        nav li { margin-bottom: 10px; display: flex; align-items: flex-start; }
+        .nav-marker { color: var(--syntax-marker); margin-right: 8px; font-weight: bold; }
+        nav a { text-decoration: none; color: var(--syntax-string); transition: 0.2s; }
+        nav a:hover { color: var(--accent-color); padding-left: 4px; }
+
+        /* --- Main Content --- */
+        main { padding: 60px 80px; max-width: 1000px; }
+
+        header {
+            margin-bottom: 80px;
+            position: relative; /* Enabled for absolute positioning of the showcase */
+        }
+
+        h1 { font-size: 3em; margin: 0; color: #1a1a1a; letter-spacing: -1.5px; position: relative; z-index: 2; }
+        .version-badge { background: var(--accent-color); color: white; padding: 4px 15px; border-radius: 50px; font-size: 0.4em; vertical-align: middle; margin-left: 10px; }
+
+        /* --- Section Headers --- */
+        h2 {
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 1.5em;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--syntax-key);
+        }
+        h2 .m { color: var(--syntax-marker); }
+        h3 { font-size: 1.5em; margin-top: 2em; color: var(--accent-color); }
+        h4 { font-size: 1.1em; margin-top: 1.5em; color: #34495e; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* --- Self-Referential Cards --- */
+        .card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 50px;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        .card-close {
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 1.8em;
+            color: var(--syntax-marker);
+            font-weight: bold;
+            margin-top: 25px;
+            line-height: 1;
+        }
+
+        /* Faded Background Code Showcase moved to the Header */
+        header::after {
+            content: "IP = \"127.0.0.1\"\APort = 8080\A\ASecurity = [\A  Enabled = 1\A  Key = [\A    Rules = [\A      Type = \"AES\"\A    ]\A  ]\A]";
+            white-space: pre;
+            position: absolute;
+            font-family: 'Cascadia Code', monospace;
+            font-size: 30px;
+            color: #000;
+            opacity: 0.04;
+            right: 0px;
+            top: -20px;
+            transform: rotate(9deg);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 24px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            border: 1px solid #333;
+            margin: 25px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 2; /* Ensures code blocks render above background decoration */
+        }
+        pre code { background: none !important; color: inherit !important; padding: 0 !important; border: none !important; }
+        :not(pre) > code { font-family: 'Cascadia Code', monospace; background: #f1f1f1; padding: 2px 6px; border-radius: 4px; color: #d63384; font-size: 0.9em; }
+
+        /* Syntax colors inside text/code */
+        .m { color: #569cd6; font-weight: bold; }
+        .s { color: #ce9178; font-weight: normal; }
+        .c { color: #6a9955; font-style: italic; }
+        .k { color: #9cdcfe; }
+
+        /* Decorative Directives (Notes & Info boxes) */
+        .directive {
+            background: #fffdf3;
+            border: 1px dashed #f1c40f;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 8px;
+            position: relative;
+            z-index: 2;
+        }
+        .directive.info {
+            background: #f4f9ff;
+            border: 1px dashed #3498db;
+        }
+        .directive-header {
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-weight: bold;
+            color: #d35400;
+            margin-bottom: 10px;
+        }
+        .directive-header.info {
+            color: var(--accent-color);
+        }
+        .directive-close {
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-weight: bold;
+            color: #d35400;
+            margin-top: 10px;
+        }
+        .directive-close.info {
+            color: var(--accent-color);
+        }
+
+        table { width: 100%; border-collapse: collapse; margin: 30px 0; background: white; position: relative; z-index: 2; }
+        th, td { text-align: left; padding: 14px; border: 1px solid var(--border-color); }
+        th { background: #f8f9fa; font-weight: bold; }
+
+        footer { margin-top: 100px; padding: 60px 0; border-top: 1px solid var(--border-color); color: #bdc3c7; text-align: center; }
+
+        @media (max-width: 1000px) {
+            body { grid-template-columns: 1fr; }
+            nav { position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); }
+            main { padding: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-bracket"><h2>Handbook</h2> = [</div>
+        <ul>
+            <li><span class="nav-marker">=</span> <a href="#manifesto">"1. Design Manifesto"</a></li>
+            <li><span class="nav-marker">=</span> <a href="#types">"2. Values & Arrays"</a></li>
+            <li><span class="nav-marker">=</span> <a href="#hierarchy">"3. Nested Sections"</a></li>
+            <li><span class="nav-marker">=</span> <a href="#line-rules">"4. Line-Orientation"</a></li>
+            <li><span class="nav-marker">=</span> <a href="#continuations">"5. Continuations"</a></li>
+            <li><span class="nav-marker">=</span> <a href="#bookend">"6. The Bookend Rule"</a></li>
+            <li><span class="nav-marker">=</span> <a href="#manual">"7. Parser Guide"</a></li>
+            <li><span class="nav-marker">=</span> <a href="#reference">"8. Marker Reference"</a></li>
+            <li><span class="nav-marker">=</span> <a href="#example">"9. Full Showcase"</a></li>
+            <li><span class="nav-marker">=</span> <a href="#implementation">"10. C++ Examples"</a></li>
+        </ul>
+        <div class="nav-close">]</div>
+    </nav>
+
+    <main>
+        <header>
+            <h1 style="position: relative; z-index: 2; margin: 0 0 25px 0;">
+                ClaFi configuration format <span class="version-badge">v1.0</span>
+            </h1>
+            <div style="position: relative; z-index: 2; font-size: 1.15em; color: #7f8c8d; font-weight: 500; line-height: 1.8;">
+                <div style="margin-bottom: 4px;">
+                    <span class="m" style="font-family: 'Cascadia Code', monospace; font-size: 0.95em; color: var(--syntax-marker); margin-right: 8px;">@</span>What: Hierarchical, line-oriented text for configuration trees
+                </div>
+                <div style="margin-bottom: 4px;">
+                    <span class="m" style="font-family: 'Cascadia Code', monospace; font-size: 0.95em; color: var(--syntax-marker); margin-right: 8px;">@</span>Part of: ClaFi - Clarity First the Framework
+                </div>
+                <div style="margin-bottom: 4px;">
+                    <span class="m" style="font-family: 'Cascadia Code', monospace; font-size: 0.95em; color: var(--syntax-marker); margin-right: 8px;">@</span>Loaded and saved by: the Dom's <code>FileFormat::ClaFi</code> - see <a href="Dom-Manual.html#supported-formats" style="color: inherit;">Dom</a>
+                </div>
+                <div>
+                    <span class="m" style="font-family: 'Cascadia Code', monospace; font-size: 0.95em; color: var(--syntax-marker); margin-right: 8px;">@</span>Sibling: Fmt, the text language - see <a href="TextEngine.html#fmt" style="color: inherit;">TextEngine</a>
+                </div>
+            </div>
+        </header>
+
+        <section id="manifesto" class="card">
+            <h2>1. Design Manifesto = <span class="m">[</span></h2>
+
+            <p>This specification describes the configuration file format used in ClaFi. It combines the line-oriented simplicity of flat key-value files with the recursive structure of a tree. It structures configuration trees without losing the clarity of a plain text file.</p>
+
+            <p>The format is designed to be simple and fast to parse:</p>
+            <ul>
+                <li><strong>Uniform grammar:</strong> Everything is a <code>key=value</code> assignment. No arbitrary headers or confusing scopes.</li>
+                <li><strong>Single-pass parsing:</strong> No backtracking, lookahead, or state machines required.</li>
+                <li><strong>Zero-allocation value extraction:</strong> The Bookend Rule enables string decoding without copying or escaping.</li>
+                <li><strong>Trivial line dispatch:</strong> The first character of each line determines its entire semantic meaning.</li>
+            </ul>
+
+            <div class="directive info">
+                <div class="directive-header info">Tooling Compatibility = [</div>
+                <p>The format uses comments starting with <code>;</code>, value assignments with <code>=</code>, and square brackets <code>[</code> for divisions. This layout mirrors legacy property files, allowing immediate syntax highlighting in VS Code when using <strong><code>.cfg</code></strong> or <strong><code>.ini</code></strong> extensions.</p>
+                <div class="directive-close info">]</div>
+            </div>
+
+            <div id="literal" class="directive">
+                <div class="directive-header">The Literal Advantage = [</div>
+                <p>The core philosophy is <strong>No Escaping</strong>. The backslash (<code>\</code>) is treated as a literal character, which provides several advantages:</p>
+                <ul>
+                    <li><strong>Source-Code Friendly:</strong> You can paste C++, JavaScript, or Regex snippets directly into a value. <span style="font-size: 0.9em; color: #7f8c8d;">*read how to paste multiline text in <a href="#continuations">Continuations</a></span></li>
+                    <li><strong>Path Safe:</strong> File paths are stored exactly as they appear in the file system.</li>
+                    <li><strong>Predictable Round-Trips:</strong> Reading a file and writing it back results in the same data without substitutions.</li>
+                </ul>
+                <div class="directive-close">]</div>
+            </div>
+
+            <div class="card-close">]</div>
+        </section>
+
+        <section id="types" class="card">
+            <h2>2. Values & Arrays = <span class="m">[</span></h2>
+
+            <p>Values are either quoted strings or unquoted literals. The format has no built-in type system; interpretation is left to the application.</p>
+
+            <h3>2.1 Scalar Values</h3>
+            <p>Content after the <code>=</code> is the value. If it starts and ends with <code>"</code>, the Bookend Rule applies. Otherwise, the value is taken literally after trimming outer whitespace.</p>
+
+            <pre><code><span class="c">; Quoted string</span>
+<span class="k">Name</span> = <span class="s">"Nebula Framework"</span>
+
+<span class="c">; Unquoted literals</span>
+<span class="k">Version</span> = 1.0
+
+<span class="c">; Unquoted literal (application decides type)</span>
+<span class="k">Enabled</span> = yes
+
+<span class="c">; No escaping needed</span>
+<span class="k">Path</span> = C:\Program Files\App</code></pre>
+
+            <div class="directive info">
+                <div class="directive-header info">Implementation Freedom = [</div>
+                <p>Parsers return strings. Applications interpret types like integers, floats, or booleans. The format is type-agnostic.</p>
+                <div class="directive-close info">]</div>
+            </div>
+
+            <h3>2.2 Arrays</h3>
+            <p>Arrays group multiple values under a key. Each item begins with <code>=</code> on its own line.</p>
+
+            <h4>2.2.1 Scalar Array</h4>
+            <pre><code><span class="k">Flags</span> = [
+    = <span class="s">"Optimize"</span>
+    = <span class="s">"Debug"</span>
+    = <span class="s">"Release"</span>
+]</code></pre>
+
+            <h4>2.2.2 Section Array (List of Sections)</h4>
+            <pre><code><span class="k">Users</span> = [
+    =[
+        <span class="k">Name</span> = <span class="s">"Alice"</span>
+        <span class="k">Active</span> = 1
+    ]
+    =[
+        <span class="k">Name</span> = <span class="s">"Bob"</span>
+        <span class="k">Active</span> = 0
+    ]
+]</code></pre>
+
+            <div class="directive">
+                <div class="directive-header">Parsing Arrays = [</div>
+                <ol>
+                    <li>When <code>Key = [</code> is encountered, begin collecting items.</li>
+                    <li>Each line starting with <code>=</code> begins a new item.</li>
+                    <li>If <code>=[</code>, parse as an anonymous section until the matching <code>]</code>.</li>
+                    <li>Otherwise, parse as a scalar value (applying Bookend Rule).</li>
+                    <li>Stop at <code>]</code> on its own line.</li>
+                </ol>
+                <div class="directive-close">]</div>
+            </div>
+            <div class="card-close">]</div>
+        </section>
+
+        <section id="hierarchy" class="card">
+            <h2>3. Nested Sections = <span class="m">[</span></h2>
+
+            <p>
+                The format uses a tree structure where any attribute can branch into a deeper section.
+                The format supports unlimited nesting depth.
+            </p>
+
+            <p>Attributes assign nested sections using the <code>[</code> token:</p>
+    <pre><code><span class="k">NestedSection</span> = [
+    <span class="k">SubKey</span> = <span class="s">"Value"</span>
+]</code></pre>
+
+            <ul>
+                <li>Every section acts as a standalone sub-file.</li>
+                <li>Nested sections use the full grammar.</li>
+                <li>A matching closing bracket <code>]</code> must occupy its own line.</li>
+            </ul>
+            <div class="card-close">]</div>
+        </section>
+
+        <section id="line-rules" class="card">
+            <h2>4. Line-Orientation = <span class="m">[</span></h2>
+            <p>The format is line-oriented. To keep parsers simple and git diffs clean, structural markers cannot be inlined.</p>
+            <table>
+                <thead>
+                    <tr><th>Marker</th><th>Requirement</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>]</code> (closing scope marker)</td><td>Must be the first non-whitespace character on its own line.</td></tr>
+                    <tr><td><code>=</code> (array item marker)</td><td>Must be the first non-whitespace character on its own line.</td></tr>
+                    <tr><td><code>|</code> or <code>+</code></td><td>Must be the first non-whitespace character on its own line.</td></tr>
+                </tbody>
+            </table>
+            <div class="card-close">]</div>
+        </section>
+
+        <section id="continuations" class="card">
+            <h2>5. Continuations = <span class="m">[</span></h2>
+            <p>If a value spans multiple lines, the format provides two behaviors:</p>
+            <ul>
+                <li><strong>Newline (<code>|</code>):</strong> Appends the line text and inserts a newline (<code>\n</code>).</li>
+                <li><strong>Concatenation (<code>+</code>):</strong> Appends the line text directly without adding characters. Useful for long paths or keys.</li>
+            </ul>
+
+            <pre><code><span class="k">LongText</span> = <span class="s">"First Line"</span>
+         | <span class="s">"Second Line"</span>
+         | <span class="s">"Third Line"</span>
+           <span class="c">; Value: First Line\nSecond Line\nThird Line</span>
+
+<span class="k">LongPath</span> = <span class="s">"C:\Program"</span>
+         + <span class="s">" Files"</span>
+         + <span class="s">"\Application"</span>
+           <span class="c">; Value: C:\Program Files\Application</span></code></pre>
+
+            <div style="margin-top: 35px; padding-top: 20px; border-top: 1px dashed var(--border-color); font-size: 0.9em; color: #7f8c8d; line-height: 1.6;">
+                <p><strong>* Note on Multiline Snippets:</strong> To paste multiline content, prepend the newline continuation marker (<code>|</code>) at the start of each subsequent line.</p>
+
+                <p>Because leading whitespace on continuation lines is stripped up to the | marker, optional indentation allows you to align subsequent lines with the first one - even within deeply nested sections - greatly improving visual readability.</p>
+
+                <pre style="font-size: 13px; padding: 15px; margin: 15px 0; background-color: #1a1a1a; border-radius: 6px; border: 1px solid #333;"><span class="k">NestedKey</span> = Line one content
+          | Line two content
+          | Line three content</pre>
+
+                <p><strong>Note:</strong> Double quotes are optional.</p>
+
+                <p><em>Addressing the "No Escaping" Critique:</em> Some argue that requiring a prepended <code>|</code> on continuation lines acts as an escape sequence. In this format, a multiline string is modeled as an array of independent, single-line strings presented separately. The <code>|</code> is a structural syntax marker indicating how separate lines compile into the tree, not an escape character.</p>
+            </div>
+
+            <div class="card-close">]</div>
+        </section>
+
+        <section id="bookend" class="card">
+            <h2>6. The Bookend Rule = <span class="m">[</span></h2>
+            <p>To support quotes and protect whitespace boundaries without escaping, the format uses one rule for boundary detection:</p>
+
+            <div class="directive">
+                <div class="directive-header">Rule For Parsers = [</div>
+                <p>If a line starts and ends with a double-quote (<code>"</code>), the parser strips the first and last character.</p>
+                <div class="directive-close">]</div>
+            </div>
+
+            <div class="directive info">
+                <div class="directive-header info">Rule For Builders = [</div>
+                <p>To prevent data loss, a builder must wrap a value in double-quotes (<code>"</code>) if the value:</p>
+                <ul>
+                    <li>Starts and ends with double-quotes (e.g. <code>"Error"</code>).</li>
+                    <li>Is exactly an opening square bracket ([) - prevents section hijacking.</li>
+                    <li>Contains leading or trailing whitespace - prevents boundary loss during trimming.</li>
+                </ul>
+                <p>The parser strips the outer quotes during load, restoring the exact value.</p>
+                <div class="directive-close info">]</div>
+            </div>
+
+            <p>This preserves internal quotes and margins:</p>
+            <pre><code><span class="c">; 1. Quotes preserved without escaping</span>
+<span class="k">LogMessage</span> = <span class="s">"System returned "Error 404" at runtime"</span>
+<span class="c">; Internal Value: System returned "Error 404" at runtime</span>
+
+<span class="c">; 2. Padding preserved (normally lost during trims)</span>
+<span class="k">PaddedText</span> = <span class="s">"   Preserved Margins   "</span>
+<span class="c">; Internal Value:    Preserved Margins   </span></code></pre>
+            <p>If the line does not have quotes at both ends, the parser treats it as an unquoted string and trims the outer whitespace.</p>
+            <div class="card-close">]</div>
+        </section>
+
+        <section id="manual" class="card">
+            <h2>7. Parser Guide = <span class="m">[</span></h2>
+            <p>Implementing a parser is simple. Because the format is line-oriented, you do not need to scan back and forth within a line for transitions.</p>
+
+            <div class="directive">
+                <div class="directive-header">The Standard Algorithm = [</div>
+                <ol>
+                    <li><strong>Read:</strong> Take a line from the input.</li>
+                    <li><strong>Initial Trim:</strong> Remove leading whitespace.</li>
+                    <li>
+                        <strong>Dispatch:</strong>
+                        <ul>
+                            <li>If <code>@</code>: Handle metadata.</li>
+                            <li>If <code>;</code>: Skip line.</li>
+                            <li>If <code>]</code>: Pop scope from the stack.</li>
+                            <li>
+                                If <code>|</code> or <code>+</code>: Apply Bookend Rule and append to the last processed value.
+                            </li>
+                            <li>
+                                If Key/Alpha: Split at <code>=</code>.
+                                <ul>
+                                    <li>If Value is <code>[</code>: Push a new named section scope.</li>
+                                    <li>Else: Process value.</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ol>
+                <div class="directive-close">]</div>
+            </div>
+            <div class="card-close">]</div>
+        </section>
+
+        <section id="reference" class="card">
+            <h2>8. Marker Reference = <span class="m">[</span></h2>
+            <table>
+                <thead>
+                    <tr><th>Symbol</th><th>Logic</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>@</code></td><td>Optional Metadata Directive (e.g., encoding)</td></tr>
+                    <tr><td><code>;</code></td><td>Line Comment</td></tr>
+                    <tr><td><code>Key = [</code></td><td>Starts a Named Section or Array</td></tr>
+                    <tr><td><code>=[</code></td><td>Starts an Anonymous Section (Array Item)</td></tr>
+                    <tr><td><code>]</code></td><td>Ends current scope (Must be on new line)</td></tr>
+                    <tr><td><code>=</code></td><td>Value Assignment or Array Item Marker</td></tr>
+                    <tr><td><code>|</code></td><td>Newline continuation</td></tr>
+                    <tr><td><code>+</code></td><td>Concatenation continuation</td></tr>
+                    <tr><td><code>"</code></td><td>Bookend Quotes (Stripped if at both ends of a line)</td></tr>
+                </tbody>
+            </table>
+            <div class="directive info">
+                <div class="directive-header info">Note = [</div>
+                <p>Values may contain any symbols, including reserved markers. Avoid using them in keys.</p>
+                <div class="directive-close info">]</div>
+            </div>
+            <div class="card-close">]</div>
+        </section>
+
+        <section id="example" class="card">
+            <h2>9. Full Showcase = <span class="m">[</span></h2>
+
+            <pre><code><span class="m">@ClaFi 1.0</span>
+<span class="m">@encoding</span> utf-8
+
+<span class="c">; Example usage</span>
+
+<span class="k">ColorMode</span>=Dark
+
+<span class="k">MainForm</span>=[
+    <span class="k">Bounds</span>=[
+        <span class="k">Left</span>=934
+        <span class="k">Top</span>=515
+        <span class="k">Right</span>=2886
+        <span class="k">Bottom</span>=1765
+    ]
+]
+
+<span class="k">Tabs</span>=[
+    <span class="k">OpenTabs</span>=<span class="s">"Tab1,Tab2,Tab3"</span>
+    <span class="k">TabContent</span>=[
+        =[
+            <span class="k">Id</span>=<span class="s">"Tab1"</span>
+            <span class="k">Title</span>=<span class="s">"Themes"</span>
+            <span class="k">Path</span>=<span class="s">"Home"</span>
+            <span class="k">Preview</span>=1
+            <span class="k">ThemeData</span>=[
+                <span class="k">BgSaturation</span>=0
+                <span class="k">AnchorHue</span>=210
+                <span class="k">Harmony</span>=<span class="s">"Monochromatic"</span>
+            ]
+        ]
+        =[
+            <span class="k">Id</span>=<span class="s">"Tab2"</span>
+            <span class="k">Title</span>=<span class="s">"New Theme (2)"</span>
+            <span class="k">Preview</span>=1
+            <span class="k">ThemeData</span>=[
+                <span class="k">BgSaturation</span>=0.07333333
+                <span class="k">AnchorHue</span>=71
+            ]
+        ]
+    ]
+    <span class="k">SelectedTab</span>=<span class="s">"Tab3"</span>
+]</code></pre>
+            <div class="card-close">]</div>
+        </section>
+
+        <section id="implementation" class="card">
+            <h2>10. C++ Examples = <span class="m">[</span></h2>
+            <p>This chapter provides C++ examples for implementing key features. The snippets demonstrate the line-oriented design.</p>
+
+            <h3>10.1 Implementing the Bookend Rule</h3>
+            <pre><code><span class="c">// Decoder following the Bookend Rule</span>
+<span class="k">std::wstring_view</span> decodeValue(<span class="k">std::wstring_view</span> source)
+{
+    <span class="k">if</span> (source.size() > <span class="m">1</span> && source.front() == L<span class="s">'"'</span> && source.back() == L<span class="s">'"'</span>)
+    {
+        <span class="k">return</span> source.substr(<span class="m">1</span>, source.size() - <span class="m">2</span>);
+    }
+    <span class="k">return</span> source;
+}
+
+<span class="c">// Builder side: protecting quotes, brackets, and boundary spaces</span>
+<span class="k">std::wstring</span> encodeValue(<span class="k">std::wstring_view</span> source)
+{
+    <span class="k">const bool</span> isOpeningBracket = (source == L<span class="s">"["</span>);
+    <span class="k">const bool</span> isAlreadyBookended = (source.size() >= <span class="m">2</span> && source.front() == L<span class="s">'"'</span> && source.back() == L<span class="s">'"'</span>);
+    <span class="k">const bool</span> hasBoundaryWhitespace = (!source.empty() && (std::iswspace(source.front()) || std::iswspace(source.back())));
+
+    <span class="k">if</span> (isOpeningBracket || isAlreadyBookended || hasBoundaryWhitespace)
+    {
+        <span class="k">return</span> L<span class="s">"\""</span> + <span class="k">std::wstring</span>(source) + L<span class="s">"\""</span>;
+    }
+    <span class="k">return</span> <span class="k">std::wstring</span>(source);
+}</code></pre>
+
+            <h3>10.2 Core Parser Loop Structure</h3>
+            <p>The main dispatch logic showcasing the format's line-oriented simplicity:</p>
+            <pre><code><span class="k">void</span> ConfigFile::load(<span class="k">std::wifstream</span>&amp; stream)
+{
+    <span class="k">std::wstring</span> line;
+    Node* currentScope = rootNode;
+
+    <span class="k">while</span> (getTrimLine(stream, line))
+    {
+        <span class="k">if</span> (line.empty())
+        {
+            <span class="k">continue</span>;
+        }
+
+        <span class="c">// Dispatch based on first character</span>
+        <span class="k">switch</span> (line.front())
+        {
+            <span class="k">case</span> L<span class="s">';'</span>:  <span class="c">// Comment</span>
+            {
+                <span class="k">break</span>;
+            }
+
+            <span class="k">case</span> L<span class="s">']'</span>:   <span class="c">// End current scope</span>
+            {
+                currentScope = currentScope->parent();
+                <span class="k">break</span>;
+            }
+
+            <span class="k">case</span> L<span class="s">'|'</span>:  <span class="c">// Newline continuation</span>
+            <span class="k">case</span> L<span class="s">'+'</span>:  <span class="c">// Concatenation continuation</span>
+            {
+                <span class="k">if</span> (lastValueNode)
+                {
+                    <span class="k">bool</span> addNewline = (line.front() == L<span class="s">'|'</span>);
+                    lastValueNode->appendValue(line.substr(<span class="m">1</span>), addNewline);
+                }
+                <span class="k">break</span>;
+            }
+
+            <span class="k">default</span>:  <span class="c">// Key=Value assignment or Array item</span>
+            {
+                size_t eqPos = line.find(L<span class="s">'='</span>);
+                <span class="k">if</span> (eqPos != std::wstring::npos)
+                {
+                    std::wstring_view key = line.substr(<span class="m">0</span>, eqPos);
+                    std::wstring_view value = line.substr(eqPos + <span class="m">1</span>);
+
+                    <span class="k">if</span> (key.empty())
+                    {
+                        <span class="c">// Array item</span>
+                        <span class="k">if</span> (value == L<span class="s">"["</span>)
+                        {
+                            currentScope = &amp;currentScope->addAnonymousSection();
+                        }
+                        <span class="k">else</span>
+                        {
+                            currentScope->addArrayItem(decodeValue(value));
+                        }
+                    }
+                    <span class="k">else</span>
+                    {
+                        <span class="c">// Key=Value assignment</span>
+                        <span class="k">if</span> (!value.empty() && value.front() == L<span class="s">'['</span>)
+                        {
+                            currentScope = &amp;currentScope->addNamedSection(key);
+                        }
+                        <span class="k">else</span>
+                        {
+                            lastValueNode = &amp;currentScope->assignValue(key, decodeValue(value));
+                        }
+                    }
+                }
+                <span class="k">else</span>
+                {
+                    <span class="c">// Syntax Error: Every non-reserved line must contain an '='</span>
+                }
+                <span class="k">break</span>;
+            }
+        }
+    }
+}</code></pre>
+            <div class="card-close">]</div>
+        </section>
+
+        <footer>
+            ClaFi configuration format - v1.0 Standard - Simple, Escapeless Data.
+        </footer>
+    </main>
+
+</body>
+</html>

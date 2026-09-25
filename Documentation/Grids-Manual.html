@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi Grid - Developer Manual</title>
+    <style>
+        :root {
+            --bg-color: #f9f9fb; --text-color: #333; --accent-color: #0066cc;
+            --code-bg: #1e1e1e; --code-text: #d4d4d4; --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6; color: var(--text-color); background-color: var(--bg-color);
+            margin: 0; padding: 0; display: flex;
+        }
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;
+            background-color: #fff; border-right: 1px solid var(--border-color);
+            overflow-y: auto; padding: 2rem 1rem; box-sizing: border-box; z-index: 100;
+        }
+        .sidebar-brand { padding: 0 0.5rem 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); }
+        .sidebar-brand-text {
+            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            font-size: 2.0rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            background: linear-gradient(90deg, #4EC9B0, #A6E22E);
+            -webkit-background-clip: text;
+            /*
+            background-clip: text;
+            */
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 8px rgba(78, 201, 176, 0.25);
+        }
+        .sidebar-brand-text::after {
+            content: "::";
+            margin-left: 0.2em;
+            font-weight: 400;
+        }
+        .sidebar-header { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; padding-left: 0.5rem; color: #111; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar > ul > li { margin-bottom: 0.8rem; }
+        .nav-item-wrapper {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.25rem 0.5rem; border-radius: 6px; transition: background-color 0.2s ease;
+        }
+        .nav-item-wrapper:hover { background-color: rgba(0, 0, 0, 0.02); }
+        .sidebar > ul > li > .nav-item-wrapper > a { font-size: 1rem; font-weight: 600; color: #111; flex-grow: 1; }
+        .sidebar ul ul {
+            padding-left: 0.8rem; margin-top: 0.3rem; margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color); margin-left: 1.1rem;
+        }
+        .sidebar ul ul li { margin-bottom: 0.4rem; }
+        .sidebar ul ul a { font-size: 0.9rem; color: #555; display: block; padding: 0.15rem 0; transition: color 0.15s ease; }
+        .sidebar a { text-decoration: none; display: block; transition: color 0.2s ease; }
+        .sidebar a:hover, .sidebar ul ul a:hover { color: var(--accent-color); }
+        .toggle-btn {
+            background: none; border: none; padding: 4px; margin: 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; color: #888;
+            border-radius: 4px; transition: background-color 0.2s, color 0.2s; outline: none;
+        }
+        .toggle-btn:hover { background-color: rgba(0, 0, 0, 0.05); color: var(--accent-color); }
+        .toggle-btn svg { width: 16px; height: 16px; fill: currentColor; transform: rotate(90deg); transition: transform 0.2s ease; }
+        .sidebar li.has-children.collapsed ul { display: none !important; }
+        .sidebar li.has-children.collapsed .toggle-btn svg { transform: rotate(0deg); }
+        .page-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        header { background-color: #fff; padding: 2rem; border-bottom: 1px solid var(--border-color); text-align: center; }
+        h1, h2, h3, h4 { color: #111; margin-top: 2rem; }
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+        main {
+            max-width: 900px; margin: 2rem auto; padding: 0 2rem; background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; padding-bottom: 2rem;
+        }
+        p, li { font-size: 1.1rem; }
+        pre {
+            background-color: var(--code-bg); color: var(--code-text); padding: 1.5rem;
+            border-radius: 8px; overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.95rem; line-height: 1.5;
+        }
+        code {
+            background-color: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.9em; color: #d14;
+        }
+        pre code { background-color: transparent; padding: 0; color: inherit; }
+        .kw { color: #569cd6; } .tp { color: #4ec9b0; } .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; } .fn { color: #dcdcaa; }
+        .warning { background-color: #fff3f3; border-left: 4px solid #cc0000; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .info { background-color: #f0f7ff; border-left: 4px solid #0066cc; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0; }
+        .rule-card { padding: 1.2rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .rule-card.dos { background-color: #f4faf4; border-left: 4px solid #2e7d32; }
+        .rule-card.donts { background-color: #fff8f8; border-left: 4px solid #c62828; }
+        .rule-card h4 { margin-top: 0; margin-bottom: 0.5rem; }
+        .rule-card ul { margin: 0; padding-left: 1.2rem; }
+        .rule-card li { font-size: 1rem; margin-bottom: 0.5rem; }
+        table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 0.98rem; }
+        th, td { border: 1px solid var(--border-color); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+        th { background-color: #f6f8fa; font-weight: 600; }
+        td code { font-size: 0.85em; }
+        .grid-fig { width: 100%; max-width: 720px; margin: 1.5rem 0; display: block; }
+        @media (max-width: 1200px) { .sidebar { display: none; } .page-content { margin-left: 0; width: 100%; } }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand"><span class="sidebar-brand-text">ClaFi</span></div>
+        <div class="sidebar-header">Contents</div>
+        <ul>
+            <li><div class="nav-item-wrapper"><a href="#introduction">Introduction</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#quickstart">Quick Start</a></div></li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#concepts">Core Concepts</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#columns">Columns</a></li>
+                    <li><a href="#rows">Rows</a></li>
+                    <li><a href="#cells">Cells and content</a></li>
+                    <li><a href="#merging">Merging</a></li>
+                    <li><a href="#widths">Widths</a></li>
+                    <li><a href="#keys">Tags</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#reference">Blueprint Reference</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#ref-grid">Grid</a></li>
+                    <li><a href="#ref-column">Column, Columns</a></li>
+                    <li><a href="#ref-rows">Row, Expander, Group</a></li>
+                    <li><a href="#ref-cells">Cell, CellWith, CellSet</a></li>
+                    <li><a href="#ref-lookup">Finding things later</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#recipes">Recipes</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#r-merge">A label that spans sub-columns</a></li>
+                    <li><a href="#r-group">Grouping rows beside a span</a></li>
+                    <li><a href="#r-controls">Live controls in cells</a></li>
+                    <li><a href="#r-share">Sharing cells between rows</a></li>
+                    <li><a href="#r-vary">Rows that differ from their neighbours</a></li>
+                    <li><a href="#r-update">Reaching a control later</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#troubleshooting">Troubleshooting</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#t-build">Build errors</a></li>
+                    <li><a href="#t-visual">Nothing appears / looks wrong</a></li>
+                    <li><a href="#t-rules">Do / Don't</a></li>
+                </ul>
+            </li>
+            <li><div class="nav-item-wrapper"><a href="#appendix">Appendix &middot; Direct API</a></div></li>
+        </ul>
+    </nav>
+    <div class="page-content">
+        <header>
+            <h1>ClaFi Grid</h1>
+            <p>Building grids was never that simple</p>
+        </header>
+        <main>
+<h2 id="introduction">Introduction</h2>
+
+<svg class="grid-fig showcase" viewBox="0 0 700 348" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Schematic of a ClaFi grid showing merged column headers, an expander, a group label spanning rows, and a row whose cell spans two sub-columns.">
+  <style>
+    .sc-hdr   { fill:#f6f8fa; stroke:#c9cfd6; stroke-width:1; }
+    .sc-cell  { fill:#ffffff; stroke:#dfe3e8; stroke-width:1; }
+    .sc-val   { fill:#eef4fb; stroke:#0066cc; stroke-width:1.2; }
+    .sc-merge { fill:#e3edfa; stroke:#0066cc; stroke-width:1.6; }
+    .sc-group { fill:#e8f0e8; stroke:#2e7d32; stroke-width:1.6; }
+    .sc-exp   { fill:#eceef2; stroke:#c9cfd6; stroke-width:1; }
+    .sc-t     { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .sc-th    { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#111; font-weight:600; }
+    .sc-ti    { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#555; font-style:italic; }
+    .sc-tm    { font-family:"Fira Code",Consolas,monospace; font-size:10px; fill:#5a6b7d; }
+    .sc-n     { font-family:-apple-system,"Segoe UI",sans-serif; font-size:10px; fill:#fff; font-weight:700; }
+    .sc-lg    { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11.5px; fill:#333; }
+    .sc-dot   { fill:#0066cc; }
+    .sc-dotg  { fill:#2e7d32; }
+  </style>
+
+  <!-- ============ header, one row of cells per column level ============ -->
+  <rect class="sc-hdr" x="0"   y="8"  width="200" height="26"/><text class="sc-th" x="8"   y="25">Device</text>
+  <rect class="sc-hdr" x="0"   y="34" width="100" height="26"/><text class="sc-th" x="8"   y="51">Name</text>
+  <rect class="sc-hdr" x="100" y="34" width="100" height="26"/><text class="sc-th" x="108" y="51">Channel</text>
+  <!-- Level has no sub-columns: one cell across the full header height -->
+  <rect class="sc-merge" x="200" y="8" width="90" height="52"/><text class="sc-th" x="208" y="38">Level</text>
+  <rect class="sc-hdr" x="290" y="8"  width="410" height="26"/><text class="sc-th" x="298" y="25">Range</text>
+  <rect class="sc-hdr" x="290" y="34" width="130" height="26"/><text class="sc-th" x="298" y="51">Mode</text>
+  <rect class="sc-hdr" x="420" y="34" width="280" height="26"/><text class="sc-th" x="428" y="51">Amount</text>
+
+  <!-- ============ expander, open ============ -->
+  <rect class="sc-exp" x="0" y="60" width="700" height="26"/>
+  <path d="M10 70 l8 0 l-4 7 z" fill="#6b7684"/>
+  <text class="sc-ti" x="26" y="77">Outputs</text>
+
+  <!-- ============ group: one label spanning three rows ============ -->
+  <rect class="sc-group" x="0" y="86" width="100" height="78"/><text class="sc-t" x="8" y="129">Mixer</text>
+  <rect class="sc-val" x="100" y="86"  width="100" height="26"/><text class="sc-t" x="108" y="103">Input</text>
+  <rect class="sc-val" x="100" y="112" width="100" height="26"/><text class="sc-t" x="108" y="129">Output</text>
+  <rect class="sc-val" x="100" y="138" width="100" height="26"/><text class="sc-t" x="108" y="155">Monitor</text>
+  <rect class="sc-cell" x="200" y="86"  width="90" height="26"/><text class="sc-tm" x="208" y="103">0.80</text>
+  <rect class="sc-cell" x="200" y="112" width="90" height="26"/><text class="sc-tm" x="208" y="129">0.65</text>
+  <rect class="sc-cell" x="200" y="138" width="90" height="26"/><text class="sc-tm" x="208" y="155">1.00</text>
+  <rect class="sc-cell" x="290" y="86"  width="130" height="26"/><text class="sc-tm" x="298" y="103">Scale</text>
+  <path d="M402 97 l8 0 l-4 5 z" fill="#7d8894"/>
+  <rect class="sc-cell" x="290" y="112" width="130" height="26"/><text class="sc-tm" x="298" y="129">Offset</text>
+  <path d="M402 123 l8 0 l-4 5 z" fill="#7d8894"/>
+  <rect class="sc-cell" x="290" y="138" width="130" height="26"/><text class="sc-tm" x="298" y="155">No change</text>
+  <path d="M402 149 l8 0 l-4 5 z" fill="#7d8894"/>
+  <rect class="sc-cell" x="420" y="86"  width="280" height="26"/>
+  <rect class="sc-cell" x="420" y="112" width="280" height="26"/>
+  <rect class="sc-cell" x="420" y="138" width="280" height="26"/>
+  <line x1="440" y1="99"  x2="680" y2="99"  stroke="#c3cbd4" stroke-width="3" stroke-linecap="round"/>
+  <line x1="440" y1="99"  x2="590" y2="99"  stroke="#7fb3e8" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="590" cy="99" r="5" fill="#fff" stroke="#4a90d9" stroke-width="2"/>
+  <line x1="440" y1="125" x2="680" y2="125" stroke="#c3cbd4" stroke-width="3" stroke-linecap="round"/>
+  <line x1="440" y1="125" x2="540" y2="125" stroke="#7fb3e8" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="540" cy="125" r="5" fill="#fff" stroke="#4a90d9" stroke-width="2"/>
+  <line x1="440" y1="151" x2="680" y2="151" stroke="#c3cbd4" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="440" cy="151" r="5" fill="#fff" stroke="#b8c2cc" stroke-width="2"/>
+
+  <!-- ============ a row that fills the parent instead of its children ============ -->
+  <rect class="sc-merge" x="0" y="164" width="200" height="26"/><text class="sc-t" x="8" y="181">Master bus</text>
+  <rect class="sc-cell" x="200" y="164" width="90"  height="26"/><text class="sc-tm" x="208" y="181">0.50</text>
+  <rect class="sc-cell" x="290" y="164" width="130" height="26"/><text class="sc-tm" x="298" y="181">Set</text>
+  <path d="M402 175 l8 0 l-4 5 z" fill="#7d8894"/>
+  <rect class="sc-cell" x="420" y="164" width="280" height="26"/>
+  <line x1="440" y1="177" x2="680" y2="177" stroke="#c3cbd4" stroke-width="3" stroke-linecap="round"/>
+  <line x1="440" y1="177" x2="620" y2="177" stroke="#7fb3e8" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="620" cy="177" r="5" fill="#fff" stroke="#4a90d9" stroke-width="2"/>
+
+  <!-- ============ expander, collapsed ============ -->
+  <rect class="sc-exp" x="0" y="190" width="700" height="26"/>
+  <path d="M11 196 l0 8 l7 -4 z" fill="#6b7684"/>
+  <text class="sc-ti" x="26" y="207">Inputs</text>
+
+  <!-- ============ callouts ============ -->
+  <circle class="sc-dot"  cx="182" cy="20"  r="8"/><text class="sc-n" x="179" y="24">1</text>
+  <circle class="sc-dot"  cx="682" cy="20"  r="8"/><text class="sc-n" x="679" y="24">1</text>
+  <circle class="sc-dot"  cx="272" cy="20"  r="8"/><text class="sc-n" x="269" y="24">2</text>
+  <circle class="sc-dotg" cx="84"  cy="98"  r="8"/><text class="sc-n" x="81"  y="102">3</text>
+  <circle class="sc-dot"  cx="182" cy="176" r="8"/><text class="sc-n" x="179" y="180">4</text>
+  <circle class="sc-dot"  cx="672" cy="73"  r="8"/><text class="sc-n" x="669" y="77">5</text>
+  <circle class="sc-dot"  cx="672" cy="203" r="8"/><text class="sc-n" x="669" y="207">5</text>
+
+  <!-- ============ legend ============ -->
+  <circle class="sc-dot"  cx="9"  cy="242" r="8"/><text class="sc-n" x="6"  y="246">1</text>
+  <text class="sc-lg" x="24" y="246">Device and Range have sub-columns, so the header calculates two rows of cells.</text>
+  <circle class="sc-dot"  cx="9"  cy="266" r="8"/><text class="sc-n" x="6"  y="270">2</text>
+  <text class="sc-lg" x="24" y="270">Level has no sub-columns, so its header cell fills the full header height.</text>
+  <circle class="sc-dotg" cx="9"  cy="290" r="8"/><text class="sc-n" x="6"  y="294">3</text>
+  <text class="sc-lg" x="24" y="294">A group's span row fills one column across all of its rows.</text>
+  <circle class="sc-dot"  cx="9"  cy="314" r="8"/><text class="sc-n" x="6"  y="318">4</text>
+  <text class="sc-lg" x="24" y="318">This row fills Device itself, so one cell covers Name and Channel.</text>
+  <circle class="sc-dot"  cx="9"  cy="338" r="8"/><text class="sc-n" x="6"  y="342">5</text>
+  <text class="sc-lg" x="24" y="342">Expanders open and close a whole section.</text>
+</svg>
+
+<p>The structure you see in that picture &mdash; different column levels, visual cell spans and merges,
+groups &mdash; falls out of two hierarchies, a tree of columns and a tree of rows, plus
+one fact per cell: whether that row fills that column.</p>
+
+<p>You describe all of it &mdash; columns, rows, and the contents of every cell &mdash; as
+a single nested declaration:</p>
+
+<pre><code><span class="tp">Grid</span> m_blueprint{ m_grid,
+    <span class="tp">Columns</span>{ <span class="cm">/* the column tree */</span> },
+    <span class="tp">Header</span>{}, <span class="cm">// The grid header is optional, this line creates one</span>
+    <span class="tp">Rows</span>{ <span class="cm">/* the rows, and the cells in them */</span> }
+};</code></pre>
+
+<p>Applying it builds the grid and, for each row, connects a pair of handlers to that row:
+one answering which columns the row fills, one supplying the text of its cells. The grid asks
+the row while it lays out, paints and hit-tests, so there is no second place to keep in sync.
+The row owns those connections, so nothing outside the grid has to stay alive.</p>
+
+<div class="info">
+<strong>The one idea to carry through this document:</strong> a grid is a <em>sparse</em>
+matrix. Which cells exist is the most important thing about it &mdash; it drives layout,
+painting, merging, hit testing and keyboard navigation. With the Blueprint, a row's cells
+are exactly the ones you list, and nothing else.
+</div>
+
+<h2 id="quickstart">Quick Start</h2>
+
+<p>A grid with two columns and two rows. This is the whole thing:</p>
+
+<pre><code><span class="kw">import</span> ClaFi.Controls.Grids;
+<span class="kw">import</span> ClaFi.Controls.Grids_Dt;
+
+<span class="kw">using namespace</span> <span class="tp">ClaFi</span>;
+<span class="kw">using namespace</span> <span class="tp">ClaFi::Controls</span>;   <span class="cm">// Grids:: and Dt:: from here on</span>
+
+<span class="kw">enum class</span> <span class="tp">Col</span> { Name, Size };
+
+<span class="kw">class</span> <span class="tp">FilesPage</span> : <span class="kw">public</span> <span class="tp">BasePage</span>
+{
+    <span class="tp">Grid</span>&amp; m_grid{ body().<span class="fn">add</span>&lt;<span class="tp">Grid</span>&gt;() };
+
+    <span class="tp">Grid</span> m_blueprint{ m_grid,
+        <span class="tp">Columns</span>{
+            <span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="tp">Text</span>{ <span class="st">L"Name"</span> } },
+            <span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Size }, <span class="tp">Text</span>{ <span class="st">L"Size"</span> } }
+        },
+        <span class="tp">Header</span>{},
+        <span class="tp">Rows</span>{
+            <span class="tp">Row</span>{
+                <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, [](<span class="tp">CellTextArgs</span>&amp; a) { a.text &lt;&lt; <span class="st">L"readme.txt"</span>; } },
+                <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Size }, [](<span class="tp">CellTextArgs</span>&amp; a) { a.text &lt;&lt; <span class="st">L"1.2 KB"</span>; } }
+            },
+            <span class="tp">Row</span>{
+                <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, [](<span class="tp">CellTextArgs</span>&amp; a) { a.text &lt;&lt; <span class="st">L"notes.md"</span>; } },
+                <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Size }, [](<span class="tp">CellTextArgs</span>&amp; a) { a.text &lt;&lt; <span class="st">L"640 B"</span>; } }
+            }
+        }
+    };
+};</code></pre>
+
+<div class="info">
+<strong>Three namespaces, and you name none of them.</strong> The grid's runtime classes live
+in <code>ClaFi::Controls::Grids</code> &mdash; plural, so that <code>Grid</code> stays free
+as a class name. The blueprint layer is <code>ClaFi::Controls::Grids::Dt</code>. The
+machinery both of the framework's blueprint layers share &mdash; <code>OnEvent</code>,
+<code>Init</code>, the node bases, the pack routing &mdash; lives in <code>ClaFi::Dt</code>,
+and <code>Grids::Dt</code> re-exports the parts you name directly.
+<br><br>
+Pull the blueprint layer in once, in the namespace your page lives in, and write every node
+unqualified after that:
+<pre><code><span class="kw">namespace</span> <span class="tp">MyApp</span>
+{
+    <span class="kw">using namespace</span> ::<span class="tp">ClaFi</span>;
+    <span class="kw">using namespace</span> ::<span class="tp">ClaFi::Controls</span>;
+    <span class="kw">using namespace</span> ::<span class="tp">ClaFi::Controls::Grids::Dt</span>;</code></pre>
+Two names still need qualifying, because they collide with the controls of the same name in
+<code>Controls::</code>: <code>Grids::Dt::Expander</code> and
+<code>Grids::Dt::Divider</code>. Everything else is written bare.
+<br><br>
+<code>Grids_Dt</code> also publishes <code>Grids::Rt::</code>, aliases for the runtime types a
+blueprint mentions: <code>Rt::Column</code>, <code>Rt::RowBase</code>,
+<code>Rt::RowContainer</code>. The same classes, spelled so that a blueprint reads visibly
+differently from the live objects it describes.
+</div>
+
+<div class="info">
+<strong>Two imports.</strong> <code>import ClaFi.Controls.Grids;</code> brings the grid and
+<code>import ClaFi.Controls.Grids_Dt;</code> brings the declarative layer. The second pulls in
+<code>ClaFi.Core.Dt</code> for you.
+</div>
+
+<p>Four things to notice, because they apply everywhere:</p>
+
+<ul>
+<li>The <code>Grid</code> applies itself in its constructor, so it has to be
+declared <strong>after</strong> the grid it builds into. It keeps nothing afterwards, so it can
+equally be a local in a constructor body rather than a member.</li>
+<li>A column is named by its <code>Tag</code> &mdash; an ordinary property, forwarded to the
+column like any other. Any enum or integer works. The values have to be unique among the
+columns of one grid, and a debug build says so if they are not.</li>
+<li>A cell names its column with that same <code>Tag</code> &mdash;
+<code>Cell{ Tag{ Col::Name }, ... }</code>.</li>
+<li>A row has cells only where you give it cells. A row with no cell in
+<code>Col::Size</code> has no cell there at all &mdash; not an empty one.</li>
+</ul>
+
+<p>Text usually comes from your data rather than a literal. Point the cell at a member
+function and it will be called whenever that cell needs drawing:</p>
+
+<pre><code><span class="kw">void</span> <span class="tp">FilesPage</span>::<span class="fn">nameCell</span>(<span class="tp">CellTextArgs</span>&amp; args) <span class="kw">const</span>
+{
+    args.text &lt;&lt; m_files[args.row.<span class="fn">tag</span>&lt;<span class="kw">size_t</span>&gt;()].name;
+}
+
+<span class="cm">// ...</span>
+<span class="tp">Row</span>{ <span class="tp">Tag</span>{ index }, <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">FilesPage</span>::nameCell } }</code></pre>
+
+<p><code>Tag</code> is yours to use however you like &mdash; here it carries the row's index
+into the model. The grid never reads it.</p>
+<h2 id="concepts">Core Concepts</h2>
+
+<h3 id="columns">Columns</h3>
+
+<p>Columns form a tree. Any column can have sub-columns:</p>
+
+<pre><code><span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Range }, <span class="tp">Text</span>{ <span class="st">L"Range"</span> },
+    <span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::RangeMode },   <span class="tp">Text</span>{ <span class="st">L"Mode"</span> } },
+    <span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::RangeAmount }, <span class="tp">Text</span>{ <span class="st">L"Amount"</span> } }
+}</code></pre>
+
+<p>Anything in a <code>Column</code> that is not another <code>Column</code> is a property.
+The useful ones:</p>
+
+<table>
+<tr><th>Property</th><th>Effect</th></tr>
+<tr><td><code>Text{ ... }</code></td><td>The header label, and the default text of the header cell.</td></tr>
+<tr><td><code>ShowInHeader::Yes / No</code></td><td>Whether the header row draws a cell here. Default <code>Yes</code>.</td></tr>
+<tr><td><code>ColumnWidthMode::FitContent</code></td><td>As wide as its widest cell. The default.</td></tr>
+<tr><td><code>ColumnWidthMode::Fixed</code></td><td>As wide as the <code>float</code> you also pass.</td></tr>
+<tr><td><code>ColumnWidthMode::Fill</code></td><td>Takes a share of the leftover width. With several <code>Fill</code> siblings the <code>float</code> acts as a ratio.</td></tr>
+<tr><td><code>TextAlign::...</code></td><td>Alignment for every cell in the column.</td></tr>
+<tr><td><code>const ColorRule*</code></td><td>Background tint for the whole column.</td></tr>
+<tr><td><code>Tag{ ... }</code></td><td>Names the column, so a cell can refer to it and <code>columnByTag</code> can find it afterwards. Unique within the grid. Reaches the column like any other property.</td></tr>
+</table>
+
+<h3 id="rows">Rows</h3>
+
+<p>Rows appear in the order you declare them. Besides plain <code>Row</code> there are
+containers that hold other rows:</p>
+
+<table>
+<tr><th>Node</th><th>Produces</th></tr>
+<tr><td><code>Header{}</code></td><td>The header row. Draws a cell in every column whose <code>ShowInHeader</code> is <code>Yes</code>, using that column's <code>Text</code>.</td></tr>
+<tr><td><code>Row{ ... }</code></td><td>An ordinary row. Can hold text cells and live controls.</td></tr>
+<tr><td><code>Divider{}</code></td><td>A thin band between rows, closed by a grid line.</td></tr>
+<tr><td><code>Expander{ Header{...}, rows... }</code></td><td>A collapsible header with rows beneath it.</td></tr>
+<tr><td><code>Group{ Span{...}, rows... }</code></td><td>A span row laid <em>over</em> its rows, so its cells span them vertically.</td></tr>
+<tr><td><code>Rows{ ... }</code></td><td>Grouping only &mdash; adds nesting in your source, not in the grid.</td></tr>
+</table>
+
+<h3 id="cells">Cells and content</h3>
+
+<div class="info">
+The <code>Text</code> handed to a provider is a stream the grid clears once per query, and
+providers <strong>append</strong> to it. Several levels can contribute to one cell &mdash; the
+cell's own provider, then a grid-wide <code>OnGetCellText</code> handler. One that wants to
+replace what an earlier one wrote calls <code>text.clear()</code> first.
+</div>
+
+<p>A row's cells are exactly the ones you declare. Four forms:</p>
+
+<pre><code><span class="cm">// The cell exists and is empty. It still draws a border and can be hovered.</span>
+<span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Amount } }
+
+<span class="cm">// Text from a lambda.</span>
+<span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, [](<span class="tp">CellTextArgs</span>&amp; args) { args.text &lt;&lt; <span class="st">L"..."</span>; } }
+
+<span class="cm">// Text from a member function - the usual choice.</span>
+<span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">MyPage</span>::nameCell }
+
+<span class="cm">// A live control living in the cell.</span>
+<span class="tp">CellWith</span>&lt;<span class="tp">Combobox</span>&gt;{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Mode }, <span class="cm">/* Combobox constructor arguments */</span> }</code></pre>
+
+<p>A text provider receives:</p>
+
+<pre><code><span class="kw">struct</span> <span class="tp">CellTextArgs</span>
+{
+    <span class="kw">const</span> <span class="tp">Rt::RowBase</span>&amp;  row;     <span class="cm">// which row - read its Tag to find your data</span>
+    <span class="kw">const</span> <span class="tp">Rt::Column</span>&amp;   column;
+    <span class="tp">Text</span>&amp;               text;    <span class="cm">// write here, appending</span>
+};</code></pre>
+
+<div class="info">
+<strong>Not declaring a cell is different from declaring an empty one.</strong> A column you
+skip has no cell in that row: nothing is drawn, and either a neighbouring cell covers the
+space or it stays blank. A bare <code>Cell{ key }</code> gives you a real, bordered,
+hoverable cell that happens to be empty. Both are useful; pick deliberately.
+</div>
+
+<h3 id="merging">Merging</h3>
+
+<p>Cells grow to cover their neighbours in two ways. Neither is configured &mdash; both
+follow from which cells you declared.</p>
+
+<h4>A column whose cell covers its sub-columns</h4>
+
+<svg class="grid-fig fig-subcols" viewBox="0 0 700 102" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A grid header over one row. The row fills the Device column and neither of its sub-columns, so its cell covers the width of Name and Channel and both levels of the row.">
+  <style>
+    .f1-hdr  { fill:#f6f8fa; stroke:#c9cfd6; stroke-width:1; }
+    .f1-fill { fill:#eef4fb; stroke:#0066cc; stroke-width:1.2; }
+    .f1-span { fill:#e3edfa; stroke:#0066cc; stroke-width:1.8; }
+    .f1-t    { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .f1-th   { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#111; font-weight:600; }
+    .f1-s    { font-family:-apple-system,"Segoe UI",sans-serif; font-size:10.5px; fill:#777; }
+    .f1-side { font-family:-apple-system,"Segoe UI",sans-serif; font-size:10.5px; fill:#8a94a0; text-anchor:end; }
+  </style>
+  <rect class="f1-hdr" x="70"  y="2"  width="160" height="24"/><text class="f1-th" x="78"  y="18">Device</text>
+  <rect class="f1-hdr" x="70"  y="26" width="80"  height="24"/><text class="f1-th" x="78"  y="42">Name</text>
+  <rect class="f1-hdr" x="150" y="26" width="80"  height="24"/><text class="f1-th" x="158" y="42">Channel</text>
+  <rect class="f1-hdr" x="230" y="2"  width="70"  height="48"/><text class="f1-th" x="238" y="30">Level</text>
+  <rect class="f1-hdr" x="300" y="2"  width="240" height="24"/><text class="f1-th" x="308" y="18">Range</text>
+  <rect class="f1-hdr" x="300" y="26" width="120" height="24"/><text class="f1-th" x="308" y="42">Mode</text>
+  <rect class="f1-hdr" x="420" y="26" width="120" height="24"/><text class="f1-th" x="428" y="42">Amount</text>
+  <text class="f1-side" x="64" y="30">header</text>
+  <rect class="f1-span" x="70"  y="50" width="160" height="48"/>
+  <text class="f1-t" x="78" y="70">Master bus</text>
+  <text class="f1-s" x="78" y="86">no cells in Name or Channel</text>
+  <rect class="f1-fill" x="230" y="50" width="70"  height="48"/><text class="f1-t" x="238" y="78">0.50</text>
+  <rect class="f1-fill" x="300" y="50" width="240" height="24"/><text class="f1-t" x="308" y="66">Scale</text>
+  <rect class="f1-fill" x="300" y="74" width="120" height="24"/><text class="f1-t" x="308" y="90">Offset</text>
+  <rect class="f1-fill" x="420" y="74" width="120" height="24"/><text class="f1-t" x="428" y="90">0.25</text>
+  <text class="f1-side" x="64" y="78">one row</text>
+  <text class="f1-s" x="550" y="66">level 0</text>
+  <text class="f1-s" x="550" y="90">level 1</text>
+</svg>
+
+<p>If a row fills a column but none of that column's sub-columns, the cell spans downward
+over them. The result is always a plain rectangle, because sub-columns exactly cover their
+parent's width.</p>
+
+<p>This is how one row shows a single wide label while its neighbour shows two separate
+values under the same parent column.</p>
+
+<h4>A group's span row, whose cell covers all of its rows</h4>
+
+<svg class="grid-fig fig-group" viewBox="0 0 700 152" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A grid header over a group of four rows. The group's span row fills the Name column across the full height of the group, while the four rows fill Channel and the value columns.">
+  <style>
+    .f2-hdr   { fill:#f6f8fa; stroke:#c9cfd6; stroke-width:1; }
+    .f2-cell  { fill:#ffffff; stroke:#dfe3e8; stroke-width:1; }
+    .f2-fill  { fill:#eef4fb; stroke:#0066cc; stroke-width:1.2; }
+    .f2-group { fill:#e8f0e8; stroke:#2e7d32; stroke-width:1.8; }
+    .f2-t     { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .f2-th    { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#111; font-weight:600; }
+    .f2-s     { font-family:-apple-system,"Segoe UI",sans-serif; font-size:10.5px; fill:#777; }
+    .f2-side  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:10.5px; fill:#8a94a0; text-anchor:end; }
+  </style>
+  <rect class="f2-hdr" x="70"  y="2"  width="160" height="24"/><text class="f2-th" x="78"  y="18">Device</text>
+  <rect class="f2-hdr" x="70"  y="26" width="80"  height="24"/><text class="f2-th" x="78"  y="42">Name</text>
+  <rect class="f2-hdr" x="150" y="26" width="80"  height="24"/><text class="f2-th" x="158" y="42">Channel</text>
+  <rect class="f2-hdr" x="230" y="2"  width="70"  height="48"/><text class="f2-th" x="238" y="30">Level</text>
+  <rect class="f2-hdr" x="300" y="2"  width="240" height="24"/><text class="f2-th" x="308" y="18">Range</text>
+  <rect class="f2-hdr" x="300" y="26" width="120" height="24"/><text class="f2-th" x="308" y="42">Mode</text>
+  <rect class="f2-hdr" x="420" y="26" width="120" height="24"/><text class="f2-th" x="428" y="42">Amount</text>
+  <text class="f2-side" x="64" y="30">header</text>
+  <rect class="f2-group" x="70" y="50" width="80" height="96"/><text class="f2-t" x="78" y="102">Mixer</text>
+  <text class="f2-side" x="64" y="94">group</text>
+  <text class="f2-side" x="64" y="108">span row</text>
+  <rect class="f2-fill" x="150" y="50"  width="80"  height="24"/><text class="f2-t" x="158" y="66">Input</text>
+  <rect class="f2-fill" x="150" y="74"  width="80"  height="24"/><text class="f2-t" x="158" y="90">Output</text>
+  <rect class="f2-fill" x="150" y="98"  width="80"  height="24"/><text class="f2-t" x="158" y="114">Monitor</text>
+  <rect class="f2-fill" x="150" y="122" width="80"  height="24"/><text class="f2-t" x="158" y="138">Aux</text>
+  <rect class="f2-cell" x="230" y="50"  width="70"  height="24"/>
+  <rect class="f2-cell" x="230" y="74"  width="70"  height="24"/>
+  <rect class="f2-cell" x="230" y="98"  width="70"  height="24"/>
+  <rect class="f2-cell" x="230" y="122" width="70"  height="24"/>
+  <rect class="f2-cell" x="300" y="50"  width="240" height="24"/>
+  <rect class="f2-cell" x="300" y="74"  width="240" height="24"/>
+  <rect class="f2-cell" x="300" y="98"  width="240" height="24"/>
+  <rect class="f2-cell" x="300" y="122" width="240" height="24"/>
+  <text class="f2-s" x="550" y="84">the span row fills Name,</text>
+  <text class="f2-s" x="550" y="100">the rows fill Channel</text>
+  <text class="f2-s" x="550" y="116">and the value columns</text>
+</svg>
+
+<p>A <code>Group</code>'s span row is stretched to the full height of the rows inside it
+and drawn across them. They do not collide because <strong>the span row and its rows fill
+different columns</strong>: the span row owns the columns that should read as one tall
+cell, the rows own the rest.</p>
+
+<div class="warning">
+<strong>Design rule for a group:</strong> the span row and its rows must declare
+<em>disjoint</em> sets of columns whose union covers everything the group should show. A
+column claimed by neither leaves a gap; a column claimed by both is drawn twice.
+</div>
+
+<h3 id="widths">Widths</h3>
+
+<p>Each column's width comes from its <code>ColumnWidthMode</code>:</p>
+
+<ul>
+<li><strong>FitContent</strong> &mdash; wide enough for its widest cell across all rows.</li>
+<li><strong>Fixed</strong> &mdash; the width you give it.</li>
+<li><strong>Fill</strong> &mdash; shares out whatever is left after the others.</li>
+</ul>
+
+<p>A parent column is at least as wide as its sub-columns combined, and the leftover width
+is distributed among the <code>Fill</code> ones.</p>
+
+<div class="info">
+Give at least one sub-column in each group <code>ColumnWidthMode::Fill</code>. If none of
+them can stretch, they keep their natural widths and may not reach their parent's right
+edge, leaving a narrow unpainted strip there.
+</div>
+
+<h3 id="keys">Tags</h3>
+
+<p>A <code>Tag</code> is the one identifier in play. On a column it is the name cells use to
+find it; on a row or a control it is yours to use however you like.</p>
+
+<table>
+<tr><th></th><th>On a column</th><th>On a row or a control</th></tr>
+<tr><td>Read by</td><td>the blueprint, and <code>columnByTag</code></td><td>nobody but you</td></tr>
+<tr><td>Purpose</td><td>lets a cell name the column</td><td>whatever you want to attach</td></tr>
+<tr><td>Unique?</td><td>yes, within one grid</td><td>no requirement at all</td></tr>
+<tr><td>Reaches the object?</td><td>yes, forwarded like any property</td><td>yes, like any property</td></tr>
+</table>
+
+<pre><code><span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Level },   <span class="cm">// how cells name this column</span>
+    <span class="tp">Text</span>{ <span class="st">L"Level"</span> }
+}
+
+<span class="tp">Row</span>{ <span class="tp">Tag</span>{ <span class="tp">Kind</span>::Channel, channel },   <span class="cm">// yours - the grid never reads it</span>
+    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Level }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::levelCell }
+}</code></pre>
+
+<p><code>Tag</code> packs several values into one, so a column name can be compound:
+<code>Tag{ SectionId::Audio, Col::Level }</code>. Reading a segment back is
+<code>tag&lt;index, count, Enum&gt;()</code>.</p>
+
+<div class="warning">
+Because one type serves both jobs, nothing stops a cell from naming a row's tag by mistake.
+The blueprint cannot catch that at compile time; it shows up as an unresolved cell, which a
+debug build throws on. If a column is meant to be nameable, give it a <code>Tag</code> drawn
+from the enum your cells use, and keep that enum separate from your row tags.
+</div>
+
+<div class="info">
+A column declared without a <code>Tag</code> is legal &mdash; it simply cannot be named by a
+cell. Note that <code>Tag{}</code> holding zero is a perfectly ordinary tag: the first
+enumerator of a plain enum is zero, so absence is tracked by whether you passed the property
+at all, not by its value.
+</div>
+<h2 id="reference">Blueprint Reference</h2>
+
+<pre><code><span class="kw">import</span> ClaFi.Controls.Grids;
+<span class="kw">import</span> ClaFi.Controls.Grids_Dt;
+
+<span class="kw">using namespace</span> <span class="tp">ClaFi</span>;
+<span class="kw">using namespace</span> <span class="tp">ClaFi::Controls</span>;</code></pre>
+
+<h3 id="ref-grid">Grid</h3>
+
+<pre><code><span class="kw">template</span> &lt;<span class="kw">typename</span>... Args&gt;
+<span class="tp">Grid</span>(<span class="tp">GridBase</span>&amp; grid, Args&amp;&amp;... nodes);</code></pre>
+
+<p><code>Grid</code> is the root of a blueprint: it describes a whole grid and
+applies itself to one. Declare it as a member, after the <code>Grid</code> control it builds
+into:</p>
+
+<pre><code><span class="tp">Grid</span>&amp; m_grid{ body().<span class="fn">add</span>&lt;<span class="tp">Grid</span>&gt;() };
+
+<span class="tp">Grid</span> m_blueprint{ m_grid,
+    <span class="tp">Columns</span>{ <span class="cm">/* ... */</span> },
+    <span class="tp">Header</span>{},
+    <span class="tp">Rows</span>{ <span class="cm">/* ... */</span> }
+};</code></pre>
+
+<div class="info">
+Columns are always applied before rows, whatever order you write them in, because cells
+resolve their tags by lookup. Rows keep their relative order among themselves, so
+<code>Header{}</code> written before <code>Rows{}</code> really does come first.
+</div>
+
+<div class="info">
+<strong>Nothing survives the constructor.</strong> <code>Grid</code> has no query
+members. Columns carry their tags, rows own their cell connections, and both are reachable
+through the grid itself &mdash; see <a href="#ref-lookup">Finding things later</a>. In a debug
+build the constructor throws if two columns share a tag, or if a cell named a tag no column
+carries; a release build skips both checks.
+</div>
+
+<h3 id="ref-column">Column and Columns</h3>
+
+<pre><code><span class="tp">Column</span>{ <span class="tp">Tag</span>{ ... }, properties..., <span class="tp">Column</span>{ ... }, <span class="tp">Column</span>{ ... } }</code></pre>
+
+<p>The <code>Tag</code> names the column and may sit anywhere in the argument list &mdash; it
+is an ordinary property, read by the blueprint on its way through. Everything that is not a
+nested <code>Column</code> is a property, passed straight through to the grid. Nested
+<code>Column</code> nodes become sub-columns.</p>
+
+<p>A column without a <code>Tag</code> is allowed &mdash; it simply cannot be named by a
+cell:</p>
+
+<pre><code><span class="tp">Column</span>{ <span class="tp">Text</span>{ <span class="st">L"decorative"</span> }, <span class="tp">ShowInHeader</span>::Yes }</code></pre>
+
+<p><code>Columns{ ... }</code> is a grouping node with no effect on the grid; use it as the
+outer wrapper.</p>
+
+<h3 id="ref-rows">Row, Expander, Group, Header, Span, Divider</h3>
+
+<pre><code><span class="tp">Row</span>{ properties..., <span class="tp">Cell</span>{ ... }, <span class="tp">Control</span>&lt;T&gt;{ ... }, aCellSet }</code></pre>
+
+<p>A <code>Row</code> takes no leading key. Properties &mdash; anything that is not a cell
+&mdash; go to the row control, so this is where your <code>Tag</code> goes:</p>
+
+<pre><code><span class="tp">Row</span>{
+    <span class="tp">Tag</span>{ <span class="tp">Kind</span>::Device, deviceIndex },
+    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">MyPage</span>::nameCell },
+    m_valueCells
+}</code></pre>
+
+<p>Every blueprint row can host controls, so nothing special is needed to put one in a
+cell.</p>
+
+<table>
+<tr><th>Node</th><th>Children</th></tr>
+<tr><td><code>Row{ props..., cells... }</code></td><td>cells</td></tr>
+<tr><td><code>Expander{ props..., rows... }</code></td><td>rows, inside the collapsible body</td></tr>
+<tr><td><code>Group{ props..., rows... }</code></td><td>rows, overlapped by the span row</td></tr>
+<tr><td><code>Header{ ... }</code></td><td>the header of the container it sits in &mdash; see below</td></tr>
+<tr><td><code>Span{ ... }</code></td><td>the span row of the group it sits in &mdash; see below</td></tr>
+<tr><td><code>Divider{}</code></td><td>&mdash;</td></tr>
+<tr><td><code>Rows{ rows... }</code></td><td>spliced into the enclosing grid</td></tr>
+</table>
+
+<pre><code><span class="tp">Rows</span>{
+    <span class="tp">Grids::Dt::Expander</span>{
+        <span class="tp">Header</span>{ <span class="tp">Text</span>{ <span class="tp">TextStyle</span>::SubHeading, <span class="st">L"Outputs"</span> } },
+        <span class="tp">Group</span>{
+            <span class="tp">Span</span>{ <span class="tp">Tag</span>{ <span class="tp">Kind</span>::Group, <span class="tp">Device</span>::Mixer },
+                <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::groupNameCell } },
+            <span class="fn">channelRow</span>(<span class="tp">Channel</span>::Input),
+            <span class="fn">channelRow</span>(<span class="tp">Channel</span>::Output)
+        }
+    }
+}</code></pre>
+
+<div class="info">
+<strong>Why the node names are unprefixed.</strong> The node
+names are unprefixed because their namespace already says grid: inside
+<code>Grids::Dt</code>, <code>Row</code>, <code>Cell</code> and <code>Header</code> cannot be
+mistaken for anything else, and <code>GridRow</code> would stutter.
+<code>CellWith&lt;T&gt;</code> is a cell as well, named for what the cell holds rather than
+<code>Control&lt;T&gt;</code>, which would collide with the framework's own control base.
+<br><br>
+<code>Tag</code>, <code>Text</code>, <code>ShowInHeader</code> and
+<code>ColumnWidthMode</code> are not grid types at all. They are shared control properties,
+understood by anything with a column or a header. <code>Header</code> itself is shared too: it
+lives in <code>ClaFi::Dt</code> alongside <code>OnEvent</code> and <code>Init</code>, because
+a container having a header is not a grid idea. <code>Span</code> is declared in
+<code>Grids::Dt</code>, because a row spanning the rows beside it is.
+</div>
+
+<h4>Header</h4>
+
+<p><code>Header{ ... }</code> is the header of the container it sits <strong>directly</strong>
+inside. It is not a row and not a node of any hierarchy: a container looks for one in its own
+argument list, so it can appear anywhere in that list, and a <code>Header</code> nested a level
+deeper &mdash; inside <code>Rows{}</code>, a <code>Row</code>, a <code>Column</code> &mdash; is
+a compile error rather than a silent no-op.</p>
+
+<p>What it accepts depends on the container, because the two headers are different
+objects:</p>
+
+<table>
+<tr><th>In</th><th>The header is</th><th>Takes</th></tr>
+<tr><td><code>Grid</code></td><td>the column-title row</td><td>nothing &mdash; the columns already say what belongs in it, through <code>ShowInHeader</code></td></tr>
+<tr><td><code>Expander</code></td><td>one text control</td><td><code>Text</code>. A cell here is a compile error</td></tr>
+</table>
+
+<h4>Span</h4>
+
+<p><code>Span{ ... }</code> is a group's span row: a row of the group's own, sectioned by the
+same columns as every other row and laid over the group's rows, so its cells span them. It is
+a part of the container it sits <strong>directly</strong> inside, the way a <code>Header</code>
+is, and only a <code>Group</code> takes one &mdash; a <code>Span</code> anywhere else, or a
+<code>Header</code> in a <code>Group</code>, is a compile error. It takes a <code>Tag</code>,
+cells and <code>CellWith</code>s, exactly as a <code>Row</code> does.</p>
+
+<div class="info">
+A span being a row means it goes through the same path as every other row: its
+declared cells answer content authoritatively and stop propagation. Nothing at grid level has
+to answer for it. It is a <code>RowContainer</code>, so a <code>CellWith</code> lands in
+one of its cells the way it lands in any row's.
+</div>
+
+<div class="info">
+In a blueprint the span's <code>Tag</code> goes inside <code>Span{ ... }</code> and an
+expander's text inside its <code>Header{ ... }</code> &mdash; the nesting says whose each one
+is. Through the direct API, <code>grid.addGroup</code> takes the span's tag as
+<code>SpanTag</code> and <code>grid.addExpander</code> the header's text as
+<code>HeaderText</code>. The standalone <code>Controls::Expander</code> is a different control
+and takes <code>HeaderText</code> too.
+</div>
+
+<h3 id="ref-cells">Cell, CellWith, CellSet, Init</h3>
+
+<pre><code><span class="tp">Cell</span>{ <span class="tp">Tag</span>{ ... } }                        <span class="cm">// empty but present</span>
+<span class="tp">Cell</span>{ <span class="tp">Tag</span>{ ... }, lambda }                <span class="cm">// void(CellTextArgs&amp;)</span>
+<span class="tp">Cell</span>{ <span class="tp">Tag</span>{ ... }, <span class="kw">this</span>, &amp;<span class="tp">MyPage</span>::method }  <span class="cm">// bound member function</span>
+<span class="tp">CellWith</span>&lt;T&gt;{ <span class="tp">Tag</span>{ ... }, ctorArgs... }  <span class="cm">// a live control</span>
+<span class="tp">CellSet</span>{ cells... }                    <span class="cm">// a reusable bundle</span></code></pre>
+
+<p>The leading <code>Tag</code> on a cell <em>is</em> positional &mdash; unlike a column's,
+it is consumed rather than forwarded, so it has to come first. Everything after it belongs to
+the control.</p>
+
+<p><code>CellWith&lt;T&gt;</code> forwards its arguments to the control's constructor. Because
+the call has to be replayed when the blueprint is applied, those arguments are
+<strong>copied into the node</strong>:</p>
+
+<div class="warning">
+Every argument to <code>CellWith&lt;T&gt;</code> must be copy-constructible, and anything
+large or shared will be duplicated. Wrap it: <code>std::ref(items)</code> passes a
+reference through instead.
+</div>
+
+<p>For settings that have no constructor property, use <code>Init&lt;T&gt;</code>. It runs
+against the control immediately after it is created and can appear anywhere in the argument
+list:</p>
+
+<pre><code><span class="tp">CellWith</span>&lt;<span class="tp">Slider</span>&gt;{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Amount },
+    <span class="tp">ScrollButtons</span>::No,
+    <span class="tp">Init</span>&lt;<span class="tp">Slider</span>&gt;{ [](<span class="tp">Slider</span>&amp; slider) {
+        slider.<span class="fn">setMaxPosition</span>(<span class="kw">1.0f</span>);
+        slider.<span class="fn">setRelativePosition</span>(<span class="kw">0.5f</span>, <span class="kw">false</span>);
+    } }
+}</code></pre>
+
+<h3 id="ref-lookup">Finding things later</h3>
+
+<p>Ask the grid, not the blueprint. Both lookups are on <code>GridBase</code>, so they work
+whether or not the <code>Grid</code> object still exists:</p>
+
+<table>
+<tr><th>Member</th><th>Purpose</th></tr>
+<tr><td><code>columnByTag(Tag)</code></td><td>The <code>Column&amp;</code> carrying that tag. Throws in a debug build if there is none.</td></tr>
+<tr><td><code>findColumnByTag(Tag)</code></td><td>Same, but returns <code>nullptr</code> if absent.</td></tr>
+<tr><td><code>forEachRow(func)</code></td><td>Calls <code>func(RowContainer&amp;)</code> for every row in the grid and its sub-grids.</td></tr>
+</table>
+
+<pre><code><span class="tp">Combobox</span>&amp; combobox = row.<span class="fn">controlAtColumnAs</span>&lt;<span class="tp">Combobox</span>&gt;(m_grid.<span class="fn">columnByTag</span>(<span class="tp">Tag</span>{ <span class="tp">Col</span>::Mode }));
+
+m_grid.<span class="fn">forEachRow</span>([<span class="kw">this</span>](<span class="tp">Grids::Rt::RowContainer</span>&amp; row) {
+    <span class="fn">refresh</span>(row);
+    });</code></pre>
+
+<p>Inside a lambda that runs later, capture the <em>tag</em> and resolve it when the event
+fires. The columns do not exist yet while the blueprint is being built:</p>
+
+<pre><code><span class="tp">OnEvent</span>{ [<span class="kw">this</span>, amountTag](<span class="tp">ComboboxChangeEvent</span>&amp; event) {
+    <span class="kw">auto</span>&amp; row = *<span class="kw">static_cast</span>&lt;<span class="tp">Grids::Rt::RowContainer</span>*&gt;(event.<span class="fn">combobox</span>().<span class="fn">parent</span>());
+    <span class="tp">Control</span>* slider = row.<span class="fn">controlAtColumn</span>(m_grid.<span class="fn">columnByTag</span>(amountTag));
+    slider-&gt;<span class="fn">invalidateState</span>();
+} }</code></pre>
+
+<div class="warning">
+<code>columnByTag</code> walks the column tree; there is no index. That is fine once per event,
+and wrong in a handler the grid calls per row and per column &mdash; an
+<code>OnCellContent</code> handler, for instance. Resolve the column once, keep the reference,
+and compare by address there.
+</div>
+<h2 id="recipes">Recipes</h2>
+
+<h3 id="r-merge">A label that spans sub-columns</h3>
+
+<p>Some rows want one wide label where others want two separate values. Declare the parent
+column's cell and skip the children:</p>
+
+<pre><code><span class="cm">// Device has two sub-columns.</span>
+<span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Device }, <span class="tp">Text</span>{ <span class="st">L"Device"</span> },
+    <span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name },    <span class="tp">ShowInHeader</span>::No },
+    <span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Channel }, <span class="tp">ShowInHeader</span>::No }
+}
+
+<span class="cm">// This row fills the parent, so its cell spans both children: one wide label.</span>
+<span class="tp">Row</span>{ <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Device }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::deviceCell } }
+
+<span class="cm">// This one fills a child instead, so the two sit side by side.</span>
+<span class="tp">Row</span>{ <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Channel }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::channelCell } }</code></pre>
+
+<h3 id="r-group">Grouping rows beside a span</h3>
+
+<p>A <code>Group</code>'s span row stretches down its rows. It is a row, so it is described
+as one:</p>
+
+<pre><code><span class="cm">// The rows fill Channel; the span row fills Name. Together they cover both.</span>
+<span class="tp">Group</span>{
+    <span class="tp">Span</span>{
+        <span class="tp">Tag</span>{ <span class="tp">Kind</span>::Group, <span class="tp">Device</span>::Mixer },
+        <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::deviceCell } },
+    <span class="fn">channelRow</span>(<span class="tp">Channel</span>::Input),
+    <span class="fn">channelRow</span>(<span class="tp">Channel</span>::Output)
+}</code></pre>
+
+<p>That is the whole recipe. The span's cells connect to the span row exactly as any row's
+do, so it answers for itself and nothing at grid level is involved.</p>
+
+<h4>A control that belongs to the group rather than to a row</h4>
+
+<p>The span's cells are stretched over the rows beside them, so a control in one of them reads
+as the group's own. That is where a choice made once per group goes:</p>
+
+<pre><code><span class="tp">Group</span>{
+    <span class="tp">Span</span>{
+        <span class="tp">Tag</span>{ <span class="tp">Kind</span>::Group, <span class="tp">Device</span>::Mixer },
+        <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::deviceCell },
+        <span class="tp">CellWith</span>&lt;<span class="tp">Checkbox</span>&gt;{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Mute } } },
+    <span class="fn">channelRow</span>(<span class="tp">Channel</span>::Input),
+    <span class="fn">channelRow</span>(<span class="tp">Channel</span>::Output)
+}</code></pre>
+
+<p>The control is placed at the top of the merged cell, at the height of one row, and the
+column it names counts as the span's under the disjointness rule &mdash; no row of the group
+may declare it.</p>
+
+<div class="warning">
+<code>forEachRow</code> walks the rows of a grid and its sub-grids. A group's span is not one
+of them, so a control there is not reached that way. Reach it through the group, or keep a
+reference to it from <code>Init&lt;T&gt;</code>.
+</div>
+
+<div class="info">
+This used to need a pair of grid-level <code>OnCellContent</code> and
+<code>OnGetCellText</code> handlers, filtering on the row's <code>Tag</code> and comparing the
+column by address, because the blueprint had no way to give the span cells. If you have those
+handlers, they can go &mdash; and check whether their text provider is already the one an
+ordinary row uses, in which case the span can point at the same method.
+</div>
+
+<div class="warning">
+The span's <code>Tag</code> is still worth setting even when nothing reads it: hit-testing
+and your own <code>forEachRow</code> walks use it to tell a span row from an element row.
+</div>
+
+<h3 id="r-vary">Rows that differ from their neighbours</h3>
+
+<p>Build rows with a function and let it choose:</p>
+
+<pre><code><span class="tp">Row</span> <span class="tp">Page</span>::<span class="fn">channelRow</span>(<span class="tp">Channel</span> channel) <span class="kw">const</span>
+{
+    <span class="kw">const bool</span> readOnly = channel == <span class="tp">Channel</span>::Monitor;
+    <span class="kw">return</span> <span class="tp">Row</span>{
+        <span class="tp">Tag</span>{ <span class="tp">Kind</span>::Channel, channel },
+        <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Channel }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::channelCell },
+        readOnly ? m_readOnlyCells : m_valueCells
+    };
+}</code></pre>
+
+<p>A row that should leave a slot visibly blank rather than let a neighbour cover it
+declares the cell with no content:</p>
+
+<pre><code><span class="kw">const</span> <span class="tp">CellSet</span> m_readOnlyCells{
+    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Mode } },      <span class="cm">// present, empty, still bordered</span>
+    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Amount } }
+};</code></pre>
+
+<h3 id="r-update">Reaching a control later</h3>
+
+<pre><code><span class="kw">void</span> <span class="tp">Page</span>::<span class="fn">refreshAll</span>()
+{
+    <span class="kw">for</span> (<span class="kw">auto</span>* row : m_blueprint.<span class="fn">rows</span>())
+    {
+        <span class="tp">Combobox</span>&amp; mode = row.<span class="fn">controlAtColumnAs</span>&lt;<span class="tp">Combobox</span>&gt;(m_grid.<span class="fn">columnByTag</span>(<span class="tp">Tag</span>{ <span class="tp">Col</span>::Mode }));
+        <span class="tp">Slider</span>&amp; amount = row.<span class="fn">controlAtColumnAs</span>&lt;<span class="tp">Slider</span>&gt;(m_grid.<span class="fn">columnByTag</span>(<span class="tp">Tag</span>{ <span class="tp">Col</span>::Amount }));
+        <span class="cm">// ...</span>
+    }
+}</code></pre>
+
+<div class="info">
+<code>forEachRow</code> visits every <code>RowContainer</code> standing as a row of the grid,
+including ones inside expanders and groups. Expanders and groups are not containers themselves,
+so they are stepped over and descended into. A group's span is a container but not a row of
+the grid, so it is not visited. If some rows do not have the control you are asking for, check
+the row's <code>Tag</code> first &mdash; <code>controlAtColumnAs</code> does not check.
+</div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="t-build">Build errors</h3>
+
+<table>
+<tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr>
+<tr>
+<td>Unqualified grid names fail to resolve in an implementation unit</td>
+<td>A module implementation unit does not inherit everything its interface unit had in
+scope.</td>
+<td>Give the <code>.cpp</code> its own imports and using-directives:
+<code>import ClaFi.Controls.Grids;</code>, <code>import ClaFi.Controls.Grids_Dt;</code>,
+<code>using namespace ClaFi;</code>, <code>using namespace ClaFi::Controls;</code>.
+<code>Dt::</code> needs no alias &mdash; it is a real namespace, so it resolves wherever
+<code>ClaFi::Controls</code> does.</td>
+</tr>
+<tr>
+<td>"deleted function" or "no copy constructor", pointing into
+<code>std::function</code> or <code>std::tuple</code></td>
+<td>An argument to <code>CellWith&lt;T&gt;</code> or <code>Column</code> is move-only. The
+call is stored so it can be replayed, which requires copyable arguments.</td>
+<td>Wrap it in <code>std::ref</code>. If it truly must be moved, create that control
+through the direct API instead.</td>
+</tr>
+<tr>
+<td>Constraint not satisfied on <code>Cell</code>'s constructor</td>
+<td>The lambda's parameter is not <code>CellTextArgs&amp;</code>.</td>
+<td>The signature must be exactly <code>void(CellTextArgs&amp;)</code>. Watch for
+a stray <code>const</code>.</td>
+</tr>
+<tr>
+<td>Cannot convert <code>const MyPage*</code> in <code>Cell{ key, this, &amp;MyPage::method }</code></td>
+<td>The function building the row is <code>const</code> but the cell provider is not.</td>
+<td>Make the provider <code>const</code> too.</td>
+</tr>
+<tr>
+<td>Use of an undeclared member in the <code>Grid</code> initialiser</td>
+<td>A <code>CellSet</code>, or the grid itself, is declared after the blueprint.</td>
+<td>Members initialise in declaration order: grid, then cell sets, then blueprint.</td>
+</tr>
+<tr>
+<td>Errors listing a control's constructor, from inside <code>CellWith&lt;T&gt;</code></td>
+<td>The argument pack does not match that control's constructor.</td>
+<td>Write one direct <code>row.addControl&lt;T&gt;(column, args...)</code> to confirm the
+arguments, then move them into <code>CellWith&lt;T&gt;</code> unchanged.</td>
+</tr>
+</table>
+
+<h3 id="t-visual">Nothing appears, or it looks wrong</h3>
+
+<table>
+<tr><th>Symptom</th><th>Cause</th></tr>
+<tr>
+<td>Debug build throws from <code>Grid</code>'s constructor: "<em>Cell keys matched no
+column</em>"</td>
+<td>Exactly what it says, and the message lists the numeric key values. Some cell names a
+column that was never declared with that <code>Tag</code>. Release builds skip the check
+and silently drop those cells.</td>
+</tr>
+<tr>
+<td>A row you declared never appears at all</td>
+<td>None of its cells resolved, so the row has no content, therefore no height. Same cause
+as above &mdash; run a debug build.</td>
+</tr>
+<tr>
+<td>A cell is missing but the row is fine</td>
+<td>That one tag did not match a column. A debug build throws from the constructor and lists
+the numeric tag values.</td>
+</tr>
+<tr>
+<td>A group's span row has no label</td>
+<td>The blueprint gives that row no cells, so it answers through the grid's
+<code>OnCellContent</code> / <code>OnGetCellText</code> handlers. See
+<a href="#r-group">the recipe</a>.</td>
+</tr>
+<tr>
+<td>Every cell is filled in a row you expected to be sparse</td>
+<td>That row declared no cells, so no handler was connected to it and the question fell
+through to the grid's event, where <code>hasContent</code> defaults to <em>true</em>. Group
+span rows do this.</td>
+</tr>
+<tr>
+<td>A parent cell is short, with a gap beneath it</td>
+<td>Something in its sub-columns has content in that row, so it is not merging. Declare the
+empty sibling as a bare <code>Cell{ key }</code> if you want the space filled.</td>
+</tr>
+<tr>
+<td>A narrow unpainted strip at the right edge of a column group</td>
+<td>None of that group's sub-columns is <code>ColumnWidthMode::Fill</code>, so they do not
+reach their parent's edge.</td>
+</tr>
+<tr>
+<td>Controls appear in the wrong cells</td>
+<td>A shared <code>CellSet</code> was built with the wrong keys, or a lambda captured a
+column reference instead of a key.</td>
+</tr>
+<tr>
+<td>An event handler no longer recognises a column</td>
+<td>It resolves the column through the blueprint, which no longer answers lookups, or it
+resolves a tag on every call instead of once. Keep a <code>Rt::Column&amp;</code> and compare by
+address:
+<code>Tag</code>. Compare by address:
+<code>&amp;event.column() == &amp;m_someColumn</code>, resolved once with
+<code>columnByTag</code> after the grid is built.</td>
+</tr>
+</table>
+
+<h3 id="t-rules">Do / Don't</h3>
+
+<div class="rules-grid">
+<div class="rule-card dos">
+<h4>Do</h4>
+<ul>
+<li>Declare in this order: grid, cell sets, blueprint.</li>
+<li>Give every column a cell names a unique <code>Tag</code>.</li>
+<li>Capture tags in lambdas and resolve them through the grid when the event fires.</li>
+<li>Resolve a column once and compare by address in anything the grid calls per cell.</li>
+<li>Use <code>std::ref</code> for anything shared or expensive.</li>
+<li>Use a bare <code>Cell{ Tag{ ... } }</code> when you want a present-but-empty cell.</li>
+<li>Give at least one sub-column in each group <code>Fill</code>.</li>
+<li>Run a debug build after changing a blueprint.</li>
+</ul>
+</div>
+<div class="rule-card donts">
+<h4>Don't</h4>
+<ul>
+<li>Don't draw column tags from the same enum as your row tags &mdash; one type serves both,
+so nothing catches the mix-up at compile time.</li>
+<li>Don't capture a <code>Column&amp;</code> in a cell set &mdash; the columns do not exist yet.</li>
+<li>Don't keep the <code>Grid</code> around to look things up; ask the grid.</li>
+<li>Don't call <code>columnByTag</code> inside <code>OnCellContent</code>.</li>
+<li>Don't assume a <code>Group</code>'s span row has declared cells.</li>
+<li>Don't read a missing cell as an empty one; it means no cell at all.</li>
+<li>Don't rely on release builds to tell you a tag was wrong.</li>
+</ul>
+</div>
+</div>
+
+<h2 id="appendix">Appendix &middot; Direct API</h2>
+
+<p>The blueprint is a convenience, not a wall. Everything below still works and mixes freely
+with a blueprint on the same grid, which is useful when one row needs something the DSL does
+not express.</p>
+
+<table>
+<tr><th>Call</th><th>Returns</th></tr>
+<tr><td><code>grid.columns()</code></td><td>the root <code>ColumnCollection&amp;</code></td></tr>
+<tr><td><code>columns.add(props...)</code></td><td><code>Column&amp;</code></td></tr>
+<tr><td><code>column.createSubColumns()</code></td><td><code>ColumnCollection&amp;</code>, creating on first use</td></tr>
+<tr><td><code>column.subColumns()</code></td><td><code>ColumnCollection*</code>, null if none</td></tr>
+<tr><td><code>grid.addHeader()</code></td><td><code>Rt::GridHeader&amp;</code></td></tr>
+<tr><td><code>grid.addRow(props...)</code></td><td><code>Rt::Row&amp;</code></td></tr>
+<tr><td><code>grid.addControlRow(props...)</code></td><td><code>Rt::RowContainer&amp;</code></td></tr>
+<tr><td><code>grid.addDivider(props...)</code></td><td><code>Rt::RowDivider&amp;</code></td></tr>
+<tr><td><code>grid.addExpander(props...)</code></td><td><code>Rt::RowExpander&amp;</code>, body via <code>.body()</code></td></tr>
+<tr><td><code>grid.addGroup(props...)</code></td><td><code>Rt::RowGroup&amp;</code>, span via <code>.span()</code>, body via <code>.body()</code></td></tr>
+<tr><td><code>row.addControl&lt;T&gt;(column, args...)</code></td><td><code>T&amp;</code></td></tr>
+<tr><td><code>row.controlAtColumn(column)</code></td><td><code>Control*</code>, null if none</td></tr>
+<tr><td><code>row.controlAtColumnAs&lt;T&gt;(column)</code></td><td><code>T&amp;</code>, unchecked</td></tr>
+</table>
+
+<p>Without a blueprint, a grid answers two questions through events &mdash; which cells
+exist, and what they say:</p>
+
+<pre><code>grid.<span class="fn">onCellContent</span>([](<span class="tp">CellContentEvent</span>&amp; event) {
+    event.hasContent = <span class="cm">/* ... */</span>;   <span class="cm">// defaults to true</span>
+});
+
+grid.<span class="fn">onGetCellText</span>([](<span class="tp">GetCellTextEvent</span>&amp; event) {
+    event.<span class="fn">text</span>() &lt;&lt; <span class="cm">/* ... */</span>;
+});</code></pre>
+
+<div class="info">
+Note the default: <code>hasContent</code> arrives as <em>true</em>, so without a blueprint every
+cell exists unless you say otherwise. That is the opposite of a blueprint row, where a cell
+exists only if you declared it.
+</div>
+
+<p>The same two events exist on every row, which is how a blueprint answers for the rows it
+builds. <code>OnCellContent</code> and <code>OnGetCellText</code> are ordinary row properties,
+and <code>RowBase::onCellContent</code> / <code>onGetCellText</code> connect them later:</p>
+
+<pre><code>grid.<span class="fn">addControlRow</span>(<span class="tp">Tag</span>{ ... },
+    <span class="tp">OnCellContent</span>{ [](<span class="tp">CellContentEvent</span>&amp; event) {
+        event.hasContent = <span class="cm">/* ... */</span>;
+        event.<span class="fn">stopPropagation</span>();   <span class="cm">// keep the grid handler out of it</span>
+        } });</code></pre>
+
+<div class="info">
+A row's handler runs before the grid's. If it calls <code>stopPropagation()</code> the grid
+handler never sees that cell &mdash; which is how a blueprint row stays authoritative about its
+own content while rows it did not declare fall through to whatever the grid says.
+</div>
+        </main>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const collapsibleElements = document.querySelectorAll('.sidebar li.has-children');
+            collapsibleElements.forEach(li => {
+                const btn = li.querySelector('.toggle-btn');
+                const link = li.querySelector('.nav-item-wrapper > a');
+                const toggle = (e) => { e.preventDefault(); e.stopPropagation(); li.classList.toggle('collapsed'); };
+                if (btn) btn.addEventListener('click', toggle);
+                if (link) link.addEventListener('click', () => {
+                    if (li.classList.contains('collapsed')) li.classList.remove('collapsed');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

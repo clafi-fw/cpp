@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi Platform - Developer Manual</title>
+    <style>
+        :root {
+            --bg-color: #f9f9fb;
+            --text-color: #333;
+            --accent-color: #0066cc;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        /* --- Sidebar & Collapsible Layout --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: #fff;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-left: 0.5rem;
+            color: #111;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Top-level list items (root nodes) */
+        .sidebar > ul > li {
+            margin-bottom: 0.8rem;
+        }
+
+        /* Group wrapper for link + toggle button */
+        .nav-item-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-item-wrapper:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        /* Root-level link styling */
+        .sidebar > ul > li > .nav-item-wrapper > a {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111;
+            flex-grow: 1;
+        }
+
+        /* Sub-level lists */
+        .sidebar ul ul {
+            padding-left: 0.8rem;
+            margin-top: 0.3rem;
+            margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color);
+            margin-left: 1.1rem;
+        }
+
+        .sidebar ul ul li {
+            margin-bottom: 0.4rem;
+        }
+
+        .sidebar ul ul a {
+            font-size: 0.9rem;
+            color: #555;
+            display: block;
+            padding: 0.15rem 0;
+            transition: color 0.15s ease;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            display: block;
+            transition: color 0.2s ease;
+        }
+
+        .sidebar a:hover,
+        .sidebar ul ul a:hover {
+            color: var(--accent-color);
+        }
+
+        /* Toggle Button styling */
+        .toggle-btn {
+            background: none;
+            border: none;
+            padding: 4px;
+            margin: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+            outline: none;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--accent-color);
+        }
+
+        .toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            transform: rotate(90deg); /* Points down when expanded */
+            transition: transform 0.2s ease;
+        }
+
+        /* Interactive Collapsible states managed by JS */
+        .sidebar li.has-children.collapsed ul {
+            display: none !important;
+        }
+
+        .sidebar li.has-children.collapsed .toggle-btn svg {
+            transform: rotate(0deg); /* Points right when collapsed */
+        }
+
+        /* --- Base Page Layout --- */
+        .page-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        header {
+            background-color: #fff;
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        h1, h2, h3, h4 {
+            color: #111;
+            margin-top: 2rem;
+        }
+
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+
+        main {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            padding-bottom: 2rem;
+        }
+
+        p, li { font-size: 1.1rem; }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background-color: rgba(0,0,0,0.05);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.9em;
+            color: #d14;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        .kw { color: #569cd6; }
+        .tp { color: #4ec9b0; }
+        .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; }
+        .fn { color: #dcdcaa; }
+
+        .warning {
+            background-color: #fff3f3;
+            border-left: 4px solid #cc0000;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .rule-card {
+            padding: 1.2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .rule-card.dos {
+            background-color: #f4faf4;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .rule-card.donts {
+            background-color: #fff8f8;
+            border-left: 4px solid #c62828;
+        }
+
+        .rule-card h4 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .rule-card ul {
+            margin: 0;
+            padding-left: 1.2rem;
+        }
+
+        .rule-card li {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .sidebar {
+                display: none;
+            }
+            .page-content {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+        table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 0.98rem; }
+        th, td { border: 1px solid var(--border-color); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+        th { background-color: #f6f8fa; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="sidebar-header">Contents</div>
+        <ul>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#introduction">Introduction</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#basic-usage">Basic Usage Example</a>
+                </div>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#two-halves">The Two Halves of a Platform</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#neutral-platform">Platform, the Neutral Half</a></li>
+                    <li><a href="#display-platform">The Platform Built for the Display Server</a></li>
+                    <li><a href="#params">Params</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#ownership">What the Platform Owns</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#win32-members">Win32Platform</a></li>
+                    <li><a href="#wayland-members">WaylandPlatform</a></li>
+                    <li><a href="#order">Order Is the Design</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#application">Where the Platform Stands in an Application</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#first-and-last">First Up, Last Down</a></li>
+                    <li><a href="#lifetime">The Whole Lifetime</a></li>
+                    <li><a href="#app-context">AppContext</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#from-above">Reaching the Platform From Above</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#windows-from-above">Windows</a></li>
+                    <li><a href="#clipboard-from-above">The Clipboard</a></li>
+                    <li><a href="#animator-from-above">Animations</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#from-below">Reaching the Platform From Below</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#services-seam">The Empty Name and What Stands Behind It</a></li>
+                    <li><a href="#standing">The Standing Pointer</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#platform-objects">The Platform's Own Objects</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#win32-objects">On Win32</a></li>
+                    <li><a href="#wayland-objects">On Wayland</a></li>
+                    <li><a href="#clipboard-halves">The Clipboard's Two Halves</a></li>
+                </ul>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#teardown">Teardown</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#statics">What Stays Static, and Why</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#adding">Adding a Platform Service</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#reference">Reference</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="page-content">
+        <header>
+            <h1>Platform and Ownership</h1>
+            <p>ClaFi Framework Developer Manual</p>
+        </header>
+
+        <main>
+            <h2 id="introduction">Introduction</h2>
+            <p>The <strong>platform</strong> is the object an application is built against. It is the one place
+            the framework meets the operating system, and it is where everything that is process-wide lives: the
+            connection to the display server, the timers, the clipboard, the directory watches. An application
+            holds exactly one, builds it first and destroys it last, and everything else in the process - the
+            context, the forms, every control - stands on it.</p>
+
+            <div class="info">
+                <strong>Module Import:</strong>
+                <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
+<span class="kw">import</span> <span class="tp">ClaFi.Platform.Windows</span>;   <span class="cm">// Win32Platform, Win32Application</span>
+<span class="kw">import</span> <span class="tp">ClaFi.Platform.Wayland</span>;   <span class="cm">// WaylandPlatform, WaylandApplication</span></pre>
+            </div>
+
+            <p>Most code never names the platform. A control reaches what it needs through its context - the
+            clipboard through <code>formContext().clipboard()</code>, the animation controller through
+            <code>appContext().animator()</code> - and the framework's own services reach their owner through one
+            of two seams described in <a href="#from-below">Reaching the Platform From Below</a>. This manual is
+            for the reader who wants to know what stands where, in what order it is built and torn down, and how
+            to add a service of their own without breaking that order.</p>
+
+            <p>One rule is worth carrying from the start: <strong>nothing framework-wide is a static</strong>. Every
+            object that serves the whole process has an owner, the owner is the platform or the application's
+            context, and the object is built and destroyed at the moment its owner's member order says. A service
+            that cannot hold a reference to its owner - a hook with no object in hand - reaches it through a
+            <em>standing pointer</em> the owned object sets and clears, and a hook that finds none standing has
+            found a broken order and says so.</p>
+
+            <h2 id="basic-usage">Basic Usage Example</h2>
+            <p>An application is <code>Application&lt;Platform, Backend&gt;</code>, or a class derived from it,
+            built from the platform's <code>Params</code>. The entry point is the whole of what a program knows
+            about its platform:</p>
+<pre><span class="cm">// Win32 - the Direct2D backend</span>
+<span class="kw">int</span> __stdcall <span class="fn">wWinMain</span>(<span class="tp">HINSTANCE</span> hInstance, <span class="tp">HINSTANCE</span>, <span class="kw">wchar_t</span>*, <span class="kw">int</span>)
+{
+    <span class="kw">using namespace</span> ClaFi;
+
+    <span class="tp">ThisApp</span>::<span class="tp">ThemesApplication</span>&lt;<span class="tp">Win32Platform</span>, <span class="tp">Direct2DBackend</span>&gt; app{ { hInstance } };
+    <span class="kw">return</span> app.<span class="fn">run</span>();
+}
+
+<span class="cm">// Wayland - the CPU backend, there being no GPU backend on this platform</span>
+<span class="kw">int</span> <span class="fn">main</span>()
+{
+    <span class="kw">using namespace</span> ClaFi;
+
+    <span class="tp">ThisApp</span>::<span class="tp">ThemesApplication</span>&lt;<span class="tp">WaylandPlatform</span>, <span class="tp">Graphics</span>::<span class="tp">Cpu</span>::<span class="tp">CpuBackend</span>&gt; app{ <span class="tp">WaylandPlatform</span>::<span class="tp">Params</span>{} };
+    <span class="kw">return</span> app.<span class="fn">run</span>();
+}</pre>
+            <p>Two aliases name the common pairings: <code>Win32Application</code> is
+            <code>Application&lt;Win32Platform, Direct2DBackend&gt;</code> and <code>WaylandApplication</code> is
+            <code>Application&lt;WaylandPlatform, Graphics::Cpu::CpuBackend&gt;</code>. The backend is the
+            application's choice, not the platform's: <code>Application&lt;Win32Platform, CpuBackend&gt;</code> is
+            as valid as the Direct2D pairing.</p>
+            <div class="warning"><strong>A platform that cannot start throws.</strong> <code>WaylandPlatform</code>'s
+            constructor connects to the compositor, and where there is none it throws a
+            <code>std::runtime_error</code> naming what <code>WAYLAND_DISPLAY</code> held. Left uncaught, that
+            ends the process with the message on stderr, which is what a client started outside a session should
+            do. There is no probe to call first: building the application is the attempt.</div>
+            <h2 id="two-halves">The Two Halves of a Platform</h2>
+            <p>A platform is two classes in a base-derived pair. <code>Platform</code>, declared in the Context
+            module, is what the rest of the framework sees and is the same on every platform.
+            <code>Win32Platform</code> and <code>WaylandPlatform</code> derive from it, one per build, and are what
+            the entry point names. The base is the contract; the derived class is the owner.</p>
+
+            <h3 id="neutral-platform">Platform, the Neutral Half</h3>
+            <p><code>Platform</code> lives in <code>ClaFi.Core.Context.FormContext</code> and carries three kinds of
+            member:</p>
+            <table>
+                <tr><th>Kind</th><th>Members</th><th>Who answers</th></tr>
+                <tr><td>Statics</td><td><code>setApplicationId</code>, <code>createFormsConfigSchema</code>,
+                    <code>restoreFormPlacement</code>, <code>storeFormPlacement</code>, <code>addFormToSession</code>,
+                    <code>keyName</code>, <code>keyModifiers</code>, <code>beep</code>, <code>globalScaleFactor</code>,
+                    <code>caretBlinkTime</code>, <code>processCpuTime</code>, <code>setCursor</code>, <code>cursor</code>,
+                    <code>getCursorInfo</code>, <code>shellExecute</code>, <code>appDataPath</code>,
+                    <code>debugOutput</code>, <code>systemColorMode</code>, <code>events</code></td>
+                    <td>Each platform supplies the bodies in its own unit - <code>Wayland.Platform.cpp</code>, an
+                    implementation unit of the Context module, and <code>Windows_Facade.cppm</code>. A static that
+                    needs the display server reaches it through a standing pointer - see
+                    <a href="#standing">The Standing Pointer</a>.</td></tr>
+                <tr><td>One virtual</td><td><code>createWindow(IForm&amp;, WindowRole, IForm* parentForm)</code></td>
+                    <td>The derived platform, which holds what a window is made from. A form calls it through
+                    <code>appContext().platform()</code> when it builds its window.</td></tr>
+                <tr><td>One owned object, by reference</td><td><code>clipboard()</code></td>
+                    <td>The derived platform owns the <code>Transfer::Clipboard</code> as a member and names it to
+                    the base at construction: <code>Platform(Transfer::Clipboard&amp;)</code>.</td></tr>
+            </table>
+            <p>The base holds a reference rather than the clipboard itself because of order: a base is built before
+            any member of the derived class, and on Win32 the clipboard has to come after the OLE apartment the
+            windows manager opens. So the derived class declares the clipboard where the order needs it and hands
+            the base its address - before the clipboard is built, which a reference may be, nothing reading through
+            it until the platform stands whole.</p>
+
+            <h3 id="display-platform">The Platform Built for the Display Server</h3>
+            <p><code>Win32Platform</code> and <code>WaylandPlatform</code> are the owners. Each derives from
+            <code>Platform</code> and from one further interface that says what its platform layer offers to
+            services standing below the context - the subject of <a href="#services-seam">The Empty Name and What
+            Stands Behind It</a>:</p>
+<pre><span class="kw">export struct</span> <span class="tp">Win32Platform</span>
+    :
+    <span class="kw">public</span> <span class="tp">Platform</span>,
+    <span class="kw">public</span> <span class="tp">PlatformImplementation</span>::<span class="tp">Windows</span>::<span class="tp">IMessageWindowFactory</span>
+{
+    ...
+};
+
+<span class="kw">export struct</span> <span class="tp">WaylandPlatform</span>
+    :
+    <span class="kw">public</span> <span class="tp">Platform</span>,
+    <span class="kw">public</span> <span class="tp">PlatformImplementation</span>::<span class="tp">Wayland</span>::<span class="tp">IDisplayAccess</span>
+{
+    ...
+};</pre>
+            <p>What each owns, and in what order, is the next section. The rule they share: a platform member is
+            declared after everything it needs and before everything that needs it, and what the platform owns is
+            reached through the platform - or, where a hook has no object in hand, through the standing pointer
+            the owned object publishes.</p>
+
+            <h3 id="params">Params</h3>
+            <p>Each platform declares a <code>Params</code> struct, and <code>IsPlatform</code> asks for nothing
+            more than that a platform is constructible from one. It is what the entry point has and the platform
+            wants:</p>
+            <table>
+                <tr><th>Platform</th><th>Params</th><th>Meaning</th></tr>
+                <tr><td><code>Win32Platform</code></td><td><code>HINSTANCE appInstance</code></td>
+                    <td>The instance handle <code>wWinMain</code> is given, which every window class and window is
+                    registered under.</td></tr>
+                <tr><td><code>WaylandPlatform</code></td><td><code>bool watchesClipboard{ false }</code></td>
+                    <td>Whether the application watches the clipboard rather than pastes from it. A compositor
+                    announces a selection to the client holding the keyboard focus and to nobody else, so a viewer
+                    of the clipboard asks here for the clipboard manager's channel, where the compositor offers
+                    one.</td></tr>
+            </table>
+            <h2 id="ownership">What the Platform Owns</h2>
+            <p>C++ builds members in declaration order and destroys them in reverse, and that is the whole of the
+            lifetime machinery here. Each platform lists its members in the order they depend on each other, the
+            comment on the list says why, and nothing else states an order anywhere.</p>
+
+            <h3 id="win32-members">Win32Platform</h3>
+<pre><span class="kw">private</span>:
+    <span class="tp">Params</span> m_params;
+    <span class="tp">PlatformImplementation</span>::<span class="tp">Windows</span>::<span class="tp">WindowsManager</span> m_manager{ m_params.appInstance };
+    <span class="tp">PlatformImplementation</span>::<span class="tp">Windows</span>::<span class="tp">TimerManager</span> m_timers{ m_manager };
+    <span class="tp">Transfer</span>::<span class="tp">Clipboard</span> m_clipboard{ *<span class="kw">this</span> };</pre>
+            <table>
+                <tr><th>Member</th><th>What it is</th><th>Why here</th></tr>
+                <tr><td><code>WindowsManager</code></td><td>Registers the window classes, opens the OLE apartment,
+                    and closes both on the way out. Every window is made from it.</td>
+                    <td>First: everything below is made from it or lives inside what it opened.</td></tr>
+                <tr><td><code>TimerManager</code></td><td>A message-only window and its <code>WM_TIMER</code>, which
+                    every <code>UiTimer</code> ticks through.</td>
+                    <td>After the manager, whose class it is made from.</td></tr>
+                <tr><td><code>Transfer::Clipboard</code></td><td>The clipboard, with its Windows half behind it - the
+                    <code>IDataObject</code> OLE holds and the listener window.</td>
+                    <td>Last: its destructor renders the package onto the clipboard, which wants the OLE apartment
+                    still open.</td></tr>
+            </table>
+
+            <h3 id="wayland-members">WaylandPlatform</h3>
+<pre><span class="kw">private</span>:
+    <span class="tp">PlatformImplementation</span>::<span class="tp">Wayland</span>::<span class="tp">DisplayManager</span> m_display{};
+    <span class="tp">PlatformImplementation</span>::<span class="tp">Linux</span>::<span class="tp">TimerManager</span> m_timers{};
+    <span class="tp">PlatformImplementation</span>::<span class="tp">Linux</span>::<span class="tp">DirWatchManager</span> m_dirWatches{};
+    <span class="tp">PlatformImplementation</span>::<span class="tp">Wayland</span>::<span class="tp">PollSource</span> m_timerSource{ m_display, m_timers.<span class="fn">eventFd</span>(), ... };
+    <span class="tp">PlatformImplementation</span>::<span class="tp">Wayland</span>::<span class="tp">PollSource</span> m_dirWatchSource{ m_display, m_dirWatches.<span class="fn">notifyFd</span>(), ... };
+    <span class="tp">Transfer</span>::<span class="tp">Clipboard</span> m_clipboard{ *<span class="kw">this</span> };</pre>
+            <table>
+                <tr><th>Member</th><th>What it is</th><th>Why here</th></tr>
+                <tr><td><code>DisplayManager</code></td><td>The connection, the globals and the event loop. Its
+                    constructor connects and throws where it cannot.</td>
+                    <td>First: it is the loop everything else is dispatched from.</td></tr>
+                <tr><td><code>TimerManager</code></td><td>A thread that waits out the delays and an eventfd it
+                    raises, which every <code>UiTimer</code> ticks through.</td>
+                    <td>Before its poll source, which names its descriptor.</td></tr>
+                <tr><td><code>DirWatchManager</code></td><td>One inotify descriptor serving every
+                    <code>DirWatch</code>.</td>
+                    <td>Same.</td></tr>
+                <tr><td>Two <code>PollSource</code>s</td><td>Each puts a descriptor in the display's loop with the
+                    call to make when it is readable, and takes it out again in its destructor.</td>
+                    <td>After the display and the manager each polls for, so the descriptor is in the loop exactly
+                    while both stand.</td></tr>
+                <tr><td><code>Transfer::Clipboard</code></td><td>The clipboard, with its Wayland half - the
+                    <code>wl_data_source</code> behind the selection.</td>
+                    <td>Last: on the way out it hands the selection and its change handler back to a display that
+                    is still up.</td></tr>
+            </table>
+
+            <h3 id="order">Order Is the Design</h3>
+            <p>Two things follow from letting member order carry the lifetime, and both are deliberate.</p>
+            <p>First, there is no <code>initialize()</code> or <code>finalize()</code> on a platform. A member's
+            constructor is its initialisation and its destructor its finalisation, and a member declared in the
+            right place needs neither called. A separate finalisation step is for the case where something must
+            happen while a <em>later</em> member is still standing, and no member of either platform has that
+            case: the Win32 clipboard flushes in its own destructor, which runs before the manager's, and that is
+            the order it wants.</p>
+            <p>Second, the loop names none of what it polls. On Wayland the display would otherwise have to know
+            the timer and the watch managers, which would put them under it in the module graph and above it in
+            the ownership order at the same time. Instead the display offers <code>addPollSource</code> and
+            <code>removePollSource</code>, and the platform - which owns both the display and the managers -
+            registers each descriptor through a <code>PollSource</code> whose lifetime is the registration.</p>
+            <div class="info">Declaring a platform member in the wrong place is the one mistake this design cannot
+            catch at compile time. The list in each facade carries a comment stating the order and its reasons;
+            read it before adding to it, and add to it rather than around it.</div>
+            <h2 id="application">Where the Platform Stands in an Application</h2>
+
+            <h3 id="first-and-last">First Up, Last Down</h3>
+            <p><code>Application&lt;Platform, Backend&gt;</code> holds its platform in a base, not a member:</p>
+<pre><span class="kw">template</span> &lt;<span class="tp">IsPlatform</span> <span class="tp">PlatformType</span>&gt;
+<span class="kw">class</span> <span class="tp">PlatformHolder</span>
+{
+<span class="kw">protected</span>:
+    <span class="tp">PlatformType</span> m_platform;
+};
+
+<span class="kw">export template</span> &lt;<span class="tp">IsPlatform</span> <span class="tp">PlatformType</span>, <span class="tp">IsBackend</span> <span class="tp">Backend</span>&gt;
+<span class="kw">class</span> <span class="tp">Application</span> : <span class="kw">private</span> <span class="tp">PlatformHolder</span>&lt;<span class="tp">PlatformType</span>&gt;, <span class="kw">public</span> <span class="tp">ApplicationBase</span>
+{
+    ...
+};</pre>
+            <p>Bases are built in declaration order and destroyed in reverse, so the platform is built before
+            <code>ApplicationBase</code> - and with it the <code>AppContext</code>, the config and the
+            <code>ThemesManager</code> with its directory watch - and destroyed after them. Everything an
+            application owns is built on a standing platform and goes down on one. A <code>UiTimer</code> stopped
+            by a dying member finds the timer manager up; a directory watch removed by a dying themes manager
+            finds its manager up; a form's window is destroyed while the windows manager still holds its class.</p>
+            <div class="info">The base-from-member idiom is what makes this an order rather than a convention. A
+            platform held as a member behind <code>ApplicationBase</code> would be built after the context and
+            destroyed before it, and every one of the sentences above would be false.</div>
+
+            <h3 id="lifetime">The Whole Lifetime</h3>
+            <p>From the entry point's braces to their close, in order:</p>
+            <table>
+                <tr><th>Step</th><th>What happens</th></tr>
+                <tr><td>1</td><td><code>PlatformHolder</code> builds the platform from its <code>Params</code>: the
+                    platform's members in their declared order, each on the ones before it. The platform stands
+                    whole from here.</td></tr>
+                <tr><td>2</td><td><code>ApplicationBase</code> is built on it: the config path, the
+                    <code>AppContext</code> holding a <code>Platform&amp;</code>, the <code>ThemesManager</code>.</td></tr>
+                <tr><td>3</td><td><code>Application</code>'s constructor body calls
+                    <code>ApplicationBase::initialize()</code>: the application id is stated to the platform, the
+                    standard actions and the transfer formats are registered - the paste action connecting to the
+                    platform's clipboard - the app menu and themes are connected, the config is read.</td></tr>
+                <tr><td>4</td><td>The application's own members and its <code>run()</code>: forms are built, each
+                    asking the platform for its window, and the main form's loop runs on the platform's event
+                    loop.</td></tr>
+                <tr><td>5</td><td>The application's own members go. A form's root stops its animations while it can
+                    still name its form; a container stops its subtree's before detaching it - see
+                    <a href="#teardown">Teardown</a>.</td></tr>
+                <tr><td>6</td><td><code>~Application</code> calls <code>finalize()</code>: the config is saved where
+                    the user allowed it, the diagnostic log is released. It runs once, however many times it is
+                    called, so an application whose own members the save reaches calls it from its own destructor
+                    first.</td></tr>
+                <tr><td>7</td><td><code>ApplicationBase</code>'s members go: the themes manager and its watch, then
+                    the context, whose destructor stops the theme crossing.</td></tr>
+                <tr><td>8</td><td>The platform goes, its members in reverse: the clipboard flushes or hands its
+                    selection back, the timers stop, the display or the windows manager closes.</td></tr>
+            </table>
+
+            <h3 id="app-context">AppContext</h3>
+            <p><code>AppContext</code> is what a form or a control means by "the application". It holds the platform
+            by reference and hands it out as <code>platform()</code>, and it owns the one process-wide object
+            that is not the platform's: the <code>AnimationController</code>, as <code>animator()</code>. The
+            animation controller belongs here rather than to the platform because it is the application's -
+            every control's state fades, every glide, the theme crossing - stepped by one <code>UiTimer</code>
+            that the platform's timer manager serves. Its owner has to stand below the platform and above every
+            control, which is exactly where the context stands.</p>
+            <p>A <code>FormContext</code> holds a <code>const Platform&amp;</code> and hands out the one thing a
+            control asks the platform for directly, the clipboard, as <code>clipboard()</code>. It is not
+            <code>const</code>: the clipboard is the process's state rather than the context's, and a copy made
+            from a const context is still a copy.</p>
+            <h2 id="from-above">Reaching the Platform From Above</h2>
+            <p>Code above the context - forms, controls, an application's own pages - never names
+            <code>Win32Platform</code> or <code>WaylandPlatform</code>. It reaches what it needs through the
+            context it already has, and the context knows only <code>Platform</code>.</p>
+
+            <h3 id="windows-from-above">Windows</h3>
+            <p>A form asks for its window in its own member initialiser, through the context's platform:</p>
+<pre><span class="tp">std</span>::<span class="tp">unique_ptr</span>&lt;<span class="tp">IPlatformWindow</span>&gt; m_window{
+    m_appContext.<span class="fn">platform</span>().<span class="fn">createWindow</span>(*<span class="kw">this</span>, m_windowRole, <span class="fn">popupTargetForm</span>())
+};</pre>
+            <p><code>createWindow</code> is the platform's one virtual. The derived platform answers with a
+            <code>FormWindow</code> made from what it holds - the windows manager on Win32, the display on
+            Wayland - and hands that to the window, so no window reaches for it by any other route. A popup is
+            handed its parent's window the same way, through the parent form. <code>WindowRole</code> says what
+            kind of window: <code>Dialog</code>, <code>Menu</code> or <code>Tooltip</code>, and nothing else.</p>
+
+            <h3 id="clipboard-from-above">The Clipboard</h3>
+            <p>The clipboard is <code>formContext().clipboard()</code>, a <code>Transfer::Clipboard&amp;</code>. A
+            copy puts a package on it with the input event that asked; a paste asks it for an offer:</p>
+<pre><span class="cm">// a copy, from a handler that has the click's stamp</span>
+<span class="tp">Transfer</span>::<span class="tp">Source</span> source{};
+source.<span class="fn">add</span>&lt;<span class="tp">Transfer</span>::<span class="tp">PlainText</span>&gt;(<span class="fn">selectedText</span>());
+<span class="fn">formContext</span>().<span class="fn">clipboard</span>().<span class="fn">set</span>(<span class="tp">std</span>::<span class="fn">move</span>(source), stamp);
+
+<span class="cm">// a paste</span>
+<span class="kw">if</span> (<span class="tp">Transfer</span>::<span class="tp">Offer</span>* offer = <span class="fn">formContext</span>().<span class="fn">clipboard</span>().<span class="fn">offer</span>())
+{
+    <span class="kw">if</span> (<span class="kw">const</span> <span class="tp">std</span>::<span class="tp">optional</span>&lt;<span class="tp">std</span>::<span class="tp">wstring</span>&gt; text = <span class="tp">Transfer</span>::<span class="fn">take</span>&lt;<span class="tp">Transfer</span>::<span class="tp">PlainText</span>&gt;(*offer))
+        <span class="fn">insert</span>(*text);
+}
+
+<span class="cm">// what to connect to instead of polling - scoped, because the clipboard outlives the listener</span>
+<span class="tp">ScopedEventConnection</span> watch{ <span class="fn">formContext</span>().<span class="fn">clipboard</span>().<span class="fn">events</span>()
+    .<span class="fn">connect</span>&lt;<span class="tp">Transfer</span>::<span class="tp">ClipboardChangeEvent</span>&gt;([&amp;](<span class="tp">Transfer</span>::<span class="tp">ClipboardChangeEvent</span>&amp;) {
+        <span class="fn">refresh</span>();
+    }) };</pre>
+            <p>Where only a form is at hand, <code>form-&gt;context().clipboard()</code> is the same object. The
+            clipboard's own manual is the Transfer note in <code>Source/RawDocs</code>; what matters here is its
+            place: one per process, the platform's member, alive from before the first window to after the
+            last.</p>
+
+            <h3 id="animator-from-above">Animations</h3>
+            <p>A control runs its animations through <code>Control::animate</code>, which reaches the application's
+            controller through the control's form:</p>
+<pre><span class="fn">animate</span>(<span class="tp">AnimationSlots</span>::expander, m_expandedFactor, target, [<span class="kw">this</span>](<span class="tp">AnimateParams</span>&amp; params) {
+    m_expandedFactor = params.value;
+    <span class="fn">invalidateChevron</span>();
+});
+
+<span class="fn">stopAnimation</span>(<span class="tp">AnimationSlots</span>::scroll);   <span class="cm">// one slot</span>
+<span class="fn">stopAnimations</span>();                           <span class="cm">// every slot of this control</span></pre>
+            <p><code>animator()</code> answers the controller, or null while the control stands in no form - there
+            being no application to reach then. <code>animate</code> on a control in no form applies the end
+            value at once through the same callback: nobody sees an unattached control, and the end value is what
+            it is drawn from once attached. A form reaches the controller as
+            <code>appContext().animator()</code>; something that is not a control - the grid's cell highlights -
+            takes it from the control it belongs to and answers the null the same way.</p>
+            <h2 id="from-below">Reaching the Platform From Below</h2>
+            <p>Some of the framework's own services stand <em>below</em> the context in the module graph - the
+            clipboard in Transfer, the timer hooks in System - and cannot import the module that declares
+            <code>Platform</code>, because Context imports them. They still need the platform: the clipboard
+            wants a listener window on Win32 and the display on Wayland, and a <code>UiTimer</code> wants the
+            timer manager. Two seams serve them, and which one applies depends on whether the service has an
+            object in hand.</p>
+
+            <h3 id="services-seam">The Empty Name and What Stands Behind It</h3>
+            <p><code>IPlatformServices</code>, declared in <code>ClaFi.Core.System.UiTypes</code>, is a class
+            with a virtual destructor and nothing else. It is the platform as a service below the context can
+            name it, and a service that is handed the platform holds it under this name:</p>
+<pre><span class="kw">export class</span> <span class="tp">Clipboard</span>
+{
+<span class="kw">public</span>:
+    <span class="kw">explicit</span> <span class="fn">Clipboard</span>(<span class="tp">IPlatformServices</span>&amp;);
+    ...
+<span class="kw">private</span>:
+    <span class="tp">IPlatformServices</span>&amp; m_platform;
+};</pre>
+            <p>What stands behind the name is each platform layer's own statement, in its own module, and the
+            platform built for the display server derives from it:</p>
+            <table>
+                <tr><th>Platform</th><th>Interface</th><th>Declared in</th><th>What it offers</th></tr>
+                <tr><td>Win32</td><td><code>IMessageWindowFactory</code></td><td><code>ClaFi.Platform.Windows.Window</code></td>
+                    <td><code>createMessageWindow()</code> - a <code>MessageWindow</code> made from the windows
+                    manager, for a service that needs an HWND to listen on.</td></tr>
+                <tr><td>Wayland</td><td><code>IDisplayAccess</code></td><td><code>ClaFi.Platform.Wayland.Display</code></td>
+                    <td><code>display()</code> - the <code>DisplayManager</code>, for the data device, the
+                    selection and the change handler.</td></tr>
+            </table>
+            <p>The service's platform half - the unit compiled for that platform alone - casts the name to what
+            its platform stands behind it:</p>
+<pre><span class="cm">// Windows.Transfer.cpp</span>
+<span class="tp">IMessageWindowFactory</span>&amp; platform = <span class="kw">static_cast</span>&lt;<span class="tp">IMessageWindowFactory</span>&amp;&gt;(owner.m_platform);
+listener = platform.<span class="fn">createMessageWindow</span>();
+
+<span class="cm">// Wayland.Transfer.cpp</span>
+<span class="kw">return</span> <span class="kw">static_cast</span>&lt;<span class="tp">IDisplayAccess</span>&amp;&gt;(owner.m_platform).<span class="fn">display</span>();</pre>
+            <p>The cast is sound because a build has one platform: the object behind an
+            <code>IPlatformServices&amp;</code> in a Windows build is a <code>Win32Platform</code>, which derives
+            from <code>IMessageWindowFactory</code>, and there is no other. The cast is also what keeps the neutral
+            name empty. Nothing is declared on <code>IPlatformServices</code> that only one platform can answer,
+            so no platform is made to answer for a thing it has no notion of - Wayland has no message window, and
+            Win32 has no display object - and the neutral module carries no method that half the builds would
+            stub.</p>
+            <div class="info"><code>Platform</code> itself does not derive from <code>IPlatformServices</code>; the
+            derived platform does, beside <code>Platform</code>. That keeps the conversion from either platform to
+            the name unambiguous, and keeps Context out of the business of naming the seam at all.</div>
+
+            <h3 id="standing">The Standing Pointer</h3>
+            <p>A hook has no object in hand. <code>PlatformTimer::start</code> and <code>stop</code> are free
+            functions a <code>UiTimer</code> calls; a <code>DirWatch</code>'s platform half is built with nothing
+            but the watch; a <code>Platform</code> static is a static. These reach the platform's object through
+            a pointer that object sets as it is built and clears as it goes:</p>
+<pre><span class="kw">export class</span> <span class="tp">TimerManager</span>
+{
+<span class="kw">public</span>:
+    [[<span class="kw">nodiscard</span>]] <span class="kw">static</span> <span class="tp">TimerManager</span>* <span class="fn">standing</span>() { <span class="kw">return</span> s_standing; }
+    ...
+<span class="kw">private</span>:
+    <span class="kw">inline static</span> <span class="tp">TimerManager</span>* s_standing{ <span class="kw">nullptr</span> };
+};
+
+<span class="cm">// the hook</span>
+<span class="kw">void</span> <span class="fn">start</span>(<span class="tp">UiTimer</span>* timer, <span class="tp">MilliSeconds</span> delay)
+{
+    <span class="tp">TimerManager</span>* manager = <span class="tp">TimerManager</span>::<span class="fn">standing</span>();
+    <span class="kw">if</span> (manager == <span class="kw">nullptr</span>)
+        <span class="fn">unreachable</span>(<span class="st">"PlatformTimer: no timer manager stands - a UiTimer outlives the platform"</span>);
+    ...
+}</pre>
+            <table>
+                <tr><th>Pointer</th><th>Set by</th><th>Read by</th></tr>
+                <tr><td><code>TimerManager::standing()</code> (Win32 and Linux)</td><td>The platform's timer
+                    manager</td><td><code>PlatformTimer::start</code> and <code>stop</code>, the two hooks
+                    <code>ClaFi.Core.System.Timer</code> declares and each platform defines.</td></tr>
+                <tr><td><code>DirWatchManager::standing()</code> (Linux)</td><td>The platform's watch
+                    manager</td><td><code>DirWatch::Impl</code>, the Linux half of a directory watch.</td></tr>
+                <tr><td><code>DisplayManager::standing()</code> (Wayland)</td><td>The platform's display</td>
+                    <td>The <code>Platform</code> statics that need the display server: the cursor, the modifiers,
+                    the application id, the session.</td></tr>
+            </table>
+            <p>This is not a singleton. The object is a platform member with a declared place and a declared
+            lifetime; the pointer is a non-owning view of it, and it is null exactly while the platform holds no
+            such object. That null is the whole of the difference: a singleton built on first use would answer a
+            hook called after the platform has gone by building a new manager, silently and at process exit. A
+            standing pointer answers it with <code>unreachable</code>, because the platform stands before anything
+            that owns a timer or a watch and after it - see <a href="#first-and-last">First Up, Last Down</a> -
+            and a hook finding none standing has found a broken order.</p>
+            <div class="rules-grid">
+                <div class="rule-card dos">
+                    <h4>DO:</h4>
+                    <ul>
+                        <li>Hand the platform's object to whatever you build from it - a window its manager, a
+                        buffer its <code>wl_shm</code> - and hold it as a reference member.</li>
+                        <li>Use the empty name and a cast when the caller is a service below the context that is
+                        handed the platform once.</li>
+                        <li>Use a standing pointer only for a hook with no object in hand, and make none standing
+                        <code>unreachable</code>.</li>
+                    </ul>
+                </div>
+                <div class="rule-card donts">
+                    <h4>DON'T:</h4>
+                    <ul>
+                        <li>Don't add a method to <code>IPlatformServices</code>. A method there is one every
+                        platform must answer, and the name exists to be empty.</li>
+                        <li>Don't write a <code>static X&amp; instance()</code> or a function-local static holding
+                        framework state. It has no place in the order and dies at process exit, after everything
+                        that would have released it.</li>
+                        <li>Don't answer a missing standing pointer by doing nothing. The silence hides the order
+                        that is wrong.</li>
+                    </ul>
+                </div>
+            </div>
+            <h2 id="platform-objects">The Platform's Own Objects</h2>
+            <p>What each platform layer builds for its owner, and the two or three rules each carries.</p>
+
+            <h3 id="win32-objects">On Win32</h3>
+            <p><strong><code>WindowsManager</code></strong> is the root of the Windows layer. Its constructor sets the
+            process DPI awareness, opens the OLE apartment the clipboard lives in, and registers the four window
+            classes; its destructor closes the apartment, posts the quit message and unregisters the classes. Every
+            window is handed the manager by whoever makes it - the platform to a <code>FormWindow</code>, the
+            platform to the timer's and the clipboard's message windows - and the manager has no static accessor.
+            The one static state it keeps is the desktop's colour mode as last read, which a broadcast is compared
+            against.</p>
+            <p><strong><code>MessageWindow</code></strong> is a message-only HWND on <code>WindowBase</code> alone -
+            no frame, no placement, no alpha, none of what a platform window has. Whoever holds one names itself
+            as its <code>IMessageSink</code> and receives every message the window does, exactly as a
+            <code>Window</code> subclass would without being one; what the sink leaves unhandled goes to the
+            system's default. <code>IMessageSink</code> is also what the manager's window procedure delivers to for
+            every window it made, by the pointer in the window's user data - a <code>Window</code> and a
+            <code>MessageWindow</code> alike.</p>
+            <p><strong><code>TimerManager</code></strong> owns a <code>MessageWindow</code> and is its sink for
+            <code>WM_TIMER</code>. It publishes <code>standing()</code> for the two hooks.</p>
+
+            <h3 id="wayland-objects">On Wayland</h3>
+            <p><strong><code>DisplayManager</code></strong> is the connection, the bound globals and the event loop.
+            Its constructor connects and throws where it cannot; <code>waitForEvent</code> sleeps on the
+            connection's descriptor, every registered poll source and the appearance bus, and
+            <code>dispatchPending</code> hands every sink what arrived. It publishes <code>standing()</code> for the
+            <code>Platform</code> statics, and nothing else reaches it by name: windows are handed it, and the
+            clipboard casts to <code>IDisplayAccess</code>.</p>
+            <p><strong><code>PollSource</code></strong> is a descriptor's place in the loop, held for as long as
+            the object stands: <code>addPollSource</code> in its constructor, <code>removePollSource</code> in its
+            destructor, with the call to make when the descriptor is readable. The platform declares one per
+            manager, after the display and the manager it polls for.</p>
+            <p><strong><code>Linux::TimerManager</code></strong> is a thread that waits out the delays and an
+            eventfd it raises; <strong><code>Linux::DirWatchManager</code></strong> is one inotify descriptor. Both
+            live in <code>Platform/Linux</code> because they are the operating system's, not the display server's;
+            both publish <code>standing()</code>; neither knows the loop that polls it.</p>
+
+            <h3 id="clipboard-halves">The Clipboard's Two Halves</h3>
+            <p><code>Transfer::Clipboard</code> is the worked example of a service that is one object with a
+            neutral half and a platform half. The neutral half - the package this process stands behind, the
+            held reader, the change dispatcher, the generation - is the class's own members, declared in
+            <code>ClaFi.Core.Transfer.Clipboard</code>. The platform half is <code>NativeClipboard</code>: a
+            struct the interface declares without a body and each platform's implementation unit of the same
+            module defines, held through a <code>unique_ptr</code> so the interface names no platform type.</p>
+            <table>
+                <tr><th></th><th>Win32</th><th>Wayland</th></tr>
+                <tr><td>NativeClipboard holds</td><td>The <code>IDataObject</code> OLE keeps a reference to, the
+                    clipboard sequence numbers, the retry flag, the listener <code>MessageWindow</code>.</td>
+                    <td>The <code>wl_data_source</code> behind the selection and the offer handle the reader was
+                    built for.</td></tr>
+                <tr><td>Reaches the platform by</td><td>Casting to <code>IMessageWindowFactory</code> on the first
+                    watch, for the listener window; it is the window's sink.</td>
+                    <td>Casting to <code>IDisplayAccess</code>, for the data device, the selection and the change
+                    handler it installs on the first watch.</td></tr>
+                <tr><td>On the way out</td><td>Renders the package onto the clipboard where
+                    <code>OleIsCurrentClipboard</code> says it is still there, so a copy outlives the process;
+                    removes the format listener.</td>
+                    <td>Destroys the standing source and clears the display's change handler.</td></tr>
+            </table>
+            <p>The constructor and destructor of <code>Clipboard</code> are defined in the platform unit, where
+            <code>NativeClipboard</code> is complete. Nothing above the platform layer sees the difference.</p>
+            <h2 id="teardown">Teardown</h2>
+            <p>Construction order is the easy half; the framework's own objects are built by whoever owns them, in
+            the order the owner declares. Teardown is where a design of this shape earns its keep, because the
+            things going down still reach for the platform, and the platform has to be there.</p>
+            <table>
+                <tr><th>What goes</th><th>What it reaches for</th><th>Why it finds it</th></tr>
+                <tr><td>A control destroyed in place</td><td>The animation controller, to stop what it was running
+                    (<code>Control::~Control</code> calls <code>stopAnimations</code>).</td>
+                    <td>It is still attached, so its form and the context are reachable.</td></tr>
+                <tr><td>A container's children</td><td>The same.</td>
+                    <td>They go down detached, so <code>releaseChildren</code> stops the whole subtree's animations
+                    first, while the container can still reach the controller.</td></tr>
+                <tr><td>A form's root</td><td>The same.</td>
+                    <td>A root has no parent, so <code>FormControlBase</code>'s destructor stops its animations
+                    while <code>getForm</code> still names its form - by the time <code>Control</code>'s destructor
+                    runs, <code>getForm</code> walks the parents and finds none.</td></tr>
+                <tr><td>Any <code>UiTimer</code></td><td>The platform's timer manager, through
+                    <code>PlatformTimer::stop</code>.</td>
+                    <td>Every <code>UiTimer</code> is owned by something the application or its context owns - a
+                    control, a form's tooltip, the animation controller, a directory watch - and the platform
+                    outlives all of them. The hook finding no manager is <code>unreachable</code>.</td></tr>
+                <tr><td>The themes manager's <code>DirWatch</code></td><td>The platform's watch manager.</td>
+                    <td><code>ApplicationBase</code>'s members go before the platform.</td></tr>
+                <tr><td><code>AppContext</code></td><td>Its own animation controller, to stop the theme
+                    crossing.</td><td>The controller is its member, stopped in its destructor body before the
+                    members go.</td></tr>
+                <tr><td>The clipboard</td><td>The OLE apartment, or the display.</td>
+                    <td>Declared last in the platform, so it goes first.</td></tr>
+            </table>
+            <div class="warning"><strong>An animation left running into freed memory is the failure this order
+            prevents.</strong> The controller ticks through a callback that captures the control; a control that
+            died without stopping its animations leaves that callback to run on the next tick. Every route a
+            control can die by stops them - in place, as a released child, as a root - and each does so at the
+            one moment the controller is still reachable from where it stands.</div>
+
+            <h2 id="statics">What Stays Static, and Why</h2>
+            <p>The rule is not "no statics"; it is that no static holds anything that must be released in an
+            order. A timer, a handle, a thread, a protocol object, a listener on something else - each of those
+            has an owner with a declared place. What remains static holds none of them:</p>
+            <table>
+                <tr><th>Static</th><th>What it holds</th></tr>
+                <tr><td>The <code>Platform</code> statics</td><td>Functions, and one value: the cursor last set. A
+                    static that needs the display server on Wayland reaches it through
+                    <code>DisplayManager::standing()</code>.</td></tr>
+                <tr><td><code>Platform::events()</code></td><td>One dispatcher for the process, where
+                    <code>SystemColorModeEvent</code> is raised. It stands before the first window and after the
+                    last, which is the safe direction for a scoped connection.</td></tr>
+                <tr><td><code>Input</code></td><td>Which control has the focus, which is hovered, which device is
+                    driving: pointers to controls that clear themselves on the way out, and a value. The fade
+                    between the devices' looks runs on the application's controller, which the form calling
+                    <code>Input::setDevice</code> hands it.</td></tr>
+                <tr><td>The Transfer tables</td><td>Registrations filled by calls from
+                    <code>ApplicationBase::initialize</code>, never at static initialisation - a static library
+                    drops a translation unit nothing references.</td></tr>
+                <tr><td>The text engine's caches</td><td>Layouts, glyphs, draw buffers, the spare buffers on Linux.
+                    They are caches: what they hold is rebuilt on demand and released in no order.</td></tr>
+                <tr><td>The Wayland appearance portal</td><td>A lazily connected session bus, read for the desktop's
+                    colour mode; its descriptor is polled by the display's loop while it is open.</td></tr>
+                <tr><td><code>WindowsManager::appsColorMode</code></td><td>The desktop's mode as last read, which a
+                    broadcast is compared against.</td></tr>
+                <tr><td>The diagnostic log</td><td>A form, held in a static <code>unique_ptr</code> in the Diagnostic
+                    module. It is the one static whose contents need an order, and <code>ApplicationBase::finalize</code>
+                    is what keeps it: the log is released there, ahead of the context and the platform going.</td></tr>
+            </table>
+
+            <h2 id="adding">Adding a Platform Service</h2>
+            <p>The questions to answer, in order:</p>
+            <ol>
+                <li><strong>Who owns it?</strong> A service the platform layer makes from the operating system - a
+                window, a descriptor, an apartment - belongs to the platform. A service the application runs for
+                itself - the animations - belongs to <code>AppContext</code>. Nothing belongs to a namespace.</li>
+                <li><strong>Where in the list?</strong> After everything it is made from, before everything that
+                is made from it. On Wayland, a descriptor the loop must poll gets a <code>PollSource</code> declared
+                after both the display and the service.</li>
+                <li><strong>Who reaches it, and from where?</strong> Code above the context: give the context an
+                accessor, as <code>clipboard()</code> and <code>animator()</code>. A service below the context that
+                is handed the platform once: add a method to the platform layer's <code>IPlatformServices</code>
+                derivative - <code>IMessageWindowFactory</code> or <code>IDisplayAccess</code> - never to the
+                neutral name. A hook with no object in hand: a <code>standing()</code> pointer on the service, set
+                and cleared by the service, <code>unreachable</code> when null.</li>
+                <li><strong>Where do the bodies go?</strong> A class member is defined in the module that declared
+                its class, so a platform-neutral interface with platform bodies gets one implementation unit per
+                platform of the <em>same</em> module - <code>Windows.Transfer.cpp</code> and
+                <code>Wayland.Transfer.cpp</code> are both <code>module ClaFi.Core.Transfer.Clipboard;</code>. Its
+                platform state goes behind a struct the interface declares and the platform unit defines, held
+                through a <code>unique_ptr</code>.</li>
+                <li><strong>What does it do on the way out?</strong> Its destructor, and only that. If it must act
+                while a <em>later</em> platform member still stands, the order is wrong; move it.</li>
+            </ol>
+
+            <h2 id="reference">Reference</h2>
+            <p>The platform's neutral half, <code>ClaFi.Core.Context.FormContext</code>:</p>
+            <table>
+                <tr><th>Member</th><th>What it is</th></tr>
+                <tr><td><code>Platform(Transfer::Clipboard&amp;)</code></td><td>Names the clipboard the derived
+                    platform owns as a member.</td></tr>
+                <tr><td><code>clipboard()</code></td><td>The one clipboard, a <code>Transfer::Clipboard&amp;</code>.</td></tr>
+                <tr><td><code>createWindow(IForm&amp;, WindowRole, IForm* parentForm)</code></td><td>A form's
+                    window, answered by the derived platform.</td></tr>
+                <tr><td>The statics</td><td>See <a href="#neutral-platform">Platform, the Neutral Half</a>.</td></tr>
+            </table>
+            <p>The two platforms and their facades:</p>
+            <table>
+                <tr><th>Name</th><th>Module</th><th>Notes</th></tr>
+                <tr><td><code>Win32Platform</code>, <code>Win32Application</code></td><td><code>ClaFi.Platform.Windows</code></td>
+                    <td><code>Params{ HINSTANCE appInstance }</code>. Derives from <code>IMessageWindowFactory</code>.</td></tr>
+                <tr><td><code>WaylandPlatform</code>, <code>WaylandApplication</code></td><td><code>ClaFi.Platform.Wayland</code></td>
+                    <td><code>Params{ bool watchesClipboard }</code>. Derives from <code>IDisplayAccess</code>. The
+                    constructor throws <code>std::runtime_error</code> with no compositor.</td></tr>
+            </table>
+            <p>The seams:</p>
+            <table>
+                <tr><th>Name</th><th>Module</th><th>What it is</th></tr>
+                <tr><td><code>IPlatformServices</code></td><td><code>ClaFi.Core.System.UiTypes</code></td>
+                    <td>The platform as a service below the context names it. Empty.</td></tr>
+                <tr><td><code>IMessageWindowFactory</code>, <code>MessageWindow</code>, <code>IMessageSink</code></td>
+                    <td><code>ClaFi.Platform.Windows.Window</code></td>
+                    <td>What Win32 stands behind the name: a message-only window and the sink it delivers to.</td></tr>
+                <tr><td><code>IDisplayAccess</code>, <code>PollSource</code></td><td><code>ClaFi.Platform.Wayland.Display</code></td>
+                    <td>What Wayland stands behind the name: the display, and a descriptor's place in its loop.</td></tr>
+                <tr><td><code>TimerManager::standing()</code></td><td><code>ClaFi.Platform.Windows.Timer</code>,
+                    <code>ClaFi.Platform.Linux.Timer</code></td><td>For <code>PlatformTimer::start</code> and
+                    <code>stop</code>.</td></tr>
+                <tr><td><code>DirWatchManager::standing()</code></td><td><code>ClaFi.Platform.Linux.DirWatch</code></td>
+                    <td>For the Linux <code>DirWatch::Impl</code>.</td></tr>
+                <tr><td><code>DisplayManager::standing()</code></td><td><code>ClaFi.Platform.Wayland.Display</code></td>
+                    <td>For the <code>Platform</code> statics.</td></tr>
+            </table>
+            <p>What the context hands out:</p>
+            <table>
+                <tr><th>Accessor</th><th>Answers</th></tr>
+                <tr><td><code>AppContext::platform()</code></td><td>The <code>Platform&amp;</code>.</td></tr>
+                <tr><td><code>AppContext::animator()</code></td><td>The application's <code>AnimationController</code>.</td></tr>
+                <tr><td><code>FormContext::clipboard()</code></td><td>The platform's <code>Transfer::Clipboard</code>.</td></tr>
+                <tr><td><code>Control::animator()</code></td><td>The controller through the form, or null in no form.</td></tr>
+                <tr><td><code>Control::animate(slot, current, end, onAnimate)</code></td><td>Runs an animation
+                    through it, or applies the end value in no form.</td></tr>
+                <tr><td><code>Control::stopAnimation(slot)</code>, <code>stopAnimations()</code></td><td>The stops,
+                    by the same route.</td></tr>
+            </table>
+        </main>
+    </div>
+
+    <!-- Collapsible Sidebar Logic Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const collapsibleElements = document.querySelectorAll('.sidebar li.has-children');
+            collapsibleElements.forEach(li => {
+                const btn = li.querySelector('.toggle-btn');
+                const link = li.querySelector('.nav-item-wrapper > a');
+
+                const toggle = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    li.classList.toggle('collapsed');
+                };
+
+                if (btn) {
+                    btn.addEventListener('click', toggle);
+                }
+
+                // Allow clicking the primary root link to expand the node if it's currently collapsed
+                if (link) {
+                    link.addEventListener('click', () => {
+                        if (li.classList.contains('collapsed')) {
+                            li.classList.remove('collapsed');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.1.11312.151
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Dom Benchmark", "Dom Benchmark.vcxproj", "{0FB9DA7B-C776-4F7F-BD1E-2CC2DD0D8F64}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClaFi", "..\..\Visual Studio Shared Items\ClaFi.vcxitems", "{6954ED2F-785A-436B-90A8-65188080FDB3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0FB9DA7B-C776-4F7F-BD1E-2CC2DD0D8F64}.Debug|x64.ActiveCfg = Debug|x64
+		{0FB9DA7B-C776-4F7F-BD1E-2CC2DD0D8F64}.Debug|x64.Build.0 = Debug|x64
+		{0FB9DA7B-C776-4F7F-BD1E-2CC2DD0D8F64}.Release|x64.ActiveCfg = Release|x64
+		{0FB9DA7B-C776-4F7F-BD1E-2CC2DD0D8F64}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {12F95E43-A489-432D-B355-76083D427418}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{6954ed2f-785a-436b-90a8-65188080fdb3}*SharedItemsImports = 9
+		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{0fb9da7b-c776-4f7f-bd1e-2cc2dd0d8f64}*SharedItemsImports = 4
+	EndGlobalSection
+EndGlobal

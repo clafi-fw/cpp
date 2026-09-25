@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi Dom - Developer Manual</title>
+    <style>
+        :root {
+            --bg-color: #f9f9fb;
+            --text-color: #333;
+            --accent-color: #0066cc;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        /* --- Sidebar & Collapsible Layout --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: #fff;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-left: 0.5rem;
+            color: #111;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Top-level list items (root nodes) */
+        .sidebar > ul > li {
+            margin-bottom: 0.8rem;
+        }
+
+        /* Group wrapper for link + toggle button */
+        .nav-item-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-item-wrapper:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        /* Root-level link styling */
+        .sidebar > ul > li > .nav-item-wrapper > a {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111;
+            flex-grow: 1;
+        }
+
+        /* Sub-level lists */
+        .sidebar ul ul {
+            padding-left: 0.8rem;
+            margin-top: 0.3rem;
+            margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color);
+            margin-left: 1.1rem;
+        }
+
+        .sidebar ul ul li {
+            margin-bottom: 0.4rem;
+        }
+
+        .sidebar ul ul a {
+            font-size: 0.9rem;
+            color: #555;
+            display: block;
+            padding: 0.15rem 0;
+            transition: color 0.15s ease;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            display: block;
+            transition: color 0.2s ease;
+        }
+
+        .sidebar a:hover,
+        .sidebar ul ul a:hover {
+            color: var(--accent-color);
+        }
+
+        /* Toggle Button styling */
+        .toggle-btn {
+            background: none;
+            border: none;
+            padding: 4px;
+            margin: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+            outline: none;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--accent-color);
+        }
+
+        .toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            transform: rotate(90deg); /* Points down when expanded */
+            transition: transform 0.2s ease;
+        }
+
+        /* Interactive Collapsible states managed by JS */
+        .sidebar li.has-children.collapsed ul {
+            display: none !important;
+        }
+
+        .sidebar li.has-children.collapsed .toggle-btn svg {
+            transform: rotate(0deg); /* Points right when collapsed */
+        }
+
+        /* --- Base Page Layout --- */
+        .page-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        header {
+            background-color: #fff;
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        h1, h2, h3, h4 {
+            color: #111;
+            margin-top: 2rem;
+        }
+
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+
+        main {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            padding-bottom: 2rem;
+        }
+
+        p, li { font-size: 1.1rem; }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background-color: rgba(0,0,0,0.05);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.9em;
+            color: #d14;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        .kw { color: #569cd6; }
+        .tp { color: #4ec9b0; }
+        .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; }
+        .fn { color: #dcdcaa; }
+
+        .warning {
+            background-color: #fff3f3;
+            border-left: 4px solid #cc0000;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .rule-card {
+            padding: 1.2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .rule-card.dos {
+            background-color: #f4faf4;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .rule-card.donts {
+            background-color: #fff8f8;
+            border-left: 4px solid #c62828;
+        }
+
+        .rule-card h4 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .rule-card ul {
+            margin: 0;
+            padding-left: 1.2rem;
+        }
+
+        .rule-card li {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .sidebar {
+                display: none;
+            }
+            .page-content {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="sidebar-header">Contents</div>
+        <ul>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#introduction">Introduction</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#basic-usage">Basic Usage Example</a>
+                </div>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#type-registration">Type Registration</a>
+                    <button class="toggle-btn" aria-label="Toggle Section">
+                        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </button>
+                </div>
+                <ul>
+                    <li><a href="#primitives">Scalar Values</a></li>
+                    <li><a href="#structs">Structs & Classes</a></li>
+                    <li><a href="#external-structs">External Structs (Non-Intrusive)</a></li>
+                    <li><a href="#enums">Enums</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#declarative-dsl">Blueprint Declaration</a>
+                    <button class="toggle-btn" aria-label="Toggle Section">
+                        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </button>
+                </div>
+                <ul>
+                    <li><a href="#schema-first-evaluation">Schema-First Evaluation</a></li>
+                    <li><a href="#dsl-nodes">Blueprint Nodes</a></li>
+                    <li><a href="#schema-memory">Blueprint Memory & Lifetime Rules</a></li>
+                    <li><a href="#manual-construction">Low-level Manual Construction</a></li>
+                    <li><a href="#full-example">A Complete Example</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#reading-writing">Reading & Writing Values</a>
+                    <button class="toggle-btn" aria-label="Toggle Section">
+                        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </button>
+                </div>
+                <ul>
+                    <li><a href="#reading-writing-nodes">Reading, Writing & Casting Nodes</a></li>
+                    <li><a href="#zero-copy">Zero-Copy Extraction (getTo)</a></li>
+                    <li><a href="#eager-evaluation">Eager Type Evaluation & Zero-Overhead Resolution</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#sequences">Sequences</a>
+                    <button class="toggle-btn" aria-label="Toggle Section">
+                        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </button>
+                </div>
+                <ul>
+                    <li><a href="#homogeneous-seq">Value Sequences</a></li>
+                    <li><a href="#dynamic-seq">Section Sequences</a></li>
+                    <li><a href="#search-seq">Search and Removal inside Sequences</a></li>
+                    <li><a href="#iterating-large-values">Iterating Sequences of Large or Complex Values</a></li>
+                </ul>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#events-transactions">Events & Transactions</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#document-wrapper">The Document Wrapper</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#supported-formats">Supported File Formats</a>
+                </div>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#custom-format">Implementing a Custom File Format</a>
+                    <button class="toggle-btn" aria-label="Toggle Section">
+                        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </button>
+                </div>
+                <ul>
+                    <li><a href="#json-implementation">Implementation (ThisApp.DomFormats.JsonNlohmann)</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="page-content">
+        <header>
+            <h1>Dom Subsystem</h1>
+            <p>ClaFi Framework Developer Manual</p>
+        </header>
+
+        <main>
+            <h2 id="introduction">Introduction</h2>
+            <p>The <code>Dom</code> subsystem is a generic, type-safe, schema-first representation of any hierarchical data. It provides automatic save capabilities, customizable file formats, and transactional changes.</p>
+
+            <div class="info">
+                <strong>Module Imports:</strong> To use the DOM subsystem and its declarative DSL, import the core DOM subsystem module in your C++20 code:
+                <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
+<span class="kw">import</span> <span class="tp">ClaFi.Core.Dom</span>;</pre>
+                If you need built-in file format support, also import the corresponding format module:
+                <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
+<span class="kw">import</span> <span class="tp">ClaFi.Dom.FileFormat.ClaFi</span>; <span class="cm">// or ClaFi.Dom.FileFormat.Json</span></pre>
+            </div>
+
+            <div class="info">
+                <strong>Namespace Note:</strong> To keep code examples concise and readable, almost all examples in this manual assume that the main DOM runtime namespace is in scope:
+                <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
+<span class="kw">using namespace</span> <span class="tp">ClaFi::Dom</span>;</pre>
+                Blueprint construction nodes are explicitly qualified with the <code style="color: #4ec9b0; background: transparent; padding: 0;">Dt::</code> namespace prefix to clearly differentiate them from active runtime memory nodes.
+            </div>
+
+            <div class="info">
+                <strong>The "Document" Conceptual Model:</strong> A <code>Document</code> is simply a <code>Section</code> that can be saved to and loaded from disk. Any <code>Section</code> can be combined and nested with any other section, in any order, whether or not it's a <code>Document</code>'s root. A <code>Document</code> can be stored in any file format &mdash; the format is a separate, pluggable concern.
+            </div>
+
+            <h2 id="basic-usage">Basic Usage Example</h2>
+            <p>The Dom subsystem utilizes a declarative DSL blueprint pattern. This example shows how to initialize a serialized Document container on disk, bind native class methods as event listeners, load, alter, and save configuration or document settings.</p>
+
+            <pre><code><span class="kw">import</span> <span class="tp">ClaFi.Core.Dom</span>;
+<span class="kw">import</span> <span class="tp">ClaFi.Dom.FileFormat.ClaFi</span>;
+
+<span class="kw">class</span> <span class="tp">MyForm</span>
+{
+<span class="kw">public</span>:
+    <span class="kw">void</span> <span class="fn">onColorChanged</span>(<span class="tp">ChangeEvent</span>&amp;);
+
+    <span class="kw">void</span> <span class="fn">configShowCase</span>()
+    {
+        <span class="cm">// 1. Create the document and pass its layout blueprint to the constructor.</span>
+        <span class="cm">//    The outermost Dt::Section is anonymous (no key), acting as the document root.</span>
+        <span class="tp">Document</span>&lt;<span class="tp">FileFormat::ClaFi</span>&gt; configDoc
+        {
+            <span class="st">L"app.cfg"</span>,
+            <span class="tp">AutoSave</span>::<span class="tp">No</span>,
+            <span class="tp">Dt::Section</span>
+            {
+                <span class="tp">Dt::Section</span>
+                {
+                    <span class="st">L"Window"</span>,
+                    <span class="tp">Dt::Value</span>{ <span class="st">L"Width"</span>, <span class="kw">1280</span> },
+                    <span class="tp">Dt::Value</span>{ <span class="st">L"Height"</span>, <span class="kw">720</span> },
+                    <span class="tp">Dt::Value</span>{ <span class="st">L"Title"</span>, <span class="st">L"My Application"</span> }
+                },
+                <span class="tp">Dt::Value</span>
+                {
+                    <span class="st">L"ColorMode"</span>,
+                    <span class="tp">ColorMode</span>::<span class="tp">Dark</span>,
+                    <span class="tp">Dt::OnChange</span>{ <span class="kw">this</span>, &amp;<span class="tp">MyForm</span>::<span class="fn">onColorChanged</span> }
+                }
+            }
+        };
+
+        <span class="cm">// 2. Load from disk</span>
+        configDoc.<span class="fn">load</span>();
+
+        <span class="cm">// 3. Access and modify data</span>
+        <span class="kw">int</span> width = (configDoc / <span class="st">L"Window"</span> / <span class="st">L"Width"</span>).<span class="fn">get</span>&lt;<span class="kw">int</span>&gt;();
+        width += <span class="kw">100</span>;
+        (configDoc / <span class="st">L"Window"</span> / <span class="st">L"Width"</span>).<span class="fn">set</span>(width);
+
+        <span class="cm">// 4. Save back out</span>
+        configDoc.<span class="fn">save</span>();
+    }
+};</code></pre>
+
+            <h2 id="type-registration">Type Registration</h2>
+            <p>Before using custom types within blueprints, the developer must declare their serialization rules. The system provides mapping architectures for primitives, structs (or classes), and enums.</p>
+
+            <h3 id="primitives">Scalar Values</h3>
+            <p>Basic types (<code>int</code>, <code>float</code>, <code>bool</code>, <code>std::wstring</code>) are handled automatically. Custom scalar types can be registered by specializing the single-parameter template <code>ScalarSerializer</code>.</p>
+            <p>Each custom serializer can optionally expose an internal <code>StorageType</code> alias. Declaring this alias is only required when the type you pass to your serializer differs from the type that should be permanently stored in the DOM. For example, string-like views (such as <code>std::wstring_view</code> or <code>const wchar_t*</code>) use this mechanism to declare <code>using StorageType = std::wstring;</code>, forcing the DOM engine to instantiate an owned <code>std::wstring</code> node and preventing dangling pointer bugs. If no <code>StorageType</code> alias is declared, the engine seamlessly falls back to the decayed type of your template parameter.</p>
+            <pre><code><span class="kw">template</span> &lt;&gt;
+<span class="kw">struct</span> <span class="tp">ClaFi::Dom::ScalarSerializer</span>&lt;<span class="tp">MyIntType</span>&gt;
+{
+    <span class="cm">// Optional: omitted here as StorageType defaults directly to MyIntType</span>
+
+    <span class="kw">static</span> <span class="tp">std::wstring</span> <span class="fn">toWString</span>(<span class="kw">const</span> <span class="tp">MyIntType</span>&amp; v)
+    {
+        <span class="kw">return</span> <span class="tp">std::to_wstring</span>(v.val);
+    }
+
+    <span class="kw">static void</span> <span class="fn">fromWString</span>(<span class="tp">std::wstring_view</span> str, <span class="tp">MyIntType</span>&amp; val)
+    {
+        <span class="cm">/* custom parsing logic */</span>
+    }
+};</code></pre>
+
+            <h3 id="structs">Structs & Classes</h3>
+            <p>To make a C++ struct serializable, define a <code>static constexpr auto serializedFields</code> tuple inside the struct. This maps string keys to class properties.</p>
+            <p>The <code>SerializedField</code> supports both direct member pointers and getter/setter function pairs:</p>
+
+            <pre><code><span class="kw">struct</span> <span class="tp">WindowConfig</span>
+{
+    <span class="kw">bool</span> maximized{ <span class="kw">false</span> };
+    <span class="kw">int</span> width{ <span class="kw">640</span> };
+
+    <span class="kw">int</span> <span class="fn">getWidth</span>() <span class="kw">const</span> { <span class="kw">return</span> width; }
+    <span class="kw">void</span> <span class="fn">setWidth</span>(<span class="kw">int</span> w) { width = w; }
+
+    <span class="kw">static constexpr auto</span> serializedFields = <span class="tp">std::make_tuple</span>(
+        <span class="cm">// Direct member access</span>
+        <span class="tp">SerializedField</span>{ <span class="st">L"Maximized"</span>, &amp;<span class="tp">WindowConfig</span>::maximized },
+
+        <span class="cm">// Getter and setter pair (types are deduced automatically)</span>
+        <span class="tp">SerializedField</span>{ <span class="st">L"Width"</span>, &amp;<span class="tp">WindowConfig</span>::<span class="fn">getWidth</span>, &amp;<span class="tp">WindowConfig</span>::<span class="fn">setWidth</span> }
+        <span class="cm">// Note: If you have an overloaded setter (e.g., void setWidth(float w);)</span>
+        <span class="cm">// you can resolve it using a cast: static_cast&lt;void (WindowConfig::*)(int)&gt;(&amp;WindowConfig::setWidth)</span>
+    );
+};</code></pre>
+
+            <p>In the ClaFi Dom, both primitive scalars and complex reflected structs are represented by the unified template class <code>Value&lt;T&gt;</code>. When you define a <code>Value</code> with a reflected C++ struct, the DOM engine expands the struct into a sub-tree of nested nodes. This allows you to traverse inside it (e.g., <code>settings / L"Placement" / L"Bounds"</code>) exactly like inside a regular <code>Section</code>.</p>
+
+            <h3 id="external-structs">External Structs (Non-Intrusive)</h3>
+            <p>If you need to serialize a C++ struct or class that you cannot modify, define a standalone <code>constexpr auto serializedFields(Type)</code> function in the same namespace.</p>
+
+            <pre><code><span class="kw">struct</span> <span class="tp">ExternalPoint</span>
+{
+    <span class="kw">float</span> x, y;
+};
+
+<span class="kw">constexpr auto</span> <span class="fn">serializedFields</span>(<span class="tp">ExternalPoint</span>)
+{
+    <span class="kw">return</span> <span class="tp">std::make_tuple</span>(
+        <span class="tp">SerializedField</span>{ <span class="st">L"X"</span>, &amp;<span class="tp">ExternalPoint</span>::x },
+        <span class="tp">SerializedField</span>{ <span class="st">L"Y"</span>, &amp;<span class="tp">ExternalPoint</span>::y }
+    );
+}</code></pre>
+
+            <h3 id="enums">Enums</h3>
+            <p>Enums require a <code>constexpr auto enumNames(EnumType)</code> function in the same namespace. If the enum ends with a <code>Count</code> element, it is used for compile-time size checking.</p>
+            <pre><code><span class="kw">enum class</span> <span class="tp">ColorMode</span>
+{
+    Dark,
+    Light,
+    Count
+};
+
+<span class="kw">constexpr auto</span> <span class="fn">enumNames</span>(<span class="tp">ColorMode</span>)
+{
+    <span class="kw">return</span> <span class="tp">std::array</span>{ <span class="st">L"Dark"</span>, <span class="st">L"Light"</span> };
+}</code></pre>
+
+            <h2 id="declarative-dsl">Blueprint Declaration</h2>
+            <p>The Dom subsystem features a C++ Domain-Specific Language (DSL) to express document blueprints. To achieve zero allocation overhead, the <code>Dt::Section</code> class and other DSL nodes are strictly <strong>move-only</strong>.</p>
+
+            <h3 id="schema-first-evaluation">Schema-First Evaluation</h3>
+            <div class="warning">
+                <strong>Critical Architectural Rule:</strong> The engine does not attempt to guess types from text. When a parser reads <code>"Value=42"</code> from a file, it does not know if 42 is an integer, a float, or a string. The only source of truth for types and structure is the defining DSL evaluation stage executed in C++ prior to loading.
+            </div>
+
+            <h3 id="dsl-nodes">Blueprint Nodes</h3>
+
+            <div class="info">
+                <strong>Handlers are properties, not nodes.</strong> <code>OnEvent</code>,
+                <code>OnChange</code> and <code>OnNestedChange</code> do not occupy a position in a
+                section's child list. They attach to whatever node encloses them, and they connect as
+                soon as that node exists &mdash; before its children are applied. Nothing in the Dom
+                raises an event while a blueprint is being applied, so the ordering is not observable,
+                but it is worth knowing when reasoning about a handler's lifetime.
+                <br><br>
+                <code>OnEvent</code> comes from <code>ClaFi::Dt</code>, the machinery the Dom and
+                Grid declarative layers share, and <code>Dom::Dt</code> re-exports it. It reads the
+                event type off the handler's own parameter, which is why there is no
+                <code>OnColorChange</code>, no <code>OnItemAdded</code>, and no need for one.
+                <code>OnChange</code> and <code>OnNestedChange</code> remain as thin named wrappers so
+                existing blueprints keep compiling.
+            </div>
+            <p>The following declarative constructs reside inside the <code>ClaFi::Dom::Dt</code> namespace:</p>
+            <ul>
+                <li><code>Section(child_nodes...)</code>: Declares an <strong>anonymous section (fragment)</strong>. The children are injected into the parent without wrapping them in a new named node. This is used to define document roots or to merge multiple reusable blueprint fragments.</li>
+                <li><code>Section(key, child_nodes...)</code>: Declares a <strong>named section</strong>. Groups values together inside a logical sub-tree wrapper.</li>
+                <li><code>Value(key, defaultValue)</code>: Declares a scalar, composite struct, or enum with a default fallback state.</code>.</li>
+                <li><code>Value(key, defaultValue, handlers...)</code>: Declares a local value and attaches <strong>any number</strong> of event handlers to it. Each handler names the event it wants in its own parameter list, so no per-event wrapper type is needed:
+<code>Value{ L"color", Rgb{}, OnEvent{ [](ChangeEvent&amp; e) { ... } } }</code>. A bare lambda works too &mdash; <code>Value{ L"color", Rgb{}, [](ChangeEvent&amp; e) { ... } }</code> &mdash; because a Dom node's argument list holds nothing a callable could be confused with. Method pointers go through <code>makeOnEvent(this, &amp;MyForm::onColorChanged)</code>.</li>
+                <li><code>OnEvent{ handler }</code> inside a <code>Section</code>: attaches the handler to that section. A <code>NestedChangeEvent&amp;</code> parameter listens to changes bubbling up from anywhere in the sub-tree; a <code>ChangeEvent&amp;</code> parameter listens to the section itself.</li>
+                <li><code>Sequence(key, itemBlueprint)</code>: The array blueprint. It can declare lists of primitives, reflected composites, nested multi-dimensional sequences, or nested sections to build dynamic arrays of customized structural elements.</li>
+            </ul>
+
+            <h3 id="schema-memory">Blueprint Memory & Lifetime Rules</h3>
+            <p>Because section blueprints are non-copyable, you must manage their lifetimes and composition using C++ standard value categories. Review the rules below to write clean, compile-safe configurations:</p>
+
+            <div class="rules-grid">
+                <div class="rule-card dos">
+                    <h4>DO:</h4>
+                    <ul>
+                        <li><strong>Do pass inline temporaries directly (rvalues):</strong> Defining schemas inline inside constructors allows the engine to transfer ownership of the nodes with zero allocation overhead.</li>
+                        <li><strong>Do mix references and moves dynamically:</strong> You can combine existing blueprint variables (lvalues) and temporary blueprints (rvalues) into a single layout in any order.</li>
+                        <li><strong>Do use std::move to migrate variables:</strong> When nesting an existing blueprint variable into a new one, pass it with <code>std::move()</code> to dissolve the source and transfer its memory ownership.</li>
+                        <li><strong>Do pass by reference for shared layouts:</strong> If you want a base blueprint variable to remain intact so you can reuse it across multiple schemas, pass it directly by reference instead of moving it.</li>
+                    </ul>
+                </div>
+                <div class="rule-card donts">
+                    <h4>DON'T:</h4>
+                    <ul>
+                        <li>Don't do anything that won't compile. If you get an error, inspect it carefully and refer again to the DO section to resolve it.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 id="manual-construction">Low-level Manual Construction</h3>
+            <p>If you need to construct or augment the structure dynamically at runtime instead of using the declarative DSL constructor, use the manual builder APIs directly on any <code>Section</code> node:</p>
+            <ul>
+                <li><code>addSection(key)</code>: Creates and appends a nested section group.</li>
+                <li><code>addValue(key, defaultVal)</code>: Adds a scalar or composite node (returns <code>Value&lt;T&gt;&amp;</code>).</li>
+                <li><code>addSequence(key, defaultItemTemplate)</code>: Adds an array sequence container dynamically for primitives, composites, or arbitrary nesting.</li>
+            </ul>
+
+            <h3 id="full-example">A Complete Example</h3>
+            <p>This example deliberately demonstrates every way of creating, merging, and transferring schemas between scopes. You won't need all of them at once in real code &mdash; a typical application is more likely to have a single const declaration with everything it needs in one place.</p>
+            <p>One rule must be obeyed without exception: the schema must be established before any file is ever read. This is worth spelling out for sequences specifically, since a sequence can look dynamic in a way that invites confusion: its <em>item count</em> changes freely as data comes and goes, but the sequence's own existence, and the shape each item takes, are declared once, up front, exactly like every other node in the schema. What varies at runtime is only which items are actually present &mdash; found by searching the already-declared sequence with <code>childWhere</code>, never by inventing new schema entries after the fact.</p>
+
+            <pre><code><span class="cm">// AppSchemas.ixx (a small module the rest of the app shares)</span>
+<span class="kw">export module</span> <span class="tp">MyProject.AppSchemas</span>;
+
+<span class="kw">import</span> <span class="tp">ClaFi.Core.Dom</span>;
+
+<span class="kw">export namespace</span> <span class="tp">MyProject::Schemas</span>
+{
+    <span class="cm">// Declared once. Referencing it below does not copy or move it --</span>
+    <span class="cm">// each use just points back to this same instance, so it stays intact</span>
+    <span class="cm">// for every place it's used.</span>
+    <span class="kw">export const</span> <span class="tp">Dt::Section</span> DEFAULT_THEME
+    {
+        <span class="st">L"Theme"</span>,
+        <span class="tp">Dt::Value</span>{ <span class="st">L"Background"</span>, <span class="tp">std::wstring</span>{ <span class="st">L"#1e1e1e"</span> } },
+        <span class="tp">Dt::Value</span>{ <span class="st">L"Accent"</span>, <span class="tp">std::wstring</span>{ <span class="st">L"#0066cc"</span> } }
+    };
+}
+
+<span class="cm">// NetworkSchema.cpp (a schema fragment built through a function, not a</span>
+<span class="cm">// static reference -- every value here is an ordinary, fixed default</span>
+<span class="cm">// known at compile time, same as if it were written inline)</span>
+<span class="kw">import</span> <span class="tp">ClaFi.Core.Dom</span>;
+
+<span class="tp">Dt::Section</span> <span class="fn">makeNetworkSection</span>()
+{
+    <span class="kw">return</span> <span class="tp">Dt::Section</span>
+    {
+        <span class="st">L"Network"</span>,
+        <span class="tp">Dt::Value</span>{ <span class="st">L"ProxyEnabled"</span>, <span class="kw">false</span> },
+        <span class="tp">Dt::Value</span>{ <span class="st">L"TimeoutSeconds"</span>, <span class="kw">30</span> }
+    };
+}
+
+<span class="cm">// AppSettings.cpp (assembling everything into one document)</span>
+<span class="kw">import</span> <span class="tp">ClaFi.Core.Dom</span>;
+<span class="kw">import</span> <span class="tp">ClaFi.FileFormat.ClaFi</span>;
+<span class="kw">import</span> <span class="tp">MyProject.AppSchemas</span>;
+
+<span class="kw">class</span> <span class="tp">SettingsManager</span>
+{
+<span class="kw">public</span>:
+    <span class="kw">void</span> <span class="fn">onNetworkChanged</span>(<span class="tp">NestedChangeEvent</span>&amp;)
+    {
+        <span class="tp">Networking</span>::<span class="fn">applySettings</span>();
+    }
+
+    <span class="kw">void</span> <span class="fn">initialize</span>()
+    {
+        <span class="cm">// A section built via a function call, with a listener attached to</span>
+        <span class="cm">// it specifically -- append() merges the handler into Network's own</span>
+        <span class="cm">// handler set, not into the whole document's.</span>
+        <span class="tp">Dt::Section</span> networkLayout = <span class="fn">makeNetworkSection</span>();
+        networkLayout.<span class="fn">append</span>(<span class="tp">Dt::Section</span>
+        {
+            <span class="tp">Dt::OnNestedChange</span>{ <span class="kw">this</span>, &amp;<span class="tp">SettingsManager</span>::<span class="fn">onNetworkChanged</span> }
+        });
+
+        <span class="tp">Dt::Section</span> rootLayout
+        {
+            <span class="cm">// A key-less group: these two Values are merged in as direct</span>
+            <span class="cm">// siblings of everything else here, not nested under a section</span>
+            <span class="cm">// of their own.</span>
+            <span class="tp">Dt::Section</span>
+            {
+                <span class="tp">Dt::Value</span>{ <span class="st">L"Language"</span>, <span class="tp">std::wstring</span>{ <span class="st">L"en"</span> } },
+                <span class="tp">Dt::Value</span>{ <span class="st">L"FirstRun"</span>, <span class="kw">true</span> }
+            },
+
+            <span class="tp">std::move</span>(networkLayout),
+
+            <span class="cm">// The reusable Theme blueprint -- still fully intact, and used</span>
+            <span class="cm">// again below as the root of its own separate file.</span>
+            <span class="tp">Schemas</span>::DEFAULT_THEME,
+
+            <span class="cm">// The set of installed plugins is data, and can grow or shrink --</span>
+            <span class="cm">// but the sequence itself, and the shape each entry has, is fixed</span>
+            <span class="cm">// schema, declared here like everything else.</span>
+            <span class="tp">Dt::Sequence</span>{ <span class="st">L"Plugins"</span>, <span class="tp">Dt::Section</span>
+            {
+                <span class="tp">Dt::Value</span>{ <span class="st">L"Path"</span>, <span class="tp">std::wstring</span>{} },
+                <span class="tp">Dt::Value</span>{ <span class="st">L"Enabled"</span>, <span class="kw">true</span> }
+            } }
+        };
+
+        <span class="tp">Document</span>&lt;<span class="tp">FileFormat::ClaFi</span>&gt; settings{ <span class="st">L"app_settings.cfg"</span>, <span class="tp">AutoSave</span>::<span class="tp">Yes</span>, rootLayout };
+        settings.<span class="fn">load</span>();
+
+        <span class="cm">// Editing anything under Network -- here, from a settings UI, or on</span>
+        <span class="cm">// the next load() -- calls onNetworkChanged.</span>
+        (settings / <span class="st">L"Network"</span> / <span class="st">L"ProxyEnabled"</span>).<span class="fn">set</span>(<span class="kw">true</span>);
+
+        <span class="cm">// Reconcile the already-declared Plugins sequence against what's</span>
+        <span class="cm">// actually on disk right now, by identity (Path) -- not by rebuilding</span>
+        <span class="cm">// any part of the schema. First, drop entries for files that are gone:</span>
+        <span class="kw">auto</span>&amp; pluginSeq = (settings / <span class="st">L"Plugins"</span>).<span class="fn">as</span>&lt;<span class="tp">Sequence</span>&lt;<span class="tp">Section</span>&gt;&gt;();
+
+        <span class="kw">for</span> (<span class="tp">size_t</span> i = pluginSeq.<span class="fn">size</span>(); i-- &gt; <span class="kw">0</span>; )
+        {
+            <span class="kw">const</span> <span class="tp">std::wstring</span> path = (pluginSeq[i] / <span class="st">L"Path"</span>).<span class="fn">get</span>&lt;<span class="tp">std::wstring</span>&gt;();
+            <span class="kw">if</span> (!<span class="tp">std::filesystem</span>::<span class="fn">exists</span>(path))
+            {
+                pluginSeq[i].<span class="fn">deleteSelf</span>();
+            }
+        }
+
+        <span class="cm">// Then add an entry for any file found that isn't tracked yet. An</span>
+        <span class="cm">// entry that's already there keeps whatever Enabled value the user</span>
+        <span class="cm">// set for it -- rescanning never resets it.</span>
+        <span class="kw">for</span> (<span class="kw">const auto</span>&amp; pluginPath : <span class="tp">Platform</span>::<span class="fn">scanPluginDirectory</span>())
+        {
+            <span class="tp">std::wstring</span> pathStr = pluginPath.<span class="fn">wstring</span>();
+            <span class="kw">if</span> (pluginSeq.<span class="fn">childWhere</span>&lt;<span class="tp">std::wstring</span>&gt;({ <span class="st">L"Path"</span> }, pathStr))
+            {
+                <span class="kw">continue</span>;
+            }
+
+            <span class="tp">Section</span>&amp; entry = pluginSeq.<span class="fn">add</span>();
+            (entry / <span class="st">L"Path"</span>).<span class="fn">set</span>(pathStr);
+            (entry / <span class="st">L"Enabled"</span>).<span class="fn">set</span>(<span class="kw">true</span>);
+        }
+
+        settings.<span class="fn">save</span>();
+
+        <span class="cm">// DEFAULT_THEME is the same object used above -- reusing it here</span>
+        <span class="cm">// doesn't disturb the copy already embedded in "settings". Since its</span>
+        <span class="cm">// own key is "Theme", this file's root has the exact same shape it</span>
+        <span class="cm">// has when nested: accessed as (themeFile / L"Theme" / L"Background"),</span>
+        <span class="cm">// not a bare L"Background".</span>
+        <span class="tp">Document</span>&lt;<span class="tp">FileFormat::ClaFi</span>&gt; themeFile{ <span class="st">L"themes/dark.clafi"</span>, <span class="tp">AutoSave</span>::<span class="tp">Yes</span>, <span class="tp">Schemas</span>::DEFAULT_THEME };
+        themeFile.<span class="fn">load</span>();
+    }
+};</code></pre>
+
+            <h2 id="reading-writing">Reading & Writing Values</h2>
+
+            <h3 id="reading-writing-nodes">Reading, Writing & Casting Nodes</h3>
+            <p>Dom provides several mechanisms to traverse and edit your values. For nested structures, the engine supports a directory-style path division operator (<code>/</code>) and index subscripts (<code>[]</code>).</p>
+
+            <p>In C++, the types map to your initial layout definitions. Both scalar primitives and reflected composite structs reside in the unified template class <code>Value&lt;T&gt;</code>. You can retrieve values directly or extract references to the node objects using the <code>.as&lt;T&gt;()</code> helper:</p>
+
+            <pre><code><span class="cm">// 1. Direct retrieval (using .get&lt;T&gt;())</span>
+<span class="kw">int</span> width = (settings / <span class="st">L"Window"</span> / <span class="st">L"Width"</span>).<span class="fn">get</span>&lt;<span class="kw">int</span>&gt;();
+<span class="tp">IntRect</span> r = (settings / <span class="st">L"Window"</span> / <span class="st">L"Placement"</span> / <span class="st">L"Bounds"</span>).<span class="fn">get</span>&lt;<span class="tp">IntRect</span>&gt;();
+
+<span class="cm">// 2. Writing values</span>
+(settings / <span class="st">L"Window"</span> / <span class="st">L"Width"</span>).<span class="fn">set</span>(<span class="kw">1920</span>);
+
+<span class="cm">// 3. Getting a typed reference to the node itself (using .as&lt;Value&lt;T&gt;&gt;())</span>
+<span class="kw">auto</span>&amp; widthNode = (settings / <span class="st">L"Window"</span> / <span class="st">L"Width"</span>).<span class="fn">as</span>&lt;<span class="tp">Value</span>&lt;<span class="kw">int</span>&gt;&gt;();
+widthNode.<span class="fn">set</span>(<span class="kw">1920</span>);
+
+<span class="cm">// 4. Getting a typed reference to a composite value node</span>
+<span class="kw">auto</span>&amp; placementNode = (settings / <span class="st">L"Window"</span> / <span class="st">L"Placement"</span>).<span class="fn">as</span>&lt;<span class="tp">Value</span>&lt;<span class="tp">WindowConfig</span>&gt;&gt;();
+<span class="tp">WindowConfig</span> win = placementNode.<span class="fn">get</span>();</code></pre>
+
+            <h3 id="zero-copy">Zero-Copy Extraction (getTo)</h3>
+            <p>When working with large, complex structs or arrays, calling <code>.get&lt;T&gt;()</code> forces the engine to return a fully composed object by value, which incurs copy overhead. To eliminate this, the engine provides the <code>.getTo(T&amp;)</code> method.</p>
+            <p><code>.getTo()</code> recursively deserializes the sub-tree directly into your pre-allocated object. Furthermore, if you use direct member pointers in your <code>serializedFields</code> tuple (no setter), the DOM engine bypasses intermediate assignments and deserializes nested hierarchies directly into the target struct's physical memory footprint in-place. For <code>Sequence</code> nodes, it leverages <code>.resize()</code> on supported containers to pre-allocate capacity and deserialize elements sequentially into the underlying buffer.</p>
+
+            <pre><code><span class="cm">// Zero-copy extraction of a complex configuration</span>
+<span class="tp">WindowConfig</span> win;
+(settings / <span class="st">L"Window"</span> / <span class="st">L"Placement"</span>).<span class="fn">getTo</span>(win);
+
+<span class="cm">// Zero-copy extraction of a sequence into a vector</span>
+<span class="tp">std::vector</span>&lt;<span class="tp">TabConfig</span>&gt; existingTabs;
+(settings / <span class="st">L"OpenTabs"</span>).<span class="fn">getTo</span>(existingTabs);
+</code></pre>
+
+            <h3 id="eager-evaluation">Eager Type Evaluation & Zero-Overhead Resolution</h3>
+            <p>The ClaFi DOM engine is strictly <strong>Schema-First</strong>. This allows the engine to bypass the severe CPU and memory overhead normally associated with loose text-parsing document trees.</p>
+
+            <div class="info">
+                <strong>O(1) Fetching:</strong> The engine performs <strong>Eager Evaluation</strong> on leaf nodes. All primitives are parsed into their registered C++ types during document initialization. Structs, however, are purely ephemeral and composed <strong>on-the-fly</strong>. Calling <code>.get&lt;int&gt;()</code> on a leaf node is a direct O(1) memory fetch without string parsing, while calling <code>.get&lt;WindowConfig&gt;()</code> on a composite node instantly aggregates those pre-parsed leaf values into your struct with zero text-parsing overhead.
+            </div>
+
+            <div class="info">
+                <strong>Zero-Allocation Paths:</strong> The DOM engine leverages C++20 heterogeneous map lookups. The <code>/</code> traversal operator does not allocate strings or copy keys. It compiles down to pure pointer operations passing <code>std::wstring_view</code> boundaries, ensuring your read loops and deep-path resolutions remain allocation-free.
+            </div>
+
+            <h2 id="sequences">Sequences</h2>
+            <p>The Dom subsystem treats every array natively via the universal <code>Sequence&lt;T&gt;</code> component. It natively supports primitives, structured class layouts, and unlimited multidimensional nesting (e.g., arrays of arrays). All of these sequence configurations natively support allocation-free lazy evaluation and dynamic operations.</p>
+            <p>Every <code>Sequence&lt;T&gt;</code> is homogeneous by construction &mdash; every element shares the same type <code>T</code>, whether <code>T</code> is a scalar, a reflected composite, or <code>Dom::Section</code> itself. The two shapes below differ only in what <code>T</code> is and how you round-trip a value of that type.</p>
+
+            <h3 id="homogeneous-seq">Value Sequences</h3>
+            <p>When working with standard scalar primitives or simple composites, you can easily extract or overwrite the entire sequence natively:</p>
+            <pre><code><span class="cm">// 1. Read the entire sequence directly into a standard vector</span>
+<span class="tp">std::vector</span>&lt;<span class="tp">TabConfig</span>&gt; tabs = (settings / <span class="st">L"OpenTabs"</span>).<span class="fn">get</span>&lt;<span class="tp">std::vector</span>&lt;<span class="tp">TabConfig</span>&gt;&gt;();
+
+<span class="cm">// 2. Modify your collection locally</span>
+tabs.<span class="fn">push_back</span>(<span class="tp">TabConfig</span>{ .id = <span class="st">L"Tab3"</span>, .title = <span class="st">L"Settings"</span> });
+
+<span class="cm">// 3. Overwrite the sequence node on the DOM in one step</span>
+(settings / <span class="st">L"OpenTabs"</span>).<span class="fn">set</span>(tabs);</code></pre>
+
+            <h3 id="dynamic-seq">Section Sequences</h3>
+            <p>When you declare a structural array using a unique DSL layout (<code>Dt::Sequence{ L"MyLayouts", Dt::Section{ ... } }</code>), the engine creates a dynamic <code>Sequence&lt;Dom::Section&gt;</code> list node. Fresh elements added dynamically via `.add()` will instantly clone the layout blueprint's underlying runtime structures.</p>
+            <pre><code><span class="cm">// 1. Retrieve the typed section sequence reference using the fluent .as() cast</span>
+<span class="kw">auto</span>&amp; dynamicTabs = (settings / <span class="st">L"OpenTabs"</span>).<span class="fn">as</span>&lt;<span class="tp">Dom::Sequence</span>&lt;<span class="tp">Dom::Section</span>&gt;&gt;();
+
+<span class="cm">// 2. Clear all existing nested DOM nodes</span>
+dynamicTabs.<span class="fn">clear</span>();
+
+<span class="cm">// 3. Append a new nested structural node (automatically copy-initialized with the template layout)</span>
+<span class="kw">auto</span>&amp; tabNode = dynamicTabs.<span class="fn">add</span>();
+(tabNode / <span class="st">L"Id"</span>).<span class="fn">set</span>&lt;<span class="tp">std::wstring</span>&gt;(<span class="st">L"Tab1"</span>);
+(tabNode / <span class="st">L"Title"</span>).<span class="fn">set</span>&lt;<span class="tp">std::wstring</span>&gt;(<span class="st">L"Home"</span>);</code></pre>
+
+            <h3 id="search-seq">Search and Removal inside Sequences</h3>
+            <p>The <code>SequenceBase</code> provides safe template search operations to locate elements matching a specific nested value, and <code>NodeBase</code> allows elements to destroy themselves from their parent containers:</p>
+            <ul>
+                <li><code>childWhere(path, targetValue)</code>: Searches sequentially through child nodes. It safely traverses down the relative path starting from each direct child, and returns a pointer to the direct sequence child matching the target value. Passing an empty path <code>{}</code> compares the typed value of the direct child itself.</li>
+                <li><code>childWhere(predicate)</code>: The general form, closer to SQL's actual <code>WHERE</code> &mdash; takes any callable returning <code>bool</code> and passes it the whole direct child (typed, e.g. <code>const Section&amp;</code> for a <code>Sequence&lt;Section&gt;</code>), so the predicate can check any condition, not just equality against one nested value.</li>
+                <li><code>deleteSelf()</code>: Instructs the node to locate its parent sequence and erase itself safely, triggering any registered structural changes automatically.</li>
+            </ul>
+
+            <pre><code><span class="cm">// 1. Lookup a dynamic tab section by a nested value ("Id" inside each Section sequence element)</span>
+<span class="tp">NodeBase</span>* foundItem = (settings / <span class="st">L"OpenTabs"</span>).<span class="fn">as</span>&lt;<span class="tp">Dom::Sequence</span>&lt;<span class="tp">Dom::Section</span>&gt;&gt;().<span class="fn">childWhere</span>&lt;<span class="tp">std::wstring</span>&gt;({ <span class="st">L"Id"</span> }, <span class="st">L"Tab1"</span>);
+
+<span class="kw">if</span> (foundItem)
+{
+    <span class="cm">// 2. Read, update, or completely erase the located element from the sequence</span>
+    foundItem-&gt;<span class="fn">deleteSelf</span>();
+}
+
+<span class="cm">// 3. Empty paths can be used to search homogenous primitive sequences</span>
+<span class="kw">auto</span>&amp; stringSeq = (settings / L"StringArray").<span class="fn">as</span>&lt;<span class="tp">Dom::Sequence</span>&lt;<span class="tp">std::wstring</span>&gt;&gt;();
+<span class="tp">NodeBase</span>* foundPrimitive = stringSeq.<span class="fn">childWhere</span>&lt;<span class="tp">std::wstring</span>&gt;({}, <span class="st">L"MatchMe"</span>);
+
+<span class="cm">// 4. General predicate form: any boolean expression over the child, not just equality</span>
+<span class="kw">auto</span>&amp; openTabs = (settings / <span class="st">L"OpenTabs"</span>).<span class="fn">as</span>&lt;<span class="tp">Dom::Sequence</span>&lt;<span class="tp">Dom::Section</span>&gt;&gt;();
+<span class="tp">Dom::Section</span>* activeWideTab = openTabs.<span class="fn">childWhere</span>([](<span class="kw">const</span> <span class="tp">Dom::Section</span>&amp; tab)
+{
+    <span class="kw">return</span> (tab / <span class="st">L"Active"</span>).<span class="fn">get</span>&lt;<span class="kw">bool</span>&gt;() &amp;&amp; (tab / <span class="st">L"Width"</span>).<span class="fn">get</span>&lt;<span class="kw">int</span>&gt;() &gt; <span class="kw">400</span>;
+});</code></pre>
+
+            <h3 id="iterating-large-values">Iterating Sequences of Large or Complex Values</h3>
+            <p>For sequences of small scalars this distinction rarely shows up, but for a <code>Sequence&lt;Dom::Section&gt;</code> or a sequence of large composites, it matters which accessor you reach for. There are two genuinely different operations that look similar at the call site:</p>
+            <ul>
+                <li><code>.get&lt;T&gt;()</code>, and range-<code>for</code> over the range returned by <code>.get()</code>, build an <strong>independent, detached snapshot</strong>. Every element is freshly materialized on each call &mdash; for a <code>Section</code> element, that means its entire sub-tree is recursively cloned. This is the right tool when you need a copy that will outlive the current DOM state, or that you intend to hand off elsewhere, but it is expensive if you are only reading.</li>
+                <li><code>operator[]</code>, and range-<code>for</code> directly over the <code>Sequence&lt;T&gt;</code> itself, return a <strong>live reference</strong> to the actual child node &mdash; nothing is cloned. This is the right tool for read-only iteration, and for in-place edits you mean to keep on the tree.</li>
+            </ul>
+            <pre><code><span class="cm">// Expensive: clones every element's whole sub-tree, on every single pass</span>
+<span class="kw">for</span> (<span class="kw">const</span> <span class="kw">auto</span>&amp; tab : (settings / <span class="st">L"OpenTabs"</span>).<span class="fn">get</span>&lt;<span class="tp">std::vector</span>&lt;<span class="tp">TabConfig</span>&gt;&gt;())
+{
+    <span class="cm">// tab is an independent, already-detached copy</span>
+}
+
+<span class="cm">// Zero-copy: iterates the live child nodes directly, nothing is cloned</span>
+<span class="kw">auto</span>&amp; openTabs = (settings / <span class="st">L"OpenTabs"</span>).<span class="fn">as</span>&lt;<span class="tp">Dom::Sequence</span>&lt;<span class="tp">Dom::Section</span>&gt;&gt;();
+<span class="kw">for</span> (<span class="kw">const</span> <span class="tp">Dom::Section</span>&amp; tab : openTabs)
+{
+    <span class="cm">// tab is a reference to the actual child Section in the tree</span>
+    <span class="kw">auto</span> title = (tab / <span class="st">L"Title"</span>).<span class="fn">get</span>&lt;<span class="tp">std::wstring</span>&gt;();
+}</code></pre>
+            <p>The same tradeoff applies to a single composite or section field, not just sequences: <code>.get&lt;T&gt;()</code> always returns a detached value, while <code>childSection(key)</code> and the <code>/</code> path operator give you a direct reference to the live node with no copy.</p>
+
+            <h2 id="events-transactions">Events & Transactions</h2>
+            <p>The Dom subsystem dispatches a <code>ChangeEvent</code> synchronously on the node whose value changed, and a <code>NestedChangeEvent</code> that bubbles from that node up through each ancestor in turn. Without batching, each field update in a set of related changes produces its own independent <code>NestedChangeEvent</code> bubble.</p>
+
+            <p>The <strong>Hierarchical Transaction System</strong> batches this bubbling. Wrapping a set of updates in an RAII <code>Transaction</code> targeting any sub-tree separates local state updates from structural tree updates for its duration:</p>
+            <ul>
+                <li><strong>Immediate Local Updates:</strong> Local <code>ChangeEvent</code>s are dispatched instantly on the leaf nodes. This ensures tightly-bound inputs (like textboxes or toggles) stay synchronized without layout overhead.</li>
+                <li><strong>Suppressed Sub-Tree Notifications:</strong> Bubbling <code>NestedChangeEvent</code>s are held and coalesced on the parents. This prevents heavy layout recalculations or disk-save operations while settings are in an intermediate state. No nested change events ever leak up into non-transactioned parent nodes during the middle of active updates.</li>
+                <li><strong>Coalesced Flush on Commit:</strong> When the <code>Transaction</code> goes out of scope, a <strong>single</strong> <code>NestedChangeEvent</code> bubbles up from the transaction root, triggering exactly one atomic layout update and exactly one disk-saving write (if <code>AutoSave::Yes</code> is enabled on your document).</li>
+            </ul>
+
+            <pre><code><span class="kw">void</span> <span class="tp">MyForm</span>::<span class="fn">applyCustomLayout</span>()
+{
+    {
+        <span class="cm">// 1. Open a transaction directly on the MainForm node using the fluent API.</span>
+        <span class="cm">//    Any nested bubbling is suspended within this sub-tree.</span>
+        <span class="kw">auto</span> t = (settings / <span class="st">L"MainForm"</span>).<span class="fn">startTransaction</span>();
+
+        <span class="cm">// 2. Perform multiple updates (each firing local ChangeEvents instantly).</span>
+        (settings / <span class="st">L"MainForm"</span> / <span class="st">L"Maximized"</span>).<span class="fn">set</span>(<span class="kw">true</span>);
+        (settings / <span class="st">L"MainForm"</span> / <span class="st">L"Placement"</span>).<span class="fn">set</span>(<span class="tp">WindowConfig</span>{ .bounds = { <span class="kw">0</span>, <span class="kw">0</span>, <span class="kw">800</span>, <span class="kw">600</span> } });
+
+        <span class="cm">// AutoSave (if enabled) is safely suspended. No disk IO occurs yet.</span>
+    }
+    <span class="cm">// 3. Transaction out of scope! </span>
+    <span class="cm">//    A single, unified NestedChangeEvent is bubbled up from the MainForm node.</span>
+    <span class="cm">//    Our registered onUIConfigurationChanged() handler fires exactly once,</span>
+    <span class="cm">//    and the configuration Document flushes to the disk exactly once!</span>
+}</code></pre>
+
+            <h2 id="document-wrapper">The Document Wrapper</h2>
+            <p>The <code>Document&lt;FileFormat&gt;</code> template handles parsing, serializing, file lock rules, and stream delegation.</p>
+
+            <div class="info">
+                <strong>Blueprint Lifetimes:</strong> Because the document's internal DOM structure is fully allocated within the <code>Document</code> constructor stage (via <code>layout.apply()</code>), the source <code>Dt::Section</code> blueprint does not need to outlive the Document wrapper. It can be safely destroyed immediately after construction completes.
+            </div>
+
+            <ul>
+                <li><strong>AutoSave:</strong> Initializing the document with <code>AutoSave::Yes</code> binds a change listener to the root section. Any modification to a child node triggers an automatic, safe <code>save()</code> operation.</li>
+                <li><strong>Constructor Overloads:</strong> Supports paths, directories, and blueprint configurations directly by const reference:
+                    <pre><code><span class="tp">Document</span>(<span class="kw">const</span> <span class="tp">std::filesystem::path</span>&amp; path, <span class="tp">AutoSave</span> autoSave = <span class="tp">AutoSave</span>::<span class="tp">No</span>, <span class="kw">const</span> <span class="tp">Dt::Section</span>&amp; layout = {});</code></pre>
+                </li>
+            </ul>
+
+            <h2 id="supported-formats">Supported File Formats</h2>
+            <p>The core DOM engine operates independently of specific file syntaxes. File format modules convert plain text into the DOM node structure. The ClaFi framework ships with three built-in, dependency-free format modules.</p>
+
+            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem; margin-bottom: 2rem; font-size: 0.95rem;">
+                <thead>
+                    <tr style="background-color: #f1f3f5; border-bottom: 2px solid var(--border-color); text-align: left;">
+                        <th style="padding: 12px;">Format Module</th>
+                        <th style="padding: 12px;">Syntax</th>
+                        <th style="padding: 12px;">Best Use Case</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 12px; font-weight: bold;"><code>FileFormat::ClaFi</code></td>
+                        <td style="padding: 12px;">ClaFi</td>
+                        <td style="padding: 12px;">Extremely fast parsing with highly readable syntax tailored for human-edited config files.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 12px; font-weight: bold;"><code>FileFormat::Json</code></td>
+                        <td style="padding: 12px;">JSON</td>
+                        <td style="padding: 12px;">Interoperability with web formats or third-party tools while maintaining a strict zero-dependency C++ architecture.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 12px; font-weight: bold;"><code>FileFormat::Xml</code></td>
+                        <td style="padding: 12px;">XML</td>
+                        <td style="padding: 12px;">Interoperability with XML-based tooling or legacy systems. Sequence items are written as repeated <code>&lt;Item&gt;</code> elements under the sequence's own key.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="warning">
+                <strong>Spec Conformance:</strong> none of these three modules is a general-purpose, standalone parser for its format &mdash; each is schema-bound, resolving every key against the DOM schema already defined in C++ rather than inferring structure from the file itself. An unrecognized key emits a schema-error event and is discarded, not preserved. A few further deviations worth knowing before relying on interop with external tools:
+                <ul>
+                    <li><code>FileFormat::Json</code> does not decode <code>\uXXXX</code> Unicode escapes, and requires the document root to be a JSON object (<code>{...}</code>).</li>
+                    <li><code>FileFormat::Xml</code> has no support for CDATA sections, comments, DOCTYPE/DTD, namespaces, or numeric character references, and only recognizes double-quoted attribute values (not single-quoted).</li>
+                    <li><code>FileFormat::ClaFi</code> follows the ClaFi 1.0 Handbook closely; malformed input degrades via schema-error events rather than a hard parse failure.</li>
+                </ul>
+                See each module's own header comment for the complete list.
+            </div>
+
+            <h2 id="custom-format">Implementing a Custom File Format</h2>
+            <p>To integrate an external parser, implement a custom parser class inheriting from <code>FileFormatBase</code>. This example uses C++20 modules and the <code>nlohmann/json</code> library to parse and serialize configurations.</p>
+
+            <h3 id="json-implementation">Implementation (ThisApp.DomFormats.JsonNlohmann)</h3>
+            <pre><code><span class="kw">module;</span>
+<span class="kw">#include</span> <span class="st">&lt;../../../nlohmann/json.hpp&gt;</span>
+<span class="kw">export module</span> ThisApp.DomFormats.JsonNlohmann;
+
+<span class="kw">import</span> <span class="tp">ClaFi.Core.Dom</span>;
+<span class="kw">import</span> <span class="tp">ClaFi.StdLib</span>;
+
+<span class="kw">namespace</span> <span class="tp">ThisApp::DomFormats</span>
+{
+    <span class="kw">using namespace</span> <span class="tp">ClaFi::Dom</span>;
+    <span class="kw">using</span> json = <span class="tp">nlohmann::json</span>;
+
+    <span class="kw">export class</span> <span class="tp">JsonNlohmann</span> : <span class="kw">public</span> <span class="tp">FileFormatBase</span>
+    {
+    <span class="kw">public</span>:
+        <span class="kw">void</span> <span class="fn">loadSectionFromStream</span>(<span class="tp">Section</span>&amp; section, <span class="tp">std::wistream</span>&amp; stream) <span class="kw">override</span>;
+        <span class="kw">void</span> <span class="fn">saveSectionToStream</span>(<span class="kw">const</span> <span class="tp">Section</span>&amp; section, <span class="tp">std::wostream</span>&amp; stream) <span class="kw">override</span>;
+
+    <span class="kw">private</span>:
+        <span class="kw">void</span> <span class="fn">populateNode</span>(<span class="kw">const</span> json&amp; j, <span class="tp">NodeBase</span>&amp; target);
+        json <span class="fn">buildJson</span>(<span class="kw">const</span> <span class="tp">NodeBase</span>&amp; node);
+
+        <span class="kw">static</span> <span class="tp">std::wstring</span> <span class="fn">utf8ToWString</span>(<span class="kw">const</span> <span class="tp">std::string</span>&amp; str);
+        <span class="kw">static</span> <span class="tp">std::string</span> <span class="fn">wStringToUtf8</span>(<span class="kw">const</span> <span class="tp">std::wstring</span>&amp; str);
+    };
+
+    <span class="cm">// ---------------------------------------------------------</span>
+    <span class="cm">// Implementation</span>
+    <span class="cm">// ---------------------------------------------------------</span>
+
+    <span class="tp">std::wstring</span> <span class="tp">JsonNlohmann</span>::<span class="fn">utf8ToWString</span>(<span class="kw">const</span> <span class="tp">std::string</span>&amp; str)
+    {
+        <span class="tp">std::wstring_convert</span>&lt;<span class="tp">std::codecvt_utf8</span>&lt;<span class="kw">wchar_t</span>&gt;&gt; myconv;
+        <span class="kw">return</span> myconv.<span class="fn">from_bytes</span>(str);
+    }
+
+    <span class="tp">std::string</span> <span class="tp">JsonNlohmann</span>::<span class="fn">wStringToUtf8</span>(<span class="kw">const</span> <span class="tp">std::wstring</span>&amp; str)
+    {
+        <span class="tp">std::wstring_convert</span>&lt;<span class="tp">std::codecvt_utf8</span>&lt;<span class="kw">wchar_t</span>&gt;&gt; myconv;
+        <span class="kw">return</span> myconv.<span class="fn">to_bytes</span>(str);
+    }
+
+    <span class="kw">void</span> <span class="tp">JsonNlohmann</span>::<span class="fn">loadSectionFromStream</span>(<span class="tp">Section</span>&amp; section, <span class="tp">std::wistream</span>&amp; stream)
+    {
+        <span class="tp">std::wstringstream</span> wss;
+        wss &lt;&lt; stream.<span class="fn">rdbuf</span>();
+        <span class="tp">std::string</span> utf8Str = <span class="fn">wStringToUtf8</span>(wss.<span class="fn">str</span>());
+
+        json j = <span class="tp">json</span>::<span class="fn">parse</span>(utf8Str, <span class="kw">nullptr</span>, <span class="kw">false</span>);
+        <span class="kw">if</span> (!j.<span class="fn">is_discarded</span>())
+        {
+            <span class="fn">populateNode</span>(j, section);
+        }
+    }
+
+    <span class="kw">void</span> <span class="tp">JsonNlohmann</span>::<span class="fn">saveSectionToStream</span>(<span class="kw">const</span> <span class="tp">Section</span>&amp; section, <span class="tp">std::wostream</span>&amp; stream)
+    {
+        json j = <span class="fn">buildJson</span>(section);
+        stream &lt;&lt; <span class="fn">utf8ToWString</span>(j.<span class="fn">dump</span>(<span class="kw">4</span>)) &lt;&lt; <span class="st">L"\n"</span>;
+    }
+
+    <span class="kw">void</span> <span class="tp">JsonNlohmann</span>::<span class="fn">populateNode</span>(<span class="kw">const</span> json&amp; j, <span class="tp">NodeBase</span>&amp; target)
+    {
+        if (j.<span class="fn">is_object</span>())
+        {
+            if (target.<span class="fn">type</span>() == <span class="tp">NodeType</span>::Section || target.<span class="fn">type</span>() == <span class="tp">NodeType</span>::CompositeValue)
+            {
+                <span class="kw">auto</span>&amp; sec = <span class="kw">static_cast</span>&lt;<span class="tp">Section</span>&amp;&gt;(target);
+                for (<span class="kw">auto</span>&amp; [key, value] : j.<span class="fn">items</span>())
+                {
+                    <span class="tp">std::wstring</span> wkey = <span class="fn">utf8ToWString</span>(key);
+                    <span class="tp">NodeBase</span>* childPtr = sec.<span class="fn">child</span>(wkey);
+
+                    if (childPtr)
+                    {
+                        <span class="fn">populateNode</span>(value, *childPtr);
+                    }
+                    else
+                    {
+                        sec.<span class="fn">emitSchemaError</span>(sec, <span class="st">L"Schema mismatch: Unknown key in JSON object."</span>);
+                    }
+                }
+            }
+            else
+            {
+                target.<span class="fn">emitSchemaError</span>(target, <span class="st">L"Schema mismatch: JSON expects an object structure here."</span>);
+            }
+        }
+        else if (j.<span class="fn">is_array</span>())
+        {
+            if (target.<span class="fn">type</span>() == <span class="tp">NodeType</span>::Sequence)
+            {
+                <span class="kw">auto</span>&amp; seq = <span class="kw">static_cast</span>&lt;<span class="tp">SequenceBase</span>&amp;&gt;(target);
+                seq.<span class="fn">clear</span>();
+
+                for (<span class="kw">const auto</span>&amp; item : j)
+                {
+                    <span class="fn">populateNode</span>(item, seq.<span class="fn">addNode</span>());
+                }
+            }
+            else
+            {
+                target.<span class="fn">emitSchemaError</span>(target, <span class="st">L"Schema mismatch: JSON expects an array sequence here."</span>);
+            }
+        }
+        else
+        {
+            if (target.<span class="fn">type</span>() == <span class="tp">NodeType</span>::ScalarValue)
+            {
+                <span class="tp">std::string</span> rawVal = j.<span class="fn">is_string</span>() ? j.<span class="fn">get</span>&lt;<span class="tp">std::string</span>&gt;() : j.<span class="fn">dump</span>();
+                <span class="kw">static_cast</span>&lt;<span class="tp">ScalarValueBase</span>&amp;&gt;(target).<span class="fn">setFromRaw</span>(<span class="fn">utf8ToWString</span>(rawVal));
+            }
+            else
+            {
+                target.<span class="fn">emitSchemaError</span>(target, <span class="st">L"Schema mismatch: JSON provided a primitive, but struct expected."</span>);
+            }
+        }
+    }
+
+    json <span class="tp">JsonNlohmann</span>::<span class="fn">buildJson</span>(<span class="kw">const</span> <span class="tp">NodeBase</span>&amp; node)
+    {
+        if (node.<span class="fn">type</span>() == <span class="tp">NodeType</span>::ScalarValue)
+        {
+            <span class="tp">std::string</span> raw = <span class="fn">wStringToUtf8</span>(<span class="kw">static_cast</span>&lt;<span class="kw">const</span> <span class="tp">ScalarValueBase</span>&amp;&gt;(node).<span class="fn">getAsRaw</span>());
+
+            if (raw == <span class="st">"true"</span>)
+            {
+                <span class="kw">return true</span>;
+            }
+            if (raw == <span class="st">"false"</span>)
+            {
+                <span class="kw">return false</span>;
+            }
+
+            try
+            {
+                <span class="kw">size_t</span> pos;
+                <span class="kw">int</span> i = <span class="tp">std::stoi</span>(raw, &amp;pos);
+                if (pos == raw.<span class="fn">size</span>())
+                {
+                    <span class="kw">return</span> i;
+                }
+
+                <span class="kw">double</span> d = <span class="tp">std::stod</span>(raw, &amp;pos);
+                if (pos == raw.<span class="fn">size</span>())
+                {
+                    <span class="kw">return</span> d;
+                }
+            }
+            catch (...)
+            {
+            }
+            <span class="kw">return</span> raw;
+        }
+        else if (node.<span class="fn">type</span>() == <span class="tp">NodeType</span>::Section || node.<span class="fn">type</span>() == <span class="tp">NodeType</span>::CompositeValue)
+        {
+            json j = <span class="tp">json</span>::<span class="fn">object</span>();
+            <span class="kw">auto</span>&amp; sec = <span class="kw">static_cast</span>&lt;<span class="kw">const</span> <span class="tp">Section</span>&amp;&gt;(node);
+
+            for (<span class="kw">const auto</span>&amp; wkey : sec.<span class="fn">getKeys</span>())
+            {
+                j[<span class="fn">wStringToUtf8</span>(<span class="tp">std::wstring</span>(wkey))] = <span class="fn">buildJson</span>(*sec.<span class="fn">child</span>(wkey));
+            }
+            <span class="kw">return</span> j;
+        }
+        else if (node.<span class="fn">type</span>() == <span class="tp">NodeType</span>::Sequence)
+        {
+            json j = <span class="tp">json</span>::<span class="fn">array</span>();
+            <span class="kw">auto</span>&amp; seq = <span class="kw">static_cast</span>&lt;<span class="kw">const</span> <span class="tp">SequenceBase</span>&amp;&gt;(node);
+
+            for (<span class="kw">size_t</span> i = <span class="kw">0</span>; i &lt; seq.<span class="fn">size</span>(); ++i)
+            {
+                j.<span class="fn">push_back</span>(<span class="fn">buildJson</span>(*seq.<span class="fn">child</span>(i)));
+            }
+            <span class="kw">return</span> j;
+        }
+        <span class="kw">return</span> json{};
+    }
+}</code></pre>
+        </main>
+    </div>
+
+    <!-- Collapsible Sidebar Logic Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const collapsibleElements = document.querySelectorAll('.sidebar li.has-children');
+            collapsibleElements.forEach(li => {
+                const btn = li.querySelector('.toggle-btn');
+                const link = li.querySelector('.nav-item-wrapper > a');
+
+                const toggle = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    li.classList.toggle('collapsed');
+                };
+
+                if (btn) {
+                    btn.addEventListener('click', toggle);
+                }
+
+                // Allow clicking the primary root link to expand the node if it's currently collapsed
+                if (link) {
+                    link.addEventListener('click', () => {
+                        if (li.classList.contains('collapsed')) {
+                            li.classList.remove('collapsed');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

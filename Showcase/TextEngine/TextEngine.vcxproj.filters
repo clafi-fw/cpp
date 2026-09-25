@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Src">
+      <UniqueIdentifier>{d227521a-c271-4c38-94df-4ff588bf7905}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Pages">
+      <UniqueIdentifier>{e150b912-432d-49aa-afaf-e8caa1d04da6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Src\TextEngine_Icon.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\TextEngine_Icon.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\TextEngine_Main.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\TextEngine_Main.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\TextEngine_Win32.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\TextEngine_Code.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\TextEngine_Code.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\TextEngine_Emoji.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\TextEngine_Emoji.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\TextEngine_Features.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\TextEngine_Ledger.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\TextEngine_Ledger.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\TextEngine_Math.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\TextEngine_Math.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\TextEngine_Scripts.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\TextEngine_Scripts.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Src\TextEngine_Wayland.cpp">
+      <Filter>Src</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TextEngine.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="TextEngine.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+</Project>

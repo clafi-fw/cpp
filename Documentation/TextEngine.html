@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi TextEngine - Developer Manual</title>
+    <style>
+        :root {
+            --bg-color: #f9f9fb; --text-color: #333; --accent-color: #0066cc;
+            --code-bg: #1e1e1e; --code-text: #d4d4d4; --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6; color: var(--text-color); background-color: var(--bg-color);
+            margin: 0; padding: 0; display: flex;
+        }
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;
+            background-color: #fff; border-right: 1px solid var(--border-color);
+            overflow-y: auto; padding: 2rem 1rem; box-sizing: border-box; z-index: 100;
+        }
+        .sidebar-brand { padding: 0 0.5rem 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); }
+        .sidebar-brand-text {
+            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            font-size: 2.0rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            background: linear-gradient(90deg, #4EC9B0, #A6E22E);
+            -webkit-background-clip: text;
+            /*
+            background-clip: text;
+            */
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 8px rgba(78, 201, 176, 0.25);
+        }
+        .sidebar-brand-text::after {
+            content: "::";
+            margin-left: 0.2em;
+            font-weight: 400;
+        }
+        .sidebar-header { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; padding-left: 0.5rem; color: #111; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar > ul > li { margin-bottom: 0.8rem; }
+        .nav-item-wrapper {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.25rem 0.5rem; border-radius: 6px; transition: background-color 0.2s ease;
+        }
+        .nav-item-wrapper:hover { background-color: rgba(0, 0, 0, 0.02); }
+        .sidebar > ul > li > .nav-item-wrapper > a { font-size: 1rem; font-weight: 600; color: #111; flex-grow: 1; }
+        .sidebar ul ul {
+            padding-left: 0.8rem; margin-top: 0.3rem; margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color); margin-left: 1.1rem;
+        }
+        .sidebar ul ul li { margin-bottom: 0.4rem; }
+        .sidebar ul ul a { font-size: 0.9rem; color: #555; display: block; padding: 0.15rem 0; transition: color 0.15s ease; }
+        .sidebar a { text-decoration: none; display: block; transition: color 0.2s ease; }
+        .sidebar a:hover, .sidebar ul ul a:hover { color: var(--accent-color); }
+        .toggle-btn {
+            background: none; border: none; padding: 4px; margin: 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; color: #888;
+            border-radius: 4px; transition: background-color 0.2s, color 0.2s; outline: none;
+        }
+        .toggle-btn:hover { background-color: rgba(0, 0, 0, 0.05); color: var(--accent-color); }
+        .toggle-btn svg { width: 16px; height: 16px; fill: currentColor; transform: rotate(90deg); transition: transform 0.2s ease; }
+        .sidebar li.has-children.collapsed ul { display: none !important; }
+        .sidebar li.has-children.collapsed .toggle-btn svg { transform: rotate(0deg); }
+        .page-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        header { background-color: #fff; padding: 2rem; border-bottom: 1px solid var(--border-color); text-align: center; }
+        h1, h2, h3, h4 { color: #111; margin-top: 2rem; }
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+        main {
+            max-width: 900px; margin: 2rem auto; padding: 0 2rem; background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; padding-bottom: 2rem;
+        }
+        p, li { font-size: 1.1rem; }
+        pre {
+            background-color: var(--code-bg); color: var(--code-text); padding: 1.5rem;
+            border-radius: 8px; overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.95rem; line-height: 1.5;
+        }
+        code {
+            background-color: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.9em; color: #d14;
+        }
+        pre code { background-color: transparent; padding: 0; color: inherit; }
+        .kw { color: #569cd6; } .tp { color: #4ec9b0; } .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; } .fn { color: #dcdcaa; }
+        .warning { background-color: #fff3f3; border-left: 4px solid #cc0000; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .info { background-color: #f0f7ff; border-left: 4px solid #0066cc; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0; }
+        .rule-card { padding: 1.2rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .rule-card.dos { background-color: #f4faf4; border-left: 4px solid #2e7d32; }
+        .rule-card.donts { background-color: #fff8f8; border-left: 4px solid #c62828; }
+        .rule-card h4 { margin-top: 0; margin-bottom: 0.5rem; }
+        .rule-card ul { margin: 0; padding-left: 1.2rem; }
+        .rule-card li { font-size: 1rem; margin-bottom: 0.5rem; }
+        table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 0.98rem; }
+        th, td { border: 1px solid var(--border-color); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+        th { background-color: #f6f8fa; font-weight: 600; }
+        td code { font-size: 0.85em; }
+        .grid-fig { width: 100%; max-width: 720px; margin: 1.5rem 0; display: block; }
+        @media (max-width: 1200px) { .sidebar { display: none; } .page-content { margin-left: 0; width: 100%; } }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand"><span class="sidebar-brand-text">ClaFi</span></div>
+        <div class="sidebar-header">Contents</div>
+        <ul>
+            <li><div class="nav-item-wrapper"><a href="#introduction">Introduction</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#quickstart">Quick Start</a></div></li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#building">Building Text</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#stream">The stream</a></li>
+                    <li><a href="#fmt">Fmt and arguments</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#tags">Tag Reference</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#tags-typography">Typography</a></li>
+                    <li><a href="#tags-color">Colour</a></li>
+                    <li><a href="#tags-layout">Layout and spacing</a></li>
+                    <li><a href="#tags-icons">Icons</a></li>
+                    <li><a href="#tags-links">Links and anchors</a></li>
+                    <li><a href="#tags-document">In a document</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#examples">Worked Examples</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#ex-flex">Flexible space</a></li>
+                    <li><a href="#ex-tabto">Tabular alignment</a></li>
+                    <li><a href="#ex-icons">Bullets and inline icons</a></li>
+                </ul>
+            </li>
+            <li><div class="nav-item-wrapper"><a href="#drawing">Drawing and Measuring</a></div></li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#own-layout">A control that holds its own layout</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#own-layout-when">When a control needs one</a></li>
+                    <li><a href="#own-layout-seams">The two seams</a></li>
+                    <li><a href="#own-layout-synced">Bringing the layout up to date</a></li>
+                    <li><a href="#own-layout-positions">Positions on a held layout</a></li>
+                </ul>
+            </li>
+            <li><div class="nav-item-wrapper"><a href="#editing">Editing a layout in place</a></div></li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#links">Links and Anchors</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#links-writing">Writing a link</a></li>
+                    <li><a href="#links-anchors">Anchors</a></li>
+                    <li><a href="#links-editing">Links in an edited text</a></li>
+                    <li><a href="#links-following">Following a link</a></li>
+                    <li><a href="#links-history">Back and forward</a></li>
+                    <li><a href="#links-hints">Link hints</a></li>
+                    <li><a href="#links-layout">Links on a held layout</a></li>
+                </ul>
+            </li>
+            <li><div class="nav-item-wrapper"><a href="#do-dont">Do and Don't</a></div></li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#howitworks">How It Works</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#hiw-baked">Markers to spans</a></li>
+                    <li><a href="#hiw-cache">The layout cache</a></li>
+                    <li><a href="#hiw-cells">Paragraphs on cells</a></li>
+                    <li><a href="#hiw-underline">The link underline</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <div class="page-content">
+        <header>
+            <h1>ClaFi TextEngine</h1>
+            <p>One string, a list of markers, and a layout somebody else already built</p>
+        </header>
+        <main>
+<style>
+    .example-render {
+        border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 1.25rem;
+        margin: 1rem 0 1.5rem; background: #fff; font-family: "Segoe UI", sans-serif; color: #111;
+    }
+    .example-render .row { display: flex; align-items: baseline; }
+    .example-render .quiet { color: #8a8f98; }
+    .example-render .accent { color: #0a84c1; }
+    .example-render .bullet::before {
+        content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+        background: currentColor; margin-right: 10px; vertical-align: middle;
+    }
+    .example-render .tabrow { position: relative; height: 1.6em; }
+    .example-render .tabrow span { position: absolute; }
+</style>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>A <code>Text</code> is a plain string and a list of markers, each marker a position and one
+formatting item. It carries no fonts, no colours and no geometry - a marker says
+<em>push bold here</em> or <em>this run is drawn in the accent</em>, and what those mean is settled
+later, by the control that draws it and the theme in effect at the time.</p>
+
+<p>That is what makes a <code>Text</code> cheap to build and safe to keep. Building one every paint
+is the normal way to use it: the shaping is cached behind the engine, and a rebuilt
+<code>Text</code> that says the same thing hits that cache.</p>
+
+<div class="info">
+<strong>Module imports:</strong> <code>ClaFi.Core.TextEngine.Text</code> for <code>Text</code>,
+<code>ClaFi.Core.TextEngine.Types</code> for the formatting items and <code>TextStyle</code>,
+<code>ClaFi.Core.TextEngine.Fmt</code> for the format-string syntax, and
+<code>ClaFi.Core.TextEngine</code> for the engine that draws and measures. Colours come from
+<code>ClaFi.Core.System.InkWell</code> - see the <em>Colour</em> manual.
+</div>
+
+<h2 id="quickstart">Quick Start</h2>
+
+<p>Two spellings of the same thing. The stream is for text assembled from parts; the format string
+is for text whose shape is known and whose values are not.</p>
+
+<pre><code><span class="cm">// The stream.</span>
+<span class="tp">Text</span> text;
+text &lt;&lt; <span class="tp">TextStyleId</span>::Section &lt;&lt; <span class="st">L"Performance"</span> &lt;&lt; <span class="tp">PopTextStyle</span>{} &lt;&lt; <span class="tp">TextOp</span>::EndLine
+     &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Muted) &lt;&lt; <span class="st">L"Frames: "</span> &lt;&lt; <span class="tp">PopColor</span>{}
+     &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">accentInk</span>() &lt;&lt; frameCount;
+
+<span class="cm">// The format string. Both syntaxes in one: [tag] formats, {} takes an argument.</span>
+<span class="tp">Text</span> same{ <span class="tp">Fmt</span>{
+    <span class="st">L"[section]Performance[/section]\n"</span>
+    <span class="st">L"[color muted]Frames: [/color][color accent]{}[/color]"</span>,
+    frameCount } };</code></pre>
+
+<h2 id="building">Building Text</h2>
+
+<h3 id="stream">The stream</h3>
+
+<p>Everything is streamed in with <code>operator&lt;&lt;</code>. The variadic constructor is the same
+sequence written as one expression, which is what makes a <code>Text</code> usable as a control
+property.</p>
+
+<p><code>operator=</code> takes any one of the same arguments and states the whole text rather than
+adding to it. Assigning one <code>Text</code> to another copies or moves it, so a text is an
+ordinary value to hold in a member or hand back from a function.</p>
+
+<pre><code>Text caption;
+caption &lt;&lt; L"Opening ";                 // adds
+caption = L"Ready";                     // replaces
+caption = other.selectedText(range);    // moves
+caption = Text{ InkColor::Accent, name, L" saved" };   // several parts</code></pre>
+
+<p>An assignment operator takes exactly one argument, so a text built from several parts is spelt
+as a <code>Text</code> and moved in, as the last line shows.</p>
+
+<p>The constructor stays <code>explicit</code>. It accepts any argument list at all, so an implicit
+one would offer a <code>Text</code> conversion from every type in every overload set it appears in.
+Name the type where a <code>Text</code> is built - <code>Text{ L"Ready" }</code> - and assign
+without it.</p>
+
+<table>
+<tr><th>Streamed</th><th>Effect</th></tr>
+<tr><td><code>std::wstring_view</code>, <code>const wchar_t*</code>, <code>wchar_t</code>, <code>int</code>, <code>size_t</code></td><td>Appends text. A count - a line, a column, a length - streams as the <code>size_t</code> it is held in.</td></tr>
+<tr><td><code>Ink</code>, <code>PushThemeColor{ ink }</code></td><td>Pushes a theme ink for the runs that follow.</td></tr>
+<tr><td><code>InkGrade</code></td><td>Pushes the framework's own ink at that step - <code>InkWell::textInk(grade)</code>, written as the step alone.</td></tr>
+<tr><td><code>InkColor</code></td><td>Pushes that colour at <code>Strongest</code> - <code>InkColor::Red</code> is <code>InkWell::Red</code>, written as the colour alone. Any other grade is streamed as the <code>Ink</code> it is.</td></tr>
+<tr><td><code>Color</code>, <code>PushCustomColor{ c }</code></td><td>Pushes a colour stated outright, which the theme does not touch.</td></tr>
+<tr><td><code>PopColor{}</code></td><td>Pops one colour off the stack.</td></tr>
+<tr><td><code>TextStyleId</code>, <code>PopTextStyle{}</code></td><td>Pushes and pops a named style.</td></tr>
+<tr><td><code>PushFontSize{ f }</code>, <code>PopFontSize{}</code></td><td>Overrides the size within the current style.</td></tr>
+<tr><td><code>PushFontFamily{ L"..." }</code>, <code>PopFontFamily{}</code></td><td>Overrides the family.</td></tr>
+<tr><td><code>TextOp::PushBold</code> &hellip; <code>PopItalic</code>, <code>EndLine</code></td><td>Weight, slant, and the line break.</td></tr>
+<tr><td><code>TextOp::PushSuperscript</code>, <code>PushSubscript</code>, <code>PopScript</code></td><td>Raises or lowers the runs that follow, taking the size down with them.</td></tr>
+<tr><td><code>TextAlign</code></td><td>Alignment of the paragraph this lands in.</td></tr>
+<tr><td><code>SetIndent{ f }</code>, <code>setIndent(f)</code>, <code>setLineSpacing(f)</code></td><td>Paragraph geometry. An indent holds until it is set again, wrapped lines included.</td></tr>
+<tr><td><code>Space{ w }</code>, <code>FlexSpace{}</code>, <code>TabTo{ x }</code>, <code>VSpace{ h }</code></td><td>Inline spacing objects - see <a href="#tags-layout">below</a>.</td></tr>
+<tr><td><code>InTextIcon{ ... }</code></td><td>A painted object that sits in the text flow.</td></tr>
+<tr><td><code>PushLink{ L"..." }</code>, <code>PopLink{}</code></td><td>A link to the target named, over the runs between the two - see <a href="#links">Links and Anchors</a>.</td></tr>
+<tr><td><code>PushAnchor{ L"..." }</code>, <code>PopAnchor{}</code></td><td>An anchor of that name over the runs between the two, which a link reaches with <code>#</code> and the name.</td></tr>
+<tr><td><code>const Text&amp;</code></td><td>Appends another text with its markers, offset into place.</td></tr>
+</table>
+
+<p>The rest of the surface is small: <code>plainText()</code>, <code>markers()</code>,
+<code>empty()</code>, <code>clear()</code>, <code>hash()</code>, <code>hasFlexSpace()</code>,
+<code>anchorRange(name)</code>, and the editing calls <code>replaceText</code> and
+<code>selectedText</code>.
+<code>PlaceHolderText</code> and <code>TooltipText</code> are <code>Text</code> under another name,
+so a control can tell which of its texts it was handed by the type alone.</p>
+
+<h3 id="fmt">Fmt and arguments</h3>
+
+<p><code>Fmt</code> holds a format string and a reference to each argument.
+<code>Text{ Fmt{ ... } }</code> builds a text from it; <code>text &lt;&lt; Fmt{ ... }</code> appends
+to one that exists.</p>
+
+<p>The format string carries two constructs, and the difference between them is whether they consume
+an argument:</p>
+
+<table>
+<tr><th>Construct</th><th>Consumes an argument</th><th>Meaning</th></tr>
+<tr><td><code>[tag]</code></td><td>No</td><td>Changes the stream state - a style, a colour, a space, an alignment.</td></tr>
+<tr><td><code>{}</code>, <code>{:.2f}</code>, <code>{:02X}</code></td><td>Yes</td><td>Formats the next argument through <code>std::vformat</code>, with the spec written inside the braces.</td></tr>
+<tr><td><code>[color {}]</code></td><td>Yes</td><td>The bridge between the two: takes a <code>Color</code> argument and pushes it.</td></tr>
+<tr><td><code>[icon {} 24,24]</code></td><td>Yes</td><td>Takes a paint callable and places it inline.</td></tr>
+<tr><td><code>\n</code></td><td>No</td><td>A literal newline in the format string is a line break, the same as <code>[n]</code>.</td></tr>
+</table>
+
+<p>Arguments are consumed strictly in order by whichever construct takes one, so an
+<code>[icon {}]</code> and a <code>{}</code> draw from the same queue. A construct that wants an
+argument when none is left is dropped rather than diagnosed.</p>
+
+<pre><code><span class="tp">Text</span>{ <span class="tp">Fmt</span>{
+    <span class="st">L"[icon {} 18,18][b]{}[/b] [color muted]{:.1f} ms[/color]"</span>,
+    paintDot,        <span class="cm">// 1 - the icon</span>
+    name,            <span class="cm">// 2 - the bold run</span>
+    elapsed } };     <span class="cm">// 3 - the number</span></code></pre>
+
+<div class="info">
+An argument's type picks its handler. Integers and floating point go through
+<code>std::vformat</code>; a <code>Color</code> prints as text under <code>{}</code> and pushes as a
+colour under <code>[color {}]</code>; anything callable with a <code>PaintIconEvent&amp;</code> is an
+icon painter. Everything else is streamed as it stands.
+</div>
+
+<h2 id="tags">Tag Reference</h2>
+
+<h3 id="tags-typography">Typography</h3>
+
+<table>
+<tr><th>Tag</th><th>Style</th><th>Drawn as</th></tr>
+<tr><td><code>[title]</code></td><td><code>TextStyleId::Title</code></td><td>sans-serif 28, bold</td></tr>
+<tr><td><code>[subtitle]</code></td><td><code>SubTitle</code></td><td>sans-serif 20</td></tr>
+<tr><td><code>[heading]</code></td><td><code>Heading</code></td><td>sans-serif 18, semibold</td></tr>
+<tr><td><code>[subheading]</code></td><td><code>SubHeading</code></td><td>sans-serif 16</td></tr>
+<tr><td><code>[section]</code></td><td><code>Section</code></td><td>sans-serif 14, bold</td></tr>
+<tr><td><code>[subsection]</code></td><td><code>SubSection</code></td><td>sans-serif 14, italic</td></tr>
+<tr><td><code>[body]</code></td><td><code>Body</code></td><td>sans-serif 14 - the default</td></tr>
+<tr><td><code>[subbody]</code></td><td><code>SubBody</code></td><td>sans-serif 12</td></tr>
+<tr><td><code>[code]</code></td><td><code>Code</code></td><td>monospace 14</td></tr>
+</table>
+
+<p>Each tag is the style's <code>TextStyleId</code> member in lower case, and is short for
+<code>[style title]</code> - the spelling a document writes. Either form reads.</p>
+
+<p>The two families are generic - <code>GenericFamily::sansSerif</code> and
+<code>GenericFamily::monospace</code> - and each platform resolves them to a face of its own:
+DirectWrite is handed Segoe UI and Consolas for them, fontconfig reads both names as the aliases
+its configuration defines. A concrete family named with <code>[font]</code> is passed through as
+written and stands or falls on the fonts installed.</p>
+
+<p>A style closes with its own name or with <code>[/style]</code>; either pops the style opened last.
+Inside a style, three more pairs override one property at a time:</p>
+
+<table>
+<tr><th>Tag</th><th>Effect</th></tr>
+<tr><td><code>[b]</code> <code>[/b]</code>, <code>[i]</code> <code>[/i]</code></td><td>Weight and slant.</td></tr>
+<tr><td><code>[sup]</code> <code>[/sup]</code>, <code>[sub]</code> <code>[/sub]</code></td><td>A run off the baseline. Either closer ends the nearest script still open.</td></tr>
+<tr><td><code>[size 24]</code> <code>[/size]</code></td><td>Font size in design pixels.</td></tr>
+<tr><td><code>[font Consolas]</code> <code>[/font]</code></td><td>Font family by name.</td></tr>
+<tr><td><code>[n]</code>, <code>[end]</code></td><td>End the line. Interchangeable, and the same as a literal newline.</td></tr>
+<tr><td><code>[left]</code>, <code>[center]</code>, <code>[right]</code>, <code>[justified]</code></td><td>Alignment of the paragraph the tag lands in.</td></tr>
+</table>
+
+<p>A script takes the size of what it stands on down by a fixed factor and steps the baseline by a
+share of that size, so <code>[sup]</code> inside <code>[sup]</code> shrinks and steps again -
+<code>2[sup]2[sup]n[/sup][/sup]</code> comes out as a tower of three sizes. One stack holds both
+kinds, which is why <code>[/sup]</code> and <code>[/sub]</code> are one instruction: each ends the
+nearest script still open.</p>
+
+<p>The line is not made taller for a script. A raised run keeps inside the ascent of the run it
+stands on; a lowered one whose letters descend can reach below what its line was measured at.</p>
+
+<h3 id="tags-color">Colour</h3>
+
+<p>A colour tag names an ink - an <code>InkColor</code> at an <code>InkGrade</code> - and states no
+tone of its own; the tones are <code>InkWell</code>'s. Both are spelt as their members in lower case,
+the colour first, and either can be left out: the colour is then <code>text</code> and the grade
+<code>strongest</code>.</p>
+
+<table>
+<tr><th>Tag</th><th>Ink</th></tr>
+<tr><td><code>[color strongest]</code></td><td><code>textInk()</code> - the ink the paint chain arrived at.</td></tr>
+<tr><td><code>[color muted]</code></td><td><code>textInk(InkGrade::Muted)</code> - secondary text.</td></tr>
+<tr><td><code>[color accent]</code></td><td><code>accentInk()</code> - the colour the interface answers with.</td></tr>
+<tr><td><code>[color spot]</code></td><td><code>spotInk()</code> - the second accent, for what stands apart from the interface.</td></tr>
+<tr><td><code>[color green]</code>, <code>[color blue]</code>, <code>[color red]</code></td><td>The semantic inks of those names.</td></tr>
+<tr><td><code>[color red muted]</code></td><td>A colour at a grade. The colours are <code>text</code>, <code>accent</code>, <code>spot</code>, <code>yellow</code>, <code>green</code>, <code>blue</code>, <code>red</code>, <code>black</code> and <code>white</code>; the grades are <code>faint</code>, <code>subtle</code>, <code>muted</code>, <code>strong</code> and <code>strongest</code>.</td></tr>
+<tr><td><code>[color accent 0.45]</code></td><td>A grade between the steps, stated as its share.</td></tr>
+<tr><td><code>[color #4EC9B0]</code></td><td>A colour stated outright. The theme does not touch it.</td></tr>
+<tr><td><code>[color {}]</code></td><td>A <code>Color</code> taken from the arguments.</td></tr>
+<tr><td><code>[/color]</code></td><td>Pops the colour stack.</td></tr>
+</table>
+
+<div class="warning">
+<strong>Yellow is drawn, not read.</strong> At the 4.5:1 reading threshold on a light page the whole
+warm arc collapses to brown, so no yellow is both legible and recognisable. Use
+<code>InkWell::Yellow</code> on an icon and let the text say it in words. <code>[color yellow]</code>
+reads, so that a text built from code can be written out and read back.
+</div>
+
+<h3 id="tags-layout">Layout and spacing</h3>
+
+<table>
+<tr><th>Tag</th><th>Streamed form</th><th>Effect</th></tr>
+<tr><td><code>[space 40]</code></td><td><code>Space{ 40 }</code></td><td>A fixed horizontal gap.</td></tr>
+<tr><td><code>[flex]</code>, <code>[fill]</code>, <code>[space flex]</code></td><td><code>FlexSpace{}</code></td><td>Takes the leftover width of the line, pushing what follows to the right.</td></tr>
+<tr><td><code>[tabto 150]</code></td><td><code>TabTo{ 150 }</code></td><td>Moves to an absolute x within the block.</td></tr>
+<tr><td><code>[vspace 60]</code></td><td><code>VSpace{ 60 }</code></td><td>A minimum height for the row it stands in. Shorter than the natural height, it does nothing.</td></tr>
+<tr><td><code>[indent 34]</code></td><td><code>SetIndent{ 34 }</code></td><td>Indents the block, wrapped lines included, until it is set again. <code>[indent 0]</code> returns.</td></tr>
+</table>
+
+<h3 id="tags-icons">Icons</h3>
+
+<p>An icon in text is a <code>PaintIconFunc</code> - anything callable with a
+<code>PaintIconEvent&amp;</code> - given a box in the flow. The tag takes the painter from the
+arguments and the box from its own text:</p>
+
+<table>
+<tr><th>Written</th><th>Box</th></tr>
+<tr><td><code>[icon {}]</code></td><td>16 &times; 16, baseline at 85% of the height.</td></tr>
+<tr><td><code>[icon {} 24]</code></td><td>24 &times; 24.</td></tr>
+<tr><td><code>[icon {} 24,20]</code></td><td>Width 24, height 20.</td></tr>
+<tr><td><code>[icon {} 24,24,20]</code></td><td>Width, height, and baseline stated outright.</td></tr>
+<tr><td><code>InTextIcon{ w, h, baseline, painter, tag }</code></td><td>The streamed form, which also carries a <code>Tag</code> the painter can read back.</td></tr>
+</table>
+
+<p>The painter is handed an event that answers everything a control's paint event does about colour:
+<code>event.ink(...)</code>, <code>event.textColor()</code>, <code>event.iconRect()</code>,
+<code>event.scaleF(...)</code>. An icon of width 0 draws outside the flow without occupying it, which
+is how a bullet is made.</p>
+
+<h3 id="tags-links">Links and anchors</h3>
+
+<table>
+<tr><th>Tag</th><th>Streamed form</th><th>Effect</th></tr>
+<tr><td><code>[link https://example.com]</code> <code>[/link]</code></td><td><code>PushLink{ L"https://example.com" }</code>, <code>PopLink{}</code></td><td>A link to the target, which is everything after the word <code>link</code>, spaces included.</td></tr>
+<tr><td><code>[link #clue-17]</code> <code>[/link]</code></td><td><code>PushLink{ L"#clue-17" }</code>, <code>PopLink{}</code></td><td>A link to the anchor of that name.</td></tr>
+<tr><td><code>[anchor clue-17]</code> <code>[/anchor]</code></td><td><code>PushAnchor{ L"clue-17" }</code>, <code>PopAnchor{}</code></td><td>An anchor named <code>clue-17</code>. It draws nothing.</td></tr>
+</table>
+
+<p>A target is read up to the closing bracket, so one holding a <code>]</code> cannot be written in a
+format string. Stream a <code>PushLink</code> for it instead; a document and the clipboard carry it
+whole.</p>
+
+<h3 id="tags-document">In a document</h3>
+
+<p>A <code>Text</code> in a document is its plain text and one entry per marker, and each marker is
+written as the tag Fmt reads for it. Import <code>ClaFi.Core.Dom_TextSerializers</code> wherever a
+blueprint states a <code>Text</code>, and <code>Dt::Value{ L"Caption", Text{} }</code> holding
+<code>[title]Title[/title] and [color muted]note[/color]</code> writes as</p>
+
+<pre><code>Caption=[
+    Markers=[
+        =[
+            Tag=style title
+            At=0
+        ]
+        =[
+            Tag=/style
+            At=5
+        ]
+        =[
+            Tag=color muted
+            At=10
+        ]
+        =[
+            Tag=/color
+            At=14
+        ]
+    ]
+    Text=Title and note
+]</code></pre>
+
+<p><code>At</code> is the index in the plain text the marker applies from, and each child is found
+by name, in any order. A style is written as <code>style</code> and its name. An ink is written with
+its colour and its grade, each left out where it is <code>text</code> or <code>strongest</code>; the
+text ink at <code>strongest</code> is written <code>color strongest</code>. Every spelling in the
+tables above reads back, the style shorthand included.</p>
+
+<p>An icon's painter is a callable and is not written. It reads back at its stated extent and draws
+nothing.</p>
+
+<h2 id="examples">Worked Examples</h2>
+
+<h3 id="ex-flex">Flexible space</h3>
+
+<pre><code><span class="tp">Text</span>{ <span class="tp">Fmt</span>{
+    <span class="st">L"[color muted]System[/color][flex][b]ONLINE[/b]\n"</span>
+    <span class="st">L"[color muted]Ping[/color][flex]{} ms"</span>,
+    ping } };</code></pre>
+
+<div class="example-render">
+    <div class="row"><span class="quiet">System</span><span style="flex-grow:1"></span><strong>ONLINE</strong></div>
+    <div class="row"><span class="quiet">Ping</span><span style="flex-grow:1"></span><span>24 ms</span></div>
+</div>
+
+<p>Each line's flex space eats whatever that line has left over, so the right-hand column is flush
+against the right edge and ragged against the left. That is the difference from a tab stop, and the
+reason both exist.</p>
+
+<h3 id="ex-tabto">Tabular alignment</h3>
+
+<pre><code><span class="tp">Text</span>{ <span class="tp">Fmt</span>{
+    <span class="st">L"[b]Component[/b][tabto 150][b]Status[/b][tabto 260][b]Load[/b]\n"</span>
+    <span class="st">L"Parser[tabto 150][color green]Active[/color][tabto 260]High\n"</span>
+    <span class="st">L"Renderer[tabto 150][color muted]Standby[/color][tabto 260]Low"</span> } };</code></pre>
+
+<div class="example-render">
+    <div class="tabrow"><span style="left:0"><strong>Component</strong></span><span style="left:150px"><strong>Status</strong></span><span style="left:260px"><strong>Load</strong></span></div>
+    <div class="tabrow"><span style="left:0">Parser</span><span style="left:150px;color:#2e7d32">Active</span><span style="left:260px">High</span></div>
+    <div class="tabrow"><span style="left:0">Renderer</span><span style="left:150px" class="quiet">Standby</span><span style="left:260px">Low</span></div>
+</div>
+
+<p>A tab stop is an absolute x inside the block, so every row lands on the same column whatever the
+width the block was given. Text that has already passed a stop does not go back to it.</p>
+
+<p>A tab character in the text is the other kind of stop: it reaches the next multiple of four
+spaces of the font the paragraph starts in, so in a monospace font a tab is four columns.</p>
+
+<h3 id="ex-icons">Bullets and inline icons</h3>
+
+<pre><code><span class="kw">auto</span> paintBullet = [](<span class="tp">PaintIconEvent</span>&amp; event) {
+    <span class="tp">FloatPoint</span> center = event.<span class="fn">iconRect</span>().<span class="fn">center</span>();
+    <span class="cm">// The icon has no width, so the centre sits on the indent - shift it into the margin.</span>
+    center.x -= event.<span class="fn">scaleF</span>(<span class="kw">16.0f</span>);
+    event.<span class="fn">canvas</span>().<span class="fn">fillCircle</span>(center, event.<span class="fn">scaleF</span>(<span class="kw">3.0f</span>),
+        <span class="tp">InkWell</span>::<span class="fn">accentInk</span>().<span class="fn">toColor</span>(event));
+    };
+
+<span class="tp">Text</span>{ <span class="tp">Fmt</span>{
+    <span class="st">L"[indent 34]"</span>
+    <span class="st">L"[icon {} 0,18][b]Lambda drawables:[/b] [color muted]any callable renders into the flow.[/color]\n"</span>
+    <span class="st">L"[icon {} 0,18][b]Reusability:[/b] [color muted]pass one painter as many times as you need.[/color]"</span>
+    <span class="st">L"[indent 0]"</span>,
+    paintBullet, paintBullet } };</code></pre>
+
+<div class="example-render" style="padding-left:2.5rem">
+    <div><span class="accent bullet"></span><strong>Lambda drawables:</strong> <span class="quiet">any callable renders into the flow.</span></div>
+    <div><span class="accent bullet"></span><strong>Reusability:</strong> <span class="quiet">pass one painter as many times as you need.</span></div>
+</div>
+
+<p>The same painter passed twice draws twice - the argument is read, not consumed destructively - so
+a list of any length costs one lambda and one argument per row.</p>
+
+<h2 id="drawing">Drawing and Measuring</h2>
+
+<p>The engine builds the layout. A control hands it a text, a rectangle, the colours it resolved,
+and where in that rectangle the text block belongs:</p>
+
+<pre><code><span class="tp">DrawTextResult</span> <span class="fn">drawText</span>(<span class="tp">ControlPaintContext</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp;, <span class="kw">const</span> <span class="tp">Text</span>&amp;,
+    <span class="tp">TextAnchor</span>, <span class="kw">const</span> <span class="tp">EditProps</span>* = <span class="kw">nullptr</span>, <span class="tp">TextRenderMode</span> = <span class="tp">TextRenderMode</span>::Static,
+    <span class="kw">bool</span> wrap = <span class="kw">true</span>);
+
+<span class="tp">CalculatedDimensions</span> <span class="fn">calculateText</span>(<span class="kw">const</span> <span class="tp">FormContext</span>&amp;, <span class="kw">const</span> <span class="tp">Text</span>&amp;,
+    <span class="tp">MaxSize</span> = { k_maxFloat, k_maxFloat }, <span class="kw">bool</span> editable = <span class="kw">false</span>, <span class="kw">bool</span> wrap = <span class="kw">true</span>);</code></pre>
+
+<p>Colours arrive with the draw. A run names inks, and the paint context the draw is handed is
+what resolves them - so the same layout draws correctly through whichever backend owns the form it
+appears in.</p>
+
+<div class="warning">
+<strong>Always pass the anchor.</strong> A layout is built at the origin of a box of the given
+size, and the anchor is the whole of what says where in the bounds that box was put. A call that
+leaves it out draws against a box the text does not occupy.
+</div>
+
+<p><code>TextRenderMode</code> is a question about movement, not about quality:</p>
+
+<table>
+<tr><th>Mode</th><th>For</th></tr>
+<tr><td><code>Static</code></td><td>Text that cannot move. Everything that makes a glyph crisp, because nothing will ask it to be anywhere else.</td></tr>
+<tr><td><code>Movable</code></td><td>Text that can move, while it is not moving. It gives up the crispness permanently rather than at the moment movement starts - every setting that buys crispness ties the raster to sub-pixel position, so switching it around a movement makes the text visibly change at both ends, at rest.</td></tr>
+<tr><td><code>Moving</code></td><td>While the position is actually changing: outlines filled as geometry instead of a glyph rasterized afresh each frame. That is the expensive half, so it is not paid by a control that is merely capable of moving.</td></tr>
+</table>
+
+<p>Passing an <code>EditProps</code> makes the layout editable, which is a property of the text and
+not a convenience: an editable text keeps the empty paragraph a trailing newline opens, because the
+caret has to be able to stand on it. Measured as not editable, that row is missing from the size the
+control is given.</p>
+
+<p>Positions in a text are answered without a layout at all -
+<code>nextWord</code>, <code>prevWord</code>, <code>wordAt</code>, <code>paragraphAt</code>. A
+caret is measured on a <code>TextLayout</code> by whoever holds one, because an edited text is a
+different text on every key, and routing that through the shared cache would store a copy per press.
+A paragraph range includes the newline that ends it: a selection that leaves it behind cuts the text
+and leaves an empty row where it was.</p>
+
+<p>A text box holds the layout it draws from rather than taking one from the cache. Its paint, its
+caret and every position it measures run on that one layout, so a caret is never read off one build
+and drawn on another.</p>
+
+<h2 id="own-layout">A control that holds its own layout</h2>
+
+<h3 id="own-layout-when">When a control needs one</h3>
+
+<p><code>WithTextLayout&lt;HostClass&gt;</code> gives a control a <code>TextLayout</code> of its own
+to shape in, instead of drawing through the engine's cache. It is spelt in the base list and
+nowhere else:</p>
+
+<pre><code><span class="kw">class</span> <span class="tp">TextBox</span> : <span class="kw">public</span> <span class="tp">WithTextLayout</span>&lt;<span class="tp">Label</span>&gt;
+
+<span class="cm">// A label that rewrites its words needs nothing of its own:</span>
+<span class="kw">using</span> <span class="tp">CaretReadout</span> = <span class="tp">WithTextLayout</span>&lt;<span class="tp">Label</span>&gt;;</code></pre>
+
+<div class="info">
+<strong>Using it is the declaration.</strong> A control whose text changes often derives from it,
+and a control whose text is written once and then stands does not. The base list says it once,
+and nothing else has to be kept in step.
+</div>
+
+<p>The cache is addressed by what a text <em>says</em>, which is what lets a hundred buttons saying
+one word share a single shaping. It is also what a text rewritten every frame misses on every
+paint - the value under a slider's thumb, a frame rate, a caret position in the corner of a scroll
+box. Each new value takes a fresh entry and pushes out a layout that was being shared, so a drag of
+a few seconds empties the cache and leaves every label on the form to be shaped again.</p>
+
+<p>A control here shapes its own text in place: no hash, no comparison against another control's
+words, nothing evicted, and nothing of its own in there to be evicted from. Editing is the second
+reason and the section above states it - an edited text is a different text on every key, and the
+paint and the caret have to read one build.</p>
+
+<h3 id="own-layout-seams">The two seams</h3>
+
+<p>Two virtuals on <code>Control</code> decide which layout an answer comes out of, and they are a
+<strong>pair</strong>:</p>
+
+<pre><code><span class="kw">virtual</span> <span class="tp">DrawTextResult</span> <span class="fn">drawText</span>(<span class="tp">PaintEvent</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp; textBounds, <span class="kw">const</span> <span class="tp">Text</span>&amp;);
+<span class="kw">virtual</span> <span class="tp">CalculatedDimensions</span> <span class="fn">measureText</span>(<span class="tp">AlignEvent</span>&amp;, <span class="tp">ScaledDimensions</span> asked, <span class="kw">const</span> <span class="tp">Text</span>&amp;);</code></pre>
+
+<p>Everything around them stays with the framework. <code>paintText</code> keeps the rect, the
+gather and the flags the result raises; <code>calculateText</code> keeps the gather, the rule that a
+run which does not wrap is measured against no width at all, and the clamp to the box.</p>
+
+<div class="warning">
+<strong>Override both or neither.</strong> A control that replaces one measures on one layout and
+draws on another.
+</div>
+
+<h3 id="own-layout-synced">Bringing the layout up to date</h3>
+
+<p>Both seams, and everything else that asks the layout a question, go through one call - which is
+what keeps a position from being read off one build and drawn on another:</p>
+
+<pre><code><span class="tp">TextLayout</span>&amp; <span class="fn">syncedLayout</span>(<span class="kw">const</span> <span class="tp">FormContext</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp; textBounds) <span class="kw">const</span>;
+<span class="tp">TextLayout</span>&amp; <span class="fn">syncedLayout</span>(<span class="kw">const</span> <span class="tp">FormContext</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp; textBounds, <span class="kw">const</span> <span class="tp">Text</span>&amp;) <span class="kw">const</span>;
+
+<span class="kw">virtual</span> <span class="kw">void</span> <span class="fn">takeText</span>(<span class="kw">const</span> <span class="tp">Text</span>&amp;) <span class="kw">const</span>;</code></pre>
+
+<p>The one-argument overload gathers a text itself, the way a paint does. Asking twice is free: a
+gather <em>names</em> a control's own text rather than copying it, so an answer that is that object
+is recognised by address, and an answer with no life of its own - one a parent composed, or a
+handler built - is compared instead. Either way an unchanged text rebuilds nothing, and a control
+measured four times in one pass shapes once.</p>
+
+<p>Only the <em>size</em> of the rect is taken. Where it sits is the caller's business and the
+anchor's, so a control carried sideways under a viewport does not rebuild for every pixel it
+moves.</p>
+
+<p>A layout held here stands outside the cache, so it answers <code>invalidateLayouts()</code>
+for itself: it compares <code>layoutGeneration()</code> against the number it was built at, and
+invalidates when the two have parted.</p>
+
+<p><code>takeText</code> states the <em>whole</em> of a text the layout has not been told about,
+which is what a text rewritten from nothing needs. A host that knows what changed overrides it and
+says so instead - see <a href="#editing">Editing a layout in place</a>.</p>
+
+<h3 id="own-layout-positions">Positions on a held layout</h3>
+
+<p>Whoever holds a layout asks it where things are. The word-level questions above need no layout;
+these do, because the answers are about lines, and lines exist only once a text has been broken to
+a width.</p>
+
+<table>
+<tr><th>Call</th><th>Answers</th></tr>
+<tr><td><code>caretPos(FloatPoint)</code></td><td>The <code>CaretHit</code> a point names: an insertion position, and the affinity that says which of two rows a position on a break belongs to.</td></tr>
+<tr><td><code>getCaretRect(CaretHit)</code></td><td>Where that position stands.</td></tr>
+<tr><td><code>posOnNextRow(CaretHit, ScrollDirection, targetX)</code></td><td>The position one row up or down. <code>targetX</code> is the column a run of arrow keys is holding, so a short row passed through does not pull the caret in with it.</td></tr>
+<tr><td><code>rowStart(CaretHit)</code>, <code>rowEnd(CaretHit)</code></td><td>The two ends of the row the position stands on - where Home and End go.</td></tr>
+<tr><td><code>lineColumnAt(size_t)</code></td><td>Which line the position is on and how far into it.</td></tr>
+</table>
+
+<pre><code><span class="kw">struct</span> <span class="tp">TextLineColumn</span> { <span class="tp">size_t</span> line{ 1 }; <span class="tp">size_t</span> column{ 1 }; };</code></pre>
+
+<div class="info">
+<strong>A row is what the breaker made; a line is what the newlines cut.</strong> So a row moves
+with the width the text was broken at, and a paragraph broken across five rows carries one line
+number, the column running along the whole of it. Both are counted from one, which is what a
+reader counts from.
+</div>
+
+<p><code>lineColumnAt</code> is a binary search over the paragraphs and reads no text, so a status
+readout can ask it on every key press of a fifty-thousand-line document. The row calls walk the
+paragraphs, which is the cost of an answer that depends on where the lines were broken.</p>
+
+<p>All of these are in the layout's own coordinates - the box is built at the origin. A control
+crosses <code>anchoredOrigin</code> in both directions: subtracting it from a point handed in,
+adding it to a rect handed back.</p>
+
+<h2 id="editing">Editing a layout in place</h2>
+
+<p>A layout is normally told a whole text. A caller that knows what changed can say so instead, and
+then a paragraph the edit did not reach keeps the shaping it already has:</p>
+
+<pre><code><span class="kw">struct</span> <span class="tp">TextEdit</span> { <span class="tp">TextRange</span> replaced; <span class="tp">size_t</span> insertedLength; };
+
+[[nodiscard]] <span class="kw">bool</span> <span class="fn">applyTextEdit</span>(<span class="kw">const</span> <span class="tp">Text</span>&amp;, <span class="tp">TextEdit</span>);
+[[nodiscard]] <span class="tp">TextEdit</span> <span class="fn">mergedEdits</span>(<span class="tp">TextEdit</span> first, <span class="tp">TextEdit</span> second);</code></pre>
+
+<p>The edit is stated in the coordinates of the text <em>before</em> it. What the layout does with it
+is find the paragraphs it reaches, re-shape those, and move the rest: their characters begin later or
+earlier, and their lines stand lower or higher. Typing a newline, deleting one and pasting a
+thousand lines are all the same operation - how many paragraphs the slice became is read off the
+rebuilt text rather than worked out from what the edit was.</p>
+
+<div class="warning">
+<strong>It can decline, and the answer says so.</strong> A layout with nothing shaped yet, or a
+paragraph in the slice that is not leading while the box it stands in has moved. A caller that gets
+<code>false</code> states the whole text with <code>setText</code>; the layout is already
+invalidated for it.
+</div>
+
+<p>One record carries one edit, and key repeat outruns the paint loop - so several edits can reach
+the text before anything asks the layout about it. <code>mergedEdits</code> folds a second into a
+standing record, answering the hull of the two. A hull can name text neither edit touched, which
+costs a paragraph re-shaped that did not have to be, or a refusal - never a wrong answer.</p>
+
+<p>A caller must also know that the record describes <em>this</em> text. What makes an edit and a
+text one story is that the lengths agree: the text the layout holds, plus what the edit inserted,
+less what it replaced. A control whose text arrives from its parent edits its own, and the two are
+not the same text.</p>
+
+<h2 id="links">Links and Anchors</h2>
+
+<p>A link is a run of text that points somewhere, and an anchor is a run of text a link can point
+to. Both are pairs of markers, the way bold is, so they travel through every edit, copy and paste
+the rest of the formatting does. What a link <em>does</em> is up to the control holding the text: a
+<code>TextBox</code> follows it, and a label draws it and nothing more.</p>
+
+<h3 id="links-writing">Writing a link</h3>
+
+<pre><code><span class="tp">Text</span>{ <span class="tp">Fmt</span>{
+    <span class="st">L"See [link https://example.com]the site[/link] or "</span>
+    <span class="st">L"[link #gallery]the long gallery[/link]."</span> } };
+
+<span class="cm">// The same link, streamed.</span>
+<span class="tp">Text</span> text;
+text &lt;&lt; <span class="st">L"See "</span> &lt;&lt; <span class="tp">PushLink</span>{ <span class="st">L"https://example.com"</span> } &lt;&lt; <span class="st">L"the site"</span> &lt;&lt; <span class="tp">PopLink</span>{};</code></pre>
+
+<div class="example-render">
+    <div>See <span class="accent">the site</span> or <span class="accent" style="text-decoration:underline;text-decoration-skip-ink:auto;text-underline-offset:3px">the long gallery</span>.</div>
+</div>
+
+<p>The target is any string at all - a URL, a path, <code>#</code> and an anchor name, or a word the
+application answers for itself, such as <code>clafi:ledger</code>. The engine never reads it.</p>
+
+<p>A link is drawn in the accent ink. A colour pushed before the link opened gives way to it; one
+pushed inside the link is the link's own, which is how a link that should not look like one is
+written. The underline is not part of the text: the control underlines the link under the pointer
+when a click there would follow it, as the second link above shows, and draws nothing under it
+otherwise.</p>
+
+<p>The underline stands clear of the ink it would cross, the way a browser's does: it is cut where a
+descender reaches through it, with a gap of its own thickness on either side - see
+<a href="#hiw-underline">The link underline</a>.</p>
+
+<h3 id="links-anchors">Anchors</h3>
+
+<pre><code><span class="st">L"[anchor clue-17][b]Clue 17.[/b][/anchor] Dmitri stands two doors from whoever was counting."</span>
+<span class="cm">// ... and anywhere in the same text:</span>
+<span class="st">L"The blue landing is settled by [link #clue-17]Clue 17[/link]."</span></code></pre>
+
+<p>An anchor is a run rather than a point: it holds text, and a box going to it selects that text.
+It draws nothing. Where two anchors share a name the first in the text is the one reached, and one
+left open runs to the end of the text.</p>
+
+<p><code>Text::anchorRange(name)</code> answers the range an anchor holds, or nothing where the text
+holds no anchor of that name. It walks the markers when it is asked: an anchor is looked for when a
+link to it is followed, and nothing is kept for it in between.</p>
+
+<h3 id="links-editing">Links in an edited text</h3>
+
+<p><strong>A link does not grow at its end.</strong> A character typed after a bold word is bold,
+and every other run takes in what is typed at its end the same way. A link is the exception,
+because a word typed after it is not part of where it points. Typing <em>over</em> the end of a link
+is different: the text replaced was the link's, and what replaces it is too.</p>
+
+<p><strong>Two links that meet and name one target are one link.</strong> They are pointed at,
+underlined and followed whole, and what is typed where they meet goes inside. An undo that puts a
+link's last word back produces exactly such a pair, so the link it restores behaves as it did.</p>
+
+<p>An anchor grows at its end the way bold does, since what is typed there is part of what it holds.
+Deleting the whole of a link or an anchor takes its markers with it, and an undo puts them back.</p>
+
+<h3 id="links-following">Following a link in a TextBox</h3>
+
+<table>
+<tr><th>Box</th><th>Follows a link on</th><th>A plain click on a link</th></tr>
+<tr><td>Read-only</td><td>A click</td><td>Follows it.</td></tr>
+<tr><td>One the user types into</td><td>Ctrl+click</td><td>Places the caret, as it does anywhere else in the text.</td></tr>
+</table>
+
+<p>The same rule decides when a link is underlined and shows the hand pointer, so what stands under
+the pointer always says what a click there will do. A press that ends in a selection was a drag, and
+follows nothing.</p>
+
+<p>Where a followed link goes, in order:</p>
+
+<ol>
+<li><strong><code>#name</code>, and the box's own text holds that anchor</strong> - the box goes to
+it. The anchor's text is selected and its line brought to the top of the view, the way a browser
+lands on a fragment. No event is raised.</li>
+<li><strong>Any other target</strong> - <code>OnLinkClick</code> is raised with it. A handler that
+answers the target stops the event.</li>
+<li><strong>Nothing stopped it</strong> - a target starting with <code>http:</code>,
+<code>https:</code> or <code>mailto:</code> is opened through the shell, whatever the case of its
+letters. Every other target goes nowhere.</li>
+</ol>
+
+<pre><code>box.<span class="fn">onLinkClick</span>([](<span class="tp">LinkClickEvent</span>&amp; event) {
+    <span class="kw">if</span> (!event.target.<span class="fn">starts_with</span>(<span class="st">L"clafi:"</span>))
+        <span class="kw">return</span>;
+    <span class="fn">openPage</span>(event.target.<span class="fn">substr</span>(6));
+    event.<span class="fn">stopPropagation</span>();
+    });</code></pre>
+
+<p><code>LinkClickEvent</code> carries <code>target</code>, as the text states it, and
+<code>stamp</code>, the press that followed the link. A <code>#name</code> the box's text does not
+hold is raised like any other target, which is how a link reaches an anchor on another page: the
+handler opens that page and calls <code>goToAnchor</code> on its box.</p>
+
+<div class="warning">
+<strong>The shell opens three schemes and no more.</strong> A text can come out of a file or off the
+clipboard and name anything, and the shell runs a program it is handed. A <code>file:</code> link, a
+path or a scheme of the application's own does nothing until a handler answers it.
+</div>
+
+<h3 id="links-history">Back and forward</h3>
+
+<pre><code><span class="cm">// false, and nothing moves, where the text holds no such anchor</span>
+<span class="kw">bool</span> <span class="fn">goToAnchor</span>(<span class="tp">std::wstring_view</span> name);
+<span class="kw">void</span> <span class="fn">goBack</span>();
+<span class="kw">void</span> <span class="fn">goForward</span>();
+<span class="kw">bool</span> <span class="fn">canGoBack</span>() <span class="kw">const</span>;
+<span class="kw">bool</span> <span class="fn">canGoForward</span>() <span class="kw">const</span>;</code></pre>
+
+<p>Every jump is remembered. Before it goes to an anchor the box keeps where it stood - the
+selection, and the position the view showed at its top - and <code>Alt+Left</code> goes back to it,
+<code>Alt+Right</code> forward again, the way a browser's history does. <code>goToAnchor</code> is
+what records a place, whether a link called it or the application did. With nothing to go back or
+forward to, the key is left unhandled and reaches whatever stands above the box.</p>
+
+<p>An edit made through the box moves every remembered place with the text, so going back after
+typing lands where the user was. An undo or a redo drops the history. A text the host writes leaves
+it standing, and a place past the end of that text is held to its end when it is gone to.</p>
+
+<h3 id="links-hints">Link hints</h3>
+
+<p>Every link has a hint, whether a click would follow it or not: the underline says a click would,
+and the hint says where it goes, which a reader wants in a box they type into as much as in one they
+read. It stands over the line the pointer is on, starting where the link starts on that line, so it
+covers neither the link nor the words around it. Where the screen has no room above the line, it
+stands under it. While the pointer is on a link, the link's hint stands in for the box's own.</p>
+
+<p>What the box writes when nothing else does:</p>
+
+<table>
+<tr><th>Target</th><th>Hint</th></tr>
+<tr><td><code>#name</code>, held by the box's text</td><td>The paragraph the anchor stands in, with its formatting - in the Ledger, the clue a reference names. A paragraph longer than six lines is cut at the end of the sixth and ends in an ellipsis, in the styles still open where it stands.</td></tr>
+<tr><td>Any other target</td><td>The target as the text states it.</td></tr>
+</table>
+
+<p>In a box the user types into, a muted line follows: <em>Ctrl+click to follow</em>. A plain click
+there places the caret, and nothing else on screen says the link can be followed at all.</p>
+
+<p><code>OnGetLinkTooltip</code> is raised first. Its event carries <code>target</code>,
+<code>range</code> - the text the link covers - and <code>tooltip</code>, the hint itself with its
+placement and anchor already stated. What a handler writes into <code>tooltip.text</code> is the
+whole of the hint, and the box then writes nothing.</p>
+
+<pre><code>box.<span class="fn">onGetLinkTooltip</span>([](<span class="tp">GetLinkTooltipEvent</span>&amp; event) {
+    <span class="kw">if</span> (event.target.<span class="fn">starts_with</span>(<span class="st">L"clafi:"</span>))
+        event.tooltip.text &lt;&lt; <span class="st">L"Opens the "</span> &lt;&lt; event.target.<span class="fn">substr</span>(6) &lt;&lt; <span class="st">L" page"</span>;
+    });</code></pre>
+
+<div class="info">
+<strong>A hint breaks its lines at 480 design pixels</strong>, and its window is sized to the widest
+line it came to - so a short hint stays short, and a long one wraps rather than running out to the
+edge of the screen. That holds for every hint in the framework except one standing over a control's
+own text, which repeats the lines that control broke. A preview is cut at six lines of that width.
+</div>
+
+<h3 id="links-layout">Links on a held layout</h3>
+
+<p>A control drawing links of its own - one that <a href="#own-layout">holds its own layout</a> -
+asks the layout which link is under a point, and tells it which one to underline:</p>
+
+<pre><code>[[nodiscard]] <span class="tp">std::optional</span>&lt;<span class="tp">LinkHit</span>&gt; <span class="fn">linkAt</span>(<span class="tp">FloatPoint</span>);
+<span class="kw">void</span> <span class="fn">setHoveredLink</span>(<span class="tp">TextRange</span>);     <span class="cm">// an empty range underlines nothing</span>
+<span class="tp">TextRange</span> <span class="fn">hoveredLink</span>() <span class="kw">const</span>;
+
+<span class="kw">struct</span> <span class="tp">LinkHit</span> { <span class="tp">LinkSpan</span> link; <span class="tp">size_t</span> pos; };   <span class="cm">// the link, and the character under the point</span></code></pre>
+
+<p><code>linkAt</code> takes a point in the layout's own coordinates, the ones <code>caretPos</code>
+takes. A hit test names the nearest character even past the end of a line, so the point is held to
+the box that character's glyph stands in: past the end of a line, between two lines or below the
+text, there is no link. <code>pos</code> is the character under the point, which says which line of
+a wrapped link the pointer is on.</p>
+
+<p>The hovered link is a draw-time question, the way colours are: stating one shapes nothing, and
+the caller repaints. A new text drops it, since the range was stated in the text it was found
+in.</p>
+
+<p><code>LinkSpan</code> is <code>TextSpan&lt;std::wstring_view&gt;</code> - the range a link covers
+and its target - and <code>BakedText::links()</code> answers every one in text order. The target is
+a view into the text the spans were baked from, and holds while that text stands unchanged.</p>
+
+<h2 id="do-dont">Do and Don't</h2>
+
+<div class="rules-grid">
+    <div class="rule-card dos">
+        <h4>Do</h4>
+        <ul>
+            <li><strong>Build a <code>Text</code> per paint.</strong> An identical text hits the layout cache, so rebuilding costs a hash and a compare.</li>
+            <li><strong>Name inks, not colours</strong>, so a run keeps its meaning through a theme change.</li>
+            <li><strong>Use <code>[tabto]</code> for columns and <code>[flex]</code> for two ends of a line.</strong> They answer different questions.</li>
+            <li><strong>Pass the anchor</strong> that matches how the control positions its text.</li>
+            <li><strong>Give an icon a <code>Tag</code></strong> when one painter serves several rows and has to tell them apart.</li>
+            <li><strong>Answer your own link targets in <code>OnLinkClick</code> and stop the event.</strong> Of the rest, the box opens only http, https and mailto.</li>
+        </ul>
+    </div>
+    <div class="rule-card donts">
+        <h4>Don't</h4>
+        <ul>
+            <li><strong>Don't hold a <code>Text</code> to avoid rebuilding it</strong> unless it is genuinely expensive to assemble - the cache is behind the engine, not in your control.</li>
+            <li><strong>Don't count on an unmatched tag failing loudly.</strong> An unknown <code>[tag]</code> and an <code>{}</code> with no argument left are both dropped in silence.</li>
+            <li><strong>Don't mix argument order between the two syntaxes.</strong> There is one queue, and <code>[icon {}]</code> draws from it too.</li>
+            <li><strong>Don't reach for <code>[color #RRGGBB]</code> in a control.</strong> A literal colour is right for art and wrong for interface.</li>
+            <li><strong>Don't measure editable text as static</strong> and then draw it editable. The two answer different heights.</li>
+            <li><strong>Don't put a text that is rewritten as the user watches through the cache.</strong> A control whose words change often derives from <code>WithTextLayout</code> and shapes them in place.</li>
+            <li><strong>Don't write a link target holding <code>]</code> in a format string.</strong> The tag ends there; stream a <code>PushLink</code> instead.</li>
+        </ul>
+    </div>
+</div>
+
+<h2 id="howitworks">How It Works</h2>
+
+<h3 id="hiw-baked">Markers to spans</h3>
+
+<p><code>BakedText::rebuild</code> walks the markers once and turns a stack-based description into
+absolute ranges: <code>ColorSpan</code>, <code>WeightSpan</code>, <code>StyleSpan</code>,
+<code>SizeSpan</code>, <code>FamilySpan</code>, <code>ParagraphStyle</code>, a <code>LinkSpan</code>
+for every link, and a <code>BakedInlineObject</code> for every icon, flex space and tab stop. That is the form the native
+layout is fed.</p>
+
+<p>A colour span holds <code>ColorDef</code>, which is
+<code>std::variant&lt;Ink, Color&gt;</code> - the <em>name</em> of a colour rather than a colour.
+Colours are deliberately absent from what a layout is built from: they reach the native layout when
+it is drawn, so a theme change re-draws the same shaping rather than paying for it again. Alignment
+is absent for the same reason: where finished lines sit inside their box is set on a built layout,
+not shaped from.</p>
+
+<h3 id="hiw-cache">The layout cache</h3>
+
+<p>The engine keeps up to 512 layouts, keyed on a text rather than on a box: the text's hash, the
+scale factor, whether it is editable, and - for a text carrying a flex space - the event phase. A
+flex space is the one thing laid out differently for a measurement and for a paint, filling the box
+it is drawn in and contributing nothing to a size. Floats are held as their bits, because this is an
+identity question and not a numeric one.</p>
+
+<p>A key names a bucket, and the bucket holds one layout per width the text has been broken at.
+Lines broken at one width came out no wider than the widest of them, and every width between the two
+breaks them the same way - none has to split, each already fitting, and none can join, because the
+breaker refused the next word at the wider of the two. So a layout is asked whether it accepts the
+width being requested, and the first that does answers it. That is what lets one build serve both
+passes: a control is sized to what it measured, so the paint asks at a width inside the interval of
+the build the measurement just made. A width outside every interval takes a layout of its own, up to
+four to a text, and the least recently used of them goes.</p>
+
+<p>The box a layout stands in is not the width its lines were broken at. A native layout places a
+centred or right-aligned line at an offset measured from the box it was told about, so a shaping
+answering about a narrower box is told so before it is drawn or measured. Only the placement moves:
+the box is never wider than the width the lines were broken at.</p>
+
+<p>The height is in none of this. It decides which line the text is cut off at and which lines fade,
+and that is read off the finished lines - so a box of another height keeps the shaping and reads the
+fit again.</p>
+
+<p>A hash is a way to find an entry, not proof it is the right one - two texts landing on one would
+draw the wrong words - so a hit is confirmed by comparing the <code>Text</code> itself. The cache
+owns that copy, because every caller's text is a temporary built for one paint while the layout keeps
+a pointer to the one it was given.</p>
+
+<p><code>Text::hash</code> stands in for the whole <code>Text</code>, colour markers and all. A
+colour is no part of a build, but it is part of what makes one <code>Text</code> a different
+<code>Text</code>, so two runs naming different inks hold a cache entry each rather than sharing a
+key and evicting one another on every alternation. For anything that changes what a build would
+produce without being part of the key - the font table above all - <code>invalidateLayouts()</code>
+drops the cache and moves <code>layoutGeneration()</code> on, and a layout held outside the cache
+compares that number against the one it was built at.</p>
+
+<h3 id="hiw-cells">Paragraphs on cells</h3>
+
+<p>A paragraph set in one monospace font is not shaped at all. Every glyph of such a font is one
+cell wide, so the x of a column is the column times the cell, a tab reaches the next multiple of
+four columns, the line is one row of the face's height, and a hit test is a division. The layout
+decides this per paragraph, before building anything: one font over the whole of it - a span of
+family, size, weight or style ending inside the paragraph makes a paragraph in two fonts - no inline
+object, no script, not justified, and every character either a tab or one the font has a glyph for
+at exactly the cell advance. A paragraph that qualifies is one row of columns times cell and holds
+no native layout. Anything else is shaped natively, that paragraph alone: one line of Arabic in a
+source file costs that line and no other.</p>
+
+<p>What this buys is the shaping. A document of source is one pass over its characters instead of a
+native layout per line, and what the layout keeps is a paragraph record per line rather than a
+native object each - the lines of every paragraph live in one pool on the layout, so a document of
+a hundred thousand rows allocates once for them. The pixels are the ones the native layout would
+draw: DirectWrite's natural measuring mode already places a monospace run at column times advance,
+the tab stops are the same four cells, and the glyphs reach the same draw primitive -
+<code>DrawGlyphRun</code> on Direct2D, the glyph cache and the compositor on the CPU backends. The
+cell and the line height are the platform's own measurement of the font, the same one the tab
+stops are read from.</p>
+
+<div class="info">
+<strong>One glyph per character.</strong> A paragraph on cells draws each character as its own
+glyph, so a font's ligatures are not applied to it. Consolas and DejaVu Sans Mono carry none;
+Cascadia Code and Fira Code do, and a text set in one of those shows its characters unjoined.
+</div>
+
+<p>What a glyph table alone cannot lay out stays native, and the layout refuses it without asking
+the font: the controls and the format characters, combining marks, the right-to-left scripts, the
+scripts that reorder or stack, and anything past the basic plane. A wrapping layout keeps a
+paragraph on cells while its ink fits the width it breaks at - a line that fits is never broken -
+and hands one that does not to the native layout. Left, centre and right alignment are an offset
+inside the box, applied as the paragraph is drawn or hit rather than told to a layout, so a box
+that moves costs nothing.</p>
+
+<p>Nothing in the API says which paragraphs are on cells. <code>[code]</code> text, a
+<code>CodeBox</code>, a <code>HexView</code> line and a label in a monospace family all take the
+path when they qualify, and a caller reads the same positions and draws the same pixels either
+way.</p>
+
+<h3 id="hiw-underline">The link underline</h3>
+
+<p>The layout draws the underline of the hovered link: one segment per line the link reaches, under
+the glyphs that line shows, in the colour the segment's first glyph was drawn in. It stands below
+the baseline by a share of the room the line has there, in the thin stroke; the font's own underline
+metrics are not read. It is drawn over the glyphs, so a selection band does not cover it, and it
+does not fade with the glyphs of a line the box cuts.</p>
+
+<p>Where it would cross ink, it is cut. The native layout answers where the link's glyphs put ink
+between the line's top and bottom edges - <code>INativeTextLayout::appendInkAcross</code>, and
+<code>INativeMonoFont::inkAcross</code> for a paragraph on cells - reading the same glyph coverage
+the CPU path draws from, a row at a time, and counting a pixel as ink past a fifth covered. Each
+stretch is widened by the line's thickness on both sides and cut out. A piece left no longer than
+the line is thick is not drawn, since it would read as a dot between two descenders. On Direct2D the
+glyphs of a hovered link are rasterized into the CPU glyph cache for the purpose.</p>
+
+<p>Nothing is kept. The ink is asked for on every paint while a link is hovered, and that is a line
+or two of one link.</p>
+        </main>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const collapsibleElements = document.querySelectorAll('.sidebar li.has-children');
+            collapsibleElements.forEach(li => {
+                const btn = li.querySelector('.toggle-btn');
+                const link = li.querySelector('.nav-item-wrapper > a');
+                const toggle = (e) => { e.preventDefault(); e.stopPropagation(); li.classList.toggle('collapsed'); };
+                if (btn) btn.addEventListener('click', toggle);
+                if (link) link.addEventListener('click', () => {
+                    if (li.classList.contains('collapsed')) li.classList.remove('collapsed');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
