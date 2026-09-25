@@ -33,12 +33,12 @@ namespace ClaFi::Controls
     {
     public:
         template<typename... Args>
-        ColorSlider(const CreateParams&, Args&&...);
+        explicit ColorSlider(const CreateParams&, Args&&...);
     public:
-        const float trackingValue() const { return *m_trackingValue; }
+        float trackingValue() const { return *m_trackingValue; }
         void invalidateSlot();
         void trackingValueChanged(bool propagateChanges = false);
-        void paintValue(Text&, EventPhase);
+        void paintValue(Text&, EventPhase) const;
         void setTrackingAttribute(ColorAttribute);
         void setEditedColor(Hsl& value);
         // A slider over a bare hue rather than over a colour. What it edits is one number, so the
@@ -65,7 +65,7 @@ namespace ClaFi::Controls
     private:
         void relinkTrackingValue();
         void rebuildSlotBmp(Graphics::Bitmap&, IntSize bmpBounds, SlotSpan, const PaintEvent&);
-        void paintNotch(PaintEvent&, const FloatRect& slotRect, SlotSpan);
+        void paintNotch(PaintEvent&, const FloatRect& slotRect, SlotSpan) const;
     private:
         inline static Hsl s_nullColor{ 0.6f, 0.5f, 0.5f };
         // The notch marking the value the slider was given, in design units.
@@ -127,14 +127,14 @@ namespace ClaFi::Controls
         if (m_boundHue)
             m_displayColor.hue = *m_boundHue;
 
-        float maxPos = maxPosition();
+        const float maxPos = maxPosition();
         setPosition(std::round(*m_trackingValue * maxPos), propagateChanges);
         m_originalValue = *m_trackingValue;
     }
 
-    void ColorSlider::paintValue(Text& text, EventPhase phase)
+    void ColorSlider::paintValue(Text& text, EventPhase phase) const
     {
-        bool calcOnly = phase == EventPhase::Calculate;
+        const bool calcOnly = phase == EventPhase::Calculate;
         switch (m_trackingAttribute)
         {
         case ColorAttribute::Hue:
@@ -181,11 +181,11 @@ namespace ClaFi::Controls
     // sizeChanged, and a finer slider's is not.
     void ColorSlider::paintSlot(PaintEvent& event, const FloatRect& slotRect, SlotSpan span)
     {
-        float radius = slotRect.height() / 2.0f;
+        const float radius = slotRect.height() / 2.0f;
         // The rounded ends are painted as geometry over the caps, so the bitmap carries the
         // straight middle only. Rounding the rect out rather than rounding its dimensions
         // keeps the pixel that a fractional top and a fractional bottom both touch.
-        IntRect bmpRect = slotRect.inflated(-radius, 0.0f).roundedOut();
+        const IntRect bmpRect = slotRect.inflated(-radius, 0.0f).roundedOut();
         const IntSize bmpSize = bmpRect.dimensions();
         SlotSpectrum& spectrum = span == SlotSpan{} ? m_slot : m_spanSlot;
         if (!spectrum.valid
@@ -289,13 +289,13 @@ namespace ClaFi::Controls
     {
         bitmap.resize(bmpBounds);
 
-        float maxLum = 0.9f;
-        float minLum = std::lerp(0.08f, 0.2f, event.lightness());
+        constexpr float maxLum = 0.9f;
+        const float minLum = std::lerp(0.08f, 0.2f, event.lightness());
 
         Hsl slotColor = *m_editedColor;
         slotColor.luminosity = (std::min)((std::max)(slotColor.luminosity, minLum), maxLum);
 
-        std::size_t valueOffset = ((std::size_t)m_trackingValue - (std::size_t)m_editedColor);
+        std::size_t valueOffset = (reinterpret_cast<std::size_t>(m_trackingValue) - reinterpret_cast<std::size_t>(m_editedColor));
 
         valueOffset /= sizeof(float);
         if (!valueOffset)
@@ -308,7 +308,7 @@ namespace ClaFi::Controls
 
         float* trackingValue = reinterpret_cast<float*>(&slotColor) + valueOffset;
 
-        bool deepEnabled = enabled(true);
+        const bool deepEnabled = enabled(true);
         for (int x = 0; x < bmpBounds.x; ++x)
         {
             // assuming left is 0 here
@@ -340,7 +340,7 @@ namespace ClaFi::Controls
     // THE VALUE THE SLIDER WAS GIVEN, marked above the slot: what a drag has moved away from,
     // and where it stands while nothing has moved. A triangle pointing at the slot, in the room
     // the thumb leaves above it. A slot over a span the value lies outside has nothing to mark.
-    void ColorSlider::paintNotch(PaintEvent& event, const FloatRect& slotRect, SlotSpan span)
+    void ColorSlider::paintNotch(PaintEvent& event, const FloatRect& slotRect, SlotSpan span) const
     {
         const float fraction = span.fractionOf(m_originalValue);
         if (fraction < 0.0f || fraction > 1.0f)
