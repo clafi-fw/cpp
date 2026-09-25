@@ -5,11 +5,11 @@ rasterizer), sharing everything above the platform layer.
 
 ## Code style
 
-The `cpp-code-style` skill is the authoritative C++ style directive. Read it before writing or
-editing any C++ in this tree.
+The `cpp-code-style` skill (`.claude/skills/cpp-code-style/SKILL.md`) is the authoritative C++
+style directive. Read it before writing or editing any C++ in this tree.
 
 The declaration routine is how a control, its properties and its events are declared so that a
-line scanner can harvest them. A comment above a harvested
+line scanner can harvest them. A comment on a harvested
 declaration is one line, and the words that do not fit go into a note under `Source/RawDocs`,
 referenced from the line. `python "Tools/Surface Scanner/scan.py" --check` reports every departure.
 
