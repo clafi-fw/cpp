@@ -207,8 +207,9 @@ namespace ClaFi
         [[nodiscard]] bool isListedByEnclosingHost(const Control&) const;
         // How far a rule reading these inputs applies: 1 at rest, their composed factors otherwise.
         [[nodiscard]] float inputFactor(RuleInputs) const;
-        // The new rules for this control's element on one channel. Answers how far they moved it.
+        // The element's own new rules on one channel, then the shared ones; how far they moved it.
         float applyColorRules2(PaintChannel, Hsl& color) const;
+        float applyColorRules2(const BakedColorRules2&, PaintChannel, Hsl& color) const;
         void inheritCornerRadii();
         void paint();
         [[nodiscard]] SurfaceShape surfaceShape(FloatPoint inset);

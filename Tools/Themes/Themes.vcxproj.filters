@@ -62,6 +62,12 @@
     <ClCompile Include="Src\Pages\ThemePage.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.ApplyToControl.cpp">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.ApplyToControl.cppm">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Util\ThisApp.CodeOptions.cpp">
       <Filter>Src\Util</Filter>
     </ClCompile>
@@ -93,6 +99,12 @@
       <Filter>Src\Util</Filter>
     </ClCompile>
     <ClCompile Include="Src\Util\ThisApp.Utils.cppm">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.ValueRuleControl.cpp">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.ValueRuleControl.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
   </ItemGroup>

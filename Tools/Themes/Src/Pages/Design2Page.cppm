@@ -27,25 +27,33 @@ namespace ThisApp
         template<typename... Args>
         explicit Design2Page(const CreateParams&, Args&&...);
     public:
-        // The element whose page shows, and nothing before one is picked.
-        [[nodiscard]] OptionalUiElement pickedElement() const;
-        void pickElement(UiElement);
-        // Connects a handler raised after another element is picked.
+        // The token of the page that shows - an element's or k_sharedRulesToken - or nothing yet.
+        [[nodiscard]] std::wstring_view pickedPage() const;
+        void pickPage(std::wstring_view token);
+        // Connects a handler raised after another page is picked.
         template<typename F>
-        EventConnection onElementPick(F&& callback);
-        // Hands every element page the rules it edits and what it calls after changing them.
-        void bind(ColorRules2&, const OnRulesChanged&);
-        // Builds every element page's sections again from the rules as they stand.
+        EventConnection onPagePick(F&& callback);
+        // Hands every page its list of the theme's rules and what it calls after changing it.
+        void bind(ThemeColors&, const OnRulesChanged&);
+        // Builds every page's rows again from the rules as they stand.
         void rebuildRules();
     private:
-        using ElementControls = std::array<Control*, k_uiElementCount>;
-        using ElementPages = std::array<ElementPage*, k_uiElementCount>;
+        // An item of the tree and the page it opens, named by the element whose rules it shows.
+        struct TreeEntry
+        {
+            OptionalUiElement element{}; // nothing for the shared rules
+            Control* item{};
+            ElementPage* page{};
+        };
+        using TreeEntries = std::vector<TreeEntry>;
     private:
         void buildTree();
-        void showPickedElement();
+        void addEntry(StackPanel& parent, OptionalUiElement element, std::wstring_view name);
+        void showPickedPage();
+        [[nodiscard]] const TreeEntry* pickedEntry() const;
+        [[nodiscard]] static std::wstring_view tokenOf(const TreeEntry&);
     private:
-        ElementControls m_items{}; // each element's item in the tree, null where it has none
-        ElementPages m_elementPages{};
+        TreeEntries m_entries{}; // an item's tag is its place here
 
         StackView& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,
@@ -71,7 +79,7 @@ namespace ThisApp
     }
 
     template<typename F>
-    EventConnection Design2Page::onElementPick(F&& callback)
+    EventConnection Design2Page::onPagePick(F&& callback)
     {
         return m_tree.onCurrentItemChange(std::forward<F>(callback));
     }

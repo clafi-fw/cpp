@@ -77,13 +77,27 @@ namespace ClaFi
     public:
         [[nodiscard]] bool operator==(const BakedColorRule2&) const = default;
     public:
-        UiElement subject{};
         RuleInputs inputs{};
         PaintChannel output{ PaintChannel::Surface };
         BakedRule effect{};
     };
 
     export using BakedColorRules2 = std::vector<BakedColorRule2>;
+
+    // THE NEW RULES AS THE PAINT PATH READS THEM - each element's own, and the shared ones.
+    export struct BakedRules2
+    {
+    public:
+        [[nodiscard]] const BakedColorRules2& of(UiElement element) const
+        {
+            return elements[static_cast<std::size_t>(element)];
+        }
+        [[nodiscard]] bool operator==(const BakedRules2&) const = default;
+    public:
+        BakedColorRules2 shared{};
+        std::array<BakedColorRules2, k_uiElementCount> elements{}; // indexed by UiElement
+    };
+
     export using BakedElements = std::array<BakedElement, k_uiElementCount>;
     export using BakedRules = std::array<BakedRule, k_uiElementCount>;
     export using PigmentHues = std::array<float, k_pigmentsCount>;
@@ -121,7 +135,7 @@ namespace ClaFi
         // Every pigment's hue, taken off the harmony as the theme is baked, so nothing
         // downstream has a harmony to derive or a kind to read.
         PigmentHues pigmentHues{};
-        BakedColorRules2 rules2{}; // the rules of the new color theme architecture
+        BakedRules2 rules2{}; // the rules of the new color theme architecture
     };
 
     // One rule inside a set, named the way a whole set is. It is resolved against the set the
@@ -147,6 +161,8 @@ namespace ClaFi
     export [[nodiscard]] BakedRule bakeShadow(const ColorRule&, const ThemeColors&);
     // A shadow rule's effect is baked the way bakeShadow bakes, every other one the way bake does.
     export [[nodiscard]] BakedColorRule2 bake(const ColorRule2&, const ThemeColors&);
+    export [[nodiscard]] BakedColorRules2 bake(const ColorRules2&, const ThemeColors&);
+    export [[nodiscard]] BakedRules2 bake(const ThemeRules2&, const ThemeColors&);
 
     // CROSSING A SET WITH ITSELF ANSWERS THAT SET AT EVERY FACTOR, which is what the weighted
     // targets below are for. See AppTheme
@@ -159,6 +175,8 @@ namespace ClaFi
     // Rule by rule where both lists state the same rules in one order, the destination otherwise.
     export [[nodiscard]] BakedColorRules2 blend(const BakedColorRules2& from,
         const BakedColorRules2& to, float factor);
+    export [[nodiscard]] BakedRules2 blend(const BakedRules2& from, const BakedRules2& to,
+        float factor);
     // Two factors, because a theme's lightness crosses on a slot of its own - see
     // AnimationSlots::themeLightness. Everything else answers to the first.
     export [[nodiscard]] BakedColors blend(const BakedColors& from, const BakedColors& to,
@@ -376,13 +394,30 @@ namespace ClaFi
     BakedColorRule2 bake(const ColorRule2& rule, const ThemeColors& themeColors)
     {
         return {
-            .subject = rule.subject,
             .inputs = rule.inputs,
             .output = rule.output,
             .effect = rule.output == PaintChannel::Shadow
                 ? bakeShadow(rule.effect, themeColors)
                 : bake(rule.effect, themeColors)
         };
+    }
+
+    BakedColorRules2 bake(const ColorRules2& rules, const ThemeColors& themeColors)
+    {
+        BakedColorRules2 result{};
+        result.reserve(rules.size());
+        for (const ColorRule2& rule : rules)
+            result.push_back(bake(rule, themeColors));
+        return result;
+    }
+
+    BakedRules2 bake(const ThemeRules2& rules, const ThemeColors& themeColors)
+    {
+        BakedRules2 result{};
+        result.shared = bake(rules.shared, themeColors);
+        for (std::size_t i = 0; i < result.elements.size(); ++i)
+            result.elements[i] = bake(rules.elements[i], themeColors);
+        return result;
     }
 
     // blend
@@ -481,8 +516,7 @@ namespace ClaFi
     {
         const bool sameRules = std::ranges::equal(from, to,
             [](const BakedColorRule2& fromRule, const BakedColorRule2& toRule) {
-                return fromRule.subject == toRule.subject
-                    and fromRule.inputs == toRule.inputs
+                return fromRule.inputs == toRule.inputs
                     and fromRule.output == toRule.output;
             });
         if (!sameRules)
@@ -490,6 +524,16 @@ namespace ClaFi
         BakedColorRules2 result = to;
         for (std::size_t i = 0; i < result.size(); ++i)
             result[i].effect = blend(from[i].effect, to[i].effect, factor);
+        return result;
+    }
+
+    // Element by element, so a change to one list leaves the others crossing smoothly.
+    BakedRules2 blend(const BakedRules2& from, const BakedRules2& to, float factor)
+    {
+        BakedRules2 result{};
+        result.shared = blend(from.shared, to.shared, factor);
+        for (std::size_t i = 0; i < result.elements.size(); ++i)
+            result.elements[i] = blend(from.elements[i], to.elements[i], factor);
         return result;
     }
 

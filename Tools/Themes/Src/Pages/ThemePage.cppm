@@ -809,11 +809,11 @@ namespace ThisApp
                 storeView();
             });
 
-        m_design2Page.onElementPick([this](CurrentItemChangeEvent&) {
+        m_design2Page.onPagePick([this](CurrentItemChangeEvent&) {
             storeElement();
         });
 
-        m_design2Page.bind(editColors().rules2, [this]() {
+        m_design2Page.bind(editColors(), [this]() {
             rules2Changed();
         });
     }

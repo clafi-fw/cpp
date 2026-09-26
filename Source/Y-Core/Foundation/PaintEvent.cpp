@@ -666,17 +666,25 @@ namespace ClaFi
         return result;
     }
 
-    // A shadow is read at the dark end whatever the lightness, as BakedColors::windowShadow reads
-    // the old rule.
     float PaintEvent::applyColorRules2(const PaintChannel channel, Hsl& color) const
     {
         if (!m_element)
             return 0.0f;
+        const BakedRules2& rules = bakedColors().rules2;
+        const float ownChanged = applyColorRules2(rules.of(*m_element), channel, color);
+        return StateFactors::compose(ownChanged, applyColorRules2(rules.shared, channel, color));
+    }
+
+    // A shadow is read at the dark end whatever the lightness, as BakedColors::windowShadow reads
+    // the old rule.
+    float PaintEvent::applyColorRules2(const BakedColorRules2& rules, const PaintChannel channel,
+        Hsl& color) const
+    {
         const Lightness lightness = channel == PaintChannel::Shadow ? k_darkLightness : m_lightness;
         float changed = 0.0f;
-        for (const BakedColorRule2& rule : bakedColors().rules2)
+        for (const BakedColorRule2& rule : rules)
         {
-            if (rule.subject != *m_element or rule.output != channel)
+            if (rule.output != channel)
                 continue;
             changed = StateFactors::compose(changed,
                 rule.effect.applyTo(color, inputFactor(rule.inputs), lightness));

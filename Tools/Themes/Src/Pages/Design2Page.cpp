@@ -1,11 +1,13 @@
 module ThisApp.Design2Page;
 
+import ThisApp.Consts;
 import ThisApp.ElementPage;
 
 import ClaFi.Application.ThemesManager_Elements;
 
 import ClaFi.Controls.Base.StackPanelBase;
 import ClaFi.Controls.Button;
+import ClaFi.Controls.Divider;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.StackPanel;
@@ -80,42 +82,50 @@ namespace ThisApp
         constexpr float k_itemIndent{ 16.0f };
     }
 
-    OptionalUiElement Design2Page::pickedElement() const
+    std::wstring_view Design2Page::pickedPage() const
     {
-        if (const Control* item = m_tree.currentItem())
-            return item->tag<UiElement>();
-        return std::nullopt;
+        if (const TreeEntry* entry = pickedEntry())
+            return tokenOf(*entry);
+        return {};
     }
 
-    void Design2Page::pickElement(const UiElement element)
+    void Design2Page::pickPage(const std::wstring_view token)
     {
-        if (Control* item = m_items[static_cast<std::size_t>(element)])
-            m_tree.setCurrentItem(item);
+        for (const TreeEntry& entry : m_entries)
+            if (tokenOf(entry) == token)
+                m_tree.setCurrentItem(entry.item);
     }
 
-    void Design2Page::bind(ColorRules2& rules, const OnRulesChanged& onRulesChanged)
+    void Design2Page::bind(ThemeColors& colors, const OnRulesChanged& onRulesChanged)
     {
-        for (ElementPage* page : m_elementPages)
-            if (page)
-                page->bind(rules, onRulesChanged);
+        ThemeRules2& rules = colors.rules2;
+        for (const TreeEntry& entry : m_entries)
+        {
+            ColorRules2& list = entry.element ? rules.of(*entry.element) : rules.shared;
+            entry.page->bind(list, colors, onRulesChanged);
+        }
     }
 
     void Design2Page::rebuildRules()
     {
-        for (ElementPage* page : m_elementPages)
-            if (page)
-                page->rebuild();
+        for (const TreeEntry& entry : m_entries)
+            entry.page->rebuild();
     }
 
     void Design2Page::buildTree()
     {
         m_tree.onCanFocusItem([this](CanFocusItemEvent& event) {
-            event.canFocus = std::ranges::find(m_items, &event.item) != m_items.end();
+            event.canFocus = std::ranges::any_of(m_entries, [&event](const TreeEntry& entry) {
+                return entry.item == &event.item;
+            });
         });
         m_tree.onCurrentItemChange([this](CurrentItemChangeEvent&) {
-            showPickedElement();
+            showPickedPage();
         });
 
+        addEntry(m_tree, std::nullopt, L"Any element");
+        // Sets the shared rules apart, so they read as a peer of the categories.
+        m_tree.add<Divider>(Thickness::Heavy, Padding{ 4.0f, 6.0f });
         for (const ElementCategory& category : k_elementCategories)
         {
             CategoryNode& node = m_tree.add<CategoryNode>(
@@ -130,26 +140,46 @@ namespace ThisApp
                 }
             );
             for (const UiElement element : category.elements)
-            {
-                const std::size_t index = static_cast<std::size_t>(element);
-                ToolButton& item = node.body().add<ToolButton>(
-                    Text{ uiElementOf(element).name },
-                    Tag{ element },
-                    HorizontalTextAnchor::Left,
-                    ShowSelectionOnSurface::Yes
-                );
-                m_items[index] = &item;
-                m_elementPages[index] = &m_pages.add<ElementPage>(element);
-                // The first element stands picked, so the body never opens empty.
-                if (!m_tree.currentItem())
-                    m_tree.setCurrentItem(item);
-            }
+                addEntry(node.body(), element, uiElementOf(element).name);
         }
     }
 
-    void Design2Page::showPickedElement()
+    void Design2Page::addEntry(StackPanel& parent, const OptionalUiElement element,
+        const std::wstring_view name)
     {
-        if (const OptionalUiElement element = pickedElement())
-            m_pages.setCurrentItem(m_elementPages[static_cast<std::size_t>(*element)]);
+        ToolButton& item = parent.add<ToolButton>(
+            Text{ name },
+            Tag{ m_entries.size() },
+            HorizontalTextAnchor::Left,
+            ShowSelectionOnSurface::Yes
+        );
+        m_entries.push_back(TreeEntry{
+            .element = element,
+            .item = &item,
+            .page = &m_pages.add<ElementPage>(name)
+        });
+        // The first item stands picked, so the body never opens empty.
+        if (!m_tree.currentItem())
+            m_tree.setCurrentItem(item);
+    }
+
+    void Design2Page::showPickedPage()
+    {
+        if (const TreeEntry* entry = pickedEntry())
+            m_pages.setCurrentItem(entry->page);
+    }
+
+    const Design2Page::TreeEntry* Design2Page::pickedEntry() const
+    {
+        if (const Control* item = m_tree.currentItem())
+            return &m_entries[item->tag<std::size_t>()];
+        return nullptr;
+    }
+
+    std::wstring_view Design2Page::tokenOf(const TreeEntry& entry)
+    {
+        if (entry.element)
+            return uiElementOf(*entry.element).token;
+        return k_sharedRulesToken;
     }
 }

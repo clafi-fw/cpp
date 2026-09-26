@@ -238,6 +238,8 @@
     <ClCompile Include="Src\Themes_Main.cpp" />
     <ClCompile Include="Src\Themes_Main.cppm" />
     <ClCompile Include="Src\Themes_Win32.cpp" />
+    <ClCompile Include="Src\Util\ThisApp.ApplyToControl.cpp" />
+    <ClCompile Include="Src\Util\ThisApp.ApplyToControl.cppm" />
     <ClCompile Include="Src\Util\ThisApp.CodeOptions.cpp" />
     <ClCompile Include="Src\Util\ThisApp.CodeOptions.cppm" />
     <ClCompile Include="Src\Util\ThisApp.Consts.cppm" />
@@ -249,6 +251,8 @@
     <ClCompile Include="Src\Util\ThisApp.ThemeToCppCode.cpp" />
     <ClCompile Include="Src\Util\ThisApp.ThemeToCppCode.cppm" />
     <ClCompile Include="Src\Util\ThisApp.Utils.cppm" />
+    <ClCompile Include="Src\Util\ThisApp.ValueRuleControl.cpp" />
+    <ClCompile Include="Src\Util\ThisApp.ValueRuleControl.cppm" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Src\Themes_Wayland.cpp" />

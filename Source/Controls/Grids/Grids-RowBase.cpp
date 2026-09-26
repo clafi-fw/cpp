@@ -505,8 +505,8 @@ namespace ClaFi::Controls::Grids
         if (&event.control != this)
             return;
         // WHAT A GRID ROW IS SELECTED BY IS THE CELL SELECTION - the row holding the selected
-        // cell, and every row that row is nested in, a group row included - and never the
-        // container's current item.
+        // cell, and every row that row is nested in, a group row included - and the grid's own
+        // selection where it holds several rows. Never the container's current item.
         //
         // THE WALK ENDS HERE, and it has to. `Control::state()` runs leaf to root and the last
         // writer wins; a grid is an ActiveContainer, so `StackPanelBase::getControlState` above
@@ -515,7 +515,8 @@ namespace ClaFi::Controls::Grids
         // the cell inside it, which is exactly the set this rule exists to name.
         //
         // Written before the base runs, so a handler on the row still has the last word.
-        event.state.selected = containsNested(m_descriptor.selectedRow());
+        event.state.selected = containsNested(m_descriptor.selectedRow())
+            or m_descriptor.owner().selection().contains(this);
         LaneBase::getControlState(event);
         event.stopPropagation();
     }

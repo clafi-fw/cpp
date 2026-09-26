@@ -473,9 +473,11 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Pages/Design2Page.cpp"
         "${themes_dir}/Pages/ElementPage.cpp"
         "${themes_dir}/Pages/ThemePage.cpp"
+        "${themes_dir}/Util/ThisApp.ApplyToControl.cpp"
         "${themes_dir}/Util/ThisApp.CodeOptions.cpp"
         "${themes_dir}/Util/ThisApp.FloorSlider.cpp"
-        "${themes_dir}/Util/ThisApp.ThemeToCppCode.cpp")
+        "${themes_dir}/Util/ThisApp.ThemeToCppCode.cpp"
+        "${themes_dir}/Util/ThisApp.ValueRuleControl.cpp")
     target_sources(Themes PRIVATE FILE_SET CXX_MODULES FILES
         "${themes_dir}/Themes_Main.cppm"
         "${themes_dir}/Themes_Icon.cppm"
@@ -486,6 +488,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Pages/HomePage.cppm"
         "${themes_dir}/Pages/PreviewPanel.cppm"
         "${themes_dir}/Pages/ThemePage.cppm"
+        "${themes_dir}/Util/ThisApp.ApplyToControl.cppm"
         "${themes_dir}/Util/ThisApp.CodeOptions.cppm"
         "${themes_dir}/Util/ThisApp.Consts.cppm"
         "${themes_dir}/Util/ThisApp.FloorSlider.cppm"
@@ -493,7 +496,8 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Util/ThisApp.Palette.Controls.cppm"
         "${themes_dir}/Util/ThisApp.RuleSlider.cppm"
         "${themes_dir}/Util/ThisApp.ThemeToCppCode.cppm"
-        "${themes_dir}/Util/ThisApp.Utils.cppm")
+        "${themes_dir}/Util/ThisApp.Utils.cppm"
+        "${themes_dir}/Util/ThisApp.ValueRuleControl.cppm")
     target_link_libraries(Themes PRIVATE ClaFi)
     target_compile_options(Themes PRIVATE ${clafi_compile_options})
 endif()

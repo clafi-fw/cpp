@@ -266,6 +266,7 @@ namespace ClaFi
             return (m_bits & bitOf(input)) != 0u;
         }
         void add(RuleInput input) { m_bits |= bitOf(input); }
+        void remove(RuleInput input) { m_bits &= ~bitOf(input); }
         [[nodiscard]] bool operator==(const RuleInputs&) const = default;
     private:
         [[nodiscard]] static constexpr std::uint32_t bitOf(RuleInput input)
@@ -289,13 +290,39 @@ namespace ClaFi
     // A rule of the new color theme architecture: it reads its inputs and writes to its output.
     export struct ColorRule2
     {
-        UiElement subject{};                            // the element the rule colours
         RuleInputs inputs{};                            // what the rule reads
         PaintChannel output{ PaintChannel::Surface };   // the channel the rule writes to
         ColorRule effect{};                             // what the rule does to that channel
     };
 
     export using ColorRules2 = std::vector<ColorRule2>;
+
+    // The new rules a theme states: each element's own, and the shared ones applied after them.
+    export struct ThemeRules2
+    {
+        ColorRules2 shared{};
+        std::array<ColorRules2, k_uiElementCount> elements{}; // indexed by UiElement
+        [[nodiscard]] ColorRules2& of(UiElement element)
+        {
+            return elements[indexOf(element)];
+        }
+        [[nodiscard]] const ColorRules2& of(UiElement element) const
+        {
+            return elements[indexOf(element)];
+        }
+        // One element's list as a document field reads and writes it, by its place in the array.
+        template<std::size_t I>
+        [[nodiscard]] const ColorRules2& element() const { return elements[I]; }
+        template<std::size_t I>
+        void setElement(const ColorRules2& value) { elements[I] = value; }
+        [[nodiscard]] static constexpr std::size_t indexOf(UiElement element)
+        {
+            return static_cast<std::size_t>(element);
+        }
+    };
+
+    // The rules the framework's own theme states.
+    export [[nodiscard]] ThemeRules2 defaultRules2();
 
     // A theme's colours. The mode they are worn in is the application's. See AppTheme
     export struct ThemeColors
@@ -665,50 +692,7 @@ namespace ClaFi
 
 
 
-        // The rules of the new color theme architecture, each naming the element it colours.
-        ColorRules2 rules2{
-            // Testee, in the values Button states - its surface set, then its stroke.
-            ColorRule2{
-                .subject = UiElement::Testee,
-                .effect{
-                    { ColorRuleOp::NoChange, 0.0f },        // S
-                    { ColorRuleOp::Offset, 0.054944f }      // E
-                }
-            },
-            ColorRule2{
-                .subject = UiElement::Testee,
-                .inputs{ RuleInput::Selected, RuleInput::Hovered },
-                .effect{
-                    { ColorRuleHueOp::PaletteColor2 },      // H
-                    { ColorRuleOp::Offset, 0.094499f },     // S
-                    { ColorRuleOp::Offset, 0.099311f }      // E
-                }
-            },
-            ColorRule2{
-                .subject = UiElement::Testee,
-                .inputs{ RuleInput::Hovered },
-                .effect{
-                    { ColorRuleOp::Offset, 0.085609f },     // S
-                    { ColorRuleOp::Offset, 0.126926f }      // E
-                }
-            },
-            ColorRule2{
-                .subject = UiElement::Testee,
-                .inputs{ RuleInput::Pressed },
-                .effect{
-                    { ColorRuleOp::Scale, 0.8f },           // S
-                    { ColorRuleOp::Scale, 0.9f }            // E
-                }
-            },
-            ColorRule2{
-                .subject = UiElement::Testee,
-                .output = PaintChannel::Stroke,
-                .effect{
-                    {},                                     // S
-                    { ColorRuleOp::Offset, 0.037839f }      // E
-                }
-            }
-        };
+        ThemeRules2 rules2{ defaultRules2() }; // the rules of the new color theme architecture
 
         [[nodiscard]] Hsl pigmentHsl(Pigment, ColorMode) const;
         [[nodiscard]] Hsl pigmentHsl(Pigment, InkTone) const;
@@ -1073,6 +1057,52 @@ namespace ClaFi
     void PigmentPalette::reset() const
     {
         m_harmony.reset();
+    }
+
+    // ThemeRules2
+
+    ThemeRules2 defaultRules2()
+    {
+        ThemeRules2 result{};
+        // Testee, in the values Button states - its surface set, then its stroke.
+        result.of(UiElement::Testee) = {
+            ColorRule2{
+                .effect{
+                    { ColorRuleOp::NoChange, 0.0f },        // S
+                    { ColorRuleOp::Offset, 0.054944f }      // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Selected, RuleInput::Hovered },
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Offset, 0.094499f },     // S
+                    { ColorRuleOp::Offset, 0.099311f }      // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Hovered },
+                .effect{
+                    { ColorRuleOp::Offset, 0.085609f },     // S
+                    { ColorRuleOp::Offset, 0.126926f }      // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Pressed },
+                .effect{
+                    { ColorRuleOp::Scale, 0.8f },           // S
+                    { ColorRuleOp::Scale, 0.9f }            // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Offset, 0.037839f }      // E
+                }
+            }
+        };
+        return result;
     }
 
     // ThemeColors

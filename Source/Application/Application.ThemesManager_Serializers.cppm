@@ -121,15 +121,6 @@ namespace ClaFi // AppTheme serializers
         );
     }
 
-    // An element is written under its token, the name its rules stand under in a theme file.
-    export constexpr auto enumNames(UiElement)
-    {
-        std::array<std::wstring_view, k_uiElementCount> result{};
-        for (std::size_t i = 0ull; i != k_uiElementCount; ++i)
-            result[i] = k_uiElements[i].token;
-        return result;
-    }
-
     export constexpr std::array<std::wstring_view, static_cast<std::size_t>(RuleInput::Count)>
         k_ruleInputKeys{
             L"Hovered",
@@ -156,10 +147,32 @@ namespace ClaFi // AppTheme serializers
 
     export constexpr auto serializedFields(const ColorRule2&) {
         return std::make_tuple(
-            SerializedField{ L"Subject", &ColorRule2::subject },
             SerializedField{ L"Inputs", &ColorRule2::inputs },
             SerializedField{ L"Output", &ColorRule2::output },
             SerializedField{ L"Effect", &ColorRule2::effect }
+        );
+    }
+
+    // Each element's list stands under the element's token, the name its old rules stand under.
+    template <std::size_t I>
+    constexpr auto elementRulesField()
+    {
+        return SerializedField{ k_uiElements[I].token, &ThemeRules2::element<I>,
+            &ThemeRules2::setElement<I> };
+    }
+
+    template <std::size_t... I>
+    constexpr auto elementRulesFields(std::index_sequence<I...>)
+    {
+        return std::make_tuple(elementRulesField<I>()...);
+    }
+
+    export constexpr auto serializedFields(const ThemeRules2&) {
+        return std::tuple_cat(
+            std::make_tuple(
+                SerializedField{ L"Shared", &ThemeRules2::shared }
+            ),
+            elementRulesFields(std::make_index_sequence<k_uiElementCount>{})
         );
     }
 

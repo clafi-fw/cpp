@@ -5,8 +5,6 @@ import ClaFi.Icons.LuminosityIcon;
 import ClaFi.Icons.PlusMark;
 import ClaFi.Icons.SaturationIcon;
 
-import ClaFi.Application.ThemesManager_Elements;
-
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Grids_Dt;
@@ -15,6 +13,8 @@ import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.StackView;
+
+import ClaFi.StdActions;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
@@ -33,54 +33,65 @@ namespace ThisApp
     // What an element page calls after it has changed the rules it is bound to.
     export using OnRulesChanged = std::function<void()>;
 
-    // One element of a theme under the new color theme architecture, a grid row for each rule.
+    // One list of the new rules - an element's own or the shared ones - a grid row for each rule.
     export class ElementPage : public Panel
     {
     public:
         template<typename... Args>
-        explicit ElementPage(const CreateParams&, UiElement, Args&&...);
+        explicit ElementPage(const CreateParams&, std::wstring_view title, Args&&...);
     public:
-        // Takes the rules the page edits and what it calls after changing them, and shows them.
-        void bind(ColorRules2&, OnRulesChanged);
-        // Builds a row for every rule naming this element, in list order.
+        // Takes the list it edits, the colours its hues read and what it calls after a change.
+        void bind(ColorRules2&, const ThemeColors&, OnRulesChanged);
+        // Builds a row for every rule in the list, in list order.
         void rebuild();
     private:
         // The grid's columns, as their tags name them.
         enum class RuleColumn : TagValue
         {
-            Output,
-            Inputs,
+            ApplyTo,
             Hue,
             Saturation,
-            Elevation,
-            Delete
+            Elevation
         };
-        using RuleRows = std::vector<Control*>;
+        using RuleRows = std::vector<Grids::RowContainer*>;
+        using RuleIndices = std::vector<std::size_t>;
     private:
         void addRule();
-        void deleteRule(std::size_t index);
-        void deletePendingRule();
+        void deleteSelectedRules();
+        void deletePendingRules();
         void addRow(std::size_t index);
-        void ruleCellText(Grids::GetCellTextEvent&) const;
+        void bindEditors(Grids::RowContainer&);
+        [[nodiscard]] Grids::Column& column(RuleColumn);
         void rulesChanged() const;
     private:
-        UiElement m_element;
-        ColorRules2* m_rules{}; // every element's rules, of which the page shows its own
+        ColorRules2* m_rules{}; // the list the page shows, null until bound
+        const ThemeColors* m_colors{}; // what the hue editors read the palette from
         OnRulesChanged m_onRulesChanged{};
-        UiTimer m_deleteTimer{}; // deletes on the next tick, outside the click that asked
-        std::optional<std::size_t> m_pendingDelete{};
+        UiTimer m_deleteTimer{}; // deletes on the next tick, outside the event that asked
+        RuleIndices m_pendingDeletes{};
         RuleRows m_ruleRows{}; // one per rule, the header aside
 
         Panel& m_topBar{ createTopBar<Panel>(
             Padding{ 12.0f, 8.0f }
         ) };
 
-        Label& m_title{ m_topBar.createBody<Label>(
-            VerticalTextAnchor::Center,
-            Text{ TextStyleId::SubTitle, uiElementOf(m_element).name }
+        Label& m_title;
+
+        StackPanel& m_tools{ m_topBar.createRightBar<StackPanel>(
+            Orientation::Horizontal,
+            Interactivity::ActiveContainer,
+            Spacing{ 4.0f }
         ) };
 
-        ToolButton& m_addButton{ m_topBar.createRightBar<ToolButton>(
+        // Words, icon and state come from the action; mouse only keeps the focus in the grid.
+        ToolButton& m_deleteButton{ m_tools.add<ToolButton>(
+            IconSize{ 18.0f },
+            ButtonViewMode::IconOnly,
+            StdActions::del,
+            Interactivity::MouseOnly
+        ) };
+
+        ToolButton& m_addButton{ m_tools.add<ToolButton>(
             IconSize{ 18.0f },
             ButtonViewMode::LeftIcon,
             Button::OnPaintIcon{ Icons::PlusMark::paint },
@@ -99,24 +110,22 @@ namespace ThisApp
             Grids::GridLines::Horizontal,
             SelectionMode::Multi,
             Grids::Dt::Columns{
-                Grids::Dt::Column{ Tag{ RuleColumn::Output },
-                    Text{ L"Output" }
-                },
-                Grids::Dt::Column{ Tag{ RuleColumn::Inputs },
-                    Text{ L"Inputs" },
-                    Grids::ColumnWidthMode::Fill
+                Grids::Dt::Column{ Tag{ RuleColumn::ApplyTo },
+                    Text{ L"Apply to" },
+                    Grids::ColumnWidthMode::Fill,
+                    Grids::CellHighlightMode::Control
                 },
                 Grids::Dt::Column{ Tag{ RuleColumn::Hue },
-                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::HueIcon::paint }, L" Hue" }
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::HueIcon::paint }, L" Hue" },
+                    Grids::CellHighlightMode::Control
                 },
                 Grids::Dt::Column{ Tag{ RuleColumn::Saturation },
-                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::SaturationIcon::paint }, L" Saturation" }
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::SaturationIcon::paint },
+                        L" Saturation" },
+                    Grids::CellHighlightMode::Control
                 },
                 Grids::Dt::Column{ Tag{ RuleColumn::Elevation },
-                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::paint }, L" Elevation" }
-                },
-                Grids::Dt::Column{ Tag{ RuleColumn::Delete },
-                    Text{},
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::paint }, L" Elevation" },
                     Grids::CellHighlightMode::Control
                 }
             },
@@ -129,19 +138,33 @@ namespace ThisApp
 
 
     template<typename... Args>
-    ElementPage::ElementPage(const CreateParams& params, const UiElement element, Args&&... args)
+    ElementPage::ElementPage(const CreateParams& params, const std::wstring_view title,
+        Args&&... args)
         :
         Panel{ params, std::forward<Args>(args)... },
-        m_element{ element }
+        m_title{ m_topBar.createBody<Label>(
+            VerticalTextAnchor::Center,
+            Text{ TextStyleId::SubTitle, title }
+        ) }
     {
         m_addButton.onClick([this](ClickEvent&) {
             addRule();
         });
         m_deleteTimer.onTick([this](TimerEvent&) {
-            deletePendingRule();
+            deletePendingRules();
         });
-        m_grid.onGetCellText([this](Grids::GetCellTextEvent& event) {
-            ruleCellText(event);
+        m_grid.onSelectionChange([](SelectionChangeEvent&) {
+            StdActions::del.invalidateState();
+        });
+        // The toolbar button and the Delete key land here alike, and the selection they act on is
+        // this page's grid.
+        onGetActionState([this](GetActionStateEvent& event) {
+            if (&event.action == &StdActions::del)
+                event.claim({ .enabled = !m_grid.selection().empty() });
+        });
+        onActionClick([this](ActionClickEvent& event) {
+            if (&event.action == &StdActions::del)
+                deleteSelectedRules();
         });
     }
 }
