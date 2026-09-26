@@ -2,6 +2,7 @@ module ThisApp.Design2Page;
 
 import ThisApp.Consts;
 import ThisApp.ElementPage;
+import ThisApp.RuleSlider;
 
 import ClaFi.Application.ThemesManager_Elements;
 
@@ -96,13 +97,19 @@ namespace ThisApp
                 m_tree.setCurrentItem(entry.item);
     }
 
-    void Design2Page::bind(ThemeColors& colors, const OnRulesChanged& onRulesChanged)
+    void Design2Page::bind(ThemeColors& colors, const OnGetElementRuleBase& ruleBase,
+        const OnRulesChanged& onRulesChanged)
     {
         ThemeRules2& rules = colors.rules2;
         for (const TreeEntry& entry : m_entries)
         {
             ColorRules2& list = entry.element ? rules.of(*entry.element) : rules.shared;
-            entry.page->bind(list, colors, onRulesChanged);
+            const OptionalUiElement element = entry.element;
+            OnGetListRuleBase listRuleBase = [ruleBase, element](const ColorRule2& rule,
+                const RuleChannel channel) {
+                return ruleBase(element, rule, channel);
+            };
+            entry.page->bind(list, colors, std::move(listRuleBase), onRulesChanged);
         }
     }
 

@@ -1,9 +1,12 @@
 module ThisApp.ValueRuleControl;
 
+import ThisApp.RuleSlider;
+import ThisApp.RuleText;
 import ThisApp.Utils;
 
 import ClaFi.Controls.Base.SliderBase;
 import ClaFi.Controls.Button;
+import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.LabeledDivider;
 import ClaFi.Controls.Slider;
 import ClaFi.Controls.StackPanel;
@@ -13,8 +16,10 @@ import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
@@ -72,6 +77,24 @@ namespace ThisApp
                 << PopColor{};
         }
 
+        // A value as it would be typed over the face: its mark and its number.
+        [[nodiscard]] std::wstring typedValue(const ColorRuleValue& rule)
+        {
+            const float value = rule.value();
+            switch (rule.operation())
+            {
+                case ColorRuleOp::Offset:
+                    return std::format(L"{:+.2f}", value);
+                case ColorRuleOp::Scale:
+                    return std::format(L"\u00D7{:.2f}", value);
+                case ColorRuleOp::Set:
+                    return std::format(L"={:.2f}", value);
+                case ColorRuleOp::NoChange:
+                    break;
+            }
+            return {};
+        }
+
         // No change in words, having no value to show, and anything else as its glyph and value.
         void writeValueContent(Text& text, const ColorRuleValue& rule)
         {
@@ -127,9 +150,12 @@ namespace ThisApp
 
     // ValueRuleControl
 
-    void ValueRuleControl::bind(ColorRuleValue& value, OnValueRuleChanged onChanged)
+    void ValueRuleControl::bind(ColorRuleValue& value, const RuleChannel channel,
+        OnGetRuleBase ruleBase, OnValueRuleChanged onChanged)
     {
         m_value = &value;
+        m_channel = channel;
+        m_ruleBase = std::move(ruleBase);
         m_onChanged = std::move(onChanged);
         invalidate();
     }
@@ -160,6 +186,11 @@ namespace ThisApp
         changed();
     }
 
+    EditorMode ValueRuleControl::editorMode() const
+    {
+        return m_value ? EditorMode::Editable : EditorMode::None;
+    }
+
     void ValueRuleControl::showDropdown(Control& initiator)
     {
         if (!m_value)
@@ -178,6 +209,65 @@ namespace ThisApp
         if (m_value)
             event.text << k_operationNames[static_cast<std::size_t>(operation())];
         DropdownControlBase::getTooltip(event);
+    }
+
+    void ValueRuleControl::getEditorText(Text& text) const
+    {
+        if (m_value)
+            text << typedValue(*m_value);
+    }
+
+    // A value left as it reads is not taken, or the two decimals it shows would round the rule.
+    void ValueRuleControl::acceptEditorText(AcceptEditEvent& event)
+    {
+        if (!m_value)
+            return;
+        std::wstring_view typed = event.text.plainText();
+        trimLeft(typed);
+        trimRight(typed);
+        if (typed == typedValue(*m_value))
+            return;
+        if (typed.empty())
+        {
+            setOperation(ColorRuleOp::NoChange);
+            return;
+        }
+        const std::optional<ColorRuleValue> rule = typedRule(event, *m_value);
+        if (!rule.has_value())
+        {
+            if (!event.refused())
+                event.refuse(L"Type a mark and a value, such as +0.02 or =0.66.");
+            return;
+        }
+        *m_value = rule.value();
+        invalidateFormAlign();
+        changed();
+    }
+
+    // The face is one line, so the editor grows to the right with no ceiling of its own.
+    FloatPoint ValueRuleControl::editorMaxTextSize(const FloatRect&) const
+    {
+        return {};
+    }
+
+    // Return types over the face, the way it does over an editable combobox.
+    void ValueRuleControl::keyDown(KeyDownEvent& event)
+    {
+        if (event.key == Keys::Return && openEditor())
+        {
+            event.handled = true;
+            return;
+        }
+        ValueRuleControlBase::keyDown(event);
+    }
+
+    // A character that can start a value opens the editor with it, and a space presses the face.
+    void ValueRuleControl::charPress(CharPressEvent& event)
+    {
+        const wchar_t character = event.character();
+        if (character != L' ' && std::iswprint(character) && openEditor({ &character, 1 }))
+            return;
+        ValueRuleControlBase::charPress(event);
     }
 
     void ValueRuleControl::changed()
@@ -223,11 +313,12 @@ namespace ThisApp
         );
 
         // The value belongs to the picked operation, so with none there is nothing to move.
-        Slider& slider = add<Slider>(
+        RuleSlider& slider = add<RuleSlider>(
             ScrollButtons::No,
             HorizontalAlign::Fill,
             Padding{ 4.0f }
         );
+        slider.bind(m_owner.value(), m_owner.channel(), m_owner.ruleBase());
         slider.setMaxPosition(1.0f);
         slider.setRelativePosition(m_owner.normalizedValue(), false);
         slider.connectEvent([this](GetStateEvent& event) {
@@ -269,10 +360,14 @@ namespace ThisApp
         refreshItems();
     }
 
+    // The ramp is drawn through the operation, so the slider is painted again as well.
     void ValueRulePopup::refreshItems()
     {
         for (Control* item : m_stateItems)
+        {
             item->invalidateState();
+            item->invalidate();
+        }
     }
 
     // OperationItem

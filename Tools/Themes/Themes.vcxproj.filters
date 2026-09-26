@@ -92,6 +92,12 @@
     <ClCompile Include="Src\Util\ThisApp.RuleSlider.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.RuleText.cpp">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.RuleText.cppm">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Util\ThisApp.ThemeToCppCode.cpp">
       <Filter>Src\Util</Filter>
     </ClCompile>

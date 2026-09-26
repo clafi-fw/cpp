@@ -244,6 +244,8 @@ namespace ThisApp
         // The ink of the colour mode before any rule has touched it.
         [[nodiscard]] Hsl bareInk();
         [[nodiscard]] RuleBase rowRuleBase(const Grids::Rt::RowBase&, RuleChannel);
+        // What a value of a new rule is about to change, read the way rowRuleBase reads a row.
+        [[nodiscard]] RuleBase rule2Base(OptionalUiElement, const ColorRule2&, RuleChannel);
         //
         ColorRule& rowColorRule(Grids::Row&);
         ControlColorRules& rowColorRules(Grids::Rt::Row&);
@@ -813,9 +815,15 @@ namespace ThisApp
             storeElement();
         });
 
-        m_design2Page.bind(editColors(), [this]() {
-            rules2Changed();
-        });
+        m_design2Page.bind(editColors(),
+            [this](const OptionalUiElement element, const ColorRule2& rule,
+                const RuleChannel channel) {
+                return rule2Base(element, rule, channel);
+            },
+            [this]() {
+                rules2Changed();
+            }
+        );
     }
 
 }

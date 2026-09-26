@@ -476,6 +476,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Util/ThisApp.ApplyToControl.cpp"
         "${themes_dir}/Util/ThisApp.CodeOptions.cpp"
         "${themes_dir}/Util/ThisApp.FloorSlider.cpp"
+        "${themes_dir}/Util/ThisApp.RuleText.cpp"
         "${themes_dir}/Util/ThisApp.ThemeToCppCode.cpp"
         "${themes_dir}/Util/ThisApp.ValueRuleControl.cpp")
     target_sources(Themes PRIVATE FILE_SET CXX_MODULES FILES
@@ -495,6 +496,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Util/ThisApp.HueRuleControl.cppm"
         "${themes_dir}/Util/ThisApp.Palette.Controls.cppm"
         "${themes_dir}/Util/ThisApp.RuleSlider.cppm"
+        "${themes_dir}/Util/ThisApp.RuleText.cppm"
         "${themes_dir}/Util/ThisApp.ThemeToCppCode.cppm"
         "${themes_dir}/Util/ThisApp.Utils.cppm"
         "${themes_dir}/Util/ThisApp.ValueRuleControl.cppm")

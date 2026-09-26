@@ -1,6 +1,7 @@
 export module ThisApp.Design2Page;
 
 import ThisApp.ElementPage;
+import ThisApp.RuleSlider;
 
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
@@ -20,6 +21,10 @@ namespace ThisApp
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
+    // The colour a rule of an element's list, or of the shared list, is applied to.
+    export using OnGetElementRuleBase =
+        std::function<RuleBase(OptionalUiElement, const ColorRule2&, RuleChannel)>;
+
     // A theme's design under the new color theme architecture, one element page at a time.
     export class Design2Page : public Panel
     {
@@ -33,8 +38,8 @@ namespace ThisApp
         // Connects a handler raised after another page is picked.
         template<typename F>
         EventConnection onPagePick(F&& callback);
-        // Hands every page its list of the theme's rules and what it calls after changing it.
-        void bind(ThemeColors&, const OnRulesChanged&);
+        // Hands every page its list of the theme's rules, its ramps' base and what to call.
+        void bind(ThemeColors&, const OnGetElementRuleBase&, const OnRulesChanged&);
         // Builds every page's rows again from the rules as they stand.
         void rebuildRules();
     private:

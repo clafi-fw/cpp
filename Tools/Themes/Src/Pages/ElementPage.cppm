@@ -1,5 +1,7 @@
 export module ThisApp.ElementPage;
 
+import ThisApp.RuleSlider;
+
 import ClaFi.Icons.HueIcon;
 import ClaFi.Icons.LuminosityIcon;
 import ClaFi.Icons.PlusMark;
@@ -32,6 +34,8 @@ namespace ThisApp
 
     // What an element page calls after it has changed the rules it is bound to.
     export using OnRulesChanged = std::function<void()>;
+    // The colour a rule of the list is applied to, which its value ramps are drawn from.
+    export using OnGetListRuleBase = std::function<RuleBase(const ColorRule2&, RuleChannel)>;
 
     // One list of the new rules - an element's own or the shared ones - a grid row for each rule.
     export class ElementPage : public Panel
@@ -40,8 +44,8 @@ namespace ThisApp
         template<typename... Args>
         explicit ElementPage(const CreateParams&, std::wstring_view title, Args&&...);
     public:
-        // Takes the list it edits, the colours its hues read and what it calls after a change.
-        void bind(ColorRules2&, const ThemeColors&, OnRulesChanged);
+        // Takes the list, the colours its hues read, its ramps' base and what to call after edits.
+        void bind(ColorRules2&, const ThemeColors&, OnGetListRuleBase, OnRulesChanged);
         // Builds a row for every rule in the list, in list order.
         void rebuild();
     private:
@@ -62,10 +66,12 @@ namespace ThisApp
         void addRow(std::size_t index);
         void bindEditors(Grids::RowContainer&);
         [[nodiscard]] Grids::Column& column(RuleColumn);
+        [[nodiscard]] OnGetRuleBase ruleBaseOf(std::size_t index, RuleChannel) const;
         void rulesChanged() const;
     private:
         ColorRules2* m_rules{}; // the list the page shows, null until bound
         const ThemeColors* m_colors{}; // what the hue editors read the palette from
+        OnGetListRuleBase m_ruleBase{};
         OnRulesChanged m_onRulesChanged{};
         UiTimer m_deleteTimer{}; // deletes on the next tick, outside the event that asked
         RuleIndices m_pendingDeletes{};
@@ -112,21 +118,17 @@ namespace ThisApp
             Grids::Dt::Columns{
                 Grids::Dt::Column{ Tag{ RuleColumn::ApplyTo },
                     Text{ L"Apply to" },
-                    Grids::ColumnWidthMode::Fill,
-                    Grids::CellHighlightMode::Control
+                    Grids::ColumnWidthMode::Fill
                 },
                 Grids::Dt::Column{ Tag{ RuleColumn::Hue },
-                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::HueIcon::paint }, L" Hue" },
-                    Grids::CellHighlightMode::Control
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::HueIcon::paint }, L" Hue" }
                 },
                 Grids::Dt::Column{ Tag{ RuleColumn::Saturation },
                     Text{ InTextIcon{ 16.0f, 16.0f, Icons::SaturationIcon::paint },
-                        L" Saturation" },
-                    Grids::CellHighlightMode::Control
+                        L" Saturation" }
                 },
                 Grids::Dt::Column{ Tag{ RuleColumn::Elevation },
-                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::paint }, L" Elevation" },
-                    Grids::CellHighlightMode::Control
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::paint }, L" Elevation" }
                 }
             },
             Grids::Dt::Header{}

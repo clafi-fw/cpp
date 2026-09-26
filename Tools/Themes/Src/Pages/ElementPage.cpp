@@ -2,6 +2,7 @@ module ThisApp.ElementPage;
 
 import ThisApp.ApplyToControl;
 import ThisApp.HueRuleControl;
+import ThisApp.RuleSlider;
 import ThisApp.ValueRuleControl;
 
 import ClaFi.Controls.Grids;
@@ -19,10 +20,11 @@ import ClaFi.StdLib;
 namespace ThisApp
 {
     void ElementPage::bind(ColorRules2& rules, const ThemeColors& colors,
-        OnRulesChanged onRulesChanged)
+        OnGetListRuleBase ruleBase, OnRulesChanged onRulesChanged)
     {
         m_rules = &rules;
         m_colors = &colors;
+        m_ruleBase = std::move(ruleBase);
         m_onRulesChanged = std::move(onRulesChanged);
         rebuild();
     }
@@ -113,18 +115,37 @@ namespace ThisApp
     // No change is always a hue a new rule may take, so Clear is offered on every row.
     void ElementPage::bindEditors(Grids::RowContainer& row)
     {
-        ColorRule& effect = (*m_rules)[row.tag().value].effect;
+        const std::size_t index = row.tag().value;
+        ColorRule& effect = (*m_rules)[index].effect;
         row.controlAtColumnAs<HueRuleControl>(column(RuleColumn::Hue))
             .bind(effect.hue, *m_colors, m_onRulesChanged, true);
-        row.controlAtColumnAs<ValueRuleControl>(column(RuleColumn::Saturation))
-            .bind(effect.saturation, m_onRulesChanged);
-        row.controlAtColumnAs<ValueRuleControl>(column(RuleColumn::Elevation))
-            .bind(effect.elevation, m_onRulesChanged);
+        row.controlAtColumnAs<ValueRuleControl>(column(RuleColumn::Saturation)).bind(
+            effect.saturation,
+            RuleChannel::Saturation,
+            ruleBaseOf(index, RuleChannel::Saturation),
+            m_onRulesChanged
+        );
+        row.controlAtColumnAs<ValueRuleControl>(column(RuleColumn::Elevation)).bind(
+            effect.elevation,
+            RuleChannel::Elevation,
+            ruleBaseOf(index, RuleChannel::Elevation),
+            m_onRulesChanged
+        );
     }
 
     Grids::Column& ElementPage::column(const RuleColumn tag)
     {
         return m_grid.columnByTag(Tag{ tag });
+    }
+
+    // Asked as the ramp is painted, since every other rule of the theme can move it.
+    OnGetRuleBase ElementPage::ruleBaseOf(const std::size_t index, const RuleChannel channel) const
+    {
+        if (!m_ruleBase)
+            return {};
+        return [this, index, channel]() {
+            return m_ruleBase((*m_rules)[index], channel);
+        };
     }
 
     void ElementPage::rulesChanged() const
