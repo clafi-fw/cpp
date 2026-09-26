@@ -191,6 +191,17 @@ namespace ClaFi
             float effectivePressedFactor = calcEffectiveFactor(m_colorRules.pressed, VisualStateIndex::Pressed, m_parentPressedAmount);
             bgChanged2 = StateFactors::compose(bgChanged2,
                 m_colorRules.pressed.applyTo(surface, effectivePressedFactor, m_lightness));
+
+            // The new rules read the factors the old ones were applied by, so a control that hides
+            // its surface at rest, or its selection, says so to both alike.
+            m_ruleInputFactors = {
+                .surfaceRest = m_showSurfaceAtRest ? 1.0f : 0.0f,
+                .strokeRest = baseFactor,
+                .hovered = hoverEffectiveFactor,
+                .pressed = effectivePressedFactor,
+                .selected = selectedFactor,
+                .selectedOnSurface = selectedEffectiveFactor
+            };
             bgChanged2 = StateFactors::compose(bgChanged2,
                 applyColorRules2(PaintChannel::Surface, surface));
 
@@ -642,18 +653,25 @@ namespace ClaFi
         return false;
     }
 
-    float PaintEvent::inputFactor(const RuleInputs inputs) const
+    float PaintEvent::inputFactor(const RuleInputs inputs, const PaintChannel channel) const
     {
+        const bool onSurface = channel == PaintChannel::Surface or channel == PaintChannel::Stroke;
         if (inputs.empty())
+        {
+            if (channel == PaintChannel::Surface)
+                return m_ruleInputFactors.surfaceRest;
+            if (channel == PaintChannel::Stroke)
+                return m_ruleInputFactors.strokeRest;
             return 1.0f;
+        }
         const StateFactors& factors = control().factors();
         // In RuleInput order.
         using InputFactors = std::array<float, static_cast<std::size_t>(RuleInput::Count)>;
         const InputFactors inputFactors = {
-            factors.hovered(),
-            factors.pressed(),
+            m_ruleInputFactors.hovered,
+            m_ruleInputFactors.pressed,
             factors.focused(),
-            factors.selected(),
+            onSurface ? m_ruleInputFactors.selectedOnSurface : m_ruleInputFactors.selected,
             1.0f - m_enabledFactor,
             factors.textHovered(),
             factors.current(),
@@ -687,7 +705,7 @@ namespace ClaFi
             if (rule.output != channel)
                 continue;
             changed = StateFactors::compose(changed,
-                rule.effect.applyTo(color, inputFactor(rule.inputs), lightness));
+                rule.effect.applyTo(color, inputFactor(rule.inputs, channel), lightness));
         }
         return changed;
     }

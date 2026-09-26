@@ -187,13 +187,7 @@ namespace ClaFi
             .name = L"Page",
             .codeName = L"page",
             .token = L"Page",
-            .rules = &ThemeColors::page,
-            .base = UiElement::Form,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Stroke,
-                UiElementState::Text
-            }
+            .base = UiElement::Form
         },
         // The open tab wears its page's surface, and its line runs the length of the page.
         UiElementDescriptor{
@@ -207,13 +201,7 @@ namespace ClaFi
             .name = L"Section",
             .codeName = L"section",
             .token = L"Section",
-            .rules = &ThemeColors::section,
-            .base = UiElement::Page,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Stroke,
-                UiElementState::Text
-            }
+            .base = UiElement::Page
         },
         // No Stroke: ThemeMetrics gives an expander header and a grid header no border, and
         // GridHeader copies only surface and text out of this set in any case.
@@ -228,33 +216,18 @@ namespace ClaFi
                 UiElementState::Text
             }
         },
-        // What a bar is painted on is the window's content, the same thing a section stands on,
-        // so it previews against the page. No Active, Hovered or Pressed: nothing makes a bar the
-        // one in effect and nothing points at it - the controls standing on it answer all three.
+        // What a bar is painted on is the window's content, the same thing a section stands on.
         UiElementDescriptor{
             .name = L"Bar",
             .codeName = L"bar",
             .token = L"Bar",
-            .rules = &ThemeColors::bar,
-            .base = UiElement::Page,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Stroke,
-                UiElementState::Text
-            }
+            .base = UiElement::Page
         },
         UiElementDescriptor{
             .name = L"Form Title",
             .codeName = L"formTitle",
             .token = L"FormTitle",
-            .rules = &ThemeColors::formTitle,
-            .base = UiElement::Form,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Active,
-                UiElementState::Text,
-                UiElementState::ActiveText
-            }
+            .base = UiElement::Form
         },
         UiElementDescriptor{
             .name = L"Menu",
@@ -288,26 +261,14 @@ namespace ClaFi
             .name = L"Divider",
             .codeName = L"divider",
             .token = L"Divider",
-            .rules = &ThemeColors::divider,
-            .base = UiElement::Section,
-            .states{
-                UiElementState::Surface
-            }
+            .base = UiElement::Section
         },
-        // STROKE HERE IS THE GRID'S OUTER BORDER - the line drawn around the lattice, and not one
-        // of the lines in it. Those are GridLine, one rule for the whole lattice, and they stand
-        // on the rows. No Active: what the selection lights is a row, which wears GridRow.
+        // Its stroke is the grid's outer border; the lines in the lattice are GridLine's.
         UiElementDescriptor{
             .name = L"Grid",
             .codeName = L"grid",
             .token = L"Grid",
-            .rules = &ThemeColors::grid,
-            .base = UiElement::Section,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Stroke,
-                UiElementState::Text
-            }
+            .base = UiElement::Section
         },
         // No Stroke: a row draws no border of its own - the lines between its cells are GridLine.
         UiElementDescriptor{
@@ -336,17 +297,7 @@ namespace ClaFi
             .name = L"Button",
             .codeName = L"button",
             .token = L"Button",
-            .rules = &ThemeColors::button,
-            .base = UiElement::Section,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Stroke,
-                UiElementState::Active,
-                UiElementState::Hovered,
-                UiElementState::Pressed,
-                UiElementState::Text,
-                UiElementState::ActiveText
-            }
+            .base = UiElement::Section
         },
         // Surface is the band while the focus is elsewhere and Active is what the focus adds, so
         // the Surface row is what is seen on a box the user is not typing in.
@@ -400,47 +351,16 @@ namespace ClaFi
             .rule = &ThemeColors::spot,
             .base = UiElement::Section
         },
-        // No Active on either half of a scroll bar: both are copied from button in the
-        // ThemeColors constructor and inherit its active rule, but nothing ever makes a scroll
-        // button or a thumb the one in effect. Neither is given a border either.
         UiElementDescriptor{
             .name = L"Scroll Button",
             .codeName = L"scrollButton",
             .token = L"ScrollButton",
-            .rules = &ThemeColors::scrollButton,
-            .base = UiElement::Section,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Hovered,
-                UiElementState::Pressed,
-                UiElementState::Text
-            }
+            .base = UiElement::Section
         },
         UiElementDescriptor{
             .name = L"Scroll Thumb",
             .codeName = L"scrollThumb",
             .token = L"ScrollThumb",
-            .rules = &ThemeColors::scrollThumb,
-            .base = UiElement::Section,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Hovered,
-                UiElementState::Pressed,
-                UiElementState::Text
-            }
-        },
-        // THE TWO TEST SUBJECTS. They name no old rule, so nothing but the new color rules reaches
-        // them: with none, each paints no surface and draws its text in the ink it inherits.
-        UiElementDescriptor{
-            .name = L"Testee",
-            .codeName = L"testee",
-            .token = L"Testee",
-            .base = UiElement::Section
-        },
-        UiElementDescriptor{
-            .name = L"Bestee",
-            .codeName = L"bestee",
-            .token = L"Bestee",
             .base = UiElement::Section
         }
     };

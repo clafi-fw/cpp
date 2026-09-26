@@ -909,6 +909,7 @@ namespace ThisApp
             (editColors().*descriptor.rules).surface.applyTo(result, 1.0f, editColors(),
                 elementMode);
         }
+        applyRestingRules2(result, *element, PaintChannel::Surface, elementMode);
         return result;
     }
 
@@ -933,7 +934,19 @@ namespace ThisApp
                 result.luminosity = 1.0f - result.luminosity;
             rules.text.applyTo(result, 1.0f, editColors(), elementColorMode(element));
         }
+        applyRestingRules2(result, *element, PaintChannel::Text, elementColorMode(element));
         return result;
+    }
+
+    // The new rules come after the old ones, and the shared list after the element's own.
+    void ThemePage::applyRestingRules2(Hsl& color, const UiElement element,
+        const PaintChannel channel, const ColorMode mode)
+    {
+        const ThemeRules2& rules = editColors().rules2;
+        for (const ColorRules2* list : { &rules.of(element), &rules.shared })
+            for (const ColorRule2& rule : *list)
+                if (rule.inputs.empty() and rule.output == channel)
+                    rule.effect.applyTo(color, 1.0f, editColors(), mode);
     }
 
     // The ink of the preview's colour mode before any rule: white at the dark end, black at the

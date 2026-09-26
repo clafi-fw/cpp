@@ -241,6 +241,8 @@ namespace ThisApp
         // The ink an element's text starts from: the same nesting as elementColor, walked
         // through text rules instead of surface ones.
         [[nodiscard]] Hsl elementTextColor(OptionalUiElement);
+        // What an element's new rules, and the shared ones, do at rest to one channel.
+        void applyRestingRules2(Hsl&, UiElement, PaintChannel, ColorMode);
         // The ink of the colour mode before any rule has touched it.
         [[nodiscard]] Hsl bareInk();
         [[nodiscard]] RuleBase rowRuleBase(const Grids::Rt::RowBase&, RuleChannel);
@@ -607,43 +609,18 @@ namespace ThisApp
                     Grids::Dt::Divider{},
                     elementGroup(UiElement::Tooltip)
                 },
-                // What is painted inside a form, and the line each surface carries. A page on the
-                // form with the line its tabs stand on, a section on the page, a header on the
-                // section with the divider that parts one band of it from the next, a bar along an
-                // edge of the window, the title strip across the top of the form itself, and the
-                // grid a lattice is drawn inside, with its rows and the lattice's line under it.
+                // What is painted inside a form: the line tabs stand on, a header, and a grid's
+                // rows with the lattice's line under them.
                 Grids::Dt::Expander{
                     Header{ Text{ TextStyleId::Section, L"Surfaces" } },
                     sectionFold(),
-                    elementGroup(UiElement::Page),
-                    Grids::Dt::Divider{},
                     staticRow(UiElement::TabLine),
                     Grids::Dt::Divider{},
-                    elementGroup(UiElement::Section),
-                    Grids::Dt::Divider{},
                     elementGroup(UiElement::Header),
-                    Grids::Dt::Divider{},
-                    staticRow(UiElement::Divider),
-                    Grids::Dt::Divider{},
-                    elementGroup(UiElement::Bar),
-                    Grids::Dt::Divider{},
-                    elementGroup(UiElement::FormTitle),
-                    Grids::Dt::Divider{},
-                    elementGroup(UiElement::Grid),
                     Grids::Dt::Divider{},
                     elementGroup(UiElement::GridRow),
                     Grids::Dt::Divider{},
                     staticRow(UiElement::GridLine)
-                },
-                // What answers the pointer.
-                Grids::Dt::Expander{
-                    Header{ Text{ TextStyleId::Section, L"Controls" } },
-                    sectionFold(),
-                    elementGroup(UiElement::Button),
-                    Grids::Dt::Divider{},
-                    elementGroup(UiElement::ScrollButton),
-                    Grids::Dt::Divider{},
-                    elementGroup(UiElement::ScrollThumb)
                 },
                 // Where the user is and what the user has picked. Accent is the one ink for the
                 // focus ring and the on state of every mark, and Spot is the emphasis that stands

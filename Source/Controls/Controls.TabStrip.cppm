@@ -7,6 +7,7 @@ import ClaFi.Controls.Base.Container;
 
 import ClaFi.Core.Graphics.TabRenderer;
 
+import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
 
 import ClaFi.Core.System.UiTypes;
@@ -239,7 +240,8 @@ namespace ClaFi::Controls
     void Tab::adjustPaint(AdjustPaintEvent& event)
     {
         TabBaseClass::adjustPaint(event);
-        event.setColorRules(UiElement::Button);
+        // A set of its own, every rule of it stated below, so no element's new rules reach a tab.
+        event.setColorRules(BakedElement{});
         event.setStrokeRule(event.bakedColors().rule(UiElement::TabLine));
 
         if (m_actualPageColor.alpha)

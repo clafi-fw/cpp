@@ -74,7 +74,7 @@ namespace ThisApp
         std::wstring_view text{};
     };
 
-    constexpr std::array<MemberComment, 12ull> k_memberComments{
+    constexpr std::array<MemberComment, 9ull> k_memberComments{
         MemberComment{ .element = UiElement::Form, .text =
             L"THE WINDOW EVERYTHING ELSE IS PAINTED ON. A form is the root a control tree stands in,\n"
             L"and the pair this set states is what that root establishes: surface is applied to the\n"
@@ -93,16 +93,6 @@ namespace ThisApp
             L"of a grid. An expander takes the whole set for its header; a grid header takes surface\n"
             L"and text and leaves its other states as they stand, so those two are the whole of what\n"
             L"a column name is drawn in." },
-        MemberComment{ .element = UiElement::Bar, .text =
-            L"A STRIP OF COMMANDS ACROSS AN EDGE OF A WINDOW: a toolbar along the top, the row of\n"
-            L"answers along the bottom of a message box, and anything else that is a band of the\n"
-            L"window rather than a card standing in it. A bar is what the controls on it are painted\n"
-            L"over, so what it states is a place for them to stand and never an emphasis of its own -\n"
-            L"it names no state, because nothing makes a bar hovered, pressed or the one in effect." },
-        MemberComment{ .element = UiElement::Grid, .text =
-            L"THE GRID AS A WHOLE, and its stroke is the grid's OUTER border - the line around the\n"
-            L"lattice and not one of the lines in it, which is gridLine's. GridBase wears this set,\n"
-            L"so the surface is what every row and cell of the grid stands on." },
         MemberComment{ .element = UiElement::GridRow, .text =
             L"Every row of a grid, groups and sections included. See Grids" },
         MemberComment{ .element = UiElement::GridLine, .text =
@@ -138,11 +128,7 @@ namespace ThisApp
             L"The second accent, over the palette's third hue: what stands apart from the interface\n"
             L"rather than answers to it - a brand mark, a run of emphasised text, and the tint a\n"
             L"tooltip carries. Stated apart from the accent so that a theme can spend one sparingly\n"
-            L"while the other runs through every control." },
-        MemberComment{ .element = UiElement::ScrollButton, .text =
-            L"The button at each end of a scroll bar. ScrollBar hands this set to those two and\n"
-            L"scrollThumb to the thumb, so the halves of a bar are themed apart: a thumb has to\n"
-            L"read against the trough it runs in, an end button against the bar." }
+            L"while the other runs through every control." }
     };
 
     // The prose that member carries, or nothing where it carries none.

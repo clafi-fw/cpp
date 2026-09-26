@@ -66,17 +66,11 @@ namespace ThisApp
             UiElement::SelectedText
         };
 
-        constexpr std::array k_testSubjects{
-            UiElement::Testee,
-            UiElement::Bestee
-        };
-
         constexpr std::array k_elementCategories{
             ElementCategory{ L"Window roots", k_windowRoots },
             ElementCategory{ L"Surfaces", k_surfaces },
             ElementCategory{ L"Controls", k_controls },
-            ElementCategory{ L"Focus and Selection", k_focusAndSelection },
-            ElementCategory{ L"Test subjects", k_testSubjects }
+            ElementCategory{ L"Focus and Selection", k_focusAndSelection }
         };
 
         // How far an element's name stands in from its category's.

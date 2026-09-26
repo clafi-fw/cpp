@@ -226,8 +226,6 @@ namespace ClaFi
         Spot,
         ScrollButton,
         ScrollThumb,
-        Testee,   // a test subject only the new color rules reach
-        Bestee,   // the second test subject only the new color rules reach
         Count
     };
 
@@ -385,33 +383,11 @@ namespace ClaFi
             }
         };
 
-        ControlColorRules page{
-            .surface{
-                {},                                     // S
-                { ColorRuleOp::Set, 0.0f }              // E
-            },
-            .stroke{
-                {},                                     // S
-                { ColorRuleOp::Offset, 0.044491f }      // E
-            }
-        };
-
         // Every tab's outline and the line it stands on, applied to the tab's own surface.
         ColorRule tabLine{
             { ColorRuleHueOp::NoChange, 0.928767f },    // H
             { ColorRuleOp::NoChange, 0.490111f },       // S
             { ColorRuleOp::Offset, 0.25f }              // E
-        };
-
-        ControlColorRules section{
-            .surface{
-                { ColorRuleOp::NoChange, 0.195241f },   // S
-                { ColorRuleOp::Offset, 0.044533f }      // E
-            },
-            .stroke{
-                {},                                     // S
-                { ColorRuleOp::NoChange, 0.541019f }    // E
-            }
         };
 
         // The strip an expander shows its title on, and the row of column names across the top
@@ -426,43 +402,6 @@ namespace ClaFi
             .text{
                 {},                                     // S
                 { ColorRuleOp::Set, 0.897275f }         // E
-            }
-        };
-
-        // A STRIP OF COMMANDS ACROSS AN EDGE OF A WINDOW: a toolbar along the top, the row of
-        // answers along the bottom of a message box, and anything else that is a band of the
-        // window rather than a card standing in it. A bar is what the controls on it are painted
-        // over, so what it states is a place for them to stand and never an emphasis of its own -
-        // it names no state, because nothing makes a bar hovered, pressed or the one in effect.
-        ControlColorRules bar{
-            .surface{
-                { ColorRuleHueOp::NoChange, 0.512329f }, // H
-                { ColorRuleOp::NoChange, 0.137752f },   // S
-                { ColorRuleOp::Set, 0.102818f }         // E
-            },
-            .stroke{
-                {},                                     // S
-                { ColorRuleOp::NoChange, 0.271235f }    // E
-            }
-        };
-
-        ControlColorRules formTitle{
-            .surface{
-                { ColorRuleOp::NoChange, 0.18f },       // S
-                { ColorRuleOp::Set, 0.13 }         // E
-            },
-            .active{
-                { ColorRuleOp::NoChange, 0.501121f },   // S
-                { ColorRuleOp::Set, 0.08f }              // E
-            },
-            .text{
-                { ColorRuleHueOp::NoChange, 0.131507f }, // H
-                { ColorRuleOp::NoChange, 1.0f },        // S
-                { ColorRuleOp::Offset, -0.3 }     // E
-            },
-            .activeText{
-                {},                                     // S
-                { ColorRuleOp::Offset, 0.3 }      // E
             }
         };
 
@@ -504,23 +443,6 @@ namespace ClaFi
             }
         };
 
-        ControlColorRules divider{
-            .surface{
-                { ColorRuleOp::NoChange, 0.191474f },   // S
-                { ColorRuleOp::Offset, 0.05f }      // E
-            }
-        };
-
-        // THE GRID AS A WHOLE, and its stroke is the grid's OUTER border - the line around the
-        // lattice and not one of the lines in it, which is gridLine's. GridBase wears this set,
-        // so the surface is what every row and cell of the grid stands on.
-        ControlColorRules grid{
-            .stroke{
-                {},                                     // S
-                { ColorRuleOp::Offset, 0.120654f }      // E
-            }
-        };
-
         // Every row of a grid, groups and sections included. See Grids
         ControlColorRules gridRow{
             // A SELECTED ROW. A row wears this set and paints no surface of its own, so the rule
@@ -544,30 +466,6 @@ namespace ClaFi
             { ColorRuleHueOp::NoChange, 0.860274f },    // H
             { ColorRuleOp::NoChange, 0.765086f },       // S
             { ColorRuleOp::Offset, 0.080088f }          // E
-        };
-
-        ControlColorRules button{
-            .surface{
-                { ColorRuleOp::NoChange, 0.0f },        // S
-                { ColorRuleOp::Offset, 0.054944f }      // E
-            },
-            .stroke{
-                {},                                     // S
-                { ColorRuleOp::Offset, 0.037839f }      // E
-            },
-            .active{
-                { ColorRuleHueOp::PaletteColor2 },      // H
-                { ColorRuleOp::Offset, 0.094499f },     // S
-                { ColorRuleOp::Offset, 0.099311f }      // E
-            },
-            .hovered{
-                { ColorRuleOp::Offset, 0.085609f },     // S
-                { ColorRuleOp::Offset, 0.126926f }      // E
-            },
-            .pressed{
-                { ColorRuleOp::Scale, 0.8f },           // S
-                { ColorRuleOp::Scale, 0.9f }            // E
-            }
         };
 
         // The band behind selected text, and the ink drawn on it. The two are resolved in
@@ -654,39 +552,6 @@ namespace ClaFi
             { ColorRuleHueOp::PaletteColor3 },          // H
             { ColorRuleOp::Set, 0.926093f },            // S
             { ColorRuleOp::Set, 0.689641f }             // E
-        };
-
-        // The button at each end of a scroll bar. ScrollBar hands this set to those two and
-        // scrollThumb to the thumb, so the halves of a bar are themed apart: a thumb has to
-        // read against the trough it runs in, an end button against the bar.
-        ControlColorRules scrollButton{
-            .surface{
-                { ColorRuleOp::NoChange, 0.0f },        // S
-                { ColorRuleOp::Offset, 0.03f }          // E
-            },
-            .hovered{
-                { ColorRuleOp::Offset, 0.0f },          // S
-                { ColorRuleOp::Offset, 0.3f }           // E
-            },
-            .pressed{
-                { ColorRuleOp::Scale, 0.8f },           // S
-                { ColorRuleOp::Scale, 0.9f }            // E
-            }
-        };
-
-        ControlColorRules scrollThumb{
-            .surface{
-                { ColorRuleOp::NoChange, 0.0f },        // S
-                { ColorRuleOp::Offset, 0.4f }           // E
-            },
-            .hovered{
-                { ColorRuleOp::Offset, 0.0f },          // S
-                { ColorRuleOp::Offset, 0.06f }          // E
-            },
-            .pressed{
-                { ColorRuleOp::Scale, 0.8f },           // S
-                { ColorRuleOp::Scale, 0.9f }            // E
-            }
         };
 
 
@@ -1064,8 +929,100 @@ namespace ClaFi
     ThemeRules2 defaultRules2()
     {
         ThemeRules2 result{};
-        // Testee, in the values Button states - its surface set, then its stroke.
-        result.of(UiElement::Testee) = {
+        // Page - its surface at rest, then its stroke.
+        result.of(UiElement::Page) = {
+            ColorRule2{
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Set, 0.0f }              // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Offset, 0.044491f }      // E
+                }
+            }
+        };
+
+        // Section - its surface at rest.
+        result.of(UiElement::Section) = {
+            ColorRule2{
+                .effect{
+                    { ColorRuleOp::NoChange, 0.195241f },   // S
+                    { ColorRuleOp::Offset, 0.044533f }      // E
+                }
+            }
+        };
+
+        // Bar - its surface at rest.
+        result.of(UiElement::Bar) = {
+            ColorRule2{
+                .effect{
+                    { ColorRuleHueOp::NoChange, 0.512329f }, // H
+                    { ColorRuleOp::NoChange, 0.137752f },   // S
+                    { ColorRuleOp::Set, 0.102818f }         // E
+                }
+            }
+        };
+
+        // Form title - its surface at rest and selected, then its text at rest and selected.
+        result.of(UiElement::FormTitle) = {
+            ColorRule2{
+                .effect{
+                    { ColorRuleOp::NoChange, 0.18f },       // S
+                    { ColorRuleOp::Set, 0.13 }              // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Selected },
+                .effect{
+                    { ColorRuleOp::NoChange, 0.501121f },   // S
+                    { ColorRuleOp::Set, 0.08f }             // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Text,
+                .effect{
+                    { ColorRuleHueOp::NoChange, 0.131507f }, // H
+                    { ColorRuleOp::NoChange, 1.0f },        // S
+                    { ColorRuleOp::Offset, -0.3 }           // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Selected },
+                .output = PaintChannel::Text,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Offset, 0.3 }            // E
+                }
+            }
+        };
+
+        // Divider - its surface at rest.
+        result.of(UiElement::Divider) = {
+            ColorRule2{
+                .effect{
+                    { ColorRuleOp::NoChange, 0.191474f },   // S
+                    { ColorRuleOp::Offset, 0.05f }          // E
+                }
+            }
+        };
+
+        // Grid - its stroke, the outer border of the lattice.
+        result.of(UiElement::Grid) = {
+            ColorRule2{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Offset, 0.120654f }      // E
+                }
+            }
+        };
+
+        // Button - its surface at rest and in each state, then its stroke.
+        result.of(UiElement::Button) = {
             ColorRule2{
                 .effect{
                     { ColorRuleOp::NoChange, 0.0f },        // S
@@ -1073,7 +1030,7 @@ namespace ClaFi
                 }
             },
             ColorRule2{
-                .inputs{ RuleInput::Selected, RuleInput::Hovered },
+                .inputs{ RuleInput::Selected },
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
                     { ColorRuleOp::Offset, 0.094499f },     // S
@@ -1099,6 +1056,54 @@ namespace ClaFi
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Offset, 0.037839f }      // E
+                }
+            }
+        };
+
+        // Scroll button - its surface at rest, hovered and pressed.
+        result.of(UiElement::ScrollButton) = {
+            ColorRule2{
+                .effect{
+                    { ColorRuleOp::NoChange, 0.0f },        // S
+                    { ColorRuleOp::Offset, 0.03f }          // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Hovered },
+                .effect{
+                    { ColorRuleOp::Offset, 0.0f },          // S
+                    { ColorRuleOp::Offset, 0.3f }           // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Pressed },
+                .effect{
+                    { ColorRuleOp::Scale, 0.8f },           // S
+                    { ColorRuleOp::Scale, 0.9f }            // E
+                }
+            }
+        };
+
+        // Scroll thumb - its surface at rest, hovered and pressed.
+        result.of(UiElement::ScrollThumb) = {
+            ColorRule2{
+                .effect{
+                    { ColorRuleOp::NoChange, 0.0f },        // S
+                    { ColorRuleOp::Offset, 0.4f }           // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Hovered },
+                .effect{
+                    { ColorRuleOp::Offset, 0.0f },          // S
+                    { ColorRuleOp::Offset, 0.06f }          // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Pressed },
+                .effect{
+                    { ColorRuleOp::Scale, 0.8f },           // S
+                    { ColorRuleOp::Scale, 0.9f }            // E
                 }
             }
         };

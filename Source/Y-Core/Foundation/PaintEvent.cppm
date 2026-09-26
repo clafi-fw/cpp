@@ -179,6 +179,16 @@ namespace ClaFi
             CornerRadii radii{};
             RectSidesBoolArray sides{};
         };
+        // How far each state stands as the new rules read it, settled with the old rules' factors.
+        struct RuleInputFactors
+        {
+            float surfaceRest{ 1.0f };      // an at-rest rule on the surface
+            float strokeRest{ 1.0f };       // an at-rest rule on the stroke
+            float hovered{};
+            float pressed{};
+            float selected{};               // as the ink reads it
+            float selectedOnSurface{};      // as the surface and the stroke read it
+        };
     private:
         [[nodiscard]] float zAnimationFactor(VisualStateIndex) const;
         // The parent this control may take state from, which is not always the one above it.
@@ -205,8 +215,8 @@ namespace ClaFi
         // Whether a host further out, in its standard stage at the moment, lists this control - a
         // control that host's overlay stage is going to paint. See paint.
         [[nodiscard]] bool isListedByEnclosingHost(const Control&) const;
-        // How far a rule reading these inputs applies: 1 at rest, their composed factors otherwise.
-        [[nodiscard]] float inputFactor(RuleInputs) const;
+        // How far a rule reading these inputs applies on a channel: its rest, or their factors.
+        [[nodiscard]] float inputFactor(RuleInputs, PaintChannel) const;
         // The element's own new rules on one channel, then the shared ones; how far they moved it.
         float applyColorRules2(PaintChannel, Hsl& color) const;
         float applyColorRules2(const BakedColorRules2&, PaintChannel, Hsl& color) const;
@@ -291,6 +301,7 @@ namespace ClaFi
         Color m_surfaceRgb;
         Color m_strokeRgb{};
         Hsl m_shadowHsl{}; // the shadow channel, carried down the tree like the surface and the ink
+        RuleInputFactors m_ruleInputFactors{};
     };
 
     // The paint being set up, before anything is drawn.
