@@ -11,12 +11,12 @@ namespace ClaFi::Icons::MessageBadge
 {
     using namespace ::ClaFi::Graphics;
 
-    // What the five message icons are made of: a container filled in the colour its slot names,
+    // What the five message icons are made of: a container filled in the colour its pigment names,
     // with the glyph drawn over it in the colour of the surface the icon stands on. The five
-    // differ in their glyph and their slot and in nothing else, so the container is stated here
+    // differ in their glyph and their pigment and in nothing else, so the container is stated here
     // once and each icon is left holding only what makes it that icon.
     //
-    // Not an icon itself: it takes a slot, so it can never be a PaintIconFunc.
+    // Not an icon itself: it takes an ink, so it can never be a PaintIconFunc.
 
     // Where a glyph goes and what it is drawn with, as fractions of the whole badge. See Icons
     export struct GlyphSlot

@@ -70,7 +70,7 @@ namespace ClaFi
             return spotInk(gradeOf(grade));
         }
 
-        // The palette's semantic hues, each at the tone slotTones states for the side of the
+        // The palette's semantic hues, each at the tone pigmentTones states for the side of the
         // theme the painter stands on. The grade fades one toward the surface the way it fades
         // the text ink, so at Strongest a hue stands at its own tone.
         [[nodiscard]] constexpr Ink yellowInk(float grade)
@@ -158,22 +158,22 @@ namespace ClaFi
         // because nothing brighter clears 3:1 on a light page - a bright yellow IS light - which
         // is why every system draws that icon amber on light and lemon on dark. Raising it back
         // toward lemon breaks the contrast.
-        [[nodiscard]] constexpr SlotTones slotTones(ColorSlot slot)
+        [[nodiscard]] constexpr PigmentTones pigmentTones(Pigment pigment)
         {
-            switch (slot)
+            switch (pigment)
             {
-                case ColorSlot::Yellowish:
+                case Pigment::Yellow:
                     return { .dark{ 1.0f, 0.9f }, .light{ 1.0f, 0.51f } };
-                case ColorSlot::Greenish:
+                case Pigment::Green:
                     return { .dark{ 1.0f, 0.84f }, .light{ 1.0f, 0.49f } };
-                case ColorSlot::Blueish:
+                case Pigment::Blue:
                     return { .dark{ 1.0f, 0.47f }, .light{ 1.0f, 0.41f } };
-                case ColorSlot::Reddish:
+                case Pigment::Red:
                     return { .dark{ 1.0f, 0.56f }, .light{ 1.0f, 0.55f } };
-                case ColorSlot::Count:
+                case Pigment::Count:
                     break;
             }
-            unreachable("a colour slot with no tones");
+            unreachable("a pigment with no tones");
         }
 
         constexpr Ink Yellow = yellowInk();

@@ -89,7 +89,7 @@ namespace ClaFi
         applyTheme(appContext, theme, wornColorMode(appContext));
     }
 
-    // Baked here rather than in the core: what a slot and a palette hue stand for is the theme's
+    // Baked here rather than in the core: what a pigment and a palette hue stand for is the theme's
     // to say, and saying it is what leaves a set with a half way in every value.
     void applyTheme(AppContext& appContext, const AppTheme& theme, ColorMode mode)
     {

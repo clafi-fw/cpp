@@ -237,14 +237,14 @@ Dark or Light stated outright. Auto stands first and is what a config stating no
 is drawn is always a ColorMode - a setting is read into one where a theme is put on, see
 wornColorMode in Application - so nothing that paints ever holds Auto.
 
-## ColorSlot
+## Pigment
 
 Which of the theme's semantic hues an ink is drawn from. Each is a region of the wheel
-rather than a place in an order, so a slot carries the colour its name states whatever the
+rather than a place in an order, so a pigment carries the colour its name states whatever the
 anchor is, and one harmony fills all four.
 
-Only a hue is named here. What a slot is drawn as - how colourful, and how light - is stated
-once per colour mode: by InkWell's tones for an ink colour, and by the painter for a slot it
+Only a hue is named here. What a pigment is drawn as - how colourful, and how light - is stated
+once per colour mode: by InkWell's tones for an ink colour, and by the painter for a pigment it
 draws directly. See InkTone.
 
 ## InkTone
@@ -254,7 +254,7 @@ different amount of colour to read at one luminosity than at another, so stating
 without the other names half a colour - which is why a mode-pair is a pair of these rather
 than a pair of luminosities.
 
-## SlotTones
+## PigmentTones
 
 One colour stated once for each side of the theme, rather than one elevation the mode would
 orient. Which of the two is read is the painter's mode rather than the theme's, and a theme
@@ -335,7 +335,7 @@ accent so that spending it sparingly is the theme's decision and not each caller
 
 ## InkColor::Yellow, Green, Blue, Red
 
-One of the palette's semantic hues, drawn at the tone InkWell's slotTones states for the
+One of the palette's semantic hues, drawn at the tone InkWell's pigmentTones states for the
 colour mode the painter stands in. The grade fades it toward the surface the way it fades
 the text ink, so at Strongest the hue stands at its own tone.
 

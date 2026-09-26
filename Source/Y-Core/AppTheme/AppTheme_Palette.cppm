@@ -71,26 +71,26 @@ namespace ClaFi
         3ull
     };
 
-    // What a harmony fills and what an ink is drawn from are one question, so ColorSlot answers
+    // What a harmony fills and what an ink is drawn from are one question, so Pigment answers
     // both: the four hues it names are the four a harmony settles, in the order it settles them.
 
-    using IconHues = std::array<float, k_colorSlotsCount>;
-    using ClaimedSlots = std::array<bool, k_colorSlotsCount>;
+    using PigmentHues = std::array<float, k_pigmentsCount>;
+    using ClaimedPigments = std::array<bool, k_pigmentsCount>;
 
-    // Where yellow, green, blue and red stand: for each name, the hue that still reads as that
-    // name at the luminosities these slots are painted at. A slot is named after a colour, so its
-    // reference is the middle of that colour, and the hue channel places the four by how they
-    // look rather than by even thirds of a wheel.
+    // Where yellow, green, blue and red stand: for each name, the hue that still reads as that name
+    // at the luminosities these pigments are painted at. A pigment is named after a colour, so its
+    // reference is the middle of that colour, and the hue channel places the four by how they look
+    // rather than by even thirds of a wheel.
     //
-    // The middle of the colour, not the sRGB corner of it. A corner is the most saturated
-    // exemplar a display holds, which is the edge of what the name covers rather than its centre:
-    // sRGB's blue carries hue 264, and 264 at the palette display pair paints #7A9FEC, a
-    // periwinkle. A corner named here would put every Information and Question icon on the violet
-    // side of blue, and would leave the blue a theme actually holds too far out to reach the slot.
+    // The middle of the colour, not the sRGB corner of it. A corner is the most saturated exemplar
+    // a display holds, which is the edge of what the name covers rather than its centre: sRGB's
+    // blue carries hue 264, and 264 at the palette display pair paints #7A9FEC, a periwinkle. A
+    // corner named here would put every Information and Question icon on the violet side of blue,
+    // and would leave the blue a theme actually holds too far out to reach the pigment.
     //
     // THE FOUR ARE NOT EVENLY SPREAD, and no rule here may assume they are. Yellow and green
     // stand 58 degrees apart while blue and red stand 140.
-    constexpr std::array<int, k_colorSlotsCount> k_iconHueReferenceDegrees{
+    constexpr std::array<int, k_pigmentsCount> k_pigmentReferenceDegrees{
         90,
         148,
         245,
@@ -99,77 +99,78 @@ namespace ClaFi
 
     namespace
     {
-        constexpr IconHues makeIconHueReferences()
+        constexpr PigmentHues makePigmentReferences()
         {
-            IconHues references{};
-            for (std::size_t slot = 0ull; slot != k_colorSlotsCount; ++slot)
-                references[slot] = hueFromDegree(k_iconHueReferenceDegrees[slot]);
+            PigmentHues references{};
+            for (std::size_t pigment = 0ull; pigment != k_pigmentsCount; ++pigment)
+                references[pigment] = hueFromDegree(k_pigmentReferenceDegrees[pigment]);
             return references;
         }
     }
 
-    constexpr IconHues k_iconHueReferences = makeIconHueReferences();
+    constexpr PigmentHues k_pigmentReferences = makePigmentReferences();
 
-    // How far from its reference a hue may stand and still be called by that slot's name. This is
-    // what a claim means: a hue standing outside every reach names no slot, and that slot is
-    // answered by a fill rule rather than by a colour nobody would call blue.
-    constexpr int k_iconHueReachDegrees = 30;
+    // How far from its reference a hue may stand and still be called by that pigment's name. This
+    // is what a claim means: a hue standing outside every reach names no pigment, and that pigment
+    // is answered by a fill rule rather than by a colour nobody would call blue.
+    constexpr int k_pigmentReachDegrees = 30;
 
     namespace
     {
-        // A slot's claim window, in whole degrees to either side of its reference. The two sides are
-        // stated apart because the references are not evenly spread: a slot with a near neighbour on
-        // one side and a far one on the other reaches further into the side that stands empty.
-        struct IconHueWindow
+        // A pigment's claim window, in whole degrees to either side of its reference. The two sides
+        // are stated apart because the references are not evenly spread: a pigment with a near
+        // neighbour on one side and a far one on the other reaches further into the side that
+        // stands empty.
+        struct PigmentWindow
         {
             int below;
             int above;
         };
     }
 
-    using IconHueWindows = std::array<IconHueWindow, k_colorSlotsCount>;
+    using PigmentWindows = std::array<PigmentWindow, k_pigmentsCount>;
 
     // Each side is the reach, cut back to half the gap to the nearest reference on that side.
-    // Half a gap is what keeps every hue inside a window nearer this slot's reference than any
+    // Half a gap is what keeps every hue inside a window nearer this pigment's reference than any
     // other, and the whole-degree division leaves the seam over an odd gap to neither window
-    // rather than to both. A gap cuts only the two slots it separates, so Blueish keeps its whole
-    // reach across the 97 degrees of empty wheel above green while Yellowish holds 29 on the side
+    // rather than to both. A gap cuts only the two pigments it separates, so Blue keeps its whole
+    // reach across the 97 degrees of empty wheel above green while Yellow holds 29 on the side
     // green stands.
-    constexpr IconHueWindows makeIconHueWindows()
+    constexpr PigmentWindows makePigmentWindows()
     {
-        IconHueWindows windows{};
-        for (std::size_t slot = 0ull; slot != k_colorSlotsCount; ++slot)
+        PigmentWindows windows{};
+        for (std::size_t pigment = 0ull; pigment != k_pigmentsCount; ++pigment)
         {
-            IconHueWindow window = { k_iconHueReachDegrees, k_iconHueReachDegrees };
-            for (std::size_t other = 0ull; other != k_colorSlotsCount; ++other)
+            PigmentWindow window = { k_pigmentReachDegrees, k_pigmentReachDegrees };
+            for (std::size_t other = 0ull; other != k_pigmentsCount; ++other)
             {
-                if (other == slot)
+                if (other == pigment)
                     continue;
-                int gapAbove = (k_iconHueReferenceDegrees[other] - k_iconHueReferenceDegrees[slot] + 360) % 360;
+                int gapAbove = (k_pigmentReferenceDegrees[other] - k_pigmentReferenceDegrees[pigment] + 360) % 360;
                 int gapBelow = 360 - gapAbove;
                 window.above = (std::min)(window.above, gapAbove / 2);
                 window.below = (std::min)(window.below, gapBelow / 2);
             }
-            windows[slot] = window;
+            windows[pigment] = window;
         }
         return windows;
     }
 
-    constexpr IconHueWindows k_iconHueWindows = makeIconHueWindows();
+    constexpr PigmentWindows k_pigmentWindows = makePigmentWindows();
 
     // Two distances within a degree of each other count as the same distance, and a hue a degree
     // outside a window stands inside it. A colour between two references - an orange between
     // yellow and red - is at the same remove from both, and a harmony steps by whole degrees, so
     // it drops colours on a window edge exactly; without the margin the float error those offsets
-    // carry would settle which slot took a colour, or whether any slot took it at all.
-    constexpr float k_iconHueTie = 1.0f / 360.0f;
+    // carry would settle which pigment took a colour, or whether any pigment took it at all.
+    constexpr float k_pigmentHueTie = 1.0f / 360.0f;
 
     // The most the four may be turned as one: the smallest window side, so the turn leaves every
-    // slot inside its own window whichever way it goes.
-    constexpr float makeIconHueTurnLimit()
+    // pigment inside its own window whichever way it goes.
+    constexpr float makePigmentTurnLimit()
     {
-        int limit = k_iconHueReachDegrees;
-        for (const IconHueWindow& window : k_iconHueWindows)
+        int limit = k_pigmentReachDegrees;
+        for (const PigmentWindow& window : k_pigmentWindows)
         {
             limit = (std::min)(limit, window.below);
             limit = (std::min)(limit, window.above);
@@ -177,18 +178,18 @@ namespace ClaFi
         return hueFromDegree(limit);
     }
 
-    constexpr float k_iconHueTurnLimit = makeIconHueTurnLimit();
+    constexpr float k_pigmentTurnLimit = makePigmentTurnLimit();
 
-    // What fills a slot no harmony colour reaches. All three keep the four hues distinct and each
-    // one inside its window, so a slot always carries the colour its name states; they differ in
-    // what a theme's icons do when the harmony stands nowhere near a slot. Set k_iconHueFill and
-    // rebuild to compare them.
-    enum class IconHueFill
+    // What fills a pigment no harmony colour reaches. All three keep the four hues distinct and
+    // each one inside its window, so a pigment always carries the colour its name states; they
+    // differ in what a theme's icons do when the harmony stands nowhere near a pigment. Set
+    // k_pigmentFill and rebuild to compare them.
+    enum class PigmentFill
     {
-        // The slot's own reference. Truest to the names, and the same hue in every theme, so in
-        // that slot only the anchor's saturation and luminosity tell two themes' icons apart.
+        // The pigment's own reference. Truest to the names, and the same hue in every theme, so in
+        // that pigment only the anchor's saturation and luminosity tell two themes' icons apart.
         Reference,
-        // The point in the slot's window standing farthest from every hue already settled. Keeps
+        // The point in the pigment's window standing farthest from every hue already settled. Keeps
         // the four spread and moving with the theme, at the cost of sitting near a window edge.
         WidestGap,
         // Nothing is claimed: the four references turn as one, by the offset that lays the set
@@ -197,7 +198,7 @@ namespace ClaFi
         TurnedSet
     };
 
-    constexpr IconHueFill k_iconHueFill = IconHueFill::WidestGap;
+    constexpr PigmentFill k_pigmentFill = PigmentFill::WidestGap;
 
     // A hue wrapped into the half open turn a hue is held in.
     [[nodiscard]] float wrappedHue(float value);
@@ -210,35 +211,35 @@ namespace ClaFi
     // positive above.
     [[nodiscard]] float hueOffset(float hue, float reference);
 
-    // Whether a hue stands inside a slot's window, the side it falls on choosing the reach.
-    [[nodiscard]] bool insideIconHueWindow(float hue, std::size_t slot);
+    // Whether a hue stands inside a pigment's window, the side it falls on choosing the reach.
+    [[nodiscard]] bool insidePigmentWindow(float hue, std::size_t pigment);
 
-    // Hands each slot the harmony colour nearest its reference, of those standing inside its
-    // window, and marks the slot claimed. The nearest pairing is settled first, so a colour two
-    // slots could take goes to the one it fits better and the other is left for another rule to
-    // fill. A colour serves one slot only, two slots holding it naming the same hue twice.
-    void claimIconHues(IconHues&, ClaimedSlots&, const PaletteColors&);
+    // Hands each pigment the harmony colour nearest its reference, of those standing inside its
+    // window, and marks the pigment claimed. The nearest pairing is settled first, so a colour two
+    // pigments could take goes to the one it fits better and the other is left for another rule to
+    // fill. A colour serves one pigment only, two pigments holding it naming the same hue twice.
+    void claimPigmentHues(PigmentHues&, ClaimedPigments&, const PaletteColors&);
 
-    // Moves each unclaimed slot to the point in its window standing farthest from where every
-    // other slot stands: a claimed slot at the colour it took, one this has not answered yet at
-    // its own reference, which is where it stands unless something crowds it. Each window is
-    // walked outward from its reference, so a slot with room on both sides keeps its reference
+    // Moves each unclaimed pigment to the point in its window standing farthest from where every
+    // other pigment stands: a claimed pigment at the colour it took, one this has not answered yet
+    // at its own reference, which is where it stands unless something crowds it. Each window is
+    // walked outward from its reference, so a pigment with room on both sides keeps its reference
     // and the four stay as near their names as the harmony leaves them.
-    void spreadIconHues(IconHues&, const ClaimedSlots&);
+    void spreadPigmentHues(PigmentHues&, const ClaimedPigments&);
 
     // Turns the whole set by the one offset, no wider than the tightest window, that lays it over
     // as many of the harmony's colours as it can. The turn is looked for among the offsets that
     // would bring some reference onto some colour: between two of those nothing meets, so moving
     // further only takes the set away from whatever it was nearest.
-    void turnIconHues(IconHues&, const PaletteColors&);
+    void turnPigmentHues(PigmentHues&, const PaletteColors&);
 
     // A palette entry shown as a colour. An entry is a hue and nothing else, so anything that
     // draws one has to be given the other two from somewhere, and this is that somewhere. The pair
     // is the same in every theme, so a swatch shows the hue itself rather than how that hue
     // happens to land in the theme being looked at.
     //
-    // Nothing resolved is drawn from these: ThemeColors::slotHsl takes the hue of a palette colour
-    // and states the other two itself.
+    // Nothing resolved is drawn from these: ThemeColors::pigmentHsl takes the hue of a palette
+    // colour and states the other two itself.
     export constexpr float k_paletteDisplaySaturation = 0.75f;
     export constexpr float k_paletteDisplayLuminosity = 0.66f;
 
@@ -262,18 +263,18 @@ namespace ClaFi
         const PaletteColor& color(std::size_t index) const;
         std::size_t colorsNum() const { return m_colors.size(); }
         bool useColorOnBg() const { return (*m_selectedMap)[0] != noHue; }
-        // The four hues an icon may be drawn in, one per slot, derived once per anchor and
-        // read from there. Where one of the harmony's own colours falls in a slot's window that
-        // colour fills the slot, an icon being free to share a hue with the palette; a slot no
-        // harmony colour reaches is answered by k_iconHueFill. No two slots hold one colour,
-        // which would name the same hue twice.
-        [[nodiscard]] const PaletteColors& iconColors() const { return m_iconColors; }
-        [[nodiscard]] const PaletteColor& iconColor(ColorSlot slot) const { return m_iconColors[static_cast<std::size_t>(slot)]; }
+        // The four pigments, derived once per anchor and read from there. Where one of the
+        // harmony's own colours falls in a pigment's window that colour fills the pigment, a
+        // pigment being free to share a hue with the palette; a pigment no harmony colour reaches
+        // is answered by k_pigmentFill. No two pigments hold one colour, which would name the same
+        // hue twice.
+        [[nodiscard]] const PaletteColors& pigmentColors() const { return m_pigmentColors; }
+        [[nodiscard]] const PaletteColor& pigmentColor(Pigment pigment) const { return m_pigmentColors[static_cast<std::size_t>(pigment)]; }
     protected:
         PaletteColors& colors() { return m_colors; }
-        // Derives the icon hues from whatever colours stand in m_colors, so an override of
+        // Derives the pigments from whatever colours stand in m_colors, so an override of
         // anchorChanged that builds its colours differently ends by calling this.
-        void fillIconColors();
+        void fillPigmentColors();
     protected:
         PaletteColor m_gray{ { 0.0f, 0.0f, 0.5f } };
     protected:
@@ -283,7 +284,7 @@ namespace ClaFi
         ColorHarmonyKind m_kind;
         const std::wstring_view& m_name;
         PaletteColors m_colors{};
-        PaletteColors m_iconColors{};
+        PaletteColors m_pigmentColors{};
         PaletteMap* m_selectedMap;
         std::vector<PaletteMap> m_maps;
     };
@@ -342,64 +343,64 @@ namespace ClaFi
         return offset > 0.5f ? offset - 1.0f : offset;
     }
 
-    bool insideIconHueWindow(float hue, std::size_t slot)
+    bool insidePigmentWindow(float hue, std::size_t pigment)
     {
-        const IconHueWindow& window = k_iconHueWindows[slot];
-        float offset = hueOffset(hue, k_iconHueReferences[slot]);
+        const PigmentWindow& window = k_pigmentWindows[pigment];
+        float offset = hueOffset(hue, k_pigmentReferences[pigment]);
         int reach = offset < 0.0f ? window.below : window.above;
-        return std::fabs(offset) <= hueFromDegree(reach) + k_iconHueTie;
+        return std::fabs(offset) <= hueFromDegree(reach) + k_pigmentHueTie;
     }
 
-    void claimIconHues(IconHues& hues, ClaimedSlots& claimed, const PaletteColors& colors)
+    void claimPigmentHues(PigmentHues& hues, ClaimedPigments& claimed, const PaletteColors& colors)
     {
-        // Which colour each slot took, kept beside the claimed flags because a colour is refused
-        // to a second slot by identity and not by the hue it carries.
+        // Which colour each pigment took, kept beside the claimed flags because a colour is refused
+        // to a second pigment by identity and not by the hue it carries.
         constexpr std::size_t unclaimed = static_cast<std::size_t>(-1);
-        std::array<std::size_t, k_colorSlotsCount> claimedColor{};
+        std::array<std::size_t, k_pigmentsCount> claimedColor{};
         claimedColor.fill(unclaimed);
 
-        for (std::size_t pairing = 0ull; pairing != k_colorSlotsCount; ++pairing)
+        for (std::size_t pairing = 0ull; pairing != k_pigmentsCount; ++pairing)
         {
-            std::size_t bestSlot = unclaimed;
+            std::size_t bestPigment = unclaimed;
             std::size_t bestColor = unclaimed;
             float bestDistance = k_maxFloat;
-            for (std::size_t slot = 0ull; slot != k_colorSlotsCount; ++slot)
+            for (std::size_t pigment = 0ull; pigment != k_pigmentsCount; ++pigment)
             {
-                if (claimedColor[slot] != unclaimed)
+                if (claimedColor[pigment] != unclaimed)
                     continue;
                 for (std::size_t color = 0ull; color != colors.size(); ++color)
                 {
                     if (std::ranges::find(claimedColor, color) != claimedColor.end())
                         continue;
-                    if (!insideIconHueWindow(colors[color].hue(), slot))
+                    if (!insidePigmentWindow(colors[color].hue(), pigment))
                         continue;
-                    float distance = hueDistance(colors[color].hue(), k_iconHueReferences[slot]);
-                    // Where two pairings fit equally the earlier slot keeps the colour, the slots
-                    // being walked in order.
-                    if (distance + k_iconHueTie >= bestDistance)
+                    float distance = hueDistance(colors[color].hue(), k_pigmentReferences[pigment]);
+                    // Where two pairings fit equally the earlier pigment keeps the colour, the
+                    // pigments being walked in order.
+                    if (distance + k_pigmentHueTie >= bestDistance)
                         continue;
                     bestDistance = distance;
-                    bestSlot = slot;
+                    bestPigment = pigment;
                     bestColor = color;
                 }
             }
-            if (bestSlot == unclaimed)
+            if (bestPigment == unclaimed)
                 break;
-            hues[bestSlot] = colors[bestColor].hue();
-            claimedColor[bestSlot] = bestColor;
-            claimed[bestSlot] = true;
+            hues[bestPigment] = colors[bestColor].hue();
+            claimedColor[bestPigment] = bestColor;
+            claimed[bestPigment] = true;
         }
     }
 
-    void spreadIconHues(IconHues& hues, const ClaimedSlots& claimed)
+    void spreadPigmentHues(PigmentHues& hues, const ClaimedPigments& claimed)
     {
-        for (std::size_t slot = 0ull; slot != k_colorSlotsCount; ++slot)
+        for (std::size_t pigment = 0ull; pigment != k_pigmentsCount; ++pigment)
         {
-            if (claimed[slot])
+            if (claimed[pigment])
                 continue;
 
-            const IconHueWindow& window = k_iconHueWindows[slot];
-            float bestHue = k_iconHueReferences[slot];
+            const PigmentWindow& window = k_pigmentWindows[pigment];
+            float bestHue = k_pigmentReferences[pigment];
             float bestClearance = -1.0f;
             for (int offset = 0; offset <= (std::max)(window.below, window.above); ++offset)
             {
@@ -408,17 +409,17 @@ namespace ClaFi
                     int step = offset * direction;
                     if (step < -window.below || step > window.above)
                         continue;
-                    float hue = wrappedHue(k_iconHueReferences[slot] + hueFromDegree(step));
+                    float hue = wrappedHue(k_pigmentReferences[pigment] + hueFromDegree(step));
 
                     // How much room the candidate has: its distance from the nearest hue another
-                    // slot stands at. A slot this has not answered yet stands at its reference,
-                    // which is where it ends up unless something crowds it, so counting it holds a
-                    // slot with room on both sides at its own reference instead of pushing it
-                    // against the window edge furthest from whatever was settled first.
+                    // pigment stands at. A pigment this has not answered yet stands at its
+                    // reference, which is where it ends up unless something crowds it, so counting
+                    // it holds a pigment with room on both sides at its own reference instead of
+                    // pushing it against the window edge furthest from whatever was settled first.
                     float clearance = k_maxFloat;
-                    for (std::size_t other = 0ull; other != k_colorSlotsCount; ++other)
+                    for (std::size_t other = 0ull; other != k_pigmentsCount; ++other)
                     {
-                        if (other == slot)
+                        if (other == pigment)
                             continue;
                         clearance = (std::min)(clearance, hueDistance(hue, hues[other]));
                     }
@@ -429,22 +430,22 @@ namespace ClaFi
                     bestHue = hue;
                 }
             }
-            hues[slot] = bestHue;
+            hues[pigment] = bestHue;
         }
     }
 
-    void turnIconHues(IconHues& hues, const PaletteColors& colors)
+    void turnPigmentHues(PigmentHues& hues, const PaletteColors& colors)
     {
         std::vector<float> turns{ 0.0f };
-        turns.reserve(colors.size() * k_colorSlotsCount + 1ull);
+        turns.reserve(colors.size() * k_pigmentsCount + 1ull);
         for (const PaletteColor& color : colors)
-            for (float reference : k_iconHueReferences)
+            for (float reference : k_pigmentReferences)
             {
                 // The shorter way round, so a turn reads as the small move it is rather than as
                 // most of a lap the other way.
                 float turn = color.hue() - reference;
                 turn -= std::round(turn);
-                if (std::fabs(turn) <= k_iconHueTurnLimit)
+                if (std::fabs(turn) <= k_pigmentTurnLimit)
                     turns.push_back(turn);
             }
 
@@ -459,23 +460,23 @@ namespace ClaFi
         for (float turn : turns)
         {
             // How far the harmony's colours stand from the turned set. The lower this is, the more
-            // of them an icon hue lands on.
+            // of them a pigment lands on.
             float cost = 0.0f;
             for (const PaletteColor& color : colors)
             {
                 float nearest = k_maxFloat;
-                for (float reference : k_iconHueReferences)
+                for (float reference : k_pigmentReferences)
                     nearest = (std::min)(nearest, hueDistance(color.hue(), wrappedHue(reference + turn)));
                 cost += nearest;
             }
-            if (cost + k_iconHueTie >= bestCost)
+            if (cost + k_pigmentHueTie >= bestCost)
                 continue;
             bestCost = cost;
             bestTurn = turn;
         }
 
-        for (std::size_t slot = 0ull; slot != k_colorSlotsCount; ++slot)
-            hues[slot] = wrappedHue(k_iconHueReferences[slot] + bestTurn);
+        for (std::size_t pigment = 0ull; pigment != k_pigmentsCount; ++pigment)
+            hues[pigment] = wrappedHue(k_pigmentReferences[pigment] + bestTurn);
     }
 
     Hsl paletteDisplayColor(float hue)
@@ -595,7 +596,7 @@ namespace ClaFi
         case ColorHarmonyKind::Count:
             break;
         }
-        fillIconColors();
+        fillPigmentColors();
     }
 
     void ColorHarmony::addMap(const PaletteMap& value)
@@ -629,31 +630,31 @@ namespace ClaFi
         }
     }
 
-    void ColorHarmony::fillIconColors()
+    void ColorHarmony::fillPigmentColors()
     {
-        // The set starts on the references, and what follows writes over the slots it settles.
-        IconHues hues = k_iconHueReferences;
-        ClaimedSlots claimed{};
+        // The set starts on the references, and what follows writes over the pigments it settles.
+        PigmentHues hues = k_pigmentReferences;
+        ClaimedPigments claimed{};
 
-        if constexpr (k_iconHueFill == IconHueFill::TurnedSet)
+        if constexpr (k_pigmentFill == PigmentFill::TurnedSet)
         {
-            turnIconHues(hues, m_colors);
+            turnPigmentHues(hues, m_colors);
         }
         else
         {
-            claimIconHues(hues, claimed, m_colors);
-            if constexpr (k_iconHueFill == IconHueFill::WidestGap)
+            claimPigmentHues(hues, claimed, m_colors);
+            if constexpr (k_pigmentFill == PigmentFill::WidestGap)
             {
-                spreadIconHues(hues, claimed);
+                spreadPigmentHues(hues, claimed);
             }
         }
 
         // Only the hue is the harmony's, and only the hue leaves here for anything painted: the
         // resolver states the other two itself. These carry the palette's display pair so that a
-        // slot shown in the editor and a palette swatch beside it read as one set.
-        m_iconColors.clear();
+        // pigment shown in the editor and a palette swatch beside it read as one set.
+        m_pigmentColors.clear();
         for (float hue : hues)
-            m_iconColors.emplace_back(paletteDisplayColor(hue));
+            m_pigmentColors.emplace_back(paletteDisplayColor(hue));
     }
 
     // ColorHarmonySelector

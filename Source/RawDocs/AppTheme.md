@@ -115,7 +115,7 @@ Per channel, in place of the operation and its value:
 - `setTarget` with `setPull` - an absolute elevation and how far it is taken, identity 0
 
 A hue is the same pair, `hue` with `setPull`, a pull of nothing being the hue the colour arrived
-with. A palette slot resolves to its hue as the set is baked, so nothing downstream has a slot
+with. A pigment resolves to its hue as the set is baked, so nothing downstream has a pigment
 left to look up.
 
 `applyTo` crosses to the elevation axis once, runs Scale, then Offset, then Set, and crosses back.
@@ -130,11 +130,11 @@ that set at every factor**, so two themes that agree on a rule leave it still. A
 outgoing rule at one weight and the incoming rule at the other does not hold it - two `Set 0.5`
 taken at 0.7 and 0.3 pull `1 - 0.3 * 0.7` of the way rather than the whole of it.
 
-## A slot as a baked theme holds it
+## A pigment as a baked theme holds it
 
-A SLOT'S HUE IS THE THEME'S AND ITS TONE IS THE INK'S. The harmony answers while a theme is baked,
-so what a baked set carries per slot is the hue itself - a value two themes have a half way between
-- and `ColorHarmonyKind` reaches no further than the bake.
+A PIGMENT'S HUE IS THE THEME'S AND ITS TONE IS THE INK'S. The harmony answers while a theme is
+baked, so what a baked set carries per pigment is the hue itself - a value two themes have a half
+way between - and `ColorHarmonyKind` reaches no further than the bake.
 
 The two tones an ink states are one colour written once for each side of the theme rather than one
 elevation the mode would orient, so a theme standing between the sides is drawn between the tones.

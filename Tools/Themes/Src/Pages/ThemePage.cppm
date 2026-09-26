@@ -153,10 +153,10 @@ namespace ThisApp
         void harmonyChanged();
         void paletteMapChanged();
         void mapHuesToColors();
-        // The icon hues of the harmony the theme names, written as marks after the row's
-        // caption, in slot order. They are derived from the anchor and the harmony kind alone, so
-        // nothing here reads or writes the palette.
-        void iconHuesText(GetTextEvent&);
+        // The pigments of the harmony the theme names, written as marks after the row's caption, in
+        // pigment order. They are derived from the anchor and the harmony kind alone, so nothing
+        // here reads or writes the palette.
+        void otherPigmentsText(GetTextEvent&);
         void darkModeFloorChanged();
         void darkModeFloorText(GetTextEvent&);
         //
@@ -385,7 +385,7 @@ namespace ThisApp
             m_laneSize
         );
 
-        TabTo m_labelsMargin{ 70.0f };
+        TabTo m_labelsMargin{ 120.0f };
 
         const Text k_labelPush{};
         const Text k_labelPop{};
@@ -394,11 +394,11 @@ namespace ThisApp
         // When it'll do, this label can be eliminated and replaced with uncommenting *** below
         Label& m_anchorLabel{ m_paletteAnchorLane.createLeftBar<Label>(
             VerticalTextAnchor::Center,
-            Text{ k_labelPush, L"Anchor:", m_labelsMargin, k_labelPop })
+            Text{ k_labelPush, L"Anchor hue:", m_labelsMargin, k_labelPop })
         };
 
         ColorSlider& m_anchorSlider{ m_paletteAnchorLane.createBody<ColorSlider>(
-            // *** Text{ k_subHeaderFont, L"Anchor color:" },
+            // *** Text{ k_subHeaderFont, L"Anchor hue:" },
             // *** TextPlacement::Left,
             // *** VerticalTextAnchor::Center,
             ColorAttribute::Hue,
@@ -429,13 +429,12 @@ namespace ThisApp
             }
         ) };
 
-        // The four hues the selected harmony offers an icon, shown and nothing more: nothing
-        // names one of them yet, and the label carries the whole row - the marks are written into
-        // its text beside the caption rather than standing as controls of their own.
-        Label& m_iconHuesLabel{ m_paletteColumn1.add<Label>(
+        // The selected harmony's four pigments, drawn as marks in the label's own text.
+        Label& m_otherPigmentsLabel{ m_paletteColumn1.add<Label>(
             VerticalTextAnchor::Center,
             Padding{ 0.0f, 4.0f },
-            Text{ k_labelPush, L"Icon hues:", m_labelsMargin, k_labelPop }
+            Text{ k_labelPush, L"Other pigments:", m_labelsMargin, k_labelPop },
+            TooltipText{ L"Pigments safe to use in small doses" }
         ) };
 
         //Controls::Separator& m_paletteSep1{ m_paleteExpanderBody.add<Controls::Separator>() };
@@ -774,7 +773,7 @@ namespace ThisApp
                     );
             });
 
-        m_iconHuesLabel.connectEvent(this, &ThemePage::iconHuesText);
+        m_otherPigmentsLabel.connectEvent(this, &ThemePage::otherPigmentsText);
 
         m_harmonyStack.connectEvent([this](CurrentItemChangeEvent&) {
                 harmonyChanged();

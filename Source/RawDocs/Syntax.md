@@ -31,7 +31,7 @@ these and nothing else grows with it.
 ## Inks
 
 What each kind of token is drawn in, one Ink per kind. An ink is a colour named rather than
-stated - a slot of the palette, a rule of the theme, a grade of the text - so a table holds
+stated - a pigment, a rule of the theme, a grade of the text - so a table holds
 on either side of the theme without saying so twice. A kind left in the text's own ink is
 plain to whoever draws it: it states no span, and costs what a plain run costs. The
 framework's table keeps only Plain there; operators and punctuation are drawn a grade

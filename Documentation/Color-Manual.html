@@ -121,7 +121,7 @@
                 <ul>
                     <li><a href="#surface-and-ink">Surface and ink</a></li>
                     <li><a href="#grades">Grades</a></li>
-                    <li><a href="#slots">Semantic colours</a></li>
+                    <li><a href="#pigments">Pigments</a></li>
                     <li><a href="#accent-and-spot">Accent and spot</a></li>
                     <li><a href="#elevation">Elevation and colour mode</a></li>
                     <li><a href="#app-mode">The application's mode</a></li>
@@ -135,7 +135,7 @@
                 <ul>
                     <li><a href="#ref-inkwell">InkWell</a></li>
                     <li><a href="#ref-grades">InkGrade</a></li>
-                    <li><a href="#ref-slots">ColorSlot and InkTone</a></li>
+                    <li><a href="#ref-pigments">Pigment and InkTone</a></li>
                     <li><a href="#ref-resolving">Resolving an ink</a></li>
                     <li><a href="#ref-text">Naming an ink in text</a></li>
                     <li><a href="#ref-app-mode">The application's mode</a></li>
@@ -188,17 +188,18 @@ cannot tell the families apart at the call site:</p>
 <ul>
     <li><strong>Text</strong> - the ink the paint chain arrived at. All text is this colour at one
         grade or another.</li>
-    <li><strong>The semantic colours</strong> - <code>Yellow</code>, <code>Green</code>,
-        <code>Blue</code> and <code>Red</code>, the theme's four meaning-carrying hues, each drawn at a
-        tone the framework states for either side of the theme. Warnings and errors are these.</li>
+    <li><strong>The other pigments</strong> - <code>Yellow</code>, <code>Green</code>,
+        <code>Blue</code> and <code>Red</code>, the four meaning-carrying hues the theme supplies beside
+        accent and spot, each drawn at a tone the framework states for either side of the theme.
+        Warnings and errors are these.</li>
     <li><strong>Black and white</strong> - pure, and the same on either side of the theme.</li>
-    <li><strong>Accent and spot</strong> - one of the theme's own colour rules, laid over the text
-        ink.</li>
+    <li><strong>Accent and spot</strong> - the two pigments named for their role, each one of the
+        theme's own colour rules laid over the text ink.</li>
 </ul>
 
 <div class="info">
 <strong>Module imports:</strong> naming an ink needs <code>ClaFi.Core.System.InkWell</code>. The
-types the names are built from - <code>Ink</code>, <code>InkColor</code>, <code>InkGrade</code>, <code>ColorSlot</code>,
+types the names are built from - <code>Ink</code>, <code>InkColor</code>, <code>InkGrade</code>, <code>Pigment</code>,
 <code>InkTone</code>, <code>ColorMode</code> - come with
 <code>ClaFi.Core.System.UiTypes</code>. A theme's own rules live in
 <code>ClaFi.Core.AppTheme_Colors</code>, which only a theme editor and the paint chain need.
@@ -214,7 +215,7 @@ end.</p>
 <span class="tp">Color</span> body = <span class="tp">InkWell</span>::<span class="fn">textInk</span>().<span class="fn">toColor</span>(event);                 <span class="cm">// the full ink</span>
 <span class="tp">Color</span> quiet = <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Muted).<span class="fn">toColor</span>(event);  <span class="cm">// a step down toward the surface</span>
 <span class="tp">Color</span> mark = <span class="tp">InkWell</span>::<span class="fn">accentInk</span>().<span class="fn">toColor</span>(event);               <span class="cm">// the theme's accent</span>
-<span class="tp">Color</span> warn = <span class="tp">InkWell</span>::Yellow.<span class="fn">toColor</span>(event);                      <span class="cm">// a semantic hue</span>
+<span class="tp">Color</span> warn = <span class="tp">InkWell</span>::Yellow.<span class="fn">toColor</span>(event);                      <span class="cm">// a pigment</span>
 
 event.<span class="fn">canvas</span>().<span class="fn">drawPath</span>(path, { <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(mark, event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin)) });</code></pre>
 
@@ -267,17 +268,19 @@ band under a line that crosses another. It is invisible on the surface it was re
 only there.
 </div>
 
-<h3 id="slots">Semantic colours</h3>
+<h3 id="pigments">Pigments</h3>
 
-<p>Four colours carry meaning rather than emphasis: <code>InkColor::Yellow</code>,
-<code>Green</code>, <code>Blue</code> and <code>Red</code>. Each takes its hue from a slot of the
-theme's harmony - a region of the wheel that every theme fills its own way - so it carries the
-colour its name states whatever the anchor is.</p>
+<p>A pigment is a hue the theme supplies. Two are named for their role - the accent and the spot,
+described next. The other four are named the way colours are named everywhere else:
+<code>InkColor::Yellow</code>, <code>Green</code>, <code>Blue</code> and <code>Red</code>. They
+carry meaning rather than emphasis, and are safe to use in small doses - an icon, a badge, a border.
+Each takes its hue from a region of the theme's harmony that every theme fills its own way, so it
+carries the colour its name states whatever the anchor is.</p>
 
-<p>The theme supplies the hue and nothing else. How colourful the colour is and where it sits are
-the framework's to state, <strong>once for each colour mode</strong>, as a pair of
-<code>InkTone</code> in <code>InkWell::slotTones</code>. A semantic ink therefore reads the same on
-every surface in the form - which is the point. A yellow border going brown on a dark theme is a
+<p>The theme supplies their hue and nothing else. How colourful the colour is and where it sits
+are the framework's to state, <strong>once for each colour mode</strong>, as a pair of
+<code>InkTone</code> in <code>InkWell::pigmentTones</code>. A semantic ink therefore reads the same
+on every surface in the form - which is the point. A yellow border going brown on a dark theme is a
 border doing its job; a warning icon going brown is one failing at it.</p>
 
 <p>The grade fades a semantic colour toward the surface the way it fades the text ink, so at
@@ -420,7 +423,7 @@ two yellows.</p>
 <tr><td><code>spotInk(InkGrade = Strongest)</code></td><td>The theme's spot rule, at that grade.</td></tr>
 <tr><td><code>yellowInk</code>, <code>greenInk</code>, <code>blueInk</code>, <code>redInk</code> <code>(InkGrade = Strongest)</code></td><td>A semantic colour at that grade.</td></tr>
 <tr><td><code>blackInk</code>, <code>whiteInk</code> <code>(InkGrade = Strongest)</code></td><td>Pure black or white at that grade, the same in both colour modes.</td></tr>
-<tr><td><code>slotTones(ColorSlot)</code></td><td>The tone a semantic colour is drawn at on each side of the theme.</td></tr>
+<tr><td><code>pigmentTones(Pigment)</code></td><td>The tone a semantic colour is drawn at on each side of the theme.</td></tr>
 <tr><td><code>InkWell::Yellow</code></td><td>Warning. Drawn, never read - see below.</td></tr>
 <tr><td><code>InkWell::Green</code></td><td>Success, present, on.</td></tr>
 <tr><td><code>InkWell::Blue</code></td><td>Information, a link, a thing named.</td></tr>
@@ -450,23 +453,24 @@ and is not an invitation.
 <tr><td><code>InkGrade::Strongest</code></td><td>1.00</td><td>Body text - the ink itself.</td></tr>
 </table>
 
-<h3 id="ref-slots">ColorSlot and InkTone</h3>
+<h3 id="ref-pigments">Pigment and InkTone</h3>
 
-<p><code>ColorSlot</code> is <code>Yellowish</code>, <code>Greenish</code>, <code>Blueish</code>,
-<code>Reddish</code> - the harmony's hue regions, one behind each semantic colour, never a place in
-an order. <code>InkTone</code> is the pair that says how colourful and how light: the two travel
-together because a hue needs a different amount of colour to read at one luminosity than at
-another, so stating either without the other names half a colour. <code>SlotTones</code> states one
+<p><code>Pigment</code> is <code>Yellow</code>, <code>Green</code>, <code>Blue</code>,
+<code>Red</code> - the four other pigments, each a region of the harmony's wheel rather than a place
+in an order. Accent and spot reach the paint through the theme's rules and have no entry here.
+<code>InkTone</code> is the pair that says how colourful and how light: the two travel together
+because a hue needs a different amount of colour to read at one luminosity than at another, so
+stating either without the other names half a colour. <code>PigmentTones</code> states one
 <code>InkTone</code> for each side of the theme.</p>
 
 <pre><code><span class="kw">struct</span> <span class="tp">InkTone</span> { <span class="kw">float</span> saturation{ <span class="kw">1.0f</span> }; <span class="kw">float</span> luminosity{ <span class="kw">0.5f</span> }; };
-<span class="kw">struct</span> <span class="tp">SlotTones</span> { <span class="tp">InkTone</span> dark{}; <span class="tp">InkTone</span> light{}; };
+<span class="kw">struct</span> <span class="tp">PigmentTones</span> { <span class="tp">InkTone</span> dark{}; <span class="tp">InkTone</span> light{}; };
 
 <span class="cm">// Declared once and serving both modes from that one declaration.</span>
-<span class="kw">constexpr</span> <span class="tp">SlotTones</span> <span class="tp">InkWell</span>::<span class="fn">slotTones</span>(<span class="tp">ColorSlot</span>);
+<span class="kw">constexpr</span> <span class="tp">PigmentTones</span> <span class="tp">InkWell</span>::<span class="fn">pigmentTones</span>(<span class="tp">Pigment</span>);
 
-<span class="cm">// The slot a semantic colour takes its hue from, and none for the other colours.</span>
-<span class="kw">constexpr</span> <span class="tp">std</span>::<span class="tp">optional</span>&lt;<span class="tp">ColorSlot</span>&gt; <span class="fn">slotOf</span>(<span class="tp">InkColor</span>);</code></pre>
+<span class="cm">// The pigment a semantic colour takes its hue from, and none for the other colours.</span>
+<span class="kw">constexpr</span> <span class="tp">std</span>::<span class="tp">optional</span>&lt;<span class="tp">Pigment</span>&gt; <span class="fn">pigmentOf</span>(<span class="tp">InkColor</span>);</code></pre>
 
 <p>The tones the four semantic colours are drawn at, measured at the 3:1 graphics threshold against
 pages at luminosity 0.13 and 0.87:</p>
@@ -493,8 +497,8 @@ icon can name a colour without knowing what kind of event is behind it.</p>
 <tr><th>Call</th><th>Use</th></tr>
 <tr><td><code>ref.toColor(event)</code></td><td>The usual spelling, and the only one an icon needs.</td></tr>
 <tr><td><code>event.ink(ref)</code></td><td>The same call from the other end.</td></tr>
-<tr><td><code>event.ink(slot, tone)</code></td><td>A slot's hue at a tone stated outright, with nothing placing it.</td></tr>
-<tr><td><code>event.ink(slot, saturation, elevation)</code></td><td>A slot placed by elevation, with the mode doing the orienting.</td></tr>
+<tr><td><code>event.ink(pigment, tone)</code></td><td>A pigment's hue at a tone stated outright, with nothing placing it.</td></tr>
+<tr><td><code>event.ink(pigment, saturation, elevation)</code></td><td>A pigment placed by elevation, with the mode doing the orienting.</td></tr>
 <tr><td><code>themeColors().inkHsl(ref, textColor)</code></td><td>The resolution before it becomes a <code>Color</code>. Take this when a colour rule is applied next.</td></tr>
 </table>
 
@@ -602,7 +606,7 @@ assigned:</p>
 </table>
 
 <p>Separately, <code>anchorHue</code> and <code>harmonyKind</code> derive the harmony the four
-semantic slots are taken from. The harmony is derived rather than stored, so a file carries the two
+other pigments are taken from. The harmony is derived rather than stored, so a file carries the two
 inputs and not the result.</p>
 
 <h3 id="color-rules">Colour rules</h3>
@@ -661,7 +665,7 @@ the element having to state a flip.</p>
         <ul>
             <li><strong>Name the ink, resolve where you paint.</strong> The same <code>Ink</code> is right on every surface; a <code>Color</code> is right on one.</li>
             <li><strong>Use a grade for anything grey.</strong> Grey is the ladder between the surface and the ink, not a colour.</li>
-            <li><strong>Name a meaning with a semantic colour</strong> - <code>InkWell::Red</code>, or <code>redInk(grade)</code> for a quieter one - and leave its tones to <code>InkWell::slotTones</code>, the one declaration serving both modes.</li>
+            <li><strong>Name a meaning with a semantic colour</strong> - <code>InkWell::Red</code>, or <code>redInk(grade)</code> for a quieter one - and leave its tones to <code>InkWell::pigmentTones</code>, the one declaration serving both modes.</li>
             <li><strong>Take <code>inkHsl</code> when a rule comes next</strong>, and let the last step be the one that makes a <code>Color</code>.</li>
             <li><strong>Reach for the accent for interface emphasis</strong> and the spot for what stands apart from the interface.</li>
             <li><strong>Ask <code>wornColorMode</code> which side the application is on.</strong> Under Auto the answer is the desktop's, and it moves while the application runs.</li>
@@ -693,9 +697,9 @@ at every grade.</p>
 <pre><code><span class="cm">// The far end of the mix: a semantic colour's hue, pure black or white, the theme's accent</span>
 <span class="cm">// or spot rule over the chain's ink, or the chain's ink itself.</span>
 <span class="tp">Hsl</span> inkEnd = textHsl;
-<span class="kw">const</span> <span class="tp">std</span>::<span class="tp">optional</span>&lt;<span class="tp">ColorSlot</span>&gt; slot = <span class="fn">slotOf</span>(ink.color);
-<span class="kw">if</span> (slot)
-    inkEnd = m_bakedColors-&gt;<span class="fn">slotHsl</span>(*slot, lightness);
+<span class="kw">const</span> <span class="tp">std</span>::<span class="tp">optional</span>&lt;<span class="tp">Pigment</span>&gt; pigment = <span class="fn">pigmentOf</span>(ink.color);
+<span class="kw">if</span> (pigment)
+    inkEnd = m_bakedColors-&gt;<span class="fn">pigmentHsl</span>(*pigment, lightness);
 <span class="kw">else if</span> (ink.color == <span class="tp">InkColor</span>::Black)
     inkEnd = { <span class="kw">0.0f</span>, <span class="kw">0.0f</span>, <span class="kw">0.0f</span> };
 <span class="kw">else if</span> (ink.color == <span class="tp">InkColor</span>::White)

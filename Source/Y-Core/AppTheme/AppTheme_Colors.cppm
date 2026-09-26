@@ -175,24 +175,24 @@ namespace ClaFi
         ColorRule shadow{};
     };
 
-    // The harmony a theme's icon hues come from, built over the anchor and the harmony kind and
-    // kept until either moves. A theme carries one so that a slot can be resolved while painting,
-    // where there is nothing to derive a harmony from.
+    // The harmony a theme's pigments come from, built over the anchor and the harmony kind and
+    // kept until either moves. A theme carries one so that a pigment can be resolved while
+    // painting, where there is nothing to derive a harmony from.
     //
     // The anchor is this object's own copy and the harmony holds a reference to it, so copying and
     // moving drop the harmony rather than carrying it: one taken from another theme would answer
     // from that theme's anchor, and one taken from a moved-from theme would read storage that has
     // gone. What is dropped is derived, so a theme that starts empty builds its own from its own
-    // anchor the first time a slot is asked for.
-    class IconPalette
+    // anchor the first time a pigment is asked for.
+    class PigmentPalette
     {
     public:
-        IconPalette() = default;
-        IconPalette(const IconPalette&) {}
-        IconPalette(IconPalette&&) noexcept {}
-        IconPalette& operator=(const IconPalette&);
-        IconPalette& operator=(IconPalette&&) noexcept;
-        ~IconPalette() = default;
+        PigmentPalette() = default;
+        PigmentPalette(const PigmentPalette&) {}
+        PigmentPalette(PigmentPalette&&) noexcept {}
+        PigmentPalette& operator=(const PigmentPalette&);
+        PigmentPalette& operator=(PigmentPalette&&) noexcept;
+        ~PigmentPalette() = default;
         [[nodiscard]] const ColorHarmony& harmony(float anchorHue, ColorHarmonyKind) const;
     private:
         void reset() const;
@@ -600,10 +600,10 @@ namespace ClaFi
 
 
 
-        [[nodiscard]] Hsl slotHsl(ColorSlot, ColorMode) const;
-        [[nodiscard]] Hsl slotHsl(ColorSlot, InkTone) const;
-        // The half of the resolver that needs the theme: a slot names a colour, and only the theme
-        // knows what the name stands for. A grade needs nothing of the theme, so it does not
+        [[nodiscard]] Hsl pigmentHsl(Pigment, ColorMode) const;
+        [[nodiscard]] Hsl pigmentHsl(Pigment, InkTone) const;
+        // The half of the resolver that needs the theme: a pigment names a colour, and only the
+        // theme knows what the name stands for. A grade needs nothing of the theme, so it does not
         // appear here.
         // Which of this theme's rules an ink names. The ink says which; what it does is the
         // theme's to say, and this is the one place the two are put together.
@@ -612,7 +612,7 @@ namespace ClaFi
     private:
         // Derived from anchorHue and harmonyKind, and stated by them, so it is not a field of
         // the theme and nothing writes it to a file.
-        IconPalette m_iconPalette{};
+        PigmentPalette m_pigmentPalette{};
     };
 
     // What a channel no floor reaches states, which is every saturation.
@@ -925,21 +925,21 @@ namespace ClaFi
         elevation.setOperationAndValue(ColorRuleOp::Set, exactElevation);
     }
 
-    // IconPalette
+    // PigmentPalette
 
-    IconPalette& IconPalette::operator=(const IconPalette&)
+    PigmentPalette& PigmentPalette::operator=(const PigmentPalette&)
     {
         reset();
         return *this;
     }
 
-    IconPalette& IconPalette::operator=(IconPalette&&) noexcept
+    PigmentPalette& PigmentPalette::operator=(PigmentPalette&&) noexcept
     {
         reset();
         return *this;
     }
 
-    const ColorHarmony& IconPalette::harmony(float anchorHue, ColorHarmonyKind kind) const
+    const ColorHarmony& PigmentPalette::harmony(float anchorHue, ColorHarmonyKind kind) const
     {
         // The kind is a constructor argument, so a harmony of another kind is replaced rather
         // than told. An anchor that has moved under the same kind is told, which is the case a
@@ -960,7 +960,7 @@ namespace ClaFi
         return *m_harmony;
     }
 
-    void IconPalette::reset() const
+    void PigmentPalette::reset() const
     {
         m_harmony.reset();
     }
@@ -989,20 +989,20 @@ namespace ClaFi
 
     const ColorHarmony& ThemeColors::harmony() const
     {
-        return m_iconPalette.harmony(anchorHue, harmonyKind);
+        return m_pigmentPalette.harmony(anchorHue, harmonyKind);
     }
 
-    Hsl ThemeColors::slotHsl(ColorSlot slot, ColorMode controlColorMode) const
+    Hsl ThemeColors::pigmentHsl(Pigment pigment, ColorMode controlColorMode) const
     {
-        const SlotTones tones = InkWell::slotTones(slot);
+        const PigmentTones tones = InkWell::pigmentTones(pigment);
         const InkTone& tone = controlColorMode == ColorMode::Light ? tones.light : tones.dark;
-        return slotHsl(slot, tone);
+        return pigmentHsl(pigment, tone);
     }
 
-    Hsl ThemeColors::slotHsl(ColorSlot slot, InkTone tone) const
+    Hsl ThemeColors::pigmentHsl(Pigment pigment, InkTone tone) const
     {
         return {
-            harmony().iconColor(slot).hsl().hue,
+            harmony().pigmentColor(pigment).hsl().hue,
             std::clamp(tone.saturation, 0.0f, 1.0f),
             std::clamp(tone.luminosity, 0.0f, 1.0f)
         };

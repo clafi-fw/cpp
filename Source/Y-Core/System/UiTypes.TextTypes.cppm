@@ -30,17 +30,17 @@ namespace ClaFi{
     };
 
     // Which of the theme's semantic hues an ink is drawn from. See UI-Types
-    export enum class ColorSlot : std::size_t
+    export enum class Pigment : std::size_t
     {
         First = 0,
-        Yellowish = 0,
-        Greenish,
-        Blueish,
-        Reddish,
+        Yellow = 0,
+        Green,
+        Blue,
+        Red,
         Count
     };
 
-    export constexpr std::size_t k_colorSlotsCount = static_cast<std::size_t>(ColorSlot::Count);
+    export constexpr std::size_t k_pigmentsCount = static_cast<std::size_t>(Pigment::Count);
 
     // How colourful a colour is and where it sits. See UI-Types
     export struct InkTone
@@ -51,7 +51,7 @@ namespace ClaFi{
     };
 
     // One colour stated once for each side of the theme. See UI-Types
-    export struct SlotTones
+    export struct PigmentTones
     {
         InkTone dark{};
         InkTone light{};
@@ -101,19 +101,19 @@ namespace ClaFi{
         Count
     };
 
-    // The palette slot one of the semantic colours is drawn from, and none for the others.
-    export [[nodiscard]] constexpr std::optional<ColorSlot> slotOf(InkColor color)
+    // The pigment one of the semantic colours is drawn from, and none for the others.
+    export [[nodiscard]] constexpr std::optional<Pigment> pigmentOf(InkColor color)
     {
         switch (color)
         {
             case InkColor::Yellow:
-                return ColorSlot::Yellowish;
+                return Pigment::Yellow;
             case InkColor::Green:
-                return ColorSlot::Greenish;
+                return Pigment::Green;
             case InkColor::Blue:
-                return ColorSlot::Blueish;
+                return Pigment::Blue;
             case InkColor::Red:
-                return ColorSlot::Reddish;
+                return Pigment::Red;
             case InkColor::Text:
             case InkColor::Accent:
             case InkColor::Spot:

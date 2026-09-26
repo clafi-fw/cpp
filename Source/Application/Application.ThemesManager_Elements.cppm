@@ -466,12 +466,12 @@ namespace ClaFi
             }
         }
 
-        // The harmony answers here and nowhere after: what a slot stands for is the theme's
+        // The harmony answers here and nowhere after: what a pigment stands for is the theme's
         // to say, and a hue is a value two themes have a half way between.
-        for (std::size_t slot = 0ull; slot != k_colorSlotsCount; ++slot)
+        for (std::size_t pigment = 0ull; pigment != k_pigmentsCount; ++pigment)
         {
-            result.slotHues[slot] = themeColors.harmony()
-                .iconColor(static_cast<ColorSlot>(slot)).hsl().hue;
+            result.pigmentHues[pigment] = themeColors.harmony()
+                .pigmentColor(static_cast<Pigment>(pigment)).hsl().hue;
         }
         return result;
     }

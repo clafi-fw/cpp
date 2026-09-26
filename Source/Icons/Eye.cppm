@@ -15,7 +15,7 @@ namespace ClaFi::Icons::Eye
     // It was the last thing in here still staging into a PixelView, and it staged because it read
     // the pixel underneath itself. That sample was only ever used twice: to mix the iris grey, and
     // to paint the corners back out where the two lids, swept as separately clipped circles,
-    // crossed and overshot each other. A grey is asked for by slot and elevation, and the lids are one
+    // crossed and overshot each other. A grey is asked for by grade, and the lids are one
     // closed path that meets at the corners by construction, so neither reason is left - and with
     // the sample goes the scratch buffer, the CPU rasterization and the texture upload a GPU
     // backend was paying for every frame the icon was on screen.

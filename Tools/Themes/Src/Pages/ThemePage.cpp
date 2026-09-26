@@ -345,7 +345,7 @@ namespace ThisApp
     {
         m_harmonySelector.anchorChanged();
         m_harmonyStack.invalidate();
-        m_iconHuesLabel.invalidate();
+        m_otherPigmentsLabel.invalidate();
         mapHuesToColors();
 
         storeViewState();
@@ -358,7 +358,7 @@ namespace ThisApp
         else
             editColors().harmonyKind = k_defaultHarmonyKind;
         m_harmonyPanel.invalidate();
-        m_iconHuesLabel.invalidate();
+        m_otherPigmentsLabel.invalidate();
         mapHuesToColors();
 
         storeViewState();
@@ -382,13 +382,13 @@ namespace ThisApp
         m_darkModeFloorSlider.invalidate();
     }
 
-    void ThemePage::iconHuesText(GetTextEvent& event)
+    void ThemePage::otherPigmentsText(GetTextEvent& event)
     {
         // The selector holds every harmony built against the current anchor, so the one the theme
         // names answers for itself. Which map is selected does not reach these hues: a map orders
-        // the colours a palette takes, and an icon hue is not one of them.
+        // the colours a palette takes, and a pigment is not one of them.
         const ColorHarmony& harmony = m_harmonySelector.harmony(static_cast<std::size_t>(editColors().harmonyKind));
-        for (const PaletteColor& color : harmony.iconColors())
+        for (const PaletteColor& color : harmony.pigmentColors())
             paintColorDot(event.text, color.rgb());
     }
 

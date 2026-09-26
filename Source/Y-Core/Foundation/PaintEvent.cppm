@@ -107,12 +107,12 @@ namespace ClaFi
         Color textRgb(InkGrade grade) const { return inkRgb(InkWell::textInk(grade)); }
         Color accentRgb(InkGrade grade) const { return inkRgb(InkWell::accentInk(grade)); }
         Color spotRgb(InkGrade grade) const { return inkRgb(InkWell::spotInk(grade)); }
-        // The colour a slot names at an elevation, on this control's surface. Every ink this
-        // control draws text or an icon in comes from here: a slot says which of the theme's
+        // The colour a pigment names at an elevation, on this control's surface. Every ink this
+        // control draws text or an icon in comes from here: a pigment says which of the theme's
         // colours, an elevation says how far it stands from the surface it is drawn on.
         [[nodiscard]] Color inkRgb(const Ink& ink) const { return m_controlContext.inkRgb(ink); }
-        [[nodiscard]] Color inkRgb(ColorSlot slot, InkTone tone) const { return m_controlContext.inkRgb(slot, tone); }
-        [[nodiscard]] Color inkRgb(ColorSlot slot, float saturation, float elevation) const { return m_controlContext.inkRgb(slot, saturation, elevation); }
+        [[nodiscard]] Color inkRgb(Pigment pigment, InkTone tone) const { return m_controlContext.inkRgb(pigment, tone); }
+        [[nodiscard]] Color inkRgb(Pigment pigment, float saturation, float elevation) const { return m_controlContext.inkRgb(pigment, saturation, elevation); }
         // How much of a ring is drawn live rather than in the inactive grey: the focused
         // factor once the keyboard has taken over, the hovered one while the pointer drives,
         // crossfaded between them.
@@ -214,10 +214,10 @@ namespace ClaFi
         // destructor puts back.
         const AppTheme* m_enteredTheme;
         const BakedColors* m_enteredBakedColors;
-        // Built from this event's own theme, not the traversal's: a control showing another
-        // theme swaps the one its event carries, and everything inside it copies the swapped one.
-        // A rule ink and a slot ink are read straight off this theme, so bound to the traversal's
-        // it would draw the application's spot and accent inside a preview of another theme.
+        // Built from this event's own theme, not the traversal's: a control showing another theme
+        // swaps the one its event carries, and everything inside it copies the swapped one. A rule
+        // ink and a pigment ink are read straight off this theme, so bound to the traversal's it
+        // would draw the application's spot and accent inside a preview of another theme.
         ControlPaintContext m_controlContext{ formContext(), bakedColors() };
         PaintEvent* m_parentEvent;
         const Control* m_overlayHost{};

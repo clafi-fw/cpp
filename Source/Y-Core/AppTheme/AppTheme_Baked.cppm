@@ -73,7 +73,7 @@ namespace ClaFi
 
     export using BakedElements = std::array<BakedElement, k_uiElementCount>;
     export using BakedRules = std::array<BakedRule, k_uiElementCount>;
-    export using SlotHues = std::array<float, k_colorSlotsCount>;
+    export using PigmentHues = std::array<float, k_pigmentsCount>;
 
     // A THEME AS THE PAINT PATH READS IT, each set standing at the element it belongs to. An
     // element is either a set of state rules or one bare rule, so one of the two arrays carries
@@ -85,9 +85,9 @@ namespace ClaFi
         [[nodiscard]] const BakedRule& rule(UiElement) const;
         // Which of this theme's rules an ink names.
         [[nodiscard]] const BakedRule& ruleOf(InkColor) const;
-        // A slot's hue, at the tone InkWell states for the side of the theme the painter stands on.
-        [[nodiscard]] Hsl slotHsl(ColorSlot, Lightness) const;
-        [[nodiscard]] Hsl slotHsl(ColorSlot, InkTone) const;
+        // A pigment's hue, at InkWell's tone for the side of the theme the painter stands on.
+        [[nodiscard]] Hsl pigmentHsl(Pigment, Lightness) const;
+        [[nodiscard]] Hsl pigmentHsl(Pigment, InkTone) const;
         // WHAT A FORM ROOT ESTABLISHES: the bare colour of the lightness with the form's own
         // surface rule over it, and the bare ink with its text rule.
         [[nodiscard]] Hsl formSurface() const;
@@ -103,9 +103,9 @@ namespace ClaFi
         BakedRules rules{};
         // Each window root's shadow rule, standing at the root and empty at every other element.
         BakedRules shadows{};
-        // Every slot's hue, taken off the harmony as the theme is baked, so nothing
+        // Every pigment's hue, taken off the harmony as the theme is baked, so nothing
         // downstream has a harmony to derive or a kind to read.
-        SlotHues slotHues{};
+        PigmentHues pigmentHues{};
     };
 
     // One rule inside a set, named the way a whole set is. It is resolved against the set the
@@ -306,8 +306,8 @@ namespace ClaFi
         return result;
     }
 
-    // A hue slot names a place in the palette, and the palette is the theme's to read. What comes
-    // out is the hue itself, so nothing downstream has a slot left to resolve.
+    // A pigment names a place in the palette, and the palette is the theme's to read. What comes
+    // out is the hue itself, so nothing downstream has a pigment left to resolve.
     BakedHue bake(const ColorRuleHue& hue, const ThemeColors& themeColors)
     {
         if (hue.operation() == ColorRuleHueOp::NoChange)
@@ -395,7 +395,7 @@ namespace ClaFi
             and a.elements == b.elements
             and a.rules == b.rules
             and a.shadows == b.shadows
-            and a.slotHues == b.slotHues;
+            and a.pigmentHues == b.pigmentHues;
     }
 
     BakedValue blend(const BakedValue& from, const BakedValue& to, float factor)
@@ -477,20 +477,20 @@ namespace ClaFi
 
     // The two tones are one colour stated once for each side of the theme rather than one the
     // mode would orient, so a theme standing between the sides is drawn between the tones.
-    Hsl BakedColors::slotHsl(ColorSlot slot, Lightness aLightness) const
+    Hsl BakedColors::pigmentHsl(Pigment pigment, Lightness aLightness) const
     {
-        const SlotTones tones = InkWell::slotTones(slot);
+        const PigmentTones tones = InkWell::pigmentTones(pigment);
         InkTone tone = {
             std::lerp(tones.dark.saturation, tones.light.saturation, aLightness),
             std::lerp(tones.dark.luminosity, tones.light.luminosity, aLightness)
         };
-        return slotHsl(slot, tone);
+        return pigmentHsl(pigment, tone);
     }
 
-    Hsl BakedColors::slotHsl(ColorSlot slot, InkTone tone) const
+    Hsl BakedColors::pigmentHsl(Pigment pigment, InkTone tone) const
     {
         return {
-            slotHues[static_cast<std::size_t>(slot)],
+            pigmentHues[static_cast<std::size_t>(pigment)],
             std::clamp(tone.saturation, 0.0f, 1.0f),
             std::clamp(tone.luminosity, 0.0f, 1.0f)
         };
@@ -549,9 +549,9 @@ namespace ClaFi
         for (std::size_t i = 0; i < result.shadows.size(); ++i)
             result.shadows[i] = blend(from.shadows[i], to.shadows[i], factor);
 
-        for (std::size_t i = 0; i < result.slotHues.size(); ++i)
-            result.slotHues[i] = blendedHue(from.slotHues[i], 1.0f - factor, to.slotHues[i],
-                factor, factor);
+        for (std::size_t i = 0; i < result.pigmentHues.size(); ++i)
+            result.pigmentHues[i] = blendedHue(from.pigmentHues[i], 1.0f - factor,
+                to.pigmentHues[i], factor, factor);
 
         return result;
     }

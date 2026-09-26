@@ -35,8 +35,8 @@ namespace ClaFi
         [[nodiscard]] Hsl inkHsl(const Ink&) const;
         [[nodiscard]] Color inkRgb(const Ink&) const;
         [[nodiscard]] Color fadedInk(Hsl) const;
-        [[nodiscard]] Color inkRgb(ColorSlot, float saturation, float elevation) const;
-        [[nodiscard]] Color inkRgb(ColorSlot, InkTone) const;
+        [[nodiscard]] Color inkRgb(Pigment, float saturation, float elevation) const;
+        [[nodiscard]] Color inkRgb(Pigment, InkTone) const;
         //
         // The band behind selected text, and the colour every check mark, radio mark and caret is
         // filled with. Resolved when they are asked for rather than with everything else: most
@@ -108,9 +108,9 @@ namespace ClaFi
         // or spot rule over the chain's ink, or the chain's ink itself. The rule goes on before the
         // mix, since one that states where it lands would overwrite the grade.
         Hsl inkEnd = textHsl;
-        const std::optional<ColorSlot> slot = slotOf(ink.color);
-        if (slot)
-            inkEnd = m_bakedColors->slotHsl(*slot, lightness);
+        const std::optional<Pigment> pigment = pigmentOf(ink.color);
+        if (pigment)
+            inkEnd = m_bakedColors->pigmentHsl(*pigment, lightness);
         else if (ink.color == InkColor::Black)
             inkEnd = { 0.0f, 0.0f, 0.0f };
         else if (ink.color == InkColor::White)
@@ -152,18 +152,18 @@ namespace ClaFi
         return hsl.toColor();
     }
 
-    Color ControlPaintContext::inkRgb(ColorSlot slot, float saturation, float elevation) const
+    Color ControlPaintContext::inkRgb(Pigment pigment, float saturation, float elevation) const
     {
         const InkTone tone{
             saturation,
             luminosityOf(elevation, lightness)
         };
-        return fadedInk(m_bakedColors->slotHsl(slot, tone));
+        return fadedInk(m_bakedColors->pigmentHsl(pigment, tone));
     }
 
-    Color ControlPaintContext::inkRgb(ColorSlot slot, InkTone tone) const
+    Color ControlPaintContext::inkRgb(Pigment pigment, InkTone tone) const
     {
-        return fadedInk(m_bakedColors->slotHsl(slot, tone));
+        return fadedInk(m_bakedColors->pigmentHsl(pigment, tone));
     }
 
     // Raised off the control's own surface, in the direction the element stands in - the

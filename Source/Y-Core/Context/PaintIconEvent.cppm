@@ -30,8 +30,8 @@ namespace ClaFi
         [[nodiscard]] Color accentRgb(InkGrade grade) const { return inkColor(InkWell::accentInk(grade)); }
         [[nodiscard]] Color spotRgb(InkGrade grade) const { return inkColor(InkWell::spotInk(grade)); }
         [[nodiscard]] Color inkColor(const Ink& ink) const { return m_controlContext.inkRgb(ink); }
-        [[nodiscard]] Color inkColor(ColorSlot slot, InkTone tone) const { return m_controlContext.inkRgb(slot, tone); }
-        [[nodiscard]] Color inkColor(ColorSlot slot, float saturation, float elevation) const { return m_controlContext.inkRgb(slot, saturation, elevation); }
+        [[nodiscard]] Color inkColor(Pigment pigment, InkTone tone) const { return m_controlContext.inkRgb(pigment, tone); }
+        [[nodiscard]] Color inkColor(Pigment pigment, float saturation, float elevation) const { return m_controlContext.inkRgb(pigment, saturation, elevation); }
         float disabledAmount() const { return m_disabledAmount; }
         void applyDisabledFactorTo(Color& color) const { color.blend(m_controlContext.surface, m_disabledAmount); }
         [[nodiscard]] Color applyDisabledFactor(Color color) const { applyDisabledFactorTo(color); return color; }
