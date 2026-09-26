@@ -191,7 +191,8 @@ namespace ClaFi
             float effectivePressedFactor = calcEffectiveFactor(m_colorRules.pressed, VisualStateIndex::Pressed, m_parentPressedAmount);
             bgChanged2 = StateFactors::compose(bgChanged2,
                 m_colorRules.pressed.applyTo(surface, effectivePressedFactor, m_lightness));
-            applyColorRules2(surface);
+            bgChanged2 = StateFactors::compose(bgChanged2,
+                applyColorRules2(PaintChannel::Surface, surface));
 
             // Kept from the same three numbers the colours were mixed from, so a surface cannot
             // be at full opacity while still at rest size, whatever combination of its own state
@@ -228,7 +229,7 @@ namespace ClaFi
                 // modifies what that rule established, and at the same factor the active rule is
                 // taken at, so the two move together.
                 m_colorRules.activeText.applyTo(ink, selectedFactor, m_lightness);
-                applyColorRules2(ink);
+                applyColorRules2(PaintChannel::Text, ink);
 
                 // The pair the resolver measures between: an elevation of 0 lands on the surface
                 // and 1 lands as far off as the ink itself. Set before the first ink is asked
@@ -269,6 +270,21 @@ namespace ClaFi
                 m_strokeRgb = disabledFormOf(m_strokeRgb, standsOn, disabledAmount());
                 m_strokeRgb.setOpacity(borderChanged);
             }
+
+            // The stroke under the new rules, seeded from this control's own surface and drawn in
+            // place of the old one wherever they move it.
+            Hsl stroke = surface;
+            const float strokeChanged = applyColorRules2(PaintChannel::Stroke, stroke);
+            if (strokeChanged > 0.0f)
+            {
+                m_strokeRgb = stroke.toColor();
+                m_strokeRgb = disabledFormOf(m_strokeRgb, standsOn, disabledAmount());
+                m_strokeRgb.setOpacity(strokeChanged);
+            }
+
+            // Carried like the others. A window's shadow is drawn from its root's old shadow rule.
+            m_shadowHsl = inheritedShadowHsl();
+            applyColorRules2(PaintChannel::Shadow, m_shadowHsl);
 
             // The colours held as colours rather than resolved on demand. What the context
             // resolves for itself carries the same fade, toward the same surface, as it is built -
@@ -593,6 +609,13 @@ namespace ClaFi
         return bakedColors().formText();
     }
 
+    Hsl PaintEvent::inheritedShadowHsl() const
+    {
+        if (m_parentEvent)
+            return m_parentEvent->m_shadowHsl;
+        return bakedColors().bareShadow();
+    }
+
     // An overlay control is held against its host rather than its parent: the host is what clips
     // it and what it is drawn over, so a grid's header held at the top of the view takes the
     // view's corner and not the grid's.
@@ -619,13 +642,46 @@ namespace ClaFi
         return false;
     }
 
-    void PaintEvent::applyColorRules2(Hsl& color) const
+    float PaintEvent::inputFactor(const RuleInputs inputs) const
+    {
+        if (inputs.empty())
+            return 1.0f;
+        const StateFactors& factors = control().factors();
+        // In RuleInput order.
+        using InputFactors = std::array<float, static_cast<std::size_t>(RuleInput::Count)>;
+        const InputFactors inputFactors = {
+            factors.hovered(),
+            factors.pressed(),
+            factors.focused(),
+            factors.selected(),
+            1.0f - m_enabledFactor,
+            factors.textHovered(),
+            factors.current(),
+            m_windowFocusedFactor
+        };
+        float result = 0.0f;
+        for (std::size_t i = 0; i != inputFactors.size(); ++i)
+            if (inputs.has(static_cast<RuleInput>(i)))
+                result = StateFactors::compose(result, inputFactors[i]);
+        return result;
+    }
+
+    // A shadow is read at the dark end whatever the lightness, as BakedColors::windowShadow reads
+    // the old rule.
+    float PaintEvent::applyColorRules2(const PaintChannel channel, Hsl& color) const
     {
         if (!m_element)
-            return;
-        for (const ColorRule2& rule : bakedColors().rules2)
-            if (rule.subject == *m_element)
-                rule.applyTo(color);
+            return 0.0f;
+        const Lightness lightness = channel == PaintChannel::Shadow ? k_darkLightness : m_lightness;
+        float changed = 0.0f;
+        for (const BakedColorRule2& rule : bakedColors().rules2)
+        {
+            if (rule.subject != *m_element or rule.output != channel)
+                continue;
+            changed = StateFactors::compose(changed,
+                rule.effect.applyTo(color, inputFactor(rule.inputs), lightness));
+        }
+        return changed;
     }
 
     // WHICH CORNERS A CONTROL ROUNDS. Its own radius goes on the corners of its bounds, and a

@@ -197,14 +197,18 @@ namespace ClaFi
         // host has stated for it, or what the chain hands down. Held the way the surface is, and
         // answered for both phases for the same reason.
         [[nodiscard]] Hsl inheritedTextHsl() const;
+        // The shadow this control starts from: the parent's, or the root's seed.
+        [[nodiscard]] Hsl inheritedShadowHsl() const;
         // The event of the control this one stands in: the parent's, except for an overlay
         // control, which stands on its host - see the definition.
         [[nodiscard]] const PaintEvent* containerEvent() const;
         // Whether a host further out, in its standard stage at the moment, lists this control - a
         // control that host's overlay stage is going to paint. See paint.
         [[nodiscard]] bool isListedByEnclosingHost(const Control&) const;
-        // The new rules naming this control's element, over a colour the old rules have finished.
-        void applyColorRules2(Hsl& color) const;
+        // How far a rule reading these inputs applies: 1 at rest, their composed factors otherwise.
+        [[nodiscard]] float inputFactor(RuleInputs) const;
+        // The new rules for this control's element on one channel. Answers how far they moved it.
+        float applyColorRules2(PaintChannel, Hsl& color) const;
         void inheritCornerRadii();
         void paint();
         [[nodiscard]] SurfaceShape surfaceShape(FloatPoint inset);
@@ -285,6 +289,7 @@ namespace ClaFi
         //
         Color m_surfaceRgb;
         Color m_strokeRgb{};
+        Hsl m_shadowHsl{}; // the shadow channel, carried down the tree like the surface and the ink
     };
 
     // The paint being set up, before anything is drawn.

@@ -71,6 +71,19 @@ namespace ClaFi
         BakedRule activeText{};
     };
 
+    // A RULE OF THE NEW COLOR THEME ARCHITECTURE AS THE PAINT PATH READS IT.
+    export struct BakedColorRule2
+    {
+    public:
+        [[nodiscard]] bool operator==(const BakedColorRule2&) const = default;
+    public:
+        UiElement subject{};
+        RuleInputs inputs{};
+        PaintChannel output{ PaintChannel::Surface };
+        BakedRule effect{};
+    };
+
+    export using BakedColorRules2 = std::vector<BakedColorRule2>;
     export using BakedElements = std::array<BakedElement, k_uiElementCount>;
     export using BakedRules = std::array<BakedRule, k_uiElementCount>;
     export using PigmentHues = std::array<float, k_pigmentsCount>;
@@ -92,6 +105,8 @@ namespace ClaFi
         // surface rule over it, and the bare ink with its text rule.
         [[nodiscard]] Hsl formSurface() const;
         [[nodiscard]] Hsl formText() const;
+        // The colour every shadow starts from: black, at the form surface's hue.
+        [[nodiscard]] Hsl bareShadow() const;
         // The colour a window root casts its shadow in, before any opacity. See AppTheme
         [[nodiscard]] Hsl windowShadow(OptionalUiElement root) const;
     public:
@@ -106,7 +121,7 @@ namespace ClaFi
         // Every pigment's hue, taken off the harmony as the theme is baked, so nothing
         // downstream has a harmony to derive or a kind to read.
         PigmentHues pigmentHues{};
-        std::vector<ColorRule2> rules2{}; // the new color rules, as the theme states them
+        BakedColorRules2 rules2{}; // the rules of the new color theme architecture
     };
 
     // One rule inside a set, named the way a whole set is. It is resolved against the set the
@@ -130,6 +145,8 @@ namespace ClaFi
     export [[nodiscard]] BakedElement bake(const ControlColorRules&, const ThemeColors&);
     // A window root's shadow rule, its elevation lifted by no floor. See AppTheme#windowshadow
     export [[nodiscard]] BakedRule bakeShadow(const ColorRule&, const ThemeColors&);
+    // A shadow rule's effect is baked the way bakeShadow bakes, every other one the way bake does.
+    export [[nodiscard]] BakedColorRule2 bake(const ColorRule2&, const ThemeColors&);
 
     // CROSSING A SET WITH ITSELF ANSWERS THAT SET AT EVERY FACTOR, which is what the weighted
     // targets below are for. See AppTheme
@@ -139,6 +156,9 @@ namespace ClaFi
     export [[nodiscard]] BakedRule blend(const BakedRule& from, const BakedRule& to, float factor);
     export [[nodiscard]] BakedElement blend(const BakedElement& from, const BakedElement& to,
         float factor);
+    // Rule by rule where both lists state the same rules in one order, the destination otherwise.
+    export [[nodiscard]] BakedColorRules2 blend(const BakedColorRules2& from,
+        const BakedColorRules2& to, float factor);
     // Two factors, because a theme's lightness crosses on a slot of its own - see
     // AnimationSlots::themeLightness. Everything else answers to the first.
     export [[nodiscard]] BakedColors blend(const BakedColors& from, const BakedColors& to,
@@ -353,6 +373,18 @@ namespace ClaFi
         };
     }
 
+    BakedColorRule2 bake(const ColorRule2& rule, const ThemeColors& themeColors)
+    {
+        return {
+            .subject = rule.subject,
+            .inputs = rule.inputs,
+            .output = rule.output,
+            .effect = rule.output == PaintChannel::Shadow
+                ? bakeShadow(rule.effect, themeColors)
+                : bake(rule.effect, themeColors)
+        };
+    }
+
     // blend
 
     float blendedTarget(float fromValue, float fromWeight, float toValue, float toWeight,
@@ -396,7 +428,8 @@ namespace ClaFi
             and a.elements == b.elements
             and a.rules == b.rules
             and a.shadows == b.shadows
-            and a.pigmentHues == b.pigmentHues;
+            and a.pigmentHues == b.pigmentHues
+            and a.rules2 == b.rules2;
     }
 
     BakedValue blend(const BakedValue& from, const BakedValue& to, float factor)
@@ -441,6 +474,23 @@ namespace ClaFi
             blend(from.text, to.text, factor),
             blend(from.activeText, to.activeText, factor)
         };
+    }
+
+    // Two lists that differ in what their rules read or write have no half way between them.
+    BakedColorRules2 blend(const BakedColorRules2& from, const BakedColorRules2& to, float factor)
+    {
+        const bool sameRules = std::ranges::equal(from, to,
+            [](const BakedColorRule2& fromRule, const BakedColorRule2& toRule) {
+                return fromRule.subject == toRule.subject
+                    and fromRule.inputs == toRule.inputs
+                    and fromRule.output == toRule.output;
+            });
+        if (!sameRules)
+            return to;
+        BakedColorRules2 result = to;
+        for (std::size_t i = 0; i < result.size(); ++i)
+            result[i].effect = blend(from[i].effect, to[i].effect, factor);
+        return result;
     }
 
     // BakedColors
@@ -513,10 +563,15 @@ namespace ClaFi
         return result;
     }
 
+    Hsl BakedColors::bareShadow() const
+    {
+        return { formSurface().hue, 0.0f, 0.0f };
+    }
+
     // Read at the dark end whatever the lightness - a shadow is the absence of light on both sides.
     Hsl BakedColors::windowShadow(OptionalUiElement root) const
     {
-        Hsl result = { formSurface().hue, 0.0f, 0.0f };
+        Hsl result = bareShadow();
         if (!root)
             return result;
         shadows[static_cast<std::size_t>(*root)].applyTo(result, 1.0f, k_darkLightness);
@@ -554,8 +609,7 @@ namespace ClaFi
             result.pigmentHues[i] = blendedHue(from.pigmentHues[i], 1.0f - factor,
                 to.pigmentHues[i], factor, factor);
 
-        // A rule states no channel, so there is nothing between two sets of them to cross.
-        result.rules2 = to.rules2;
+        result.rules2 = blend(from.rules2, to.rules2, factor);
 
         return result;
     }

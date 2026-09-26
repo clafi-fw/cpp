@@ -487,7 +487,8 @@ namespace ClaFi
             result.pigmentHues[pigment] = themeColors.harmony()
                 .pigmentColor(static_cast<Pigment>(pigment)).hsl().hue;
         }
-        result.rules2 = themeColors.rules2;
+        for (const ColorRule2& rule : themeColors.rules2)
+            result.rules2.push_back(bake(rule, themeColors));
         return result;
     }
 }

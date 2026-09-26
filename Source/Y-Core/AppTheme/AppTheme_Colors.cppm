@@ -234,12 +234,64 @@ namespace ClaFi
     export constexpr std::size_t k_uiElementCount{ static_cast<std::size_t>(UiElement::Count) };
     export using OptionalUiElement = std::optional<UiElement>;
 
-    // A rule of the new color theme architecture.
+    // What a rule of the new color theme architecture reads.
+    export enum class RuleInput
+    {
+        Hovered,
+        Pressed,
+        Focused,
+        Selected,
+        Disabled,       // the enabled factor turned over
+        TextHovered,
+        Current,
+        WindowFocused,  // the focus of the form the control stands in
+        Count
+    };
+
+    // The inputs a rule reads, joined as "or". An empty set is at rest: the rule always applies.
+    export class RuleInputs
+    {
+    public:
+        constexpr RuleInputs() = default;
+        // Not explicit, so a rule names its set as a braced list of enumerators.
+        template <std::same_as<RuleInput>... Inputs>
+        constexpr RuleInputs(Inputs... inputs)
+            :
+            m_bits{ (0u | ... | bitOf(inputs)) }
+        {
+        }
+        [[nodiscard]] constexpr bool empty() const { return m_bits == 0u; }
+        [[nodiscard]] constexpr bool has(RuleInput input) const
+        {
+            return (m_bits & bitOf(input)) != 0u;
+        }
+        [[nodiscard]] bool operator==(const RuleInputs&) const = default;
+    private:
+        [[nodiscard]] static constexpr std::uint32_t bitOf(RuleInput input)
+        {
+            return 1u << static_cast<std::uint32_t>(input);
+        }
+    private:
+        std::uint32_t m_bits{ 0u };
+    };
+
+    // Where a rule writes. A stroke starts at the control's own surface, the rest at the parent's.
+    export enum class PaintChannel
+    {
+        Surface,
+        Stroke,
+        Text,
+        Shadow,
+        Count
+    };
+
+    // A rule of the new color theme architecture: it reads its inputs and writes to its output.
     export struct ColorRule2
     {
-        UiElement subject{}; // the element the rule colours
-        // What the rule does to a colour. It states no channel, so it leaves the colour as it is.
-        void applyTo(Hsl&) const;
+        UiElement subject{};                            // the element the rule colours
+        RuleInputs inputs{};                            // what the rule reads
+        PaintChannel output{ PaintChannel::Surface };   // the channel the rule writes to
+        ColorRule effect{};                             // what the rule does to that channel
     };
 
     // A theme's colours. The mode they are worn in is the application's. See AppTheme
@@ -611,7 +663,49 @@ namespace ClaFi
 
 
         // The rules of the new color theme architecture, each naming the element it colours.
-        std::vector<ColorRule2> rules2{};
+        std::vector<ColorRule2> rules2{
+            // Testee, in the values Button states - its surface set, then its stroke.
+            ColorRule2{
+                .subject = UiElement::Testee,
+                .effect{
+                    { ColorRuleOp::NoChange, 0.0f },        // S
+                    { ColorRuleOp::Offset, 0.054944f }      // E
+                }
+            },
+            ColorRule2{
+                .subject = UiElement::Testee,
+                .inputs{ RuleInput::Selected },
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Offset, 0.094499f },     // S
+                    { ColorRuleOp::Offset, 0.099311f }      // E
+                }
+            },
+            ColorRule2{
+                .subject = UiElement::Testee,
+                .inputs{ RuleInput::Hovered },
+                .effect{
+                    { ColorRuleOp::Offset, 0.085609f },     // S
+                    { ColorRuleOp::Offset, 0.126926f }      // E
+                }
+            },
+            ColorRule2{
+                .subject = UiElement::Testee,
+                .inputs{ RuleInput::Pressed },
+                .effect{
+                    { ColorRuleOp::Scale, 0.8f },           // S
+                    { ColorRuleOp::Scale, 0.9f }            // E
+                }
+            },
+            ColorRule2{
+                .subject = UiElement::Testee,
+                .output = PaintChannel::Stroke,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Offset, 0.037839f }      // E
+                }
+            }
+        };
 
         [[nodiscard]] Hsl pigmentHsl(Pigment, ColorMode) const;
         [[nodiscard]] Hsl pigmentHsl(Pigment, InkTone) const;
@@ -936,12 +1030,6 @@ namespace ClaFi
         // The rule states an elevation, so the colour's luminosity crosses to that axis.
         const float exactElevation = elevationOf(value.luminosity, mode);
         elevation.setOperationAndValue(ColorRuleOp::Set, exactElevation);
-    }
-
-    // ColorRule2
-
-    void ColorRule2::applyTo(Hsl&) const
-    {
     }
 
     // PigmentPalette
