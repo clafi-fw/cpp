@@ -471,6 +471,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Themes_Icon.cpp"
         "${themes_dir}/Themes_Wayland.cpp"
         "${themes_dir}/Pages/Design2Page.cpp"
+        "${themes_dir}/Pages/ElementPage.cpp"
         "${themes_dir}/Pages/ThemePage.cpp"
         "${themes_dir}/Util/ThisApp.CodeOptions.cpp"
         "${themes_dir}/Util/ThisApp.FloorSlider.cpp"

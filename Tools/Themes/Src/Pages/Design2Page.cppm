@@ -1,5 +1,7 @@
 export module ThisApp.Design2Page;
 
+import ThisApp.ElementPage;
+
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
@@ -31,14 +33,19 @@ namespace ThisApp
         // Connects a handler raised after another element is picked.
         template<typename F>
         EventConnection onElementPick(F&& callback);
+        // Hands every element page the rules it edits and what it calls after changing them.
+        void bind(ColorRules2&, const OnRulesChanged&);
+        // Builds every element page's sections again from the rules as they stand.
+        void rebuildRules();
     private:
         using ElementControls = std::array<Control*, k_uiElementCount>;
+        using ElementPages = std::array<ElementPage*, k_uiElementCount>;
     private:
         void buildTree();
         void showPickedElement();
     private:
         ElementControls m_items{}; // each element's item in the tree, null where it has none
-        ElementControls m_elementPages{};
+        ElementPages m_elementPages{};
 
         StackView& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,

@@ -266,6 +266,7 @@ namespace ThisApp
         m_darkModeFloorSlider.invalidate();
         updateGridControls();
         restoreFolds();
+        m_design2Page.rebuildRules();
         restoreView();
         restoreElement();
     }
@@ -629,6 +630,12 @@ namespace ThisApp
         for (std::size_t i = 0ull; i != k_uiElements.size(); ++i)
             if (k_uiElements[i].token == token)
                 m_design2Page.pickElement(static_cast<UiElement>(i));
+    }
+
+    void ThemePage::rules2Changed()
+    {
+        invalidatePreview();
+        storeViewState();
     }
 
     void ThemePage::saveTheme() const

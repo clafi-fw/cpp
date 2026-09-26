@@ -44,6 +44,9 @@
     <ClCompile Include="Src\Pages\Design2Page.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Pages\ElementPage.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Pages\ElementPage.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>

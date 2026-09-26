@@ -93,6 +93,20 @@ namespace ThisApp
             m_tree.setCurrentItem(item);
     }
 
+    void Design2Page::bind(ColorRules2& rules, const OnRulesChanged& onRulesChanged)
+    {
+        for (ElementPage* page : m_elementPages)
+            if (page)
+                page->bind(rules, onRulesChanged);
+    }
+
+    void Design2Page::rebuildRules()
+    {
+        for (ElementPage* page : m_elementPages)
+            if (page)
+                page->rebuild();
+    }
+
     void Design2Page::buildTree()
     {
         m_tree.onCanFocusItem([this](CanFocusItemEvent& event) {

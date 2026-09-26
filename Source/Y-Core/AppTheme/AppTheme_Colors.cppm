@@ -265,6 +265,7 @@ namespace ClaFi
         {
             return (m_bits & bitOf(input)) != 0u;
         }
+        void add(RuleInput input) { m_bits |= bitOf(input); }
         [[nodiscard]] bool operator==(const RuleInputs&) const = default;
     private:
         [[nodiscard]] static constexpr std::uint32_t bitOf(RuleInput input)
@@ -293,6 +294,8 @@ namespace ClaFi
         PaintChannel output{ PaintChannel::Surface };   // the channel the rule writes to
         ColorRule effect{};                             // what the rule does to that channel
     };
+
+    export using ColorRules2 = std::vector<ColorRule2>;
 
     // A theme's colours. The mode they are worn in is the application's. See AppTheme
     export struct ThemeColors
@@ -663,7 +666,7 @@ namespace ClaFi
 
 
         // The rules of the new color theme architecture, each naming the element it colours.
-        std::vector<ColorRule2> rules2{
+        ColorRules2 rules2{
             // Testee, in the values Button states - its surface set, then its stroke.
             ColorRule2{
                 .subject = UiElement::Testee,
@@ -674,7 +677,7 @@ namespace ClaFi
             },
             ColorRule2{
                 .subject = UiElement::Testee,
-                .inputs{ RuleInput::Selected },
+                .inputs{ RuleInput::Selected, RuleInput::Hovered },
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
                     { ColorRuleOp::Offset, 0.094499f },     // S

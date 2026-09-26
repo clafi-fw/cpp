@@ -6,9 +6,22 @@ import ClaFi.App.ThemeIcon;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Palette;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.DomEngine;
 import ClaFi.Core.System.Serialization;
 import ClaFi.StdLib;
 import ClaFi.Core.System.UiTypes;
+
+namespace ClaFi::Dom
+{
+    // A rule's inputs are one scalar in a document: their names, a space apart, and nothing at
+    // rest. A name no input goes by is passed over.
+    template <>
+    struct ScalarSerializer<RuleInputs>
+    {
+        [[nodiscard]] static std::wstring toWString(const RuleInputs& inputs);
+        static void fromWString(std::wstring_view str, RuleInputs& inputs);
+    };
+}
 
 namespace ClaFi // AppTheme serializers
 {
@@ -108,9 +121,52 @@ namespace ClaFi // AppTheme serializers
         );
     }
 
-    // The palette is stated here and the elements come from k_uiElements, in that table's order,
-    // which is ThemeColors declaration order. Field order in a document is a reading matter -
-    // a field is found by name - so the table's order is free to be the one generated C++ needs.
+    // An element is written under its token, the name its rules stand under in a theme file.
+    export constexpr auto enumNames(UiElement)
+    {
+        std::array<std::wstring_view, k_uiElementCount> result{};
+        for (std::size_t i = 0ull; i != k_uiElementCount; ++i)
+            result[i] = k_uiElements[i].token;
+        return result;
+    }
+
+    export constexpr std::array<std::wstring_view, static_cast<std::size_t>(RuleInput::Count)>
+        k_ruleInputKeys{
+            L"Hovered",
+            L"Pressed",
+            L"Focused",
+            L"Selected",
+            L"Disabled",
+            L"TextHovered",
+            L"Current",
+            L"WindowFocused"
+        };
+
+    export constexpr auto enumNames(RuleInput) { return k_ruleInputKeys; }
+
+    export constexpr auto enumNames(PaintChannel)
+    {
+        return std::array{
+            L"Surface",
+            L"Stroke",
+            L"Text",
+            L"Shadow",
+        };
+    }
+
+    export constexpr auto serializedFields(const ColorRule2&) {
+        return std::make_tuple(
+            SerializedField{ L"Subject", &ColorRule2::subject },
+            SerializedField{ L"Inputs", &ColorRule2::inputs },
+            SerializedField{ L"Output", &ColorRule2::output },
+            SerializedField{ L"Effect", &ColorRule2::effect }
+        );
+    }
+
+    // The palette and the new rules are stated here and the elements come from k_uiElements, in
+    // that table's order, which is ThemeColors declaration order. Field order in a document is a
+    // reading matter - a field is found by name - so the table's order is free to be the one
+    // generated C++ needs.
     export constexpr auto serializedFields(const ThemeColors&) {
         return std::tuple_cat(
             std::make_tuple(
@@ -119,7 +175,10 @@ namespace ClaFi // AppTheme serializers
                 SerializedField{ L"PaletteHues", &ThemeColors::paletteHues },
                 SerializedField{ L"DarkModeFloor", &ThemeColors::darkModeFloor }
             ),
-            elementFields(std::make_index_sequence<k_uiElements.size()>{})
+            elementFields(std::make_index_sequence<k_uiElements.size()>{}),
+            std::make_tuple(
+                SerializedField{ L"Rules2", &ThemeColors::rules2 }
+            )
         );
     }
 
@@ -137,4 +196,37 @@ namespace ClaFi // AppTheme serializers
         );
     }
 
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+namespace ClaFi::Dom
+{
+    std::wstring ScalarSerializer<RuleInputs>::toWString(const RuleInputs& inputs)
+    {
+        std::wstring result{};
+        for (std::size_t i = 0ull; i != k_ruleInputKeys.size(); ++i)
+        {
+            if (!inputs.has(static_cast<RuleInput>(i)))
+                continue;
+            if (!result.empty())
+                result.push_back(L' ');
+            result.append(k_ruleInputKeys[i]);
+        }
+        return result;
+    }
+
+    void ScalarSerializer<RuleInputs>::fromWString(std::wstring_view str, RuleInputs& inputs)
+    {
+        inputs = {};
+        for (const auto word : std::views::split(str, L' '))
+        {
+            const std::wstring_view name{ word.begin(), word.end() };
+            for (std::size_t i = 0ull; i != k_ruleInputKeys.size(); ++i)
+                if (k_ruleInputKeys[i] == name)
+                    inputs.add(static_cast<RuleInput>(i));
+        }
+    }
 }

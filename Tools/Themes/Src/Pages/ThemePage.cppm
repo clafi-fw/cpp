@@ -186,6 +186,7 @@ namespace ThisApp
         void restoreView();
         void storeElement() const;
         void restoreElement();
+        void rules2Changed(); // a rule was added on the Design 2 page or taken away
         void saveTheme() const;
         // Writes this page's work to a name the user gives, and takes the tab there. The original
         // is left on the disk as it stands, which is what tells this from Save.
@@ -810,6 +811,10 @@ namespace ThisApp
 
         m_design2Page.onElementPick([this](CurrentItemChangeEvent&) {
             storeElement();
+        });
+
+        m_design2Page.bind(editColors().rules2, [this]() {
+            rules2Changed();
         });
     }
 
