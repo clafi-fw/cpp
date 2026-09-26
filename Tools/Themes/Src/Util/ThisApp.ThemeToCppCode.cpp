@@ -303,6 +303,9 @@ namespace ThisApp
     void CppCodeGenerator::colorMember(UiElement element)
     {
         const UiElementDescriptor& entry = uiElementOf(element);
+        // An element only the new color rules reach has no member of ThemeColors to state.
+        if (!entry.rule and !entry.rules)
+            return;
         // The comment is written after the member is known to be stated, so a block of
         // differences carries prose only for what it does state.
         if (entry.rule)

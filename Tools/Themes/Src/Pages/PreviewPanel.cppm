@@ -92,5 +92,15 @@ namespace ThisApp
             } },
             OnGetState{ [](GetStateEvent& event) { event.state.selected = m_selectedRb; }}
         ) };
+
+        RichControl& m_testee{ m_stackPanel.add<RichControl>(
+            UiElement::Testee,
+            Text{ L"Testee" }
+        ) };
+
+        RichControl& m_bestee{ m_stackPanel.add<RichControl>(
+            UiElement::Bestee,
+            Text{ L"Bestee" }
+        ) };
     };
 }

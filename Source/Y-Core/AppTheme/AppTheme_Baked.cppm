@@ -106,6 +106,7 @@ namespace ClaFi
         // Every pigment's hue, taken off the harmony as the theme is baked, so nothing
         // downstream has a harmony to derive or a kind to read.
         PigmentHues pigmentHues{};
+        std::vector<ColorRule2> rules2{}; // the new color rules, as the theme states them
     };
 
     // One rule inside a set, named the way a whole set is. It is resolved against the set the
@@ -552,6 +553,9 @@ namespace ClaFi
         for (std::size_t i = 0; i < result.pigmentHues.size(); ++i)
             result.pigmentHues[i] = blendedHue(from.pigmentHues[i], 1.0f - factor,
                 to.pigmentHues[i], factor, factor);
+
+        // A rule states no channel, so there is nothing between two sets of them to cross.
+        result.rules2 = to.rules2;
 
         return result;
     }

@@ -226,11 +226,21 @@ namespace ClaFi
         Spot,
         ScrollButton,
         ScrollThumb,
+        Testee,   // a test subject only the new color rules reach
+        Bestee,   // the second test subject only the new color rules reach
         Count
     };
 
     export constexpr std::size_t k_uiElementCount{ static_cast<std::size_t>(UiElement::Count) };
     export using OptionalUiElement = std::optional<UiElement>;
+
+    // A rule of the new color theme architecture.
+    export struct ColorRule2
+    {
+        UiElement subject{}; // the element the rule colours
+        // What the rule does to a colour. It states no channel, so it leaves the colour as it is.
+        void applyTo(Hsl&) const;
+    };
 
     // A theme's colours. The mode they are worn in is the application's. See AppTheme
     export struct ThemeColors
@@ -600,6 +610,9 @@ namespace ClaFi
 
 
 
+        // The rules of the new color theme architecture, each naming the element it colours.
+        std::vector<ColorRule2> rules2{};
+
         [[nodiscard]] Hsl pigmentHsl(Pigment, ColorMode) const;
         [[nodiscard]] Hsl pigmentHsl(Pigment, InkTone) const;
         // The half of the resolver that needs the theme: a pigment names a colour, and only the
@@ -923,6 +936,12 @@ namespace ClaFi
         // The rule states an elevation, so the colour's luminosity crosses to that axis.
         const float exactElevation = elevationOf(value.luminosity, mode);
         elevation.setOperationAndValue(ColorRuleOp::Set, exactElevation);
+    }
+
+    // ColorRule2
+
+    void ColorRule2::applyTo(Hsl&) const
+    {
     }
 
     // PigmentPalette

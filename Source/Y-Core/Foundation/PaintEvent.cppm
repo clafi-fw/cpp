@@ -203,6 +203,8 @@ namespace ClaFi
         // Whether a host further out, in its standard stage at the moment, lists this control - a
         // control that host's overlay stage is going to paint. See paint.
         [[nodiscard]] bool isListedByEnclosingHost(const Control&) const;
+        // The new rules naming this control's element, over a colour the old rules have finished.
+        void applyColorRules2(Hsl& color) const;
         void inheritCornerRadii();
         void paint();
         [[nodiscard]] SurfaceShape surfaceShape(FloatPoint inset);
@@ -225,6 +227,7 @@ namespace ClaFi
         bool m_paintsSelf{};
         float m_pinnedTop{ 0.0f };
     private:
+        OptionalUiElement m_element{}; // the element this control wears, as setColorRules named it
         BakedElement m_colorRules{};
         float m_parentHoverAmount{ 0.0f };
         float m_parentSelectedAmount{ 0.0f };

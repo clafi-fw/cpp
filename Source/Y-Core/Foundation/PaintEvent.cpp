@@ -191,6 +191,7 @@ namespace ClaFi
             float effectivePressedFactor = calcEffectiveFactor(m_colorRules.pressed, VisualStateIndex::Pressed, m_parentPressedAmount);
             bgChanged2 = StateFactors::compose(bgChanged2,
                 m_colorRules.pressed.applyTo(surface, effectivePressedFactor, m_lightness));
+            applyColorRules2(surface);
 
             // Kept from the same three numbers the colours were mixed from, so a surface cannot
             // be at full opacity while still at rest size, whatever combination of its own state
@@ -227,6 +228,7 @@ namespace ClaFi
                 // modifies what that rule established, and at the same factor the active rule is
                 // taken at, so the two move together.
                 m_colorRules.activeText.applyTo(ink, selectedFactor, m_lightness);
+                applyColorRules2(ink);
 
                 // The pair the resolver measures between: an elevation of 0 lands on the surface
                 // and 1 lands as far off as the ink itself. Set before the first ink is asked
@@ -617,6 +619,15 @@ namespace ClaFi
         return false;
     }
 
+    void PaintEvent::applyColorRules2(Hsl& color) const
+    {
+        if (!m_element)
+            return;
+        for (const ColorRule2& rule : bakedColors().rules2)
+            if (rule.subject == *m_element)
+                rule.applyTo(color);
+    }
+
     // WHICH CORNERS A CONTROL ROUNDS. Its own radius goes on the corners of its bounds, and a
     // corner the viewport cuts off is not one of them, so it is square. Each corner is then held
     // against the corner of its container it stands at: where this control's arc - a square
@@ -909,6 +920,7 @@ namespace ClaFi
 
     void AdjustPaintEvent::setColorRules(UiElement value)
     {
+        m_target.m_element = value;
         m_target.m_colorRules = m_target.bakedColors().element(value);
     }
 

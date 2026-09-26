@@ -184,6 +184,8 @@ namespace ThisApp
         [[nodiscard]] const Fold* hidingFold(const Control*) const;
         void storeView() const;
         void restoreView();
+        void storeElement() const;
+        void restoreElement();
         void saveTheme() const;
         // Writes this page's work to a name the user gives, and takes the tab there. The original
         // is left on the disk as it stands, which is what tells this from Save.
@@ -805,6 +807,10 @@ namespace ThisApp
                 generateCode();
                 storeView();
             });
+
+        m_design2Page.onElementPick([this](CurrentItemChangeEvent&) {
+            storeElement();
+        });
     }
 
 }

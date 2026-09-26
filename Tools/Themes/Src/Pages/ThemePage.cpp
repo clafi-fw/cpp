@@ -267,6 +267,7 @@ namespace ThisApp
         updateGridControls();
         restoreFolds();
         restoreView();
+        restoreElement();
     }
 
     bool ThemePage::hasUnsavedEdits() const
@@ -614,6 +615,20 @@ namespace ThisApp
     {
         const ThemeView view = (tabConfig() / k_viewAttrName).get<ThemeView>();
         m_viewTabs[static_cast<std::size_t>(view)]->select();
+    }
+
+    void ThemePage::storeElement() const
+    {
+        if (const OptionalUiElement element = m_design2Page.pickedElement())
+            (tabConfig() / k_elementAttrName).set(std::wstring{ uiElementOf(*element).token });
+    }
+
+    void ThemePage::restoreElement()
+    {
+        const std::wstring token = (tabConfig() / k_elementAttrName).get<std::wstring>();
+        for (std::size_t i = 0ull; i != k_uiElements.size(); ++i)
+            if (k_uiElements[i].token == token)
+                m_design2Page.pickElement(static_cast<UiElement>(i));
     }
 
     void ThemePage::saveTheme() const

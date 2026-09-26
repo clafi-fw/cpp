@@ -58,6 +58,9 @@ namespace ThisApp
     // The view a tab's theme page shows - see ThemePage::storeView.
     export constexpr std::wstring_view k_viewAttrName{ L"View" };
 
+    // The element a tab's Design 2 page shows, by its token - see ThemePage::storeElement.
+    export constexpr std::wstring_view k_elementAttrName{ L"Element" };
+
     // What a tab's icon is drawn from, kept in the tab's entry so that an unopened tab reads no
     // file for it - see ThemesBrowser::paintTabIcon.
     export constexpr std::wstring_view k_tabIconAttrName{ L"Icon" };

@@ -132,8 +132,8 @@ namespace ClaFi
         std::wstring_view name{};
         std::wstring_view codeName{};
         std::wstring_view token{};
-        // Exactly one of these two. An element is either one bare rule or a set of state rules,
-        // never both, and null is what says which.
+        // One of these two at most. An element is one bare rule, a set of state rules, or neither
+        // where only the new color rules reach it - never both, and null is what says which.
         ColorRule ThemeColors::* rule{ nullptr };
         ControlColorRules ThemeColors::* rules{ nullptr };
         // What the element is painted on. The framework nests these controls; this states that
@@ -428,6 +428,20 @@ namespace ClaFi
                 UiElementState::Pressed,
                 UiElementState::Text
             }
+        },
+        // THE TWO TEST SUBJECTS. They name no old rule, so nothing but the new color rules reaches
+        // them: with none, each paints no surface and draws its text in the ink it inherits.
+        UiElementDescriptor{
+            .name = L"Testee",
+            .codeName = L"testee",
+            .token = L"Testee",
+            .base = UiElement::Section
+        },
+        UiElementDescriptor{
+            .name = L"Bestee",
+            .codeName = L"bestee",
+            .token = L"Bestee",
+            .base = UiElement::Section
         }
     };
 
@@ -457,7 +471,7 @@ namespace ClaFi
             {
                 result.rules[i] = bake(themeColors.*descriptor.rule, themeColors);
             }
-            else
+            else if (descriptor.rules != nullptr)
             {
                 const ControlColorRules& rules = themeColors.*descriptor.rules;
                 result.elements[i] = bake(rules, themeColors);
@@ -473,6 +487,7 @@ namespace ClaFi
             result.pigmentHues[pigment] = themeColors.harmony()
                 .pigmentColor(static_cast<Pigment>(pigment)).hsl().hue;
         }
+        result.rules2 = themeColors.rules2;
         return result;
     }
 }

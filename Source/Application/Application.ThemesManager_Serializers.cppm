@@ -68,7 +68,7 @@ namespace ClaFi // AppTheme serializers
     }
 
     // ONE FIELD AT A TIME, BECAUSE THE LIST IS HETEROGENEOUS. A tuple carries a type per element,
-    // and an element names either a ColorRule or a whole ControlColorRules - so the fields cannot
+    // and an element names a ColorRule, a whole ControlColorRules or neither - so the fields cannot
     // be produced by one transform over the table. Each index answers with a tuple of its own and
     // tuple_cat joins them.
     template <std::size_t I>
@@ -76,8 +76,10 @@ namespace ClaFi // AppTheme serializers
     {
         if constexpr (k_uiElements[I].rule != nullptr)
             return std::make_tuple(SerializedField{ k_uiElements[I].token, k_uiElements[I].rule });
-        else
+        else if constexpr (k_uiElements[I].rules != nullptr)
             return std::make_tuple(SerializedField{ k_uiElements[I].token, k_uiElements[I].rules });
+        else
+            return std::tuple<>{};
     }
 
     template <std::size_t... I>
