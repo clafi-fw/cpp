@@ -55,6 +55,9 @@ namespace ThisApp
     // The folds a tab's design page has closed, one name each - see ThemePage::storeFolds.
     export constexpr std::wstring_view k_collapsedAttrName{ L"Collapsed" };
 
+    // The view a tab's theme page shows - see ThemePage::storeView.
+    export constexpr std::wstring_view k_viewAttrName{ L"View" };
+
     // What a tab's icon is drawn from, kept in the tab's entry so that an unopened tab reads no
     // file for it - see ThemesBrowser::paintTabIcon.
     export constexpr std::wstring_view k_tabIconAttrName{ L"Icon" };
@@ -97,5 +100,30 @@ namespace ThisApp
         Saturation,
         Elevation
     };
+
+    // The views a theme page switches between, one tab each.
+    export enum class ThemeView
+    {
+        Design,
+        Design2,
+        Cpp,
+        ClaFi,
+        Xml,
+        Json,
+        Count
+    };
+
+    // The names a tab's config uses, spelled to match the enumerators.
+    export constexpr std::array<std::wstring_view, static_cast<std::size_t>(ThemeView::Count)>
+        k_themeViewKeys{
+            L"Design",
+            L"Design2",
+            L"Cpp",
+            L"ClaFi",
+            L"Xml",
+            L"Json"
+        };
+
+    export constexpr auto enumNames(ThemeView) { return k_themeViewKeys; }
 
 }

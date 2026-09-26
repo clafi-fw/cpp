@@ -479,6 +479,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Themes_Icon.cppm"
         "${themes_dir}/Themes_BrowserControl.cppm"
         "${themes_dir}/Pages/BasePage.cppm"
+        "${themes_dir}/Pages/Design2Page.cppm"
         "${themes_dir}/Pages/HomePage.cppm"
         "${themes_dir}/Pages/PreviewPanel.cppm"
         "${themes_dir}/Pages/ThemePage.cppm"

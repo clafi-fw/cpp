@@ -224,6 +224,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Src\Pages\BasePage.cppm" />
+    <ClCompile Include="Src\Pages\Design2Page.cppm" />
     <ClCompile Include="Src\Pages\HomePage.cppm" />
     <ClCompile Include="Src\Pages\PreviewPanel.cppm" />
     <ClCompile Include="Src\Pages\ThemePage.cpp" />

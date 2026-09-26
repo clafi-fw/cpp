@@ -266,6 +266,7 @@ namespace ThisApp
         m_darkModeFloorSlider.invalidate();
         updateGridControls();
         restoreFolds();
+        restoreView();
     }
 
     bool ThemePage::hasUnsavedEdits() const
@@ -599,6 +600,20 @@ namespace ThisApp
                 result = &fold;
         }
         return result;
+    }
+
+    void ThemePage::storeView() const
+    {
+        const Control* page = m_tabbedBox.pageControl().currentItem();
+        for (std::size_t i = 0ull; i != m_viewTabs.size(); ++i)
+            if (m_viewTabs[i]->page() == page)
+                (tabConfig() / k_viewAttrName).set(static_cast<ThemeView>(i));
+    }
+
+    void ThemePage::restoreView()
+    {
+        const ThemeView view = (tabConfig() / k_viewAttrName).get<ThemeView>();
+        m_viewTabs[static_cast<std::size_t>(view)]->select();
     }
 
     void ThemePage::saveTheme() const

@@ -3,6 +3,7 @@ export module ThisApp.ThemePage;
 import ThisApp.BasePage;
 import ThisApp.CodeOptions;
 import ThisApp.Consts;
+import ThisApp.Design2Page;
 import ThisApp.FloorSlider;
 import ThisApp.HueRuleControl;
 import ThisApp.RuleSlider;
@@ -146,6 +147,7 @@ namespace ThisApp
         };
         using FoldCollection = std::vector<Fold>;
         using FoldNames = std::vector<std::wstring>;
+        using ViewTabs = std::array<Tab*, static_cast<std::size_t>(ThemeView::Count)>;
     private:
         ThemeColors& editColors() { return m_editTheme.colors; }
         //
@@ -180,6 +182,8 @@ namespace ThisApp
         void followFolds(const Control* owner); // keeps the focus and the menu's target in sight
         // The outermost closed fold whose body holds the control, or null where none does.
         [[nodiscard]] const Fold* hidingFold(const Control*) const;
+        void storeView() const;
+        void restoreView();
         void saveTheme() const;
         // Writes this page's work to a name the user gives, and takes the tab there. The original
         // is left on the disk as it stands, which is what tells this from Save.
@@ -312,6 +316,8 @@ namespace ThisApp
             ScrollBars::Vertical
         ) };
 
+        Design2Page& m_design2Page{ m_tabbedBox.pageControl().add<Design2Page>() };
+
         CodePage& m_cppCodePage{ m_tabbedBox.pageControl().add<CodePage>() };
         CodePage& m_claFiPage{ m_tabbedBox.pageControl().add<CodePage>() };
         CodePage& m_xmlPage{ m_tabbedBox.pageControl().add<CodePage>() };
@@ -345,6 +351,11 @@ namespace ThisApp
             .select()
         };
 
+        Tab& m_design2Tab{ m_tabbedBox.strip().addTab(
+            L"Design 2",
+            Page{ m_design2Page }
+        ) };
+
         Tab& m_cppCodeTab{ m_tabbedBox.strip().addTab(
             Text{ TextStyleId::Code, L"C++" },
             Page{ m_cppCodePage }
@@ -364,6 +375,16 @@ namespace ThisApp
             Text{ TextStyleId::Code, L"JSON" },
             Page{ m_jsonPage }
         ) };
+
+        // One tab per ThemeView, in its order.
+        const ViewTabs m_viewTabs{
+            &m_designTab,
+            &m_design2Tab,
+            &m_cppCodeTab,
+            &m_claFiTab,
+            &m_xmlTab,
+            &m_jsonTab
+        };
 
         Controls::Expander& m_paletteExpander{ m_designView.add<Controls::Expander>(
             VerticalAlign::Top,
@@ -782,6 +803,7 @@ namespace ThisApp
         m_tabbedBox.pageControl().connectEvent([this](CurrentItemChangeEvent&)
             {
                 generateCode();
+                storeView();
             });
     }
 
