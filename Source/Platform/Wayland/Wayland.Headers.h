@@ -23,6 +23,8 @@
 // RAISING A WINDOW IS THE COMPOSITOR'S. The client asks for a token against the input event that
 // wanted the raise, and hands it back naming the window.
 #include <xdg-activation-v1-client-protocol.h>
+// A WINDOW'S OPACITY IS THE COMPOSITOR'S TO APPLY, as a multiplier on the surface.
+#include <alpha-modifier-v1-client-protocol.h>
 // THE LAYER SHELL NAMES AN ARGUMENT "namespace", which C accepts and C++ cannot, and the
 // generated header is C. It reads as namespace_ for the length of the include; nothing else
 // in that header spells the word outside a comment.

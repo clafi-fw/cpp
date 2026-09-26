@@ -99,13 +99,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // loses the corners; a layer surface loses both.
         [[nodiscard]] WindowFrame appliedFrame() const;
         PlacedWindow place(const WindowPlacement&) override;
-        // NO PER-SURFACE OPACITY, so a window here is either up or it is not - a translucent one
-        // would be a buffer carrying the alpha, which is the backend's business and not this
-        // window's. The number is REMEMBERED AND ANSWERED even so, because what asks for it is a
-        // fade: a tooltip is put away by animating its alpha to zero and is never told to hide,
-        // so a platform that answers a constant leaves the window standing at full strength for
-        // ever. Zero unmaps it and anything else maps it - the fade snaps at each end, and the
-        // window going away is the half that matters.
+        // Applied by the compositor or by the frame. See Platform#window-opacity
         [[nodiscard]] ColorByte alpha() override { return m_alpha; }
         void setAlpha(ColorByte value) override;
         void initiateWindowDrag(IntPoint pt, InputStamp) override;
@@ -183,6 +177,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         // ATTACHES A FRAME AND ASKS FOR IT TO BE SHOWN. The damage is in BUFFER coordinates,
         // which is what survives a scale change - surface coordinates would not.
         void presentFrame(ShmBuffers::Frame&, const IntRect& damage);
+        // The opacity a frame's own pixels carry - full where the compositor applies the window's.
+        [[nodiscard]] ColorByte pixelAlpha() const { return m_alphaModifier ? 255 : m_alpha; }
 
         // THE TWO REQUESTS THAT HAND THE WINDOW TO THE COMPOSITOR - to be moved, or to be sized
         // from the edge or corner named. Both are refused on the same terms: a request naming no
@@ -293,13 +289,14 @@ namespace ClaFi::PlatformImplementation::Wayland
         // number the outputs report.
         wp_viewport* m_viewport{ nullptr };
         wp_fractional_scale_v1* m_fractionalScale{ nullptr };
+        // Null where the compositor offers no multiplier and the frame carries the opacity.
+        wp_alpha_modifier_surface_v1* m_alphaModifier{ nullptr };
         // OUTSTANDING WHILE A FRAME IS OWED. The compositor answers it when this surface is about
         // to be drawn, which is the only moment another frame is worth producing. Painting on any
         // other schedule draws frames that are overwritten before a screen refresh reaches them.
         wl_callback* m_frameCallback{ nullptr };
         std::wstring m_title;
-        // What a caller last asked for, and the whole of what opacity means here - see setAlpha.
-        ColorByte m_alpha{ 255 };
+        ColorByte m_alpha{ 255 };   // what a caller last asked for
         IntRect m_dirtyRect{};
         // WHAT THE LAST CONFIGURE PROPOSED, and not yet what is true. A configure is a proposal
         // in two halves - the toplevel names a size and a set of states, the surface then says
@@ -445,6 +442,10 @@ namespace ClaFi::PlatformImplementation::Wayland
                 &k_fractionalScaleListener, this);
         }
 
+        wp_alpha_modifier_v1* alphaModifier = manager.alphaModifier();
+        if (alphaModifier)
+            m_alphaModifier = ::wp_alpha_modifier_v1_get_surface(alphaModifier, m_surface);
+
         // A POPUP IS DRAWN AT ITS PARENT'S SCALE AND TAKES NONE OF ITS OWN - see placePopup,
         // which reads it. NOT HERE: a hint's window is a member of the form it belongs to and is
         // built with it, which is before that form's own window has been configured and so before
@@ -562,6 +563,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         // DESTROYED INNERMOST FIRST. Each of these was made from the one below it, and a
         // compositor is entitled to treat a parent destroyed before its child as a protocol
         // error rather than as tidying up.
+        if (m_alphaModifier)
+            ::wp_alpha_modifier_surface_v1_destroy(m_alphaModifier);
         if (m_fractionalScale)
             ::wp_fractional_scale_v1_destroy(m_fractionalScale);
         if (m_viewport)
@@ -583,6 +586,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (m_surface)
             ::wl_surface_destroy(m_surface);
 
+        m_alphaModifier = nullptr;
         m_fractionalScale = nullptr;
         m_viewport = nullptr;
         m_frameCallback = nullptr;
@@ -816,10 +820,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         return { geometryPixels().toFloat() };
     }
 
-    // THE OPACITY IS CARRIED IN THE PIXELS. There is no per-surface opacity protocol, so a frame
-    // is written at the window's alpha instead - see FormWindow::paint - and a new value is a
-    // repaint and nothing more. ZERO IS STILL SPECIAL: a frame nobody can see is not worth
-    // drawing, and an unmapped window is the honest way to say a hint is not there.
+    // Zero unmaps; any other value is a commit or a repaint. See Platform#window-opacity
     void Window::setAlpha(ColorByte value)
     {
         if (m_alpha == value)
@@ -833,6 +834,12 @@ namespace ClaFi::PlatformImplementation::Wayland
         // opaque region, whatever its pixels would be at full.
         if (wasOpaque != (m_alpha == 255))
             stateGeometry();
+
+        if (m_alphaModifier)
+        {
+            const std::uint32_t factor = m_alpha * 0x01010101u;   // 255 becomes UINT32_MAX
+            ::wp_alpha_modifier_surface_v1_set_multiplier(m_alphaModifier, factor);
+        }
 
         if (wasUp != (m_alpha != 0))
         {
@@ -848,7 +855,15 @@ namespace ClaFi::PlatformImplementation::Wayland
             return;
         }
 
-        invalidateRect(nullptr);
+        if (!m_alphaModifier)
+        {
+            invalidateRect(nullptr);
+            return;
+        }
+
+        // A bare commit on an unmapped surface asks for it to be mapped - see show.
+        if (m_configured && !m_unmapped && m_visible)
+            ::wl_surface_commit(m_surface);
     }
 
     // ADDED, NOT RESTORED, AND MAPPED THIS WHOLE TIME. A session opened while this window stood

@@ -324,7 +324,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // scaled by c and an alpha equal to c, which is the same number. So a full-strength frame
         // needs no conversion at all, whichever format it is in - what XRGB8888 and ARGB8888 name
         // on a little-endian machine is the order Graphics::Color already holds.
-        const std::uint32_t opacity = alpha();
+        const std::uint32_t opacity = pixelAlpha();
         if (!m_buffers.hasAlphaChannel() || opacity == 255)
         {
             const std::size_t rowBytes = static_cast<std::size_t>(right - left) * sizeof(Color);
@@ -335,21 +335,21 @@ namespace ClaFi::PlatformImplementation::Wayland
         }
         else
         {
-            // A WINDOW-WIDE OPACITY IS A MULTIPLY AND NOTHING ELSE. Premultiplied colour scales
-            // with its own alpha, so all four channels take the same factor and stay consistent
-            // with each other - no destination to read, no division, and a rounded corner keeps
-            // the coverage it was drawn with. Scalar while this is being proven; it is a pure
-            // load-multiply-store, so the eight-at-a-time shape in TODO.cpp fits it directly.
+            // Two channels per multiply, rounded. See Platform#window-opacity
+            constexpr ColorAsUint k_evenBytes = 0x00FF00FFu;
+            constexpr ColorAsUint k_half = 0x00800080u;
             for (int y = top; y < bottom; ++y)
             {
                 const Color* in = source + static_cast<std::size_t>(y) * backBuffer->stride() + left;
                 Color* out = target + static_cast<std::size_t>(y) * size.x + left;
                 for (int x = left; x < right; ++x, ++in, ++out)
                 {
-                    out->blue = static_cast<ColorByte>(in->blue * opacity / 255);
-                    out->green = static_cast<ColorByte>(in->green * opacity / 255);
-                    out->red = static_cast<ColorByte>(in->red * opacity / 255);
-                    out->alpha = static_cast<ColorByte>(in->alpha * opacity / 255);
+                    const ColorAsUint pixel = in->asUint();
+                    ColorAsUint blueRed = (pixel & k_evenBytes) * opacity + k_half;
+                    ColorAsUint greenAlpha = ((pixel >> 8) & k_evenBytes) * opacity + k_half;
+                    blueRed = ((blueRed + ((blueRed >> 8) & k_evenBytes)) >> 8) & k_evenBytes;
+                    greenAlpha = (greenAlpha + ((greenAlpha >> 8) & k_evenBytes)) & ~k_evenBytes;
+                    *out = Color{ blueRed | greenAlpha };
                 }
             }
         }

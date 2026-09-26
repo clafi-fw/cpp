@@ -82,7 +82,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             std::string_view name;
             bool offered{ false };
         };
-        using OptionalGlobals = std::array<OptionalGlobal, 8>;
+        using OptionalGlobals = std::array<OptionalGlobal, 9>;
     public:
         // CONNECTS, OR THROWS. A client started outside a session has nothing to draw into, and
         // the error names what was looked for - the value of WAYLAND_DISPLAY.
@@ -187,6 +187,8 @@ namespace ClaFi::PlatformImplementation::Wayland
             return m_viewporter ? m_fractionalScaleManager : nullptr;
         }
         [[nodiscard]] wp_viewporter* viewporter() const { return m_viewporter; }
+        // Null where the compositor applies no opacity. See Platform#window-opacity
+        [[nodiscard]] wp_alpha_modifier_v1* alphaModifier() const { return m_alphaModifier; }
         //
         // THE POINTER IMAGE, BY NAME. The compositor draws it from its own theme at its own size,
         // which is the only way a cursor on Wayland is ever the right size on every screen; a
@@ -388,6 +390,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         ext_data_control_device_v1* m_dataControlDevice{ nullptr };
         wp_viewporter* m_viewporter{ nullptr };
         wp_fractional_scale_manager_v1* m_fractionalScaleManager{ nullptr };
+        wp_alpha_modifier_v1* m_alphaModifier{ nullptr };
         wp_cursor_shape_manager_v1* m_cursorShapeManager{ nullptr };
         wl_pointer* m_pointer{ nullptr };
         // The pointer's shape device. Made with the pointer and released with it.
@@ -510,6 +513,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         constexpr std::uint32_t output = 2;
         constexpr std::uint32_t viewporter = 1;
         constexpr std::uint32_t fractionalScaleManager = 1;
+        constexpr std::uint32_t alphaModifier = 1;
         // 1 carries the whole of the selection: a source naming its MIME types, an offer listing
         // them, and set_selection against an input serial. 3 adds the drag-and-drop actions, whose
         // events would arrive on listener slots this layer does not fill, so it is not asked for
@@ -595,6 +599,8 @@ namespace ClaFi::PlatformImplementation::Wayland
             ::wl_seat_destroy(m_seat);
         if (m_cursorShapeManager)
             ::wp_cursor_shape_manager_v1_destroy(m_cursorShapeManager);
+        if (m_alphaModifier)
+            ::wp_alpha_modifier_v1_destroy(m_alphaModifier);
         if (m_fractionalScaleManager)
             ::wp_fractional_scale_manager_v1_destroy(m_fractionalScaleManager);
         if (m_viewporter)
@@ -956,9 +962,11 @@ namespace ClaFi::PlatformImplementation::Wayland
                 m_windowManager ? ::xdg_wm_base_get_version(m_windowManager) : 0,
                 m_seat ? ::wl_seat_get_version(m_seat) : 0);
         std::fprintf(stderr,
-            "[wayland] outputs %zu  viewporter=%p fractional=%p cursor-shape=%p layer-shell=%p\n",
+            "[wayland] outputs %zu  viewporter=%p fractional=%p alpha-modifier=%p cursor-shape=%p "
+            "layer-shell=%p\n",
             m_outputs.size(), static_cast<const void*>(m_viewporter),
             static_cast<const void*>(m_fractionalScaleManager),
+            static_cast<const void*>(m_alphaModifier),
             static_cast<const void*>(m_cursorShapeManager),
             static_cast<const void*>(m_layerShell));
         std::fprintf(stderr,
@@ -982,6 +990,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             { ::wp_viewporter_interface.name, m_viewporter != nullptr },
             { ::wp_fractional_scale_manager_v1_interface.name,
                 m_fractionalScaleManager != nullptr },
+            { ::wp_alpha_modifier_v1_interface.name, m_alphaModifier != nullptr },
             { ::wp_cursor_shape_manager_v1_interface.name, m_cursorShapeManager != nullptr },
             { ::zxdg_decoration_manager_v1_interface.name, m_decorationManager != nullptr },
             { ::zwlr_layer_shell_v1_interface.name, m_layerShell != nullptr },
@@ -1062,6 +1071,13 @@ namespace ClaFi::PlatformImplementation::Wayland
             m_fractionalScaleManager = static_cast<wp_fractional_scale_manager_v1*>(
                 ::wl_registry_bind(registry, name, &::wp_fractional_scale_manager_v1_interface,
                     std::min(version, InterfaceVersion::fractionalScaleManager)));
+            return;
+        }
+        if (interfaceName == ::wp_alpha_modifier_v1_interface.name)
+        {
+            m_alphaModifier = static_cast<wp_alpha_modifier_v1*>(
+                ::wl_registry_bind(registry, name, &::wp_alpha_modifier_v1_interface,
+                    std::min(version, InterfaceVersion::alphaModifier)));
             return;
         }
         if (interfaceName == ::wp_cursor_shape_manager_v1_interface.name)

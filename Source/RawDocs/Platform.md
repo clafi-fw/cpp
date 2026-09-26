@@ -256,6 +256,31 @@ failing that by its position on a US keyboard - which is how Win32 names every k
 WHERE A COMPOSITOR EVENT BECOMES SOMETHING THE FRAMEWORK UNDERSTANDS. The window above
 knows about surfaces and buffers; this knows about a form, and the two meet only here.
 
+## Window opacity
+
+A WINDOW'S OPACITY IS THE COMPOSITOR'S TO APPLY where it offers wp_alpha_modifier_v1. The
+value is stated on the surface as a multiplier, so a change is one commit - no paint, no
+pixel pass, no new buffer. The compositor applies it to a buffer without an alpha channel
+too, so an opaque window fades the same way. While the window is off the screen the
+multiplier waits in the surface's pending state for the commit that maps it, since a bare
+commit on an unmapped surface asks for it to be mapped.
+
+WHERE THE COMPOSITOR OFFERS NONE, THE FRAME CARRIES IT. FormWindow::paint writes every pixel
+at the window's opacity, and a change repaints the window. Premultiplied colour scales with
+its own alpha, so all four channels take one factor and the result is still premultiplied
+colour - no destination is read, and a rounded corner keeps the coverage it was drawn with.
+
+TWO CHANNELS SHARE EACH MULTIPLY. The pixel is read as one 32-bit word, blue with red in its
+even bytes and green with alpha in its odd ones, and a byte times a byte fits the 16 bits
+each channel has there. The division by 255 is (t + (t >> 8)) >> 8 over t = c * o + 128,
+which is c * o / 255 rounded to nearest and exact for every pair of bytes. Written this way
+the compiler vectorises the loop, and on a frame larger than the cache it runs as fast as a
+plain copy of the same rows. A hand-written AVX2 kernel would be x86 only and measured no
+faster there.
+
+ZERO UNMAPS on either path. A frame nobody can see is not worth drawing, and an unmapped
+window is how a hint says it is not there.
+
 ## INativeEventSink
 
 WHAT THE DISPLAY DELIVERS TO. A separate interface so the connection does not have to know

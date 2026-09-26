@@ -292,6 +292,11 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
     clafi_wayland_protocol(
         "${WAYLAND_PROTOCOLS_DIR}/staging/xdg-activation/xdg-activation-v1.xml"
         xdg-activation-v1)
+    # A WINDOW'S OPACITY, multiplied in by the compositor - see Window::setAlpha. Every
+    # wayland-protocols accepted above carries it.
+    clafi_wayland_protocol(
+        "${WAYLAND_PROTOCOLS_DIR}/staging/alpha-modifier/alpha-modifier-v1.xml"
+        alpha-modifier-v1)
 
     # A WINDOW ON THE SCREEN'S EDGE. xdg-shell has no request that names an edge; the layer shell
     # states an anchor, a size and a reserved strip, and the compositor does the rest - see
