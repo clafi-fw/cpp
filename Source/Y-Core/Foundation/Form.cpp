@@ -19,6 +19,7 @@ import ClaFi.Core.System.Scaler;
 
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
@@ -191,6 +192,9 @@ namespace ClaFi
         // handle that had already been taken. It also reads this form on its way down.
         m_tooltip.destroyForm();
 
+        // What the form runs under its own key; FormControlBase stops what the root runs.
+        m_appContext.animator().stop(this);
+
         if (m_popupTargetForm && m_popupTargetForm->m_activePopup == this)
             m_popupTargetForm->m_activePopup = nullptr;
         // Both directions. A popup normally goes first, but nothing enforces it - a popup is a
@@ -247,6 +251,14 @@ namespace ClaFi
     float FormBase::contentHeight() const
     {
         return m_content.height();;
+    }
+
+    float FormBase::windowFocusedFactor() const
+    {
+        // A popup's window never takes the focus, so it reads as the window it stands on.
+        if (m_windowRole != WindowRole::Dialog && m_popupTargetForm)
+            return m_popupTargetForm->windowFocusedFactor();
+        return m_windowFocusedFactor;
     }
 
     FloatRect FormBase::geometry() const
@@ -1268,8 +1280,7 @@ namespace ClaFi
 
     void FormBase::wnd_focusChanged()
     {
-        // TODO: is invalidateState() needed here?
-        //m_client->invalidateState();
+        stateWindowFocus();
         FormFocusChangeEvent event{ *this };
         emitEvent(event);
 
@@ -1999,6 +2010,23 @@ namespace ClaFi
         m_scalerConnection = m_scaler->connectEvent<ScaleFactorChangeEvent>(
             this, &FormBase::scaleFactorChanged);
         m_context.setScaler(*m_scaler);
+    }
+
+    void FormBase::stateWindowFocus()
+    {
+        const float endValue = m_window->isFocused() ? 1.0f : 0.0f;
+        // A form not painted yet has nothing on screen to fade.
+        if (!m_content.isPainted())
+        {
+            m_windowFocusedFactor = endValue;
+            return;
+        }
+        // The whole window, since the form cannot know who reads the factor. See Control-Foundation
+        m_appContext.animator().start(this, AnimationSlots::windowFocused, m_windowFocusedFactor,
+            endValue, [this](AnimateParams& params) {
+                m_windowFocusedFactor = params.value;
+                invalidate();
+            });
     }
 
     void FormBase::followPopupTarget2()

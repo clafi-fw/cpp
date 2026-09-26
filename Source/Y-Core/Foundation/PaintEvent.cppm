@@ -45,6 +45,8 @@ namespace ClaFi
         float pressedFactor() const;
         float enabledFactor() const;
         float focusedFactor() const;
+        // How far the window this control is painted in holds the focus. See Control-Foundation
+        [[nodiscard]] float windowFocusedFactor() const { return m_windowFocusedFactor; }
 
         const BakedElement& colorRules() const { return m_colorRules; }
 
@@ -227,11 +229,13 @@ namespace ClaFi
         float m_parentHoverAmount{ 0.0f };
         float m_parentSelectedAmount{ 0.0f };
         float m_parentPressedAmount{ 0.0f };
+        float m_windowSelectedAmount{ 0.0f };
         // Zero by default: a control's depth answers to its own state unless its host says
         // otherwise, so nothing starts out moving on someone else's behalf.
         float m_parentZAmount{ 0.0f };
         float m_disablingStrength{ 0.77f };
         float m_enabledFactor{ 1.0f };
+        float m_windowFocusedFactor{ 1.0f };
         bool m_showSurfaceAtRest{ true };
         bool m_showSelectionOnSurface{ true };
         float m_surfaceVisibility{ 0.0f };
@@ -316,6 +320,8 @@ namespace ClaFi
         // is a child that is also clickable in its own right, which has its own hover to show and
         // should keep a share of the movement for it.
         void setParentZAmount(float value) { m_target.m_parentZAmount = value; }
+        // How much of the selected factor is the window's focus rather than the control's own.
+        void setWindowSelectedAmount(float value) { m_target.m_windowSelectedAmount = value; }
         void setDisabledBlendAmount(float value) { m_target.m_disablingStrength = value; }
         // The ink this control has inherited, before its own text rule is applied to it: what a
         // host has named for it, or what the chain hands down. Read and written where a control's

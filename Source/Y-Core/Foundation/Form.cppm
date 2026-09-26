@@ -167,8 +167,8 @@ namespace ClaFi
         //
         // These two forwarders exist so DECLARE_EVENT and the emit sites below can be written the
         // usual way. m_content is set by the root control itself, in FormControlBase's
-        // constructor, so it is already there for a child that connects a form event on its way
-        // up - FormTitle does exactly that.
+        // constructor, so it is already there for a child that connects a form event while it
+        // is being built.
         template <IsEvent TEvent>
         EventConnection connectEvent(auto&& callback) {
             return m_content.connectEvent<TEvent>(std::forward<decltype(callback)>(callback));
@@ -202,6 +202,8 @@ namespace ClaFi
         [[nodiscard]] Actions& actions() { return m_actions; }
         [[nodiscard]] float contentHeight() const;
         IPlatformWindow& window() const { return *m_window; }
+        // How far this form's window holds the focus, from 0 to 1. See Control-Foundation
+        [[nodiscard]] float windowFocusedFactor() const;
         // THE FRAME THE WINDOW IS WEARING - what the platform applies, not what the root states.
         [[nodiscard]] const WindowFrame& frame() const { return m_frame; }
         // Where the window stands inside its surface: the surface less the frame's margins, in
@@ -440,6 +442,7 @@ namespace ClaFi
         void detachScaler(const Scaler& goingDown);
         // Which scaler this form is drawn at from now on - see the definition.
         void stateScaler(Scaler&);
+        void stateWindowFocus();
         // Whether this form has taken a scale of its own while still standing on another form -
         // see holdScale.
         [[nodiscard]] bool holdingScale() const
@@ -518,6 +521,7 @@ namespace ClaFi
         ScaledDimensions m_statedMaxSize{ -1.0f, -1.0f };
         AutoFit m_autoFit{ AutoFit::No };
         bool m_visible{};
+        float m_windowFocusedFactor{ 0.0f };
         // The form is where the application context stops being carried down. FormContext below it
         // holds only the theme, so that the TextEngine and everything above it stay clear of the
         // config and DOM stack that AppContext brings with it.

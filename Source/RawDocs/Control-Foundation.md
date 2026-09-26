@@ -347,3 +347,32 @@ on Wayland that is also the last moment a toplevel can be named to its session. 
 name stores nothing and restores nothing. The placement is written on every hide - a close hides
 first - so a system close, Alt+F4 or the compositor's, stores it too: the platform routes those
 through IForm::wnd_closeRequested, which closes the form the way its own close button does.
+
+## FormBase::windowFocusedFactor
+
+HOW FAR A FORM'S WINDOW HOLDS THE FOCUS, from 0 to 1. The form animates it itself, on
+`AnimationSlots::windowFocused`, whenever the platform reports a change through
+`wnd_focusChanged`: `WM_SETFOCUS` and `WM_KILLFOCUS` on Win32, the ACTIVATED state of a toplevel
+configure on Wayland. A form not painted yet takes the value outright.
+
+NOTHING SUBSCRIBES. A control reads the factor while it paints, through
+`PaintEvent::windowFocusedFactor`, which is read from the form once at the root of the paint and
+handed down the chain. The form cannot know which controls read it, so every step of the
+animation invalidates the whole window.
+
+A POPUP READS THE WINDOW IT STANDS ON. A Menu or Tooltip window never takes the focus -
+`WS_EX_NOACTIVATE` on Win32, and an `xdg_popup` has no ACTIVATED state - so a popup answers its
+owner's factor, up to the first Dialog. A Dialog answers its own, owned or not. A Wayland
+layer-shell Dialog, placed `ScreenRight`, is sent no ACTIVATED state and reads 0.
+
+What reads it:
+
+- The colour chain, through `AdjustPaintEvent::setWindowSelectedAmount` - how much of the
+  selected factor is the window's focus. `FormTitle` states 1, so its `active` and `activeText`
+  rules follow its window.
+- The selection band. `ControlPaintContext::focusedFactor` is the control's focus times the
+  window's, so a selection in a window without the focus rests at `selectedText.surface`.
+- The focus ring's live share. The ring stays, in the inactive grey.
+- `TextBox`'s caret, drawn only while the factor is 1.
+
+`FormFocusChangeEvent` marks the moment of each change; the factor is what a paint reads.

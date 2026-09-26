@@ -64,6 +64,12 @@ namespace ClaFi::AnimationSlots
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseInOut }
     };
 
+    // A form's window taking or losing the focus. See Control-Foundation
+    export constexpr AnimationSlot windowFocused{
+        .duration{.rise = 66ms, .fall = 330ms },
+        .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseOut }
+    };
+
     export constexpr AnimationSlot expander{
         .duration{.rise = 400ms, .fall = 166ms },
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseInOut }

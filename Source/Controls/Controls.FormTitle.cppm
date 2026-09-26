@@ -58,7 +58,7 @@ namespace ClaFi::Controls
         template<typename... Args>
         explicit FormTitle(const CreateParams&, Args&&...);
     protected:
-        void getControlState(GetStateEvent&) const override;
+        void adjustPaint(AdjustPaintEvent&) override;
         void hitTest(HitTestEvent& event) const override { event.zone = HitTest::Title; };
     private:
         StackPanel& m_sysButtons{ createRightBar<StackPanel>(
@@ -178,15 +178,12 @@ namespace ClaFi::Controls
             std::forward<Args>(args)...
         }
     {
-        params.form.onFocusChange([this](FormFocusChangeEvent&) {
-            invalidateState();
-            });
     }
 
-    void FormTitle::getControlState(GetStateEvent& event) const
+    void FormTitle::adjustPaint(AdjustPaintEvent& event)
     {
-        if (&event.control == this)
-            event.state.selected = event.form().window().isFocused();
+        Panel::adjustPaint(event);
+        event.setWindowSelectedAmount(1.0f);
     }
 
 }

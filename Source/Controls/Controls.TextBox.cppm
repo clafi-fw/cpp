@@ -153,8 +153,7 @@ namespace ClaFi::Controls
         // several lines tall is nowhere near either.
         [[nodiscard]] FloatRect contextMenuAnchor() const override;
         void setSelection(std::size_t otherPos, std::size_t caretPos);
-        // Where the blink and the visual state meet. The caret is drawn from this one place, so
-        // both are read here rather than mirrored into a member a missed change could leave stale.
+        // The caret's one drawing site - the blink, the visual state and the window's focus meet.
         void paintText(PaintEvent&) override;
         // What the layout is told when the box's text has moved. An edit reaches a paragraph or
         // two, and the rest of the document keeps the shaping it has - which is what the base's
@@ -296,8 +295,7 @@ namespace ClaFi::Controls
         Places m_backPlaces;
         Places m_forwardPlaces;
         PointedLink m_pointedLink;
-        // Which half of the blink the caret stands in. Whether it is DRAWN is this and
-        // VisualState::focused together - see paintText.
+        // Which half of the blink the caret stands in - see paintText for whether it is drawn.
         bool m_caretOn{ true };
         // The edit that produced a text the layout has not been told about yet, recorded by
         // applyEdit and consumed by the next syncedLayout - which is what lets a paragraph the
@@ -511,7 +509,9 @@ namespace ClaFi::Controls
 
     void TextBox::paintText(PaintEvent& event)
     {
-        m_editProps.caretVisible = m_caretOn && visualState().focused;
+        m_editProps.caretVisible = m_caretOn
+            && visualState().focused
+            && event.windowFocusedFactor() >= 1.0f;
         Label::paintText(event);
     }
 

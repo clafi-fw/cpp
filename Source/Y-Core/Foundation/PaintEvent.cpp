@@ -1,6 +1,7 @@
 module ClaFi.Core.Foundation;
 
 import :PaintEvent;
+import :Form;
 import :Control;
 import :Traversal;
 
@@ -59,6 +60,10 @@ namespace ClaFi
         // before it, a control that has never been enabled paints its first frame live and
         // only settles when something else invalidates it - a pointer crossing the window.
         m_enabledFactor = control.enabledFactor() * (m_parentEvent ? m_parentEvent->m_enabledFactor : 1.0f);
+        if (m_parentEvent)
+            m_windowFocusedFactor = m_parentEvent->m_windowFocusedFactor;
+        else if (const FormBase* form = control.getForm())
+            m_windowFocusedFactor = form->windowFocusedFactor();
 
         // Metrics
         {
@@ -133,11 +138,15 @@ namespace ClaFi
                 };
 
             float hoverEffectiveFactor = calcEffectiveFactor(m_colorRules.hovered, VisualStateIndex::Hovered, m_parentHoverAmount);
-            // How far this control is the one in effect. The ink reads it whatever the surface
+            // How far this control is the one in effect: its own selected state, or its window's
+            // focus as far as setWindowSelectedAmount asked. The ink reads it whatever the surface
             // does with it: an element that paints no selected fill still states its ink through
-            // activeText, and a form title is that element.
-            const float selectedFactor = calcEffectiveFactor(m_colorRules.active,
-                VisualStateIndex::Selected, m_parentSelectedAmount);
+            // activeText.
+            const float selectedFactor = std::lerp(
+                calcEffectiveFactor(m_colorRules.active, VisualStateIndex::Selected,
+                    m_parentSelectedAmount),
+                m_windowFocusedFactor,
+                m_windowSelectedAmount);
             // At zero the active rule reaches neither the fill, nor the grow-in that
             // m_surfaceVisibility drives, which is the whole of what a surface says.
             float selectedEffectiveFactor = m_showSelectionOnSurface ? selectedFactor : 0.0f;
@@ -203,10 +212,10 @@ namespace ClaFi
             // Text Color
             {
                 // The control drawing a selection is the one that owns it, so the band is taken
-                // by this control's own focused factor. Handed over rather than resolved: the
-                // band and the caret are two colours out of the many a context can answer with,
-                // and almost nothing asks for either.
-                m_controlContext.focusedFactor = factors.focused();
+                // by this control's own focused factor, as far as its window holds the focus.
+                // Handed over rather than resolved: the band and the caret are two colours out of
+                // the many a context can answer with, and almost nothing asks for either.
+                m_controlContext.focusedFactor = factors.focused() * m_windowFocusedFactor;
 
                 // The ink arrives from the control above, or from a host that named one, so only
                 // this control's own rule is applied to it - at full strength, with no state term
@@ -277,7 +286,8 @@ namespace ClaFi
             //
             // Whether there is a ring and what colour it is are two questions, so two terms.
             const float focusHolderFactor = factors.focused() * s_keyboardFactor;
-            const float activeFactor = activeFactorOf(factors.hovered(), factors.focused());
+            const float activeFactor = activeFactorOf(factors.hovered(), factors.focused())
+                * m_windowFocusedFactor;
             float effectiveFocusFactor = std::max(focusHolderFactor, factors.current());
                 switch (m_interactivity)
                 {
@@ -419,7 +429,7 @@ namespace ClaFi
         applyFocus2(
             targetColor,
             std::max(focusHolderFactor, target.currentFactor()),
-            activeFactorOf(target.hoveredFactor(), target.focusedFactor())
+            activeFactorOf(target.hoveredFactor(), target.focusedFactor()) * m_windowFocusedFactor
         );
     }
 
