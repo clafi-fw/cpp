@@ -435,10 +435,11 @@ namespace ClaFi
         using ClickEventBase::ClickEventBase;
     };
 
-    // The control named is about to act on the click it was given. See Control-Foundation
-    export struct PressedEvent : public ClickEventBase
+    // The control named is about to drop a popup from its click. See Control-Foundation
+    export struct DropPopupEvent : public ClickEventBase
     {
         using ClickEventBase::ClickEventBase;
+        bool implicit{ false };   // the click implies the drop rather than asking for it
     };
 
     // TODO: should these three flags live on the event, as every other input result does?
@@ -741,8 +742,10 @@ namespace ClaFi
         // Runs the click a key asked for, which names that key rather than whatever the pointer
         // last pressed on this form.
         void animatedClick(FormBase&, InputStamp);
-        // False when a control above keeps the click. See Control-Foundation#pressedevent
-        [[nodiscard]] bool mayActOnClick(const ClickEvent&);
+        // False when the popup the click asks for is refused. See Control-Foundation#droppopupevent
+        [[nodiscard]] bool mayDropPopup(const ClickEvent&);
+        // False when an implicit drop is refused. See Control-Foundation#droppopupevent
+        [[nodiscard]] bool mayDropPopupImplicitly(const ClickEvent&);
         //
         [[nodiscard]] bool visible() const { return !(cfHidden & m_flags); }
         void setVisible(const bool value);
@@ -1075,8 +1078,8 @@ namespace ClaFi
         // points it at itself - so the write at the end of the walk is what settles it. Acting on
         // the way through is expected: this is where a container brings its focused item in line.
         virtual void nestedControlFocusing(FocusEvent&);
-        // event.control is about to act on its click, and stopping the event keeps it from acting.
-        virtual void nestedControlPressed(PressedEvent&);
+        // event.control is about to drop a popup from its click, and stopping the event refuses it.
+        virtual void nestedControlDroppingPopup(DropPopupEvent&);
         // What the pointer is on has changed, and it is this control or something inside it. Told
         // to EVERY ancestor of the new one, which is what tells this apart from childHoverEnter:
         // that pair rides the walk which invalidates state, and that walk stops at the common

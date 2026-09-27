@@ -50,24 +50,27 @@ checkbox cell toggles it and on a combobox cell drops its list or opens its edit
 
 ## Picking
 
-A press on a control in a cell picks the cell first. The control acts only on a press on the cell
-that was already selected, and in a grid that keeps a selection, only while its row is held as
-well. A part with a command of its own, a dropdown strip, acts on the picking press too.
+A press on a control in a cell picks the cell first. A popup a click drops implicitly - the list a
+combobox drops from its main area, an in-place editor - drops only from a press on the cell that
+was already selected, and in a grid that keeps a selection, only while its row is held as well. A
+part whose one job is its popup, a dropdown strip, drops it from the picking press too. A check
+box or a button drops nothing, and acts on the picking press.
 
 The row the press focuses records it, in `RowBase::nestedControlFocusing`, before
 `selectColumnUnderMouse` moves the selection - the one moment both the old cell and the new one
 are known. The record is one cell and what the press was to it, a `CellPressKind`, kept in
-`GridDescriptor`. When the cell's control is about to act on the click it asks, and
-`RowContainer::nestedControlPressed` stops the event for a press the row keeps - see
-Control-Foundation#pressedevent.
+`GridDescriptor`. When the cell's control is about to drop a popup it asks, and
+`RowContainer::nestedControlDroppingPopup` answers from that record and from
+`DropPopupEvent::implicit` - see Control-Foundation#droppopupevent.
 
-- Ctrl or Shift in a `SelectionMode::Multi` grid make the press `Select`, and the row keeps it
-  from everything in the cell, strip included.
-- A click the keyboard makes - Return or Space handed to the cell's control - is never kept. The
-  device is read at the click, and a key reaches the control only through the selected cell.
-- A double click on a cell that was not selected picks and opens in one gesture: the row keeps
-  the first click, and the second lands on the cell it picked. `WithInPlaceEdit` counts the pair
-  as two ordinary clicks when its first click was kept.
+- Ctrl or Shift in a `SelectionMode::Multi` grid make the press `Select`, and the row refuses a
+  popup to everything in the cell, strip included.
+- A click the keyboard makes - Return or Space handed to the cell's control - is never refused a
+  popup. The device is read at the click, and a key reaches the control only through the selected
+  cell.
+- A double click on a cell that was not selected picks and opens in one gesture: the row refuses
+  the editor on the first click, and the second lands on the cell it picked. `WithInPlaceEdit`
+  counts the pair as two ordinary clicks when the editor was refused on its first click.
 
 THE CLICK REACHES THE GRID AS A CLICK ON THE ROW. `RowContainer::nestedClick` retargets it the way
 `nestedControlFocusing` retargets the focus. The grid's click pass completes a pick - a Ctrl

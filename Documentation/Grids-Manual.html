@@ -990,9 +990,10 @@ focus for it: the grid keeps the arrows, Home, End, the page keys and Tab, and e
 goes to the control in the selected cell.</p>
 
 <p><strong>The first click picks the cell.</strong> A control that opens something over itself
-- a combobox's list, an editor typed in place - acts only on a click on the cell that is
-already selected. The first click selects the cell and its row, and the next one opens. Picking
-a row to delete it opens nothing.</p>
+- a combobox's list, an editor typed in place - opens it only from a click on the cell that is
+already selected. The first click selects the cell and its row, and the next one opens. The
+dropdown arrow opens on the first click too, because opening the list is its one job. Picking a
+row to delete it opens nothing.</p>
 
 <table>
 <tr><th>Gesture</th><th>On a cell not selected</th><th>On the selected cell</th></tr>
@@ -1010,13 +1011,22 @@ so the grid has nothing to hold back.</p>
 how the grid moves its selection. A click handler on the grid reads the row in
 <code>event.control</code>, not the control.</p>
 
-<p><strong>A cell control of your own</strong> that opens something over itself on a click asks
-first with <code>mayActOnClick</code>. When the answer is no, it leaves the click alone - the
-click goes on to the row, which picks the cell:</p>
+<p><strong>A cell control of your own</strong> that drops a popup on a click asks first, and
+the question it asks says what dropping the popup is to that click. When the answer is no, it
+leaves the click alone - the click goes on to the row, which picks the cell.</p>
+
+<table>
+<tr><th>Question</th><th>Dropping the popup is</th><th>On the click that picks the cell</th></tr>
+<tr><td><code>mayDropPopupImplicitly</code></td><td>A meaning a click on the control is given - the list a combobox drops from its main area, an editor over a caption</td><td>Refused</td></tr>
+<tr><td><code>mayDropPopup</code></td><td>The one job of the part that was clicked - a dropdown arrow</td><td>Allowed</td></tr>
+</table>
+
+<p>Ctrl+click and Shift+click in a <code>SelectionMode::Multi</code> grid refuse both. A swatch
+that opens a colour picker when clicked is given that meaning, so it asks the first question:</p>
 
 <pre><code><span class="kw">void</span> <span class="tp">SwatchControl</span>::<span class="fn">nestedClick</span>(<span class="tp">ClickEvent</span>&amp; event)
 {
-    <span class="kw">if</span> (!<span class="fn">mayActOnClick</span>(event))
+    <span class="kw">if</span> (!<span class="fn">mayDropPopupImplicitly</span>(event))
         <span class="kw">return</span>;
     event.<span class="fn">stopPropagation</span>();
     <span class="fn">openSwatchPopup</span>();
@@ -1024,8 +1034,9 @@ click goes on to the row, which picks the cell:</p>
 
 <div class="info">
 A control built on <code>DropdownControlBase</code> or <code>WithInPlaceEdit</code> asks
-already and needs nothing more. The question walks <code>nestedControlPressed</code> from the
-control up to the root, and the row holding the cell answers it for the control.
+already and needs nothing more. Both questions walk <code>nestedControlDroppingPopup</code> from
+the control up to the root, and the row holding the cell answers them for the control, reading
+<code>DropPopupEvent::implicit</code> to tell them apart.
 </div>
 
 <h3 id="r-vary">Rows that differ from their neighbours</h3>
@@ -1241,7 +1252,7 @@ are built in declaration order, so the grid read the set before it was built.</t
 <li>Use <code>std::ref</code> for anything shared or expensive.</li>
 <li>Use a bare <code>Cell{ Tag{ ... } }</code> when you want a present-but-empty cell.</li>
 <li>Add an item's row inside the <code>NewItemEvent</code> handler, so the grid can select it.</li>
-<li>Ask <code>mayActOnClick</code> before a cell control of your own opens anything on a click.</li>
+<li>Ask <code>mayDropPopupImplicitly</code> before a cell control of your own drops a popup on a click, or <code>mayDropPopup</code> from a part whose one job is that popup.</li>
 <li>Give at least one sub-column in each group <code>Fill</code>.</li>
 <li>Run a debug build after changing a blueprint.</li>
 </ul>

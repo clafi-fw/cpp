@@ -37,14 +37,14 @@ namespace ClaFi::Controls::Grids
 
     // RowContainer
 
-    void RowContainer::nestedControlPressed(PressedEvent& event)
+    void RowContainer::nestedControlDroppingPopup(DropPopupEvent& event)
     {
-        if (keepsPress(*event.control))
+        if (refusesPopup(event))
         {
             event.stopPropagation();
             return;
         }
-        Row::nestedControlPressed(event);
+        Row::nestedControlDroppingPopup(event);
     }
 
     // The grid completes a pick in the click pass, and it can make only a row current - handed
@@ -115,19 +115,19 @@ namespace ClaFi::Controls::Grids
         return control;
     }
 
-    // A part with a command of its own, a dropdown strip, still acts on the press that picks its
-    // cell. Nothing in the cell acts on a press that changes the selection.
-    bool RowContainer::keepsPress(const Control& acting) const
+    // A popup dropped implicitly waits for a press on the cell already selected. A part whose one
+    // job is its popup, a dropdown strip, drops it from the press that picks its cell.
+    bool RowContainer::refusesPopup(const DropPopupEvent& event) const
     {
         for (const auto& [column, index] : m_controlMap)
         {
             const Control& hosted = *m_controls[index];
-            if (!hosted.containsNested(acting))
+            if (!hosted.containsNested(*event.control))
                 continue;
             switch (pressOn(*column))
             {
                 case CellPressKind::Pick:
-                    return &acting == &hosted;
+                    return event.implicit;
                 case CellPressKind::Select:
                     return true;
                 case CellPressKind::Act:

@@ -878,10 +878,18 @@ namespace ClaFi
         doClick(event);
     }
 
-    bool Control::mayActOnClick(const ClickEvent& click)
+    bool Control::mayDropPopup(const ClickEvent& click)
     {
-        PressedEvent event{ *this, click.form, click.stamp };
-        nestedControlPressed(event);
+        DropPopupEvent event{ *this, click.form, click.stamp };
+        nestedControlDroppingPopup(event);
+        return !event.propagationStopped();
+    }
+
+    bool Control::mayDropPopupImplicitly(const ClickEvent& click)
+    {
+        DropPopupEvent event{ *this, click.form, click.stamp };
+        event.implicit = true;
+        nestedControlDroppingPopup(event);
         return !event.propagationStopped();
     }
 
@@ -1444,10 +1452,10 @@ namespace ClaFi
             Input::setFocusedControl(*event.control);
     }
 
-    void Control::nestedControlPressed(PressedEvent& event)
+    void Control::nestedControlDroppingPopup(DropPopupEvent& event)
     {
         if (Control* parent = this->parent())
-            parent->nestedControlPressed(event);
+            parent->nestedControlDroppingPopup(event);
     }
 
     void Control::nestedControlHovered(Control* hovered)
