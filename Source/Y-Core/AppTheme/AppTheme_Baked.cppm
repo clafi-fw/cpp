@@ -122,7 +122,7 @@ namespace ClaFi
         // The colour every shadow starts from: black, at the form surface's hue.
         [[nodiscard]] Hsl bareShadow() const;
         // The colour a window root casts its shadow in, before any opacity. See AppTheme
-        [[nodiscard]] Hsl windowShadow(OptionalUiElement root) const;
+        [[nodiscard]] Hsl windowShadow(OptionalUiElement root, float windowFocusedFactor) const;
     public:
         Lightness lightness{ k_darkLightness };
         // The hue a harmony turns around, for a drawing that has to answer where a rule states
@@ -606,16 +606,25 @@ namespace ClaFi
     }
 
     // Read at the dark end whatever the lightness - a shadow is the absence of light on both sides.
-    // The root's own shadow rules at rest, then the shared ones, in the order PaintEvent takes.
-    Hsl BakedColors::windowShadow(OptionalUiElement root) const
+    // The root's own shadow rules, then the shared ones, in the order PaintEvent takes. A window
+    // has no state but its focus, so a rule reading only other inputs does not reach its shadow.
+    Hsl BakedColors::windowShadow(OptionalUiElement root, float windowFocusedFactor) const
     {
         Hsl result = bareShadow();
         if (!root)
             return result;
         for (const BakedColorRules2* list : { &rules2.of(*root), &rules2.shared })
+        {
             for (const BakedColorRule2& rule : *list)
-                if (rule.output == PaintChannel::Shadow and rule.inputs.empty())
-                    rule.effect.applyTo(result, 1.0f, k_darkLightness);
+            {
+                if (rule.output != PaintChannel::Shadow)
+                    continue;
+                float factor = 1.0f;
+                if (!rule.inputs.empty())
+                    factor = rule.inputs.has(RuleInput::WindowFocused) ? windowFocusedFactor : 0.0f;
+                rule.effect.applyTo(result, factor, k_darkLightness);
+            }
+        }
         return result;
     }
 

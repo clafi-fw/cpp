@@ -1656,7 +1656,8 @@ namespace ClaFi
         const ControlMetrics& metrics = m_content.metrics();
         const WindowShadow shadow = m_content.windowShadow();
         const Scaler& scaler = this->scaler();
-        const Color rgb = bakedColors().windowShadow(m_content.colorRules()).toColor();
+        const Color rgb = bakedColors().windowShadow(m_content.colorRules(),
+            windowFocusedFactor()).toColor();
         const ColorByte alpha = static_cast<ColorByte>(std::lround(shadow.opacity * 255.0f));
         return {
             .shadow = {
@@ -2019,12 +2020,15 @@ namespace ClaFi
         if (!m_content.isPainted())
         {
             m_windowFocusedFactor = endValue;
+            m_shadowPainter.setDesign(shadowDesign());
             return;
         }
         // The whole window, since the form cannot know who reads the factor. See Control-Foundation
+        // The shadow is one of the readers, and a design that has not changed is not baked again.
         m_appContext.animator().start(this, AnimationSlots::windowFocused, m_windowFocusedFactor,
             endValue, [this](AnimateParams& params) {
                 m_windowFocusedFactor = params.value;
+                m_shadowPainter.setDesign(shadowDesign());
                 invalidate();
             });
     }
