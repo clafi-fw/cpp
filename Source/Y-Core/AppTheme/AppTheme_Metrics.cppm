@@ -122,7 +122,7 @@ namespace ClaFi
     {
         static constexpr float btnRadius = 4.0f;
 
-        // button (also used for labels, checkboxes, edits)
+        // button (also used for labels, check boxes, edits)
         button.border = border;
         button.radius = btnRadius;
         button.padding = { 8.0f, 4.0f };

@@ -9,7 +9,7 @@ export import ClaFi.Controls.Base.DropdownControlBase;
 export import ClaFi.Controls.AppButton;
 
 export import ClaFi.Controls.Button;
-export import ClaFi.Controls.Checkbox;
+export import ClaFi.Controls.CheckBox;
 export import ClaFi.Controls.CodeBox;
 export import ClaFi.Controls.ColorSlider;
 export import ClaFi.Controls.ComboBox;

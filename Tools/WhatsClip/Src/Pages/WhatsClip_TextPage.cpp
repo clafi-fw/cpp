@@ -2,7 +2,7 @@ module ClaFi.Tools.WhatsClip.TextPage;
 
 import ClaFi.Tools.WhatsClip.Page;
 
-import ClaFi.Controls.Checkbox;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.CodeBox;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.TextBox;

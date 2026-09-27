@@ -15,7 +15,7 @@ import ClaFi.Application.ThemesManager_Elements;
 
 import ClaFi.Controls.Base.ExpanderBase;
 import ClaFi.Controls.Base.SliderBase;
-import ClaFi.Controls.Checkbox;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Menu;
 import ClaFi.Controls.MessageDialog;
@@ -626,7 +626,7 @@ namespace ThisApp
         return isReservedThemeName(std::filesystem::path{ pageData().name }.stem().wstring());
     }
 
-    CellSet ThemePage::operationCells(ColumnTag actionKey, ColumnTag valueKey, ComboboxTarget target)
+    CellSet ThemePage::operationCells(ColumnTag actionKey, ColumnTag valueKey, ComboBoxTarget target)
     {
         static const Text k_pushIconFormat{ InkWell::spotInk(), TextOp::PushBold };
         static const Text k_popIconFormat{ TextOp::PopBold, PopColor{} };
@@ -652,7 +652,7 @@ namespace ThisApp
                 TooltipText{ L"Set exact value" }
             }
             } };
-        static constexpr MinSize k_comboboxSize{ 90.0f, 0.0f };
+        static constexpr MinSize k_comboBoxSize{ 90.0f, 0.0f };
         // From the theme, not the grid: the cell sets are built before the grid exists.
         // GridDescriptor's designCellMetrics is a reference to this same object.
         const Padding k_controlPadding = themeMetrics().listItem.padding;
@@ -663,7 +663,7 @@ namespace ThisApp
             // apply time, hence std::ref for the shared TextItems.
             CellWith<ComboBox>{ actionKey,
                 std::ref(items),
-                k_comboboxSize,
+                k_comboBoxSize,
                 VerticalTextAnchor::Center,
                 k_controlPadding,
                 VerticalAlign::Fill,
@@ -678,22 +678,22 @@ namespace ThisApp
                 } },
                 // Captures the Tag, not the column: the columns do not exist yet when this
                 // fragment is built. The grid resolves it when the event fires.
-                OnEvent{ [this, valueKey](ComboboxChangeEvent& event) {
+                OnEvent{ [this, valueKey](ComboBoxChangeEvent& event) {
                     Grids::Rt::RowContainer& container = *static_cast<Grids::Rt::RowContainer*>(event.comboBox().parent());
                     Control* slider = container.controlAtColumn(m_grid.columnByTag(Tag{ valueKey }));
                     slider->invalidateState();
-                    const ComboboxTarget targetOp = event.comboBox().tag<ComboboxTarget>();
+                    const ComboBoxTarget targetOp = event.comboBox().tag<ComboBoxTarget>();
                     const TextItem* item = event.comboBox().selectedItem();
                     const auto operation = item->tag().get<ColorRuleOp>();
                     ColorRule& rule = rowColorRule(container);
-                    if (targetOp == ComboboxTarget::Elevation)
+                    if (targetOp == ComboBoxTarget::Elevation)
                         rule.elevation.setOperation(operation);
                     else
                         rule.saturation.setOperation(operation);
                     invalidatePreview();
                     storeViewState();
                 } },
-                OnEvent{ [this](ComboboxAcceptTextEvent& event) {
+                OnEvent{ [this](ComboBoxAcceptTextEvent& event) {
                     acceptOperationText(event);
                 } },
                 OnEvent{ [this](AdjustItemTextEvent& event) {
@@ -705,10 +705,10 @@ namespace ThisApp
                         event.text() << TextStyleId::Code << L"-0.00";
                         return;
                     }
-                    const ComboboxTarget isLum = event.comboBox().tag<ComboboxTarget>();
+                    const ComboBoxTarget isLum = event.comboBox().tag<ComboBoxTarget>();
                     Grids::Rt::RowContainer& row = *static_cast<Grids::Rt::RowContainer*>(event.comboBox().parent());
                     const ColorRule& rule = rowColorRule(row);
-                    const ColorRuleValue& ruleValue = isLum == ComboboxTarget::Elevation
+                    const ColorRuleValue& ruleValue = isLum == ComboBoxTarget::Elevation
                         ? rule.elevation
                         : rule.saturation;
                     float value = ruleValue.value(itemAction);
@@ -729,16 +729,16 @@ namespace ThisApp
                 Events{
                     [this, actionKey](GetStateEvent& event) {
                         Control* row = event.control.parent();
-                        Control* comboboxControl = static_cast<Grids::Rt::RowContainer*>(row)->controlAtColumn(m_grid.columnByTag(Tag{ actionKey }));
-                        ItemIndexValue itemIndex = static_cast<ComboBox*>(comboboxControl)->itemIndex();
+                        Control* comboBoxControl = static_cast<Grids::Rt::RowContainer*>(row)->controlAtColumn(m_grid.columnByTag(Tag{ actionKey }));
+                        ItemIndexValue itemIndex = static_cast<ComboBox*>(comboBoxControl)->itemIndex();
                         event.state.enabled = itemIndex.has_value() and itemIndex.value();
                     },
                     [this](SliderChangeEvent& event) {
                         Grids::Rt::RowContainer& row = *static_cast<Grids::Rt::RowContainer*>((event.slider.parent()));
                         const Slider& slider = static_cast<const Slider&>(event.slider);
-                        ComboboxTarget isLum = slider.tag<ComboboxTarget>();
+                        ComboBoxTarget isLum = slider.tag<ComboBoxTarget>();
                         ColorRule& rule = rowColorRule(row);
-                        if (isLum == ComboboxTarget::Elevation)
+                        if (isLum == ComboBoxTarget::Elevation)
                             rule.elevation.setNormalizedValue(slider.relativePosition());
                         else
                             rule.saturation.setNormalizedValue(slider.relativePosition());
@@ -751,12 +751,12 @@ namespace ThisApp
         };
     }
 
-    void ThemePage::acceptOperationText(ComboboxAcceptTextEvent& event)
+    void ThemePage::acceptOperationText(ComboBoxAcceptTextEvent& event)
     {
         Grids::Rt::RowContainer& row = *static_cast<Grids::Rt::RowContainer*>(event.comboBox().parent());
-        const ComboboxTarget target = event.comboBox().tag<ComboboxTarget>();
+        const ComboBoxTarget target = event.comboBox().tag<ComboBoxTarget>();
         ColorRule& rule = rowColorRule(row);
-        ColorRuleValue& ruleValue = target == ComboboxTarget::Elevation
+        ColorRuleValue& ruleValue = target == ComboBoxTarget::Elevation
             ? rule.elevation
             : rule.saturation;
         const std::optional<ColorRuleValue> typed = typedRule(event.accept, ruleValue);
@@ -766,10 +766,10 @@ namespace ThisApp
         // Taken, so the list does not look it up.
         event.stopPropagation();
         ruleValue = typed.value();
-        if (target == ComboboxTarget::Elevation)
-            updateElevationSliderAndCombobox(row);
+        if (target == ComboBoxTarget::Elevation)
+            updateElevationSliderAndComboBox(row);
         else
-            updateSaturationSliderAndCombobox(row);
+            updateSaturationSliderAndComboBox(row);
         row.invalidate();
         invalidatePreview();
         storeViewState();
@@ -812,7 +812,7 @@ namespace ThisApp
                 // The mark reads the theme and the click writes it. Nothing binds this control to
                 // its row: the row is what the event arrives through, and a group's span is not
                 // one of the rows updateGridControls walks.
-                CellWith<Checkbox>{ ColumnTag::ElevationFlip,
+                CellWith<CheckBox>{ ColumnTag::ElevationFlip,
                     HorizontalAlign::Center,
                     OnEvent{ [this](GetStateEvent& event) {
                         elementFlipState(event);
@@ -1122,14 +1122,14 @@ namespace ThisApp
         // not containers, so they are stepped over and descended into.
         m_grid.forEachRow([this](Grids::Rt::RowContainer& row) {
             updateHueControl(row);
-            updateSaturationSliderAndCombobox(row);
-            updateElevationSliderAndCombobox(row);
+            updateSaturationSliderAndComboBox(row);
+            updateElevationSliderAndComboBox(row);
             });
     }
 
-    void ThemePage::updateRowControls(ComboBox& combobox, RuleSlider& slider, ColorRuleValue& ruleValue)
+    void ThemePage::updateRowControls(ComboBox& comboBox, RuleSlider& slider, ColorRuleValue& ruleValue)
     {
-        combobox.setItemIndex(static_cast<std::size_t>(ruleValue.operation()));
+        comboBox.setItemIndex(static_cast<std::size_t>(ruleValue.operation()));
         // Showing the value the rule holds, which is not changing it. Left to trigger, the
         // slider's own handler would write the position straight back into that rule - a round
         // trip through the bar's resolution, and an edit the user did not make.
@@ -1147,24 +1147,24 @@ namespace ThisApp
             !statesAbsoluteSurface(row));
     }
 
-    void ThemePage::updateSaturationSliderAndCombobox(Grids::Rt::RowContainer& row)
+    void ThemePage::updateSaturationSliderAndComboBox(Grids::Rt::RowContainer& row)
     {
-        ComboBox& combobox = row.controlAtColumnAs<ComboBox>(m_grid.columnByTag(Tag{ ColumnTag::SaturationAction }));
+        ComboBox& comboBox = row.controlAtColumnAs<ComboBox>(m_grid.columnByTag(Tag{ ColumnTag::SaturationAction }));
         RuleSlider& slider = row.controlAtColumnAs<RuleSlider>(m_grid.columnByTag(Tag{ ColumnTag::SaturationAmount }));
         ColorRuleValue& ruleValue = rowColorRule(row).saturation;
-        updateRowControls(combobox, slider, ruleValue);
+        updateRowControls(comboBox, slider, ruleValue);
         // The base is asked for at paint time rather than handed over here: every other rule in
         // the theme can move it, and this row is not told when one does.
         slider.bind(ruleValue, RuleChannel::Saturation,
             [this, &row]() { return rowRuleBase(row, RuleChannel::Saturation); });
     }
 
-    void ThemePage::updateElevationSliderAndCombobox(Grids::Rt::RowContainer& row)
+    void ThemePage::updateElevationSliderAndComboBox(Grids::Rt::RowContainer& row)
     {
-        ComboBox& combobox = row.controlAtColumnAs<ComboBox>(m_grid.columnByTag(Tag{ ColumnTag::ElevationOperation }));
+        ComboBox& comboBox = row.controlAtColumnAs<ComboBox>(m_grid.columnByTag(Tag{ ColumnTag::ElevationOperation }));
         RuleSlider& slider = row.controlAtColumnAs<RuleSlider>(m_grid.columnByTag(Tag{ ColumnTag::ElevationAmount }));
         ColorRuleValue& ruleValue = rowColorRule(row).elevation;
-        updateRowControls(combobox, slider, ruleValue);
+        updateRowControls(comboBox, slider, ruleValue);
         slider.bind(ruleValue, RuleChannel::Elevation,
             [this, &row]() { return rowRuleBase(row, RuleChannel::Elevation); });
     }

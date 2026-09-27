@@ -30,7 +30,7 @@ popup it puts up.
 
 The face measures the text it would show for every item, the text it shows now included, and
 answers the widest. A pick then changes the words and never the size: nothing beside the
-combobox moves, and nothing above it has to be laid out again.
+combo box moves, and nothing above it has to be laid out again.
 
 That second half is what a window sized once needs. A form that is not `AutoFit::Yes` keeps
 the window it was placed in - the application menu is one - so a face that grew inside it would
@@ -42,7 +42,7 @@ pickers write "(Auto)" after the name they found.
 
 Every pass that measures the face measures every item, answered by the text cache after the
 first. `Control::calculateText` answers an empty text without calling `measureText`, so a face
-with nothing picked and no placeholder measures no item at all - a combobox is built standing
+with nothing picked and no placeholder measures no item at all - a combo box is built standing
 on an item.
 
 ### The list is sized by its items
@@ -55,9 +55,9 @@ list laid out into the window it was first placed in would give the bar its last
 Where the side the list fell to has no room for the bar, the window is cut there as well and
 the vertical bar comes up beside it - see ScrollBars::Auto.
 
-## ComboboxAcceptTextEvent
+## ComboBoxAcceptTextEvent
 
-The text typed over an editable combobox's face, on its way to picking an item. The application
+The text typed over an editable combo box's face, on its way to picking an item. The application
 answers first, through the AcceptEditEvent it carries:
 
 - a handler that TAKES the text stops the event - the Themes app reads `+0.02` and `=0.66` as
@@ -74,7 +74,7 @@ offered.
 
 ## PlaceHolderText
 
-What a combobox item shows while its text is empty, which makes it the item that stands for no
+What a combo box item shows while its text is empty, which makes it the item that stands for no
 value. The face and the list draw the placeholder muted, the editor opens empty over it, and an
 emptied value picks it. It still names the item for a lookup, so typing its first letters finds
 it. The Themes app's No change is one: an operation cell that changes nothing has no value to
@@ -301,7 +301,7 @@ edit is on, and the editor is what hides the old one - a box that shrank to what
 typed would let the rest of a wrapped caption show out from under it.
 
 WHAT WAS TYPED TO OPEN THE EDITOR REPLACES THE VALUE. The value opens selected whole, so the
-keys that asked for the editor land where the next ones would - a combobox opened by typing a
+keys that asked for the editor land where the next ones would - a combo box opened by typing a
 character starts its value with that character, and the value it replaced stays in the undo
 history.
 
@@ -313,7 +313,7 @@ caller's list is still there for as long as the editor is.
 ## SuggestionList
 
 The list under an in-place editor of the values whose names begin with what is typed. It is
-what a combobox shows over its editor: `WithInPlaceEdit::editorSuggestions` answers a
+what a combo box shows over its editor: `WithInPlaceEdit::editorSuggestions` answers a
 TextItems, and the editor lists it.
 
 THE CARET STAYS IN THE BOX. The list is a window of its own standing on the box, and nothing
@@ -329,14 +329,14 @@ whose popup is up but does not hold the focus keeps its characters; see wnd_char
 WHAT IS LISTED IS WHAT THE SINK WOULD TAKE. A row is matched by typedName, and case aside by
 startsWithFolded - the two functions ComboBox::lookUpItem matches by - against the text as
 the sink is offered it, trimmed. The list appears on the first edit and never on open, and
-goes away with no match or an empty text. F4 or Alt+Down - the keys that drop a combobox's
+goes away with no match or an empty text. F4 or Alt+Down - the keys that drop a combo box's
 list - list every item whatever is typed, the filter lifted until the next edit puts it back.
 A row shows the item's own text, or its placeholder muted while it has none, and never what a
 face adds.
 
 NOTHING IS CURRENT UNTIL DOWN. Return with no row current offers what was typed, as it always
 does: a sink taking free text with hints must not have "new" turned into "newfile", and a
-combobox's own prefix rule already lands on the first match. Down from the box enters at the
+combo box's own prefix rule already lands on the first match. Down from the box enters at the
 first row, Up from the first row goes back to the box, and Down from the last row stays. The
 box keeps what was typed while the rows are walked - nothing is written into it to restore on
 Escape.

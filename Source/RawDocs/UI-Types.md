@@ -203,11 +203,11 @@ open, so a control with conditions of its own answers None while they hold. The 
 Editable while anything listens for AcceptEditEvent and None otherwise. StdActions::rename is
 enabled by Editable alone - a reader shows a name and does not change it.
 
-A combobox states it as a property, None by default. Editable makes the face where a value is
+A combo box states it as a property, None by default. Editable makes the face where a value is
 typed: a press on the face opens the editor and the strip alone drops the list, Return opens the
-editor, and a character typed on the combobox opens it with that character in it. A combobox
+editor, and a character typed on the combo box opens it with that character in it. A combo box
 with no strip keeps the list on its face, and F4 and Alt+Down drop it from the keyboard either
-way. What the editor is left with goes to ComboboxAcceptTextEvent - see Controls.
+way. What the editor is left with goes to ComboBoxAcceptTextEvent - see Controls.
 
 ## ChevronTurn
 

@@ -28,33 +28,33 @@ namespace ClaFi::Controls
 {
     export class ComboBox;
 
-    // ComboboxEventBase
+    // ComboBoxEventBase
 
     class ComboBoxEventBase : public Event
     {
     public:
-        explicit ComboBoxEventBase(const ComboBox& combobox);
+        explicit ComboBoxEventBase(const ComboBox& comboBox);
         const ComboBox& comboBox() const { return m_comboBox; }
     private:
         const ComboBox& m_comboBox;
     };
 
-    // ComboboxChangeEvent
+    // ComboBoxChangeEvent
 
-    // The combobox has settled on a different item.
-    export class ComboboxChangeEvent : public ComboBoxEventBase
+    // The combo box has settled on a different item.
+    export class ComboBoxChangeEvent : public ComboBoxEventBase
     {
     public:
         using ComboBoxEventBase::ComboBoxEventBase;
     };
 
-    // ComboboxAcceptTextEvent
+    // ComboBoxAcceptTextEvent
 
     // The text typed over the face, before it is looked up among the items. See Controls
-    export class ComboboxAcceptTextEvent : public ComboBoxEventBase
+    export class ComboBoxAcceptTextEvent : public ComboBoxEventBase
     {
     public:
-        ComboboxAcceptTextEvent(const ComboBox&, AcceptEditEvent&);
+        ComboBoxAcceptTextEvent(const ComboBox&, AcceptEditEvent&);
         AcceptEditEvent& accept; // the typed text, and the refusal that answers it
     };
 
@@ -120,15 +120,15 @@ namespace ClaFi::Controls
         const TextItem& m_item;
     };
 
-    // ComboboxItemControl
+    // ComboBoxItemControl
 
-    // One line of the combobox's popup list.
-    export class ComboboxItemControl : public Button
+    // One line of the combo box's popup list.
+    export class ComboBoxItemControl : public Button
     {
     public:
-        ComboboxItemControl(const CreateParams&, ComboBox&, std::size_t itemIndex);
-        // Which of the combobox's items this control stands for. The dropdown reads it back off
-        // the item the preview settled on, that preview naming a control and the combobox's own
+        ComboBoxItemControl(const CreateParams&, ComboBox&, std::size_t itemIndex);
+        // Which of the combo box's items this control stands for. The dropdown reads it back off
+        // the item the preview settled on, that preview naming a control and the combo box's own
         // event an index.
         [[nodiscard]] std::size_t itemIndex() const { return m_itemIndex; }
     protected:
@@ -140,38 +140,38 @@ namespace ClaFi::Controls
             return Button::calculateContent(event);
         }
     private:
-        ComboBox& m_combobox;
+        ComboBox& m_comboBox;
         std::size_t m_itemIndex;
     };
 
-    // ComboboxDropdownStack // The 'Stack' part here is very misleading
+    // ComboBoxDropdownStack // The 'Stack' part here is very misleading
 
-    class ComboboxDropdownStack : public StackView
+    class ComboBoxDropdownStack : public StackView
     {
     public:
-        ComboboxDropdownStack(const CreateParams&, ComboBox&);
+        ComboBoxDropdownStack(const CreateParams&, ComboBox&);
     protected:
         void previewItemChanged(PreviewEvent&) override;
     private:
-        // Brings the item the combobox is wearing into view, once the layout has settled.
+        // Brings the item the combo box is wearing into view, once the layout has settled.
         void scrollToCurrentItem();
     private:
-        ComboBox& m_combobox;
+        ComboBox& m_comboBox;
         ScopedEventConnection m_aligned{};
         bool m_scrolledToCurrent{ false };
     };
 
     // The list as it is dropped: a box that scrolls, holding the stack of items.
-    using ComboboxDropdown = ScrollBoxWith<ComboboxDropdownStack>;
+    using ComboBoxDropdown = ScrollBoxWith<ComboBoxDropdownStack>;
 
-    // Combobox
+    // ComboBox
 
-    using ComboboxBaseClass = WithInPlaceEdit<DropdownControlBase>;
+    using ComboBoxBaseClass = WithInPlaceEdit<DropdownControlBase>;
     // A button that drops a list of texts and shows the one chosen.
-    export class ComboBox : public ComboboxBaseClass, public TextItemsContainer
+    export class ComboBox : public ComboBoxBaseClass, public TextItemsContainer
     {
-        friend ComboboxItemControl;
-        friend ComboboxDropdownStack;
+        friend ComboBoxItemControl;
+        friend ComboBoxDropdownStack;
     public:
         // Shared items
         template <typename... Args>
@@ -183,8 +183,8 @@ namespace ClaFi::Controls
         // Which editor the face opens, if any. See UI-Types
         DECLARE_PROPERTY_STORAGE(EditorMode, editorMode, EditorMode::None)
     public:
-        // The combobox has settled on a different item.
-        DECLARE_EVENT(ComboboxChangeEvent, OnChange, onChange)
+        // The combo box has settled on a different item.
+        DECLARE_EVENT(ComboBoxChangeEvent, OnChange, onChange)
         // The text one item is about to be written with.
         DECLARE_EVENT(AdjustItemTextEvent, OnAdjustItemText, onAdjustItemText)
         // The icon one item is drawn with.
@@ -192,7 +192,7 @@ namespace ClaFi::Controls
         // An item is being looked at before it is chosen.
         DECLARE_EVENT(PreviewItemEvent, OnPreviewItem, onPreviewItem)
         // The text typed over the face, before it is looked up among the items. See Controls
-        DECLARE_EVENT(ComboboxAcceptTextEvent, OnAcceptText, onAcceptText)
+        DECLARE_EVENT(ComboBoxAcceptTextEvent, OnAcceptText, onAcceptText)
     public:
         [[nodiscard]] EditorMode editorMode() const override { return m_editorMode; }
     protected:
@@ -239,28 +239,28 @@ namespace ClaFi::Controls
 
     //-------------------------------------------------------------------------
 
-    // ComboboxChangeEvent
+    // ComboBoxChangeEvent
 
-    ComboBoxEventBase::ComboBoxEventBase(const ComboBox& combobox)
-        : m_comboBox{ combobox }
+    ComboBoxEventBase::ComboBoxEventBase(const ComboBox& comboBox)
+        : m_comboBox{ comboBox }
     {
     }
 
-    // ComboboxItemEventBase
+    // ComboBoxItemEventBase
 
-    TextItemEventBase::TextItemEventBase(const ComboBox& combobox, const TextItem& item)
+    TextItemEventBase::TextItemEventBase(const ComboBox& comboBox, const TextItem& item)
         :
-        ComboBoxEventBase{ combobox },
+        ComboBoxEventBase{ comboBox },
         m_item{ item }
     {
     }
 
     // AdjustItemTextEvent
 
-    AdjustItemTextEvent::AdjustItemTextEvent(const ComboBox& combobox,
+    AdjustItemTextEvent::AdjustItemTextEvent(const ComboBox& comboBox,
         const TextItem& item, Text& text, EventPhase phase)
         :
-        TextItemEventBase{ combobox, item },
+        TextItemEventBase{ comboBox, item },
         m_text{ text },
         m_phase{ phase }
     {
@@ -277,16 +277,16 @@ namespace ClaFi::Controls
 
     // PreviewItemEvent
 
-    PreviewItemEvent::PreviewItemEvent(ComboBox& combobox, std::size_t itemIndex)
+    PreviewItemEvent::PreviewItemEvent(ComboBox& comboBox, std::size_t itemIndex)
         :
-        TextItemEventBase{ combobox, combobox.items()[itemIndex] },
+        TextItemEventBase{ comboBox, comboBox.items()[itemIndex] },
         m_itemIndex{ itemIndex }
     {
     }
 
-    // ComboboxItemControl
+    // ComboBoxItemControl
 
-    ComboboxItemControl::ComboboxItemControl(const CreateParams& params, ComboBox& combobox, std::size_t itemIndex)
+    ComboBoxItemControl::ComboBoxItemControl(const CreateParams& params, ComboBox& comboBox, std::size_t itemIndex)
         :
         Button{ params,
             //IndicatorVisibility::Hover,
@@ -294,46 +294,46 @@ namespace ClaFi::Controls
             // the whole of that look.
             ShowSurfaceAtRest::No,
             ShowSelectionOnSurface::Yes,
-            combobox.m_itemsViewMode,
-            combobox.m_itemsIconSize,
+            comboBox.m_itemsViewMode,
+            comboBox.m_itemsIconSize,
             Tag{ itemIndex }
         },
-        m_combobox{ combobox },
+        m_comboBox{ comboBox },
         m_itemIndex{ itemIndex }
     {
     }
 
-    void ComboboxItemControl::paintIcon(PaintIconEvent& event)
+    void ComboBoxItemControl::paintIcon(PaintIconEvent& event)
     {
-        PaintItemIconEvent event2{ event, m_combobox.items()[m_itemIndex] };
-        m_combobox.paintItemIcon(event2);
+        PaintItemIconEvent event2{ event, m_comboBox.items()[m_itemIndex] };
+        m_comboBox.paintItemIcon(event2);
     }
 
-    void ComboboxItemControl::getText(GetTextEvent& event) const
+    void ComboBoxItemControl::getText(GetTextEvent& event) const
     {
-        m_combobox.itemFaceText(m_combobox.items()[m_itemIndex], event.text, event.phase());
+        m_comboBox.itemFaceText(m_comboBox.items()[m_itemIndex], event.text, event.phase());
     }
 
-    void ComboboxItemControl::nestedGetTooltip(GetTooltipEvent& event)
+    void ComboBoxItemControl::nestedGetTooltip(GetTooltipEvent& event)
     {
-        event.text << m_combobox.items()[m_itemIndex].tooltipText();
+        event.text << m_comboBox.items()[m_itemIndex].tooltipText();
         Button::nestedGetTooltip(event);
     }
 
-    void ComboboxItemControl::nestedClick(ClickEvent& event)
+    void ComboBoxItemControl::nestedClick(ClickEvent& event)
     {
-        m_combobox.setItemIndex(m_itemIndex);
+        m_comboBox.setItemIndex(m_itemIndex);
         event.closeForm();
     }
 
-    // ComboboxDropdownStack
+    // ComboBoxDropdownStack
 
-    ComboboxDropdownStack::ComboboxDropdownStack(const CreateParams& params, ComboBox& combobox)
+    ComboBoxDropdownStack::ComboBoxDropdownStack(const CreateParams& params, ComboBox& comboBox)
         :
         StackView{ params,
             Orientation::VerticalWrap,
             PlaceHolderText{ L"No items" },
-            LaneSize{ combobox.m_itemsLaneSize.value, combobox.m_itemsLaneSize.sizing },
+            LaneSize{ comboBox.m_itemsLaneSize.value, comboBox.m_itemsLaneSize.sizing },
             // A SCROLLED BODY KEEPS THE SIZE IT MEASURED. The box states its viewport as a
             // wrapping body's maximum width, and a list measured against a viewport the bar
             // has already taken its strip out of comes back a bar narrower than the window.
@@ -343,15 +343,15 @@ namespace ClaFi::Controls
             // the keys drive, so arrowing down the list previews what it stops on.
             PreviewMode::Hover
         },
-        m_combobox{ combobox }
+        m_comboBox{ comboBox }
     {
-        for (std::size_t i = 0; i != combobox.items().size(); ++i)
+        for (std::size_t i = 0; i != comboBox.items().size(); ++i)
         {
-            Control& newItem = add<ComboboxItemControl>(combobox, i);
-            if (combobox.itemIndex().has_value() && combobox.itemIndex().value() == i)
+            Control& newItem = add<ComboBoxItemControl>(comboBox, i);
+            if (comboBox.itemIndex().has_value() && comboBox.itemIndex().value() == i)
             {
                 recordCurrentItem(newItem);
-                // The combobox is already wearing this item, so reaching it asks for nothing.
+                // The combo box is already wearing this item, so reaching it asks for nothing.
                 recordPreviewItem(newItem);
             }
         }
@@ -364,15 +364,15 @@ namespace ClaFi::Controls
         });
     }
 
-    void ComboboxDropdownStack::previewItemChanged(PreviewEvent& event)
+    void ComboBoxDropdownStack::previewItemChanged(PreviewEvent& event)
     {
         StackView::previewItemChanged(event);
-        // Every control this stack holds is one of the combobox's items, so the item the preview
+        // Every control this stack holds is one of the combo box's items, so the item the preview
         // settled on is one of them and nothing else can reach here.
-        m_combobox.previewItem(static_cast<ComboboxItemControl&>(event.item).itemIndex());
+        m_comboBox.previewItem(static_cast<ComboBoxItemControl&>(event.item).itemIndex());
     }
 
-    void ComboboxDropdownStack::scrollToCurrentItem()
+    void ComboBoxDropdownStack::scrollToCurrentItem()
     {
         if (m_scrolledToCurrent)
             return;
@@ -403,7 +403,7 @@ namespace ClaFi::Controls
     void ComboBox::showDropdown(Control& initiator)
     {
         m_previewedItemIndex.reset();
-        dropPopup<ComboboxDropdown>(
+        dropPopup<ComboBoxDropdown>(
             form(),
             initiator,
             HostProps{
@@ -431,8 +431,8 @@ namespace ClaFi::Controls
 
     void ComboBox::itemIndexChanged()
     {
-        ComboboxChangeEvent event{ *this };
-        emitEvent<ComboboxChangeEvent>(event);
+        ComboBoxChangeEvent event{ *this };
+        emitEvent<ComboBoxChangeEvent>(event);
         invalidate();
     }
 
@@ -468,7 +468,7 @@ namespace ClaFi::Controls
         const Text& text)
     {
         // The face as it reads now counts too - a derived control may word it unlike any item.
-        CalculatedDimensions result = ComboboxBaseClass::measureText(event, asked, text);
+        CalculatedDimensions result = ComboBoxBaseClass::measureText(event, asked, text);
         for (const TextItem& item : items())
         {
             Text face{};
@@ -477,7 +477,7 @@ namespace ClaFi::Controls
                 appendInTextMark(face);
 
             const CalculatedDimensions faceSize =
-                ComboboxBaseClass::measureText(event, asked, face);
+                ComboBoxBaseClass::measureText(event, asked, face);
             result.x = std::max(result.x, faceSize.x);
             result.y = std::max(result.y, faceSize.y);
         }
@@ -486,32 +486,32 @@ namespace ClaFi::Controls
 
     void ComboBox::adjustPaint(AdjustPaintEvent& event)
     {
-        // A COMBOBOX WEARS A BUTTON'S COLOURS, and it has to say so itself: the chain above
-        // it names no rule set, so a combobox that states none paints against an empty one -
+        // A COMBO BOX WEARS A BUTTON'S COLOURS, and it has to say so itself: the chain above
+        // it names no rule set, so a combo box that states none paints against an empty one -
         // no surface in any state, whatever ShowSurfaceAtRest asks for, and no border.
-        ComboboxBaseClass::adjustPaint(event);
+        ComboBoxBaseClass::adjustPaint(event);
         event.setColorRules(UiElement::Button);
     }
 
-    // Combobox
+    // ComboBox
 
     template <typename ... Args>
     ComboBox::ComboBox(const CreateParams& params, TextItems* ownItems, TextItems* sharedItems, Args&&... args)
         :
-        ComboboxBaseClass{
+        ComboBoxBaseClass{
             params,
             params.themeMetrics().button,
             Interactivity::Focusable,
             // The face is one line. A label too wide for it fades at the end rather than breaking,
             // which a control of one line's height would collapse.
             WordWrap::No,
-            // What Auto means for a combobox. It comes before the caller's own arguments, so a
+            // What Auto means for a combo box. It comes before the caller's own arguments, so a
             // caller that asks for a strip still gets one - Props takes the last match.
             //ArrowPlacement::InText,
 
-            // The size the combobox draws its own icon at.
+            // The size the combo box draws its own icon at.
             READ_PROPERTY(IconSize, s_defaultIconSize),
-            // How the combobox lays that icon out against its text.
+            // How the combo box lays that icon out against its text.
             READ_PROPERTY(ButtonViewMode, s_defaultViewMode),
             std::forward<Args>(args)...
         },

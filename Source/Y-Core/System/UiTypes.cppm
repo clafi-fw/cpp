@@ -653,7 +653,7 @@ namespace ClaFi
     // What a button's selection indicator is drawn as.
     export enum class IndicatorStyle
     {
-        Check,    // a checkbox
+        Check,    // a check box
         Radio,    // a radio button
         Custom    // the derived class paints its own
     };

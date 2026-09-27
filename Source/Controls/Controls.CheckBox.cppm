@@ -1,6 +1,6 @@
 module;
 #include "../Y-Core/System/EventBindings.h"
-export module ClaFi.Controls.Checkbox;
+export module ClaFi.Controls.CheckBox;
 
 import ClaFi.Controls.Base.ButtonBase;
 import ClaFi.Core.System.Props;
@@ -11,11 +11,11 @@ import ClaFi.StdLib;
 namespace ClaFi::Controls
 {
     // A button drawn with a check, always showing its indicator.
-    export class Checkbox : public ButtonBase
+    export class CheckBox : public ButtonBase
     {
     public:
         template <typename... Args>
-        explicit Checkbox(const CreateParams& params, Args&&... args)
+        explicit CheckBox(const CreateParams& params, Args&&... args)
             :
             ButtonBase{
                 params,
@@ -28,14 +28,14 @@ namespace ClaFi::Controls
         {}
     };
 
-    // A checkbox that keeps its own checked state and toggles it on a click.
-    export class Checkbox2 : public Checkbox
+    // A check box that keeps its own checked state and toggles it on a click.
+    export class CheckBox2 : public CheckBox
     {
     public:
         template <typename... Args>
-        Checkbox2(const CreateParams& params, Args&&... args)
+        CheckBox2(const CreateParams& params, Args&&... args)
             :
-            Checkbox{ params, std::forward<Args>(args)...},
+            CheckBox{ params, std::forward<Args>(args)...},
             INIT_PROPERTY(checked)
         {}
     public:
@@ -52,7 +52,7 @@ namespace ClaFi::Controls
         }
     };
 
-    void Checkbox2::setChecked(Checked value)
+    void CheckBox2::setChecked(Checked value)
     {
         if (value == m_checked)
             return;
@@ -60,7 +60,7 @@ namespace ClaFi::Controls
         invalidateState();
     }
 
-    void Checkbox2::nestedClick(ClickEvent&)
+    void CheckBox2::nestedClick(ClickEvent&)
     {
         if (m_checked == Checked::No)
             m_checked = Checked::Yes;

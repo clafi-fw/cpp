@@ -322,7 +322,7 @@ namespace ClaFi::Controls::Grids
         // ONLY A CELL DRAWN AS TEXT. A cell holding a control is that control's - its row hands it
         // the key, see RowContainer::nestedKeyDown - and a box laid over it would be showing a
         // value the cell does not draw. The column cannot answer this: which cells hold controls is
-        // the ROW's, so a column of plain text with one checkbox in it is asked per cell.
+        // the ROW's, so a column of plain text with one check box in it is asked per cell.
         if (row->cellControl(*column))
             return false;
 

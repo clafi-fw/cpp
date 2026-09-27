@@ -69,7 +69,7 @@ namespace ThisApp
             return {};
         }
 
-        // A glyph in the spot ink and bold, the way the operation comboboxes write theirs.
+        // A glyph in the spot ink and bold, the way the operation combo boxes write theirs.
         void writeGlyph(Text& text, const std::wstring_view glyph)
         {
             text << InkWell::spotInk()
@@ -273,7 +273,7 @@ namespace ThisApp
         return {};
     }
 
-    // Return types over the face, the way it does over an editable combobox.
+    // Return types over the face, the way it does over an editable combo box.
     void ValueRuleControl::nestedKeyDown(KeyDownEvent& event)
     {
         if (event.key == Keys::Return && openEditor())

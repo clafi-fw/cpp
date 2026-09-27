@@ -226,7 +226,7 @@ namespace ClaFi::Controls
 
         // Only a multi-select view has anything to say here. Everywhere else the focused item
         // is the selected item and is already drawn as one, so marking it current on top of
-        // that would put a ring around every open tab and every chosen combobox entry.
+        // that would put a ring around every open tab and every chosen combo box entry.
         if (isMultiSelect() && currentItem() == &control)
             state.current = true;
     }
@@ -278,7 +278,7 @@ namespace ClaFi::Controls
 
         // Don't:
         // params.handled = true;
-        // We do not touch handled here, so the event is passed to the parent scrollbox,
+        // We do not touch handled here, so the event is passed to the parent scroll box,
         // which triggers autoscrolling when an object dragged close to its boundaries
 
         // lockHoveredControl() prevents stucking in autoscrolling state
@@ -300,7 +300,7 @@ namespace ClaFi::Controls
             event.handled.preventClick = true;
             // Don't:
             // params.handled = true;
-            // We do not touching handled here, so the event is passed to the parent scrollbox,
+            // We do not touching handled here, so the event is passed to the parent scroll box,
             // it need to process it to stop auto-scrolling
             event.scrollIntoView = false;
         }

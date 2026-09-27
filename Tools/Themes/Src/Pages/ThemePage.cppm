@@ -19,7 +19,7 @@ import ClaFi.Icons.LuminosityIcon;
 import ClaFi.Controls.Base.MessageBoxBase;
 import ClaFi.Controls.Base.StackPanelBase;
 import ClaFi.Controls.Button;
-import ClaFi.Controls.Checkbox;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.CodeBox;
 import ClaFi.Controls.ColorSlider;
 import ClaFi.Controls.ComboBox;
@@ -209,9 +209,9 @@ namespace ThisApp
         //
         // Blueprint fragments built by function, so one definition serves both
         // column pairs - the pattern Dom uses for makeNetworkSection().
-        CellSet operationCells(ColumnTag actionKey, ColumnTag valueKey, ComboboxTarget target);
+        CellSet operationCells(ColumnTag actionKey, ColumnTag valueKey, ComboBoxTarget target);
         // A rule typed over an Operation cell - +0.02, =0.66 - sets its operation and value at once.
-        void acceptOperationText(ComboboxAcceptTextEvent&);
+        void acceptOperationText(ComboBoxAcceptTextEvent&);
         // An element the descriptor gives one state or none: one row, its name spanning the
         // Name and State columns.
         Row staticRow(UiElement) const;
@@ -265,8 +265,8 @@ namespace ThisApp
         void updateGridControls();
         void updateRowControls(ComboBox&, RuleSlider&, ColorRuleValue&);
         void updateHueControl(Grids::Rt::RowContainer&);
-        void updateSaturationSliderAndCombobox(Grids::Rt::RowContainer&);
-        void updateElevationSliderAndCombobox(Grids::Rt::RowContainer&);
+        void updateSaturationSliderAndComboBox(Grids::Rt::RowContainer&);
+        void updateElevationSliderAndComboBox(Grids::Rt::RowContainer&);
         void hueRuleChanged();
         void generateCode();
         // The theme as one document, written into a box in the format's own spelling.
@@ -285,7 +285,7 @@ namespace ThisApp
         // The floor slider's end. Useful floors sit far below it; at 1 a surface has no room.
         static constexpr float k_maxDarkModeFloor = 0.5f;
         // Holds "No change" in SubBody on the common sans-serif faces. DejaVu Sans, the widest,
-        // needs 95 with the combobox's strip and padding.
+        // needs 95 with the combo box's strip and padding.
         static constexpr float k_operationColumnWidth = 96.0f;
         // Save on the face, Save as behind the strip. Both are StdActions, so the page answers
         // for them once and the keys reach the same answer the button does.
@@ -502,10 +502,10 @@ namespace ThisApp
         // take them by reference, so they are shared, never copied.
 
         const CellSet m_saturationCells{
-            operationCells(ColumnTag::SaturationAction, ColumnTag::SaturationAmount, ComboboxTarget::Saturation) };
+            operationCells(ColumnTag::SaturationAction, ColumnTag::SaturationAmount, ComboBoxTarget::Saturation) };
 
         const CellSet m_elevationCells{
-            operationCells(ColumnTag::ElevationOperation, ColumnTag::ElevationAmount, ComboboxTarget::Elevation) };
+            operationCells(ColumnTag::ElevationOperation, ColumnTag::ElevationAmount, ComboBoxTarget::Elevation) };
 
         const CellSet m_elementCells{
             CellWith<HueRuleControl>{ Tag{ ColumnTag::Hue },

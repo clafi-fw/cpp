@@ -41,17 +41,17 @@ closed - see Collapsible.
 A row whose cells hold controls. Every control a row holds is MouseOnly, so the row holds the
 focus for them and hands the control in the selected cell every key the grid does not move by,
 and what is typed. The grid keeps the arrows, Home, End, PageUp, PageDown and Tab - unless Alt is
-held, which makes the key the control's: Alt+Down drops a combobox's list. A press on one of
+held, which makes the key the control's: Alt+Down drops a combo box's list. A press on one of
 the controls picks its cell before the control acts on anything - see Picking.
 
 A key the control leaves goes on as it would have. Return and Space are the exception: they press
 the control, the way FocusNavigator presses a control that has the focus, so Return on a
-checkbox cell toggles it and on a combobox cell drops its list or opens its editor.
+check box cell toggles it and on a combo box cell drops its list or opens its editor.
 
 ## Picking
 
 A press on a control in a cell picks the cell first. A popup a click drops implicitly - the list a
-combobox drops from its main area, an in-place editor - drops only from a press on the cell that
+combo box drops from its main area, an in-place editor - drops only from a press on the cell that
 was already selected, and in a grid that keeps a selection, only while its row is held as well. A
 part whose one job is its popup, a dropdown strip, drops it from the picking press too. A check
 box or a button drops nothing, and acts on the picking press.

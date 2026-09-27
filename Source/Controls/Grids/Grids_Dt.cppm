@@ -250,7 +250,7 @@ namespace ClaFi::Controls::Grids::Dt
         void apply(CellBuildContext&) const override;
     };
 
-    // CellWith<Combobox>{ tag, ...ctor args..., OnEvent{ ... }, Init<Combobox>{ ... } }
+    // CellWith<ComboBox>{ tag, ...ctor args..., OnEvent{ ... }, Init<ComboBox>{ ... } }
     //
     // Adds a live control to the cell through RowContainer::addControl. Arguments
     // are copied into the node, so wrap anything expensive or shared in std::ref.

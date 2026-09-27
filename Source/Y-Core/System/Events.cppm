@@ -314,7 +314,7 @@ namespace ClaFi
     // Deduces the event from the handler's own parameter, so one property type
     // connects any event on any emitter:
     //
-    //     OnEvent{ [](ComboboxChangeEvent& event) { ... } }
+    //     OnEvent{ [](ComboBoxChangeEvent& event) { ... } }
     //     OnEvent{ [this](ChangeEvent& event) { ... } }
     //     makeOnEvent(this, &Page::stateWanted)      // parameter read off the method
     //

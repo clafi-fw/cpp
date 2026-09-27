@@ -9,7 +9,7 @@ import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.StackView;
-import ClaFi.Controls.Checkbox;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Spacer;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Label;
@@ -118,7 +118,7 @@ namespace ClaFi
             ) };
         // Held above the other windows. Hidden where the platform cannot do it - see
         // IPlatformWindow::canSetAlwaysOnTop.
-        Checkbox& onTopCheck{ form.body().strip().add<Checkbox>(
+        CheckBox& onTopCheck{ form.body().strip().add<CheckBox>(
             L"Always on top",
             Padding{ 8.0f, 0.0f },
             VerticalTextAnchor::Center

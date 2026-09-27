@@ -106,13 +106,13 @@ namespace ClaFi::Controls
         // Runs the popup. The initiator is the control the press landed on, and it is what the
         // popup has to be owned by - see dropPopup().
         virtual void showDropdown(Control& initiator) = 0;
-        // Whether pressing the control outside the strip opens the dropdown too. A combobox says
+        // Whether pressing the control outside the strip opens the dropdown too. A combo box says
         // yes: every part of it opens the same list. A split button says no: its main half is a
         // separate action.
         [[nodiscard]] virtual bool dropOnPrimaryPress() const { return false; }
         // WHETHER THE STRIP IS A COMMAND OF ITS OWN, and so stands or falls apart from the
-        // control's own face. A combobox says no - every part of it opens the same list, so a
-        // combobox that cannot be used cannot be dropped either. A split button says yes: its
+        // control's own face. A combo box says no - every part of it opens the same list, so a
+        // combo box that cannot be used cannot be dropped either. A split button says yes: its
         // face carries one command and its strip another, and a Save with nothing to write over
         // still has a Save as behind it.
         //
@@ -122,7 +122,7 @@ namespace ClaFi::Controls
         // is the one an attached action wrote into it, and the strip's command is not that one.
         [[nodiscard]] virtual bool dropdownActsAlone() const { return false; }
         // The control's own text, without the mark. Overridden by a control whose text is not
-        // simply the text property - a combobox's is its selected item.
+        // simply the text property - a combo box's is its selected item.
         virtual void getMainText(GetTextEvent&) const;
         // The mark an InText control ends its line with, put after the text given.
         void appendInTextMark(Text&) const;

@@ -553,9 +553,9 @@ form-&gt;<span class="fn">onClose</span>([](<span class="tp">FormCloseEvent</spa
 
             <h3 id="emitting">Emitting</h3>
             <p><code>emitEvent</code> deduces the event type from the object you hand it:</p>
-<pre><span class="kw">void</span> <span class="tp">Combobox</span>::<span class="fn">itemIndexChanged</span>()
+<pre><span class="kw">void</span> <span class="tp">ComboBox</span>::<span class="fn">itemIndexChanged</span>()
 {
-    <span class="tp">ComboboxChangeEvent</span> event{ *<span class="kw">this</span> };
+    <span class="tp">ComboBoxChangeEvent</span> event{ *<span class="kw">this</span> };
     <span class="fn">emitEvent</span>(event);
 }</pre>
             <p>There is also a construct-in-place form, <code>emitEvent&lt;TEvent&gt;(args...)</code>, for an event
@@ -579,7 +579,7 @@ form-&gt;<span class="fn">onClose</span>([](<span class="tp">FormCloseEvent</spa
 
             <div class="info">A control needs no constructor code to accept handlers for the events it declares -
             not even for events its base classes know nothing about. <code>Control</code>'s constructor connects a
-            <code>ComboboxChangeEvent</code> handler perfectly well, for the reason given in
+            <code>ComboBoxChangeEvent</code> handler perfectly well, for the reason given in
             <a href="#dispatcher">One Dispatcher per Object</a>.</div>
 
             <h3 id="custom-emitters">Making Any Class an Emitter</h3>

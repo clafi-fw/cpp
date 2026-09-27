@@ -57,7 +57,7 @@ namespace ThisApp
     // What sits on a blob. One character, because the blob is the size of one and the name it
     // stands for is in the tooltip.
     constexpr std::array<std::wstring_view, 3> k_paletteDigits{ L"1", L"2", L"3" };
-    // The exact hue is set outright, and is marked with the character the operation comboboxes
+    // The exact hue is set outright, and is marked with the character the operation combo boxes
     // already give ColorRuleOp::Set.
     constexpr std::wstring_view k_exactHueGlyph{ L"=" };
     constexpr std::wstring_view hueOpGlyph(ColorRuleHueOp value)
@@ -76,7 +76,7 @@ namespace ThisApp
     // cell's face and the popup's item are one statement about one rule.
     //
     // No change says so in words, there being no colour to show, and says it in the subdued
-    // style the operation comboboxes give their own No change item - which is what makes the
+    // style the operation combo boxes give their own No change item - which is what makes the
     // two dropdowns read alike. Everything else writes its one character, which the control's
     // text anchors centre for it. Every descriptive name is the tooltip's.
     void writeHueOpContent(Text& text, ColorRuleHueOp value, bool onBlob)
@@ -92,7 +92,7 @@ namespace ThisApp
         }
 
         // On a blob the glyph is written as every blob's is, at the blob's size. Off one it is
-        // written the way the operation comboboxes write their own - bold, in the spot ink.
+        // written the way the operation combo boxes write their own - bold, in the spot ink.
         // See ThemePage::operationCells.
         if (onBlob)
         {
@@ -610,7 +610,7 @@ namespace ThisApp
         }
         const ColorRuleHueOp operation = m_owner.operation();
         // No change has no hue to state, and says so in the subdued style the operation
-        // comboboxes give their own No change item - which is what makes the two dropdowns read
+        // combo boxes give their own No change item - which is what makes the two dropdowns read
         // alike.
         if (!m_owner.hasHue(operation))
         {

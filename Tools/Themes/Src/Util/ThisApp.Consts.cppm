@@ -104,7 +104,7 @@ namespace ThisApp
         L"Custom hue"
     };
 
-    export enum class ComboboxTarget
+    export enum class ComboBoxTarget
     {
         Saturation,
         Elevation

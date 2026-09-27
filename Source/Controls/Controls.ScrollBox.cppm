@@ -343,7 +343,7 @@ namespace ClaFi::Controls
         // derived from the very thing it would bound - and that is a ratchet: whatever narrows the
         // body once narrows the box, narrows the viewport, and caps the body there for good. A tab
         // strip that wrapped one label while the DPI changed stayed wrapped, because a wrapped
-        // label is narrower and that width became the ceiling. A menu's list lost a scrollbar's
+        // label is narrower and that width became the ceiling. A menu's list lost a scroll bar's
         // width the same way. One level is not enough: a box in a slot of a window placed around
         // its content is still measured from its body, and a section collapsed there would hold
         // the options at the collapsed width once it opened again. See

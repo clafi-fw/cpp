@@ -231,7 +231,7 @@ Three things the remembered width is not allowed to do, and each is a guard:
   `FormBase::isMeasuringPlacement`. That pass is where a form finds out what it wants, and one
   held to the width it was last given could never grow.
 
-THE SAME THREE GOVERN THE VIEWPORT A SCROLLBOX STATES FOR ITS BODY, which is a remembered width
+THE SAME THREE GOVERN THE VIEWPORT A SCROLL BOX STATES FOR ITS BODY, which is a remembered width
 of the same kind - see ScrollBox::adjustChildMetrics, and Controls-Base for where it is written.
 The placement guard is needed on the READ as well as the write: what a form does when it is handed
 a scale is lay itself out once inside the window it still has, at the new factor, and the body

@@ -5,7 +5,7 @@ import ClaFi.Tools.WhatsClip.LanguagePick;
 import ClaFi.Tools.WhatsClip.Encodings;
 import ClaFi.Tools.WhatsClip.Languages;
 
-import ClaFi.Controls.Checkbox;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.CodeBox;
 import ClaFi.Controls.ComboBox;
 import ClaFi.Controls.Label;
@@ -200,7 +200,7 @@ namespace ClaFi::Tools::WhatsClip
         std::wstring m_formatName{};
         EncodingPick& m_encodingPick;
         LanguagePick& m_languagePick;
-        Checkbox& m_wrapCheck;
+        CheckBox& m_wrapCheck;
         // The platform's locale resolver, or null where there is none - see PickLists::readLocale.
         void (*m_readLocale)(Transfer::Offer&) { nullptr };
     };
@@ -267,7 +267,7 @@ namespace ClaFi::Tools::WhatsClip
             Padding{ k_pickPaddingX, k_pickPaddingY },
             VerticalTextAnchor::Center,
             ShowSurfaceAtRest::Yes,
-            ComboBox::OnChange{ [this](ComboboxChangeEvent&) {
+            ComboBox::OnChange{ [this](ComboBoxChangeEvent&) {
                 encodingPicked();
             } }
         ) },
@@ -279,20 +279,20 @@ namespace ClaFi::Tools::WhatsClip
             Padding{ k_pickPaddingX, k_pickPaddingY },
             VerticalTextAnchor::Center,
             ShowSurfaceAtRest::Yes,
-            ComboBox::OnChange{ [this](ComboboxChangeEvent&) {
+            ComboBox::OnChange{ [this](ComboBoxChangeEvent&) {
                 languagePicked();
             } }
         ) },
         // THE MARK READS THE BOX AND THE CLICK WRITES IT: the box's own property is the
         // setting.
-        m_wrapCheck{ createStripBar<Checkbox>(
+        m_wrapCheck{ createStripBar<CheckBox>(
             wrapLabel(),
             Padding{ k_pickPaddingX, 0.0f },
             VerticalTextAnchor::Center,
-            Checkbox::OnGetState{ [this](GetStateEvent& event) {
+            CheckBox::OnGetState{ [this](GetStateEvent& event) {
                 wrapState(event);
             } },
-            Checkbox::OnClick{ [this](ClickEvent&) {
+            CheckBox::OnClick{ [this](ClickEvent&) {
                 wrapClicked();
             } }
         ) },

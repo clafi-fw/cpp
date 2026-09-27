@@ -24,11 +24,11 @@ namespace ClaFi::Controls
         }
     }
 
-    // ComboboxAcceptTextEvent
+    // ComboBoxAcceptTextEvent
 
-    ComboboxAcceptTextEvent::ComboboxAcceptTextEvent(const ComboBox& combobox, AcceptEditEvent& accept)
+    ComboBoxAcceptTextEvent::ComboBoxAcceptTextEvent(const ComboBox& comboBox, AcceptEditEvent& accept)
         :
-        ComboBoxEventBase{ combobox },
+        ComboBoxEventBase{ comboBox },
         accept{ accept }
     {
     }
@@ -63,7 +63,7 @@ namespace ClaFi::Controls
         if (typed == trimmed(value))
             return;
 
-        ComboboxAcceptTextEvent textEvent{ *this, event };
+        ComboBoxAcceptTextEvent textEvent{ *this, event };
         emitEvent(textEvent);
         if (textEvent.propagationStopped() || event.refused())
             return;
@@ -93,14 +93,14 @@ namespace ClaFi::Controls
 
     void ComboBox::nestedKeyDown(KeyDownEvent& event)
     {
-        // Return edits an editable combobox wherever its list is - on its strip, or behind F4 and
+        // Return edits an editable combo box wherever its list is - on its strip, or behind F4 and
         // Alt+Down when the face drops it.
         if (event.key == Keys::Return && m_editorMode == EditorMode::Editable && openEditor())
         {
             event.handled = true;
             return;
         }
-        ComboboxBaseClass::nestedKeyDown(event);
+        ComboBoxBaseClass::nestedKeyDown(event);
     }
 
     void ComboBox::charPress(CharPressEvent& event)
@@ -112,7 +112,7 @@ namespace ClaFi::Controls
             && std::iswprint(character);
         if (startsValue && openEditor({ &character, 1 }))
             return;
-        ComboboxBaseClass::charPress(event);
+        ComboBoxBaseClass::charPress(event);
     }
 
     void ComboBox::itemFaceText(const TextItem& item, Text& text, const EventPhase phase) const

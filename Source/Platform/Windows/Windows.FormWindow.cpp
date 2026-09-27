@@ -247,7 +247,7 @@ namespace ClaFi
         // work area plus its resize borders, so the client hangs off the monitor by that much,
         // and a control at the window's edge reaches past the screen's. A pointer driven into a
         // corner or against an edge is then inside the control standing there - the close button,
-        // a scrollbar's thumb - rather than a few pixels short of it.
+        // a scroll bar's thumb - rather than a few pixels short of it.
         case WM_NCCALCSIZE:
             msg.result = 0;
             msg.handled = true;

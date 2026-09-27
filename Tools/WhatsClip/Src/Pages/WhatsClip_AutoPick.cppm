@@ -10,7 +10,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Tools::WhatsClip
 {
-    // A combobox of Auto and a list of names, whose face on Auto reads the name found for it
+    // A combo box of Auto and a list of names, whose face on Auto reads the name found for it
     // with a muted (Auto) after it. The list's Auto item keeps its word: it is what the user
     // picks to have the answer asked rather than stated. What is found, and from what, is the
     // derived pick's affair.

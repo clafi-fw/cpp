@@ -198,7 +198,7 @@ namespace ClaFi::Controls
     {
         // That may be useful, but it we want to process the wheel here,
         // it MUST be optional and turned off by default.
-        // Think of a slider on a scrollbox body.
+        // Think of a slider on a scroll box body.
         // event.handled = true;
         // offsetPositionBySteps(event.delta);
     }

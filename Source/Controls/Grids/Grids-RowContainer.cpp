@@ -13,7 +13,7 @@ namespace ClaFi::Controls::Grids
     namespace
     {
         // The keys the grid moves the selection by, and Tab, which leaves the grid. Held with Alt,
-        // a key is the cell's control's instead: Alt+Down drops a combobox's list.
+        // a key is the cell's control's instead: Alt+Down drops a combo box's list.
         [[nodiscard]] bool gridMovesBy(const KeyDownEvent& event)
         {
             if (event.modifiers.alt)

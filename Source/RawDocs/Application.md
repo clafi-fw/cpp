@@ -253,7 +253,7 @@ back:
 
     connectAppPage(L"Scene", [](OptionsPage& page){
         StackPanel& picked = page.addGroup(L"Picked Window");
-        picked.add<Checkbox>(L"Highlight corners");
+        picked.add<CheckBox>(L"Highlight corners");
     });
 
 ## connectAppPage

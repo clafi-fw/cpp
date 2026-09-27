@@ -1,6 +1,6 @@
 module ThisApp.ApplyToControl;
 
-import ClaFi.Controls.Checkbox;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.StackPanel;
@@ -95,7 +95,7 @@ namespace ThisApp
         }
     }
 
-    // The outputs as radio buttons, then each of the two input sets as a column of checkboxes.
+    // The outputs as radio buttons, then each of the two input sets as a column of check boxes.
     class ApplyToPopup : public StackPanel
     {
     public:
@@ -110,7 +110,7 @@ namespace ThisApp
         void refreshItems();
     private:
         ApplyToControl& m_owner;
-        std::vector<Control*> m_items{}; // every radio button and checkbox
+        std::vector<Control*> m_items{}; // every radio button and check box
     };
 
     // An output in the popup, marked while the rule writes to it.
@@ -127,7 +127,7 @@ namespace ThisApp
     };
 
     // An input in the popup, checked while the rule's set reads it.
-    class InputItem : public Checkbox
+    class InputItem : public CheckBox
     {
     public:
         InputItem(const CreateParams&, ApplyToPopup&, RuleClause, RuleInput);
@@ -320,7 +320,7 @@ namespace ThisApp
     InputItem::InputItem(const CreateParams& params, ApplyToPopup& popup, const RuleClause clause,
         const RuleInput input)
         :
-        Checkbox{ params,
+        CheckBox{ params,
             Text{ itemLabel(k_inputLabels[static_cast<std::size_t>(input)]) }
         },
         m_popup{ popup },

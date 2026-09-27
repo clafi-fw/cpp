@@ -1444,7 +1444,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // bounds are set; the configure that answers the reposition then finds m_size already
         // true and has nothing to do. Left to that configure, the answer would be compared with
         // an m_size this call has already moved, and the geometry, the input region, the frames
-        // and the form's canvas would keep the size before the ask - a scrollbar the second ask
+        // and the form's canvas would keep the size before the ask - a scroll bar the second ask
         // added drawn past the input region, its presses reaching the window underneath. Before
         // the first configure there is nothing to apply to; that configure applies everything.
         if (m_configured && m_size != sizeBefore)

@@ -3,7 +3,7 @@ export module ClaFi.App.Settings;
 import ClaFi.App.ThemePick;
 
 import ClaFi.Controls.Button;
-import ClaFi.Controls.Checkbox;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
@@ -97,17 +97,17 @@ namespace ClaFi
         // Held whole: the whole of it goes where the platform has no keep-above to ask for.
         OptionsPage::Section& m_windowSection;
         StackPanel& m_windowGroup;
-        Checkbox& m_alwaysOnTop;
+        CheckBox& m_alwaysOnTop;
         // Held whole for the same reason the window's is: all of it goes where the application
         // named no GPU backend.
         OptionsPage::Section& m_graphicsSection;
         StackPanel& m_graphicsGroup;
-        Checkbox& m_gpuAcceleration;
+        CheckBox& m_gpuAcceleration;
         // The foot of the page, outside the box: the answer here is about the page as a whole,
         // so it stands where it can be seen rather than travelling with the options.
         StackPanel& m_footer;
         Controls::Divider& m_footerDivider;
-        Checkbox& m_keepSettings;
+        CheckBox& m_keepSettings;
     };
 
     // What an application puts on a page of its own in the backstage. See Application

@@ -237,7 +237,7 @@ namespace ClaFi
         // The axis carrying the greater overflow is the one the container scrolls on. Which axis
         // overflows at all is not enough to tell them apart: a wrapping layout wraps at the
         // viewport extent rather than at a whole item, so it spills a few pixels onto the axis it
-        // fills, and a container is free to overflow an axis whose scrollbar is hidden. Reading
+        // fills, and a container is free to overflow an axis whose scroll bar is hidden. Reading
         // either as the scrolling axis pages along an axis that holds a single screenful, where
         // the search finds nothing ahead and every press ends at the edge item.
         const float verticalOverflow = containerBounds.height() - containerViewport.height();

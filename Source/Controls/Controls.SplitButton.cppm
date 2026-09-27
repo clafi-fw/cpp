@@ -69,7 +69,7 @@ namespace ClaFi::Controls
         void showDropdown(Control& initiator) override;
         void adjustPaint(AdjustPaintEvent&) override;
         // The mark sits on a button face rather than in a field, so it carries the normal text
-        // colour rather than the muted one a combobox uses.
+        // colour rather than the muted one a combo box uses.
         [[nodiscard]] Ink dropdownMarkInk() const override { return InkWell::textInk(); }
     private:
         Action* m_dropdownAction{ nullptr };
@@ -86,7 +86,7 @@ namespace ClaFi::Controls
         :
         DropdownControlBase{
             params,
-            // The base sits on ButtonBase so that a combobox can share it without being handed a
+            // The base sits on ButtonBase so that a combo box can share it without being handed a
             // button's metrics, so a button asks for them here.
             Interactivity::Focusable,
             params.themeMetrics().button,

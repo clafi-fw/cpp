@@ -329,7 +329,7 @@ namespace ClaFi::Showcase
         advanceCycleTime();
 
         // A paint covering at least 80% of the scene is a full one, and only a full one is
-        // measured: a repaint of the combobox or the slider covers a fraction of the scene and
+        // measured: a repaint of the combo box or the slider covers a fraction of the scene and
         // would read as a spike. The 80% leaves room for the off-screen clipping a maximized
         // window brings.
         const IntRect& clipRect = event.canvas().clipBox().toInt();

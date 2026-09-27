@@ -504,7 +504,7 @@ replace what an earlier one wrote calls <code>event.text().clear()</code> first.
     <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Channel }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::channelCell },
 
     <span class="cm">// A live control living in the cell. Its constructor arguments follow the Tag.</span>
-    <span class="tp">CellWith</span>&lt;<span class="tp">Checkbox</span>&gt;{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Mute } }
+    <span class="tp">CellWith</span>&lt;<span class="tp">CheckBox</span>&gt;{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Mute } }
 }</code></pre>
 
 <p>A text provider receives the grid's <code>Grids::GetCellTextEvent</code> - the same event a
@@ -905,7 +905,7 @@ m_grid.<span class="fn">forEachRow</span>([<span class="kw">this</span>](<span c
 <p>Inside a lambda that runs later, capture the <em>tag</em> and resolve it when the event
 fires. The columns do not exist yet while the blueprint is being built:</p>
 
-<pre><code><span class="tp">OnEvent</span>{ [<span class="kw">this</span>, amountTag](<span class="tp">ComboboxChangeEvent</span>&amp; event) {
+<pre><code><span class="tp">OnEvent</span>{ [<span class="kw">this</span>, amountTag](<span class="tp">ComboBoxChangeEvent</span>&amp; event) {
     <span class="kw">auto</span>&amp; row = *<span class="kw">static_cast</span>&lt;<span class="tp">Grids::Rt::RowContainer</span>*&gt;(event.<span class="fn">comboBox</span>().<span class="fn">parent</span>());
     <span class="tp">Control</span>* slider = row.<span class="fn">controlAtColumn</span>(m_grid.<span class="fn">columnByTag</span>(amountTag));
     slider-&gt;<span class="fn">invalidateState</span>();
@@ -962,7 +962,7 @@ as the group's own. That is where a choice made once per group goes:</p>
     <span class="tp">Span</span>{
         <span class="tp">Tag</span>{ <span class="tp">Kind</span>::Group, <span class="tp">Device</span>::Mixer },
         <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::deviceCell },
-        <span class="tp">CellWith</span>&lt;<span class="tp">Checkbox</span>&gt;{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Mute } } },
+        <span class="tp">CellWith</span>&lt;<span class="tp">CheckBox</span>&gt;{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Mute } } },
     <span class="fn">channelRow</span>(<span class="tp">Channel</span>::Input),
     <span class="fn">channelRow</span>(<span class="tp">Channel</span>::Output)
 }</code></pre>
@@ -990,7 +990,7 @@ focus for it: the grid keeps the arrows, Home, End, the page keys and Tab, and e
 goes to the control in the selected cell.</p>
 
 <p><strong>The first click picks the cell.</strong> A control that opens something over itself
-- a combobox's list, an editor typed in place - opens it only from a click on the cell that is
+- a combo box's list, an editor typed in place - opens it only from a click on the cell that is
 already selected. The first click selects the cell and its row, and the next one opens. The
 dropdown arrow opens on the first click too, because opening the list is its one job. Picking a
 row to delete it opens nothing.</p>
@@ -1017,7 +1017,7 @@ leaves the click alone - the click goes on to the row, which picks the cell.</p>
 
 <table>
 <tr><th>Question</th><th>Dropping the popup is</th><th>On the click that picks the cell</th></tr>
-<tr><td><code>mayDropPopupImplicitly</code></td><td>A meaning a click on the control is given - the list a combobox drops from its main area, an editor over a caption</td><td>Refused</td></tr>
+<tr><td><code>mayDropPopupImplicitly</code></td><td>A meaning a click on the control is given - the list a combo box drops from its main area, an editor over a caption</td><td>Refused</td></tr>
 <tr><td><code>mayDropPopup</code></td><td>The one job of the part that was clicked - a dropdown arrow</td><td>Allowed</td></tr>
 </table>
 

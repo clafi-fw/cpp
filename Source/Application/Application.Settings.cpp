@@ -11,7 +11,7 @@ import ClaFi.Controls.Base.SliderBase;
 import ClaFi.Controls.Base.StackPanelBase;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.MessageDialog;
-import ClaFi.Controls.Checkbox;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
@@ -328,18 +328,18 @@ namespace ClaFi
         ) },
         m_windowSection{ m_options.addSection(L"Main Window") },
         m_windowGroup{ m_windowSection.body() },
-        // NO ROOM AT THE SIDES, so the box stands where a label's text stands. A checkbox is
+        // NO ROOM AT THE SIDES, so the box stands where a label's text stands. A check box is
         // built on the theme's listItem metrics and a Label states none, so the indicator is
         // inset by that padding and the two start at different edges down one group. The room
         // above and below is the theme's, which is what holds the row's height.
-        m_alwaysOnTop{ m_windowGroup.add<Checkbox>(
+        m_alwaysOnTop{ m_windowGroup.add<CheckBox>(
             L"Always on top",
             TooltipText{ L"Keep above others" },
             Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
         ) },
         m_graphicsSection{ m_options.addSection(L"Graphics") },
         m_graphicsGroup{ m_graphicsSection.body() },
-        m_gpuAcceleration{ m_graphicsGroup.add<Checkbox>(
+        m_gpuAcceleration{ m_graphicsGroup.add<CheckBox>(
             L"GPU acceleration",
             Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
         ) },
@@ -349,7 +349,7 @@ namespace ClaFi
             Spacing{ k_pageSpacing }
         ) },
         m_footerDivider{ m_footer.add<Divider>() },
-        m_keepSettings{ m_footer.add<Checkbox>(L"Keep settings on this PC") }
+        m_keepSettings{ m_footer.add<CheckBox>(L"Keep settings on this PC") }
     {
         // THE MODE IS STATED, NOT TRIED ON. A click writes the config like a pick from the list,
         // and the node's change carries it to the theme - see connectAppThemes.

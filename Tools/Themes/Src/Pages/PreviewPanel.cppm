@@ -71,7 +71,7 @@ namespace ThisApp
         EventConnection m_button1Click3{ m_button1.onClick([](ClickEvent&) {
             }) };
 
-        Checkbox2& m_checkBox{ m_stackPanel.add<Checkbox2>(
+        CheckBox2& m_checkBox{ m_stackPanel.add<CheckBox2>(
             L"CheckBox",
             Checked::Yes
         ) };

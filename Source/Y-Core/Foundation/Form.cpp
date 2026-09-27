@@ -390,7 +390,7 @@ namespace ClaFi
         //
         // An axis it granted in full bounds nothing while the form is measuring what to ask for -
         // a form held to the window it is about to replace could never grow, and growing by a
-        // scrollbar is exactly what it has to do. Once it is laying content into the window it
+        // scroll bar is exactly what it has to do. Once it is laying content into the window it
         // got, that window bounds both axes if it is the USER'S: a window the user dragged is not
         // an answer to the content, and the content has to fit it or show a bar.
         const bool userSized = m_autoFit == AutoFit::No && !m_measuringPlacement;
@@ -1509,7 +1509,7 @@ namespace ClaFi
         //
         // WHAT THE LAST STEP MEASURED. Laying the content out into the window is where a
         // ScrollBox discovers it needs a bar, and a bar makes the content WIDER than the window
-        // just granted for it. A form sized by its content is then a scrollbar too narrow: the
+        // just granted for it. A form sized by its content is then a scroll bar too narrow: the
         // strip comes out of the body instead, and every Fill item in it stands past the view
         // with its tail under the bar. That pass cannot ask for another placement from inside
         // itself - updateAlign marks the form aligned before it runs, so a request raised in it
@@ -1573,7 +1573,7 @@ namespace ClaFi
             // for: the size above came from what the content wanted, and the placement is free to
             // give it less - the room the side it took had, or what the work area could hold. A
             // window that could not grow has to wrap its text rather than cut it, and one that
-            // was made shorter has to show what fell past the cut, which is the scrollbar coming
+            // was made shorter has to show what fell past the cut, which is the scroll bar coming
             // up. Only a pass measured against the window does either - see adjustRootMetrics.
             // A grant past the ask is not laid out into - see contentExtent.
             //
@@ -1612,7 +1612,7 @@ namespace ClaFi
     //
     // Those are two different moves, and only the second one is a search. Tab means "leave what
     // I am on and take the next", so a Tab emulated from the entry lands one item PAST it: a
-    // combobox opened on its third entry comes up with the fourth lit. Landing on the item is
+    // combo box opened on its third entry comes up with the fourth lit. Landing on the item is
     // therefore said outright, and the walk is what answers the case with nothing to return to -
     // there the root answers with itself, the search starts from it, and the first item is what
     // it finds.

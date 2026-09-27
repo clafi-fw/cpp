@@ -3,7 +3,7 @@ module ClaFi.Tools.WhatsClip.Page;
 import ClaFi.Tools.WhatsClip.EncodingPick;
 import ClaFi.Tools.WhatsClip.LanguagePick;
 
-import ClaFi.Controls.Checkbox;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.CodeBox;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;

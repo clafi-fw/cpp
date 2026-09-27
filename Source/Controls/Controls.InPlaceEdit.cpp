@@ -95,7 +95,7 @@ namespace ClaFi::Controls
         if (event.key == Keys::Return)
             m_takeLineBreak = event.modifiers.shift;
         // THE LIST'S KEYS. Up and Down are the list's while it is up, and Alt+Down - the key
-        // that drops a combobox's list - is the list's always. The walk reaches the box before
+        // that drops a combo box's list - is the list's always. The walk reaches the box before
         // the root, and the box would move the caret on them; left alone here, they reach the
         // root next. F4, the other dropping key, is a key the box never takes.
         const bool arrow = event.key == Keys::Up || event.key == Keys::Down;
@@ -158,7 +158,7 @@ namespace ClaFi::Controls
 
     void SuggestionRow::getText(GetTextEvent& event) const
     {
-        // The item's own text, or its placeholder muted while it has none - what a combobox
+        // The item's own text, or its placeholder muted while it has none - what a combo box
         // face shows for it, without what a face adds.
         const TextItem& item = (*m_root.suggestions())[m_itemIndex];
         if (item.text().empty())
@@ -178,7 +178,7 @@ namespace ClaFi::Controls
         :
         StackPanel{ params,
             Orientation::Vertical,
-            // A SCROLLED BODY KEEPS THE SIZE IT MEASURED - see ComboboxDropdownStack.
+            // A SCROLLED BODY KEEPS THE SIZE IT MEASURED - see ComboBoxDropdownStack.
             WordWrap::No
         }
     {
@@ -506,7 +506,7 @@ namespace ClaFi::Controls
         case Keys::Up:
         case Keys::Down:
             {
-                // The keys that drop a combobox's list drop this one whole, the filter lifted;
+                // The keys that drop a combo box's list drop this one whole, the filter lifted;
                 // the arrows walk it while it is up. The box leaves them to the root - see
                 // EditBox::nestedKeyDown.
                 const bool drops = event.key == Keys::F4
@@ -545,7 +545,7 @@ namespace ClaFi::Controls
     bool InPlaceEditRoot::suggestionsShown() const
     {
         // The list registers on this form as the box's popup while it is up, and on nothing
-        // while it is down - the same fact a combobox face reads about its list.
+        // while it is down - the same fact a combo box face reads about its list.
         return body().isDroppedDown();
     }
 

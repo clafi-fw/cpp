@@ -179,7 +179,7 @@ besides the invalidation itself. `None` is the invalidation alone.
 A control about to drop a popup from the click it was given asks first, and the question it asks
 says what dropping the popup is to that click. A part whose one job is the popup - a dropdown
 strip - asks `Control::mayDropPopup`: the click asks for the drop. A control whose click has a
-popup assigned to it besides - a combobox dropping its list from its main area, a caption opening
+popup assigned to it besides - a combo box dropping its list from its main area, a caption opening
 its in-place editor - asks `Control::mayDropPopupImplicitly`: the click implies the drop. An
 in-place editor is a popup, so it asks what a list does.
 

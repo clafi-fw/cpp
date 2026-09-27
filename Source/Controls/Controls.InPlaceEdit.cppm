@@ -319,7 +319,7 @@ namespace ClaFi::Controls
     /// copied out of a control that only shows it. A reader needs no sink and claims no rename.
     ///
     /// @note A host that answers editorSuggestions gets a list under the box of the values whose
-    /// names begin with what is typed - a combobox answers its items - and F4 or Alt+Down lists
+    /// names begin with what is typed - a combo box answers its items - and F4 or Alt+Down lists
     /// them all. Picking one, with Return or a click, puts its name in the box and offers it in
     /// the same press.
     export template <IsControl HostClass>
@@ -370,7 +370,7 @@ namespace ClaFi::Controls
         /// long for the control is read whole while it is being typed. Zero on an axis says no
         /// limit, and the monitor is then the only bound left.
         [[nodiscard]] virtual FloatPoint editorMaxTextSize(const FloatRect& textRect) const;
-        /// What the editor completes from - a combobox, its items. See Controls#suggestionlist
+        /// What the editor completes from - a combo box, its items. See Controls#suggestionlist
         [[nodiscard]] virtual const TextItems* editorSuggestions() const;
         /// Whether the click being answered opens the editor. It is asked once per click, before
         /// anything is dispatched, and only for a press on this control itself: a press on a part
