@@ -1,8 +1,6 @@
 module ClaFi.Core.TextEngine.Layout;
 
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.AppTheme_Baked;
-import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.BakedText;
 import ClaFi.Core.TextEngine.Mono;
@@ -137,10 +135,8 @@ namespace ClaFi
             Hsl hsl = value.index() == 0
                 ? theme.inkHsl(std::get<0>(value))
                 : Hsl{ std::get<1>(value) };
-            // The band states which side of the theme it stands on and the ink over it is read
-            // from that side, so the whole of that question is answered by the theme the control
-            // was handed - a box inside an element carried across the theme moves its selected
-            // ink the way it still has room to move.
+            // Read in the direction the control stands in, so a box inside an element carried
+            // across the theme moves its selected ink the way it still has room to move.
             return theme.selectionInkHsl(hsl).toColor();
         };
 
@@ -908,11 +904,7 @@ namespace ClaFi
                     drawnColors = buffers.mergedColors;
                 }
             }
-            // A flipped band carries the ink across the theme with it, so the run is re-inked on
-            // an element that states a flip even where its own text rule says nothing.
-            const BakedElement& rules = controlContext.bakedColors()
-                .element(UiElement::SelectedText);
-            if (localSelection.length and (rules.flip != 0.0f or !rules.text.changesNothing()))
+            if (localSelection.length and controlContext.selectionChangesInk())
             {
                 collectSelectionInk(drawnColors, localSelection, controlContext, buffers.inkedColors);
                 drawnColors = buffers.inkedColors;

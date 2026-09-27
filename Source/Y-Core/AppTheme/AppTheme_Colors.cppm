@@ -237,7 +237,7 @@ namespace ClaFi
     {
         Hovered,
         Pressed,
-        Focused,
+        Focused,        // the control's focus, as far as its form holds the focus
         Selected,
         Disabled,       // the enabled factor turned over
         TextHovered,
@@ -245,6 +245,9 @@ namespace ClaFi
         WindowFocused,  // the focus of the form the control stands in
         Count
     };
+
+    // How far each input stands on one control, in RuleInput order.
+    export using RuleInputLevels = std::array<float, static_cast<std::size_t>(RuleInput::Count)>;
 
     // The inputs a rule reads, joined as "or". An empty set is at rest: the rule always applies.
     export class RuleInputs
@@ -265,6 +268,8 @@ namespace ClaFi
         }
         void add(RuleInput input) { m_bits |= bitOf(input); }
         void remove(RuleInput input) { m_bits &= ~bitOf(input); }
+        // How far the set stands at these levels: its inputs joined as "or", and 1 at rest.
+        [[nodiscard]] float levelIn(const RuleInputLevels&) const;
         [[nodiscard]] bool operator==(const RuleInputs&) const = default;
     private:
         [[nodiscard]] static constexpr std::uint32_t bitOf(RuleInput input)
@@ -383,8 +388,8 @@ namespace ClaFi
         ControlColorRules gridRow{
             // A SELECTED ROW. A row wears this set and paints no surface of its own, so the rule
             // reaches the screen through the cells the row fills. It lands where a focused text
-            // selection lands - selectedText's surface and active come to the same place - so the
-            // two selections an interface can show read as one colour.
+            // selection lands - SelectedText's resting and focused rules come to the same place -
+            // so the two selections an interface can show read as one colour.
             .active{
                 { ColorRuleHueOp::PaletteColor2 },      // H
                 { ColorRuleOp::Offset, 0.190021f },     // S
@@ -402,35 +407,6 @@ namespace ClaFi
             { ColorRuleHueOp::NoChange, 0.860274f },    // H
             { ColorRuleOp::NoChange, 0.765086f },       // S
             { ColorRuleOp::Offset, 0.080088f }          // E
-        };
-
-        // The band behind selected text, and the ink drawn on it. The two are resolved in
-        // different places: the band once, against the surface the text sits on, and the ink
-        // where each run is drawn, against whatever colour that run already carries - so a grey
-        // run stays grey under the band and an accent run stays accent.
-        //
-        // surface is the band while the focus is elsewhere, and active is what the focus adds to
-        // it, applied by the owning control's focused factor so the two crossfade as the focus
-        // moves. Both are on screen together whenever a second box still holds a selection,
-        // which is what they exist to tell apart.
-        ControlColorRules selectedText{
-            .surface{
-                { ColorRuleHueOp::PaletteColor2 },      // H
-                { ColorRuleOp::Offset, -0.042085f },    // S
-                { ColorRuleOp::Offset, 0.092057f }      // E
-            },
-            .active{
-                { ColorRuleOp::Offset, 0.382042f },     // S
-                { ColorRuleOp::Offset, 0.094934f }      // E
-            },
-            .text{
-                {},                                     // S
-                { ColorRuleOp::NoChange, 0.071926f }    // E
-            },
-            .activeText{
-                {},                                     // S
-                { ColorRuleOp::NoChange, 0.706543f }    // E
-            }
         };
 
         // THE THEME'S OWN EMPHASIS, AND WHAT SAYS A THING IS ON - one rule for both, because the
@@ -826,6 +802,22 @@ namespace ClaFi
         m_harmony.reset();
     }
 
+    // RuleInputs
+
+    float RuleInputs::levelIn(const RuleInputLevels& levels) const
+    {
+        if (empty())
+            return 1.0f;
+
+        float result = 0.0f;
+        for (std::size_t i = 0; i != levels.size(); ++i)
+        {
+            if (has(static_cast<RuleInput>(i)))
+                result = StateFactors::compose(result, levels[i]);
+        }
+        return result;
+    }
+
     // ThemeRules2
 
     ThemeRules2 defaultRules2()
@@ -1035,6 +1027,24 @@ namespace ClaFi
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Offset, 0.037839f }      // E
+                }
+            }
+        };
+
+        // Selected text - the band at rest, then what the focus adds to it.
+        result.of(UiElement::SelectedText) = {
+            ColorRule2{
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Offset, -0.042085f },    // S
+                    { ColorRuleOp::Offset, 0.092057f }      // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Focused },
+                .effect{
+                    { ColorRuleOp::Offset, 0.382042f },     // S
+                    { ColorRuleOp::Offset, 0.094934f }      // E
                 }
             }
         };

@@ -74,7 +74,7 @@ namespace ThisApp
         std::wstring_view text{};
     };
 
-    constexpr std::array<MemberComment, 7ull> k_memberComments{
+    constexpr std::array<MemberComment, 6ull> k_memberComments{
         MemberComment{ .element = UiElement::TabLine, .text =
             L"Every tab's outline and the line it stands on, applied to the tab's own surface." },
         MemberComment{ .element = UiElement::Header, .text =
@@ -87,16 +87,6 @@ namespace ThisApp
         MemberComment{ .element = UiElement::GridLine, .text =
             L"Every line of a grid's lattice. One rule for the whole lattice, so a cell's own\n"
             L"surface cannot move the line beside it." },
-        MemberComment{ .element = UiElement::SelectedText, .text =
-            L"The band behind selected text, and the ink drawn on it. The two are resolved in\n"
-            L"different places: the band once, against the surface the text sits on, and the ink\n"
-            L"where each run is drawn, against whatever colour that run already carries - so a grey\n"
-            L"run stays grey under the band and an accent run stays accent.\n"
-            L"\n"
-            L"surface is the band while the focus is elsewhere, and active is what the focus adds to\n"
-            L"it, applied by the owning control's focused factor so the two crossfade as the focus\n"
-            L"moves. Both are on screen together whenever a second box still holds a selection,\n"
-            L"which is what they exist to tell apart." },
         MemberComment{ .element = UiElement::Accent, .text =
             L"THE THEME'S OWN EMPHASIS, AND WHAT SAYS A THING IS ON - one rule for both, because the\n"
             L"two are one colour. It is the ink anything asking for emphasis is drawn in, over the\n"
@@ -145,8 +135,8 @@ namespace ThisApp
         StateComment{ .memberName = L"gridRow", .stateName = L"active", .text =
             L"A SELECTED ROW. A row wears this set and paints no surface of its own, so the rule\n"
             L"reaches the screen through the cells the row fills. It lands where a focused text\n"
-            L"selection lands - selectedText's surface and active come to the same place - so the\n"
-            L"two selections an interface can show read as one colour." }
+            L"selection lands - SelectedText's resting and focused rules come to the same place -\n"
+            L"so the two selections an interface can show read as one colour." }
     };
 
     // The comment that state carries in that member, or nothing where it carries none.

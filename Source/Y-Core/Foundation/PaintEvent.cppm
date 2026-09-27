@@ -179,15 +179,12 @@ namespace ClaFi
             CornerRadii radii{};
             RectSidesBoolArray sides{};
         };
-        // How far each state stands as the new rules read it, settled with the old rules' factors.
+        // What the surface and the stroke read in place of the levels the context holds.
         struct RuleInputFactors
         {
             float surfaceRest{ 1.0f };      // an at-rest rule on the surface
             float strokeRest{ 1.0f };       // an at-rest rule on the stroke
-            float hovered{};
-            float pressed{};
-            float selected{};               // as the ink reads it
-            float selectedOnSurface{};      // as the surface and the stroke read it
+            float selectedOnSurface{};      // the selection as far as the control shows it there
         };
     private:
         [[nodiscard]] float zAnimationFactor(VisualStateIndex) const;

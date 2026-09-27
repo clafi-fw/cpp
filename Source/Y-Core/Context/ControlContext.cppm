@@ -38,23 +38,14 @@ namespace ClaFi
         [[nodiscard]] Color inkRgb(Pigment, float saturation, float elevation) const;
         [[nodiscard]] Color inkRgb(Pigment, InkTone) const;
         //
-        // The band behind selected text, and the colour every check mark, radio mark and caret is
-        // filled with. Resolved when they are asked for rather than with everything else: most
-        // controls ask for neither.
+        // The band behind selected text, resolved when asked for: most controls never ask.
         [[nodiscard]] Color selectionRgb() const;
+        // The resting band with the accent over it - a caret, a focus ring, a tab's indicator.
         [[nodiscard]] Color indicatorRgb() const;
-        // The ink a run of selected text is drawn in: the colour that run already carries, with
-        // the band's own text rule over it. Asked for per span, where the run's colour is known.
+        // A run's own ink with the band's text rules over it, asked for per span.
         [[nodiscard]] Hsl selectionInkHsl(Hsl runInk) const;
-        // The mode an element applied by hand stands in: this control's, crossed once if the
-        // element states a flip. PaintEvent makes that crossing for the element a control wears,
-        // and the band behind selected text is not that element - it is raised over whatever
-        // surface the text sits on - so the places applying it by hand make the crossing here. See
-        // BakedElement::flip.
-        [[nodiscard]] Lightness elementLightness(const BakedElement& element) const
-        {
-            return element.lightnessIn(lightness);
-        }
+        // Whether a rule reaching the band writes the ink, so a run under it has to be re-inked.
+        [[nodiscard]] bool selectionChangesInk() const;
         // What a colour becomes on a control that cannot be used: itself, moved toward the surface
         // it is drawn on. The alpha is the caller's and is put back untouched - Color::blend
         // carries alpha with it and the surface is opaque, so left to itself the blend would drag
@@ -74,10 +65,8 @@ namespace ClaFi
         Hsl surfaceHsl{};
         Hsl textHsl{};
         float disabledAmount{ 0.0f };
-        // How far the control drawing this holds the keyboard focus. A selection stays behind when
-        // the focus leaves, so the band has to say whether the keys still act on it, and the
-        // factor is animated so the two bands crossfade rather than swap.
-        float focusedFactor{ 0.0f };
+        // The inputs of the control drawing this, as its ink reads them. The band reads them.
+        RuleInputLevels ruleInputLevels{};
         //
         // TODO: nothing gives this a colour, so a found range would draw in the value below. It
         // belongs with the selection band - the same rules at a different strength, or its own -
@@ -85,6 +74,9 @@ namespace ClaFi
         // does not show.
         Color hit{ 0xff00FFff };
         Color surface;
+    private:
+        // The band's rules on one channel: its own list, then Any element's.
+        void applySelectionRules(PaintChannel, Hsl& color, const RuleInputLevels&) const;
     private:
         FormContext& m_formContext;
         const BakedColors* m_bakedColors;
@@ -166,44 +158,57 @@ namespace ClaFi
         return fadedInk(m_bakedColors->pigmentHsl(pigment, tone));
     }
 
-    // Raised off the control's own surface, in the direction the element stands in - the
-    // control's own, crossed once where the theme states a flip on the band.
+    // Raised by the inputs of the control drawing it, which owns the selection. A selection stays
+    // behind when the focus leaves, so the band says whether the keys still act on it.
     Color ControlPaintContext::selectionRgb() const
     {
-        const BakedElement& band = m_bakedColors->element(UiElement::SelectedText);
-        const Lightness elementLightness = this->elementLightness(band);
         Hsl result = surfaceHsl;
-        band.surface.applyTo(result, 1.0f, elementLightness);
-        band.active.applyTo(result, focusedFactor, elementLightness);
+        applySelectionRules(PaintChannel::Surface, result, ruleInputLevels);
         return disabledRgb(result.toColor());
     }
 
-    // The resting band with the accent over it, so a caret, the ring on the control the user is
-    // on and a tab's indicator are drawn from one statement. The two
-    // rules are read in different directions on purpose: the band is an element and is read in the
-    // direction that element stands in - reading it at this control's side would put a band drawn
-    // here on the far side from one drawn by a control wearing it - while the accent belongs to no
-    // element and is read in this control's own.
+    // Levels of zero leave only the resting rules, so the control's own state does not reach the
+    // caret, the focus ring or a tab's indicator.
     Color ControlPaintContext::indicatorRgb() const
     {
-        const BakedElement& band = m_bakedColors->element(UiElement::SelectedText);
         Hsl result = surfaceHsl;
-        band.surface.applyTo(result, 1.0f, elementLightness(band));
+        applySelectionRules(PaintChannel::Surface, result, RuleInputLevels{});
         m_bakedColors->rule(UiElement::Accent).applyTo(result, 1.0f, lightness);
         return disabledRgb(result.toColor());
     }
 
-    // The ink over the band. A run carries the ink of the side the control stands on, so on a
-    // flipped band it crosses with the element before the band's own text rule is applied - the
-    // order PaintEvent takes for a control wearing a flipped element. Without the crossing a run
-    // whose text rule says nothing keeps the ink of the side the band has just left, and no rule
-    // in the theme says anything is wrong.
+    // The rules go over whatever the run already carries, so a grey run stays grey under the band
+    // and an accent run stays accent.
     Hsl ControlPaintContext::selectionInkHsl(Hsl runInk) const
     {
-        const BakedElement& band = m_bakedColors->element(UiElement::SelectedText);
-        runInk.luminosity += band.flip * (1.0f - 2.0f * runInk.luminosity);
-        band.text.applyTo(runInk, 1.0f, elementLightness(band));
+        applySelectionRules(PaintChannel::Text, runInk, ruleInputLevels);
         return runInk;
+    }
+
+    bool ControlPaintContext::selectionChangesInk() const
+    {
+        const BakedRules2& rules = m_bakedColors->rules2;
+        auto writesInk = [](const BakedColorRule2& rule){
+            return rule.output == PaintChannel::Text;
+        };
+        return std::ranges::any_of(rules.of(UiElement::SelectedText), writesInk)
+            or std::ranges::any_of(rules.shared, writesInk);
+    }
+
+    // The order PaintEvent takes for the element a control wears. The band's rest is its own, so
+    // it is raised in full whether or not the control shows a surface at rest.
+    void ControlPaintContext::applySelectionRules(const PaintChannel channel, Hsl& color,
+        const RuleInputLevels& levels) const
+    {
+        const BakedRules2& rules = m_bakedColors->rules2;
+        for (const BakedColorRules2* list : { &rules.of(UiElement::SelectedText), &rules.shared })
+        {
+            for (const BakedColorRule2& rule : *list)
+            {
+                if (rule.output == channel)
+                    rule.effect.applyTo(color, rule.inputs.levelIn(levels), lightness);
+            }
+        }
     }
 
 

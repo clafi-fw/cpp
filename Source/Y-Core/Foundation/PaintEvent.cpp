@@ -214,10 +214,20 @@ namespace ClaFi
             m_ruleInputFactors = {
                 .surfaceRest = m_showSurfaceAtRest ? 1.0f : 0.0f,
                 .strokeRest = baseFactor,
-                .hovered = hoverEffectiveFactor,
-                .pressed = effectivePressedFactor,
-                .selected = selectedFactor,
                 .selectedOnSurface = selectedEffectiveFactor
+            };
+            // In RuleInput order. The control drawing a selection is the one that owns it, so the
+            // band reads these too - handed over rather than resolved, since almost nothing asks
+            // for the band.
+            m_controlContext.ruleInputLevels = {
+                hoverEffectiveFactor,
+                effectivePressedFactor,
+                factors.focused() * m_windowFocusedFactor,
+                selectedFactor,
+                1.0f - m_enabledFactor,
+                factors.textHovered(),
+                factors.current(),
+                m_windowFocusedFactor
             };
             bgChanged2 = StateFactors::compose(bgChanged2,
                 applyColorRules2(PaintChannel::Surface, surface));
@@ -241,12 +251,6 @@ namespace ClaFi
 
             // Text Color
             {
-                // The control drawing a selection is the one that owns it, so the band is taken
-                // by this control's own focused factor, as far as its window holds the focus.
-                // Handed over rather than resolved: the band and the caret are two colours out of
-                // the many a context can answer with, and almost nothing asks for either.
-                m_controlContext.focusedFactor = factors.focused() * m_windowFocusedFactor;
-
                 // The ink's hue is its surface's, as far as neither a rule nor a host has named
                 // one, so a text rule raising saturation alone tints toward what the text is on.
                 seedHue(ink, surface.hue, m_textHueStated);
@@ -694,24 +698,13 @@ namespace ClaFi
                 return m_ruleInputFactors.strokeRest;
             return 1.0f;
         }
-        const StateFactors& factors = control().factors();
-        // In RuleInput order.
-        using InputFactors = std::array<float, static_cast<std::size_t>(RuleInput::Count)>;
-        const InputFactors inputFactors = {
-            m_ruleInputFactors.hovered,
-            m_ruleInputFactors.pressed,
-            factors.focused(),
-            onSurface ? m_ruleInputFactors.selectedOnSurface : m_ruleInputFactors.selected,
-            1.0f - m_enabledFactor,
-            factors.textHovered(),
-            factors.current(),
-            m_windowFocusedFactor
-        };
-        float result = 0.0f;
-        for (std::size_t i = 0; i != inputFactors.size(); ++i)
-            if (inputs.has(static_cast<RuleInput>(i)))
-                result = StateFactors::compose(result, inputFactors[i]);
-        return result;
+        RuleInputLevels levels = m_controlContext.ruleInputLevels;
+        if (onSurface)
+        {
+            const std::size_t selected = static_cast<std::size_t>(RuleInput::Selected);
+            levels[selected] = m_ruleInputFactors.selectedOnSurface;
+        }
+        return inputs.levelIn(levels);
     }
 
     // The element's own list, then the window's, then the shared one. A form's root control is a

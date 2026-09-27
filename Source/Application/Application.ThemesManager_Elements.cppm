@@ -272,20 +272,12 @@ namespace ClaFi
             .token = L"Button",
             .base = UiElement::Section
         },
-        // Surface is the band while the focus is elsewhere and Active is what the focus adds, so
-        // the Surface row is what is seen on a box the user is not typing in.
+        // The band behind selected text, and the ink drawn over it.
         UiElementDescriptor{
             .name = L"Selected Text",
             .codeName = L"selectedText",
             .token = L"SelectedText",
-            .rules = &ThemeColors::selectedText,
-            .base = UiElement::Section,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Active,
-                UiElementState::Text,
-                UiElementState::ActiveText
-            }
+            .base = UiElement::Section
         },
         // The box of a check and the ring of a radio button, with the colour each takes when on.
         UiElementDescriptor{
