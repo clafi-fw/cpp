@@ -652,7 +652,7 @@ namespace ClaFi::Tools::WhatsClip
                     params.themeMetrics().primaryWindow,
                     params.themeMetrics().primaryWindowShadow,
 
-                    UiElement::Page, // Root window color, visible behind the formats bar
+                    UiElement::Dialog, // Root window color, visible behind the formats bar
                     Border{ Thickness::Regular },
                     Padding{ 0.0f },
                     Spacing{ 0.0f },
@@ -692,7 +692,7 @@ namespace ClaFi::Tools::WhatsClip
 
         // The title is the app button's container, and its padding is what stands between the
         // mark and the corner of the window.
-        FormTitle& title = form->createTopBar<FormTitle>(
+        auto& title = form->createTopBar<DialogTitle>(
             HorizontalTextAnchor::Left,
             application.name(),
             Padding{ 0.0f },

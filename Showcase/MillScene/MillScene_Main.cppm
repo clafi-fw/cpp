@@ -78,7 +78,6 @@ namespace ClaFi::Showcase
         const auto form = application.createDialog<MillSceneForm>(
             application.metrics().primaryWindow,
             application.metrics().primaryWindowShadow,
-            UiElement::Form,
             MinSize{ k_minWindowWidth / 2.0f, k_minWindowHeight / 2.0f },
             PreferredSize{ k_minWindowWidth, k_minWindowHeight }
         );

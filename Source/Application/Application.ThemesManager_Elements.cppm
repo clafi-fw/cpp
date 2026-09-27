@@ -171,10 +171,10 @@ namespace ClaFi
         // the window's frame: the stroke around it and the shadow it casts. Nothing is under a
         // root, so this one has no base - it stands on the bare colour of the mode.
         UiElementDescriptor{
-            .name = L"Form",
-            .codeName = L"form",
-            .token = L"Form",
-            .rules = &ThemeColors::form,
+            .name = L"Dialog",
+            .codeName = L"dialog",
+            .token = L"Dialog",
+            .rules = &ThemeColors::dialog,
             .isWindowRoot = true,
             .states{
                 UiElementState::Surface,
@@ -187,7 +187,7 @@ namespace ClaFi
             .name = L"Page",
             .codeName = L"page",
             .token = L"Page",
-            .base = UiElement::Form
+            .base = UiElement::Dialog
         },
         // The open tab wears its page's surface, and its line runs the length of the page.
         UiElementDescriptor{
@@ -224,17 +224,17 @@ namespace ClaFi
             .base = UiElement::Page
         },
         UiElementDescriptor{
-            .name = L"Form Title",
-            .codeName = L"formTitle",
-            .token = L"FormTitle",
-            .base = UiElement::Form
+            .name = L"Dialog Title",
+            .codeName = L"dialogTitle",
+            .token = L"DialogTitle",
+            .base = UiElement::Dialog
         },
         UiElementDescriptor{
             .name = L"Menu",
             .codeName = L"menu",
             .token = L"Menu",
             .rules = &ThemeColors::menu,
-            .base = UiElement::Form,
+            //.base = UiElement::Form,
             .isWindowRoot = true,
             .states{
                 UiElementState::Surface,
@@ -248,7 +248,7 @@ namespace ClaFi
             .codeName = L"tooltip",
             .token = L"Tooltip",
             .rules = &ThemeColors::tooltip,
-            .base = UiElement::Form,
+            //.base = UiElement::Form,
             .isWindowRoot = true,
             .states{
                 UiElementState::Surface,

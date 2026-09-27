@@ -63,7 +63,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ComboBox.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ComboBox.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Expander.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.FormTitle.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.DialogTitle.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TextItems.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\ColorEditDialog.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\ColorEditDialog.cppm" />

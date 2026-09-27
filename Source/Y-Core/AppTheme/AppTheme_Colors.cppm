@@ -206,13 +206,13 @@ namespace ClaFi
     // Every element a theme colours, in ThemeColors declaration order. See Application
     export enum class UiElement : TagValue
     {
-        Form,
+        Dialog,
         Page,
         TabLine,
         Section,
         Header,
         Bar,
-        FormTitle,
+        DialogTitle,
         Menu,
         Tooltip,
         Divider,
@@ -326,8 +326,8 @@ namespace ClaFi
     export struct ThemeColors
     {
     public:
-        [[nodiscard]] Hsl formSurface(ColorMode) const;
-        [[nodiscard]] Hsl formText(ColorMode) const;
+        [[nodiscard]] Hsl rootSurface(ColorMode) const;
+        [[nodiscard]] static Hsl rootText(ColorMode);
         [[nodiscard]] const ColorHarmony& harmony() const;
     public:
 
@@ -366,7 +366,7 @@ namespace ClaFi
         //
         // Menu and tooltip are the other two window roots, each stating the same pair for the
         // window it opens.
-        ControlColorRules form{
+        ControlColorRules dialog{
             .surface{
                 { ColorRuleHueOp::PaletteColor1, 0.252055f }, // H
                 { ColorRuleOp::Set, 0.0684084f },       // S
@@ -968,7 +968,7 @@ namespace ClaFi
         };
 
         // Form title - its surface at rest and selected, then its text at rest and selected.
-        result.of(UiElement::FormTitle) = {
+        result.of(UiElement::DialogTitle) = {
             ColorRule2{
                 .effect{
                     { ColorRuleOp::NoChange, 0.18f },       // S
@@ -1112,24 +1112,20 @@ namespace ClaFi
 
     // ThemeColors
 
-    Hsl ThemeColors::formSurface(ColorMode mode) const
+    Hsl ThemeColors::rootSurface(ColorMode mode) const
     {
-        Hsl result = mode == ColorMode::Dark
-            ? Hsl{ 0.0f, 0.0f, 0.0f }
+        return mode == ColorMode::Dark
+            ? Hsl{ 0.0f, 0.0f, darkModeFloor }
             : Hsl{ 0.0f, 0.0f, 1.0f };
-        form.surface.applyTo(result, 1.0f, *this, mode);
-        return result;
     }
 
     // The bare ink of the colour mode, carrying the form surface's hue so that a text rule
     // raising saturation alone tints toward the theme's own family rather than toward red.
-    Hsl ThemeColors::formText(ColorMode mode) const
+    Hsl ThemeColors::rootText(ColorMode mode)
     {
-        Hsl result = mode == ColorMode::Dark
-            ? Hsl{ formSurface(mode).hue, 0.0f, 1.0f }
-            : Hsl{ formSurface(mode).hue, 0.0f, 0.0f };
-        form.text.applyTo(result, 1.0f, *this, mode);
-        return result;
+        return mode == ColorMode::Dark
+            ? Hsl{ 0.0f, 0.0f, 1.0f }
+            : Hsl{ 0.0f, 0.0f, 0.0f };
     }
 
     const ColorHarmony& ThemeColors::harmony() const

@@ -327,6 +327,9 @@
     <ClCompile Update="..\..\Source\Y-Core\Dom\DomEngine_Rt_Facade.cppm">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Controls\Controls.DialogTitle.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
     <ClCompile Include="Src\Pages\TextEngine_Features.cppm" />
     <ClCompile Include="Src\Pages\TextEngine_Code.cpp" />
     <ClCompile Include="Src\Pages\TextEngine_Code.cppm" />

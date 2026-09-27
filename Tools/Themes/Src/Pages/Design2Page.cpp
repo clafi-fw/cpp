@@ -35,7 +35,7 @@ namespace ThisApp
         };
 
         constexpr std::array k_windowRoots{
-            UiElement::Form,
+            UiElement::Dialog,
             UiElement::Menu,
             UiElement::Tooltip
         };
@@ -47,7 +47,7 @@ namespace ThisApp
             UiElement::Header,
             UiElement::Divider,
             UiElement::Bar,
-            UiElement::FormTitle,
+            UiElement::DialogTitle,
             UiElement::Grid,
             UiElement::GridRow,
             UiElement::GridLine

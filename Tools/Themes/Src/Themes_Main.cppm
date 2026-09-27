@@ -74,7 +74,7 @@ namespace ThisApp
         const std::unique_ptr<Form<ThemesBrowser>> form = this->createMainForm(
             this->metrics().primaryWindow,
             this->metrics().primaryWindowShadow,
-            UiElement::Form,
+            UiElement::Dialog,
             k_mainFormMinSize
         );
         return form->execute();

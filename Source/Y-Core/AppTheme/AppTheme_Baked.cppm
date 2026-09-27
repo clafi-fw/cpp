@@ -117,8 +117,8 @@ namespace ClaFi
         [[nodiscard]] Hsl pigmentHsl(Pigment, InkTone) const;
         // WHAT A FORM ROOT ESTABLISHES: the bare colour of the lightness with the form's own
         // surface rule over it, and the bare ink with its text rule.
-        [[nodiscard]] Hsl formSurface() const;
-        [[nodiscard]] Hsl formText() const;
+        [[nodiscard]] Hsl rootSurface() const;
+        [[nodiscard]] Hsl rootText() const;
         // The colour every shadow starts from: black, at the form surface's hue.
         [[nodiscard]] Hsl bareShadow() const;
         // The colour a window root casts its shadow in, before any opacity. See AppTheme
@@ -591,25 +591,21 @@ namespace ClaFi
         };
     }
 
-    Hsl BakedColors::formSurface() const
+    Hsl BakedColors::rootSurface() const
     {
-        Hsl result = { 0.0f, 0.0f, luminosityOf(0.0f, lightness) };
-        element(UiElement::Form).surface.applyTo(result, 1.0f, lightness);
-        return result;
+        return { 0.0f, 0.0f, luminosityOf(0.0f, lightness) };
     }
 
     // The bare ink of the lightness, carrying the form surface's hue so that a text rule raising
     // saturation alone tints toward the theme's own family rather than toward red.
-    Hsl BakedColors::formText() const
+    Hsl BakedColors::rootText() const
     {
-        Hsl result = { formSurface().hue, 0.0f, luminosityOf(1.0f, lightness) };
-        element(UiElement::Form).text.applyTo(result, 1.0f, lightness);
-        return result;
+        return { rootSurface().hue, 0.0f, luminosityOf(1.0f, lightness) };
     }
 
     Hsl BakedColors::bareShadow() const
     {
-        return { formSurface().hue, 0.0f, 0.0f };
+        return { rootSurface().hue, 0.0f, 0.0f };
     }
 
     // Read at the dark end whatever the lightness - a shadow is the absence of light on both sides.

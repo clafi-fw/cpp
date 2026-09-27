@@ -103,8 +103,8 @@ namespace ClaFi::Icons::Magnifier
         // painted in, which is why one fill does both jobs below. That makes it a colour of the
         // icon's own as far as the event is concerned - no theme faded it on the way in - so it
         // goes through the fade by hand, and so does the mark derived from it.
-        const Color formSurface = event.bakedColors().formSurface().toColor();
-        const Color surface = event.applyDisabledFactor(formSurface);
+        const Color rootSurface = event.bakedColors().rootSurface().toColor();
+        const Color surface = event.applyDisabledFactor(rootSurface);
 
         const FloatPoint tailFrom{ center.x + radius * k_tailFrom, center.y + radius * k_tailFrom };
         const FloatPoint tailTo{ center.x + radius * k_tailTo, center.y + radius * k_tailTo };

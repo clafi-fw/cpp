@@ -299,7 +299,7 @@ namespace ClaFi::Showcase::TextEngine
 
         // The title is the app button's container, and its padding is what stands between
         // the mark and the corner of the window.
-        FormTitle& title = form->createTopBar<FormTitle>(application.name(), Padding{ 0.0f });
+        auto& title = form->createTopBar<DialogTitle>(application.name(), Padding{ 0.0f });
         title.createLeftBar<AppButton>(
             VerticalAlign::Center,
             AppButton::OnPaintIcon{ AppIcon::paintIcon }

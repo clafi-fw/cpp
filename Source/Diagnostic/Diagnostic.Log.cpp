@@ -113,7 +113,7 @@ namespace ClaFi
         [[nodiscard]] Dom::DomNodeBase& tabNode() const;
         AppContext& appContext;
         Form<WithBody<Panel, TabbedBox>> form;
-        FormTitle& title{ form.createTopBar<FormTitle>(
+        DialogTitle& title{ form.createTopBar<DialogTitle>(
             Text{ L"Diagnostic - ", form.appContext().appName() }
             ) };
         // Held above the other windows. Hidden where the platform cannot do it - see

@@ -603,7 +603,7 @@ namespace ThisApp
                 Grids::Dt::Expander{
                     Header{ Text{ TextStyleId::Section, L"Window roots" } },
                     sectionFold(),
-                    elementGroup(UiElement::Form),
+                    elementGroup(UiElement::Dialog),
                     Grids::Dt::Divider{},
                     elementGroup(UiElement::Menu),
                     Grids::Dt::Divider{},

@@ -449,6 +449,9 @@
     <ClCompile Update="..\..\Source\Y-Core\Graphics\Graphics.Y_Types.cppm">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Controls\Controls.DialogTitle.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />

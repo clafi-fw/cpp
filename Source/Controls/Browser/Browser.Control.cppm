@@ -161,7 +161,7 @@ namespace ClaFi::Browser
         explicit BrowserControl(const CreateParams&, Args&&...);
     public:
         void initialize(BrowserSettings&);
-        FormTitle& title() const { return m_title; }
+        DialogTitle& title() const { return m_title; }
         AppButton& appButton() const { return m_appButton; }
     public:
         // Opens a tab on the home page, which is where a browser with nothing said to it starts.
@@ -314,7 +314,7 @@ namespace ClaFi::Browser
         bool m_tabsRestoring{};
     private:
         AddPageDataCallback m_addPageDataCallback;
-        FormTitle& m_title{ createTopBar<FormTitle>(
+        DialogTitle& m_title{ createTopBar<DialogTitle>(
             WordWrap::No,
             MinSize{ 0.0f, 36.0f },
             Spacing{ 4.0f, 0.0f },

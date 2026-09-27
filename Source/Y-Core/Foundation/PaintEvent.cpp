@@ -416,9 +416,9 @@ namespace ClaFi
         // the control's surface and ink would come from the theme it named while every ink it
         // resolved while painting came from the one it left.
         m_controlContext.setBakedColors(bakedColors());
-        m_controlContext.surfaceHsl = bakedColors().formSurface();
+        m_controlContext.surfaceHsl = bakedColors().rootSurface();
         m_surfaceHslStated = true;
-        m_controlContext.textHsl = bakedColors().formText();
+        m_controlContext.textHsl = bakedColors().rootText();
         m_textHslStated = true;
         m_lightness = bakedColors().lightness;
     }
@@ -608,7 +608,7 @@ namespace ClaFi
             return m_controlContext.surfaceHsl;
         if (m_parentEvent)
             return m_parentEvent->surfaceHsl();
-        return bakedColors().formSurface();
+        return bakedColors().rootSurface();
     }
 
     Hsl PaintEvent::inheritedTextHsl() const
@@ -617,7 +617,7 @@ namespace ClaFi
             return m_controlContext.textHsl;
         if (m_parentEvent)
             return m_parentEvent->textHsl();
-        return bakedColors().formText();
+        return bakedColors().rootText();
     }
 
     Hsl PaintEvent::inheritedShadowHsl() const

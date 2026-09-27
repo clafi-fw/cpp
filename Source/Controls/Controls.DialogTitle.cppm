@@ -52,11 +52,11 @@ namespace ClaFi::Controls
     };
 
     // The bar across the top of a window: its name, and the buttons that size it.
-    export class FormTitle : public Panel
+    export class DialogTitle : public Panel
     {
     public:
         template<typename... Args>
-        explicit FormTitle(const CreateParams&, Args&&...);
+        explicit DialogTitle(const CreateParams&, Args&&...);
     protected:
         void adjustPaint(AdjustPaintEvent&) override;
         void hitTest(HitTestEvent& event) const override { event.zone = HitTest::Title; };
@@ -163,14 +163,14 @@ namespace ClaFi::Controls
         event.closeForm();
     }
 
-    // FormTitle
+    // DialogTitle
 
     template<typename ...Args>
-    FormTitle::FormTitle(const CreateParams& params, Args&&... args)
+    DialogTitle::DialogTitle(const CreateParams& params, Args&&... args)
         :
         Panel{
             params,
-            UiElement::FormTitle,
+            UiElement::DialogTitle,
             params.themeMetrics().formTitle,
             VerticalTextAnchor::Center,
             HorizontalTextAnchor::Center,
@@ -180,7 +180,7 @@ namespace ClaFi::Controls
     {
     }
 
-    void FormTitle::adjustPaint(AdjustPaintEvent& event)
+    void DialogTitle::adjustPaint(AdjustPaintEvent& event)
     {
         Panel::adjustPaint(event);
         event.setWindowSelectedAmount(1.0f);

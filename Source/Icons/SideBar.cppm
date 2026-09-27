@@ -55,13 +55,13 @@ namespace ClaFi::Icons::SideBar
         RoundedRectangleParts parts;
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         const float midPoint = iconRect.relativeX(0.66);
-        const float radius = event.scaleF(4);
+        const float radius = event.scaleF(4.0f);
         parts.bounds = iconRect;
         event.canvas().fillRoundedRectangle(
             iconRect,
             radius,
             radius,
-            event.bakedColors().formSurface().toColor()
+            event.bakedColors().rootSurface().toColor()
         );
 
         parts.bounds.right = midPoint;
@@ -87,7 +87,7 @@ namespace ClaFi::Icons::SideBar
             iconRect,
             radius,
             radius,
-            event.bakedColors().formSurface().toColor()
+            event.bakedColors().rootSurface().toColor()
         );
 
         event.canvas().drawRoundedRectangle(iconRect, radius, radius, event.accentRgb(InkGrade::Strongest), strokeWidth);

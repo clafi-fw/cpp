@@ -956,7 +956,7 @@ namespace ThisApp
     {
         const ColorMode mode = previewColorMode();
         return {
-            editColors().formSurface(mode).hue,
+            editColors().rootSurface(mode).hue,
             0.0f,
             mode == ColorMode::Dark ? 1.0f : 0.0f
         };
@@ -989,7 +989,7 @@ namespace ThisApp
         Hsl result{};
         if (shadowState)
         {
-            const float formHue = editColors().formSurface(previewColorMode()).hue;
+            const float formHue = editColors().rootSurface(previewColorMode()).hue;
             result = { formHue, 0.0f, 0.0f };
         }
         else if (state == UiElementState::Text)
@@ -1025,7 +1025,7 @@ namespace ThisApp
         const ColorMode mode = shadow ? ColorMode::Dark : elementColorMode(element);
         Hsl result{};
         if (shadow)
-            result = { editColors().formSurface(previewColorMode()).hue, 0.0f, 0.0f };
+            result = { editColors().rootSurface(previewColorMode()).hue, 0.0f, 0.0f };
         else if (rule.output == PaintChannel::Text)
             result = elementTextColor(element);
         else

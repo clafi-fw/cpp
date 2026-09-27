@@ -99,7 +99,7 @@ namespace ClaFi::Showcase
 
     void MillSceneShowcase::buildTitleBar(Panel& content)
     {
-        FormTitle& titleBar = content.createTopBar<FormTitle>(m_application.name());
+        DialogTitle& titleBar = content.createTopBar<DialogTitle>(m_application.name());
 
         StackPanel& leftBar = titleBar.createLeftBar<StackPanel>(
             Orientation::Horizontal,

@@ -75,17 +75,10 @@ namespace ThisApp
     };
 
     constexpr std::array<MemberComment, 9ull> k_memberComments{
-        MemberComment{ .element = UiElement::Form, .text =
-            L"THE WINDOW EVERYTHING ELSE IS PAINTED ON. A form is the root a control tree stands in,\n"
-            L"and the pair this set states is what that root establishes: surface is applied to the\n"
-            L"bare colour of the mode - black at the dark end, white at the light one - and text is\n"
-            L"applied to the bare ink, white at the dark end and black at the light one, carrying the\n"
-            L"surface's hue so that a rule raising saturation alone tints toward the family the theme\n"
-            L"is already in. Every control carries the ink it inherits and applies its own text rule\n"
-            L"to that, so a rule stated here reaches everything in the form.\n"
-            L"\n"
-            L"Menu and tooltip are the other two window roots, each stating the same pair for the\n"
-            L"window it opens." },
+        MemberComment{
+            .element = UiElement::Dialog,
+            .text = L"The dialog"
+        },
         MemberComment{ .element = UiElement::TabLine, .text =
             L"Every tab's outline and the line it stands on, applied to the tab's own surface." },
         MemberComment{ .element = UiElement::Header, .text =

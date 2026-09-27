@@ -140,8 +140,8 @@ namespace ClaFi
     ThemeIconColors::ThemeIconColors(const ThemeColors& colors)
         :
         paletteHues{ colors.paletteHues },
-        darkSurface{ colors.formSurface(ColorMode::Dark) },
-        lightSurface{ colors.formSurface(ColorMode::Light) }
+        darkSurface{ colors.rootSurface(ColorMode::Dark) },
+        lightSurface{ colors.rootSurface(ColorMode::Light) }
     {
     }
 
