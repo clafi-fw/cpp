@@ -115,18 +115,15 @@ namespace ClaFi
     // is answered by a fill rule rather than by a colour nobody would call blue.
     constexpr int k_pigmentReachDegrees = 30;
 
-    namespace
+    // A pigment's claim window, in whole degrees to either side of its reference. The two sides
+    // are stated apart because the references are not evenly spread: a pigment with a near
+    // neighbour on one side and a far one on the other reaches further into the side that
+    // stands empty.
+    struct PigmentWindow
     {
-        // A pigment's claim window, in whole degrees to either side of its reference. The two sides
-        // are stated apart because the references are not evenly spread: a pigment with a near
-        // neighbour on one side and a far one on the other reaches further into the side that
-        // stands empty.
-        struct PigmentWindow
-        {
-            int below;
-            int above;
-        };
-    }
+        int below;
+        int above;
+    };
 
     using PigmentWindows = std::array<PigmentWindow, k_pigmentsCount>;
 
