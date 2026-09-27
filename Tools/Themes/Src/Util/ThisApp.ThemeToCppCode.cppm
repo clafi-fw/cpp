@@ -74,11 +74,7 @@ namespace ThisApp
         std::wstring_view text{};
     };
 
-    constexpr std::array<MemberComment, 9ull> k_memberComments{
-        MemberComment{
-            .element = UiElement::Dialog,
-            .text = L"The dialog"
-        },
+    constexpr std::array<MemberComment, 8ull> k_memberComments{
         MemberComment{ .element = UiElement::TabLine, .text =
             L"Every tab's outline and the line it stands on, applied to the tab's own surface." },
         MemberComment{ .element = UiElement::Header, .text =

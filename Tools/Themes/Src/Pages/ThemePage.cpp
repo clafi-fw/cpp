@@ -893,9 +893,7 @@ namespace ThisApp
     Hsl ThemePage::elementColor(OptionalUiElement element)
     {
         if (!element)
-            return previewColorMode() == ColorMode::Dark
-                ? Hsl{ 0.0f, 0.0f, 0.0f }
-                : Hsl{ 0.0f, 0.0f, 1.0f };
+            return editColors().rootSurface(previewColorMode());
 
         const UiElementDescriptor& descriptor = uiElementOf(*element);
         Hsl result = elementColor(descriptor.base);

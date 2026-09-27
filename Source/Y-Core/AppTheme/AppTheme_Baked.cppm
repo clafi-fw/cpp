@@ -130,8 +130,6 @@ namespace ClaFi
         float anchorHue{};
         BakedElements elements{};
         BakedRules rules{};
-        // Each window root's shadow rule, standing at the root and empty at every other element.
-        BakedRules shadows{};
         // Every pigment's hue, taken off the harmony as the theme is baked, so nothing
         // downstream has a harmony to derive or a kind to read.
         PigmentHues pigmentHues{};
@@ -462,7 +460,6 @@ namespace ClaFi
         return a.anchorHue == b.anchorHue
             and a.elements == b.elements
             and a.rules == b.rules
-            and a.shadows == b.shadows
             and a.pigmentHues == b.pigmentHues
             and a.rules2 == b.rules2;
     }
@@ -609,12 +606,16 @@ namespace ClaFi
     }
 
     // Read at the dark end whatever the lightness - a shadow is the absence of light on both sides.
+    // The root's own shadow rules at rest, then the shared ones, in the order PaintEvent takes.
     Hsl BakedColors::windowShadow(OptionalUiElement root) const
     {
         Hsl result = bareShadow();
         if (!root)
             return result;
-        shadows[static_cast<std::size_t>(*root)].applyTo(result, 1.0f, k_darkLightness);
+        for (const BakedColorRules2* list : { &rules2.of(*root), &rules2.shared })
+            for (const BakedColorRule2& rule : *list)
+                if (rule.output == PaintChannel::Shadow and rule.inputs.empty())
+                    rule.effect.applyTo(result, 1.0f, k_darkLightness);
         return result;
     }
 
@@ -641,9 +642,6 @@ namespace ClaFi
 
         for (std::size_t i = 0; i < result.rules.size(); ++i)
             result.rules[i] = blend(from.rules[i], to.rules[i], factor);
-
-        for (std::size_t i = 0; i < result.shadows.size(); ++i)
-            result.shadows[i] = blend(from.shadows[i], to.shadows[i], factor);
 
         for (std::size_t i = 0; i < result.pigmentHues.size(); ++i)
             result.pigmentHues[i] = blendedHue(from.pigmentHues[i], 1.0f - factor,

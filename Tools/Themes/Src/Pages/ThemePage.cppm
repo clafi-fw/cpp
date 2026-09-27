@@ -594,21 +594,6 @@ namespace ThisApp
             // what order, is k_uiElements' answer - so a rule the element does not paint cannot
             // reach the grid by being listed at this call site.
             Rows{
-                // THE THREE WINDOW ROOTS. Each opens a window of its own and states the pair
-                // that window establishes: the surface it is filled with and the ink everything
-                // inside it starts from. What stands behind such a window is not the theme's to
-                // know, so each names its Surface hue outright and sets its saturation and
-                // elevation - see statesAbsoluteSurface. FormBase::initialMetrics draws the same
-                // line: the form takes primaryWindow, the other two take secondaryWindow.
-                Grids::Dt::Expander{
-                    Header{ Text{ TextStyleId::Section, L"Window roots" } },
-                    sectionFold(),
-                    elementGroup(UiElement::Dialog),
-                    Grids::Dt::Divider{},
-                    elementGroup(UiElement::Menu),
-                    Grids::Dt::Divider{},
-                    elementGroup(UiElement::Tooltip)
-                },
                 // What is painted inside a form: the line tabs stand on, a header, and a grid's
                 // rows with the lattice's line under them.
                 Grids::Dt::Expander{

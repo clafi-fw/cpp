@@ -356,33 +356,6 @@ namespace ClaFi
         // The luminosity elevation 0 is lifted to at the dark end. See AppTheme
         float darkModeFloor{ 0.098735f };
 
-        // THE WINDOW EVERYTHING ELSE IS PAINTED ON. A form is the root a control tree stands in,
-        // and the pair this set states is what that root establishes: surface is applied to the
-        // bare colour of the mode - black at the dark end, white at the light one - and text is
-        // applied to the bare ink, white at the dark end and black at the light one, carrying the
-        // surface's hue so that a rule raising saturation alone tints toward the family the theme
-        // is already in. Every control carries the ink it inherits and applies its own text rule
-        // to that, so a rule stated here reaches everything in the form.
-        //
-        // Menu and tooltip are the other two window roots, each stating the same pair for the
-        // window it opens.
-        ControlColorRules dialog{
-            .surface{
-                { ColorRuleHueOp::PaletteColor1, 0.252055f }, // H
-                { ColorRuleOp::Set, 0.0684084f },       // S
-                { ColorRuleOp::Set, 0.0018784736f }     // E
-            },
-            .stroke{
-                {},                                     // S
-                { ColorRuleOp::Offset, 0.120151f }      // E
-            },
-            .shadow{
-                { ColorRuleHueOp::PaletteColor1 },      // H
-                { ColorRuleOp::Set, 0.6926495f },       // S
-                { ColorRuleOp::Set, 0.23802227f }       // E
-            }
-        };
-
         // Every tab's outline and the line it stands on, applied to the tab's own surface.
         ColorRule tabLine{
             { ColorRuleHueOp::NoChange, 0.928767f },    // H
@@ -402,44 +375,6 @@ namespace ClaFi
             .text{
                 {},                                     // S
                 { ColorRuleOp::Set, 0.897275f }         // E
-            }
-        };
-
-        ControlColorRules menu{
-            .surface{
-                { ColorRuleHueOp::PaletteColor1 },      // H
-                { ColorRuleOp::Set, 0.072888434f },     // S
-                { ColorRuleOp::Set, 0.0011279281f }     // E
-            },
-            .stroke{
-                {},                                     // S
-                { ColorRuleOp::Set, 0.5f }              // E
-            },
-            .shadow{
-                { ColorRuleOp::Set, 0.68912506f },      // S
-                { ColorRuleOp::Set, 0.23544617f }       // E
-            }
-        };
-
-        ControlColorRules tooltip{
-            //.flip = true,
-            .surface{
-                { ColorRuleHueOp::PaletteColor3 },      // H
-                { ColorRuleOp::Set, 0.12352588f },      // S
-                { ColorRuleOp::Set, 0.053887f }         // E
-            },
-            .stroke{
-                {},                                     // S
-                { ColorRuleOp::Set, 0.278328f }         // E
-            },
-            .text{
-                { ColorRuleOp::NoChange, 0.68665785f }, // S
-                { ColorRuleOp::NoChange, 0.236442f }    // E
-            },
-            .shadow{
-                { ColorRuleHueOp::PaletteColor3 },      // H
-                { ColorRuleOp::Set, 0.69047594f },      // S
-                { ColorRuleOp::Set, 0.23544617f }       // E
             }
         };
 
@@ -929,6 +864,32 @@ namespace ClaFi
     ThemeRules2 defaultRules2()
     {
         ThemeRules2 result{};
+        // Dialog - a window root: its surface named outright, then its stroke and window shadow.
+        result.of(UiElement::Dialog) = {
+            ColorRule2{
+                .effect{
+                    { ColorRuleHueOp::PaletteColor1, 0.252055f }, // H
+                    { ColorRuleOp::Set, 0.0684084f },       // S
+                    { ColorRuleOp::Set, 0.0018784736f }     // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Offset, 0.120151f }      // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Shadow,
+                .effect{
+                    { ColorRuleHueOp::PaletteColor1 },      // H
+                    { ColorRuleOp::Set, 0.6926495f },       // S
+                    { ColorRuleOp::Set, 0.23802227f }       // E
+                }
+            }
+        };
+
         // Page - its surface at rest, then its stroke.
         result.of(UiElement::Page) = {
             ColorRule2{
@@ -967,7 +928,7 @@ namespace ClaFi
             }
         };
 
-        // Form title - its surface at rest and selected, then its text at rest and selected.
+        // Dialog title - its surface at rest and selected, then its text at rest and selected.
         result.of(UiElement::DialogTitle) = {
             ColorRule2{
                 .effect{
@@ -996,6 +957,57 @@ namespace ClaFi
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Offset, 0.3 }            // E
+                }
+            }
+        };
+
+        // Menu - a window root: its surface named outright, then its stroke and window shadow.
+        result.of(UiElement::Menu) = {
+            ColorRule2{
+                .effect{
+                    { ColorRuleHueOp::PaletteColor1 },      // H
+                    { ColorRuleOp::Set, 0.072888434f },     // S
+                    { ColorRuleOp::Set, 0.0011279281f }     // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Set, 0.5f }              // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Shadow,
+                .effect{
+                    { ColorRuleOp::Set, 0.68912506f },      // S
+                    { ColorRuleOp::Set, 0.23544617f }       // E
+                }
+            }
+        };
+
+        // Tooltip - a window root: its surface named outright, then its stroke and window shadow.
+        result.of(UiElement::Tooltip) = {
+            ColorRule2{
+                .effect{
+                    { ColorRuleHueOp::PaletteColor3 },      // H
+                    { ColorRuleOp::Set, 0.12352588f },      // S
+                    { ColorRuleOp::Set, 0.053887f }         // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Set, 0.278328f }         // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Shadow,
+                .effect{
+                    { ColorRuleHueOp::PaletteColor3 },      // H
+                    { ColorRuleOp::Set, 0.69047594f },      // S
+                    { ColorRuleOp::Set, 0.23544617f }       // E
                 }
             }
         };

@@ -146,11 +146,8 @@ namespace ClaFi
         // outright and sets its saturation and elevation rather than moving them. Its text and
         // stroke rules are ordinary: they are applied to an ink and a surface the root itself has
         // just established, and both may derive. Its shadow is read on an axis of its own - see
-        // AppTheme's WindowShadow.
-        //
-        // A root still carries a base, because the ink it inherits is real: PaintEvent seeds a
-        // root's surface and ink from formSurface() and formText(), so a menu and a tooltip stand
-        // on the form the way every other element does. Only the form itself has nothing under it.
+        // AppTheme's WindowShadow. A root stands on the bare colour of the mode, which is what
+        // PaintEvent seeds it with - see BakedColors::rootSurface.
         bool isWindowRoot{ false };
         // Empty for a bare rule. One state is one row in an editor; two or more is a group.
         UiElementStates states{};
@@ -163,8 +160,7 @@ namespace ClaFi
     // effect. No Stroke where the element's ControlMetrics::border is None: the stroke reaches
     // the screen only through scaler().scaledStrokeWidth(metrics.border), which is 0 for None, so
     // the rule would reach nothing. Check the metrics the element is constructed with, not its
-    // colour rules. No Shadow on anything but a window root: FormBase::shadowDesign reads the
-    // root's, and nothing reads another element's.
+    // colour rules.
     export constexpr std::array<UiElementDescriptor, static_cast<std::size_t>(UiElement::Count)> k_uiElements{
         // A WINDOW ROOT. Menu and Tooltip are the other two, and the three carry the same pair -
         // the surface the window is filled with and the ink everything in it starts from - and
@@ -174,14 +170,7 @@ namespace ClaFi
             .name = L"Dialog",
             .codeName = L"dialog",
             .token = L"Dialog",
-            .rules = &ThemeColors::dialog,
-            .isWindowRoot = true,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Stroke,
-                UiElementState::Text,
-                UiElementState::Shadow
-            }
+            .isWindowRoot = true
         },
         UiElementDescriptor{
             .name = L"Page",
@@ -233,29 +222,13 @@ namespace ClaFi
             .name = L"Menu",
             .codeName = L"menu",
             .token = L"Menu",
-            .rules = &ThemeColors::menu,
-            //.base = UiElement::Form,
-            .isWindowRoot = true,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Stroke,
-                UiElementState::Text,
-                UiElementState::Shadow
-            }
+            .isWindowRoot = true
         },
         UiElementDescriptor{
             .name = L"Tooltip",
             .codeName = L"tooltip",
             .token = L"Tooltip",
-            .rules = &ThemeColors::tooltip,
-            //.base = UiElement::Form,
-            .isWindowRoot = true,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Stroke,
-                UiElementState::Text,
-                UiElementState::Shadow
-            }
+            .isWindowRoot = true
         },
         UiElementDescriptor{
             .name = L"Divider",
@@ -393,10 +366,7 @@ namespace ClaFi
             }
             else if (descriptor.rules != nullptr)
             {
-                const ControlColorRules& rules = themeColors.*descriptor.rules;
-                result.elements[i] = bake(rules, themeColors);
-                if (descriptor.states.has(UiElementState::Shadow))
-                    result.shadows[i] = bakeShadow(rules.shadow, themeColors);
+                result.elements[i] = bake(themeColors.*descriptor.rules, themeColors);
             }
         }
 
