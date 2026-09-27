@@ -224,10 +224,10 @@ namespace ClaFi
 
     // BEFORE THE BASE, which sends the position to the point under the pointer and raises the
     // change that writes the config. See Application
-    void ScaleSlider::pressDown(PressDownEvent& event)
+    void ScaleSlider::nestedPressDown(PressDownEvent& event)
     {
         form().holdScale();
-        Slider::pressDown(event);
+        Slider::nestedPressDown(event);
     }
 
     // The same hold, taken again: a press on the thumb never reaches the slot. See Application
@@ -238,9 +238,9 @@ namespace ClaFi
     }
 
     // AFTER THE BASE, which is what clears the pointer's claim on the position.
-    void ScaleSlider::pressUp(PressUpEvent& event)
+    void ScaleSlider::nestedPressUp(PressUpEvent& event)
     {
-        Slider::pressUp(event);
+        Slider::nestedPressUp(event);
         form().followScale();
     }
 

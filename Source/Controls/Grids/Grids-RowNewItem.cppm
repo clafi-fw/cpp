@@ -32,7 +32,7 @@ namespace ClaFi::Controls::Grids
     protected:
         bool hasContent(const Column&) const override; // the root column, which spans every other
         void getCellText(const Column&, Text&) override;
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
     private:
         PlaceHolderText m_placeHolderText;
     };

@@ -63,18 +63,18 @@ namespace ClaFi::Controls
     {
         if (m_refusal.empty())
             return;
-        // Raised rather than waited for. A message is shown at once and goes as any tooltip
-        // goes, which is what puts the reason in front of a user who is looking at the keyboard;
-        // getTooltip below is what answers every hover after that, for as long as the value is
-        // still refused.
+        // Raised rather than waited for. A message is shown at once and goes as any tooltip goes,
+        // which is what puts the reason in front of a user who is looking at the keyboard;
+        // nestedGetTooltip below is what answers every hover after that, for as long as the value
+        // is still refused.
         ContextMessage::show(*this, Text{ m_refusal });
     }
 
-    void EditBox::getTooltip(GetTooltipEvent& event)
+    void EditBox::nestedGetTooltip(GetTooltipEvent& event)
     {
         if (m_refusal.empty())
         {
-            TextBox::getTooltip(event);
+            TextBox::nestedGetTooltip(event);
             return;
         }
         // A refusal stands in front of anything else this box would say, and it is placed under
@@ -85,7 +85,7 @@ namespace ClaFi::Controls
         event.anchorRect = boundsInForm();
     }
 
-    void EditBox::keyDown(KeyDownEvent& event)
+    void EditBox::nestedKeyDown(KeyDownEvent& event)
     {
         // Any press at all answers a refusal - reading it is what makes it stale, and the user
         // is now doing something about it. This runs before the root sees the key, so a Return
@@ -102,16 +102,16 @@ namespace ClaFi::Controls
         const bool dropsList = event.key == Keys::Down && event.modifiers.alt;
         if (dropsList || (arrow && isDroppedDown()))
             return;
-        TextBox::keyDown(event);
+        TextBox::nestedKeyDown(event);
     }
 
-    void EditBox::pressDown(PressDownEvent& event)
+    void EditBox::nestedPressDown(PressDownEvent& event)
     {
         // Clicking into the box to correct the value answers the refusal as much as typing
         // does. The tooltip window is hidden by the form's own mouse handling; what has to go
         // here is the box's memory of it, or every later hover reads the stale reason back.
         clearRefusal();
-        TextBox::pressDown(event);
+        TextBox::nestedPressDown(event);
     }
 
     void EditBox::charPress(CharPressEvent& event)
@@ -167,7 +167,7 @@ namespace ClaFi::Controls
             event.text << item.text();
     }
 
-    void SuggestionRow::click(ClickEvent&)
+    void SuggestionRow::nestedClick(ClickEvent&)
     {
         m_root.takeSuggestion(m_itemIndex);
     }
@@ -456,7 +456,7 @@ namespace ClaFi::Controls
         state.current = true;
     }
 
-    void InPlaceEditRoot::keyDown(KeyDownEvent& event)
+    void InPlaceEditRoot::nestedKeyDown(KeyDownEvent& event)
     {
         switch (event.key)
         {
@@ -508,7 +508,7 @@ namespace ClaFi::Controls
             {
                 // The keys that drop a combobox's list drop this one whole, the filter lifted;
                 // the arrows walk it while it is up. The box leaves them to the root - see
-                // EditBox::keyDown.
+                // EditBox::nestedKeyDown.
                 const bool drops = event.key == Keys::F4
                     || (event.key == Keys::Down && event.modifiers.alt);
                 if (drops)
@@ -527,7 +527,7 @@ namespace ClaFi::Controls
                 return;
             }
         }
-        Base::keyDown(event);
+        Base::nestedKeyDown(event);
     }
 
     void InPlaceEditRoot::acceptText()

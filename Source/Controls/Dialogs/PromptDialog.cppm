@@ -37,7 +37,7 @@ namespace ClaFi::Controls
         /// cancelling answer.
         bool execute();
     protected:
-        void keyDown(KeyDownEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
     private:
         // Offers the text and answers whether it was taken. A refusal does not settle anything:
         // it leaves a value still to be corrected or abandoned, which is what the window is still

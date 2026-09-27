@@ -68,8 +68,8 @@ namespace ClaFi::Controls
         [[nodiscard]] bool secondaryPressPropagates() const override { return false; }
         void adjustPaint(AdjustPaintEvent&) override;
         void paintSurface(PaintEvent&) override;
-        void pressDown(PressDownEvent&) override;
-        void drag(DragEvent&) override;
+        void nestedPressDown(PressDownEvent&) override;
+        void nestedDrag(DragEvent&) override;
     private:
         void tabCreated(Control* parent);
         void prepareGeometry(const PaintEvent&, float visibilityFactor, PaintEvent*& outEvent);
@@ -315,15 +315,15 @@ namespace ClaFi::Controls
         paintIconLayer(event);
     }
 
-    void Tab::pressDown(PressDownEvent& event)
+    void Tab::nestedPressDown(PressDownEvent& event)
     {
-        TabBaseClass::pressDown(event);
+        TabBaseClass::nestedPressDown(event);
 
         if (event.control == this)
             select();
     }
 
-    void Tab::drag(DragEvent& event)
+    void Tab::nestedDrag(DragEvent& event)
     {
         // While it seems convenient for a strip placed on a DialogTitle,
         // if the strip is on a popup, an accidental drag closes the window, that's awful
@@ -333,7 +333,7 @@ namespace ClaFi::Controls
         //    form().window().initiateWindowDrag(event.currentPos().toInt(), event.stamp());
         //    return;
         //}
-        TabBaseClass::drag(event);
+        TabBaseClass::nestedDrag(event);
     }
 
     void Tab::tabCreated(Control* parent)

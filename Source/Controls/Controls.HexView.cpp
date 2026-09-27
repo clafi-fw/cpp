@@ -198,18 +198,18 @@ namespace ClaFi::Controls
         }
     }
 
-    void HexView::pressDown(PressDownEvent& event)
+    void HexView::nestedPressDown(PressDownEvent& event)
     {
-        Control::pressDown(event);
+        Control::nestedPressDown(event);
         if (event.propagationStopped())
             return;
 
         takeHit(pointInControl(event.clickPos()), event.modifiers.shift);
     }
 
-    void HexView::doubleClick(DoubleClickEvent& event)
+    void HexView::nestedDoubleClick(DoubleClickEvent& event)
     {
-        Control::doubleClick(event);
+        Control::nestedDoubleClick(event);
         if (event.propagationStopped())
             return;
 
@@ -220,9 +220,9 @@ namespace ClaFi::Controls
             event.stopPropagation();
     }
 
-    void HexView::tripleClick(TripleClickEvent& event)
+    void HexView::nestedTripleClick(TripleClickEvent& event)
     {
-        Control::tripleClick(event);
+        Control::nestedTripleClick(event);
         if (event.propagationStopped())
             return;
 
@@ -230,7 +230,7 @@ namespace ClaFi::Controls
             event.stopPropagation();
     }
 
-    void HexView::drag(DragEvent& event)
+    void HexView::nestedDrag(DragEvent& event)
     {
         const std::optional<Hit> hit = hitAt(pointInControl(event.currentPos()));
         if (!hit)
@@ -268,7 +268,7 @@ namespace ClaFi::Controls
         invalidate();
     }
 
-    void HexView::contextPopup(ContextPopupEvent& event)
+    void HexView::nestedContextPopup(ContextPopupEvent& event)
     {
         // Outside the selection the press states a new caret, as a left one does. Inside it, the
         // press is aimed at the range the menu's Copy acts on, and moving the caret there would
@@ -279,7 +279,7 @@ namespace ClaFi::Controls
 
         // The application gets first refusal, and a handler that stops the event has replaced
         // the menu outright.
-        Control::contextPopup(event);
+        Control::nestedContextPopup(event);
         if (event.propagationStopped())
             return;
 
@@ -299,16 +299,16 @@ namespace ClaFi::Controls
             return;
 
         // NO COMMAND STRIP. The strip across the top of a menu compresses a long edit menu into
-        // icons, and two commands have nothing to compress - see TextBox::contextPopup, which
+        // icons, and two commands have nothing to compress - see TextBox::nestedContextPopup, which
         // has seven.
         Menu menu{ *this };
         menu.add(items);
         menu.execute();
     }
 
-    void HexView::keyDown(KeyDownEvent& event)
+    void HexView::nestedKeyDown(KeyDownEvent& event)
     {
-        Control::keyDown(event);
+        Control::nestedKeyDown(event);
         if (event.propagationStopped())
             return;
         if (m_bytes.empty())

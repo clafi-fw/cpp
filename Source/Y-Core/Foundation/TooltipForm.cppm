@@ -119,7 +119,7 @@ namespace ClaFi
         // show. Asked of the control alone, a message standing about this control would be laid
         // out as the control's own tooltip and the window would show the wrong words.
         if (!ContextMessage::answer(*m_control, tooltipEvent))
-            m_control->getTooltip(tooltipEvent);
+            m_control->nestedGetTooltip(tooltipEvent);
         // WHAT A PAINT PRODUCED IS WHAT THE FADE REPEATS. A calculation is a measurement and is
         // answered with the room a later value will need, so recording that one would send the
         // window out saying a line it never showed.

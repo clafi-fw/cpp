@@ -158,8 +158,8 @@ namespace ClaFi::Controls
         void calculateChildren(FormBase&) override;
         void adjustChildMetrics(AdjustMetricsEvent&) const override;
         void adjustChildPaint(AdjustPaintEvent&) override;
-        void click(ClickEvent&) override;
-        void keyDown(KeyDownEvent&) override;
+        void nestedClick(ClickEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
     private:
         template <typename... Args>
         static Config makeConfig(const Args&...);

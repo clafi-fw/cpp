@@ -91,7 +91,7 @@ namespace ClaFi::Controls
         // The hint of the link under the pointer is being asked for. See Controls#link-hints
         DECLARE_EVENT(GetLinkTooltipEvent, OnGetLinkTooltip, onGetLinkTooltip)
     public:
-        // setCaretPosFromMouse Is calling from pressDown, contextPopup
+        // setCaretPosFromMouse Is calling from nestedPressDown, nestedContextPopup
         // and on popping in in-place edit form
         void setCaretPosFromMouse();
         // Puts the caret where a host names it, with nothing selected.
@@ -169,20 +169,20 @@ namespace ClaFi::Controls
         void hoverLeave() override;
         // The hint of the link under the pointer, where there is one, and the box's own
         // otherwise. See Controls#link-hints
-        void getTooltip(GetTooltipEvent&) override;
-        void pressDown(PressDownEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedPressDown(PressDownEvent&) override;
         // Follows a link when the press and the release stayed on it and nothing was selected
         // between them. Defined in TextBox.cpp, with the rest of what a link does.
-        void click(ClickEvent&) override;
-        void doubleClick(DoubleClickEvent&) override;
-        void tripleClick(TripleClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
+        void nestedDoubleClick(DoubleClickEvent&) override;
+        void nestedTripleClick(TripleClickEvent&) override;
         // Defined in TextBox.cpp: the standard edit menu is built there, and the menu pulls in
         // the Grid the whole of it is built on. Nothing that merely uses a text box should have
         // to import that.
-        void contextPopup(ContextPopupEvent&) override;
-        void drag(DragEvent&) override;
+        void nestedContextPopup(ContextPopupEvent&) override;
+        void nestedDrag(DragEvent&) override;
         // Keyboard events
-        void keyDown(KeyDownEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
     private:
         // What one page press crosses, and the rect the view is moved by to show it.
@@ -208,7 +208,7 @@ namespace ClaFi::Controls
         using Places = std::vector<Place>;
     private:
         // Answers the framework's edit actions - see the definition for why they are not
-        // answered in keyDown. Defined in TextBox.cpp, which is what keeps the standard
+        // answered in nestedKeyDown. Defined in TextBox.cpp, which is what keeps the standard
         // actions out of the interface every user of a text box imports.
         void connectEditActions();
         // The rect the text is laid out in, in this control's own coordinates. Everything the
@@ -353,7 +353,7 @@ namespace ClaFi::Controls
     {
         const std::size_t caretPos = std::min(pos, text().plainText().size());
         // The remembered column belongs to a run of vertical presses, and this is not one - see
-        // keyDown.
+        // nestedKeyDown.
         m_editProps.targetX.reset();
         setSelection(caretPos, caretPos);
     }
@@ -487,7 +487,7 @@ namespace ClaFi::Controls
 
         // Measured in FORM space by handing the form rect in: textBounds and caretRect both
         // answer in whatever space the rect they are given is in, so nothing is converted
-        // afterwards. Same route Control::getTooltip takes for an OverText anchor.
+        // afterwards. Same route Control::nestedGetTooltip takes for an OverText anchor.
         const FloatRect textBounds = this->textBounds(formContext(), boundsInForm());
         return caretRect(textBounds, { m_editProps.caretPos(), m_editProps.affinityTrailing });
     }
@@ -556,15 +556,15 @@ namespace ClaFi::Controls
         caretMoved();
     }
 
-    void TextBox::pressDown(PressDownEvent& event)
+    void TextBox::nestedPressDown(PressDownEvent& event)
     {
         setCaretPosFromMouse();
-        Label::pressDown(event);
+        Label::nestedPressDown(event);
     }
 
-    void TextBox::doubleClick(DoubleClickEvent& event)
+    void TextBox::nestedDoubleClick(DoubleClickEvent& event)
     {
-        Label::doubleClick(event);
+        Label::nestedDoubleClick(event);
         if (event.propagationStopped())
             return;
         const FormContext& formContext = this->formContext();
@@ -575,12 +575,12 @@ namespace ClaFi::Controls
         m_editProps.selRange = textEngine().wordAt(m_layoutText, hit.pos);
         m_editProps.caretOnLeft = false;
         caretMoved();
-        event.stopPropagation(); // to prevent pressDown()
+        event.stopPropagation(); // to prevent nestedPressDown()
     }
 
-    void TextBox::tripleClick(TripleClickEvent& event)
+    void TextBox::nestedTripleClick(TripleClickEvent& event)
     {
-        Label::tripleClick(event);
+        Label::nestedTripleClick(event);
         if (event.propagationStopped())
             return;
         const FormContext& formContext = this->formContext();
@@ -591,12 +591,12 @@ namespace ClaFi::Controls
         m_editProps.selRange = textEngine().paragraphAt(m_layoutText, hit.pos);
         m_editProps.caretOnLeft = false;
         caretMoved();
-        event.stopPropagation(); // to prevent pressDown()
+        event.stopPropagation(); // to prevent nestedPressDown()
     }
 
-    void TextBox::drag(DragEvent& event)
+    void TextBox::nestedDrag(DragEvent& event)
     {
-        Label::drag(event);
+        Label::nestedDrag(event);
 
         if (event.propagationStopped())
             return;
@@ -623,9 +623,9 @@ namespace ClaFi::Controls
         m_editProps.targetX.reset();
     }
 
-    void TextBox::keyDown(KeyDownEvent& event)
+    void TextBox::nestedKeyDown(KeyDownEvent& event)
     {
-        Label::keyDown(event);
+        Label::nestedKeyDown(event);
         if (event.propagationStopped())
             return;
 

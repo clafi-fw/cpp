@@ -69,7 +69,7 @@ Control-Foundation#pressedevent.
   the first click, and the second lands on the cell it picked. `WithInPlaceEdit` counts the pair
   as two ordinary clicks when its first click was kept.
 
-THE CLICK REACHES THE GRID AS A CLICK ON THE ROW. `RowContainer::click` retargets it the way
+THE CLICK REACHES THE GRID AS A CLICK ON THE ROW. `RowContainer::nestedClick` retargets it the way
 `nestedControlFocusing` retargets the focus. The grid's click pass completes a pick - a Ctrl
 toggle, a plain press on a row already held - and it can make only a row current: handed the
 control, it would read the click as landing on nothing and clear the selection.

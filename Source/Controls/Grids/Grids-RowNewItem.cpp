@@ -63,9 +63,9 @@ namespace ClaFi::Controls::Grids
     // Return and Space land here as well: the focus navigator presses the row the grid's focus
     // stands for, which is this one while its cell is selected. The click stops here, or the
     // grid would take the pressed row back as its current item over the row just added.
-    void RowNewItem::click(ClickEvent& event)
+    void RowNewItem::nestedClick(ClickEvent& event)
     {
-        Row::click(event);
+        Row::nestedClick(event);
         event.stopPropagation();
         parentAs<GridBase>().requestNewItem();
     }

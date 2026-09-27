@@ -88,7 +88,7 @@ namespace ThisApp
         OutputItem(const CreateParams&, ApplyToPopup&, PaintChannel);
     protected:
         void getControlState(GetStateEvent&) const override;
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
     private:
         ApplyToPopup& m_popup;
         PaintChannel m_channel;
@@ -101,7 +101,7 @@ namespace ThisApp
         InputItem(const CreateParams&, ApplyToPopup&, RuleInput);
     protected:
         void getControlState(GetStateEvent&) const override;
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
     private:
         ApplyToPopup& m_popup;
         RuleInput m_input;
@@ -254,7 +254,7 @@ namespace ThisApp
         event.stopPropagation();
     }
 
-    void OutputItem::click(ClickEvent&)
+    void OutputItem::nestedClick(ClickEvent&)
     {
         m_popup.setOutput(m_channel);
     }
@@ -280,7 +280,7 @@ namespace ThisApp
         event.stopPropagation();
     }
 
-    void InputItem::click(ClickEvent&)
+    void InputItem::nestedClick(ClickEvent&)
     {
         m_popup.toggleInput(m_input);
     }

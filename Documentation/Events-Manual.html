@@ -564,10 +564,10 @@ form-&gt;<span class="fn">onClose</span>([](<span class="tp">FormCloseEvent</spa
             <p>A handler can call <code>event.stopPropagation()</code>. The emit loop stops at that handler, and the
             emitter can test <code>event.propagationStopped()</code> to decide whether to run its own default
             behaviour - this is how a control lets a caller override it:</p>
-<pre><span class="kw">void</span> <span class="tp">TextBox</span>::<span class="fn">contextPopup</span>(<span class="tp">ContextPopupEvent</span>&amp; event)
+<pre><span class="kw">void</span> <span class="tp">TextBox</span>::<span class="fn">nestedContextPopup</span>(<span class="tp">ContextPopupEvent</span>&amp; event)
 {
     <span class="fn">setCaretPosFromMouse</span>();
-    <span class="tp">Label</span>::<span class="fn">contextPopup</span>(event);     <span class="cm">// emits; a handler may stop it</span>
+    <span class="tp">Label</span>::<span class="fn">nestedContextPopup</span>(event);     <span class="cm">// emits; a handler may stop it</span>
     <span class="kw">if</span> (event.<span class="fn">propagationStopped</span>())
         <span class="kw">return</span>;                    <span class="cm">// the caller replaced the menu</span>
     <span class="cm">// ... otherwise show the built-in one</span>

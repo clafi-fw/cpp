@@ -1239,8 +1239,8 @@ namespace ClaFi
     FloatRect TextLayout::getCaretRect(CaretHit caretHit)
     {
         ensureLayout();
-        // A whole-text selection names its end as k_maxSize, which stands for the end of the
-        // text - the clamp TextBox::keyDown and caretLineColumn already make before measuring.
+        // A whole-text selection names its end as k_maxSize, which stands for the end of the text -
+        // the clamp TextBox::nestedKeyDown and caretLineColumn already make before measuring.
         caretHit.pos = std::min(caretHit.pos, m_bakedText.plainText().length());
         const std::size_t index = paragraphAt(caretHit.pos);
         if (index == k_maxSize)

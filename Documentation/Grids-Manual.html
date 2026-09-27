@@ -961,7 +961,7 @@ how the grid moves its selection. A click handler on the grid reads the row in
 first with <code>mayActOnClick</code>. When the answer is no, it leaves the click alone - the
 click goes on to the row, which picks the cell:</p>
 
-<pre><code><span class="kw">void</span> <span class="tp">SwatchControl</span>::<span class="fn">click</span>(<span class="tp">ClickEvent</span>&amp; event)
+<pre><code><span class="kw">void</span> <span class="tp">SwatchControl</span>::<span class="fn">nestedClick</span>(<span class="tp">ClickEvent</span>&amp; event)
 {
     <span class="kw">if</span> (!<span class="fn">mayActOnClick</span>(event))
         <span class="kw">return</span>;

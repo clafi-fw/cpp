@@ -78,11 +78,11 @@ namespace ClaFi::Controls
 
         void scrollChildIntoView(Control&, FloatRect) override;
         // user input
-        void mouseWheel(MouseWheelEvent&) override;
-        void mouseHWheel(MouseWheelEvent&) override;
-        void drag(DragEvent&) override;
-        void pressDown(PressDownEvent&) override;
-        void pressUp(PressUpEvent&) override;
+        void nestedMouseWheel(MouseWheelEvent&) override;
+        void nestedMouseHWheel(MouseWheelEvent&) override;
+        void nestedDrag(DragEvent&) override;
+        void nestedPressDown(PressDownEvent&) override;
+        void nestedPressUp(PressUpEvent&) override;
     private:
         using PanelBase::createRightBar;
         using PanelBase::createBottomBar;
@@ -606,7 +606,7 @@ namespace ClaFi::Controls
         scrollIntoView();
     }
 
-    void ScrollBox::mouseWheel(MouseWheelEvent& event)
+    void ScrollBox::nestedMouseWheel(MouseWheelEvent& event)
     {
         if (m_vScrollBar.visible())
             return wheelScrolled(event, m_vScrollBar, -event.delta);
@@ -614,7 +614,7 @@ namespace ClaFi::Controls
             return wheelScrolled(event, m_hScrollBar, -event.delta);
     }
 
-    void ScrollBox::mouseHWheel(MouseWheelEvent& event)
+    void ScrollBox::nestedMouseHWheel(MouseWheelEvent& event)
     {
         if (m_hScrollBar.visible())
             return wheelScrolled(event, m_hScrollBar, event.delta);
@@ -624,7 +624,7 @@ namespace ClaFi::Controls
     // and leaving the view is a request for more of it. A drag that started on a bar travels up
     // through this box on its way out and asks nothing of it: the caption drags the window, and
     // the system's move loop reports the pointer here for as long as it lasts.
-    void ScrollBox::drag(DragEvent& event)
+    void ScrollBox::nestedDrag(DragEvent& event)
     {
         const Control* content = body();
         if (!content || !content->containsNested(event.control(), CheckSelf::Yes))
@@ -656,12 +656,12 @@ namespace ClaFi::Controls
         m_inDrag = false;
     }
 
-    void ScrollBox::pressDown(PressDownEvent&)
+    void ScrollBox::nestedPressDown(PressDownEvent&)
     {
         m_scrolledInDragOrByWheel = false;
     }
 
-    void ScrollBox::pressUp(PressUpEvent& event)
+    void ScrollBox::nestedPressUp(PressUpEvent& event)
     {
         if (m_scrolledInDragOrByWheel)
         {

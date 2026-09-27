@@ -94,14 +94,14 @@ namespace ClaFi::Controls
         void adjustMetrics(AdjustMetricsEvent&) const override;
         [[nodiscard]] ScaledDimensions calculateContent(AlignEvent&) override;
         void paintSurface(PaintEvent&) override;
-        void pressDown(PressDownEvent&) override;
-        void doubleClick(DoubleClickEvent&) override;
-        void tripleClick(TripleClickEvent&) override;
-        void drag(DragEvent&) override;
+        void nestedPressDown(PressDownEvent&) override;
+        void nestedDoubleClick(DoubleClickEvent&) override;
+        void nestedTripleClick(TripleClickEvent&) override;
+        void nestedDrag(DragEvent&) override;
         void mouseMove(MouseMoveEvent&) override;
         void hoverLeave() override;
-        void contextPopup(ContextPopupEvent&) override;
-        void keyDown(KeyDownEvent&) override;
+        void nestedContextPopup(ContextPopupEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
         void focusChanged() override;
     private:
         // Where a point fell: the byte it names, and the column it fell in.

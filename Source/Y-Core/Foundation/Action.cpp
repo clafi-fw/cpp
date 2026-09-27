@@ -113,7 +113,7 @@ namespace ClaFi
         else
             event.text << m_tooltipText;
         // A nameless action contributes nothing at all, so that the trimmed-text fallback
-        // Control::getTooltip ends with is left the way it was found.
+        // Control::nestedGetTooltip ends with is left the way it was found.
         if (event.text.empty())
             return;
 

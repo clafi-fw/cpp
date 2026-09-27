@@ -31,8 +31,8 @@ namespace ThisApp
         explicit ColorHarmonyItem(const CreateParams&, Args&&...);
         ColorHarmony& harmony() const { return m_harmony; }
     protected:
-        void getTooltip(GetTooltipEvent&) override;
-        void keyDown(KeyDownEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
         void dropdown(DropdownEvent&) override;
         void paintIcon(PaintIconEvent&) override;
     private:
@@ -41,8 +41,8 @@ namespace ThisApp
         public:
             DropDownMenu(const CreateParams&, const ColorHarmonyItem&);
             void getChildText(GetChildTextEvent&) const override;
-            void click(ClickEvent&) override;
-            void doubleClick(DoubleClickEvent& event) override { event.closeForm(); }
+            void nestedClick(ClickEvent&) override;
+            void nestedDoubleClick(DoubleClickEvent& event) override { event.closeForm(); }
         private:
             static const TagValue kLabelTag = (std::numeric_limits<TagValue>::max)();
         private:
@@ -62,8 +62,8 @@ namespace ThisApp
         };
     private:
         void dropDown(Control& dropDownButton);
-        //void doubleClick(DoubleClickEvent&) override { dropDown(m_dropDownButton); }
-        //void click(ClickEvent&) override
+        //void nestedDoubleClick(DoubleClickEvent&) override { dropDown(m_dropDownButton); }
+        //void nestedClick(ClickEvent&) override
         //{
         //  //if (controller() == Controller::Keyboard) dropDown(m_dropDownButton);
         //}
@@ -132,9 +132,9 @@ namespace ThisApp
         paintPaletteMap(event.text, m_harmony, m_harmony.maps()[tagValue]);
     }
 
-    void ColorHarmonyItem::DropDownMenu::click(ClickEvent& event)
+    void ColorHarmonyItem::DropDownMenu::nestedClick(ClickEvent& event)
     {
-        StackPanel::click(event);
+        StackPanel::nestedClick(event);
         std::size_t tagValue = event.control->tag().value;
         m_harmony.selectMap(m_harmony.maps()[tagValue]);
         //invalidateChildrenStates();
@@ -177,13 +177,13 @@ namespace ThisApp
         //  });
     }
 
-    void ColorHarmonyItem::getTooltip(GetTooltipEvent& event)
+    void ColorHarmonyItem::nestedGetTooltip(GetTooltipEvent& event)
     {
         event.placement = FormPlacement::Bottom;
         event.text << m_harmony.name();
     }
 
-    void ColorHarmonyItem::keyDown(KeyDownEvent& event)
+    void ColorHarmonyItem::nestedKeyDown(KeyDownEvent& event)
     {
         switch (event.key)
         {
@@ -195,7 +195,7 @@ namespace ThisApp
                 return;
             }
         }
-        HarmonyItemClass::keyDown(event);
+        HarmonyItemClass::nestedKeyDown(event);
     }
 
     void ColorHarmonyItem::dropdown(DropdownEvent& event)

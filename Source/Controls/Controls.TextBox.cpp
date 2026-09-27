@@ -138,7 +138,7 @@ namespace ClaFi::Controls
         m_forwardPlaces.clear();
         m_editProps.targetX.reset();
         setSelection(anchor->start, anchor->end());
-        // The view moves last, once the selection is written - the order keyDown keeps.
+        // The view moves last, once the selection is written - the order nestedKeyDown keeps.
         scrollLineToTop(anchor->start);
         return true;
     }
@@ -190,11 +190,11 @@ namespace ClaFi::Controls
         hoverLink({});
     }
 
-    void TextBox::getTooltip(GetTooltipEvent& event)
+    void TextBox::nestedGetTooltip(GetTooltipEvent& event)
     {
         if (!m_pointedLink.range.length)
         {
-            Label::getTooltip(event);
+            Label::nestedGetTooltip(event);
             return;
         }
 
@@ -209,7 +209,7 @@ namespace ClaFi::Controls
             writeLinkTooltip(event.text);
     }
 
-    void TextBox::click(ClickEvent& event)
+    void TextBox::nestedClick(ClickEvent& event)
     {
         // A press that ended in a selection was a drag, and a drag does not follow the link it
         // started on. The caret the press placed stands where the release did when the two are
@@ -222,7 +222,7 @@ namespace ClaFi::Controls
         }
         if (!link.has_value())
         {
-            Label::click(event);
+            Label::nestedClick(event);
             return;
         }
 
@@ -247,7 +247,7 @@ namespace ClaFi::Controls
             Platform::shellExecute(nullptr, linkEvent.target);
     }
 
-    void TextBox::contextPopup(ContextPopupEvent& event)
+    void TextBox::nestedContextPopup(ContextPopupEvent& event)
     {
         // Outside the selection the click states a new caret, as a left one does. Inside it, the
         // click is aimed at the selection the menu's Copy and Cut act on, and placing a caret
@@ -257,7 +257,7 @@ namespace ClaFi::Controls
 
         // The application gets first refusal, and a handler that stops the event has replaced
         // the menu outright.
-        Label::contextPopup(event);
+        Label::nestedContextPopup(event);
         if (event.propagationStopped())
             return;
 
@@ -299,8 +299,8 @@ namespace ClaFi::Controls
 
     void TextBox::connectEditActions()
     {
-        // Answered here rather than in keyDown, so that the shortcut and a menu item carrying
-        // the same action reach one implementation. keyDown hands those keys on for exactly
+        // Answered here rather than in nestedKeyDown, so that the shortcut and a menu item carrying
+        // the same action reach one implementation. nestedKeyDown hands those keys on for exactly
         // this reason.
         //
         // Claiming says this control is what the action acts on; what it claims says whether it

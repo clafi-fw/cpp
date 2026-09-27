@@ -241,9 +241,9 @@ namespace ClaFi::Controls
             doSelectionChanged();
     }
 
-    void StackView::drag(DragEvent& event)
+    void StackView::nestedDrag(DragEvent& event)
     {
-        StackPanel::drag(event);
+        StackPanel::nestedDrag(event);
 
         if (!isMultiSelect())
             return;
@@ -286,9 +286,9 @@ namespace ClaFi::Controls
         event.lockHoveredControl();
     }
 
-    void StackView::pressUp(PressUpEvent& event)
+    void StackView::nestedPressUp(PressUpEvent& event)
     {
-        StackPanel::pressUp(event);
+        StackPanel::nestedPressUp(event);
         if (m_selectionOverlayRect)
         {
             invalidateSelectionOverlay();

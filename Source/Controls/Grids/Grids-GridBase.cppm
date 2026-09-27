@@ -131,13 +131,13 @@ namespace ClaFi::Controls::Grids
         // one asks for the strip a held header stands in as well as for itself. See
         // Control::heldHeaderStrip.
         void scrollChildIntoView(Control&, FloatRect) override;
-        void pressDown(PressDownEvent&) override;
+        void nestedPressDown(PressDownEvent&) override;
         // Answered HERE and not on the row. The double-click walk starts at the control the
         // pointer hit and climbs, so the grid sees every one of them, and the grid is what holds
         // the selected cell the edit is for. The first click of the pair has already put the
         // selection on the cell under the pointer.
-        void doubleClick(DoubleClickEvent&) override;
-        void keyDown(KeyDownEvent&) override;
+        void nestedDoubleClick(DoubleClickEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
         // Puts a row added after the new-item row ahead of it, and notes it for requestNewItem.
         void controlAdded(Control&) override;
         // The new-item row is a command rather than an item, so no selection holds it.

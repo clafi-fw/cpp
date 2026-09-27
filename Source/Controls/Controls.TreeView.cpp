@@ -45,14 +45,14 @@ namespace ClaFi::Controls
 
     // TreeNode
 
-    void TreeNode::keyDown(KeyDownEvent& event)
+    void TreeNode::nestedKeyDown(KeyDownEvent& event)
     {
         if (event.modifiers.empty() && answerTreeKey(event.key))
         {
             event.handled = true;
             return;
         }
-        Expander::keyDown(event);
+        Expander::nestedKeyDown(event);
     }
 
     void TreeNode::layOutHeader(const ControlMetrics& buttonMetrics)

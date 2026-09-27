@@ -205,7 +205,7 @@ namespace ClaFi::Controls
             event.dropSurfaceAtRest();
     }
 
-    void SplitButtonBase::pressDown(PressDownEvent& event)
+    void SplitButtonBase::nestedPressDown(PressDownEvent& event)
     {
         if (!secondaryPressPropagates() && pressedSecondary(event))
         {
@@ -215,10 +215,10 @@ namespace ClaFi::Controls
             event.stopPropagation();
             return;
         }
-        ButtonBase::pressDown(event);
+        ButtonBase::nestedPressDown(event);
     }
 
-    void SplitButtonBase::click(ClickEvent& event)
+    void SplitButtonBase::nestedClick(ClickEvent& event)
     {
         if (pressedSecondary(event))
         {
@@ -228,7 +228,7 @@ namespace ClaFi::Controls
             secondaryClicked(event);
             return;
         }
-        ButtonBase::click(event);
+        ButtonBase::nestedClick(event);
     }
 
 } // of namespace ClaFi

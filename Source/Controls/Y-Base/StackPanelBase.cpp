@@ -141,7 +141,7 @@ namespace ClaFi::Controls
         return m_currentItem ? m_currentItem : this;
     }
 
-    void StackPanelBase::click(ClickEvent& event)
+    void StackPanelBase::nestedClick(ClickEvent& event)
     {
         //if (Input::device() == InputDevice::Keyboard)
         {
@@ -149,7 +149,7 @@ namespace ClaFi::Controls
             bool handled{};
             autoSelectItem(*event.control, event.modifiers, handled);
         }
-        Container::click(event);
+        Container::nestedClick(event);
     }
 
     // A press on the current item is still a pick while the selection does not hold it - a view

@@ -294,7 +294,7 @@ stands for as long as the pointer rests there, and needs no time of its own.
 ONE AT A TIME. There is one tooltip window, so a second message takes the place of
 the first rather than queueing behind it.
 
-WHAT A CONTROL HAS TO SAY EVERY TIME IT IS ASKED belongs in its getTooltip, not
+WHAT A CONTROL HAS TO SAY EVERY TIME IT IS ASKED belongs in its nestedGetTooltip, not
 here. A message is what is said once, at the moment it becomes true. A control that must
 go on saying it answers for itself as well - see EditBox and the value it has refused.
 

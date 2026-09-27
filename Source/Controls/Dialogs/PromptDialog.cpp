@@ -65,7 +65,7 @@ namespace ClaFi::Controls
         return m_accepted;
     }
 
-    void PromptDialog::keyDown(KeyDownEvent& event)
+    void PromptDialog::nestedKeyDown(KeyDownEvent& event)
     {
         // Return commits FOR THE BOX, and only while the box holds the focus. A key walks leaf
         // to root and the navigator's click on the focused control is the last thing to run, so
@@ -87,7 +87,7 @@ namespace ClaFi::Controls
             box().showRefusal();
             return;
         }
-        MessageBoxBase::keyDown(event);
+        MessageBoxBase::nestedKeyDown(event);
     }
 
     bool PromptDialog::offerText(Control& askedBy)

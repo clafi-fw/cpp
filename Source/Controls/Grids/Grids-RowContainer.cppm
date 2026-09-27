@@ -48,12 +48,12 @@ namespace ClaFi::Controls::Grids
         // Keeps a press that picks a cell or changes the selection from the cell's control.
         void nestedControlPressed(PressedEvent&) override;
         // A click on a cell's control reaches the grid as a click on this row, as the focus does.
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
         // The row holds the focus for its cells' controls and hands them the keys the grid leaves.
-        void keyDown(KeyDownEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
         // A menu asked from the keyboard is the selected cell's control's, as under the pointer.
-        void contextPopup(ContextPopupEvent&) override;
+        void nestedContextPopup(ContextPopupEvent&) override;
     private:
         // The control in the selected cell, while it stands in this row and takes input.
         [[nodiscard]] Control* selectedCellControl();

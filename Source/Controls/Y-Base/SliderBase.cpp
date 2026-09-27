@@ -75,20 +75,20 @@ namespace ClaFi::Controls
         parent()->adjustButtonPaint(event);
     }
 
-    void SliderBase::ScrollButton::click(ClickEvent&)
+    void SliderBase::ScrollButton::nestedClick(ClickEvent&)
     {
         if (Input::device() == InputDevice::Keyboard)
-            doIt(); // mouse clicks handled in pressDown
+            doIt(); // mouse clicks handled in nestedPressDown
     }
 
-    void SliderBase::ScrollButton::pressDown(PressDownEvent& params)
+    void SliderBase::ScrollButton::nestedPressDown(PressDownEvent& params)
     {
         m_autoScrolling = false;
         m_clickRepeater.start();
         params.stopPropagation();
     }
 
-    void SliderBase::ScrollButton::pressUp(PressUpEvent&)
+    void SliderBase::ScrollButton::nestedPressUp(PressUpEvent&)
     {
         m_clickRepeater.stop();
     }
@@ -153,12 +153,12 @@ namespace ClaFi::Controls
         parent()->paintThumb(params);
     }
 
-    void SliderBase::Thumb::getTooltip(GetTooltipEvent& event)
+    void SliderBase::Thumb::nestedGetTooltip(GetTooltipEvent& event)
     {
         parent()->getThumbTooltip(event);
     }
 
-    void SliderBase::Thumb::pressDown(PressDownEvent& event)
+    void SliderBase::Thumb::nestedPressDown(PressDownEvent& event)
     {
         event.stopPropagation();
         // The pointer owns the position from here, and it takes it over at what is on screen.
@@ -172,7 +172,7 @@ namespace ClaFi::Controls
         parent()->thumbPressDown();
     }
 
-    void SliderBase::Thumb::drag(DragEvent& dp)
+    void SliderBase::Thumb::nestedDrag(DragEvent& dp)
     {
         float delta;
         float myHeight;
@@ -451,7 +451,7 @@ namespace ClaFi::Controls
         event.stopPropagation();
     }
 
-    void SliderBase::pressDown(PressDownEvent& event)
+    void SliderBase::nestedPressDown(PressDownEvent& event)
     {
         FloatPoint pt = slotPoint(form().mouseDownPos());
         m_slotPressed = slotArea().contains(pt);
@@ -469,7 +469,7 @@ namespace ClaFi::Controls
         event.updateDownControl();
     }
 
-    void SliderBase::pressUp(PressUpEvent&)
+    void SliderBase::nestedPressUp(PressUpEvent&)
     {
         m_slotPressed = false;
         m_thumbPressed = false;
@@ -478,7 +478,7 @@ namespace ClaFi::Controls
     // The press sent the position to the point under the pointer, and the pointer goes on naming
     // it for as long as it is held. A point outside the slot names the end it is past, the same
     // way a thumb dragged off the end stops at the end.
-    void SliderBase::drag(DragEvent& event)
+    void SliderBase::nestedDrag(DragEvent& event)
     {
         if (!m_slotPressed)
             return;

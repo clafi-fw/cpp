@@ -29,7 +29,7 @@ namespace ClaFi::Controls
         // text of its own, so the depth costs nothing in rasterization.
         [[nodiscard]] bool allowZAnimation() const override { return true; }
     protected:
-        void doubleClick(DoubleClickEvent& event) override { event.stopPropagation(); }
+        void nestedDoubleClick(DoubleClickEvent& event) override { event.stopPropagation(); }
     };
 
     // ButtonBase
@@ -362,9 +362,9 @@ namespace ClaFi::Controls
         event.text << FlexSpace{ k_openWindowMarkGap } << mark;
     }
 
-    void ButtonBase::getTooltip(GetTooltipEvent& event)
+    void ButtonBase::nestedGetTooltip(GetTooltipEvent& event)
     {
-        RichControl::getTooltip(event);
+        RichControl::nestedGetTooltip(event);
         if (event.text.empty() && m_viewMode == ButtonViewMode::IconOnly)
         {
             GetTextEvent textEvent(event.formContext(), *this, event.text, EventPhase::Paint);
@@ -375,7 +375,7 @@ namespace ClaFi::Controls
     }
 
     // AN ICON-ONLY BUTTON DOES NOT LAY ITS TEXT OUT. Its words are what the tooltip says - see
-    // getTooltip - and paintText draws none of them, so they take no space in either pass.
+    // nestedGetTooltip - and paintText draws none of them, so they take no space in either pass.
     // calculateContent answers for that mode with the icon alone, and the align pass re-measures a
     // wrapping text against the box the control was granted and takes that answer as its content:
     // a button measuring words it never shows comes out as tall as they are wrapped in its own
@@ -495,13 +495,13 @@ namespace ClaFi::Controls
         RichControl::alignContent(event, position, dimensions);
     }
 
-    void ButtonBase::pressDown(PressDownEvent& event)
+    void ButtonBase::nestedPressDown(PressDownEvent& event)
     {
         injectCtrl(event);
-        RichControl::pressDown(event);
+        RichControl::nestedPressDown(event);
     }
 
-    void ButtonBase::pressUp(PressUpEvent& event)
+    void ButtonBase::nestedPressUp(PressUpEvent& event)
     {
         // TODO: make PressUpEvent a ClickEventBase so this can go through injectCtrl
         if (&event.control == m_indicator)
@@ -509,13 +509,13 @@ namespace ClaFi::Controls
             //affects selection in BaseListView
             event.modifiers.ctrl = true;
         }
-        RichControl::pressUp(event);
+        RichControl::nestedPressUp(event);
     }
 
-    void ButtonBase::click(ClickEvent& event)
+    void ButtonBase::nestedClick(ClickEvent& event)
     {
         injectCtrl(event);
-        RichControl::click(event);
+        RichControl::nestedClick(event);
     }
 
     void ButtonBase::nestedControlFocusing(FocusEvent& event)

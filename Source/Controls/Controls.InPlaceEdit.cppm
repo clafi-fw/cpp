@@ -108,9 +108,9 @@ namespace ClaFi::Controls
         // hovered for. Nothing to show is not an error.
         void showRefusal();
     protected:
-        void getTooltip(GetTooltipEvent&) override;
-        void keyDown(KeyDownEvent&) override;
-        void pressDown(PressDownEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
+        void nestedPressDown(PressDownEvent&) override;
         void charPress(CharPressEvent&) override;
     private:
         void clearRefusal();
@@ -138,7 +138,7 @@ namespace ClaFi::Controls
         [[nodiscard]] const std::wstring& name() const { return m_name; }
     protected:
         void getText(GetTextEvent&) const override;
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
     private:
         InPlaceEditRoot& m_root;
         std::size_t m_itemIndex;
@@ -203,7 +203,7 @@ namespace ClaFi::Controls
     protected:
         [[nodiscard]] FloatPoint textOrigin() const override;
         void adjustNestedControlVisualState(const Control&, VisualState&) const override;
-        void keyDown(KeyDownEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
     private:
         using Base = WithBody<Panel, EditBox>;
     private:
@@ -385,10 +385,10 @@ namespace ClaFi::Controls
         /// A control that wants a condition of its own ON TOP of the default says it with the
         /// base's answer as well, the way editorMode is written.
         [[nodiscard]] virtual bool clickOpensEditor() const;
-        void keyDown(KeyDownEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;
-        void click(ClickEvent&) override;
-        void doubleClick(DoubleClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
+        void nestedDoubleClick(DoubleClickEvent&) override;
     private:
         /// Claims StdActions::rename for this control and answers it. Connected from the
         /// constructor, the way TextBox connects the edit actions.
@@ -407,8 +407,8 @@ namespace ClaFi::Controls
         // What was typed with a request that is waiting for the layout.
         std::wstring m_typed{};
         // Recorded as the press happens, because nothing afterwards can answer it:
-        // Input::setMouseDown moves the focus BEFORE it dispatches the press, so by click() the
-        // control reads focused whichever way the click went.
+        // Input::setMouseDown moves the focus BEFORE it dispatches the press, so by nestedClick()
+        // the control reads focused whichever way the click went.
         bool m_wasCurrentBeforePress{ false };
         // The trailing release of a double click raises an ordinary click of its own,
         // indistinguishable from a lone one, and that pair means whatever double clicking means
@@ -530,7 +530,7 @@ namespace ClaFi::Controls
     }
 
     template <IsControl HostClass>
-    void WithInPlaceEdit<HostClass>::keyDown(KeyDownEvent& event)
+    void WithInPlaceEdit<HostClass>::nestedKeyDown(KeyDownEvent& event)
     {
         // THE KEY IS ANSWERED HERE RATHER THAN LEFT TO StdActions::rename's SHORTCUT. A key the
         // control handles never reaches the shortcut scopes, and this is the control that has to
@@ -545,7 +545,7 @@ namespace ClaFi::Controls
             event.handled = true;
             return;
         }
-        HostClass::keyDown(event);
+        HostClass::nestedKeyDown(event);
     }
 
     template <IsControl HostClass>
@@ -567,7 +567,7 @@ namespace ClaFi::Controls
     }
 
     template <IsControl HostClass>
-    void WithInPlaceEdit<HostClass>::click(ClickEvent& event)
+    void WithInPlaceEdit<HostClass>::nestedClick(ClickEvent& event)
     {
         // Read and cleared before anything else runs: the base may take the focus somewhere and
         // come back, and the editor below pumps messages of its own.
@@ -577,18 +577,18 @@ namespace ClaFi::Controls
         m_wasCurrentBeforePress = false;
         m_doubleClicked = false;
 
-        HostClass::click(event);
+        HostClass::nestedClick(event);
         if (opensEditor)
             openEditor();
     }
 
     template <IsControl HostClass>
-    void WithInPlaceEdit<HostClass>::doubleClick(DoubleClickEvent& event)
+    void WithInPlaceEdit<HostClass>::nestedDoubleClick(DoubleClickEvent& event)
     {
         // A pair whose first click a control above kept is two ordinary clicks, and the second
         // edits the way one does.
         m_doubleClicked = !m_clickKept;
-        HostClass::doubleClick(event);
+        HostClass::nestedDoubleClick(event);
     }
 
     template <IsControl HostClass>

@@ -65,14 +65,14 @@ namespace ClaFi::Controls
         virtual FloatRect iconRect(const PaintEvent&) const;
         void adjustTextRect(AdjustTextRectEvent&) const override;
         void getText(GetTextEvent&) const override;
-        void getTooltip(GetTooltipEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
         CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
         void calculateChildren(FormBase& form) override;
         ScaledDimensions calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
-        void pressDown(PressDownEvent&) override;
-        void pressUp(PressUpEvent&) override;
-        void click(ClickEvent&) override;
+        void nestedPressDown(PressDownEvent&) override;
+        void nestedPressUp(PressUpEvent&) override;
+        void nestedClick(ClickEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;
         // Registers a child owned by a derived class. It shares one array with the selection
         // indicator, so controls() can hand out both in a single contiguous span. There is room

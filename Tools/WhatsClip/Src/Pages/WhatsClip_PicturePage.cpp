@@ -325,8 +325,8 @@ namespace ClaFi::Tools::WhatsClip
     }
 
     // THE CORNER'S TWO COMMANDS, AT THE PIXEL ITSELF. The view has already selected the pixel the
-    // press landed on - see PictureView::contextPopup - so both act on what was pointed at. The
-    // editor is owned by the line that opened it, which is what stands it over the menu.
+    // press landed on - see PictureView::nestedContextPopup - so both act on what was pointed at.
+    // The editor is owned by the line that opened it, which is what stands it over the menu.
     void PicturePage::showPixelMenu(ContextPopupEvent& event)
     {
         event.stopPropagation();

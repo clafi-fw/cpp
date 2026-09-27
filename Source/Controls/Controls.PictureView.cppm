@@ -85,12 +85,12 @@ namespace ClaFi::Controls
         [[nodiscard]] FloatRect contextMenuAnchor() const override;
         [[nodiscard]] ScaledDimensions calculateContent(AlignEvent&) override;
         void paintSurface(PaintEvent&) override;
-        void pressDown(PressDownEvent&) override;
-        void doubleClick(DoubleClickEvent&) override;
-        void drag(DragEvent&) override;
+        void nestedPressDown(PressDownEvent&) override;
+        void nestedDoubleClick(DoubleClickEvent&) override;
+        void nestedDrag(DragEvent&) override;
         void mouseMove(MouseMoveEvent&) override;
-        void mouseWheel(MouseWheelEvent&) override;
-        void contextPopup(ContextPopupEvent&) override;
+        void nestedMouseWheel(MouseWheelEvent&) override;
+        void nestedContextPopup(ContextPopupEvent&) override;
     private:
         // What a zoom keeps still: a point of the picture, and the point in the form it stays
         // under, both taken from the origin before the placement floored it. See anchorAt

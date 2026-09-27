@@ -316,7 +316,7 @@ namespace ClaFi::Controls
         }
     }
 
-    void DropdownControlBase::click(ClickEvent& event)
+    void DropdownControlBase::nestedClick(ClickEvent& event)
     {
         // Whichever half is about to drop the list asks first. A click a control above keeps goes
         // on up to it, left alone here.
@@ -333,10 +333,10 @@ namespace ClaFi::Controls
             runDropdown(*this);
             return;
         }
-        SplitButtonBase::click(event);
+        SplitButtonBase::nestedClick(event);
     }
 
-    void DropdownControlBase::keyDown(KeyDownEvent& event)
+    void DropdownControlBase::nestedKeyDown(KeyDownEvent& event)
     {
         // The two Windows conventions for dropping a list open. Alt+Down has to be claimed here,
         // ahead of FocusNavigator, or the arrow moves the focus instead.
@@ -348,7 +348,7 @@ namespace ClaFi::Controls
             dropDown();
             return;
         }
-        SplitButtonBase::keyDown(event);
+        SplitButtonBase::nestedKeyDown(event);
     }
 
     ButtonViewMode DropdownControlBase::mainViewMode(const Config& config)

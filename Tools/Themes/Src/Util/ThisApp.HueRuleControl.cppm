@@ -168,7 +168,7 @@ namespace ThisApp
         [[nodiscard]] bool dropOnPrimaryPress() const override { return true; }
         void showDropdown(Control& initiator) override;
         void getMainText(GetTextEvent&) const override;
-        void getTooltip(GetTooltipEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
     private:
         void setOperation(ColorRuleHueOp);
@@ -197,9 +197,9 @@ namespace ThisApp
     protected:
         [[nodiscard]] MinSize indicatorSize(const AppTheme&) const override { return k_indicatorSize; }
         void getText(GetTextEvent&) const override;
-        void getTooltip(GetTooltipEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
         void getControlState(GetStateEvent&) const override;
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
     private:
         HueRulePopup& m_popup;
@@ -335,11 +335,11 @@ namespace ThisApp
         writeHueOpContent(event.text, operation(), true);
     }
 
-    void HueRuleControl::getTooltip(GetTooltipEvent& event)
+    void HueRuleControl::nestedGetTooltip(GetTooltipEvent& event)
     {
         if (bound())
             event.text << k_hueOpNames[static_cast<std::size_t>(operation())];
-        DropdownControlBase::getTooltip(event);
+        DropdownControlBase::nestedGetTooltip(event);
     }
 
     DrawTextResult HueRuleControl::drawText(PaintEvent& event, const FloatRect& textBounds, const Text& text)
@@ -404,10 +404,10 @@ namespace ThisApp
             event.text << PopTextStyle{};
     }
 
-    void HueRuleItem::getTooltip(GetTooltipEvent& event)
+    void HueRuleItem::nestedGetTooltip(GetTooltipEvent& event)
     {
         event.text << k_hueOpNames[static_cast<std::size_t>(m_operation)];
-        Button::getTooltip(event);
+        Button::nestedGetTooltip(event);
     }
 
     void HueRuleItem::getControlState(GetStateEvent& event) const
@@ -421,7 +421,7 @@ namespace ThisApp
         event.stopPropagation();
     }
 
-    void HueRuleItem::click(ClickEvent&)
+    void HueRuleItem::nestedClick(ClickEvent&)
     {
         m_popup.pick(m_operation);
     }

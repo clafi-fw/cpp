@@ -91,7 +91,7 @@ namespace ClaFi::Controls
         return &items();
     }
 
-    void ComboBox::keyDown(KeyDownEvent& event)
+    void ComboBox::nestedKeyDown(KeyDownEvent& event)
     {
         // Return edits an editable combobox wherever its list is - on its strip, or behind F4 and
         // Alt+Down when the face drops it.
@@ -100,7 +100,7 @@ namespace ClaFi::Controls
             event.handled = true;
             return;
         }
-        ComboboxBaseClass::keyDown(event);
+        ComboboxBaseClass::nestedKeyDown(event);
     }
 
     void ComboBox::charPress(CharPressEvent& event)

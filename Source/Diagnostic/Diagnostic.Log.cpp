@@ -86,7 +86,7 @@ namespace ClaFi
         void hoverEnter() override;
         void hoverLeave() override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
-        void contextPopup(ContextPopupEvent&) override;
+        void nestedContextPopup(ContextPopupEvent&) override;
     private:
         void copyRows(const Control* single, InputStamp);
     private:
@@ -302,11 +302,11 @@ namespace ClaFi
         }
     }
 
-    void OutputPage::contextPopup(ContextPopupEvent& event)
+    void OutputPage::nestedContextPopup(ContextPopupEvent& event)
     {
         // The application gets first refusal, and a handler that stops the event has replaced the
         // menu outright.
-        ScrollBox::contextPopup(event);
+        ScrollBox::nestedContextPopup(event);
         if (event.propagationStopped())
             return;
 

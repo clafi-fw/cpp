@@ -17,7 +17,7 @@ namespace ClaFi
         /// Whether a message stands about this control, and if so what it says and where it goes.
         /// Asked at each place the tooltip asks a control what it has to say, BEFORE the control
         /// is asked: a message stands in front of whatever its control would answer, and this is
-        /// what keeps every getTooltip in the tree from having to know that.
+        /// what keeps every nestedGetTooltip in the tree from having to know that.
         [[nodiscard]] static bool answer(const Control&, GetTooltipEvent&);
         /// Drops the message. The tooltip machinery calls this at each point the window goes down
         /// or moves on, which is the whole of a message's life; nothing else has to.

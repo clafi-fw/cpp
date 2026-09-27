@@ -49,18 +49,18 @@ namespace ClaFi::Controls::Grids
 
     // The grid completes a pick in the click pass, and it can make only a row current - handed
     // the control, it would read the click as landing on nothing and drop the selection.
-    void RowContainer::click(ClickEvent& event)
+    void RowContainer::nestedClick(ClickEvent& event)
     {
         event.control = this;
-        Row::click(event);
+        Row::nestedClick(event);
     }
 
-    void RowContainer::keyDown(KeyDownEvent& event)
+    void RowContainer::nestedKeyDown(KeyDownEvent& event)
     {
         Control* control = gridMovesBy(event) ? nullptr : selectedCellControl();
         if (!control)
         {
-            Row::keyDown(event);
+            Row::nestedKeyDown(event);
             return;
         }
         forwardKeyDown(*control, event);
@@ -75,7 +75,7 @@ namespace ClaFi::Controls::Grids
             control->animatedClick(form(), event.stamp);
             return;
         }
-        Row::keyDown(event);
+        Row::nestedKeyDown(event);
     }
 
     void RowContainer::charPress(CharPressEvent& event)
@@ -90,7 +90,7 @@ namespace ClaFi::Controls::Grids
         forwardCharPress(*control, forwarded);
     }
 
-    void RowContainer::contextPopup(ContextPopupEvent& event)
+    void RowContainer::nestedContextPopup(ContextPopupEvent& event)
     {
         Control* control = event.mousePos ? nullptr : selectedCellControl();
         if (control && event.control == this)
@@ -100,7 +100,7 @@ namespace ClaFi::Controls::Grids
             if (event.propagationStopped())
                 return;
         }
-        Row::contextPopup(event);
+        Row::nestedContextPopup(event);
     }
 
     Control* RowContainer::selectedCellControl()

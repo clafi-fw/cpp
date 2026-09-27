@@ -134,8 +134,8 @@ namespace ClaFi::Controls
     protected:
         void paintIcon(PaintIconEvent&) override;
         void getText(GetTextEvent&) const override;
-        void getTooltip(GetTooltipEvent&) override;
-        void click(ClickEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedClick(ClickEvent&) override;
         ScaledDimensions calculateContent(AlignEvent& event) override {
             return Button::calculateContent(event);
         }
@@ -212,7 +212,7 @@ namespace ClaFi::Controls
         [[nodiscard]] FloatPoint editorMaxTextSize(const FloatRect&) const override;
         // The items, listed under the editor as their names are typed.
         [[nodiscard]] const TextItems* editorSuggestions() const override;
-        void keyDown(KeyDownEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
     private:
         template <typename... Args>
@@ -314,13 +314,13 @@ namespace ClaFi::Controls
         m_combobox.itemFaceText(m_combobox.items()[m_itemIndex], event.text, event.phase());
     }
 
-    void ComboboxItemControl::getTooltip(GetTooltipEvent& event)
+    void ComboboxItemControl::nestedGetTooltip(GetTooltipEvent& event)
     {
         event.text << m_combobox.items()[m_itemIndex].tooltipText();
-        Button::getTooltip(event);
+        Button::nestedGetTooltip(event);
     }
 
-    void ComboboxItemControl::click(ClickEvent& event)
+    void ComboboxItemControl::nestedClick(ClickEvent& event)
     {
         m_combobox.setItemIndex(m_itemIndex);
         event.closeForm();

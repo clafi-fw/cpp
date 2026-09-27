@@ -52,10 +52,10 @@ namespace ThisApp
         const AppTheme& theme() { return m_theme; }
         const std::wstring& pagePath() { return m_pagePath; }
     protected:
-        void click(ClickEvent&) override;
-        void doubleClick(DoubleClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
+        void nestedDoubleClick(DoubleClickEvent&) override;
         [[nodiscard]] EditorMode editorMode() const override;
-        void contextPopup(ContextPopupEvent&) override;
+        void nestedContextPopup(ContextPopupEvent&) override;
         void paintIcon(PaintIconEvent&) override;
     private:
         using Base = WithInPlaceEdit<Button>;
@@ -136,21 +136,21 @@ namespace ThisApp
     //
     // The event travels on: the container above reads it for the selection, and what it settles
     // there is the same whether or not a theme is opening.
-    void ThemeButton::click(ClickEvent& event)
+    void ThemeButton::nestedClick(ClickEvent& event)
     {
         const bool opensTheme = event.form.isKeyboardClick()
             && !event.modifiers.ctrl
             && !event.modifiers.shift;
-        Base::click(event);
+        Base::nestedClick(event);
         if (opensTheme)
             openTheme(event.stamp);
     }
 
     // A double click on the check mark never arrives here: the indicator answers that one itself
     // and stops it, which is what keeps taking a tile into the selection from opening it.
-    void ThemeButton::doubleClick(DoubleClickEvent& event)
+    void ThemeButton::nestedDoubleClick(DoubleClickEvent& event)
     {
-        Base::doubleClick(event);
+        Base::nestedDoubleClick(event);
         // THE GESTURE IS SPENT HERE. A double click that nothing stopped is read by the form as
         // the press it also is, and that press would act on a tile the navigation is about to
         // take down. Said before the command runs, because the command owns what happens next and
@@ -168,11 +168,11 @@ namespace ThisApp
         return Base::editorMode();
     }
 
-    void ThemeButton::contextPopup(ContextPopupEvent& event)
+    void ThemeButton::nestedContextPopup(ContextPopupEvent& event)
     {
         // The application gets first refusal, and a handler that stops the event has replaced
         // this menu outright.
-        Base::contextPopup(event);
+        Base::nestedContextPopup(event);
         if (event.propagationStopped())
             return;
 

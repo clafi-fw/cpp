@@ -86,9 +86,9 @@ namespace ClaFi::StdActions
         Shortcut{ L'S', { .shift = true, .ctrl = true } }
     };
     // THE KEY IS STATED HERE AND ANSWERED BY THE CONTROL. WithInPlaceEdit takes F2 in its own
-    // keyDown, so the press never reaches the shortcut scopes and there is no contest - the same
-    // shape a text box's Delete has. It has to be answered there: the subject walk starts at the
-    // focused control, and a container holding the focus answers for itself rather than for the
+    // nestedKeyDown, so the press never reaches the shortcut scopes and there is no contest - the
+    // same shape a text box's Delete has. It has to be answered there: the subject walk starts at
+    // the focused control, and a container holding the focus answers for itself rather than for the
     // item it is on, so a tile inside a StackView is never reached from a shortcut. What the
     // shortcut here buys is the key printed on the menu line.
     Action rename{

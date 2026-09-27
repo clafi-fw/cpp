@@ -50,7 +50,7 @@ namespace ClaFi::Controls
         Color thumbColor(PaintEvent&, FloatPoint&) override;
         void getThumbTooltip(GetTooltipEvent&) override;
         void thumbPressDown() override;
-        void keyDown(KeyDownEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
         void changed(SliderChangeEvent&) override;
         void sizeChanged() override;
     private:
@@ -252,9 +252,9 @@ namespace ClaFi::Controls
         form().tooltip().showRightNow(thumb());
     }
 
-    void ColorSlider::keyDown(KeyDownEvent& key)
+    void ColorSlider::nestedKeyDown(KeyDownEvent& key)
     {
-        Slider::keyDown(key);
+        Slider::nestedKeyDown(key);
         if (key.handled)
             form().tooltip().showRightNow(thumb());
     }

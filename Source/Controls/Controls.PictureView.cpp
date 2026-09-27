@@ -163,9 +163,9 @@ namespace ClaFi::Controls
     // A PRESS STATES THE TARGET: the crosshair and the reading follow the button down rather than
     // waiting for it to come back up. A press that goes on to travel pans, and leaves selected the
     // pixel it was taken hold of at.
-    void PictureView::pressDown(PressDownEvent& event)
+    void PictureView::nestedPressDown(PressDownEvent& event)
     {
-        Control::pressDown(event);
+        Control::nestedPressDown(event);
         if (event.propagationStopped())
             return;
 
@@ -178,9 +178,9 @@ namespace ClaFi::Controls
     // The second press on a pixel asks for it to be acted on - the colour editor, where this
     // viewer hangs one. A double click on the surface beside the picture names no pixel and asks
     // for nothing.
-    void PictureView::doubleClick(DoubleClickEvent& event)
+    void PictureView::nestedDoubleClick(DoubleClickEvent& event)
     {
-        Control::doubleClick(event);
+        Control::nestedDoubleClick(event);
         if (event.propagationStopped())
             return;
 
@@ -190,7 +190,7 @@ namespace ClaFi::Controls
 
     // The picture follows the pointer by what it moved since the last move. Stopped here so
     // the box scrolling this view does not read the drag as a selection reaching past its edge.
-    void PictureView::drag(DragEvent& event)
+    void PictureView::nestedDrag(DragEvent& event)
     {
         if (!m_picture || m_picture->empty())
             return;
@@ -218,7 +218,7 @@ namespace ClaFi::Controls
     // readout land where the zoom is going without a click. Over the surface beside the
     // picture there is no pixel to take, and the selection stands while the zoom still keeps
     // the point under the pointer still.
-    void PictureView::mouseWheel(MouseWheelEvent& event)
+    void PictureView::nestedMouseWheel(MouseWheelEvent& event)
     {
         if (!m_picture || m_picture->empty())
             return;
@@ -234,7 +234,7 @@ namespace ClaFi::Controls
     // one does, so the crosshair and the commands name the same one. A menu raised from the
     // keyboard moves nothing - the pixel already selected is what it is about. The commands
     // themselves are the application's: the view holds none of its own.
-    void PictureView::contextPopup(ContextPopupEvent& event)
+    void PictureView::nestedContextPopup(ContextPopupEvent& event)
     {
         if (Input::device() == InputDevice::Mouse)
         {
@@ -242,7 +242,7 @@ namespace ClaFi::Controls
                 setSelection(pixel);
         }
 
-        Control::contextPopup(event);
+        Control::nestedContextPopup(event);
     }
 
     FloatSize PictureView::pictureSize() const

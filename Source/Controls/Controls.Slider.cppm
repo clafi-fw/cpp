@@ -88,8 +88,8 @@ namespace ClaFi::Controls
         void setPaintTails(bool value) { m_paintTails = value; }
     protected:
         ScrollInfo controlScrollInfo() const override { return m_scrollInfo; }
-        void mouseWheel(MouseWheelEvent&) override;
-        void contextPopup(ContextPopupEvent&) override;
+        void nestedMouseWheel(MouseWheelEvent&) override;
+        void nestedContextPopup(ContextPopupEvent&) override;
         float stepSize() override { return 1.0f; }
         float buttonSize(const AppTheme&) override { return 24.0f; }
 
@@ -127,7 +127,7 @@ namespace ClaFi::Controls
         Color thumbColor(PaintEvent&, FloatPoint&) override;
         void paintSlot(PaintEvent&, const FloatRect&, SlotSpan) override;
         void changed(SliderChangeEvent&) override;
-        void pressUp(PressUpEvent&) override;
+        void nestedPressUp(PressUpEvent&) override;
     private:
         // As long as the owner, so a drag moves the value a tenth as far, and never below k_minLength.
         [[nodiscard]] static MinSize trackLengthOf(const Slider& owner);
@@ -144,7 +144,7 @@ namespace ClaFi::Controls
     public:
         FineSliderPopup(const CreateParams&, Slider& owner, SlotSpan);
     protected:
-        void keyDown(KeyDownEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
     private:
         static constexpr float k_padding = 8.0f;
         Slider& m_owner;
@@ -194,7 +194,7 @@ namespace ClaFi::Controls
         controlFeedBack();
     }
 
-    void Slider::mouseWheel(MouseWheelEvent&)
+    void Slider::nestedMouseWheel(MouseWheelEvent&)
     {
         // That may be useful, but it we want to process the wheel here,
         // it MUST be optional and turned off by default.
@@ -205,9 +205,9 @@ namespace ClaFi::Controls
 
     // The application answers first, and a handler that stops the event has replaced the finer
     // slider outright.
-    void Slider::contextPopup(ContextPopupEvent& event)
+    void Slider::nestedContextPopup(ContextPopupEvent& event)
     {
-        SliderBase::contextPopup(event);
+        SliderBase::nestedContextPopup(event);
         if (event.propagationStopped())
             return;
         if (m_fineAdjust == FineAdjust::No || !enabled(true) || maxPosition() <= 0.0f)
@@ -454,10 +454,10 @@ namespace ClaFi::Controls
 
     // The popup goes when the pointer lets go of the position, and keeps where it was let go.
     // Read before the base clears the claim.
-    void FineSlider::pressUp(PressUpEvent& event)
+    void FineSlider::nestedPressUp(PressUpEvent& event)
     {
         const bool held = positionHeldByPointer();
-        Slider::pressUp(event);
+        Slider::nestedPressUp(event);
         if (held)
             form().close();
     }
@@ -487,7 +487,7 @@ namespace ClaFi::Controls
     }
 
     // Escape puts the owner back where it stood and Return keeps where it is. Both close.
-    void FineSliderPopup::keyDown(KeyDownEvent& event)
+    void FineSliderPopup::nestedKeyDown(KeyDownEvent& event)
     {
         switch (event.key)
         {
@@ -497,7 +497,7 @@ namespace ClaFi::Controls
         case Keys::Return:
             break;
         default:
-            Panel::keyDown(event);
+            Panel::nestedKeyDown(event);
             return;
         }
         event.handled = true;

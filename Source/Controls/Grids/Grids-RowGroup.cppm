@@ -45,9 +45,9 @@ namespace ClaFi::Controls::Grids
         void adjustChildMetrics(AdjustMetricsEvent&) const override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         // On the mark's cell Right opens the group and Left closes it, as on a tree node.
-        void keyDown(KeyDownEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
         // A double click on the mark is two presses of it, and one on a blank opens the group.
-        void doubleClick(DoubleClickEvent&) override;
+        void nestedDoubleClick(DoubleClickEvent&) override;
     private:
         void createMark();
         // The cell the mark leads: the first column this span fills, left to right.

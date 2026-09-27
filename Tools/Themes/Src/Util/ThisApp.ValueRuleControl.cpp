@@ -163,9 +163,9 @@ namespace ThisApp
         [[nodiscard]] MinSize indicatorSize(const AppTheme&) const override;
         void getText(GetTextEvent&) const override;
         void paintIcon(PaintIconEvent&) override;
-        void getTooltip(GetTooltipEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
         void getControlState(GetStateEvent&) const override;
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
     private:
         ValueRulePopup& m_popup;
         ColorRuleOp m_operation;
@@ -227,11 +227,11 @@ namespace ThisApp
             writeValueContent(event.text, *m_value);
     }
 
-    void ValueRuleControl::getTooltip(GetTooltipEvent& event)
+    void ValueRuleControl::nestedGetTooltip(GetTooltipEvent& event)
     {
         if (m_value)
             event.text << k_operationNames[static_cast<std::size_t>(operation())];
-        DropdownControlBase::getTooltip(event);
+        DropdownControlBase::nestedGetTooltip(event);
     }
 
     void ValueRuleControl::getEditorText(Text& text) const
@@ -274,14 +274,14 @@ namespace ThisApp
     }
 
     // Return types over the face, the way it does over an editable combobox.
-    void ValueRuleControl::keyDown(KeyDownEvent& event)
+    void ValueRuleControl::nestedKeyDown(KeyDownEvent& event)
     {
         if (event.key == Keys::Return && openEditor())
         {
             event.handled = true;
             return;
         }
-        ValueRuleControlBase::keyDown(event);
+        ValueRuleControlBase::nestedKeyDown(event);
     }
 
     // A character that can start a value opens the editor with it, and a space presses the face.
@@ -437,10 +437,10 @@ namespace ThisApp
         paintOperationBlob(event, m_operation);
     }
 
-    void OperationItem::getTooltip(GetTooltipEvent& event)
+    void OperationItem::nestedGetTooltip(GetTooltipEvent& event)
     {
         event.text << k_operationNames[static_cast<std::size_t>(m_operation)];
-        Button::getTooltip(event);
+        Button::nestedGetTooltip(event);
     }
 
     // Stopped here, so the tile row's current item is not written over the mark.
@@ -452,7 +452,7 @@ namespace ThisApp
         event.stopPropagation();
     }
 
-    void OperationItem::click(ClickEvent&)
+    void OperationItem::nestedClick(ClickEvent&)
     {
         m_popup.pick(m_operation);
     }

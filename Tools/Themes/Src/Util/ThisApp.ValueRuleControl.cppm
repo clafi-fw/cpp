@@ -45,11 +45,11 @@ namespace ThisApp
         [[nodiscard]] bool clickOpensEditor() const override { return true; }
         void showDropdown(Control& initiator) override;
         void getMainText(GetTextEvent&) const override;
-        void getTooltip(GetTooltipEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
         void getEditorText(Text&) const override;
         void acceptEditorText(AcceptEditEvent&) override;
         [[nodiscard]] FloatPoint editorMaxTextSize(const FloatRect& textRect) const override;
-        void keyDown(KeyDownEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
     private:
         void changed();

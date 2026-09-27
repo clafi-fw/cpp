@@ -200,17 +200,17 @@ owns the slot that form is put on a scale of its own - FormBase::holdScale at th
 FormBase::followScale at the release.
 
 A SLOT THAT ANSWERS TO ITS OWN POSITION IS A LOOP. The position is read off where the pointer
-stands in the slot - see SliderBase::Thumb::drag - so a slot free to grow and move with the value
+stands in the slot - see SliderBase::Thumb::nestedDrag - so a slot free to grow and move with the value
 it is naming does not settle under a pointer. A slot half as long makes a pixel of travel worth
 twice the percent, and the slot's own left edge travels further than the pointer does, which
 reverses the sign. What it does instead of following the pointer is swing between the two ends.
 
 THE HOLD IS TAKEN AT THE PRESS, IN TWO PLACES. A press on the thumb stops propagating before the
-slot sees it - see SliderBase::Thumb::pressDown - so thumbPressDown is the hook that covers that
-one, and pressDown covers a press on the slot. Both are taken before the base runs, since the
+slot sees it - see SliderBase::Thumb::nestedPressDown - so thumbPressDown is the hook that covers that
+one, and nestedPressDown covers a press on the slot. Both are taken before the base runs, since the
 base sends the position to the point under the pointer and raises the change that writes the
 config. The release needs one place: an up walks the whole chain, so a thumb, a slot and an end
-button all reach pressUp here.
+button all reach nestedPressUp here.
 
 THE END BUTTONS AND THE ARROW KEYS ARE NOT HELD, and want no hold. Each names a step rather than
 a place, so nothing is read back off the slot and there is nothing to swing - the form grows a

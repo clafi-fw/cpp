@@ -1544,26 +1544,26 @@ namespace ClaFi
         emitEvent(event);
     }
 
-    void Control::drag(DragEvent&)
+    void Control::nestedDrag(DragEvent&)
     {
     }
 
-    void Control::pressDown(PressDownEvent& event)
-    {
-        emitEvent(event);
-    }
-
-    void Control::click(ClickEvent& event)
+    void Control::nestedPressDown(PressDownEvent& event)
     {
         emitEvent(event);
     }
 
-    void Control::doubleClick(DoubleClickEvent& event)
+    void Control::nestedClick(ClickEvent& event)
     {
         emitEvent(event);
     }
 
-    void Control::tripleClick(TripleClickEvent& event)
+    void Control::nestedDoubleClick(DoubleClickEvent& event)
+    {
+        emitEvent(event);
+    }
+
+    void Control::nestedTripleClick(TripleClickEvent& event)
     {
         emitEvent(event);
     }
@@ -1578,7 +1578,7 @@ namespace ClaFi
         emitEvent<HoverLeaveEvent>(HoverLeaveEvent{ *this });
     }
 
-    void Control::contextPopup(ContextPopupEvent& event)
+    void Control::nestedContextPopup(ContextPopupEvent& event)
     {
         emitEvent(event);
     }
@@ -1588,7 +1588,7 @@ namespace ClaFi
         emitEvent(event);
     }
 
-    void Control::keyDown(KeyDownEvent& event)
+    void Control::nestedKeyDown(KeyDownEvent& event)
     {
         switch (event.key)
         {
@@ -1606,7 +1606,7 @@ namespace ClaFi
         emitEvent(event);
     }
 
-    void Control::getTooltip(GetTooltipEvent& event)
+    void Control::nestedGetTooltip(GetTooltipEvent& event)
     {
         emitEvent(event);
         // A handler that produced text wins over the trimmed-text fallback below.
@@ -2398,7 +2398,7 @@ namespace ClaFi
         Control* item = this;
         while (item && !event.handled.propagationStopped)
         {
-            item->pressUp(event);
+            item->nestedPressUp(event);
             item = item->m_parent;
         }
         Control::invalidateStateUp(this, nullptr, InvalidateEvent::PressUp);
@@ -2409,7 +2409,7 @@ namespace ClaFi
         Control* item = this;
         while (item && !event.propagationStopped())
         {
-            item->pressDown(event);
+            item->nestedPressDown(event);
             item = item->m_parent;
         }
         Control::invalidateStateUp(this, nullptr, InvalidateEvent::PressDown);
@@ -2419,25 +2419,25 @@ namespace ClaFi
     {
         invalidateState();
         Control* control = this;
-        do control->click(params);
+        do control->nestedClick(params);
         while (!params.propagationStopped() && ((control = control->m_parent)));
-        // don't place code here - we may be killed inside the click()
+        // don't place code here - we may be killed inside the nestedClick()
     }
 
     void Control::doDoubleClick(DoubleClickEvent& event, PointInForm)
     {
         Control* control = this;
-        do control->doubleClick(event);
+        do control->nestedDoubleClick(event);
         while (!event.propagationStopped() && ((control = control->m_parent)));
-        // don't place code here - we may be killed inside the click()
+        // don't place code here - we may be killed inside the nestedClick()
     }
 
     void Control::doTripleClick(TripleClickEvent& event, PointInForm)
     {
         Control* control = this;
-        do control->tripleClick(event);
+        do control->nestedTripleClick(event);
         while (!event.propagationStopped() && ((control = control->m_parent)));
-        // don't place code here - we may be killed inside the click()
+        // don't place code here - we may be killed inside the nestedClick()
     }
 
     void Control::doHoverEnter()
@@ -2457,7 +2457,7 @@ namespace ClaFi
     void Control::doContextPopup(ContextPopupEvent& event)
     {
         if (!event.propagationStopped())
-            contextPopup(event);
+            nestedContextPopup(event);
     }
 
     // A ROOT HAS NO PARENT TO ADJUST IT, and the one thing standing over it is the form: the

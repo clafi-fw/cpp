@@ -233,7 +233,7 @@ namespace ClaFi
             // A message raised about this control stands in front of whatever it would say for
             // itself, and is the whole of the answer wherever it stands.
             if (!ContextMessage::answer(*it, event))
-                it->getTooltip(event);
+                it->nestedGetTooltip(event);
             if (!tmpText.empty())
             {
                 // A control is free to answer differently from one hover to the next - a toggle

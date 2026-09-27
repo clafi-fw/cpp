@@ -587,7 +587,7 @@ namespace ClaFi
             Control* control = m_downItem;
             while (control && !dragEvent.propagationStopped())
             {
-                control->drag(dragEvent);
+                control->nestedDrag(dragEvent);
                 control = control->m_parent;
                 m_appContext.animator().externalTimerTick();
             }
@@ -822,7 +822,7 @@ namespace ClaFi
                     }
             }
         }
-        // do not place any code here because this may be killed in the click()
+        // do not place any code here because this may be killed in the nestedClick()
     }
 
     void FormBase::wnd_doubleClick(PointInForm pt, InputStamp stamp)
@@ -974,9 +974,9 @@ namespace ClaFi
         while (control && !event.handled)
         {
             if (h)
-                control->mouseHWheel(event);
+                control->nestedMouseHWheel(event);
             else
-                control->mouseWheel(event);
+                control->nestedMouseWheel(event);
             control = control->parent();
         };
         //handleMouseMove(pt, false);
@@ -1090,7 +1090,7 @@ namespace ClaFi
                 // Should a handler that opens something modal be run after the walk unwinds
                 // instead of inside it?
                 Control* nextControl = control->parent();
-                control->keyDown(event);
+                control->nestedKeyDown(event);
                 control = nextControl;
             };
         }
@@ -1162,7 +1162,7 @@ namespace ClaFi
 
         while (control)
         {
-            control->keyUp();
+            control->nestedKeyUp();
             if (control->interactivity() == Interactivity::Focusable)
                 control->invalidateState();
             control = control->parent();

@@ -56,7 +56,7 @@ namespace ClaFi::Controls
         template<typename... Args>
         TreeNode& addNode(Args&&...);
     protected:
-        void keyDown(KeyDownEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
     private:
         // Lays the header out the way a TreeItem is laid out, so the two texts share a column.
         void layOutHeader(const ControlMetrics& buttonMetrics);

@@ -192,14 +192,14 @@ namespace ClaFi::Controls::Grids
         StackView::scrollChildIntoView(control, controlRect);
     }
 
-    void GridBase::pressDown(PressDownEvent& event)
+    void GridBase::nestedPressDown(PressDownEvent& event)
     {
         m_descriptor.beginCellSelection();
-        StackView::pressDown(event);
+        StackView::nestedPressDown(event);
         m_descriptor.endCellSelection();
     }
 
-    void GridBase::doubleClick(DoubleClickEvent& event)
+    void GridBase::nestedDoubleClick(DoubleClickEvent& event)
     {
         if (editSelectedCell())
         {
@@ -209,10 +209,10 @@ namespace ClaFi::Controls::Grids
             event.stopPropagation();
             return;
         }
-        StackView::doubleClick(event);
+        StackView::nestedDoubleClick(event);
     }
 
-    void GridBase::keyDown(KeyDownEvent& event)
+    void GridBase::nestedKeyDown(KeyDownEvent& event)
     {
         switch (event.key)
         {
@@ -267,7 +267,7 @@ namespace ClaFi::Controls::Grids
         // at all - which every text column does, since EditorMode::ReadOnly is the default. So
         // Return reaches the panel underneath from a cell holding a control, and from a column
         // that says EditorMode::None, and nowhere else. Nothing is taken from it here:
-        // Control::keyDown does nothing with Return, and the form's keyboard-click flag is a
+        // Control::nestedKeyDown does nothing with Return, and the form's keyboard-click flag is a
         // visual pressed state rather than a click.
         case Keys::F2:
         case Keys::Return:
@@ -280,7 +280,7 @@ namespace ClaFi::Controls::Grids
                 break;
             }
         }
-        StackView::keyDown(event);
+        StackView::nestedKeyDown(event);
     }
 
     void GridBase::controlAdded(Control& control)
@@ -319,10 +319,10 @@ namespace ClaFi::Controls::Grids
         RowBase* const row = stop.row;
         const Column* const column = stop.column;
 
-        // ONLY A CELL DRAWN AS TEXT. A cell holding a control is that control's - its row hands
-        // it the key, see RowContainer::keyDown - and a box laid over it would be showing a value
-        // the cell does not draw. The column cannot answer this: which cells hold controls is the
-        // ROW's, so a column of plain text with one checkbox in it is asked per cell.
+        // ONLY A CELL DRAWN AS TEXT. A cell holding a control is that control's - its row hands it
+        // the key, see RowContainer::nestedKeyDown - and a box laid over it would be showing a
+        // value the cell does not draw. The column cannot answer this: which cells hold controls is
+        // the ROW's, so a column of plain text with one checkbox in it is asked per cell.
         if (row->cellControl(*column))
             return false;
 

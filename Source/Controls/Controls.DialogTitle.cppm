@@ -29,7 +29,7 @@ namespace ClaFi::Controls
         using SysMenuButton::SysMenuButton;
     protected:
         void paintIcon(PaintIconEvent&) override;
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
     };
 
     export class MaximizeButton : public SysMenuButton
@@ -39,7 +39,7 @@ namespace ClaFi::Controls
     protected:
         void hitTest(HitTestEvent& event) const override { event.zone = HitTest::MaxButton; }
         void paintIcon(PaintIconEvent&) override;
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
     };
 
     export class CloseButton : public SysMenuButton
@@ -48,7 +48,7 @@ namespace ClaFi::Controls
         using SysMenuButton::SysMenuButton;
     protected:
         void paintIcon(PaintIconEvent&) override;
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
     };
 
     // The bar across the top of a window: its name, and the buttons that size it.
@@ -109,7 +109,7 @@ namespace ClaFi::Controls
             );
     }
 
-    void MinimizeButton::click(ClickEvent& event)
+    void MinimizeButton::nestedClick(ClickEvent& event)
     {
         event.form.minimize();
     }
@@ -143,7 +143,7 @@ namespace ClaFi::Controls
         event.canvas().drawRoundedRectangle(rect, radius, radius, strokeColor, strokeWidth);
     }
 
-    void MaximizeButton::click(ClickEvent& event)
+    void MaximizeButton::nestedClick(ClickEvent& event)
     {
         if (event.form.isMaximized())
             event.form.restore();
@@ -158,7 +158,7 @@ namespace ClaFi::Controls
         Icons::XMark::paint(event);
     }
 
-    void CloseButton::click(ClickEvent& event)
+    void CloseButton::nestedClick(ClickEvent& event)
     {
         event.closeForm();
     }

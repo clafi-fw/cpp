@@ -87,7 +87,7 @@ namespace ClaFi::Browser
         [[nodiscard]] bool isOnRestoredPage() const { return m_onRestoredPage; }
     protected:
         virtual RichControl* visualPage(RichControl*) override;
-        void getTooltip(GetTooltipEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
         void getText(GetTextEvent&) const override;
         void paintIcon(PaintIconEvent&) override;
         void secondaryClicked(ClickEvent& event) override { closeThisTab(event); }
@@ -443,9 +443,9 @@ namespace ClaFi::Browser
         return &m_browserControl->m_breadCrumbArea;
     }
 
-    void BrowserTab::getTooltip(GetTooltipEvent& event)
+    void BrowserTab::nestedGetTooltip(GetTooltipEvent& event)
     {
-        Tab::getTooltip(event);
+        Tab::nestedGetTooltip(event);
         event.placement = FormPlacement::Bottom;
     }
 

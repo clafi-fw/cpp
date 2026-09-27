@@ -126,7 +126,7 @@ namespace ClaFi::Browser
         void showDropdown(Control& initiator) override;
         void adjustPaint(AdjustPaintEvent&) override;
         void getControlState(GetStateEvent&) const override;
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
         // The mark sits on a crumb's face rather than in a field, so it carries the normal text
         // colour rather than the muted one a combobox uses.
         [[nodiscard]] Ink dropdownMarkInk() const override { return InkWell::textInk(); }
@@ -377,13 +377,13 @@ namespace ClaFi::Browser
         event.stopPropagation();
     }
 
-    void BreadCrumbBarItem::click(ClickEvent& event)
+    void BreadCrumbBarItem::nestedClick(ClickEvent& event)
     {
         // WHICH HALF WAS PRESSED IS READ FIRST, and that is load bearing: the base runs the
         // dropdown from here, and a fetch that names nothing takes the strip away - after which
         // the press lands on no part at all and would read as a press on the crumb's own face.
         const bool pressedStrip = pressedSecondary(event);
-        BreadCrumbBarItemBase::click(event);
+        BreadCrumbBarItemBase::nestedClick(event);
         // A press on the strip is the base's: it stops the click there and runs the dropdown. What
         // is left is a press on the crumb's own face, which is the page the crumb names.
         if (pressedStrip || !m_data)

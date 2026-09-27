@@ -104,8 +104,8 @@ namespace ClaFi::Controls
         [[nodiscard]] bool isItemSelected(const Control&) const override;
         void adjustNestedControlVisualState(const Control&, VisualState&) const override;
         void nestedControlDeleted(Control*) override;
-        void drag(DragEvent&) override;
-        void pressUp(PressUpEvent&) override;
+        void nestedDrag(DragEvent&) override;
+        void nestedPressUp(PressUpEvent&) override;
         void paintChildren(PaintEvent&) override;
     private:
         [[nodiscard]] bool isMultiSelect() const { return m_selectionMode == SelectionMode::Multi; }

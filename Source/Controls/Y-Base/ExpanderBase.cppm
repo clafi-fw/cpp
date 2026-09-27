@@ -95,7 +95,7 @@ namespace ClaFi::Controls
         [[nodiscard]] RoundedRectangleParts silhouette(const PaintEvent& hostEvent, const FloatRect& headerRect) const;
     protected:
         void adjustPaint(AdjustPaintEvent&) override;
-        void doubleClick(DoubleClickEvent&) override;
+        void nestedDoubleClick(DoubleClickEvent&) override;
         ScaledDimensions calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
@@ -236,9 +236,9 @@ namespace ClaFi::Controls
     // click, so the whole header answers one. A double click landing on the button toggles twice
     // over - once from the click inside it, once from here - and lands back where it started,
     // which is what a double click on a chevron already means.
-    void ExpanderHeader::doubleClick(DoubleClickEvent& event)
+    void ExpanderHeader::nestedDoubleClick(DoubleClickEvent& event)
     {
-        PanelBase::doubleClick(event);
+        PanelBase::nestedDoubleClick(event);
         toggleExpanded();
     }
 

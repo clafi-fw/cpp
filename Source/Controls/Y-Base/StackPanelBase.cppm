@@ -97,7 +97,7 @@ namespace ClaFi::Controls
         void nestedControlDeleted(Control*) override;
         void getControlState(GetStateEvent&) const override;
         Control* focusDelegate() override;
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;
     private:
         // Whether this container moves its current item itself, following whatever the user acts

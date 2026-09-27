@@ -48,11 +48,11 @@ namespace ClaFi
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"ScaleSlider"; }
     protected:
         // A press on the slot, which is where the hold starts for a click on it.
-        void pressDown(PressDownEvent&) override;
-        // A press on the thumb, which the slot never sees - see SliderBase::Thumb::pressDown.
+        void nestedPressDown(PressDownEvent&) override;
+        // A press on the thumb, which the slot never sees - see SliderBase::Thumb::nestedPressDown.
         void thumbPressDown() override;
         // The pointer lets go, and the form is drawn at the size it has named from here.
-        void pressUp(PressUpEvent&) override;
+        void nestedPressUp(PressUpEvent&) override;
     };
 
     // The backstage's own page: the options every application has, on a box that scrolls under a

@@ -44,7 +44,7 @@ namespace ClaFi::Controls
     public:
         void setChecked(Checked value);
     protected:
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
         void getControlState(GetStateEvent& event) const override
         {
             event.state.selected = m_checked == Checked::Yes;
@@ -60,7 +60,7 @@ namespace ClaFi::Controls
         invalidateState();
     }
 
-    void Checkbox2::click(ClickEvent&)
+    void Checkbox2::nestedClick(ClickEvent&)
     {
         if (m_checked == Checked::No)
             m_checked = Checked::Yes;

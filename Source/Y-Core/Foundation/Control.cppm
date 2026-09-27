@@ -1132,24 +1132,24 @@ namespace ClaFi
         //
         virtual void mouseMove(MouseMoveEvent&);
         virtual void nestedMouseMove(const MouseMoveEvent&) {};
-        virtual void mouseWheel(MouseWheelEvent&) {}
-        virtual void mouseHWheel(MouseWheelEvent&) {}
-        virtual void drag(DragEvent&);
+        virtual void nestedMouseWheel(MouseWheelEvent&) {}
+        virtual void nestedMouseHWheel(MouseWheelEvent&) {}
+        virtual void nestedDrag(DragEvent&);
         //virtual void mouseDown(const MouseDownEvent&) {}
-        virtual void pressDown(PressDownEvent&);
-        virtual void pressUp(PressUpEvent&) {}
-        virtual void click(ClickEvent&);
-        virtual void doubleClick(DoubleClickEvent&);
-        virtual void tripleClick(TripleClickEvent&);
+        virtual void nestedPressDown(PressDownEvent&);
+        virtual void nestedPressUp(PressUpEvent&) {}
+        virtual void nestedClick(ClickEvent&);
+        virtual void nestedDoubleClick(DoubleClickEvent&);
+        virtual void nestedTripleClick(TripleClickEvent&);
         //
         virtual void hoverEnter();
         virtual void hoverLeave();
         //
-        virtual void contextPopup(ContextPopupEvent&);
+        virtual void nestedContextPopup(ContextPopupEvent&);
         virtual void editContextPopup(EditContextPopupEvent&);
         //
-        virtual void keyDown(KeyDownEvent&);
-        virtual void keyUp() {}
+        virtual void nestedKeyDown(KeyDownEvent&);
+        virtual void nestedKeyUp() {}
         virtual void charPress(CharPressEvent&) {};
 
         // Painting
@@ -1157,7 +1157,7 @@ namespace ClaFi
         virtual void adjustViewPort(AdjustViewportEvent&) const {}
         //
         // Text routine (protected)
-        virtual void getTooltip(GetTooltipEvent&);
+        virtual void nestedGetTooltip(GetTooltipEvent&);
         virtual void getText(GetTextEvent&) const;
         // Moves where the children begin. The event arrives holding the content padding and
         // carries the scaler with it, so an override states its inset in design units.
@@ -1225,10 +1225,10 @@ namespace ClaFi
         static void calculateControl(Control& control, FormBase& form) { control.calculate(form); }
 
         // A key press, and the character it produced, for a child whose focus this host holds.
-        static void forwardKeyDown(Control& control, KeyDownEvent& event) { control.keyDown(event); }
+        static void forwardKeyDown(Control& control, KeyDownEvent& event) { control.nestedKeyDown(event); }
         static void forwardCharPress(Control& control, CharPressEvent& event) { control.charPress(event); }
         // A menu the keyboard asked of this host, for the same child.
-        static void forwardContextPopup(Control& control, ContextPopupEvent& event) { control.contextPopup(event); }
+        static void forwardContextPopup(Control& control, ContextPopupEvent& event) { control.nestedContextPopup(event); }
 
         // A row breaks on the lane count, or on the smaller of the maximum the control states and
         // the width handed in here - see StackPanel::wrapWidthLimit, the one caller that states one.

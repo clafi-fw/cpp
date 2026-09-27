@@ -112,7 +112,7 @@ namespace ClaFi::Controls::Grids
         alignControl(m_mark, event, markPosition, markDimensions);
     }
 
-    void RowGroupSpan::keyDown(KeyDownEvent& event)
+    void RowGroupSpan::nestedKeyDown(KeyDownEvent& event)
     {
         const bool opens = event.key == Keys::Right && !m_expanded;
         const bool closes = event.key == Keys::Left && m_expanded;
@@ -126,17 +126,17 @@ namespace ClaFi::Controls::Grids
             event.handled = true;
             return;
         }
-        RowContainer::keyDown(event);
+        RowContainer::nestedKeyDown(event);
     }
 
-    void RowGroupSpan::doubleClick(DoubleClickEvent& event)
+    void RowGroupSpan::nestedDoubleClick(DoubleClickEvent& event)
     {
         const bool onMark = event.control == m_mark;
         // The span takes a press only on its cells and its blanks, so no cell there is a blank.
         const bool onBlank = event.control == this && !columnAt(event.clickPos());
         if (!onMark && !onBlank)
         {
-            RowContainer::doubleClick(event);
+            RowContainer::nestedDoubleClick(event);
             return;
         }
         // On the mark the first press has turned the group already. Passed on, a double click

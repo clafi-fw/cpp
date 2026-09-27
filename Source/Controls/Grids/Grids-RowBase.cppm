@@ -100,7 +100,7 @@ namespace ClaFi::Controls::Grids
         //
         virtual void getCellText(const Column&, Text&);
         // The hint for one cell, asked of this row's listeners and then of the grid - the pair
-        // getCellText asks. Raised by getTooltip for the cell under the pointer.
+        // getCellText asks. Raised by nestedGetTooltip for the cell under the pointer.
         virtual void getCellTooltip(GetCellTooltipEvent&);
         // The other end of getCellText: an in-place edit of this cell is being committed, and
         // this is the text it was left with. It goes to whatever answers getCellText, so a row
@@ -125,7 +125,7 @@ namespace ClaFi::Controls::Grids
         void paintOneCell(PaintEvent&, const RowCell&, bool isFirstRow);
         void doPaintColumns(PaintEvent&);
         void paintText(PaintEvent&) override {}
-        void getTooltip(GetTooltipEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
         //
         void getControlState(GetStateEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;
@@ -134,7 +134,7 @@ namespace ClaFi::Controls::Grids
         void mouseMove(MouseMoveEvent&) override;
         void hoverLeave() override;
         void nestedControlFocusing(FocusEvent&) override;
-        void pressDown(PressDownEvent&) override;
+        void nestedPressDown(PressDownEvent&) override;
         //
         Column* columnAt(PointInForm) const;
         Column* columnAt(PointInControl) const;

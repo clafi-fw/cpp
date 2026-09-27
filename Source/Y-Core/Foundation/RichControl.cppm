@@ -97,7 +97,7 @@ namespace ClaFi
         void adjustMetrics(AdjustMetricsEvent&) const override final;
         void adjustPaint(AdjustPaintEvent&) override;
         void getText(GetTextEvent&) const override;
-        void getTooltip(GetTooltipEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
     private:
         ControlMetrics m_metrics{};
         OptionalUiElement m_colorRules{};

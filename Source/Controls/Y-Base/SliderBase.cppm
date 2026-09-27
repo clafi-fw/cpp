@@ -66,14 +66,14 @@ namespace ClaFi::Controls
         protected:
             void adjustMetrics(AdjustMetricsEvent& event) const override { parent()->adjustButtonMetrics(event); }
             void adjustPaint(AdjustPaintEvent&) override;
-            void click(ClickEvent&) override;
-            void pressDown(PressDownEvent&) override;
-            void pressUp(PressUpEvent&) override;
+            void nestedClick(ClickEvent&) override;
+            void nestedPressDown(PressDownEvent&) override;
+            void nestedPressUp(PressUpEvent&) override;
             // 'lockHoveredControl' prevents the hovered control from switching
             // when the mouse leaves the button area while the button is still pressed.
             // It kind of emulates the mouse capturing.
             // Otherwise the click repeater stucks in the active state
-            void drag(DragEvent& event) override { event.lockHoveredControl(); }
+            void nestedDrag(DragEvent& event) override { event.lockHoveredControl(); }
             void paintSurface(PaintEvent&) override;
         private:
             void doIt();
@@ -105,9 +105,9 @@ namespace ClaFi::Controls
             void getControlState(GetStateEvent&) const override;
             void adjustPaint(AdjustPaintEvent&) override;
             void paintSurface(PaintEvent&) override;
-            void getTooltip(GetTooltipEvent&) override;
-            void pressDown(PressDownEvent&) override;
-            void drag(DragEvent&) override;
+            void nestedGetTooltip(GetTooltipEvent&) override;
+            void nestedPressDown(PressDownEvent&) override;
+            void nestedDrag(DragEvent&) override;
         private:
             float m_startTop;
         };
@@ -194,9 +194,9 @@ namespace ClaFi::Controls
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void alignThumb() const;
         void getControlState(GetStateEvent&) const override;
-        void pressDown(PressDownEvent&) override;
-        void pressUp(PressUpEvent&) override;
-        void drag(DragEvent&) override;
+        void nestedPressDown(PressDownEvent&) override;
+        void nestedPressUp(PressUpEvent&) override;
+        void nestedDrag(DragEvent&) override;
         static constexpr float k_thumbSize = 20.0f;
     private:
         void applyPosition(float value, bool triggerChange);

@@ -421,11 +421,11 @@ namespace ClaFi::Controls::Grids
     }
 
     // A CELL SAYS WHAT ITS COLUMN IS TOO NARROW TO SHOW, which is the over-text hint
-    // Control::getTooltip offers for a control's own text - see that one for the shape of the
+    // Control::nestedGetTooltip offers for a control's own text - see that one for the shape of the
     // answer. A row draws its cells rather than holding a control per cell, so the question is
     // asked of the row about one of its cells, and every part of the answer is worked out here
     // rather than read off what a paint recorded.
-    void RowBase::getTooltip(GetTooltipEvent& event)
+    void RowBase::nestedGetTooltip(GetTooltipEvent& event)
     {
         // ONLY THE ROW THE HOVER NAMES ANSWERS. The walk that asks this climbs from the control
         // under the pointer, so a row holding the hovered one is asked in its turn - and the
@@ -595,11 +595,11 @@ namespace ClaFi::Controls::Grids
         m_descriptor.endCellSelection();
     }
 
-    void RowBase::pressDown(PressDownEvent& event)
+    void RowBase::nestedPressDown(PressDownEvent& event)
     {
         m_descriptor.beginCellSelection();
         selectColumnUnderMouse();
-        Control::pressDown(event);
+        Control::nestedPressDown(event);
         m_descriptor.endCellSelection();
     }
 

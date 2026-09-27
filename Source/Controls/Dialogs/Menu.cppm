@@ -62,7 +62,7 @@ namespace ClaFi::Controls
         std::wstring_view diagnosticText() const override { return L"MenuItem"; }
     protected:
         void getText(GetTextEvent&) const override;
-        void click(ClickEvent&) override;
+        void nestedClick(ClickEvent&) override;
     };
 
     /// @brief One command in the strip across the top of a menu.
@@ -81,8 +81,8 @@ namespace ClaFi::Controls
     public:
         std::wstring_view diagnosticText() const override { return L"MenuCommand"; }
     protected:
-        void getTooltip(GetTooltipEvent&) override;
-        void click(ClickEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedClick(ClickEvent&) override;
     };
 
     export using BaseMenuForm = Form<ScrollBoxWith<StackPanel>>;
@@ -378,9 +378,9 @@ namespace ClaFi::Controls
         event.text << InkWell::textInk(InkGrade::Muted) << shortcutText;
     }
 
-    void MenuItem::click(ClickEvent& event)
+    void MenuItem::nestedClick(ClickEvent& event)
     {
-        MenuItemBase::click(event);
+        MenuItemBase::nestedClick(event);
         closeBehindCommand(event);
     }
 
@@ -418,9 +418,9 @@ namespace ClaFi::Controls
     {
     }
 
-    void MenuCommand::getTooltip(GetTooltipEvent& event)
+    void MenuCommand::nestedGetTooltip(GetTooltipEvent& event)
     {
-        MenuCommandBase::getTooltip(event);
+        MenuCommandBase::nestedGetTooltip(event);
         // An action says its own name and key - see Action::getTooltip - and this is what a
         // command with none says instead. The strip writes the name under each icon and has
         // nowhere to put the key beside it, so this is where the two are said together.
@@ -441,9 +441,9 @@ namespace ClaFi::Controls
         event.text << L" (" << shortcutText << L")";
     }
 
-    void MenuCommand::click(ClickEvent& event)
+    void MenuCommand::nestedClick(ClickEvent& event)
     {
-        MenuCommandBase::click(event);
+        MenuCommandBase::nestedClick(event);
         closeBehindCommand(event);
     }
 

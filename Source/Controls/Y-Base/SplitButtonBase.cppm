@@ -86,8 +86,8 @@ namespace ClaFi::Controls
         void adjustTextRect(AdjustTextRectEvent&) const override;
         FloatRect iconRect(const PaintEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;
-        void pressDown(PressDownEvent&) override;
-        void click(ClickEvent&) override;
+        void nestedPressDown(PressDownEvent&) override;
+        void nestedClick(ClickEvent&) override;
     private:
         // Owned by ButtonBase, which holds the one child slot a button has.
         Control* m_secondaryPart{ nullptr };
