@@ -153,12 +153,7 @@ namespace ClaFi::Controls
 
         // All below is for the indicator
 
-        // The set arrives on the event by copy, so the on state is put into it here rather than
-        // stated in the theme: an indicator's active rule IS the accent, and the accent is where
-        // the framework states it once for the mark, the focus ring and the tab indicator alike.
-        // See UiElement::InactiveIndicator.
-        event.setColorRules(UiElement::InactiveIndicator);
-        event.colorRules().active = event.bakedColors().rule(UiElement::Accent);
+        event.setColorRules(UiElement::SelectionIndicator);
 
         event.setParentSelectedAmount(1.0f);
         event.setParentPressedAmount(1.0f);

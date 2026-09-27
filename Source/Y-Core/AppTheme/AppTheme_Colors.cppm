@@ -221,7 +221,7 @@ namespace ClaFi
         GridLine,
         Button,
         SelectedText,
-        InactiveIndicator,
+        SelectionIndicator,
         Accent,
         Spot,
         ScrollButton,
@@ -432,47 +432,13 @@ namespace ClaFi
             }
         };
 
-        // THE MARK WHILE IT IS OFF: the empty box of a check, the ring of a radio button, the
-        // well a caret or a selection band is raised out of. What the mark becomes when it comes
-        // on is the accent, stated once there, so this set names no active state at all - see
-        // accent. The states it does name answer the pointer, so a mark inside a button can move
-        // with the button around it, and text is the ink over the mark once something is drawn
-        // on it.
-        ControlColorRules inactiveIndicator{
-            .surface{
-                { ColorRuleOp::NoChange, 0.0f },        // S
-                { ColorRuleOp::Offset, 0.155899f }      // E
-            },
-            .stroke{
-                {},                                     // S
-                { ColorRuleOp::NoChange, 0.646367f }    // E
-            },
-            .hovered{
-                { ColorRuleHueOp::PaletteColor2 },      // H
-                { ColorRuleOp::Offset, 0.125f },        // S
-                { ColorRuleOp::Offset, 0.06f }          // E
-            },
-            .pressed{
-                { ColorRuleOp::Scale, 0.8f },           // S
-                { ColorRuleOp::Scale, 0.9f }            // E
-            },
-            // Set states an absolute target and reads it against the colour mode, so 0 comes out
-            // at the floor in dark mode and white in light mode. That is how a mark gets ink that
-            // contrasts with it under either mode, without the element having to state a flip.
-            .text{
-                { ColorRuleOp::Set, 0.0f },             // S
-                { ColorRuleOp::Set, 0.0f }              // E
-            }
-        };
-
         // THE THEME'S OWN EMPHASIS, AND WHAT SAYS A THING IS ON - one rule for both, because the
         // two are one colour. It is the ink anything asking for emphasis is drawn in, over the
         // palette's accent hue - the same one a button under the pointer moves toward, so an icon
         // drawn in it belongs to the family of the controls around it - and it is equally the
-        // active state of every mark: a check, a radio dot, a text caret, a hot link, the band a
-        // StackView draws behind a selected item, the focus ring while the user is on the control,
-        // and the indicator under an open tab. That is why inactiveIndicator states no active rule
-        // of its own: the on state is here, once, and the whole interface says it in one colour.
+        // active state of every mark: a text caret, a hot link, the band a StackView draws behind a
+        // selected item, the focus ring while the user is on the control, and the indicator under
+        // an open tab. A check and a radio dot state their own on colour - see SelectionIndicator.
         ColorRule accent{
             { ColorRuleHueOp::PaletteColor2 },          // H
             { ColorRuleOp::Set, 1.0f },                 // S
@@ -1068,6 +1034,47 @@ namespace ClaFi
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Offset, 0.037839f }      // E
+                }
+            }
+        };
+
+        // Selection indicator - its surface at rest, selected, hovered and pressed, then its text.
+        result.of(UiElement::SelectionIndicator) = {
+            ColorRule2{
+                .effect{
+                    { ColorRuleOp::NoChange, 0.0f },        // S
+                    { ColorRuleOp::Offset, 0.155899f }      // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Selected },
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Set, 1.0f },             // S
+                    { ColorRuleOp::Set, 0.544542f }         // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Hovered },
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Offset, 0.125f },        // S
+                    { ColorRuleOp::Offset, 0.06f }          // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Pressed },
+                .effect{
+                    { ColorRuleOp::Scale, 0.8f },           // S
+                    { ColorRuleOp::Scale, 0.9f }            // E
+                }
+            },
+            // Set 0 lands at the floor in dark mode and at white in light: legible either way.
+            ColorRule2{
+                .output = PaintChannel::Text,
+                .effect{
+                    { ColorRuleOp::Set, 0.0f },             // S
+                    { ColorRuleOp::Set, 0.0f }              // E
                 }
             }
         };

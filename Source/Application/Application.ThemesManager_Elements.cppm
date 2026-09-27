@@ -287,27 +287,15 @@ namespace ClaFi
                 UiElementState::ActiveText
             }
         },
-        // NO ACTIVE AND NO ACTIVE TEXT, and the omission is the whole point of the name: what a
-        // mark becomes when it comes on is Accent, stated once there for the mark, the focus ring
-        // and the tab indicator alike. ButtonBase::adjustChildPaint puts that rule into the set it
-        // hands its indicator, so the on state still arrives through UiElementState::Active - it
-        // is simply not this element's to state.
+        // The box of a check and the ring of a radio button, with the colour each takes when on.
         UiElementDescriptor{
-            .name = L"Inactive Indicator",
-            .codeName = L"inactiveIndicator",
-            .token = L"InactiveIndicator",
-            .rules = &ThemeColors::inactiveIndicator,
-            .base = UiElement::Section,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Stroke,
-                UiElementState::Hovered,
-                UiElementState::Pressed,
-                UiElementState::Text
-            }
+            .name = L"Selection Indicator",
+            .codeName = L"selectionIndicator",
+            .token = L"SelectionIndicator",
+            .base = UiElement::Section
         },
         // THREE THINGS IN ONE RULE, which is what the name says: the theme's own emphasis, the
-        // ring on the control the user is on, and the on state of every indicator. They are one
+        // ring on the control the user is on, and the indicator under an open tab. They are one
         // colour on purpose - the interface says "this one" in a single ink - so they are edited
         // as one row.
         UiElementDescriptor{

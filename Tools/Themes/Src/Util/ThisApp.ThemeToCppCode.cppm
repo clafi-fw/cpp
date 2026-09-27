@@ -74,7 +74,7 @@ namespace ThisApp
         std::wstring_view text{};
     };
 
-    constexpr std::array<MemberComment, 8ull> k_memberComments{
+    constexpr std::array<MemberComment, 7ull> k_memberComments{
         MemberComment{ .element = UiElement::TabLine, .text =
             L"Every tab's outline and the line it stands on, applied to the tab's own surface." },
         MemberComment{ .element = UiElement::Header, .text =
@@ -97,22 +97,14 @@ namespace ThisApp
             L"it, applied by the owning control's focused factor so the two crossfade as the focus\n"
             L"moves. Both are on screen together whenever a second box still holds a selection,\n"
             L"which is what they exist to tell apart." },
-        MemberComment{ .element = UiElement::InactiveIndicator, .text =
-            L"THE MARK WHILE IT IS OFF: the empty box of a check, the ring of a radio button, the\n"
-            L"well a caret or a selection band is raised out of. What the mark becomes when it comes\n"
-            L"on is the accent, stated once there, so this set names no active state at all - see\n"
-            L"accent. The states it does name answer the pointer, so a mark inside a button can move\n"
-            L"with the button around it, and text is the ink over the mark once something is drawn\n"
-            L"on it." },
         MemberComment{ .element = UiElement::Accent, .text =
             L"THE THEME'S OWN EMPHASIS, AND WHAT SAYS A THING IS ON - one rule for both, because the\n"
             L"two are one colour. It is the ink anything asking for emphasis is drawn in, over the\n"
             L"palette's accent hue - the same one a button under the pointer moves toward, so an icon\n"
             L"drawn in it belongs to the family of the controls around it - and it is equally the\n"
-            L"active state of every mark: a check, a radio dot, a text caret, a hot link, the band a\n"
-            L"StackView draws behind a selected item, the focus ring while the user is on the control,\n"
-            L"and the indicator under an open tab. That is why inactiveIndicator states no active rule\n"
-            L"of its own: the on state is here, once, and the whole interface says it in one colour." },
+            L"active state of every mark: a text caret, a hot link, the band a StackView draws behind a\n"
+            L"selected item, the focus ring while the user is on the control, and the indicator under\n"
+            L"an open tab. A check and a radio dot state their own on colour - see SelectionIndicator." },
         MemberComment{ .element = UiElement::Spot, .text =
             L"The second accent, over the palette's third hue: what stands apart from the interface\n"
             L"rather than answers to it - a brand mark, a run of emphasised text, and the tint a\n"
@@ -149,16 +141,12 @@ namespace ThisApp
         std::wstring_view text{};
     };
 
-    constexpr std::array<StateComment, 2ull> k_stateComments{
+    constexpr std::array<StateComment, 1ull> k_stateComments{
         StateComment{ .memberName = L"gridRow", .stateName = L"active", .text =
             L"A SELECTED ROW. A row wears this set and paints no surface of its own, so the rule\n"
             L"reaches the screen through the cells the row fills. It lands where a focused text\n"
             L"selection lands - selectedText's surface and active come to the same place - so the\n"
-            L"two selections an interface can show read as one colour." },
-        StateComment{ .memberName = L"inactiveIndicator", .stateName = L"text", .text =
-            L"Set states an absolute target and reads it against the colour mode, so 0 comes out\n"
-            L"at the floor in dark mode and white in light mode. That is how a mark gets ink that\n"
-            L"contrasts with it under either mode, without the element having to state a flip." }
+            L"two selections an interface can show read as one colour." }
     };
 
     // The comment that state carries in that member, or nothing where it carries none.

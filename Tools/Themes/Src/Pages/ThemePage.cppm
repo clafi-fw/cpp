@@ -608,17 +608,14 @@ namespace ThisApp
                     staticRow(UiElement::GridLine)
                 },
                 // Where the user is and what the user has picked. Accent is the one ink for the
-                // focus ring and the on state of every mark, and Spot is the emphasis that stands
-                // apart from the interface rather than answering to it. The two sets under them
-                // are what a mark and a run of selected text wear, and both read the focus.
+                // focus ring, and Spot is the emphasis that stands apart from the interface rather
+                // than answering to it. The set under them is what a run of selected text wears.
                 Grids::Dt::Expander{
                     Header{ Text{ TextStyleId::Section, L"Focus and Selection" } },
                     sectionFold(),
                     staticRow(UiElement::Accent),
                     Grids::Dt::Divider{},
                     staticRow(UiElement::Spot),
-                    Grids::Dt::Divider{},
-                    elementGroup(UiElement::InactiveIndicator),
                     Grids::Dt::Divider{},
                     elementGroup(UiElement::SelectedText)
                 }

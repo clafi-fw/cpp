@@ -178,8 +178,8 @@ namespace ClaFi
         return disabledRgb(result.toColor());
     }
 
-    // The resting band with the accent over it, so a caret, every check and radio mark, the ring
-    // on the control the user is on and a tab's indicator are drawn from one statement. The two
+    // The resting band with the accent over it, so a caret, the ring on the control the user is
+    // on and a tab's indicator are drawn from one statement. The two
     // rules are read in different directions on purpose: the band is an element and is read in the
     // direction that element stands in - reading it at this control's side would put a band drawn
     // here on the far side from one drawn by a control wearing it - while the accent belongs to no
