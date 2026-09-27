@@ -930,6 +930,51 @@ The span's <code>Tag</code> is still worth setting even when nothing reads it: h
 and your own <code>forEachRow</code> walks use it to tell a span row from an element row.
 </div>
 
+<h3 id="r-controls">Live controls in cells</h3>
+
+<p>A <code>CellWith&lt;T&gt;</code> puts a live control in a cell. The row keeps the keyboard
+focus for it: the grid keeps the arrows, Home, End, the page keys and Tab, and every other key
+goes to the control in the selected cell.</p>
+
+<p><strong>The first click picks the cell.</strong> A control that opens something over itself
+- a combobox's list, an editor typed in place - acts only on a click on the cell that is
+already selected. The first click selects the cell and its row, and the next one opens. Picking
+a row to delete it opens nothing.</p>
+
+<table>
+<tr><th>Gesture</th><th>On a cell not selected</th><th>On the selected cell</th></tr>
+<tr><td>Click on the control</td><td>Selects the cell and its row</td><td>Opens the list or the editor</td></tr>
+<tr><td>Click on the dropdown arrow</td><td>Selects and opens</td><td>Opens</td></tr>
+<tr><td>Double click</td><td>Selects and opens</td><td>Opens</td></tr>
+<tr><td>Ctrl+click, Shift+click</td><td colspan="2">In a <code>SelectionMode::Multi</code> grid, changes the selected rows and opens nothing, the arrow included</td></tr>
+<tr><td>Return, Space, F4, Alt+Down</td><td>-</td><td>Opens</td></tr>
+</table>
+
+<p>A check box or a button in a cell acts on the first click. It opens nothing over the cell,
+so the grid has nothing to hold back.</p>
+
+<p>A click on a control in a cell reaches the grid as a click on the row holding it, which is
+how the grid moves its selection. A click handler on the grid reads the row in
+<code>event.control</code>, not the control.</p>
+
+<p><strong>A cell control of your own</strong> that opens something over itself on a click asks
+first with <code>mayActOnClick</code>. When the answer is no, it leaves the click alone - the
+click goes on to the row, which picks the cell:</p>
+
+<pre><code><span class="kw">void</span> <span class="tp">SwatchControl</span>::<span class="fn">click</span>(<span class="tp">ClickEvent</span>&amp; event)
+{
+    <span class="kw">if</span> (!<span class="fn">mayActOnClick</span>(event))
+        <span class="kw">return</span>;
+    event.<span class="fn">stopPropagation</span>();
+    <span class="fn">openSwatchPopup</span>();
+}</code></pre>
+
+<div class="info">
+A control built on <code>DropdownControlBase</code> or <code>WithInPlaceEdit</code> asks
+already and needs nothing more. The question walks <code>nestedControlPressed</code> from the
+control up to the root, and the row holding the cell answers it for the control.
+</div>
+
 <h3 id="r-vary">Rows that differ from their neighbours</h3>
 
 <p>Build rows with a function and let it choose:</p>
@@ -1131,6 +1176,7 @@ address:
 <li>Use <code>std::ref</code> for anything shared or expensive.</li>
 <li>Use a bare <code>Cell{ Tag{ ... } }</code> when you want a present-but-empty cell.</li>
 <li>Add an item's row inside the <code>NewItemEvent</code> handler, so the grid can select it.</li>
+<li>Ask <code>mayActOnClick</code> before a cell control of your own opens anything on a click.</li>
 <li>Give at least one sub-column in each group <code>Fill</code>.</li>
 <li>Run a debug build after changing a blueprint.</li>
 </ul>

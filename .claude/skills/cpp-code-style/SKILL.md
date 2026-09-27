@@ -242,6 +242,7 @@ Converting a tab-indented file is safe only after confirming no tab appears outs
   }
   ```
 - **[MUST] Concepts:** PascalCase starting with an adjective or verb (e.g., `IsComposite`, `SerializableEnum`).
+- **[MUST] Bubbling Events:** A control event that bubbles up - raised on a control, then handed from it to each parent in turn, any of which may act on it, retarget it or stop it - is named with `nested` (e.g., `nestedControlFocusing`, `nestedControlHovered`, `nestedControlPressed`, `nestedMouseMove`).
 
 ## 6. C++ Modernisms
 

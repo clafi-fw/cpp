@@ -226,6 +226,9 @@ namespace ClaFi::Controls::Grids
         {
             hl->forgetRow(m_owner.animator(), row);
         }
+        // A row built later at this address is a different row, and no press has landed on it.
+        if (m_press.row == row)
+            m_press = {};
     }
 
     bool GridDescriptor::setHighlightedCell(HighlightChannel& hl, Control* row, const Column* column) const
@@ -264,6 +267,12 @@ namespace ClaFi::Controls::Grids
     void GridDescriptor::setSelectedRow(Control* value)
     {
         setSelectedCell(value, m_selectChannel.column());
+    }
+
+    void GridDescriptor::recordPress(const Control& row, const Column* column,
+        const CellPressKind cellPressKind)
+    {
+        m_press = { &row, column, cellPressKind };
     }
 
 }

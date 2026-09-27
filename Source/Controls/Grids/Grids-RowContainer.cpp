@@ -37,6 +37,24 @@ namespace ClaFi::Controls::Grids
 
     // RowContainer
 
+    void RowContainer::nestedControlPressed(PressedEvent& event)
+    {
+        if (keepsPress(*event.control))
+        {
+            event.stopPropagation();
+            return;
+        }
+        Row::nestedControlPressed(event);
+    }
+
+    // The grid completes a pick in the click pass, and it can make only a row current - handed
+    // the control, it would read the click as landing on nothing and drop the selection.
+    void RowContainer::click(ClickEvent& event)
+    {
+        event.control = this;
+        Row::click(event);
+    }
+
     void RowContainer::keyDown(KeyDownEvent& event)
     {
         Control* control = gridMovesBy(event) ? nullptr : selectedCellControl();
@@ -95,5 +113,27 @@ namespace ClaFi::Controls::Grids
         if (!control || !control->enabled(true))
             return nullptr;
         return control;
+    }
+
+    // A part with a command of its own, a dropdown strip, still acts on the press that picks its
+    // cell. Nothing in the cell acts on a press that changes the selection.
+    bool RowContainer::keepsPress(const Control& acting) const
+    {
+        for (const auto& [column, index] : m_controlMap)
+        {
+            const Control& hosted = *m_controls[index];
+            if (!hosted.containsNested(acting))
+                continue;
+            switch (pressOn(*column))
+            {
+                case CellPressKind::Pick:
+                    return &acting == &hosted;
+                case CellPressKind::Select:
+                    return true;
+                case CellPressKind::Act:
+                    return false;
+            }
+        }
+        return false;
     }
 }

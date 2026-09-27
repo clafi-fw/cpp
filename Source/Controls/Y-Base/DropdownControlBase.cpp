@@ -318,10 +318,17 @@ namespace ClaFi::Controls
 
     void DropdownControlBase::click(ClickEvent& event)
     {
+        // Whichever half is about to drop the list asks first. A click a control above keeps goes
+        // on up to it, left alone here.
+        const bool onStrip = pressedSecondary(event);
+        if (onStrip && !shownSecondaryPart()->mayActOnClick(event))
+            return;
         // A press on the strip is the base's business - it stops the click and calls
         // secondaryClicked(). What is left to decide here is a press anywhere else.
-        if (!pressedSecondary(event) && dropOnPrimaryPress() && canDropDown())
+        if (!onStrip && dropOnPrimaryPress() && canDropDown())
         {
+            if (!mayActOnClick(event))
+                return;
             event.stopPropagation();
             runDropdown(*this);
             return;

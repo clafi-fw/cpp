@@ -45,6 +45,10 @@ namespace ClaFi::Controls::Grids
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void nestedMouseMove(const MouseMoveEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;
+        // Keeps a press that picks a cell or changes the selection from the cell's control.
+        void nestedControlPressed(PressedEvent&) override;
+        // A click on a cell's control reaches the grid as a click on this row, as the focus does.
+        void click(ClickEvent&) override;
         // The row holds the focus for its cells' controls and hands them the keys the grid leaves.
         void keyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
@@ -53,6 +57,8 @@ namespace ClaFi::Controls::Grids
     private:
         // The control in the selected cell, while it stands in this row and takes input.
         [[nodiscard]] Control* selectedCellControl();
+        // Whether the press is this row's rather than the cell control's. See Grids#picking
+        [[nodiscard]] bool keepsPress(const Control& acting) const;
     private:
         ControlMap m_controlMap{};
         ControlCollection m_controls{};

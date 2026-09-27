@@ -3,6 +3,8 @@ module ClaFi.Controls.Grids;
 import :Columns;
 import :RowBase;
 
+import ClaFi.Controls.StackView;
+
 import ClaFi.Diagnostic.Log;
 
 import ClaFi.Core.System.Utils;
@@ -574,6 +576,9 @@ namespace ClaFi::Controls::Grids
     void RowBase::nestedControlFocusing(FocusEvent& event)
     {
         m_descriptor.beginCellSelection();
+        // Recorded by the row the focus lands on, before the selection moves under the press.
+        if (event.control == this)
+            recordPress(event.modifiers);
         selectColumnUnderMouse();
         // Only when the row itself is the control being focused. The event passes through every
         // row on the way up, and a row holding controls in its cells must not answer for the
@@ -613,13 +618,7 @@ namespace ClaFi::Controls::Grids
         if (Input::device() != InputDevice::Mouse)
             return;
         const PointInForm mousePosition = form().mouseDownPos();
-        // The lane rather than the cell: a press on a blank selects the cell it stands for.
-        Column* columnToSelect = nullptr;
-        traverseLanes(boundsInForm().topLeft(), [&](const RowCell& cell, const FloatRect& lane){
-            if (!columnToSelect && lane.contains(mousePosition))
-                columnToSelect = &cell.column;
-        });
-        if (columnToSelect)
+        if (const Column* columnToSelect = laneColumnAt(mousePosition))
         {
             selectColumn(*columnToSelect);
             // The click names both lines a later move keeps, the same as the keys do.
@@ -627,6 +626,18 @@ namespace ClaFi::Controls::Grids
             m_descriptor.setDesiredCellX(mousePosition.x - gridOrigin.x);
             m_descriptor.setDesiredCellY(mousePosition.y - gridOrigin.y);
         }
+    }
+
+    CellPressKind RowBase::pressOn(const Column& column) const
+    {
+        // A key reaches a cell's control only while its cell is the selected one.
+        if (Input::device() != InputDevice::Mouse)
+            return CellPressKind::Act;
+        const CellPress& press = m_descriptor.lastPress();
+        // A press recorded on some other cell did not move the selection onto this one.
+        if (press.row != this || press.column != &column)
+            return CellPressKind::Act;
+        return press.kind;
     }
 
     void RowBase::selectCellOnKeyboardEntry()
@@ -688,6 +699,40 @@ namespace ClaFi::Controls::Grids
                 result = &cell.column;
         });
         return result;
+    }
+
+    const Column* RowBase::laneColumnAt(const PointInForm position) const
+    {
+        const Column* result = nullptr;
+        traverseLanes(boundsInForm().topLeft(), [&](const RowCell& cell, const FloatRect& lane){
+            if (!result && lane.contains(position))
+                result = &cell.column;
+        });
+        return result;
+    }
+
+    // The user is on a cell while it is the selected one and, in a view holding a selection,
+    // while its row is held as well - StackPanelBase reads a press on anything else as a pick.
+    void RowBase::recordPress(const KeyModifiers modifiers)
+    {
+        if (Input::device() != InputDevice::Mouse)
+            return;
+        const Column* column = laneColumnAt(form().mouseDownPos());
+        Grid& grid = m_descriptor.owner();
+        const bool multiSelect = grid.selectionMode() == SelectionMode::Multi;
+        if (multiSelect && (modifiers.ctrl || modifiers.shift))
+        {
+            m_descriptor.recordPress(*this, column, CellPressKind::Select);
+            return;
+        }
+        const bool onSelectedCell = column
+            && m_descriptor.selectedRow() == this
+            && m_descriptor.selectedColumn() == column;
+        const bool rowHeld = !multiSelect || grid.selection().contains(this);
+        const CellPressKind kind = onSelectedCell && rowHeld
+            ? CellPressKind::Act
+            : CellPressKind::Pick;
+        m_descriptor.recordPress(*this, column, kind);
     }
 
     const Column* RowBase::coloredColumnOfCell(const Control& control, const PaintEvent& event)

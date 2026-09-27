@@ -174,6 +174,20 @@ text, icons and children together for everything that does not separate them.
 Why a run of states is being invalidated, which decides what each control on the way is told
 besides the invalidation itself. `None` is the invalidation alone.
 
+## PressedEvent
+
+A control about to act on the click it was given - drop a list over itself, open an editor on
+itself - asks first with `Control::mayActOnClick`. That raises this event and walks
+`nestedControlPressed` from the control up to the root, the control itself first, the way
+`nestedControlFocusing` walks. Any control on the way may stop it. A stopped event means a control
+above keeps the click: the control does not act, and leaves the click to go on up.
+
+This is how a container keeps a click that is a step of its own gesture rather than a command to
+the control inside it. A grid row keeps the press that picks a cell - see Grids#picking.
+
+Only an act that opens something over the control asks. A check box toggling in place, a button
+running its command, has nothing to ask about.
+
 ## GetActionStateEvent
 
 An action asks its two questions with `GetActionStateEvent` and `ActionClickEvent`, of each

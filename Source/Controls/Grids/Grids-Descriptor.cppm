@@ -81,6 +81,22 @@ namespace ClaFi::Controls::Grids
         const Column* m_column{};
     };
 
+    // What the last mouse press was to the cell it landed on. See Grids#picking
+    enum class CellPressKind
+    {
+        Pick,     // it moved the selection onto the cell
+        Select,   // it held a selection modifier, and changes the grid's selection alone
+        Act       // it landed on the cell the user was already on
+    };
+
+    // The last mouse press and the cell it landed on, taken before it moved the selection.
+    struct CellPress
+    {
+        const Control* row{};
+        const Column* column{};
+        CellPressKind kind{ CellPressKind::Act };
+    };
+
     export class GridDescriptor
     {
         //
@@ -168,6 +184,9 @@ namespace ClaFi::Controls::Grids
 
         void onCellAnimated(AnimateParams&) const;
         void setSelectedRow(Control*);
+        // Taken by the row a press lands in, before the press moves the selection.
+        void recordPress(const Control& row, const Column*, CellPressKind);
+        [[nodiscard]] const CellPress& lastPress() const { return m_press; }
     private:
         //
         static constexpr std::size_t k_maxHoverHighlights{ 16 };
@@ -195,6 +214,8 @@ namespace ClaFi::Controls::Grids
         // begin/endCellSelection routine
         int m_selectionCnt{};
         bool m_selectionChanged{};
+        //
+        CellPress m_press{};
         //
         const PaintEvent* m_gridPaintEvent{}; // valid only during the paint stage.
     };

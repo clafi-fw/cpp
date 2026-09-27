@@ -139,6 +139,8 @@ namespace ClaFi::Controls::Grids
         Column* columnAt(PointInForm) const;
         Column* columnAt(PointInControl) const;
         void selectColumnUnderMouse();
+        // What the last press was to this row's cell in that column. See Grids#picking
+        [[nodiscard]] CellPressKind pressOn(const Column&) const;
         void selectCellOnKeyboardEntry();
         void selectColumn(const Column& value);
         void scrollCellIntoView(const FloatRect& cellRect);
@@ -164,6 +166,10 @@ namespace ClaFi::Controls::Grids
 
     private:
         Column* columnAt(ScaledPosition mousePosition, ScaledPosition topLeft) const;
+        // The column whose lane holds the point: a press on a blank names the cell it stands for.
+        [[nodiscard]] const Column* laneColumnAt(PointInForm position) const;
+        // What this press is to the cell it lands on, taken before it moves the selection.
+        void recordPress(KeyModifiers);
         // The column whose cell holds `control` and gives it a colour, or nullptr. The colour
         // is tested first: it is a field read where cellControl is a lookup, so a grid whose
         // columns carry no colour - the common case - never makes the second.

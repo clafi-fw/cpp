@@ -41,7 +41,7 @@ namespace ThisApp
         void setNormalizedValue(float);
     protected:
         [[nodiscard]] EditorMode editorMode() const override;
-        // The face is typed over on the first press, and the strip drops the popup.
+        // The face is typed over on any press the grid leaves it, and the strip drops the popup.
         [[nodiscard]] bool clickOpensEditor() const override { return true; }
         void showDropdown(Control& initiator) override;
         void getMainText(GetTextEvent&) const override;

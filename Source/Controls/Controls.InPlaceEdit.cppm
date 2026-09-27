@@ -306,7 +306,9 @@ namespace ClaFi::Controls
     ///
     /// @note The gestures are F2, and A CLICK ON THE TEXT OF A CONTROL THE USER IS ALREADY ON.
     /// The click that picks a control never edits it, or a control could never be picked
-    /// without editing it, and neither does the trailing click of a double click.
+    /// without editing it, and neither does a click a control above keeps for itself - see
+    /// Control::mayActOnClick. The trailing click of a double click does not edit either, unless
+    /// a control above kept the first one: the second is then an ordinary click.
     ///
     /// @note The host also answers StdActions::rename, so a menu item or a toolbar button
     /// presenting that command renames it with nothing written by the application.
@@ -371,7 +373,8 @@ namespace ClaFi::Controls
         [[nodiscard]] virtual const TextItems* editorSuggestions() const;
         /// Whether the click being answered opens the editor. It is asked once per click, before
         /// anything is dispatched, and only for a press on this control itself: a press on a part
-        /// of it - a dropdown strip, a close button - is that part's.
+        /// of it - a dropdown strip, a close button - is that part's. A control above may still
+        /// keep a click this answers yes to - see Control::mayActOnClick.
         ///
         /// The default is A CLICK ON THE TEXT OF A CONTROL THE USER IS ALREADY ON: the click that
         /// PICKS a control never edits it, or a control could never be picked without editing it,
@@ -411,6 +414,8 @@ namespace ClaFi::Controls
         // indistinguishable from a lone one, and that pair means whatever double clicking means
         // here rather than an edit.
         bool m_doubleClicked{ false };
+        // The last click would have opened the editor, and a control above kept it.
+        bool m_clickKept{ false };
     };
 
 
@@ -566,7 +571,9 @@ namespace ClaFi::Controls
     {
         // Read and cleared before anything else runs: the base may take the focus somewhere and
         // come back, and the editor below pumps messages of its own.
-        const bool opensEditor = event.control == this && !m_doubleClicked && clickOpensEditor();
+        const bool wouldOpen = event.control == this && !m_doubleClicked && clickOpensEditor();
+        const bool opensEditor = wouldOpen && this->mayActOnClick(event);
+        m_clickKept = wouldOpen && !opensEditor;
         m_wasCurrentBeforePress = false;
         m_doubleClicked = false;
 
@@ -578,7 +585,9 @@ namespace ClaFi::Controls
     template <IsControl HostClass>
     void WithInPlaceEdit<HostClass>::doubleClick(DoubleClickEvent& event)
     {
-        m_doubleClicked = true;
+        // A pair whose first click a control above kept is two ordinary clicks, and the second
+        // edits the way one does.
+        m_doubleClicked = !m_clickKept;
         HostClass::doubleClick(event);
     }
 

@@ -41,11 +41,38 @@ closed - see Collapsible.
 A row whose cells hold controls. Every control a row holds is MouseOnly, so the row holds the
 focus for them and hands the control in the selected cell every key the grid does not move by,
 and what is typed. The grid keeps the arrows, Home, End, PageUp, PageDown and Tab - unless Alt is
-held, which makes the key the control's: Alt+Down drops a combobox's list.
+held, which makes the key the control's: Alt+Down drops a combobox's list. A press on one of
+the controls picks its cell before the control acts on anything - see Picking.
 
 A key the control leaves goes on as it would have. Return and Space are the exception: they press
 the control, the way FocusNavigator presses a control that has the focus, so Return on a
 checkbox cell toggles it and on a combobox cell drops its list or opens its editor.
+
+## Picking
+
+A press on a control in a cell picks the cell first. The control acts only on a press on the cell
+that was already selected, and in a grid that keeps a selection, only while its row is held as
+well. A part with a command of its own, a dropdown strip, acts on the picking press too.
+
+The row the press focuses records it, in `RowBase::nestedControlFocusing`, before
+`selectColumnUnderMouse` moves the selection - the one moment both the old cell and the new one
+are known. The record is one cell and what the press was to it, a `CellPressKind`, kept in
+`GridDescriptor`. When the cell's control is about to act on the click it asks, and
+`RowContainer::nestedControlPressed` stops the event for a press the row keeps - see
+Control-Foundation#pressedevent.
+
+- Ctrl or Shift in a `SelectionMode::Multi` grid make the press `Select`, and the row keeps it
+  from everything in the cell, strip included.
+- A click the keyboard makes - Return or Space handed to the cell's control - is never kept. The
+  device is read at the click, and a key reaches the control only through the selected cell.
+- A double click on a cell that was not selected picks and opens in one gesture: the row keeps
+  the first click, and the second lands on the cell it picked. `WithInPlaceEdit` counts the pair
+  as two ordinary clicks when its first click was kept.
+
+THE CLICK REACHES THE GRID AS A CLICK ON THE ROW. `RowContainer::click` retargets it the way
+`nestedControlFocusing` retargets the focus. The grid's click pass completes a pick - a Ctrl
+toggle, a plain press on a row already held - and it can make only a row current: handed the
+control, it would read the click as landing on nothing and clear the selection.
 
 ## RowStop
 
