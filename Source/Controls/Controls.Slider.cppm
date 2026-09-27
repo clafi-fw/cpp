@@ -250,7 +250,7 @@ namespace ClaFi::Controls
         const BakedColorRules2& buttonRules = event.bakedColors().rules2.of(UiElement::Button);
         const auto restingStroke = std::ranges::find_if(buttonRules,
             [](const BakedColorRule2& rule) {
-                return rule.output == PaintChannel::Stroke and rule.inputs.empty();
+                return rule.output == PaintChannel::Stroke and rule.atRest();
             });
         if (restingStroke != buttonRules.end())
             slotRules.stroke = restingStroke->effect;

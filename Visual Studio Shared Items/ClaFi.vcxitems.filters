@@ -418,6 +418,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\RenameIcon.cppm">
       <Filter>Icons</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\ResetIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\RestartIcon.cppm">
       <Filter>Icons</Filter>
     </ClCompile>

@@ -212,8 +212,8 @@ namespace ClaFi
         // Whether a host further out, in its standard stage at the moment, lists this control - a
         // control that host's overlay stage is going to paint. See paint.
         [[nodiscard]] bool isListedByEnclosingHost(const Control&) const;
-        // How far a rule reading these inputs applies on a channel: its rest, or their factors.
-        [[nodiscard]] float inputFactor(RuleInputs, PaintChannel) const;
+        // How far a rule applies on its channel: its inputs or the channel's rest, times andInputs.
+        [[nodiscard]] float inputFactor(const BakedColorRule2&) const;
         // The new rules on one channel, in the order they apply; how far they moved it.
         float applyColorRules2(PaintChannel, Hsl& color, float* namedHue = nullptr) const;
         float applyColorRules2(const BakedColorRules2&, PaintChannel, Hsl& color,

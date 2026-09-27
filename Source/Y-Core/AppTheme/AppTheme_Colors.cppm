@@ -66,6 +66,7 @@ namespace ClaFi
         void setOperationAndValue(ColorRuleOp, float value);
 
         float applyTo(float& field, float factor, ColorMode, float luminosityFloor) const;
+        [[nodiscard]] bool operator==(const ColorRuleValue&) const = default;
     private:
         static constexpr float toNormalizedValue(ColorRuleOp, float);
         static constexpr float fromNormalizedValue(ColorRuleOp, float);
@@ -97,6 +98,7 @@ namespace ClaFi
         float exactValue() const { return m_exactValue; }
         void setExactValue(float value) { m_exactValue = value; }
         float actualHue(const ThemeColors&, float fallbackHue) const;
+        [[nodiscard]] bool operator==(const ColorRuleHue&) const = default;
     private:
         ColorRuleHueOp m_operation;
         // exactValue is used only if (action == ExactValue);
@@ -122,6 +124,7 @@ namespace ClaFi
         // first, so a rule left at its default costs nothing.
         [[nodiscard]] bool changesNothing() const;
         void setExactHsl(Hsl, ColorMode);
+        [[nodiscard]] bool operator==(const ColorRule&) const = default;
     public:
         ColorRuleHue hue{};
         ColorRuleValue saturation{};
@@ -237,7 +240,7 @@ namespace ClaFi
     {
         Hovered,
         Pressed,
-        Focused,        // the control's focus, as far as its form holds the focus
+        Focused,        // the control's own focus, whether or not its form has it
         Selected,
         Disabled,       // the enabled factor turned over
         TextHovered,
@@ -249,7 +252,7 @@ namespace ClaFi
     // How far each input stands on one control, in RuleInput order.
     export using RuleInputLevels = std::array<float, static_cast<std::size_t>(RuleInput::Count)>;
 
-    // The inputs a rule reads, joined as "or". An empty set is at rest: the rule always applies.
+    // The inputs a rule reads, joined as "or". An empty set stands at 1 and holds nothing back.
     export class RuleInputs
     {
     public:
@@ -293,9 +296,12 @@ namespace ClaFi
     // A rule of the new color theme architecture: it reads its inputs and writes to its output.
     export struct ColorRule2
     {
-        RuleInputs inputs{};                            // what the rule reads
+        RuleInputs inputs{};                            // when the rule applies, at rest if empty
+        RuleInputs andInputs{};                         // what must hold as well, joined as "and"
         PaintChannel output{ PaintChannel::Surface };   // the channel the rule writes to
         ColorRule effect{};                             // what the rule does to that channel
+        [[nodiscard]] bool atRest() const { return inputs.empty() and andInputs.empty(); }
+        [[nodiscard]] bool operator==(const ColorRule2&) const = default;
     };
 
     export using ColorRules2 = std::vector<ColorRule2>;
@@ -1042,6 +1048,7 @@ namespace ClaFi
             },
             ColorRule2{
                 .inputs{ RuleInput::Focused },
+                .andInputs{ RuleInput::WindowFocused },
                 .effect{
                     { ColorRuleOp::Offset, 0.382042f },     // S
                     { ColorRuleOp::Offset, 0.094934f }      // E

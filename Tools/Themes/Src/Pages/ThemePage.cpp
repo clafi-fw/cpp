@@ -962,7 +962,7 @@ namespace ThisApp
                 continue;
             for (const ColorRule2& rule : *list)
             {
-                if (!rule.inputs.empty() or rule.output != channel)
+                if (!rule.atRest() or rule.output != channel)
                     continue;
                 rule.effect.applyTo(color, 1.0f, editColors(), mode);
                 if (rule.effect.hue.operation() != ColorRuleHueOp::NoChange)

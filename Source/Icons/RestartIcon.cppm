@@ -39,10 +39,13 @@ namespace ClaFi::Icons::RestartIcon
         return { -std::sin(radians), std::cos(radians) };
     }
 
-    // Each segment's control points lie on the tangents at its ends, at the distance that keeps
-    // the curve on the circle.
-    void buildRingPath(PixelPath& path, const FloatPoint center, const float radius)
+    // The ring in local space, in a square of `size`, which ResetIcon draws mirrored. Each
+    // segment's control points lie on the tangents at its ends, at the distance that keeps the
+    // curve on the circle.
+    export void buildRingPath(PixelPath& path, const float size)
     {
+        const FloatPoint center = { size * 0.5f };
+        const float radius = size * 0.5f * k_radiusShare;
         const float step = radiansOf(k_sweepDegrees) / k_segments;
         const float handle = 4.0f / 3.0f * std::tan(step / 4.0f) * radius;
         float angle = radiansOf(k_startDegrees);
@@ -60,14 +63,19 @@ namespace ClaFi::Icons::RestartIcon
         }
     }
 
-    // The head, an open chevron on the tip the ring arrives at, pointing on along it. Separate
-    // from the ring because it carries the accent colour.
-    void buildHeadPath(PixelPath& path, const FloatPoint center, const float radius)
+    // The head, an open chevron on the tip the ring arrives at. It lies along the chord of the
+    // ring it covers, so the ring runs in between its legs - laid on the tangent at the tip, its
+    // inner leg would lie along the ring. Separate from the ring because it carries the accent.
+    export void buildHeadPath(PixelPath& path, const float size)
     {
+        const FloatPoint center = { size * 0.5f };
+        const float radius = size * 0.5f * k_radiusShare;
         const float end = radiansOf(k_startDegrees + k_sweepDegrees);
         const FloatPoint tip = pointAt(center, radius, end);
-        const FloatPoint back = -headingAt(end) * (radius * k_headLength);
-        const FloatPoint aside = FloatPoint{ std::cos(end), std::sin(end) } * (radius * k_headHalfWidth);
+        // Where the ring's tangent runs parallel to that chord - at the chord's middle.
+        const float axis = end - std::asin(k_headLength * 0.5f);
+        const FloatPoint back = -headingAt(axis) * (radius * k_headLength);
+        const FloatPoint aside = FloatPoint{ std::cos(axis), std::sin(axis) } * (radius * k_headHalfWidth);
         path.moveTo(tip + back + aside);
         path.lineTo(tip);
         path.lineTo(tip + back - aside);
@@ -81,17 +89,15 @@ namespace ClaFi::Icons::RestartIcon
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         size -= strokeWidth;
 
-        const FloatPoint center{ size * 0.5f };
-        const float radius = size * 0.5f * k_radiusShare;
         Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         Canvas& canvas = event.canvas();
         PixelPath path;
 
-        buildRingPath(path, center, radius);
+        buildRingPath(path, size);
         canvas.drawPath(path, { PathDrawLayer::stroke(event.textRgb(InkGrade::Strong), strokeWidth) }, &transform);
 
         path.clear();
-        buildHeadPath(path, center, radius);
+        buildHeadPath(path, size);
         canvas.drawPath(path, { PathDrawLayer::stroke(event.accentRgb(InkGrade::Strongest), strokeWidth) }, &transform);
     }
 }

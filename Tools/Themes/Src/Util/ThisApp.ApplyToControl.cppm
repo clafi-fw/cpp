@@ -16,6 +16,9 @@ namespace ThisApp
     // What an Apply to control calls after it has changed its rule.
     export using OnRuleChanged = std::function<void()>;
 
+    // Which of a rule's two input sets a column edits - inputs or andInputs.
+    export using RuleClause = RuleInputs ColorRule2::*;
+
     // A rule's Apply to cell: the channel it writes and the inputs it reads, set from one dropdown.
     export class ApplyToControl : public DropdownControlBase
     {
@@ -26,9 +29,10 @@ namespace ThisApp
         // Takes the rule by its place, which a growing list keeps, and what to call after a change.
         void bind(ColorRules2&, std::size_t index, OnRuleChanged);
         [[nodiscard]] PaintChannel output() const;
-        [[nodiscard]] bool reads(RuleInput) const;
+        [[nodiscard]] bool reads(RuleClause, RuleInput) const;
+        [[nodiscard]] bool readsAny(RuleClause) const;
         void setOutput(PaintChannel);
-        void toggleInput(RuleInput);
+        void toggleInput(RuleClause, RuleInput);
     protected:
         [[nodiscard]] bool dropOnPrimaryPress() const override { return true; }
         void showDropdown(Control& initiator) override;
@@ -53,7 +57,7 @@ namespace ThisApp
         DropdownControlBase{ params,
             HorizontalTextAnchor::Left,
             VerticalTextAnchor::Center,
-            // One line, like the grid's text cells - the grid measures a row before it lays it out.
+            // Broken only at its own line end - the grid measures a row before it lays it out.
             WordWrap::No,
             std::forward<Args>(args)...
         }

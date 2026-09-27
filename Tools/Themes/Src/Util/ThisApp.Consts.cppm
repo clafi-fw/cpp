@@ -62,8 +62,10 @@ namespace ThisApp
     export constexpr std::wstring_view k_elementAttrName{ L"Element" };
     // The token the shared rules' page goes by, where an element's page goes by its element's.
     export constexpr std::wstring_view k_sharedRulesToken{ L"Shared" };
-    // The token the Any window page goes by.
+    // The token the Any Window page goes by.
     export constexpr std::wstring_view k_anyWindowRulesToken{ L"AnyWindow" };
+    // The token the Palette & Transform page goes by.
+    export constexpr std::wstring_view k_paletteToken{ L"Palette" };
 
     // What a tab's icon is drawn from, kept in the tab's entry so that an unopened tab reads no
     // file for it - see ThemesBrowser::paintTabIcon.

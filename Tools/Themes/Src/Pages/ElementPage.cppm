@@ -4,6 +4,7 @@ import ThisApp.RuleSlider;
 
 import ClaFi.Icons.HueIcon;
 import ClaFi.Icons.LuminosityIcon;
+import ClaFi.Icons.ResetIcon;
 import ClaFi.Icons.SaturationIcon;
 
 import ClaFi.Controls.Button;
@@ -43,8 +44,9 @@ namespace ThisApp
         template<typename... Args>
         explicit ElementPage(const CreateParams&, std::wstring_view title, Args&&...);
     public:
-        // Takes the list, the colours its hues read, its ramps' base and what to call after edits.
-        void bind(ColorRules2&, const ThemeColors&, OnGetListRuleBase, OnRulesChanged);
+        // Takes the list, its defaults, the hues' colours, its ramps' base and what edits call.
+        void bind(ColorRules2&, const ColorRules2& defaults, const ThemeColors&, OnGetListRuleBase,
+            OnRulesChanged);
         // Builds a row for every rule in the list, in list order.
         void rebuild();
     private:
@@ -62,16 +64,19 @@ namespace ThisApp
         void addRule();
         void deleteSelectedRules();
         void deletePendingRules();
+        void resetRules();
         void addRow(std::size_t index);
         void bindEditors(Grids::RowContainer&);
         [[nodiscard]] Grids::Column& column(RuleColumn);
         [[nodiscard]] OnGetRuleBase ruleBaseOf(std::size_t index, RuleChannel) const;
-        void rulesChanged() const;
+        void rulesChanged();
     private:
         ColorRules2* m_rules{}; // the list the page shows, null until bound
+        const ColorRules2* m_defaults{}; // what a reset puts back, null until bound
         const ThemeColors* m_colors{}; // what the hue editors read the palette from
         OnGetListRuleBase m_ruleBase{};
         OnRulesChanged m_onRulesChanged{};
+        OnRulesChanged m_onCellEdit; // what the cells' editors call, held by address
         UiTimer m_deleteTimer{}; // deletes on the next tick, outside the event that asked
         RuleIndices m_pendingDeletes{};
         RuleRows m_ruleRows{}; // one per rule, the header aside
@@ -86,6 +91,14 @@ namespace ThisApp
             Orientation::Horizontal,
             Interactivity::ActiveContainer,
             Spacing{ 4.0f }
+        ) };
+
+        ToolButton& m_resetButton{ m_tools.add<ToolButton>(
+            IconSize{ 18.0f },
+            ButtonViewMode::IconOnly,
+            OnPaintIcon{ Icons::ResetIcon::paint },
+            L"Reset to defaults",
+            Interactivity::MouseOnly
         ) };
 
         // Words, icon and state come from the action; mouse only keeps the focus in the grid.
@@ -137,6 +150,9 @@ namespace ThisApp
         Args&&... args)
         :
         Panel{ params, std::forward<Args>(args)... },
+        m_onCellEdit{ [this]() {
+            rulesChanged();
+        } },
         m_title{ m_topBar.createBody<Label>(
             VerticalTextAnchor::Center,
             Text{ TextStyleId::SubTitle, title }
@@ -160,6 +176,14 @@ namespace ThisApp
         onActionClick([this](ActionClickEvent& event) {
             if (&event.action == &StdActions::del)
                 deleteSelectedRules();
+        });
+        m_resetButton.onClick([this](ClickEvent&) {
+            resetRules();
+        });
+        // Offered only where a reset would change something.
+        m_resetButton.onGetState([this](GetStateEvent& event) {
+            event.state.enabled = m_rules && *m_rules != *m_defaults;
+            event.stopPropagation();
         });
     }
 }

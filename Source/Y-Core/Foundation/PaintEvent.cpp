@@ -222,7 +222,7 @@ namespace ClaFi
             m_controlContext.ruleInputLevels = {
                 hoverEffectiveFactor,
                 effectivePressedFactor,
-                factors.focused() * m_windowFocusedFactor,
+                factors.focused(),
                 selectedFactor,
                 1.0f - m_enabledFactor,
                 factors.textHovered(),
@@ -687,24 +687,25 @@ namespace ClaFi
         return false;
     }
 
-    float PaintEvent::inputFactor(const RuleInputs inputs, const PaintChannel channel) const
+    float PaintEvent::inputFactor(const BakedColorRule2& rule) const
     {
+        const PaintChannel channel = rule.output;
         const bool onSurface = channel == PaintChannel::Surface or channel == PaintChannel::Stroke;
-        if (inputs.empty())
-        {
-            if (channel == PaintChannel::Surface)
-                return m_ruleInputFactors.surfaceRest;
-            if (channel == PaintChannel::Stroke)
-                return m_ruleInputFactors.strokeRest;
-            return 1.0f;
-        }
+        float restFactor = 1.0f;
+        if (channel == PaintChannel::Surface)
+            restFactor = m_ruleInputFactors.surfaceRest;
+        else if (channel == PaintChannel::Stroke)
+            restFactor = m_ruleInputFactors.strokeRest;
+        if (rule.atRest())
+            return restFactor;
         RuleInputLevels levels = m_controlContext.ruleInputLevels;
         if (onSurface)
         {
             const std::size_t selected = static_cast<std::size_t>(RuleInput::Selected);
             levels[selected] = m_ruleInputFactors.selectedOnSurface;
         }
-        return inputs.levelIn(levels);
+        const float whenFactor = rule.inputs.empty() ? restFactor : rule.inputs.levelIn(levels);
+        return whenFactor * rule.andInputs.levelIn(levels);
     }
 
     // The element's own list, then the window's, then the shared one. A form's root control is a
@@ -739,7 +740,7 @@ namespace ClaFi
         {
             if (rule.output != channel)
                 continue;
-            const float factor = inputFactor(rule.inputs, channel);
+            const float factor = inputFactor(rule);
             changed = StateFactors::compose(changed, rule.effect.applyTo(color, factor, lightness));
             if (namedHue)
                 *namedHue = StateFactors::compose(*namedHue, factor * rule.effect.hue.setPull);

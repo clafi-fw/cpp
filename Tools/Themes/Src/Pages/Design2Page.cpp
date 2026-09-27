@@ -22,13 +22,13 @@ namespace ThisApp
     namespace
     {
         constexpr SharedRules k_anyElement{
-            .name = L"Any element",
+            .name = L"Any Element",
             .token = k_sharedRulesToken,
             .rules = &ThemeRules2::shared
         };
 
         constexpr SharedRules k_anyWindow{
-            .name = L"Any window",
+            .name = L"Any Window",
             .token = k_anyWindowRulesToken,
             .rules = &ThemeRules2::anyWindow
         };
@@ -38,7 +38,6 @@ namespace ThisApp
         {
             std::wstring_view name;
             std::span<const UiElement> elements;
-            const SharedRules* shared{ nullptr }; // listed ahead of the elements
         };
 
         constexpr std::array k_windowRoots{
@@ -74,10 +73,10 @@ namespace ThisApp
         };
 
         constexpr std::array k_elementCategories{
-            ElementCategory{ L"Window roots", k_windowRoots, &k_anyWindow },
+            ElementCategory{ L"Window roots", k_windowRoots },
             ElementCategory{ L"Surfaces", k_surfaces },
             ElementCategory{ L"Controls", k_controls },
-            ElementCategory{ L"Focus and Selection", k_focusAndSelection }
+            ElementCategory{ L"Focus & Selection", k_focusAndSelection }
         };
     }
 
@@ -101,22 +100,28 @@ namespace ThisApp
         ThemeRules2& rules = colors.rules2;
         for (const TreeEntry& entry : m_entries)
         {
+            if (!entry.rules)
+                continue;
             ColorRules2& list = entry.element
                 ? rules.of(*entry.element)
                 : rules.*entry.shared->rules;
+            const ColorRules2& defaults = entry.element
+                ? m_defaultRules.of(*entry.element)
+                : m_defaultRules.*entry.shared->rules;
             const OptionalUiElement element = entry.element;
             OnGetListRuleBase listRuleBase = [ruleBase, element](const ColorRule2& rule,
                 const RuleChannel channel) {
                 return ruleBase(element, rule, channel);
             };
-            entry.page->bind(list, colors, std::move(listRuleBase), onRulesChanged);
+            entry.rules->bind(list, defaults, colors, std::move(listRuleBase), onRulesChanged);
         }
     }
 
     void Design2Page::rebuildRules()
     {
         for (const TreeEntry& entry : m_entries)
-            entry.page->rebuild();
+            if (entry.rules)
+                entry.rules->rebuild();
     }
 
     void Design2Page::buildTree()
@@ -125,14 +130,14 @@ namespace ThisApp
             showPickedPage();
         });
 
+        addEntry(m_tree.addItem(), TreeEntry{ .page = &m_palettePage });
         addEntry(m_tree.addItem(), TreeEntry{ .shared = &k_anyElement });
-        // Sets Any element apart, so it reads as a peer of the categories.
+        addEntry(m_tree.addItem(), TreeEntry{ .shared = &k_anyWindow });
+        // Sets the theme-wide pages apart, so they read as peers of the categories.
         m_tree.add<Divider>(Thickness::Heavy, Padding{ 4.0f, 6.0f });
         for (const ElementCategory& category : k_elementCategories)
         {
             TreeNode& node = m_tree.addNode(HeaderText{ category.name });
-            if (category.shared)
-                addEntry(node.addItem(), TreeEntry{ .shared = category.shared });
             for (const UiElement element : category.elements)
                 addEntry(node.addItem(), TreeEntry{ .element = element });
         }
@@ -140,13 +145,16 @@ namespace ThisApp
 
     void Design2Page::addEntry(TreeItem& item, TreeEntry entry)
     {
-        const std::wstring_view name = entry.element
-            ? uiElementOf(*entry.element).name
-            : entry.shared->name;
+        const std::wstring_view name = nameOf(entry);
         item.text() << name;
         item.setTag(Tag{ m_entries.size() });
         entry.item = &item;
-        entry.page = &m_pages.add<ElementPage>(name);
+        // A page of rules is made here - the palette's page stands already.
+        if (!entry.page)
+        {
+            entry.rules = &m_pages.add<ElementPage>(name);
+            entry.page = entry.rules;
+        }
         m_entries.push_back(entry);
         // The first item stands picked, so the body never opens empty.
         if (!m_tree.currentItem())
@@ -166,10 +174,21 @@ namespace ThisApp
         return nullptr;
     }
 
+    std::wstring_view Design2Page::nameOf(const TreeEntry& entry)
+    {
+        if (entry.element)
+            return uiElementOf(*entry.element).name;
+        if (entry.shared)
+            return entry.shared->name;
+        return k_paletteTitle;
+    }
+
     std::wstring_view Design2Page::tokenOf(const TreeEntry& entry)
     {
         if (entry.element)
             return uiElementOf(*entry.element).token;
-        return entry.shared->token;
+        if (entry.shared)
+            return entry.shared->token;
+        return k_paletteToken;
     }
 }

@@ -3,13 +3,17 @@ export module ThisApp.Design2Page;
 import ThisApp.ElementPage;
 import ThisApp.RuleSlider;
 
+import ClaFi.Controls.Label;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
+import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.TreeView;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 
@@ -45,18 +49,21 @@ namespace ThisApp
         // Connects a handler raised after another page is picked.
         template<typename F>
         EventConnection onPagePick(F&& callback);
+        // The Palette & Transform page's body, which the theme page fills.
+        [[nodiscard]] StackPanel& paletteView() { return m_paletteView; }
         // Hands every page its list of the theme's rules, its ramps' base and what to call.
         void bind(ThemeColors&, const OnGetElementRuleBase&, const OnRulesChanged&);
         // Builds every page's rows again from the rules as they stand.
         void rebuildRules();
     private:
-        // An item of the tree and the page it opens, named by the element whose rules it shows.
+        // An item of the tree and the page it opens.
         struct TreeEntry
         {
-            OptionalUiElement element{}; // nothing for a shared list
-            const SharedRules* shared{}; // null for an element's own list
+            OptionalUiElement element{}; // nothing for a shared list and for the palette
+            const SharedRules* shared{}; // null for an element's own list and for the palette
             Control* item{};
-            ElementPage* page{};
+            Control* page{};
+            ElementPage* rules{}; // the page, where it shows a list of rules
         };
         using TreeEntries = std::vector<TreeEntry>;
     private:
@@ -64,9 +71,13 @@ namespace ThisApp
         void addEntry(TreeItem&, TreeEntry);
         void showPickedPage();
         [[nodiscard]] const TreeEntry* pickedEntry() const;
+        [[nodiscard]] static std::wstring_view nameOf(const TreeEntry&);
         [[nodiscard]] static std::wstring_view tokenOf(const TreeEntry&);
     private:
+        static constexpr std::wstring_view k_paletteTitle{ L"Palette & Transform" };
+
         TreeEntries m_entries{}; // an item's tag is its place here
+        const ThemeRules2 m_defaultRules{ defaultRules2() }; // what each page's reset puts back
 
         TreeView& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,
@@ -76,6 +87,24 @@ namespace ThisApp
         ) };
 
         PageControl& m_pages{ createBody<PageControl>() };
+
+        // The theme-wide settings, titled as an element page is.
+        Panel& m_palettePage{ m_pages.add<Panel>() };
+
+        Label& m_paletteTitle{ m_palettePage.createTopBar<Panel>(
+            Padding{ 12.0f, 8.0f }
+        ).createBody<Label>(
+            VerticalTextAnchor::Center,
+            Text{ TextStyleId::SubTitle, k_paletteTitle }
+        ) };
+
+        StackPanel& m_paletteView{ m_palettePage.createBody<ScrollBox>(
+            ScrollBars::Vertical
+        ).createBody<StackPanel>(
+            Orientation::Vertical,
+            Padding{ 12.0f },
+            Spacing{ 8.0f }
+        ) };
     };
 
 

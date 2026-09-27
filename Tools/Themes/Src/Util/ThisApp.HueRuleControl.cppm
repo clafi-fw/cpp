@@ -91,12 +91,14 @@ namespace ThisApp
             return;
         }
 
-        // On a blob the glyph is written as every blob's is. Off one it is written the way the
-        // operation comboboxes write their own - bold, in the spot ink.
+        // On a blob the glyph is written as every blob's is, at the blob's size. Off one it is
+        // written the way the operation comboboxes write their own - bold, in the spot ink.
         // See ThemePage::operationCells.
         if (onBlob)
         {
+            text << k_blobGlyphStyle;
             writeBlobGlyph(text, hueOpGlyph(value));
+            text << PopTextStyle{};
             return;
         }
         text
@@ -344,10 +346,9 @@ namespace ThisApp
 
     DrawTextResult HueRuleControl::drawText(PaintEvent& event, const FloatRect& textBounds, const Text& text)
     {
-        // On the face the mark rides its own strip rather than the text, so the run is the glyph
-        // alone and the blob is sized by the line it sits on.
+        // The popup tile's blob, so the face and the tile read as one mark.
         if (bound() and hasHue(operation()))
-            paintHueBlob(event, blobBounds(textBounds, textBounds.height()), blobColor(operation()));
+            paintHueBlob(event, blobBounds(textBounds, event.scaleF(k_blobSize)), blobColor(operation()));
         return DropdownControlBase::drawText(event, textBounds, {text});
     }
 
@@ -396,12 +397,7 @@ namespace ThisApp
 
     void HueRuleItem::getText(GetTextEvent& event) const
     {
-        const bool onBlob = m_view == HueItemView::Tile;
-        if (onBlob)
-            event.text << k_blobGlyphStyle;
-        writeHueOpContent(event.text, m_operation, onBlob);
-        if (onBlob)
-            event.text << PopTextStyle{};
+        writeHueOpContent(event.text, m_operation, m_view == HueItemView::Tile);
     }
 
     void HueRuleItem::nestedGetTooltip(GetTooltipEvent& event)

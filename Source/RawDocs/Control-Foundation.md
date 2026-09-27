@@ -384,8 +384,10 @@ What reads it:
 - The colour chain, through `AdjustPaintEvent::setWindowSelectedAmount` - how much of the
   selected factor is the window's focus. `DialogTitle` states 1, so its `active` and `activeText`
   rules follow its window.
-- `RuleInput::Focused`, the control's focus times the window's, so a selection in a window
-  without the focus shows only the band's resting rules.
+- `RuleInput::WindowFocused`, which a rule reads on its own or joins to another input in its
+  `andInputs`. `Focused` is the control's own focus alone. The band's focus rule reads "when
+  focused and window focused", so a selection in a window without the focus shows only the
+  band's resting rules.
 - The focus ring's live share. The ring stays, in the inactive grey.
 - `TextBox`'s caret, drawn only while the factor is 1.
 

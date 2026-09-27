@@ -19,10 +19,11 @@ import ClaFi.StdLib;
 
 namespace ThisApp
 {
-    void ElementPage::bind(ColorRules2& rules, const ThemeColors& colors,
-        OnGetListRuleBase ruleBase, OnRulesChanged onRulesChanged)
+    void ElementPage::bind(ColorRules2& rules, const ColorRules2& defaults,
+        const ThemeColors& colors, OnGetListRuleBase ruleBase, OnRulesChanged onRulesChanged)
     {
         m_rules = &rules;
+        m_defaults = &defaults;
         m_colors = &colors;
         m_ruleBase = std::move(ruleBase);
         m_onRulesChanged = std::move(onRulesChanged);
@@ -40,6 +41,7 @@ namespace ThisApp
             return;
         for (std::size_t i = 0ull; i != m_rules->size(); ++i)
             addRow(i);
+        m_resetButton.invalidateState();
         form().invalidateAlign();
     }
 
@@ -80,6 +82,14 @@ namespace ThisApp
         rulesChanged();
     }
 
+    // The button stands outside the grid, so the rows can go at once.
+    void ElementPage::resetRules()
+    {
+        *m_rules = *m_defaults;
+        rebuild();
+        rulesChanged();
+    }
+
     // Every cell of a rule's row holds its editor.
     void ElementPage::addRow(const std::size_t index)
     {
@@ -90,9 +100,7 @@ namespace ThisApp
             padding,
             VerticalAlign::Fill
         );
-        applyTo.bind(*m_rules, index, [this]() {
-            rulesChanged();
-        });
+        applyTo.bind(*m_rules, index, m_onCellEdit);
         row.addControl<HueRuleControl>(
             column(RuleColumn::Hue),
             padding,
@@ -118,18 +126,18 @@ namespace ThisApp
         const std::size_t index = row.tag().value;
         ColorRule& effect = (*m_rules)[index].effect;
         row.controlAtColumnAs<HueRuleControl>(column(RuleColumn::Hue))
-            .bind(effect.hue, *m_colors, m_onRulesChanged, true);
+            .bind(effect.hue, *m_colors, m_onCellEdit, true);
         row.controlAtColumnAs<ValueRuleControl>(column(RuleColumn::Saturation)).bind(
             effect.saturation,
             RuleChannel::Saturation,
             ruleBaseOf(index, RuleChannel::Saturation),
-            m_onRulesChanged
+            m_onCellEdit
         );
         row.controlAtColumnAs<ValueRuleControl>(column(RuleColumn::Elevation)).bind(
             effect.elevation,
             RuleChannel::Elevation,
             ruleBaseOf(index, RuleChannel::Elevation),
-            m_onRulesChanged
+            m_onCellEdit
         );
     }
 
@@ -148,8 +156,9 @@ namespace ThisApp
         };
     }
 
-    void ElementPage::rulesChanged() const
+    void ElementPage::rulesChanged()
     {
+        m_resetButton.invalidateState();
         if (m_onRulesChanged)
             m_onRulesChanged();
     }

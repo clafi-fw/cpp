@@ -206,7 +206,7 @@ namespace ClaFi
             for (const BakedColorRule2& rule : *list)
             {
                 if (rule.output == channel)
-                    rule.effect.applyTo(color, rule.inputs.levelIn(levels), lightness);
+                    rule.effect.applyTo(color, rule.levelIn(levels), lightness);
             }
         }
     }

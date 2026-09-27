@@ -395,17 +395,16 @@ namespace ThisApp
             &m_jsonTab
         };
 
-        Controls::Expander& m_paletteExpander{ m_designView.add<Controls::Expander>(
-            VerticalAlign::Top,
-            HeaderText{ TextStyleId::Section, L"Palette"}
+        Label& m_paletteHeader{ m_design2Page.paletteView().add<Label>(
+            Text{ TextStyleId::Section, L"Palette" }
         ) };
 
-        StackPanel& m_paleteExpanderBody = m_paletteExpander.createBody<StackPanel>(
+        StackPanel& m_paletteBody{ m_design2Page.paletteView().add<StackPanel>(
             Orientation::HorizontalWrap,
             Padding{ 8.0f, 8.0f }
-        );
+        ) };
 
-        StackPanel& m_paletteColumn1{ m_paleteExpanderBody.add<StackPanel>(
+        StackPanel& m_paletteColumn1{ m_paletteBody.add<StackPanel>(
             Orientation::Vertical
         ) };
 
@@ -467,21 +466,20 @@ namespace ThisApp
             TooltipText{ L"Pigments safe to use in small doses" }
         ) };
 
-        //Controls::Separator& m_paletteSep1{ m_paleteExpanderBody.add<Controls::Separator>() };
+        //Controls::Separator& m_paletteSep1{ m_paletteBody.add<Controls::Separator>() };
 
-        Spacer& m_spacer1{ m_paleteExpanderBody.add<Spacer>(8.0f) };
+        Spacer& m_spacer1{ m_paletteBody.add<Spacer>(8.0f) };
 
-        Controls::Expander& m_transformExpander{ m_designView.add<Controls::Expander>(
-            VerticalAlign::Top,
-            HeaderText{ TextStyleId::Section, L"Transform" }
+        Label& m_transformHeader{ m_design2Page.paletteView().add<Label>(
+            Text{ TextStyleId::Section, L"Transform" }
         ) };
 
-        StackPanel& m_transformExpanderBody{ m_transformExpander.createBody<StackPanel>(
+        StackPanel& m_transformBody{ m_design2Page.paletteView().add<StackPanel>(
             Orientation::Vertical,
             Padding{ 8.0f, 8.0f }
         ) };
 
-        Panel& m_darkModeFloorLane{ m_transformExpanderBody.add<Panel>(
+        Panel& m_darkModeFloorLane{ m_transformBody.add<Panel>(
             m_laneSize,
             Spacing{ 8.0f, 0.0f }
         ) };
@@ -613,7 +611,7 @@ namespace ThisApp
                 // focus ring, and Spot is the emphasis that stands apart from the interface rather
                 // than answering to it.
                 Grids::Dt::Expander{
-                    Header{ Text{ TextStyleId::Section, L"Focus and Selection" } },
+                    Header{ Text{ TextStyleId::Section, L"Focus & Selection" } },
                     sectionFold(),
                     staticRow(UiElement::Accent),
                     Grids::Dt::Divider{},
@@ -687,19 +685,6 @@ namespace ThisApp
             saveThemeAs(shownBy);
             });
 
-        // The palette's colours are the most saturated thing on the page, and judging a theme's
-        // quieter ones beside them is what the warning is about.
-        m_paletteExpander.header().button().connectEvent([this](GetTooltipEvent& event) {
-            if (!m_paletteExpander.header().expanded())
-            {
-                event.text << L"Show palette";
-                return;
-            }
-            event.text << L"Hide palette, to ensure vibrant colors won't skew your perception";
-            });
-
-        addFold(m_paletteExpander.header());
-        addFold(m_transformExpander.header());
         connectFoldMenu();
 
         for (std::size_t i = 0ull; i != m_harmonySelector.count(); ++i)

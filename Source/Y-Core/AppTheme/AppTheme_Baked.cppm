@@ -75,9 +75,13 @@ namespace ClaFi
     export struct BakedColorRule2
     {
     public:
+        [[nodiscard]] bool atRest() const { return inputs.empty() and andInputs.empty(); }
+        // How far the rule applies at these levels: its two sets joined as "and".
+        [[nodiscard]] float levelIn(const RuleInputLevels&) const;
         [[nodiscard]] bool operator==(const BakedColorRule2&) const = default;
     public:
         RuleInputs inputs{};
+        RuleInputs andInputs{};
         PaintChannel output{ PaintChannel::Surface };
         BakedRule effect{};
     };
@@ -316,6 +320,13 @@ namespace ClaFi
         return lightness + flip * (1.0f - 2.0f * lightness);
     }
 
+    // BakedColorRule2
+
+    float BakedColorRule2::levelIn(const RuleInputLevels& levels) const
+    {
+        return inputs.levelIn(levels) * andInputs.levelIn(levels);
+    }
+
     // bake
 
     BakedValue bake(const ColorRuleValue& value, float luminosityFloor)
@@ -393,6 +404,7 @@ namespace ClaFi
     {
         return {
             .inputs = rule.inputs,
+            .andInputs = rule.andInputs,
             .output = rule.output,
             .effect = rule.output == PaintChannel::Shadow
                 ? bakeShadow(rule.effect, themeColors)
@@ -515,6 +527,7 @@ namespace ClaFi
         const bool sameRules = std::ranges::equal(from, to,
             [](const BakedColorRule2& fromRule, const BakedColorRule2& toRule) {
                 return fromRule.inputs == toRule.inputs
+                    and fromRule.andInputs == toRule.andInputs
                     and fromRule.output == toRule.output;
             });
         if (!sameRules)
@@ -616,11 +629,8 @@ namespace ClaFi
     {
         const BakedColorRules2* own = root ? &rules2.of(*root) : nullptr;
         const BakedColorRules2* shared = root ? &rules2.shared : nullptr;
-        auto factorOf = [windowFocusedFactor](const RuleInputs inputs){
-            if (inputs.empty())
-                return 1.0f;
-            return inputs.has(RuleInput::WindowFocused) ? windowFocusedFactor : 0.0f;
-        };
+        RuleInputLevels levels = {};
+        levels[static_cast<std::size_t>(RuleInput::WindowFocused)] = windowFocusedFactor;
         auto applyRules = [&](const PaintChannel channel, Hsl& color){
             const Lightness readIn = channel == PaintChannel::Shadow ? k_darkLightness : lightness;
             for (const BakedColorRules2* list : { own, &rules2.anyWindow, shared })
@@ -630,7 +640,7 @@ namespace ClaFi
                 for (const BakedColorRule2& rule : *list)
                 {
                     if (rule.output == channel)
-                        rule.effect.applyTo(color, factorOf(rule.inputs), readIn);
+                        rule.effect.applyTo(color, rule.levelIn(levels), readIn);
                 }
             }
         };

@@ -148,6 +148,7 @@ namespace ClaFi // AppTheme serializers
     export constexpr auto serializedFields(const ColorRule2&) {
         return std::make_tuple(
             SerializedField{ L"Inputs", &ColorRule2::inputs },
+            SerializedField{ L"AndInputs", &ColorRule2::andInputs },
             SerializedField{ L"Output", &ColorRule2::output },
             SerializedField{ L"Effect", &ColorRule2::effect }
         );
