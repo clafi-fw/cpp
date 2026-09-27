@@ -6,8 +6,7 @@ import ThisApp.RuleSlider;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
-import ClaFi.Controls.StackView;
+import ClaFi.Controls.TreeView;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
@@ -53,18 +52,17 @@ namespace ThisApp
         using TreeEntries = std::vector<TreeEntry>;
     private:
         void buildTree();
-        void addEntry(StackPanel& parent, OptionalUiElement element, std::wstring_view name);
+        void addEntry(TreeItem&, OptionalUiElement element);
         void showPickedPage();
         [[nodiscard]] const TreeEntry* pickedEntry() const;
         [[nodiscard]] static std::wstring_view tokenOf(const TreeEntry&);
     private:
         TreeEntries m_entries{}; // an item's tag is its place here
 
-        StackView& m_tree{ createLeftBar<ScrollBox>(
+        TreeView& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,
             UiElement::Section
-        ).createBody<StackView>(
-            Orientation::Vertical,
+        ).createBody<TreeView>(
             Padding{ 4.0f }
         ) };
 

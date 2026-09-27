@@ -967,6 +967,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TabStrip.cppm">
       <Filter>Controls\Containers</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TreeView.cpp">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TreeView.cppm">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Expander.cppm">
       <Filter>Controls\Containers</Filter>
     </ClCompile>

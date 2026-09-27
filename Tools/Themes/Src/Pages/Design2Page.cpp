@@ -7,16 +7,12 @@ import ThisApp.RuleSlider;
 import ClaFi.Application.ThemesManager_Elements;
 
 import ClaFi.Controls.Base.StackPanelBase;
-import ClaFi.Controls.Button;
 import ClaFi.Controls.Divider;
-import ClaFi.Controls.Expander;
 import ClaFi.Controls.PageControl;
-import ClaFi.Controls.StackPanel;
-import ClaFi.Controls.StackView;
+import ClaFi.Controls.TreeView;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.TextEngine.Text;
-import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -25,8 +21,6 @@ namespace ThisApp
 {
     namespace
     {
-        using CategoryNode = ExpanderWith<StackPanel>;
-
         // A branch of the tree: its name, and the elements under it in the order they are listed.
         struct ElementCategory
         {
@@ -73,8 +67,7 @@ namespace ThisApp
             ElementCategory{ L"Focus and Selection", k_focusAndSelection }
         };
 
-        // How far an element's name stands in from its category's.
-        constexpr float k_itemIndent{ 16.0f };
+        constexpr std::wstring_view k_sharedRulesName{ L"Any element" };
     }
 
     std::wstring_view Design2Page::pickedPage() const
@@ -115,45 +108,26 @@ namespace ThisApp
 
     void Design2Page::buildTree()
     {
-        m_tree.onCanFocusItem([this](CanFocusItemEvent& event) {
-            event.canFocus = std::ranges::any_of(m_entries, [&event](const TreeEntry& entry) {
-                return entry.item == &event.item;
-            });
-        });
         m_tree.onCurrentItemChange([this](CurrentItemChangeEvent&) {
             showPickedPage();
         });
 
-        addEntry(m_tree, std::nullopt, L"Any element");
+        addEntry(m_tree.addItem(), std::nullopt);
         // Sets the shared rules apart, so they read as a peer of the categories.
         m_tree.add<Divider>(Thickness::Heavy, Padding{ 4.0f, 6.0f });
         for (const ElementCategory& category : k_elementCategories)
         {
-            CategoryNode& node = m_tree.add<CategoryNode>(
-                HostProps{
-                    VerticalAlign::Top,
-                    ExpanderViewMode::TreeNode,
-                    HeaderText{ category.name }
-                },
-                BodyProps{
-                    Orientation::Vertical,
-                    Padding{ k_itemIndent, 0.0f }
-                }
-            );
+            TreeNode& node = m_tree.addNode(HeaderText{ category.name });
             for (const UiElement element : category.elements)
-                addEntry(node.body(), element, uiElementOf(element).name);
+                addEntry(node.addItem(), element);
         }
     }
 
-    void Design2Page::addEntry(StackPanel& parent, const OptionalUiElement element,
-        const std::wstring_view name)
+    void Design2Page::addEntry(TreeItem& item, const OptionalUiElement element)
     {
-        ToolButton& item = parent.add<ToolButton>(
-            Text{ name },
-            Tag{ m_entries.size() },
-            HorizontalTextAnchor::Left,
-            ShowSelectionOnSurface::Yes
-        );
+        const std::wstring_view name = element ? uiElementOf(*element).name : k_sharedRulesName;
+        item.text() << name;
+        item.setTag(Tag{ m_entries.size() });
         m_entries.push_back(TreeEntry{
             .element = element,
             .item = &item,

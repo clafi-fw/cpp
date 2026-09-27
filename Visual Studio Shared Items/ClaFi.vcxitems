@@ -127,6 +127,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TabStrip.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TextBox.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TextBox.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TreeView.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TreeView.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\ButtonBase.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\ButtonBase.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\ContainerBase.cppm" />

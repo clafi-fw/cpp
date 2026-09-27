@@ -85,6 +85,8 @@ namespace ClaFi::Controls
         // The header shows the label in every look, so a host spells the header text one way and
         // the button stays a target of its own.
         void setHeaderText(const Text& value) { text() << value; }
+        // How far the content stands in past the left padding, in design units.
+        void setLead(float value);
         ExpanderButton& button() { return m_button; }
         const ExpanderButton& button() const { return m_button; }
         // The shape a held header is laid on: its rect with the corners it turns while open - the
@@ -94,6 +96,9 @@ namespace ClaFi::Controls
     protected:
         void adjustPaint(AdjustPaintEvent&) override;
         void doubleClick(DoubleClickEvent&) override;
+        ScaledDimensions calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void adjustTextRect(AdjustTextRectEvent&) const override;
         void paintSurface(PaintEvent& event) override
         {
             PanelBase::paintSurface(event);
@@ -107,6 +112,7 @@ namespace ClaFi::Controls
     private:
         bool m_expanded{ true };
         float m_expandedFactor{ 1.0f };
+        float m_lead{};
         // Declared before the button: the look names the slot the button is built into, and a
         // member initializer runs in declaration order.
         ExpanderViewMode m_viewMode;
@@ -201,6 +207,15 @@ namespace ClaFi::Controls
         }
     }
 
+    void ExpanderHeader::setLead(float value)
+    {
+        if (m_lead == value)
+            return;
+
+        m_lead = value;
+        invalidateFormAlign();
+    }
+
     RoundedRectangleParts ExpanderHeader::silhouette(const PaintEvent& hostEvent, const FloatRect& headerRect) const
     {
         const float radius = hostEvent.scaleF(designMetrics().radius);
@@ -225,6 +240,36 @@ namespace ClaFi::Controls
     {
         PanelBase::doubleClick(event);
         toggleExpanded();
+    }
+
+    // Counted in the floor only where there is one, the way the padding is.
+    ScaledDimensions ExpanderHeader::calculateContent(AlignEvent& event)
+    {
+        ScaledDimensions result = PanelBase::calculateContent(event);
+        const float lead = event.scale(m_lead);
+        result.x += lead;
+        if (event.calculatedMinSize.x > 0.0f)
+            event.calculatedMinSize.x += lead;
+        return result;
+    }
+
+    // The parts are laid out in the width the lead leaves, then carried past it.
+    void ExpanderHeader::alignContent(AlignEvent& event, ScaledPosition position,
+        ScaledDimensions& contentSize)
+    {
+        const float lead = event.scale(m_lead);
+        const float width = contentSize.x;
+        contentSize.x = std::max(0.0f, width - lead);
+        PanelBase::alignContent(event, position, contentSize);
+        contentSize.x = width;
+        for (ControlPtr& child : controls())
+            offsetControl(child.get(), { lead, 0.0f });
+    }
+
+    void ExpanderHeader::adjustTextRect(AdjustTextRectEvent& event) const
+    {
+        PanelBase::adjustTextRect(event);
+        event.textBounds.offset(event.scale(m_lead), 0.0f);
     }
 
     // The divider look holds its label against the left edge, which is what frees the body slot
