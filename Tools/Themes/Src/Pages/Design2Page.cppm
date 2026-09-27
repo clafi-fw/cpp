@@ -20,9 +20,17 @@ namespace ThisApp
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // The colour a rule of an element's list, or of the shared list, is applied to.
+    // The colour a rule of an element's list, or of a shared list, is applied to.
     export using OnGetElementRuleBase =
         std::function<RuleBase(OptionalUiElement, const ColorRule2&, RuleChannel)>;
+
+    // A list of rules no one element owns, and what its tree item and its page go by.
+    struct SharedRules
+    {
+        std::wstring_view name{};
+        std::wstring_view token{};
+        ColorRules2 ThemeRules2::* rules{ nullptr };
+    };
 
     // A theme's design under the new color theme architecture, one element page at a time.
     export class Design2Page : public Panel
@@ -31,7 +39,7 @@ namespace ThisApp
         template<typename... Args>
         explicit Design2Page(const CreateParams&, Args&&...);
     public:
-        // The token of the page that shows - an element's or k_sharedRulesToken - or nothing yet.
+        // The token of the page that shows - an element's or a shared list's - or nothing yet.
         [[nodiscard]] std::wstring_view pickedPage() const;
         void pickPage(std::wstring_view token);
         // Connects a handler raised after another page is picked.
@@ -45,14 +53,15 @@ namespace ThisApp
         // An item of the tree and the page it opens, named by the element whose rules it shows.
         struct TreeEntry
         {
-            OptionalUiElement element{}; // nothing for the shared rules
+            OptionalUiElement element{}; // nothing for a shared list
+            const SharedRules* shared{}; // null for an element's own list
             Control* item{};
             ElementPage* page{};
         };
         using TreeEntries = std::vector<TreeEntry>;
     private:
         void buildTree();
-        void addEntry(TreeItem&, OptionalUiElement element);
+        void addEntry(TreeItem&, TreeEntry);
         void showPickedPage();
         [[nodiscard]] const TreeEntry* pickedEntry() const;
         [[nodiscard]] static std::wstring_view tokenOf(const TreeEntry&);

@@ -21,11 +21,24 @@ namespace ThisApp
 {
     namespace
     {
+        constexpr SharedRules k_anyElement{
+            .name = L"Any element",
+            .token = k_sharedRulesToken,
+            .rules = &ThemeRules2::shared
+        };
+
+        constexpr SharedRules k_anyWindow{
+            .name = L"Any window",
+            .token = k_anyWindowRulesToken,
+            .rules = &ThemeRules2::anyWindow
+        };
+
         // A branch of the tree: its name, and the elements under it in the order they are listed.
         struct ElementCategory
         {
             std::wstring_view name;
             std::span<const UiElement> elements;
+            const SharedRules* shared{ nullptr }; // listed ahead of the elements
         };
 
         constexpr std::array k_windowRoots{
@@ -61,13 +74,11 @@ namespace ThisApp
         };
 
         constexpr std::array k_elementCategories{
-            ElementCategory{ L"Window roots", k_windowRoots },
+            ElementCategory{ L"Window roots", k_windowRoots, &k_anyWindow },
             ElementCategory{ L"Surfaces", k_surfaces },
             ElementCategory{ L"Controls", k_controls },
             ElementCategory{ L"Focus and Selection", k_focusAndSelection }
         };
-
-        constexpr std::wstring_view k_sharedRulesName{ L"Any element" };
     }
 
     std::wstring_view Design2Page::pickedPage() const
@@ -90,7 +101,9 @@ namespace ThisApp
         ThemeRules2& rules = colors.rules2;
         for (const TreeEntry& entry : m_entries)
         {
-            ColorRules2& list = entry.element ? rules.of(*entry.element) : rules.shared;
+            ColorRules2& list = entry.element
+                ? rules.of(*entry.element)
+                : rules.*entry.shared->rules;
             const OptionalUiElement element = entry.element;
             OnGetListRuleBase listRuleBase = [ruleBase, element](const ColorRule2& rule,
                 const RuleChannel channel) {
@@ -112,27 +125,29 @@ namespace ThisApp
             showPickedPage();
         });
 
-        addEntry(m_tree.addItem(), std::nullopt);
-        // Sets the shared rules apart, so they read as a peer of the categories.
+        addEntry(m_tree.addItem(), TreeEntry{ .shared = &k_anyElement });
+        // Sets Any element apart, so it reads as a peer of the categories.
         m_tree.add<Divider>(Thickness::Heavy, Padding{ 4.0f, 6.0f });
         for (const ElementCategory& category : k_elementCategories)
         {
             TreeNode& node = m_tree.addNode(HeaderText{ category.name });
+            if (category.shared)
+                addEntry(node.addItem(), TreeEntry{ .shared = category.shared });
             for (const UiElement element : category.elements)
-                addEntry(node.addItem(), element);
+                addEntry(node.addItem(), TreeEntry{ .element = element });
         }
     }
 
-    void Design2Page::addEntry(TreeItem& item, const OptionalUiElement element)
+    void Design2Page::addEntry(TreeItem& item, TreeEntry entry)
     {
-        const std::wstring_view name = element ? uiElementOf(*element).name : k_sharedRulesName;
+        const std::wstring_view name = entry.element
+            ? uiElementOf(*entry.element).name
+            : entry.shared->name;
         item.text() << name;
         item.setTag(Tag{ m_entries.size() });
-        m_entries.push_back(TreeEntry{
-            .element = element,
-            .item = &item,
-            .page = &m_pages.add<ElementPage>(name)
-        });
+        entry.item = &item;
+        entry.page = &m_pages.add<ElementPage>(name);
+        m_entries.push_back(entry);
         // The first item stands picked, so the body never opens empty.
         if (!m_tree.currentItem())
             m_tree.setCurrentItem(item);
@@ -155,6 +170,6 @@ namespace ThisApp
     {
         if (entry.element)
             return uiElementOf(*entry.element).token;
-        return k_sharedRulesToken;
+        return entry.shared->token;
     }
 }

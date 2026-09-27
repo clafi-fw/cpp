@@ -295,10 +295,11 @@ namespace ClaFi
 
     export using ColorRules2 = std::vector<ColorRule2>;
 
-    // The new rules a theme states: each element's own, and the shared ones applied after them.
+    // The new rules a theme states: each element's own, then the window's, then the shared ones.
     export struct ThemeRules2
     {
         ColorRules2 shared{};
+        ColorRules2 anyWindow{}; // what every form's root control takes, whatever it wears
         std::array<ColorRules2, k_uiElementCount> elements{}; // indexed by UiElement
         [[nodiscard]] ColorRules2& of(UiElement element)
         {

@@ -936,15 +936,23 @@ namespace ThisApp
         return result;
     }
 
-    // The new rules come after the old ones, and the shared list after the element's own.
+    // The new rules come after the old ones: the element's own list, the window's where the
+    // element is worn by a form's root control, then the shared list.
     void ThemePage::applyRestingRules2(Hsl& color, const UiElement element,
         const PaintChannel channel, const ColorMode mode)
     {
         const ThemeRules2& rules = editColors().rules2;
-        for (const ColorRules2* list : { &rules.of(element), &rules.shared })
+        const ColorRules2* windowRules = uiElementOf(element).isWindowRoot
+            ? &rules.anyWindow
+            : nullptr;
+        for (const ColorRules2* list : { &rules.of(element), windowRules, &rules.shared })
+        {
+            if (!list)
+                continue;
             for (const ColorRule2& rule : *list)
                 if (rule.inputs.empty() and rule.output == channel)
                     rule.effect.applyTo(color, 1.0f, editColors(), mode);
+        }
     }
 
     // The ink of the preview's colour mode before any rule: white at the dark end, black at the

@@ -241,7 +241,7 @@ namespace ThisApp
         // The ink an element's text starts from: the same nesting as elementColor, walked
         // through text rules instead of surface ones.
         [[nodiscard]] Hsl elementTextColor(OptionalUiElement);
-        // What an element's new rules, and the shared ones, do at rest to one channel.
+        // What an element's new rules, the window's and the shared ones do at rest to one channel.
         void applyRestingRules2(Hsl&, UiElement, PaintChannel, ColorMode);
         // The ink of the colour mode before any rule has touched it.
         [[nodiscard]] Hsl bareInk();

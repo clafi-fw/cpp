@@ -684,13 +684,25 @@ namespace ClaFi
         return result;
     }
 
+    // The element's own list, then the window's, then the shared one. A form's root control is a
+    // window whichever element it wears, so the window's list reaches it with no element at all.
     float PaintEvent::applyColorRules2(const PaintChannel channel, Hsl& color) const
     {
-        if (!m_element)
-            return 0.0f;
         const BakedRules2& rules = bakedColors().rules2;
-        const float ownChanged = applyColorRules2(rules.of(*m_element), channel, color);
-        return StateFactors::compose(ownChanged, applyColorRules2(rules.shared, channel, color));
+        float changed = 0.0f;
+        if (m_element)
+            changed = applyColorRules2(rules.of(*m_element), channel, color);
+        if (!m_parentEvent)
+        {
+            changed = StateFactors::compose(changed,
+                applyColorRules2(rules.anyWindow, channel, color));
+        }
+        if (m_element)
+        {
+            changed = StateFactors::compose(changed,
+                applyColorRules2(rules.shared, channel, color));
+        }
+        return changed;
     }
 
     // A shadow is read at the dark end whatever the lightness, as BakedColors::windowShadow reads

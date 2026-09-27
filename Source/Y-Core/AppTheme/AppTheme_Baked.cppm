@@ -84,7 +84,7 @@ namespace ClaFi
 
     export using BakedColorRules2 = std::vector<BakedColorRule2>;
 
-    // THE NEW RULES AS THE PAINT PATH READS THEM - each element's own, and the shared ones.
+    // THE NEW RULES AS THE PAINT PATH READS THEM - each element's own, the window's and the shared.
     export struct BakedRules2
     {
     public:
@@ -95,6 +95,7 @@ namespace ClaFi
         [[nodiscard]] bool operator==(const BakedRules2&) const = default;
     public:
         BakedColorRules2 shared{};
+        BakedColorRules2 anyWindow{};
         std::array<BakedColorRules2, k_uiElementCount> elements{}; // indexed by UiElement
     };
 
@@ -413,6 +414,7 @@ namespace ClaFi
     {
         BakedRules2 result{};
         result.shared = bake(rules.shared, themeColors);
+        result.anyWindow = bake(rules.anyWindow, themeColors);
         for (std::size_t i = 0; i < result.elements.size(); ++i)
             result.elements[i] = bake(rules.elements[i], themeColors);
         return result;
@@ -529,6 +531,7 @@ namespace ClaFi
     {
         BakedRules2 result{};
         result.shared = blend(from.shared, to.shared, factor);
+        result.anyWindow = blend(from.anyWindow, to.anyWindow, factor);
         for (std::size_t i = 0; i < result.elements.size(); ++i)
             result.elements[i] = blend(from.elements[i], to.elements[i], factor);
         return result;
@@ -606,15 +609,18 @@ namespace ClaFi
     }
 
     // Read at the dark end whatever the lightness - a shadow is the absence of light on both sides.
-    // The root's own shadow rules, then the shared ones, in the order PaintEvent takes. A window
-    // has no state but its focus, so a rule reading only other inputs does not reach its shadow.
+    // The root's own shadow rules, the window's and the shared ones, in the order PaintEvent
+    // takes - a root wearing no element takes the window's alone. A window has no state but its
+    // focus, so a rule reading only other inputs does not reach its shadow.
     Hsl BakedColors::windowShadow(OptionalUiElement root, float windowFocusedFactor) const
     {
         Hsl result = bareShadow();
-        if (!root)
-            return result;
-        for (const BakedColorRules2* list : { &rules2.of(*root), &rules2.shared })
+        const BakedColorRules2* own = root ? &rules2.of(*root) : nullptr;
+        const BakedColorRules2* shared = root ? &rules2.shared : nullptr;
+        for (const BakedColorRules2* list : { own, &rules2.anyWindow, shared })
         {
+            if (!list)
+                continue;
             for (const BakedColorRule2& rule : *list)
             {
                 if (rule.output != PaintChannel::Shadow)

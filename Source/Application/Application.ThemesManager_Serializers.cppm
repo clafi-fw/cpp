@@ -170,7 +170,8 @@ namespace ClaFi // AppTheme serializers
     export constexpr auto serializedFields(const ThemeRules2&) {
         return std::tuple_cat(
             std::make_tuple(
-                SerializedField{ L"Shared", &ThemeRules2::shared }
+                SerializedField{ L"Shared", &ThemeRules2::shared },
+                SerializedField{ L"AnyWindow", &ThemeRules2::anyWindow }
             ),
             elementRulesFields(std::make_index_sequence<k_uiElementCount>{})
         );
