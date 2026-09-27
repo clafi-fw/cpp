@@ -328,7 +328,7 @@ namespace ClaFi
     {
     public:
         [[nodiscard]] Hsl rootSurface(ColorMode) const;
-        [[nodiscard]] static Hsl rootText(ColorMode);
+        [[nodiscard]] Hsl rootText(ColorMode) const;
         [[nodiscard]] const ColorHarmony& harmony() const;
     public:
 
@@ -1135,17 +1135,16 @@ namespace ClaFi
     Hsl ThemeColors::rootSurface(ColorMode mode) const
     {
         return mode == ColorMode::Dark
-            ? Hsl{ 0.0f, 0.0f, darkModeFloor }
-            : Hsl{ 0.0f, 0.0f, 1.0f };
+            ? Hsl{ anchorHue, 0.0f, darkModeFloor }
+            : Hsl{ anchorHue, 0.0f, 1.0f };
     }
 
-    // The bare ink of the colour mode, carrying the form surface's hue so that a text rule
-    // raising saturation alone tints toward the theme's own family rather than toward red.
-    Hsl ThemeColors::rootText(ColorMode mode)
+    // The bare ink of the colour mode.
+    Hsl ThemeColors::rootText(ColorMode mode) const
     {
         return mode == ColorMode::Dark
-            ? Hsl{ 0.0f, 0.0f, 1.0f }
-            : Hsl{ 0.0f, 0.0f, 0.0f };
+            ? Hsl{ anchorHue, 0.0f, 1.0f }
+            : Hsl{ anchorHue, 0.0f, 0.0f };
     }
 
     const ColorHarmony& ThemeColors::harmony() const

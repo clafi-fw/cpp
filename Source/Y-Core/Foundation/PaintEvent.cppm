@@ -96,7 +96,7 @@ namespace ClaFi
         void resetTheme();
         Hsl surfaceHsl() const { return m_controlContext.surfaceHsl; }
         // The ink this control carries, before any of the derived tones in textColor(). It is
-        // inherited from the control above and changed only by this control's own text rule.
+        // inherited, takes its surface's hue unless one is named, and moves by its own text rules.
         Hsl textHsl() const { return m_controlContext.textHsl; }
         Color surfaceRgb() const { return m_surfaceRgb; }
         Color strokeRgb() const { return m_strokeRgb; }
@@ -218,8 +218,9 @@ namespace ClaFi
         // How far a rule reading these inputs applies on a channel: its rest, or their factors.
         [[nodiscard]] float inputFactor(RuleInputs, PaintChannel) const;
         // The new rules on one channel, in the order they apply; how far they moved it.
-        float applyColorRules2(PaintChannel, Hsl& color) const;
-        float applyColorRules2(const BakedColorRules2&, PaintChannel, Hsl& color) const;
+        float applyColorRules2(PaintChannel, Hsl& color, float* namedHue = nullptr) const;
+        float applyColorRules2(const BakedColorRules2&, PaintChannel, Hsl& color,
+            float* namedHue) const;
         void inheritCornerRadii();
         void paint();
         [[nodiscard]] SurfaceShape surfaceShape(FloatPoint inset);
@@ -297,10 +298,12 @@ namespace ClaFi
         // Whether the host named the ink this control starts from. Held the way the surface is,
         // and read by the same seed.
         bool m_textHslStated{ false };
+        float m_textHueStated{ 0.0f }; // how far a rule or a host has named the ink's hue
         //
         Color m_surfaceRgb;
         Color m_strokeRgb{};
         Hsl m_shadowHsl{}; // the shadow channel, carried down the tree like the surface and the ink
+        float m_shadowHueStated{ 0.0f }; // how far a rule has named the shadow's hue
         RuleInputFactors m_ruleInputFactors{};
     };
 

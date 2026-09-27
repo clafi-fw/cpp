@@ -240,11 +240,13 @@ namespace ThisApp
         [[nodiscard]] Hsl elementColor(OptionalUiElement);
         // The ink an element's text starts from: the same nesting as elementColor, walked
         // through text rules instead of surface ones.
-        [[nodiscard]] Hsl elementTextColor(OptionalUiElement);
-        // What an element's new rules, the window's and the shared ones do at rest to one channel.
-        void applyRestingRules2(Hsl&, UiElement, PaintChannel, ColorMode);
+        [[nodiscard]] Hsl elementTextColor(OptionalUiElement, bool* hueNamed = nullptr);
+        // The resting new rules on one channel of an element; true where one of them names a hue.
+        bool applyRestingRules2(Hsl&, UiElement, PaintChannel, ColorMode);
         // The ink of the colour mode before any rule has touched it.
         [[nodiscard]] Hsl bareInk();
+        // Black in the hue of an element's resting stroke, where its shadow starts.
+        [[nodiscard]] Hsl bareShadow(OptionalUiElement);
         [[nodiscard]] RuleBase rowRuleBase(const Grids::Rt::RowBase&, RuleChannel);
         // What a value of a new rule is about to change, read the way rowRuleBase reads a row.
         [[nodiscard]] RuleBase rule2Base(OptionalUiElement, const ColorRule2&, RuleChannel);

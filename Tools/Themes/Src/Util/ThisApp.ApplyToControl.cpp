@@ -54,7 +54,7 @@ namespace ThisApp
             return result;
         }
 
-        // A label as a popup item starts it, with a capital.
+        // A label that starts what it is shown in, with a capital.
         [[nodiscard]] std::wstring itemLabel(const std::wstring_view label)
         {
             std::wstring result{ label };
@@ -152,13 +152,13 @@ namespace ThisApp
         dropPopup<ApplyToPopup>(form(), initiator, *this);
     }
 
-    // The rule read the way it is stated - "surface hovered or selected", "stroke at rest".
+    // The rule read the way it is stated - "Surface hovered or selected", "Stroke at rest".
     void ApplyToControl::getMainText(GetTextEvent& event) const
     {
         if (!m_rules)
             return;
         const ColorRule2& value = rule();
-        event.text << k_channelLabels[static_cast<std::size_t>(value.output)] << L" "
+        event.text << itemLabel(k_channelLabels[static_cast<std::size_t>(value.output)]) << L" "
             << inputsText(value.inputs);
     }
 

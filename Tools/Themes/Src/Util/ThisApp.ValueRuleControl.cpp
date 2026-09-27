@@ -15,7 +15,9 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Context.FormContext;
+import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
@@ -100,7 +102,7 @@ namespace ThisApp
         {
             if (rule.operation() == ColorRuleOp::NoChange)
             {
-                text << InkWell::textInk(InkGrade::Muted)
+                text << InkWell::textInk(InkGrade::Subtle)
                     << TextStyleId::SubBody
                     << k_operationNames[static_cast<std::size_t>(ColorRuleOp::NoChange)]
                     << PopTextStyle{}
@@ -112,6 +114,26 @@ namespace ThisApp
             text << TextStyleId::Code
                 << std::format(L"{:.2f}", std::abs(value))
                 << PopTextStyle{};
+        }
+
+        // The operation's glyph on a blob in the muted spot ink, shaped as the hue popup's.
+        void paintOperationBlob(PaintIconEvent& event, const ColorRuleOp operation)
+        {
+            const FloatRect& blob = event.iconRect();
+            const float radius = blob.height() * k_blobCornerShare;
+            const Color spot = event.spotRgb(InkGrade::Muted);
+            event.canvas().fillRoundedRectangle(blob, radius, radius, spot);
+
+            Text glyph;
+            glyph << k_blobGlyphStyle;
+            writeBlobGlyph(glyph, operationGlyph(operation, 0.0f));
+            glyph << PopTextStyle{};
+            Control::textEngine().drawText(
+                event.controlContext(),
+                blob,
+                glyph,
+                { VerticalTextAnchor::Center, HorizontalTextAnchor::Center }
+            );
         }
     }
 
@@ -132,7 +154,7 @@ namespace ThisApp
         std::vector<Control*> m_stateItems{}; // the tiles and the slider
     };
 
-    // One operation in the popup, marked while the rule applies it.
+    // One operation in the popup: its mark on a blob over the value it gives the rule.
     class OperationItem : public Button
     {
     public:
@@ -140,6 +162,7 @@ namespace ThisApp
     protected:
         [[nodiscard]] MinSize indicatorSize(const AppTheme&) const override;
         void getText(GetTextEvent&) const override;
+        void paintIcon(PaintIconEvent&) override;
         void getTooltip(GetTooltipEvent&) override;
         void getControlState(GetStateEvent&) const override;
         void click(ClickEvent&) override;
@@ -324,8 +347,10 @@ namespace ThisApp
         slider.connectEvent([this](GetStateEvent& event) {
             event.state.enabled = m_owner.operation() != ColorRuleOp::NoChange;
         });
-        slider.onChange([this, &slider](SliderChangeEvent&) {
+        // Every tile's caption is a value the slider sets, so the row is painted again with it.
+        slider.onChange([this, &slider, &tileRow](SliderChangeEvent&) {
             m_owner.setNormalizedValue(slider.relativePosition());
+            tileRow.invalidate();
         });
         m_stateItems.push_back(&slider);
 
@@ -372,6 +397,7 @@ namespace ThisApp
 
     // OperationItem
 
+    // As wide as the harmony picker's tile, and as tall as the blob and its caption come to.
     OperationItem::OperationItem(const CreateParams& params, ValueRulePopup& popup,
         const ColorRuleOp operation)
         :
@@ -380,7 +406,10 @@ namespace ThisApp
             IndicatorVisibility::Always,
             IndicatorStyle::Radio,
             ShowSelectionOnSurface::Yes,
-            k_harmonyItemSize,
+            ButtonViewMode::TopCenterIcon,
+            IconSize{ k_blobSize },
+            MinSize{ k_harmonyItemSize.x, k_harmonyItemSize.y },
+            MaxSize{ k_harmonyItemSize.x, k_maxFloat },
             HorizontalTextAnchor::Center,
             VerticalTextAnchor::Center
         },
@@ -394,11 +423,18 @@ namespace ThisApp
         return k_indicatorSize;
     }
 
+    // The value the rule takes under this operation, sign included - the blob holds only the mark.
     void OperationItem::getText(GetTextEvent& event) const
     {
-        event.text << TextStyleId::Title;
-        writeGlyph(event.text, operationGlyph(m_operation, 0.0f));
-        event.text << PopTextStyle{};
+        const float value = m_popup.owner().value().value(m_operation);
+        event.text << TextStyleId::SubBody
+            << std::format(L"{:.2f}", value)
+            << PopTextStyle{};
+    }
+
+    void OperationItem::paintIcon(PaintIconEvent& event)
+    {
+        paintOperationBlob(event, m_operation);
     }
 
     void OperationItem::getTooltip(GetTooltipEvent& event)

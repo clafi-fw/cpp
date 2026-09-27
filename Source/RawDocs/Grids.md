@@ -217,6 +217,9 @@ The click raises NewItemEvent on the grid. The row itself never joins the select
 a command rather than an item, and a selection holding it would hand it to whatever acts on
 the selection - Delete among them.
 
+The click ends at the row. Passed on, it would reach the grid's own click, which makes the
+pressed row the current item - over the row requestNewItem has just given the focus.
+
 ## NewItemEvent
 
 Raised on the grid when its new-item row is pressed, and by GridBase::requestNewItem. The

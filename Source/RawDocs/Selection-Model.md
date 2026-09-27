@@ -23,7 +23,8 @@ it - see `StackPanelBase::appliesGesture`.
 Whether a view holds a set of selected items on top of the current item that every StackPanel
 already tracks. A Shift range runs between the selection anchor and the current item, and the
 anchor is recorded by every pick that is not a Shift. Neither the anchor nor the current item
-is a member of the set unless something put it there.
+is a member of the set unless something put it there. A press on a current item the set does
+not hold picks it, the same as a press on any other item.
 
 This is the view's own axis, and the only one it has. Whether the container tracks a current
 item at all is the other, and it is not a mode: it is what makes a container an

@@ -22,9 +22,23 @@ namespace ClaFi
     // the distance the header has to be carried before the shadow is at full strength, so one
     // number says how deep it is and how long it takes to arrive.
     static constexpr float k_heldShadowReach = 8.0f;
-    // The shadow at full strength. A drop shadow is the absence of light rather than a colour the
-    // theme names, so it is black in every theme and only its opacity is in play.
+    // The shadow's opacity at full strength. Its colour is the theme's, off the shadow channel.
     static constexpr float k_heldShadowOpacity = 0.28f;
+
+    // A channel takes the hue it follows as far as nothing has named one of its own.
+    static void seedHue(Hsl& color, float hue, float hueStated)
+    {
+        if (hueStated <= 0.0f)
+        {
+            color.hue = hue;
+        }
+        else if (hueStated < 1.0f)
+        {
+            const Hsl seeded = { hue, color.saturation, color.luminosity };
+            color = Hsl{ seeded, color, hueStated };
+        }
+    }
+
     // PaintEvent
 
     PaintEvent::PaintEvent(TraversalContext& context)
@@ -85,6 +99,9 @@ namespace ClaFi
         // The lightness this control stands at, inherited before it adjusts anything, so a
         // control reading it during the adjustment is answered with what the chain handed it.
         m_lightness = m_parentEvent ? m_parentEvent->m_lightness : bakedColors().lightness;
+
+        // Before the adjustment, where a host naming the ink names its hue as well.
+        m_textHueStated = m_parentEvent ? m_parentEvent->m_textHueStated : 0.0f;
 
         // Adjust Colors
         {
@@ -230,6 +247,10 @@ namespace ClaFi
                 // the many a context can answer with, and almost nothing asks for either.
                 m_controlContext.focusedFactor = factors.focused() * m_windowFocusedFactor;
 
+                // The ink's hue is its surface's, as far as neither a rule nor a host has named
+                // one, so a text rule raising saturation alone tints toward what the text is on.
+                seedHue(ink, surface.hue, m_textHueStated);
+
                 // The ink arrives from the control above, or from a host that named one, so only
                 // this control's own rule is applied to it - at full strength, with no state term
                 // and no part in the grow-in. What a control states as its text is what everything
@@ -240,7 +261,10 @@ namespace ClaFi
                 // modifies what that rule established, and at the same factor the active rule is
                 // taken at, so the two move together.
                 m_colorRules.activeText.applyTo(ink, selectedFactor, m_lightness);
-                applyColorRules2(PaintChannel::Text, ink);
+                float namedHue = StateFactors::compose(m_colorRules.text.hue.setPull,
+                    selectedFactor * m_colorRules.activeText.hue.setPull);
+                applyColorRules2(PaintChannel::Text, ink, &namedHue);
+                m_textHueStated = StateFactors::compose(m_textHueStated, namedHue);
 
                 // The pair the resolver measures between: an elevation of 0 lands on the surface
                 // and 1 lands as far off as the ink itself. Set before the first ink is asked
@@ -293,9 +317,14 @@ namespace ClaFi
                 m_strokeRgb.setOpacity(strokeChanged);
             }
 
-            // Carried like the others. A window's shadow is drawn from its root's old shadow rule.
+            // Carried like the others, in the stroke's hue as far as no rule has named one. A
+            // window's shadow is drawn from BakedColors::windowShadow, which seeds it the same way.
             m_shadowHsl = inheritedShadowHsl();
-            applyColorRules2(PaintChannel::Shadow, m_shadowHsl);
+            m_shadowHueStated = m_parentEvent ? m_parentEvent->m_shadowHueStated : 0.0f;
+            seedHue(m_shadowHsl, stroke.hue, m_shadowHueStated);
+            float namedShadowHue = 0.0f;
+            applyColorRules2(PaintChannel::Shadow, m_shadowHsl, &namedShadowHue);
+            m_shadowHueStated = StateFactors::compose(m_shadowHueStated, namedShadowHue);
 
             // The colours held as colours rather than resolved on demand. What the context
             // resolves for itself carries the same fade, toward the same surface, as it is built -
@@ -420,6 +449,7 @@ namespace ClaFi
         m_surfaceHslStated = true;
         m_controlContext.textHsl = bakedColors().rootText();
         m_textHslStated = true;
+        m_textHueStated = 0.0f;
         m_lightness = bakedColors().lightness;
     }
 
@@ -558,15 +588,15 @@ namespace ClaFi
 
     // The shadow first and the backdrop over it: a shadow is measured from the shape's edge and
     // reaches inward as much as out, and the backdrop is what covers the half that falls inside.
+    // Both are this control's, the one holding the header: its surface and its shadow channel.
     void PaintEvent::paintHeldBackdrop(const RoundedRectangleParts& silhouette, float travel)
     {
         const float reach = scaleF(k_heldShadowReach);
         if (reach > 0.0f)
         {
             const float strength = std::min(travel / reach, 1.0f);
-            const Color black = { 0, 0, 0 };
             const Graphics::ShadowParams shadow = {
-                .color = black.withOpacity(k_heldShadowOpacity * strength),
+                .color = m_shadowHsl.toColor().withOpacity(k_heldShadowOpacity * strength),
                 .blur = reach,
                 .falloff = Graphics::GlowFalloff::Smooth
             };
@@ -686,21 +716,21 @@ namespace ClaFi
 
     // The element's own list, then the window's, then the shared one. A form's root control is a
     // window whichever element it wears, so the window's list reaches it with no element at all.
-    float PaintEvent::applyColorRules2(const PaintChannel channel, Hsl& color) const
+    float PaintEvent::applyColorRules2(const PaintChannel channel, Hsl& color, float* namedHue) const
     {
         const BakedRules2& rules = bakedColors().rules2;
         float changed = 0.0f;
         if (m_element)
-            changed = applyColorRules2(rules.of(*m_element), channel, color);
+            changed = applyColorRules2(rules.of(*m_element), channel, color, namedHue);
         if (!m_parentEvent)
         {
             changed = StateFactors::compose(changed,
-                applyColorRules2(rules.anyWindow, channel, color));
+                applyColorRules2(rules.anyWindow, channel, color, namedHue));
         }
         if (m_element)
         {
             changed = StateFactors::compose(changed,
-                applyColorRules2(rules.shared, channel, color));
+                applyColorRules2(rules.shared, channel, color, namedHue));
         }
         return changed;
     }
@@ -708,7 +738,7 @@ namespace ClaFi
     // A shadow is read at the dark end whatever the lightness, as BakedColors::windowShadow reads
     // the old rule.
     float PaintEvent::applyColorRules2(const BakedColorRules2& rules, const PaintChannel channel,
-        Hsl& color) const
+        Hsl& color, float* namedHue) const
     {
         const Lightness lightness = channel == PaintChannel::Shadow ? k_darkLightness : m_lightness;
         float changed = 0.0f;
@@ -716,8 +746,10 @@ namespace ClaFi
         {
             if (rule.output != channel)
                 continue;
-            changed = StateFactors::compose(changed,
-                rule.effect.applyTo(color, inputFactor(rule.inputs, channel), lightness));
+            const float factor = inputFactor(rule.inputs, channel);
+            changed = StateFactors::compose(changed, rule.effect.applyTo(color, factor, lightness));
+            if (namedHue)
+                *namedHue = StateFactors::compose(*namedHue, factor * rule.effect.hue.setPull);
         }
         return changed;
     }
@@ -1029,6 +1061,7 @@ namespace ClaFi
     {
         m_target.m_controlContext.textHsl = value;
         m_target.m_textHslStated = true;
+        m_target.m_textHueStated = 1.0f;
     }
 
     void AdjustPaintEvent::setLightness(Lightness value)

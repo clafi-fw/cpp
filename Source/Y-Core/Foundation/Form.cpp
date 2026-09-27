@@ -622,11 +622,15 @@ namespace ClaFi
         mouseTick(allowDrag);
     }
 
+    // A theme switch passes over a form nobody can see, so one coming into view states its frame
+    // from the theme it comes into - here, because a tooltip replaces updateVisibility.
     void FormBase::setVisible(bool value)
     {
         if (value == m_visible)
             return;
         m_visible = value;
+        if (m_visible)
+            stateFrame();
         updateVisibility();
     }
 

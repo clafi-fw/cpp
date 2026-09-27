@@ -915,14 +915,19 @@ namespace ThisApp
     // text rules are applied on the way: what an element is painted on is a separate chain and
     // does not reach the ink. No element is the bare ink of the colour mode, with nothing
     // applied - a window root's own text rule is the first thing on the chain, exactly as its
-    // surface rule is the first thing on the other one.
-    Hsl ThemePage::elementTextColor(OptionalUiElement element)
+    // surface rule is the first thing on the other one. The one thing the surface lends the ink
+    // is its hue, until a text rule on the way names one - the seed PaintEvent takes.
+    Hsl ThemePage::elementTextColor(OptionalUiElement element, bool* hueNamed)
     {
         if (!element)
             return bareInk();
 
         const UiElementDescriptor& descriptor = uiElementOf(*element);
-        Hsl result = elementTextColor(descriptor.base);
+        bool named = false;
+        Hsl result = elementTextColor(descriptor.base, &named);
+        if (!named)
+            result.hue = elementColor(element).hue;
+        const ColorMode mode = elementColorMode(element);
         if (descriptor.rules)
         {
             const ControlColorRules& rules = editColors().*descriptor.rules;
@@ -930,34 +935,45 @@ namespace ThisApp
             // the same order PaintEvent takes when the mode flips.
             if (rules.flip)
                 result.luminosity = 1.0f - result.luminosity;
-            rules.text.applyTo(result, 1.0f, editColors(), elementColorMode(element));
+            rules.text.applyTo(result, 1.0f, editColors(), mode);
+            if (rules.text.hue.operation() != ColorRuleHueOp::NoChange)
+                named = true;
         }
-        applyRestingRules2(result, *element, PaintChannel::Text, elementColorMode(element));
+        if (applyRestingRules2(result, *element, PaintChannel::Text, mode))
+            named = true;
+        if (hueNamed)
+            *hueNamed = named;
         return result;
     }
 
     // The new rules come after the old ones: the element's own list, the window's where the
     // element is worn by a form's root control, then the shared list.
-    void ThemePage::applyRestingRules2(Hsl& color, const UiElement element,
+    bool ThemePage::applyRestingRules2(Hsl& color, const UiElement element,
         const PaintChannel channel, const ColorMode mode)
     {
         const ThemeRules2& rules = editColors().rules2;
         const ColorRules2* windowRules = uiElementOf(element).isWindowRoot
             ? &rules.anyWindow
             : nullptr;
+        bool namesHue = false;
         for (const ColorRules2* list : { &rules.of(element), windowRules, &rules.shared })
         {
             if (!list)
                 continue;
             for (const ColorRule2& rule : *list)
-                if (rule.inputs.empty() and rule.output == channel)
-                    rule.effect.applyTo(color, 1.0f, editColors(), mode);
+            {
+                if (!rule.inputs.empty() or rule.output != channel)
+                    continue;
+                rule.effect.applyTo(color, 1.0f, editColors(), mode);
+                if (rule.effect.hue.operation() != ColorRuleHueOp::NoChange)
+                    namesHue = true;
+            }
         }
+        return namesHue;
     }
 
     // The ink of the preview's colour mode before any rule: white at the dark end, black at the
-    // light one, carrying the form surface's hue so that a rule raising saturation alone tints
-    // toward the theme's own family.
+    // light one, in the hue of the bare surface - the theme's anchor.
     Hsl ThemePage::bareInk()
     {
         const ColorMode mode = previewColorMode();
@@ -966,6 +982,16 @@ namespace ThisApp
             0.0f,
             mode == ColorMode::Dark ? 1.0f : 0.0f
         };
+    }
+
+    // The seed BakedColors::windowShadow takes: a stroke starts at the element's surface and its
+    // resting stroke rules move it, and a shadow rule naming no hue keeps the stroke's.
+    Hsl ThemePage::bareShadow(OptionalUiElement element)
+    {
+        Hsl stroke = elementColor(element);
+        if (element)
+            applyRestingRules2(stroke, *element, PaintChannel::Stroke, elementColorMode(element));
+        return { stroke.hue, 0.0f, 0.0f };
     }
 
     // What the slider's own value is about to change: everything under the row's rule, plus every
@@ -983,7 +1009,7 @@ namespace ThisApp
         //
         // Every row of an element is read in the one direction that element stands in, so a
         // flipped element's ramps draw the path the painter will actually walk. A shadow row is
-        // read at the dark end with no floor, from black carrying the form surface's hue - the
+        // read at the dark end with no floor, from black in the hue of the element's stroke - the
         // walk BakedColors::windowShadow makes.
         const bool shadowState = state == UiElementState::Shadow;
         const ColorMode elementMode = shadowState ? ColorMode::Dark : elementColorMode(element);
@@ -994,12 +1020,14 @@ namespace ThisApp
             or state == UiElementState::ActiveText;
         Hsl result{};
         if (shadowState)
-        {
-            const float formHue = editColors().rootSurface(previewColorMode()).hue;
-            result = { formHue, 0.0f, 0.0f };
-        }
+            result = bareShadow(element);
         else if (state == UiElementState::Text)
-            result = elementTextColor(uiElementOf(element).base);
+        {
+            bool hueNamed = false;
+            result = elementTextColor(uiElementOf(element).base, &hueNamed);
+            if (!hueNamed)
+                result.hue = elementColor(element).hue;
+        }
         // Drawn against the ink this element's own text rule has already established, since that
         // is the ink it modifies.
         else if (state == UiElementState::ActiveText)
@@ -1031,7 +1059,7 @@ namespace ThisApp
         const ColorMode mode = shadow ? ColorMode::Dark : elementColorMode(element);
         Hsl result{};
         if (shadow)
-            result = { editColors().rootSurface(previewColorMode()).hue, 0.0f, 0.0f };
+            result = bareShadow(element);
         else if (rule.output == PaintChannel::Text)
             result = elementTextColor(element);
         else

@@ -152,9 +152,14 @@ namespace ClaFi::Controls
         Container::click(event);
     }
 
+    // A press on the current item is still a pick while the selection does not hold it - a view
+    // keeping a set can have its current item outside the set. Focus arriving any other way
+    // moves nothing there.
     void StackPanelBase::nestedControlFocusing(FocusEvent& event)
     {
-        bool handled = (event.control == this || event.control == currentItem());
+        const bool alreadyPicked = event.control == currentItem()
+            && (Input::device() != InputDevice::Mouse || isItemSelected(*event.control));
+        bool handled = (event.control == this || alreadyPicked);
         if (!handled)
         {
             const KeyModifiers modifiers = event.modifiers;

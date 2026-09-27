@@ -116,11 +116,10 @@ namespace ClaFi
         // A pigment's hue, at InkWell's tone for the side of the theme the painter stands on.
         [[nodiscard]] Hsl pigmentHsl(Pigment, Lightness) const;
         [[nodiscard]] Hsl pigmentHsl(Pigment, InkTone) const;
-        // WHAT A FORM ROOT ESTABLISHES: the bare colour of the lightness with the form's own
-        // surface rule over it, and the bare ink with its text rule.
+        // Where a form root starts: the bare colour and ink of the lightness, at the anchor hue.
         [[nodiscard]] Hsl rootSurface() const;
         [[nodiscard]] Hsl rootText() const;
-        // The colour every shadow starts from: black, at the form surface's hue.
+        // Black at the anchor hue, where the shadow channel starts at a form root.
         [[nodiscard]] Hsl bareShadow() const;
         // The colour a window root casts its shadow in, before any opacity. See AppTheme
         [[nodiscard]] Hsl windowShadow(OptionalUiElement root, float windowFocusedFactor) const;
@@ -593,11 +592,10 @@ namespace ClaFi
 
     Hsl BakedColors::rootSurface() const
     {
-        return { 0.0f, 0.0f, luminosityOf(0.0f, lightness) };
+        return { anchorHue, 0.0f, luminosityOf(0.0f, lightness) };
     }
 
-    // The bare ink of the lightness, carrying the form surface's hue so that a text rule raising
-    // saturation alone tints toward the theme's own family rather than toward red.
+    // The bare ink of the lightness. PaintEvent gives it the hue of the surface it is drawn on.
     Hsl BakedColors::rootText() const
     {
         return { rootSurface().hue, 0.0f, luminosityOf(1.0f, lightness) };
@@ -609,28 +607,40 @@ namespace ClaFi
     }
 
     // Read at the dark end whatever the lightness - a shadow is the absence of light on both sides.
-    // The root's own shadow rules, the window's and the shared ones, in the order PaintEvent
-    // takes - a root wearing no element takes the window's alone. A window has no state but its
-    // focus, so a rule reading only other inputs does not reach its shadow.
+    // The root's own rules, the window's and the shared ones, in the order PaintEvent takes - a
+    // root wearing no element takes the window's alone. A window has no state but its focus, so a
+    // rule reading only other inputs does not reach it. The shadow starts in the hue of the
+    // window's stroke, itself resolved from the root's surface, so a shadow rule naming no hue
+    // follows the stroke.
     Hsl BakedColors::windowShadow(OptionalUiElement root, float windowFocusedFactor) const
     {
-        Hsl result = bareShadow();
         const BakedColorRules2* own = root ? &rules2.of(*root) : nullptr;
         const BakedColorRules2* shared = root ? &rules2.shared : nullptr;
-        for (const BakedColorRules2* list : { own, &rules2.anyWindow, shared })
-        {
-            if (!list)
-                continue;
-            for (const BakedColorRule2& rule : *list)
+        auto factorOf = [windowFocusedFactor](const RuleInputs inputs){
+            if (inputs.empty())
+                return 1.0f;
+            return inputs.has(RuleInput::WindowFocused) ? windowFocusedFactor : 0.0f;
+        };
+        auto applyRules = [&](const PaintChannel channel, Hsl& color){
+            const Lightness readIn = channel == PaintChannel::Shadow ? k_darkLightness : lightness;
+            for (const BakedColorRules2* list : { own, &rules2.anyWindow, shared })
             {
-                if (rule.output != PaintChannel::Shadow)
+                if (!list)
                     continue;
-                float factor = 1.0f;
-                if (!rule.inputs.empty())
-                    factor = rule.inputs.has(RuleInput::WindowFocused) ? windowFocusedFactor : 0.0f;
-                rule.effect.applyTo(result, factor, k_darkLightness);
+                for (const BakedColorRule2& rule : *list)
+                {
+                    if (rule.output == channel)
+                        rule.effect.applyTo(color, factorOf(rule.inputs), readIn);
+                }
             }
-        }
+        };
+
+        Hsl stroke = rootSurface();
+        applyRules(PaintChannel::Surface, stroke);
+        applyRules(PaintChannel::Stroke, stroke);
+
+        Hsl result = { stroke.hue, 0.0f, 0.0f };
+        applyRules(PaintChannel::Shadow, result);
         return result;
     }
 

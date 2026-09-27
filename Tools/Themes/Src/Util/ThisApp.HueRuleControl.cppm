@@ -51,12 +51,7 @@ namespace ThisApp
     // around them. Both the control's face and the popup's items draw against these.
     constexpr float k_blobSaturation{ 0.5f };
     constexpr float k_blobLuminosity{ 0.5f };
-    // Design size of the blob on a popup tile. It is the harmony picker's icon size, and the
-    // tile it sits on is k_harmonyItemSize - the picker's palette maps are the same kind of
-    // choice, offered a few controls away, and reading as one size is the point of taking both
-    // from there rather than restating the numbers.
-    constexpr float k_blobSize{ 32.0f };
-    // The mark against a tile of that size, matching the one the harmony picker's maps carry.
+    // The mark against a k_harmonyItemSize tile, matching the one the harmony picker's maps carry.
     constexpr MinSize k_indicatorSize{ 16.0f };
 
     // What sits on a blob. One character, because the blob is the size of one and the name it
@@ -88,7 +83,7 @@ namespace ThisApp
     {
         if (value == ColorRuleHueOp::NoChange)
         {
-            text << InkWell::textInk(InkGrade::Muted)
+            text << InkWell::textInk(InkGrade::Subtle)
                 << TextStyleId::SubBody
                 << k_hueOpNames[static_cast<std::size_t>(value)]
                 << PopTextStyle{}
@@ -96,14 +91,16 @@ namespace ThisApp
             return;
         }
 
-        // On a blob the glyph takes the surface ink, which reads against the blob and vanishes on
-        // the bare surface. Off one it is written the way the operation comboboxes write their
-        // own - bold, in the spot ink. See ThemePage::operationCells.
-        const Ink ink = onBlob
-            ? InkWell::surfaceInk()
-            : InkWell::spotInk();
+        // On a blob the glyph is written as every blob's is. Off one it is written the way the
+        // operation comboboxes write their own - bold, in the spot ink.
+        // See ThemePage::operationCells.
+        if (onBlob)
+        {
+            writeBlobGlyph(text, hueOpGlyph(value));
+            return;
+        }
         text
-            << ink
+            << InkWell::spotInk()
             << TextOp::PushBold
             << hueOpGlyph(value)
             << TextOp::PopBold
@@ -269,7 +266,7 @@ namespace ThisApp
     // gives its palette map tiles.
     void paintHueBlob(PaintEvent& event, const FloatRect& bounds, Color color)
     {
-        const float radius = bounds.height() / 4.0f;
+        const float radius = bounds.height() * k_blobCornerShare;
         event.canvas().fillRoundedRectangle(bounds, radius, radius, event.applyDisabledFactor(color));
     }
 
@@ -399,7 +396,12 @@ namespace ThisApp
 
     void HueRuleItem::getText(GetTextEvent& event) const
     {
-        writeHueOpContent(event.text, m_operation, m_view == HueItemView::Tile);
+        const bool onBlob = m_view == HueItemView::Tile;
+        if (onBlob)
+            event.text << k_blobGlyphStyle;
+        writeHueOpContent(event.text, m_operation, onBlob);
+        if (onBlob)
+            event.text << PopTextStyle{};
     }
 
     void HueRuleItem::getTooltip(GetTooltipEvent& event)

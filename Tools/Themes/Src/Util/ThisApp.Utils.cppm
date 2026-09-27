@@ -32,6 +32,8 @@ namespace ThisApp
     // A hue that stands beside a palette rather than in it is written with this, so the two kinds
     // of mark are told apart by shape before they are read.
     export void paintColorDot(Text&, Color);
+    // A glyph on a blob: bold, in the surface ink, which reads against the blob.
+    export void writeBlobGlyph(Text&, std::wstring_view glyph);
 
     /// Whether a name is one of the built-ins' and so cannot be given to a user theme. Case is not
     /// part of the answer: the file system does not tell `dark` from `Dark`, so the two would take
@@ -99,6 +101,12 @@ namespace ThisApp
     constexpr float k_markH = 12.0f * scale;
     constexpr float k_markW = 24.0f * scale;
     export constexpr FixedSize k_harmonyItemSize{ 60.0f * scale, 48.0f * scale };
+    // Design side of the blob a popup tile carries, the harmony picker's icon size.
+    export constexpr float k_blobSize{ 32.0f };
+    // The style a glyph takes on a tile's blob, sized to the blob rather than to a line.
+    export constexpr TextStyleId k_blobGlyphStyle{ TextStyleId::SubTitle };
+    // A blob's corner radius as a share of its side.
+    export constexpr float k_blobCornerShare{ 0.25f };
 
     // Square. The three parts meet at the centre and leave along their own arms, so a tile wider
     // than it is tall gives the width to the top part and the height to the other two.
@@ -117,6 +125,15 @@ namespace ThisApp
     {
         // Square, so the rounding ColorSpot applies - half the height - closes into a circle.
         text << InTextIcon{ k_markH, k_markH, k_markH * 0.85f, ColorSpot::paint, Tag{ color.asUint() } };
+    }
+
+    void writeBlobGlyph(Text& text, std::wstring_view glyph)
+    {
+        text << InkWell::surfaceInk()
+            << TextOp::PushBold
+            << glyph
+            << TextOp::PopBold
+            << PopColor{};
     }
 
     void paintColorCell(Text& tt, Color color, bool extendedMode)

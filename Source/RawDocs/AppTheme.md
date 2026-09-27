@@ -16,13 +16,13 @@ list the Shadow state, so theirs is the only `ControlColorRules::shadow` that is
 read. `BakedColors::windowShadow` resolves it for the colour set the root wears - plain black
 for any other set, or for none - and `FormBase::shadowDesign` hands it to the painter.
 
-The rule is applied to black carrying the form surface's hue - the hue `formText` seeds the
-ink with - and read at the dark end whatever the lightness, with no floor and no flip. A
+The rule is applied to black carrying the hue of the window's stroke, and read at the dark
+end whatever the lightness, with no floor and no flip. A
 shadow is the absence of light on either side of the theme, and a rule read in the window's
 own direction cannot say that: `Set 0` is black at the dark end and white at the light one.
 So elevation here is luminosity, `{}` is plain black, and one rule gives one shadow in both
-modes. Raising saturation alone tints it toward the theme's own family, and a stated hue
-toward that hue. `bakeShadow` gives the elevation `k_noFloor`: the floor lifts the theme's
+modes. Raising saturation alone tints it toward the stroke's hue, and a stated hue toward
+that hue. `bakeShadow` gives the elevation `k_noFloor`: the floor lifts the theme's
 own surfaces, and a shadow falls on whatever stands behind the window.
 
 A theme crossing carries the shadow with the rest of the window. The form restates its frame
