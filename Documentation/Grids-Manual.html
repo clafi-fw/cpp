@@ -281,13 +281,13 @@ one fact per cell: whether that row fills that column.</p>
 <p>You describe all of it &mdash; columns, rows, and the contents of every cell &mdash; as
 a single nested declaration:</p>
 
-<pre><code><span class="tp">Grid</span> m_blueprint{ m_grid,
+<pre><code><span class="tp">Grid</span>&amp; m_grid{ <span class="fn">add</span>&lt;<span class="tp">Grid</span>&gt;(
     <span class="tp">Columns</span>{ <span class="cm">/* the column tree */</span> },
     <span class="tp">Header</span>{}, <span class="cm">// The grid header is optional, this line creates one</span>
     <span class="tp">Rows</span>{ <span class="cm">/* the rows, and the cells in them */</span> }
-};</code></pre>
+) };</code></pre>
 
-<p>Applying it builds the grid and, for each row, connects a pair of handlers to that row:
+<p>The grid builds itself from that list and, for each row, connects a pair of handlers to that row:
 one answering which columns the row fills, one supplying the text of its cells. The grid asks
 the row while it lays out, paints and hit-tests, so there is no second place to keep in sync.
 The row owns those connections, so nothing outside the grid has to stay alive.</p>
@@ -303,39 +303,66 @@ are exactly the ones you list, and nothing else.
 
 <p>A grid with two columns and two rows. This is the whole thing:</p>
 
-<pre><code><span class="kw">import</span> ClaFi.Controls.Grids;
-<span class="kw">import</span> ClaFi.Controls.Grids_Dt;
+<pre><code><span class="kw">import</span> ClaFi.Controls.Grids_Dt;
+<span class="kw">import</span> ClaFi.Controls.Grids;
+<span class="kw">import</span> ClaFi.Controls.StackPanel;
+<span class="kw">import</span> ClaFi.Core.TextEngine.Text;
+<span class="kw">import</span> ClaFi.Core.Foundation;
+<span class="kw">import</span> ClaFi.Core.System.UiTypes;
 
-<span class="kw">using namespace</span> <span class="tp">ClaFi</span>;
-<span class="kw">using namespace</span> <span class="tp">ClaFi::Controls</span>;   <span class="cm">// Grids:: and Dt:: from here on</span>
-
-<span class="kw">enum class</span> <span class="tp">Col</span> { Name, Size };
-
-<span class="kw">class</span> <span class="tp">FilesPage</span> : <span class="kw">public</span> <span class="tp">BasePage</span>
+<span class="kw">namespace</span> <span class="tp">MyApp</span>
 {
-    <span class="tp">Grid</span>&amp; m_grid{ body().<span class="fn">add</span>&lt;<span class="tp">Grid</span>&gt;() };
+    <span class="kw">using namespace</span> ::<span class="tp">ClaFi</span>;
+    <span class="kw">using namespace</span> ::<span class="tp">ClaFi::Controls</span>;
+    <span class="kw">using namespace</span> ::<span class="tp">ClaFi::Controls::Grids::Dt</span>;
 
-    <span class="tp">Grid</span> m_blueprint{ m_grid,
-        <span class="tp">Columns</span>{
-            <span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="tp">Text</span>{ <span class="st">L"Name"</span> } },
-            <span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Size }, <span class="tp">Text</span>{ <span class="st">L"Size"</span> } }
-        },
-        <span class="tp">Header</span>{},
-        <span class="tp">Rows</span>{
-            <span class="tp">Row</span>{
-                <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, [](<span class="tp">CellTextArgs</span>&amp; a) { a.text &lt;&lt; <span class="st">L"readme.txt"</span>; } },
-                <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Size }, [](<span class="tp">CellTextArgs</span>&amp; a) { a.text &lt;&lt; <span class="st">L"1.2 KB"</span>; } }
-            },
-            <span class="tp">Row</span>{
-                <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, [](<span class="tp">CellTextArgs</span>&amp; a) { a.text &lt;&lt; <span class="st">L"notes.md"</span>; } },
-                <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Size }, [](<span class="tp">CellTextArgs</span>&amp; a) { a.text &lt;&lt; <span class="st">L"640 B"</span>; } }
-            }
-        }
+    <span class="kw">enum class</span> <span class="tp">Col</span>
+    {
+        Name,
+        Size
     };
-};</code></pre>
+
+    <span class="kw">class</span> <span class="tp">FilesPage</span> : <span class="kw">public</span> <span class="tp">StackPanel</span>
+    {
+    <span class="kw">public</span>:
+        <span class="kw">explicit</span> <span class="tp">FilesPage</span>(<span class="kw">const</span> <span class="tp">CreateParams</span>&amp;);
+    <span class="kw">private</span>:
+        <span class="tp">Grid</span>&amp; m_grid{ <span class="fn">add</span>&lt;<span class="tp">Grid</span>&gt;(
+            <span class="tp">Columns</span>{
+                <span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="tp">Text</span>{ <span class="st">L"Name"</span> } },
+                <span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Size }, <span class="tp">Text</span>{ <span class="st">L"Size"</span> } }
+            },
+            <span class="tp">Header</span>{},
+            <span class="tp">Rows</span>{
+                <span class="tp">Row</span>{
+                    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, [](<span class="tp">Grids::GetCellTextEvent</span>&amp; event) {
+                        event.<span class="fn">text</span>() &lt;&lt; <span class="st">L"readme.txt"</span>;
+                    } },
+                    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Size }, [](<span class="tp">Grids::GetCellTextEvent</span>&amp; event) {
+                        event.<span class="fn">text</span>() &lt;&lt; <span class="st">L"1.2 KB"</span>;
+                    } }
+                },
+                <span class="tp">Row</span>{
+                    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, [](<span class="tp">Grids::GetCellTextEvent</span>&amp; event) {
+                        event.<span class="fn">text</span>() &lt;&lt; <span class="st">L"notes.md"</span>;
+                    } },
+                    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Size }, [](<span class="tp">Grids::GetCellTextEvent</span>&amp; event) {
+                        event.<span class="fn">text</span>() &lt;&lt; <span class="st">L"640 B"</span>;
+                    } }
+                }
+            }
+        ) };
+    };
+
+    <span class="tp">FilesPage::FilesPage</span>(<span class="kw">const</span> <span class="tp">CreateParams</span>&amp; params)
+        :
+        <span class="tp">StackPanel</span>{ params, <span class="tp">Orientation</span>::Vertical }
+    {
+    }
+}</code></pre>
 
 <div class="info">
-<strong>Three namespaces, and you name none of them.</strong> The grid's runtime classes live
+<strong>Three namespaces.</strong> The grid's runtime classes and its events live
 in <code>ClaFi::Controls::Grids</code> &mdash; plural, so that <code>Grid</code> stays free
 as a class name. The blueprint layer is <code>ClaFi::Controls::Grids::Dt</code>. The
 machinery both of the framework's blueprint layers share &mdash; <code>OnEvent</code>,
@@ -349,9 +376,17 @@ unqualified after that:
     <span class="kw">using namespace</span> ::<span class="tp">ClaFi</span>;
     <span class="kw">using namespace</span> ::<span class="tp">ClaFi::Controls</span>;
     <span class="kw">using namespace</span> ::<span class="tp">ClaFi::Controls::Grids::Dt</span>;</code></pre>
-Two names still need qualifying, because they collide with the controls of the same name in
-<code>Controls::</code>: <code>Grids::Dt::Expander</code> and
-<code>Grids::Dt::Divider</code>. Everything else is written bare.
+Two nodes are written in full, <code>Grids::Dt::Expander</code> and
+<code>Grids::Dt::Divider</code>. Wherever <code>Controls::Expander</code> or
+<code>Controls::Divider</code> is visible, the bare name is ambiguous. The other nodes are
+written bare.
+<br><br>
+The events a provider or a handler takes are not nodes, and they stay in <code>Grids::</code> -
+<code>Grids::GetCellTextEvent</code>, <code>Grids::CellContentEvent</code>,
+<code>Grids::NewItemEvent</code>. So do <code>Grids::GridLines</code> and
+<code>Grids::ViewMode</code>. Spell a node <code>Grids::Dt::</code> in full rather than
+<code>Dt::</code>. Under <code>using namespace ::ClaFi</code>, <code>Dt::</code> names
+<code>ClaFi::Dt</code>, which holds none of them.
 <br><br>
 <code>Grids_Dt</code> also publishes <code>Grids::Rt::</code>, aliases for the runtime types a
 blueprint mentions: <code>Rt::Column</code>, <code>Rt::RowBase</code>,
@@ -360,17 +395,22 @@ differently from the live objects it describes.
 </div>
 
 <div class="info">
-<strong>Two imports.</strong> <code>import ClaFi.Controls.Grids;</code> brings the grid and
-<code>import ClaFi.Controls.Grids_Dt;</code> brings the declarative layer. The second pulls in
-<code>ClaFi.Core.Dt</code> for you.
+<strong>The imports.</strong> <code>import ClaFi.Controls.Grids_Dt;</code> brings the
+blueprint layer, with <code>OnEvent</code> and <code>Init</code> re-exported from
+<code>ClaFi::Dt</code>. <code>import ClaFi.Controls.Grids;</code> brings the runtime classes and
+the events. The properties come from their own modules: <code>Tag</code> from
+<code>ClaFi.Core.System.UiTypes</code>, <code>Text</code> from
+<code>ClaFi.Core.TextEngine.Text</code>, <code>CreateParams</code> from
+<code>ClaFi.Core.Foundation</code>. clang wants each one imported by the file that names it,
+even where MSVC lets the name through from another import.
 </div>
 
 <p>Four things to notice, because they apply everywhere:</p>
 
 <ul>
-<li>The <code>Grid</code> applies itself in its constructor, so it has to be
-declared <strong>after</strong> the grid it builds into. It keeps nothing afterwards, so it can
-equally be a local in a constructor body rather than a member.</li>
+<li>The <code>Grid</code> builds itself from its argument list in its constructor. Anything
+that list names - a <code>CellSet</code>, a member a row reads - has to be declared
+<strong>before</strong> the grid, because members are built in declaration order.</li>
 <li>A column is named by its <code>Tag</code> &mdash; an ordinary property, forwarded to the
 column like any other. Any enum or integer works. The values have to be unique among the
 columns of one grid, and a debug build says so if they are not.</li>
@@ -383,13 +423,18 @@ columns of one grid, and a debug build says so if they are not.</li>
 <p>Text usually comes from your data rather than a literal. Point the cell at a member
 function and it will be called whenever that cell needs drawing:</p>
 
-<pre><code><span class="kw">void</span> <span class="tp">FilesPage</span>::<span class="fn">nameCell</span>(<span class="tp">CellTextArgs</span>&amp; args) <span class="kw">const</span>
+<pre><code><span class="kw">void</span> <span class="tp">FilesPage</span>::<span class="fn">nameCell</span>(<span class="tp">Grids::GetCellTextEvent</span>&amp; event) <span class="kw">const</span>
 {
-    args.text &lt;&lt; m_files[args.row.<span class="fn">tag</span>&lt;<span class="kw">size_t</span>&gt;()].name;
+    event.<span class="fn">text</span>() &lt;&lt; m_files[event.<span class="fn">row</span>().<span class="fn">tag</span>&lt;<span class="tp">std::size_t</span>&gt;()].name;
 }
 
-<span class="cm">// ...</span>
-<span class="tp">Row</span>{ <span class="tp">Tag</span>{ index }, <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">FilesPage</span>::nameCell } }</code></pre>
+<span class="tp">Row</span> <span class="tp">FilesPage</span>::<span class="fn">fileRow</span>(<span class="tp">std::size_t</span> index) <span class="kw">const</span>
+{
+    <span class="kw">return</span> <span class="tp">Row</span>{
+        <span class="tp">Tag</span>{ index },
+        <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">FilesPage</span>::nameCell }
+    };
+}</code></pre>
 
 <p><code>Tag</code> is yours to use however you like &mdash; here it carries the row's index
 into the model. The grid never reads it.</p>
@@ -441,36 +486,42 @@ containers that hold other rows:</p>
 The <code>Text</code> handed to a provider is a stream the grid clears once per query, and
 providers <strong>append</strong> to it. Several levels can contribute to one cell &mdash; the
 cell's own provider, then a grid-wide <code>OnGetCellText</code> handler. One that wants to
-replace what an earlier one wrote calls <code>text.clear()</code> first.
+replace what an earlier one wrote calls <code>event.text().clear()</code> first.
 </div>
 
-<p>A row's cells are exactly the ones you declare. Four forms:</p>
+<p>A row's cells are exactly the ones you declare. Four forms, in one row:</p>
 
-<pre><code><span class="cm">// The cell exists and is empty. It still draws a border and can be hovered.</span>
-<span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Amount } }
+<pre><code><span class="tp">Row</span>{
+    <span class="cm">// The cell exists and is empty. It still draws a border and can be hovered.</span>
+    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Amount } },
 
-<span class="cm">// Text from a lambda.</span>
-<span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, [](<span class="tp">CellTextArgs</span>&amp; args) { args.text &lt;&lt; <span class="st">L"..."</span>; } }
+    <span class="cm">// Text from a lambda.</span>
+    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, [](<span class="tp">Grids::GetCellTextEvent</span>&amp; event) {
+        event.<span class="fn">text</span>() &lt;&lt; <span class="st">L"..."</span>;
+    } },
 
-<span class="cm">// Text from a member function - the usual choice.</span>
-<span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">MyPage</span>::nameCell }
+    <span class="cm">// Text from a member function - the usual choice.</span>
+    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Channel }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::channelCell },
 
-<span class="cm">// A live control living in the cell.</span>
-<span class="tp">CellWith</span>&lt;<span class="tp">Combobox</span>&gt;{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Mode }, <span class="cm">/* Combobox constructor arguments */</span> }</code></pre>
+    <span class="cm">// A live control living in the cell. Its constructor arguments follow the Tag.</span>
+    <span class="tp">CellWith</span>&lt;<span class="tp">Checkbox</span>&gt;{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Mute } }
+}</code></pre>
 
-<p>A text provider receives:</p>
+<p>A text provider receives the grid's <code>Grids::GetCellTextEvent</code> - the same event a
+grid-wide <code>OnGetCellText</code> handler takes, so one method serves at either level:</p>
 
-<pre><code><span class="kw">struct</span> <span class="tp">CellTextArgs</span>
-{
-    <span class="kw">const</span> <span class="tp">Rt::RowBase</span>&amp;  row;     <span class="cm">// which row - read its Tag to find your data</span>
-    <span class="kw">const</span> <span class="tp">Rt::Column</span>&amp;   column;
-    <span class="tp">Text</span>&amp;               text;    <span class="cm">// write here, appending</span>
-};</code></pre>
+<table>
+<tr><th>Member</th><th>What it gives</th></tr>
+<tr><td><code>event.row()</code></td><td><code>const Rt::RowBase&amp;</code> - which row. Read its <code>Tag</code> to find your data.</td></tr>
+<tr><td><code>event.column()</code></td><td><code>const Rt::Column&amp;</code> - which column.</td></tr>
+<tr><td><code>event.text()</code></td><td><code>Text&amp;</code> - write here, appending.</td></tr>
+<tr><td><code>event.stopPropagation()</code></td><td>Keeps the handlers behind this one from seeing the cell.</td></tr>
+</table>
 
 <div class="info">
 <strong>Not declaring a cell is different from declaring an empty one.</strong> A column you
 skip has no cell in that row: nothing is drawn, and either a neighbouring cell covers the
-space or it stays blank. A bare <code>Cell{ key }</code> gives you a real, bordered,
+space or it stays blank. A bare <code>Cell{ Tag{ ... } }</code> gives you a real, bordered,
 hoverable cell that happens to be empty. Both are useful; pick deliberately.
 </div>
 
@@ -614,7 +665,8 @@ find it; on a row or a control it is yours to use however you like.</p>
 
 <p><code>Tag</code> packs several values into one, so a column name can be compound:
 <code>Tag{ SectionId::Audio, Col::Level }</code>. Reading a segment back is
-<code>tag&lt;index, count, Enum&gt;()</code>.</p>
+<code>tag.get&lt;index, count, Enum&gt;()</code>, or <code>row.tag&lt;index, count, Enum&gt;()</code>
+on a row.</p>
 
 <div class="warning">
 Because one type serves both jobs, nothing stops a cell from naming a row's tag by mistake.
@@ -631,41 +683,49 @@ at all, not by its value.
 </div>
 <h2 id="reference">Blueprint Reference</h2>
 
-<pre><code><span class="kw">import</span> ClaFi.Controls.Grids;
-<span class="kw">import</span> ClaFi.Controls.Grids_Dt;
+<pre><code><span class="kw">import</span> ClaFi.Controls.Grids_Dt;
+<span class="kw">import</span> ClaFi.Controls.Grids;
 
-<span class="kw">using namespace</span> <span class="tp">ClaFi</span>;
-<span class="kw">using namespace</span> <span class="tp">ClaFi::Controls</span>;</code></pre>
+<span class="kw">namespace</span> <span class="tp">MyApp</span>
+{
+    <span class="kw">using namespace</span> ::<span class="tp">ClaFi</span>;
+    <span class="kw">using namespace</span> ::<span class="tp">ClaFi::Controls</span>;
+    <span class="kw">using namespace</span> ::<span class="tp">ClaFi::Controls::Grids::Dt</span>;
+}</code></pre>
 
 <h3 id="ref-grid">Grid</h3>
 
-<pre><code><span class="kw">template</span> &lt;<span class="kw">typename</span>... Args&gt;
-<span class="tp">Grid</span>(<span class="tp">GridBase</span>&amp; grid, Args&amp;&amp;... nodes);</code></pre>
+<pre><code><span class="kw">template</span> &lt;<span class="kw">typename</span>... <span class="tp">Args</span>&gt;
+<span class="kw">explicit</span> <span class="tp">Grid</span>(<span class="kw">const</span> <span class="tp">CreateParams</span>&amp; params, <span class="tp">Args</span>&amp;&amp;... args);</code></pre>
 
-<p><code>Grid</code> is the root of a blueprint: it describes a whole grid and
-applies itself to one. Declare it as a member, after the <code>Grid</code> control it builds
-into:</p>
+<p><code>Grid</code> is the grid itself: an <code>Rt::Grid</code> whose constructor builds the
+columns, the header and the rows it is handed. The grid's own properties and handlers go in the
+same list. Add it where any control is added:</p>
 
-<pre><code><span class="tp">Grid</span>&amp; m_grid{ body().<span class="fn">add</span>&lt;<span class="tp">Grid</span>&gt;() };
-
-<span class="tp">Grid</span> m_blueprint{ m_grid,
+<pre><code><span class="tp">Grid</span>&amp; m_grid{ <span class="fn">add</span>&lt;<span class="tp">Grid</span>&gt;(
+    <span class="tp">Grids::GridLines</span>::Horizontal,
+    <span class="tp">OnEvent</span>{ [<span class="kw">this</span>](<span class="tp">Grids::GetCellTooltipEvent</span>&amp; event) {
+        <span class="fn">writeTooltip</span>(event);
+    } },
     <span class="tp">Columns</span>{ <span class="cm">/* ... */</span> },
     <span class="tp">Header</span>{},
     <span class="tp">Rows</span>{ <span class="cm">/* ... */</span> }
-};</code></pre>
+) };</code></pre>
 
 <div class="info">
 Columns are always applied before rows, whatever order you write them in, because cells
-resolve their tags by lookup. Rows keep their relative order among themselves, so
-<code>Header{}</code> written before <code>Rows{}</code> really does come first.
+resolve their tags by lookup. <code>Header{}</code> is added ahead of the first row wherever
+it is written, and <code>NewItem{}</code> stays after the last one. The rows keep the order they
+are written in.
 </div>
 
 <div class="info">
-<strong>Nothing survives the constructor.</strong> <code>Grid</code> has no query
-members. Columns carry their tags, rows own their cell connections, and both are reachable
-through the grid itself &mdash; see <a href="#ref-lookup">Finding things later</a>. In a debug
-build the constructor throws if two columns share a tag, or if a cell named a tag no column
-carries; a release build skips both checks.
+<strong>The description is not kept.</strong> The nodes are spent in the constructor, and
+what stands afterwards is an ordinary grid. Columns carry their tags and rows own their cell
+connections, both reached through the grid - see <a href="#ref-lookup">Finding things
+later</a>. The constructor throws <code>std::logic_error</code> if two columns share a tag, or
+if a cell names a tag no column carries. It checks both only where <code>_DEBUG</code> is
+defined, which is the Debug configuration under Visual Studio. Other builds skip them.
 </div>
 
 <h3 id="ref-column">Column and Columns</h3>
@@ -674,7 +734,7 @@ carries; a release build skips both checks.
 
 <p>The <code>Tag</code> names the column and may sit anywhere in the argument list &mdash; it
 is an ordinary property, read by the blueprint on its way through. Everything that is not a
-nested <code>Column</code> is a property, passed straight through to the grid. Nested
+nested <code>Column</code> is a property, passed straight through to the column. Nested
 <code>Column</code> nodes become sub-columns.</p>
 
 <p>A column without a <code>Tag</code> is allowed &mdash; it simply cannot be named by a
@@ -687,14 +747,14 @@ outer wrapper.</p>
 
 <h3 id="ref-rows">Row, Expander, Group, Header, Span, Divider, NewItem</h3>
 
-<pre><code><span class="tp">Row</span>{ properties..., <span class="tp">Cell</span>{ ... }, <span class="tp">Control</span>&lt;T&gt;{ ... }, aCellSet }</code></pre>
+<pre><code><span class="tp">Row</span>{ properties..., <span class="tp">Cell</span>{ ... }, <span class="tp">CellWith</span>&lt;T&gt;{ ... }, aCellSet }</code></pre>
 
 <p>A <code>Row</code> takes no leading key. Properties &mdash; anything that is not a cell
 &mdash; go to the row control, so this is where your <code>Tag</code> goes:</p>
 
 <pre><code><span class="tp">Row</span>{
     <span class="tp">Tag</span>{ <span class="tp">Kind</span>::Device, deviceIndex },
-    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">MyPage</span>::nameCell },
+    <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::nameCell },
     m_valueCells
 }</code></pre>
 
@@ -715,7 +775,7 @@ cell.</p>
 
 <pre><code><span class="tp">Rows</span>{
     <span class="tp">Grids::Dt::Expander</span>{
-        <span class="tp">Header</span>{ <span class="tp">Text</span>{ <span class="tp">TextStyle</span>::SubHeading, <span class="st">L"Outputs"</span> } },
+        <span class="tp">Header</span>{ <span class="tp">Text</span>{ <span class="tp">TextStyleId</span>::SubHeading, <span class="st">L"Outputs"</span> } },
         <span class="tp">Group</span>{
             <span class="tp">Span</span>{ <span class="tp">Tag</span>{ <span class="tp">Kind</span>::Group, <span class="tp">Device</span>::Mixer },
                 <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::groupNameCell } },
@@ -793,10 +853,10 @@ the rows, it ends up last, and it stays last as rows are added. What pressing it
 <h3 id="ref-cells">Cell, CellWith, CellSet, Init</h3>
 
 <pre><code><span class="tp">Cell</span>{ <span class="tp">Tag</span>{ ... } }                        <span class="cm">// empty but present</span>
-<span class="tp">Cell</span>{ <span class="tp">Tag</span>{ ... }, lambda }                <span class="cm">// void(CellTextArgs&amp;)</span>
-<span class="tp">Cell</span>{ <span class="tp">Tag</span>{ ... }, <span class="kw">this</span>, &amp;<span class="tp">MyPage</span>::method }  <span class="cm">// bound member function</span>
-<span class="tp">CellWith</span>&lt;T&gt;{ <span class="tp">Tag</span>{ ... }, ctorArgs... }  <span class="cm">// a live control</span>
-<span class="tp">CellSet</span>{ cells... }                    <span class="cm">// a reusable bundle</span></code></pre>
+<span class="tp">Cell</span>{ <span class="tp">Tag</span>{ ... }, lambda }                <span class="cm">// void(Grids::GetCellTextEvent&amp;)</span>
+<span class="tp">Cell</span>{ <span class="tp">Tag</span>{ ... }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::method }   <span class="cm">// bound member function</span>
+<span class="tp">CellWith</span>&lt;T&gt;{ <span class="tp">Tag</span>{ ... }, ctorArgs... }    <span class="cm">// a live control</span>
+<span class="tp">CellSet</span>{ cells... }                       <span class="cm">// a reusable bundle</span></code></pre>
 
 <p>The leading <code>Tag</code> on a cell <em>is</em> positional &mdash; unlike a column's,
 it is consumed rather than forwarded, so it has to come first. Everything after it belongs to
@@ -826,27 +886,27 @@ list:</p>
 
 <h3 id="ref-lookup">Finding things later</h3>
 
-<p>Ask the grid, not the blueprint. Both lookups are on <code>GridBase</code>, so they work
-whether or not the <code>Grid</code> object still exists:</p>
+<p>The grid answers for everything the blueprint built. The lookups are members of
+<code>GridBase</code>, and a sub-grid answers them the same as its root:</p>
 
 <table>
 <tr><th>Member</th><th>Purpose</th></tr>
-<tr><td><code>columnByTag(Tag)</code></td><td>The <code>Column&amp;</code> carrying that tag. Throws in a debug build if there is none.</td></tr>
+<tr><td><code>columnByTag(Tag)</code></td><td>The <code>Column&amp;</code> carrying that tag. Throws <code>std::logic_error</code> if there is none, in every build.</td></tr>
 <tr><td><code>findColumnByTag(Tag)</code></td><td>Same, but returns <code>nullptr</code> if absent.</td></tr>
 <tr><td><code>forEachRow(func)</code></td><td>Calls <code>func(RowContainer&amp;)</code> for every row in the grid and its sub-grids.</td></tr>
 </table>
 
-<pre><code><span class="tp">Combobox</span>&amp; combobox = row.<span class="fn">controlAtColumnAs</span>&lt;<span class="tp">Combobox</span>&gt;(m_grid.<span class="fn">columnByTag</span>(<span class="tp">Tag</span>{ <span class="tp">Col</span>::Mode }));
+<pre><code><span class="tp">ComboBox</span>&amp; mode = row.<span class="fn">controlAtColumnAs</span>&lt;<span class="tp">ComboBox</span>&gt;(m_grid.<span class="fn">columnByTag</span>(<span class="tp">Tag</span>{ <span class="tp">Col</span>::Mode }));
 
 m_grid.<span class="fn">forEachRow</span>([<span class="kw">this</span>](<span class="tp">Grids::Rt::RowContainer</span>&amp; row) {
     <span class="fn">refresh</span>(row);
-    });</code></pre>
+});</code></pre>
 
 <p>Inside a lambda that runs later, capture the <em>tag</em> and resolve it when the event
 fires. The columns do not exist yet while the blueprint is being built:</p>
 
 <pre><code><span class="tp">OnEvent</span>{ [<span class="kw">this</span>, amountTag](<span class="tp">ComboboxChangeEvent</span>&amp; event) {
-    <span class="kw">auto</span>&amp; row = *<span class="kw">static_cast</span>&lt;<span class="tp">Grids::Rt::RowContainer</span>*&gt;(event.<span class="fn">combobox</span>().<span class="fn">parent</span>());
+    <span class="kw">auto</span>&amp; row = *<span class="kw">static_cast</span>&lt;<span class="tp">Grids::Rt::RowContainer</span>*&gt;(event.<span class="fn">comboBox</span>().<span class="fn">parent</span>());
     <span class="tp">Control</span>* slider = row.<span class="fn">controlAtColumn</span>(m_grid.<span class="fn">columnByTag</span>(amountTag));
     slider-&gt;<span class="fn">invalidateState</span>();
 } }</code></pre>
@@ -917,17 +977,10 @@ of them, so a control there is not reached that way. Reach it through the group,
 reference to it from <code>Init&lt;T&gt;</code>.
 </div>
 
-<div class="info">
-This used to need a pair of grid-level <code>OnCellContent</code> and
-<code>OnGetCellText</code> handlers, filtering on the row's <code>Tag</code> and comparing the
-column by address, because the blueprint had no way to give the span cells. If you have those
-handlers, they can go &mdash; and check whether their text provider is already the one an
-ordinary row uses, in which case the span can point at the same method.
-</div>
-
 <div class="warning">
-The span's <code>Tag</code> is still worth setting even when nothing reads it: hit-testing
-and your own <code>forEachRow</code> walks use it to tell a span row from an element row.
+Set the span's <code>Tag</code> even where the grid never needs it. A provider shared by the
+span and the rows receives either one as <code>event.row()</code>, and the tag is how it tells
+the span from an element row.
 </div>
 
 <h3 id="r-controls">Live controls in cells</h3>
@@ -1001,12 +1054,16 @@ declares the cell with no content:</p>
 
 <pre><code><span class="kw">void</span> <span class="tp">Page</span>::<span class="fn">refreshAll</span>()
 {
-    <span class="kw">for</span> (<span class="kw">auto</span>* row : m_blueprint.<span class="fn">rows</span>())
-    {
-        <span class="tp">Combobox</span>&amp; mode = row.<span class="fn">controlAtColumnAs</span>&lt;<span class="tp">Combobox</span>&gt;(m_grid.<span class="fn">columnByTag</span>(<span class="tp">Tag</span>{ <span class="tp">Col</span>::Mode }));
-        <span class="tp">Slider</span>&amp; amount = row.<span class="fn">controlAtColumnAs</span>&lt;<span class="tp">Slider</span>&gt;(m_grid.<span class="fn">columnByTag</span>(<span class="tp">Tag</span>{ <span class="tp">Col</span>::Amount }));
-        <span class="cm">// ...</span>
-    }
+    <span class="tp">Grids::Rt::Column</span>&amp; modeColumn = m_grid.<span class="fn">columnByTag</span>(<span class="tp">Tag</span>{ <span class="tp">Col</span>::Mode });
+    <span class="tp">Grids::Rt::Column</span>&amp; amountColumn = m_grid.<span class="fn">columnByTag</span>(<span class="tp">Tag</span>{ <span class="tp">Col</span>::Amount });
+    m_grid.<span class="fn">forEachRow</span>([&amp;](<span class="tp">Grids::Rt::RowContainer</span>&amp; row) {
+        <span class="kw">if</span> (row.<span class="fn">tag</span>&lt;<span class="kw">0</span>, <span class="kw">2</span>, <span class="tp">Kind</span>&gt;() != <span class="tp">Kind</span>::Channel)
+            <span class="kw">return</span>;
+        <span class="tp">ComboBox</span>&amp; mode = row.<span class="fn">controlAtColumnAs</span>&lt;<span class="tp">ComboBox</span>&gt;(modeColumn);
+        <span class="tp">Slider</span>&amp; amount = row.<span class="fn">controlAtColumnAs</span>&lt;<span class="tp">Slider</span>&gt;(amountColumn);
+        mode.<span class="fn">invalidateState</span>();
+        amount.<span class="fn">invalidateState</span>();
+    });
 }</code></pre>
 
 <div class="info">
@@ -1023,13 +1080,15 @@ the row's <code>Tag</code> first &mdash; <code>controlAtColumnAs</code> does not
 row, led by a plus, that reads the text you give it. The grid does the asking and leaves the
 adding to you:</p>
 
-<pre><code><span class="tp">Grids::Dt::Grid</span>&amp; m_grid{ parent.<span class="fn">add</span>&lt;<span class="tp">Grids::Dt::Grid</span>&gt;(
-    <span class="tp">Columns</span>{ ... },
+<pre><code><span class="tp">Grid</span>&amp; m_grid{ <span class="fn">add</span>&lt;<span class="tp">Grid</span>&gt;(
+    <span class="tp">Columns</span>{ <span class="cm">/* ... */</span> },
     <span class="tp">Header</span>{},
     <span class="tp">NewItem</span>{ <span class="tp">PlaceHolderText</span>{ <span class="st">L"Add rule"</span> } }
-) };
+) };</code></pre>
 
-m_grid.<span class="fn">onNewItem</span>([<span class="kw">this</span>](<span class="tp">Grids::NewItemEvent</span>&amp;) {
+<p>The handler goes in the constructor, once the grid is built:</p>
+
+<pre><code>m_grid.<span class="fn">onNewItem</span>([<span class="kw">this</span>](<span class="tp">Grids::NewItemEvent</span>&amp;) {
     m_rules.<span class="fn">push_back</span>({});
     <span class="fn">addRuleRow</span>(m_rules.<span class="fn">size</span>() - <span class="kw">1</span>);
 });</code></pre>
@@ -1067,10 +1126,10 @@ in-place editor either, so F2 on it does nothing.
 <td>A module implementation unit does not inherit everything its interface unit had in
 scope.</td>
 <td>Give the <code>.cpp</code> its own imports and using-directives:
-<code>import ClaFi.Controls.Grids;</code>, <code>import ClaFi.Controls.Grids_Dt;</code>,
-<code>using namespace ClaFi;</code>, <code>using namespace ClaFi::Controls;</code>.
-<code>Dt::</code> needs no alias &mdash; it is a real namespace, so it resolves wherever
-<code>ClaFi::Controls</code> does.</td>
+<code>import ClaFi.Controls.Grids_Dt;</code>, <code>import ClaFi.Controls.Grids;</code>,
+<code>using namespace ::ClaFi;</code>, <code>using namespace ::ClaFi::Controls;</code>,
+<code>using namespace ::ClaFi::Controls::Grids::Dt;</code>. Spell a node
+<code>Grids::Dt::</code> in full - <code>Dt::</code> names <code>ClaFi::Dt</code> here.</td>
 </tr>
 <tr>
 <td>"deleted function" or "no copy constructor", pointing into
@@ -1081,20 +1140,24 @@ call is stored so it can be replayed, which requires copyable arguments.</td>
 through the direct API instead.</td>
 </tr>
 <tr>
-<td>Constraint not satisfied on <code>Cell</code>'s constructor</td>
-<td>The lambda's parameter is not <code>CellTextArgs&amp;</code>.</td>
-<td>The signature must be exactly <code>void(CellTextArgs&amp;)</code>. Watch for
-a stray <code>const</code>.</td>
+<td>No matching constructor for <code>Cell</code>, with a note that a constraint was not
+satisfied</td>
+<td>The provider cannot be called with a <code>Grids::GetCellTextEvent&amp;</code>. A handler
+written for another event is the usual cause.</td>
+<td>Take <code>Grids::GetCellTextEvent&amp;</code>, the parameter a grid-wide
+<code>OnGetCellText</code> handler takes.</td>
 </tr>
 <tr>
-<td>Cannot convert <code>const MyPage*</code> in <code>Cell{ key, this, &amp;MyPage::method }</code></td>
+<td><code>text()</code> called on a <code>const</code> event, inside a provider</td>
+<td>The provider takes <code>const Grids::GetCellTextEvent&amp;</code>. That passes the
+constraint, and <code>text()</code> is not <code>const</code>.</td>
+<td>Drop the <code>const</code>.</td>
+</tr>
+<tr>
+<td>A call through a member pointer drops <code>const</code>, inside <code>Cell</code>'s
+constructor instantiated for <code>const Page</code></td>
 <td>The function building the row is <code>const</code> but the cell provider is not.</td>
 <td>Make the provider <code>const</code> too.</td>
-</tr>
-<tr>
-<td>Use of an undeclared member in the <code>Grid</code> initialiser</td>
-<td>A <code>CellSet</code>, or the grid itself, is declared after the blueprint.</td>
-<td>Members initialise in declaration order: grid, then cell sets, then blueprint.</td>
 </tr>
 <tr>
 <td>Errors listing a control's constructor, from inside <code>CellWith&lt;T&gt;</code></td>
@@ -1109,11 +1172,11 @@ arguments, then move them into <code>CellWith&lt;T&gt;</code> unchanged.</td>
 <table>
 <tr><th>Symptom</th><th>Cause</th></tr>
 <tr>
-<td>Debug build throws from <code>Grid</code>'s constructor: "<em>Cell keys matched no
-column</em>"</td>
-<td>Exactly what it says, and the message lists the numeric key values. Some cell names a
-column that was never declared with that <code>Tag</code>. Release builds skip the check
-and silently drop those cells.</td>
+<td>Debug build throws from <code>Grid</code>'s constructor: "<em>Grid design: cell Tags
+matched no column</em>"</td>
+<td>Exactly what it says, and the message lists the numeric tag values. Some cell names a
+column that was never declared with that <code>Tag</code>. A build without
+<code>_DEBUG</code> skips the check and drops those cells.</td>
 </tr>
 <tr>
 <td>A row you declared never appears at all</td>
@@ -1127,20 +1190,19 @@ the numeric tag values.</td>
 </tr>
 <tr>
 <td>A group's span row has no label</td>
-<td>The blueprint gives that row no cells, so it answers through the grid's
-<code>OnCellContent</code> / <code>OnGetCellText</code> handlers. See
+<td>Its <code>Span{ ... }</code> declares no cell in that column. See
 <a href="#r-group">the recipe</a>.</td>
 </tr>
 <tr>
 <td>Every cell is filled in a row you expected to be sparse</td>
 <td>That row declared no cells, so no handler was connected to it and the question fell
-through to the grid's event, where <code>hasContent</code> defaults to <em>true</em>. Group
-span rows do this.</td>
+through to the grid's event, where <code>hasContent</code> defaults to <em>true</em>. The span of a
+<code>Group</code> whose <code>Span</code> declares no cells does this too.</td>
 </tr>
 <tr>
 <td>A parent cell is short, with a gap beneath it</td>
 <td>Something in its sub-columns has content in that row, so it is not merging. Declare the
-empty sibling as a bare <code>Cell{ key }</code> if you want the space filled.</td>
+empty sibling as a bare <code>Cell{ Tag{ ... } }</code> if you want the space filled.</td>
 </tr>
 <tr>
 <td>A narrow unpainted strip at the right edge of a column group</td>
@@ -1149,17 +1211,20 @@ reach their parent's edge.</td>
 </tr>
 <tr>
 <td>Controls appear in the wrong cells</td>
-<td>A shared <code>CellSet</code> was built with the wrong keys, or a lambda captured a
-column reference instead of a key.</td>
+<td>A shared <code>CellSet</code> was built with the wrong tags, or a lambda captured a
+column reference instead of a tag.</td>
 </tr>
 <tr>
-<td>An event handler no longer recognises a column</td>
-<td>It resolves the column through the blueprint, which no longer answers lookups, or it
-resolves a tag on every call instead of once. Keep a <code>Rt::Column&amp;</code> and compare by
-address:
-<code>Tag</code>. Compare by address:
-<code>&amp;event.column() == &amp;m_someColumn</code>, resolved once with
-<code>columnByTag</code> after the grid is built.</td>
+<td>A handler that picks out one column is slow</td>
+<td>It resolves a tag on every call. Resolve the column once with <code>columnByTag</code>
+after the grid is built, keep the <code>Rt::Column&amp;</code>, and compare by address:
+<code>&amp;event.column() == &amp;m_someColumn</code>.</td>
+</tr>
+<tr>
+<td>A crash in <code>Grid</code>'s constructor, or a row without the cells a shared set
+holds</td>
+<td>A <code>CellSet</code> the grid's argument list names is declared after the grid. Members
+are built in declaration order, so the grid read the set before it was built.</td>
 </tr>
 </table>
 
@@ -1169,7 +1234,7 @@ address:
 <div class="rule-card dos">
 <h4>Do</h4>
 <ul>
-<li>Declare in this order: grid, cell sets, blueprint.</li>
+<li>Declare cell sets, and anything else the grid's argument list names, before the grid.</li>
 <li>Give every column a cell names a unique <code>Tag</code>.</li>
 <li>Capture tags in lambdas and resolve them through the grid when the event fires.</li>
 <li>Resolve a column once and compare by address in anything the grid calls per cell.</li>
@@ -1187,9 +1252,9 @@ address:
 <li>Don't draw column tags from the same enum as your row tags &mdash; one type serves both,
 so nothing catches the mix-up at compile time.</li>
 <li>Don't capture a <code>Column&amp;</code> in a cell set &mdash; the columns do not exist yet.</li>
-<li>Don't keep the <code>Grid</code> around to look things up; ask the grid.</li>
 <li>Don't call <code>columnByTag</code> inside <code>OnCellContent</code>.</li>
-<li>Don't assume a <code>Group</code>'s span row has declared cells.</li>
+<li>Don't leave a <code>Group</code>'s <code>Span</code> without cells. A span that declares
+none answers through the grid's handlers, where every cell exists.</li>
 <li>Don't read a missing cell as an empty one; it means no cell at all.</li>
 <li>Don't rely on release builds to tell you a tag was wrong.</li>
 </ul>
@@ -1198,9 +1263,9 @@ so nothing catches the mix-up at compile time.</li>
 
 <h2 id="appendix">Appendix &middot; Direct API</h2>
 
-<p>The blueprint is a convenience, not a wall. Everything below still works and mixes freely
-with a blueprint on the same grid, which is useful when one row needs something the DSL does
-not express.</p>
+<p>The blueprint is a convenience, not a wall. Everything below works on a grid built from a
+blueprint as well, which is useful when one row needs something the blueprint does not
+express.</p>
 
 <table>
 <tr><th>Call</th><th>Returns</th></tr>
@@ -1208,13 +1273,13 @@ not express.</p>
 <tr><td><code>columns.add(props...)</code></td><td><code>Column&amp;</code></td></tr>
 <tr><td><code>column.createSubColumns()</code></td><td><code>ColumnCollection&amp;</code>, creating on first use</td></tr>
 <tr><td><code>column.subColumns()</code></td><td><code>ColumnCollection*</code>, null if none</td></tr>
-<tr><td><code>grid.addHeader()</code></td><td><code>Rt::GridHeader&amp;</code></td></tr>
+<tr><td><code>grid.addHeader()</code></td><td><code>Grids::GridHeader&amp;</code></td></tr>
 <tr><td><code>grid.addRow(props...)</code></td><td><code>Rt::Row&amp;</code></td></tr>
 <tr><td><code>grid.addControlRow(props...)</code></td><td><code>Rt::RowContainer&amp;</code></td></tr>
-<tr><td><code>grid.addDivider(props...)</code></td><td><code>Rt::RowDivider&amp;</code></td></tr>
+<tr><td><code>grid.addDivider(props...)</code></td><td><code>Grids::RowDivider&amp;</code></td></tr>
 <tr><td><code>grid.addExpander(props...)</code></td><td><code>Rt::RowExpander&amp;</code>, body via <code>.body()</code></td></tr>
 <tr><td><code>grid.addGroup(props...)</code></td><td><code>Rt::RowGroup&amp;</code>, span via <code>.span()</code>, body via <code>.body()</code></td></tr>
-<tr><td><code>grid.addNewItemRow(PlaceHolderText)</code></td><td><code>RowNewItem&amp;</code>, kept after the last row</td></tr>
+<tr><td><code>grid.addNewItemRow(PlaceHolderText)</code></td><td><code>Grids::RowNewItem&amp;</code>, kept after the last row</td></tr>
 <tr><td><code>grid.requestNewItem()</code></td><td>nothing - raises <code>NewItemEvent</code> the way pressing the new-item row does</td></tr>
 <tr><td><code>row.addControl&lt;T&gt;(column, args...)</code></td><td><code>T&amp;</code></td></tr>
 <tr><td><code>row.controlAtColumn(column)</code></td><td><code>Control*</code>, null if none</td></tr>
@@ -1224,12 +1289,12 @@ not express.</p>
 <p>Without a blueprint, a grid answers two questions through events &mdash; which cells
 exist, and what they say:</p>
 
-<pre><code>grid.<span class="fn">onCellContent</span>([](<span class="tp">CellContentEvent</span>&amp; event) {
-    event.hasContent = <span class="cm">/* ... */</span>;   <span class="cm">// defaults to true</span>
+<pre><code>m_grid.<span class="fn">onCellContent</span>([](<span class="tp">Grids::CellContentEvent</span>&amp; event) {
+    event.hasContent = event.<span class="fn">column</span>().<span class="fn">tag</span>() != <span class="tp">Tag</span>{ <span class="tp">Col</span>::Mute };   <span class="cm">// defaults to true</span>
 });
 
-grid.<span class="fn">onGetCellText</span>([](<span class="tp">GetCellTextEvent</span>&amp; event) {
-    event.<span class="fn">text</span>() &lt;&lt; <span class="cm">/* ... */</span>;
+m_grid.<span class="fn">onGetCellText</span>([<span class="kw">this</span>](<span class="tp">Grids::GetCellTextEvent</span>&amp; event) {
+    <span class="fn">writeCell</span>(event);
 });</code></pre>
 
 <div class="info">
@@ -1239,14 +1304,15 @@ exists only if you declared it.
 </div>
 
 <p>The same two events exist on every row, which is how a blueprint answers for the rows it
-builds. <code>OnCellContent</code> and <code>OnGetCellText</code> are ordinary row properties,
-and <code>RowBase::onCellContent</code> / <code>onGetCellText</code> connect them later:</p>
+builds. A row takes a handler for either in its argument list, as an <code>OnEvent</code>
+like any other, and <code>RowBase::onCellContent</code> / <code>onGetCellText</code> connect one
+later:</p>
 
-<pre><code>grid.<span class="fn">addControlRow</span>(<span class="tp">Tag</span>{ ... },
-    <span class="tp">OnCellContent</span>{ [](<span class="tp">CellContentEvent</span>&amp; event) {
-        event.hasContent = <span class="cm">/* ... */</span>;
+<pre><code>m_grid.<span class="fn">addControlRow</span>(<span class="tp">Tag</span>{ <span class="tp">Kind</span>::Channel, <span class="tp">Channel</span>::Input },
+    <span class="tp">OnEvent</span>{ [](<span class="tp">Grids::CellContentEvent</span>&amp; event) {
+        event.hasContent = event.<span class="fn">column</span>().<span class="fn">tag</span>() == <span class="tp">Tag</span>{ <span class="tp">Col</span>::Channel };
         event.<span class="fn">stopPropagation</span>();   <span class="cm">// keep the grid handler out of it</span>
-        } });</code></pre>
+    } });</code></pre>
 
 <div class="info">
 A row's handler runs before the grid's. If it calls <code>stopPropagation()</code> the grid
