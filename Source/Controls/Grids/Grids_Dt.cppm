@@ -371,6 +371,16 @@ namespace ClaFi::Controls::Grids::Dt
         void apply(RowBuildContext&) const override;
     };
 
+    // The described grid's new-item row, kept after its last row wherever it is written. See Grids
+    export struct NewItem : public RowNode
+    {
+        explicit NewItem(PlaceHolderText);
+
+        PlaceHolderText text; // what the row says
+
+        void apply(RowBuildContext&) const override;
+    };
+
     // Rows{ ... } - anonymous group, spliced into the enclosing grid.
     export struct Rows : public RowNode
     {
@@ -870,6 +880,19 @@ namespace ClaFi::Controls::Grids::Dt
     void Divider::apply(RowBuildContext& context) const
     {
         context.target.addDivider();
+    }
+
+    // --- NewItem ---
+
+    NewItem::NewItem(PlaceHolderText placeHolderText)
+        :
+        text{ std::move(placeHolderText) }
+    {
+    }
+
+    void NewItem::apply(RowBuildContext& context) const
+    {
+        context.target.addNewItemRow(text);
     }
 
     // --- Rows ---

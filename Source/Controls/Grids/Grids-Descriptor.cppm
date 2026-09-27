@@ -175,7 +175,9 @@ namespace ClaFi::Controls::Grids
         Grid& m_owner;
         ViewMode m_viewMode;
         GridLines m_gridLines;
-        Column m_rootColumn{ *this, nullptr, L"Root menu", ShowInHeader::No, ColumnWidthMode::Fill };
+        // No editor: the one row holding a cell of the root is the new-item row, a command.
+        Column m_rootColumn{ *this, nullptr, L"Root menu", ShowInHeader::No, ColumnWidthMode::Fill,
+            EditorMode::None };
         ColumnCollection& m_columns{ m_rootColumn.createSubColumns() };
         const ControlMetrics& m_designCellMetrics;
         ScaledCellMetrics m_scaledCellMetrics;

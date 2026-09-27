@@ -14,7 +14,7 @@ export import ClaFi.Controls.CodeBox;
 export import ClaFi.Controls.ColorSlider;
 export import ClaFi.Controls.ComboBox;
 export import ClaFi.Controls.Expander;
-export import ClaFi.Controls.FormTitle;
+export import ClaFi.Controls.DialogTitle;
 export import ClaFi.Controls.Grids;
 export import ClaFi.Controls.HexView;
 export import ClaFi.Controls.InPlaceEdit;

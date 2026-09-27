@@ -86,7 +86,7 @@ namespace ClaFi::Controls
         // Every child a panel has, each in the slot it was given. That is the order they are
         // laid out in and the order navigation reads them in, and it is not the order they were
         // created in: the code building a panel is free to ask for the right bar before the left
-        // one, and FormTitle does exactly that, so the control collection says nothing about
+        // one, and DialogTitle does exactly that, so the control collection says nothing about
         // where a bar sits.
         //
         // Non-owning - the controls themselves live in the collection, like every other child -

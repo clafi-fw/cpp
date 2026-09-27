@@ -4,7 +4,6 @@ import ThisApp.RuleSlider;
 
 import ClaFi.Icons.HueIcon;
 import ClaFi.Icons.LuminosityIcon;
-import ClaFi.Icons.PlusMark;
 import ClaFi.Icons.SaturationIcon;
 
 import ClaFi.Controls.Button;
@@ -97,13 +96,6 @@ namespace ThisApp
             Interactivity::MouseOnly
         ) };
 
-        ToolButton& m_addButton{ m_tools.add<ToolButton>(
-            IconSize{ 18.0f },
-            ButtonViewMode::LeftIcon,
-            Button::OnPaintIcon{ Icons::PlusMark::paint },
-            L"Add rule"
-        ) };
-
         // A row names its rule by the rule's place in the list, carried as the row's tag.
         Grids::Dt::Grid& m_grid{ createBody<ScrollBox>(
             ScrollBars::Vertical
@@ -131,7 +123,8 @@ namespace ThisApp
                     Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::paint }, L" Elevation" }
                 }
             },
-            Grids::Dt::Header{}
+            Grids::Dt::Header{},
+            Grids::Dt::NewItem{ PlaceHolderText{ L"Add rule" } }
         ) };
     };
 
@@ -149,7 +142,7 @@ namespace ThisApp
             Text{ TextStyleId::SubTitle, title }
         ) }
     {
-        m_addButton.onClick([this](ClickEvent&) {
+        m_grid.onNewItem([this](Grids::NewItemEvent&) {
             addRule();
         });
         m_deleteTimer.onTick([this](TimerEvent&) {

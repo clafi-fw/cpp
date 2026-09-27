@@ -1,6 +1,7 @@
 module ClaFi.Controls.Grids;
 
 import :RowBase;
+import :RowNewItem;
 
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.TextBox;
@@ -84,6 +85,35 @@ namespace ClaFi::Controls::Grids
             addOverlayControl(*m_header, ClippingMode::Standard);
         }
         return *m_header;
+    }
+
+    RowNewItem& GridBase::addNewItemRow(PlaceHolderText placeHolderText)
+    {
+        m_newItemRow = &add<RowNewItem>(std::move(placeHolderText));
+        return *m_newItemRow;
+    }
+
+    // The row a handler added is entered at its leading cell, since a new item is filled in from
+    // its start. It has not been laid out yet, so the reveal waits for the pass.
+    void GridBase::requestNewItem()
+    {
+        m_rowAdded = nullptr;
+        NewItemEvent event{ *this };
+        emitEvent(event);
+        if (!m_rowAdded)
+            return;
+        // Every child of a grid is a row.
+        RowBase& row = static_cast<RowBase&>(*m_rowAdded);
+        m_rowAdded = nullptr;
+        const Column* leading = nullptr;
+        row.traverseLanes({ 0.0f, 0.0f }, [&](const RowCell& cell, const FloatRect&){
+            if (!leading)
+                leading = &cell.column;
+        });
+        if (leading)
+            row.selectColumn(*leading);
+        row.setFocus();
+        row.scrollIntoViewOnAlign();
     }
 
     ScaledDimensions GridBase::calculateContent(AlignEvent& event)
@@ -251,6 +281,19 @@ namespace ClaFi::Controls::Grids
             }
         }
         StackView::keyDown(event);
+    }
+
+    void GridBase::controlAdded(Control& control)
+    {
+        StackView::controlAdded(control);
+        m_rowAdded = &control;
+        if (m_newItemRow && &control != m_newItemRow)
+            moveControl(*m_newItemRow, controls().size());
+    }
+
+    bool GridBase::defaultCanSelectItem(Control& value)
+    {
+        return &value != m_newItemRow && StackView::defaultCanSelectItem(value);
     }
 
     bool GridBase::editSelectedCell()

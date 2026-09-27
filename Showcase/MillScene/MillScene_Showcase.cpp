@@ -15,7 +15,7 @@ import ClaFi.Controls.AppButton;
 import ClaFi.Controls.Base.ButtonBase;
 import ClaFi.Controls.Base.SliderBase;
 import ClaFi.Controls.Button;
-import ClaFi.Controls.FormTitle;
+import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.Slider;

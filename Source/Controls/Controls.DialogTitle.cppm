@@ -1,4 +1,4 @@
-export module ClaFi.Controls.FormTitle;
+export module ClaFi.Controls.DialogTitle;
 
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.StackPanel;
@@ -171,7 +171,7 @@ namespace ClaFi::Controls
         Panel{
             params,
             UiElement::DialogTitle,
-            params.themeMetrics().formTitle,
+            params.themeMetrics().dialogTitle,
             VerticalTextAnchor::Center,
             HorizontalTextAnchor::Center,
             WordWrap::No,

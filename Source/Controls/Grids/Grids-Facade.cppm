@@ -11,6 +11,7 @@ export import :RowExpander;
 export import :RowGroup;
 export import :RowGroupBase;
 export import :RowDivider;
+export import :RowNewItem;
 export import :GridBase;
 export import :SubGrid;
 export import :Grid;

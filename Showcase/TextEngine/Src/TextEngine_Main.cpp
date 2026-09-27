@@ -10,7 +10,7 @@ import ClaFi.Showcase.TextEngine.Icon;
 
 import ClaFi.Controls.AppButton;
 import ClaFi.Controls.CodeBox;
-import ClaFi.Controls.FormTitle;
+import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;

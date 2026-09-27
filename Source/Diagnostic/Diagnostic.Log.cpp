@@ -5,7 +5,7 @@ import ClaFi.Diagnostic.Options;
 
 import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.TabStrip;
-import ClaFi.Controls.FormTitle;
+import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.StackView;

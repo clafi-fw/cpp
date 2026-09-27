@@ -13,7 +13,7 @@ import ClaFi.StdActions.Transfer;
 
 import ClaFi.Controls.AppButton;
 import ClaFi.Controls.Divider;
-import ClaFi.Controls.FormTitle;
+import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Spacer;

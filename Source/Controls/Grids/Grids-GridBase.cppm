@@ -12,11 +12,13 @@ import :RowDivider;
 import :GridHeader;
 import :RowExpander;
 import :RowGroup;
+import :RowNewItem;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Controls.Base.StackPanelBase;
 import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.StackView;
+import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.Context.FormContext;
@@ -44,6 +46,8 @@ namespace ClaFi::Controls::Grids
         DECLARE_EVENT(AcceptCellTextEvent, OnAcceptCellText, onAcceptCellText)
         // The hint for one cell, asked while the pointer rests on it. See Grids
         DECLARE_EVENT(GetCellTooltipEvent, OnGetCellTooltip, onGetCellTooltip)
+        // Raised when the new-item row asks for an item. See Grids
+        DECLARE_EVENT(NewItemEvent, OnNewItem, onNewItem)
     public:
         template<RowType Row, typename... Args>
         Row& add(Args&&... args) {
@@ -92,6 +96,10 @@ namespace ClaFi::Controls::Grids
         // The header row, once one has been added - what a cell event's row is compared with to
         // tell a column's name cell from a data cell. nullptr before then.
         [[nodiscard]] const GridHeader* header() const { return m_header; }
+        // The row kept after the last one, whose cell asks for an item. See Grids
+        RowNewItem& addNewItemRow(PlaceHolderText);
+        // Raises NewItemEvent, then selects the leading cell of the row a handler added.
+        void requestNewItem();
         [[nodiscard]] Column* findColumnByTag(Tag tag) const { return columns().findByTag(tag); }
         [[nodiscard]] Column& columnByTag(Tag tag) const { return columns().byTag(tag); }
     protected:
@@ -130,6 +138,10 @@ namespace ClaFi::Controls::Grids
         // selection on the cell under the pointer.
         void doubleClick(DoubleClickEvent&) override;
         void keyDown(KeyDownEvent&) override;
+        // Puts a row added after the new-item row ahead of it, and notes it for requestNewItem.
+        void controlAdded(Control&) override;
+        // The new-item row is a command rather than an item, so no selection holds it.
+        bool defaultCanSelectItem(Control&) override;
     private:
         // A place a key can land: a cell of a row, or the control a row that has no cells of its
         // own stands behind. The origin is the row's own top left in form space, which is what
@@ -238,6 +250,8 @@ namespace ClaFi::Controls::Grids
         // that parent can hold one, and the grid itself where it cannot. It is what bounds what
         // the header draws, and it names the pass the header is painted in. See addHeader.
         Control* m_headerHost{};
+        RowNewItem* m_newItemRow{}; // null until addNewItemRow
+        Control* m_rowAdded{}; // the last row added, which requestNewItem selects
     };
 
 

@@ -325,7 +325,7 @@ namespace ClaFi::Controls
 
     void Tab::drag(DragEvent& event)
     {
-        // While it seems convenient for a strip placed on a Form Title,
+        // While it seems convenient for a strip placed on a DialogTitle,
         // if the strip is on a popup, an accidental drag closes the window, that's awful
         //if (&event.control() == this)
         //{

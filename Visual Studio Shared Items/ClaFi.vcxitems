@@ -96,6 +96,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowGroup.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowGroupBase.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowGroupBase.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowNewItem.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowNewItem.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-GridHeader.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-GridHeader.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids_Dt.cppm" />

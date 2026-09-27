@@ -152,6 +152,7 @@
                     <li><a href="#r-share">Sharing cells between rows</a></li>
                     <li><a href="#r-vary">Rows that differ from their neighbours</a></li>
                     <li><a href="#r-update">Reaching a control later</a></li>
+                    <li><a href="#r-newitem">Adding items from the grid</a></li>
                 </ul>
             </li>
             <li class="has-children">
@@ -428,6 +429,7 @@ containers that hold other rows:</p>
 <tr><td><code>Header{}</code></td><td>The header row. Draws a cell in every column whose <code>ShowInHeader</code> is <code>Yes</code>, using that column's <code>Text</code>.</td></tr>
 <tr><td><code>Row{ ... }</code></td><td>An ordinary row. Can hold text cells and live controls.</td></tr>
 <tr><td><code>Divider{}</code></td><td>A thin band between rows, closed by a grid line.</td></tr>
+<tr><td><code>NewItem{ PlaceHolderText{...} }</code></td><td>A muted line kept below the last row. Pressing it asks you for a new item - see <a href="#r-newitem">Adding items from the grid</a>.</td></tr>
 <tr><td><code>Expander{ Header{...}, rows... }</code></td><td>A collapsible header with rows beneath it.</td></tr>
 <tr><td><code>Group{ Span{...}, rows... }</code></td><td>A span row laid <em>over</em> its rows, so its cells span them vertically.</td></tr>
 <tr><td><code>Rows{ ... }</code></td><td>Grouping only &mdash; adds nesting in your source, not in the grid.</td></tr>
@@ -683,7 +685,7 @@ cell:</p>
 <p><code>Columns{ ... }</code> is a grouping node with no effect on the grid; use it as the
 outer wrapper.</p>
 
-<h3 id="ref-rows">Row, Expander, Group, Header, Span, Divider</h3>
+<h3 id="ref-rows">Row, Expander, Group, Header, Span, Divider, NewItem</h3>
 
 <pre><code><span class="tp">Row</span>{ properties..., <span class="tp">Cell</span>{ ... }, <span class="tp">Control</span>&lt;T&gt;{ ... }, aCellSet }</code></pre>
 
@@ -707,6 +709,7 @@ cell.</p>
 <tr><td><code>Header{ ... }</code></td><td>the header of the container it sits in &mdash; see below</td></tr>
 <tr><td><code>Span{ ... }</code></td><td>the span row of the group it sits in &mdash; see below</td></tr>
 <tr><td><code>Divider{}</code></td><td>&mdash;</td></tr>
+<tr><td><code>NewItem{ PlaceHolderText{...} }</code></td><td>&mdash;</td></tr>
 <tr><td><code>Rows{ rows... }</code></td><td>spliced into the enclosing grid</td></tr>
 </table>
 
@@ -779,6 +782,13 @@ is. Through the direct API, <code>grid.addGroup</code> takes the span's tag as
 <code>HeaderText</code>. The standalone <code>Controls::Expander</code> is a different control
 and takes <code>HeaderText</code> too.
 </div>
+
+<h4>NewItem</h4>
+
+<p><code>NewItem{ PlaceHolderText{ ... } }</code> is the grid's new-item row. It takes the text
+its one cell shows and nothing else. Put it in the grid's own list: wherever it is written among
+the rows, it ends up last, and it stays last as rows are added. What pressing it does is in
+<a href="#r-newitem">Adding items from the grid</a>.</p>
 
 <h3 id="ref-cells">Cell, CellWith, CellSet, Init</h3>
 
@@ -961,6 +971,46 @@ so they are stepped over and descended into. A group's span is a container but n
 the grid, so it is not visited. If some rows do not have the control you are asking for, check
 the row's <code>Tag</code> first &mdash; <code>controlAtColumnAs</code> does not check.
 </div>
+
+<h3 id="r-newitem">Adding items from the grid</h3>
+
+<p>A <code>NewItem</code> row lets the grid ask for an item itself: a muted line under the last
+row, led by a plus, that reads the text you give it. The grid does the asking and leaves the
+adding to you:</p>
+
+<pre><code><span class="tp">Grids::Dt::Grid</span>&amp; m_grid{ parent.<span class="fn">add</span>&lt;<span class="tp">Grids::Dt::Grid</span>&gt;(
+    <span class="tp">Columns</span>{ ... },
+    <span class="tp">Header</span>{},
+    <span class="tp">NewItem</span>{ <span class="tp">PlaceHolderText</span>{ <span class="st">L"Add rule"</span> } }
+) };
+
+m_grid.<span class="fn">onNewItem</span>([<span class="kw">this</span>](<span class="tp">Grids::NewItemEvent</span>&amp;) {
+    m_rules.<span class="fn">push_back</span>({});
+    <span class="fn">addRuleRow</span>(m_rules.<span class="fn">size</span>() - <span class="kw">1</span>);
+});</code></pre>
+
+<p>The row's one cell spans every column and behaves like any other cell: the pointer lights
+it and the arrow keys reach it. A click on it, or Return or Space while it is selected, raises
+<code>NewItemEvent</code> on the grid. When your handler returns, the grid selects the first
+cell of the row the handler added, gives it the focus, and scrolls it into view once the row
+has been laid out. A handler that adds nothing leaves the selection where it was.</p>
+
+<p>A row added after the new-item row is put ahead of it, so it stays last however the rows
+arrive - appended one at a time or rebuilt wholesale.</p>
+
+<div class="warning">
+Add the row inside the handler. The grid selects a row added while the event runs; one added
+later - on the next tick, say - arrives unselected.
+</div>
+
+<div class="info">
+The new-item row never joins the selection. It is a command rather than an item, so a
+<code>Delete</code> handler that walks <code>selection()</code> never meets it. It opens no
+in-place editor either, so F2 on it does nothing.
+</div>
+
+<p>To ask for an item from somewhere else - a toolbar button, a shortcut - call
+<code>grid.requestNewItem()</code>. It raises the same event and selects the same way.</p>
 <h2 id="troubleshooting">Troubleshooting</h2>
 
 <h3 id="t-build">Build errors</h3>
@@ -1080,6 +1130,7 @@ address:
 <li>Resolve a column once and compare by address in anything the grid calls per cell.</li>
 <li>Use <code>std::ref</code> for anything shared or expensive.</li>
 <li>Use a bare <code>Cell{ Tag{ ... } }</code> when you want a present-but-empty cell.</li>
+<li>Add an item's row inside the <code>NewItemEvent</code> handler, so the grid can select it.</li>
 <li>Give at least one sub-column in each group <code>Fill</code>.</li>
 <li>Run a debug build after changing a blueprint.</li>
 </ul>
@@ -1117,6 +1168,8 @@ not express.</p>
 <tr><td><code>grid.addDivider(props...)</code></td><td><code>Rt::RowDivider&amp;</code></td></tr>
 <tr><td><code>grid.addExpander(props...)</code></td><td><code>Rt::RowExpander&amp;</code>, body via <code>.body()</code></td></tr>
 <tr><td><code>grid.addGroup(props...)</code></td><td><code>Rt::RowGroup&amp;</code>, span via <code>.span()</code>, body via <code>.body()</code></td></tr>
+<tr><td><code>grid.addNewItemRow(PlaceHolderText)</code></td><td><code>RowNewItem&amp;</code>, kept after the last row</td></tr>
+<tr><td><code>grid.requestNewItem()</code></td><td>nothing - raises <code>NewItemEvent</code> the way pressing the new-item row does</td></tr>
 <tr><td><code>row.addControl&lt;T&gt;(column, args...)</code></td><td><code>T&amp;</code></td></tr>
 <tr><td><code>row.controlAtColumn(column)</code></td><td><code>Control*</code>, null if none</td></tr>
 <tr><td><code>row.controlAtColumnAs&lt;T&gt;(column)</code></td><td><code>T&amp;</code>, unchecked</td></tr>

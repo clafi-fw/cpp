@@ -577,10 +577,11 @@ namespace ClaFi
     };
 
     // The root control is a base rather than a member, so a form is called like the control it
-    // hosts - form.createTopBar<FormTitle>() instead of form.content().createTopBar<FormTitle>().
-    // Bases initialize in declaration order, so FormBase is complete - window, canvas, context -
-    // before CreateParams is formed from it. Nothing about the window moves into Control, so the
-    // same class stays usable as a nested child.
+    // hosts - form.createTopBar<DialogTitle>() instead of
+    // form.content().createTopBar<DialogTitle>(). Bases initialize in declaration order, so
+    // FormBase is complete - window, canvas, context - before CreateParams is formed from it.
+    // Nothing about the window moves into Control, so the same class stays usable as a nested
+    // child.
     export template <ClassOfFormControl ControlClass>
         class Form : public FormBase, public ControlClass
     {

@@ -9,7 +9,7 @@ import ClaFi.Browser.BreadCrumbBar;
 import ClaFi.Controls.AppButton;
 import ClaFi.Controls.Base.ButtonBase;
 import ClaFi.Controls.Button;
-import ClaFi.Controls.FormTitle;
+import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.Base.StackPanelBase;

@@ -134,6 +134,13 @@ Init<Rt::RowGroup>{ ... } and OnEvent{ ... } run against the group once its span
 described, before its rows are applied. The folding is the span's to report, so an Init
 that follows it connects to group.span().
 
+## NewItem
+
+NewItem{ PlaceHolderText{ ... } }
+
+The design's new-item row - see RowNewItem. It stands last wherever it is written among
+the rows, and the text is what its one cell says.
+
 ## Collapsible
 
 Whether a group's rows fold away under its span, and whether the group starts open.
@@ -194,6 +201,28 @@ every row alike.
 Its header is held against the top of the view while the rows of its body are scrolled
 under it, resting under the grid's own header and under the header of any expander this
 one stands in - see WithHeldHeader.
+
+## RowNewItem
+
+The row a grid keeps after its last one - GridBase::addNewItemRow, or NewItem{ ... } in a
+design. A row added later is put ahead of it, so it stays last whatever order the rows
+arrive in. A grid holds one.
+
+Its one cell is the root column's, which spans every other, so it is drawn, hovered,
+selected and reached by the keys the way any cell is. It says the text it was given, muted
+and led by a plus. The root column opens no editor, so Return and Space go on to the focus
+navigator, which presses the row: a key and the pointer make the same click.
+
+The click raises NewItemEvent on the grid. The row itself never joins the selection: it is
+a command rather than an item, and a selection holding it would hand it to whatever acts on
+the selection - Delete among them.
+
+## NewItemEvent
+
+Raised on the grid when its new-item row is pressed, and by GridBase::requestNewItem. The
+handler adds the item's row, which the grid puts ahead of the new-item row. The grid then
+selects that row's leading cell and brings the row into view once it has been laid out. A
+handler that adds nothing leaves the selection where it was.
 
 ## GridRow
 

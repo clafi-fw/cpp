@@ -98,7 +98,7 @@ namespace ClaFi
         static constexpr float surfaceGrowInScale = 0.83f;
         static constexpr float scrollBarWidth = 17.0f;
         ControlMetrics button;
-        ControlMetrics formTitle;
+        ControlMetrics dialogTitle;
         // THE FRAME A WINDOW WEARS: border is the ring its content stands inside and radius its
         // corners, both painted by the framework on every platform. The padding of a primary
         // window is that ring and nothing more.

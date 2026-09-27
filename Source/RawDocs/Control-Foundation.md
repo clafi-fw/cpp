@@ -368,7 +368,7 @@ layer-shell Dialog, placed `ScreenRight`, is sent no ACTIVATED state and reads 0
 What reads it:
 
 - The colour chain, through `AdjustPaintEvent::setWindowSelectedAmount` - how much of the
-  selected factor is the window's focus. `FormTitle` states 1, so its `active` and `activeText`
+  selected factor is the window's focus. `DialogTitle` states 1, so its `active` and `activeText`
   rules follow its window.
 - The selection band. `ControlPaintContext::focusedFactor` is the control's focus times the
   window's, so a selection in a window without the focus rests at `selectedText.surface`.
