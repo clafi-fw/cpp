@@ -325,6 +325,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Formats\Formats_Xml.cppm">
       <Filter>Dom\Formats</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\BrowseBackIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\BrowseForwardIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\BrowseUpIcon.cppm">
       <Filter>Icons</Filter>
     </ClCompile>

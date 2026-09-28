@@ -193,6 +193,7 @@ namespace ClaFi
         virtual void wnd_contextMenu(PointInForm*, InputStamp) = 0;
         virtual void wnd_mouseWheel(PointInForm, float wheelDelta) = 0;
         virtual void wnd_mouseHWheel(PointInForm, float wheelDelta) = 0;
+        virtual void wnd_sideButton(PointInForm, SideButton, InputStamp) = 0; // a side press
         virtual void wnd_keyDown(KeyDownEvent& key) = 0;
         virtual void wnd_keyUp() = 0;
         virtual void wnd_char(wchar_t value) = 0;

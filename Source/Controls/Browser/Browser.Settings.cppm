@@ -22,7 +22,9 @@ namespace ClaFi::Browser
     {
         Value{ ConfigNames::id, L"" },
         Value{ ConfigNames::title, ConfigNames::untitledPage },
-        Value{ ConfigNames::path, L"" }
+        Value{ ConfigNames::path, L"" },
+        Sequence{ ConfigNames::backUrls, std::wstring{} },
+        Sequence{ ConfigNames::forwardUrls, std::wstring{} }
     };
 
     // The browser's part of the application config - the selected tab and an entry per open tab.

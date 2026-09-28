@@ -24,6 +24,15 @@ namespace ClaFi
     constexpr DWORD k_dwmCornerDoNotRound = 1;
     constexpr DWORD k_dwmColorNone = 0xFFFFFFFE;
 
+    namespace
+    {
+        // The side button a WM_XBUTTON or WM_NCXBUTTON message names in its wParam.
+        [[nodiscard]] SideButton sideButtonOf(const WPARAM wParam)
+        {
+            return GET_XBUTTON_WPARAM(wParam) == XBUTTON1 ? SideButton::Back : SideButton::Forward;
+        }
+    }
+
     FormWindow::FormWindow(WindowsManager& owner, IForm& form, WindowRole role, IForm* parentForm)
         :
         Window{ owner, role,
@@ -345,6 +354,43 @@ namespace ClaFi
 
         case WM_RBUTTONUP:
             m_captionRightPressed = false;
+            break;
+
+        // A SIDE BUTTON ACTS AS IT GOES DOWN, and a second press inside the double-click time
+        // arrives as a double click. Each of its messages is answered TRUE, which tells the system
+        // the window took it - DefWindowProc would otherwise raise a WM_APPCOMMAND on the release.
+        case WM_XBUTTONDOWN:
+        case WM_XBUTTONDBLCLK:
+            m_form.wnd_sideButton(toSurface(msg.mousePos()).toFloat(), sideButtonOf(msg.wParam),
+                InputStamp{});
+            msg.result = TRUE;
+            msg.handled = true;
+            break;
+
+        case WM_XBUTTONUP:
+            msg.result = TRUE;
+            msg.handled = true;
+            break;
+
+        case WM_NCXBUTTONDOWN:
+        case WM_NCXBUTTONDBLCLK:
+            if (!isFrameHitTest(static_cast<WPARAM>(GET_NCHITTEST_WPARAM(msg.wParam))))
+            {
+                IntPoint mp = msg.mousePos();
+                ::ScreenToClient(handle(), reinterpret_cast<POINT*>(&mp));
+                m_form.wnd_sideButton(toSurface(mp).toFloat(), sideButtonOf(msg.wParam),
+                    InputStamp{});
+                msg.result = TRUE;
+                msg.handled = true;
+            }
+            break;
+
+        case WM_NCXBUTTONUP:
+            if (!isFrameHitTest(static_cast<WPARAM>(GET_NCHITTEST_WPARAM(msg.wParam))))
+            {
+                msg.result = TRUE;
+                msg.handled = true;
+            }
             break;
 
         case WM_NCHITTEST:

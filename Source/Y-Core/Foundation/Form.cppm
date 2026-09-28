@@ -360,6 +360,7 @@ namespace ClaFi
         void wnd_mouseWheel(PointInForm, float wheelDelta) override;
         void wnd_mouseHWheel(PointInForm, float wheelDelta) override;
         void mouseWheelOrHwheel(PointInForm, float wheelDelta, bool h);
+        void wnd_sideButton(PointInForm, SideButton, InputStamp) override;
         void wnd_keyDown(KeyDownEvent&) override;
         void wnd_keyUp() override;
         void wnd_char(wchar_t value) override;

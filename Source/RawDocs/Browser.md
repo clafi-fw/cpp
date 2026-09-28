@@ -61,13 +61,33 @@ A pick inside a page that names one of its anchors goes to the browser as a url 
 shown on the spot. The browser records where the tab is, and the page shows what this event
 names - so the url a tab stores is always the place its page shows.
 
+## HistoryEntry
+
+How a move keeps the url it leaves.
+A tab keeps two stacks of urls: back, nearest last, and forward, nearest first. Push puts the url
+left on the back stack and drops the forward stack - what a move the user asked for does. Replace
+forgets the url left and keeps the forward stack. A page stepping through its own anchors a key at a
+time replaces, so a walk leaves one entry behind rather than one per anchor passed over. An entry
+that a replace leaves naming the url on screen is dropped, since a step to it would go nowhere.
+Only a move that changes the url is kept. Selecting a tab, a goTo naming the url the tab stands on
+and a move canLeavePage refused all record nothing.
+Back and Forward travel the stacks through the same move, so they ask canLeavePage and raise
+ShowAnchorEvent like any other. A right click on either button drops the stack as a list, nearest
+first; a travel of several steps carries the urls passed over to the other stack in the order they
+were visited. The back stack holds 50 urls, and the oldest go first.
+Browser::Actions::back and forward run on Alt+Left and Alt+Right, deferred as Open is. A side
+button of the mouse travels wherever the pointer stands inside the browser. A text box with a jump
+history of its own answers Alt+Left first.
+Entries are urls, so a page a fetch drops stays named by its path, and travelling back to it builds
+it again as goTo builds any path. A rename rewrites the entries at or under the renamed page.
+
 ## BrowserSettings
 
 Where the browser's settings are kept, and when each part reaches the disk.
-The application config carries the selected tab's id and an entry per open tab - id, title
-and url, plus what the application adds to an entry - which is what is shown of a tab that
-has not been opened. The Themes app keeps what a tab's icon is drawn from there. Nothing of
-the page is there.
+The application config carries the selected tab's id and an entry per open tab - id, title,
+url and the back and forward urls, plus what the application adds to an entry - which is what
+is shown of a tab that has not been opened. The Themes app keeps what a tab's icon is drawn
+from there. Nothing of the page is there.
 What a page keeps is in the tab's own file, in the OpenTabs folder beside the config file,
 named by the tab's id with the config file's extension and laid out by the application's tab
 schema alone. The file is read the first time the page asks for it, which is when the page is

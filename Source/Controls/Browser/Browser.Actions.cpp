@@ -1,5 +1,8 @@
 module ClaFi.Browser.Actions;
 
+import ClaFi.Icons.BrowseBackIcon;
+import ClaFi.Icons.BrowseForwardIcon;
+
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
@@ -18,23 +21,34 @@ namespace ClaFi::Browser::Actions
     Action openInNewTab{
         Text{ L"Open in new tab" }
     };
+    Action back{
+        Text{ L"Back" },
+        Shortcut{ Keys::Left, { .alt = true } },
+        Action::OnPaintIcon{ Icons::BrowseBackIcon::paint }
+    };
+    Action forward{
+        Text{ L"Forward" },
+        Shortcut{ Keys::Right, { .alt = true } },
+        Action::OnPaintIcon{ Icons::BrowseForwardIcon::paint }
+    };
 
     void registerAll()
     {
         // The application's scope is one object for the whole process and outlives any single
         // browser, and Actions::add appends unconditionally, so a second browser would otherwise
-        // register the same pair behind the first one. One registration is all there is.
+        // register the same set behind the first one. One registration is all there is.
         static bool registered = false;
         if (registered)
             return;
         registered = true;
 
         AppActions& actions = AppActions::get();
-        // Neither carries a shortcut, so nothing in the scope can ever match one. Added anyway,
-        // so the scope holds the pair whole and an application that gives one a key needs to do
-        // no more than that.
+        // Open and Open in new tab carry no shortcut. They are added anyway, so an application
+        // that gives one a key needs to do no more than that.
         actions.add(open);
         actions.add(openInNewTab);
+        actions.add(back);
+        actions.add(forward);
     }
 
 }

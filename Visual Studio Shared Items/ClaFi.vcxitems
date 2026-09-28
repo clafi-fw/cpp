@@ -333,6 +333,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Log.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Log.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Options.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\BrowseBackIcon.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\BrowseForwardIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\BrowseUpIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\ChannelTile.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\CheckMark.cppm" />

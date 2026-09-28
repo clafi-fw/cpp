@@ -982,6 +982,24 @@ namespace ClaFi
         //handleMouseMove(pt, false);
     }
 
+    // Walked from the hovered control, as the wheel is. The next step is read before the handler
+    // runs, as the key walk reads it: a side button goes back, and going back frees the page.
+    void FormBase::wnd_sideButton(PointInForm, const SideButton button, const InputStamp stamp)
+    {
+        Tooltip::handleUserInput();
+        Control* control = Input::hoveredControl();
+        if (!control)
+            return;
+
+        SideClickEvent event{ *control, *this, button, stamp };
+        while (control && !event.propagationStopped())
+        {
+            Control* nextControl = control->parent();
+            control->nestedSideClick(event);
+            control = nextControl;
+        }
+    }
+
     void FormBase::wnd_keyDown(KeyDownEvent& event)
     {
         // Cleared first, and unconditionally. The flag stands for one press; a press the system

@@ -33,7 +33,10 @@ namespace ClaFi::Browser::Actions
     // answers it and a toolbar button does not? That is a question about where a shortcut is
     // looked up, rather than about these two commands.
 
-    // Puts both in the application's scope, which is what a shortcut is looked up in. A
+    export extern Action back; // a step back through the current tab's history
+    export extern Action forward; // a step forward through the current tab's history
+
+    // Puts them in the application's scope, which is what a shortcut is looked up in. A
     // BrowserControl calls it as it is built, so a browser holds them without writing anything.
     export void registerAll();
 }

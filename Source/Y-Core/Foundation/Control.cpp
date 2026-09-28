@@ -340,6 +340,16 @@ namespace ClaFi
     {
     }
 
+    // SideClickEvent
+
+    SideClickEvent::SideClickEvent(Control& control, FormBase& form, const SideButton button,
+        const InputStamp stamp)
+        :
+        ClickEventBase{ control, form, stamp },
+        button{ button }
+    {
+    }
+
     // DestroyEvent
 
     DestroyEvent::DestroyEvent(const Control& control)
@@ -1592,6 +1602,11 @@ namespace ClaFi
     }
 
     void Control::editContextPopup(EditContextPopupEvent& event)
+    {
+        emitEvent(event);
+    }
+
+    void Control::nestedSideClick(SideClickEvent& event)
     {
         emitEvent(event);
     }

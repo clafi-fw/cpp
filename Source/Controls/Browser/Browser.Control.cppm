@@ -2,6 +2,7 @@ module;
 #include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Browser.Control;
 
+import ClaFi.Browser.Actions;
 import ClaFi.Browser.Consts;
 import ClaFi.Browser.PageData;
 import ClaFi.Browser.Settings;
@@ -48,12 +49,21 @@ namespace ClaFi::Browser
     export template<typename T>
         concept IsBrowserPage = std::derived_from<T, BrowserPage>;
 
+    // How a move keeps the url it leaves. See Browser
+    export enum class HistoryEntry
+    {
+        Push,       // the url left goes on the back stack, and the forward stack is dropped
+        Replace     // the url left is forgotten, and the forward stack stays
+    };
+
     // One tab of the browser, standing for a page it can return to.
     export class BrowserTab : public Tab
     {
         // The browser is what makes a tab and what shows a page on one, so it is what sets
-        // m_anchor, and sets and spends m_onRestoredPage.
+        // m_anchor and the history, and sets and spends m_onRestoredPage.
         friend BrowserControl;
+    public:
+        using Urls = std::vector<Url>;
     public:
         explicit BrowserTab(const CreateParams&);
     public:
@@ -64,6 +74,10 @@ namespace ClaFi::Browser
         PageData* pageData() const { return m_pageData; }
         [[nodiscard]] const std::wstring& anchor() const { return m_anchor; } // empty for none
         [[nodiscard]] Url url() const; // the page's path with this tab's anchor
+        [[nodiscard]] const Urls& backUrls() const { return m_backUrls; } // nearest last
+        [[nodiscard]] const Urls& forwardUrls() const { return m_forwardUrls; } // nearest first
+        // The url this many steps through the history, back for a negative count, or nothing.
+        [[nodiscard]] const Url* historyUrl(std::ptrdiff_t offset) const;
         void setPageData(PageData*);
         // Asks the browser what this tab's icon is now and opens or closes the icon slot to match.
         // setPageData does this on its own; a browser calls it again when the answer changes
@@ -88,11 +102,21 @@ namespace ClaFi::Browser
         void secondaryClicked(ClickEvent& event) override { closeThisTab(event); }
     private:
         void closeThisTab(ClickEvent& params);
+        // Keeps the url this tab has just moved from, the way the move asked.
+        void recordLeft(const Url& left, HistoryEntry);
+        // Moves the stacks past a travel of this many steps from the url this tab has just left.
+        void recordTravel(const Url& left, std::ptrdiff_t offset);
+        void trimHistory(); // drops the oldest entries past k_historyDepth
+        // Points every entry at or under a renamed page to its new path. Answers whether one moved.
+        bool renameInHistory(std::wstring_view oldPath, std::wstring_view newPath);
     private:
+        static constexpr std::size_t k_historyDepth{ 50 };
         BrowserControl* m_browserControl{};
         std::wstring m_id{};
         PageData* m_pageData{};
         std::wstring m_anchor{};
+        Urls m_backUrls{};
+        Urls m_forwardUrls{};
         // False for a tab the user opened, which is every tab but the ones a run starts with.
         bool m_onRestoredPage{ false };
         // The close button is the tab's secondary part, so the base keeps a press on it from
@@ -175,10 +199,11 @@ namespace ClaFi::Browser
         BrowserTab* restoreTab(std::wstring_view id, const Url&);
         void goUp();
         void goTo(std::wstring_view path, std::wstring_view subPath);
-        void goTo(const Url&);
+        void goTo(const Url&, HistoryEntry = HistoryEntry::Push);
         void goTo(PageData&);
         void goTo(PageData&, Control& initiator);
-        void goTo(PageData&, std::wstring_view anchor, Control& initiator);
+        void goTo(PageData&, std::wstring_view anchor, Control& initiator,
+            HistoryEntry = HistoryEntry::Push);
         // Goes to a page once the press that asked for it has unwound. A COMMAND THAT NAVIGATES
         // FROM INSIDE A CLICK DESTROYS THE PAGE IT WAS PRESSED ON, and the frames above that click
         // go on reading controls that went down with it. The wait is held here rather than on the
@@ -281,7 +306,16 @@ namespace ClaFi::Browser
         virtual IconSize pageIconSize(PageData&) { return IconSize{ 0.0f }; }
         virtual void paintPageIcon(PageData&, PaintIconEvent&) {}
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void nestedSideClick(SideClickEvent&) override;
         bool tabsRestoring() const { return m_tabsRestoring; }
+    private:
+        // What a move made of the tab it was asked of.
+        enum class TabMove
+        {
+            Refused,    // canLeavePage said no, and the tab stands where it stood
+            Stayed,     // the tab already stood on the url asked for
+            Moved       // the tab stands on the url asked for
+        };
     private:
         bool idExists(std::wstring value);
         void connectParts(); // wires the tabs, crumbs, buttons and timer, from the constructor
@@ -289,6 +323,18 @@ namespace ClaFi::Browser
         // page on screen names. Connected from the constructor, the way TextBox connects the
         // edit actions.
         void connectPageActions();
+        // Claims Browser::Actions::back and forward, and wires the buttons' history menus.
+        void connectHistory();
+        [[nodiscard]] BrowserTab* currentTab(); // nothing when no tab is selected
+        // Moves a tab to a url and answers what came of it. The history is the caller's to keep.
+        TabMove moveTab(BrowserTab&, PageData&, std::wstring_view anchor, Control& initiator);
+        // Moves the current tab this many steps through its history, back for a negative count.
+        void travel(std::ptrdiff_t offset, Control& initiator);
+        // Travels once the press that asked for it has unwound, for the reason goToLater waits.
+        void travelLater(std::ptrdiff_t offset);
+        // Drops the current tab's history one way, as a list under the button for that way.
+        void showHistoryMenu(std::ptrdiff_t direction);
+        [[nodiscard]] Button& historyButton(std::ptrdiff_t offset); // Back for a negative offset
         // Puts the name the user typed to the browser, and puts the tree right when it is taken.
         void acceptPageName(PageData&, AcceptEditEvent&);
         // Whether a page IS the one named or stands under it - which is every page whose path a
@@ -315,6 +361,8 @@ namespace ClaFi::Browser
         std::size_t m_fetchedCount{ 0 };
         UiTimer m_goToTimer{};
         Url m_goToUrl{};
+        UiTimer m_travelTimer{};
+        std::ptrdiff_t m_travelOffset{ 0 };
         BrowserSettings* m_settings{};
         bool m_tabsRestoring{};
     private:
@@ -363,6 +411,18 @@ namespace ClaFi::Browser
         StackPanel& m_navigationBar{ m_breadCrumbArea.createLeftBar<StackPanel>(
             Orientation::Horizontal
         ) };
+        Button& m_backButton{ m_navigationBar.add<ToolButton>(
+            IconSize{ 18.0f },
+            ButtonViewMode::IconOnly,
+            Actions::back,
+            Interactivity::MouseOnly
+        ) };
+        Button& m_forwardButton{ m_navigationBar.add<ToolButton>(
+            IconSize{ 18.0f },
+            ButtonViewMode::IconOnly,
+            Actions::forward,
+            Interactivity::MouseOnly
+        ) };
         Button& m_upButton{ m_navigationBar.add<ToolButton>(
             IconSize{ 18.0f },
             ButtonViewMode::IconOnly,
@@ -408,5 +468,6 @@ namespace ClaFi::Browser
     {
         connectParts();
         connectPageActions();
+        connectHistory();
     }
 }

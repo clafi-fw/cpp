@@ -126,6 +126,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         void onPointerMoved(IntPoint surfacePoint) final;
         void onPointerButton(IntPoint surfacePoint, std::uint32_t time, InputStamp, bool down) final;
         void onPointerContextMenu(IntPoint surfacePoint, InputStamp) final;
+        void onPointerSideButton(IntPoint surfacePoint, SideButton, InputStamp) final;
         void onPointerWheel(IntPoint surfacePoint, float delta, bool horizontal) final;
         void onPointerLeft() final;
         // A KEY HAS NO COORDINATES TO CONVERT, and is routed the same way even so, so that a
@@ -159,6 +160,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         virtual void pointerMoved(IntPoint) {}
         virtual void pointerButton(IntPoint, std::uint32_t time, InputStamp, bool down) {}
         virtual void pointerContextMenu(IntPoint, InputStamp) {}
+        virtual void pointerSideButton(IntPoint, SideButton, InputStamp) {}
         virtual void pointerWheel(IntPoint, float delta, bool horizontal) {}
         virtual void pointerLeft() {}
         virtual void keyPressed(const KeyPress&) {}
@@ -1228,6 +1230,12 @@ namespace ClaFi::PlatformImplementation::Wayland
     void Window::onPointerContextMenu(IntPoint surfacePoint, InputStamp stamp)
     {
         pointerContextMenu(toBufferPoint(surfacePoint), stamp);
+    }
+
+    void Window::onPointerSideButton(IntPoint surfacePoint, const SideButton button,
+        InputStamp stamp)
+    {
+        pointerSideButton(toBufferPoint(surfacePoint), button, stamp);
     }
 
     void Window::onPointerWheel(IntPoint surfacePoint, float delta, bool horizontal)

@@ -227,6 +227,13 @@ namespace ClaFi
         Keyboard
     };
 
+    // A side button of the mouse, named by what the system takes it to mean.
+    export enum class SideButton
+    {
+        Back,       // XBUTTON1 on Windows, BTN_SIDE on Linux
+        Forward     // XBUTTON2 on Windows, BTN_EXTRA on Linux
+    };
+
     // ControlFlags are declared here but there are no public members of this type exist.
     // Only one out there declared in the BaseControl class and it's private.
     // But the type is here because it's used in the Horizontal/VericalAlign enums,

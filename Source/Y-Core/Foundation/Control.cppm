@@ -231,6 +231,14 @@ namespace ClaFi
         ActionList& actions;
     };
 
+    // A side button of the mouse was pressed over the control.
+    export class SideClickEvent : public ClickEventBase
+    {
+    public:
+        SideClickEvent(Control&, FormBase&, SideButton, InputStamp);
+        SideButton button;
+    };
+
     // The control is being destroyed. See Control-Foundation
     export class DestroyEvent : public Event
     {
@@ -579,6 +587,8 @@ namespace ClaFi
         DECLARE_EVENT(ContextPopupEvent, OnContextPopup, onContextPopup)
         // The control about to show its own edit menu.
         DECLARE_EVENT(EditContextPopupEvent, OnEditContextPopup, onEditContextPopup)
+        // A side button of the mouse pressed over this control.
+        DECLARE_EVENT(SideClickEvent, OnSideClick, onSideClick)
         // The control being asked what state it is in.
         DECLARE_EVENT(GetStateEvent, OnGetState, onGetState)
         // The control being asked for its own text.
@@ -1150,6 +1160,7 @@ namespace ClaFi
         //
         virtual void nestedContextPopup(ContextPopupEvent&);
         virtual void editContextPopup(EditContextPopupEvent&);
+        virtual void nestedSideClick(SideClickEvent&);
         //
         virtual void nestedKeyDown(KeyDownEvent&);
         virtual void nestedKeyUp() {}

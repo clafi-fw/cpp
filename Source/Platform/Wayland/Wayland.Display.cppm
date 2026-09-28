@@ -36,6 +36,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         // A press asking for a menu about whatever is under the pointer. Separate from a button
         // because it is answered on the press and no release is ever matched to it.
         virtual void onPointerContextMenu(IntPoint surfacePoint, InputStamp) = 0;
+        // A side button pressed. Answered on the press, as the menu is.
+        virtual void onPointerSideButton(IntPoint surfacePoint, SideButton, InputStamp) = 0;
         virtual void onPointerWheel(IntPoint surfacePoint, float delta, bool horizontal) = 0;
         virtual void onPointerLeft() = 0;
 
@@ -1449,6 +1451,21 @@ namespace ClaFi::PlatformImplementation::Wayland
             // menu on the press rather than counting a release it would have to match up.
             if (down)
                 manager.m_pointerFocus->onPointerContextMenu(manager.m_pointerPos, { serial });
+            break;
+
+        // Most mice report their side buttons as BTN_SIDE and BTN_EXTRA; a few as BACK and FORWARD.
+        case BTN_SIDE:
+        case BTN_BACK:
+            if (down)
+                manager.m_pointerFocus->onPointerSideButton(manager.m_pointerPos, SideButton::Back,
+                    { serial });
+            break;
+
+        case BTN_EXTRA:
+        case BTN_FORWARD:
+            if (down)
+                manager.m_pointerFocus->onPointerSideButton(manager.m_pointerPos,
+                    SideButton::Forward, { serial });
             break;
 
         default:

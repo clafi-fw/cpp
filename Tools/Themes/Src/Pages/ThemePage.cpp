@@ -394,12 +394,16 @@ namespace ThisApp
     }
 
     // The page the tree picked shows once the browser has taken the tab there - see showAnchor.
+    // A step made by a key replaces the entry, so a walk down the tree leaves one entry behind.
     void ThemePage::designPagePicked()
     {
         if (m_showingAnchor)
             return;
 
-        tab().browserControl().goTo(tab().url().withAnchor(m_designPage.pickedPage()));
+        const Browser::HistoryEntry entry = Input::device() == InputDevice::Keyboard
+            ? Browser::HistoryEntry::Replace
+            : Browser::HistoryEntry::Push;
+        tab().browserControl().goTo(tab().url().withAnchor(m_designPage.pickedPage()), entry);
     }
 
     void ThemePage::showAnchor(const Browser::ShowAnchorEvent& event)
