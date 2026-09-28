@@ -23,7 +23,7 @@ namespace ThisApp::CodeOptions
     namespace
     {
         CodeContent s_content{ CodeContent::Full };
-        CodeScope s_scope{ CodeScope::ClassDeclarations };
+        CodeScope s_scope{ CodeScope::ClassMethod };
 
         // A click writes through the form it arrived on: an action answering for itself is handed
         // no control, and the form is the one thing both events of a click carry.
@@ -42,7 +42,6 @@ namespace ThisApp::CodeOptions
         {
             s_scope = value;
             (form.appContext().config() / k_codeScopeAttrName).set(value);
-            asClassDeclarations.invalidateState();
             asClassMethod.invalidateState();
             asOutsideClass.invalidateState();
         }
@@ -81,16 +80,6 @@ namespace ThisApp::CodeOptions
         } },
         Action::OnClick{ [](ActionClickEvent& event) {
             setContent(CodeContent::Full, event.form);
-        } }
-    };
-
-    Action asClassDeclarations{
-        Text{ L"Class declarations" },
-        Action::OnGetState{ [](GetActionStateEvent& event) {
-            event.claim({ .selected = s_scope == CodeScope::ClassDeclarations });
-        } },
-        Action::OnClick{ [](ActionClickEvent& event) {
-            setScope(CodeScope::ClassDeclarations, event.form);
         } }
     };
 

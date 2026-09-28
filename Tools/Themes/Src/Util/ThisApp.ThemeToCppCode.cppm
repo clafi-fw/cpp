@@ -20,12 +20,10 @@ namespace ThisApp
         Count
     };
 
-    // Where the block is meant to be pasted. It picks how a member is stated: a declaration
-    // carrying its initializer inside ThemeColors, an assignment inside one of its methods, or
-    // an assignment to a named object from outside the class.
+    // Where the block is meant to be pasted: inside a ThemeColors method, or outside the class,
+    // where it writes through a named object.
     export enum class CodeScope
     {
-        ClassDeclarations,
         ClassMethod,
         OutsideClass,
         Count
@@ -41,7 +39,6 @@ namespace ThisApp
 
     export constexpr std::array<std::wstring_view, static_cast<std::size_t>(CodeScope::Count)>
         k_codeScopeKeys{
-            L"ClassDeclarations",
             L"ClassMethod",
             L"OutsideClass"
         };
@@ -49,72 +46,72 @@ namespace ThisApp
     export constexpr auto enumNames(CodeContent) { return k_codeContentKeys; }
     export constexpr auto enumNames(CodeScope) { return k_codeScopeKeys; }
 
+    // What writing the built-in colours came to.
+    export enum class SourceWrite
+    {
+        Written,
+        Unchanged,  // the file already states this theme and is left as it stands
+        Failed
+    };
+
     // The block that states a theme, as plain C++ source. Its channel markers line up in a
     // monospaced style only.
     export [[nodiscard]] std::wstring themeToCppCode(const ThemeColors&, CodeContent, CodeScope);
 
-    // WHAT STANDS ABOVE A MEMBER IN THE SOURCE, without the marker or the indent, lines separated
-    // by a newline. THE BLOCK IS PASTED OVER THE DECLARATIONS, so a comment the block does not
-    // carry is a comment the next regeneration deletes: this is where a member of ThemeColors
-    // keeps its prose, and the declaration there keeps a copy. A member named by no entry here
-    // carries none.
-    //
-    // WHAT IS WRITTEN HERE HAS TO OUTLIVE THE NUMBERS BESIDE IT. The block is generated from
-    // whatever theme is open, so it restates every value and none of the reasoning: a comment
-    // that compares one member's numbers with another's - carries the button's set, states the
-    // same set as section - is true of the defaults it was written against and false the first
-    // time someone regenerates from a theme they have edited. What a member is, what reads it,
-    // and how it resolves survive that; what it currently equals does not.
-    //
-    // Which members there are and what each one is called in generated code are k_uiElements'
-    // answer, not this table's.
-    struct MemberComment
+    // The whole of the built-in colours' file, stating this theme as the framework's own.
+    export [[nodiscard]] std::wstring themeToSourceFile(const ThemeColors&);
+
+    // That file in the source tree this application was compiled from, or nothing without one.
+    export [[nodiscard]] std::filesystem::path builtInColorsFile();
+
+    // Writes the file in the line ends the module beside it is checked out with.
+    export [[nodiscard]] SourceWrite writeBuiltInColors(const std::filesystem::path& file,
+        const ThemeColors&);
+
+    // What stands in the built-in colours' file around the constructor's statements.
+    constexpr std::wstring_view k_sourceFileHead{
+        L"// The framework's own theme, written whole by the Themes app's Write to source.\n"
+        L"// An edit made here is lost at the next write.\n"
+        L"module ClaFi.Core.AppTheme_Colors;\n"
+        L"\n"
+        L"import ClaFi.Core.AppTheme_Palette;\n"
+        L"\n"
+        L"import ClaFi.StdLib;\n"
+        L"\n"
+        L"namespace ClaFi\n"
+        L"{\n"
+        L"    ThemeColors::ThemeColors()\n"
+        L"    {\n" };
+
+    constexpr std::wstring_view k_sourceFileTail{
+        L"    }\n"
+        L"}\n" };
+
+    // How deep the constructor's statements stand: the namespace, then the body.
+    constexpr std::size_t k_sourceFileIndent{ 8ull };
+
+    // The module the built-in colours belong to, whose file marks a folder as the tree's.
+    constexpr std::wstring_view k_colorsModuleFileName{ L"AppTheme_Colors.cppm" };
+    constexpr std::wstring_view k_builtInColorsFileName{ L"AppTheme_BuiltInColors.cpp" };
+
+    // The line end a file is checked out with, read off its first line.
+    [[nodiscard]] std::string_view lineEndOf(const std::filesystem::path& file);
+    // Everything a file holds, or nothing where there is no file to read.
+    [[nodiscard]] std::string fileBytes(const std::filesystem::path& file);
+
+    // A list ThemeRules holds by name rather than by element, and the name generated code gives it.
+    struct NamedRules
     {
-        UiElement element{};
-        std::wstring_view text{};
+        std::wstring_view codeName{};
+        ColorRules ThemeRules::* rules{ nullptr };
     };
 
-    constexpr std::array<MemberComment, 2ull> k_memberComments{
-        MemberComment{ .element = UiElement::Accent, .text =
-            L"THE THEME'S OWN EMPHASIS, AND WHAT SAYS A THING IS ON - one effect for both, because the\n"
-            L"two are one colour. It is the ink anything asking for emphasis is drawn in, over the\n"
-            L"palette's accent hue - the same one a button under the pointer moves toward, so an icon\n"
-            L"drawn in it belongs to the family of the controls around it - and it is equally the\n"
-            L"active state of every mark: a text caret, a hot link, the band a StackView draws behind a\n"
-            L"selected item, the focus ring while the user is on the control, and the indicator under\n"
-            L"an open tab. A check and a radio dot state their own on colour - see SelectionIndicator." },
-        MemberComment{ .element = UiElement::Spot, .text =
-            L"The second accent, over the palette's third hue: what stands apart from the interface\n"
-            L"rather than answers to it - a brand mark, a run of emphasised text, and the tint a\n"
-            L"tooltip carries. Stated apart from the accent so that a theme can spend one sparingly\n"
-            L"while the other runs through every control." }
+    // In ThemeRules declaration order, which is the order the block states them in.
+    constexpr std::array<NamedRules, 3ull> k_namedRules{
+        NamedRules{ .codeName = L"shared", .rules = &ThemeRules::shared },
+        NamedRules{ .codeName = L"anyWindow", .rules = &ThemeRules::anyWindow },
+        NamedRules{ .codeName = L"focusRing", .rules = &ThemeRules::focusRing }
     };
-
-    // The prose that member carries, or nothing where it carries none.
-    [[nodiscard]] std::wstring_view memberCommentOf(UiElement);
-
-    // The palette's two members and the dark mode floor are not stated through k_uiElements - a
-    // float and an array of floats are not effects - so their prose is kept here, under the same
-    // rule: what the block does not carry, the next regeneration deletes.
-    constexpr std::wstring_view k_anchorHueComment{
-        L"The hue a harmony turns around, and the only thing about the anchor anyone chooses.\n"
-        L"A palette is a set of hues and nothing else, so what a swatch or a slider ramp is\n"
-        L"drawn in comes from the palette's display pair rather than from here." };
-
-    constexpr std::wstring_view k_paletteHuesComment{
-        L"The three hues a rule can name. Only a hue is the palette's own: a control keeps the\n"
-        L"saturation and luminosity it already carries, and the palette swatch borrows the\n"
-        L"anchor's." };
-
-    constexpr std::wstring_view k_darkModeFloorComment{
-        L"The luminosity elevation 0 is lifted to at the dark end. See AppTheme" };
-
-    // Whether two values would come out as the same code. The rule types carry no comparison of
-    // their own, and a theme is measured field by field against the framework's defaults to
-    // decide what CodeContent::Differences leaves out.
-    [[nodiscard]] bool isSame(const ColorRuleValue&, const ColorRuleValue&);
-    [[nodiscard]] bool isSame(const ColorRuleHue&, const ColorRuleHue&);
-    [[nodiscard]] bool isSame(const ColorEffect&, const ColorEffect&);
 
     // The value a literal has to carry to rebuild a rule value. A rule holds its value
     // normalized, and an Offset normalizes by half a unit, which is enough to put the shortest
@@ -129,6 +126,8 @@ namespace ThisApp
     {
     public:
         CppCodeGenerator(const ThemeColors&, CodeContent, CodeScope);
+        // The statements of the built-in theme's constructor, whose object starts with no rules.
+        explicit CppCodeGenerator(const ThemeColors&);
     public:
         [[nodiscard]] std::wstring text() && { return std::move(m_text); }
     private:
@@ -152,25 +151,37 @@ namespace ThisApp
         // level is the indent its closing brace sits at. Saturation and elevation are positional
         // arguments, so both are stated whenever the effect states anything; hue is stated only
         // when it moves.
-        CppCodeGenerator& colorEffect(const ColorEffect&, std::size_t level);
+        CppCodeGenerator& colorEffect(const ColorEffect&, std::size_t level,
+            std::size_t markerColumn);
+        // One designator of a set of inputs, the inputs named in RuleInput order.
+        CppCodeGenerator& ruleInputs(std::wstring_view designator, const RuleInputs&);
+        // Ends a designator's line, with a comma while more follow.
+        CppCodeGenerator& fieldEnd(std::size_t fieldsLeft);
+        // The braces of one rule, stating only what differs from a plain ColorRule{}.
+        CppCodeGenerator& colorRule(const ColorRule&, std::size_t level, std::size_t markerColumn);
+        CppCodeGenerator& colorRules(const ColorRules&, std::size_t level,
+            std::size_t markerColumn);
         //
         // The member a statement writes to, carrying the object name an outside block goes
         // through.
         CppCodeGenerator& memberName(std::wstring_view name);
         // The head of one member statement, up to where its braced value begins.
         CppCodeGenerator& openMember(std::wstring_view typeName, std::wstring_view name);
-        // The prose above whatever comes next, one line at a time, each carrying the marker and
-        // the indent. Nothing is written for an empty text.
-        CppCodeGenerator& memberComment(std::wstring_view text, std::size_t level);
         // Whether a member is stated: because it differs from the framework's defaults, or
         // because the block states every member regardless.
         [[nodiscard]] bool statesMember(bool differs) const;
         void colorMember(UiElement);
-        void floatMember(std::wstring_view name, float value, float defaultValue,
-            std::wstring_view comment);
+        void floatMember(std::wstring_view name, float value, float defaultValue);
         void paletteMembers();
         void paletteHuesMember();
-        // The object an outside block writes through. The other scopes write through the class.
+        // Full states the rules from none, so there an empty list needs no statement.
+        [[nodiscard]] bool statesList(const ColorRules& value,
+            const ColorRules& defaultValue) const;
+        // One list's statement. target is what follows the object: a name or an of() call.
+        void rulesList(std::wstring_view target, const ColorRules& value,
+            const ColorRules& defaultValue);
+        void themeRules();
+        // The object an outside block writes through. A method writes through the class.
         void objectDeclaration();
         void headerComment();
         //
@@ -181,6 +192,8 @@ namespace ThisApp
         // The column a channel marker starts at. The block is shown in a monospaced style, so
         // one column puts every marker of a rule under the one above it.
         static constexpr std::size_t k_channelColumn = 48ull;
+        // The column a rule's channel marker starts at. Its channels stand deeper than a member's.
+        static constexpr std::size_t k_ruleChannelColumn{ 52ull };
         static constexpr std::size_t k_indentWidth = 4ull;
         static constexpr std::wstring_view k_spaces{
             L"                                                                " };
@@ -189,9 +202,11 @@ namespace ThisApp
         const ThemeColors m_defaults{};
         CodeContent m_content;
         CodeScope m_scope;
+        bool m_startsEmpty{ false }; // a constructor's statements: no header, no rules to clear
         std::wstring m_text{};
         std::size_t m_column{ 0ull };
         bool m_statedAnyMember{ false };
+        bool m_statedAnyList{ false };
     };
 
 }

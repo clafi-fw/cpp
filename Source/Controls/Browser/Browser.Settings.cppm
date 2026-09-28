@@ -22,7 +22,12 @@ namespace ClaFi::Browser
     {
         Value{ ConfigNames::id, L"" },
         Value{ ConfigNames::title, ConfigNames::untitledPage },
-        Value{ ConfigNames::path, L"" },
+        Value{ ConfigNames::path, L"" }
+    };
+
+    // What the browser keeps in a tab's own file; the application's tab schema is added to it.
+    export const Section k_tabFileSchema
+    {
         Sequence{ ConfigNames::backUrls, std::wstring{} },
         Sequence{ ConfigNames::forwardUrls, std::wstring{} }
     };
@@ -43,9 +48,9 @@ namespace ClaFi::Browser
         [[nodiscard]] Dom::Value<std::wstring>& selectedTab() const { return m_selectedTab; }
         // The entry of a listed tab.
         [[nodiscard]] Dom::Section& tabEntry(std::wstring_view tabId) const;
-        // What a tab's page keeps, in the tab's own file - read the first time it is asked for.
+        // What a tab keeps, in the tab's own file - read the first time it is asked for.
         [[nodiscard]] Dom::Section& tabConfig(std::wstring_view tabId);
-        // Lists a tab, answering its entry.
+        // Lists a new tab, answering its entry. The tab's file starts empty.
         Dom::Section& addTabEntry(std::wstring_view tabId);
         // Unlists a tab. Its file, where it has one, goes with the next save.
         void deleteTabEntry(std::wstring_view tabId);
@@ -55,6 +60,7 @@ namespace ClaFi::Browser
     private:
         // Writes the file of every page that has one and removes every other file from the folder.
         void save();
+        [[nodiscard]] std::unique_ptr<TabDocument> createTabDocument(std::wstring_view tabId) const;
         [[nodiscard]] std::filesystem::path tabsFolder() const;
         [[nodiscard]] std::filesystem::path tabFilePath(std::wstring_view tabId) const;
     private:
@@ -92,7 +98,7 @@ namespace ClaFi::Browser
     BrowserSettings::BrowserSettings(Dom::DocumentBase& appConfig, Dom::Dt::Section&& tabSchema)
         :
         m_appConfig{ appConfig },
-        m_tabSchema{ std::move(tabSchema) }
+        m_tabSchema{ k_tabFileSchema, std::move(tabSchema) }
     {
         m_appConfigSaved = m_appConfig.connectEvent([this](Dom::SaveEvent&) {
             save();
@@ -112,8 +118,7 @@ namespace ClaFi::Browser
         const TabDocuments::iterator found = m_tabDocuments.find(tabId);
         if (found != m_tabDocuments.end())
             return *found->second;
-        auto document = std::make_unique<TabDocument>(
-            tabFilePath(tabId), Dom::AutoSave::No, m_tabSchema, Dom::WriteDefaults::No);
+        std::unique_ptr<TabDocument> document = createTabDocument(tabId);
         TabDocument& result = *document;
         m_tabDocuments.insert_or_assign(std::wstring{ tabId }, std::move(document));
         const bool read = result.load();
@@ -122,10 +127,14 @@ namespace ClaFi::Browser
         return result;
     }
 
+    // A file already standing under this id is a closed tab's. It is never read, and the next save
+    // writes this document over it.
     Dom::Section& BrowserSettings::addTabEntry(std::wstring_view tabId)
     {
         Dom::Section& entry = m_openTabs.add();
         (entry / ConfigNames::id).set(tabId);
+        m_tabDocuments.insert_or_assign(std::wstring{ tabId }, createTabDocument(tabId));
+        diagnosticLog(std::format(L"tab config new {}", tabFilePath(tabId).wstring()));
         return entry;
     }
 
@@ -159,6 +168,13 @@ namespace ClaFi::Browser
             std::filesystem::remove(entry.path(), error);
             diagnosticLog(std::format(L"tab config removed {}", entry.path().wstring()));
         }
+    }
+
+    std::unique_ptr<BrowserSettings::TabDocument> BrowserSettings::createTabDocument(
+        std::wstring_view tabId) const
+    {
+        return std::make_unique<TabDocument>(
+            tabFilePath(tabId), Dom::AutoSave::No, m_tabSchema, Dom::WriteDefaults::No);
     }
 
     std::filesystem::path BrowserSettings::tabsFolder() const

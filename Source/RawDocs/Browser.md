@@ -79,19 +79,23 @@ Browser::Actions::back and forward run on Alt+Left and Alt+Right, deferred as Op
 button of the mouse travels wherever the pointer stands inside the browser. A text box with a jump
 history of its own answers Alt+Left first.
 Entries are urls, so a page a fetch drops stays named by its path, and travelling back to it builds
-it again as goTo builds any path. A rename rewrites the entries at or under the renamed page.
+it again as goTo builds any path. A rename rewrites the entries at or under the renamed page, in
+every tab - reading the file of a tab not shown in this run, whose history names paths too.
+The stacks are kept in the tab's own file, and read from it the first time the tab is selected.
 
 ## BrowserSettings
 
 Where the browser's settings are kept, and when each part reaches the disk.
-The application config carries the selected tab's id and an entry per open tab - id, title,
-url and the back and forward urls, plus what the application adds to an entry - which is what
-is shown of a tab that has not been opened. The Themes app keeps what a tab's icon is drawn
-from there. Nothing of the page is there.
-What a page keeps is in the tab's own file, in the OpenTabs folder beside the config file,
-named by the tab's id with the config file's extension and laid out by the application's tab
-schema alone. The file is read the first time the page asks for it, which is when the page is
-shown; a tab whose page is never shown in a run has its file neither read nor written.
+The application config carries the selected tab's id and an entry per open tab - id, title
+and url, plus what the application adds to an entry - which is what is shown of a tab that
+has not been opened. The Themes app keeps what a tab's icon is drawn from there. Nothing of
+the page is there.
+What a tab keeps is in its own file, in the OpenTabs folder beside the config file, named by
+the tab's id with the config file's extension: the browser's history, k_tabFileSchema, and the
+application's tab schema beside it. The file is read the first time the browser or the page
+asks for it, which is when the tab is shown; a tab never shown in a run has its file neither
+read nor written. A tab the user opens starts with an empty file, and one a closed tab left
+under the same id is never read - the next save writes the new one over it.
 The tab files are written when the application config is - BrowserSettings answers the config
 document's SaveEvent - each one that was asked for, and every file in the folder that no entry
 names is removed then. So closing a tab changes nothing on the disk until the next save, and a

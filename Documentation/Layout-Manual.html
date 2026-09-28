@@ -669,7 +669,7 @@ settled by order, and the last one wins:</p>
 
 <pre><code><span class="tp">Panel</span>&amp; m_card{ m_stack.<span class="fn">add</span>&lt;<span class="tp">Panel</span>&gt;(
     <span class="fn">themeMetrics</span>().page,      <span class="cm">// the whole metric block the theme designs for a page</span>
-    <span class="fn">themeColors</span>().section,
+    <span class="tp">UiElement</span>::Section,       <span class="cm">// the theme element it wears - see the Colour manual</span>
     <span class="tp">Padding</span>{ <span class="st">12.0f</span> }          <span class="cm">// and this padding instead of the block's</span>
 ) };</code></pre>
 

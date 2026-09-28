@@ -61,7 +61,7 @@ namespace ClaFi::Icons::OpenInExplorerIcon
 
         canvas.drawPath(
             path,
-            { PathDrawLayer::stroke(event.inkColor(k_folderInk), strokeWidth) },
+            { PathDrawLayer::stroke(event.inkRgb(k_folderInk), strokeWidth) },
             &transform
         );
 

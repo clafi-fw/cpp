@@ -40,7 +40,7 @@ namespace ClaFi::Icons::BrowseUpIcon
         const Color strokeColor = event.textRgb(InkGrade::Strongest);
 
         float size = std::min(iconRect.width(), iconRect.height());
-        const float strokeWidth = std::max(1.0f, size * 0.08f);
+        const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);//std::max(1.0f, size * 0.08f);
         size -= strokeWidth;
 
         const Matrix3x2 placement = Matrix3x2::translation(

@@ -56,6 +56,11 @@ both, so which end a theme is worn at is no longer the theme's to say: it is the
 the application's config beside the theme's path - see `applyColorMode` in Application. Whatever
 reads a theme at a mode is handed the mode: `bake` and `ThemeColors::rootSurface`.
 
+THE BUILT-IN THEME IS WRITTEN, NOT EDITED. `ThemeColors()` states it, and its definition stands
+alone in `AppTheme_BuiltInColors.cpp`, which the Themes app's Write to source rewrites whole from
+the theme it has open. The declarations say what each member is and carry no values, so a theme
+change rebuilds that one file rather than everything that imports the module.
+
 
 ## Lightness
 

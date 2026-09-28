@@ -26,7 +26,7 @@ namespace ClaFi::Showcase::TextEngine
         // to brown, so the colour is carried by a shape instead of by a run of text.
         auto paintWarning = [](PaintIconEvent& event){
             event.canvas().fillCircle(event.iconCenter(), event.scaleF(5.0f),
-                event.inkColor(InkWell::Yellow));
+                event.inkRgb(InkWell::Yellow));
             };
 
         // A bullet: no width, so it draws into the indent it stands at rather than occupying it.

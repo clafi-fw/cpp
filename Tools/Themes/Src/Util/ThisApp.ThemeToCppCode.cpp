@@ -21,35 +21,98 @@ namespace ThisApp
         return CppCodeGenerator{ colors, content, scope }.text();
     }
 
-    // memberCommentOf
+    // themeToSourceFile
 
-    std::wstring_view memberCommentOf(UiElement element)
+    std::wstring themeToSourceFile(const ThemeColors& colors)
     {
-        for (const MemberComment& entry : k_memberComments)
-            if (entry.element == element)
-                return entry.text;
+        const std::wstring text = CppCodeGenerator{ colors }.text();
+        std::wstring_view statements = text;
+        std::wstring result{ k_sourceFileHead };
+        while (!statements.empty())
+        {
+            const std::size_t lineEnd = statements.find(L'\n');
+            const std::wstring_view line = statements.substr(0ull, lineEnd);
+            // A blank line stays empty rather than carrying the indent as trailing whitespace.
+            if (!line.empty())
+                result.append(k_sourceFileIndent, L' ').append(line);
+            result.push_back(L'\n');
+            if (lineEnd == std::wstring_view::npos)
+                break;
+            statements.remove_prefix(lineEnd + 1ull);
+        }
+        // The last statement's blank line would stand above the closing brace.
+        while (result.ends_with(L"\n\n"))
+            result.pop_back();
+        return result.append(k_sourceFileTail);
+    }
+
+    // builtInColorsFile
+
+    std::filesystem::path builtInColorsFile()
+    {
+        // This file stands in the tree it was compiled from, wherever the executable was put.
+        std::error_code error;
+        std::filesystem::path folder =
+            std::filesystem::path{ std::source_location::current().file_name() }.parent_path();
+        while (!folder.empty())
+        {
+            const std::filesystem::path appThemeFolder =
+                folder / L"Source" / L"Y-Core" / L"AppTheme";
+            if (std::filesystem::exists(appThemeFolder / k_colorsModuleFileName, error))
+                return appThemeFolder / k_builtInColorsFileName;
+            std::filesystem::path parent = folder.parent_path();
+            // A root is its own parent.
+            if (parent == folder)
+                break;
+            folder = std::move(parent);
+        }
         return {};
     }
 
-    // isSame
+    // writeBuiltInColors
 
-    bool isSame(const ColorRuleValue& first, const ColorRuleValue& second)
+    SourceWrite writeBuiltInColors(const std::filesystem::path& file, const ThemeColors& colors)
     {
-        return first.operation() == second.operation()
-            and first.normalizedValue() == second.normalizedValue();
+        const std::string_view lineEnd = lineEndOf(file.parent_path() / k_colorsModuleFileName);
+        std::string content{};
+        for (const char c : toUtf8(themeToSourceFile(colors)))
+        {
+            if (c == '\n')
+            {
+                content.append(lineEnd);
+            }
+            else
+            {
+                content.push_back(c);
+            }
+        }
+        // An untouched file is not rebuilt.
+        if (fileBytes(file) == content)
+            return SourceWrite::Unchanged;
+        std::ofstream stream{ file, std::ios::binary | std::ios::trunc };
+        stream.write(content.data(), static_cast<std::streamsize>(content.size()));
+        stream.close();
+        return stream ? SourceWrite::Written : SourceWrite::Failed;
     }
 
-    bool isSame(const ColorRuleHue& first, const ColorRuleHue& second)
+    // lineEndOf
+
+    std::string_view lineEndOf(const std::filesystem::path& file)
     {
-        return first.operation() == second.operation()
-            and first.exactValue() == second.exactValue();
+        std::ifstream stream{ file, std::ios::binary };
+        std::string line{};
+        std::getline(stream, line);
+        if (line.ends_with('\r'))
+            return "\r\n";
+        return "\n";
     }
 
-    bool isSame(const ColorEffect& first, const ColorEffect& second)
+    // fileBytes
+
+    std::string fileBytes(const std::filesystem::path& file)
     {
-        return isSame(first.hue, second.hue)
-            and isSame(first.saturation, second.saturation)
-            and isSame(first.elevation, second.elevation);
+        std::ifstream stream{ file, std::ios::binary };
+        return { std::istreambuf_iterator<char>{ stream }, std::istreambuf_iterator<char>{} };
     }
 
     // literalValue
@@ -89,6 +152,16 @@ namespace ThisApp
         m_colors{ colors },
         m_content{ content },
         m_scope{ scope }
+    {
+        build();
+    }
+
+    CppCodeGenerator::CppCodeGenerator(const ThemeColors& colors)
+        :
+        m_colors{ colors },
+        m_content{ CodeContent::Full },
+        m_scope{ CodeScope::ClassMethod },
+        m_startsEmpty{ true }
     {
         build();
     }
@@ -152,7 +225,7 @@ namespace ThisApp
 
     CppCodeGenerator& CppCodeGenerator::colorRuleValue(const ColorRuleValue& value)
     {
-        if (isSame(value, ColorRuleValue{}))
+        if (value == ColorRuleValue{})
             return write(L"{}");
         write(L"{ ").colorRuleOp(value.operation());
         write(L", ").number(literalValue(value));
@@ -161,7 +234,7 @@ namespace ThisApp
 
     CppCodeGenerator& CppCodeGenerator::colorRuleHue(const ColorRuleHue& value)
     {
-        if (isSame(value, ColorRuleHue{}))
+        if (value == ColorRuleHue{})
             return write(L"{}");
         write(L"{ ").colorRuleHueOp(value.operation());
         // The exact value is read only by ExactValue, and carrying it under any other operation
@@ -171,20 +244,100 @@ namespace ThisApp
         return write(L" }");
     }
 
-    CppCodeGenerator& CppCodeGenerator::colorEffect(const ColorEffect& value, std::size_t level)
+    CppCodeGenerator& CppCodeGenerator::colorEffect(const ColorEffect& value, std::size_t level,
+        std::size_t markerColumn)
     {
-        if (isSame(value, ColorEffect{}))
+        if (value == ColorEffect{})
             return write(L"{}");
         write(L"{").newLine();
-        if (!isSame(value.hue, ColorRuleHue{}))
+        if (value.hue != ColorRuleHue{})
         {
             indent(level + 1ull).colorRuleHue(value.hue).write(L",");
-            padTo(k_channelColumn).write(L"// H").newLine();
+            padTo(markerColumn).write(L"// H").newLine();
         }
         indent(level + 1ull).colorRuleValue(value.saturation).write(L",");
-        padTo(k_channelColumn).write(L"// S").newLine();
+        padTo(markerColumn).write(L"// S").newLine();
         indent(level + 1ull).colorRuleValue(value.elevation);
-        padTo(k_channelColumn).write(L"// E").newLine();
+        padTo(markerColumn).write(L"// E").newLine();
+        return indent(level).write(L"}");
+    }
+
+    CppCodeGenerator& CppCodeGenerator::ruleInputs(std::wstring_view designator,
+        const RuleInputs& inputs)
+    {
+        write(L".").write(designator).write(L"{ ");
+        bool first = true;
+        for (std::size_t i = 0ull; i != k_ruleInputKeys.size(); ++i)
+        {
+            if (!inputs.has(static_cast<RuleInput>(i)))
+                continue;
+            if (!first)
+                write(L", ");
+            enumValue(L"RuleInput", k_ruleInputKeys[i]);
+            first = false;
+        }
+        return write(L" }");
+    }
+
+    CppCodeGenerator& CppCodeGenerator::fieldEnd(std::size_t fieldsLeft)
+    {
+        if (fieldsLeft != 0ull)
+            write(L",");
+        return newLine();
+    }
+
+    CppCodeGenerator& CppCodeGenerator::colorRule(const ColorRule& rule, std::size_t level,
+        std::size_t markerColumn)
+    {
+        const bool statesInputs = !rule.inputs.empty();
+        const bool statesAndInputs = !rule.andInputs.empty();
+        const bool statesOutput = rule.output != ColorRule{}.output;
+        const bool statesEffect = rule.effect != ColorEffect{};
+        std::size_t fieldsLeft = static_cast<std::size_t>(std::ranges::count(
+            std::array{ statesInputs, statesAndInputs, statesOutput, statesEffect }, true));
+        write(L"ColorRule{");
+        if (fieldsLeft == 0ull)
+            return write(L"}");
+        newLine();
+        if (statesInputs)
+        {
+            --fieldsLeft;
+            indent(level + 1ull).ruleInputs(L"inputs", rule.inputs).fieldEnd(fieldsLeft);
+        }
+        if (statesAndInputs)
+        {
+            --fieldsLeft;
+            indent(level + 1ull).ruleInputs(L"andInputs", rule.andInputs).fieldEnd(fieldsLeft);
+        }
+        if (statesOutput)
+        {
+            --fieldsLeft;
+            const std::size_t output = static_cast<std::size_t>(rule.output);
+            indent(level + 1ull).write(L".output = ");
+            enumValue(L"PaintChannel", enumNames(rule.output)[output]).fieldEnd(fieldsLeft);
+        }
+        if (statesEffect)
+        {
+            --fieldsLeft;
+            indent(level + 1ull).write(L".effect");
+            colorEffect(rule.effect, level + 1ull, markerColumn).fieldEnd(fieldsLeft);
+        }
+        return indent(level).write(L"}");
+    }
+
+    CppCodeGenerator& CppCodeGenerator::colorRules(const ColorRules& rules, std::size_t level,
+        std::size_t markerColumn)
+    {
+        if (rules.empty())
+            return write(L"{}");
+        write(L"{").newLine();
+        for (std::size_t i = 0ull; i != rules.size(); ++i)
+        {
+            indent(level + 1ull).colorRule(rules[i], level + 1ull, markerColumn);
+            if (i + 1ull != rules.size())
+                write(L",");
+            newLine();
+        }
         return indent(level).write(L"}");
     }
 
@@ -197,34 +350,7 @@ namespace ThisApp
 
     CppCodeGenerator& CppCodeGenerator::openMember(std::wstring_view typeName, std::wstring_view name)
     {
-        if (m_scope == CodeScope::ClassDeclarations)
-            return write(typeName).write(L" ").write(name);
         return memberName(name).write(L" = ").write(typeName);
-    }
-
-    CppCodeGenerator& CppCodeGenerator::memberComment(std::wstring_view text, std::size_t level)
-    {
-        while (!text.empty())
-        {
-            const std::size_t lineEnd = text.find(L'\n');
-            const std::wstring_view line = text.substr(0ull, lineEnd);
-            indent(level);
-            // A blank line carries the marker alone. A marker and a space would leave trailing
-            // whitespace in a block written to be pasted into a source file.
-            if (line.empty())
-            {
-                write(L"//");
-            }
-            else
-            {
-                write(L"// ").write(line);
-            }
-            newLine();
-            if (lineEnd == std::wstring_view::npos)
-                break;
-            text.remove_prefix(lineEnd + 1ull);
-        }
-        return *this;
     }
 
     bool CppCodeGenerator::statesMember(bool differs) const
@@ -238,56 +364,32 @@ namespace ThisApp
         // An element whose effect no ink names has no member of ThemeColors to state.
         if (!entry.effect)
             return;
-        // The comment is written after the member is known to be stated, so a block of
-        // differences carries prose only for what it does state.
-        if (!statesMember(!isSame(m_colors.*entry.effect, m_defaults.*entry.effect)))
+        if (!statesMember(m_colors.*entry.effect != m_defaults.*entry.effect))
             return;
-        memberComment(memberCommentOf(element), 0ull);
         openMember(L"ColorEffect", entry.codeName);
-        colorEffect(m_colors.*entry.effect, 0ull);
+        colorEffect(m_colors.*entry.effect, 0ull, k_channelColumn);
         closeLine();
         newLine();
         m_statedAnyMember = true;
     }
 
-    void CppCodeGenerator::floatMember(std::wstring_view name, float value, float defaultValue,
-        std::wstring_view comment)
+    void CppCodeGenerator::floatMember(std::wstring_view name, float value, float defaultValue)
     {
         if (!statesMember(value != defaultValue))
             return;
-        memberComment(comment, 0ull);
-        if (m_scope == CodeScope::ClassDeclarations)
-        {
-            write(L"float ").write(name);
-            write(L"{ ").number(value).write(L" }");
-        }
-        else
-        {
-            memberName(name).write(L" = ");
-            number(value);
-        }
+        memberName(name).write(L" = ").number(value);
         closeLine().newLine();
         m_statedAnyMember = true;
     }
 
     void CppCodeGenerator::paletteMembers()
     {
-        floatMember(L"anchorHue", m_colors.anchorHue, m_defaults.anchorHue, k_anchorHueComment);
+        floatMember(L"anchorHue", m_colors.anchorHue, m_defaults.anchorHue);
         if (statesMember(m_colors.harmonyKind != m_defaults.harmonyKind))
         {
             const std::wstring_view harmonyName =
                 enumNames(m_colors.harmonyKind)[static_cast<std::size_t>(m_colors.harmonyKind)];
-            // An enum names its value outright, so an assignment has no braces to put it in.
-            if (m_scope == CodeScope::ClassDeclarations)
-            {
-                write(L"ColorHarmonyKind harmonyKind");
-                write(L"{ ").enumValue(L"ColorHarmonyKind", harmonyName).write(L" }");
-            }
-            else
-            {
-                memberName(L"harmonyKind").write(L" = ");
-                enumValue(L"ColorHarmonyKind", harmonyName);
-            }
+            memberName(L"harmonyKind").write(L" = ").enumValue(L"ColorHarmonyKind", harmonyName);
             closeLine().newLine();
             m_statedAnyMember = true;
         }
@@ -296,22 +398,9 @@ namespace ThisApp
 
     void CppCodeGenerator::paletteHuesMember()
     {
-        bool differs = false;
-        for (std::size_t i = 0ull; i != m_colors.paletteHues.size(); ++i)
-            if (m_colors.paletteHues[i] != m_defaults.paletteHues[i])
-                differs = true;
-        if (!statesMember(differs))
+        if (!statesMember(m_colors.paletteHues != m_defaults.paletteHues))
             return;
-        memberComment(k_paletteHuesComment, 0ull);
-        if (m_scope == CodeScope::ClassDeclarations)
-        {
-            write(L"std::array<float, 3> paletteHues");
-        }
-        else
-        {
-            memberName(L"paletteHues").write(L" = ");
-        }
-        write(L"{").newLine();
+        memberName(L"paletteHues").write(L" = {").newLine();
         for (std::size_t i = 0ull; i != m_colors.paletteHues.size(); ++i)
         {
             indent(1ull).number(m_colors.paletteHues[i]);
@@ -321,6 +410,47 @@ namespace ThisApp
         }
         write(L"}").closeLine().newLine();
         m_statedAnyMember = true;
+    }
+
+    bool CppCodeGenerator::statesList(const ColorRules& value,
+        const ColorRules& defaultValue) const
+    {
+        if (m_content == CodeContent::Full)
+            return !value.empty();
+        return value != defaultValue;
+    }
+
+    void CppCodeGenerator::rulesList(std::wstring_view target, const ColorRules& value,
+        const ColorRules& defaultValue)
+    {
+        if (!statesList(value, defaultValue))
+            return;
+        // Statements stand a blank line apart. The first one follows what opened the rules.
+        if (m_statedAnyList)
+            newLine();
+        memberName(L"rules").write(L".").write(target).write(L" = ");
+        colorRules(value, 0ull, k_ruleChannelColumn);
+        closeLine();
+        m_statedAnyList = true;
+        m_statedAnyMember = true;
+    }
+
+    void CppCodeGenerator::themeRules()
+    {
+        // An object built with the framework's rules is brought to none before Full states its own.
+        if (m_content == CodeContent::Full and !m_startsEmpty)
+        {
+            memberName(L"rules").write(L" = {}").closeLine();
+            m_statedAnyMember = true;
+        }
+        for (const NamedRules& entry : k_namedRules)
+            rulesList(entry.codeName, m_colors.rules.*entry.rules, m_defaults.rules.*entry.rules);
+        for (std::size_t i = 0ull; i != k_uiElementCount; ++i)
+        {
+            // An element's token is spelled as its enumerator, as every name a theme file uses is.
+            const std::wstring target = std::format(L"of(UiElement::{})", k_uiElements[i].token);
+            rulesList(target, m_colors.rules.elements[i], m_defaults.rules.elements[i]);
+        }
     }
 
     void CppCodeGenerator::objectDeclaration()
@@ -335,10 +465,6 @@ namespace ThisApp
     {
         switch (m_scope)
         {
-        case CodeScope::ClassDeclarations:
-            write(L"// This code is to be used inside the ThemeColors class").newLine();
-            write(L"// to initialize a theme compiled into an application").newLine();
-            break;
         case CodeScope::ClassMethod:
             write(L"// This code is to be used inside a ThemeColors method").newLine();
             write(L"// to initialize a theme compiled into an application").newLine();
@@ -351,20 +477,21 @@ namespace ThisApp
         }
         if (m_content == CodeContent::Differences)
         {
-            write(L"// A member left unstated keeps the framework's default").newLine();
+            write(L"// Anything left unstated keeps the framework's default").newLine();
         }
         newLine();
     }
 
     void CppCodeGenerator::build()
     {
-        headerComment();
+        if (!m_startsEmpty)
+            headerComment();
         objectDeclaration();
         paletteMembers();
-        floatMember(L"darkModeFloor", m_colors.darkModeFloor,
-            m_defaults.darkModeFloor, k_darkModeFloorComment);
+        floatMember(L"darkModeFloor", m_colors.darkModeFloor, m_defaults.darkModeFloor);
         for (std::size_t i = 0ull; i != k_uiElements.size(); ++i)
             colorMember(static_cast<UiElement>(i));
+        themeRules();
         if (!m_statedAnyMember)
             write(L"// This theme is the framework's default").newLine();
     }

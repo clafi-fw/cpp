@@ -711,4 +711,27 @@ namespace ThisApp
         // already been asked again. What is left is the document this page is showing.
         generateCode();
     }
+
+    void ThemePage::writeToSource(ClickEvent& event)
+    {
+        Text message{};
+        MessageIcon icon = MessageIcon::Information;
+        switch (writeBuiltInColors(m_builtInColorsFile, editColors()))
+        {
+        case SourceWrite::Written:
+            message << L"The theme is written to " << m_builtInColorsFile.wstring()
+                << L". It is the built-in theme from the next build.";
+            break;
+        case SourceWrite::Unchanged:
+            message << m_builtInColorsFile.wstring() << L" already states this theme.";
+            break;
+        case SourceWrite::Failed:
+            message << m_builtInColorsFile.wstring() << L" could not be written.";
+            icon = MessageIcon::Error;
+            break;
+        }
+        MessageDialog dialog{ *event.control, L"Write to source", message, icon };
+        dialog.add(DialogButton::Ok);
+        dialog.execute();
+    }
 }

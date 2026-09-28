@@ -7,6 +7,7 @@ import ThisApp.DesignPage;
 import ThisApp.FloorSlider;
 import ThisApp.HueRuleControl;
 import ThisApp.RuleSlider;
+import ThisApp.ThemeToCppCode;
 import ThisApp.Utils;
 import ThisApp.ValueRuleControl;
 import ThisApp.Palette.Controls;
@@ -221,6 +222,8 @@ namespace ThisApp
         // A pick was made on this page. The action has already moved the answer and refreshed
         // every presenter of it; what is left is the document this page is showing.
         void codeOptionPicked(ClickEvent&);
+        // Writes this theme as the framework's own, and says what came of it.
+        void writeToSource(ClickEvent&);
     private:
         static constexpr TagValue k_harmonyTag = 2ull;
         // The floor slider's end. Useful floors sit far below it; at 1 a surface has no room.
@@ -251,6 +254,8 @@ namespace ThisApp
         bool m_savedUnderAnotherName{ false };
         // Set while showAnchor picks a design page, a pick the tab already stands on.
         bool m_showingAnchor{ false };
+        // Where Write to source writes - empty where the tree it was compiled from is not there.
+        const std::filesystem::path m_builtInColorsFile{ builtInColorsFile() };
 
         ColorHarmonySelector m_harmonySelector{ editColors().anchorHue };
 
@@ -278,6 +283,15 @@ namespace ThisApp
 
         StackPanel& m_cppScopeGroup{ m_cppCodePage.options().add<StackPanel>(
             Orientation::Vertical
+        ) };
+
+        Controls::Divider& m_writeSourceDivider{ m_cppCodePage.options().add<Controls::Divider>(
+            Thickness::Heavy,
+            Padding{ 0.0f, 4.0f }
+        ) };
+
+        Button& m_writeSourceButton{ m_cppCodePage.options().add<Button>(
+            L"Write to source"
         ) };
 
         Tab& m_designTab{ m_tabbedBox.strip().addTab(
@@ -535,14 +549,16 @@ namespace ThisApp
                 button.connectEvent(this, &ThemePage::codeOptionPicked);
             }
 
-        for (Action* action : {
-            &CodeOptions::asClassDeclarations,
-            &CodeOptions::asClassMethod,
-            &CodeOptions::asOutsideClass })
+        for (Action* action : { &CodeOptions::asClassMethod, &CodeOptions::asOutsideClass })
         {
             RadioButton& button = m_cppScopeGroup.add<RadioButton>(*action);
             button.connectEvent(this, &ThemePage::codeOptionPicked);
         }
+
+        m_writeSourceButton.onGetState([this](GetStateEvent& event) {
+            event.state.enabled = !m_builtInColorsFile.empty();
+            });
+        m_writeSourceButton.connectEvent(this, &ThemePage::writeToSource);
 
         m_harmonyPanel.connectEvent([this](GetTextEvent& event) {
             event.text << L" "

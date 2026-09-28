@@ -149,7 +149,7 @@ namespace ClaFi::Controls
         // wherever the press landed, and a muted mark over an open popup reads as a control at
         // rest. A mark already taking the normal colour stays as it is.
         Color color = Color::blend(
-            event.inkColor(dropdownMarkInk()),
+            event.inkRgb(dropdownMarkInk()),
             event.textRgb(InkGrade::Strongest),
             m_droppedDownFactor
         );

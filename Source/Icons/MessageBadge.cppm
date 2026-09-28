@@ -95,14 +95,14 @@ namespace ClaFi::Icons::MessageBadge
         return {
             .box = box,
             .strokeWidth = std::max(event.scaledStrokeWidth(Thickness::Thin), box.width() * k_glyphStroke),
-            .color = event.inkColor(InkWell::surfaceInk())
+            .color = event.inkRgb(InkWell::surfaceInk())
         };
     }
 
     GlyphSlot paintDisc(PaintIconEvent& event, Ink ink)
     {
         const FloatRect box = badgeBox(event);
-        event.canvas().fillCircle(box.center(), box.width() * 0.5f, event.inkColor(ink));
+        event.canvas().fillCircle(box.center(), box.width() * 0.5f, event.inkRgb(ink));
         return glyphSlotOf(event, box);
     }
 
@@ -118,7 +118,7 @@ namespace ClaFi::Icons::MessageBadge
 
         PixelPath path;
         path.addRoundedPolygon(corners, size * k_cornerRadius);
-        event.canvas().fillPath(path, event.inkColor(ink));
+        event.canvas().fillPath(path, event.inkRgb(ink));
         return glyphSlotOf(event, box);
     }
 

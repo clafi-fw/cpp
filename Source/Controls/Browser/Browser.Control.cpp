@@ -354,13 +354,9 @@ namespace ClaFi::Browser
         {
             const std::wstring tabId = (tabEntry / ConfigNames::id).get<std::wstring>();
             const std::wstring tabUrl = (tabEntry / ConfigNames::path).get<std::wstring>();
-            BrowserTab::Urls backUrls = urlsIn(tabEntry, ConfigNames::backUrls);
-            BrowserTab::Urls forwardUrls = urlsIn(tabEntry, ConfigNames::forwardUrls);
             BrowserTab* newTab = restoreTab(tabId, Url::parse(tabUrl));
             if (!newTab)
                 continue;
-            newTab->m_backUrls = std::move(backUrls);
-            newTab->m_forwardUrls = std::move(forwardUrls);
             if (!tabToSelect || tabId == selectedTabId)
                 tabToSelect = newTab;
         }
@@ -458,13 +454,17 @@ namespace ClaFi::Browser
         Control& initiator, const HistoryEntry entry)
     {
         BrowserTab& tab = *currentTab();
+        readHistory(tab);
         const Url left = tab.url();
         const TabMove move = moveTab(tab, pageData, anchor, initiator);
         if (move == TabMove::Refused)
             return;
 
         if (move == TabMove::Moved)
+        {
             tab.recordLeft(left, entry);
+            storeHistory(tab);
+        }
         storeTabSettings(tab);
         invalidateHistoryState();
     }
@@ -522,8 +522,6 @@ namespace ClaFi::Browser
         Dom::Section& tabEntry = m_settings->tabEntry(tab.id());
         (tabEntry / ConfigNames::title).set(tab.pageData()->title);
         (tabEntry / ConfigNames::path).set(tab.url().str());
-        storeUrls(tabEntry, ConfigNames::backUrls, tab.backUrls());
-        storeUrls(tabEntry, ConfigNames::forwardUrls, tab.forwardUrls());
     }
 
     // The view state is saved while the entry it writes to is still listed.
@@ -745,6 +743,7 @@ namespace ClaFi::Browser
             return;
 
         tab->recordTravel(left, offset);
+        storeHistory(*tab);
         storeTabSettings(*tab);
         invalidateHistoryState();
     }
@@ -791,6 +790,24 @@ namespace ClaFi::Browser
         return offset < 0 ? m_backButton : m_forwardButton;
     }
 
+    void BrowserControl::readHistory(BrowserTab& tab)
+    {
+        if (tab.m_historyRead)
+            return;
+
+        tab.m_historyRead = true;
+        const Dom::Section& tabConfig = m_settings->tabConfig(tab.id());
+        tab.m_backUrls = urlsIn(tabConfig, ConfigNames::backUrls);
+        tab.m_forwardUrls = urlsIn(tabConfig, ConfigNames::forwardUrls);
+    }
+
+    void BrowserControl::storeHistory(const BrowserTab& tab) const
+    {
+        Dom::Section& tabConfig = m_settings->tabConfig(tab.id());
+        storeUrls(tabConfig, ConfigNames::backUrls, tab.backUrls());
+        storeUrls(tabConfig, ConfigNames::forwardUrls, tab.forwardUrls());
+    }
+
     void BrowserControl::acceptPageName(PageData& pageData, AcceptEditEvent& event)
     {
         const std::wstring newName = renamePage(pageData, event);
@@ -812,15 +829,16 @@ namespace ClaFi::Browser
         // until it is written out again.
         for (BrowserTab& tab : tabs())
         {
-            const bool onRenamedPage = tab.pageData() && isPageUnder(*tab.pageData(), pageData);
-            const bool historyRenamed = tab.renameInHistory(oldPath, newPath);
-            if (!onRenamedPage && !historyRenamed)
+            // A tab not shown in this run has its file read here: its history names paths too.
+            readHistory(tab);
+            if (tab.renameInHistory(oldPath, newPath))
+                storeHistory(tab);
+            if (!tab.pageData() || !isPageUnder(*tab.pageData(), pageData))
                 continue;
 
             storeTabSettings(tab);
             // A tab's caption is its page's title, and the title has just been worked out again.
-            if (onRenamedPage)
-                tab.invalidate();
+            tab.invalidate();
         }
 
         // THE PAGE ITSELF IS STILL THE ONE THE BROWSER IS SHOWING, so this rebuilds the same

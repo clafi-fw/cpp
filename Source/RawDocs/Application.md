@@ -268,10 +268,9 @@ Nothing calls it for an application, and one that never does gets Settings alone
 
 ## UiElement
 
-IN THEMECOLORS DECLARATION ORDER, which generated C++ depends on: a designated initializer
-list has to name members in the order they are declared. Nothing else here needs an order,
-so this is the one it takes. An editor is free to present them in any order it likes by
-naming elements one at a time.
+The order is free. What is indexed by an element - `k_uiElements`, a theme's element lists,
+the baked effects - follows the enum, and an editor presents elements in any order it likes by
+naming them one at a time.
 
 ## UiElementDescriptor
 
@@ -279,7 +278,7 @@ What one element is: its three spellings, what it is painted on, whether it open
 and - for the elements an ink names - the ThemeColors member holding that effect.
 
 THE THREE SPELLINGS ARE NOT THE SAME WORD. `name` is the label an editor writes, `codeName` is
-the designator generated C++ has to compile, and `token` is what stands in a theme file - the
+the member generated C++ assigns an effect to, and `token` is what stands in a theme file - the
 key an element's list of rules stands under, and its effect's where it has one. Changing `token`
 changes the file format: an unrecognised key is discarded with a SchemaErrorEvent, so a theme
 saved under the old spelling loses those rules rather than failing to load.

@@ -80,7 +80,7 @@ namespace ThisApp
         static constexpr std::wstring_view k_paletteTitle{ L"Palette" };
 
         TreeEntries m_entries{}; // an item's tag is its place here
-        const ThemeRules m_defaultRules{ defaultRules() }; // what each page's reset puts back
+        const ThemeRules m_defaultRules{ ThemeColors{}.rules }; // what each page's reset puts back
 
         TreeView& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,

@@ -7,7 +7,7 @@
 //
 // Four readers share it and none keeps a list of its own: the serializers
 // build their field tuples from this table, the Themes app names its pages
-// from it, the C++ code generator emits designators from it, and bake below
+// from it, the C++ code generator names members and elements from it, and bake below
 // turns a theme into the set the paint path reads. An element added here
 // reaches all four; one added anywhere else reaches none.
 // =========================================================================

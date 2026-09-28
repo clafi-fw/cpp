@@ -117,6 +117,7 @@ namespace ClaFi::Browser
         std::wstring m_anchor{};
         Urls m_backUrls{};
         Urls m_forwardUrls{};
+        bool m_historyRead{ false }; // the stacks hold what the tab's file had
         // False for a tab the user opened, which is every tab but the ones a run starts with.
         bool m_onRestoredPage{ false };
         // The close button is the tab's secondary part, so the base keeps a press on it from
@@ -335,6 +336,9 @@ namespace ClaFi::Browser
         // Drops the current tab's history one way, as a list under the button for that way.
         void showHistoryMenu(std::ptrdiff_t direction);
         [[nodiscard]] Button& historyButton(std::ptrdiff_t offset); // Back for a negative offset
+        // Reads a tab's history from its file, once - goTo asks it of every tab it selects.
+        void readHistory(BrowserTab&);
+        void storeHistory(const BrowserTab&) const; // into the document of the tab's file
         // Puts the name the user typed to the browser, and puts the tree right when it is taken.
         void acceptPageName(PageData&, AcceptEditEvent&);
         // Whether a page IS the one named or stands under it - which is every page whose path a

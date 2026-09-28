@@ -151,6 +151,10 @@
                     <li><a href="#palette">The palette</a></li>
                     <li><a href="#color-effects">Colour effects</a></li>
                     <li><a href="#color-rules">Colour rules</a></li>
+                    <li><a href="#rule-lists">Where a control's rules come from</a></li>
+                    <li><a href="#pointer-and-keys">The pointer and the keys</a></li>
+                    <li><a href="#focus-ring">The focus ring</a></li>
+                    <li><a href="#elements">Elements</a></li>
                 </ul>
             </li>
             <li><div class="nav-item-wrapper"><a href="#do-dont">Do and Don't</a></div></li>
@@ -194,28 +198,30 @@ cannot tell the families apart at the call site:</p>
         Warnings and errors are these.</li>
     <li><strong>Black and white</strong> - pure, and the same on either side of the theme.</li>
     <li><strong>Accent and spot</strong> - the two pigments named for their role, each one of the
-        theme's own colour rules laid over the text ink.</li>
+        theme's own colour effects laid over the text ink.</li>
 </ul>
 
 <div class="info">
 <strong>Module imports:</strong> naming an ink needs <code>ClaFi.Core.System.InkWell</code>. The
 types the names are built from - <code>Ink</code>, <code>InkColor</code>, <code>InkGrade</code>, <code>Pigment</code>,
 <code>InkTone</code>, <code>ColorMode</code> - come with
-<code>ClaFi.Core.System.UiTypes</code>. A theme's own rules live in
-<code>ClaFi.Core.AppTheme_Colors</code>, which only a theme editor and the paint chain need.
+<code>ClaFi.Core.System.UiTypes</code>. A theme's effects and rules, and the <code>UiElement</code>
+a control wears, live in <code>ClaFi.Core.AppTheme_Colors</code>. The form the paint path reads,
+<code>BakedColorRule</code> among it, lives in <code>ClaFi.Core.AppTheme_Baked</code>.
 </div>
 
 <h2 id="quickstart">Quick Start</h2>
 
-<p>An ink becomes a colour where it is used. Every paint event answers <code>ink()</code>, and every
-<code>Ink</code> answers <code>toColor()</code> - the two are the same call written from either
-end.</p>
+<p>An ink becomes a colour where it is used, against the surface the painter stands on. A
+<code>PaintEvent</code> answers <code>textRgb</code>, <code>accentRgb</code> and <code>spotRgb</code>
+for the three families at a named step, and <code>inkRgb</code> for any <code>Ink</code>. An icon's
+<code>PaintIconEvent</code> answers the same four.</p>
 
-<pre><code><span class="cm">// In a control's paint handler, or an icon's.</span>
-<span class="tp">Color</span> body = <span class="tp">InkWell</span>::<span class="fn">textInk</span>().<span class="fn">toColor</span>(event);                 <span class="cm">// the full ink</span>
-<span class="tp">Color</span> quiet = <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Muted).<span class="fn">toColor</span>(event);  <span class="cm">// a step down toward the surface</span>
-<span class="tp">Color</span> mark = <span class="tp">InkWell</span>::<span class="fn">accentInk</span>().<span class="fn">toColor</span>(event);               <span class="cm">// the theme's accent</span>
-<span class="tp">Color</span> warn = <span class="tp">InkWell</span>::Yellow.<span class="fn">toColor</span>(event);                      <span class="cm">// a pigment</span>
+<pre><code><span class="cm">// In a control's paint handler.</span>
+<span class="tp">Color</span> body = event.<span class="fn">textRgb</span>(<span class="tp">InkGrade</span>::Strongest);     <span class="cm">// the full ink</span>
+<span class="tp">Color</span> quiet = event.<span class="fn">textRgb</span>(<span class="tp">InkGrade</span>::Muted);        <span class="cm">// a step down toward the surface</span>
+<span class="tp">Color</span> mark = event.<span class="fn">accentRgb</span>(<span class="tp">InkGrade</span>::Strongest);   <span class="cm">// the theme's accent</span>
+<span class="tp">Color</span> warn = event.<span class="fn">inkRgb</span>(<span class="tp">InkWell</span>::Yellow);          <span class="cm">// a pigment</span>
 
 event.<span class="fn">canvas</span>().<span class="fn">drawPath</span>(path, { <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(mark, event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin)) });</code></pre>
 
@@ -237,8 +243,9 @@ the background in effect under the brush, and the <strong>ink</strong>, which is
 text on that surface is drawn in. A control that fills its own background becomes the surface for
 its children. A control that states a text rule changes the ink for everything inside it.</p>
 
-<p>Both are carried as <code>Hsl</code> in the <code>TextColorTheme</code> the event hands out:
-<code>surfaceHsl</code> is where a grade of 0 lands, <code>inkHsl</code> where a grade of 1 lands.
+<p>Both are carried as <code>Hsl</code> in the <code>ControlPaintContext</code> the event hands out
+as <code>controlContext()</code>: <code>surfaceHsl</code> is where a grade of 0 lands,
+<code>textHsl</code> where a grade of 1 lands.
 Nothing derives from "the theme's background" - what a colour is measured against is what is
 actually behind it.</p>
 
@@ -297,24 +304,24 @@ find yourself reaching for one, what you want is a grade.
 
 <h3 id="accent-and-spot">Accent and spot</h3>
 
-<p>The palette carries two accent hues, and the theme states a rule for each. An accent or spot ink
-is a grade of the text ink with that rule applied to it, so what comes out is where the theme says
-such a colour lands rather than a relative of the ink underneath.</p>
+<p>The palette carries two accent hues, and the theme states an effect for each. An accent or spot
+ink is a grade of the text ink with that effect applied to it, so what comes out is where the theme
+says such a colour lands rather than a relative of the ink underneath.</p>
 
 <table>
-<tr><th>Ink</th><th>Rule</th><th>What it is for</th></tr>
+<tr><th>Ink</th><th>Effect</th><th>What it is for</th></tr>
 <tr><td><code>InkWell::accentInk()</code></td><td><code>ThemeColors::accent</code></td>
-    <td>The colour the interface answers with. It is the palette hue a button under the pointer, a
-    checked mark and the band behind selected text all move toward, so an icon or a run drawn in it
-    belongs to the controls around it.</td></tr>
+    <td>The colour the interface answers with. It is the palette hue a selected button, a checked
+    mark and the band behind selected text move toward, so an icon or a run drawn in it belongs to
+    the controls around it.</td></tr>
 <tr><td><code>InkWell::spotInk()</code></td><td><code>ThemeColors::spot</code></td>
     <td>The second accent, for what stands apart from the interface rather than answers to it: a
     brand mark, the application's own name, a run of emphasised text. Spent sparingly, which is a
     decision the theme makes once rather than each caller remaking it.</td></tr>
 </table>
 
-<p>Both take a grade, and the grade names the ink the rule is applied to rather than where the
-result ends up. A theme whose accent rule sets both saturation and luminosity outright therefore
+<p>Both take a grade, and the grade names the ink the effect is applied to rather than where the
+result ends up. A theme whose accent effect sets both saturation and elevation outright therefore
 answers the same colour at every grade, which is the usual case.</p>
 
 <h3 id="elevation">Elevation and colour mode</h3>
@@ -420,8 +427,8 @@ two yellows.</p>
 <tr><td><code>textInk(InkGrade = Strongest)</code></td><td>A named step between the surface and the ink.</td></tr>
 <tr><td><code>textInk(float grade)</code></td><td>A share of your own, for a step the framework does not draw in.</td></tr>
 <tr><td><code>surfaceInk()</code></td><td>Grade 0 - flush with the surface, and so invisible on it.</td></tr>
-<tr><td><code>accentInk(InkGrade = Strongest)</code></td><td>The theme's accent rule, at that grade.</td></tr>
-<tr><td><code>spotInk(InkGrade = Strongest)</code></td><td>The theme's spot rule, at that grade.</td></tr>
+<tr><td><code>accentInk(InkGrade = Strongest)</code></td><td>The theme's accent effect, at that grade.</td></tr>
+<tr><td><code>spotInk(InkGrade = Strongest)</code></td><td>The theme's spot effect, at that grade.</td></tr>
 <tr><td><code>yellowInk</code>, <code>greenInk</code>, <code>blueInk</code>, <code>redInk</code> <code>(InkGrade = Strongest)</code></td><td>A semantic colour at that grade.</td></tr>
 <tr><td><code>blackInk</code>, <code>whiteInk</code> <code>(InkGrade = Strongest)</code></td><td>Pure black or white at that grade, the same in both colour modes.</td></tr>
 <tr><td><code>pigmentTones(Pigment)</code></td><td>The tone a semantic colour is drawn at on each side of the theme.</td></tr>
@@ -458,7 +465,7 @@ and is not an invitation.
 
 <p><code>Pigment</code> is <code>Yellow</code>, <code>Green</code>, <code>Blue</code>,
 <code>Red</code> - the four other pigments, each a region of the harmony's wheel rather than a place
-in an order. Accent and spot reach the paint through the theme's rules and have no entry here.
+in an order. Accent and spot reach the paint through the theme's effects and have no entry here.
 <code>InkTone</code> is the pair that says how colourful and how light: the two travel together
 because a hue needs a different amount of colour to read at one luminosity than at another, so
 stating either without the other names half a colour. <code>PigmentTones</code> states one
@@ -490,17 +497,17 @@ light and lemon on dark.</p>
 
 <h3 id="ref-resolving">Resolving an ink</h3>
 
-<p><code>Ink::toColor</code> is a template over anything that answers <code>ink(Ink)</code>,
-which <code>PaintEvent</code>, <code>PaintIconEvent</code> and <code>FormContext</code> all are. So an
-icon can name a colour without knowing what kind of event is behind it.</p>
+<p>An ink is resolved by the event the painter holds, against the surface and the lightness that
+event carries. <code>PaintEvent</code> and <code>PaintIconEvent</code> answer the same calls, each a
+forward to the event's <code>ControlPaintContext</code>, which is where the resolution happens.</p>
 
 <table>
 <tr><th>Call</th><th>Use</th></tr>
-<tr><td><code>ref.toColor(event)</code></td><td>The usual spelling, and the only one an icon needs.</td></tr>
-<tr><td><code>event.ink(ref)</code></td><td>The same call from the other end.</td></tr>
-<tr><td><code>event.ink(pigment, tone)</code></td><td>A pigment's hue at a tone stated outright, with nothing placing it.</td></tr>
-<tr><td><code>event.ink(pigment, saturation, elevation)</code></td><td>A pigment placed by elevation, with the mode doing the orienting.</td></tr>
-<tr><td><code>themeColors().inkHsl(ref, textColor)</code></td><td>The resolution before it becomes a <code>Color</code>. Take this when a colour rule is applied next.</td></tr>
+<tr><td><code>event.textRgb(grade)</code>, <code>accentRgb(grade)</code>, <code>spotRgb(grade)</code></td><td>A family at a named step - the usual spelling, in a control and in an icon.</td></tr>
+<tr><td><code>event.inkRgb(ink)</code></td><td>Any <code>Ink</code> - a pigment, black or white, or a share of your own.</td></tr>
+<tr><td><code>event.inkRgb(pigment, tone)</code></td><td>A pigment's hue at a tone stated outright, with nothing placing it.</td></tr>
+<tr><td><code>event.inkRgb(pigment, saturation, elevation)</code></td><td>A pigment placed by elevation, with the control's lightness doing the orienting.</td></tr>
+<tr><td><code>event.controlContext().inkHsl(ink)</code></td><td>The resolution before it becomes a <code>Color</code>. Take this when a colour effect is applied next.</td></tr>
 </table>
 
 <div class="warning">
@@ -575,8 +582,8 @@ can be left out: the colour is then <code>text</code> and the grade <code>strong
 <pre><code><span class="kw">void</span> <span class="fn">paint</span>(<span class="tp">PaintIconEvent</span>&amp; event)
 {
     <span class="kw">const float</span> strokeWidth = event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin);
-    <span class="tp">Color</span> body = <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Strong).<span class="fn">toColor</span>(event);
-    <span class="tp">Color</span> accent = <span class="tp">InkWell</span>::<span class="fn">accentInk</span>().<span class="fn">toColor</span>(event);
+    <span class="tp">Color</span> body = event.<span class="fn">textRgb</span>(<span class="tp">InkGrade</span>::Strong);
+    <span class="tp">Color</span> accent = event.<span class="fn">accentRgb</span>(<span class="tp">InkGrade</span>::Strongest);
 
     canvas.<span class="fn">drawPath</span>(bodyPath, { <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(body, strokeWidth) }, &amp;transform);
     canvas.<span class="fn">drawPath</span>(headPath, { <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(accent, strokeWidth) }, &amp;transform);
@@ -638,44 +645,201 @@ the control it lands on stands in. <code>Set 0.0</code> comes out at the floor o
 white on a light one, which is how a mark gets ink that contrasts with it under either mode.</p>
 
 <p><code>ThemeColors::accent</code> and <code>ThemeColors::spot</code> are bare effects: the two
-inks a theme states itself, applied wherever an ink names them.</p>
+inks a theme states itself, applied wherever an ink names them. The accent is also what a mark that
+says a thing is on is drawn in - a text caret, the indicator under an open tab - through
+<code>ControlPaintContext::indicatorRgb</code>. A rule that wants the accent's colour states its
+values in its own effect, as the focus ring's rules do.</p>
 
 <h3 id="color-rules">Colour rules</h3>
 
-<p>A <code>ColorRule</code> is what a theme says about an element: the states it reads, the channel
+<p>A <code>ColorRule</code> is what a theme says about an element: the inputs it reads, the channel
 it writes, and the effect it applies there.</p>
 
 <table>
 <tr><th>Member</th><th>What it states</th></tr>
-<tr><td><code>inputs</code></td><td>The states the rule reads, joined as "or" - <code>Hovered</code>, <code>Pressed</code>, <code>Focused</code>, <code>Selected</code>, <code>Disabled</code>, <code>TextHovered</code>, <code>Current</code>, <code>WindowFocused</code>. An empty set is at rest: the rule applies in full.</td></tr>
+<tr><td><code>inputs</code></td><td>The inputs the rule reads, joined as "or". An empty set is at rest: the rule applies in full.</td></tr>
 <tr><td><code>andInputs</code></td><td>What must hold as well, joined as "and" - a surface when focused and the window focused.</td></tr>
 <tr><td><code>output</code></td><td>The <code>PaintChannel</code> the rule writes.</td></tr>
 <tr><td><code>effect</code></td><td>The <code>ColorEffect</code> applied to that channel, as far as the inputs stand.</td></tr>
 </table>
 
+<p>Every input is a factor from 0 to 1 that follows its state through an animation, so a rule fades
+in as its input rises. The inputs joined as "or" stand where any one of them would take them -
+<code>1 - (1 - a) * (1 - b)</code> - and the ones joined as "and" multiply that. A rule reading
+"when hovered, and mouse and current" applies as far as all three hold.</p>
+
+<table>
+<tr><th>RuleInput</th><th>What it reads</th></tr>
+<tr><td><code>Hovered</code></td><td>The pointer over the control, and nothing else. A control reached by a key is not hovered.</td></tr>
+<tr><td><code>Pressed</code></td><td>A press held on the control.</td></tr>
+<tr><td><code>Focused</code></td><td>The control's own focus, whether or not its window has it.</td></tr>
+<tr><td><code>Selected</code></td><td>A checked box, an open tab, a picked item. A control that keeps its selection off its surface keeps it off its stroke as well.</td></tr>
+<tr><td><code>Disabled</code></td><td>The enabled factor turned over.</td></tr>
+<tr><td><code>TextHovered</code></td><td>The pointer on the control's own text.</td></tr>
+<tr><td><code>Current</code></td><td>A container's current item - the one a Shift range grows from.</td></tr>
+<tr><td><code>WindowFocused</code></td><td>How far the window the control stands in holds the focus. A menu or a tooltip reads the window it stands on.</td></tr>
+<tr><td><code>Keyboard</code></td><td>How far the keyboard drives the input. The same on every control of every window.</td></tr>
+<tr><td><code>Mouse</code></td><td>How far the mouse drives the input. The same on every control of every window.</td></tr>
+</table>
+
 <table>
 <tr><th>Channel</th><th>Where it starts</th></tr>
 <tr><td><code>Surface</code></td><td>The surface the control stands on. A control whose rules move nothing paints no surface of its own.</td></tr>
-<tr><td><code>Stroke</code></td><td>The control's own surface.</td></tr>
-<tr><td><code>Text</code></td><td>The ink the control above passes on, in its own surface's hue until a rule names one.</td></tr>
-<tr><td><code>Shadow</code></td><td>Black in the stroke's hue. It is read at the dark end in both modes with no floor, so elevation here is luminosity. A window's blur, offset, spread and opacity are metrics, in <code>WindowShadow</code>.</td></tr>
+<tr><td><code>Stroke</code></td><td>The control's own surface. The focus ring takes it further - see <a href="#focus-ring">The focus ring</a>.</td></tr>
+<tr><td><code>Text</code></td><td>The ink the control above passes on, in the control's own surface's hue until a rule names one.</td></tr>
+<tr><td><code>Shadow</code></td><td>Black in the stroke's hue, the stroke as it stands before the ring. It is read at the dark end in both modes with no floor, so elevation here is luminosity. A window's blur, offset, spread and opacity are metrics, in <code>WindowShadow</code>.</td></tr>
 </table>
+
+<p>A button's look under the pointer, as the framework's own theme states it, is two rules: the look
+gated on the mouse, and the same look for a key that reached the button - see
+<a href="#pointer-and-keys">The pointer and the keys</a>.</p>
 
 <pre><code><span class="tp">ColorRule</span>{
     .inputs{ <span class="tp">RuleInput</span>::Hovered },
+    .andInputs{ <span class="tp">RuleInput</span>::Mouse },
+    .effect{
+        { <span class="tp">ColorRuleOp</span>::Offset, <span class="kw">0.085609f</span> },     <span class="cm">// S</span>
+        { <span class="tp">ColorRuleOp</span>::Offset, <span class="kw">0.126926f</span> }      <span class="cm">// E</span>
+    }
+},
+<span class="tp">ColorRule</span>{
+    .inputs{ <span class="tp">RuleInput</span>::Focused },
+    .andInputs{ <span class="tp">RuleInput</span>::Keyboard },
     .effect{
         { <span class="tp">ColorRuleOp</span>::Offset, <span class="kw">0.085609f</span> },     <span class="cm">// S</span>
         { <span class="tp">ColorRuleOp</span>::Offset, <span class="kw">0.126926f</span> }      <span class="cm">// E</span>
     }
 }</code></pre>
 
-<p><code>ThemeColors::rules</code> is a <code>ThemeRules</code>: one list per
-<code>UiElement</code>, <code>anyWindow</code> for a form's root control whatever element it wears, and <code>shared</code>
-for every element. A control names the element it wears through
-<code>AdjustPaintEvent::setColorRules</code>, and takes that element's list, then the window's where
-it is a form's root, then the shared one. A control with something to say that no theme can - a tab
-taking on its page's colour - states rules of its own through
-<code>AdjustPaintEvent::setOwnRules</code>, applied ahead of its element's.</p>
+<h3 id="rule-lists">Where a control's rules come from</h3>
+
+<p><code>ThemeColors::rules</code> is a <code>ThemeRules</code>: a list per element, and three lists
+that reach across elements. A control takes its lists in this order, each applied over what the one
+before it left:</p>
+
+<table>
+<tr><th>List</th><th>Reaches</th></tr>
+<tr><td>The control's own</td><td>The control that states them through <code>AdjustPaintEvent::setOwnRules</code>.</td></tr>
+<tr><td><code>of(UiElement)</code></td><td>Every control wearing that element.</td></tr>
+<tr><td><code>anyWindow</code></td><td>A form's root control, by its position, whatever element it wears. A root that wears none takes this list all the same.</td></tr>
+<tr><td><code>shared</code></td><td>Every control that wears an element. The Themes app calls it Any element.</td></tr>
+<tr><td><code>focusRing</code></td><td>The own stroke of every control that takes input, read after the rest - see <a href="#focus-ring">The focus ring</a>.</td></tr>
+</table>
+
+<p>A control wears an element in one of two ways. A <code>RichControl</code> takes it as a property,
+beside its metric block. A control that decides for itself states it while its paint is adjusted,
+and what it states there has the last word.</p>
+
+<pre><code><span class="cm">// As a property.</span>
+<span class="tp">Panel</span>&amp; m_card{ m_stack.<span class="fn">add</span>&lt;<span class="tp">Panel</span>&gt;(
+    <span class="fn">themeMetrics</span>().page,
+    <span class="tp">UiElement</span>::Section
+) };
+
+<span class="cm">// From the control's own adjustment.</span>
+<span class="kw">void</span> <span class="tp">Badge</span>::<span class="fn">adjustPaint</span>(<span class="tp">AdjustPaintEvent</span>&amp; event)
+{
+    <span class="tp">RichControl</span>::<span class="fn">adjustPaint</span>(event);
+    event.<span class="fn">setColorRules</span>(<span class="tp">UiElement</span>::ToolButton);
+}</code></pre>
+
+<p>A control that wears no element takes its own rules and, at a form's root, the window's. Neither
+an element's list nor the shared one reaches it.</p>
+
+<p>A control with something to say that no theme can - a tab taking on the colour of the page it
+opens - states rules of its own. They are baked rules, <code>BakedColorRule</code>, handed over as
+a span that has to outlive the paint: a member of the control, or a rule of the baked set the pass
+carries.</p>
+
+<pre><code><span class="cm">// A member, so the span outlives the paint.</span>
+<span class="tp">BakedColorRule</span> m_pageRule{ .inputs{ <span class="tp">RuleInput</span>::Hovered, <span class="tp">RuleInput</span>::Selected } };
+
+<span class="kw">void</span> <span class="tp">Tab</span>::<span class="fn">adjustPaint</span>(<span class="tp">AdjustPaintEvent</span>&amp; event)
+{
+    ...
+    m_pageRule.effect.<span class="fn">setExactHsl</span>(m_actualPageHsl, event.<span class="fn">lightness</span>());
+    event.<span class="fn">setOwnRules</span>({ &amp;m_pageRule, <span class="kw">1</span> });
+}</code></pre>
+
+<h3 id="pointer-and-keys">The pointer and the keys</h3>
+
+<p><code>Hovered</code> means the pointer is over the control, and only the form's hit test moves it.
+A control the user reached by a key is focused, not hovered, and reads through <code>Focused</code>
+and the keyboard. So a look that answers the user being on a control is stated twice: when hovered,
+and mouse, and when focused, and keyboard. With one of the two controllers on, one item is lit.</p>
+
+<p><code>Keyboard</code> and <code>Mouse</code> are the two input controllers' factors. The pointer
+turns the mouse on and the keyboard off, a key does the opposite, and a bare modifier turns the
+keyboard on and leaves the mouse as it is - so both are on only after a modifier. Each fades on
+an animation slot of its own, the two mirrored so that a switch is one crossfade. Nothing knows which
+controls read them, so every visible window repaints for the length of the fade. The
+<a href="Platform-Manual.html#input-controllers">Platform manual</a> says where the switches come
+from.</p>
+
+<h3 id="focus-ring">The focus ring</h3>
+
+<p>The ring is the control's own stroke, taken further by the theme's <code>focusRing</code> list -
+Focus ring in the Themes app. The list reaches every control whose <code>Interactivity</code> is not
+<code>None</code>, whatever element it wears, and it is read after the stroke's own lists. Only its
+Stroke rules are read, and only for the control's own stroke: a line a control raises through
+<code>PaintEvent::strokeRgbOn</code> - a grid cell's, a divider row's - does not take the ring.</p>
+
+<p>How far the list reaches the stroke is how much ring there is, and that share sets the ring's
+weight as well as its colour. The border thickens toward <code>ThemeMetrics::focusedBorder</code> by
+it, and a surface that grows in as it arrives is held at full size by it, since a ring marks the
+control's frame and not its surface. Both are paint effects, and neither moves any layout. The
+shadow takes its hue from the stroke before the ring, so a focused control does not tint the shadow
+it casts.</p>
+
+<p>The framework's own theme states four rules:</p>
+
+<table>
+<tr><th>Rule</th><th>Ink</th></tr>
+<tr><td>when focused, and keyboard</td><td>Full contrast - no saturation, elevation 1.</td></tr>
+<tr><td>when current</td><td>Full contrast. A container's current item wears the ring under the mouse as well, since it marks where a Shift range grows from.</td></tr>
+<tr><td>when hovered, and mouse and current and window focused</td><td>The accent.</td></tr>
+<tr><td>when focused, and keyboard and window focused</td><td>The accent.</td></tr>
+</table>
+
+<p>So the ring is drawn in the accent only while its window holds the focus. The accent's values are
+written into these rules, so a theme that moves its accent moves the ring by editing them too.</p>
+
+<h3 id="elements">Elements</h3>
+
+<p>A <code>UiElement</code> names what a control is to the theme. Three elements open a window of
+their own, and every other stands on one - the colour a rule changes is the one its base leaves. A
+window root's surface names its hue and sets its saturation and elevation outright, since what stands
+behind a window is not the theme's to know.</p>
+
+<table>
+<tr><th>Element</th><th>Stands on</th><th>What wears it</th></tr>
+<tr><td><code>Dialog</code>, <code>Menu</code>, <code>Tooltip</code></td><td>The bare colour of the mode</td><td>The root of a window of that kind: its surface, its ink, its frame's stroke and the shadow it casts.</td></tr>
+<tr><td><code>Page</code></td><td><code>Dialog</code></td><td>A page of content.</td></tr>
+<tr><td><code>Tab</code></td><td><code>Page</code></td><td>A tab in a strip. The open tab wears its page's surface, and its line runs the length of the page.</td></tr>
+<tr><td><code>Section</code></td><td><code>Page</code></td><td>A section of a page.</td></tr>
+<tr><td><code>SectionHeader</code></td><td><code>Section</code></td><td>The strip an expander shows its title on. A grid draws a section's line from its stroke.</td></tr>
+<tr><td><code>ToolBar</code></td><td><code>Page</code></td><td>A tool bar.</td></tr>
+<tr><td><code>DialogTitle</code></td><td><code>Dialog</code></td><td>A window's title bar. Its Selected rules follow the window's focus.</td></tr>
+<tr><td><code>Divider</code></td><td><code>Section</code></td><td>A divider. Its stroke is the line a grid's divider row carries.</td></tr>
+<tr><td><code>Grid</code></td><td><code>Section</code></td><td>A grid. Its stroke is the grid's outer border.</td></tr>
+<tr><td><code>GridHeader</code></td><td><code>Grid</code></td><td>The row of column names across the top of a grid. Its stroke is the lines between them.</td></tr>
+<tr><td><code>GridRow</code></td><td><code>Grid</code></td><td>Every row of a grid, groups and sections included. Its stroke is the lines between cells.</td></tr>
+<tr><td><code>Button</code></td><td><code>Section</code></td><td>A button with a surface at rest.</td></tr>
+<tr><td><code>ToolButton</code></td><td><code>Section</code></td><td>A button whose surface arrives with the pointer - a tool bar's, a menu line, a list item. It states no surface at rest.</td></tr>
+<tr><td><code>SelectedText</code></td><td><code>Section</code></td><td>The band behind selected text, and the ink drawn over it.</td></tr>
+<tr><td><code>SelectionIndicator</code></td><td><code>Section</code></td><td>The box of a check and the ring of a radio button, with the colour each takes when on.</td></tr>
+<tr><td><code>HoverIndicator</code></td><td><code>Section</code></td><td>The mark of a button whose <code>IndicatorVisibility</code> is <code>Hover</code>, with nothing at rest.</td></tr>
+<tr><td><code>Accent</code>, <code>Spot</code></td><td><code>Section</code></td><td>The two effects an ink names, <code>ThemeColors::accent</code> and <code>spot</code>.</td></tr>
+<tr><td><code>ScrollButton</code>, <code>ScrollThumb</code></td><td><code>Section</code></td><td>A scroll bar's buttons and its thumb.</td></tr>
+<tr><td><code>Testee</code>, <code>Bestee</code></td><td><code>Section</code></td><td>Test subjects nothing in the framework wears. Only the rules a theme states for them reach them.</td></tr>
+</table>
+
+<p>Whether a control carries a surface at rest is its element's to say: <code>ToolButton</code>
+states no rule at rest, so its surface exists only as far as its states carry it. How that surface
+arrives is geometry, and geometry is a metric. <code>ControlMetrics::surfaceGrowInScale</code> is the
+size it grows in from, as a fraction of the size it settles at: 0.83 in
+<code>ThemeMetrics::toolButton</code>, and 1 - a surface that fades in at full size - everywhere
+else.</p>
 
 <h2 id="do-dont">Do and Don't</h2>
 
@@ -686,7 +850,8 @@ taking on its page's colour - states rules of its own through
             <li><strong>Name the ink, resolve where you paint.</strong> The same <code>Ink</code> is right on every surface; a <code>Color</code> is right on one.</li>
             <li><strong>Use a grade for anything grey.</strong> Grey is the ladder between the surface and the ink, not a colour.</li>
             <li><strong>Name a meaning with a semantic colour</strong> - <code>InkWell::Red</code>, or <code>redInk(grade)</code> for a quieter one - and leave its tones to <code>InkWell::pigmentTones</code>, the one declaration serving both modes.</li>
-            <li><strong>Take <code>inkHsl</code> when a rule comes next</strong>, and let the last step be the one that makes a <code>Color</code>.</li>
+            <li><strong>Take <code>controlContext().inkHsl</code> when an effect comes next</strong>, and let the last step be the one that makes a <code>Color</code>.</li>
+            <li><strong>State a look for the user being on a control twice</strong> - when hovered, and mouse; when focused, and keyboard. <code>Hovered</code> is the pointer and nothing else.</li>
             <li><strong>Reach for the accent for interface emphasis</strong> and the spot for what stands apart from the interface.</li>
             <li><strong>Ask <code>wornColorMode</code> which side the application is on.</strong> Under Auto the answer is the desktop's, and it moves while the application runs.</li>
         </ul>
@@ -698,6 +863,7 @@ taking on its page's colour - states rules of its own through
             <li><strong>Don't cache a resolved colour</strong> across surfaces or across a theme change. Resolving is cheap; being wrong is not.</li>
             <li><strong>Don't give a semantic ink an elevation.</strong> An icon that means something means it on both sides of the theme.</li>
             <li><strong>Don't write a hex literal in a control or an icon.</strong> If the model cannot say it, that is a gap in the model.</li>
+            <li><strong>Don't hand <code>setOwnRules</code> a temporary.</strong> It keeps a span, and the rules it names are read after the adjustment returns.</li>
             <li><strong>Don't ask for yellow text.</strong> There is no legible yellow; use the shape or the icon to carry it.</li>
             <li><strong>Don't read the setting as a side.</strong> <code>colorMode().get() == ColorModeSetting::Dark</code> is false on a dark desktop under Auto.</li>
         </ul>
@@ -710,12 +876,12 @@ taking on its page's colour - states rules of its own through
 
 <p><code>ControlPaintContext::inkHsl</code> is the one place a name becomes a colour. Every ink is
 read the same way: its colour picks the far end of the mix, and the grade mixes toward that end
-from the surface. For the accent and the spot the far end is the theme's rule laid over the chain's
-ink - laid over the mixed ink, a rule that sets its channels outright would answer the same colour
-at every grade.</p>
+from the surface. For the accent and the spot the far end is the theme's effect laid over the chain's
+ink - laid over the mixed ink, an effect that sets its channels outright would answer the same
+colour at every grade.</p>
 
 <pre><code><span class="cm">// The far end of the mix: a semantic colour's hue, pure black or white, the theme's accent</span>
-<span class="cm">// or spot rule over the chain's ink, or the chain's ink itself.</span>
+<span class="cm">// or spot effect over the chain's ink, or the chain's ink itself.</span>
 <span class="tp">Hsl</span> inkEnd = textHsl;
 <span class="kw">const</span> <span class="tp">std</span>::<span class="tp">optional</span>&lt;<span class="tp">Pigment</span>&gt; pigment = <span class="fn">pigmentOf</span>(ink.color);
 <span class="kw">if</span> (pigment)
@@ -771,23 +937,34 @@ lies below 1, where the axis would have no room left, and the Themes app's slide
 <h3 id="hiw-chain">The chain a control carries</h3>
 
 <p><code>PaintEvent</code> accumulates the chain on the way down. Each control applies its own
-rules to what it was handed, and what it passes on is what its children measure against:</p>
+rules to what it was handed, and what it passes on is what its children measure against. The
+channels are resolved in one order, because each seeds the next:</p>
+
+<ol>
+    <li>The <strong>surface</strong>: the Surface rules over what the control stands on - a host's
+        answer where one was stated through <code>AdjustPaintEvent::setSurfaceHsl</code>, the
+        parent's surface otherwise. A control whose rules move nothing contributes nothing to it.</li>
+    <li>The <strong>ink</strong>: the parent's ink, in this surface's hue as far as neither a rule nor
+        a host has named one, with this control's Text rules applied. A Text rule raising saturation
+        alone tints toward what the text is on.</li>
+    <li>The <strong>stroke</strong>: this control's own surface with its Stroke rules applied, then
+        the focus ring's list where the control takes input.</li>
+    <li>The <strong>shadow</strong>: the parent's shadow, in the hue of the stroke before the ring as
+        far as no rule has named one, with the Shadow rules applied.</li>
+</ol>
 
 <ul>
-    <li>The <strong>surface</strong> is the Surface rules' result, accumulated - a control whose
-        rules move nothing contributes nothing to it.</li>
-    <li>The <strong>ink</strong> is the parent's ink with this control's own Text rules
-        applied.</li>
     <li>The <strong>lightness</strong> is inherited. A control that knows better states it outright
         through <code>AdjustPaintEvent::setLightness</code>.</li>
     <li>The <strong>disabled amount</strong> is applied as the chain is built, so an ink asked for on
         demand matches one that was resolved ahead of time.</li>
 </ul>
 
-<p>Everything else in <code>TextColorTheme</code> - <code>selection</code>, <code>caret</code>,
-<code>hotLink</code> - is resolved once per paint from the rules that state them, because a layout
-needs them whether or not it uses them. The theme hands over resolved colours and never states, so
-by the time a run is drawn there is nothing left to decide.</p>
+<p>The band behind selected text and the indicator are resolved when asked for -
+<code>selectionRgb</code> and <code>indicatorRgb</code> on the <code>ControlPaintContext</code> -
+since most controls never ask. The band reads the inputs of the control drawing it, which owns the
+selection. The indicator reads none of them, so a control's own state does not reach its caret or a
+tab's indicator.</p>
         </main>
     </div>
     <script>

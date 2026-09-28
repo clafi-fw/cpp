@@ -111,7 +111,7 @@ namespace ClaFi::Showcase::TextEngine
         {
             FloatPoint center = event.iconCenter();
             center.x -= event.scaleF(16.0f);
-            event.canvas().fillCircle(center, event.scaleF(3.0f), event.inkColor(InkWell::Green));
+            event.canvas().fillCircle(center, event.scaleF(3.0f), event.inkRgb(InkWell::Green));
         }
 
         // The rule that closes a round: a hairline running in from each side of the box, and at the

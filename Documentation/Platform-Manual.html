@@ -344,8 +344,19 @@
                 </div>
                 <ul>
                     <li><a href="#windows-from-above">Windows</a></li>
+                    <li><a href="#window-opacity">Window Opacity</a></li>
                     <li><a href="#clipboard-from-above">The Clipboard</a></li>
                     <li><a href="#animator-from-above">Animations</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#reported">What the Platform Reports</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#input-controllers">The Input Controllers</a></li>
+                    <li><a href="#side-buttons">Side Buttons</a></li>
                 </ul>
             </li>
             <li class="has-children collapsed">
@@ -685,6 +696,29 @@
             handed its parent's window the same way, through the parent form. <code>WindowRole</code> says what
             kind of window: <code>Dialog</code>, <code>Menu</code> or <code>Tooltip</code>, and nothing else.</p>
 
+            <h3 id="window-opacity">Window Opacity</h3>
+            <p>A window's opacity is a byte on its <code>IPlatformWindow</code> - <code>alpha()</code> and
+            <code>setAlpha(ColorByte)</code> - applied to the whole window at once. A tooltip fades in and out
+            this way, stepping the byte on <code>AnimationSlots::formAlpha</code>. Each platform applies the
+            value where it costs least:</p>
+            <table>
+                <tr><th>Platform</th><th>What applies it</th></tr>
+                <tr><td>Win32</td><td>The window's composition visual. The shadow window the form casts its
+                    shadow from takes the same value, so the two fade together. Nothing is repainted.</td></tr>
+                <tr><td>Wayland, where the compositor offers <code>wp_alpha_modifier_v1</code></td><td>The
+                    compositor, as a multiplier stated on the surface. A change is one commit - no paint, no pixel
+                    pass, no new buffer - and it applies to a buffer without an alpha channel too, so an opaque
+                    window fades the same way. While the window is off the screen the value waits in the surface's
+                    pending state for the commit that maps it.</td></tr>
+                <tr><td>Wayland, where it offers none</td><td>The frame, where the window's buffer carries an
+                    alpha channel. Every pixel is written at the window's opacity, and a change repaints the
+                    window. Premultiplied colour scales with its own alpha, so the four channels take one factor,
+                    the result is still premultiplied, and a rounded corner keeps the coverage it was drawn
+                    with.</td></tr>
+            </table>
+            <p>Zero takes a Wayland window off the screen on either path: a frame nobody can see is not worth
+            drawing, and an unmapped window is how a hint says it is not there.</p>
+
             <h3 id="clipboard-from-above">The Clipboard</h3>
             <p>The clipboard is <code>formContext().clipboard()</code>, a <code>Transfer::Clipboard&amp;</code>. A
             copy puts a package on it with the input event that asked; a paste asks it for an offer:</p>
@@ -726,6 +760,76 @@ source.<span class="fn">add</span>&lt;<span class="tp">Transfer</span>::<span cl
             it is drawn from once attached. A form reaches the controller as
             <code>appContext().animator()</code>; something that is not a control - the grid's cell highlights -
             takes it from the control it belongs to and answers the null the same way.</p>
+
+            <h2 id="reported">What the Platform Reports</h2>
+            <p>The platform reports what the user does to the form whose window it happened in, through
+            <code>IForm</code>: a pointer move, a press, a wheel, a key, a side button. The form turns each report
+            into the framework's input state, which lives in <code>Input</code> - one per application rather
+            than one per form, since the focus leaves one window as it arrives in another.</p>
+
+            <h3 id="input-controllers">The Input Controllers</h3>
+            <p>The mouse and the keyboard are each an <code>InputController</code>: whether it drives the input,
+            and a factor that follows that through a fade of its own. Code outside <code>Input</code> reads
+            them and never writes them:</p>
+<pre><span class="kw">const</span> <span class="tp">InputController</span>&amp; mouse = <span class="tp">Input</span>::<span class="fn">mouse</span>();
+<span class="kw">const</span> <span class="tp">InputController</span>&amp; keyboard = <span class="tp">Input</span>::<span class="fn">keyboard</span>();
+
+<span class="kw">bool</span> byKey = !mouse.<span class="fn">active</span>();         <span class="cm">// whether a key did what is being handled</span>
+<span class="kw">float</span> ringShare = keyboard.<span class="fn">factor</span>();  <span class="cm">// active() through its fade, from 0 to 1</span></pre>
+            <p>What the form is told switches them:</p>
+            <table>
+                <tr><th>Report</th><th>Mouse</th><th>Keyboard</th></tr>
+                <tr><td>A pointer move, a press or a release, a wheel, a side button, a menu asked for at a
+                    point</td><td>On</td><td>Off</td></tr>
+                <tr><td>A key, or a menu asked for from the keyboard</td><td>Off</td><td>On</td></tr>
+                <tr><td>A bare modifier - Shift, Ctrl, Alt</td><td>As it is</td><td>On</td></tr>
+            </table>
+            <p>So both are on only after a modifier, until the next pointer report or key, and the one state
+            that cannot occur is both off. A modifier names no destination - it qualifies the click or the key
+            that follows, and the pointer is still where the user left it. Two reports switch nothing: a held
+            key's repeats, and the first move a form hears since the pointer came in, which only hit-tests -
+            Win32 sends a window that appears under a still pointer a move, and a Wayland enter arrives as
+            one.</p>
+            <p>A click, or a menu the pointer raised, always finds the mouse on. A key other than a modifier
+            finds it off, unless the pointer moved while that key was held down and repeating.</p>
+            <p>The fades run on the application's animator, reached through the <code>AppContext</code> the form
+            reporting the input hands in, so <code>Input</code> owns nothing that has to be released. The two
+            slots, <code>AnimationSlots::keyboardActive</code> and <code>mouseActive</code>, mirror each other, so
+            a switch from one device to the other is one crossfade. Each step of either fade raises
+            <code>InputSwitchEvent</code> on <code>AppContext::events()</code>, and every visible form repaints
+            whole on it: the colour rules read the two factors as <code>RuleInput::Keyboard</code> and
+            <code>RuleInput::Mouse</code>, and nothing knows which controls of which windows do. The
+            <a href="Color-Manual.html#pointer-and-keys">Colour manual</a> says what the rules do with them.</p>
+
+            <h3 id="side-buttons">Side Buttons</h3>
+            <p>The two side buttons most mice carry are reported as <code>SideButton::Back</code> and
+            <code>SideButton::Forward</code> - named by what the system takes each to mean, not by where it
+            sits on the mouse:</p>
+            <table>
+                <tr><th>Platform</th><th><code>Back</code></th><th><code>Forward</code></th></tr>
+                <tr><td>Win32</td><td><code>XBUTTON1</code></td><td><code>XBUTTON2</code></td></tr>
+                <tr><td>Linux</td><td><code>BTN_SIDE</code>, or <code>BTN_BACK</code> on the few mice that
+                    report it</td><td><code>BTN_EXTRA</code>, or <code>BTN_FORWARD</code></td></tr>
+            </table>
+            <p>A side button acts as it goes down, and a second press inside the double-click time is one more
+            press. On Win32 the window answers every side button message itself, so the system raises no
+            <code>WM_APPCOMMAND</code> for the same press.</p>
+            <p>The form hands the press to the control under the pointer as a <code>SideClickEvent</code>,
+            carrying the button, and walks it up the parents until one stops it. A control answers with an
+            <code>OnSideClick</code> handler, or, where it answers for everything inside it, by overriding
+            <code>nestedSideClick</code>:</p>
+<pre><span class="cm">// Whatever the pointer stands on inside the browser, a side button is its Back or Forward.</span>
+<span class="kw">void</span> <span class="tp">BrowserControl</span>::<span class="fn">nestedSideClick</span>(<span class="tp">SideClickEvent</span>&amp; event)
+{
+    <span class="tp">Panel</span>::<span class="fn">nestedSideClick</span>(event);   <span class="cm">// emits; a handler may stop it</span>
+    <span class="kw">if</span> (event.<span class="fn">propagationStopped</span>())
+        <span class="kw">return</span>;
+
+    event.<span class="fn">stopPropagation</span>();
+    <span class="kw">const</span> <span class="tp">std</span>::<span class="tp">ptrdiff_t</span> offset = event.button == <span class="tp">SideButton</span>::Back ? -<span class="kw">1</span> : <span class="kw">1</span>;
+    <span class="fn">travel</span>(offset, <span class="fn">historyButton</span>(offset));
+}</pre>
+
             <h2 id="from-below">Reaching the Platform From Below</h2>
             <p>Some of the framework's own services stand <em>below</em> the context in the module graph - the
             clipboard in Transfer, the timer hooks in System - and cannot import the module that declares
@@ -949,10 +1053,11 @@ listener = platform.<span class="fn">createMessageWindow</span>();
                 <tr><td><code>Platform::events()</code></td><td>One dispatcher for the process, where
                     <code>SystemColorModeEvent</code> is raised. It stands before the first window and after the
                     last, which is the safe direction for a scoped connection.</td></tr>
-                <tr><td><code>Input</code></td><td>Which control has the focus, which is hovered, which device is
-                    driving: pointers to controls that clear themselves on the way out, and a value. The fade
-                    between the devices' looks runs on the application's controller, which the form calling
-                    <code>Input::setDevice</code> hands it.</td></tr>
+                <tr><td><code>Input</code></td><td>Which control has the focus, which is hovered, whether a button
+                    is down, and the two input controllers: pointers to controls that clear themselves on the way
+                    out, and values. Each controller's fade runs on the application's animator, reached through
+                    the <code>AppContext</code> the form reporting the input hands in - see
+                    <a href="#input-controllers">The Input Controllers</a>.</td></tr>
                 <tr><td>The Transfer tables</td><td>Registrations filled by calls from
                     <code>ApplicationBase::initialize</code>, never at static initialisation - a static library
                     drops a translation unit nothing references.</td></tr>
@@ -1041,6 +1146,26 @@ listener = platform.<span class="fn">createMessageWindow</span>();
                     through it, or applies the end value in no form.</td></tr>
                 <tr><td><code>Control::stopAnimation(slot)</code>, <code>stopAnimations()</code></td><td>The stops,
                     by the same route.</td></tr>
+                <tr><td><code>AppContext::events()</code></td><td>Where <code>InputSwitchEvent</code> is raised, at
+                    every step of either input controller's fade.</td></tr>
+            </table>
+            <p>What the platform reports, as the framework holds it:</p>
+            <table>
+                <tr><th>Name</th><th>Module</th><th>What it is</th></tr>
+                <tr><td><code>Input::mouse()</code>, <code>Input::keyboard()</code></td><td><code>ClaFi.Core.Foundation</code></td>
+                    <td>The two input controllers, read-only.</td></tr>
+                <tr><td><code>InputController::active()</code>, <code>factor()</code></td><td><code>ClaFi.Core.Foundation</code></td>
+                    <td>Whether the device drives the input, and that through its fade.</td></tr>
+                <tr><td><code>InputSwitchEvent</code></td><td><code>ClaFi.Core.Context.AppContext</code></td>
+                    <td>The controllers' factors have moved. Carries nothing.</td></tr>
+                <tr><td><code>SideButton</code></td><td><code>ClaFi.Core.System.UiTypes</code></td>
+                    <td><code>Back</code> or <code>Forward</code>.</td></tr>
+                <tr><td><code>SideClickEvent</code>, <code>Control::OnSideClick</code>, <code>nestedSideClick</code></td>
+                    <td><code>ClaFi.Core.Foundation</code></td><td>A side button pressed over a control, walked up
+                    its parents.</td></tr>
+                <tr><td><code>IPlatformWindow::alpha()</code>, <code>setAlpha(ColorByte)</code></td>
+                    <td><code>ClaFi.Core.Context.FormContext</code></td><td>The window's opacity - see
+                    <a href="#window-opacity">Window Opacity</a>.</td></tr>
             </table>
         </main>
     </div>

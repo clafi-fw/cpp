@@ -137,7 +137,7 @@ namespace ClaFi::Icons::Magnifier
             .center = center,
             .size = radius,
             .lineWidth = std::max(event.scaleBorder(0.6f), strokeWidth * 0.5f),
-            .color = event.inkColor(InkWell::accentInk())
+            .color = event.inkRgb(InkWell::accentInk())
         };
         mark.paintPlusOrMinus(lens == Lens::Plus);
     }

@@ -26,12 +26,12 @@ namespace ClaFi
         [[nodiscard]] Color surfaceRgb() const { return m_controlContext.surfaceRgb(); }
         ControlPaintContext& controlContext() { return m_controlContext; }
         const ControlPaintContext& controlContext() const { return m_controlContext; }
-        [[nodiscard]] Color textRgb(InkGrade grade) const { return inkColor(InkWell::textInk(grade)); }
-        [[nodiscard]] Color accentRgb(InkGrade grade) const { return inkColor(InkWell::accentInk(grade)); }
-        [[nodiscard]] Color spotRgb(InkGrade grade) const { return inkColor(InkWell::spotInk(grade)); }
-        [[nodiscard]] Color inkColor(const Ink& ink) const { return m_controlContext.inkRgb(ink); }
-        [[nodiscard]] Color inkColor(Pigment pigment, InkTone tone) const { return m_controlContext.inkRgb(pigment, tone); }
-        [[nodiscard]] Color inkColor(Pigment pigment, float saturation, float elevation) const { return m_controlContext.inkRgb(pigment, saturation, elevation); }
+        [[nodiscard]] Color textRgb(InkGrade grade) const { return inkRgb(InkWell::textInk(grade)); }
+        [[nodiscard]] Color accentRgb(InkGrade grade) const { return inkRgb(InkWell::accentInk(grade)); }
+        [[nodiscard]] Color spotRgb(InkGrade grade) const { return inkRgb(InkWell::spotInk(grade)); }
+        [[nodiscard]] Color inkRgb(const Ink& ink) const { return m_controlContext.inkRgb(ink); }
+        [[nodiscard]] Color inkRgb(Pigment pigment, InkTone tone) const { return m_controlContext.inkRgb(pigment, tone); }
+        [[nodiscard]] Color inkRgb(Pigment pigment, float saturation, float elevation) const { return m_controlContext.inkRgb(pigment, saturation, elevation); }
         float disabledAmount() const { return m_disabledAmount; }
         void applyDisabledFactorTo(Color& color) const { color.blend(m_controlContext.surface, m_disabledAmount); }
         [[nodiscard]] Color applyDisabledFactor(Color color) const { applyDisabledFactorTo(color); return color; }

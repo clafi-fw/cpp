@@ -43,7 +43,7 @@ namespace ThisApp
             Dom::Dt::Value{ k_previewInAppAttrName, false },
             Dom::Dt::Value{ k_previewColorModeAttrName, ColorMode::Dark },
             Dom::Dt::Value{ k_codeContentAttrName, CodeContent::Full },
-            Dom::Dt::Value{ k_codeScopeAttrName, CodeScope::ClassDeclarations }
+            Dom::Dt::Value{ k_codeScopeAttrName, CodeScope::ClassMethod }
         };
     }
 

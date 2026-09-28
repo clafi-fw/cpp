@@ -83,8 +83,8 @@ namespace ThisApp
         ) };
         Panel& m_topPanel{ m_topStack.add<Panel>(
             Padding{ 4.0f },
-            Spacing{ 0.0f, 4.0f },
-            UiElement::Section
+            Spacing{ 0.0f, 4.0f }
+            //UiElement::Section
         ) };
         Controls::Divider& m_s0{ m_topStack.add<Controls::Divider>(
             Padding{ 0.0f, 0.0f }

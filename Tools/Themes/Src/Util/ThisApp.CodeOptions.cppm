@@ -24,7 +24,6 @@ namespace ThisApp::CodeOptions
     // its words from the action, so the words are stated here and nowhere else.
     export extern Action onlyDifferences;
     export extern Action full;
-    export extern Action asClassDeclarations;
     export extern Action asClassMethod;
     export extern Action asOutsideClass;
 }
