@@ -193,7 +193,7 @@ namespace ClaFi::Controls
             }
         ) },
         m_answerBar{ createBottomBar<Panel>(
-            UiElement::Bar,
+            UiElement::ToolBar,
             Radius{ 0.0f },
             Padding{ k_barPaddingX, k_barPaddingY }
         ) },

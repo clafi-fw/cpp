@@ -3,6 +3,7 @@ module ThisApp.ApplyToControl;
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.RadioButton;
+import ClaFi.Controls.Spacer;
 import ClaFi.Controls.StackPanel;
 
 import ClaFi.Core.AppTheme_Colors;
@@ -271,6 +272,7 @@ namespace ThisApp
             Text{ InkGrade::Muted, header },
             WordWrap::No
         );
+        result.add<Spacer>(8.0f);
         return result;
     }
 

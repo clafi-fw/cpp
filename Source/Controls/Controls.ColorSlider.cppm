@@ -13,9 +13,7 @@ import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Controls.Base.SliderBase;
-import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.System.Events;
-import ClaFi.Core.TextEngine.Types;
 import ClaFi.StdLib;
 
 namespace ClaFi::Controls
@@ -48,9 +46,7 @@ namespace ClaFi::Controls
     protected:
         void paintSlot(PaintEvent&, const FloatRect&, SlotSpan) override;
         Color thumbColor(PaintEvent&, FloatPoint&) override;
-        void getThumbTooltip(GetTooltipEvent&) override;
-        void thumbPressDown() override;
-        void nestedKeyDown(KeyDownEvent&) override;
+        void writeValueHint(Text&, EventPhase) const override;
         void changed(SliderChangeEvent&) override;
         void sizeChanged() override;
     private:
@@ -239,24 +235,9 @@ namespace ClaFi::Controls
         return tmp.toColor();
     }
 
-    void ColorSlider::getThumbTooltip(GetTooltipEvent& event)
+    void ColorSlider::writeValueHint(Text& text, EventPhase phase) const
     {
-        event.placement = FormPlacement::Top;
-        event.hideOnUserInput = false;
-        event.text << TextAlign::Center;
-        paintValue(event.text, event.phase);
-    }
-
-    void ColorSlider::thumbPressDown()
-    {
-        form().tooltip().showRightNow(thumb());
-    }
-
-    void ColorSlider::nestedKeyDown(KeyDownEvent& key)
-    {
-        Slider::nestedKeyDown(key);
-        if (key.handled)
-            form().tooltip().showRightNow(thumb());
+        paintValue(text, phase);
     }
 
     void ColorSlider::changed(SliderChangeEvent& event)
@@ -267,7 +248,6 @@ namespace ClaFi::Controls
         if (m_boundHue)
             *m_boundHue = m_displayColor.hue;
 
-        form().tooltip().showRightNow(thumb());
         Slider::changed(event);
     }
 

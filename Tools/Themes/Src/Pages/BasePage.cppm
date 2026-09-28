@@ -79,7 +79,7 @@ namespace ThisApp
         inline static ColorMode s_previewColorMode{ ColorMode::Dark };
         StackPanel& m_topStack{ createTopBar<StackPanel>(
             Orientation::Vertical,
-            UiElement::Bar
+            UiElement::ToolBar
         ) };
         Panel& m_topPanel{ m_topStack.add<Panel>(
             Padding{ 4.0f },

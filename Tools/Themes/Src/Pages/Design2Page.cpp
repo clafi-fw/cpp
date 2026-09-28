@@ -13,6 +13,7 @@ import ClaFi.Controls.TreeView;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -48,11 +49,10 @@ namespace ThisApp
 
         constexpr std::array k_surfaces{
             UiElement::Page,
-            UiElement::Tab,
             UiElement::Section,
             UiElement::SectionHeader,
             UiElement::Divider,
-            UiElement::Bar,
+            UiElement::ToolBar,
             UiElement::DialogTitle,
             UiElement::Grid,
             UiElement::GridHeader,
@@ -62,13 +62,12 @@ namespace ThisApp
         constexpr std::array k_controls{
             UiElement::Button,
             UiElement::ToolButton,
+            UiElement::Tab,
             UiElement::ScrollButton,
             UiElement::ScrollThumb
         };
 
         constexpr std::array k_focusAndSelection{
-            UiElement::Accent,
-            UiElement::Spot,
             UiElement::SelectionIndicator,
             UiElement::HoverIndicator,
             UiElement::SelectedText
@@ -132,17 +131,25 @@ namespace ThisApp
             showPickedPage();
         });
 
-        addEntry(m_tree.addItem(), TreeEntry{ .page = &m_palettePage });
-        addEntry(m_tree.addItem(), TreeEntry{ .shared = &k_anyElement });
-        addEntry(m_tree.addItem(), TreeEntry{ .shared = &k_anyWindow });
+        addEntry(addRootItem(), TreeEntry{ .page = &m_palettePage });
+        addEntry(addRootItem(), TreeEntry{ .shared = &k_anyElement });
+        addEntry(addRootItem(), TreeEntry{ .shared = &k_anyWindow });
         // Sets the theme-wide pages apart, so they read as peers of the categories.
         m_tree.add<Divider>(Thickness::Heavy, Padding{ 4.0f, 6.0f });
         for (const ElementCategory& category : k_elementCategories)
         {
-            TreeNode& node = m_tree.addNode(HeaderText{ category.name });
+            TreeNode& node = m_tree.addNode(HeaderText{ InkGrade::Muted, category.name });
             for (const UiElement element : category.elements)
                 addEntry(node.addItem(), TreeEntry{ .element = element });
         }
+    }
+
+    // The style goes in ahead of the name addEntry writes after it.
+    TreeItem& Design2Page::addRootItem()
+    {
+        TreeItem& item = m_tree.addItem();
+        item.text() << TextStyleId::SubHeading;
+        return item;
     }
 
     void Design2Page::addEntry(TreeItem& item, TreeEntry entry)

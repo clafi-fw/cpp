@@ -198,11 +198,11 @@ namespace ClaFi
             .token = L"SectionHeader",
             .base = UiElement::Section
         },
-        // What a bar is painted on is the window's content, the same thing a section stands on.
+        // A tool bar is painted on the window's content, the same thing a section stands on.
         UiElementDescriptor{
-            .name = L"Bar",
-            .codeName = L"bar",
-            .token = L"Bar",
+            .name = L"Tool Bar",
+            .codeName = L"toolBar",
+            .token = L"ToolBar",
             .base = UiElement::Page
         },
         UiElementDescriptor{

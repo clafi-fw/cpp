@@ -49,7 +49,7 @@ namespace ThisApp
         // Connects a handler raised after another page is picked.
         template<typename F>
         EventConnection onPagePick(F&& callback);
-        // The Palette & Transform page's body, which the theme page fills.
+        // The Palette page's body, which the theme page fills.
         [[nodiscard]] StackPanel& paletteView() { return m_paletteView; }
         // Hands every page its list of the theme's rules, its ramps' base and what to call.
         void bind(ThemeColors&, const OnGetElementRuleBase&, const OnRulesChanged&);
@@ -68,13 +68,14 @@ namespace ThisApp
         using TreeEntries = std::vector<TreeEntry>;
     private:
         void buildTree();
+        [[nodiscard]] TreeItem& addRootItem(); // a theme-wide page's row, a step larger
         void addEntry(TreeItem&, TreeEntry);
         void showPickedPage();
         [[nodiscard]] const TreeEntry* pickedEntry() const;
         [[nodiscard]] static std::wstring_view nameOf(const TreeEntry&);
         [[nodiscard]] static std::wstring_view tokenOf(const TreeEntry&);
     private:
-        static constexpr std::wstring_view k_paletteTitle{ L"Palette & Transform" };
+        static constexpr std::wstring_view k_paletteTitle{ L"Palette" };
 
         TreeEntries m_entries{}; // an item's tag is its place here
         const ThemeRules2 m_defaultRules{ defaultRules2() }; // what each page's reset puts back

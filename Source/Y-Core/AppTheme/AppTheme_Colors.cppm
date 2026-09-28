@@ -214,7 +214,7 @@ namespace ClaFi
         Tab,
         Section,
         SectionHeader,
-        Bar,
+        ToolBar,
         DialogTitle,
         Menu,
         Tooltip,
@@ -875,8 +875,8 @@ namespace ClaFi
             }
         };
 
-        // Bar - its surface at rest.
-        result.of(UiElement::Bar) = {
+        // Tool bar - its surface at rest.
+        result.of(UiElement::ToolBar) = {
             ColorRule2{
                 .effect{
                     { ColorRuleHueOp::NoChange, 0.512329f }, // H

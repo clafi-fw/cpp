@@ -6,6 +6,9 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
+import ClaFi.Core.TextEngine.Fmt;
+import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -46,6 +49,12 @@ namespace ThisApp
     Color FloorSlider::thumbColor(PaintEvent&, FloatPoint&)
     {
         return sampleAt(relativePosition(), m_base());
+    }
+
+    // Every floor is spelled in the same four cells, so the text measured is the text shown.
+    void FloorSlider::writeValueHint(Text& text, EventPhase) const
+    {
+        text << TextStyleId::Code << Fmt{ L"{:.2f}", position() };
     }
 
     Color FloorSlider::sampleAt(float position, const Hsl& base) const

@@ -120,7 +120,7 @@ namespace ClaFi::Controls
         m_luminosity{ addRow(L"Luminosity", ColorAttribute::Luminosity) },
         m_linker{ m_hue.slider, m_saturation.slider, m_luminosity.slider },
         m_answerBar{ createBottomBar<Panel>(
-            UiElement::Bar,
+            UiElement::ToolBar,
             Radius{ 0.0f },
             Padding{ k_barPaddingX, k_barPaddingY }
         ) },

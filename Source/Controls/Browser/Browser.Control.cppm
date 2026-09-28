@@ -351,7 +351,7 @@ namespace ClaFi::Browser
             Padding{ 4.0f },
             Spacing{ 4.0f },
             Radius{ 0.0f },
-            UiElement::Bar
+            UiElement::ToolBar
         ) };
         BreadCrumbBar& m_breadCrumbBar{ m_breadCrumbArea.createBody<BreadCrumbBar>(
         ) };

@@ -118,7 +118,6 @@ namespace ThisApp
         m_anchorSlider.trackingValueChanged(false);
 
         m_darkModeFloorSlider.setPosition(editColors().darkModeFloor, false);
-        m_darkModeFloorLabel.invalidate();
 
         // THE ANCHOR FIRST, THEN THE MAP, THEN THE PALETTE. Each step below is what the next one
         // reads, so the order is the whole of it and anchorChanged() cannot stand in for the pair:
@@ -386,18 +385,11 @@ namespace ThisApp
     void ThemePage::darkModeFloorChanged()
     {
         editColors().darkModeFloor = m_darkModeFloorSlider.position();
-        m_darkModeFloorLabel.invalidate();
         // Every swatch and every ramp that stands on a surface moves with the floor.
         m_grid.invalidate();
         m_pigmentGrid.invalidate();
         invalidatePreview();
         storeViewState();
-    }
-
-    void ThemePage::darkModeFloorText(GetTextEvent& event)
-    {
-        event.text << L" " << TextStyleId::Code
-            << Fmt{ L"{:.2f}", editColors().darkModeFloor };
     }
 
     void ThemePage::storeViewState() const

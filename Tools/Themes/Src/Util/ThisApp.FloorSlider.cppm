@@ -3,6 +3,7 @@ export module ThisApp.FloorSlider;
 import ClaFi.Controls.Slider;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -26,6 +27,7 @@ namespace ThisApp
     protected:
         void paintSlot(PaintEvent&, const FloatRect&, SlotSpan) override;
         Color thumbColor(PaintEvent&, FloatPoint&) override;
+        void writeValueHint(Text&, EventPhase) const override;
     private:
         // The base at elevation 0 in dark mode, on the floor a relative position stands for.
         [[nodiscard]] Color sampleAt(float position, const Hsl& base) const;

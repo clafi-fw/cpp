@@ -178,7 +178,6 @@ namespace ThisApp
         [[nodiscard]] RuleBase pigmentRuleBase(UiElement, RuleChannel);
         void pigmentChanged();
         void darkModeFloorChanged();
-        void darkModeFloorText(GetTextEvent&);
         //
         void storeViewState() const;
         // Remembers a fold, and stores the tab's folds whenever it turns.
@@ -417,10 +416,6 @@ namespace ThisApp
             &m_jsonTab
         };
 
-        Label& m_paletteHeader{ m_design2Page.paletteView().add<Label>(
-            Text{ TextStyleId::Section, L"Palette" }
-        ) };
-
         StackPanel& m_paletteBody{ m_design2Page.paletteView().add<StackPanel>(
             Orientation::HorizontalWrap,
             Padding{ 8.0f, 8.0f }
@@ -516,27 +511,15 @@ namespace ThisApp
             TooltipText{ L"Pigments safe to use in small doses" }
         ) };
 
-        //Controls::Separator& m_paletteSep1{ m_paletteBody.add<Controls::Separator>() };
+        Spacer& m_floorSpacer{ m_paletteColumn1.add<Spacer>(16.0f) };
 
-        Spacer& m_spacer1{ m_paletteBody.add<Spacer>(8.0f) };
-
-        Label& m_transformHeader{ m_design2Page.paletteView().add<Label>(
-            Text{ TextStyleId::Section, L"Transform" }
-        ) };
-
-        StackPanel& m_transformBody{ m_design2Page.paletteView().add<StackPanel>(
-            Orientation::Vertical,
-            Padding{ 8.0f, 8.0f }
-        ) };
-
-        Panel& m_darkModeFloorLane{ m_transformBody.add<Panel>(
-            m_laneSize,
-            Spacing{ 8.0f, 0.0f }
+        Panel& m_darkModeFloorLane{ m_paletteColumn1.add<Panel>(
+            m_laneSize
         ) };
 
         Label& m_darkModeFloorLabel{ m_darkModeFloorLane.createLeftBar<Label>(
             VerticalTextAnchor::Center,
-            Text{ k_labelPush, L"Dark mode floor:", k_labelPop }
+            Text{ k_labelPush, L"Dark mode floor:", m_labelsMargin, k_labelPop }
         ) };
 
         FloorSlider& m_darkModeFloorSlider{ m_darkModeFloorLane.createBody<FloorSlider>(
@@ -544,6 +527,10 @@ namespace ThisApp
             Spacing{ 0.0f, 4.0f },
             HorizontalAlign::Fill
         ) };
+
+        //Controls::Separator& m_paletteSep1{ m_paletteBody.add<Controls::Separator>() };
+
+        Spacer& m_spacer1{ m_paletteBody.add<Spacer>(8.0f) };
 
         ThemeRule m_satColumnColor{ UiElement::Section, &BakedElement::surface };
 
@@ -725,7 +712,6 @@ namespace ThisApp
         m_darkModeFloorSlider.connectEvent([this](SliderChangeEvent&) {
             darkModeFloorChanged();
             });
-        m_darkModeFloorLabel.connectEvent(this, &ThemePage::darkModeFloorText);
 
         m_cppCodePage.box().setLanguage(Syntax::Languages::cpp);
         m_claFiPage.box().setLanguage(Syntax::Languages::claFi);
