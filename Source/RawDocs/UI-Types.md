@@ -131,13 +131,6 @@ popup that grows with what is typed into it needs.
 
 The placement clamps to the monitor either way, and that clamp is the bound of last resort.
 
-## ShowSurfaceAtRest
-
-Whether a button carries a surface when nothing is happening to it. `No` is what a tool button
-carries: the surface colour rule is not applied, so the fill exists only as far as the hovered,
-selected and pressed states carry it, and grows in from `ThemeMetrics::surfaceGrowInScale` as it
-arrives.
-
 ## ArrowPlacement
 
 Where the dropdown mark sits, and with it whether the control has a strip that can be pressed on

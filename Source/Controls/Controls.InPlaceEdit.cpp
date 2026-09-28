@@ -145,7 +145,8 @@ namespace ClaFi::Controls
         :
         Button{ params,
             // The look of a dropdown's line: no surface at rest, and the current row on its own.
-            ShowSurfaceAtRest::No,
+            params.themeMetrics().toolButton,
+            UiElement::ToolButton,
             ShowSelectionOnSurface::Yes,
             // Reached by the pointer and never focused - the caret stays in the box.
             Interactivity::MouseOnly

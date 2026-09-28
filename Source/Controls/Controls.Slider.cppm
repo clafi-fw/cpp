@@ -93,7 +93,7 @@ namespace ClaFi::Controls
         float stepSize() override { return 1.0f; }
         float buttonSize(const AppTheme&) override { return 24.0f; }
 
-        void adjustButtonMetrics(AdjustMetricsEvent& event) const override { event.metrics = event.themeMetrics().button; }
+        void adjustButtonMetrics(AdjustMetricsEvent& event) const override { event.metrics = event.themeMetrics().toolButton; }
         void adjustButtonPaint(AdjustPaintEvent&) override;
         void adjustThumbMetrics(AdjustMetricsEvent& event) const override;
         void adjustThumbPaint(AdjustPaintEvent&) override;
@@ -218,8 +218,7 @@ namespace ClaFi::Controls
 
     void Slider::adjustButtonPaint(AdjustPaintEvent& event)
     {
-        event.setColorRules(UiElement::Button);
-        event.dropSurfaceAtRest();
+        event.setColorRules(UiElement::ToolButton);
     }
 
     void Slider::adjustThumbMetrics(AdjustMetricsEvent& event) const

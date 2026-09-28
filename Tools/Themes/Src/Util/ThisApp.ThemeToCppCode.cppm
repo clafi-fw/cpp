@@ -74,19 +74,7 @@ namespace ThisApp
         std::wstring_view text{};
     };
 
-    constexpr std::array<MemberComment, 6ull> k_memberComments{
-        MemberComment{ .element = UiElement::TabLine, .text =
-            L"Every tab's outline and the line it stands on, applied to the tab's own surface." },
-        MemberComment{ .element = UiElement::Header, .text =
-            L"The strip an expander shows its title on, and the row of column names across the top\n"
-            L"of a grid. An expander takes the whole set for its header; a grid header takes surface\n"
-            L"and text and leaves its other states as they stand, so those two are the whole of what\n"
-            L"a column name is drawn in." },
-        MemberComment{ .element = UiElement::GridRow, .text =
-            L"Every row of a grid, groups and sections included. See Grids" },
-        MemberComment{ .element = UiElement::GridLine, .text =
-            L"Every line of a grid's lattice. One rule for the whole lattice, so a cell's own\n"
-            L"surface cannot move the line beside it." },
+    constexpr std::array<MemberComment, 2ull> k_memberComments{
         MemberComment{ .element = UiElement::Accent, .text =
             L"THE THEME'S OWN EMPHASIS, AND WHAT SAYS A THING IS ON - one rule for both, because the\n"
             L"two are one colour. It is the ink anything asking for emphasis is drawn in, over the\n"
@@ -131,13 +119,7 @@ namespace ThisApp
         std::wstring_view text{};
     };
 
-    constexpr std::array<StateComment, 1ull> k_stateComments{
-        StateComment{ .memberName = L"gridRow", .stateName = L"active", .text =
-            L"A SELECTED ROW. A row wears this set and paints no surface of its own, so the rule\n"
-            L"reaches the screen through the cells the row fills. It lands where a focused text\n"
-            L"selection lands - SelectedText's resting and focused rules come to the same place -\n"
-            L"so the two selections an interface can show read as one colour." }
-    };
+    constexpr std::array<StateComment, 0ull> k_stateComments{};
 
     // The comment that state carries in that member, or nothing where it carries none.
     [[nodiscard]] std::wstring_view stateCommentOf(std::wstring_view memberName,

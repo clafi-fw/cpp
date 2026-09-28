@@ -60,13 +60,14 @@ namespace ClaFi::Controls
     template<typename ...Args>
     ToolButton::ToolButton(const CreateParams& params, Args && ...args)
         :
-        // The surface arrives with the pointer and nothing else moves. Growing it from the
-        // inside on hover would read as a double move against PaintEvent::pressScale(), which
-        // already scales the whole control.
-        //
-        // Stated ahead of the caller's own properties, so a tool button asked for a surface at
-        // rest gets one: Props::get takes the last of the matching arguments.
-        Button{ params, ShowSurfaceAtRest::No, std::forward<Args>(args)... }
+        // Stated ahead of the caller's own properties, so a tool button asked for another
+        // element or other metrics gets them: Props::get takes the last of the matching arguments.
+        Button{
+            params,
+            params.themeMetrics().toolButton,
+            UiElement::ToolButton,
+            std::forward<Args>(args)...
+        }
     {
     }
 

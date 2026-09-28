@@ -240,9 +240,10 @@ namespace ClaFi::Controls
     void Tab::adjustPaint(AdjustPaintEvent& event)
     {
         TabBaseClass::adjustPaint(event);
-        // A set of its own, every rule of it stated below, so no element's new rules reach a tab.
+        // The element brings the new rules, the tab's stroke among them. The old set is the tab's
+        // own, every rule of it stated below.
+        event.setColorRules(UiElement::Tab);
         event.setColorRules(BakedElement{});
-        event.setStrokeRule(event.bakedColors().rule(UiElement::TabLine));
 
         if (m_actualPageColor.alpha)
         {
@@ -270,9 +271,8 @@ namespace ClaFi::Controls
             event.setTextHsl(Hsl{ event.textHsl(), m_actualPageTextHsl, pageFactor });
         }
         event.colorRules().pressed.clear();
-        // A tab has no surface at rest by being a split button, so the surface rule states a
-        // colour nothing reaches - and clearing it keeps the surface a tab's children stand on
-        // the strip's, which is what is behind the tab until the page's colour arrives.
+        // No surface at rest, so the surface a tab's children stand on stays the strip's, which is
+        // what is behind the tab until the page's colour arrives.
         event.colorRules().surface.clear();
     }
 
@@ -287,6 +287,14 @@ namespace ClaFi::Controls
         {
             float visibilityFactor = factors().hoveredOrSelected(1.0f, 1.0f);
             tabColors.surface = event.surfaceRgb();
+            // The open tab's fill covers the page's border across its mouth - see
+            // TabbedBox::alignContent - so it stands at the selected factor even where the page's
+            // colour was already there and its rules moved nothing.
+            if (m_actualPageColor.alpha)
+            {
+                const float shownOpacity = tabColors.surface.alpha / 255.0f;
+                tabColors.surface.setOpacity(std::max(shownOpacity, factors().selected()));
+            }
             if (visibilityFactor)
             {
                 tabColors.indicator = event.indicatorRgb().withOpacity(factors().selected() * 0.5f + 0.5f);

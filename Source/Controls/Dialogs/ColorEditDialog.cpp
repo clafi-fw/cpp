@@ -89,7 +89,7 @@ namespace ClaFi::Controls
         m_color{ original },
         m_speller{ std::move(speller) },
         m_title{ createTopBar<Label>(
-            UiElement::Header,
+            UiElement::SectionHeader,
             Radius{ 0.0f },
             Padding{ k_barPaddingX, k_barPaddingY },
             Text{ title }

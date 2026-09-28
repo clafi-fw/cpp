@@ -84,9 +84,10 @@ namespace ThisApp
         :
         Base{
             params,
-            // Not a tool, so not a ToolButton - but it wears the same look, and the property is
-            // the whole of that look.
-            ShowSurfaceAtRest::No,
+            // Not a tool, so not a ToolButton - but it wears the same look, and the element and
+            // the metrics are the whole of that look.
+            params.themeMetrics().toolButton,
+            UiElement::ToolButton,
             ShowSelectionOnSurface::Yes,
             IndicatorVisibility::Hover,
             IndicatorStyle::Check,

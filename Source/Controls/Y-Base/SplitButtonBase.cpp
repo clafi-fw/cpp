@@ -190,19 +190,15 @@ namespace ClaFi::Controls
         return result;
     }
 
-    void SplitButtonBase::adjustPaint(AdjustPaintEvent& event)
+    // Stops short of ButtonBase and RichControl on purpose - see the TODO.
+    void SplitButtonBase::adjustPaint(AdjustPaintEvent&)
     {
-        // The property is read here rather than left to ButtonBase::adjustPaint, which this does
-        // not reach.
-        //
         // TODO: nothing above this runs for a split button - not ButtonBase, which is where
         // ShowSelectionOnSurface is answered, and not RichControl, which is where a ColorRules
         // property is applied. Calling the base would answer both, and would start dropping the
         // selected surface on every split button that has not asked for it - ComboBox and
         // BreadCrumbBarItem have, Tab and SplitButton have not. Which of those two is the tab's
         // selected fill: the active rule it names itself, or a state the base would take away?
-        if (showSurfaceAtRest() == ShowSurfaceAtRest::No)
-            event.dropSurfaceAtRest();
     }
 
     void SplitButtonBase::nestedPressDown(PressDownEvent& event)

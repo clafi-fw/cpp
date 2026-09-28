@@ -198,14 +198,14 @@ namespace ClaFi::Browser
         BreadCrumbBarItemBase{
             params,
             // The base sits on ButtonBase so that a combo box can share it without being handed a
-            // button's metrics, so a crumb asks for them here.
+            // button's metrics, so a crumb asks for a tool button's here.
             Interactivity::Focusable,
             // THE FILLED SURFACE IS WHAT SAYS WHICH PAGE THE BROWSER IS SHOWING, and that is
             // the crumb's own answer to getControlState - so the selected state has to reach the
             // surface. A button keeps it off by default, which is right where an indicator or
             // a dot says the same thing, and a crumb has neither.
             ShowSelectionOnSurface::Yes,
-            params.themeMetrics().button,
+            params.themeMetrics().toolButton,
             Padding{ 4.0f },
             // A crumb is as narrow as its own title, so a path longer than the bar narrows its
             // crumbs instead of pushing the last of them off the end. Only the width is freed:
@@ -357,10 +357,8 @@ namespace ClaFi::Browser
     void BreadCrumbBarItem::adjustPaint(AdjustPaintEvent& event)
     {
         BreadCrumbBarItemBase::adjustPaint(event);
-        // The button's colours. A crumb has no surface at rest - its fill arrives with the
-        // pointer the way a tool button's does - and that is the split button's default, so it is
-        // not stated twice.
-        event.setColorRules(UiElement::Button);
+        // A tool button's colours: a crumb's fill arrives with the pointer.
+        event.setColorRules(UiElement::ToolButton);
     }
 
     void BreadCrumbBarItem::getControlState(GetStateEvent& event) const

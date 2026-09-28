@@ -164,7 +164,7 @@ namespace ClaFi::Controls
             Spacing{ 4.0f },
             // What the expander draws of itself, which is what places its text.
             textPlacementFor(READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
-            expanderColorRules(UiElement::Header,
+            expanderColorRules(UiElement::SectionHeader,
                 // The same, for the colour rules the header paints from.
                 READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
             std::forward<Args>(args)...
@@ -285,16 +285,15 @@ namespace ClaFi::Controls
 
     // A bar field takes its control once, so the look is settled here and holds for the life of
     // the header. TreeNode leads the strip with the button; the other two put it at the far end,
-    // past the label and past whatever the header carries between them.
+    // past the label and past whatever the header carries between them. On a divider line the
+    // button wears a button's look, with a surface at rest; elsewhere a tool button's.
     ExpanderButton& ExpanderHeader::createChevronButton()
     {
-        ShowSurfaceAtRest showSurfaceAtRest = m_viewMode == ExpanderViewMode::Divider ?
-            ShowSurfaceAtRest::Yes
-            :
-            ShowSurfaceAtRest::No;
+        if (m_viewMode == ExpanderViewMode::Divider)
+            return createRightBar<ExpanderButton>(UiElement::Button, themeMetrics().button);
         if (m_viewMode == ExpanderViewMode::TreeNode)
-            return createLeftBar<ExpanderButton>(showSurfaceAtRest);
-        return createRightBar<ExpanderButton>(showSurfaceAtRest);
+            return createLeftBar<ExpanderButton>();
+        return createRightBar<ExpanderButton>();
     }
 
     // The line takes the body slot, stretched to what the label and the chevron leave, so it runs

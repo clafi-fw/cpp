@@ -87,9 +87,9 @@ namespace ClaFi::Controls
         DropdownControlBase{
             params,
             // The base sits on ButtonBase so that a combo box can share it without being handed a
-            // button's metrics, so a button asks for them here.
+            // button's metrics, so a split button asks for a tool button's here.
             Interactivity::Focusable,
-            params.themeMetrics().button,
+            params.themeMetrics().toolButton,
             std::forward<Args>(args)...
         }
     {
@@ -130,7 +130,11 @@ namespace ClaFi::Controls
     void SplitButton::adjustPaint(AdjustPaintEvent& event)
     {
         DropdownControlBase::adjustPaint(event);
-        event.setColorRules(UiElement::Button);
+        // TWO TARGETS ON ONE FACE, so the surface arrives with the pointer: one at rest would
+        // draw a single box around both halves, and the seam between them is what has to read.
+        // An element passed in is read here or not at all - SplitButtonBase stops short of
+        // RichControl.
+        event.setColorRules(colorRules().value_or(UiElement::ToolButton));
     }
 
     // DropdownEvent

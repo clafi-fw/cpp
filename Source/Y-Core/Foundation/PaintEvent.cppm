@@ -100,6 +100,8 @@ namespace ClaFi
         Hsl textHsl() const { return m_controlContext.textHsl; }
         Color surfaceRgb() const { return m_surfaceRgb; }
         Color strokeRgb() const { return m_strokeRgb; }
+        // The stroke this control's rules raise off another surface, its alpha how far they landed.
+        [[nodiscard]] Color strokeRgbOn(Hsl surface) const;
         // What every check mark, radio mark and caret is filled with.
         Color indicatorRgb() const { return m_controlContext.indicatorRgb(); }
         ControlPaintContext& controlContext() { return m_controlContext; }
@@ -179,13 +181,6 @@ namespace ClaFi
             CornerRadii radii{};
             RectSidesBoolArray sides{};
         };
-        // What the surface and the stroke read in place of the levels the context holds.
-        struct RuleInputFactors
-        {
-            float surfaceRest{ 1.0f };      // an at-rest rule on the surface
-            float strokeRest{ 1.0f };       // an at-rest rule on the stroke
-            float selectedOnSurface{};      // the selection as far as the control shows it there
-        };
     private:
         [[nodiscard]] float zAnimationFactor(VisualStateIndex) const;
         // The parent this control may take state from, which is not always the one above it.
@@ -212,7 +207,7 @@ namespace ClaFi
         // Whether a host further out, in its standard stage at the moment, lists this control - a
         // control that host's overlay stage is going to paint. See paint.
         [[nodiscard]] bool isListedByEnclosingHost(const Control&) const;
-        // How far a rule applies on its channel: its inputs or the channel's rest, times andInputs.
+        // How far a rule applies on its channel: its inputs, times andInputs, and 1 at rest.
         [[nodiscard]] float inputFactor(const BakedColorRule2&) const;
         // The new rules on one channel, in the order they apply; how far they moved it.
         float applyColorRules2(PaintChannel, Hsl& color, float* namedHue = nullptr) const;
@@ -252,9 +247,9 @@ namespace ClaFi
         float m_disablingStrength{ 0.77f };
         float m_enabledFactor{ 1.0f };
         float m_windowFocusedFactor{ 1.0f };
-        bool m_showSurfaceAtRest{ true };
         bool m_showSelectionOnSurface{ true };
         float m_surfaceVisibility{ 0.0f };
+        float m_surfaceGrowInScale{ 1.0f }; // the size the surface arrives from
         Interactivity m_interactivity;
         // Set for the control that owns the press animation, and inherited by everything it
         // contains, so a child does not scale a second time about its own centre.
@@ -265,8 +260,6 @@ namespace ClaFi
         // A ring marks the control's frame, so it does not take part in the grow-in.
         float m_focusRingFactor{ 0.0f };
         float m_borderWidth;
-        // Null unless setStrokeRule named one, in which case it replaces m_colorRules.stroke.
-        const BakedRule* m_strokeRule{};
         float m_radius{};
         CornerRadii m_cornerRadii{};
         ScaledSpacing m_spacing;
@@ -301,7 +294,7 @@ namespace ClaFi
         Color m_strokeRgb{};
         Hsl m_shadowHsl{}; // the shadow channel, carried down the tree like the surface and the ink
         float m_shadowHueStated{ 0.0f }; // how far a rule has named the shadow's hue
-        RuleInputFactors m_ruleInputFactors{};
+        float m_selectedOnSurface{}; // the selection as the surface and the stroke read it
     };
 
     // The paint being set up, before anything is drawn.
@@ -316,10 +309,6 @@ namespace ClaFi
         // The element this control paints from, resolved against the set the pass carries.
         void setColorRules(UiElement);
         void setColorRules(const BakedElement& value) { m_target.m_colorRules = value; }
-        // Keeps the control off its own surface until its state calls for one - the surface rule
-        // states the colour it arrives at, and nothing states one at rest. See
-        // ButtonBase's ShowSurfaceAtRest.
-        void dropSurfaceAtRest() { m_target.m_showSurfaceAtRest = false; }
         // Keeps the selected state off the surface - the control is still selected, and its
         // indicator, text and focus ring still say so. See ButtonBase's ShowSelectionOnSurface.
         void dropSelectedSurface() { m_target.m_showSelectionOnSurface = false; }
@@ -382,11 +371,6 @@ namespace ClaFi
         void setCornerRadius(Corner corner, float value) { m_target.m_cornerRadii[cornerIndex(corner)] = value; }
         void setInteractivity(Interactivity value) { m_target.m_interactivity = value; }
         void setBorderWidth(float value) { m_target.m_borderWidth = value; }
-        // Draws the border from this rule applied to the control's own surface, in place of the
-        // element's stroke, which is applied to the higher of that surface and the one the
-        // control stands on. The rule is held by address and must outlive the paint; a member of
-        // BakedColors does.
-        void setStrokeRule(const BakedRule& value) { m_target.m_strokeRule = &value; }
     private:
         PaintEvent& m_target;
     };

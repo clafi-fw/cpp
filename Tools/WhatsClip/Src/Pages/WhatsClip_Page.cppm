@@ -126,7 +126,7 @@ namespace ClaFi::Tools::WhatsClip
         // The strip is one surface: the status as its body, and what a page stands at its right
         // end on the same header - see stripBars.
         Panel& m_strip{ m_topPanel.createBody<Panel>(
-            UiElement::Header,
+            UiElement::SectionHeader,
             themeMetrics().page
         ) };
         Label& m_status{ m_strip.createBody<Label>(
@@ -266,7 +266,8 @@ namespace ClaFi::Tools::WhatsClip
             MaxSize{ k_pickWidth, k_maxFloat },
             Padding{ k_pickPaddingX, k_pickPaddingY },
             VerticalTextAnchor::Center,
-            ShowSurfaceAtRest::Yes,
+            themeMetrics().button,
+            UiElement::Button,
             ComboBox::OnChange{ [this](ComboBoxChangeEvent&) {
                 encodingPicked();
             } }
@@ -278,7 +279,8 @@ namespace ClaFi::Tools::WhatsClip
             MaxSize{ k_pickWidth, k_maxFloat },
             Padding{ k_pickPaddingX, k_pickPaddingY },
             VerticalTextAnchor::Center,
-            ShowSurfaceAtRest::Yes,
+            themeMetrics().button,
+            UiElement::Button,
             ComboBox::OnChange{ [this](ComboBoxChangeEvent&) {
                 languagePicked();
             } }

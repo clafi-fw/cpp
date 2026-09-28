@@ -29,6 +29,7 @@ import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
@@ -150,7 +151,8 @@ namespace ClaFi::Tools::WhatsClip
             WordWrap::No,
             HorizontalTextAnchor::Left,
             VerticalTextAnchor::Center,
-            ShowSurfaceAtRest::Yes,
+            themeMetrics().button,
+            UiElement::Button,
             OnEvent{ [this](ClickEvent&) {
                 openEditor(m_colorReadout);
             } },

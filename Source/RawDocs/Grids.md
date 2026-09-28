@@ -261,20 +261,24 @@ handler that adds nothing leaves the selection where it was.
 
 THE ELEMENT EVERY ROW OF A GRID WEARS, a group and a section among them -
 RowBase::adjustPaint puts it on each. A row paints no rect of its own: its cells are filled
-from its surface, so every rule in the set reaches the screen through them.
+from its surface, so every rule in its list reaches the screen through them.
 
-The rows inside a group or a section inherit its colour and paint it for it. Surface, Text,
-Active and Active text are therefore applied once per level of nesting: a row inside a group
-applies its own over the group's. Active stops short of a section, which declines the
-selection - see RowExpander. Hovered and Pressed reach only the rows: a group and a section
-are not interactive, and a control that is not reads as neither - see Control::visualState.
+The rows inside a group or a section inherit its colour and paint it for it, so a row's rules
+are applied once per level of nesting: a row inside a group applies its own over the group's.
+Selected stops short of a section, which declines the selection - see RowExpander. Hovered
+and Pressed reach only the rows: a group and a section are not interactive, and a control
+that is not reads as neither - see Control::visualState.
 
-The column header keeps Active and Active text alone. Its surface, ink and flip are
-Header's, and a column name answers no pointer of its own - see GridHeader::adjustPaint. A
-divider wears Divider.
+The column header wears GridHeader, a section's header wears SectionHeader, and a divider
+wears Divider.
 
-The lines between a row's cells are GridLine, drawn over each cell's own surface, so
-GridLine stands on GridRow. A row draws no border of its own, and the set lists no Stroke.
+Each draws its lines with its own stroke. A row's Stroke is the lines between its cells,
+and PaintEvent::strokeRgbOn raises it off each cell's own surface - the row's, with the row's
+and the column's colour over it - so a cell carrying a colour of its own carries the lines
+beside it with it. The header row's lines are GridHeader's stroke, the line under a section's
+header is SectionHeader's, and the line a divider closes with is Divider's. A stroke that
+reaches nothing is transparent, and the gap left for the line stays open. The frame around
+the grid is Grid's own stroke and none of these.
 
 ## RowCell
 

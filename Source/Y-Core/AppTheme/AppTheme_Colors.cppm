@@ -211,20 +211,22 @@ namespace ClaFi
     {
         Dialog,
         Page,
-        TabLine,
+        Tab,
         Section,
-        Header,
+        SectionHeader,
         Bar,
         DialogTitle,
         Menu,
         Tooltip,
         Divider,
         Grid,
+        GridHeader,
         GridRow,
-        GridLine,
         Button,
+        ToolButton,
         SelectedText,
         SelectionIndicator,
+        HoverIndicator,
         Accent,
         Spot,
         ScrollButton,
@@ -367,53 +369,6 @@ namespace ClaFi
 
         // The luminosity elevation 0 is lifted to at the dark end. See AppTheme
         float darkModeFloor{ 0.098735f };
-
-        // Every tab's outline and the line it stands on, applied to the tab's own surface.
-        ColorRule tabLine{
-            { ColorRuleHueOp::NoChange, 0.928767f },    // H
-            { ColorRuleOp::NoChange, 0.490111f },       // S
-            { ColorRuleOp::Offset, 0.25f }              // E
-        };
-
-        // The strip an expander shows its title on, and the row of column names across the top
-        // of a grid. An expander takes the whole set for its header; a grid header takes surface
-        // and text and leaves its other states as they stand, so those two are the whole of what
-        // a column name is drawn in.
-        ControlColorRules header{
-            .surface{
-                {},                                     // S
-                { ColorRuleOp::Set, 0.111111f }         // E
-            },
-            .text{
-                {},                                     // S
-                { ColorRuleOp::Set, 0.897275f }         // E
-            }
-        };
-
-        // Every row of a grid, groups and sections included. See Grids
-        ControlColorRules gridRow{
-            // A SELECTED ROW. A row wears this set and paints no surface of its own, so the rule
-            // reaches the screen through the cells the row fills. It lands where a focused text
-            // selection lands - SelectedText's resting and focused rules come to the same place -
-            // so the two selections an interface can show read as one colour.
-            .active{
-                { ColorRuleHueOp::PaletteColor2 },      // H
-                { ColorRuleOp::Offset, 0.190021f },     // S
-                { ColorRuleOp::Offset, 0.08306903f }    // E
-            },
-            .hovered{
-                {},                                     // S
-                { ColorRuleOp::Offset, 0.080827f }      // E
-            }
-        };
-
-        // Every line of a grid's lattice. One rule for the whole lattice, so a cell's own
-        // surface cannot move the line beside it.
-        ColorRule gridLine{
-            { ColorRuleHueOp::NoChange, 0.860274f },    // H
-            { ColorRuleOp::NoChange, 0.765086f },       // S
-            { ColorRuleOp::Offset, 0.080088f }          // E
-        };
 
         // THE THEME'S OWN EMPHASIS, AND WHAT SAYS A THING IS ON - one rule for both, because the
         // two are one colour. It is the ink anything asking for emphasis is drawn in, over the
@@ -872,12 +827,50 @@ namespace ClaFi
             }
         };
 
+        // Tab - its stroke while hovered or open, the open tab's outline and the line it stands on.
+        result.of(UiElement::Tab) = {
+            ColorRule2{
+                .inputs{ RuleInput::Hovered, RuleInput::Selected },
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleHueOp::NoChange, 0.928767f }, // H
+                    { ColorRuleOp::NoChange, 0.490111f },   // S
+                    { ColorRuleOp::Offset, 0.25f }          // E
+                }
+            }
+        };
+
         // Section - its surface at rest.
         result.of(UiElement::Section) = {
             ColorRule2{
                 .effect{
                     { ColorRuleOp::NoChange, 0.195241f },   // S
                     { ColorRuleOp::Offset, 0.044533f }      // E
+                }
+            }
+        };
+
+        // Section header - its surface at rest and its text, then its stroke.
+        result.of(UiElement::SectionHeader) = {
+            ColorRule2{
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Set, 0.111111f }         // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Text,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Set, 0.897275f }         // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleHueOp::NoChange, 0.860274f }, // H
+                    { ColorRuleOp::NoChange, 0.765086f },   // S
+                    { ColorRuleOp::Offset, 0.080088f }      // E
                 }
             }
         };
@@ -977,12 +970,20 @@ namespace ClaFi
             }
         };
 
-        // Divider - its surface at rest.
+        // Divider - its surface at rest, then its stroke, the line a grid's divider row carries.
         result.of(UiElement::Divider) = {
             ColorRule2{
                 .effect{
                     { ColorRuleOp::NoChange, 0.191474f },   // S
                     { ColorRuleOp::Offset, 0.05f }          // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleHueOp::NoChange, 0.860274f }, // H
+                    { ColorRuleOp::NoChange, 0.765086f },   // S
+                    { ColorRuleOp::Offset, 0.080088f }      // E
                 }
             }
         };
@@ -994,6 +995,58 @@ namespace ClaFi
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Offset, 0.120654f }      // E
+                }
+            }
+        };
+
+        // Grid header - its surface at rest and its text, then its stroke between the columns.
+        result.of(UiElement::GridHeader) = {
+            ColorRule2{
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Set, 0.111111f }         // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Text,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Set, 0.897275f }         // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleHueOp::NoChange, 0.860274f }, // H
+                    { ColorRuleOp::NoChange, 0.765086f },   // S
+                    { ColorRuleOp::Offset, 0.080088f }      // E
+                }
+            }
+        };
+
+        // Grid row - its surface selected and hovered, then its stroke, the lines between cells.
+        result.of(UiElement::GridRow) = {
+            ColorRule2{
+                .inputs{ RuleInput::Selected },
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Offset, 0.190021f },     // S
+                    { ColorRuleOp::Offset, 0.08306903f }    // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Hovered },
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Offset, 0.080827f }      // E
+                }
+            },
+            ColorRule2{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleHueOp::NoChange, 0.860274f }, // H
+                    { ColorRuleOp::NoChange, 0.765086f },   // S
+                    { ColorRuleOp::Offset, 0.080088f }      // E
                 }
             }
         };
@@ -1037,6 +1090,41 @@ namespace ClaFi
             }
         };
 
+        // Tool button - its surface selected, hovered and pressed, then its stroke as that surface
+        // arrives. Nothing at rest.
+        result.of(UiElement::ToolButton) = {
+            ColorRule2{
+                .inputs{ RuleInput::Selected },
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Offset, 0.094499f },     // S
+                    { ColorRuleOp::Offset, 0.099311f }      // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Hovered },
+                .effect{
+                    { ColorRuleOp::Offset, 0.085609f },     // S
+                    { ColorRuleOp::Offset, 0.126926f }      // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Pressed },
+                .effect{
+                    { ColorRuleOp::Scale, 0.8f },           // S
+                    { ColorRuleOp::Scale, 0.9f }            // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Hovered, RuleInput::Selected },
+                .output = PaintChannel::Stroke,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Offset, 0.037839f }      // E
+                }
+            }
+        };
+
         // Selected text - the band at rest, then what the focus adds to it.
         result.of(UiElement::SelectedText) = {
             ColorRule2{
@@ -1064,6 +1152,41 @@ namespace ClaFi
                     { ColorRuleOp::Offset, 0.155899f }      // E
                 }
             },
+            ColorRule2{
+                .inputs{ RuleInput::Selected },
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Set, 1.0f },             // S
+                    { ColorRuleOp::Set, 0.544542f }         // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Hovered },
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Offset, 0.125f },        // S
+                    { ColorRuleOp::Offset, 0.06f }          // E
+                }
+            },
+            ColorRule2{
+                .inputs{ RuleInput::Pressed },
+                .effect{
+                    { ColorRuleOp::Scale, 0.8f },           // S
+                    { ColorRuleOp::Scale, 0.9f }            // E
+                }
+            },
+            // Set 0 lands at the floor in dark mode and at white in light: legible either way.
+            ColorRule2{
+                .output = PaintChannel::Text,
+                .effect{
+                    { ColorRuleOp::Set, 0.0f },             // S
+                    { ColorRuleOp::Set, 0.0f }              // E
+                }
+            }
+        };
+
+        // Hover indicator - its surface selected, hovered and pressed, then its text.
+        result.of(UiElement::HoverIndicator) = {
             ColorRule2{
                 .inputs{ RuleInput::Selected },
                 .effect{

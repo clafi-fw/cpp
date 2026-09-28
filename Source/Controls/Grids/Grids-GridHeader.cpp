@@ -2,7 +2,6 @@
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
-import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.System.UiTypes;
 
@@ -27,29 +26,7 @@ namespace ClaFi::Controls::Grids
     void GridHeader::adjustPaint(AdjustPaintEvent& event)
     {
         RowBase::adjustPaint(event);
-        // What establishes the element, not only the surface the cells are filled with: the ink
-        // is what the cell text is drawn in and what the lines take their direction from, and a
-        // control hosted in a header cell inherits the same pair every other child inherits. The
-        // row's selection is left as it stands - a column name answers no pointer of its own.
-        //
-        // The row paints no surface of its own - the cells do - and a cell is filled from the
-        // row's surface, so naming the surface rule here is the whole of what colours a header.
-        // It states for the row the colour those cells arrive at, which is what everything
-        // reading this row's surface needs to see.
-        //
-        // flip comes with them: it says which side of the theme the element stands on, so an ink
-        // raised off that surface rises the way it leaves room for. An expander's header takes
-        // the whole set and gets it that way; this row copies, so it has to name it.
-        const BakedElement& header = event.bakedColors().element(UiElement::Header);
-        const BakedElement& rowRules = event.colorRules();
-        const BakedElement rules = {
-            .flip = header.flip,
-            .surface = header.surface,
-            .active = rowRules.active,
-            .text = header.text,
-            .activeText = rowRules.activeText
-        };
-        event.setColorRules(rules);
+        event.setColorRules(UiElement::GridHeader);
     }
 
     void GridHeader::paintSurface(PaintEvent& event)

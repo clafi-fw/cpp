@@ -162,7 +162,7 @@ namespace ClaFi::Controls
         // The title is the header of this window the way a section header is the header of a
         // section: the same colours, and the text style that names a section.
         m_title{ createTopBar<Label>(
-            UiElement::Header,
+            UiElement::SectionHeader,
             Radius{ 0.0f },
             Padding{ k_barPaddingX, k_barPaddingY },
             Text{ title }

@@ -29,7 +29,7 @@ namespace ThisApp
             WordWrap::No,
             HorizontalAlign::Center,
             VerticalAlign::Center,
-            UiElement::Header,
+            UiElement::SectionHeader,
             themeMetrics().page
         ) };
 

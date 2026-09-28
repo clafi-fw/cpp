@@ -110,7 +110,8 @@ namespace ThisApp
         {
             MapButton& subItem{ add<MapButton>(
                 Tag{ i },
-                ShowSurfaceAtRest::No,
+                params.themeMetrics().toolButton,
+                UiElement::ToolButton,
                 IndicatorVisibility::Always,
                 IndicatorStyle::Radio,
                 ShowSelectionOnSurface::Yes,
@@ -150,7 +151,8 @@ namespace ThisApp
         HarmonyItemClass{ params,
             ButtonViewMode::IconOnly,
             IconSize{ 32.f, 32.0f },
-            ShowSurfaceAtRest::Yes,
+            params.themeMetrics().button,
+            UiElement::Button,
             VerticalTextAnchor::Center,
             //params.theme().colors.button,
             //params.theme().metrics.listItem,

@@ -44,6 +44,8 @@ namespace ClaFi
         // 1 is the theme's depth. 0 opts the style out. Above 1 overstates, which is worth doing
         // only where the projection has left a control too small for its travel to be seen.
         float zDepthFactor{};
+        // The size the surface arrives from as it appears, a fraction of the size it settles at.
+        float surfaceGrowInScale{ 1.0f };
     };
 
     // The shadow a window casts, in logical pixels. See AppTheme
@@ -89,15 +91,9 @@ namespace ClaFi
         // than authoring it is what keeps the depths comparable to each other and to a real one.
         static constexpr float pressRestScale = viewerDistance / (viewerDistance + pressRestDepth);
         static constexpr float pressHeldScale = viewerDistance / (viewerDistance + pressHeldDepth);
-        // A control with no surface at rest has none until it is hovered or selected, so the
-        // only thing its
-        // surface can do on the way in is arrive. This is the size it arrives from, as a
-        // fraction of the size it settles at. Unlike the press scales it is a large number on
-        // purpose - it is not a nudge, it is where the shape comes from - and it costs nothing in
-        // paint area because it only ever makes the surface smaller than the control.
-        static constexpr float surfaceGrowInScale = 0.83f;
         static constexpr float scrollBarWidth = 17.0f;
         ControlMetrics button;
+        ControlMetrics toolButton; // a button's, with a surface that grows in as it arrives
         ControlMetrics dialogTitle;
         // THE FRAME A WINDOW WEARS: border is the ring its content stands inside and radius its
         // corners, both painted by the framework on every platform. The padding of a primary
@@ -129,6 +125,14 @@ namespace ClaFi
         button.spacing = { 4.0f, 4.0f };
         button.minSize = { 40.0f, 24.0f };
         button.zDepthFactor = 1.0f;
+
+        // toolButton
+        // A tool button's colours state no surface at rest, so the only thing its surface does
+        // on the way in is arrive. Unlike the press scales this is a large number on purpose -
+        // not a nudge but where the shape comes from - and it costs nothing in paint area,
+        // because it only ever makes the surface smaller than the control.
+        toolButton = button;
+        toolButton.surfaceGrowInScale = 0.83f;
 
         // appTitleBar
         //appTitleBar.padding = { 4.0f, 4.0f };

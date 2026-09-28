@@ -64,9 +64,8 @@ namespace ClaFi::Controls::Grids
             return;
         FloatRect bottomBorderRect = event.controlBounds();
         bottomBorderRect.top = bottomBorderRect.bottom - descriptor.scaledBorderWidth() - event.scale(1.0f - expandedFactor());
-        event.canvas().fillRectangle(bottomBorderRect,
-            GridDescriptor::gridLineRgb(event.surfaceHsl(), event.bakedColors(),
-                event.lightness()));
+        // Raised off the surface rather than read from strokeRgb(), which carries the focus ring.
+        event.canvas().fillRectangle(bottomBorderRect, event.strokeRgbOn(event.surfaceHsl()));
     }
 
     // RowExpander
@@ -79,7 +78,7 @@ namespace ClaFi::Controls::Grids
         m_controls[k_head] = std::make_unique<RowExpanderHeader>(
             CreateParams{ *this },
             descriptor.designCellMetrics().padding,
-            UiElement::Header,
+            UiElement::SectionHeader,
             // What the expander draws of itself.
             READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)
         );

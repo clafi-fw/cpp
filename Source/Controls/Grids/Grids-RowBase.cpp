@@ -306,8 +306,8 @@ namespace ClaFi::Controls::Grids
         cellFrame.sides = { drawsHorizontal, drawsVertical, drawsHorizontal, drawsVertical };
         // A ROW PAINTS NO SURFACE OF ITS OWN, SO ITS CELLS ARE IT, and the fill is
         // unconditional. What a cell stands on is the row's surface: what the row inherited from
-        // whatever holds it, with the row's own rules over that - GridRow's active rule at the
-        // row's selected factor among them. A column rule then modifies it per cell.
+        // whatever holds it, with the row's own rules over that - GridRow's Selected rule among
+        // them. A column rule then modifies it per cell.
         //
         // Unconditional because the colour a row inherits is as much a colour it has to paint as
         // one it states itself. A row standing in a group that holds the selection states nothing
@@ -320,8 +320,7 @@ namespace ClaFi::Controls::Grids
             // Both rules are read in the direction this row stands in, the one its ink and its grid
             // lines are already read in. A row whose element states a flip stands on the far side
             // of the theme, and a fill mixed from the theme's own side would leave the surface
-            // where it is while the text on it crosses - see GridHeader::adjustPaint, which names
-            // that flip for this row.
+            // where it is while the text on it crosses.
             const Lightness lightness = event.lightness();
             if (rowColor)
                 rowColor->applyTo(bgHsl, 1.0f, lightness);
@@ -333,11 +332,11 @@ namespace ClaFi::Controls::Grids
         // Paint the cell right and bottom stroke. A stroke lands inside the bounds it is given, so
         // the band it covers is the cell's own last border on each of those two sides. The next
         // cell's bounds start where that band ends, and the two strokes form one unbroken line.
-        
+        // The row's stroke is raised off the cell's own surface, so a cell carrying a colour of
+        // its own carries its lines with it.
         if (drawsVertical || drawsHorizontal)
-            event.canvas().drawPartialRoundedRectangle(cellFrame,
-                GridDescriptor::gridLineRgb(bgHsl, event.bakedColors(),
-                    event.lightness()), cellLt.border / 2.0f);
+            event.canvas().drawPartialRoundedRectangle(cellFrame, event.strokeRgbOn(bgHsl),
+                cellLt.border / 2.0f);
 
         // A blank is the surface and the lines alone: nothing is written in it, and nothing
         // lands on it for a highlight to show.
@@ -537,8 +536,7 @@ namespace ClaFi::Controls::Grids
         // so the colour is named here, before the child's own adjustPaint runs.
         //
         // The column's part only. A row that colours its cells states the same rule for
-        // itself, so its own surface already carries the row's part - see
-        // GridHeader::adjustPaint, which names header.surface for exactly this reason.
+        // itself, so its own surface already carries the row's part.
         //
         // The sign is the child's, which is the row's: a paint event takes its colour mode from
         // its parent before doAdjustPaint runs, and a flip of the child's own is settled after

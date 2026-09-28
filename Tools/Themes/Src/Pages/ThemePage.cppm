@@ -594,19 +594,6 @@ namespace ThisApp
             // what order, is k_uiElements' answer - so a rule the element does not paint cannot
             // reach the grid by being listed at this call site.
             Rows{
-                // What is painted inside a form: the line tabs stand on, a header, and a grid's
-                // rows with the lattice's line under them.
-                Grids::Dt::Expander{
-                    Header{ Text{ TextStyleId::Section, L"Surfaces" } },
-                    sectionFold(),
-                    staticRow(UiElement::TabLine),
-                    Grids::Dt::Divider{},
-                    elementGroup(UiElement::Header),
-                    Grids::Dt::Divider{},
-                    elementGroup(UiElement::GridRow),
-                    Grids::Dt::Divider{},
-                    staticRow(UiElement::GridLine)
-                },
                 // Where the user is and what the user has picked. Accent is the one ink for the
                 // focus ring, and Spot is the emphasis that stands apart from the interface rather
                 // than answering to it.

@@ -112,7 +112,7 @@ namespace ClaFi::Controls::Grids
         void currentItemChanged(CurrentItemChangeEvent&)  override;
         // Puts the theme's grid element on the grid, whose stroke is the grid's own border - the
         // outer line of the lattice: the cells leave their outermost strokes to it and draw only
-        // the interior ones, in gridLine.
+        // the interior ones, each in its row's stroke.
         void adjustPaint(AdjustPaintEvent&) override;
         // The header row, for as long as it heads a row - see Control::heldHeader.
         [[nodiscard]] const Control* heldHeader() const override;

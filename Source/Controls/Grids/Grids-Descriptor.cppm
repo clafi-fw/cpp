@@ -3,8 +3,6 @@ export module ClaFi.Controls.Grids :Descriptor;
 import :Columns;
 import :Cell;
 
-import ClaFi.Core.AppTheme_Baked;
-import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Animation;
@@ -139,18 +137,6 @@ namespace ClaFi::Controls::Grids
         // Per-cell state, replacing the row-factor * column-factor product.
         [[nodiscard]] float cellHoveredFactor(const Control&, const Column&) const;
         [[nodiscard]] float cellSelectedFactor(const Control&, const Column&) const;
-        // The colour of a line of the lattice, drawn on the given surface. A line belongs to what
-        // it is drawn on, so the surface is passed in: a cell hands over its own surface, so a
-        // cell that carries a colour of its own carries the lines beside it with it. The grid's
-        // frame is the same rule applied to the grid's own surface - see GridBase::adjustPaint.
-        //
-        // The alpha carries how much of the rule reached the surface, so a rule that changes
-        // nothing answers a fully transparent colour: a caller that has left a gap for the line
-        // must test it and leave that gap open rather than close it with something else.
-        // The direction is the caller's to state: a line is seen against the surface it is drawn
-        // on, so it rises the way whatever carries that surface still has room to rise, which is
-        // PaintEvent::contrastSign of the control drawing it.
-        [[nodiscard]] static Color gridLineRgb(Hsl surface, const BakedColors&, Lightness);
         // The corners the grid's corner cells turn: what the grid paints at each corner, except
         // that a corner the scroll has cut out of view keeps at least the grid's own radius - the
         // row that turns it may still be in view, held there, and the header at the top of the

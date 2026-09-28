@@ -48,19 +48,20 @@ namespace ThisApp
 
         constexpr std::array k_surfaces{
             UiElement::Page,
-            UiElement::TabLine,
+            UiElement::Tab,
             UiElement::Section,
-            UiElement::Header,
+            UiElement::SectionHeader,
             UiElement::Divider,
             UiElement::Bar,
             UiElement::DialogTitle,
             UiElement::Grid,
-            UiElement::GridRow,
-            UiElement::GridLine
+            UiElement::GridHeader,
+            UiElement::GridRow
         };
 
         constexpr std::array k_controls{
             UiElement::Button,
+            UiElement::ToolButton,
             UiElement::ScrollButton,
             UiElement::ScrollThumb
         };
@@ -69,6 +70,7 @@ namespace ThisApp
             UiElement::Accent,
             UiElement::Spot,
             UiElement::SelectionIndicator,
+            UiElement::HoverIndicator,
             UiElement::SelectedText
         };
 

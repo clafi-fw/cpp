@@ -27,8 +27,6 @@ namespace ClaFi::Controls
         DECLARE_WRITABLE_PROPERTY(IndicatorStyle, indicatorStyle, setIndicatorStyle, IndicatorStyle::Check)
         // Whether the selection is shown on the button's surface as well.
         DECLARE_WRITABLE_PROPERTY(ShowSelectionOnSurface, showSelectionOnSurface, setShowSelectionOnSurface, ShowSelectionOnSurface::No)
-        // Whether the button carries a surface when nothing is happening to it.
-        DECLARE_WRITABLE_PROPERTY(ShowSurfaceAtRest, showSurfaceAtRest, setShowSurfaceAtRest, ShowSurfaceAtRest::Yes)
         // Where the indicator sits.
         DECLARE_WRITABLE_PROPERTY(IndicatorPlacement, indicatorPlacement, setIndicatorPlacement, IndicatorPlacement::LeftCenter)
         // The design size the button draws its icon at.
@@ -42,7 +40,6 @@ namespace ClaFi::Controls
         void setIndicatorVisibility(const IndicatorVisibility value);
         void setIndicatorStyle(const IndicatorStyle value);
         void setShowSelectionOnSurface(const ShowSelectionOnSurface value);
-        void setShowSurfaceAtRest(const ShowSurfaceAtRest value);
         void setIndicatorPlacement(const IndicatorPlacement value);
         void setIconSize(IconSize);
         void setViewMode(ButtonViewMode);
@@ -119,7 +116,6 @@ namespace ClaFi::Controls
         INIT_PROPERTY(indicatorVisibility),
         INIT_PROPERTY(indicatorStyle),
         INIT_PROPERTY(showSelectionOnSurface),
-        INIT_PROPERTY(showSurfaceAtRest),
         INIT_PROPERTY(indicatorPlacement),
         INIT_PROPERTY(iconSize),
         INIT_PROPERTY(viewMode),

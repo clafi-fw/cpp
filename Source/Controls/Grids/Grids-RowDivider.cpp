@@ -4,7 +4,6 @@ import :Descriptor;
 import :RowDivider;
 
 import ClaFi.Core.Foundation;
-import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi::Controls::Grids
@@ -13,10 +12,9 @@ namespace ClaFi::Controls::Grids
 
     void RowDivider::paintSurface(PaintEvent& event)
     {
-        // The band along the bottom of the row is the slot the grid line closing the divider
-        // stands in, so the divider's own fill stops short of it. The line is drawn on what that
-        // gap leaves showing - the surface the row sits on - the same as every other line of the
-        // lattice is drawn on what it lies over.
+        // The band along the bottom of the row is the slot the line closing the divider stands
+        // in, so the divider's own fill stops short of it. The line is the divider's own stroke,
+        // the way every row of the grid draws its lines with its own.
         FloatRect fillRect = event.controlBounds();
 
         const Color surfaceRgb = event.surfaceRgb();
@@ -35,12 +33,11 @@ namespace ClaFi::Controls::Grids
         if (!descriptor().drawsHorizontalLines())
             return;
 
-        // A rule that reaches nothing answers a transparent colour, and the slot is then left as
-        // it is. Filling it with the divider's own colour instead would state a line the theme
-        // did not ask for, and the gap is what a divider carrying no line looks like.
-        const Hsl surfaceHsl = event.surfaceHsl();// event.parentEvent()->surfaceHsl();
-        const Color lineColor = GridDescriptor::gridLineRgb(surfaceHsl, event.bakedColors(),
-            event.lightness());
+        // A stroke that reaches nothing is transparent, and the slot is then left as it is.
+        // Filling it with the divider's own colour instead would state a line the theme did not
+        // ask for, and the gap is what a divider carrying no line looks like. Raised off the
+        // surface rather than read from strokeRgb(), which carries the focus ring.
+        const Color lineColor = event.strokeRgbOn(event.surfaceHsl());
         if (lineColor.alpha)
         {
             FloatRect lineRect = fillRect;

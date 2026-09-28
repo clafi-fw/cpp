@@ -180,10 +180,9 @@ namespace ClaFi
         },
         // The open tab wears its page's surface, and its line runs the length of the page.
         UiElementDescriptor{
-            .name = L"Tab Line",
-            .codeName = L"tabLine",
-            .token = L"TabLine",
-            .rule = &ThemeColors::tabLine,
+            .name = L"Tab",
+            .codeName = L"tab",
+            .token = L"Tab",
             .base = UiElement::Page
         },
         UiElementDescriptor{
@@ -192,18 +191,12 @@ namespace ClaFi
             .token = L"Section",
             .base = UiElement::Page
         },
-        // No Stroke: ThemeMetrics gives an expander header and a grid header no border, and
-        // GridHeader copies only surface and text out of this set in any case.
+        // The strip an expander shows its title on; a grid draws a section's line from its stroke.
         UiElementDescriptor{
-            .name = L"Header",
-            .codeName = L"header",
-            .token = L"Header",
-            .rules = &ThemeColors::header,
-            .base = UiElement::Section,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Text
-            }
+            .name = L"Section Header",
+            .codeName = L"sectionHeader",
+            .token = L"SectionHeader",
+            .base = UiElement::Section
         },
         // What a bar is painted on is the window's content, the same thing a section stands on.
         UiElementDescriptor{
@@ -230,46 +223,45 @@ namespace ClaFi
             .token = L"Tooltip",
             .isWindowRoot = true
         },
+        // Its stroke is the line a divider row of a grid carries.
         UiElementDescriptor{
             .name = L"Divider",
             .codeName = L"divider",
             .token = L"Divider",
             .base = UiElement::Section
         },
-        // Its stroke is the grid's outer border; the lines in the lattice are GridLine's.
+        // Its stroke is the grid's outer border; each row draws the lines inside with its own.
         UiElementDescriptor{
             .name = L"Grid",
             .codeName = L"grid",
             .token = L"Grid",
             .base = UiElement::Section
         },
-        // No Stroke: a row draws no border of its own - the lines between its cells are GridLine.
+        // The row of column names across the top of a grid; its stroke is the lines between them.
+        UiElementDescriptor{
+            .name = L"Grid Header",
+            .codeName = L"gridHeader",
+            .token = L"GridHeader",
+            .base = UiElement::Grid
+        },
+        // Every row of a grid, groups and sections included; its stroke is the lines between cells.
         UiElementDescriptor{
             .name = L"Grid Row",
             .codeName = L"gridRow",
             .token = L"GridRow",
-            .rules = &ThemeColors::gridRow,
-            .base = UiElement::Grid,
-            .states{
-                UiElementState::Surface,
-                UiElementState::Active,
-                UiElementState::Hovered,
-                UiElementState::Pressed,
-                UiElementState::Text,
-                UiElementState::ActiveText
-            }
-        },
-        UiElementDescriptor{
-            .name = L"Grid Line",
-            .codeName = L"gridLine",
-            .token = L"GridLine",
-            .rule = &ThemeColors::gridLine,
-            .base = UiElement::GridRow
+            .base = UiElement::Grid
         },
         UiElementDescriptor{
             .name = L"Button",
             .codeName = L"button",
             .token = L"Button",
+            .base = UiElement::Section
+        },
+        // A button whose surface arrives with the pointer: a toolbar's, a menu line, a list item.
+        UiElementDescriptor{
+            .name = L"Tool Button",
+            .codeName = L"toolButton",
+            .token = L"ToolButton",
             .base = UiElement::Section
         },
         // The band behind selected text, and the ink drawn over it.
@@ -284,6 +276,13 @@ namespace ClaFi
             .name = L"Selection Indicator",
             .codeName = L"selectionIndicator",
             .token = L"SelectionIndicator",
+            .base = UiElement::Section
+        },
+        // The mark of a button whose IndicatorVisibility is Hover, with nothing at rest.
+        UiElementDescriptor{
+            .name = L"Hover Indicator",
+            .codeName = L"hoverIndicator",
+            .token = L"HoverIndicator",
             .base = UiElement::Section
         },
         // THREE THINGS IN ONE RULE, which is what the name says: the theme's own emphasis, the

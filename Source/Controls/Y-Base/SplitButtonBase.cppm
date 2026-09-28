@@ -106,14 +106,7 @@ namespace ClaFi::Controls
     template<typename ...Args>
     SplitButtonBase::SplitButtonBase(const CreateParams& params, Args && ...args)
         :
-        // A SPLIT BUTTON IS TWO TARGETS ON ONE FACE, and a surface at rest would draw one box
-        // around both of them - the seam between the halves is what has to read, and it reads
-        // against the page rather than against a fill. So the surface arrives with the pointer,
-        // which is also when there is a half to tell apart.
-        //
-        // Stated ahead of the caller's own properties, so a split button asked for a surface at
-        // rest gets one: Props::get takes the last of the matching arguments.
-        ButtonBase{ params, ShowSurfaceAtRest::No, std::forward<Args>(args)... }
+        ButtonBase{ params, std::forward<Args>(args)... }
     {
     }
 

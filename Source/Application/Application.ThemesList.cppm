@@ -14,6 +14,7 @@ import ClaFi.Controls.TextItems;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
@@ -199,9 +200,10 @@ namespace ClaFi
         :
         Base{
             params,
-            // Not a tool, so not a ToolButton - but it wears the same look, and the property is
-            // the whole of that look.
-            ShowSurfaceAtRest::No,
+            // Not a tool, so not a ToolButton - but it wears the same look, and the element and
+            // the metrics are the whole of that look.
+            params.themeMetrics().toolButton,
+            UiElement::ToolButton,
             ShowSelectionOnSurface::Yes,
             IndicatorVisibility::Hover,
             IndicatorPlacement::TopLeftIn,

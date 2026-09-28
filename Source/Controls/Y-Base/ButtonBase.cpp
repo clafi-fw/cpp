@@ -66,18 +66,6 @@ namespace ClaFi::Controls
             invalidate();
     }
 
-    void ButtonBase::setShowSurfaceAtRest(const ShowSurfaceAtRest value)
-    {
-        if (m_showSurfaceAtRest == value)
-            return;
-
-        m_showSurfaceAtRest = value;
-        // Unconditional, unlike the selected surface above: this is what the button looks like
-        // with nothing happening to it, so there is no state it could be in that leaves the answer
-        // off the screen.
-        invalidate();
-    }
-
     void ButtonBase::setIndicatorPlacement(const IndicatorPlacement value)
     {
         if (value == m_indicatorPlacement)
@@ -133,6 +121,10 @@ namespace ClaFi::Controls
         }
 
         event.metrics = event.themeMetrics().checkMark;
+        // A mark shown on hover has nothing at rest, so it arrives the way a tool button's
+        // surface does.
+        if (m_indicatorVisibility == IndicatorVisibility::Hover)
+            event.metrics.surfaceGrowInScale = event.themeMetrics().toolButton.surfaceGrowInScale;
         switch (m_indicatorStyle)
         {
             case IndicatorStyle::Check:
@@ -153,7 +145,9 @@ namespace ClaFi::Controls
 
         // All below is for the indicator
 
-        event.setColorRules(UiElement::SelectionIndicator);
+        event.setColorRules(m_indicatorVisibility == IndicatorVisibility::Hover
+            ? UiElement::HoverIndicator
+            : UiElement::SelectionIndicator);
 
         event.setParentSelectedAmount(1.0f);
         event.setParentPressedAmount(1.0f);
@@ -175,12 +169,6 @@ namespace ClaFi::Controls
         // The indicator is given no Focusable role. That role gates focus painting, which an
         // indicator never has, and a press is expressed by scaling the whole control about one
         // origin - see PaintEvent::pressScale() - rather than per element.
-
-        if (m_indicatorVisibility == IndicatorVisibility::Hover)
-        {
-            event.dropSurfaceAtRest();
-            //event.setParentHoverAmount(0.0f);
-        }
     }
 
     void ButtonBase::paintChildSurface(PaintEvent& event)
@@ -246,10 +234,8 @@ namespace ClaFi::Controls
     void ButtonBase::adjustPaint(AdjustPaintEvent& event)
     {
         RichControl::adjustPaint(event);
-        // Both told to the event rather than taken out of the colour rules: Button assigns its
-        // whole rule set after this runs, and a cleared rule would come straight back with it.
-        if (m_showSurfaceAtRest == ShowSurfaceAtRest::No)
-            event.dropSurfaceAtRest();
+        // Told to the event rather than taken out of the colour rules: Button assigns its whole
+        // rule set after this runs, and a cleared rule would come straight back with it.
         if (m_showSelectionOnSurface == ShowSelectionOnSurface::No)
             event.dropSelectedSurface();
     }

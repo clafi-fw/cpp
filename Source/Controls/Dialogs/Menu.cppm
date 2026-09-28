@@ -47,10 +47,9 @@ namespace ClaFi::Controls
     /// @note A button, and deliberately: the icon, the text, the enabled and selected states and
     /// the press all belong to a button already. What a menu adds is the key printed at the
     /// right-hand end of the line, and closing behind the command it ran.
-    // Button for its colours, its metrics and its z animation - UiElement::Button,
-    // themeMetrics().button, and the press depth that allowZAnimation() turns on - and the item
-    // states nothing of its own about any of them. NOT ToolButton: a line of a menu is not a tool,
-    // and all it wanted from that class was the one property it now states itself.
+    // Button for its z animation - the press depth that allowZAnimation() turns on - with a tool
+    // button's element and metrics, which the item names itself. NOT ToolButton: a line of a
+    // menu is not a tool, and all it wanted from that class was the look.
     using MenuItemBase = Button;
     // One line of a menu.
     export class MenuItem : public MenuItemBase
@@ -327,9 +326,10 @@ namespace ClaFi::Controls
         MenuItemBase{
             params,
             Interactivity::Focusable,
-            // Not a tool, so not a ToolButton - but it wears the same look, and the property is
-            // the whole of that look.
-            ShowSurfaceAtRest::No,
+            // Not a tool, so not a ToolButton - but it wears the same look, and the element and
+            // the metrics are the whole of that look.
+            params.themeMetrics().toolButton,
+            UiElement::ToolButton,
             // The icon slot is kept whether or not this item has one, which is what puts every
             // item's text on the same left edge.
             ButtonViewMode::LeftIcon,
@@ -397,9 +397,10 @@ namespace ClaFi::Controls
         MenuCommandBase{
             params,
             Interactivity::Focusable,
-            // Not a tool, so not a ToolButton - but it wears the same look, and the property is
-            // the whole of that look.
-            ShowSurfaceAtRest::No,
+            // Not a tool, so not a ToolButton - but it wears the same look, and the element and
+            // the metrics are the whole of that look.
+            params.themeMetrics().toolButton,
+            UiElement::ToolButton,
             // The icon over the name rather than beside it, which is what stands a row of
             // commands in the width one of them would take as a line.
             ButtonViewMode::TopCenterIcon,

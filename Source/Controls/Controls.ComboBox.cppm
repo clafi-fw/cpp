@@ -290,9 +290,10 @@ namespace ClaFi::Controls
         :
         Button{ params,
             //IndicatorVisibility::Hover,
-            // Not a tool, so not a ToolButton - but it wears the same look, and the property is
-            // the whole of that look.
-            ShowSurfaceAtRest::No,
+            // Not a tool, so not a ToolButton - but it wears the same look, and the element and
+            // the metrics are the whole of that look.
+            params.themeMetrics().toolButton,
+            UiElement::ToolButton,
             ShowSelectionOnSurface::Yes,
             comboBox.m_itemsViewMode,
             comboBox.m_itemsIconSize,
@@ -486,11 +487,12 @@ namespace ClaFi::Controls
 
     void ComboBox::adjustPaint(AdjustPaintEvent& event)
     {
-        // A COMBO BOX WEARS A BUTTON'S COLOURS, and it has to say so itself: the chain above
-        // it names no rule set, so a combo box that states none paints against an empty one -
-        // no surface in any state, whatever ShowSurfaceAtRest asks for, and no border.
+        // A COMBO BOX WEARS A TOOL BUTTON'S COLOURS, and it has to say so itself: the chain above
+        // it names no rule set, so a combo box that states none paints against an empty one.
+        // An element passed in is read here or not at all - SplitButtonBase stops short of
+        // RichControl.
         ComboBoxBaseClass::adjustPaint(event);
-        event.setColorRules(UiElement::Button);
+        event.setColorRules(colorRules().value_or(UiElement::ToolButton));
     }
 
     // ComboBox
@@ -500,7 +502,7 @@ namespace ClaFi::Controls
         :
         ComboBoxBaseClass{
             params,
-            params.themeMetrics().button,
+            params.themeMetrics().toolButton,
             Interactivity::Focusable,
             // The face is one line. A label too wide for it fades at the end rather than breaking,
             // which a control of one line's height would collapse.

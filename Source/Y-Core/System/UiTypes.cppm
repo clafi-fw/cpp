@@ -665,13 +665,6 @@ namespace ClaFi
         Yes
     };
 
-    // Whether a button carries a surface when nothing is happening to it. See UI-Types
-    export enum class ShowSurfaceAtRest
-    {
-        No,
-        Yes
-    };
-
     // Where a button's selection indicator sits.
     export enum class IndicatorPlacement
     {

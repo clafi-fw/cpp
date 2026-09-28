@@ -402,7 +402,8 @@ namespace ThisApp
         const ColorRuleOp operation)
         :
         Button{ params,
-            ShowSurfaceAtRest::No,
+            params.themeMetrics().toolButton,
+            UiElement::ToolButton,
             IndicatorVisibility::Always,
             IndicatorStyle::Radio,
             ShowSelectionOnSurface::Yes,

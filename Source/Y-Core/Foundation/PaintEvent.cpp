@@ -91,6 +91,7 @@ namespace ClaFi
             // any. Read here rather than in pressScale(), so that everything downstream of the
             // scale - the transform, the text raster mode - sees one answer.
             m_zDepthFactor = control.allowZAnimation() ? metrics.zDepthFactor : 0.0f;
+            m_surfaceGrowInScale = metrics.surfaceGrowInScale;
         }
 
         // Before the adjustment, so what the control or its parent states there has the last word.
@@ -168,13 +169,6 @@ namespace ClaFi
             // m_surfaceVisibility drives, which is the whole of what a surface says.
             float selectedEffectiveFactor = m_showSelectionOnSurface ? selectedFactor : 0.0f;
 
-            float baseFactor = m_showSurfaceAtRest
-                ? 1.0f
-                : StateFactors::compose(
-                    hoverEffectiveFactor,
-                    selectedEffectiveFactor,
-                    m_parentHoverAmount * (lender ? lender->factors().hoveredOrSelected() : 0.0f));
-
             // WHAT THE CONTROL STANDS ON. The host's answer where it gave one, because the
             // parent chain cannot: a grid cell is filled by the row, so a control hosted in a
             // coloured cell stands on the cell and not on the row - see
@@ -188,9 +182,7 @@ namespace ClaFi
             const Hsl standsOn{ inheritedSurfaceHsl() };
             Hsl surface{ standsOn };
 
-            float bgChanged2{ 0.0f };
-            if (m_showSurfaceAtRest)
-                bgChanged2 = m_colorRules.surface.applyTo(surface, baseFactor, m_lightness);
+            float bgChanged2 = m_colorRules.surface.applyTo(surface, 1.0f, m_lightness);
 
             // Every rule this control applies runs in the one direction the control stands in,
             // the surface and text rules that establish the element included. An element that
@@ -209,13 +201,9 @@ namespace ClaFi
             bgChanged2 = StateFactors::compose(bgChanged2,
                 m_colorRules.pressed.applyTo(surface, effectivePressedFactor, m_lightness));
 
-            // The new rules read the factors the old ones were applied by, so a control that hides
-            // its surface at rest, or its selection, says so to both alike.
-            m_ruleInputFactors = {
-                .surfaceRest = m_showSurfaceAtRest ? 1.0f : 0.0f,
-                .strokeRest = baseFactor,
-                .selectedOnSurface = selectedEffectiveFactor
-            };
+            // The new rules read the selection the old ones were applied by, so a control that
+            // keeps its selection off the surface says so to both alike.
+            m_selectedOnSurface = selectedEffectiveFactor;
             // In RuleInput order. The control drawing a selection is the one that owns it, so the
             // band reads these too - handed over rather than resolved, since almost nothing asks
             // for the band.
@@ -279,17 +267,7 @@ namespace ClaFi
             }
 
 
-            if (m_strokeRule)
-            {
-                // Applied to this control's own surface, which is what setStrokeRule promises.
-                Hsl newStrokeHsl = surface;
-                float borderChanged = m_strokeRule->applyTo(newStrokeHsl, baseFactor, m_lightness);
-
-                m_strokeRgb = newStrokeHsl.toColor();
-                m_strokeRgb = disabledFormOf(m_strokeRgb, standsOn, disabledAmount());
-                m_strokeRgb.setOpacity(borderChanged);
-            }
-            else if (!m_colorRules.stroke.changesNothing())
+            if (!m_colorRules.stroke.changesNothing())
             {
                 Hsl newStrokeHsl = surface;
                 // Which of the two surfaces stands higher is asked in the direction this control
@@ -302,8 +280,7 @@ namespace ClaFi
 
                 // Raised along this control's own contrast: a border has to be seen against the
                 // surface it is drawn on, which is the same thing the ink answers to.
-                float borderChanged = m_colorRules.stroke.applyTo(newStrokeHsl, baseFactor,
-                    m_lightness);
+                float borderChanged = m_colorRules.stroke.applyTo(newStrokeHsl, 1.0f, m_lightness);
 
                 m_strokeRgb = newStrokeHsl.toColor();
                 m_strokeRgb = disabledFormOf(m_strokeRgb, standsOn, disabledAmount());
@@ -455,6 +432,15 @@ namespace ClaFi
         m_textHslStated = true;
         m_textHueStated = 0.0f;
         m_lightness = bakedColors().lightness;
+    }
+
+    // Unlike strokeRgb(), unfaded while disabled - the surface handed in carries no fade either.
+    Color PaintEvent::strokeRgbOn(Hsl surface) const
+    {
+        const float changed = applyColorRules2(PaintChannel::Stroke, surface);
+        Color result = surface.toColor();
+        result.setOpacity(changed);
+        return result;
     }
 
     // The ring's colour says the control is the one the user is on, and which control that is
@@ -689,23 +675,16 @@ namespace ClaFi
 
     float PaintEvent::inputFactor(const BakedColorRule2& rule) const
     {
-        const PaintChannel channel = rule.output;
-        const bool onSurface = channel == PaintChannel::Surface or channel == PaintChannel::Stroke;
-        float restFactor = 1.0f;
-        if (channel == PaintChannel::Surface)
-            restFactor = m_ruleInputFactors.surfaceRest;
-        else if (channel == PaintChannel::Stroke)
-            restFactor = m_ruleInputFactors.strokeRest;
         if (rule.atRest())
-            return restFactor;
+            return 1.0f;
         RuleInputLevels levels = m_controlContext.ruleInputLevels;
-        if (onSurface)
+        const PaintChannel channel = rule.output;
+        if (channel == PaintChannel::Surface or channel == PaintChannel::Stroke)
         {
             const std::size_t selected = static_cast<std::size_t>(RuleInput::Selected);
-            levels[selected] = m_ruleInputFactors.selectedOnSurface;
+            levels[selected] = m_selectedOnSurface;
         }
-        const float whenFactor = rule.inputs.empty() ? restFactor : rule.inputs.levelIn(levels);
-        return whenFactor * rule.andInputs.levelIn(levels);
+        return rule.inputs.levelIn(levels) * rule.andInputs.levelIn(levels);
     }
 
     // The element's own list, then the window's, then the shared one. A form's root control is a
@@ -964,9 +943,9 @@ namespace ClaFi
         // child with no surface at rest can be lit entirely by its parent: an indicator set to
         // appear on hover is shown by the button's hover, never by its own, and reading its raw
         // factors would leave it stuck at rest size for as long as it was on screen.
-        if (!m_showSurfaceAtRest)
+        if (m_surfaceGrowInScale != 1.0f)
         {
-            float scale = std::lerp(themeMetrics().surfaceGrowInScale, 1.0f, m_surfaceVisibility);
+            float scale = std::lerp(m_surfaceGrowInScale, 1.0f, m_surfaceVisibility);
             // The focus ring is drawn with this same rect, and it marks the control's frame
             // rather than its surface, so it pulls the shape back out to full size. A current
             // item that is not hovered has next to no surface to grow in, and without this the

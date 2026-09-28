@@ -1,8 +1,6 @@
 module ClaFi.Controls.Grids;
 
 import ClaFi.Core.AppTheme_AnimationSlots;
-import ClaFi.Core.AppTheme_Baked;
-import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.Foundation;
@@ -145,16 +143,6 @@ namespace ClaFi::Controls::Grids
     float GridDescriptor::cellSelectedFactor(const Control& row, const Column& column) const
     {
         return m_selectChannel.cellFactor(row, column);
-    }
-
-    Color GridDescriptor::gridLineRgb(Hsl surface, const BakedColors& bakedColors,
-        Lightness lightness)
-    {
-        const float changed = bakedColors.rule(UiElement::GridLine).applyTo(surface, 1.0f,
-            lightness);
-        Color result = surface.toColor();
-        result.setOpacity(changed);
-        return result;
     }
 
     CornerRadii GridDescriptor::cornerRadiiOf(const PaintEvent& gridEvent)
