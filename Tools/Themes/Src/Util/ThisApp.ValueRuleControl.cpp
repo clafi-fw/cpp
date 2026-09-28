@@ -76,7 +76,8 @@ namespace ThisApp
                 << TextOp::PushBold
                 << glyph
                 << TextOp::PopBold
-                << PopColor{};
+                << PopColor{}
+                << L" ";
         }
 
         // A value as it would be typed over the face: its mark and its number.
@@ -442,10 +443,10 @@ namespace ThisApp
             IndicatorVisibility::Always,
             IndicatorStyle::Radio,
             ShowSelectionOnSurface::Yes,
-            ButtonViewMode::TopCenterIcon,
-            IconSize{ k_blobSize },
-            MinSize{ k_harmonyItemSize.x, k_harmonyItemSize.y },
-            MaxSize{ k_harmonyItemSize.x, k_maxFloat },
+            ButtonViewMode::TextLabel,
+            //IconSize{ k_blobSize },
+            //MinSize{ k_harmonyItemSize.x, k_harmonyItemSize.y },
+            //MaxSize{ k_harmonyItemSize.x, k_maxFloat },
             HorizontalTextAnchor::Center,
             VerticalTextAnchor::Center
         },
@@ -463,8 +464,11 @@ namespace ThisApp
     void OperationItem::getText(GetTextEvent& event) const
     {
         const float value = m_popup.owner().value().value(m_operation);
-        event.text << TextStyleId::SubBody
-            << std::format(L"{:.2f}", value)
+        
+        writeGlyph(event.text, operationGlyph(m_operation, value));
+
+        event.text << TextStyleId::Code
+            << std::format(L"{:.2f}", std::abs(value))
             << PopTextStyle{};
     }
 
