@@ -34,6 +34,13 @@ namespace ThisApp
             .rules = &ThemeRules::anyWindow
         };
 
+        constexpr SharedRules k_focusRing{
+            .name = L"Focus Ring",
+            .token = k_focusRingRulesToken,
+            .rules = &ThemeRules::focusRing,
+            .output = PaintChannel::Stroke
+        };
+
         // A branch of the tree: its name, and the elements under it in the order they are listed.
         struct ElementCategory
         {
@@ -73,11 +80,17 @@ namespace ThisApp
             UiElement::SelectedText
         };
 
+        constexpr std::array k_testSubjects{
+            UiElement::Testee,
+            UiElement::Bestee
+        };
+
         constexpr std::array k_elementCategories{
             ElementCategory{ L"Window roots", k_windowRoots },
             ElementCategory{ L"Surfaces", k_surfaces },
             ElementCategory{ L"Controls", k_controls },
-            ElementCategory{ L"Focus & Selection", k_focusAndSelection }
+            ElementCategory{ L"Focus & Selection", k_focusAndSelection },
+            ElementCategory{ L"Test subjects", k_testSubjects }
         };
     }
 
@@ -110,12 +123,16 @@ namespace ThisApp
             const ColorRules& defaults = entry.element
                 ? m_defaultRules.of(*entry.element)
                 : m_defaultRules.*entry.shared->rules;
+            const OptionalPaintChannel output = entry.shared
+                ? entry.shared->output
+                : OptionalPaintChannel{};
             const OptionalUiElement element = entry.element;
             OnGetListRuleBase listRuleBase = [ruleBase, element](const ColorRule& rule,
                 const RuleChannel channel) {
                 return ruleBase(element, rule, channel);
             };
-            entry.rules->bind(list, defaults, colors, std::move(listRuleBase), onRulesChanged);
+            entry.rules->bind(list, defaults, output, colors, std::move(listRuleBase),
+                onRulesChanged);
         }
     }
 
@@ -131,6 +148,7 @@ namespace ThisApp
         addEntry(addRootItem(), TreeEntry{ .page = &m_palettePage });
         addEntry(addRootItem(), TreeEntry{ .shared = &k_anyElement });
         addEntry(addRootItem(), TreeEntry{ .shared = &k_anyWindow });
+        addEntry(addRootItem(), TreeEntry{ .shared = &k_focusRing });
         // Sets the theme-wide pages apart, so they read as peers of the categories.
         m_tree.add<Divider>(Thickness::Heavy, Padding{ 4.0f, 6.0f });
         for (const ElementCategory& category : k_elementCategories)

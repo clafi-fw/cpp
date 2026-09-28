@@ -578,9 +578,6 @@ namespace ClaFi
         // to realign stale layout
         wnd_beforePaint();
 
-        // Whatever is held down, the pointer moving is the mouse driving.
-        Input::setDevice(m_appContext.animator(), InputDevice::Mouse);
-
         if (allowDrag && Input::isMouseDown() && m_downItem)
         {
             DragEvent dragEvent{ *m_downItem, *this, m_mouseDownPos, m_mousePos, m_mouseDownStamp };
@@ -707,12 +704,22 @@ namespace ClaFi
         return searchResult.hitZone;
     }
 
+    // THE FIRST MOVE SINCE THE POINTER CAME IN IS AN ENTRY. Win32 sends a window that appears
+    // under a still pointer a move all the same, and a Wayland enter arrives as one, so that move
+    // says where the pointer is and not that it moved: it hit-tests, and the mouse is left as it
+    // is. A dropdown a key opened under the pointer keeps the keyboard on. Every move after it
+    // is the mouse driving, whatever is held down.
     void FormBase::wnd_mouseMove(PointInForm pt)
     {
-        bool posChanged = m_mousePos != pt;
+        const bool entering = !m_pointerInside;
+        m_pointerInside = true;
+        const bool posChanged = m_mousePos != pt;
         m_mousePos = pt;
-        if (posChanged)
-            mouseTick();
+        if (!posChanged and !entering)
+            return;
+        if (!entering)
+            Input::mouseActed(m_appContext);
+        mouseTick();
     }
 
     void FormBase::wnd_ncMouseDown(PointInForm pt, InputStamp stamp)
@@ -751,6 +758,7 @@ namespace ClaFi
 
         Tooltip::handleUserInput();
 
+        Input::mouseActed(m_appContext);
         mouseTick(pt);
         if (Control* firstHotItem = Input::hoveredControl())
         {
@@ -791,6 +799,7 @@ namespace ClaFi
         bool scrollIntoView = true;
         Input::setMouseUp(*this, m_downItem, handled, scrollIntoView);
 
+        Input::mouseActed(m_appContext);
         mouseTick(pt);
 
         if (SearchControlResult searhResult = controlAt(m_mousePos))
@@ -876,6 +885,7 @@ namespace ClaFi
 
     void FormBase::wnd_mouseLeave()
     {
+        m_pointerInside = false;
         if (Input::hoveredControl() && &Input::hoveredControl()->form() == this)
             Input::setHoveredControl(nullptr);
     }
@@ -884,7 +894,7 @@ namespace ClaFi
     {
         if (!pt)
         {
-            Input::setDevice(m_appContext.animator(), InputDevice::Keyboard);
+            Input::keyActed(m_appContext);
             if (m_activePopup)
             {
                 m_activePopup->wnd_contextMenu(nullptr, stamp);
@@ -904,16 +914,14 @@ namespace ClaFi
             // The stamp goes with the position: the press that raised this menu where the
             // platform names one, and nothing where it does not - never a press this one is not.
             m_mouseDownStamp = stamp;
+            Input::mouseActed(m_appContext);
             mouseTick(m_mouseDownPos);
         }
         update();
 
         // THE POINTER NAMES THE CONTROL A RIGHT-CLICK IS ABOUT; THE KEYBOARD NAMES THE FOCUSED
-        // ONE. Reading the hover for both worked only by way of Input::setDevice carrying the
-        // hover onto the focused control - and setDevice does that only when the device CHANGES,
-        // so a second press with the keyboard already current asked whichever control the pointer
-        // was last left over. The focus is read here instead, and a container answering for an
-        // item hands the item over.
+        // ONE. The hover is where the pointer is and nothing else, so a menu the keyboard raised
+        // reads the focus, and a container answering for an item hands the item over.
         Control* it;
         if (pt)
         {
@@ -967,6 +975,7 @@ namespace ClaFi
     void FormBase::mouseWheelOrHwheel(PointInForm, const float wheelDelta, bool h)
     {
         Tooltip::handleUserInput();
+        Input::mouseActed(m_appContext);
         Control* control = Input::hoveredControl();
         if (!control)
             return;
@@ -987,6 +996,7 @@ namespace ClaFi
     void FormBase::wnd_sideButton(PointInForm, const SideButton button, const InputStamp stamp)
     {
         Tooltip::handleUserInput();
+        Input::mouseActed(m_appContext);
         Control* control = Input::hoveredControl();
         if (!control)
             return;
@@ -1048,27 +1058,27 @@ namespace ClaFi
             m_isKeyboardClick = true;
             break;
         }
-        // Every key, modifiers included. Reaching for Ctrl or Shift is reaching for the keyboard
-        // as much as reaching for a letter is, and the focus has to be visible by the time the key
-        // that acts on it arrives - which for a modifier is the whole point of pressing it first.
+        // Every key turns the keyboard on, modifiers included. Reaching for Ctrl or Shift is
+        // reaching for the keyboard as much as reaching for a letter is, and the focus has to be
+        // visible by the time the key that acts on it arrives - which for a modifier is the whole
+        // point of pressing it first.
         //
-        // A key still down is not a reach for anything: the system repeats a held modifier many
-        // times a second, and each repeat would take the device back from a pointer that is
-        // moving, leaving the hover to swing between the focused item and the item under the
-        // pointer for as long as the two are held together.
+        // A key still down is not a reach for anything: the system repeats a held key many times
+        // a second, and each repeat would turn the keyboard back on under a pointer that is
+        // moving, swinging what the two controllers light between the focused item and the item
+        // under the pointer for as long as the two are held together.
         //
-        // A modifier does not carry the hover with it either. Only navigation has a reason to
-        // move the hover, and a modifier names no destination - it qualifies the key that
-        // follows, and that key moves the hover when it arrives.
+        // A modifier leaves the mouse on. It names no destination - it qualifies the click or the
+        // key that follows.
         if (!event.isRepeat)
         {
             const bool isBareModifier = event.key == Keys::Shift
                 || event.key == Keys::Ctrl
                 || event.key == Keys::Alt;
-            Input::setDevice(
-                m_appContext.animator(),
-                InputDevice::Keyboard,
-                isBareModifier ? FocusTakesHover::No : FocusTakesHover::Yes);
+            if (isBareModifier)
+                Input::modifierActed(m_appContext);
+            else
+                Input::keyActed(m_appContext);
         }
 
         if (!event.handled)
@@ -1162,8 +1172,8 @@ namespace ClaFi
     {
         // Cleared BEFORE the forward. A key that opened a popup on its way down has its way up
         // forwarded to that popup, and the flag would otherwise stay set here for as long as the
-        // popup is open - Control::isPressed reads it, so every control on this form would read
-        // pressed. Enter starting an in-place edit is exactly that key.
+        // popup is open - Control::isPressed reads it, so the focused item would read pressed.
+        // Enter starting an in-place edit is exactly that key.
         m_isKeyboardClick = false;
         if (m_activePopup)
         {
@@ -1471,6 +1481,9 @@ namespace ClaFi
         m_scaleSwitchConnection{
             appContext.events().connect<ScaleSwitchEvent>(this, &FormBase::scaleSwitched)
         },
+        m_inputSwitchConnection{
+            appContext.events().connect<InputSwitchEvent>(this, &FormBase::inputSwitched)
+        },
         m_popupTargetForm{ ownerForm },
         m_popupTarget{ popupTarget },
         m_placement{ placement },
@@ -1490,7 +1503,7 @@ namespace ClaFi
 
         // A window standing on the pointer hangs off the point itself; one dropped from a control
         // stands clear of what it dropped from.
-        const bool onPointer = Input::device() == InputDevice::Mouse &&
+        const bool onPointer = Input::mouse().active() &&
             (m_placement == FormPlacement::ContextMenu || m_placement == FormPlacement::Mouse);
 
         WindowPlacement request{};
@@ -1916,6 +1929,14 @@ namespace ClaFi
         m_ownScaler.setAppPercent(m_appContext.scalePercent());
     }
 
+    // The whole window, since the form cannot know which controls read the factors. See Context
+    void FormBase::inputSwitched(InputSwitchEvent&)
+    {
+        if (!visible())
+            return;
+        invalidate();
+    }
+
     // A theme change is one set of colours coming over another rather than replacing it, and the
     // coming over is made in the colours themselves: every control resolves its own once per theme
     // still on the screen and mixes what each comes to - see ControlPaintContext. So the tree is
@@ -1987,7 +2008,7 @@ namespace ClaFi
         // the pointer is, held clear of the arrow by what the cursor takes below its hot spot so
         // the first line is not underneath it. Read here rather than by the placement, which runs
         // again every time the target moves, by which time the pointer has gone elsewhere.
-        if (Input::device() == InputDevice::Mouse &&
+        if (Input::mouse().active() &&
             (m_placement == FormPlacement::ContextMenu || m_placement == FormPlacement::Mouse))
         {
             FloatPoint pt = m_popupTargetForm->m_mousePos;

@@ -330,7 +330,7 @@ namespace ClaFi::Controls
 
     void TextBox::setCaretPosFromMouse()
     {
-        if (Input::device() == InputDevice::Mouse)
+        if (Input::mouse().active())
         {
             PointInForm mousePos = form().mouseDownPos();
             const FormContext& formContext = this->formContext();
@@ -1011,7 +1011,7 @@ namespace ClaFi::Controls
     bool TextBox::mousePosInSelection() const
     {
         // A keyboard-raised menu has no point to test, and an empty selection contains nothing.
-        if (Input::device() != InputDevice::Mouse || !m_editProps.selRange.length)
+        if (!Input::mouse().active() || !m_editProps.selRange.length)
             return false;
 
         const std::wstring& plainText = text().plainText();

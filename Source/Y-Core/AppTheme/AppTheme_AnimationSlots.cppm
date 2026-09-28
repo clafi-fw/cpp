@@ -54,9 +54,15 @@ namespace ClaFi::AnimationSlots
         .tag = static_cast<AnimationTag>(VisualStateIndex::Current)
     };
 
-    export constexpr AnimationSlot inputDevice{
+    export constexpr AnimationSlot keyboardActive{
         .duration{.rise = 90ms, .fall = 600ms },
         .easingFactor{}
+    };
+
+    // Mirrors keyboardActive, so a switch between the mouse and the keyboard is one crossfade.
+    export constexpr AnimationSlot mouseActive{
+        .duration{.rise = 600ms, .fall = 90ms },
+        .easingFactor{ EasingFactor::EaseInOut, EasingFactor::EaseOut }
     };
 
     export constexpr AnimationSlot formAlpha{

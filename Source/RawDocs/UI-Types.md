@@ -85,12 +85,6 @@ same idea as `Focused`: a multi-select view keeps a current item to anchor its S
 while the items it selected are the ones drawn `Selected`, and it keeps that item while the
 mouse rather than the keyboard drives the input.
 
-## InputDevice
-
-Which device the user last acted with. `Mouse` is zero because the value doubles as the
-animation target that fades the focus ring in as the keyboard takes over - see
-`Input::setDevice`.
-
 ## HorizontalTextAnchor
 
 Where the measured text block sits horizontally inside its designated zone. It carries the box

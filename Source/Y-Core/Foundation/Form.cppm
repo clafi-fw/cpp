@@ -324,6 +324,7 @@ namespace ClaFi
         [[nodiscard]] InputStamp mouseDownStamp() const { return m_mouseDownStamp; }
         void setMouseDownPos(PointInForm value) { m_mouseDownPos = value; }
         void offsetMouseDownPos(FloatPoint value) { m_mouseDownPos += value; }
+        // Hit-tests the pointer where the form last saw it, which is no act of the mouse's.
         void mouseTick(bool allowDrag = true);
         void mouseTick(PointInForm, bool allowDrag = true);
 
@@ -425,6 +426,7 @@ namespace ClaFi
         void themeSwitched(ThemeSwitchEvent&);
         void backendSwitched(BackendSwitchEvent&);
         void scaleSwitched(ScaleSwitchEvent&);
+        void inputSwitched(InputSwitchEvent&);
         // The control tree, painted in whatever the application is wearing - over the image it is
         // crossing from while it is between two themes. See the definition.
         void paintContent(const FloatRect& dirtyRect, const Graphics::PixelPath* contentClip);
@@ -537,6 +539,7 @@ namespace ClaFi
         ScopedEventConnection m_themeSwitchConnection;
         ScopedEventConnection m_backendSwitchConnection;
         ScopedEventConnection m_scaleSwitchConnection;
+        ScopedEventConnection m_inputSwitchConnection;
         // The application has moved to another backend and this form has not taken it yet.
         bool m_backendPending{ false };
 
@@ -556,6 +559,7 @@ namespace ClaFi
         bool m_layoutInProgress{ true };
         //
         PointInForm m_mousePos{ k_maxFloat, k_maxFloat };
+        bool m_pointerInside{ false }; // a move has placed the pointer here since it last left
         PointInForm m_mouseDownPos{ k_maxFloat, k_maxFloat };
         // What the display server called the press the pointer is still down from. A drag is
         // weighed against the press that began it and never against the move that carries it, so

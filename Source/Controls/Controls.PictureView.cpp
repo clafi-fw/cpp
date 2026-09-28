@@ -236,7 +236,7 @@ namespace ClaFi::Controls
     // themselves are the application's: the view holds none of its own.
     void PictureView::nestedContextPopup(ContextPopupEvent& event)
     {
-        if (Input::device() == InputDevice::Mouse)
+        if (Input::mouse().active())
         {
             if (const std::optional<IntPoint> pixel = pixelAt(form().mouseDownPos()))
                 setSelection(pixel);

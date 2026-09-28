@@ -272,14 +272,51 @@ nearer the second one is.
 ## Input
 
 The input state the whole framework reads: which control holds the focus, which one the
-pointer is over and in which of its zones, whether a mouse button is down, and which device
-the user last acted with. There is one of each per application rather than per form - the
+pointer is over and in which of its zones, whether a mouse button is down, and which of the
+two input controllers are on. There is one of each per application rather than per form - the
 focus leaves a control when it arrives somewhere else, and where that is may be another
 window - which is why they are static here instead of being members of FormBase.
 
 A control asks about ITSELF through Control::isFocused(), isHovered() and isPressed()
 rather than comparing pointers against these. A container answers for the item it holds,
 and only those helpers know it.
+
+## InputController
+
+The mouse or the keyboard, as the rest of the framework sees it: whether it is on, and a factor
+that follows that through its own animation slot. The two are switched by what the user does:
+
+- Anything the pointer does - a move, a press, a release - turns the mouse on and the keyboard
+  off. The first move a form hears since the pointer came in is not one of them: Win32 sends a
+  window that appears under a still pointer a move, and a Wayland enter arrives as one, so that
+  move only hit-tests - see FormBase::wnd_mouseMove.
+- A key turns the keyboard on and the mouse off.
+- A bare modifier - Shift, Ctrl, Alt - turns the keyboard on and leaves the mouse as it is. It
+  qualifies whatever comes next, from either device, and the pointer is still where the user
+  left it.
+
+So both are on only after a modifier, until the next pointer event or key, and the one state
+that cannot occur is both off. A held key's repeats switch nothing.
+
+`!Input::mouse().active()` is how code asks whether a key did this. A click, or a menu the
+pointer raised, always finds the mouse on. A key other than a modifier finds it off, unless the
+pointer moved while that key was held down and repeating.
+
+THE HOVER IS WHERE THE POINTER IS, and only the form's hit-test moves it. A control reached by a
+key reads through its own focus and the keyboard's factor instead: the default rules gate each
+look the pointer lights on the mouse and repeat it "when focused, and keyboard", so with one
+controller on, one item is lit. `FormBase::mouseTick` is the hit-test, and it is no act of the
+mouse's - the platform handlers turn the mouse on, so a hit-test after a scroll or an edit leaves
+the keyboard as it is.
+
+The factors are what paint reads, through the colour rules: `RuleInput::Keyboard` and
+`RuleInput::Mouse`. The focus ring's default rules are built on them - see Focus ring in AppTheme.
+The two slots mirror each other, so a switch from one device to the other is one crossfade, and
+each step of either fade repaints every window - see InputSwitchEvent in Context.
+
+The fades run on the application's animator, reached through the AppContext the form reporting
+the input hands in, so Input owns nothing that has to be released. Each fade is keyed on no
+control, so its slot is what tells it from the other one.
 
 ## ContextMessage
 
@@ -395,7 +432,8 @@ What reads it:
   `andInputs`. `Focused` is the control's own focus alone. The band's focus rule reads "when
   focused and window focused", so a selection in a window without the focus shows only the
   band's resting rules.
-- The focus ring's live share. The ring stays, in the inactive grey.
+- The focus ring's default rules: the ring is drawn in the accent only while its window has the
+  focus, and stays in the strongest ink otherwise.
 - `TextBox`'s caret, drawn only while the factor is 1.
 
 `FormFocusChangeEvent` marks the moment of each change; the factor is what a paint reads.

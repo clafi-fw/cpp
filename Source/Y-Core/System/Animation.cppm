@@ -298,9 +298,9 @@ namespace ClaFi
 
     // Whether anything is still running, which is not the same question as whether any CONTROL
     // is. An animation that belongs to the application rather than to one control carries no
-    // control at all - the input device fade is one - and reading a null control as finished ends
-    // the walk one tick in, leaving that animation's value frozen wherever the tick left it.
-    // Released is the only thing that means finished, and vacant() is what says released.
+    // control at all - each input controller's fade is one - and reading a null control as
+    // finished ends the walk one tick in, leaving that animation's value frozen wherever the tick
+    // left it. Released is the only thing that means finished, and vacant() is what says released.
     bool AnimationController::isActive()
     {
         for (const Animation& it : m_animations)

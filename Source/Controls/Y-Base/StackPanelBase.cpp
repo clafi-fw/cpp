@@ -143,7 +143,7 @@ namespace ClaFi::Controls
 
     void StackPanelBase::nestedClick(ClickEvent& event)
     {
-        //if (Input::device() == InputDevice::Keyboard)
+        //if (!Input::mouse().active())
         {
             // SetFocus handles this on mouse clicks
             bool handled{};
@@ -158,7 +158,7 @@ namespace ClaFi::Controls
     void StackPanelBase::nestedControlFocusing(FocusEvent& event)
     {
         const bool alreadyPicked = event.control == currentItem()
-            && (Input::device() != InputDevice::Mouse || isItemSelected(*event.control));
+            && (!Input::mouse().active() || isItemSelected(*event.control));
         bool handled = (event.control == this || alreadyPicked);
         if (!handled)
         {
@@ -231,7 +231,7 @@ namespace ClaFi::Controls
     // never reaches here - adjustFocus answers it before asking.
     bool StackPanelBase::appliesGesture(const Control& item, KeyModifiers modifiers) const
     {
-        if (Input::device() != InputDevice::Mouse)
+        if (!Input::mouse().active())
             return modifiers.shift || !modifiers.ctrl;
 
         if (modifiers.ctrl || modifiers.shift)

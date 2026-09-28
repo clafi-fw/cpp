@@ -184,6 +184,8 @@ namespace ClaFi
         Spot,
         ScrollButton,
         ScrollThumb,
+        Testee,     // a test subject nothing in the framework wears
+        Bestee,     // the second test subject nothing in the framework wears
         Count
     };
 
@@ -201,13 +203,15 @@ namespace ClaFi
         TextHovered,
         Current,
         WindowFocused,  // the focus of the form the control stands in
+        Keyboard,       // how far the keyboard drives the input, the same on every control
+        Mouse,          // how far the mouse drives the input, the same on every control
         Count
     };
 
     // How far each input stands on one control, in RuleInput order.
     export using RuleInputLevels = std::array<float, static_cast<std::size_t>(RuleInput::Count)>;
 
-    // The inputs a rule reads, joined as "or". An empty set stands at 1 and holds nothing back.
+    // A set of the inputs a rule reads. An empty set stands at 1 and holds nothing back.
     export class RuleInputs
     {
     public:
@@ -227,7 +231,9 @@ namespace ClaFi
         void add(RuleInput input) { m_bits |= bitOf(input); }
         void remove(RuleInput input) { m_bits &= ~bitOf(input); }
         // How far the set stands at these levels: its inputs joined as "or", and 1 at rest.
-        [[nodiscard]] float levelIn(const RuleInputLevels&) const;
+        [[nodiscard]] float anyLevelIn(const RuleInputLevels&) const;
+        // How far the set stands at these levels: its inputs joined as "and", and 1 at rest.
+        [[nodiscard]] float allLevelIn(const RuleInputLevels&) const;
         [[nodiscard]] bool operator==(const RuleInputs&) const = default;
     private:
         [[nodiscard]] static constexpr std::uint32_t bitOf(RuleInput input)
@@ -248,6 +254,8 @@ namespace ClaFi
         Count
     };
 
+    export using OptionalPaintChannel = std::optional<PaintChannel>;
+
     // A colour rule: it reads its inputs and writes to its output.
     export struct ColorRule
     {
@@ -266,6 +274,7 @@ namespace ClaFi
     {
         ColorRules shared{};
         ColorRules anyWindow{}; // what every form's root control takes, whatever it wears
+        ColorRules focusRing{}; // what an interactive control's own stroke takes. See AppTheme
         std::array<ColorRules, k_uiElementCount> elements{}; // indexed by UiElement
         [[nodiscard]] ColorRules& of(UiElement element)
         {
@@ -709,7 +718,7 @@ namespace ClaFi
 
     // RuleInputs
 
-    float RuleInputs::levelIn(const RuleInputLevels& levels) const
+    float RuleInputs::anyLevelIn(const RuleInputLevels& levels) const
     {
         if (empty())
             return 1.0f;
@@ -723,11 +732,65 @@ namespace ClaFi
         return result;
     }
 
+    float RuleInputs::allLevelIn(const RuleInputLevels& levels) const
+    {
+        float result = 1.0f;
+        for (std::size_t i = 0; i != levels.size(); ++i)
+        {
+            if (has(static_cast<RuleInput>(i)))
+                result *= levels[i];
+        }
+        return result;
+    }
+
     // ThemeRules
 
     ThemeRules defaultRules()
     {
         ThemeRules result{};
+        // The focus ring - the strongest ink wherever there is one, the accent while the user is
+        // on it. A container's current item wears it under the mouse as well: it marks where a
+        // Shift range grows from.
+        result.focusRing = {
+            ColorRule{
+                .inputs{ RuleInput::Focused },
+                .andInputs{ RuleInput::Keyboard },
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleOp::Set, 0.0f },             // S
+                    { ColorRuleOp::Set, 1.0f }              // E
+                }
+            },
+            ColorRule{
+                .inputs{ RuleInput::Current },
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleOp::Set, 0.0f },             // S
+                    { ColorRuleOp::Set, 1.0f }              // E
+                }
+            },
+            ColorRule{
+                .inputs{ RuleInput::Hovered },
+                .andInputs{ RuleInput::Mouse, RuleInput::Current, RuleInput::WindowFocused },
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Set, 1.0f },             // S
+                    { ColorRuleOp::Set, 0.544542f }         // E
+                }
+            },
+            ColorRule{
+                .inputs{ RuleInput::Focused },
+                .andInputs{ RuleInput::Keyboard, RuleInput::WindowFocused },
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Set, 1.0f },             // S
+                    { ColorRuleOp::Set, 0.544542f }         // E
+                }
+            }
+        };
+
         // Dialog - a window root: its surface named outright, then its stroke and window shadow.
         result.of(UiElement::Dialog) = {
             ColorRule{
@@ -968,7 +1031,8 @@ namespace ClaFi
             }
         };
 
-        // Grid row - its surface selected and hovered, then its stroke, the lines between cells.
+        // Grid row - its surface selected, under the pointer and reached by a key, then its stroke,
+        // the lines between cells.
         result.of(UiElement::GridRow) = {
             ColorRule{
                 .inputs{ RuleInput::Selected },
@@ -980,6 +1044,15 @@ namespace ClaFi
             },
             ColorRule{
                 .inputs{ RuleInput::Hovered },
+                .andInputs{ RuleInput::Mouse },
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Offset, 0.080827f }      // E
+                }
+            },
+            ColorRule{
+                .inputs{ RuleInput::Focused },
+                .andInputs{ RuleInput::Keyboard },
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Offset, 0.080827f }      // E
@@ -995,7 +1068,8 @@ namespace ClaFi
             }
         };
 
-        // Button - its surface at rest and in each state, then its stroke.
+        // Button - its surface at rest and in each state, the pointer's look gated on the mouse
+        // and repeated for a key, then its stroke.
         result.of(UiElement::Button) = {
             ColorRule{
                 .effect{
@@ -1013,6 +1087,15 @@ namespace ClaFi
             },
             ColorRule{
                 .inputs{ RuleInput::Hovered },
+                .andInputs{ RuleInput::Mouse },
+                .effect{
+                    { ColorRuleOp::Offset, 0.085609f },     // S
+                    { ColorRuleOp::Offset, 0.126926f }      // E
+                }
+            },
+            ColorRule{
+                .inputs{ RuleInput::Focused },
+                .andInputs{ RuleInput::Keyboard },
                 .effect{
                     { ColorRuleOp::Offset, 0.085609f },     // S
                     { ColorRuleOp::Offset, 0.126926f }      // E
@@ -1034,8 +1117,8 @@ namespace ClaFi
             }
         };
 
-        // Tool button - its surface selected, hovered and pressed, then its stroke as that surface
-        // arrives. Nothing at rest.
+        // Tool button - its surface selected, under the pointer, reached by a key and pressed,
+        // then its stroke as that surface arrives. Nothing at rest.
         result.of(UiElement::ToolButton) = {
             ColorRule{
                 .inputs{ RuleInput::Selected },
@@ -1047,6 +1130,15 @@ namespace ClaFi
             },
             ColorRule{
                 .inputs{ RuleInput::Hovered },
+                .andInputs{ RuleInput::Mouse },
+                .effect{
+                    { ColorRuleOp::Offset, 0.085609f },     // S
+                    { ColorRuleOp::Offset, 0.126926f }      // E
+                }
+            },
+            ColorRule{
+                .inputs{ RuleInput::Focused },
+                .andInputs{ RuleInput::Keyboard },
                 .effect{
                     { ColorRuleOp::Offset, 0.085609f },     // S
                     { ColorRuleOp::Offset, 0.126926f }      // E

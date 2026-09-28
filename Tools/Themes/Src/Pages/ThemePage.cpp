@@ -400,9 +400,9 @@ namespace ThisApp
         if (m_showingAnchor)
             return;
 
-        const Browser::HistoryEntry entry = Input::device() == InputDevice::Keyboard
-            ? Browser::HistoryEntry::Replace
-            : Browser::HistoryEntry::Push;
+        const Browser::HistoryEntry entry = Input::mouse().active()
+            ? Browser::HistoryEntry::Push
+            : Browser::HistoryEntry::Replace;
         tab().browserControl().goTo(tab().url().withAnchor(m_designPage.pickedPage()), entry);
     }
 

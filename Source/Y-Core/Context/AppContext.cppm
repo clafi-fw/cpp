@@ -57,6 +57,11 @@ namespace ClaFi
     {
     };
 
+    // The input controllers' factors have moved, and every window repaints. See Context
+    export struct InputSwitchEvent : public Event
+    {
+    };
+
     export class AppContext
     {
     public:

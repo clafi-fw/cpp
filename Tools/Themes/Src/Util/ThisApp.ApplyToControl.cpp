@@ -38,7 +38,9 @@ namespace ThisApp
                 L"disabled",
                 L"text hovered",
                 L"current",
-                L"window focused"
+                L"window focused",
+                L"keyboard",
+                L"mouse"
             };
 
         // A word framing a rule rather than naming its parts, gray and small.
@@ -51,8 +53,9 @@ namespace ThisApp
                 << PopColor{};
         }
 
-        // A set's inputs joined as "or", in brackets when asked and there is more than one.
-        void writeInputs(Text& text, const RuleInputs inputs, const bool bracketed)
+        // A set's inputs joined by a word, in brackets when asked and there is more than one.
+        void writeInputs(Text& text, const RuleInputs inputs, const std::wstring_view joiner,
+            const bool bracketed)
         {
             Text result{};
             std::size_t count = 0ull;
@@ -61,7 +64,7 @@ namespace ThisApp
                 if (!inputs.has(static_cast<RuleInput>(i)))
                     continue;
                 if (count != 0ull)
-                    writeFramingWord(result, L" or ");
+                    writeFramingWord(result, joiner);
                 result << k_inputLabels[i];
                 ++count;
             }
@@ -71,18 +74,18 @@ namespace ThisApp
                 text << result;
         }
 
-        // When the rule applies: "at rest", "a or b", "(a or b) and c".
+        // When the rule applies: "at rest", "a or b", "(a or b) and c and d".
         void writeCondition(Text& text, const ColorRule& rule)
         {
             const bool joined = !rule.andInputs.empty();
             if (rule.inputs.empty())
                 writeFramingWord(text, L"at rest");
             else
-                writeInputs(text, rule.inputs, joined);
+                writeInputs(text, rule.inputs, L" or ", joined);
             if (joined)
             {
                 writeFramingWord(text, L" and ");
-                writeInputs(text, rule.andInputs, joined);
+                writeInputs(text, rule.andInputs, L" and ", false);
             }
         }
 
@@ -143,10 +146,12 @@ namespace ThisApp
 
     // ApplyToControl
 
-    void ApplyToControl::bind(ColorRules& rules, const std::size_t index, OnRuleChanged onChanged)
+    void ApplyToControl::bind(ColorRules& rules, const std::size_t index,
+        const OptionalPaintChannel onlyOutput, OnRuleChanged onChanged)
     {
         m_rules = &rules;
         m_index = index;
+        m_onlyOutput = onlyOutput;
         m_onChanged = std::move(onChanged);
         invalidate();
     }
@@ -154,6 +159,11 @@ namespace ThisApp
     PaintChannel ApplyToControl::output() const
     {
         return rule().output;
+    }
+
+    bool ApplyToControl::canWrite(const PaintChannel channel) const
+    {
+        return !m_onlyOutput or *m_onlyOutput == channel;
     }
 
     bool ApplyToControl::reads(const RuleClause clause, const RuleInput input) const
@@ -309,6 +319,7 @@ namespace ThisApp
         if (&event.control != this)
             return;
         event.state.selected = m_popup.owner().output() == m_channel;
+        event.state.enabled = m_popup.owner().canWrite(m_channel);
         event.stopPropagation();
     }
 

@@ -382,25 +382,15 @@ namespace ClaFi::Controls::Grids
 
         // THE POINTER NEVER MOVED AND THE HOVER WENT ANYWAY. The editor is a window of its own
         // over the cell, so this form is told the mouse left it as the editor opens - and nothing
-        // tells it otherwise when the editor goes, because a still pointer raises no move. The
-        // cell the user is on would be left reading as though nothing were over it while the
-        // pointer sits right on top of it.
+        // tells it otherwise when the editor goes, because a still pointer raises no move. So the
+        // form hit-tests the pointer where it last saw it, which puts the hover back on whatever
+        // the pointer is on.
         //
-        // ONLY FOR AN ENDING THE KEYBOARD DROVE. An edit ended with the mouse ends WHERE THE
-        // POINTER IS, which is somewhere the user has just chosen - putting the hover back on the
-        // cell they were editing would be taking it away from them. The device answers this and
-        // the EditResult does not: Escape is as much a keyboard ending as Return, and the cell
-        // the user backed out of is still the cell they are on.
-        //
-        // The row is asked for again rather than trusted: the edit ran a loop of its own, and a
-        // row deleted underneath it took the selection with it - see the sink above.
-        if (Input::device() == InputDevice::Keyboard && m_descriptor.selectedRow() == row)
-        {
-            Input::setHoveredControl(row);
-            // No hint. Nothing was pointed at, so there is nothing for a tooltip to have been
-            // aimed at either - the same reason the keyboard's own cell entry passes false.
-            row->setHoveredColumn(column, false);
-        }
+        // ONLY FOR AN ENDING THE KEYBOARD DROVE. An edit ended with the mouse ends with a pointer
+        // event of its own, which has hit-tested where the pointer is. The mouse controller
+        // answers this and the EditResult does not: Escape is as much a keyboard ending as Return.
+        if (!Input::mouse().active())
+            form().mouseTick(false);
         return true;
     }
 

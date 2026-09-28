@@ -221,12 +221,6 @@ namespace ClaFi
     {
     }
 
-    // Which device the user last acted with. See UI-Types
-    export enum class InputDevice {
-        Mouse = 0,
-        Keyboard
-    };
-
     // A side button of the mouse, named by what the system takes it to mean.
     export enum class SideButton
     {

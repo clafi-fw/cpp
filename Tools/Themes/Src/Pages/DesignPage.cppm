@@ -34,6 +34,7 @@ namespace ThisApp
         std::wstring_view name{};
         std::wstring_view token{};
         ColorRules ThemeRules::* rules{ nullptr };
+        OptionalPaintChannel output{}; // the one channel the list's rules write, any if empty
     };
 
     // A theme's design, one element page at a time.

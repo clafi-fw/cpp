@@ -82,6 +82,7 @@ namespace ClaFi
     public:
         BakedColorRules shared{};
         BakedColorRules anyWindow{};
+        BakedColorRules focusRing{};
         std::array<BakedColorRules, k_uiElementCount> elements{}; // indexed by UiElement
     };
 
@@ -282,7 +283,7 @@ namespace ClaFi
 
     float BakedColorRule::levelIn(const RuleInputLevels& levels) const
     {
-        return inputs.levelIn(levels) * andInputs.levelIn(levels);
+        return inputs.anyLevelIn(levels) * andInputs.allLevelIn(levels);
     }
 
     // bake
@@ -370,6 +371,7 @@ namespace ClaFi
         BakedRules result{};
         result.shared = bake(rules.shared, themeColors);
         result.anyWindow = bake(rules.anyWindow, themeColors);
+        result.focusRing = bake(rules.focusRing, themeColors);
         for (std::size_t i = 0; i < result.elements.size(); ++i)
             result.elements[i] = bake(rules.elements[i], themeColors);
         return result;
@@ -473,6 +475,7 @@ namespace ClaFi
         BakedRules result{};
         result.shared = blend(from.shared, to.shared, factor);
         result.anyWindow = blend(from.anyWindow, to.anyWindow, factor);
+        result.focusRing = blend(from.focusRing, to.focusRing, factor);
         for (std::size_t i = 0; i < result.elements.size(); ++i)
             result.elements[i] = blend(from.elements[i], to.elements[i], factor);
         return result;

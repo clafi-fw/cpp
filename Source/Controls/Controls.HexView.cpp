@@ -274,7 +274,7 @@ namespace ClaFi::Controls
         // press is aimed at the range the menu's Copy acts on, and moving the caret there would
         // collapse that range before the menu is even up. A menu the keyboard raised moves
         // nothing: the caret already stands where the user put it.
-        if (Input::device() == InputDevice::Mouse && !pointerInSelection())
+        if (Input::mouse().active() && !pointerInSelection())
             takeHit(pointInControl(form().mouseDownPos()), false);
 
         // The application gets first refusal, and a handler that stops the event has replaced

@@ -26,9 +26,10 @@ namespace ThisApp
         template<typename... Args>
         explicit ApplyToControl(const CreateParams&, Args&&...);
     public:
-        // Takes the rule by its place, which a growing list keeps, and what to call after a change.
-        void bind(ColorRules&, std::size_t index, OnRuleChanged);
+        // Takes the rule by its place, the list's one channel if it has one, and what to call.
+        void bind(ColorRules&, std::size_t index, OptionalPaintChannel onlyOutput, OnRuleChanged);
         [[nodiscard]] PaintChannel output() const;
+        [[nodiscard]] bool canWrite(PaintChannel) const;
         [[nodiscard]] bool reads(RuleClause, RuleInput) const;
         [[nodiscard]] bool readsAny(RuleClause) const;
         void setOutput(PaintChannel);
@@ -44,6 +45,7 @@ namespace ThisApp
     private:
         ColorRules* m_rules{}; // null until bound
         std::size_t m_index{};
+        OptionalPaintChannel m_onlyOutput{}; // the one channel the list's rules write, any if empty
         OnRuleChanged m_onChanged{};
     };
 

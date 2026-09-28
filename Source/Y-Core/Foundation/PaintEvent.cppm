@@ -31,10 +31,6 @@ namespace ClaFi
         friend ControlTreePainter;
         friend AdjustPaintEvent;
     public:
-        // How far the keyboard has taken over from the mouse: 0 while the pointer drives, 1
-        // once a key has. The focus ring is drawn through it, so it fades rather than snaps.
-        inline static float s_keyboardFactor{};
-    public:
         explicit PaintEvent(TraversalContext&);
         ~PaintEvent();
     public:
@@ -113,14 +109,6 @@ namespace ClaFi
         [[nodiscard]] Color inkRgb(const Ink& ink) const { return m_controlContext.inkRgb(ink); }
         [[nodiscard]] Color inkRgb(Pigment pigment, InkTone tone) const { return m_controlContext.inkRgb(pigment, tone); }
         [[nodiscard]] Color inkRgb(Pigment pigment, float saturation, float elevation) const { return m_controlContext.inkRgb(pigment, saturation, elevation); }
-        // How much of a ring is drawn live rather than in the inactive grey: the focused
-        // factor once the keyboard has taken over, the hovered one while the pointer drives,
-        // crossfaded between them.
-        [[nodiscard]] static float activeFactorOf(float hoveredFactor, float focusedFactor);
-        // ringFactor is how much ring there is; activeFactor how much of it is live. See the
-        // definition.
-        void applyFocus(Color& targetColor, float ringFactor, float activeFactor) const;
-        void applyFocus(Color& targetColor) const;
         // How far every ink is blended toward the backdrop because the control is not fully
         // enabled. Exposed because a PaintIconEvent has to be given it: the colours it carries
         // have already had it applied, so an icon drawing in colours of its own cannot work it
@@ -254,8 +242,7 @@ namespace ClaFi
         bool m_pressScaleApplied{ false };
         // Metrics
         float m_zDepthFactor{ 0.0f };
-        // How much of the stroke is a focus ring rather than the surface's own border.
-        // A ring marks the control's frame, so it does not take part in the grow-in.
+        // How far the Focus ring list reached the stroke. A ring stands out of the grow-in.
         float m_focusRingFactor{ 0.0f };
         float m_borderWidth;
         float m_radius{};

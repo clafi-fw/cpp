@@ -42,6 +42,17 @@ draws through. So a switch asked for from inside a click lands between frames ho
 the tree that click was handled, and a window nobody can see keeps the mark until the paint its
 next showing asks for.
 
+## InputSwitchEvent
+
+The input controllers' factors have moved, raised on `AppContext::events()` at every step of
+either fade. It carries nothing: `Input::mouse()` and `Input::keyboard()` answer with the
+factors.
+
+EVERY WINDOW REPAINTS WHOLE. A rule reading `RuleInput::Keyboard` or `RuleInput::Mouse` can stand
+on any control of any window, and nothing knows which controls do - the reason a form repaints
+whole for its own focus. So a switch between the devices repaints every visible window for the
+length of the fade, whatever the theme reads.
+
 ## ScaleSwitchEvent
 
 The size the application is drawn at has moved, raised on `AppContext::events()`. It carries

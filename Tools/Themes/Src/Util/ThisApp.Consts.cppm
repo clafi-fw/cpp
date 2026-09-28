@@ -56,6 +56,8 @@ namespace ThisApp
     export constexpr std::wstring_view k_sharedRulesToken{ L"Shared" };
     // The token the Any Window page goes by.
     export constexpr std::wstring_view k_anyWindowRulesToken{ L"AnyWindow" };
+    // The token the Focus Ring page goes by.
+    export constexpr std::wstring_view k_focusRingRulesToken{ L"FocusRing" };
     // The token the Palette page goes by.
     export constexpr std::wstring_view k_paletteToken{ L"Palette" };
 

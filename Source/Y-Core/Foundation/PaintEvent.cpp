@@ -1,6 +1,7 @@
 module ClaFi.Core.Foundation;
 
 import :PaintEvent;
+import :Input;
 import :Form;
 import :Control;
 import :Traversal;
@@ -181,7 +182,9 @@ namespace ClaFi
                 1.0f - m_enabledFactor,
                 factors.textHovered(),
                 factors.current(),
-                m_windowFocusedFactor
+                m_windowFocusedFactor,
+                Input::keyboard().factor(),
+                Input::mouse().factor()
             };
             const float surfaceChanged = applyColorRules(PaintChannel::Surface, surface);
 
@@ -222,10 +225,19 @@ namespace ClaFi
 
             // The stroke is seeded from this control's own surface.
             Hsl stroke = surface;
-            const float strokeChanged = applyColorRules(PaintChannel::Stroke, stroke);
+            float strokeChanged = applyColorRules(PaintChannel::Stroke, stroke);
+            // The focus ring is this stroke taken further by the Focus ring list, on any control
+            // the user can be on. The shadow seeds from the stroke before it. See AppTheme
+            Hsl ring = stroke;
+            if (m_interactivity != Interactivity::None)
+            {
+                m_focusRingFactor = applyColorRules(bakedColors().rules.focusRing,
+                    PaintChannel::Stroke, ring, nullptr);
+                strokeChanged = StateFactors::compose(strokeChanged, m_focusRingFactor);
+            }
             if (strokeChanged > 0.0f)
             {
-                m_strokeRgb = stroke.toColor();
+                m_strokeRgb = ring.toColor();
                 m_strokeRgb = disabledFormOf(m_strokeRgb, standsOn, disabledAmount());
                 m_strokeRgb.setOpacity(strokeChanged);
             }
@@ -250,35 +262,13 @@ namespace ClaFi
             // surface, so an ink asked for while painting matches one that was ready.
             m_controlContext.disabledAmount = disabledAmount();
 
-            //bool alwaysShowFocus = false;
-            // The current item of a container wears the same ring, but it is not gated on
-            // the keyboard: it marks where a Shift range would grow from, and that has to
-            // stay readable while the mouse is what drives the selection.
-            //
-            // Whether there is a ring and what colour it is are two questions, so two terms.
-            const float focusHolderFactor = factors.focused() * s_keyboardFactor;
-            const float activeFactor = activeFactorOf(factors.hovered(), factors.focused())
-                * m_windowFocusedFactor;
-            float effectiveFocusFactor = std::max(focusHolderFactor, factors.current());
-                switch (m_interactivity)
-                {
-                case Interactivity::MouseOnly:
-                case Interactivity::Focusable:
-                case Interactivity::ActiveContainer:
-                    if (effectiveFocusFactor)
-                    {
-                        m_focusRingFactor = effectiveFocusFactor;
-                        applyFocus(m_strokeRgb, effectiveFocusFactor, activeFactor);
-                        if (effectiveFocusFactor)
-                        {
-                            m_borderWidth = effectiveFocusFactor
-                                * (scaledStrokeWidth(ThemeMetrics::focusedBorder) - m_borderWidth) + m_borderWidth;
-                        }
-                    }
-                    break;
-                case Interactivity::None:
-                    break;
-                }
+            // The ring's weight: the border thickens toward focusedBorder as far as the Focus ring
+            // list reached the stroke.
+            if (m_focusRingFactor > 0.0f)
+            {
+                const float focusedBorder = scaledStrokeWidth(ThemeMetrics::focusedBorder);
+                m_borderWidth = std::lerp(m_borderWidth, focusedBorder, m_focusRingFactor);
+            }
         }
     }
 
@@ -373,45 +363,6 @@ namespace ClaFi
         Color result = surface.toColor();
         result.setOpacity(changed);
         return result;
-    }
-
-    // The ring's colour says the control is the one the user is on, and which control that is
-    // depends on the device: the focus under the keyboard, the pointer under the mouse. So the
-    // live share of the ring is taken from whichever factor the device in use speaks through,
-    // crossfaded by s_keyboardFactor along with everything else the device switch moves.
-    //
-    // At either end the other term is weighted out entirely, which is what keeps the old rule:
-    // a ring the keyboard put on a control does not change colour because the pointer moved off
-    // it or left the window. What changed is the mouse end - a container's current item used to
-    // stay the inactive grey no matter what the pointer did, so under the mouse nothing said
-    // where the user was.
-    float PaintEvent::activeFactorOf(float hoveredFactor, float focusedFactor)
-    {
-        return std::lerp(hoveredFactor, focusedFactor, s_keyboardFactor);
-    }
-
-    // ringFactor says there is a ring at all; activeFactor how much of it is drawn live, in
-    // indicatorRgb(), rather than in the inactive grey.
-    void PaintEvent::applyFocus(Color& targetColor, float ringFactor, float activeFactor) const
-    {
-        if (ringFactor <= 0.0f)
-            return;
-        Color inactiveRingColor = targetColor;
-        inactiveRingColor.alpha = 255;
-        inactiveRingColor.blend(m_controlContext.textRgb(InkGrade::Strongest), ringFactor);
-        targetColor.blend(inactiveRingColor, ringFactor);
-        targetColor.blend(indicatorRgb(), activeFactor);
-    }
-
-    void PaintEvent::applyFocus(Color& targetColor) const
-    {
-        const Control& target = control();
-        const float focusHolderFactor = target.focusedFactor() * s_keyboardFactor;
-        applyFocus(
-            targetColor,
-            std::max(focusHolderFactor, target.currentFactor()),
-            activeFactorOf(target.hoveredFactor(), target.focusedFactor()) * m_windowFocusedFactor
-        );
     }
 
     float PaintEvent::disabledAmount() const
@@ -616,7 +567,7 @@ namespace ClaFi
             const std::size_t selected = static_cast<std::size_t>(RuleInput::Selected);
             levels[selected] = m_selectedOnSurface;
         }
-        return rule.inputs.levelIn(levels) * rule.andInputs.levelIn(levels);
+        return rule.inputs.anyLevelIn(levels) * rule.andInputs.allLevelIn(levels);
     }
 
     // The control's own rules, the element's list, then the window's, then the shared one. A

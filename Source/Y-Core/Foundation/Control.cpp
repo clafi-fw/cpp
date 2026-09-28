@@ -867,11 +867,6 @@ namespace ClaFi
 
     void Control::setFocus()
     {
-        // A control reached by a key reads the way the one under the pointer does, so the hover
-        // follows the focus while the keyboard drives. The mouse already put the hover where it
-        // belongs.
-        if (Input::device() == InputDevice::Keyboard)
-            Input::setHoveredControl(this);
         FocusEvent event{ *this, form() };
         nestedControlFocusing(event);
         // Only a retarget needs this. When the focus lands here the write at the end of the walk
@@ -962,10 +957,17 @@ namespace ClaFi
         return isTextDrawn() && Input::hoveredControl() == this && Input::hoveredOverText();
     }
 
+    // A button press is on what the pointer is over, and a key's press is on the item the focus
+    // names - the one Return and Space click.
     bool Control::isPressed() const
     {
-        bool blue = form().isKeyboardClick();
-        return (containsNested(Input::hoveredControl(), CheckSelf::Yes) && (Input::isMouseDown() || blue));
+        const bool pointerPressed = Input::isMouseDown()
+            && containsNested(Input::hoveredControl(), CheckSelf::Yes);
+        Control* focused = Input::focusedControl();
+        const bool keyPressed = form().isKeyboardClick()
+            && focused
+            && containsNested(focused->focusDelegate(), CheckSelf::Yes);
+        return pointerPressed || keyPressed;
     }
 
     bool Control::isFocused() const
@@ -2301,7 +2303,7 @@ namespace ClaFi
                 pass = control->respondsToPointer();
                 break;
             case InvalidateEvent::None:
-            case InvalidateEvent::InputDevice:
+            case InvalidateEvent::InputController:
                 break;
             }
             if (pass)
@@ -2344,7 +2346,7 @@ namespace ClaFi
         // A keyboard press has no point to lean towards, and the stored position still holds
         // whatever the last mouse press left there - on some other control entirely. The landmark
         // is the answer for anything not driven by the mouse.
-        if (Input::device() != InputDevice::Mouse)
+        if (!Input::mouse().active())
             return landmark;
 
         // Where the press landed, not where the pointer is now. The point is fixed for the life of

@@ -296,8 +296,6 @@ namespace ClaFi::Controls
             }
             tabColors.lineCaps = event.strokeRgb();
             tabColors.tabLine = event.strokeRgb();
-
-            event.applyFocus(tabColors.tabLine);
         }
 
         if (m_profile.tabStart < m_profile.lineStart)

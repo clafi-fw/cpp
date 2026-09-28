@@ -196,6 +196,20 @@ namespace ClaFi
             .codeName = L"scrollThumb",
             .token = L"ScrollThumb",
             .base = UiElement::Section
+        },
+        // THE TWO TEST SUBJECTS. Only the rules a theme states for them reach them: with none,
+        // each paints no surface and draws its text in the ink it inherits.
+        UiElementDescriptor{
+            .name = L"Testee",
+            .codeName = L"testee",
+            .token = L"Testee",
+            .base = UiElement::Section
+        },
+        UiElementDescriptor{
+            .name = L"Bestee",
+            .codeName = L"bestee",
+            .token = L"Bestee",
+            .base = UiElement::Section
         }
     };
 

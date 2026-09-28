@@ -21,7 +21,7 @@ namespace ClaFi::Controls
     export enum class PreviewMode
     {
         Focus,   // the item the container has settled on, whichever gesture moved it
-        Hover    // the item under the pointer, falling back to the current item on leaving
+        Hover    // the item under the pointer, and the current item as a key moves it
     };
 
     // The item a stack has settled on, before the user has picked anything. See Item-Containers
@@ -199,10 +199,9 @@ namespace ClaFi::Controls
         void alignEvenLane(AlignEvent&, ControlSpan::iterator laneBegin,
             ControlSpan::iterator laneEnd, std::size_t shares, ScaledPosition,
             float laneMain, float laneCross, ScaledDimensions& contentDimensions);
-        // Aims the preview at an item and waits to see whether the pointer stays there. An item
-        // already aimed at costs nothing, which is what makes a held key one preview rather than
-        // one per repeat: Control::setFocus moves the hover with the focus while the keyboard
-        // drives, so a key and a pointer reach this the same way.
+        // Aims the preview at an item and waits to see whether it stays there. An item already
+        // aimed at costs nothing, which is what makes a held key one preview rather than one per
+        // repeat.
         void startPreviewTimer(Control&);
         void onPreviewTimer();
     private:
@@ -415,13 +414,11 @@ namespace ClaFi::Controls
     void StackPanel::currentItemChanged(CurrentItemChangeEvent& event)
     {
         StackPanelBase::currentItemChanged(event);
-        if (m_previewMode != PreviewMode::Focus)
-            return;
 
         // Every route the current item moves by comes through here - a key, a click, a call from
-        // code - so this is the whole of what Focus mode listens to. The delay does the rest: a
-        // held arrow moves the current item once per repeat and previews once, for the item it
-        // stopped on.
+        // code - so this is the whole of what Focus mode listens to, and the half of Hover mode a
+        // key reaches. The delay does the rest: a held arrow moves the current item once per
+        // repeat and previews once, for the item it stopped on.
         //
         // The current item cleared is not an item to preview. That is what a deleted current item
         // leaves behind, and nestedControlDeleted below is what answers it.

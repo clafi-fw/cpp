@@ -339,9 +339,8 @@ namespace ClaFi::Controls
             // wrapping body's maximum width, and a list measured against a viewport the bar
             // has already taken its strip out of comes back a bar narrower than the window.
             WordWrap::No,
-            // The item under the pointer is the one the list is asked about, and the keyboard
-            // reaches it the same way - Control::setFocus carries the hover with the focus while
-            // the keys drive, so arrowing down the list previews what it stops on.
+            // The item under the pointer is the one the list is asked about, and so is the one
+            // the keys stop on as they arrow down the list.
             PreviewMode::Hover
         },
         m_comboBox{ comboBox }

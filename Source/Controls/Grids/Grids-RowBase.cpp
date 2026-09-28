@@ -556,7 +556,7 @@ namespace ClaFi::Controls::Grids
 
     void RowBase::selectColumnUnderMouse()
     {
-        if (Input::device() != InputDevice::Mouse)
+        if (!Input::mouse().active())
             return;
         const PointInForm mousePosition = form().mouseDownPos();
         if (const Column* columnToSelect = laneColumnAt(mousePosition))
@@ -572,7 +572,7 @@ namespace ClaFi::Controls::Grids
     CellPressKind RowBase::pressOn(const Column& column) const
     {
         // A key reaches a cell's control only while its cell is the selected one.
-        if (Input::device() != InputDevice::Mouse)
+        if (!Input::mouse().active())
             return CellPressKind::Act;
         const CellPress& press = m_descriptor.lastPress();
         // A press recorded on some other cell did not move the selection onto this one.
@@ -583,7 +583,7 @@ namespace ClaFi::Controls::Grids
 
     void RowBase::selectCellOnKeyboardEntry()
     {
-        if (Input::device() != InputDevice::Keyboard)
+        if (Input::mouse().active())
             return;
         // A cell of this row already selected is where the user left it, and the grid returning
         // to this row returns to that cell.
@@ -593,7 +593,6 @@ namespace ClaFi::Controls::Grids
         if (Column* columnToSelect = cellAtEntry(cellRect))
         {
             selectColumn(*columnToSelect);
-            setHoveredColumn(columnToSelect, false);
             scrollCellIntoView(cellRect);
         }
     }
@@ -601,7 +600,6 @@ namespace ClaFi::Controls::Grids
     void RowBase::selectColumn(const Column& value)
     {
         m_descriptor.setSelectedCell(this, &value);
-        m_descriptor.setHoveredCell(this, &value);
         invalidate();
     }
 
@@ -656,7 +654,7 @@ namespace ClaFi::Controls::Grids
     // while its row is held as well - StackPanelBase reads a press on anything else as a pick.
     void RowBase::recordPress(const KeyModifiers modifiers)
     {
-        if (Input::device() != InputDevice::Mouse)
+        if (!Input::mouse().active())
             return;
         const Column* column = laneColumnAt(form().mouseDownPos());
         Grid& grid = m_descriptor.owner();

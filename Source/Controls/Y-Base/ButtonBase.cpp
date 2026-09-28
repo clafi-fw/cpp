@@ -568,9 +568,11 @@ namespace ClaFi::Controls
         // The event does not always say so by itself. The indicator is MouseOnly, so the focus
         // walk in setMouseDown climbs past it to the button before it builds the FocusEvent,
         // and that event arrives here already named after the button. What the mouse is over
-        // is what still tells the two apart, and a hidden indicator cannot be hovered, so the
-        // test needs no separate visibility check.
-        if (event.control != m_indicator && !m_indicator->isHovered())
+        // is what still tells the two apart while the mouse is what acted - a key reaching the
+        // button leaves the pointer wherever it rests. A hidden indicator cannot be hovered, so
+        // the test needs no separate visibility check.
+        const bool pointedAt = Input::mouse().active() && m_indicator->isHovered();
+        if (event.control != m_indicator && !pointedAt)
             return;
 
         // affects multi-selection behavior (StackView)

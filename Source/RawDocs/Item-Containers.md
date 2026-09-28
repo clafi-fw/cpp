@@ -276,8 +276,9 @@ moving, whichever gesture moved it, and a pointer merely crossing the stack asks
 is the default, because previewing is a strong thing for a container to do and a pointer passing
 over a list did not ask for it. A stack that wants the other reading says so.
 
-`Hover` is the item under the pointer. Leaving the stack returns the preview to the current item,
-so what is previewed is always something the stack holds.
+`Hover` is the item under the pointer, and the current item whenever it moves - a key moving it
+previews what it stops on, the same way Focus does. Leaving the stack returns the preview to the
+current item, so what is previewed is always something the stack holds.
 
 ## PreviewEvent
 

@@ -92,5 +92,20 @@ namespace ThisApp
             } },
             OnGetState{ [](GetStateEvent& event) { event.state.selected = m_selectedRb; }}
         ) };
+
+        // A button's metrics give a stroke something to be drawn at; focusable gives the states.
+        RichControl& m_testee{ m_stackPanel.add<RichControl>(
+            themeMetrics().button,
+            Interactivity::Focusable,
+            UiElement::Testee,
+            Text{ L"Testee" }
+        ) };
+
+        RichControl& m_bestee{ m_stackPanel.add<RichControl>(
+            themeMetrics().button,
+            Interactivity::Focusable,
+            UiElement::Bestee,
+            Text{ L"Bestee" }
+        ) };
     };
 }

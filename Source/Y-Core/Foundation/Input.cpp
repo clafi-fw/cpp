@@ -3,15 +3,38 @@ module ClaFi.Core.Foundation;
 import :Input;
 import :Control;
 import :Form;
-import :PaintEvent;
 import :Tooltip;
 
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi
 {
+    InputController::InputController(const AnimationSlot& slot, bool active)
+        :
+        m_slot{ slot },
+        m_factor{ static_cast<float>(active) },
+        m_active{ active }
+    {
+    }
+
+    // Keyed on no control: the fade belongs to the application rather than to any control. The
+    // slot is what tells one controller's fade from the other's, so the two never share a slot.
+    bool InputController::setActive(AppContext& appContext, bool value)
+    {
+        if (m_active == value)
+            return false;
+        m_active = value;
+        appContext.animator().start(nullptr, m_slot, m_factor, static_cast<float>(m_active),
+            [this, &appContext](const AnimateParams& params) {
+                m_factor = params.value;
+                Input::controllerFactorChanged(appContext);
+            });
+        return true;
+    }
+
     void Input::setHoveredControl(Control* value, HitTest hitZone, bool overText)
     {
         bool controlChanged = value != s_hoveredControl;
@@ -76,6 +99,34 @@ namespace ClaFi
 
         notifyFocusChange(previousControl);
         notifyFocusChange(s_focusedControl);
+    }
+
+    void Input::mouseActed(AppContext& appContext)
+    {
+        const bool mouseTurnedOn = s_mouse.setActive(appContext, true);
+        const bool keyboardTurnedOff = s_keyboard.setActive(appContext, false);
+        // The animations repaint from their first tick onwards; this is the frame before the first.
+        if (mouseTurnedOn || keyboardTurnedOff)
+            invalidateForControllers(s_hoveredControl);
+    }
+
+    void Input::keyActed(AppContext& appContext)
+    {
+        const bool mouseTurnedOff = s_mouse.setActive(appContext, false);
+        const bool keyboardTurnedOn = s_keyboard.setActive(appContext, true);
+        if (!mouseTurnedOff && !keyboardTurnedOn)
+            return;
+        // The user is doing something, which is all the tooltip waits for.
+        Tooltip::handleUserInput();
+        invalidateForControllers(s_hoveredControl);
+    }
+
+    void Input::modifierActed(AppContext& appContext)
+    {
+        if (!s_keyboard.setActive(appContext, true))
+            return;
+        Tooltip::handleUserInput();
+        invalidateForControllers(s_hoveredControl);
     }
 
     void Input::setMouseDown(FormBase& form, PressUpHandled& handled, bool forceUpdate)
@@ -145,17 +196,18 @@ namespace ClaFi
         return nullptr;
     }
 
-    // The focus ring is drawn through the factor, so the control holding the focus has to be
-    // repainted as it moves - and so does the hovered one, whose ring the same factor gates.
-    void Input::deviceFactorChanged(const AnimateParams& params)
+    // Both factors reach the ring, so the control holding the focus has to be repainted as either
+    // moves - and so does the hovered one, whose ring the same factors gate. A rule reading
+    // Keyboard or Mouse can stand on any control of any window, so every window repaints as well.
+    void Input::controllerFactorChanged(AppContext& appContext)
     {
-        PaintEvent::s_keyboardFactor = params.value;
-        invalidateForDevice(s_hoveredControl);
+        invalidateForControllers(s_hoveredControl);
         if (s_focusedControl != s_hoveredControl)
-            invalidateForDevice(s_focusedControl);
+            invalidateForControllers(s_focusedControl);
+        appContext.events().emit<InputSwitchEvent>();
     }
 
-    // The repaint is asked for OUTRIGHT, not left to invalidateState. This factor belongs to the
+    // The repaint is asked for OUTRIGHT, not left to invalidateState. These factors belong to the
     // application rather than to any control, so no control's own state has moved, and
     // invalidateState repaints only when one of the control's own factors has - it would leave
     // the ring at its last painted width until something else happened to repaint the control,
@@ -163,45 +215,17 @@ namespace ClaFi
     //
     // The control that HOLDS the focus and the item it answers for can be two controls, and the
     // ring is on the item.
-    void Input::invalidateForDevice(Control* control)
+    void Input::invalidateForControllers(Control* control)
     {
         if (!control)
             return;
-        Control::invalidateStateUp(control, nullptr, InvalidateEvent::InputDevice);
+        Control::invalidateStateUp(control, nullptr, InvalidateEvent::InputController);
         control->invalidate();
         if (Control* delegate = control->focusDelegate(); delegate != control)
             delegate->invalidate();
     }
 
-    OnAnimate Input::s_onAnimateDevice{ &Input::deviceFactorChanged };
-
-    void Input::setDevice(AnimationController& animator, const InputDevice value,
-        const FocusTakesHover focusTakesHover)
-    {
-        if (s_device == value)
-            return;
-        s_device = value;
-        if (value == InputDevice::Keyboard)
-        {
-            if (focusTakesHover == FocusTakesHover::Yes
-                && s_focusedControl
-                && s_focusedControl->enabled(true))
-                setHoveredControl(s_focusedControl->focusDelegate());
-            // The tooltip goes on any key, whether or not the hover moved: the user is doing
-            // something, which is all it waits for.
-            Tooltip::handleUserInput();
-        }
-        // One animation for the whole application rather than one per control, so it is keyed
-        // on no control.
-        animator.start(
-            nullptr,
-            AnimationSlots::inputDevice,
-            PaintEvent::s_keyboardFactor,
-            static_cast<float>(s_device),
-            s_onAnimateDevice
-        );
-        // The animation repaints from its first tick onwards; this is the frame before it.
-        invalidateForDevice(s_hoveredControl);
-    }
+    InputController Input::s_mouse{ AnimationSlots::mouseActive, true };
+    InputController Input::s_keyboard{ AnimationSlots::keyboardActive, false };
 
 }

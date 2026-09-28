@@ -77,7 +77,7 @@ namespace ClaFi::Controls
 
     void SliderBase::ScrollButton::nestedClick(ClickEvent&)
     {
-        if (Input::device() == InputDevice::Keyboard)
+        if (!Input::mouse().active())
             doIt(); // mouse clicks handled in nestedPressDown
     }
 
@@ -356,7 +356,7 @@ namespace ClaFi::Controls
     void SliderBase::adjustNestedControlVisualState(const Control& control, VisualState& state) const
     {
         SliderBaseClass::adjustNestedControlVisualState(control, state);
-        //if (Input::device() == InputDevice::Keyboard)
+        //if (!Input::mouse().active())
         //{
         //  ScrollButton* button = nullptr;
         //  if (&control == &m_beginButton)

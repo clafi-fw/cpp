@@ -513,7 +513,7 @@ namespace ClaFi
         HoverLeave,
         PressUp,
         PressDown,
-        InputDevice
+        InputController
     };
 
     export struct CreateParams

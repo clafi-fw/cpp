@@ -107,7 +107,9 @@ namespace ClaFi // AppTheme serializers
             L"Disabled",
             L"TextHovered",
             L"Current",
-            L"WindowFocused"
+            L"WindowFocused",
+            L"Keyboard",
+            L"Mouse"
         };
 
     export constexpr auto enumNames(RuleInput) { return k_ruleInputKeys; }
@@ -149,7 +151,8 @@ namespace ClaFi // AppTheme serializers
         return std::tuple_cat(
             std::make_tuple(
                 SerializedField{ L"Shared", &ThemeRules::shared },
-                SerializedField{ L"AnyWindow", &ThemeRules::anyWindow }
+                SerializedField{ L"AnyWindow", &ThemeRules::anyWindow },
+                SerializedField{ L"FocusRing", &ThemeRules::focusRing }
             ),
             elementRulesFields(std::make_index_sequence<k_uiElementCount>{})
         );

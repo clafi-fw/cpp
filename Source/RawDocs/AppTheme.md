@@ -131,6 +131,33 @@ Two lists of `BakedColorRule` blend rule by rule where both read the same inputs
 channels in one order. Lists that differ in any of that have no half way, and the crossing takes the
 destination's.
 
+## Focus ring
+
+THE RING IS THE CONTROL'S OWN STROKE, taken further by the theme's Focus ring list. That list
+reaches every control whose interactivity is not None, whatever element it wears, and it is read
+after the stroke's own chain - the control's rules, its element's, the window's, Any element's.
+Only its stroke rules are read, and only for the control's own stroke: a line a control draws
+through `strokeRgbOn`, a grid cell's or a divider's, does not take the ring.
+
+HOW FAR THE LIST REACHES THE STROKE IS HOW MUCH RING THERE IS. That share thickens the border
+toward `ThemeMetrics::focusedBorder`, and it holds the control's frame out of the surface
+grow-in, since a ring marks the frame and not the surface. The weight is a paint effect, not
+layout.
+
+The shadow seeds its hue from the stroke before the ring, so a focused control does not tint the
+shadow it casts.
+
+The default list is four rules:
+
+- when focused and keyboard - the strongest ink
+- when current - the strongest ink. A container's current item wears the ring under the mouse as
+  well, since it marks where a Shift range grows from.
+- when hovered, and mouse and current and window focused - the accent
+- when focused, and keyboard and window focused - the accent
+
+The accent's values are stated in the rules themselves, so a theme that moves Accent moves the
+ring by editing these rules too.
+
 ## A pigment as a baked theme holds it
 
 A PIGMENT'S HUE IS THE THEME'S AND ITS TONE IS THE INK'S. The harmony answers while a theme is
