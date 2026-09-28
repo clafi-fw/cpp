@@ -181,6 +181,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Consts.cppm">
       <Filter>Controls\Browser</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Control.cpp">
+      <Filter>Controls\Browser</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Control.cppm">
       <Filter>Controls\Browser</Filter>
     </ClCompile>
@@ -815,6 +818,12 @@
       <Filter>Y_Core\System</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.TextTypes.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Url.cpp">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Url.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Utils.cpp">

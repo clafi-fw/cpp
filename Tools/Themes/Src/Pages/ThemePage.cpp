@@ -37,6 +37,8 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Palette;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Url;
+import ClaFi.Browser.Control;
 import ClaFi.Browser.Consts;
 import ClaFi.Browser.Settings;
 
@@ -148,7 +150,6 @@ namespace ThisApp
         bindPigmentEditors();
         m_designPage.rebuildRules();
         restoreView();
-        restoreElement();
     }
 
     bool ThemePage::hasUnsavedEdits() const
@@ -392,16 +393,19 @@ namespace ThisApp
         m_viewTabs[static_cast<std::size_t>(view)]->select();
     }
 
-    void ThemePage::storeElement() const
+    // The page the tree picked shows once the browser has taken the tab there - see showAnchor.
+    void ThemePage::designPagePicked()
     {
-        const std::wstring_view token = m_designPage.pickedPage();
-        if (!token.empty())
-            (tabConfig() / k_elementAttrName).set(std::wstring{ token });
+        if (m_showingAnchor)
+            return;
+
+        tab().browserControl().goTo(tab().url().withAnchor(m_designPage.pickedPage()));
     }
 
-    void ThemePage::restoreElement()
+    void ThemePage::showAnchor(const Browser::ShowAnchorEvent& event)
     {
-        m_designPage.pickPage((tabConfig() / k_elementAttrName).get<std::wstring>());
+        const ScopedFlag showing{ m_showingAnchor };
+        m_designPage.pickPage(event.url.anchor());
     }
 
     void ThemePage::rulesChanged()
@@ -434,9 +438,9 @@ namespace ThisApp
         // strip's menu when that is where Save as was chosen - but taking the tab to what it wrote
         // rebuilds this page, and the frames above the press go on reading the button that goes
         // down with it. The browser holds that wait, because it outlives what the going destroys.
-        tab().browserControl().goToLater(
-            std::wstring{ Browser::ConfigNames::homePath }.append(fileName)
-        );
+        // The anchor goes along, so the copy opens on the design page this one shows.
+        const std::wstring path = std::wstring{ Browser::ConfigNames::homePath }.append(fileName);
+        tab().browserControl().goToLater(Url{ path, tab().anchor() });
     }
 
     std::wstring ThemePage::saveThemeAsFile(Control& initiator) const

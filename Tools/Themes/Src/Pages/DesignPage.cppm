@@ -45,8 +45,9 @@ namespace ThisApp
     public:
         // The token of the page that shows - an element's or a shared list's - or nothing yet.
         [[nodiscard]] std::wstring_view pickedPage() const;
+        // Picks and shows the page a token names, and the first page for a token naming none.
         void pickPage(std::wstring_view token);
-        // Connects a handler raised after another page is picked.
+        // Connects a handler raised when the tree picks another page, which pickPage then shows.
         template<typename F>
         EventConnection onPagePick(F&& callback);
         // The Palette page's body, which the theme page fills.

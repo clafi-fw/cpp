@@ -46,11 +46,26 @@ what a handler leaves in PageData::items is what the crumb shows, and whether an
 worth working out again is the handler's question - PageData::fetchState is where it
 records that.
 
+## ShowAnchorEvent
+
+A tab has arrived at a url on this page, which shows the anchor it names.
+A tab stands on a url - a page's path and an anchor inside the page, see UI-Types. goTo moves the
+current tab to one, and the browser raises this on the page once the page is on screen and the
+crumbs are laid out. It is raised when the url changed - another page, or another anchor on the
+same page - and when this show built the page, whatever the url did: a tab restored from
+settings, or a new tab opened on a url. A page just built has not been told its anchor.
+Selecting a tab whose page already stands raises nothing, so the page keeps the place it was left
+at. A goTo naming the url the tab already stands on raises nothing either.
+An empty anchor names the page itself, and what the page shows for it is the page's own choice.
+A pick inside a page that names one of its anchors goes to the browser as a url rather than being
+shown on the spot. The browser records where the tab is, and the page shows what this event
+names - so the url a tab stores is always the place its page shows.
+
 ## BrowserSettings
 
 Where the browser's settings are kept, and when each part reaches the disk.
 The application config carries the selected tab's id and an entry per open tab - id, title
-and path, plus what the application adds to an entry - which is what is shown of a tab that
+and url, plus what the application adds to an entry - which is what is shown of a tab that
 has not been opened. The Themes app keeps what a tab's icon is drawn from there. Nothing of
 the page is there.
 What a page keeps is in the tab's own file, in the OpenTabs folder beside the config file,

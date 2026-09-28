@@ -53,6 +53,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Application.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.BreadCrumbBar.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Consts.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Control.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.Control.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser_Facade.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser.PageData.cppm" />
@@ -286,6 +287,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\DirWatch.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.DirWatch.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Url.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Url.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Utils.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Utils.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.BakedText.cppm" />

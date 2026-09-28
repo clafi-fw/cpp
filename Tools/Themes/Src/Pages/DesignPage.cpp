@@ -90,9 +90,10 @@ namespace ThisApp
 
     void DesignPage::pickPage(const std::wstring_view token)
     {
-        for (const TreeEntry& entry : m_entries)
-            if (tokenOf(entry) == token)
-                m_tree.setCurrentItem(entry.item);
+        const auto found = std::ranges::find(m_entries, token, &DesignPage::tokenOf);
+        const TreeEntry& entry = found != m_entries.end() ? *found : m_entries.front();
+        m_tree.setCurrentItem(entry.item);
+        showPickedPage();
     }
 
     void DesignPage::bind(ThemeColors& colors, const OnGetElementRuleBase& ruleBase,
@@ -127,10 +128,6 @@ namespace ThisApp
 
     void DesignPage::buildTree()
     {
-        m_tree.onCurrentItemChange([this](CurrentItemChangeEvent&) {
-            showPickedPage();
-        });
-
         addEntry(addRootItem(), TreeEntry{ .page = &m_palettePage });
         addEntry(addRootItem(), TreeEntry{ .shared = &k_anyElement });
         addEntry(addRootItem(), TreeEntry{ .shared = &k_anyWindow });
@@ -142,6 +139,7 @@ namespace ThisApp
             for (const UiElement element : category.elements)
                 addEntry(node.addItem(), TreeEntry{ .element = element });
         }
+        showPickedPage();
     }
 
     // The style goes in ahead of the name addEntry writes after it.

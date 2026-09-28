@@ -1,6 +1,7 @@
+module;
+#include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Browser.Control;
 
-import ClaFi.Browser.Actions;
 import ClaFi.Browser.Consts;
 import ClaFi.Browser.PageData;
 import ClaFi.Browser.Settings;
@@ -12,11 +13,8 @@ import ClaFi.Controls.Button;
 import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.StackPanel;
-import ClaFi.Controls.Base.StackPanelBase;
-import ClaFi.Controls.Base.Container;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
-import ClaFi.Controls.Divider;
 import ClaFi.Controls.TabStrip;
 
 import ClaFi.Icons.PlusMark;
@@ -25,10 +23,10 @@ import ClaFi.Icons.BrowseUpIcon;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.DomEngine;
-import ClaFi.Core.Dom_StdSerializers;
+
+import ClaFi.Core.Context.PaintIconEvent;
 
 import ClaFi.Core.Foundation;
-import ClaFi.Core.Context.FormContext;
 
 import ClaFi.Core.TextEngine.Types;
 
@@ -36,10 +34,9 @@ import ClaFi.Core.System.Props;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Events;
-import ClaFi.Core.System.InkWell;
+import ClaFi.Core.System.Url;
 
 import ClaFi.StdLib;
-import ClaFi.Core.Context.PaintIconEvent;
 
 
 namespace ClaFi::Browser
@@ -54,21 +51,19 @@ namespace ClaFi::Browser
     // One tab of the browser, standing for a page it can return to.
     export class BrowserTab : public Tab
     {
-        // The browser is what makes a tab and what shows a page on one, so it is what sets and
-        // spends m_onRestoredPage.
+        // The browser is what makes a tab and what shows a page on one, so it is what sets
+        // m_anchor, and sets and spends m_onRestoredPage.
         friend BrowserControl;
     public:
-        explicit BrowserTab(const CreateParams& params)
-            :
-            Tab{ params, WordWrap::No, Spacing{ 4.0f }, Padding{ 8.0f, 4.0f }, MinSize{ 0.0f, 28.0f } }
-        {
-        }
+        explicit BrowserTab(const CreateParams&);
     public:
         template<IsBrowserPage PageClass, typename... Args>
         PageClass& createPage(Args&&... args);
         BrowserControl& browserControl() const { return *m_browserControl; }
         Control& closeButton() const { return m_closeButton; }
         PageData* pageData() const { return m_pageData; }
+        [[nodiscard]] const std::wstring& anchor() const { return m_anchor; } // empty for none
+        [[nodiscard]] Url url() const; // the page's path with this tab's anchor
         void setPageData(PageData*);
         // Asks the browser what this tab's icon is now and opens or closes the icon slot to match.
         // setPageData does this on its own; a browser calls it again when the answer changes
@@ -97,6 +92,7 @@ namespace ClaFi::Browser
         BrowserControl* m_browserControl{};
         std::wstring m_id{};
         PageData* m_pageData{};
+        std::wstring m_anchor{};
         // False for a tab the user opened, which is every tab but the ones a run starts with.
         bool m_onRestoredPage{ false };
         // The close button is the tab's secondary part, so the base keeps a press on it from
@@ -113,13 +109,16 @@ namespace ClaFi::Browser
             Radius{ 10.0f },
             ButtonViewMode::IconOnly,
             IconSize{ 8.0f },
-            OnEvent{ Icons::XMark::paint },
-            OnEvent{ [this](GetTooltipEvent& event) {
-                event.text << L"Close " << InkWell::textInk(InkGrade::Muted);
-                m_pageData->paintText(event.text);
-                event.placement = FormPlacement::Mouse;
-            } }
+            OnEvent{ Icons::XMark::paint }
         );
+    };
+
+    // A tab has arrived at a url on this page, which shows the anchor it names. See Browser
+    export class ShowAnchorEvent : public Event
+    {
+    public:
+        explicit ShowAnchorEvent(const Url& url) : url{ url } {}
+        const Url& url;
     };
 
     // One page of the browser: what it shows, and the crumbs that lead to it.
@@ -128,6 +127,9 @@ namespace ClaFi::Browser
     public:
         template<typename... Args>
         explicit BrowserPage(const CreateParams&, Args&&...);
+    public:
+        // A tab has arrived at a url on this page, which shows the anchor it names. See Browser
+        DECLARE_EVENT(ShowAnchorEvent, OnShowAnchor, onShowAnchor)
     public:
         BrowserSettings& settings() const;
         Dom::Section& tabConfig() const;
@@ -168,20 +170,21 @@ namespace ClaFi::Browser
         void addTab();
         // Opens one on a page named outright. The new tab is selected, the way a tab the user
         // asked for is.
-        void addTab(PageData&);
-        void addTab(std::wstring_view path);
-        BrowserTab* restoreTab(const std::wstring_view id, const std::wstring_view path);
+        void addTab(PageData&, std::wstring_view anchor = {});
+        void addTab(const Url&);
+        BrowserTab* restoreTab(std::wstring_view id, const Url&);
         void goUp();
         void goTo(std::wstring_view path, std::wstring_view subPath);
-        void goTo(std::wstring_view);
+        void goTo(const Url&);
         void goTo(PageData&);
         void goTo(PageData&, Control& initiator);
+        void goTo(PageData&, std::wstring_view anchor, Control& initiator);
         // Goes to a page once the press that asked for it has unwound. A COMMAND THAT NAVIGATES
         // FROM INSIDE A CLICK DESTROYS THE PAGE IT WAS PRESSED ON, and the frames above that click
         // go on reading controls that went down with it. The wait is held here rather than on the
         // page, because a page holding it would be destroying the very dispatcher delivering the
         // tick.
-        void goToLater(std::wstring_view path);
+        void goToLater(const Url&);
         PageData& homePageData() { return m_homePageData; }
         const PageData& homePageData() const { return m_homePageData; }
         PageData* findPageData(std::wstring_view);
@@ -281,6 +284,7 @@ namespace ClaFi::Browser
         bool tabsRestoring() const { return m_tabsRestoring; }
     private:
         bool idExists(std::wstring value);
+        void connectParts(); // wires the tabs, crumbs, buttons and timer, from the constructor
         // Claims Browser::Actions::open and openInNewTab, and answers them against whatever the
         // page on screen names. Connected from the constructor, the way TextBox connects the
         // edit actions.
@@ -290,7 +294,8 @@ namespace ClaFi::Browser
         // Whether a page IS the one named or stands under it - which is every page whose path a
         // rename of that page has just changed.
         [[nodiscard]] static bool isPageUnder(const PageData&, const PageData& ancestor);
-        void selectPage(BrowserTab*);
+        void selectPage(BrowserTab*, bool urlChanged);
+        void showAnchor(BrowserTab&); // raises ShowAnchorEvent on the tab's page
         void handleTabSelect();
         void tabClosing(BrowserTab&);
         void tabClosed();
@@ -309,7 +314,7 @@ namespace ClaFi::Browser
         PageData* m_fetchingPage{};
         std::size_t m_fetchedCount{ 0 };
         UiTimer m_goToTimer{};
-        std::wstring m_goToPath{};
+        Url m_goToUrl{};
         BrowserSettings* m_settings{};
         bool m_tabsRestoring{};
     private:
@@ -371,34 +376,6 @@ namespace ClaFi::Browser
     //-----------------------------------------------------------------------------
 
 
-    namespace
-    {
-        // Holds the page a fetch is running for, and lets it go however that fetch ends. Cleared
-        // by a statement after the call instead, a fetch that threw would leave the browser
-        // believing one was still running, and the next page named under it would be ordered
-        // against a count belonging to nothing.
-        class ScopedFetch
-        {
-        public:
-            ScopedFetch(PageData*& fetchingPage, PageData& pageData)
-                :
-                m_fetchingPage{ fetchingPage }
-            {
-                m_fetchingPage = &pageData;
-            }
-            // A guard whose whole business is holding a scope must not be copied out of it.
-            ScopedFetch(const ScopedFetch&) = delete;
-            ScopedFetch& operator=(const ScopedFetch&) = delete;
-            ~ScopedFetch()
-            {
-                m_fetchingPage = nullptr;
-            }
-        private:
-            PageData*& m_fetchingPage;
-        };
-    }
-
-
     // BrowserTab
 
     template<IsBrowserPage PageClass, typename ...Args>
@@ -406,114 +383,6 @@ namespace ClaFi::Browser
     {
         PageClass& result = m_browserControl->pageControl().add<PageClass>(this, std::forward<Args>(args)...);
         return result;
-    }
-
-    void BrowserTab::setPageData(PageData* value)
-    {
-        m_pageData = value;
-        updateIconMode();
-    }
-
-    void BrowserTab::updateIconMode()
-    {
-        if (!m_browserControl)
-            return;
-
-        IconSize size = m_browserControl->tabIconSize(*this);
-        bool hasIcon = size.x > 0.0f && size.y > 0.0f;
-        setViewMode(hasIcon ? ButtonViewMode::LeftIcon : ButtonViewMode::TextLabel);
-        if (hasIcon)
-        {
-            setIconSize(size);
-        }
-        // What this tab shows has just been asked again, which is only ever done because the
-        // answer may have moved. A size that comes back the same still leaves a different picture
-        // to draw, and neither setter invalidates for one that has not changed.
-        invalidate();
-    }
-
-    void BrowserTab::setId(BrowserControl& browser, const std::wstring_view id)
-    {
-        m_browserControl = &browser;
-        m_id = id;
-    }
-
-    RichControl* BrowserTab::visualPage(RichControl*)
-    {
-        return &m_browserControl->m_breadCrumbArea;
-    }
-
-    void BrowserTab::nestedGetTooltip(GetTooltipEvent& event)
-    {
-        Tab::nestedGetTooltip(event);
-        event.placement = FormPlacement::Bottom;
-    }
-
-    void BrowserTab::getText(GetTextEvent& event) const
-    {
-        m_pageData->paintText(event.text);
-    }
-
-    void BrowserTab::paintIcon(PaintIconEvent& event)
-    {
-        Tab::paintIcon(event);
-        if (m_browserControl)
-        {
-            m_browserControl->paintTabIcon(*this, event);
-        }
-    }
-
-    void BrowserTab::closeThisTab(ClickEvent& event)
-    {
-        // Closing a tab loses whatever its page holds exactly as navigating away from it does, so
-        // it asks the same question - and asks it before the tab beside this one is selected,
-        // which is the first thing below that cannot be taken back.
-        //
-        // Under the tab rather than under the close button inside it. The button is the press, but
-        // the tab is what the question is about, and it is the shape the user has been reading -
-        // a question hung off a corner of it would read as being about the corner.
-        if (m_browserControl && !m_browserControl->canLeavePage(*this, *this))
-            return;
-
-        ControlSpan tabs = parent().controls();
-        if (tabs.size() == 1ull) // is last remaining tab
-            // so the tab remains selected and will be reselected on the next initialization
-            return event.closeForm();
-
-        if (selected())
-        {
-            // Selecting the item that supposed to be selected after this one will be closed
-            auto prevIterator = std::ranges::find_if(
-                tabs,
-                [&](const ControlPtr& aTab){
-                    return this == &*aTab;
-                }
-            );
-            if (prevIterator < std::prev(tabs.end()))
-            {
-                ++prevIterator;
-                static_cast<Tab&>(**prevIterator).select();
-            }
-            else if (prevIterator != tabs.begin())
-            {
-                --prevIterator;
-                static_cast<Tab&>(**prevIterator).select();
-            }
-        }
-
-        BrowserControl* browser = m_browserControl;
-        browser->tabClosing(*this);
-        deleteSelf();
-        browser->tabClosed();
-
-        // Todo: to implement Chrome behavior (delayed tabs realigning),
-        // first shift the tabs on right to the freshly vacant space,
-        // without changing their size, then make invalidateAlign() call on hotLeave
-        // (but make sure to do that only if user is using the mouse)
-        // event.form.validateAlign(); // this cancels invalidateAlign() triggered by closing/reselecting the tabs and/or showing/hiding their pages
-
-        // To highlight a tab, or its close button that moved under the mouse
-        event.form.mouseTick();
     }
 
     // BrowserPage
@@ -530,27 +399,6 @@ namespace ClaFi::Browser
     {
     }
 
-    BrowserSettings& BrowserPage::settings() const
-    {
-        return m_browserControl.settings();
-    }
-
-    Dom::Section& BrowserPage::tabConfig() const
-    {
-        return settings().tabConfig(tabId());
-    }
-
-    void BrowserPage::setPath(std::wstring_view newPath) const
-    {
-        PageData* newData = m_browserControl.homePageData().findOrAdd(newPath, m_browserControl.m_addPageDataCallback);
-        m_tab.setPageData(newData);
-        {
-            // That's actually is right only if the page is selected
-            m_browserControl.m_selectedPageData = newData;
-            m_browserControl.pagePathChanged();
-        }
-    }
-
     // BrowserControl
 
     template<typename ...Args>
@@ -558,436 +406,7 @@ namespace ClaFi::Browser
         :
         Panel{ params, std::forward<Args>(args)... }
     {
-        m_addPageDataCallback = [this](PageData& newPageData)
-            {
-                initPageData(newPageData);
-            };
-
-        m_tabs.setOverlayHost(m_title);
-
-        m_plusButton.onClick([this](ClickEvent& event) {
-            addTab();
-            event.form.mouseTick();
-            });
-
-        m_tabs.onCurrentItemChange([this](CurrentItemChangeEvent&) {
-            handleTabSelect();
-            });
-
-        m_breadCrumbBar.onSelectBrowserData([this](SelectBrowserDataEvent& event) {
-            goTo(event.pageData, event.initiator);
-            });
-
-        m_breadCrumbBar.onFetchSubItems([this](FetchSubItemsEvent& event) {
-            ensureSubItems(event.pageData);
-            });
-
-        // Connected here rather than given to the timer as a construction property: MSVC rejects
-        // a this-capturing lambda in a default member initializer.
-        m_goToTimer.onTick([this](TimerEvent&) { goTo(m_goToPath); });
-
-        m_breadCrumbBar.onGetPageIconSize([this](GetPageIconSizeEvent& event) {
-            event.size = pageIconSize(event.pageData);
-            });
-
-        m_breadCrumbBar.onPaintPageIcon([this](PaintPageIconEvent& event) {
-            paintPageIcon(event.pageData, event);
-            });
-
-        m_breadCrumbBar.onCanRenamePage([this](CanRenamePageEvent& event) {
-            event.canRename = canRenamePage(event.pageData);
-            });
-
-        m_breadCrumbBar.onRenamePage([this](RenamePageEvent& event) {
-            acceptPageName(event.pageData, event.accept);
-            });
-
-        m_upButton.onClick([this](ClickEvent&) { goUp(); });
-
-        m_upButton.onGetState([this](GetStateEvent& event) {
-            event.state.enabled = m_selectedPageData && m_selectedPageData->parent;
-            });
-
+        connectParts();
         connectPageActions();
     }
-
-    void BrowserControl::initialize(BrowserSettings& settings)
-    {
-        m_settings = &settings;
-
-        initPageData(m_homePageData);
-
-        m_tabsRestoring = true;
-        const std::wstring selectedTabId = settings.selectedTab().get();
-        // The stored one, and the first tab where no restored tab carries that id.
-        BrowserTab* tabToSelect{};
-        for (const Dom::Section& tabEntry : settings.openTabs())
-        {
-            const std::wstring tabId = (tabEntry / ConfigNames::id).get<std::wstring>();
-            const std::wstring tabPath = (tabEntry / ConfigNames::path).get<std::wstring>();
-            BrowserTab* newTab = restoreTab(tabId, tabPath);
-            if (!newTab)
-                continue;
-            if (!tabToSelect || tabId == selectedTabId)
-                tabToSelect = newTab;
-        }
-        if (tabToSelect)
-            tabToSelect->select();
-        m_tabsRestoring = false;
-
-        // A browser always has a tab, so a run that restores none starts on the home page.
-        if (m_tabs.controls().empty())
-            addTab();
-    }
-
-    void BrowserControl::addTab()
-    {
-        addTab(m_homePageData);
-    }
-
-    void BrowserControl::addTab(const std::wstring_view path)
-    {
-        // The same assumption goTo(std::wstring_view) makes: a path handed to the browser names
-        // a page the tree can reach, and findOrAdd builds the ones it has not been asked for yet.
-        addTab(*findPageData(path));
-    }
-
-    void BrowserControl::addTab(PageData& pageData)
-    {
-        // Generate new tab Id
-        int n = 0;
-        std::wstring newTabId;
-        do newTabId = L"Tab" + std::to_wstring(++n);
-        while (idExists(newTabId));
-
-        BrowserTab& tab = m_tabs.add<BrowserTab>();
-        settings().addTabEntry(newTabId);
-
-        tab.setId(*this, newTabId);
-        tab.setPageData(&pageData);
-        tab.select();
-
-        // in case if there the same page is on both tabs.
-        // But may be it worth it to move that into the item's constructor
-        // (== notify the form every time if an item has been created)
-        form().invalidateAlign();
-    }
-
-    BrowserTab* BrowserControl::restoreTab(const std::wstring_view tabId, const std::wstring_view path)
-    {
-        PageData* pageData = m_homePageData.findOrAdd(path, m_addPageDataCallback);
-        if (!pageData)
-            return nullptr;
-        BrowserTab& tab = m_tabs.add<BrowserTab>();
-        tab.setId(*this, tabId);
-        tab.setPageData(pageData);
-        // The view state under this tab was written for this very page by the run that stored it,
-        // so the first page shown here reads it rather than being handed the page's own source.
-        tab.m_onRestoredPage = true;
-        return &tab;
-    }
-
-    void BrowserControl::goUp()
-    {
-        goTo(*(m_selectedPageData->parent), m_upButton);
-    }
-
-    void BrowserControl::goTo(std::wstring_view path, std::wstring_view subPath)
-    {
-        std::wstring combinedPath{ path };
-        combinedPath.append(subPath);
-        goTo(combinedPath);
-    }
-
-    void BrowserControl::goTo(std::wstring_view path)
-    {
-        PageData& pageData = *m_homePageData.findOrAdd(path, m_addPageDataCallback);
-        goTo(pageData);
-    }
-
-    void BrowserControl::goTo(PageData& pageData)
-    {
-        // The tab stands in for a caller that cannot name what was pressed - it is what the
-        // question would be about in any case.
-        goTo(pageData, *m_tabs.currentItem());
-    }
-
-    void BrowserControl::goTo(PageData& pageData, Control& initiator)
-    {
-        auto& tab = static_cast<BrowserTab&>(*m_tabs.currentItem());
-        // Going to the page already open is not leaving it, and must not raise the question.
-        if (tab.pageData() != &pageData && !canLeavePage(tab, initiator))
-            return;
-
-        tab.setPageData(&pageData);
-        selectPage(&tab);
-        storeTabSettings(tab);
-    }
-
-    void BrowserControl::goToLater(const std::wstring_view path)
-    {
-        m_goToPath = path;
-        m_goToTimer.start(MilliSeconds{ 0u });
-    }
-
-    PageData* BrowserControl::findPageData(std::wstring_view path)
-    {
-        return m_homePageData.findOrAdd(path, m_addPageDataCallback);
-    }
-
-    // Everything in the page control was put there by BrowserTab::createPage, which takes an
-    // IsBrowserPage, so there is nothing else a current item can be.
-    BrowserPage* BrowserControl::currentPage()
-    {
-        return static_cast<BrowserPage*>(m_pageControl.currentItem());
-    }
-
-    PageData& BrowserControl::addSubItem(PageData& parent, const std::wstring_view name)
-    {
-        PageData* subItem = parent.findSubItem(name);
-        if (!subItem)
-            subItem = &parent.addSubItem(name, m_addPageDataCallback);
-
-        // Ordered only while a fetch of this very page is running. A fetch names what is under the
-        // page it was given, so a call about any other page is one this count says nothing about.
-        if (&parent == m_fetchingPage)
-        {
-            // A page this fetch has already named stands where it put it, which is below the
-            // count. Naming it twice must not spend a second place: a browser that lists one name
-            // twice - a built-in whose file has been saved into the directory it lists - gets the
-            // same page back both times, and the pages after it keep the places they were given.
-            if (parent.subItemIndex(*subItem) >= m_fetchedCount)
-            {
-                parent.moveSubItemTo(*subItem, m_fetchedCount);
-                ++m_fetchedCount;
-            }
-        }
-
-        return *subItem;
-    }
-
-    void BrowserControl::storeSelectedTab(const BrowserTab* tab) const
-    {
-        Dom::DomNodeBase& valueNode = m_settings->selectedTab();
-        valueNode.set(tab ? tab->id() : L"");
-    }
-
-    void BrowserControl::storeTabSettings(const BrowserTab& tab) const
-    {
-        Dom::Section& tabEntry = m_settings->tabEntry(tab.id());
-        (tabEntry / ConfigNames::title).set(tab.pageData()->title);
-        (tabEntry / ConfigNames::path).set(tab.pageData()->path());
-    }
-
-    // The view state is saved while the entry it writes to is still listed.
-    void BrowserControl::deleteTabSettings(BrowserTab& tab)
-    {
-        if (tab.page())
-        {
-            saveViewState(tab);
-            tab.page()->deleteSelf();
-        }
-        m_settings->deleteTabEntry(tab.id());
-    }
-
-    void BrowserControl::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& newDimensions)
-    {
-        Panel::alignContent(event, position, newDimensions);
-
-        float clientWidth = m_title.bodyRect().width();
-        if (clientWidth < 0.0f)
-        {
-            float delta = -clientWidth;
-            m_tabs.fitTabs(delta);
-            for (ControlPtr& ptr : m_tabs.controls())
-            {
-                BrowserTab& tab = static_cast<BrowserTab&>(*ptr);
-                if (!tab.selected())
-                {
-                    if (tab.width() > event.scale(48.f))
-                        break;
-                    setControlWidth(tab.closeButton(), 0);
-                }
-            }
-            setControlWidth(m_titleBox, m_titleBox.width() - delta);
-            Panel::alignContent(event, position, newDimensions);
-        }
-    }
-
-    bool BrowserControl::idExists(std::wstring value)
-    {
-        for (const BrowserTab& tab: m_tabs.controlsAs<BrowserTab>())
-            if (tab.id() == value)
-                return true;
-
-        return false;
-    }
-
-    void BrowserControl::connectPageActions()
-    {
-        Actions::registerAll();
-
-        // CLAIMED BY THE BROWSER, NAMED BY THE PAGE. Opening belongs to the browser - it owns the
-        // tabs and the route between pages - and what to open belongs to the page, because only
-        // the page knows what the user has picked in it. So the browser claims both wherever the
-        // walk reaches it, and a page naming nothing is a state the commands are disabled in
-        // rather than a reason to say nothing: the commands are still about this browser.
-        onGetActionState([this](GetActionStateEvent& event){
-            if (&event.action != &Actions::open && &event.action != &Actions::openInNewTab)
-                return;
-            BrowserPage* page = currentPage();
-            event.claim({ .enabled = page && !page->pathToOpen().empty() });
-        });
-
-        onActionClick([this](ActionClickEvent& event){
-            BrowserPage* page = currentPage();
-            if (!page)
-                return;
-            const std::wstring path = page->pathToOpen();
-            if (path.empty())
-                return;
-
-            // A COMMAND THAT NAVIGATES TAKES THE PAGE IT WAS RUN FROM DOWN WITH IT, and the
-            // frames above it - a menu item, the press under that - go on reading controls that
-            // went with the page. goToLater is the wait that answers it.
-            if (&event.action == &Actions::open)
-                goToLater(path);
-            // A new tab leaves the page it was asked from standing: the strip gains a tab and
-            // the page behind it is hidden rather than freed, so there is nothing to wait for.
-            else if (&event.action == &Actions::openInNewTab)
-                addTab(path);
-        });
-    }
-
-    void BrowserControl::acceptPageName(PageData& pageData, AcceptEditEvent& event)
-    {
-        const std::wstring newName = renamePage(pageData, event);
-        // A refusal, or a name the page already had. Either way nothing under the page has moved,
-        // and the editor is left to whatever the refusal said.
-        if (newName.empty())
-            return;
-
-        pageData.rename(newName);
-        // The title went with the name, and this is where a title is worked out - the same hook
-        // that gave the page its first one.
-        initPageData(pageData);
-
-        // EVERY PAGE UNDER THIS ONE IS AT A NEW PATH: a path is walked from the name each page on
-        // it carries, and one of those names has just changed. So every tab standing on such a
-        // page is stored under a path that names nothing, until it is written out again.
-        for (BrowserTab& tab : tabs())
-        {
-            if (!tab.pageData() || !isPageUnder(*tab.pageData(), pageData))
-                continue;
-
-            storeTabSettings(tab);
-            // A tab's caption is its page's title, and the title has just been worked out again.
-            tab.invalidate();
-        }
-
-        // THE PAGE ITSELF IS STILL THE ONE THE BROWSER IS SHOWING, so this rebuilds the same
-        // crumbs over the same pages and the crumb the editor stands on is one of them. It runs
-        // while that editor is up - the sink is called from inside it - and dropping the crumb
-        // from under it would take the edit down as well.
-        pagePathChanged();
-    }
-
-    bool BrowserControl::isPageUnder(const PageData& pageData, const PageData& ancestor)
-    {
-        for (const PageData* walk = &pageData; walk; walk = walk->parent)
-            if (walk == &ancestor)
-                return true;
-
-        return false;
-    }
-
-    void BrowserControl::selectPage(BrowserTab* tab)
-    {
-        m_selectedPageData = tab ? tab->pageData() : nullptr;
-        if (tab)
-        {
-            showPage(*tab);
-            // SPENT AFTER THE PAGE HAS BEEN SHOWN, which is what reads it. From here on the view
-            // state under this tab is whatever the page just put there, so the next page shown on
-            // it is an ordinary navigation.
-            tab->m_onRestoredPage = false;
-        }
-        else
-            m_pageControl.setCurrentItem(nullptr);
-        pagePathChanged();
-    }
-
-    void BrowserControl::handleTabSelect()
-    {
-        const auto tab = static_cast<BrowserTab*>(m_tabs.currentItem());
-        if (tab)
-            goTo(*tab->pageData());
-        else
-            selectPage(nullptr);
-
-        // Even if the page has not been changed, we still have to realign items,
-        // because the close button on non-selected tabs can be hidden while aligning
-        form().invalidateAlign();
-        storeSelectedTab(tab);
-    }
-
-    void BrowserControl::tabClosing(BrowserTab& tab)
-    {
-        deleteTabSettings(tab);
-    }
-
-    void BrowserControl::tabClosed()
-    {
-    }
-
-    void BrowserControl::pagePathChanged()
-    {
-        m_breadCrumbBar.createItems(m_selectedPageData);
-        m_upButton.invalidateState();
-        invalidateFormAlign();
-    }
-
-    void BrowserControl::ensureSubItems(PageData& pageData)
-    {
-        if (pageData.fetchState == FetchState::Fetched)
-            return;
-
-        m_fetchedCount = 0;
-        {
-            const ScopedFetch fetching{ m_fetchingPage, pageData };
-            fetchSubItems(pageData);
-        }
-        dropGoneSubItems(pageData);
-
-        // HasChildren is a promise made before anything under the page had been named. Having
-        // asked and been given nothing, the promise is what was wrong: leaving it would keep
-        // offering a list that opens on nothing. A browser that learns better says so by marking
-        // the page again.
-        if (pageData.items.empty() && pageData.fetchState == FetchState::HasChildren)
-            pageData.fetchState = FetchState::Unfetched;
-    }
-
-    void BrowserControl::dropGoneSubItems(PageData& pageData)
-    {
-        // Every name the fetch gave was moved to the front as it was given, so the sub-items from
-        // m_fetchedCount on are the ones it did not name - the pages that have gone from wherever
-        // the browser reads. Read here, while the count still belongs to the fetch that just ran.
-        pageData.dropSubItemsFrom(m_fetchedCount, [this](const PageData& subItem){
-            return isPageInUse(subItem);
-        });
-    }
-
-    bool BrowserControl::isPageInUse(const PageData& pageData) const
-    {
-        // A TAB HOLDS THE PAGE DATA IT STANDS ON BY POINTER, and reaches it through every page of
-        // the path down to it, so a page on the way to an open tab is as much in use as the one
-        // that tab is on. Freeing either would leave the tab, its crumbs and its page pointing at
-        // nothing.
-        for (const BrowserTab& tab : tabs())
-            if (tab.pageData() && isPageUnder(*tab.pageData(), pageData))
-                return true;
-
-        return false;
-    }
-
 }

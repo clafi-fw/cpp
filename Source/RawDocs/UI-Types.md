@@ -357,3 +357,13 @@ thing wherever it is read:
 
 Class is called UiTimer, since it's WM_TIMER based,
 and no timer ticks ever happens while there are active user input messages
+
+## Url
+
+A page's path and an anchor inside the page - the place a browser tab stands on, and what a
+link names. The spelling is the path, then `#` and the anchor where there is one. The first `#`
+is where the anchor starts, so a `#` inside either part is written `%23`, and a theme file named
+`C#.clafitheme` survives being stored and read back.
+That escape is the only one `Url::parse` reads. Any other - a web address's `%20` - stays as it
+is written, so an address goes through `str()` unchanged. A name that itself holds the three
+characters `%23` reads back as `#`.

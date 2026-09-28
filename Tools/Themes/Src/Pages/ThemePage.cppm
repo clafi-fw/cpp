@@ -17,6 +17,8 @@ import ClaFi.Icons.HueIcon;
 import ClaFi.Icons.SaturationIcon;
 import ClaFi.Icons.LuminosityIcon;
 
+import ClaFi.Browser.Control;
+
 import ClaFi.Controls.Base.MessageBoxBase;
 import ClaFi.Controls.Base.StackPanelBase;
 import ClaFi.Controls.Button;
@@ -168,8 +170,8 @@ namespace ThisApp
         void storeViewState() const;
         void storeView() const;
         void restoreView();
-        void storeElement() const;
-        void restoreElement();
+        void designPagePicked(); // sends the pick to the browser as this tab's anchor
+        void showAnchor(const Browser::ShowAnchorEvent&);
         void rulesChanged(); // a rule was added on the Design page or taken away
         void saveTheme() const;
         // Writes this page's work to a name the user gives, and takes the tab there. The original
@@ -247,6 +249,8 @@ namespace ThisApp
         // in the view state differs from this page's own file and always will - and nothing is at
         // risk by it: the work is on the disk, and the tab is on its way to where it went.
         bool m_savedUnderAnotherName{ false };
+        // Set while showAnchor picks a design page, a pick the tab already stands on.
+        bool m_showingAnchor{ false };
 
         ColorHarmonySelector m_harmonySelector{ editColors().anchorHue };
 
@@ -561,7 +565,11 @@ namespace ThisApp
             });
 
         m_designPage.onPagePick([this](CurrentItemChangeEvent&) {
-            storeElement();
+            designPagePicked();
+        });
+
+        onShowAnchor([this](Browser::ShowAnchorEvent& event) {
+            showAnchor(event);
         });
 
         m_designPage.bind(editColors(),
