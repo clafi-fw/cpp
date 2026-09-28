@@ -439,7 +439,7 @@ namespace ClaFi::Controls
     // where the user is: the box is what they are on, and it reads that way whatever they point
     // at. Both halves of the focus ring follow from that, and both are stated here rather than
     // in the painting, because what is being said is about the STATE - see the ring's two terms
-    // in PaintEvent::applyFocus2.
+    // in PaintEvent::applyFocus.
     //
     // hovered - what keeps the ring drawn LIVE rather than in the inactive grey. That is a
     //           question the input device decides for every other control, and here there is

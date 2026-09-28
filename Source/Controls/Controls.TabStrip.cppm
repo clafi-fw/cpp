@@ -88,6 +88,8 @@ namespace ClaFi::Controls
         Hsl m_actualPageHsl{};
         Hsl m_actualPageTextHsl{};
         Lightness m_actualPageLightness{ k_darkLightness };
+        // The page's surface under the pointer and on the open tab, as the tab's own rule.
+        BakedColorRule m_pageRule{ .inputs{ RuleInput::Hovered, RuleInput::Selected } };
         ScopedEventConnection m_pageConnection{};
     };
 
@@ -240,18 +242,15 @@ namespace ClaFi::Controls
     void Tab::adjustPaint(AdjustPaintEvent& event)
     {
         TabBaseClass::adjustPaint(event);
-        // The element brings the new rules, the tab's stroke among them. The old set is the tab's
-        // own, every rule of it stated below.
         event.setColorRules(UiElement::Tab);
-        event.setColorRules(BakedElement{});
 
         if (m_actualPageColor.alpha)
         {
             // A tab becomes the page it opens, and that is both of the page's colours or neither -
             // a tab wearing the page's surface under the strip's ink is the one combination
-            // nothing chose. Both rules below name the same colour, so what the surface reaches
-            // is the two factors composed, which is what hoveredOrSelected() is; the ink is taken
-            // the same distance so the two arrive together.
+            // nothing chose. The page rule reads hovered and selected joined as "or", which is
+            // what hoveredOrSelected() is, and the ink is taken the same distance so the two
+            // arrive together.
             const float pageFactor = factors().hoveredOrSelected() * factors().enabled();
 
             // The lightness comes with the colours. Past the half way point the tab is more the
@@ -260,20 +259,15 @@ namespace ClaFi::Controls
             if (pageFactor > 0.5f)
                 event.setLightness(m_actualPageLightness);
 
-            // Spelled in the direction the rules will be read in, so the two agree at the moment
+            // Spelled in the direction the rule will be read in, so the two agree at the moment
             // the lightness changes hands: a Set states where in that direction the value lands,
             // and stating it one way while reading it the other would move the colour the tab
             // arrives at without the page having moved.
-            const Lightness eventLightness = event.lightness();
-            event.colorRules().active.setExactHsl(m_actualPageHsl, eventLightness);
-            event.colorRules().hovered.setExactHsl(m_actualPageHsl, eventLightness);
+            m_pageRule.effect.setExactHsl(m_actualPageHsl, event.lightness());
+            event.setOwnRules({ &m_pageRule, 1 });
 
             event.setTextHsl(Hsl{ event.textHsl(), m_actualPageTextHsl, pageFactor });
         }
-        event.colorRules().pressed.clear();
-        // No surface at rest, so the surface a tab's children stand on stays the strip's, which is
-        // what is behind the tab until the page's colour arrives.
-        event.colorRules().surface.clear();
     }
 
     void Tab::paintSurface(PaintEvent& event)
@@ -303,7 +297,7 @@ namespace ClaFi::Controls
             tabColors.lineCaps = event.strokeRgb();
             tabColors.tabLine = event.strokeRgb();
 
-            event.applyFocus2(tabColors.tabLine);
+            event.applyFocus(tabColors.tabLine);
         }
 
         if (m_profile.tabStart < m_profile.lineStart)

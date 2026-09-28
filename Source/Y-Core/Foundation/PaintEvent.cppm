@@ -17,6 +17,8 @@ import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.InkWell;
 
+import ClaFi.StdLib;
+
 namespace ClaFi
 {
     export class PaintEvent;
@@ -47,8 +49,6 @@ namespace ClaFi
         float focusedFactor() const;
         // How far the window this control is painted in holds the focus. See Control-Foundation
         [[nodiscard]] float windowFocusedFactor() const { return m_windowFocusedFactor; }
-
-        const BakedElement& colorRules() const { return m_colorRules; }
 
         // TODO: move disabledBlendAmount into ColorRules, so an element states its own.
         float disabledBlendAmount() const { return m_disablingStrength; }
@@ -83,11 +83,9 @@ namespace ClaFi
         // the amount the parent asked for. See AdjustPaintEvent::setParentZAmount.
         [[nodiscard]] float zHoveredFactor() const;
         [[nodiscard]] float zPressedFactor() const;
-        // The lightness this control stands at: the theme's own at the form root, inherited by
-        // every control from the one above it, and carried across where the element it wears
-        // states that it stands on the far side of the theme - see BakedElement::flip. A control
-        // that knows better states it outright through AdjustPaintEvent::setLightness, and a
-        // stated lightness is not crossed again by the rule set that control happens to wear.
+        // The lightness this control stands at: the theme's own at the form root, and inherited
+        // by every control from the one above it. A control that knows better states it outright
+        // through AdjustPaintEvent::setLightness.
         //
         // It is an input to the rules and never a result of them: what the theme says about an
         // element cannot move the direction that element is read in.
@@ -121,8 +119,8 @@ namespace ClaFi
         [[nodiscard]] static float activeFactorOf(float hoveredFactor, float focusedFactor);
         // ringFactor is how much ring there is; activeFactor how much of it is live. See the
         // definition.
-        void applyFocus2(Color& targetColor, float ringFactor, float activeFactor) const;
-        void applyFocus2(Color& targetColor) const;
+        void applyFocus(Color& targetColor, float ringFactor, float activeFactor) const;
+        void applyFocus(Color& targetColor) const;
         // How far every ink is blended toward the backdrop because the control is not fully
         // enabled. Exposed because a PaintIconEvent has to be given it: the colours it carries
         // have already had it applied, so an icon drawing in colours of its own cannot work it
@@ -208,10 +206,10 @@ namespace ClaFi
         // control that host's overlay stage is going to paint. See paint.
         [[nodiscard]] bool isListedByEnclosingHost(const Control&) const;
         // How far a rule applies on its channel: its inputs, times andInputs, and 1 at rest.
-        [[nodiscard]] float inputFactor(const BakedColorRule2&) const;
-        // The new rules on one channel, in the order they apply; how far they moved it.
-        float applyColorRules2(PaintChannel, Hsl& color, float* namedHue = nullptr) const;
-        float applyColorRules2(const BakedColorRules2&, PaintChannel, Hsl& color,
+        [[nodiscard]] float inputFactor(const BakedColorRule&) const;
+        // The rules on one channel, in the order they apply; how far they moved it.
+        float applyColorRules(PaintChannel, Hsl& color, float* namedHue = nullptr) const;
+        float applyColorRules(std::span<const BakedColorRule> rules, PaintChannel, Hsl& color,
             float* namedHue) const;
         void inheritCornerRadii();
         void paint();
@@ -236,7 +234,7 @@ namespace ClaFi
         float m_pinnedTop{ 0.0f };
     private:
         OptionalUiElement m_element{}; // the element this control wears, as setColorRules named it
-        BakedElement m_colorRules{};
+        std::span<const BakedColorRule> m_ownRules{}; // applied ahead of the element's
         float m_parentHoverAmount{ 0.0f };
         float m_parentSelectedAmount{ 0.0f };
         float m_parentPressedAmount{ 0.0f };
@@ -277,10 +275,6 @@ namespace ClaFi
         // parent event before the control adjusts its paint, so a control asking for it during
         // that adjustment is answered with what it inherited.
         Lightness m_lightness{ k_darkLightness };
-        // Whether the control named the lightness itself. A control that did is not carried across
-        // a second time by the element it wears: a selected tab standing at its page's lightness
-        // wears the button's rules, and the button's flip is not the tab's business.
-        bool m_lightnessStated{ false };
         // Whether the host named the surface this control stands on. What it named is held in
         // the layer's surfaceHsl until the colours are calculated, which is where the parent
         // chain would otherwise seed it from.
@@ -305,10 +299,10 @@ namespace ClaFi
         Control& control() { return m_target.control(); }
     public:
         void resetTheme(const AppTheme& theme, const BakedColors& bakedColors);
-        BakedElement& colorRules() { return m_target.m_colorRules; }
         // The element this control paints from, resolved against the set the pass carries.
-        void setColorRules(UiElement);
-        void setColorRules(const BakedElement& value) { m_target.m_colorRules = value; }
+        void setColorRules(UiElement value) { m_target.m_element = value; }
+        // Rules of the control's own, applied ahead of its element's. They must outlive the paint.
+        void setOwnRules(std::span<const BakedColorRule> value) { m_target.m_ownRules = value; }
         // Keeps the selected state off the surface - the control is still selected, and its
         // indicator, text and focus ring still say so. See ButtonBase's ShowSelectionOnSurface.
         void dropSelectedSurface() { m_target.m_showSelectionOnSurface = false; }
@@ -342,12 +336,11 @@ namespace ClaFi
         void setTextHsl(Hsl value);
         // The lightness inherited from the control above, before this control has said anything
         // about it. Read by a control that has to state its rules in the direction they will be
-        // applied in - see Tab::adjustPaint, which spells an exact colour into two of them.
+        // applied in - see Tab::adjustPaint, which spells an exact colour into a rule of its own.
         [[nodiscard]] Lightness lightness() const { return m_target.m_lightness; }
         // The lightness this control stands at, where the control knows it and the parent chain
         // does not. A selected tab wears the page it opens, so it takes the page's lightness
-        // rather than the strip's. Stating it also settles it: the element this control wears
-        // cannot carry it across afterwards.
+        // rather than the strip's.
         void setLightness(Lightness value);
         // The surface this control stands on, as it reaches the control: what a host has named
         // for it, or what the chain hands down. A host mixing a tint of its own applies it to

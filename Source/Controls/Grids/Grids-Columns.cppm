@@ -9,8 +9,6 @@ import ClaFi.Core.Foundation.Fit;
 import ClaFi.Core.Foundation;
 
 import ClaFi.Core.TextEngine.Types;
-import ClaFi.Core.AppTheme_Baked;
-import ClaFi.Core.AppTheme_Colors;
 
 import ClaFi.Core.System.UiTypes;
 
@@ -73,8 +71,6 @@ namespace ClaFi::Controls::Grids
         template<typename... Args>
         explicit LaneBase(GridDescriptor&, Args&&...);
     protected:
-        virtual const BakedRule* color(const PaintEvent&) const { return nullptr; }
-    protected:
         GridDescriptor& m_descriptor;
     };
 
@@ -122,12 +118,6 @@ namespace ClaFi::Controls::Grids
     public:
         [[nodiscard]] std::size_t index() const { return m_index; }
         [[nodiscard]] const Text& text() const { return m_text; }
-        // Where a cell's text sits in a row taller than it - a row another cell of it made tall.
-        const BakedRule* color(const PaintEvent& event) const
-        {
-            return m_color.of(event.bakedColors());
-        }
-        void setColor(ThemeRule value) { m_color = value; }
         //
         [[nodiscard]] float neededWidth() const { return m_neededWidth; }
         ColumnCollection* subColumns() const { return m_subColumns; }
@@ -174,7 +164,6 @@ namespace ClaFi::Controls::Grids
         ColumnCollection* m_subColumns{ nullptr };
         //
         Text m_text;
-        ThemeRule m_color;
         //
         float m_designWidth;
         // all bellow is calculated
@@ -261,7 +250,6 @@ namespace ClaFi::Controls::Grids
         INIT_PROPERTY(movingText),
         // TODO: a bare float has no property type of its own, so any float in the pack matches.
         m_designWidth{ Props::get(0.0f, args...) },
-        m_color{ Props::get<ThemeRule>(ThemeRule{}, args...) },
         INIT_PROPERTY(tag)
     {
         // Copied from Control

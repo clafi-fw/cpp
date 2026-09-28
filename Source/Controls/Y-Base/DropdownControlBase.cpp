@@ -5,8 +5,6 @@ import ClaFi.Controls.Button;
 import ClaFi.Icons.Chevron;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_AnimationSlots;
-import ClaFi.Core.AppTheme_Baked;
-import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.System.UiTypes;
@@ -91,12 +89,6 @@ namespace ClaFi::Controls
             event.dropInheritedEnabled();
     }
 
-    void DropdownPart::paintSurface(PaintEvent& event)
-    {
-        ToolButton::paintSurface(event);
-        paintDivider(event);
-    }
-
     /// Whether a strip that stands for a command of its own is available.
     ///
     /// @note THE OWNER IS STEPPED OVER, AND EVERYTHING ABOVE IT IS NOT. The owner is the one
@@ -109,43 +101,6 @@ namespace ClaFi::Controls
         return !above || above->enabled(true);
     }
 
-    void DropdownPart::paintDivider(PaintEvent& event) const
-    {
-        return;
-
-        // The seam takes the theme's separator rule, resolved against whatever this half is
-        // sitting on - the same way a Separator control resolves it. It then fades out once this
-        // half is lit, because by then the surfaces already tell the two halves apart.
-        const BakedColors& bakedColors = event.bakedColors();
-        Hsl hsl = event.surfaceHsl();
-        float visibility = bakedColors.element(UiElement::Divider).surface.applyTo(hsl, 1.0f,
-            event.lightness());
-        Color color = hsl.toColor();
-        color.alpha = static_cast<ColorByte>(visibility * 255.0f * (1.0f - event.hoveredFactor()));
-        if (!color.alpha)
-            return;
-
-        FloatRect bounds = event.controlBounds();
-        float strokeWidth = event.scaledStrokeWidth(ThemeMetrics::border);
-        if (m_owner.arrowPlacement() == ArrowPlacement::Bottom)
-        {
-            float inset = event.parentEvent()->padding().x;
-            event.canvas().drawLine(
-                { bounds.left + inset, bounds.top },
-                { bounds.right - inset, bounds.top },
-                color,
-                strokeWidth
-            );
-            return;
-        }
-        float inset = event.parentEvent()->padding().y;
-        event.canvas().drawLine(
-            { bounds.left, bounds.top + inset },
-            { bounds.left, bounds.bottom - inset },
-            color,
-            strokeWidth
-        );
-    }
     // DropdownControlBase
 
     void DropdownControlBase::setDropdownWidth(const float value)

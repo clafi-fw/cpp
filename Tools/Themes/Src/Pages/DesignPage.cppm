@@ -1,4 +1,4 @@
-export module ThisApp.Design2Page;
+export module ThisApp.DesignPage;
 
 import ThisApp.ElementPage;
 import ThisApp.RuleSlider;
@@ -26,22 +26,22 @@ namespace ThisApp
 
     // The colour a rule of an element's list, or of a shared list, is applied to.
     export using OnGetElementRuleBase =
-        std::function<RuleBase(OptionalUiElement, const ColorRule2&, RuleChannel)>;
+        std::function<RuleBase(OptionalUiElement, const ColorRule&, RuleChannel)>;
 
     // A list of rules no one element owns, and what its tree item and its page go by.
     struct SharedRules
     {
         std::wstring_view name{};
         std::wstring_view token{};
-        ColorRules2 ThemeRules2::* rules{ nullptr };
+        ColorRules ThemeRules::* rules{ nullptr };
     };
 
-    // A theme's design under the new color theme architecture, one element page at a time.
-    export class Design2Page : public Panel
+    // A theme's design, one element page at a time.
+    export class DesignPage : public Panel
     {
     public:
         template<typename... Args>
-        explicit Design2Page(const CreateParams&, Args&&...);
+        explicit DesignPage(const CreateParams&, Args&&...);
     public:
         // The token of the page that shows - an element's or a shared list's - or nothing yet.
         [[nodiscard]] std::wstring_view pickedPage() const;
@@ -78,7 +78,7 @@ namespace ThisApp
         static constexpr std::wstring_view k_paletteTitle{ L"Palette" };
 
         TreeEntries m_entries{}; // an item's tag is its place here
-        const ThemeRules2 m_defaultRules{ defaultRules2() }; // what each page's reset puts back
+        const ThemeRules m_defaultRules{ defaultRules() }; // what each page's reset puts back
 
         TreeView& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,
@@ -113,7 +113,7 @@ namespace ThisApp
 
 
     template<typename... Args>
-    Design2Page::Design2Page(const CreateParams& params, Args&&... args)
+    DesignPage::DesignPage(const CreateParams& params, Args&&... args)
         :
         Panel{ params, std::forward<Args>(args)... }
     {
@@ -121,7 +121,7 @@ namespace ThisApp
     }
 
     template<typename F>
-    EventConnection Design2Page::onPagePick(F&& callback)
+    EventConnection DesignPage::onPagePick(F&& callback)
     {
         return m_tree.onCurrentItemChange(std::forward<F>(callback));
     }

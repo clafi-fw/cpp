@@ -1,16 +1,15 @@
 // =========================================================================
 // ClaFi.Application.ThemesManager_Elements
 //
-// WHAT A THEME IS MADE OF, STATED ONCE. ThemeColors declares a colour rule
-// per element and a rule per state within an element; this describes those
-// declarations - the member each one names, what it is painted on, the three
-// spellings it goes by, and which of its rules actually reach the screen.
+// WHAT A THEME IS MADE OF, STATED ONCE. Every element a theme colours, the
+// three spellings it goes by, what it is painted on, and for the elements
+// an ink names, the ThemeColors member holding that effect.
 //
 // Four readers share it and none keeps a list of its own: the serializers
-// build their field tuples from these tables, the Themes app builds its grid
-// from them, the C++ code generator emits designators from them, and bake
-// below turns a theme into the set the paint path reads. An element or a
-// state added here reaches all four; one added anywhere else reaches none.
+// build their field tuples from this table, the Themes app names its pages
+// from it, the C++ code generator emits designators from it, and bake below
+// turns a theme into the set the paint path reads. An element added here
+// reaches all four; one added anywhere else reaches none.
 // =========================================================================
 export module ClaFi.Application.ThemesManager_Elements;
 
@@ -22,120 +21,13 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // The states an element paints with, in the order they are applied. See Application
-    export enum class UiElementState : TagValue
-    {
-        Surface,
-        Stroke,
-        Active,
-        Hovered,
-        Pressed,
-        Text,
-        ActiveText,
-        Shadow,
-        Count
-    };
-
-    // THE THREE SPELLINGS A RULE GOES BY, and they are not the same word. See Application
-    export struct UiElementStateDescriptor
-    {
-        std::wstring_view name{};
-        std::wstring_view codeName{};
-        std::wstring_view token{};
-        ColorRule ControlColorRules::* rule{ nullptr };
-    };
-
-    // Indexed by UiElementState, so it and this table must stay in step.
-    export constexpr std::array<UiElementStateDescriptor, static_cast<std::size_t>(UiElementState::Count)> k_uiElementStates{
-        UiElementStateDescriptor{
-            .name = L"Surface",
-            .codeName = L"surface",
-            .token = L"Surface",
-            .rule = &ControlColorRules::surface
-        },
-        UiElementStateDescriptor{
-            .name = L"Stroke",
-            .codeName = L"stroke",
-            .token = L"Stroke",
-            .rule = &ControlColorRules::stroke
-        },
-        UiElementStateDescriptor{
-            .name = L"Active",
-            .codeName = L"active",
-            .token = L"Active",
-            .rule = &ControlColorRules::active
-        },
-        UiElementStateDescriptor{
-            .name = L"Hovered",
-            .codeName = L"hovered",
-            .token = L"Hovered",
-            .rule = &ControlColorRules::hovered
-        },
-        UiElementStateDescriptor{
-            .name = L"Pressed",
-            .codeName = L"pressed",
-            .token = L"Pressed",
-            .rule = &ControlColorRules::pressed
-        },
-        UiElementStateDescriptor{
-            .name = L"Text",
-            .codeName = L"text",
-            .token = L"Text",
-            .rule = &ControlColorRules::text
-        },
-        UiElementStateDescriptor{
-            .name = L"Active text",
-            .codeName = L"activeText",
-            .token = L"ActiveText",
-            .rule = &ControlColorRules::activeText
-        },
-        UiElementStateDescriptor{
-            .name = L"Shadow",
-            .codeName = L"shadow",
-            .token = L"Shadow",
-            .rule = &ControlColorRules::shadow
-        }
-    };
-
-    export constexpr const UiElementStateDescriptor& uiElementStateOf(UiElementState state)
-    {
-        return k_uiElementStates[static_cast<std::size_t>(state)];
-    }
-
-    // The states one element paints with, as a set. See Application
-    export class UiElementStates
-    {
-    public:
-        constexpr UiElementStates() = default;
-        // Not explicit: a descriptor names its set as a braced list of enumerators, and an
-        // aggregate initializes its members by copy-initialization, which an explicit
-        // constructor would refuse.
-        template <std::same_as<UiElementState>... States>
-        constexpr UiElementStates(States... states)
-        {
-            m_bits = (0u | ... | bitOf(states));
-        }
-        [[nodiscard]] constexpr bool has(UiElementState state) const { return (m_bits & bitOf(state)) != 0u; }
-        [[nodiscard]] constexpr std::size_t count() const { return static_cast<std::size_t>(std::popcount(m_bits)); }
-    private:
-        [[nodiscard]] static constexpr std::uint32_t bitOf(UiElementState state)
-        {
-            return 1u << static_cast<std::uint32_t>(state);
-        }
-    private:
-        std::uint32_t m_bits{ 0u };
-    };
-
-    // What one element is: its spellings, the ThemeColors member, and its rules. See Application
+    // What one element is: its spellings, what it stands on, and its effect. See Application
     export struct UiElementDescriptor
     {
         std::wstring_view name{};
         std::wstring_view codeName{};
         std::wstring_view token{};
-        // One of these two at most. An element is one bare rule, a set of state rules, or neither
-        // where only the new color rules reach it - never both, and null is what says which.
-        ColorRule ThemeColors::* rule{ nullptr };
-        ControlColorRules ThemeColors::* rules{ nullptr };
+        ColorEffect ThemeColors::* effect{ nullptr }; // the effect an ink names, where there is one
         // What the element is painted on. The framework nests these controls; this states that
         // nesting once, so a rule can be shown against the colour it will actually change.
         // An empty base is the bare colour of the mode, before any rule.
@@ -149,18 +41,9 @@ namespace ClaFi
         // AppTheme's WindowShadow. A root stands on the bare colour of the mode, which is what
         // PaintEvent seeds it with - see BakedColors::rootSurface.
         bool isWindowRoot{ false };
-        // Empty for a bare rule. One state is one row in an editor; two or more is a group.
-        UiElementStates states{};
     };
 
     // Indexed by UiElement, so it and this table must stay in step.
-    //
-    // A STATE LISTED HERE IS ONE THE ELEMENT PAINTS WITH. An omission is a statement, and every
-    // kind of omission is checkable. No Active where nothing can make the element the one in
-    // effect. No Stroke where the element's ControlMetrics::border is None: the stroke reaches
-    // the screen only through scaler().scaledStrokeWidth(metrics.border), which is 0 for None, so
-    // the rule would reach nothing. Check the metrics the element is constructed with, not its
-    // colour rules.
     export constexpr std::array<UiElementDescriptor, static_cast<std::size_t>(UiElement::Count)> k_uiElements{
         // A WINDOW ROOT. Menu and Tooltip are the other two, and the three carry the same pair -
         // the surface the window is filled with and the ink everything in it starts from - and
@@ -285,21 +168,21 @@ namespace ClaFi
             .token = L"HoverIndicator",
             .base = UiElement::Section
         },
-        // THREE THINGS IN ONE RULE: the theme's own emphasis, the ring on the control the user is
+        // THREE THINGS IN ONE EFFECT: the theme's own emphasis, the ring on the control the user is
         // on, and the indicator under an open tab. They are one colour on purpose - the interface
         // says "this one" in a single ink - so they are edited as one row.
         UiElementDescriptor{
             .name = L"Accent",
             .codeName = L"accent",
             .token = L"Accent",
-            .rule = &ThemeColors::accent,
+            .effect = &ThemeColors::accent,
             .base = UiElement::Section
         },
         UiElementDescriptor{
             .name = L"Spot",
             .codeName = L"spot",
             .token = L"Spot",
-            .rule = &ThemeColors::spot,
+            .effect = &ThemeColors::spot,
             .base = UiElement::Section
         },
         UiElementDescriptor{
@@ -338,14 +221,8 @@ namespace ClaFi
         for (std::size_t i = 0; i < k_uiElements.size(); ++i)
         {
             const UiElementDescriptor& descriptor = k_uiElements[i];
-            if (descriptor.rule != nullptr)
-            {
-                result.rules[i] = bake(themeColors.*descriptor.rule, themeColors);
-            }
-            else if (descriptor.rules != nullptr)
-            {
-                result.elements[i] = bake(themeColors.*descriptor.rules, themeColors);
-            }
+            if (descriptor.effect != nullptr)
+                result.effects[i] = bake(themeColors.*descriptor.effect, themeColors);
         }
 
         // The harmony answers here and nowhere after: what a pigment stands for is the theme's
@@ -355,7 +232,7 @@ namespace ClaFi
             result.pigmentHues[pigment] = themeColors.harmony()
                 .pigmentColor(static_cast<Pigment>(pigment)).hsl().hue;
         }
-        result.rules2 = bake(themeColors.rules2, themeColors);
+        result.rules = bake(themeColors.rules, themeColors);
         return result;
     }
 }

@@ -60,37 +60,24 @@ namespace ClaFi // AppTheme serializers
         );
     }
 
-    export constexpr auto serializedFields(const ColorRule&) {
+    export constexpr auto serializedFields(const ColorEffect&) {
         return std::make_tuple(
-            SerializedField{ L"Hue", &ColorRule::hue },
-            SerializedField{ L"Saturation", &ColorRule::saturation },
-            SerializedField{ L"Elevation", &ColorRule::elevation }
+            SerializedField{ L"Hue", &ColorEffect::hue },
+            SerializedField{ L"Saturation", &ColorEffect::saturation },
+            SerializedField{ L"Elevation", &ColorEffect::elevation }
         );
     }
 
-    template <std::size_t I>
-    constexpr auto stateField()
-    {
-        return SerializedField{ k_uiElementStates[I].token, k_uiElementStates[I].rule };
-    }
-
-    template <std::size_t... I>
-    constexpr auto stateFields(std::index_sequence<I...>)
-    {
-        return std::make_tuple(stateField<I>()...);
-    }
-
-    // ONE FIELD AT A TIME, BECAUSE THE LIST IS HETEROGENEOUS. A tuple carries a type per element,
-    // and an element names a ColorRule, a whole ControlColorRules or neither - so the fields cannot
-    // be produced by one transform over the table. Each index answers with a tuple of its own and
-    // tuple_cat joins them.
+    // ONE FIELD AT A TIME, BECAUSE ONLY SOME ELEMENTS NAME AN EFFECT. Each index answers with a
+    // tuple of its own, empty where the element names none, and tuple_cat joins them.
     template <std::size_t I>
     constexpr auto elementField()
     {
-        if constexpr (k_uiElements[I].rule != nullptr)
-            return std::make_tuple(SerializedField{ k_uiElements[I].token, k_uiElements[I].rule });
-        else if constexpr (k_uiElements[I].rules != nullptr)
-            return std::make_tuple(SerializedField{ k_uiElements[I].token, k_uiElements[I].rules });
+        if constexpr (k_uiElements[I].effect != nullptr)
+        {
+            return std::make_tuple(
+                SerializedField{ k_uiElements[I].token, k_uiElements[I].effect });
+        }
         else
             return std::tuple<>{};
     }
@@ -99,16 +86,6 @@ namespace ClaFi // AppTheme serializers
     constexpr auto elementFields(std::index_sequence<I...>)
     {
         return std::tuple_cat(elementField<I>()...);
-    }
-
-    // Flip is named here rather than through the state table, which lists rules.
-    export constexpr auto serializedFields(const ControlColorRules&) {
-        return std::tuple_cat(
-            std::make_tuple(
-                SerializedField{ L"Flip", &ControlColorRules::flip }
-            ),
-            stateFields(std::make_index_sequence<k_uiElementStates.size()>{})
-        );
     }
 
     export constexpr auto enumNames(ColorHarmonyKind) { return k_harmonyKeys; }
@@ -145,21 +122,21 @@ namespace ClaFi // AppTheme serializers
         };
     }
 
-    export constexpr auto serializedFields(const ColorRule2&) {
+    export constexpr auto serializedFields(const ColorRule&) {
         return std::make_tuple(
-            SerializedField{ L"Inputs", &ColorRule2::inputs },
-            SerializedField{ L"AndInputs", &ColorRule2::andInputs },
-            SerializedField{ L"Output", &ColorRule2::output },
-            SerializedField{ L"Effect", &ColorRule2::effect }
+            SerializedField{ L"Inputs", &ColorRule::inputs },
+            SerializedField{ L"AndInputs", &ColorRule::andInputs },
+            SerializedField{ L"Output", &ColorRule::output },
+            SerializedField{ L"Effect", &ColorRule::effect }
         );
     }
 
-    // Each element's list stands under the element's token, the name its old rules stand under.
+    // Each element's list stands under the element's token.
     template <std::size_t I>
     constexpr auto elementRulesField()
     {
-        return SerializedField{ k_uiElements[I].token, &ThemeRules2::element<I>,
-            &ThemeRules2::setElement<I> };
+        return SerializedField{ k_uiElements[I].token, &ThemeRules::element<I>,
+            &ThemeRules::setElement<I> };
     }
 
     template <std::size_t... I>
@@ -168,18 +145,18 @@ namespace ClaFi // AppTheme serializers
         return std::make_tuple(elementRulesField<I>()...);
     }
 
-    export constexpr auto serializedFields(const ThemeRules2&) {
+    export constexpr auto serializedFields(const ThemeRules&) {
         return std::tuple_cat(
             std::make_tuple(
-                SerializedField{ L"Shared", &ThemeRules2::shared },
-                SerializedField{ L"AnyWindow", &ThemeRules2::anyWindow }
+                SerializedField{ L"Shared", &ThemeRules::shared },
+                SerializedField{ L"AnyWindow", &ThemeRules::anyWindow }
             ),
             elementRulesFields(std::make_index_sequence<k_uiElementCount>{})
         );
     }
 
-    // The palette and the new rules are stated here and the elements come from k_uiElements, in
-    // that table's order, which is ThemeColors declaration order. Field order in a document is a
+    // The palette and the rules are stated here and the effects come from k_uiElements, in that
+    // table's order, which is ThemeColors declaration order. Field order in a document is a
     // reading matter - a field is found by name - so the table's order is free to be the one
     // generated C++ needs.
     export constexpr auto serializedFields(const ThemeColors&) {
@@ -192,7 +169,7 @@ namespace ClaFi // AppTheme serializers
             ),
             elementFields(std::make_index_sequence<k_uiElements.size()>{}),
             std::make_tuple(
-                SerializedField{ L"Rules2", &ThemeColors::rules2 }
+                SerializedField{ L"Rules", &ThemeColors::rules }
             )
         );
     }

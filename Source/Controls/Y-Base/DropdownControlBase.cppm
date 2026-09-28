@@ -55,10 +55,8 @@ namespace ClaFi::Controls
         void getText(GetTextEvent&) const override;
         void paintIcon(PaintIconEvent&) override;
         void adjustPaint(AdjustPaintEvent&) override;
-        void paintSurface(PaintEvent&) override;
     private:
         [[nodiscard]] bool enabledAlone() const;
-        void paintDivider(PaintEvent&) const;
     private:
         DropdownControlBase& m_owner;
     };

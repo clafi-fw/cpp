@@ -58,7 +58,6 @@ namespace ThisApp
     {
         return {
             Dom::Dt::Value{ L"Preview", true },
-            Dom::Dt::Sequence{ k_collapsedAttrName, std::wstring{} },
             Dom::Dt::Value{ k_viewAttrName, ThemeView::Design },
             Dom::Dt::Value{ k_elementAttrName, std::wstring{} },
             Dom::Dt::Value{ k_themeDataAttrName, AppTheme{} }

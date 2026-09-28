@@ -389,8 +389,8 @@ layer-shell Dialog, placed `ScreenRight`, is sent no ACTIVATED state and reads 0
 What reads it:
 
 - The colour chain, through `AdjustPaintEvent::setWindowSelectedAmount` - how much of the
-  selected factor is the window's focus. `DialogTitle` states 1, so its `active` and `activeText`
-  rules follow its window.
+  selected factor is the window's focus. `DialogTitle` states 1, so its `Selected` rules follow
+  its window.
 - `RuleInput::WindowFocused`, which a rule reads on its own or joins to another input in its
   `andInputs`. `Focused` is the control's own focus alone. The band's focus rule reads "when
   focused and window focused", so a selection in a window without the focus shows only the

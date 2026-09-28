@@ -21,20 +21,12 @@ namespace ThisApp
         return CppCodeGenerator{ colors, content, scope }.text();
     }
 
-    // memberCommentOf / stateCommentOf
+    // memberCommentOf
 
     std::wstring_view memberCommentOf(UiElement element)
     {
         for (const MemberComment& entry : k_memberComments)
             if (entry.element == element)
-                return entry.text;
-        return {};
-    }
-
-    std::wstring_view stateCommentOf(std::wstring_view memberName, std::wstring_view stateName)
-    {
-        for (const StateComment& entry : k_stateComments)
-            if (entry.memberName == memberName and entry.stateName == stateName)
                 return entry.text;
         return {};
     }
@@ -53,27 +45,11 @@ namespace ThisApp
             and first.exactValue() == second.exactValue();
     }
 
-    bool isSame(const ColorRule& first, const ColorRule& second)
+    bool isSame(const ColorEffect& first, const ColorEffect& second)
     {
         return isSame(first.hue, second.hue)
             and isSame(first.saturation, second.saturation)
             and isSame(first.elevation, second.elevation);
-    }
-
-    bool isSame(const ControlColorRules& first, const ControlColorRules& second,
-        UiElementStates states)
-    {
-        if (first.flip != second.flip)
-            return false;
-        for (std::size_t i = 0ull; i != k_uiElementStates.size(); ++i)
-        {
-            if (!states.has(static_cast<UiElementState>(i)))
-                continue;
-            ColorRule ControlColorRules::* rule = k_uiElementStates[i].rule;
-            if (!isSame(first.*rule, second.*rule))
-                return false;
-        }
-        return true;
     }
 
     // literalValue
@@ -195,9 +171,9 @@ namespace ThisApp
         return write(L" }");
     }
 
-    CppCodeGenerator& CppCodeGenerator::colorRule(const ColorRule& value, std::size_t level)
+    CppCodeGenerator& CppCodeGenerator::colorEffect(const ColorEffect& value, std::size_t level)
     {
-        if (isSame(value, ColorRule{}))
+        if (isSame(value, ColorEffect{}))
             return write(L"{}");
         write(L"{").newLine();
         if (!isSame(value.hue, ColorRuleHue{}))
@@ -209,50 +185,6 @@ namespace ThisApp
         padTo(k_channelColumn).write(L"// S").newLine();
         indent(level + 1ull).colorRuleValue(value.elevation);
         padTo(k_channelColumn).write(L"// E").newLine();
-        return indent(level).write(L"}");
-    }
-
-    CppCodeGenerator& CppCodeGenerator::controlColorRules(const ControlColorRules& value, std::size_t level,
-        const UiElementDescriptor& owner)
-    {
-        const ControlColorRules bare{};
-        if (isSame(value, bare, owner.states))
-            return write(L"{}");
-        write(L"{").newLine();
-        bool first = true;
-        auto separate = [this, &first](){
-            if (!first)
-            {
-                write(L",");
-                newLine();
-            }
-            first = false;
-        };
-        // First, because a designated initializer list names members in declaration order.
-        if (value.flip != bare.flip)
-        {
-            separate();
-            indent(level + 1ull).write(L".flip{ ");
-            write(value.flip ? L"true" : L"false").write(L" }");
-        }
-        // WALKED IN UIELEMENTSTATE ORDER, WHICH IS DECLARATION ORDER, and narrowed to the states
-        // this element paints with - a designated initializer list has to name members in
-        // declaration order, and a rule the element never applies has no place in the block.
-        for (std::size_t i = 0ull; i != k_uiElementStates.size(); ++i)
-        {
-            const UiElementStateDescriptor& state = k_uiElementStates[i];
-            if (!owner.states.has(static_cast<UiElementState>(i)))
-                continue;
-            if (isSame(value.*state.rule, bare.*state.rule))
-                continue;
-            separate();
-            // The separator ends the line before this one, so the comment starts on a line of its
-            // own and the designator follows it rather than sharing it.
-            memberComment(stateCommentOf(owner.codeName, state.codeName), level + 1ull);
-            indent(level + 1ull).write(L".").write(state.codeName);
-            colorRule(value.*state.rule, level + 1ull);
-        }
-        newLine();
         return indent(level).write(L"}");
     }
 
@@ -303,27 +235,16 @@ namespace ThisApp
     void CppCodeGenerator::colorMember(UiElement element)
     {
         const UiElementDescriptor& entry = uiElementOf(element);
-        // An element only the new color rules reach has no member of ThemeColors to state.
-        if (!entry.rule and !entry.rules)
+        // An element whose effect no ink names has no member of ThemeColors to state.
+        if (!entry.effect)
             return;
         // The comment is written after the member is known to be stated, so a block of
         // differences carries prose only for what it does state.
-        if (entry.rule)
-        {
-            if (!statesMember(!isSame(m_colors.*entry.rule, m_defaults.*entry.rule)))
-                return;
-            memberComment(memberCommentOf(element), 0ull);
-            openMember(L"ColorRule", entry.codeName);
-            colorRule(m_colors.*entry.rule, 0ull);
-        }
-        else
-        {
-            if (!statesMember(!isSame(m_colors.*entry.rules, m_defaults.*entry.rules, entry.states)))
-                return;
-            memberComment(memberCommentOf(element), 0ull);
-            openMember(L"ControlColorRules", entry.codeName);
-            controlColorRules(m_colors.*entry.rules, 0ull, entry);
-        }
+        if (!statesMember(!isSame(m_colors.*entry.effect, m_defaults.*entry.effect)))
+            return;
+        memberComment(memberCommentOf(element), 0ull);
+        openMember(L"ColorEffect", entry.codeName);
+        colorEffect(m_colors.*entry.effect, 0ull);
         closeLine();
         newLine();
         m_statedAnyMember = true;

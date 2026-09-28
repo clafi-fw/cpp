@@ -149,8 +149,8 @@
                 </div>
                 <ul>
                     <li><a href="#palette">The palette</a></li>
+                    <li><a href="#color-effects">Colour effects</a></li>
                     <li><a href="#color-rules">Colour rules</a></li>
-                    <li><a href="#control-rules">Element rules</a></li>
                 </ul>
             </li>
             <li><div class="nav-item-wrapper"><a href="#do-dont">Do and Don't</a></div></li>
@@ -324,10 +324,11 @@ ceiling, and two elements at 0.6 stand at the same luminosity whatever each is d
 mode orients it - up from the dark end on a dark theme, down from the light end on a light one - so
 one number serves both sides of the theme.</p>
 
-<p>The direction is the <strong>element's</strong> own, not the theme's. An element that carries the
-theme across itself - a dark strip on a light theme - stands in the flipped mode, and everything
-drawn from that surface answers to it. <code>PaintEvent::lightness()</code> is the side that element
-stands on - 0 the dark end, 1 the light one, anything between a crossing part way through.</p>
+<p>The direction is the <strong>control's</strong> own, not the theme's.
+<code>PaintEvent::lightness()</code> is the side a control stands on - 0 the dark end, 1 the light
+one, anything between a crossing part way through. It is inherited from the control above, and a
+control that knows better states it outright through <code>AdjustPaintEvent::setLightness</code> -
+a tab wearing its page's colour takes the page's side.</p>
 
 <pre><code><span class="cm">// The two directions of one mapping. The lightness is the element's, the floor the theme's.</span>
 <span class="kw">float</span> <span class="fn">elevationOf</span>(<span class="kw">float</span> luminosity, <span class="tp">Lightness</span> lightness, <span class="kw">float</span> luminosityFloor);
@@ -597,11 +598,11 @@ assigned:</p>
 
 <table>
 <tr><th>Index</th><th>Named by a rule as</th><th>What it is</th></tr>
-<tr><td><code>paletteHues[0]</code></td><td><code>ColorRuleHueOp::PalleteColor1</code></td>
+<tr><td><code>paletteHues[0]</code></td><td><code>ColorRuleHueOp::PaletteColor1</code></td>
     <td>The hue that tints surfaces, and so the hue every grey in the form is made of.</td></tr>
-<tr><td><code>paletteHues[1]</code></td><td><code>ColorRuleHueOp::PalleteColor2</code></td>
+<tr><td><code>paletteHues[1]</code></td><td><code>ColorRuleHueOp::PaletteColor2</code></td>
     <td>The accent - the hue the interactive states and the accent ink are drawn from.</td></tr>
-<tr><td><code>paletteHues[2]</code></td><td><code>ColorRuleHueOp::PalleteColor3</code></td>
+<tr><td><code>paletteHues[2]</code></td><td><code>ColorRuleHueOp::PaletteColor3</code></td>
     <td>The spot - the second accent, and the tooltip's tint.</td></tr>
 </table>
 
@@ -609,53 +610,72 @@ assigned:</p>
 other pigments are taken from. The harmony is derived rather than stored, so a file carries the two
 inputs and not the result.</p>
 
-<h3 id="color-rules">Colour rules</h3>
+<h3 id="color-effects">Colour effects</h3>
 
-<p>A <code>ColorRule</code> is three channels - hue, saturation, elevation - each stating what
-happens to the colour handed to it. Everything a theme says about an element is said in these.</p>
+<p>A <code>ColorEffect</code> is three channels - hue, saturation, elevation - each stating what
+happens to the colour handed to it. Everything a theme says about a colour is said in these.</p>
 
 <table>
 <tr><th>Operation</th><th>Effect</th></tr>
 <tr><td><code>ColorRuleOp::NoChange</code></td><td>Leaves the channel as it arrived.</td></tr>
 <tr><td><code>ColorRuleOp::Offset</code></td><td>Moves it by a distance. A relation between two colours.</td></tr>
 <tr><td><code>ColorRuleOp::Scale</code></td><td>Multiplies it.</td></tr>
-<tr><td><code>ColorRuleOp::Set</code></td><td>States where it lands, absolutely, read in the element's own direction.</td></tr>
+<tr><td><code>ColorRuleOp::Set</code></td><td>States where it lands, absolutely, read in the control's own direction.</td></tr>
 </table>
 
 <p>The hue channel is its own type, because a hue is chosen from a short list rather than moved:
-<code>PalleteColor1</code>, <code>PalleteColor2</code>, <code>PalleteColor3</code>,
-<code>NoChange</code>, or <code>ExactValue</code> with a hue written into the rule.</p>
+<code>PaletteColor1</code>, <code>PaletteColor2</code>, <code>PaletteColor3</code>,
+<code>NoChange</code>, or <code>ExactValue</code> with a hue written into the effect.</p>
 
-<pre><code><span class="tp">ColorRule</span> accent{
-    { <span class="tp">ColorRuleHueOp</span>::PalleteColor2 },   <span class="cm">// H - the palette's accent hue</span>
-    { <span class="tp">ColorRuleOp</span>::Set, <span class="kw">0.61449593f</span> },   <span class="cm">// S</span>
-    { <span class="tp">ColorRuleOp</span>::Set, <span class="kw">0.5606192f</span> }     <span class="cm">// E - an elevation, not a luminosity</span>
+<pre><code><span class="tp">ColorEffect</span> accent{
+    { <span class="tp">ColorRuleHueOp</span>::PaletteColor2 },   <span class="cm">// H - the palette's accent hue</span>
+    { <span class="tp">ColorRuleOp</span>::Set, <span class="kw">1.0f</span> },          <span class="cm">// S</span>
+    { <span class="tp">ColorRuleOp</span>::Set, <span class="kw">0.544542f</span> }      <span class="cm">// E - an elevation, not a luminosity</span>
 };</code></pre>
 
-<p>All three operations run in elevation space, so what a rule states is read in the direction the
-element it belongs to stands in. <code>Set 0.0</code> comes out at the floor on a dark theme and
-white on a light one, which is how a mark gets ink that contrasts with it under either mode without
-the element having to state a flip.</p>
+<p>All three operations run in elevation space, so what an effect states is read in the direction
+the control it lands on stands in. <code>Set 0.0</code> comes out at the floor on a dark theme and
+white on a light one, which is how a mark gets ink that contrasts with it under either mode.</p>
 
-<h3 id="control-rules">Element rules</h3>
+<p><code>ThemeColors::accent</code> and <code>ThemeColors::spot</code> are bare effects: the two
+inks a theme states itself, applied wherever an ink names them.</p>
 
-<p><code>ControlColorRules</code> is what an element wears: one rule per state, plus
-<code>flip</code>, the one fact that is not a colour.</p>
+<h3 id="color-rules">Colour rules</h3>
+
+<p>A <code>ColorRule</code> is what a theme says about an element: the states it reads, the channel
+it writes, and the effect it applies there.</p>
 
 <table>
 <tr><th>Member</th><th>What it states</th></tr>
-<tr><td><code>flip</code></td><td>That this element stands on the far side of the theme. Every rule it carries, every ink resolved on it and every control inside it is then read from that side.</td></tr>
-<tr><td><code>surface</code></td><td>The colour the element itself paints. <code>active</code>, <code>hovered</code> and <code>pressed</code> are applied over it.</td></tr>
-<tr><td><code>stroke</code></td><td>The element's border, applied to whichever stands higher: the element's surface or the surface it stands on.</td></tr>
-<tr><td><code>active</code></td><td>The element while it is the one in effect - the open tab, the mark that is on, the selection the keys act on. Applied over <code>surface</code> by the factor that says so.</td></tr>
-<tr><td><code>hovered</code>, <code>pressed</code></td><td>What the pointer does.</td></tr>
-<tr><td><code>text</code></td><td>The ink everything inside the element starts from.</td></tr>
-<tr><td><code>activeText</code></td><td>What being in effect does to that ink, at the same factor <code>active</code> is taken at.</td></tr>
-<tr><td><code>shadow</code></td><td>The shadow a window casts, read from the three sets a window wears: <code>form</code>, <code>menu</code> and <code>tooltip</code>. It is applied to black carrying the form surface's hue rather than over <code>surface</code>, and read at the dark end in both modes with no floor and no flip, so elevation here is luminosity and <code>{}</code> is plain black. Its blur, offset, spread and opacity are metrics, in <code>WindowShadow</code>.</td></tr>
+<tr><td><code>inputs</code></td><td>The states the rule reads, joined as "or" - <code>Hovered</code>, <code>Pressed</code>, <code>Focused</code>, <code>Selected</code>, <code>Disabled</code>, <code>TextHovered</code>, <code>Current</code>, <code>WindowFocused</code>. An empty set is at rest: the rule applies in full.</td></tr>
+<tr><td><code>andInputs</code></td><td>What must hold as well, joined as "and" - a surface when focused and the window focused.</td></tr>
+<tr><td><code>output</code></td><td>The <code>PaintChannel</code> the rule writes.</td></tr>
+<tr><td><code>effect</code></td><td>The <code>ColorEffect</code> applied to that channel, as far as the inputs stand.</td></tr>
 </table>
 
-<p>Hover and press are momentary and the background says them, which is why the ink pair stops at
-<code>text</code> and <code>activeText</code> and there is no <code>hoveredText</code>.</p>
+<table>
+<tr><th>Channel</th><th>Where it starts</th></tr>
+<tr><td><code>Surface</code></td><td>The surface the control stands on. A control whose rules move nothing paints no surface of its own.</td></tr>
+<tr><td><code>Stroke</code></td><td>The control's own surface.</td></tr>
+<tr><td><code>Text</code></td><td>The ink the control above passes on, in its own surface's hue until a rule names one.</td></tr>
+<tr><td><code>Shadow</code></td><td>Black in the stroke's hue. It is read at the dark end in both modes with no floor, so elevation here is luminosity. A window's blur, offset, spread and opacity are metrics, in <code>WindowShadow</code>.</td></tr>
+</table>
+
+<pre><code><span class="tp">ColorRule</span>{
+    .inputs{ <span class="tp">RuleInput</span>::Hovered },
+    .effect{
+        { <span class="tp">ColorRuleOp</span>::Offset, <span class="kw">0.085609f</span> },     <span class="cm">// S</span>
+        { <span class="tp">ColorRuleOp</span>::Offset, <span class="kw">0.126926f</span> }      <span class="cm">// E</span>
+    }
+}</code></pre>
+
+<p><code>ThemeColors::rules</code> is a <code>ThemeRules</code>: one list per
+<code>UiElement</code>, <code>anyWindow</code> for a form's root control whatever element it wears, and <code>shared</code>
+for every element. A control names the element it wears through
+<code>AdjustPaintEvent::setColorRules</code>, and takes that element's list, then the window's where
+it is a form's root, then the shared one. A control with something to say that no theme can - a tab
+taking on its page's colour - states rules of its own through
+<code>AdjustPaintEvent::setOwnRules</code>, applied ahead of its element's.</p>
 
 <h2 id="do-dont">Do and Don't</h2>
 
@@ -705,7 +725,7 @@ at every grade.</p>
 <span class="kw">else if</span> (ink.color == <span class="tp">InkColor</span>::White)
     inkEnd = { <span class="kw">0.0f</span>, <span class="kw">0.0f</span>, <span class="kw">1.0f</span> };
 <span class="kw">else if</span> (ink.color == <span class="tp">InkColor</span>::Accent <span class="kw">or</span> ink.color == <span class="tp">InkColor</span>::Spot)
-    m_bakedColors-&gt;<span class="fn">ruleOf</span>(ink.color).<span class="fn">applyTo</span>(inkEnd, <span class="kw">1.0f</span>, lightness);
+    m_bakedColors-&gt;<span class="fn">effectOf</span>(ink.color).<span class="fn">applyTo</span>(inkEnd, <span class="kw">1.0f</span>, lightness);
 
 <span class="tp">Hsl</span> result;
 <span class="kw">if</span> (ink.grade == <span class="kw">1.0f</span>)
@@ -727,19 +747,19 @@ used slides toward the surface it stands on, round the hue wheel rather than thr
 <h3 id="hiw-transform">The transform</h3>
 
 <p>A theme's transform shapes the elevation axis its rules are read on, and the Themes app edits it
-in its Transform section. It states one value, <code>ThemeColors::darkModeFloor</code>: the
+on the Palette page of its Design view. It states one value,
+<code>ThemeColors::darkModeFloor</code>: the
 luminosity elevation 0 is lifted to at the dark end. There the axis runs from the floor to white
 rather than from black - the luminosity an elevation names is taken to
 <code>floor + (1 - floor) * luminosity</code> - so every elevation stays reachable,
 <code>elevationOf</code> stays the inverse of <code>luminosityOf</code>, and each step a theme
 states is scaled by <code>1 - floor</code>.</p>
 
-<p>The floor is taken by <code>1 - lightness</code>. Light mode is left as it is, a crossing between
-the modes fades the floor in or out, and a flipped element takes it by the side it stands on: a dark
-tooltip in light mode is lifted, a light one in dark mode is not. With the dark end lifted, one
-design reads right at both ends, which is why a theme states no mode of its own.</p>
+<p>The floor is taken by <code>1 - lightness</code>. Light mode is left as it is, and a crossing
+between the modes fades the floor in or out. With the dark end lifted, one design reads right at
+both ends, which is why a theme states no mode of its own.</p>
 
-<p>Every elevation a theme states is lifted - surfaces, strokes, bare rules and text rules alike -
+<p>Every elevation a theme states is lifted - surfaces, strokes, effects and text rules alike -
 so a check, a caret, a focus ring and accented text rise with the surfaces around them. Text stands
 near the top of the axis, where the lift barely moves it: the ink on a dark page still reaches
 white, and only an ink set low, such as the one over a check mark, lands on the floor rather than on
@@ -751,16 +771,15 @@ lies below 1, where the axis would have no room left, and the Themes app's slide
 <h3 id="hiw-chain">The chain a control carries</h3>
 
 <p><code>PaintEvent</code> accumulates the chain on the way down. Each control applies its own
-element rules to what it was handed, and what it passes on is what its children measure against:</p>
+rules to what it was handed, and what it passes on is what its children measure against:</p>
 
 <ul>
-    <li>The <strong>surface</strong> is the background rule's result, accumulated - a control that
-        paints nothing contributes nothing to it.</li>
-    <li>The <strong>ink</strong> is the parent's ink with this control's own <code>text</code> rule
-        applied, at full strength and with no state term in it.</li>
-    <li>The <strong>mode</strong> is inherited and flipped by any element on the way down that states
-        <code>flip</code>. A control that knows better states it outright through
-        <code>AdjustPaintEvent::setColorMode</code>, and a stated mode is not flipped again.</li>
+    <li>The <strong>surface</strong> is the Surface rules' result, accumulated - a control whose
+        rules move nothing contributes nothing to it.</li>
+    <li>The <strong>ink</strong> is the parent's ink with this control's own Text rules
+        applied.</li>
+    <li>The <strong>lightness</strong> is inherited. A control that knows better states it outright
+        through <code>AdjustPaintEvent::setLightness</code>.</li>
     <li>The <strong>disabled amount</strong> is applied as the chain is built, so an ink asked for on
         demand matches one that was resolved ahead of time.</li>
 </ul>

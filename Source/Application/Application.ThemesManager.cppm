@@ -21,26 +21,9 @@ import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi
 {
-    export constexpr int k_defaultAnchorHue{ 210 };
-
     export constexpr std::wstring_view k_themeDataAttrName{ L"ThemeData" };
-    export constexpr std::wstring_view k_paletteNodeName2{ L"Palette" };
-
-    export constexpr std::wstring_view k_anchorHueAttrName{ L"AnchorHue" };
-
-    export constexpr std::wstring_view k_harmonyAttrName{ L"Harmony" };
-    export constexpr std::wstring_view k_huesAttrName{ L"Hues" };
-
-    //export constexpr std::wstring_view k_bgSaturationAttrName{ L"BgSaturation" };
-    //export constexpr std::wstring_view k_bgLuminosityAttrName{ L"BgLuminosity" };
-    export constexpr std::wstring_view k_rulesAttrName{ L"Rules" };
-    export constexpr std::wstring_view k_backgroundNodeName{ L"Background" };
-
-    export constexpr std::wstring_view k_hueActionAttrName{ L"HueAction" };
-    export constexpr std::wstring_view k_hueExactValueAttrName{ L"HueExactValue" };
 
     export constexpr std::wstring_view k_defaultThemeName = L"Default.theme";
-    export constexpr std::wstring_view k_dark2ThemeName = L"Dark2.theme";
 
     export constexpr std::wstring_view k_themeFileExtension = L".clafitheme";
     export constexpr std::wstring_view k_builtInThemeExtension = L".theme";

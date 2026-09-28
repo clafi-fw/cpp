@@ -3,7 +3,7 @@ export module ThisApp.ThemePage;
 import ThisApp.BasePage;
 import ThisApp.CodeOptions;
 import ThisApp.Consts;
-import ThisApp.Design2Page;
+import ThisApp.DesignPage;
 import ThisApp.FloorSlider;
 import ThisApp.HueRuleControl;
 import ThisApp.RuleSlider;
@@ -23,8 +23,6 @@ import ClaFi.Controls.Button;
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.CodeBox;
 import ClaFi.Controls.ColorSlider;
-import ClaFi.Controls.ComboBox;
-import ClaFi.Controls.Expander;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Grids_Dt;
 import ClaFi.Controls.Label;
@@ -133,21 +131,9 @@ namespace ThisApp
     protected:
         const AppTheme* selectedTheme() override { return &m_editTheme; }
         void visibilityChanged() override;
-        // The grid reads every element in the preview's mode.
+        // The pigment grid reads every element in the preview's mode.
         void previewColorModeChanged() override;
     private:
-        // A fold of the design page: the name the tab stores it under, and how to read and set it.
-        struct Fold
-        {
-            std::wstring name;
-            std::function<bool()> expanded;
-            std::function<void(bool)> setExpanded;
-            Control* head{}; // what opens and closes it
-            Control* stop{}; // where the focus goes when the fold closes over it
-            [[nodiscard]] bool holds(const Control*) const; // in its head or its body
-        };
-        using FoldCollection = std::vector<Fold>;
-        using FoldNames = std::vector<std::wstring>;
         using ViewTabs = std::array<Tab*, static_cast<std::size_t>(ThemeView::Count)>;
         // The pigment grid's columns, as their tags name them.
         enum class PigmentColumn : TagValue
@@ -180,30 +166,11 @@ namespace ThisApp
         void darkModeFloorChanged();
         //
         void storeViewState() const;
-        // Remembers a fold, and stores the tab's folds whenever it turns.
-        void addFold(Fold&&);
-        // An expander's fold, named by its title.
-        void addFold(ExpanderHeader&);
-        // A group's fold, named by its element's token - the name the theme file knows it by.
-        void addFold(UiElement, Grids::RowGroupSpan&);
-        // What a section of the grid registers its fold through, once its title is written.
-        [[nodiscard]] Init<Grids::Rt::RowExpander> sectionFold();
-        void storeFolds() const;
-        void restoreFolds();
-        void connectFoldMenu(); // the design page's menu, which turns its folds at once
-        void showFoldMenu(ContextPopupEvent&);
-        [[nodiscard]] bool anyFold(bool expanded) const;
-        [[nodiscard]] bool canCollapseOtherFolds() const;
-        void setAllFolds(bool expanded);
-        void collapseOtherFolds(); // every fold the menu's target does not stand in
-        void followFolds(const Control* owner); // keeps the focus and the menu's target in sight
-        // The outermost closed fold whose body holds the control, or null where none does.
-        [[nodiscard]] const Fold* hidingFold(const Control*) const;
         void storeView() const;
         void restoreView();
         void storeElement() const;
         void restoreElement();
-        void rules2Changed(); // a rule was added on the Design 2 page or taken away
+        void rulesChanged(); // a rule was added on the Design page or taken away
         void saveTheme() const;
         // Writes this page's work to a name the user gives, and takes the tab there. The original
         // is left on the disk as it stands, which is what tells this from Save.
@@ -224,70 +191,22 @@ namespace ThisApp
         // falls back to Save as.
         [[nodiscard]] bool isBuiltIn() const;
         //
-        // Blueprint fragments built by function, so one definition serves both
-        // column pairs - the pattern Dom uses for makeNetworkSection().
-        CellSet operationCells(ColumnTag actionKey, ColumnTag valueKey, ComboBoxTarget target);
-        // A rule typed over an Operation cell - +0.02, =0.66 - sets its operation and value at once.
-        void acceptOperationText(ComboBoxAcceptTextEvent&);
-        // An element the descriptor gives one state or none: one row, its name spanning the
-        // Name and State columns.
-        Row staticRow(UiElement) const;
-        Row elementRow(UiElement, UiElementState) const;
-        // An element the descriptor gives two states or more: one group, the header naming the
-        // element and one row per state it names. Not const, because the header's Flip control
-        // takes handlers that edit the theme - and a blueprint built in a member initializer is
-        // built on a page that is not const either.
-        Group elementGroup(UiElement);
-        // One cell text provider per cell kind, instead of one switch over all of them.
-        // Same signature as a row or grid level handler, so any of these could be
-        // connected at either level unchanged.
-        // Whether the row states a colour nothing stands under. A window root opens a window
-        // of its own and what is behind it is not the theme's to know, so its Surface rule names
-        // its hue outright and sets its saturation and elevation: the hue cell refuses Clear and
-        // the two operation cells are not the user's to move. Its other rows derive as any
-        // element's do.
-        [[nodiscard]] static bool statesAbsoluteSurface(const Grids::Rt::RowBase&);
-        void elementNameCell(Grids::GetCellTextEvent&) const;
-        void elementStateCell(Grids::GetCellTextEvent&) const;
-        // The mode an element stands in, accumulated down that nesting: the preview's, flipped
-        // once for every element on the way that states a flip. Every rule an element carries is
-        // read in it, so a ramp is drawn the way the painter will walk it.
-        [[nodiscard]] ColorMode elementColorMode(OptionalUiElement);
-        [[nodiscard]] const ColorRule& rowRule(UiElement, UiElementState);
         [[nodiscard]] Hsl elementColor(OptionalUiElement);
         // The ink an element's text starts from: the same nesting as elementColor, walked
         // through text rules instead of surface ones.
         [[nodiscard]] Hsl elementTextColor(OptionalUiElement, bool* hueNamed = nullptr);
-        // The resting new rules on one channel of an element; true where one of them names a hue.
-        bool applyRestingRules2(Hsl&, UiElement, PaintChannel, ColorMode);
+        // The resting rules on one channel of an element; true where one of them names a hue.
+        bool applyRestingRules(Hsl&, UiElement, PaintChannel);
         // The ink of the colour mode before any rule has touched it.
         [[nodiscard]] Hsl bareInk();
         // Black in the hue of an element's resting stroke, where its shadow starts.
         [[nodiscard]] Hsl bareShadow(OptionalUiElement);
-        [[nodiscard]] RuleBase rowRuleBase(const Grids::Rt::RowBase&, RuleChannel);
-        // What a value of a new rule is about to change, read the way rowRuleBase reads a row.
-        [[nodiscard]] RuleBase rule2Base(OptionalUiElement, const ColorRule2&, RuleChannel);
+        // What a value of a rule is about to change.
+        [[nodiscard]] RuleBase elementRuleBase(OptionalUiElement, const ColorRule&, RuleChannel);
         // A rule on a base, applied on every channel but the one its value ramp draws.
-        [[nodiscard]] RuleBase ruleBaseOn(Hsl base, const ColorRule&, RuleChannel, ColorMode,
+        [[nodiscard]] RuleBase ruleBaseOn(Hsl base, const ColorEffect&, RuleChannel, ColorMode,
             float luminosityFloor);
         //
-        ColorRule& rowColorRule(Grids::Row&);
-        ControlColorRules& rowColorRules(Grids::Rt::Row&);
-        // The rules a control standing in a cell edits. A cell blueprint names a column and knows
-        // nothing of the row, so a control asks through its own parent, which is the row it landed
-        // in - the group's span, for a control the span declares.
-        ControlColorRules& rowColorRulesOf(const Control&);
-        // The Flip cell, which stands once per group rather than once per state: the element is
-        // either carried across the theme or it is not, and its states are all on the side it
-        // ends up on.
-        void elementFlipState(GetStateEvent&);
-        void elementFlipClicked(ClickEvent&);
-        void updateGridControls();
-        void updateRowControls(ComboBox&, RuleSlider&, ColorRuleValue&);
-        void updateHueControl(Grids::Rt::RowContainer&);
-        void updateSaturationSliderAndComboBox(Grids::Rt::RowContainer&);
-        void updateElevationSliderAndComboBox(Grids::Rt::RowContainer&);
-        void hueRuleChanged();
         void generateCode();
         // The theme as one document, written into a box in the format's own spelling.
         void writeThemeTo(const Dom::FileFormatBase&, TextBox&);
@@ -304,9 +223,6 @@ namespace ThisApp
         static constexpr TagValue k_harmonyTag = 2ull;
         // The floor slider's end. Useful floors sit far below it; at 1 a surface has no room.
         static constexpr float k_maxDarkModeFloor = 0.5f;
-        // Holds "No change" in SubBody on the common sans-serif faces. DejaVu Sans, the widest,
-        // needs 95 with the combo box's strip and padding.
-        static constexpr float k_operationColumnWidth = 96.0f;
         // Save on the face, Save as behind the strip. Both are StdActions, so the page answers
         // for them once and the keys reach the same answer the button does.
         SplitButton& m_saveButton{ toolBar().add<SplitButton>(
@@ -316,7 +232,6 @@ namespace ThisApp
         ) };
     private:
         OnSelectPaletteMap m_onSelectPaletteMap;
-        OnHueRuleChanged m_onHueRuleChanged;
         OnHueRuleChanged m_onPigmentChanged; // what the pigment editors call, held by address
 
         Controls::Divider& m_sep1{ toolBar().add<Controls::Divider>(
@@ -332,9 +247,6 @@ namespace ThisApp
         // in the view state differs from this page's own file and always will - and nothing is at
         // risk by it: the work is on the disk, and the tab is on its way to where it went.
         bool m_savedUnderAnotherName{ false };
-        // Declared ahead of the grid, whose sections and groups add theirs as it is built.
-        FoldCollection m_folds;
-        Control* m_foldMenuTarget{}; // what the design page's menu was raised on, while it is up
 
         ColorHarmonySelector m_harmonySelector{ editColors().anchorHue };
 
@@ -342,22 +254,12 @@ namespace ThisApp
             TabsOrientation::HorizontalBottom
         ) };
 
-        ScrollBox& m_designScrollBox{ m_tabbedBox.pageControl().add<ScrollBox>(
-            ScrollBars::Vertical
-        ) };
-
-        Design2Page& m_design2Page{ m_tabbedBox.pageControl().add<Design2Page>() };
+        DesignPage& m_designPage{ m_tabbedBox.pageControl().add<DesignPage>() };
 
         CodePage& m_cppCodePage{ m_tabbedBox.pageControl().add<CodePage>() };
         CodePage& m_claFiPage{ m_tabbedBox.pageControl().add<CodePage>() };
         CodePage& m_xmlPage{ m_tabbedBox.pageControl().add<CodePage>() };
         CodePage& m_jsonPage{ m_tabbedBox.pageControl().add<CodePage>() };
-
-        StackPanel& m_designView{ m_designScrollBox.createBody<StackPanel>(
-            Orientation::Vertical,
-            Padding{ 12.0f },
-            Spacing{ 8.0f }
-        ) };
 
         // The scope is the C++ page's own question, so it is added to that page's bar under the
         // choice every code page carries.
@@ -376,15 +278,10 @@ namespace ThisApp
 
         Tab& m_designTab{ m_tabbedBox.strip().addTab(
             L"Design",
-            Page{m_designScrollBox}
+            Page{ m_designPage }
         )
             .select()
         };
-
-        Tab& m_design2Tab{ m_tabbedBox.strip().addTab(
-            L"Design 2",
-            Page{ m_design2Page }
-        ) };
 
         Tab& m_cppCodeTab{ m_tabbedBox.strip().addTab(
             Text{ TextStyleId::Code, L"C++" },
@@ -409,14 +306,13 @@ namespace ThisApp
         // One tab per ThemeView, in its order.
         const ViewTabs m_viewTabs{
             &m_designTab,
-            &m_design2Tab,
             &m_cppCodeTab,
             &m_claFiTab,
             &m_xmlTab,
             &m_jsonTab
         };
 
-        StackPanel& m_paletteBody{ m_design2Page.paletteView().add<StackPanel>(
+        StackPanel& m_paletteBody{ m_designPage.paletteView().add<StackPanel>(
             Orientation::HorizontalWrap,
             Padding{ 8.0f, 8.0f }
         ) };
@@ -531,96 +427,6 @@ namespace ThisApp
         //Controls::Separator& m_paletteSep1{ m_paletteBody.add<Controls::Separator>() };
 
         Spacer& m_spacer1{ m_paletteBody.add<Spacer>(8.0f) };
-
-        ThemeRule m_satColumnColor{ UiElement::Section, &BakedElement::surface };
-
-        // ---- reusable cell bundles -------------------------------------------
-        // Declared before the grid, because the grid's argument list names them. Rows
-        // take them by reference, so they are shared, never copied.
-
-        const CellSet m_saturationCells{
-            operationCells(ColumnTag::SaturationAction, ColumnTag::SaturationAmount, ComboBoxTarget::Saturation) };
-
-        const CellSet m_elevationCells{
-            operationCells(ColumnTag::ElevationOperation, ColumnTag::ElevationAmount, ComboBoxTarget::Elevation) };
-
-        const CellSet m_elementCells{
-            CellWith<HueRuleControl>{ Tag{ ColumnTag::Hue },
-                themeMetrics().listItem.padding,
-                VerticalAlign::Fill
-            },
-            m_saturationCells,
-            m_elevationCells };
-
-        // ---- the whole grid, start to finish ---------------------------------
-        // The design is the grid's argument list, not a second object applied to it.
-        // A column is named by its Tag, and those Tags have to be unique within one
-        // grid. Cells resolve against them as the grid is built, and columnByTag
-        // answers for them afterwards.
-
-        Grid& m_grid{ m_designView.add<Grid>(
-            themeMetrics().page,
-            UiElement::Section,
-            Grids::GridLines::Horizontal,
-
-            Columns{
-                Column{ Tag{ ColumnTag::StaticName },
-                    Text{ k_labelPush, L"", k_labelPop },
-                    ShowInHeader::Yes,
-                    m_satColumnColor,
-                    Column{ Tag{ ColumnTag::Name },
-                        Text{ k_labelPush, L"Element", k_labelPop },
-                        ShowInHeader::No,
-                        m_satColumnColor },
-                    Column{ Tag{ ColumnTag::State },
-                        Text{ k_labelPush, L"State", k_labelPop },
-                        ShowInHeader::No,
-                        m_satColumnColor }
-                },
-                Column{ Tag{ ColumnTag::Hue },
-                    Text{ k_labelPush, InTextIcon{ 16.0f, 16.0f, Icons::HueIcon::paint }, L" Hue", k_labelPop },
-                    CellHighlightMode::Control
-                },
-                Column{ Tag{ ColumnTag::SaturationGroup },
-                    Text{ k_labelPush, InTextIcon{ 16.0f, 16.0f, Icons::SaturationIcon::paint }, L" Saturation", k_labelPop },
-                    ColumnWidthMode::Fill,
-                    m_satColumnColor,
-                    Column{ Tag{ ColumnTag::SaturationAction },
-                        Text{ k_labelPush, L"Operation", k_labelPop },
-                        ShowInHeader::No,
-                        ColumnWidthMode::Fixed, k_operationColumnWidth,
-                        m_satColumnColor },
-                    Column{ Tag{ ColumnTag::SaturationAmount },
-                        Text{ k_labelPush, L"Value", k_labelPop },
-                        ColumnWidthMode::Fill,
-                        ShowInHeader::No,
-                        CellHighlightMode::Control,
-                        m_satColumnColor }
-                },
-                Column{ Tag{ ColumnTag::ElevationGroup },
-                    Text{ k_labelPush, InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::paint }, L" Elevation", k_labelPop },
-                    ColumnWidthMode::Fill,
-                    Column{ Tag{ ColumnTag::ElevationOperation },
-                        Text{ k_labelPush, L"Operation", k_labelPop },
-                        ColumnWidthMode::Fixed, k_operationColumnWidth,
-                        ShowInHeader::No },
-                    Column{ Tag{ ColumnTag::ElevationAmount },
-                        Text{ k_labelPush, L"Value", k_labelPop },
-                        ColumnWidthMode::Fill,
-                        ShowInHeader::No }
-                },
-                Column{ Tag{ ColumnTag::ElevationFlip },
-                    Text{ k_labelPush, InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::paint }, L" Flip", k_labelPop },
-                    TooltipText{ L"This element stands on the far side of the theme, so everything drawn from it rises the other way" },
-                    // Grid mode, which is the default: the cell's own frame carries the highlight.
-                    // Control mode writes the cell's hovered, selected and focused factors onto the
-                    // hosted control, and a check mark IS the selected factor - the mark would then
-                    // say which cell the grid is on rather than what the theme states.
-                    }
-            },
-
-            Header{}
-        ) };
     };
 
 
@@ -639,7 +445,6 @@ namespace ThisApp
         :
         BasePage{ params, std::forward<Args>(args)... },
         m_onSelectPaletteMap{ [this]() { paletteMapChanged(); } },
-        m_onHueRuleChanged{ [this]() { hueRuleChanged(); } },
         m_onPigmentChanged{ [this]() { pigmentChanged(); } }
     {
         // The second half of the button IS Save as. A menu of one was a stop on the way to it,
@@ -687,8 +492,6 @@ namespace ThisApp
             // control the rebuild is about to destroy - see saveThemeAs.
             saveThemeAs(shownBy);
             });
-
-        connectFoldMenu();
 
         for (std::size_t i = 0ull; i != m_harmonySelector.count(); ++i)
             m_harmonyStack.add<ColorHarmonyItem>(
@@ -757,17 +560,17 @@ namespace ThisApp
                 storeView();
             });
 
-        m_design2Page.onPagePick([this](CurrentItemChangeEvent&) {
+        m_designPage.onPagePick([this](CurrentItemChangeEvent&) {
             storeElement();
         });
 
-        m_design2Page.bind(editColors(),
-            [this](const OptionalUiElement element, const ColorRule2& rule,
+        m_designPage.bind(editColors(),
+            [this](const OptionalUiElement element, const ColorRule& rule,
                 const RuleChannel channel) {
-                return rule2Base(element, rule, channel);
+                return elementRuleBase(element, rule, channel);
             },
             [this]() {
-                rules2Changed();
+                rulesChanged();
             }
         );
         bindPigmentEditors();

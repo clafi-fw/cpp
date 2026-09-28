@@ -2,7 +2,6 @@ export module ClaFi.Core.AppTheme_Colors;
 
 import ClaFi.Core.AppTheme_Palette;
 import ClaFi.Core.System.UiTypes;
-import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
@@ -105,14 +104,15 @@ namespace ClaFi
         float m_exactValue;
     };
 
-    export struct ColorRule
+    export struct ColorEffect
     {
     public:
         static constexpr ColorRuleHueOp k_defaultHueAction{ ColorRuleHueOp::NoChange };
     public:
-        constexpr ColorRule() = default;
-        constexpr ColorRule(ColorRuleValue saturation, ColorRuleValue elevation);
-        constexpr ColorRule(ColorRuleHue hue, ColorRuleValue saturation, ColorRuleValue luminosity);
+        constexpr ColorEffect() = default;
+        constexpr ColorEffect(ColorRuleValue saturation, ColorRuleValue elevation);
+        constexpr ColorEffect(ColorRuleHue hue, ColorRuleValue saturation,
+            ColorRuleValue elevation);
         void clear();
         // Elevation moves in the direction the mode states. Every value the rule holds is read in
         // that direction, a Set target included: a rule applied to an element standing on the far
@@ -124,58 +124,11 @@ namespace ClaFi
         // first, so a rule left at its default costs nothing.
         [[nodiscard]] bool changesNothing() const;
         void setExactHsl(Hsl, ColorMode);
-        [[nodiscard]] bool operator==(const ColorRule&) const = default;
+        [[nodiscard]] bool operator==(const ColorEffect&) const = default;
     public:
         ColorRuleHue hue{};
         ColorRuleValue saturation{};
         ColorRuleValue elevation{};
-    };
-
-    // The colours a control paints itself from, per state.
-    export struct ControlColorRules
-    {
-        // Whether this element stands on the far side of the theme - a dark strip on a light
-        // theme, a light card on a dark one. Every rule below is then read from that side, and so
-        // is the element's border, every ink resolved on it and every control it contains. The
-        // values stay as they are written: what a rule states is a distance or a place measured
-        // from the side the element stands on, so the gap between a surface and the ink over it
-        // survives the crossing.
-        //
-        // The ink the element inherits crosses with it, before its own text rule is applied, so
-        // an element that states no text rule is legible on the side it has moved to. See
-        // PaintEvent::colorMode.
-        bool flip{ false };
-        // DECLARED IN THE ORDER PAINTEVENT APPLIES THEM: surface, then active, hovered and
-        // pressed over it, then text and activeText over the ink - and shadow last, which the
-        // form reads instead. Stroke follows surface, being the border drawn around it.
-        // Generated C++ names these as designated initializers, which have to appear in
-        // declaration order, so the two orders are one - see UiElementState, which every reader
-        // of a set walks by.
-        ColorRule surface{};
-        // The border, applied to the higher of the element's surface and the one it stands on.
-        ColorRule stroke{};
-        // The element while it is the one in effect: the open tab, the title strip of the form
-        // the user is in, a mark that is on, the selection the keys act on. It is applied over
-        // surface by whatever factor says the element is in effect, which for a control is its
-        // selected visual state - the state names what the user did, this names what is painted.
-        ColorRule active{};
-        ColorRule hovered{};
-        ColorRule pressed{};
-        ColorRule text{};
-        // What being the element in effect does to the ink text established, applied over it by
-        // the same factor active is taken at. Active is the one state that is ambient and lasting
-        // rather than pointer-driven - an inactive window stays inactive with the pointer
-        // elsewhere and nothing pressed - so its ink has to carry that itself. Hover and press
-        // are momentary and the surface says them, which is why the pair stops here and there
-        // is no hoveredText or pressedText.
-        //
-        // A set states text as the muted ink and this as what restores it, not text as the full
-        // ink with this muting it. Written the other way, muted would be the default for every
-        // element in the framework and each would have to opt back out; this way the member is
-        // {} everywhere except where an element has something to say about being in effect.
-        ColorRule activeText{};
-        // The shadow a window root casts around its window. See AppTheme#windowshadow
-        ColorRule shadow{};
     };
 
     // The harmony a theme's pigments come from, built over the anchor and the harmony kind and
@@ -237,7 +190,7 @@ namespace ClaFi
     export constexpr std::size_t k_uiElementCount{ static_cast<std::size_t>(UiElement::Count) };
     export using OptionalUiElement = std::optional<UiElement>;
 
-    // What a rule of the new color theme architecture reads.
+    // What a colour rule reads.
     export enum class RuleInput
     {
         Hovered,
@@ -295,38 +248,38 @@ namespace ClaFi
         Count
     };
 
-    // A rule of the new color theme architecture: it reads its inputs and writes to its output.
-    export struct ColorRule2
+    // A colour rule: it reads its inputs and writes to its output.
+    export struct ColorRule
     {
         RuleInputs inputs{};                            // when the rule applies, at rest if empty
         RuleInputs andInputs{};                         // what must hold as well, joined as "and"
         PaintChannel output{ PaintChannel::Surface };   // the channel the rule writes to
-        ColorRule effect{};                             // what the rule does to that channel
+        ColorEffect effect{};                             // what the rule does to that channel
         [[nodiscard]] bool atRest() const { return inputs.empty() and andInputs.empty(); }
-        [[nodiscard]] bool operator==(const ColorRule2&) const = default;
+        [[nodiscard]] bool operator==(const ColorRule&) const = default;
     };
 
-    export using ColorRules2 = std::vector<ColorRule2>;
+    export using ColorRules = std::vector<ColorRule>;
 
-    // The new rules a theme states: each element's own, then the window's, then the shared ones.
-    export struct ThemeRules2
+    // The rules a theme states: each element's own, then the window's, then the shared ones.
+    export struct ThemeRules
     {
-        ColorRules2 shared{};
-        ColorRules2 anyWindow{}; // what every form's root control takes, whatever it wears
-        std::array<ColorRules2, k_uiElementCount> elements{}; // indexed by UiElement
-        [[nodiscard]] ColorRules2& of(UiElement element)
+        ColorRules shared{};
+        ColorRules anyWindow{}; // what every form's root control takes, whatever it wears
+        std::array<ColorRules, k_uiElementCount> elements{}; // indexed by UiElement
+        [[nodiscard]] ColorRules& of(UiElement element)
         {
             return elements[indexOf(element)];
         }
-        [[nodiscard]] const ColorRules2& of(UiElement element) const
+        [[nodiscard]] const ColorRules& of(UiElement element) const
         {
             return elements[indexOf(element)];
         }
         // One element's list as a document field reads and writes it, by its place in the array.
         template<std::size_t I>
-        [[nodiscard]] const ColorRules2& element() const { return elements[I]; }
+        [[nodiscard]] const ColorRules& element() const { return elements[I]; }
         template<std::size_t I>
-        void setElement(const ColorRules2& value) { elements[I] = value; }
+        void setElement(const ColorRules& value) { elements[I] = value; }
         [[nodiscard]] static constexpr std::size_t indexOf(UiElement element)
         {
             return static_cast<std::size_t>(element);
@@ -334,14 +287,13 @@ namespace ClaFi
     };
 
     // The rules the framework's own theme states.
-    export [[nodiscard]] ThemeRules2 defaultRules2();
+    export [[nodiscard]] ThemeRules defaultRules();
 
     // A theme's colours. The mode they are worn in is the application's. See AppTheme
     export struct ThemeColors
     {
     public:
         [[nodiscard]] Hsl rootSurface(ColorMode) const;
-        [[nodiscard]] Hsl rootText(ColorMode) const;
         [[nodiscard]] const ColorHarmony& harmony() const;
     public:
 
@@ -370,14 +322,14 @@ namespace ClaFi
         // The luminosity elevation 0 is lifted to at the dark end. See AppTheme
         float darkModeFloor{ 0.098735f };
 
-        // THE THEME'S OWN EMPHASIS, AND WHAT SAYS A THING IS ON - one rule for both, because the
+        // THE THEME'S OWN EMPHASIS, AND WHAT SAYS A THING IS ON - one effect for both, because the
         // two are one colour. It is the ink anything asking for emphasis is drawn in, over the
         // palette's accent hue - the same one a button under the pointer moves toward, so an icon
         // drawn in it belongs to the family of the controls around it - and it is equally the
         // active state of every mark: a text caret, a hot link, the band a StackView draws behind a
         // selected item, the focus ring while the user is on the control, and the indicator under
         // an open tab. A check and a radio dot state their own on colour - see SelectionIndicator.
-        ColorRule accent{
+        ColorEffect accent{
             { ColorRuleHueOp::PaletteColor2 },          // H
             { ColorRuleOp::Set, 1.0f },                 // S
             { ColorRuleOp::Set, 0.544542f }             // E
@@ -387,7 +339,7 @@ namespace ClaFi
         // rather than answers to it - a brand mark, a run of emphasised text, and the tint a
         // tooltip carries. Stated apart from the accent so that a theme can spend one sparingly
         // while the other runs through every control.
-        ColorRule spot{
+        ColorEffect spot{
             { ColorRuleHueOp::PaletteColor3 },          // H
             { ColorRuleOp::Set, 0.926093f },            // S
             { ColorRuleOp::Set, 0.689641f }             // E
@@ -396,16 +348,7 @@ namespace ClaFi
 
 
 
-        ThemeRules2 rules2{ defaultRules2() }; // the rules of the new color theme architecture
-
-        [[nodiscard]] Hsl pigmentHsl(Pigment, ColorMode) const;
-        [[nodiscard]] Hsl pigmentHsl(Pigment, InkTone) const;
-        // The half of the resolver that needs the theme: a pigment names a colour, and only the
-        // theme knows what the name stands for. A grade needs nothing of the theme, so it does not
-        // appear here.
-        // Which of this theme's rules an ink names. The ink says which; what it does is the
-        // theme's to say, and this is the one place the two are put together.
-        [[nodiscard]] const ColorRule& ruleOf(InkColor) const;
+        ThemeRules rules{ defaultRules() };
 
     private:
         // Derived from anchorHue and harmonyKind, and stated by them, so it is not a field of
@@ -636,16 +579,17 @@ namespace ClaFi
         return fallbackHue;
     }
 
-    // ColorRule
+    // ColorEffect
 
-    constexpr ColorRule::ColorRule(ColorRuleValue saturation, ColorRuleValue elevation)
+    constexpr ColorEffect::ColorEffect(ColorRuleValue saturation, ColorRuleValue elevation)
         :
         saturation{ saturation },
         elevation{ elevation }
     {
     }
 
-    constexpr ColorRule::ColorRule(ColorRuleHue hue, ColorRuleValue saturation, ColorRuleValue elevation)
+    constexpr ColorEffect::ColorEffect(ColorRuleHue hue, ColorRuleValue saturation,
+        ColorRuleValue elevation)
         :
         hue{ hue },
         saturation{ saturation },
@@ -653,14 +597,14 @@ namespace ClaFi
     {
     }
 
-    void ColorRule::clear()
+    void ColorEffect::clear()
     {
         hue.clear();
         saturation.clear();
         elevation.clear();
     }
 
-    float ColorRule::applyTo(Hsl& hsl, float factor, const ThemeColors& themeColors,
+    float ColorEffect::applyTo(Hsl& hsl, float factor, const ThemeColors& themeColors,
         ColorMode mode) const
     {
         if (factor <= 0.0f)
@@ -706,14 +650,14 @@ namespace ClaFi
         return StateFactors::compose({ appliedHueFactor, appliedSatFactor, appliedLumFactor });
     }
 
-    bool ColorRule::changesNothing() const
+    bool ColorEffect::changesNothing() const
     {
         return hue.operation() == ColorRuleHueOp::NoChange
             and saturation.operation() == ColorRuleOp::NoChange
             and elevation.operation() == ColorRuleOp::NoChange;
     }
 
-    void ColorRule::setExactHsl(Hsl value, ColorMode mode)
+    void ColorEffect::setExactHsl(Hsl value, ColorMode mode)
     {
         hue.setOperation(ColorRuleHueOp::ExactValue);
         hue.setExactValue(value.hue);
@@ -779,28 +723,28 @@ namespace ClaFi
         return result;
     }
 
-    // ThemeRules2
+    // ThemeRules
 
-    ThemeRules2 defaultRules2()
+    ThemeRules defaultRules()
     {
-        ThemeRules2 result{};
+        ThemeRules result{};
         // Dialog - a window root: its surface named outright, then its stroke and window shadow.
         result.of(UiElement::Dialog) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     { ColorRuleHueOp::PaletteColor1, 0.252055f }, // H
                     { ColorRuleOp::Set, 0.0684084f },       // S
                     { ColorRuleOp::Set, 0.0018784736f }     // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Stroke,
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Offset, 0.120151f }      // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Shadow,
                 .effect{
                     { ColorRuleHueOp::PaletteColor1 },      // H
@@ -812,13 +756,13 @@ namespace ClaFi
 
         // Page - its surface at rest, then its stroke.
         result.of(UiElement::Page) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Set, 0.0f }              // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Stroke,
                 .effect{
                     {},                                     // S
@@ -829,7 +773,7 @@ namespace ClaFi
 
         // Tab - its stroke while hovered or open, the open tab's outline and the line it stands on.
         result.of(UiElement::Tab) = {
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Hovered, RuleInput::Selected },
                 .output = PaintChannel::Stroke,
                 .effect{
@@ -842,7 +786,7 @@ namespace ClaFi
 
         // Section - its surface at rest.
         result.of(UiElement::Section) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     { ColorRuleOp::NoChange, 0.195241f },   // S
                     { ColorRuleOp::Offset, 0.044533f }      // E
@@ -852,20 +796,20 @@ namespace ClaFi
 
         // Section header - its surface at rest and its text, then its stroke.
         result.of(UiElement::SectionHeader) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Set, 0.111111f }         // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Text,
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Set, 0.897275f }         // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Stroke,
                 .effect{
                     { ColorRuleHueOp::NoChange, 0.860274f }, // H
@@ -877,7 +821,7 @@ namespace ClaFi
 
         // Tool bar - its surface at rest.
         result.of(UiElement::ToolBar) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     { ColorRuleHueOp::NoChange, 0.512329f }, // H
                     { ColorRuleOp::NoChange, 0.137752f },   // S
@@ -888,20 +832,20 @@ namespace ClaFi
 
         // Dialog title - its surface at rest and selected, then its text at rest and selected.
         result.of(UiElement::DialogTitle) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     { ColorRuleOp::NoChange, 0.18f },       // S
                     { ColorRuleOp::Set, 0.13 }              // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Selected },
                 .effect{
                     { ColorRuleOp::NoChange, 0.501121f },   // S
                     { ColorRuleOp::Set, 0.08f }             // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Text,
                 .effect{
                     { ColorRuleHueOp::NoChange, 0.131507f }, // H
@@ -909,7 +853,7 @@ namespace ClaFi
                     { ColorRuleOp::Offset, -0.3 }           // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Selected },
                 .output = PaintChannel::Text,
                 .effect{
@@ -921,21 +865,21 @@ namespace ClaFi
 
         // Menu - a window root: its surface named outright, then its stroke and window shadow.
         result.of(UiElement::Menu) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     { ColorRuleHueOp::PaletteColor1 },      // H
                     { ColorRuleOp::Set, 0.072888434f },     // S
                     { ColorRuleOp::Set, 0.0011279281f }     // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Stroke,
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Set, 0.5f }              // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Shadow,
                 .effect{
                     { ColorRuleOp::Set, 0.68912506f },      // S
@@ -946,21 +890,21 @@ namespace ClaFi
 
         // Tooltip - a window root: its surface named outright, then its stroke and window shadow.
         result.of(UiElement::Tooltip) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     { ColorRuleHueOp::PaletteColor3 },      // H
                     { ColorRuleOp::Set, 0.12352588f },      // S
                     { ColorRuleOp::Set, 0.053887f }         // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Stroke,
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Set, 0.278328f }         // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Shadow,
                 .effect{
                     { ColorRuleHueOp::PaletteColor3 },      // H
@@ -972,13 +916,13 @@ namespace ClaFi
 
         // Divider - its surface at rest, then its stroke, the line a grid's divider row carries.
         result.of(UiElement::Divider) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     { ColorRuleOp::NoChange, 0.191474f },   // S
                     { ColorRuleOp::Offset, 0.05f }          // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Stroke,
                 .effect{
                     { ColorRuleHueOp::NoChange, 0.860274f }, // H
@@ -990,7 +934,7 @@ namespace ClaFi
 
         // Grid - its stroke, the outer border of the lattice.
         result.of(UiElement::Grid) = {
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Stroke,
                 .effect{
                     {},                                     // S
@@ -1001,20 +945,20 @@ namespace ClaFi
 
         // Grid header - its surface at rest and its text, then its stroke between the columns.
         result.of(UiElement::GridHeader) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Set, 0.111111f }         // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Text,
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Set, 0.897275f }         // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Stroke,
                 .effect{
                     { ColorRuleHueOp::NoChange, 0.860274f }, // H
@@ -1026,7 +970,7 @@ namespace ClaFi
 
         // Grid row - its surface selected and hovered, then its stroke, the lines between cells.
         result.of(UiElement::GridRow) = {
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Selected },
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
@@ -1034,14 +978,14 @@ namespace ClaFi
                     { ColorRuleOp::Offset, 0.08306903f }    // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Hovered },
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Offset, 0.080827f }      // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Stroke,
                 .effect{
                     { ColorRuleHueOp::NoChange, 0.860274f }, // H
@@ -1053,13 +997,13 @@ namespace ClaFi
 
         // Button - its surface at rest and in each state, then its stroke.
         result.of(UiElement::Button) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     { ColorRuleOp::NoChange, 0.0f },        // S
                     { ColorRuleOp::Offset, 0.054944f }      // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Selected },
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
@@ -1067,21 +1011,21 @@ namespace ClaFi
                     { ColorRuleOp::Offset, 0.099311f }      // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Hovered },
                 .effect{
                     { ColorRuleOp::Offset, 0.085609f },     // S
                     { ColorRuleOp::Offset, 0.126926f }      // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Pressed },
                 .effect{
                     { ColorRuleOp::Scale, 0.8f },           // S
                     { ColorRuleOp::Scale, 0.9f }            // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Stroke,
                 .effect{
                     {},                                     // S
@@ -1093,7 +1037,7 @@ namespace ClaFi
         // Tool button - its surface selected, hovered and pressed, then its stroke as that surface
         // arrives. Nothing at rest.
         result.of(UiElement::ToolButton) = {
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Selected },
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
@@ -1101,21 +1045,21 @@ namespace ClaFi
                     { ColorRuleOp::Offset, 0.099311f }      // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Hovered },
                 .effect{
                     { ColorRuleOp::Offset, 0.085609f },     // S
                     { ColorRuleOp::Offset, 0.126926f }      // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Pressed },
                 .effect{
                     { ColorRuleOp::Scale, 0.8f },           // S
                     { ColorRuleOp::Scale, 0.9f }            // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Hovered, RuleInput::Selected },
                 .output = PaintChannel::Stroke,
                 .effect{
@@ -1127,14 +1071,14 @@ namespace ClaFi
 
         // Selected text - the band at rest, then what the focus adds to it.
         result.of(UiElement::SelectedText) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
                     { ColorRuleOp::Offset, -0.042085f },    // S
                     { ColorRuleOp::Offset, 0.092057f }      // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Focused },
                 .andInputs{ RuleInput::WindowFocused },
                 .effect{
@@ -1146,13 +1090,13 @@ namespace ClaFi
 
         // Selection indicator - its surface at rest, selected, hovered and pressed, then its text.
         result.of(UiElement::SelectionIndicator) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     { ColorRuleOp::NoChange, 0.0f },        // S
                     { ColorRuleOp::Offset, 0.155899f }      // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Selected },
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
@@ -1160,7 +1104,7 @@ namespace ClaFi
                     { ColorRuleOp::Set, 0.544542f }         // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Hovered },
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
@@ -1168,7 +1112,7 @@ namespace ClaFi
                     { ColorRuleOp::Offset, 0.06f }          // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Pressed },
                 .effect{
                     { ColorRuleOp::Scale, 0.8f },           // S
@@ -1176,7 +1120,7 @@ namespace ClaFi
                 }
             },
             // Set 0 lands at the floor in dark mode and at white in light: legible either way.
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Text,
                 .effect{
                     { ColorRuleOp::Set, 0.0f },             // S
@@ -1187,7 +1131,7 @@ namespace ClaFi
 
         // Hover indicator - its surface selected, hovered and pressed, then its text.
         result.of(UiElement::HoverIndicator) = {
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Selected },
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
@@ -1195,7 +1139,7 @@ namespace ClaFi
                     { ColorRuleOp::Set, 0.544542f }         // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Hovered },
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
@@ -1203,7 +1147,7 @@ namespace ClaFi
                     { ColorRuleOp::Offset, 0.06f }          // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Pressed },
                 .effect{
                     { ColorRuleOp::Scale, 0.8f },           // S
@@ -1211,7 +1155,7 @@ namespace ClaFi
                 }
             },
             // Set 0 lands at the floor in dark mode and at white in light: legible either way.
-            ColorRule2{
+            ColorRule{
                 .output = PaintChannel::Text,
                 .effect{
                     { ColorRuleOp::Set, 0.0f },             // S
@@ -1222,20 +1166,20 @@ namespace ClaFi
 
         // Scroll button - its surface at rest, hovered and pressed.
         result.of(UiElement::ScrollButton) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     { ColorRuleOp::NoChange, 0.0f },        // S
                     { ColorRuleOp::Offset, 0.03f }          // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Hovered },
                 .effect{
                     { ColorRuleOp::Offset, 0.0f },          // S
                     { ColorRuleOp::Offset, 0.3f }           // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Pressed },
                 .effect{
                     { ColorRuleOp::Scale, 0.8f },           // S
@@ -1246,20 +1190,20 @@ namespace ClaFi
 
         // Scroll thumb - its surface at rest, hovered and pressed.
         result.of(UiElement::ScrollThumb) = {
-            ColorRule2{
+            ColorRule{
                 .effect{
                     { ColorRuleOp::NoChange, 0.0f },        // S
                     { ColorRuleOp::Offset, 0.4f }           // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Hovered },
                 .effect{
                     { ColorRuleOp::Offset, 0.0f },          // S
                     { ColorRuleOp::Offset, 0.06f }          // E
                 }
             },
-            ColorRule2{
+            ColorRule{
                 .inputs{ RuleInput::Pressed },
                 .effect{
                     { ColorRuleOp::Scale, 0.8f },           // S
@@ -1279,54 +1223,9 @@ namespace ClaFi
             : Hsl{ anchorHue, 0.0f, 1.0f };
     }
 
-    // The bare ink of the colour mode.
-    Hsl ThemeColors::rootText(ColorMode mode) const
-    {
-        return mode == ColorMode::Dark
-            ? Hsl{ anchorHue, 0.0f, 1.0f }
-            : Hsl{ anchorHue, 0.0f, 0.0f };
-    }
-
     const ColorHarmony& ThemeColors::harmony() const
     {
         return m_pigmentPalette.harmony(anchorHue, harmonyKind);
-    }
-
-    Hsl ThemeColors::pigmentHsl(Pigment pigment, ColorMode controlColorMode) const
-    {
-        const PigmentTones tones = InkWell::pigmentTones(pigment);
-        const InkTone& tone = controlColorMode == ColorMode::Light ? tones.light : tones.dark;
-        return pigmentHsl(pigment, tone);
-    }
-
-    Hsl ThemeColors::pigmentHsl(Pigment pigment, InkTone tone) const
-    {
-        return {
-            harmony().pigmentColor(pigment).hsl().hue,
-            std::clamp(tone.saturation, 0.0f, 1.0f),
-            std::clamp(tone.luminosity, 0.0f, 1.0f)
-        };
-    }
-
-    const ColorRule& ThemeColors::ruleOf(InkColor color) const
-    {
-        switch (color)
-        {
-            case InkColor::Accent:
-                return accent;
-            case InkColor::Spot:
-                return spot;
-            case InkColor::Text:
-            case InkColor::Yellow:
-            case InkColor::Green:
-            case InkColor::Blue:
-            case InkColor::Red:
-            case InkColor::Black:
-            case InkColor::White:
-            case InkColor::Count:
-                break;
-        }
-        unreachable("an ink names a rule this theme does not hold");
     }
 
 }

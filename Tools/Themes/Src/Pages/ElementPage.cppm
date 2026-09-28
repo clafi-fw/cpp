@@ -35,9 +35,9 @@ namespace ThisApp
     // What an element page calls after it has changed the rules it is bound to.
     export using OnRulesChanged = std::function<void()>;
     // The colour a rule of the list is applied to, which its value ramps are drawn from.
-    export using OnGetListRuleBase = std::function<RuleBase(const ColorRule2&, RuleChannel)>;
+    export using OnGetListRuleBase = std::function<RuleBase(const ColorRule&, RuleChannel)>;
 
-    // One list of the new rules - an element's own or the shared ones - a grid row for each rule.
+    // One list of rules - an element's own or the shared ones - a grid row for each rule.
     export class ElementPage : public Panel
     {
     public:
@@ -45,7 +45,7 @@ namespace ThisApp
         explicit ElementPage(const CreateParams&, std::wstring_view title, Args&&...);
     public:
         // Takes the list, its defaults, the hues' colours, its ramps' base and what edits call.
-        void bind(ColorRules2&, const ColorRules2& defaults, const ThemeColors&, OnGetListRuleBase,
+        void bind(ColorRules&, const ColorRules& defaults, const ThemeColors&, OnGetListRuleBase,
             OnRulesChanged);
         // Builds a row for every rule in the list, in list order.
         void rebuild();
@@ -71,8 +71,8 @@ namespace ThisApp
         [[nodiscard]] OnGetRuleBase ruleBaseOf(std::size_t index, RuleChannel) const;
         void rulesChanged();
     private:
-        ColorRules2* m_rules{}; // the list the page shows, null until bound
-        const ColorRules2* m_defaults{}; // what a reset puts back, null until bound
+        ColorRules* m_rules{}; // the list the page shows, null until bound
+        const ColorRules* m_defaults{}; // what a reset puts back, null until bound
         const ThemeColors* m_colors{}; // what the hue editors read the palette from
         OnGetListRuleBase m_ruleBase{};
         OnRulesChanged m_onRulesChanged{};
@@ -85,7 +85,9 @@ namespace ThisApp
             Padding{ 12.0f, 8.0f }
         ) };
 
-        Label& m_title;
+        Label& m_title{ m_topBar.createBody<Label>(
+            VerticalTextAnchor::Center
+        ) };
 
         StackPanel& m_tools{ m_topBar.createRightBar<StackPanel>(
             Orientation::Horizontal,
@@ -152,12 +154,9 @@ namespace ThisApp
         Panel{ params, std::forward<Args>(args)... },
         m_onCellEdit{ [this]() {
             rulesChanged();
-        } },
-        m_title{ m_topBar.createBody<Label>(
-            VerticalTextAnchor::Center,
-            Text{ TextStyleId::SubTitle, title }
-        ) }
+        } }
     {
+        m_title.text() << TextStyleId::SubTitle << title;
         m_grid.onNewItem([this](Grids::NewItemEvent&) {
             addRule();
         });

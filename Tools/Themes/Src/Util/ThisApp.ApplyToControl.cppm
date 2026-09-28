@@ -17,7 +17,7 @@ namespace ThisApp
     export using OnRuleChanged = std::function<void()>;
 
     // Which of a rule's two input sets a column edits - inputs or andInputs.
-    export using RuleClause = RuleInputs ColorRule2::*;
+    export using RuleClause = RuleInputs ColorRule::*;
 
     // A rule's Apply to cell: the channel it writes and the inputs it reads, set from one dropdown.
     export class ApplyToControl : public DropdownControlBase
@@ -27,7 +27,7 @@ namespace ThisApp
         explicit ApplyToControl(const CreateParams&, Args&&...);
     public:
         // Takes the rule by its place, which a growing list keeps, and what to call after a change.
-        void bind(ColorRules2&, std::size_t index, OnRuleChanged);
+        void bind(ColorRules&, std::size_t index, OnRuleChanged);
         [[nodiscard]] PaintChannel output() const;
         [[nodiscard]] bool reads(RuleClause, RuleInput) const;
         [[nodiscard]] bool readsAny(RuleClause) const;
@@ -38,11 +38,11 @@ namespace ThisApp
         void showDropdown(Control& initiator) override;
         void getMainText(GetTextEvent&) const override;
     private:
-        [[nodiscard]] const ColorRule2& rule() const;
-        [[nodiscard]] ColorRule2& rule();
+        [[nodiscard]] const ColorRule& rule() const;
+        [[nodiscard]] ColorRule& rule();
         void changed();
     private:
-        ColorRules2* m_rules{}; // null until bound
+        ColorRules* m_rules{}; // null until bound
         std::size_t m_index{};
         OnRuleChanged m_onChanged{};
     };

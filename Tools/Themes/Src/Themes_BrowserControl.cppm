@@ -125,8 +125,6 @@ namespace ThisApp
         }
         else if (data.name == k_defaultPageName)
             data.title = k_defaultPageTitle;
-        else if (data.name == k_dark2PageName)
-            data.title = k_dark2PageTitle;
         else if (data.name.ends_with(k_themeFileExtension))
             data.title = data.name.substr(0, data.name.size() - k_themeFileExtension.size());
     }

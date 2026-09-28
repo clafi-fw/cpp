@@ -13,14 +13,6 @@ namespace ClaFi{
         Light
     };
 
-    // The other side of the theme. An element the theme carries across itself - a dark strip on a
-    // light theme - stands in the flipped mode, and everything drawn from that surface answers to
-    // it. See ControlColorRules::flip.
-    export [[nodiscard]] constexpr ColorMode flipped(ColorMode value)
-    {
-        return value == ColorMode::Dark ? ColorMode::Light : ColorMode::Dark;
-    }
-
     // The mode the application is drawn in, as the user chose it. See UI-Types
     export enum class ColorModeSetting
     {

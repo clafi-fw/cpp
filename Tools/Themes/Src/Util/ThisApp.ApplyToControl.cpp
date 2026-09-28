@@ -72,7 +72,7 @@ namespace ThisApp
         }
 
         // When the rule applies: "at rest", "a or b", "(a or b) and c".
-        void writeCondition(Text& text, const ColorRule2& rule)
+        void writeCondition(Text& text, const ColorRule& rule)
         {
             const bool joined = !rule.andInputs.empty();
             if (rule.inputs.empty())
@@ -143,7 +143,7 @@ namespace ThisApp
 
     // ApplyToControl
 
-    void ApplyToControl::bind(ColorRules2& rules, const std::size_t index, OnRuleChanged onChanged)
+    void ApplyToControl::bind(ColorRules& rules, const std::size_t index, OnRuleChanged onChanged)
     {
         m_rules = &rules;
         m_index = index;
@@ -196,7 +196,7 @@ namespace ThisApp
     {
         if (!m_rules)
             return;
-        const ColorRule2& value = rule();
+        const ColorRule& value = rule();
         event.text << TextStyleId::SubHeading
             << itemLabel(k_channelLabels[static_cast<std::size_t>(value.output)])
             << PopTextStyle{};
@@ -208,12 +208,12 @@ namespace ThisApp
         event.text << PopColor{};
     }
 
-    const ColorRule2& ApplyToControl::rule() const
+    const ColorRule& ApplyToControl::rule() const
     {
         return (*m_rules)[m_index];
     }
 
-    ColorRule2& ApplyToControl::rule()
+    ColorRule& ApplyToControl::rule()
     {
         return (*m_rules)[m_index];
     }
@@ -245,8 +245,8 @@ namespace ThisApp
         StackPanel& outputs = addColumn(L"Apply to");
         for (std::size_t i = 0ull; i != k_channelLabels.size(); ++i)
             m_items.push_back(&outputs.add<OutputItem>(*this, static_cast<PaintChannel>(i)));
-        addInputColumn(L"When", &ColorRule2::inputs);
-        addInputColumn(L"And", &ColorRule2::andInputs);
+        addInputColumn(L"When", &ColorRule::inputs);
+        addInputColumn(L"And", &ColorRule::andInputs);
     }
 
     void ApplyToPopup::setOutput(const PaintChannel value)
@@ -337,8 +337,8 @@ namespace ThisApp
         if (&event.control != this)
             return;
         event.state.selected = m_popup.owner().reads(m_clause, m_input);
-        event.state.enabled = m_clause != &ColorRule2::andInputs
-            or m_popup.owner().readsAny(&ColorRule2::inputs);
+        event.state.enabled = m_clause != &ColorRule::andInputs
+            or m_popup.owner().readsAny(&ColorRule::inputs);
         event.stopPropagation();
     }
 

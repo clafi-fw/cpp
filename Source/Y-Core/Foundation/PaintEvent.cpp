@@ -112,21 +112,6 @@ namespace ClaFi
 
         Hsl ink{ inheritedTextHsl() };
 
-        // Read once the rules are settled: doAdjustPaint is where a control picks the element it
-        // wears. A control that named its lightness itself has already answered the question.
-        if (!m_lightnessStated and m_colorRules.flip != 0.0f)
-        {
-            m_lightness = m_colorRules.lightnessIn(m_lightness);
-            // The ink crosses with the element. What was inherited stands on the side this
-            // element has just left - a light theme's black ink over a strip that is now dark -
-            // and an element whose text rule says nothing would be left holding it.
-            //
-            // Carried across rather than re-seeded from the theme, so how far an ancestor had
-            // already moved the ink off its own limit is kept, and so a second flip further down
-            // puts the ink back exactly where it started.
-            ink.luminosity += m_colorRules.flip * (1.0f - 2.0f * ink.luminosity);
-        }
-
         // Calculate final colors
         {
             StateFactors factors = control.factors();
@@ -142,7 +127,7 @@ namespace ClaFi
                 return index == VisualStateIndex::Selected ? 1.0f : enabledFactor;
             };
 
-            auto calcEffectiveFactor = [&](const BakedRule&, VisualStateIndex index, float parentAmount)->float
+            auto calcEffectiveFactor = [&](VisualStateIndex index, float parentAmount)->float
                 {
                     float effectiveFactor = factors[index] * stateEnabledFactor(index, m_enabledFactor);
                     if (parentAmount && lender)
@@ -155,19 +140,20 @@ namespace ClaFi
                     return effectiveFactor;
                 };
 
-            float hoverEffectiveFactor = calcEffectiveFactor(m_colorRules.hovered, VisualStateIndex::Hovered, m_parentHoverAmount);
+            const float hoverEffectiveFactor = calcEffectiveFactor(VisualStateIndex::Hovered,
+                m_parentHoverAmount);
             // How far this control is the one in effect: its own selected state, or its window's
             // focus as far as setWindowSelectedAmount asked. The ink reads it whatever the surface
-            // does with it: an element that paints no selected fill still states its ink through
-            // activeText.
+            // does with it, so a Selected text rule applies where no selected fill is painted.
             const float selectedFactor = std::lerp(
-                calcEffectiveFactor(m_colorRules.active, VisualStateIndex::Selected,
-                    m_parentSelectedAmount),
+                calcEffectiveFactor(VisualStateIndex::Selected, m_parentSelectedAmount),
                 m_windowFocusedFactor,
                 m_windowSelectedAmount);
-            // At zero the active rule reaches neither the fill, nor the grow-in that
+            // At zero a Selected rule reaches neither the fill, nor the grow-in that
             // m_surfaceVisibility drives, which is the whole of what a surface says.
-            float selectedEffectiveFactor = m_showSelectionOnSurface ? selectedFactor : 0.0f;
+            const float selectedEffectiveFactor = m_showSelectionOnSurface ? selectedFactor : 0.0f;
+            const float effectivePressedFactor = calcEffectiveFactor(VisualStateIndex::Pressed,
+                m_parentPressedAmount);
 
             // WHAT THE CONTROL STANDS ON. The host's answer where it gave one, because the
             // parent chain cannot: a grid cell is filled by the row, so a control hosted in a
@@ -182,27 +168,7 @@ namespace ClaFi
             const Hsl standsOn{ inheritedSurfaceHsl() };
             Hsl surface{ standsOn };
 
-            float bgChanged2 = m_colorRules.surface.applyTo(surface, 1.0f, m_lightness);
-
-            // Every rule this control applies runs in the one direction the control stands in,
-            // the surface and text rules that establish the element included. An element that
-            // states a flip is read wholly from the far side of the theme - its surface, its ink,
-            // its states, its border and everything it contains - so the gap the theme author
-            // wrote between a surface and the ink on it survives the crossing.
-
-            // Active
-            bgChanged2 = StateFactors::compose(bgChanged2,
-                m_colorRules.active.applyTo(surface, selectedEffectiveFactor, m_lightness));
-            // Hover
-            bgChanged2 = StateFactors::compose(bgChanged2,
-                m_colorRules.hovered.applyTo(surface, hoverEffectiveFactor, m_lightness));
-            // Pressed
-            float effectivePressedFactor = calcEffectiveFactor(m_colorRules.pressed, VisualStateIndex::Pressed, m_parentPressedAmount);
-            bgChanged2 = StateFactors::compose(bgChanged2,
-                m_colorRules.pressed.applyTo(surface, effectivePressedFactor, m_lightness));
-
-            // The new rules read the selection the old ones were applied by, so a control that
-            // keeps its selection off the surface says so to both alike.
+            // A control that keeps its selection off the surface says so to the stroke as well.
             m_selectedOnSurface = selectedEffectiveFactor;
             // In RuleInput order. The control drawing a selection is the one that owns it, so the
             // band reads these too - handed over rather than resolved, since almost nothing asks
@@ -217,8 +183,7 @@ namespace ClaFi
                 factors.current(),
                 m_windowFocusedFactor
             };
-            bgChanged2 = StateFactors::compose(bgChanged2,
-                applyColorRules2(PaintChannel::Surface, surface));
+            const float surfaceChanged = applyColorRules(PaintChannel::Surface, surface);
 
             // Kept from the same three numbers the colours were mixed from, so a surface cannot
             // be at full opacity while still at rest size, whatever combination of its own state
@@ -235,7 +200,7 @@ namespace ClaFi
             // the surface has already accumulated down the parent chain, and a control with no
             // surface at rest contributes nothing to it at rest.
             m_controlContext.surface = m_surfaceRgb;
-            m_surfaceRgb.setOpacity(bgChanged2);
+            m_surfaceRgb.setOpacity(surfaceChanged);
 
             // Text Color
             {
@@ -243,19 +208,8 @@ namespace ClaFi
                 // one, so a text rule raising saturation alone tints toward what the text is on.
                 seedHue(ink, surface.hue, m_textHueStated);
 
-                // The ink arrives from the control above, or from a host that named one, so only
-                // this control's own rule is applied to it - at full strength, with no state term
-                // and no part in the grow-in. What a control states as its text is what everything
-                // inside it starts from, whatever state either of them is in.
-                m_colorRules.text.applyTo(ink, 1.0f, m_lightness);
-
-                // What being in effect does to that ink. Applied after the text rule because it
-                // modifies what that rule established, and at the same factor the active rule is
-                // taken at, so the two move together.
-                m_colorRules.activeText.applyTo(ink, selectedFactor, m_lightness);
-                float namedHue = StateFactors::compose(m_colorRules.text.hue.setPull,
-                    selectedFactor * m_colorRules.activeText.hue.setPull);
-                applyColorRules2(PaintChannel::Text, ink, &namedHue);
+                float namedHue = 0.0f;
+                applyColorRules(PaintChannel::Text, ink, &namedHue);
                 m_textHueStated = StateFactors::compose(m_textHueStated, namedHue);
 
                 // The pair the resolver measures between: an elevation of 0 lands on the surface
@@ -266,31 +220,9 @@ namespace ClaFi
                 m_controlContext.lightness = m_lightness;
             }
 
-
-            if (!m_colorRules.stroke.changesNothing())
-            {
-                Hsl newStrokeHsl = surface;
-                // Which of the two surfaces stands higher is asked in the direction this control
-                // stands in, because that is the direction the border is about to be raised in.
-                // The two surfaces can lie on opposite sides of the theme - a card that states a
-                // flip against the page it is on - and higher then means higher to this control.
-                const float sign = 1.0f - 2.0f * m_lightness;
-                if (m_parentEvent && m_parentEvent->surfaceHsl().luminosity * sign > surface.luminosity * sign)
-                    newStrokeHsl = m_parentEvent->surfaceHsl();
-
-                // Raised along this control's own contrast: a border has to be seen against the
-                // surface it is drawn on, which is the same thing the ink answers to.
-                float borderChanged = m_colorRules.stroke.applyTo(newStrokeHsl, 1.0f, m_lightness);
-
-                m_strokeRgb = newStrokeHsl.toColor();
-                m_strokeRgb = disabledFormOf(m_strokeRgb, standsOn, disabledAmount());
-                m_strokeRgb.setOpacity(borderChanged);
-            }
-
-            // The stroke under the new rules, seeded from this control's own surface and drawn in
-            // place of the old one wherever they move it.
+            // The stroke is seeded from this control's own surface.
             Hsl stroke = surface;
-            const float strokeChanged = applyColorRules2(PaintChannel::Stroke, stroke);
+            const float strokeChanged = applyColorRules(PaintChannel::Stroke, stroke);
             if (strokeChanged > 0.0f)
             {
                 m_strokeRgb = stroke.toColor();
@@ -304,7 +236,7 @@ namespace ClaFi
             m_shadowHueStated = m_parentEvent ? m_parentEvent->m_shadowHueStated : 0.0f;
             seedHue(m_shadowHsl, stroke.hue, m_shadowHueStated);
             float namedShadowHue = 0.0f;
-            applyColorRules2(PaintChannel::Shadow, m_shadowHsl, &namedShadowHue);
+            applyColorRules(PaintChannel::Shadow, m_shadowHsl, &namedShadowHue);
             m_shadowHueStated = StateFactors::compose(m_shadowHueStated, namedShadowHue);
 
             // The colours held as colours rather than resolved on demand. What the context
@@ -336,7 +268,7 @@ namespace ClaFi
                     if (effectiveFocusFactor)
                     {
                         m_focusRingFactor = effectiveFocusFactor;
-                        applyFocus2(m_strokeRgb, effectiveFocusFactor, activeFactor);
+                        applyFocus(m_strokeRgb, effectiveFocusFactor, activeFactor);
                         if (effectiveFocusFactor)
                         {
                             m_borderWidth = effectiveFocusFactor
@@ -437,7 +369,7 @@ namespace ClaFi
     // Unlike strokeRgb(), unfaded while disabled - the surface handed in carries no fade either.
     Color PaintEvent::strokeRgbOn(Hsl surface) const
     {
-        const float changed = applyColorRules2(PaintChannel::Stroke, surface);
+        const float changed = applyColorRules(PaintChannel::Stroke, surface);
         Color result = surface.toColor();
         result.setOpacity(changed);
         return result;
@@ -460,7 +392,7 @@ namespace ClaFi
 
     // ringFactor says there is a ring at all; activeFactor how much of it is drawn live, in
     // indicatorRgb(), rather than in the inactive grey.
-    void PaintEvent::applyFocus2(Color& targetColor, float ringFactor, float activeFactor) const
+    void PaintEvent::applyFocus(Color& targetColor, float ringFactor, float activeFactor) const
     {
         if (ringFactor <= 0.0f)
             return;
@@ -471,11 +403,11 @@ namespace ClaFi
         targetColor.blend(indicatorRgb(), activeFactor);
     }
 
-    void PaintEvent::applyFocus2(Color& targetColor) const
+    void PaintEvent::applyFocus(Color& targetColor) const
     {
         const Control& target = control();
         const float focusHolderFactor = target.focusedFactor() * s_keyboardFactor;
-        applyFocus2(
+        applyFocus(
             targetColor,
             std::max(focusHolderFactor, target.currentFactor()),
             activeFactorOf(target.hoveredFactor(), target.focusedFactor()) * m_windowFocusedFactor
@@ -673,7 +605,7 @@ namespace ClaFi
         return false;
     }
 
-    float PaintEvent::inputFactor(const BakedColorRule2& rule) const
+    float PaintEvent::inputFactor(const BakedColorRule& rule) const
     {
         if (rule.atRest())
             return 1.0f;
@@ -687,35 +619,39 @@ namespace ClaFi
         return rule.inputs.levelIn(levels) * rule.andInputs.levelIn(levels);
     }
 
-    // The element's own list, then the window's, then the shared one. A form's root control is a
-    // window whichever element it wears, so the window's list reaches it with no element at all.
-    float PaintEvent::applyColorRules2(const PaintChannel channel, Hsl& color, float* namedHue) const
+    // The control's own rules, the element's list, then the window's, then the shared one. A
+    // form's root control is a window whichever element it wears, so the window's list reaches it
+    // with no element at all.
+    float PaintEvent::applyColorRules(const PaintChannel channel, Hsl& color, float* namedHue) const
     {
-        const BakedRules2& rules = bakedColors().rules2;
-        float changed = 0.0f;
+        const BakedRules& rules = bakedColors().rules;
+        float changed = applyColorRules(m_ownRules, channel, color, namedHue);
         if (m_element)
-            changed = applyColorRules2(rules.of(*m_element), channel, color, namedHue);
+        {
+            changed = StateFactors::compose(changed,
+                applyColorRules(rules.of(*m_element), channel, color, namedHue));
+        }
         if (!m_parentEvent)
         {
             changed = StateFactors::compose(changed,
-                applyColorRules2(rules.anyWindow, channel, color, namedHue));
+                applyColorRules(rules.anyWindow, channel, color, namedHue));
         }
         if (m_element)
         {
             changed = StateFactors::compose(changed,
-                applyColorRules2(rules.shared, channel, color, namedHue));
+                applyColorRules(rules.shared, channel, color, namedHue));
         }
         return changed;
     }
 
     // A shadow is read at the dark end whatever the lightness, as BakedColors::windowShadow reads
-    // the old rule.
-    float PaintEvent::applyColorRules2(const BakedColorRules2& rules, const PaintChannel channel,
-        Hsl& color, float* namedHue) const
+    // it.
+    float PaintEvent::applyColorRules(const std::span<const BakedColorRule> rules,
+        const PaintChannel channel, Hsl& color, float* namedHue) const
     {
         const Lightness lightness = channel == PaintChannel::Shadow ? k_darkLightness : m_lightness;
         float changed = 0.0f;
-        for (const BakedColorRule2& rule : rules)
+        for (const BakedColorRule& rule : rules)
         {
             if (rule.output != channel)
                 continue;
@@ -1017,12 +953,6 @@ namespace ClaFi
         m_target.resetTheme();
     }
 
-    void AdjustPaintEvent::setColorRules(UiElement value)
-    {
-        m_target.m_element = value;
-        m_target.m_colorRules = m_target.bakedColors().element(value);
-    }
-
     // Out of line: the control is only declared where this event is, and reading a factor
     // off it needs the whole class.
     void AdjustPaintEvent::dropInheritedEnabled()
@@ -1040,7 +970,6 @@ namespace ClaFi
     void AdjustPaintEvent::setLightness(Lightness value)
     {
         m_target.m_lightness = value;
-        m_target.m_lightnessStated = true;
     }
 
     void AdjustPaintEvent::setSurfaceHsl(Hsl value)

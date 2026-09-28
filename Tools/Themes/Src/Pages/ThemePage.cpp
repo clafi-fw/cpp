@@ -5,7 +5,6 @@ import ThisApp.CodeOptions;
 import ThisApp.Consts;
 import ThisApp.HueRuleControl;
 import ThisApp.RuleSlider;
-import ThisApp.RuleText;
 import ThisApp.Palette.Controls;
 import ThisApp.ThemeToCppCode;
 import ThisApp.Utils;
@@ -14,19 +13,14 @@ import ThisApp.ValueRuleControl;
 import ClaFi.Application.ThemesManager;
 import ClaFi.Application.ThemesManager_Elements;
 
-import ClaFi.Controls.Base.ExpanderBase;
 import ClaFi.Controls.Base.SliderBase;
-import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.InPlaceEdit;
-import ClaFi.Controls.Menu;
 import ClaFi.Controls.MessageDialog;
 import ClaFi.Controls.PromptDialog;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Grids_Dt;
-import ClaFi.Controls.ComboBox;
 import ClaFi.Controls.Slider;
 import ClaFi.Controls.TextBox;
-import ClaFi.Controls.TextItems;
 
 import ClaFi.Dom;
 import ClaFi.Dom.Formats.ClaFi;
@@ -37,14 +31,12 @@ import ClaFi.Core.Foundation;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
-import ClaFi.Core.TextEngine.Fmt;
 
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Palette;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
-import ClaFi.Core.System.InkWell;
 import ClaFi.Browser.Consts;
 import ClaFi.Browser.Settings;
 
@@ -79,14 +71,6 @@ namespace ThisApp
         private:
             bool& m_flag;
         };
-
-        // The design page's menu - the page it was raised on answers each, for its own folds.
-        namespace FoldActions
-        {
-            Action expandAll{ Text{ L"Expand all" } };
-            Action collapseAll{ Text{ L"Collapse all" } };
-            Action collapseOthers{ Text{ L"Collapse others" } };
-        }
 
         // What a pigment the theme states itself is used for, the second line of its name.
         [[nodiscard]] std::wstring_view pigmentUse(const UiElement element)
@@ -160,12 +144,9 @@ namespace ThisApp
         // map at all in that case, or should the theme carry the map it was built from rather than
         // the hues that came out of it?
         invalidatePreview();
-        m_grid.invalidate();
         m_darkModeFloorSlider.invalidate();
-        updateGridControls();
         bindPigmentEditors();
-        restoreFolds();
-        m_design2Page.rebuildRules();
+        m_designPage.rebuildRules();
         restoreView();
         restoreElement();
     }
@@ -235,13 +216,7 @@ namespace ThisApp
 
     void ThemePage::previewColorModeChanged()
     {
-        m_grid.invalidate();
         m_pigmentGrid.invalidate();
-    }
-
-    bool ThemePage::Fold::holds(const Control* control) const
-    {
-        return head->parent()->containsNested(control);
     }
 
     void ThemePage::anchorChanged()
@@ -281,7 +256,6 @@ namespace ThisApp
             editColors().paletteHues[i] = harmony.color(map[i]).hue();
 
         invalidatePreview();
-        m_grid.invalidate();
         m_pigmentGrid.invalidate();
         m_darkModeFloorSlider.invalidate();
     }
@@ -332,7 +306,7 @@ namespace ThisApp
     {
         m_pigmentGrid.forEachRow([this](Grids::Rt::RowContainer& row) {
             const UiElement element = row.tag<UiElement>();
-            ColorRule& rule = editColors().*uiElementOf(element).rule;
+            ColorEffect& rule = editColors().*uiElementOf(element).effect;
             row.controlAtColumnAs<HueRuleControl>(pigmentColumn(PigmentColumn::Hue))
                 .bind(rule.hue, editColors(), m_onPigmentChanged, false);
             row.controlAtColumnAs<ValueRuleControl>(pigmentColumn(PigmentColumn::Saturation)).bind(
@@ -361,15 +335,15 @@ namespace ThisApp
         return m_pigmentGrid.columnByTag(Tag{ tag });
     }
 
-    // On the surface the pigment's element stands on, read in that element's own mode.
+    // On the surface the pigment's element stands on.
     RuleBase ThemePage::pigmentRuleBase(const UiElement element, const RuleChannel channel)
     {
         const UiElementDescriptor& descriptor = uiElementOf(element);
         return ruleBaseOn(
             elementColor(descriptor.base),
-            editColors().*descriptor.rule,
+            editColors().*descriptor.effect,
             channel,
-            elementColorMode(element),
+            previewColorMode(),
             editColors().darkModeFloor
         );
     }
@@ -386,7 +360,6 @@ namespace ThisApp
     {
         editColors().darkModeFloor = m_darkModeFloorSlider.position();
         // Every swatch and every ramp that stands on a surface moves with the floor.
-        m_grid.invalidate();
         m_pigmentGrid.invalidate();
         invalidatePreview();
         storeViewState();
@@ -405,186 +378,6 @@ namespace ThisApp
         themesManager().saveTheme(m_editTheme, (tabConfig() / k_themeDataAttrName).as<Dom::Value<AppTheme>>());
     }
 
-    void ThemePage::addFold(Fold&& fold)
-    {
-        fold.head->connectEvent([this](ToggleExpandedEvent&) {
-            storeFolds();
-        });
-        m_folds.push_back(std::move(fold));
-    }
-
-    void ThemePage::addFold(ExpanderHeader& header)
-    {
-        addFold(Fold{
-            .name = header.text().plainText(),
-            .expanded = [&header]() {
-                return header.expanded();
-            },
-            .setExpanded = [&header](bool value) {
-                header.setExpanded(value);
-            },
-            .head = &header,
-            .stop = &header.button(),
-        });
-    }
-
-    void ThemePage::addFold(UiElement element, Grids::RowGroupSpan& span)
-    {
-        addFold(Fold{
-            .name = std::wstring{ uiElementOf(element).token },
-            .expanded = [&span]() {
-                return span.expanded();
-            },
-            .setExpanded = [&span](bool value) {
-                span.setExpanded(value);
-            },
-            .head = &span,
-            .stop = &span,
-        });
-    }
-
-    Init<Grids::Rt::RowExpander> ThemePage::sectionFold()
-    {
-        return Init<Grids::Rt::RowExpander>{ [this](Grids::Rt::RowExpander& section) {
-            addFold(section.header());
-        } };
-    }
-
-    void ThemePage::storeFolds() const
-    {
-        // A restore turns the folds one at a time to match the list it read, and a list stored
-        // after each turn would be one it had not finished reading.
-        if (m_restoring)
-            return;
-        FoldNames collapsed;
-        for (const Fold& fold : m_folds)
-            if (!fold.expanded())
-                collapsed.push_back(fold.name);
-        (tabConfig() / k_collapsedAttrName).set(collapsed);
-    }
-
-    void ThemePage::restoreFolds()
-    {
-        const FoldNames collapsed = (tabConfig() / k_collapsedAttrName).get<FoldNames>();
-        for (const Fold& fold : m_folds)
-            fold.setExpanded(std::ranges::find(collapsed, fold.name) == collapsed.end());
-    }
-
-    void ThemePage::connectFoldMenu()
-    {
-        m_designScrollBox.onContextPopup([this](ContextPopupEvent& event) {
-            showFoldMenu(event);
-        });
-
-        // Claimed either way, so a command with nothing left to turn stays in the menu, disabled.
-        onGetActionState([this](GetActionStateEvent& event) {
-            if (&event.action == &FoldActions::expandAll)
-                event.claim({ .enabled = anyFold(false) });
-            else if (&event.action == &FoldActions::collapseAll)
-                event.claim({ .enabled = anyFold(true) });
-            else if (&event.action == &FoldActions::collapseOthers)
-                event.claim({ .enabled = canCollapseOtherFolds() });
-        });
-
-        onActionClick([this](ActionClickEvent& event) {
-            // Read before the folds turn - one closing over the owner takes the menu down with it.
-            const Control* owner = event.form.popupTarget();
-            if (&event.action == &FoldActions::expandAll)
-                setAllFolds(true);
-            else if (&event.action == &FoldActions::collapseAll)
-                setAllFolds(false);
-            else if (&event.action == &FoldActions::collapseOthers)
-                collapseOtherFolds();
-            else
-                return;
-            followFolds(owner);
-        });
-    }
-
-    void ThemePage::showFoldMenu(ContextPopupEvent& event)
-    {
-        event.stopPropagation();
-        // The menu gives the focus back to its owner, and finds this page's answers from it.
-        Control* owner = event.control;
-        while (owner && !owner->canTakeFocus())
-            owner = owner->parent();
-        if (!m_designScrollBox.containsNested(owner))
-            owner = Input::focusedControl();
-        if (!m_designScrollBox.containsNested(owner))
-            owner = &m_designScrollBox;
-        const ScopedPushPop raisedOn{ m_foldMenuTarget, event.control };
-        Menu menu{ *owner };
-        menu.add(FoldActions::expandAll);
-        menu.add(FoldActions::collapseAll);
-        menu.add(FoldActions::collapseOthers);
-        menu.execute();
-    }
-
-    bool ThemePage::anyFold(bool expanded) const
-    {
-        return std::ranges::any_of(m_folds, [expanded](const Fold& fold) {
-            return fold.expanded() == expanded;
-        });
-    }
-
-    bool ThemePage::canCollapseOtherFolds() const
-    {
-        bool inFold = false;
-        bool otherOpen = false;
-        for (const Fold& fold : m_folds)
-        {
-            if (fold.holds(m_foldMenuTarget))
-                inFold = true;
-            else if (fold.expanded())
-                otherOpen = true;
-        }
-        return inFold && otherOpen;
-    }
-
-    void ThemePage::setAllFolds(bool expanded)
-    {
-        for (const Fold& fold : m_folds)
-            fold.setExpanded(expanded);
-    }
-
-    void ThemePage::collapseOtherFolds()
-    {
-        for (const Fold& fold : m_folds)
-            if (!fold.holds(m_foldMenuTarget))
-                fold.setExpanded(false);
-    }
-
-    void ThemePage::followFolds(const Control* owner)
-    {
-        // As on a tree, a fold that closes over the focus hands it to what opens the fold again.
-        const Control* focus = owner;
-        // The grid holds the focus for the row it has selected.
-        if (m_grid.containsNested(owner))
-            focus = m_grid.descriptor().selectedRow();
-        if (const Fold* fold = hidingFold(focus))
-            fold->stop->setFocus();
-        // Every fold that opened asked to be scrolled to, and only the last request stands.
-        Control* target = m_foldMenuTarget;
-        if (const Fold* fold = hidingFold(target))
-            target = fold->stop;
-        if (target)
-            target->scrollIntoViewOnAlign();
-    }
-
-    const ThemePage::Fold* ThemePage::hidingFold(const Control* control) const
-    {
-        const Fold* result = nullptr;
-        for (const Fold& fold : m_folds)
-        {
-            // What the fold holds and its head does not stands in its body.
-            if (fold.expanded() || !fold.holds(control) || fold.head->containsNested(control))
-                continue;
-            if (!result || fold.holds(result->head))
-                result = &fold;
-        }
-        return result;
-    }
-
     void ThemePage::storeView() const
     {
         const Control* page = m_tabbedBox.pageControl().currentItem();
@@ -601,19 +394,19 @@ namespace ThisApp
 
     void ThemePage::storeElement() const
     {
-        const std::wstring_view token = m_design2Page.pickedPage();
+        const std::wstring_view token = m_designPage.pickedPage();
         if (!token.empty())
             (tabConfig() / k_elementAttrName).set(std::wstring{ token });
     }
 
     void ThemePage::restoreElement()
     {
-        m_design2Page.pickPage((tabConfig() / k_elementAttrName).get<std::wstring>());
+        m_designPage.pickPage((tabConfig() / k_elementAttrName).get<std::wstring>());
     }
 
-    void ThemePage::rules2Changed()
+    void ThemePage::rulesChanged()
     {
-        // A pigment's ramps stand on a surface the new rules colour.
+        // A pigment's ramps stand on a surface the rules colour.
         m_pigmentGrid.invalidate();
         invalidatePreview();
         storeViewState();
@@ -726,270 +519,8 @@ namespace ThisApp
         return isReservedThemeName(std::filesystem::path{ pageData().name }.stem().wstring());
     }
 
-    CellSet ThemePage::operationCells(ColumnTag actionKey, ColumnTag valueKey, ComboBoxTarget target)
-    {
-        static const Text k_pushIconFormat{ InkWell::spotInk(), TextOp::PushBold };
-        static const Text k_popIconFormat{ TextOp::PopBold, PopColor{} };
-        static TextItems items{ {
-            TextItem{
-                Tag{ ColorRuleOp::NoChange },
-                PlaceHolderText{ TextStyleId::SubBody, L"No change", PopTextStyle{} },
-                TooltipText{ L"Keep parent value" }
-            },
-            TextItem{
-                Tag{ ColorRuleOp::Offset },
-                Text{ k_pushIconFormat, L"+", k_popIconFormat },
-                TooltipText{ L"Add offset" }
-            },
-            TextItem{
-                Tag{ ColorRuleOp::Scale },
-                Text{ k_pushIconFormat, L"\u00D7", k_popIconFormat },
-                TooltipText{ L"Scale value" }
-            },
-            TextItem{
-                Tag{ ColorRuleOp::Set },
-                Text{ k_pushIconFormat, L"=", k_popIconFormat },
-                TooltipText{ L"Set exact value" }
-            }
-            } };
-        static constexpr MinSize k_comboBoxSize{ 90.0f, 0.0f };
-        // From the theme, not the grid: the cell sets are built before the grid exists.
-        // GridDescriptor's designCellMetrics is a reference to this same object.
-        const Padding k_controlPadding = themeMetrics().listItem.padding;
-        const Tag lumTag{ target };
-
-        return CellSet{
-            // Control arguments are copied into the node so the call can be replayed at
-            // apply time, hence std::ref for the shared TextItems.
-            CellWith<ComboBox>{ actionKey,
-                std::ref(items),
-                k_comboBoxSize,
-                VerticalTextAnchor::Center,
-                k_controlPadding,
-                VerticalAlign::Fill,
-                ItemIndex{ 0ull },
-                EditorMode::Editable,
-                lumTag,
-                OnEvent{ [this](GetStateEvent& event) {
-                    // Set, and not the user's to move: the row states a colour nothing stands
-                    // under. The slider stays live, because Set names a value.
-                    event.state.enabled = !statesAbsoluteSurface(
-                        *static_cast<Grids::Rt::RowContainer*>(event.control.parent()));
-                } },
-                // Captures the Tag, not the column: the columns do not exist yet when this
-                // fragment is built. The grid resolves it when the event fires.
-                OnEvent{ [this, valueKey](ComboBoxChangeEvent& event) {
-                    Grids::Rt::RowContainer& container = *static_cast<Grids::Rt::RowContainer*>(event.comboBox().parent());
-                    Control* slider = container.controlAtColumn(m_grid.columnByTag(Tag{ valueKey }));
-                    slider->invalidateState();
-                    const ComboBoxTarget targetOp = event.comboBox().tag<ComboBoxTarget>();
-                    const TextItem* item = event.comboBox().selectedItem();
-                    const auto operation = item->tag().get<ColorRuleOp>();
-                    ColorRule& rule = rowColorRule(container);
-                    if (targetOp == ComboBoxTarget::Elevation)
-                        rule.elevation.setOperation(operation);
-                    else
-                        rule.saturation.setOperation(operation);
-                    invalidatePreview();
-                    storeViewState();
-                } },
-                OnEvent{ [this](ComboBoxAcceptTextEvent& event) {
-                    acceptOperationText(event);
-                } },
-                OnEvent{ [this](AdjustItemTextEvent& event) {
-                    ColorRuleOp itemAction = event.item().tag().get<ColorRuleOp>();
-                    if (itemAction == ColorRuleOp::NoChange)
-                        return;
-                    if (event.phase() == EventPhase::Calculate)
-                    {
-                        event.text() << TextStyleId::Code << L"-0.00";
-                        return;
-                    }
-                    const ComboBoxTarget isLum = event.comboBox().tag<ComboBoxTarget>();
-                    Grids::Rt::RowContainer& row = *static_cast<Grids::Rt::RowContainer*>(event.comboBox().parent());
-                    const ColorRule& rule = rowColorRule(row);
-                    const ColorRuleValue& ruleValue = isLum == ComboBoxTarget::Elevation
-                        ? rule.elevation
-                        : rule.saturation;
-                    float value = ruleValue.value(itemAction);
-                    event.text() << FlexSpace{} << TextStyleId::Code << Fmt{ L"{:.2f}", value };
-                } }
-            },
-
-            CellWith<RuleSlider>{ Tag{ valueKey },
-                ScrollButtons::No,
-                k_controlPadding,
-                UiElement::Section,
-                lumTag,
-                // Setters with no constructor prop go here.
-                Init<RuleSlider>{ [](RuleSlider& slider) {
-                    slider.setMaxPosition(1.0f);
-                    slider.setRelativePosition(0.5f, false);
-                } },
-                Events{
-                    [this, actionKey](GetStateEvent& event) {
-                        Control* row = event.control.parent();
-                        Control* comboBoxControl = static_cast<Grids::Rt::RowContainer*>(row)->controlAtColumn(m_grid.columnByTag(Tag{ actionKey }));
-                        ItemIndexValue itemIndex = static_cast<ComboBox*>(comboBoxControl)->itemIndex();
-                        event.state.enabled = itemIndex.has_value() and itemIndex.value();
-                    },
-                    [this](SliderChangeEvent& event) {
-                        Grids::Rt::RowContainer& row = *static_cast<Grids::Rt::RowContainer*>((event.slider.parent()));
-                        const Slider& slider = static_cast<const Slider&>(event.slider);
-                        ComboBoxTarget isLum = slider.tag<ComboBoxTarget>();
-                        ColorRule& rule = rowColorRule(row);
-                        if (isLum == ComboBoxTarget::Elevation)
-                            rule.elevation.setNormalizedValue(slider.relativePosition());
-                        else
-                            rule.saturation.setNormalizedValue(slider.relativePosition());
-                        row.invalidate();
-                        storeViewState();
-                        invalidatePreview();
-                    }
-                },
-            }
-        };
-    }
-
-    void ThemePage::acceptOperationText(ComboBoxAcceptTextEvent& event)
-    {
-        Grids::Rt::RowContainer& row = *static_cast<Grids::Rt::RowContainer*>(event.comboBox().parent());
-        const ComboBoxTarget target = event.comboBox().tag<ComboBoxTarget>();
-        ColorRule& rule = rowColorRule(row);
-        ColorRuleValue& ruleValue = target == ComboBoxTarget::Elevation
-            ? rule.elevation
-            : rule.saturation;
-        const std::optional<ColorRuleValue> typed = typedRule(event.accept, ruleValue);
-        if (!typed.has_value())
-            return;
-
-        // Taken, so the list does not look it up.
-        event.stopPropagation();
-        ruleValue = typed.value();
-        if (target == ComboBoxTarget::Elevation)
-            updateElevationSliderAndComboBox(row);
-        else
-            updateSaturationSliderAndComboBox(row);
-        row.invalidate();
-        invalidatePreview();
-        storeViewState();
-    }
-
-    Grids::Dt::Row ThemePage::staticRow(UiElement element) const
-    {
-        if (uiElementOf(element).states.count() > 1ull)
-            unreachable("an element painting two states or more is a group, not one row");
-        return Grids::Dt::Row{
-            Tag{ RowTag::StaticElement, element, UiElementState::Surface, 0 },
-            Grids::Dt::Cell{ Tag{ ColumnTag::StaticName }, this, &ThemePage::elementNameCell },
-            m_elementCells
-        };
-    }
-
-    Row ThemePage::elementRow(UiElement element, UiElementState state) const
-    {
-        return Row{
-            Tag{ RowTag::DynamicElement, element, state, 0 },
-            Cell{ Tag{ ColumnTag::State }, this, &ThemePage::elementStateCell },
-            m_elementCells
-        };
-    }
-
-    Group ThemePage::elementGroup(UiElement element)
-    {
-        const UiElementStates& states = uiElementOf(element).states;
-        if (states.count() < 2ull)
-            unreachable("an element painting fewer than two states is one row, not a group");
-
-        Group group{
-            Collapsible::Expanded,
-            Init<Grids::Rt::RowGroup>{ [this, element](Grids::Rt::RowGroup& rowGroup) {
-                addFold(element, rowGroup.span());
-            } },
-            Span{
-                Tag{ RowTag::Group, element, 0, 0 },
-                Cell{ ColumnTag::Name, this, &ThemePage::elementNameCell },
-                // The mark reads the theme and the click writes it. Nothing binds this control to
-                // its row: the row is what the event arrives through, and a group's span is not
-                // one of the rows updateGridControls walks.
-                CellWith<CheckBox>{ ColumnTag::ElevationFlip,
-                    HorizontalAlign::Center,
-                    OnEvent{ [this](GetStateEvent& event) {
-                        elementFlipState(event);
-                    } },
-                    OnEvent{ [this](ClickEvent& event) {
-                        elementFlipClicked(event);
-                    } }
-                }
-            }
-        };
-
-        // WALKED IN ENUM ORDER, WHICH IS THE ORDER PAINTEVENT APPLIES THE RULES IN. A group's rows
-        // are the states its descriptor names, so the order is stated once, on UiElementState,
-        // rather than by each element's own list.
-        for (std::size_t i = 0ull; i != static_cast<std::size_t>(UiElementState::Count); ++i)
-        {
-            const UiElementState state = static_cast<UiElementState>(i);
-            if (!states.has(state))
-                continue;
-            group.children.push_back(std::make_unique<Row>(elementRow(element, state)));
-        }
-        return group;
-    }
-
-    bool ThemePage::statesAbsoluteSurface(const Grids::Rt::RowBase& row)
-    {
-        return row.tag<2, 4, UiElementState>() == UiElementState::Surface
-            and uiElementOf(row.tag<1, 4, UiElement>()).isWindowRoot;
-    }
-
-    void ThemePage::elementNameCell(Grids::GetCellTextEvent& event) const
-    {
-        const Grids::Rt::RowBase& row = event.row();
-        // A group's name follows the mark its span leads with, and a static row keeps the same
-        // room - a check mark's width and one cell padding - so every name starts in one line.
-        if (row.tag<0, 4, RowTag>() != RowTag::Group)
-        {
-            const float cellPadding = row.descriptor().designCellMetrics().padding.x;
-            event.text() << Space{ themeMetrics().checkMark.minSize.x + cellPadding };
-        }
-        event.text() << uiElementOf(row.tag<1, 4, UiElement>()).name;
-    }
-
-    void ThemePage::elementStateCell(Grids::GetCellTextEvent& event) const
-    {
-        event.text() << uiElementStateOf(event.row().tag<2, 4, UiElementState>()).name;
-    }
-
-    // The mode an element stands in: the preview's, flipped once for every element on the way
-    // down to it that states a flip - the same accumulation PaintEvent makes down the control
-    // tree. Every rule the element carries is read in it, its surface and its text included.
-    ColorMode ThemePage::elementColorMode(OptionalUiElement element)
-    {
-        if (!element)
-            return previewColorMode();
-
-        const UiElementDescriptor& descriptor = uiElementOf(*element);
-        ColorMode result = elementColorMode(descriptor.base);
-        if (descriptor.rules and (editColors().*descriptor.rules).flip)
-            result = flipped(result);
-        return result;
-    }
-
-    const ColorRule& ThemePage::rowRule(UiElement element, UiElementState state)
-    {
-        const UiElementDescriptor& descriptor = uiElementOf(element);
-        if (descriptor.rule)
-            return editColors().*descriptor.rule;
-        if (!descriptor.rules)
-            unreachable("element names no colour rule");
-        ColorRule ControlColorRules::* stateRule = uiElementStateOf(state).rule;
-        return (editColors().*descriptor.rules).*stateRule;
-    }
-
     // The colour an element resolves to, walked down from the bare surface through everything
-    // it sits on. Only the surface rule of each is applied: a state is what a row's own slider
-    // is about to change, and nothing below that row is in a state.
+    // it sits on. Only resting rules are applied: nothing below the element is in a state.
     Hsl ThemePage::elementColor(OptionalUiElement element)
     {
         if (!element)
@@ -997,17 +528,12 @@ namespace ThisApp
 
         const UiElementDescriptor& descriptor = uiElementOf(*element);
         Hsl result = elementColor(descriptor.base);
-        const ColorMode elementMode = elementColorMode(element);
-        if (descriptor.rule)
+        if (descriptor.effect)
         {
-            (editColors().*descriptor.rule).applyTo(result, 1.0f, editColors(), elementMode);
+            (editColors().*descriptor.effect).applyTo(result, 1.0f, editColors(),
+                previewColorMode());
         }
-        else if (descriptor.rules)
-        {
-            (editColors().*descriptor.rules).surface.applyTo(result, 1.0f, editColors(),
-                elementMode);
-        }
-        applyRestingRules2(result, *element, PaintChannel::Surface, elementMode);
+        applyRestingRules(result, *element, PaintChannel::Surface);
         return result;
     }
 
@@ -1027,40 +553,29 @@ namespace ThisApp
         Hsl result = elementTextColor(descriptor.base, &named);
         if (!named)
             result.hue = elementColor(element).hue;
-        const ColorMode mode = elementColorMode(element);
-        if (descriptor.rules)
-        {
-            const ControlColorRules& rules = editColors().*descriptor.rules;
-            // The ink crosses with the element, before the element's own rule is applied to it -
-            // the same order PaintEvent takes when the mode flips.
-            if (rules.flip)
-                result.luminosity = 1.0f - result.luminosity;
-            rules.text.applyTo(result, 1.0f, editColors(), mode);
-            if (rules.text.hue.operation() != ColorRuleHueOp::NoChange)
-                named = true;
-        }
-        if (applyRestingRules2(result, *element, PaintChannel::Text, mode))
+        if (applyRestingRules(result, *element, PaintChannel::Text))
             named = true;
         if (hueNamed)
             *hueNamed = named;
         return result;
     }
 
-    // The new rules come after the old ones: the element's own list, the window's where the
-    // element is worn by a form's root control, then the shared list.
-    bool ThemePage::applyRestingRules2(Hsl& color, const UiElement element,
-        const PaintChannel channel, const ColorMode mode)
+    // The element's own list, the window's where the element is worn by a form's root control,
+    // then the shared list.
+    bool ThemePage::applyRestingRules(Hsl& color, const UiElement element,
+        const PaintChannel channel)
     {
-        const ThemeRules2& rules = editColors().rules2;
-        const ColorRules2* windowRules = uiElementOf(element).isWindowRoot
+        const ColorMode mode = previewColorMode();
+        const ThemeRules& rules = editColors().rules;
+        const ColorRules* windowRules = uiElementOf(element).isWindowRoot
             ? &rules.anyWindow
             : nullptr;
         bool namesHue = false;
-        for (const ColorRules2* list : { &rules.of(element), windowRules, &rules.shared })
+        for (const ColorRules* list : { &rules.of(element), windowRules, &rules.shared })
         {
             if (!list)
                 continue;
-            for (const ColorRule2& rule : *list)
+            for (const ColorRule& rule : *list)
             {
                 if (!rule.atRest() or rule.output != channel)
                     continue;
@@ -1090,73 +605,16 @@ namespace ThisApp
     {
         Hsl stroke = elementColor(element);
         if (element)
-            applyRestingRules2(stroke, *element, PaintChannel::Stroke, elementColorMode(element));
+            applyRestingRules(stroke, *element, PaintChannel::Stroke);
         return { stroke.hue, 0.0f, 0.0f };
     }
 
-    // What the slider's own value is about to change: everything under the row's rule, plus every
-    // part of that rule the slider does not set. The hue and the other value are already chosen,
-    // and a ramp drawn without them says less than it could - a row whose base carries no
-    // saturation of its own would draw its elevation ramp in grey, and its hue cell two columns
-    // left would be saying otherwise.
-    RuleBase ThemePage::rowRuleBase(const Grids::Rt::RowBase& row, RuleChannel channel)
-    {
-        const UiElement element = row.tag<1, 4, UiElement>();
-        const UiElementState state = row.tag<2, 4, UiElementState>();
-        // Every part of this is the edited theme's, read in the preview's colour mode. The grid
-        // is painted in the application's own theme, which has nothing to do with what a ramp
-        // here shows.
-        //
-        // Every row of an element is read in the one direction that element stands in, so a
-        // flipped element's ramps draw the path the painter will actually walk. A shadow row is
-        // read at the dark end with no floor, from black in the hue of the element's stroke - the
-        // walk BakedColors::windowShadow makes.
-        const bool shadowState = state == UiElementState::Shadow;
-        const ColorMode elementMode = shadowState ? ColorMode::Dark : elementColorMode(element);
-        // A text rule changes the ink an element carries and not the surface it stands on, so it
-        // is shown against the ink chain: what the element inherits, which for a window root is
-        // the bare ink of the colour mode.
-        const bool inkState = state == UiElementState::Text
-            or state == UiElementState::ActiveText;
-        Hsl result{};
-        if (shadowState)
-            result = bareShadow(element);
-        else if (state == UiElementState::Text)
-        {
-            bool hueNamed = false;
-            result = elementTextColor(uiElementOf(element).base, &hueNamed);
-            if (!hueNamed)
-                result.hue = elementColor(element).hue;
-        }
-        // Drawn against the ink this element's own text rule has already established, since that
-        // is the ink it modifies.
-        else if (state == UiElementState::ActiveText)
-            result = elementTextColor(element);
-        else
-            result = elementColor(uiElementOf(element).base);
-        // A state is painted over its element's surface colour, and a shadow outside it.
-        if (state != UiElementState::Surface and !inkState and !shadowState)
-        {
-            if (ControlColorRules ThemeColors::* rules = uiElementOf(element).rules)
-                (editColors().*rules).surface.applyTo(result, 1.0f, editColors(), elementMode);
-        }
-
-        const float luminosityFloor = shadowState ? k_noFloor : editColors().darkModeFloor;
-        const ColorRule& rule = rowRule(element, state);
-        result.hue = rule.hue.actualHue(editColors(), result.hue);
-        if (channel != RuleChannel::Saturation)
-            rule.saturation.applyTo(result.saturation, 1.0f, ColorMode::Dark, k_noFloor);
-        if (channel != RuleChannel::Elevation)
-            rule.elevation.applyTo(result.luminosity, 1.0f, elementMode, luminosityFloor);
-        return { result, elementMode, luminosityFloor };
-    }
-
-    // What the element carries at rest under its old rules, on the channel the new rule writes.
-    RuleBase ThemePage::rule2Base(const OptionalUiElement element, const ColorRule2& rule,
+    // What the element carries at rest, on the channel the rule writes.
+    RuleBase ThemePage::elementRuleBase(const OptionalUiElement element, const ColorRule& rule,
         const RuleChannel channel)
     {
         const bool shadow = rule.output == PaintChannel::Shadow;
-        const ColorMode mode = shadow ? ColorMode::Dark : elementColorMode(element);
+        const ColorMode mode = shadow ? ColorMode::Dark : previewColorMode();
         Hsl result{};
         if (shadow)
             result = bareShadow(element);
@@ -1169,7 +627,7 @@ namespace ThisApp
         return ruleBaseOn(result, rule.effect, channel, mode, luminosityFloor);
     }
 
-    RuleBase ThemePage::ruleBaseOn(Hsl base, const ColorRule& rule, const RuleChannel channel,
+    RuleBase ThemePage::ruleBaseOn(Hsl base, const ColorEffect& rule, const RuleChannel channel,
         const ColorMode mode, const float luminosityFloor)
     {
         base.hue = rule.hue.actualHue(editColors(), base.hue);
@@ -1178,110 +636,6 @@ namespace ThisApp
         if (channel != RuleChannel::Elevation)
             rule.elevation.applyTo(base.luminosity, 1.0f, mode, luminosityFloor);
         return { base, mode, luminosityFloor };
-    }
-
-    ColorRule& ThemePage::rowColorRule(Grids::Row& row)
-    {
-        const UiElementDescriptor& descriptor = uiElementOf(row.tag().get<1, 4, UiElement>());
-        if (descriptor.rule)
-            return editColors().*descriptor.rule;
-        ColorRule ControlColorRules::* rule = uiElementStateOf(row.tag().get<2, 4, UiElementState>()).rule;
-        if (!descriptor.rules or !rule)
-            unreachable("row names no editable colour rule");
-        return (editColors().*descriptor.rules).*rule;
-    }
-
-    ControlColorRules& ThemePage::rowColorRules(Grids::Rt::Row& row)
-    {
-        ControlColorRules ThemeColors::* rules = uiElementOf(row.tag().get<1, 4, UiElement>()).rules;
-        if (!rules)
-            unreachable("element carries no state rules");
-        return editColors().*rules;
-    }
-
-    ControlColorRules& ThemePage::rowColorRulesOf(const Control& control)
-    {
-        return rowColorRules(*static_cast<Grids::Rt::RowContainer*>(control.parent()));
-    }
-
-    void ThemePage::elementFlipState(GetStateEvent& event)
-    {
-        event.state.selected = rowColorRulesOf(event.control).flip;
-    }
-
-    void ThemePage::elementFlipClicked(ClickEvent& event)
-    {
-        ControlColorRules& rules = rowColorRulesOf(*event.control);
-        rules.flip = !rules.flip;
-        event.control->invalidateState();
-        // Every row of this group draws a ramp against the direction the element stands in, so
-        // the whole grid is redrawn rather than the one cell that was clicked.
-        m_grid.invalidate();
-        invalidatePreview();
-        storeViewState();
-    }
-
-    void ThemePage::updateGridControls()
-    {
-        // Every RowContainer in the grid and its sub-grids. Expanders and groups are
-        // not containers, so they are stepped over and descended into.
-        m_grid.forEachRow([this](Grids::Rt::RowContainer& row) {
-            updateHueControl(row);
-            updateSaturationSliderAndComboBox(row);
-            updateElevationSliderAndComboBox(row);
-            });
-    }
-
-    void ThemePage::updateRowControls(ComboBox& comboBox, RuleSlider& slider, ColorRuleValue& ruleValue)
-    {
-        comboBox.setItemIndex(static_cast<std::size_t>(ruleValue.operation()));
-        // Showing the value the rule holds, which is not changing it. Left to trigger, the
-        // slider's own handler would write the position straight back into that rule - a round
-        // trip through the bar's resolution, and an edit the user did not make.
-        slider.setRelativePosition(ruleValue.normalizedValue(), false);
-    }
-
-    // The rule a hue control edits is settled here rather than at construction: the cell was
-    // built from a blueprint that names the Hue column, and only the row says which rule that
-    // column stands for. Both the rule and the colours it reads palette hues from live in
-    // m_editTheme, which outlives every control in the grid.
-    void ThemePage::updateHueControl(Grids::Rt::RowContainer& row)
-    {
-        HueRuleControl& control = row.controlAtColumnAs<HueRuleControl>(m_grid.columnByTag(Tag{ ColumnTag::Hue }));
-        control.bind(rowColorRule(row).hue, editColors(), m_onHueRuleChanged,
-            !statesAbsoluteSurface(row));
-    }
-
-    void ThemePage::updateSaturationSliderAndComboBox(Grids::Rt::RowContainer& row)
-    {
-        ComboBox& comboBox = row.controlAtColumnAs<ComboBox>(m_grid.columnByTag(Tag{ ColumnTag::SaturationAction }));
-        RuleSlider& slider = row.controlAtColumnAs<RuleSlider>(m_grid.columnByTag(Tag{ ColumnTag::SaturationAmount }));
-        ColorRuleValue& ruleValue = rowColorRule(row).saturation;
-        updateRowControls(comboBox, slider, ruleValue);
-        // The base is asked for at paint time rather than handed over here: every other rule in
-        // the theme can move it, and this row is not told when one does.
-        slider.bind(ruleValue, RuleChannel::Saturation,
-            [this, &row]() { return rowRuleBase(row, RuleChannel::Saturation); });
-    }
-
-    void ThemePage::updateElevationSliderAndComboBox(Grids::Rt::RowContainer& row)
-    {
-        ComboBox& comboBox = row.controlAtColumnAs<ComboBox>(m_grid.columnByTag(Tag{ ColumnTag::ElevationOperation }));
-        RuleSlider& slider = row.controlAtColumnAs<RuleSlider>(m_grid.columnByTag(Tag{ ColumnTag::ElevationAmount }));
-        ColorRuleValue& ruleValue = rowColorRule(row).elevation;
-        updateRowControls(comboBox, slider, ruleValue);
-        slider.bind(ruleValue, RuleChannel::Elevation,
-            [this, &row]() { return rowRuleBase(row, RuleChannel::Elevation); });
-    }
-
-    void ThemePage::hueRuleChanged()
-    {
-        // The swatch in the row that changed, and every swatch that reads the same palette
-        // entry, move together.
-        m_grid.invalidate();
-        m_darkModeFloorSlider.invalidate();
-        invalidatePreview();
-        storeViewState();
     }
 
     void ThemePage::generateCode()

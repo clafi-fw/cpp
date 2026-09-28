@@ -36,7 +36,7 @@ namespace ClaFi::Icons::SaturationIcon
         // sitting in rather than as a fixed sample. The accent rule names a palette hue; anything
         // that leaves the hue alone falls back to the anchor.
         const BakedColors& bakedColors = event.bakedColors();
-        const BakedHue& accent = bakedColors.rule(UiElement::Accent).hue;
+        const BakedHue& accent = bakedColors.effect(UiElement::Accent).hue;
         float accentHue = accent.setPull > 0.0f ? accent.hue : bakedColors.anchorHue;
 
         float startLum = std::lerp(k_startLum, 1.0f - k_startLum, bakedColors.lightness);

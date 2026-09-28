@@ -66,8 +66,8 @@ namespace ThisApp
     // time someone regenerates from a theme they have edited. What a member is, what reads it,
     // and how it resolves survive that; what it currently equals does not.
     //
-    // Which members there are, what each one is called in generated code and which of its states
-    // the block may state are k_uiElements' answer, not this table's.
+    // Which members there are and what each one is called in generated code are k_uiElements'
+    // answer, not this table's.
     struct MemberComment
     {
         UiElement element{};
@@ -76,7 +76,7 @@ namespace ThisApp
 
     constexpr std::array<MemberComment, 2ull> k_memberComments{
         MemberComment{ .element = UiElement::Accent, .text =
-            L"THE THEME'S OWN EMPHASIS, AND WHAT SAYS A THING IS ON - one rule for both, because the\n"
+            L"THE THEME'S OWN EMPHASIS, AND WHAT SAYS A THING IS ON - one effect for both, because the\n"
             L"two are one colour. It is the ink anything asking for emphasis is drawn in, over the\n"
             L"palette's accent hue - the same one a button under the pointer moves toward, so an icon\n"
             L"drawn in it belongs to the family of the controls around it - and it is equally the\n"
@@ -94,8 +94,8 @@ namespace ThisApp
     [[nodiscard]] std::wstring_view memberCommentOf(UiElement);
 
     // The palette's two members and the dark mode floor are not stated through k_uiElements - a
-    // float and an array of floats are neither a rule nor a set of them - so their prose is kept
-    // here, under the same rule: what the block does not carry, the next regeneration deletes.
+    // float and an array of floats are not effects - so their prose is kept here, under the same
+    // rule: what the block does not carry, the next regeneration deletes.
     constexpr std::wstring_view k_anchorHueComment{
         L"The hue a harmony turns around, and the only thing about the anchor anyone chooses.\n"
         L"A palette is a set of hues and nothing else, so what a swatch or a slider ramp is\n"
@@ -109,31 +109,12 @@ namespace ThisApp
     constexpr std::wstring_view k_darkModeFloorComment{
         L"The luminosity elevation 0 is lifted to at the dark end. See AppTheme" };
 
-    // A comment standing inside one member's braces, above one of its state rules. It is named by
-    // the pair because a state means something different in each member that carries it, so this
-    // is a table of its own rather than a field on the state's own descriptor.
-    struct StateComment
-    {
-        std::wstring_view memberName{};
-        std::wstring_view stateName{};
-        std::wstring_view text{};
-    };
-
-    constexpr std::array<StateComment, 0ull> k_stateComments{};
-
-    // The comment that state carries in that member, or nothing where it carries none.
-    [[nodiscard]] std::wstring_view stateCommentOf(std::wstring_view memberName,
-        std::wstring_view stateName);
-
     // Whether two values would come out as the same code. The rule types carry no comparison of
     // their own, and a theme is measured field by field against the framework's defaults to
     // decide what CodeContent::Differences leaves out.
     [[nodiscard]] bool isSame(const ColorRuleValue&, const ColorRuleValue&);
     [[nodiscard]] bool isSame(const ColorRuleHue&, const ColorRuleHue&);
-    [[nodiscard]] bool isSame(const ColorRule&, const ColorRule&);
-    // Only the states the element paints with are compared. A rule the element never applies
-    // cannot make a block differ from the defaults, because the block would not state it.
-    [[nodiscard]] bool isSame(const ControlColorRules&, const ControlColorRules&, UiElementStates);
+    [[nodiscard]] bool isSame(const ColorEffect&, const ColorEffect&);
 
     // The value a literal has to carry to rebuild a rule value. A rule holds its value
     // normalized, and an Offset normalizes by half a unit, which is enough to put the shortest
@@ -167,17 +148,11 @@ namespace ThisApp
         // The braces of one value, on the line it starts on.
         CppCodeGenerator& colorRuleValue(const ColorRuleValue&);
         CppCodeGenerator& colorRuleHue(const ColorRuleHue&);
-        // The braces of one rule, opening to closing, over as many lines as it has channels.
+        // The braces of one effect, opening to closing, over as many lines as it has channels.
         // level is the indent its closing brace sits at. Saturation and elevation are positional
-        // arguments, so both are stated whenever the rule states anything; hue is stated only
+        // arguments, so both are stated whenever the effect states anything; hue is stated only
         // when it moves.
-        CppCodeGenerator& colorRule(const ColorRule&, std::size_t level);
-        // The same for a set of state rules, as designated initializers. Only the states the
-        // owner paints with are considered, and of those only the ones it moves off a bare
-        // ControlColorRules are named. The owner is also what a state's own comment is looked up
-        // by - a state means something different in each member that carries it.
-        CppCodeGenerator& controlColorRules(const ControlColorRules&, std::size_t level,
-            const UiElementDescriptor& owner);
+        CppCodeGenerator& colorEffect(const ColorEffect&, std::size_t level);
         //
         // The member a statement writes to, carrying the object name an outside block goes
         // through.

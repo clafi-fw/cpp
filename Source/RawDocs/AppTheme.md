@@ -11,19 +11,18 @@ none keeps no margins for one. All four are metrics, and a theme is colours only
 putting a theme on never changes a window's frame. A window casts the shadow its root states as
 a property, and a root stating none casts none.
 
-THE COLOUR IS THE WINDOW ROOT'S SHADOW RULE, taken at this opacity. Form, Menu and Tooltip
-list the Shadow state, so theirs is the only `ControlColorRules::shadow` that is baked and
-read. `BakedColors::windowShadow` resolves it for the colour set the root wears - plain black
-for any other set, or for none - and `FormBase::shadowDesign` hands it to the painter.
+THE COLOUR IS THE WINDOW ROOT'S SHADOW RULES, taken at this opacity: the Shadow rules of the
+element the root wears, then Any Window's, then the shared ones. `BakedColors::windowShadow`
+resolves them for the root - Any Window's alone for a root that wears no element - and
+`FormBase::shadowDesign` hands the colour to the painter.
 
-The rule is applied to black carrying the hue of the window's stroke, and read at the dark
-end whatever the lightness, with no floor and no flip. A
-shadow is the absence of light on either side of the theme, and a rule read in the window's
-own direction cannot say that: `Set 0` is black at the dark end and white at the light one.
-So elevation here is luminosity, `{}` is plain black, and one rule gives one shadow in both
-modes. Raising saturation alone tints it toward the stroke's hue, and a stated hue toward
-that hue. `bakeShadow` gives the elevation `k_noFloor`: the floor lifts the theme's
-own surfaces, and a shadow falls on whatever stands behind the window.
+The rules are applied to black carrying the hue of the window's stroke, and read at the dark end
+whatever the lightness, with no floor. A shadow is the absence of light on either side of the
+theme, and a rule read in the window's own direction cannot say that: `Set 0` is black at the
+dark end and white at the light one. So elevation here is luminosity, `{}` is plain black, and
+one rule gives one shadow in both modes. Raising saturation alone tints it toward the stroke's
+hue, and a stated hue toward that hue. `bakeShadow` gives the elevation `k_noFloor`: the floor
+lifts the theme's own surfaces, and a shadow falls on whatever stands behind the window.
 
 A theme crossing carries the shadow with the rest of the window. The form restates its frame
 on every tick, and the painter bakes its tiles again on each tick the colour has moved. A
@@ -55,7 +54,7 @@ naming a theme that is no longer there falls back to.
 A THEME STATES NO MODE. Once the dark mode floor lifts the dark end, one design reads right at
 both, so which end a theme is worn at is no longer the theme's to say: it is the user's, kept in
 the application's config beside the theme's path - see `applyColorMode` in Application. Whatever
-reads a theme at a mode is handed the mode: `bake`, `formSurface`, `formText`.
+reads a theme at a mode is handed the mode: `bake` and `ThemeColors::rootSurface`.
 
 
 ## Lightness
@@ -63,9 +62,9 @@ reads a theme at a mode is handed the mode: `bake`, `formSurface`, `formText`.
 WHERE A THEME IS WORN BETWEEN THE TWO POLES, as a float: 0 is Dark, 1 is Light, and anything
 between is a crossing between the modes part way through. `lightnessOf(ColorMode)` is the one
 place a mode becomes the float, and `colorModeOf` the way back - the pole a lightness stands
-nearer to. `elevationOf` and `luminosityOf` take it in place of the mode - an element's own
-lightness is `BakedElement::lightnessIn`, which is the far side of the theme where the element
-flips.
+nearer to. `elevationOf` and `luminosityOf` take it in place of the mode - a control's own
+lightness is `PaintEvent::lightness`, inherited from the control above it unless the control
+states one.
 
 Contrast closes as lightness approaches 0.5 and is gone there, every elevation landing on one
 luminosity. That is the shape of the model rather than a fault in the mapping: a continuous path
@@ -79,11 +78,9 @@ WHERE THE DARK END OF THE THEME PUTS ELEVATION 0. There the elevation axis runs 
 white rather than from black: the luminosity `luminosityOf` would name is taken to
 `floor + (1 - floor) * luminosity`, so every elevation stays reachable, `elevationOf` stays its
 inverse, and each step a theme states is scaled by `1 - floor`. The floor is taken by
-`1 - lightness`: light mode is left as it is, a crossing between the modes fades it, and a
-flipped element takes it or not by the side it stands on - a dark tooltip in light mode is
-lifted, a light one in dark mode is not.
+`1 - lightness`: light mode is left as it is, and a crossing between the modes fades it.
 
-Every elevation a theme states is lifted - the surfaces, the stroke, the bare rules and the text
+Every elevation a theme states is lifted - the surfaces, the stroke, the effects and the text
 rules alike - so a check, a caret, a focus ring and accented text rise with the surfaces around
 them. Text stands near the top of the axis, where the lift barely moves it: the ink on a dark page
 still reaches white, and only an ink set low, such as the one over a check mark, lands on the
@@ -101,7 +98,7 @@ its elevation instead would move it from black.
 A floor lies below 1: at 1 the axis has no room left, and `elevationOf` divides by zero. The
 Themes app's slider stops at 0.5.
 
-## BakedValue, BakedRule, BakedElement
+## BakedValue, BakedEffect, BakedColorRule
 
 WHAT A THEME BECOMES SO THAT TWO OF THEM HAVE A HALF WAY. A Theme names one operation per channel
 and the ThemesManager edits it; a baked channel carries every operation at a weight, and the paint
@@ -123,12 +120,16 @@ Each operation standing at its identity is skipped, so a set at rest - where one
 the whole weight - costs the one crossing a rule always did, and only a set being crossed pays for
 more than one.
 
-Blending two sets lerps `offset`, `multiplier`, `setPull` and `flip`, and takes `setTarget` and
+Blending two sets lerps `offset`, `multiplier` and `setPull`, and takes `setTarget` and
 `hue` as a mean weighted by the two pulls, the hue the short way around the wheel. The weighting is
 what holds the one invariant the representation exists for: **a set crossed with itself answers
 that set at every factor**, so two themes that agree on a rule leave it still. Applying the
 outgoing rule at one weight and the incoming rule at the other does not hold it - two `Set 0.5`
 taken at 0.7 and 0.3 pull `1 - 0.3 * 0.7` of the way rather than the whole of it.
+
+Two lists of `BakedColorRule` blend rule by rule where both read the same inputs and write the same
+channels in one order. Lists that differ in any of that have no half way, and the crossing takes the
+destination's.
 
 ## A pigment as a baked theme holds it
 

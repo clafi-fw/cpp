@@ -235,7 +235,7 @@ namespace ClaFi
     // is the same in every theme, so a swatch shows the hue itself rather than how that hue
     // happens to land in the theme being looked at.
     //
-    // Nothing resolved is drawn from these: ThemeColors::pigmentHsl takes the hue of a palette
+    // Nothing resolved is drawn from these: BakedColors::pigmentHsl takes the hue of a palette
     // colour and states the other two itself.
     export constexpr float k_paletteDisplaySaturation = 0.75f;
     export constexpr float k_paletteDisplayLuminosity = 0.66f;

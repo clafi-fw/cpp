@@ -324,7 +324,7 @@ namespace ClaFi::Controls
             // Raised off the view's own surface, so it rises the way that surface leaves room
             // for rather than the way the theme as a whole does.
             Hsl hsl{ event.surfaceHsl()};
-            event.bakedColors().rule(UiElement::Accent).applyTo(hsl, 1.0f, event.lightness());
+            event.bakedColors().effect(UiElement::Accent).applyTo(hsl, 1.0f, event.lightness());
 
             const FloatRect& rect = m_selectionOverlayRect.value();
             event.canvas().fillRectangle(rect, hsl.toColor().withOpacity(0.5f));

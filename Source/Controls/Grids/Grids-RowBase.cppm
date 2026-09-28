@@ -129,7 +129,6 @@ namespace ClaFi::Controls::Grids
         //
         void getControlState(GetStateEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;
-        void adjustChildPaint(AdjustPaintEvent&) override;
         //
         void mouseMove(MouseMoveEvent&) override;
         void hoverLeave() override;
@@ -170,16 +169,6 @@ namespace ClaFi::Controls::Grids
         [[nodiscard]] const Column* laneColumnAt(PointInForm position) const;
         // What this press is to the cell it lands on, taken before it moves the selection.
         void recordPress(KeyModifiers);
-        // The column whose cell holds `control` and gives it a colour, or nullptr. The colour
-        // is tested first: it is a field read where cellControl is a lookup, so a grid whose
-        // columns carry no colour - the common case - never makes the second.
-        //
-        // The whole tree, not the top level: a cell belongs to the leaf column it stands in,
-        // and a grid that groups its columns keeps every leaf under one - Saturation's
-        // Operation and Value are sub-columns of a Saturation group, and it is the leaf that
-        // paintOneCell reads the colour from.
-        const Column* coloredColumnOfCell(const Control&, const PaintEvent&);
-        const Column* coloredColumnOfCell(const ColumnCollection&, const Control&, const PaintEvent&);
         void traverseCell(Column&, FloatPoint position, std::size_t sectionIndex, std::size_t flagsIndex,
             bool isFirstColumn, const CellFlagsList&, const CellVisitor&) const;
         // The cell the keyboard lands on when it arrives at this row.

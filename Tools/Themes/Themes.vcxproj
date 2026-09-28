@@ -224,8 +224,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Src\Pages\BasePage.cppm" />
-    <ClCompile Include="Src\Pages\Design2Page.cpp" />
-    <ClCompile Include="Src\Pages\Design2Page.cppm" />
+    <ClCompile Include="Src\Pages\DesignPage.cpp" />
+    <ClCompile Include="Src\Pages\DesignPage.cppm" />
     <ClCompile Include="Src\Pages\ElementPage.cpp" />
     <ClCompile Include="Src\Pages\ElementPage.cppm" />
     <ClCompile Include="Src\Pages\HomePage.cppm" />

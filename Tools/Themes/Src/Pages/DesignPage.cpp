@@ -1,4 +1,4 @@
-module ThisApp.Design2Page;
+module ThisApp.DesignPage;
 
 import ThisApp.Consts;
 import ThisApp.ElementPage;
@@ -25,13 +25,13 @@ namespace ThisApp
         constexpr SharedRules k_anyElement{
             .name = L"Any Element",
             .token = k_sharedRulesToken,
-            .rules = &ThemeRules2::shared
+            .rules = &ThemeRules::shared
         };
 
         constexpr SharedRules k_anyWindow{
             .name = L"Any Window",
             .token = k_anyWindowRulesToken,
-            .rules = &ThemeRules2::anyWindow
+            .rules = &ThemeRules::anyWindow
         };
 
         // A branch of the tree: its name, and the elements under it in the order they are listed.
@@ -81,36 +81,36 @@ namespace ThisApp
         };
     }
 
-    std::wstring_view Design2Page::pickedPage() const
+    std::wstring_view DesignPage::pickedPage() const
     {
         if (const TreeEntry* entry = pickedEntry())
             return tokenOf(*entry);
         return {};
     }
 
-    void Design2Page::pickPage(const std::wstring_view token)
+    void DesignPage::pickPage(const std::wstring_view token)
     {
         for (const TreeEntry& entry : m_entries)
             if (tokenOf(entry) == token)
                 m_tree.setCurrentItem(entry.item);
     }
 
-    void Design2Page::bind(ThemeColors& colors, const OnGetElementRuleBase& ruleBase,
+    void DesignPage::bind(ThemeColors& colors, const OnGetElementRuleBase& ruleBase,
         const OnRulesChanged& onRulesChanged)
     {
-        ThemeRules2& rules = colors.rules2;
+        ThemeRules& rules = colors.rules;
         for (const TreeEntry& entry : m_entries)
         {
             if (!entry.rules)
                 continue;
-            ColorRules2& list = entry.element
+            ColorRules& list = entry.element
                 ? rules.of(*entry.element)
                 : rules.*entry.shared->rules;
-            const ColorRules2& defaults = entry.element
+            const ColorRules& defaults = entry.element
                 ? m_defaultRules.of(*entry.element)
                 : m_defaultRules.*entry.shared->rules;
             const OptionalUiElement element = entry.element;
-            OnGetListRuleBase listRuleBase = [ruleBase, element](const ColorRule2& rule,
+            OnGetListRuleBase listRuleBase = [ruleBase, element](const ColorRule& rule,
                 const RuleChannel channel) {
                 return ruleBase(element, rule, channel);
             };
@@ -118,14 +118,14 @@ namespace ThisApp
         }
     }
 
-    void Design2Page::rebuildRules()
+    void DesignPage::rebuildRules()
     {
         for (const TreeEntry& entry : m_entries)
             if (entry.rules)
                 entry.rules->rebuild();
     }
 
-    void Design2Page::buildTree()
+    void DesignPage::buildTree()
     {
         m_tree.onCurrentItemChange([this](CurrentItemChangeEvent&) {
             showPickedPage();
@@ -145,14 +145,14 @@ namespace ThisApp
     }
 
     // The style goes in ahead of the name addEntry writes after it.
-    TreeItem& Design2Page::addRootItem()
+    TreeItem& DesignPage::addRootItem()
     {
         TreeItem& item = m_tree.addItem();
         item.text() << TextStyleId::SubHeading;
         return item;
     }
 
-    void Design2Page::addEntry(TreeItem& item, TreeEntry entry)
+    void DesignPage::addEntry(TreeItem& item, TreeEntry entry)
     {
         const std::wstring_view name = nameOf(entry);
         item.text() << name;
@@ -170,20 +170,20 @@ namespace ThisApp
             m_tree.setCurrentItem(item);
     }
 
-    void Design2Page::showPickedPage()
+    void DesignPage::showPickedPage()
     {
         if (const TreeEntry* entry = pickedEntry())
             m_pages.setCurrentItem(entry->page);
     }
 
-    const Design2Page::TreeEntry* Design2Page::pickedEntry() const
+    const DesignPage::TreeEntry* DesignPage::pickedEntry() const
     {
         if (const Control* item = m_tree.currentItem())
             return &m_entries[item->tag<std::size_t>()];
         return nullptr;
     }
 
-    std::wstring_view Design2Page::nameOf(const TreeEntry& entry)
+    std::wstring_view DesignPage::nameOf(const TreeEntry& entry)
     {
         if (entry.element)
             return uiElementOf(*entry.element).name;
@@ -192,7 +192,7 @@ namespace ThisApp
         return k_paletteTitle;
     }
 
-    std::wstring_view Design2Page::tokenOf(const TreeEntry& entry)
+    std::wstring_view DesignPage::tokenOf(const TreeEntry& entry)
     {
         if (entry.element)
             return uiElementOf(*entry.element).token;

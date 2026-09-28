@@ -38,10 +38,10 @@
     <ClCompile Include="Src\Pages\BasePage.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Pages\Design2Page.cpp">
+    <ClCompile Include="Src\Pages\DesignPage.cpp">
       <Filter>Src\Pages</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Pages\Design2Page.cppm">
+    <ClCompile Include="Src\Pages\DesignPage.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Src\Pages\ElementPage.cpp">

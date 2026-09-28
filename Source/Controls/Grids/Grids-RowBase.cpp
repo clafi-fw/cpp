@@ -8,7 +8,6 @@ import ClaFi.Controls.StackView;
 import ClaFi.Diagnostic.Log;
 
 import ClaFi.Core.System.Utils;
-import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.InkWell;
@@ -307,28 +306,14 @@ namespace ClaFi::Controls::Grids
         // A ROW PAINTS NO SURFACE OF ITS OWN, SO ITS CELLS ARE IT, and the fill is
         // unconditional. What a cell stands on is the row's surface: what the row inherited from
         // whatever holds it, with the row's own rules over that - GridRow's Selected rule among
-        // them. A column rule then modifies it per cell.
+        // them.
         //
         // Unconditional because the colour a row inherits is as much a colour it has to paint as
         // one it states itself. A row standing in a group that holds the selection states nothing
         // of its own, and a fill made conditional on the ROW having moved the surface would drop
         // exactly that case.
-        const BakedRule* columnColor = cell.column.color(event);
-        const BakedRule* rowColor = color(event);
-        Hsl bgHsl = event.surfaceHsl();
-        {
-            // Both rules are read in the direction this row stands in, the one its ink and its grid
-            // lines are already read in. A row whose element states a flip stands on the far side
-            // of the theme, and a fill mixed from the theme's own side would leave the surface
-            // where it is while the text on it crosses.
-            const Lightness lightness = event.lightness();
-            if (rowColor)
-                rowColor->applyTo(bgHsl, 1.0f, lightness);
-            if (columnColor)
-                columnColor->applyTo(bgHsl, 1.0f, lightness);
-            // Paint the cell surface
-            event.canvas().fillPartialRoundedRectangle(cellFrame, bgHsl.toColor());
-        }
+        const Hsl bgHsl = event.surfaceHsl();
+        event.canvas().fillPartialRoundedRectangle(cellFrame, bgHsl.toColor());
         // Paint the cell right and bottom stroke. A stroke lands inside the bounds it is given, so
         // the band it covers is the cell's own last border on each of those two sides. The next
         // cell's bounds start where that band ends, and the two strokes form one unbroken line.
@@ -528,30 +513,6 @@ namespace ClaFi::Controls::Grids
         event.setColorRules(UiElement::GridRow);
     }
 
-    void RowBase::adjustChildPaint(AdjustPaintEvent& event)
-    {
-        // The cell a hosted control sits in may stand on a colour of its own: paintOneCell
-        // fills it with this row's surface carrying the column's rule. Nothing in the parent
-        // chain says so - a cell is not a control, and the row is what the child inherits -
-        // so the colour is named here, before the child's own adjustPaint runs.
-        //
-        // The column's part only. A row that colours its cells states the same rule for
-        // itself, so its own surface already carries the row's part.
-        //
-        // The sign is the child's, which is the row's: a paint event takes its colour mode from
-        // its parent before doAdjustPaint runs, and a flip of the child's own is settled after
-        // this. So the tint rises the way the surface it lands on does.
-        if (const Column* column = coloredColumnOfCell(event.control(), event.paintEvent()))
-        {
-            Hsl cellHsl = event.surfaceHsl();
-            column->color(event.paintEvent())->applyTo(cellHsl, 1.0f,
-                event.paintEvent().lightness());
-            event.setSurfaceHsl(cellHsl);
-        }
-
-        LaneBase::adjustChildPaint(event);
-    }
-
     void RowBase::mouseMove(MouseMoveEvent& event)
     {
         Column* columnToHover = columnAt(event.posOnControl);
@@ -731,25 +692,6 @@ namespace ClaFi::Controls::Grids
             ? CellPressKind::Act
             : CellPressKind::Pick;
         m_descriptor.recordPress(*this, column, kind);
-    }
-
-    const Column* RowBase::coloredColumnOfCell(const Control& control, const PaintEvent& event)
-    {
-        return coloredColumnOfCell(m_descriptor.columns(), control, event);
-    }
-
-    const Column* RowBase::coloredColumnOfCell(const ColumnCollection& columns,
-        const Control& control, const PaintEvent& event)
-    {
-        for (Column* column : columns)
-        {
-            if (column->color(event) && cellControl(*column) == &control)
-                return column;
-            if (const ColumnCollection* subColumns = column->subColumns())
-                if (const Column* found = coloredColumnOfCell(*subColumns, control, event))
-                    return found;
-        }
-        return nullptr;
     }
 
     void RowBase::traverseCell(Column& column, FloatPoint position, std::size_t sectionIndex,

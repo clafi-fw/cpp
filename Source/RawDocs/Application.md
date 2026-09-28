@@ -266,29 +266,6 @@ Settings page is a column of small answers.
 
 Nothing calls it for an application, and one that never does gets Settings alone.
 
-## UiElementStateDescriptor
-
-THE THREE SPELLINGS A RULE GOES BY, and they are not the same word. `name` is the label an
-editor writes, `codeName` is the designator generated C++ has to compile, and `token` is
-what stands in a theme file. Changing `token` changes the file format: an unrecognised key
-is discarded with a SchemaErrorEvent, so a theme saved under the old spelling loses that
-rule rather than failing to load.
-
-## UiElementStates
-
-The states one element paints with, as a set. Anything listing an element's rules walks
-UiElementState from first to Count and takes the bits that are set, so the order is the
-enum's and the membership is the element's.
-
-## UiElementState
-
-In the order they are applied. Surface, active, hovered and pressed build the element's
-fill, then text and activeText build the ink over it - the order PaintEvent takes. Stroke
-follows surface, being the border of the element at rest. Shadow comes last and PaintEvent
-never reads it: the form casts it around a window root, and only the three roots list it -
-see AppTheme's WindowShadow. Anything walking a set of states walks this order, so no
-caller states an order of its own.
-
 ## UiElement
 
 IN THEMECOLORS DECLARATION ORDER, which generated C++ depends on: a designated initializer
@@ -298,8 +275,14 @@ naming elements one at a time.
 
 ## UiElementDescriptor
 
-What one element is: its three spellings, the ThemeColors member it names, what it is
-painted on, and the rules it paints with.
+What one element is: its three spellings, what it is painted on, whether it opens a window,
+and - for the elements an ink names - the ThemeColors member holding that effect.
+
+THE THREE SPELLINGS ARE NOT THE SAME WORD. `name` is the label an editor writes, `codeName` is
+the designator generated C++ has to compile, and `token` is what stands in a theme file - the
+key an element's list of rules stands under, and its effect's where it has one. Changing `token`
+changes the file format: an unrecognised key is discarded with a SchemaErrorEvent, so a theme
+saved under the old spelling loses those rules rather than failing to load.
 
 ## appThemes
 

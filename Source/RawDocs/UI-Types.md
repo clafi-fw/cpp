@@ -258,15 +258,14 @@ standing between the sides is drawn between the tones.
 How an ink's grade becomes a colour. Every ink is read the same way: its grade is a share of
 the gap between the surface and an ink, and the colour names the ink at the far end - the
 chain's own, one of the palette's hues, pure black or white, or for Accent and Spot one of the
-theme's rules laid over the chain's ink. The theme owns those rules, so what is written here is
-which one and nothing about what it does.
+theme's effects laid over the chain's ink. The theme owns those effects, so what is written here
+is which one and nothing about what it does.
 
-The rule goes on before the mix. A rule that sets its channels outright states where the colour
-lands, so laid over the mixed ink it would answer the same colour at every grade.
+The effect goes on before the mix. An effect that sets its channels outright states where the
+colour lands, so laid over the mixed ink it would answer the same colour at every grade.
 
-The theme's rule is read at the lightness the painter stands at. On an element that states a
-flip that is the far side of the theme, so a spot run in a hint rises off the hint's dark
-surface the way a muted run beside it does.
+The theme's effect is read at the lightness the painter stands at, so a spot run rises off the
+surface it is drawn on the way a muted run beside it does.
 
 ## Ink
 

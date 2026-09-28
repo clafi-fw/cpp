@@ -1051,6 +1051,13 @@ answer - and as tall as the middle row. The body gets what is left.</p>
 measured nothing takes its gap with it, so an empty or hidden bar leaves no trace.</p>
 
 <div class="info">
+<strong>A child that needs a constructor argument is still built where it is declared.</strong>
+The argument reaches it in the constructor body - <code>m_title.text() &lt;&lt; title;</code> -
+rather than through the constructor's initializer list, where clang reports the member it is built
+on as not yet bound. See <a href="FAQ.html#not-yet-bound">the FAQ</a>.
+</div>
+
+<div class="info">
 <strong>A body may make its panel taller.</strong> If the body comes out taller than the slot
 it was offered, the panel grows to hold it - unless the panel's own height is dictated from
 outside, which is either <code>VerticalAlign::Fill</code> or the panel itself standing in

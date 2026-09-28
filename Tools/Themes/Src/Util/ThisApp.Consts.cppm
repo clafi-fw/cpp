@@ -19,10 +19,8 @@ namespace ThisApp
     export constexpr std::wstring_view k_themePathSuffix = L"theme";
 
     export constexpr std::wstring_view k_defaultPageName = k_defaultThemeName;
-    export constexpr std::wstring_view k_dark2PageName = k_dark2ThemeName;
 
     export constexpr std::wstring_view k_defaultPageTitle = BuiltInThemes::defaultTheme;
-    export constexpr std::wstring_view k_dark2PageTitle = L"Not So Dark";
 
     // A built-in page's name without the extension, which is what a user types and what a theme
     // file is named by.
@@ -39,7 +37,6 @@ namespace ThisApp
     };
 
     export constexpr std::wstring_view k_defaultPagePath = L"/Default.theme";
-    export constexpr std::wstring_view k_dark2PagePath = L"/Dark2.theme";
 
     // One toggle for the whole application rather than one per tab, so it is named in the root
     // config section and every page reads the same node.
@@ -52,13 +49,10 @@ namespace ThisApp
     export constexpr std::wstring_view k_codeContentAttrName{ L"CodeContent" };
     export constexpr std::wstring_view k_codeScopeAttrName{ L"CodeScope" };
 
-    // The folds a tab's design page has closed, one name each - see ThemePage::storeFolds.
-    export constexpr std::wstring_view k_collapsedAttrName{ L"Collapsed" };
-
     // The view a tab's theme page shows - see ThemePage::storeView.
     export constexpr std::wstring_view k_viewAttrName{ L"View" };
 
-    // The rules page a tab's Design 2 view shows, by its token - see ThemePage::storeElement.
+    // The rules page a tab's Design view shows, by its token - see ThemePage::storeElement.
     export constexpr std::wstring_view k_elementAttrName{ L"Element" };
     // The token the shared rules' page goes by, where an element's page goes by its element's.
     export constexpr std::wstring_view k_sharedRulesToken{ L"Shared" };
@@ -71,28 +65,6 @@ namespace ThisApp
     // file for it - see ThemesBrowser::paintTabIcon.
     export constexpr std::wstring_view k_tabIconAttrName{ L"Icon" };
 
-    export enum class ColumnTag : TagValue
-    {
-        StaticName,
-            Name,
-            State,
-        Hue,
-        SaturationGroup,
-            SaturationAction,
-            SaturationAmount,
-        ElevationGroup,
-            ElevationOperation,
-            ElevationAmount,
-        ElevationFlip,
-    };
-
-    export enum class RowTag : TagValue
-    {
-        Group,
-        StaticElement,
-        DynamicElement
-    };
-
     // The five hue operations as the editor names them, indexed by ColorRuleHueOp. The names the
     // serializers use are a separate set, spelled to match the enumerators; these are labels and
     // are free to read as such.
@@ -104,17 +76,10 @@ namespace ThisApp
         L"Custom hue"
     };
 
-    export enum class ComboBoxTarget
-    {
-        Saturation,
-        Elevation
-    };
-
     // The views a theme page switches between, one tab each.
     export enum class ThemeView
     {
         Design,
-        Design2,
         Cpp,
         ClaFi,
         Xml,
@@ -126,7 +91,6 @@ namespace ThisApp
     export constexpr std::array<std::wstring_view, static_cast<std::size_t>(ThemeView::Count)>
         k_themeViewKeys{
             L"Design",
-            L"Design2",
             L"Cpp",
             L"ClaFi",
             L"Xml",

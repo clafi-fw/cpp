@@ -118,6 +118,7 @@
                 </div>
                 <ul>
                     <li><a href="#red-squiggles">Why is the source covered in red squiggles?</a></li>
+                    <li><a href="#not-yet-bound">Why does clang say a member is not yet bound in my constructor?</a></li>
                 </ul>
             </li>
             <li class="has-children">
@@ -204,6 +205,56 @@ Two editors read ClaFi properly. ReSharper C++ does, with no setup. So does clan
 CMake build once and point your editor at the <code>compile_commands.json</code> it writes into the
 build directory.
 </p>
+
+</div>
+</details>
+
+<h3 id="not-yet-bound">Why does clang say a member is not yet bound in my constructor?</h3>
+
+<p class="faq-a">Because clang checks a constructor template without the default member initializers.
+Build the member where it is declared, and hand it the argument in the constructor body.</p>
+
+<details class="faq-more">
+<summary>Why</summary>
+<div class="faq-body">
+
+<p>
+A control holds its children as members, each built by its default member initializer, and members
+are built in the order they are declared. An entry of the constructor's initializer list that reads
+a member declared above it reads one that is already built, so the code is correct C++.
+</p>
+
+<p>
+Clang's <code>-Wuninitialized</code> checks a constructor template as if those initializers were not
+there, and a control's constructor is a template, because it forwards the properties it is given.
+So every such read is reported: <code>reference 'm_topBar' is not yet bound to a value when used
+here</code> for a reference, <code>field 'm_count' is uninitialized when used here</code> for a
+pointer or a value. A constructor that is not a template is checked with the initializers, and
+nothing is reported.
+</p>
+
+<p>
+The child that needs the argument is built where it is declared, like every other child, and the
+argument reaches it in the constructor body:
+</p>
+
+<pre><code><span class="kw">class</span> <span class="tp">TitledPage</span> : <span class="kw">public</span> <span class="tp">Panel</span>
+{
+<span class="kw">public</span>:
+    <span class="kw">template</span> &lt;<span class="kw">typename</span>... Args&gt;
+    <span class="tp">TitledPage</span>(<span class="kw">const</span> <span class="tp">CreateParams</span>&amp; params, std::<span class="tp">wstring_view</span> title, Args&amp;&amp;... args);
+<span class="kw">private</span>:
+    <span class="tp">Panel</span>&amp; m_topBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">Panel</span>&gt;(<span class="tp">Padding</span>{ 12.0f, 8.0f }) };
+    <span class="tp">Label</span>&amp; m_title{ m_topBar.<span class="fn">createBody</span>&lt;<span class="tp">Label</span>&gt;(<span class="tp">VerticalTextAnchor</span>::Center) };
+};
+
+<span class="kw">template</span> &lt;<span class="kw">typename</span>... Args&gt;
+<span class="tp">TitledPage</span>::<span class="fn">TitledPage</span>(<span class="kw">const</span> <span class="tp">CreateParams</span>&amp; params, std::<span class="tp">wstring_view</span> title, Args&amp;&amp;... args)
+    :
+    <span class="tp">Panel</span>{ params, std::<span class="fn">forward</span>&lt;Args&gt;(args)... }
+{
+    m_title.<span class="fn">text</span>() &lt;&lt; <span class="tp">TextStyleId</span>::SubTitle &lt;&lt; title;
+}</code></pre>
 
 </div>
 </details>

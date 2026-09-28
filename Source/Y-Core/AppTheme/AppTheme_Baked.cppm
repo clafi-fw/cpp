@@ -38,85 +38,63 @@ namespace ClaFi
         float setPull{};
     };
 
-    // A RULE AS THE PAINT PATH READS IT - three channels, each operation held at a weight.
-    export struct BakedRule
+    // AN EFFECT AS THE PAINT PATH READS IT - three channels, each operation held at a weight.
+    export struct BakedEffect
     {
     public:
         [[nodiscard]] bool changesNothing() const;
         void clear();
         void setExactHsl(Hsl, Lightness);
         float applyTo(Hsl&, float factor, Lightness) const;
-        [[nodiscard]] bool operator==(const BakedRule&) const = default;
+        [[nodiscard]] bool operator==(const BakedEffect&) const = default;
     public:
         BakedHue hue{};
         BakedValue saturation{};
         BakedValue elevation{};
     };
 
-    // THE RULES ONE ELEMENT PAINTS ITSELF FROM, in the order PaintEvent applies them. See AppTheme
-    export struct BakedElement
-    {
-    public:
-        // The lightness this element is read in - the far side of the theme where it flips.
-        [[nodiscard]] Lightness lightnessIn(Lightness) const;
-        [[nodiscard]] bool operator==(const BakedElement&) const = default;
-    public:
-        float flip{};
-        BakedRule surface{};
-        BakedRule stroke{};
-        BakedRule active{};
-        BakedRule hovered{};
-        BakedRule pressed{};
-        BakedRule text{};
-        BakedRule activeText{};
-    };
-
-    // A RULE OF THE NEW COLOR THEME ARCHITECTURE AS THE PAINT PATH READS IT.
-    export struct BakedColorRule2
+    // A RULE AS THE PAINT PATH READS IT.
+    export struct BakedColorRule
     {
     public:
         [[nodiscard]] bool atRest() const { return inputs.empty() and andInputs.empty(); }
         // How far the rule applies at these levels: its two sets joined as "and".
         [[nodiscard]] float levelIn(const RuleInputLevels&) const;
-        [[nodiscard]] bool operator==(const BakedColorRule2&) const = default;
+        [[nodiscard]] bool operator==(const BakedColorRule&) const = default;
     public:
         RuleInputs inputs{};
         RuleInputs andInputs{};
         PaintChannel output{ PaintChannel::Surface };
-        BakedRule effect{};
+        BakedEffect effect{};
     };
 
-    export using BakedColorRules2 = std::vector<BakedColorRule2>;
+    export using BakedColorRules = std::vector<BakedColorRule>;
 
-    // THE NEW RULES AS THE PAINT PATH READS THEM - each element's own, the window's and the shared.
-    export struct BakedRules2
+    // THE RULES AS THE PAINT PATH READS THEM - each element's own, the window's and the shared.
+    export struct BakedRules
     {
     public:
-        [[nodiscard]] const BakedColorRules2& of(UiElement element) const
+        [[nodiscard]] const BakedColorRules& of(UiElement element) const
         {
             return elements[static_cast<std::size_t>(element)];
         }
-        [[nodiscard]] bool operator==(const BakedRules2&) const = default;
+        [[nodiscard]] bool operator==(const BakedRules&) const = default;
     public:
-        BakedColorRules2 shared{};
-        BakedColorRules2 anyWindow{};
-        std::array<BakedColorRules2, k_uiElementCount> elements{}; // indexed by UiElement
+        BakedColorRules shared{};
+        BakedColorRules anyWindow{};
+        std::array<BakedColorRules, k_uiElementCount> elements{}; // indexed by UiElement
     };
 
-    export using BakedElements = std::array<BakedElement, k_uiElementCount>;
-    export using BakedRules = std::array<BakedRule, k_uiElementCount>;
+    export using BakedEffects = std::array<BakedEffect, k_uiElementCount>;
     export using PigmentHues = std::array<float, k_pigmentsCount>;
 
-    // A THEME AS THE PAINT PATH READS IT, each set standing at the element it belongs to. An
-    // element is either a set of state rules or one bare rule, so one of the two arrays carries
-    // it and the other stands empty there - see UiElementDescriptor, which states which.
+    // A THEME AS THE PAINT PATH READS IT: every element's rules, and the effects an ink names.
     export struct BakedColors
     {
     public:
-        [[nodiscard]] const BakedElement& element(UiElement) const;
-        [[nodiscard]] const BakedRule& rule(UiElement) const;
-        // Which of this theme's rules an ink names.
-        [[nodiscard]] const BakedRule& ruleOf(InkColor) const;
+        [[nodiscard]] const BakedEffect& effect(UiElement) const;
+        // Which of this theme's effects an ink names.
+        [[nodiscard]] const BakedEffect& effectOf(InkColor) const;
         // A pigment's hue, at InkWell's tone for the side of the theme the painter stands on.
         [[nodiscard]] Hsl pigmentHsl(Pigment, Lightness) const;
         [[nodiscard]] Hsl pigmentHsl(Pigment, InkTone) const;
@@ -132,22 +110,11 @@ namespace ClaFi
         // The hue a harmony turns around, for a drawing that has to answer where a rule states
         // no hue of its own.
         float anchorHue{};
-        BakedElements elements{};
-        BakedRules rules{};
+        BakedEffects effects{}; // an element's bare effect, where UiElementDescriptor names one
         // Every pigment's hue, taken off the harmony as the theme is baked, so nothing
         // downstream has a harmony to derive or a kind to read.
         PigmentHues pigmentHues{};
-        BakedRules2 rules2{}; // the rules of the new color theme architecture
-    };
-
-    // One rule inside a set, named the way a whole set is. It is resolved against the set the
-    // pass reading it carries, so a control built once answers for the application's theme and
-    // for a theme a subtree was reset to - see AdjustPaintEvent::resetTheme.
-    export struct ThemeRule
-    {
-        OptionalUiElement element{};
-        BakedRule BakedElement::* rule{ nullptr };
-        [[nodiscard]] const BakedRule* of(const BakedColors&) const;
+        BakedRules rules{};
     };
 
     // WHETHER TWO SETS STATE THE SAME COLOURS, lightness aside - which is the whole of what the
@@ -157,27 +124,25 @@ namespace ClaFi
 
     export [[nodiscard]] BakedValue bake(const ColorRuleValue&, float luminosityFloor);
     export [[nodiscard]] BakedHue bake(const ColorRuleHue&, const ThemeColors&);
-    export [[nodiscard]] BakedRule bake(const ColorRule&, const ThemeColors&);
-    export [[nodiscard]] BakedElement bake(const ControlColorRules&, const ThemeColors&);
+    export [[nodiscard]] BakedEffect bake(const ColorEffect&, const ThemeColors&);
     // A window root's shadow rule, its elevation lifted by no floor. See AppTheme#windowshadow
-    export [[nodiscard]] BakedRule bakeShadow(const ColorRule&, const ThemeColors&);
+    export [[nodiscard]] BakedEffect bakeShadow(const ColorEffect&, const ThemeColors&);
     // A shadow rule's effect is baked the way bakeShadow bakes, every other one the way bake does.
-    export [[nodiscard]] BakedColorRule2 bake(const ColorRule2&, const ThemeColors&);
-    export [[nodiscard]] BakedColorRules2 bake(const ColorRules2&, const ThemeColors&);
-    export [[nodiscard]] BakedRules2 bake(const ThemeRules2&, const ThemeColors&);
+    export [[nodiscard]] BakedColorRule bake(const ColorRule&, const ThemeColors&);
+    export [[nodiscard]] BakedColorRules bake(const ColorRules&, const ThemeColors&);
+    export [[nodiscard]] BakedRules bake(const ThemeRules&, const ThemeColors&);
 
     // CROSSING A SET WITH ITSELF ANSWERS THAT SET AT EVERY FACTOR, which is what the weighted
     // targets below are for. See AppTheme
     export [[nodiscard]] BakedValue blend(const BakedValue& from, const BakedValue& to,
         float factor);
     export [[nodiscard]] BakedHue blend(const BakedHue& from, const BakedHue& to, float factor);
-    export [[nodiscard]] BakedRule blend(const BakedRule& from, const BakedRule& to, float factor);
-    export [[nodiscard]] BakedElement blend(const BakedElement& from, const BakedElement& to,
+    export [[nodiscard]] BakedEffect blend(const BakedEffect& from, const BakedEffect& to,
         float factor);
     // Rule by rule where both lists state the same rules in one order, the destination otherwise.
-    export [[nodiscard]] BakedColorRules2 blend(const BakedColorRules2& from,
-        const BakedColorRules2& to, float factor);
-    export [[nodiscard]] BakedRules2 blend(const BakedRules2& from, const BakedRules2& to,
+    export [[nodiscard]] BakedColorRules blend(const BakedColorRules& from,
+        const BakedColorRules& to, float factor);
+    export [[nodiscard]] BakedRules blend(const BakedRules& from, const BakedRules& to,
         float factor);
     // Two factors, because a theme's lightness crosses on a slot of its own - see
     // AnimationSlots::themeLightness. Everything else answers to the first.
@@ -250,23 +215,23 @@ namespace ClaFi
         setPull = 0.0f;
     }
 
-    // BakedRule
+    // BakedEffect
 
-    bool BakedRule::changesNothing() const
+    bool BakedEffect::changesNothing() const
     {
         return hue.changesNothing()
             and saturation.changesNothing()
             and elevation.changesNothing();
     }
 
-    void BakedRule::clear()
+    void BakedEffect::clear()
     {
         hue.clear();
         saturation.clear();
         elevation.clear();
     }
 
-    void BakedRule::setExactHsl(Hsl value, Lightness lightness)
+    void BakedEffect::setExactHsl(Hsl value, Lightness lightness)
     {
         hue.hue = value.hue;
         hue.setPull = 1.0f;
@@ -279,7 +244,7 @@ namespace ClaFi
         elevation.setPull = 1.0f;
     }
 
-    float BakedRule::applyTo(Hsl& hsl, float factor, Lightness lightness) const
+    float BakedEffect::applyTo(Hsl& hsl, float factor, Lightness lightness) const
     {
         if (factor <= 0.0f)
             return 0.0f;
@@ -313,16 +278,9 @@ namespace ClaFi
             appliedElevationFactor });
     }
 
-    // BakedElement
+    // BakedColorRule
 
-    Lightness BakedElement::lightnessIn(Lightness lightness) const
-    {
-        return lightness + flip * (1.0f - 2.0f * lightness);
-    }
-
-    // BakedColorRule2
-
-    float BakedColorRule2::levelIn(const RuleInputLevels& levels) const
+    float BakedColorRule::levelIn(const RuleInputLevels& levels) const
     {
         return inputs.levelIn(levels) * andInputs.levelIn(levels);
     }
@@ -367,7 +325,7 @@ namespace ClaFi
         };
     }
 
-    BakedRule bake(const ColorRule& rule, const ThemeColors& themeColors)
+    BakedEffect bake(const ColorEffect& rule, const ThemeColors& themeColors)
     {
         return {
             bake(rule.hue, themeColors),
@@ -376,22 +334,8 @@ namespace ClaFi
         };
     }
 
-    BakedElement bake(const ControlColorRules& rules, const ThemeColors& themeColors)
-    {
-        return {
-            rules.flip ? 1.0f : 0.0f,
-            bake(rules.surface, themeColors),
-            bake(rules.stroke, themeColors),
-            bake(rules.active, themeColors),
-            bake(rules.hovered, themeColors),
-            bake(rules.pressed, themeColors),
-            bake(rules.text, themeColors),
-            bake(rules.activeText, themeColors)
-        };
-    }
-
     // The floor lifts the theme's own surfaces, and a shadow falls on what is behind the window.
-    BakedRule bakeShadow(const ColorRule& rule, const ThemeColors& themeColors)
+    BakedEffect bakeShadow(const ColorEffect& rule, const ThemeColors& themeColors)
     {
         return {
             bake(rule.hue, themeColors),
@@ -400,7 +344,7 @@ namespace ClaFi
         };
     }
 
-    BakedColorRule2 bake(const ColorRule2& rule, const ThemeColors& themeColors)
+    BakedColorRule bake(const ColorRule& rule, const ThemeColors& themeColors)
     {
         return {
             .inputs = rule.inputs,
@@ -412,18 +356,18 @@ namespace ClaFi
         };
     }
 
-    BakedColorRules2 bake(const ColorRules2& rules, const ThemeColors& themeColors)
+    BakedColorRules bake(const ColorRules& rules, const ThemeColors& themeColors)
     {
-        BakedColorRules2 result{};
+        BakedColorRules result{};
         result.reserve(rules.size());
-        for (const ColorRule2& rule : rules)
+        for (const ColorRule& rule : rules)
             result.push_back(bake(rule, themeColors));
         return result;
     }
 
-    BakedRules2 bake(const ThemeRules2& rules, const ThemeColors& themeColors)
+    BakedRules bake(const ThemeRules& rules, const ThemeColors& themeColors)
     {
-        BakedRules2 result{};
+        BakedRules result{};
         result.shared = bake(rules.shared, themeColors);
         result.anyWindow = bake(rules.anyWindow, themeColors);
         for (std::size_t i = 0; i < result.elements.size(); ++i)
@@ -471,10 +415,9 @@ namespace ClaFi
     bool sameColors(const BakedColors& a, const BakedColors& b)
     {
         return a.anchorHue == b.anchorHue
-            and a.elements == b.elements
-            and a.rules == b.rules
+            and a.effects == b.effects
             and a.pigmentHues == b.pigmentHues
-            and a.rules2 == b.rules2;
+            and a.rules == b.rules;
     }
 
     BakedValue blend(const BakedValue& from, const BakedValue& to, float factor)
@@ -498,7 +441,7 @@ namespace ClaFi
         };
     }
 
-    BakedRule blend(const BakedRule& from, const BakedRule& to, float factor)
+    BakedEffect blend(const BakedEffect& from, const BakedEffect& to, float factor)
     {
         return {
             blend(from.hue, to.hue, factor),
@@ -507,41 +450,27 @@ namespace ClaFi
         };
     }
 
-    BakedElement blend(const BakedElement& from, const BakedElement& to, float factor)
-    {
-        return {
-            std::lerp(from.flip, to.flip, factor),
-            blend(from.surface, to.surface, factor),
-            blend(from.stroke, to.stroke, factor),
-            blend(from.active, to.active, factor),
-            blend(from.hovered, to.hovered, factor),
-            blend(from.pressed, to.pressed, factor),
-            blend(from.text, to.text, factor),
-            blend(from.activeText, to.activeText, factor)
-        };
-    }
-
     // Two lists that differ in what their rules read or write have no half way between them.
-    BakedColorRules2 blend(const BakedColorRules2& from, const BakedColorRules2& to, float factor)
+    BakedColorRules blend(const BakedColorRules& from, const BakedColorRules& to, float factor)
     {
         const bool sameRules = std::ranges::equal(from, to,
-            [](const BakedColorRule2& fromRule, const BakedColorRule2& toRule) {
+            [](const BakedColorRule& fromRule, const BakedColorRule& toRule) {
                 return fromRule.inputs == toRule.inputs
                     and fromRule.andInputs == toRule.andInputs
                     and fromRule.output == toRule.output;
             });
         if (!sameRules)
             return to;
-        BakedColorRules2 result = to;
+        BakedColorRules result = to;
         for (std::size_t i = 0; i < result.size(); ++i)
             result[i].effect = blend(from[i].effect, to[i].effect, factor);
         return result;
     }
 
     // Element by element, so a change to one list leaves the others crossing smoothly.
-    BakedRules2 blend(const BakedRules2& from, const BakedRules2& to, float factor)
+    BakedRules blend(const BakedRules& from, const BakedRules& to, float factor)
     {
-        BakedRules2 result{};
+        BakedRules result{};
         result.shared = blend(from.shared, to.shared, factor);
         result.anyWindow = blend(from.anyWindow, to.anyWindow, factor);
         for (std::size_t i = 0; i < result.elements.size(); ++i)
@@ -551,24 +480,19 @@ namespace ClaFi
 
     // BakedColors
 
-    const BakedElement& BakedColors::element(UiElement value) const
+    const BakedEffect& BakedColors::effect(UiElement value) const
     {
-        return elements[static_cast<std::size_t>(value)];
+        return effects[static_cast<std::size_t>(value)];
     }
 
-    const BakedRule& BakedColors::rule(UiElement value) const
-    {
-        return rules[static_cast<std::size_t>(value)];
-    }
-
-    const BakedRule& BakedColors::ruleOf(InkColor value) const
+    const BakedEffect& BakedColors::effectOf(InkColor value) const
     {
         switch (value)
         {
             case InkColor::Accent:
-                return rule(UiElement::Accent);
+                return effect(UiElement::Accent);
             case InkColor::Spot:
-                return rule(UiElement::Spot);
+                return effect(UiElement::Spot);
             case InkColor::Text:
             case InkColor::Yellow:
             case InkColor::Green:
@@ -627,17 +551,17 @@ namespace ClaFi
     // follows the stroke.
     Hsl BakedColors::windowShadow(OptionalUiElement root, float windowFocusedFactor) const
     {
-        const BakedColorRules2* own = root ? &rules2.of(*root) : nullptr;
-        const BakedColorRules2* shared = root ? &rules2.shared : nullptr;
+        const BakedColorRules* own = root ? &rules.of(*root) : nullptr;
+        const BakedColorRules* shared = root ? &rules.shared : nullptr;
         RuleInputLevels levels = {};
         levels[static_cast<std::size_t>(RuleInput::WindowFocused)] = windowFocusedFactor;
         auto applyRules = [&](const PaintChannel channel, Hsl& color){
             const Lightness readIn = channel == PaintChannel::Shadow ? k_darkLightness : lightness;
-            for (const BakedColorRules2* list : { own, &rules2.anyWindow, shared })
+            for (const BakedColorRules* list : { own, &rules.anyWindow, shared })
             {
                 if (!list)
                     continue;
-                for (const BakedColorRule2& rule : *list)
+                for (const BakedColorRule& rule : *list)
                 {
                     if (rule.output == channel)
                         rule.effect.applyTo(color, rule.levelIn(levels), readIn);
@@ -654,16 +578,6 @@ namespace ClaFi
         return result;
     }
 
-    // ThemeRule
-
-    const BakedRule* ThemeRule::of(const BakedColors& colors) const
-    {
-        if (!element or rule == nullptr)
-            return nullptr;
-
-        return &(colors.element(*element).*rule);
-    }
-
     BakedColors blend(const BakedColors& from, const BakedColors& to, float factor,
         float lightnessFactor)
     {
@@ -672,17 +586,14 @@ namespace ClaFi
         result.anchorHue = blendedHue(from.anchorHue, 1.0f - factor, to.anchorHue, factor,
             factor);
 
-        for (std::size_t i = 0; i < result.elements.size(); ++i)
-            result.elements[i] = blend(from.elements[i], to.elements[i], factor);
-
-        for (std::size_t i = 0; i < result.rules.size(); ++i)
-            result.rules[i] = blend(from.rules[i], to.rules[i], factor);
+        for (std::size_t i = 0; i < result.effects.size(); ++i)
+            result.effects[i] = blend(from.effects[i], to.effects[i], factor);
 
         for (std::size_t i = 0; i < result.pigmentHues.size(); ++i)
             result.pigmentHues[i] = blendedHue(from.pigmentHues[i], 1.0f - factor,
                 to.pigmentHues[i], factor, factor);
 
-        result.rules2 = blend(from.rules2, to.rules2, factor);
+        result.rules = blend(from.rules, to.rules, factor);
 
         return result;
     }

@@ -19,7 +19,7 @@ import ClaFi.StdLib;
 
 namespace ThisApp
 {
-    void ElementPage::bind(ColorRules2& rules, const ColorRules2& defaults,
+    void ElementPage::bind(ColorRules& rules, const ColorRules& defaults,
         const ThemeColors& colors, OnGetListRuleBase ruleBase, OnRulesChanged onRulesChanged)
     {
         m_rules = &rules;
@@ -48,7 +48,7 @@ namespace ThisApp
     // A new rule is appended, so it applies after the rest of the list.
     void ElementPage::addRule()
     {
-        m_rules->push_back(ColorRule2{});
+        m_rules->push_back(ColorRule{});
         // Appending may move the list, and the hue and value editors hold their rules by address.
         for (Grids::RowContainer* row : m_ruleRows)
             bindEditors(*row);
@@ -125,7 +125,7 @@ namespace ThisApp
     void ElementPage::bindEditors(Grids::RowContainer& row)
     {
         const std::size_t index = row.tag().value;
-        ColorRule& effect = (*m_rules)[index].effect;
+        ColorEffect& effect = (*m_rules)[index].effect;
         row.controlAtColumnAs<HueRuleControl>(column(RuleColumn::Hue))
             .bind(effect.hue, *m_colors, m_onCellEdit, true);
         row.controlAtColumnAs<ValueRuleControl>(column(RuleColumn::Saturation)).bind(

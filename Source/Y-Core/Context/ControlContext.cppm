@@ -108,7 +108,7 @@ namespace ClaFi
         else if (ink.color == InkColor::White)
             inkEnd = { 0.0f, 0.0f, 1.0f };
         else if (ink.color == InkColor::Accent or ink.color == InkColor::Spot)
-            m_bakedColors->ruleOf(ink.color).applyTo(inkEnd, 1.0f, lightness);
+            m_bakedColors->effectOf(ink.color).applyTo(inkEnd, 1.0f, lightness);
 
         // Both ends of the ladder are held here, so they are answered rather than mixed to. A mix
         // at either end returns what is already in hand, and returns it through a pair of trig
@@ -173,7 +173,7 @@ namespace ClaFi
     {
         Hsl result = surfaceHsl;
         applySelectionRules(PaintChannel::Surface, result, RuleInputLevels{});
-        m_bakedColors->rule(UiElement::Accent).applyTo(result, 1.0f, lightness);
+        m_bakedColors->effect(UiElement::Accent).applyTo(result, 1.0f, lightness);
         return disabledRgb(result.toColor());
     }
 
@@ -187,8 +187,8 @@ namespace ClaFi
 
     bool ControlPaintContext::selectionChangesInk() const
     {
-        const BakedRules2& rules = m_bakedColors->rules2;
-        auto writesInk = [](const BakedColorRule2& rule){
+        const BakedRules& rules = m_bakedColors->rules;
+        auto writesInk = [](const BakedColorRule& rule){
             return rule.output == PaintChannel::Text;
         };
         return std::ranges::any_of(rules.of(UiElement::SelectedText), writesInk)
@@ -200,10 +200,10 @@ namespace ClaFi
     void ControlPaintContext::applySelectionRules(const PaintChannel channel, Hsl& color,
         const RuleInputLevels& levels) const
     {
-        const BakedRules2& rules = m_bakedColors->rules2;
-        for (const BakedColorRules2* list : { &rules.of(UiElement::SelectedText), &rules.shared })
+        const BakedRules& rules = m_bakedColors->rules;
+        for (const BakedColorRules* list : { &rules.of(UiElement::SelectedText), &rules.shared })
         {
-            for (const BakedColorRule2& rule : *list)
+            for (const BakedColorRule& rule : *list)
             {
                 if (rule.output == channel)
                     rule.effect.applyTo(color, rule.levelIn(levels), lightness);

@@ -107,8 +107,8 @@ the pointer. A cell nobody wrote for falls back to repeating the words its colum
 Column{ Tag{ ColumnTag::Hue }, Text{ L"Hue" }, Column{ ... }, Column{ ... } }
 
 Props are forwarded verbatim to ColumnCollection::add(), so everything that
-works there today (Tag, Text, ShowInHeader, ColumnWidthMode, widths, colours,
-TextAlign) works here unchanged. Nested Column nodes become sub-columns.
+works there today (Tag, Text, ShowInHeader, ColumnWidthMode, widths, TextAlign)
+works here unchanged. Nested Column nodes become sub-columns.
 
 The Tag is read but not consumed: the design uses it to resolve cells and to
 check uniqueness, and add() receives it like any other property.
@@ -272,13 +272,12 @@ that is not reads as neither - see Control::visualState.
 The column header wears GridHeader, a section's header wears SectionHeader, and a divider
 wears Divider.
 
-Each draws its lines with its own stroke. A row's Stroke is the lines between its cells,
-and PaintEvent::strokeRgbOn raises it off each cell's own surface - the row's, with the row's
-and the column's colour over it - so a cell carrying a colour of its own carries the lines
-beside it with it. The header row's lines are GridHeader's stroke, the line under a section's
-header is SectionHeader's, and the line a divider closes with is Divider's. A stroke that
-reaches nothing is transparent, and the gap left for the line stays open. The frame around
-the grid is Grid's own stroke and none of these.
+Each draws its lines with its own stroke. A row's Stroke is the lines between its cells, and
+PaintEvent::strokeRgbOn raises it off each cell's own surface, which is the row's. The header
+row's lines are GridHeader's stroke, the line under a section's header is SectionHeader's, and
+the line a divider closes with is Divider's. A stroke that reaches nothing is transparent, and
+the gap left for the line stays open. The frame around the grid is Grid's own stroke and none of
+these.
 
 ## RowCell
 

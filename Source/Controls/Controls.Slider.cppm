@@ -282,16 +282,16 @@ namespace ClaFi::Controls
         //
         // The thumb and the buttons state their own through adjustThumbPaint and
         // adjustButtonPaint, on their own events, and are unaffected.
-        BakedElement slotRules{};
-        // The border a button states at rest, which the slot has always been drawn with.
-        const BakedColorRules2& buttonRules = event.bakedColors().rules2.of(UiElement::Button);
+        //
+        // The border a button states at rest, which the slot has always been drawn with. The rule
+        // stands in the baked set the pass carries, which outlives the paint.
+        const BakedColorRules& buttonRules = event.bakedColors().rules.of(UiElement::Button);
         const auto restingStroke = std::ranges::find_if(buttonRules,
-            [](const BakedColorRule2& rule) {
+            [](const BakedColorRule& rule) {
                 return rule.output == PaintChannel::Stroke and rule.atRest();
             });
         if (restingStroke != buttonRules.end())
-            slotRules.stroke = restingStroke->effect;
-        event.setColorRules(slotRules);
+            event.setOwnRules({ &*restingStroke, 1 });
         event.setBorderWidth(event.scaledStrokeWidth(ThemeMetrics::border));
     }
 
