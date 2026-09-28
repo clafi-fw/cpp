@@ -138,6 +138,7 @@ namespace ThisApp
     }
 
     // The three operations as tiles, a slider for the value, and the Clear and Close commands.
+    // A value that may only be set has nothing to pick and nothing to clear: the slider and Close.
     class ValueRulePopup : public StackPanel
     {
     public:
@@ -174,12 +175,13 @@ namespace ThisApp
     // ValueRuleControl
 
     void ValueRuleControl::bind(ColorRuleValue& value, const RuleChannel channel,
-        OnGetRuleBase ruleBase, OnValueRuleChanged onChanged)
+        OnGetRuleBase ruleBase, OnValueRuleChanged onChanged, const ValueRuleOperations operations)
     {
         m_value = &value;
         m_channel = channel;
         m_ruleBase = std::move(ruleBase);
         m_onChanged = std::move(onChanged);
+        m_operations = operations;
         invalidate();
     }
 
@@ -203,8 +205,15 @@ namespace ThisApp
         changed();
     }
 
+    // A value that may only be set is a stated one from its first move, whatever an older theme
+    // left on it - otherwise one left at No change could never be moved at all.
     void ValueRuleControl::setNormalizedValue(const float value)
     {
+        if (setOnly() && m_value->operation() != ColorRuleOp::Set)
+        {
+            m_value->setOperation(ColorRuleOp::Set);
+            invalidateFormAlign();
+        }
         m_value->setNormalizedValue(value);
         changed();
     }
@@ -241,6 +250,8 @@ namespace ThisApp
     }
 
     // A value left as it reads is not taken, or the two decimals it shows would round the rule.
+    // One that may only be set reads a bare number as a stated value, and refuses every other
+    // mark and an empty text, which would clear it.
     void ValueRuleControl::acceptEditorText(AcceptEditEvent& event)
     {
         if (!m_value)
@@ -252,14 +263,27 @@ namespace ThisApp
             return;
         if (typed.empty())
         {
-            setOperation(ColorRuleOp::NoChange);
+            if (setOnly())
+                event.refuse(L"Type a value, such as 0.66.");
+            else
+                setOperation(ColorRuleOp::NoChange);
             return;
         }
-        const std::optional<ColorRuleValue> rule = typedRule(event, *m_value);
+        ColorRuleValue current = *m_value;
+        if (setOnly())
+            current.setOperation(ColorRuleOp::Set);
+        const std::optional<ColorRuleValue> rule = typedRule(event, current);
         if (!rule.has_value())
         {
             if (!event.refused())
-                event.refuse(L"Type a mark and a value, such as +0.02 or =0.66.");
+                event.refuse(setOnly()
+                    ? L"Type a value, such as 0.66."
+                    : L"Type a mark and a value, such as +0.02 or =0.66.");
+            return;
+        }
+        if (setOnly() && rule->operation() != ColorRuleOp::Set)
+        {
+            event.refuse(L"Only a stated value can be typed here, such as 0.66 or =0.66.");
             return;
         }
         *m_value = rule.value();
@@ -316,26 +340,32 @@ namespace ThisApp
         },
         m_owner{ owner }
     {
-        add<LabeledDivider>(
-            L"Operation",
-            Padding{ 0.0f, k_spacing }
-        );
+        // A single tile would be a choice of one, so a value that may only be set shows none.
+        StackPanel* tileRow{};
+        if (!m_owner.setOnly())
+        {
+            add<LabeledDivider>(
+                L"Operation",
+                Padding{ 0.0f, k_spacing }
+            );
 
-        StackPanel& tileRow = add<StackPanel>(
-            Orientation::HorizontalWrap,
-            Interactivity::ActiveContainer,
-            LaneSize{ k_tileOperations.size() },
-            Spacing{ k_spacing }
-        );
-        for (const ColorRuleOp operation : k_tileOperations)
-            m_stateItems.push_back(&tileRow.add<OperationItem>(*this, operation));
+            tileRow = &add<StackPanel>(
+                Orientation::HorizontalWrap,
+                Interactivity::ActiveContainer,
+                LaneSize{ k_tileOperations.size() },
+                Spacing{ k_spacing }
+            );
+            for (const ColorRuleOp operation : k_tileOperations)
+                m_stateItems.push_back(&tileRow->add<OperationItem>(*this, operation));
+        }
 
         add<LabeledDivider>(
             L"Value",
             Padding{ 0.0f, k_spacing }
         );
 
-        // The value belongs to the picked operation, so with none there is nothing to move.
+        // The value belongs to the picked operation, so with none there is nothing to move - unless
+        // the value may only be set, where moving it is what states it.
         RuleSlider& slider = add<RuleSlider>(
             ScrollButtons::No,
             HorizontalAlign::Fill,
@@ -345,12 +375,14 @@ namespace ThisApp
         slider.setMaxPosition(1.0f);
         slider.setRelativePosition(m_owner.normalizedValue(), false);
         slider.connectEvent([this](GetStateEvent& event) {
-            event.state.enabled = m_owner.operation() != ColorRuleOp::NoChange;
+            event.state.enabled = m_owner.setOnly()
+                || m_owner.operation() != ColorRuleOp::NoChange;
         });
         // Every tile's caption is a value the slider sets, so the row is painted again with it.
-        slider.onChange([this, &slider, &tileRow](SliderChangeEvent&) {
+        slider.onChange([this, &slider, tileRow](SliderChangeEvent&) {
             m_owner.setNormalizedValue(slider.relativePosition());
-            tileRow.invalidate();
+            if (tileRow)
+                tileRow->invalidate();
         });
         m_stateItems.push_back(&slider);
 
@@ -361,14 +393,17 @@ namespace ThisApp
             Padding{ 12.0f },
             ItemSizing::Equal
         );
-        commandBar.add<Button>(
-            OnClick{ [this](ClickEvent& event) {
-                pick(ColorRuleOp::NoChange);
-                event.closeForm();
-            } },
-            Text{ L"Clear" },
-            HorizontalTextAnchor::Center
-        );
+        if (!m_owner.setOnly())
+        {
+            commandBar.add<Button>(
+                OnClick{ [this](ClickEvent& event) {
+                    pick(ColorRuleOp::NoChange);
+                    event.closeForm();
+                } },
+                Text{ L"Clear" },
+                HorizontalTextAnchor::Center
+            );
+        }
         commandBar.add<Button>(
             OnClick{ [](ClickEvent& event) {
                 event.closeForm();

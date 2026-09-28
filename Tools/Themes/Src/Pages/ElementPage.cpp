@@ -120,7 +120,8 @@ namespace ThisApp
         m_ruleRows.push_back(&row);
     }
 
-    // No change is always a hue a new rule may take, so Clear is offered on every row.
+    // A rule here is a change to a colour, so No change and every operation are offered on every
+    // row.
     void ElementPage::bindEditors(Grids::RowContainer& row)
     {
         const std::size_t index = row.tag().value;
@@ -131,13 +132,15 @@ namespace ThisApp
             effect.saturation,
             RuleChannel::Saturation,
             ruleBaseOf(index, RuleChannel::Saturation),
-            m_onCellEdit
+            m_onCellEdit,
+            ValueRuleOperations::Any
         );
         row.controlAtColumnAs<ValueRuleControl>(column(RuleColumn::Elevation)).bind(
             effect.elevation,
             RuleChannel::Elevation,
             ruleBaseOf(index, RuleChannel::Elevation),
-            m_onCellEdit
+            m_onCellEdit,
+            ValueRuleOperations::Any
         );
     }
 

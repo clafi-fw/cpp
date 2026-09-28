@@ -285,12 +285,11 @@ namespace ClaFi
             .token = L"HoverIndicator",
             .base = UiElement::Section
         },
-        // THREE THINGS IN ONE RULE, which is what the name says: the theme's own emphasis, the
-        // ring on the control the user is on, and the indicator under an open tab. They are one
-        // colour on purpose - the interface says "this one" in a single ink - so they are edited
-        // as one row.
+        // THREE THINGS IN ONE RULE: the theme's own emphasis, the ring on the control the user is
+        // on, and the indicator under an open tab. They are one colour on purpose - the interface
+        // says "this one" in a single ink - so they are edited as one row.
         UiElementDescriptor{
-            .name = L"Accent, Focus, Indicator",
+            .name = L"Accent",
             .codeName = L"accent",
             .token = L"Accent",
             .rule = &ThemeColors::accent,

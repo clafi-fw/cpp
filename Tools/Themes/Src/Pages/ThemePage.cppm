@@ -8,6 +8,7 @@ import ThisApp.FloorSlider;
 import ThisApp.HueRuleControl;
 import ThisApp.RuleSlider;
 import ThisApp.Utils;
+import ThisApp.ValueRuleControl;
 import ThisApp.Palette.Controls;
 
 // Icons
@@ -148,6 +149,14 @@ namespace ThisApp
         using FoldCollection = std::vector<Fold>;
         using FoldNames = std::vector<std::wstring>;
         using ViewTabs = std::array<Tab*, static_cast<std::size_t>(ThemeView::Count)>;
+        // The pigment grid's columns, as their tags name them.
+        enum class PigmentColumn : TagValue
+        {
+            Name,
+            Hue,
+            Saturation,
+            Elevation
+        };
     private:
         ThemeColors& editColors() { return m_editTheme.colors; }
         //
@@ -159,6 +168,15 @@ namespace ThisApp
         // pigment order. They are derived from the anchor and the harmony kind alone, so nothing
         // here reads or writes the palette.
         void otherPigmentsText(GetTextEvent&);
+        // A row for a pigment the theme states itself: its name and an element page's editors.
+        [[nodiscard]] Row pigmentRow(UiElement) const;
+        // The name, and under it in gray what the pigment is used for.
+        void pigmentNameCell(Grids::GetCellTextEvent&) const;
+        void bindPigmentEditors(); // onto the rules they edit, which live in m_editTheme
+        [[nodiscard]] Grids::Column& pigmentColumn(PigmentColumn);
+        // What a pigment's value is about to change: the surface its element stands on.
+        [[nodiscard]] RuleBase pigmentRuleBase(UiElement, RuleChannel);
+        void pigmentChanged();
         void darkModeFloorChanged();
         void darkModeFloorText(GetTextEvent&);
         //
@@ -250,6 +268,9 @@ namespace ThisApp
         [[nodiscard]] RuleBase rowRuleBase(const Grids::Rt::RowBase&, RuleChannel);
         // What a value of a new rule is about to change, read the way rowRuleBase reads a row.
         [[nodiscard]] RuleBase rule2Base(OptionalUiElement, const ColorRule2&, RuleChannel);
+        // A rule on a base, applied on every channel but the one its value ramp draws.
+        [[nodiscard]] RuleBase ruleBaseOn(Hsl base, const ColorRule&, RuleChannel, ColorMode,
+            float luminosityFloor);
         //
         ColorRule& rowColorRule(Grids::Row&);
         ControlColorRules& rowColorRules(Grids::Rt::Row&);
@@ -297,6 +318,7 @@ namespace ThisApp
     private:
         OnSelectPaletteMap m_onSelectPaletteMap;
         OnHueRuleChanged m_onHueRuleChanged;
+        OnHueRuleChanged m_onPigmentChanged; // what the pigment editors call, held by address
 
         Controls::Divider& m_sep1{ toolBar().add<Controls::Divider>(
             Padding{ 4.0f }
@@ -458,6 +480,34 @@ namespace ThisApp
             }
         ) };
 
+        Spacer& m_pigmentsSpacer{ m_paletteColumn1.add<Spacer>(16.0f) };
+
+        // Accent and Spot: the pigments a theme states itself rather than takes from its harmony.
+        Grid& m_pigmentGrid{ m_paletteColumn1.add<Grid>(
+            themeMetrics().page,
+            UiElement::Section,
+            Grids::GridLines::Horizontal,
+            HorizontalAlign::Fill,
+            Columns{
+                Column{ Tag{ PigmentColumn::Name },
+                    Text{ L"Pigment" },
+                    ColumnWidthMode::Fill
+                },
+                Column{ Tag{ PigmentColumn::Hue },
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::HueIcon::paint }, L" Hue" }
+                },
+                Column{ Tag{ PigmentColumn::Saturation },
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::SaturationIcon::paint }, L" Saturation" }
+                },
+                Column{ Tag{ PigmentColumn::Elevation },
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::paint }, L" Elevation" }
+                }
+            },
+            Header{},
+            pigmentRow(UiElement::Accent),
+            pigmentRow(UiElement::Spot)
+        ) };
+
         // The selected harmony's four pigments, drawn as marks in the label's own text.
         Label& m_otherPigmentsLabel{ m_paletteColumn1.add<Label>(
             VerticalTextAnchor::Center,
@@ -582,29 +632,7 @@ namespace ThisApp
                     }
             },
 
-            Header{},
-
-            // ONE KIND OF THING PER SECTION, AND INSIDE A SECTION THE NESTING ORDER. An element
-            // is listed after the one it is painted on, so reading down a section follows the
-            // chain a rule is applied along. Every name cell is indented by the same one step:
-            // the order carries the nesting, and a column stepped in by depth as well pushes the
-            // names too far apart to read against each other.
-            //
-            // The sections are the only thing stated here. Which rows an element gets, and in
-            // what order, is k_uiElements' answer - so a rule the element does not paint cannot
-            // reach the grid by being listed at this call site.
-            Rows{
-                // Where the user is and what the user has picked. Accent is the one ink for the
-                // focus ring, and Spot is the emphasis that stands apart from the interface rather
-                // than answering to it.
-                Grids::Dt::Expander{
-                    Header{ Text{ TextStyleId::Section, L"Focus & Selection" } },
-                    sectionFold(),
-                    staticRow(UiElement::Accent),
-                    Grids::Dt::Divider{},
-                    staticRow(UiElement::Spot)
-                }
-            }
+            Header{}
         ) };
     };
 
@@ -624,7 +652,8 @@ namespace ThisApp
         :
         BasePage{ params, std::forward<Args>(args)... },
         m_onSelectPaletteMap{ [this]() { paletteMapChanged(); } },
-        m_onHueRuleChanged{ [this]() { hueRuleChanged(); } }
+        m_onHueRuleChanged{ [this]() { hueRuleChanged(); } },
+        m_onPigmentChanged{ [this]() { pigmentChanged(); } }
     {
         // The second half of the button IS Save as. A menu of one was a stop on the way to it,
         // naming what the arrow already means and asking for a second press to get there; behind
@@ -755,6 +784,7 @@ namespace ThisApp
                 rules2Changed();
             }
         );
+        bindPigmentEditors();
     }
 
 }

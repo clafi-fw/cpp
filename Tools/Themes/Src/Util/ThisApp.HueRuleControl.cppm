@@ -140,7 +140,8 @@ namespace ThisApp
 
     /// The Hue cell's editor. Its face carries the hue the rule resolves to as a blob, with the
     /// palette index written on it where the rule names one; its popup carries the three palette
-    /// hues, a slider standing for the custom one, and the Clear command that names none of them.
+    /// hues, a slider standing for the custom one, and the Clear command that names none of them
+    /// - left out where the rule may not be cleared.
     ///
     /// What it edits is bound after construction. A grid cell is built from a blueprint that names
     /// a column, not a row, so which rule the control stands for is only settled once the row it
@@ -330,11 +331,16 @@ namespace ThisApp
         dropPopup<HueRulePopup>(form(), initiator, *this);
     }
 
+    // Measured as the widest face, No change, so a column of these keeps one width whatever
+    // operation each row holds, and holds it while one changes.
     void HueRuleControl::getMainText(GetTextEvent& event) const
     {
         if (!bound())
             return;
-        writeHueOpContent(event.text, operation(), true);
+        const ColorRuleHueOp shown = event.phase() == EventPhase::Calculate
+            ? ColorRuleHueOp::NoChange
+            : operation();
+        writeHueOpContent(event.text, shown, true);
     }
 
     void HueRuleControl::nestedGetTooltip(GetTooltipEvent& event)
@@ -553,17 +559,22 @@ namespace ThisApp
             ItemSizing::Equal
         );
 
-        commandBar.add<Button>(
-            //ButtonViewMode::LeftIcon,
-            //IconSize{ k_clearIconSize },
-            //StdActions::clear,
-            OnClick{ [this](ClickEvent& event) {
-                pick(ColorRuleHueOp::NoChange);
-                event.closeForm();
-            } },
-            Text{ L"Clear" },
-            HorizontalTextAnchor::Center
-        );
+        // The button is not the clear action, so the action's state never reaches it: a rule that
+        // may not be cleared has to go without the button instead.
+        if (m_owner.canClear())
+        {
+            commandBar.add<Button>(
+                //ButtonViewMode::LeftIcon,
+                //IconSize{ k_clearIconSize },
+                //StdActions::clear,
+                OnClick{ [this](ClickEvent& event) {
+                    pick(ColorRuleHueOp::NoChange);
+                    event.closeForm();
+                } },
+                Text{ L"Clear" },
+                HorizontalTextAnchor::Center
+            );
+        }
         commandBar.add<Button>(
             //ButtonViewMode::LeftIcon,
             //IconSize{ k_closeIconSize },

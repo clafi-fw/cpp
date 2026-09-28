@@ -9,6 +9,7 @@ import ThisApp.RuleText;
 import ThisApp.Palette.Controls;
 import ThisApp.ThemeToCppCode;
 import ThisApp.Utils;
+import ThisApp.ValueRuleControl;
 
 import ClaFi.Application.ThemesManager;
 import ClaFi.Application.ThemesManager_Elements;
@@ -86,6 +87,21 @@ namespace ThisApp
             Action collapseAll{ Text{ L"Collapse all" } };
             Action collapseOthers{ Text{ L"Collapse others" } };
         }
+
+        // What a pigment the theme states itself is used for, the second line of its name.
+        [[nodiscard]] std::wstring_view pigmentUse(const UiElement element)
+        {
+            switch (element)
+            {
+                case UiElement::Accent:
+                    return L"Focus, emphasis, on state";
+                case UiElement::Spot:
+                    return L"Brand, highlights, tooltips";
+                default:
+                    break;
+            }
+            unreachable("a pigment row names an element that is not a pigment");
+        }
     }
 
     void ThemePage::restoreViewState()
@@ -148,6 +164,7 @@ namespace ThisApp
         m_grid.invalidate();
         m_darkModeFloorSlider.invalidate();
         updateGridControls();
+        bindPigmentEditors();
         restoreFolds();
         m_design2Page.rebuildRules();
         restoreView();
@@ -220,6 +237,7 @@ namespace ThisApp
     void ThemePage::previewColorModeChanged()
     {
         m_grid.invalidate();
+        m_pigmentGrid.invalidate();
     }
 
     bool ThemePage::Fold::holds(const Control* control) const
@@ -265,6 +283,7 @@ namespace ThisApp
 
         invalidatePreview();
         m_grid.invalidate();
+        m_pigmentGrid.invalidate();
         m_darkModeFloorSlider.invalidate();
     }
 
@@ -278,12 +297,99 @@ namespace ThisApp
             paintColorDot(event.text, color.rgb());
     }
 
+    Row ThemePage::pigmentRow(const UiElement element) const
+    {
+        const Padding padding = themeMetrics().listItem.padding;
+        return Row{
+            Tag{ element },
+            Cell{ Tag{ PigmentColumn::Name }, this, &ThemePage::pigmentNameCell },
+            CellWith<HueRuleControl>{ Tag{ PigmentColumn::Hue }, padding, VerticalAlign::Fill },
+            CellWith<ValueRuleControl>{ Tag{ PigmentColumn::Saturation }, padding,
+                VerticalAlign::Fill },
+            CellWith<ValueRuleControl>{ Tag{ PigmentColumn::Elevation }, padding,
+                VerticalAlign::Fill }
+        };
+    }
+
+    // Set the way an element page sets the channel a rule writes, with the use one grade down.
+    void ThemePage::pigmentNameCell(Grids::GetCellTextEvent& event) const
+    {
+        const UiElement element = event.row().tag<UiElement>();
+        event.text() << TextStyleId::SubHeading
+            << uiElementOf(element).name
+            << PopTextStyle{}
+            << L'\n'
+            << InkGrade::Muted
+            << TextStyleId::SubBody
+            << pigmentUse(element)
+            << PopTextStyle{}
+            << PopColor{};
+    }
+
+    // Bound again after a restore, which writes the theme over in place: the rules keep their
+    // addresses, and a bind is what redraws the faces. A pigment is a colour of its own rather
+    // than a change to one, so its hue is never cleared and its values are stated ones only.
+    void ThemePage::bindPigmentEditors()
+    {
+        m_pigmentGrid.forEachRow([this](Grids::Rt::RowContainer& row) {
+            const UiElement element = row.tag<UiElement>();
+            ColorRule& rule = editColors().*uiElementOf(element).rule;
+            row.controlAtColumnAs<HueRuleControl>(pigmentColumn(PigmentColumn::Hue))
+                .bind(rule.hue, editColors(), m_onPigmentChanged, false);
+            row.controlAtColumnAs<ValueRuleControl>(pigmentColumn(PigmentColumn::Saturation)).bind(
+                rule.saturation,
+                RuleChannel::Saturation,
+                [this, element]() {
+                    return pigmentRuleBase(element, RuleChannel::Saturation);
+                },
+                m_onPigmentChanged,
+                ValueRuleOperations::SetOnly
+            );
+            row.controlAtColumnAs<ValueRuleControl>(pigmentColumn(PigmentColumn::Elevation)).bind(
+                rule.elevation,
+                RuleChannel::Elevation,
+                [this, element]() {
+                    return pigmentRuleBase(element, RuleChannel::Elevation);
+                },
+                m_onPigmentChanged,
+                ValueRuleOperations::SetOnly
+            );
+        });
+    }
+
+    Grids::Column& ThemePage::pigmentColumn(const PigmentColumn tag)
+    {
+        return m_pigmentGrid.columnByTag(Tag{ tag });
+    }
+
+    // On the surface the pigment's element stands on, read in that element's own mode.
+    RuleBase ThemePage::pigmentRuleBase(const UiElement element, const RuleChannel channel)
+    {
+        const UiElementDescriptor& descriptor = uiElementOf(element);
+        return ruleBaseOn(
+            elementColor(descriptor.base),
+            editColors().*descriptor.rule,
+            channel,
+            elementColorMode(element),
+            editColors().darkModeFloor
+        );
+    }
+
+    // Each ramp reads its rule's other channels, and the preview reads the pigment.
+    void ThemePage::pigmentChanged()
+    {
+        m_pigmentGrid.invalidate();
+        invalidatePreview();
+        storeViewState();
+    }
+
     void ThemePage::darkModeFloorChanged()
     {
         editColors().darkModeFloor = m_darkModeFloorSlider.position();
         m_darkModeFloorLabel.invalidate();
         // Every swatch and every ramp that stands on a surface moves with the floor.
         m_grid.invalidate();
+        m_pigmentGrid.invalidate();
         invalidatePreview();
         storeViewState();
     }
@@ -515,6 +621,8 @@ namespace ThisApp
 
     void ThemePage::rules2Changed()
     {
+        // A pigment's ramps stand on a surface the new rules colour.
+        m_pigmentGrid.invalidate();
         invalidatePreview();
         storeViewState();
     }
@@ -1066,13 +1174,18 @@ namespace ThisApp
             result = elementColor(element);
 
         const float luminosityFloor = shadow ? k_noFloor : editColors().darkModeFloor;
-        const ColorRule& effect = rule.effect;
-        result.hue = effect.hue.actualHue(editColors(), result.hue);
+        return ruleBaseOn(result, rule.effect, channel, mode, luminosityFloor);
+    }
+
+    RuleBase ThemePage::ruleBaseOn(Hsl base, const ColorRule& rule, const RuleChannel channel,
+        const ColorMode mode, const float luminosityFloor)
+    {
+        base.hue = rule.hue.actualHue(editColors(), base.hue);
         if (channel != RuleChannel::Saturation)
-            effect.saturation.applyTo(result.saturation, 1.0f, ColorMode::Dark, k_noFloor);
+            rule.saturation.applyTo(base.saturation, 1.0f, ColorMode::Dark, k_noFloor);
         if (channel != RuleChannel::Elevation)
-            effect.elevation.applyTo(result.luminosity, 1.0f, mode, luminosityFloor);
-        return { result, mode, luminosityFloor };
+            rule.elevation.applyTo(base.luminosity, 1.0f, mode, luminosityFloor);
+        return { base, mode, luminosityFloor };
     }
 
     ColorRule& ThemePage::rowColorRule(Grids::Row& row)

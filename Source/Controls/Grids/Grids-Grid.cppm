@@ -141,9 +141,9 @@ namespace ClaFi::Controls::Grids
         m_calculateLimit = contentSize.x;
         calculate(form());
         m_calculateLimit = k_maxFloat;
+        // The base reports the right edge the rows reach, so this shift carries the border into it.
         position += border;
         GridBase::alignContent(event, position, contentSize);
-        contentSize.x += border;
     }
 
     // The base, not StackView: a floating header is painted by GridBase and by nothing else, and
