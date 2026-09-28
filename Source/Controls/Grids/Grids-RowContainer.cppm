@@ -138,10 +138,9 @@ namespace ClaFi::Controls::Grids
         // children's total keeps the surplus. Either one shifts every control after
         // it to the left. calcLeft() has already computed the answer.
         //
-        // A cell keeps its last border on the right and bottom for the lines it draws there, so
-        // a control is given the box those lines leave - the same one the cell's text is drawn
-        // into, which is what puts a control's own frame on the cell's. The row's lead for the
-        // cell comes off the start of that box. calculateCell measures the cell as the
+        // A control is given the box the cell's lines leave - the same one the cell's text is
+        // drawn into, which is what puts a control's own frame on the cell's. The row's lead for
+        // the cell comes off the start of that box. calculateCell measures the cell as the
         // control's dimensions plus the border and the lead, so this hands the control back
         // exactly the size it asked for.
         const float border = descriptor().scaledCellMetrics().border;
@@ -155,13 +154,18 @@ namespace ClaFi::Controls::Grids
                 else if (Control* control = controlAtColumn(*column))
                 {
                     const float lead = cellLead(*column).x;
+                    const FloatRect cellRect = FloatRect::fromDimensions(
+                        { position.x + column->left(), position.y },
+                        { column->calculatedWidth(), dimensions.y }
+                    );
+                    const FloatRect innerRect = descriptor().cellInnerRect(cellRect);
                     ScaledDimensions controlDimensions = {
-                        column->calculatedWidth() - border - lead,
-                        dimensions.y - border,
+                        innerRect.width() - lead,
+                        innerRect.height(),
                     };
                     ScaledPosition controlPosition = {
-                        position.x + column->left() + lead,
-                        position.y,
+                        innerRect.left + lead,
+                        innerRect.top,
                     };
                     alignControl(control, event, controlPosition, controlDimensions);
                     dimensions.y = std::max(controlDimensions.y + border, dimensions.y);

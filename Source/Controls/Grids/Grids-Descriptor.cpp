@@ -161,6 +161,11 @@ namespace ClaFi::Controls::Grids
         return result;
     }
 
+    FloatRect GridDescriptor::cellInnerRect(const FloatRect& cellRect) const
+    {
+        return cellRect.inflated(-m_scaledCellMetrics.border / 2.0f);
+    }
+
     void GridDescriptor::setHoveredCell(Control* row, const Column* column, bool initiateHint)
     {
         if (!setHighlightedCell(m_hoverChannel, row, column))

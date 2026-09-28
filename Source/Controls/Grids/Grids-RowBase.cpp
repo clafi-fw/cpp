@@ -314,11 +314,9 @@ namespace ClaFi::Controls::Grids
         // exactly that case.
         const Hsl bgHsl = event.surfaceHsl();
         event.canvas().fillPartialRoundedRectangle(cellFrame, bgHsl.toColor());
-        // Paint the cell right and bottom stroke. A stroke lands inside the bounds it is given, so
-        // the band it covers is the cell's own last border on each of those two sides. The next
-        // cell's bounds start where that band ends, and the two strokes form one unbroken line.
-        // The row's stroke is raised off the cell's own surface, so a cell carrying a colour of
-        // its own carries its lines with it.
+        // Each side drawn is half a line, inside the bounds, and the cell across the edge draws
+        // the other half. Each half is raised off its own cell's surface, which is what lets a
+        // line between two differently coloured cells follow both colours.
         if (drawsVertical || drawsHorizontal)
             event.canvas().drawPartialRoundedRectangle(cellFrame, event.strokeRgbOn(bgHsl),
                 cellLt.border / 2.0f);
@@ -368,16 +366,6 @@ namespace ClaFi::Controls::Grids
             {
                 Color borderColor = Color(event.textRgb(InkGrade::Strongest), event.indicatorRgb(), hotFactor);
 
-                // The frame stands in the cell's inner box - the cell without the band its own
-                // two strokes cover - which leaves it the same distance from the line on all four
-                // sides: the lines on the left and top are the neighbouring cells' bands, and
-                // those lie outside this cell. A snapped side carries no band of its own, the
-                // grid's frame standing there instead, and the bounds already stop short of it.
-                //if (!snapToRight)
-                //    cellFrame.bounds.right -= cellLt.border;
-                //if (!snapToBottom)
-                //    cellFrame.bounds.bottom -= cellLt.border;
-
                 // The focus belongs to the row and the selection to the cell, so the ring
                 // thickens only where the two meet. A cell the pointer is merely on wears
                 // the line's own width, whichever cell in the row holds the selection.
@@ -388,11 +376,7 @@ namespace ClaFi::Controls::Grids
             }
         }
         // Paint cell content;
-        {
-            cellRect.right -= cellLt.border;
-            cellRect.bottom -= cellLt.border;
-            paintCell(event, cellRect, cell.column);
-        }
+        paintCell(event, m_descriptor.cellInnerRect(cellRect), cell.column);
     }
 
     void RowBase::doPaintColumns(PaintEvent& event)
@@ -441,14 +425,12 @@ namespace ClaFi::Controls::Grids
         if (!event.text.empty())
             return;
 
-        // The box the cell's text is drawn in: the cell without the band its own lines cover,
-        // then the padding and the lead - the steps paintOneCell and paintCell take to reach it.
+        // The box the cell's text is drawn in: the cell inside its lines, then the padding and
+        // the lead - the steps paintOneCell and paintCell take to reach it.
         // The fit and the placement are both stated over it, so the hint stands on the words it
         // repeats and appears exactly when they are cut.
         const ScaledCellMetrics& cellMetrics = m_descriptor.scaledCellMetrics();
-        FloatRect textBounds = cellRect;
-        textBounds.right -= cellMetrics.border;
-        textBounds.bottom -= cellMetrics.border;
+        FloatRect textBounds = m_descriptor.cellInnerRect(cellRect);
         textBounds.inflate(-cellMetrics.padding.toFloat());
         textBounds.left += cellLead(*hoveredColumn).x;
         if (textBounds.empty())

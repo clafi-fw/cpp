@@ -332,9 +332,9 @@ namespace ClaFi::Controls::Grids
         const bool readOnly = column->editorMode() == EditorMode::ReadOnly;
 
         // The editor is placed over the TEXT it replaces, so what it is given is where that text
-        // is drawn: the cell inset by the same padding and lead paintCell insets it by, in this
-        // form's coordinates, which is the space a placement rect is stated in.
-        FloatRect textRect = stop.rect;
+        // is drawn: the cell inside its lines, inset by the same padding and lead paintCell insets
+        // it by, in this form's coordinates, which is the space a placement rect is stated in.
+        FloatRect textRect = m_descriptor.cellInnerRect(stop.rect);
         textRect.inflate(-m_descriptor.scaledCellMetrics().padding.toFloat());
         textRect.left += row->cellLead(*column).x;
 

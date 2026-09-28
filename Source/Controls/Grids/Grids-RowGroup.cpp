@@ -103,8 +103,7 @@ namespace ClaFi::Controls::Grids
                 contentRect = cell.rect;
         });
         const ScaledCellMetrics& cellMetrics = descriptor().scaledCellMetrics();
-        contentRect.right -= cellMetrics.border;
-        contentRect.bottom -= cellMetrics.border;
+        contentRect = descriptor().cellInnerRect(contentRect);
         contentRect.inflate(-cellMetrics.padding.toFloat());
         const ScaledDimensions markDimensions = m_mark->dimensions();
         const TextAnchor anchor = { column->verticalTextAnchor(), HorizontalTextAnchor::Left };

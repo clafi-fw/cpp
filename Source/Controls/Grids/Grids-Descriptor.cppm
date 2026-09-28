@@ -116,6 +116,8 @@ namespace ClaFi::Controls::Grids
         ScaledCellMetrics& scaledCellMetrics() { return m_scaledCellMetrics; }
         ScaledPadding scaledCellPadding() const { return m_scaledCellMetrics.padding; }
         float scaledBorderWidth() const { return m_scaledCellMetrics.border; }
+        // Where a cell's content stands - half a border in from each side, the room its lines take.
+        [[nodiscard]] FloatRect cellInnerRect(const FloatRect& cellRect) const;
         const ControlMetrics& designCellMetrics() const { return m_designCellMetrics; }
         Thickness designBorder() const { return m_designCellMetrics.border; }
         float scrollBarWidthAndSpacing() const { return m_scrollBarWidthAndSpacing; }
