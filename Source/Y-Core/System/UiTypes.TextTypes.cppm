@@ -63,6 +63,7 @@ namespace ClaFi{
 
     export constexpr std::size_t k_inkGradesCount = static_cast<std::size_t>(InkGrade::Count);
 
+    // The named steps' shares, as a dark surface reads them. See UI-Types#inkgrade
     export constexpr std::array<float, k_inkGradesCount> k_inkGrades{
         0.12f,
         0.27f,
@@ -74,6 +75,30 @@ namespace ClaFi{
     // The share one of the named steps stands at. A grade is a share of the gap between the
     // surface and the ink, not a place on the luminosity axis: elevationOf names the second.
     export [[nodiscard]] constexpr float gradeOf(InkGrade value) { return k_inkGrades[static_cast<std::size_t>(value)]; }
+
+    // A share as a light surface reads it: the steps counted from the ink. See UI-Types#inkgrade
+    export [[nodiscard]] constexpr float lightGradeOf(float grade, float luminosityFloor)
+    {
+        if (grade <= 0.0f || grade >= 1.0f)
+            return grade;
+
+        // The steps with the surface's end before them - the last step is the ink's end.
+        std::array<float, k_inkGradesCount + 1> ladder{};
+        for (std::size_t index = 0; index != k_inkGradesCount; ++index)
+            ladder[index + 1] = k_inkGrades[index];
+
+        // The segment the share falls in, and the same segment counted from the ink's end - every
+        // step but the ink itself stopped short of it by the floor.
+        const std::size_t last = k_inkGradesCount;
+        const float reach = 1.0f - luminosityFloor;
+        std::size_t index = 1;
+        while (grade > ladder[index])
+            ++index;
+        const float from = (1.0f - ladder[last - index + 1]) * reach;
+        const float to = index == last ? 1.0f : (1.0f - ladder[last - index]) * reach;
+        const float along = (grade - ladder[index - 1]) / (ladder[index] - ladder[index - 1]);
+        return from + (to - from) * along;
+    }
 
     // How an ink's grade becomes a colour. See UI-Types
     export enum class InkColor : std::size_t
@@ -124,7 +149,7 @@ namespace ClaFi{
         constexpr Ink() = default;
         bool operator==(const Ink&) const = default;
         InkColor color{ InkColor::Text };
-        // The share of the gap between the surface and the ink this stands at.
+        // The share of the gap between the surface and the ink, as a dark surface reads it.
         float grade{ gradeOf(InkGrade::Strongest) };
     };
 

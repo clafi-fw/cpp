@@ -111,6 +111,8 @@ namespace ClaFi
         // The hue a harmony turns around, for a drawing that has to answer where a rule states
         // no hue of its own.
         float anchorHue{};
+        // Where the dark end lifts elevation 0, and what light grades stop short of. See AppTheme
+        float darkModeFloor{};
         BakedEffects effects{}; // an element's bare effect, where UiElementDescriptor names one
         // Every pigment's hue, taken off the harmony as the theme is baked, so nothing
         // downstream has a harmony to derive or a kind to read.
@@ -417,6 +419,7 @@ namespace ClaFi
     bool sameColors(const BakedColors& a, const BakedColors& b)
     {
         return a.anchorHue == b.anchorHue
+            and a.darkModeFloor == b.darkModeFloor
             and a.effects == b.effects
             and a.pigmentHues == b.pigmentHues
             and a.rules == b.rules;
@@ -588,6 +591,7 @@ namespace ClaFi
         result.lightness = std::lerp(from.lightness, to.lightness, lightnessFactor);
         result.anchorHue = blendedHue(from.anchorHue, 1.0f - factor, to.anchorHue, factor,
             factor);
+        result.darkModeFloor = std::lerp(from.darkModeFloor, to.darkModeFloor, factor);
 
         for (std::size_t i = 0; i < result.effects.size(); ++i)
             result.effects[i] = blend(from.effects[i], to.effects[i], factor);

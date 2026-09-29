@@ -231,6 +231,7 @@ namespace ClaFi
         BakedColors result{};
         result.lightness = lightnessOf(mode);
         result.anchorHue = themeColors.anchorHue;
+        result.darkModeFloor = themeColors.darkModeFloor;
 
         for (std::size_t i = 0; i < k_uiElements.size(); ++i)
         {

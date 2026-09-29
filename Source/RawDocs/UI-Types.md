@@ -316,6 +316,18 @@ scales with what the theme itself declared readable.
 These five are the steps the framework draws in. A caller wanting one of its own states the
 share instead; nothing rounds a stated grade to the nearest of these.
 
+A LIGHT SURFACE COUNTS THE STEPS FROM THE INK'S END. The shares in k_inkGrades are a dark
+surface's. Over a light one a grade stands at the mirror of the step as far from the ink as the
+grade is from the surface - Faint at 0.20, Subtle 0.40, Muted 0.73, Strong 0.88 - scaled by one
+less the theme's dark mode floor, so each stops short of the ink as far as the dark side's
+surface stops short of black. Strongest is the ink itself and reaches it. A share of a caller's
+own between two steps stands between theirs. Equal steps in lightness do not read as equal at the
+two ends of the axis: a step off a dark surface reads larger than the same step off a light one.
+Read this way, a white surface and a floored black one draw in the same greys, each counted from
+its own end. The reading follows the painter's lightness, so an element standing between the
+sides stands between the two readings. An Ink holds the dark side's share, and lightGradeOf
+answers the light side's.
+
 ## InkColor::Text
 
 A shade of the ink the paint chain arrived at, and the colour an Ink starts with. Both ends of

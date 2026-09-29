@@ -110,6 +110,11 @@ namespace ClaFi
         else if (ink.color == InkColor::Accent or ink.color == InkColor::Spot)
             m_bakedColors->effectOf(ink.color).applyTo(inkEnd, 1.0f, lightness);
 
+        // A light surface reads the steps from the ink's end - see lightGradeOf - and an element
+        // standing between the sides stands between the two readings.
+        const float grade = std::lerp(ink.grade,
+            lightGradeOf(ink.grade, m_bakedColors->darkModeFloor), lightness);
+
         // Both ends of the ladder are held here, so they are answered rather than mixed to. A mix
         // at either end returns what is already in hand, and returns it through a pair of trig
         // conversions that do not come back bit for bit - and the renderer compares the ink at
@@ -122,7 +127,7 @@ namespace ClaFi
         else if (ink.grade == 0.0f)
             result = surfaceHsl;
         else
-            result = Hsl{ surfaceHsl, inkEnd, ink.grade };
+            result = Hsl{ surfaceHsl, inkEnd, grade };
 
         // The fade a control that cannot be used calls for, taken in the colour model like every
         // other move here: the ink slides toward the surface it stands on.

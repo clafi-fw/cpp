@@ -96,6 +96,11 @@ the paint path is told which axis it stands on, and `k_noFloor` is what every sa
 ink ladder runs from the lifted surface to the ink, so a faint grade and the disabled fade land on
 the surface they are drawn on.
 
+The floor stops the light side's ink ladder short in turn. `BakedColors::darkModeFloor` carries it
+to the paint path, where every grade below Strongest over a light surface ends as far short of the
+ink as the dark side's surface stands above black, so the two sides draw in one set of greys - see
+UI-Types#inkgrade. Strongest is the ink and still reaches black.
+
 The bare colour a form starts from stays at the pole. Every window root sets its surface's
 elevation outright, and a Set lands on the lifted axis from wherever it starts; a root that moved
 its elevation instead would move it from black.
