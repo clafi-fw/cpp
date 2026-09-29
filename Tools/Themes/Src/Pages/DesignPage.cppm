@@ -57,6 +57,8 @@ namespace ThisApp
         void bind(ThemeColors&, const OnGetElementRuleBase&, const OnRulesChanged&);
         // Builds every page's rows again from the rules as they stand.
         void rebuildRules();
+    protected:
+        void visibilityChanged() override;
     private:
         // An item of the tree and the page it opens.
         struct TreeEntry

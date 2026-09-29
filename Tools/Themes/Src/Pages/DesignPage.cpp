@@ -143,6 +143,15 @@ namespace ThisApp
                 entry.rules->rebuild();
     }
 
+    // A hidden page is not laid out, and a scroll asked for a control the pass has not placed is
+    // refused - see Control::scrollIntoView. So the item picked while this page was off screen is
+    // brought into view as the page comes on, by the pass that places it.
+    void DesignPage::visibilityChanged()
+    {
+        if (visible() && m_tree.currentItem())
+            m_tree.currentItem()->scrollIntoViewOnAlign();
+    }
+
     void DesignPage::buildTree()
     {
         addEntry(addRootItem(), TreeEntry{ .page = &m_palettePage });

@@ -274,7 +274,7 @@ namespace ClaFi
 
     void FormBase::scrollIntoViewOnAlign(Control& control)
     {
-        m_scrollIntoViewOnAlign = &control;
+        m_scrollIntoViewOnAlign.push_back(&control);
         // The request needs a pass to answer it. Asking for one costs a flag and a repaint, and
         // an alignment already pending swallows it.
         invalidateAlign();
@@ -1353,8 +1353,7 @@ namespace ClaFi
     {
         if (m_downItem == item)
             m_downItem = nullptr;
-        if (m_scrollIntoViewOnAlign == item)
-            m_scrollIntoViewOnAlign = nullptr;
+        std::erase(m_scrollIntoViewOnAlign, item);
         // THE POPUP GOES WITH THE CONTROL IT IS OVER. A list rebuilt under an open in-place
         // editor deletes the item being edited, and a popup is placed, sized and aimed by that
         // control: what would be left is a window standing over nothing, with a modal loop still
@@ -1968,14 +1967,11 @@ namespace ClaFi
         m_layoutInProgress = false;
         stateSizeRange();
         contentMoved(m_content);
-        // Cleared before the scroll rather than after it: scrolling moves controls and can ask
-        // for another alignment, and a request left standing would be answered again by the pass
-        // it caused.
-        if (Control* scrollTarget = m_scrollIntoViewOnAlign)
-        {
-            m_scrollIntoViewOnAlign = nullptr;
+        // Taken whole before the first scroll rather than one by one: scrolling moves controls
+        // and can ask for another alignment, and a request left standing would be answered again
+        // by the pass it caused.
+        for (Control* scrollTarget : std::exchange(m_scrollIntoViewOnAlign, {}))
             scrollTarget->scrollIntoView();
-        }
         // A CONTROL LAID OUT AT A WIDTH THE PASS DID NOT MEASURE IT AGAINST. Put back in question
         // here, where the alignment has already been marked valid - a request raised inside the
         // pass is wiped by the line above the align. The window is not invalidated with it: the
