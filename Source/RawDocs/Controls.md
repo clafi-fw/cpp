@@ -431,7 +431,8 @@ list stated completes nothing, and a read-only box completes nothing either. Wha
 looks like and how the keys drive it is under CompletionList.
 
 A box places each line as it is typed, in the language's reading of where lines stand - Enter,
-Tab, Backspace, Home, a paste and Reindent. See Indents.
+Tab, Backspace, Home, a paste and Reindent. See Indents. It draws a line down each block its
+text opens - see IndentGuides.
 
 ## CompletionList
 
@@ -540,6 +541,22 @@ it put it, and a redo puts it back there - see TextEngine-Types#texthistory.
 
 THE UNIT is what one level is written as: the indentUnit property, four spaces unless stated,
 or with detectIndent on - the default - what the text itself says. See DetectIndent.
+
+## IndentGuides
+
+Whether a CodeBox draws a line down each block its text opens - the language's reading of its
+blocks, see Syntax#blocks. Yes by default, in every CodeBox.
+
+A guide stands at the x of the opener line's first character, taken from the layout, so it
+holds whatever the font. It runs from the line under the opener to the line over the closer,
+through blank lines, and it is left out beside a line whose text starts at or left of it - a
+private, an except, a case's else standing at the block's own column. Only the blocks crossing
+the viewport are drawn, under the text and on the layout the text is drawn from, so a
+selection band covers a guide.
+
+A guide is a solid line one device pixel wide, at any scale, standing at the middle of its pixel
+column, in the text's Faint ink. The block the caret stands in - the innermost whose opener and
+closer lie either side of the caret's line - is drawn a grade over it, in the Subtle ink.
 
 ## DetectIndent
 

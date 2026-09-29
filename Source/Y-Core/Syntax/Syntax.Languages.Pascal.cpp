@@ -1070,6 +1070,9 @@ namespace ClaFi::Syntax
             PascalIndent(const SourceLines&, std::size_t width);
         public:
             [[nodiscard]] LineIndent place(std::size_t line);
+            // Every block an end or an until closes on a later line than it opens on, read from
+            // the text's start. See Syntax#blocks
+            [[nodiscard]] SourceBlocks blocks();
         private:
             // A word's place: its line, and where it stands among the line's words.
             struct Place
@@ -1230,6 +1233,37 @@ namespace ClaFi::Syntax
                 return result;
             }
             result.column = followingColumn(previous.value());
+            return result;
+        }
+
+        SourceBlocks PascalIndent::blocks()
+        {
+            SourceBlocks result;
+            std::vector<Place> open;
+            for (std::size_t line = 0; line != m_lines.count(); ++line)
+            {
+                const std::size_t count = wordsOf(line).size();
+                for (std::size_t index = 0; index != count; ++index)
+                {
+                    const Place place = { line, index };
+                    if (isListed(place, k_pascalIndentClosers))
+                    {
+                        if (open.empty())
+                            continue;
+                        const Place opener = open.back();
+                        open.pop_back();
+                        if (opener.line != line)
+                            result.push_back({ opener.line, line });
+                        continue;
+                    }
+                    if (!opensAny(place))
+                        continue;
+                    // A record's variant part opens with a case the record's own end closes.
+                    if (isWord(place, L"case") && !open.empty() && isWord(open.back(), L"record"))
+                        continue;
+                    open.push_back(place);
+                }
+            }
             return result;
         }
 
@@ -1842,5 +1876,11 @@ namespace ClaFi::Syntax
     {
         PascalIndent placing{ lines, width };
         return placing.place(line);
+    }
+
+    SourceBlocks pascalBlocks(const SourceLines& lines)
+    {
+        PascalIndent reading{ lines, 0 };
+        return reading.blocks();
     }
 }

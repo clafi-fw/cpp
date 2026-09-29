@@ -37,6 +37,13 @@ namespace ClaFi::Controls
         Yes
     };
 
+    // Whether a CodeBox draws a line down each block its text opens. See Controls#indentguides
+    export enum class IndentGuides
+    {
+        No,
+        Yes
+    };
+
     // Whether the box reads the indent unit off each text it is handed. See Controls
     export enum class DetectIndent
     {
@@ -148,6 +155,8 @@ namespace ClaFi::Controls
             Syntax::IndentUnit{})
         // Whether the unit is read off each text the box is handed. See Controls#indents
         DECLARE_WRITABLE_PROPERTY(DetectIndent, detectIndent, setDetectIndent, DetectIndent::Yes)
+        // Whether a line runs down each block the text opens. See Controls#indentguides
+        DECLARE_WRITABLE_PROPERTY(IndentGuides, indentGuides, setIndentGuides, IndentGuides::Yes)
     public:
         // Asked which language a text the box was handed whole is in. See Controls
         DECLARE_EVENT(DetectLanguageEvent, OnDetectLanguage, onDetectLanguage)
@@ -164,6 +173,7 @@ namespace ClaFi::Controls
         void setIndentUnit(const Syntax::IndentUnit&);
         // Yes reads the unit off the text the box holds now, and off every text handed whole.
         void setDetectIndent(DetectIndent);
+        void setIndentGuides(IndentGuides);
         // What the box writes a level as: what the text says where it is read, else the property.
         [[nodiscard]] Syntax::IndentUnit indentUnitInUse() const;
         // Moves the lines the selection reaches, or the caret's, one stop on. See Controls#indents
@@ -184,6 +194,8 @@ namespace ClaFi::Controls
         void textPasted(const TextRange&) override;
         // Reindent joins the edit menu of a box that can be typed into.
         void editContextPopup(EditContextPopupEvent&) override;
+        // The guides first, on the layout the text is drawn from, so a selection band covers them.
+        DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
     private:
         // The line the caret stands on, and where the caret stands in it.
         struct CaretLine
@@ -235,6 +247,8 @@ namespace ClaFi::Controls
         void realignFinishedWord(bool byCharacter);
         // What a line break just typed goes on to do. See Syntax#indent
         void indentAfterBreak();
+        // A line down each block in view, the caret's a grade stronger. See Controls#indentguides
+        void paintIndentGuides(PaintEvent&, TextLayout&, FloatPoint origin);
     private:
         // The list's rows, as many as the theme's tool button makes tall; a longer list scrolls.
         static constexpr float k_completionRows{ 10.0f };
@@ -270,6 +284,9 @@ namespace ClaFi::Controls
         mutable std::optional<Syntax::IndentUnit> m_detectedIndent{};
         // Whether the key before this one was Escape, which hands a Tab on to the form.
         bool m_tabLeaves{ false };
+        // The blocks the text opens, read again on the first paint after the text changes.
+        mutable Syntax::SourceBlocks m_blocks{};
+        mutable bool m_blocksStale{ true };
         ScopedEventConnection m_formAligned{};
         ScopedEventConnection m_listAligned{};
     };
@@ -289,7 +306,8 @@ namespace ClaFi::Controls
         INIT_PROPERTY(detectLanguage),
         INIT_PROPERTY(completion),
         INIT_PROPERTY(indentUnit),
-        INIT_PROPERTY(detectIndent)
+        INIT_PROPERTY(detectIndent),
+        INIT_PROPERTY(indentGuides)
     {
         m_layout.setColorOverlay(this);
         // Connected here rather than given to the timer as a construction property: MSVC rejects

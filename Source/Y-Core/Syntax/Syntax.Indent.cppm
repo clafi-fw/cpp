@@ -83,6 +83,11 @@ namespace ClaFi::Syntax
     // The rule of a language that states none: a level per bracket left open. See Syntax#indent
     export [[nodiscard]] LineIndent bracketIndent(const SourceLines&, std::size_t line,
         std::size_t width);
+    // The blocks a text opens and closes over more than one line, in the order they open - the
+    // language's reading, or its braces and square brackets where it states none. See Syntax#blocks
+    export [[nodiscard]] SourceBlocks sourceBlocks(const Language&, const SourceLines&);
+    // The reading of a language that states none: a brace or a square bracket closed lower down.
+    export [[nodiscard]] SourceBlocks bracketBlocks(const SourceLines&);
     // Whether the line's first word ends at `end`, or its first character is a mark standing
     // just before it - a word just finished, a closing bracket just typed.
     export [[nodiscard]] bool firstWordEndsAt(const Language&, std::wstring_view line,

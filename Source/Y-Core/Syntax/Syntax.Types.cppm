@@ -125,6 +125,19 @@ namespace ClaFi::Syntax
     export using IndentRule = LineIndent (*)(const SourceLines&, std::size_t line,
         std::size_t width);
 
+    // A block of source that stands on more than one line: where it opens and where it closes.
+    export struct SourceBlock
+    {
+        std::size_t opener{ 0 };   // the line the block's opener stands on
+        std::size_t closer{ 0 };   // the line its closer stands on, below the opener's
+        bool operator==(const SourceBlock&) const = default;
+    };
+
+    export using SourceBlocks = std::vector<SourceBlock>;
+
+    // A language's reading of the blocks a text opens and closes. See Syntax#blocks
+    export using BlockReader = SourceBlocks (*)(const SourceLines&);
+
     // What each kind of token is drawn in. See Syntax
     export class Inks
     {

@@ -57,7 +57,7 @@ namespace ClaFi::Syntax
     // A language's reading of a whole text, answering how sure it is of it. See Syntax
     export using Detector = Claim (*)(std::wstring_view text);
 
-    // A language: tables, a hook, a detector, a reader and an indent rule. See Syntax
+    // A language: tables, a hook, a detector, two readers and an indent rule. See Syntax
     export struct Language
     {
         std::wstring_view name;
@@ -78,6 +78,7 @@ namespace ClaFi::Syntax
         Detector detect{ nullptr };              // null for a language only ever picked by hand
         DeclarationReader declarations{ nullptr };   // null for a language that declares nothing
         IndentRule indent{ nullptr };            // null places a line by its brackets alone
+        BlockReader blocks{ nullptr };           // null finds the blocks by their brackets alone
     };
 
     // The strings a line state cannot spell, held by id. See Syntax

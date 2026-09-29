@@ -243,3 +243,26 @@ them one step of its own; what each is for is under Controls#indents. The rule r
 only as far as the block or the statement it needs, so placing a line costs what that block
 holds rather than what the text does; a unit's closing end., which matches nothing, reads back
 to the text's start.
+
+## Blocks
+
+The blocks a text opens and closes over more than one line - a line number for the opener and
+one for the closer - in the order they open, the outer first where two open on one line. What
+a box draws its indent guides down; see Controls#indentguides. A block opened and closed on one
+line is none.
+
+A language states its reading through Language::blocks. One that states none is read by its
+brackets: a brace or a square bracket closed on a later line is a block, and a parenthesis is
+matched so that a brace inside a call's arguments pairs with its own closer, but opens none -
+a parenthesis over several lines is a statement running on. Only punctuation counts, so a
+bracket in a comment or a string is none. C++, JSON and ClaFi are read this way; XML and a
+text in no language have no blocks.
+
+The Pascal reading walks the text forward over the same words the indent rule reads: a block
+opens at begin, try, case, repeat, asm, record, initialization, and a class, interface or
+object with a body, and closes at the end or until that matches it. A record's variant part
+opens with a case the record's own end closes, so it is no block of its own.
+
+The reading covers the whole text. A box reads it again on the first paint after the text
+changes, which costs what lexing the text costs - a few milliseconds for a script of several
+thousand lines, and little for one of a few hundred.

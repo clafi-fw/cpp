@@ -48,6 +48,27 @@ namespace ClaFi::Syntax
             return value == L')' || value == L']' || value == L'}';
         }
 
+        // The bracket that closes one opened by this one.
+        [[nodiscard]] wchar_t matchingCloser(const wchar_t opener)
+        {
+            if (opener == L'(')
+                return L')';
+            if (opener == L'[')
+                return L']';
+            return L'}';
+        }
+
+        // Outer blocks first where two open on one line, so the last block found holding a line
+        // is the innermost one.
+        void sortByOpener(SourceBlocks& blocks)
+        {
+            std::ranges::sort(blocks, [](const SourceBlock& left, const SourceBlock& right){
+                if (left.opener != right.opener)
+                    return left.opener < right.opener;
+                return left.closer > right.closer;
+            });
+        }
+
         // What a block opened by the bracket is closed with. A parenthesis opens no block.
         [[nodiscard]] std::wstring_view blockCloserOf(const wchar_t opener)
         {
@@ -468,6 +489,42 @@ namespace ClaFi::Syntax
                 result.column = indentColumns(lines.text(opener.value()));
         }
         return result;
+    }
+
+    SourceBlocks sourceBlocks(const Language& language, const SourceLines& lines)
+    {
+        SourceBlocks blocks = language.blocks ? language.blocks(lines) : bracketBlocks(lines);
+        sortByOpener(blocks);
+        return blocks;
+    }
+
+    SourceBlocks bracketBlocks(const SourceLines& lines)
+    {
+        // Parentheses are matched too, so that a brace inside a call's arguments pairs with its
+        // own closer; a parenthesis over several lines is a statement running on, not a block.
+        SourceBlocks blocks;
+        Brackets open;
+        Brackets brackets;
+        for (std::size_t line = 0; line != lines.count(); ++line)
+        {
+            brackets.clear();
+            appendBrackets(lines, line, brackets);
+            for (const Bracket& bracket : brackets)
+            {
+                if (opensBracket(bracket.value))
+                {
+                    open.push_back(bracket);
+                    continue;
+                }
+                if (open.empty() || matchingCloser(open.back().value) != bracket.value)
+                    continue;
+                const Bracket opener = open.back();
+                open.pop_back();
+                if (opener.line != line && opener.value != L'(')
+                    blocks.push_back({ opener.line, line });
+            }
+        }
+        return blocks;
     }
 
     bool firstWordEndsAt(const Language& language, const std::wstring_view line,

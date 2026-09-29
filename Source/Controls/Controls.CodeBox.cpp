@@ -21,6 +21,7 @@ import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.Context.FormContext;
+import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.Props;
@@ -420,6 +421,12 @@ namespace ClaFi::Controls
             m_detectedIndent = Syntax::detectIndentUnit(m_layoutText.plainText());
     }
 
+    void CodeBox::setIndentGuides(const IndentGuides value)
+    {
+        m_indentGuides = value;
+        invalidate();
+    }
+
     Syntax::IndentUnit CodeBox::indentUnitInUse() const
     {
         return m_detectedIndent.value_or(m_indentUnit);
@@ -463,6 +470,7 @@ namespace ClaFi::Controls
     void CodeBox::textTaken(const Text& text, const TextEdit* edit) const
     {
         m_declarationsStale = true;
+        m_blocksStale = true;
         if (edit)
             m_lines.applyEdit(text.plainText(), edit->replaced, edit->insertedLength);
         else
@@ -643,10 +651,23 @@ namespace ClaFi::Controls
         TextBox::editContextPopup(event);
     }
 
+    DrawTextResult CodeBox::drawText(PaintEvent& event, const FloatRect& textBounds,
+        const Text& text)
+    {
+        if (m_indentGuides == IndentGuides::Yes)
+        {
+            TextLayout& layout = syncedLayout(event.formContext(), textBounds, text);
+            paintIndentGuides(event, layout,
+                anchoredOrigin(textBounds, layout.calculatedDimensions(), textAnchor()));
+        }
+        return TextBox::drawText(event, textBounds, text);
+    }
+
     void CodeBox::readWhole(const std::wstring_view text) const
     {
         m_completionRowsStale = true;
         m_declarationsStale = true;
+        m_blocksStale = true;
         m_detectedIndent.reset();
         if (m_detectIndent == DetectIndent::Yes)
             m_detectedIndent = Syntax::detectIndentUnit(text);
@@ -978,5 +999,96 @@ namespace ClaFi::Controls
             return;
         Syntax::IndentLines lines = sourceLines();
         applyIndentEdit(Syntax::breakEdit(lines, line.index, indentUnitInUse()));
+    }
+
+    void CodeBox::paintIndentGuides(PaintEvent& event, TextLayout& layout, const FloatPoint origin)
+    {
+        // The layout's text is the one the line states stand beside, and syncing the layout
+        // brought both up to the box's own.
+        const std::wstring_view text = m_layoutText.plainText();
+        if (text.empty())
+            return;
+        const Syntax::IndentLines lines{ m_lines, text };
+        if (std::exchange(m_blocksStale, false))
+            m_blocks = Syntax::sourceBlocks(m_lines.language(), lines);
+        if (m_blocks.empty())
+            return;
+
+        // The lines in view, by where the viewport's top and bottom fall in the text.
+        const FloatRect view = event.viewport();
+        const std::size_t firstShown =
+            m_lines.lineAt(layout.caretPos({ 0.0f, view.top - origin.y }).pos);
+        const std::size_t lastShown =
+            m_lines.lineAt(layout.caretPos({ 0.0f, view.bottom - origin.y }).pos);
+
+        // The caret's block: of the blocks whose opener and closer lie either side of its line,
+        // the last to open, since the blocks stand in the order they open.
+        std::size_t caretBlock = m_blocks.size();
+        if (editProps()->selRange.start != k_maxSize)
+        {
+            const std::size_t caretLine =
+                m_lines.lineAt(std::min(editProps()->caretPos(), text.size()));
+            for (std::size_t index = 0; index != m_blocks.size(); ++index)
+            {
+                const Syntax::SourceBlock& block = m_blocks[index];
+                if (block.opener < caretLine && caretLine < block.closer)
+                    caretBlock = index;
+            }
+        }
+
+        // A guide is one device pixel wide, at the middle of its pixel column, which is where a
+        // stroke that wide lands whole. The caret's block stands a grade over the rest.
+        const Color guideInk = event.textRgb(InkGrade::Faint);
+        const Color caretGuideInk = event.textRgb(InkGrade::Subtle);
+        Graphics::Canvas& canvas = event.canvas();
+        for (std::size_t index = 0; index != m_blocks.size(); ++index)
+        {
+            const Syntax::SourceBlock& block = m_blocks[index];
+            if (block.closer <= firstShown || block.opener >= lastShown)
+                continue;
+
+            // At the opener line's first character, over the lines between the opener and the
+            // closer that are blank or start right of it - not a middle word standing at the
+            // block's own column, a private or an except.
+            const std::wstring_view openerText = lines.text(block.opener);
+            const std::size_t column = Syntax::indentColumns(openerText);
+            const CaretHit openerHit = {
+                m_lines.lineStart(block.opener) + Syntax::leadingBlanks(openerText),
+                false,
+            };
+            const float x = std::floor(origin.x + layout.getCaretRect(openerHit).left) + 0.5f;
+            const Color& ink = index == caretBlock ? caretGuideInk : guideInk;
+            const auto crosses = [&](const std::size_t line){
+                const std::wstring_view lineText = lines.text(line);
+                return Syntax::leadingBlanks(lineText) == lineText.size()
+                    || Syntax::indentColumns(lineText) > column;
+            };
+
+            std::size_t line = std::max(block.opener + 1, firstShown);
+            const std::size_t end = std::min(block.closer, lastShown + 1);
+            while (line < end)
+            {
+                if (!crosses(line))
+                {
+                    ++line;
+                    continue;
+                }
+                const std::size_t runFirst = line;
+                while (line < end && crosses(line))
+                    ++line;
+                const std::size_t runLast = line - 1;
+                const CaretHit firstHit = { m_lines.lineStart(runFirst), false };
+                const CaretHit lastHit = { m_lines.lineStart(runLast), false };
+                const FloatPoint top = {
+                    x,
+                    std::round(origin.y + layout.getCaretRect(firstHit).top),
+                };
+                const FloatPoint bottom = {
+                    x,
+                    std::round(origin.y + layout.getCaretRect(lastHit).bottom),
+                };
+                canvas.drawLine(top, bottom, ink, 1.0f);
+            }
+        }
     }
 }
