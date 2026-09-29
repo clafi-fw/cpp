@@ -10,6 +10,9 @@
     <Filter Include="Controls\Browser">
       <UniqueIdentifier>{499a6635-145c-407b-9910-0e577ec9c8cf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Controls\Documents">
+      <UniqueIdentifier>{05f1da70-b882-4c06-9fda-dcfb3ba92f02}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Controls\Grids">
       <UniqueIdentifier>{dd091bb7-c874-4034-a95a-58be39a27b75}</UniqueIdentifier>
     </Filter>
@@ -195,6 +198,57 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Browser\Browser_Facade.cppm">
       <Filter>Controls\Browser</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.Application.cppm">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.BasePage.cppm">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.Browser.cpp">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.Browser.cppm">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.Folder.cpp">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.Folder.cppm">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.HomePage.cpp">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.HomePage.cppm">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.List.cpp">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.List.cppm">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.Page.cpp">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.Page.cppm">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.TextFile.cpp">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.TextFile.cppm">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.Utils.cpp">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.Utils.cppm">
+      <Filter>Controls\Documents</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents_Facade.cppm">
+      <Filter>Controls\Documents</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Cell.cppm">
       <Filter>Controls\Grids</Filter>
