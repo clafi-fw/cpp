@@ -304,14 +304,11 @@ namespace ClaFi::Browser
         // The fetch is what settles the question the strip was standing on, so the strip is put
         // right by what it left behind.
         updateDropdownMode();
-        // Nothing under this page, so there is no list to drop. Answered before the menu is built
-        // rather than by letting an empty one decline to open: a form holds a window from the
-        // moment it is constructed, and building one to find out there is nothing to put in it is
-        // work for nothing.
-        if (m_data->items.empty())
-            return;
 
         Menu menu{ initiator };
+        // A page with nothing under it right now is still a list - the strip said so - and the
+        // list says what it holds rather than declining to open.
+        menu.setPlaceHolderText(Text{ L"No items" });
         for (const PageDataPtr& subItem : m_data->items)
         {
             PageData* target = subItem.get();
@@ -378,8 +375,9 @@ namespace ClaFi::Browser
     void BreadCrumbBarItem::nestedClick(ClickEvent& event)
     {
         // WHICH HALF WAS PRESSED IS READ FIRST, and that is load bearing: the base runs the
-        // dropdown from here, and a fetch that names nothing takes the strip away - after which
-        // the press lands on no part at all and would read as a press on the crumb's own face.
+        // dropdown from here, and the fetch behind it can take the strip away - every page under
+        // an unmarked one gone - after which the press lands on no part at all and would read as
+        // a press on the crumb's own face.
         const bool pressedStrip = pressedSecondary(event);
         BreadCrumbBarItemBase::nestedClick(event);
         // A press on the strip is the base's: it stops the click there and runs the dropdown. What

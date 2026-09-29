@@ -99,6 +99,9 @@ visible, both where they were pressed.
 A popup list of commands, owned by the control it was opened from.
 Built on the stack where it is opened, filled, then run: execute() returns once the
 menu has closed, so nothing outlives the call that raised it.
+A list built out of data states a placeholder with setPlaceHolderText(), and a menu
+holding nothing but that placeholder opens to show it. A menu with nothing to show at
+all does not open.
 
 ## StepsMenu
 

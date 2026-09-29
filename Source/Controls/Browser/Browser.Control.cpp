@@ -933,13 +933,9 @@ namespace ClaFi::Browser
             fetchSubItems(pageData);
         }
         dropGoneSubItems(pageData);
-
-        // HasChildren is a promise made before anything under the page had been named. Having
-        // asked and been given nothing, the promise is what was wrong: leaving it would keep
-        // offering a list that opens on nothing. A browser that learns better says so by marking
-        // the page again.
-        if (pageData.items.empty() && pageData.fetchState == FetchState::HasChildren)
-            pageData.fetchState = FetchState::Unfetched;
+        // A FETCH THAT NAMES NOTHING LEAVES A HasChildren MARK STANDING. The mark says the page is
+        // a list, and a list read from a folder is empty whenever the folder is - the crumb keeps
+        // its strip, and drops the list's placeholder - see BreadCrumbBarItem::showDropdown.
     }
 
     void BrowserControl::dropGoneSubItems(PageData& pageData)

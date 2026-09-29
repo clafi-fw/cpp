@@ -126,15 +126,20 @@ namespace ClaFi::Controls
         /// Whether the strip already shows this command.
         [[nodiscard]] bool onCommandBar(const Action&) const;
         [[nodiscard]] bool empty() const { return !m_itemCount && m_commandBarActions.empty(); }
+        /// States what the list shows while it holds no item, and lets a menu with none open to
+        /// show it. For a list built out of data that has nothing in it right now.
+        void setPlaceHolderText(const Text&);
         /// Drops the menu at the pointer, or under the part of its owner the commands are about
         /// when the keyboard raised it, and runs it. Answers once it has closed. A menu with
-        /// nothing in it does not open.
+        /// nothing to show does not open.
         int execute();
         /// Drops the menu under a control the way a dropdown list falls, and runs it. This is for
         /// a menu that belongs to a control's outline rather than to the point that was clicked.
-        /// Answers once it has closed, and a menu with nothing in it does not open.
+        /// Answers once it has closed, and a menu with nothing to show does not open.
         int executeUnder(const Control&);
     private:
+        // Nothing in it, and no placeholder to stand in for the nothing.
+        [[nodiscard]] bool nothingToShow() const { return empty() && !m_showsPlaceHolder; }
         // One place for what every item shares: the separator waiting on it, and the count that
         // says the menu has something in it. What differs between an action item and a text item
         // is only what the button is built from.
@@ -149,6 +154,7 @@ namespace ClaFi::Controls
         std::size_t m_itemCount{ 0 };
         // A separator waits for an item to follow it, so one asked for at the end never lands.
         bool m_separatorPending{ false };
+        bool m_showsPlaceHolder{ false }; // a placeholder is stated, and the menu opens on it alone
     };
 
 
@@ -272,9 +278,15 @@ namespace ClaFi::Controls
         return std::ranges::find(m_commandBarActions, &action) != m_commandBarActions.end();
     }
 
+    void Menu::setPlaceHolderText(const Text& value)
+    {
+        body().setPlaceHolderText(value);
+        m_showsPlaceHolder = true;
+    }
+
     int Menu::execute()
     {
-        if (empty())
+        if (nothingToShow())
             return 0;
         // The pointer decides where a menu the MOUSE raised lands, and the rect below is not
         // read at all - see FormBase::initPlacement. This is the other case: raised from the
@@ -292,7 +304,7 @@ namespace ClaFi::Controls
 
     int Menu::executeUnder(const Control& control)
     {
-        if (empty())
+        if (nothingToShow())
             return 0;
         // The gap a dropped list leaves between itself and what it fell from.
         setDropdownClearance(1.0f);

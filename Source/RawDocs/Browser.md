@@ -7,8 +7,9 @@ The words that no longer fit above a declaration.
 How much is known about what lies under a page.
 Unfetched is the state a page is built in: whatever sub-items it has are the ones
 walked into on the way somewhere, and the browser has never been asked for the rest.
-HasChildren says the browser knows there is something under this page without having named
-it. Fetched says the sub-items are the whole set.
+HasChildren says the page is a list, whatever that list holds right now: a fetch that
+names nothing leaves the mark standing, and the crumb drops the list's placeholder.
+Fetched says the sub-items are the whole set.
 
 ## SelectBrowserDataEvent
 
