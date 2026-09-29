@@ -35,9 +35,9 @@ namespace ClaFi::Documents
 
     // DocumentsRebuiltEvent
 
-    DocumentsRebuiltEvent::DocumentsRebuiltEvent(DocumentsList& list)
+    DocumentsRebuiltEvent::DocumentsRebuiltEvent(IDocumentTiles& tiles)
         :
-        list{ list }
+        tiles{ tiles }
     {
     }
 
@@ -48,9 +48,17 @@ namespace ClaFi::Documents
         m_folder.listeners().erase(this);
     }
 
+    DocumentTiles DocumentsList::tiles()
+    {
+        DocumentTiles result{};
+        for (DocumentTile& tile : controlsAs<DocumentTile>())
+            result.push_back(&tile);
+        return result;
+    }
+
     DocumentTile* DocumentsList::tileByFileName(const std::wstring_view fileName)
     {
-        for (DocumentTile& tile : tiles())
+        for (DocumentTile& tile : controlsAs<DocumentTile>())
             if (tile.fileName() == fileName)
                 return &tile;
         return nullptr;
@@ -73,6 +81,11 @@ namespace ClaFi::Documents
     {
         if (DocumentTile* tile = tileByFileName(fileName))
             setCurrentItem(*tile);
+    }
+
+    void DocumentsList::selectFileNameAfterRebuild(const std::wstring_view fileName)
+    {
+        m_fileNameToSelect = fileName;
     }
 
     // THE FILE NAME IS WHAT THE LIST COMES BACK TO, not the tile: every tile here is taken down

@@ -4,6 +4,8 @@ import ClaFi.App.ThemeIcon;
 import ClaFi.App.Themes;
 import ClaFi.Application.ThemesManager;
 
+import ClaFi.Documents.Folder;
+
 import ClaFi.Controls.ComboBox;
 import ClaFi.Controls.TextItems;
 import ClaFi.Controls.StackPanel;
@@ -37,7 +39,8 @@ namespace ClaFi
 
     // The themes an application can wear, on one line - built-in first, then the user's own.
     // Looking at an item wears it, picking one states it in the config. See Application
-    export class ThemePick : private ThemeItems, public ComboBox, public ThemesManager::IListener
+    export class ThemePick : private ThemeItems, public ComboBox,
+        public Documents::DocumentsFolder::IListener
     {
     public:
         template<typename... Args>
@@ -52,7 +55,7 @@ namespace ClaFi
         // picker was on. See Application
         void rebuild();
     protected:
-        void themesManagerChanged() override;
+        void documentsFolderChanged() override;
         void showDropdown(Control& initiator) override;
     private:
         using ThemeEntries = std::vector<ThemeEntry>;

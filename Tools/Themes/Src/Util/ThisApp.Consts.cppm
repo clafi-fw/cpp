@@ -12,31 +12,8 @@ namespace ThisApp
 {
     using namespace ClaFi;
 
-    export constexpr TagValue k_homePageTag = 1ull;
-    export constexpr TagValue k_themePageTag = 2ull;
-
-    // used for both, user and built-in themes
-    export constexpr std::wstring_view k_themePathSuffix = L"theme";
-
+    // The built-in's page, named as its theme is: a document page with no file of its own.
     export constexpr std::wstring_view k_defaultPageName = k_defaultThemeName;
-
-    export constexpr std::wstring_view k_defaultPageTitle = BuiltInThemes::defaultTheme;
-
-    // A built-in page's name without the extension, which is what a user types and what a theme
-    // file is named by.
-    constexpr std::wstring_view stemOf(const std::wstring_view themeName)
-    {
-        return themeName.substr(0, themeName.size() - k_builtInThemeExtension.size());
-    }
-
-    // THE NAMES A USER THEME MAY NOT TAKE: every built-in the application lists, without its
-    // extension. ThemesManager answers these from the compiled-in colours whatever stands on the
-    // disk, so a file of that name would never be read and the theme in it could never be opened.
-    export constexpr std::array<std::wstring_view, 1> k_reservedThemeNames{
-        stemOf(k_defaultPageName)
-    };
-
-    export constexpr std::wstring_view k_defaultPagePath = L"/Default.theme";
 
     // One toggle for the whole application rather than one per tab, so it is named in the root
     // config section and every page reads the same node.

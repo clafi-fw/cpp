@@ -36,6 +36,9 @@ namespace ClaFi::Documents
         [[nodiscard]] Dom::DomNodeBase& documentNode() const;
         // The file this page's document stands in.
         [[nodiscard]] std::filesystem::path documentFile() const;
+        // Reads the saved document into the node - what a tab arriving at this page wants, unless
+        // it was restored onto it. Answers whether it could. See Documents#restored
+        [[nodiscard]] bool loadDocument() const;
     protected:
         // Reads the saved side of the comparison behind hasUnsavedEdits into the node: the page's
         // own file, unless the derived page has another. Answers whether it could.

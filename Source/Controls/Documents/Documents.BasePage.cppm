@@ -39,6 +39,8 @@ namespace ClaFi::Documents
         [[nodiscard]] virtual bool saveEdits(Control& /*initiator*/) const { return true; }
     protected:
         [[nodiscard]] StackPanel& toolBar() const { return m_toolBar; }
+        // The panel the tool bar is the body of, for a page adding a bar of its own beside it.
+        [[nodiscard]] Panel& topPanel() const { return m_topPanel; }
     private:
         DocumentsFolder& m_folder;
         StackPanel& m_topStack{ createTopBar<StackPanel>(

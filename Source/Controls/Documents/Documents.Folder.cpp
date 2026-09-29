@@ -175,25 +175,28 @@ namespace ClaFi::Documents
         m_files.clear();
 
         std::error_code errorCode;
-        if (!std::filesystem::exists(m_directory, errorCode))
-            return;
-        for (const std::filesystem::directory_entry& entry :
-            std::filesystem::directory_iterator{ m_directory, errorCode })
+        if (std::filesystem::exists(m_directory, errorCode))
         {
-            if (entry.is_regular_file() && entry.path().extension() == m_kind.extension)
-                m_files.push_back(entry.path());
-        }
+            for (const std::filesystem::directory_entry& entry :
+                std::filesystem::directory_iterator{ m_directory, errorCode })
+            {
+                if (entry.is_regular_file() && entry.path().extension() == m_kind.extension)
+                    m_files.push_back(entry.path());
+            }
 
-        using Path = std::filesystem::path;
-        std::ranges::sort(m_files, [](const Path& alpha, const Path& beta) {
-            const std::wstring stemA = alpha.stem().wstring();
-            const std::wstring stemB = beta.stem().wstring();
-            const SortKey keyA = sortKeyOf(stemA);
-            const SortKey keyB = sortKeyOf(stemB);
-            if (keyA.words == keyB.words)
-                return keyA.number < keyB.number;
-            return keyA.words < keyB.words;
-        });
+            using Path = std::filesystem::path;
+            std::ranges::sort(m_files, [](const Path& alpha, const Path& beta) {
+                const std::wstring stemA = alpha.stem().wstring();
+                const std::wstring stemB = beta.stem().wstring();
+                const SortKey keyA = sortKeyOf(stemA);
+                const SortKey keyB = sortKeyOf(stemB);
+                if (keyA.words == keyB.words)
+                    return keyA.number < keyB.number;
+                return keyA.words < keyB.words;
+            });
+        }
+        // A directory that is not there reads as no files, and that is told too.
+        filesRead(m_files);
     }
 
     void DocumentsFolder::notifyListeners()

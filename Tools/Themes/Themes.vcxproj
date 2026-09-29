@@ -223,17 +223,19 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Src\Pages\BasePage.cppm" />
     <ClCompile Include="Src\Pages\DesignPage.cpp" />
     <ClCompile Include="Src\Pages\DesignPage.cppm" />
     <ClCompile Include="Src\Pages\ElementPage.cpp" />
     <ClCompile Include="Src\Pages\ElementPage.cppm" />
+    <ClCompile Include="Src\Pages\HomePage.cpp" />
     <ClCompile Include="Src\Pages\HomePage.cppm" />
     <ClCompile Include="Src\Pages\PreviewPanel.cppm" />
     <ClCompile Include="Src\Pages\ThemePage.cpp" />
     <ClCompile Include="Src\Pages\ThemePage.cppm" />
+    <ClCompile Include="Src\Pages\WithPreview.cppm" />
     <ClCompile Include="Src\Themes_Icon.cpp" />
     <ClCompile Include="Src\Themes_Icon.cppm" />
+    <ClCompile Include="Src\Themes_BrowserControl.cpp" />
     <ClCompile Include="Src\Themes_BrowserControl.cppm" />
     <ClCompile Include="Src\Themes_Main.cpp" />
     <ClCompile Include="Src\Themes_Main.cppm" />

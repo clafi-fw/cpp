@@ -5,6 +5,7 @@ import ThisApp.Utils;
 
 import ClaFi.Diagnostic.Log;
 
+import ClaFi.App.Themes;
 import ClaFi.Application.ThemesManager;
 
 import ClaFi.Browser.Actions;
@@ -99,7 +100,7 @@ namespace ThisApp
             // the pack, so the path is reachable from here on. Naming this tile inside the handler
             // is safe - the editor stops offering the text once its target is gone.
             OnEvent{ [this](AcceptEditEvent& event) {
-                if (renameThemeFile(tag<UserTheme*>()->path(), event).empty())
+                if (appThemes().renameFile(tag<UserTheme*>()->path(), event).empty())
                     return;
                 // THE FILE IS RENAMED AND THIS TILE STILL SAYS OTHERWISE. The list is rebuilt from
                 // the directory, and the watch behind that waits out a quiet period first, so for a

@@ -50,8 +50,8 @@ namespace ClaFi::Documents
         }
         else if (isDocumentPage(data))
         {
-            const std::size_t extensionSize = m_folder.kind().extension.size();
-            data.title = data.name.substr(0ull, data.name.size() - extensionSize);
+            // The stem, whatever the extension: a derived browser's documents may carry another.
+            data.title = std::filesystem::path{ data.name }.stem().wstring();
         }
     }
 
@@ -169,7 +169,7 @@ namespace ClaFi::Documents
             {
                 case k_homePageTag:
                 {
-                    DocumentsHomePage& homePage = createHomePage(tab);
+                    DocumentsHomePageBase& homePage = createHomePage(tab);
                     // The page a tab is coming up from is the item to land on.
                     if (!pathToSelect.empty())
                         homePage.selectItemByPagePath(pathToSelect);
@@ -179,15 +179,12 @@ namespace ClaFi::Documents
                 case k_documentPageTag:
                 {
                     DocumentPage& documentPage = createDocumentPage(tab);
-                    // The page reads its document out of the tab's view state, so the file is
-                    // read into it first - unless the tab was restored onto this page, in which
-                    // case the view state is the work that has not reached the file yet.
+                    // The page reads its document out of the tab's view state, so the saved one
+                    // is read into it first - unless the tab was restored onto this page, in
+                    // which case the view state is the work that has not reached the file yet.
                     // See Documents#restored
                     if (!tab.isOnRestoredPage())
-                    {
-                        static_cast<void>(m_folder.readDocument(
-                            documentPage.documentFile(), documentPage.documentNode()));
-                    }
+                        static_cast<void>(documentPage.loadDocument());
                     tabPage = &documentPage;
                     break;
                 }

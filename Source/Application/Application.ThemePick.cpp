@@ -79,7 +79,7 @@ namespace ClaFi
 
     // The themes the list holds now are the manager's own, so the colours the application
     // wears are taken from them rather than from the ones this change took down.
-    void ThemePick::themesManagerChanged()
+    void ThemePick::documentsFolderChanged()
     {
         rebuild();
         applyStoredTheme(appContext());

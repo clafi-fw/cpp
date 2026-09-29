@@ -350,11 +350,31 @@ THE MODE THE APPLICATION IS DRAWN IN, which a ColorModeSetting is not: Dark and 
 themselves, and Auto answers with the desktop's mode - see Platform::systemColorMode in Context.
 Asked each time a theme is put on rather than kept, so it cannot fall behind the desktop.
 
+## ThemesManager
+
+THE APPLICATION'S OWN DOCUMENTS FOLDER, of theme files, built in ApplicationBase and answered by
+appThemes: the Themes application browses it, the app menu picks from it, and the Settings page
+lists it. A DocumentsFolder - see Documents - so the directory, the watch, the listeners and the
+sorted read are the base's; what the manager adds is a parsed theme per file, rebuilt in
+filesRead each time the base has read the directory afresh, and the built-in, answered from the
+compiled-in colours whatever stands on the disk.
+
+The four overrides read and write a theme the way the tab config holds it, as a Dom node.
+readDocument seeds the node with the defaults and loads the file over them, because a file states
+only what it changes; writeDocument writes what differs from the defaults, statedTheme. isEdited
+is that same difference asked of a file: a theme that states nothing is one nobody has touched.
+paintIcon looks the theme up by file name, and the built-in's page is named with its own name -
+Default.theme - so a crumb, a tab and a tile draw the built-in through the same call as a user's
+theme. checkNameShape adds the built-in names to what the base refuses: a user theme under one of
+them would never be read.
+
 ## ThemesList
 
 THE THEMES AN APPLICATION CAN WEAR, in two groups: the built-in theme and the themes in the
 directory. A StackView, each group an expander whose body holds the tiles, so collapsing a header
-takes its tiles with it.
+takes its tiles with it. It answers IDocumentTiles - see Documents - so the layer's home page
+works over it as it works over a flat list, and the Themes application's home page is that page
+with a preview.
 
 THE VIEW ALONE, WITH NO BOX AROUND IT. What scrolls the themes belongs to whatever holds them: a
 page carries these sections on the box its own column stands on, and a window that gives the list
@@ -363,31 +383,22 @@ a second bar inside the first, kept short by a stated height that cuts the tiles
 answers the list itself, for a host saying which of the two it means.
 
 The list listens to the manager and builds itself afresh whenever the directory reports. THE
-PATH IS WHAT IT COMES BACK TO, not the tile: every tile is taken down by a rebuild, and a theme
-is the same theme under the same path. `selectPathAfterRebuild` is how a caller names a theme
-whose tile does not exist yet - one just written to the disk, or the one that will stand where a
-selection has been taken away.
+FILE NAME IS WHAT IT COMES BACK TO, not the tile: every tile is taken down by a rebuild, and a
+theme is the same theme under the same name. The built-in goes by the name its page goes by,
+Default.theme, so a tab coming up from it lands on its tile. `selectFileNameAfterRebuild` is how a
+caller names a theme whose tile does not exist yet - one just written to the disk, or the one that
+will stand where a selection has been taken away - and it opens the user group as well, because a
+tile made into a closed group is never laid out.
 
 What the list does NOT do is act on the themes. Renaming a file, deleting one, opening one: a
-tile raises it and the host answers, through `ThemeEditHandler` and `ThemeMenuHandler` and
-through the click and double-click events that reach the list from its tiles. So the Settings
-page states one prop and gets a picker, and the Themes application states four and gets its home
-page, out of one list.
+tile raises it and the host answers, through `DocumentEditHandler` and `DocumentMenuHandler` and
+through the click and double-click events that reach the list from its tiles.
 
-FOUR TILES TO A LANE, IN A WINDOW OF ANY WIDTH, SPREAD ACROSS IT. `k_tilesPerLane` is stated as a
-`LaneSize` on both groups, and a stated lane breaks the row in the align pass as well as in the
-measure - so a wider host never gets a fifth tile in the lane, and the rows laid out are the rows
-reported. `ItemSizing::Equal` is what keeps the surplus from piling up at the right: the row is
-cut into four shares and each tile stands in the middle of its own, at the size it always had -
-`ThemeTile` states `HorizontalAlign::Center`, and the share is a box rather than a size. The
-built-in theme takes the first share of four, so Default stands in the column the first user
-tile does. See Item-Containers
-
-`ItemsIconSize` and `ItemsViewMode` are the tile's picture and how it stands against the name -
-stated for the list, since every tile in one list shares them. A tile whose name stands UNDER
-its picture is fixed to the width of the picture and the check mark beside it, so the pictures
-line up down the lane and a long name wraps instead of widening its row; one whose picture
-stands beside its name is as wide as it measures.
+`ItemSizing::Equal` is what keeps a lane's surplus from piling up at the right: the row is cut into
+equal shares and each tile stands in the middle of its own, at the size it always had - a
+DocumentTile takes the share of the lane it is handed, and the share is a box rather than a size.
+The built-in theme takes the first share, so Default stands in the column the first user tile
+does. See Item-Containers
 
 `SelectionMode::Multi` is what makes the list more than a picker - a selection is asked for
 where a command acts on several themes at once. Only a user tile can be held selected: a
@@ -396,20 +407,9 @@ what decides the check mark - a tile that can never join a selection carries non
 
 ## ThemeTile
 
-A theme in a list: the palette inset in the theme's own surface, its name under it. THE CAPTION
-IS THE NAME THE THEME GOES BY, so an editor over it is a rename - `WithInPlaceEdit` carries the
-gestures and the geometry, and the host carries what the name is kept in. Only a user theme
-offers one: a built-in is answered from the compiled-in colours whatever stands on the disk, so
-there is no file behind its caption.
-
-The theme a tile holds is the manager's own, by reference. That is load bearing: what an
-application is wearing is an address, so a tile's theme is what a preview names, and it stands
-still for as long as the list does. See AppContext::takeThemeColors
-
-## ThemesRebuiltEvent
-
-Raised once the tiles have been built and the list stands where it was asked to. What a host
-owes a rebuild goes here: a new theme's editor, and a preview of whatever the list now stands
-on - the rebuild took the previewed tile with the rest, and no gesture is going to ask for
-another.
-
+A DocumentTile - the mark over the file's name - with the theme beside the file: the palette inset
+in the theme's own surface is painted from it, and only a user theme offers the caption's editor,
+since a built-in has no file behind its name. The theme a tile holds is the manager's own, by
+reference. That is load bearing: what an application is wearing is an address, so a tile's theme
+is what a preview names, and it stands still for as long as the list does.
+See AppContext::takeThemeColors

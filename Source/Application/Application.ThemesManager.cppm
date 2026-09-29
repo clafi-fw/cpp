@@ -1,23 +1,17 @@
 export module ClaFi.Application.ThemesManager;
 
-import ClaFi.Dom.Formats.ClaFi;
 export import ClaFi.Application.ThemesManager_Serializers;
+
+import ClaFi.Documents.Folder;
+
+import ClaFi.Controls.InPlaceEdit;
+
+import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.DomEngine;
 
-import ClaFi.Diagnostic.Log;
-
-import ClaFi.Core.AppTheme_Colors;
-import ClaFi.Core.AppTheme_Theme;
-import ClaFi.Core.AppTheme_Palette;
-
-import ClaFi.Core.System.Utils;
-import ClaFi.Core.System.Csv;
-import ClaFi.Core.System.DirWatch;
-import ClaFi.Core.System.Events;
-
 import ClaFi.StdLib;
-import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi
 {
@@ -28,13 +22,24 @@ namespace ClaFi
     export constexpr std::wstring_view k_themeFileExtension = L".clafitheme";
     export constexpr std::wstring_view k_builtInThemeExtension = L".theme";
 
+    // What a theme is called and how its files are named - see DocumentKind.
+    export constexpr Documents::DocumentKind k_themeKind{
+        .extension = k_themeFileExtension,
+        .noun = L"theme",
+        .nounPlural = L"themes",
+        .newStem = L"New Theme",
+        .attrName = k_themeDataAttrName
+    };
+
+    // A theme read from a file in the themes folder, kept beside the file it came from.
     export class UserTheme
     {
     public:
         explicit UserTheme(const std::filesystem::path&);
-        const std::filesystem::path& path() const { return m_path; }
+    public:
+        [[nodiscard]] const std::filesystem::path& path() const { return m_path; }
+        [[nodiscard]] const AppTheme& theme() const { return m_theme; }
         static void loadTheme(const Dom::Value<AppTheme>&, AppTheme&);
-        const AppTheme& theme() const { return m_theme; }
     private:
         const std::filesystem::path m_path;
         AppTheme m_theme{};
@@ -43,218 +48,45 @@ namespace ClaFi
     export using UserThemePtr = std::unique_ptr<UserTheme>;
     export using UserThemeList = std::vector<UserThemePtr>;
 
-    export class ThemesManager
+    // The themes an application can wear - the built-in, and the user's own files. See Application
+    export class ThemesManager : public Documents::DocumentsFolder
     {
-    public:
-        class IListener
-        {
-            friend ThemesManager;
-        public:
-            virtual ~IListener() = default;
-        protected:
-            virtual void themesManagerChanged() = 0;
-        };
     public:
         explicit ThemesManager(const std::filesystem::path& directory);
     public:
-        std::set<IListener*>& listeners() { return m_listeners; }
-        [[nodiscard]] const std::filesystem::path& directory() const { return m_directory; }
-        const UserThemeList& userThemes();
-        const AppTheme* themeByName(std::wstring_view) const;
+        // The user's themes, parsed, in the folder's order - read on the first ask after the
+        // folder has changed.
+        [[nodiscard]] const UserThemeList& userThemes();
+        // The theme a file name stands for - the built-in's, or one of the user's - and nullptr
+        // where nothing does. Answered from what was last read, so a caller that may be first
+        // asks for userThemes ahead of it.
+        [[nodiscard]] const AppTheme* themeByName(std::wstring_view) const;
         // The theme a path names - see AppTheme - and nullptr where nothing stands under it. A
         // built-in is answered from the compiled-in colours; a User path reads the directory, so
         // a path names its theme on the first ask.
         [[nodiscard]] const AppTheme* themeByPath(std::wstring_view);
         // The path a user theme is known by: the User root over its file's stem.
         [[nodiscard]] static std::wstring pathOf(const UserTheme&);
+        // Whether a stem is a built-in's, which a user theme may not take. Case is not part of
+        // the answer: the file system does not tell `dark` from `Dark`.
+        [[nodiscard]] static bool isReservedName(std::wstring_view stem);
         void saveTheme(std::wstring_view themeName, Dom::Value<AppTheme>&) const;
         static void saveTheme(const AppTheme&, Dom::Value<AppTheme>&);
-        bool needDirectory();
-    private:
-        struct ParsedNameForSort
-        {
-            std::wstring_view name;
-            int num;
-        };
-        ParsedNameForSort nameForSort(std::wstring_view sourceName);
-        // Puts the watch over a directory that was made after the watch was set up. See Application
-        void watchDirectory();
-        void update();
-        void notifyListeners();
+        // What a theme states: the tree the framework would build stands beside the theme's own,
+        // and what differs is the answer. A file states the same, so a theme carrying nothing of
+        // its own comes back as the defaults.
+        [[nodiscard]] static std::unique_ptr<Dom::Section> statedTheme(const Dom::Section&);
+        [[nodiscard]] bool readDocument(const std::filesystem::path&,
+            Dom::DomNodeBase& into) const override;
+        [[nodiscard]] bool writeDocument(const Dom::DomNodeBase&,
+            const std::filesystem::path&) const override;
+        [[nodiscard]] bool isEdited(const std::filesystem::path&) const override;
+        void paintIcon(std::wstring_view fileName, PaintIconEvent&) override;
+        void checkNameShape(Controls::AcceptEditEvent&, std::wstring_view stem) const override;
+    protected:
+        void filesRead(const Documents::FilePaths&) override;
     private:
         AppTheme m_defaultTheme{ defaultTheme() };
-
-        std::filesystem::path m_directory;
-        DirWatch m_dirWatcher{ m_directory };
-        ScopedEventConnection m_dirWatchConnection{};
-        bool m_loaded{};
         UserThemeList m_userThemes{};
-        std::set<IListener*> m_listeners{};
     };
-
-
-    //----------------------------------------------------------------------------------------
-
-
-    // UserTheme
-
-    UserTheme::UserTheme(const std::filesystem::path& path)
-        :
-        m_path{ path }
-    {
-        Dom::Value<AppTheme> section{nullptr, {}};
-        Dom::FileFormat::ClaFi ff;
-        ff.loadSectionFromFile(section, path);
-        loadTheme(section, m_theme);
-    }
-
-    void UserTheme::loadTheme(const Dom::Value<AppTheme>& configNode, AppTheme& theme)
-    {
-        configNode.getTo(theme);
-    }
-
-    // ThemesManager
-
-    ThemesManager::ThemesManager(const std::filesystem::path& directory)
-        :
-        m_directory{ directory }
-    {
-        m_dirWatchConnection = m_dirWatcher.onChange([this](DirWatchChangeEvent&){
-            m_loaded = false;
-            notifyListeners();
-        });
-    }
-
-    const UserThemeList& ThemesManager::userThemes()
-    {
-        watchDirectory();
-        update();
-        return m_userThemes;
-    }
-
-    const AppTheme* ThemesManager::themeByName(std::wstring_view themeName) const
-    {
-        if (k_defaultThemeName == themeName)
-            return &m_defaultTheme;
-
-        for (const UserThemePtr& ptr : m_userThemes)
-            if (ptr->path().filename() == themeName)
-                return &ptr->theme();
-
-        return nullptr;
-    }
-
-    const AppTheme* ThemesManager::themeByPath(const std::wstring_view path)
-    {
-        const std::wstring_view root = themePathRoot(path);
-        const std::wstring_view name = themePathName(path);
-        if (root == ThemeRoots::builtIn)
-            return builtInTheme(name);
-        if (root != ThemeRoots::user)
-            return nullptr;
-
-        for (const UserThemePtr& theme : userThemes())
-            if (name == theme->path().stem().wstring())
-                return &theme->theme();
-        return nullptr;
-    }
-
-    std::wstring ThemesManager::pathOf(const UserTheme& theme)
-    {
-        return themePathOf(ThemeRoots::user, theme.path().stem().wstring());
-    }
-
-    void ThemesManager::saveTheme(std::wstring_view themeName, Dom::Value<AppTheme>& configNode) const
-    {
-        const AppTheme* theme = themeByName(themeName);
-        if (!theme)
-            return;
-        saveTheme(*theme, configNode);
-    }
-
-    void ThemesManager::saveTheme(const AppTheme& theme, Dom::Value<AppTheme>& configNode)
-    {
-        configNode.set(theme);
-    }
-
-    bool ThemesManager::needDirectory()
-    {
-        if (std::filesystem::exists(m_directory))
-            return false;
-        std::filesystem::create_directories(m_directory);
-        m_dirWatcher.restart();
-        return true;
-    }
-
-    ThemesManager::ParsedNameForSort ThemesManager::nameForSort(std::wstring_view sourceName)
-    {
-        constexpr wchar_t k_firstNumChar = L'0';
-        constexpr wchar_t k_lastNumChar = L'9';
-        constexpr wchar_t k_closingBracket = L')';
-
-        // searching for the last non digit
-        std::size_t i = sourceName.size();
-        if (!i)
-            return { sourceName , 0};
-        do --i;
-        while (i && (inRange(sourceName[i], k_firstNumChar, k_lastNumChar) || sourceName[i] == k_closingBracket));
-
-        // There's no number at the end
-        if (i == sourceName.size() - 1)
-            return { sourceName, 0 };
-
-        // Ending number found
-        wchar_t* endptr{};
-        return {
-            .name = std::wstring_view{ sourceName.data(), i + 1},
-            .num = static_cast<int>(std::wcstol(sourceName.data() + i + 1, &endptr, 10))
-        };
-    }
-
-    void ThemesManager::watchDirectory()
-    {
-        if (m_dirWatcher.watching())
-            return;
-        if (!std::filesystem::exists(m_directory))
-            return;
-        m_dirWatcher.restart();
-        // Whatever the list holds was read while nothing was watching, so it is read again.
-        m_loaded = false;
-    }
-
-    void ThemesManager::update()
-    {
-        if (m_loaded)
-            return;
-        m_loaded = true;
-        m_userThemes.clear();
-        if (std::filesystem::exists(m_directory))
-        {
-            // The theme extension is what makes a directory entry a theme.
-            for (const auto& entry : std::filesystem::directory_iterator(m_directory))
-            {
-                if (entry.path().extension() != k_themeFileExtension)
-                    continue;
-                m_userThemes.push_back(std::make_unique<UserTheme>(entry.path()));
-            }
-        }
-
-        std::ranges::sort(m_userThemes, [this](const UserThemePtr& alpha, UserThemePtr& b) {
-            std::wstring strA = alpha->path().stem().wstring();
-            std::wstring strB = b->path().stem().wstring();
-            ParsedNameForSort dataA = nameForSort(strA);
-            ParsedNameForSort dataB = nameForSort(strB);
-            if (dataA.name == dataB.name)
-                return dataA.num < dataB.num;
-            else
-                return dataA.name < dataB.name;
-            });
-    }
-
-    void ThemesManager::notifyListeners()
-    {
-        for (IListener* listener : m_listeners)
-            listener->themesManagerChanged();
-    }
-
 }

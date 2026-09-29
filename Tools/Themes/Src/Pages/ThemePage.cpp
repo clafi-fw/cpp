@@ -1,6 +1,6 @@
 module ThisApp.ThemePage;
 
-import ThisApp.BasePage;
+import ThisApp.WithPreview;
 import ThisApp.CodeOptions;
 import ThisApp.Consts;
 import ThisApp.DesignPage;
@@ -16,10 +16,11 @@ import ThisApp.ValueRuleControl;
 import ClaFi.Application.ThemesManager;
 import ClaFi.Application.ThemesManager_Elements;
 
+import ClaFi.Documents.Page;
+
 import ClaFi.Controls.Base.SliderBase;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.MessageDialog;
-import ClaFi.Controls.PromptDialog;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Grids_Dt;
 import ClaFi.Controls.Slider;
@@ -45,9 +46,7 @@ import ClaFi.Core.AppTheme_Palette;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
-import ClaFi.Core.System.Url;
 import ClaFi.Browser.Control;
-import ClaFi.Browser.Consts;
 import ClaFi.Browser.Settings;
 
 import ClaFi.Core.System.Utils;
@@ -101,10 +100,10 @@ namespace ThisApp
     void ThemePage::restoreViewState()
     {
         const ScopedFlag restoring{ m_restoring };
-        BasePage::restoreViewState();
+        Base::restoreViewState();
         // Application wide, so they are read from the root section rather than from the tab's.
         CodeOptions::restore(settings().appConfig());
-        auto& themeNode = (tabConfig() / k_themeDataAttrName).as<Dom::Value<AppTheme>>();
+        auto& themeNode = documentNode().as<Dom::Value<AppTheme>>();
         UserTheme::loadTheme(themeNode, m_editTheme);
         showEditTheme();
         // The theme as the controls now show it, palette hues included, is where undo bottoms out.
@@ -112,62 +111,20 @@ namespace ThisApp
         restoreView();
     }
 
-    bool ThemePage::hasUnsavedEdits() const
+    // A BUILT-IN HAS NO FILE OF ITS OWN, so the disk is the wrong side for one: the path it would
+    // name is never written and never read. The compiled-in colours are what it was opened from,
+    // and the manager answers a built-in name with those whatever stands on the disk.
+    bool ThemePage::readSavedDocument(Dom::DomNodeBase& into) const
     {
-        if (m_savedUnderAnotherName)
-            return false;
-
-        // THE SAVED THEME IS THE OTHER SIDE OF THE COMPARISON, not a flag kept as edits arrive.
-        // The tab's view state is where an edit lands and where it stays until Save, so a tab
-        // restored from settings comes back holding edits the saved theme has never seen - and a
-        // flag set as they were made would have been left behind with the session that made them.
-        //
-        // A user theme is read off the disk rather than asked of the manager, because the manager
-        // is not what Save wrote to: it answers with whatever the last directory read found, which
-        // is the theme as it stood before a Save the watcher has not reported yet, and that would
-        // leave a page reading unsaved immediately after saving it.
-        //
-        // A BUILT-IN HAS NO FILE OF ITS OWN, so the disk is the wrong side for one. The path it
-        // would name is never written and never read, the seed below would stand as the saved
-        // theme, and a built-in whose colours differ from that seed would read as edited the
-        // moment it was opened. The compiled-in colours are what it was opened from, and the
-        // manager answers a built-in name with those whatever stands on the disk - which is the
-        // one case where the manager is exactly what is wanted.
-        //
-        // Seeded with the defaults and loaded over, exactly as UserTheme reads a file: the file
-        // states only what it changes, so the two sides are whole themes only if this side is
-        // filled in the same way.
-        Dom::Value<AppTheme> savedNode{ nullptr, AppTheme{} };
-        if (isBuiltIn())
-        {
-            themesManager().saveTheme(pageData().name, savedNode);
-        }
-        else
-        {
-            const Dom::FileFormat::ClaFi ff;
-            ff.loadSectionFromFile(savedNode, themesManager().directory() / pageData().name);
-        }
-        return !Dom::sameValue((tabConfig() / k_themeDataAttrName).as<Dom::Section>(), savedNode);
-    }
-
-    bool ThemePage::saveEdits(Control& initiator) const
-    {
-        if (canSaveEdits())
-        {
-            saveTheme();
-            return true;
-        }
-        // A BUILT-IN HAS NO FILE OF ITS OWN, SO SAVE HERE MEANS SAVE AS. The work still has to
-        // land somewhere and the user is being asked before it is lost, so the command that can
-        // keep it is the one to offer. It writes the file and no more: the tab is already on its
-        // way somewhere else, and taking it to the copy instead would answer a question nobody
-        // asked.
-        return !saveThemeAsFile(initiator).empty();
+        if (!isBuiltIn())
+            return Base::readSavedDocument(into);
+        themesManager().saveTheme(pageData().name, into.as<Dom::Value<AppTheme>>());
+        return true;
     }
 
     void ThemePage::visibilityChanged()
     {
-        BasePage::visibilityChanged();
+        Base::visibilityChanged();
         // The answer is the application's, so another theme tab may have moved it while this page
         // was off screen, and the document this page holds would state the choice it was left
         // with. The buttons need nothing: the actions refreshed them where they stand.
@@ -475,7 +432,7 @@ namespace ThisApp
 
     void ThemePage::storeViewState() const
     {
-        themesManager().saveTheme(m_editTheme, (tabConfig() / k_themeDataAttrName).as<Dom::Value<AppTheme>>());
+        themesManager().saveTheme(m_editTheme, documentNode().as<Dom::Value<AppTheme>>());
     }
 
     void ThemePage::storeView() const
@@ -520,93 +477,6 @@ namespace ThisApp
         edited(phase, what, at);
     }
 
-    void ThemePage::saveTheme() const
-    {
-        // Named by the page rather than through themeFileName: a built-in's page name already
-        // carries its own extension.
-        writeThemeTo(themesManager().directory() / pageData().name);
-    }
-
-    void ThemePage::saveThemeAs(Control& initiator)
-    {
-        const std::wstring fileName = saveThemeAsFile(initiator);
-        if (fileName.empty())
-            return;
-
-        // Said before the tab moves, and read by the question canLeavePage puts. The work is on
-        // the disk under the name that was just given, so there is nothing left to ask about -
-        // what this page's own file holds is no longer anybody's business.
-        m_savedUnderAnotherName = true;
-
-        // ONLY THE GOING WAITS. The naming question stood where it was asked - on top of the
-        // strip's menu when that is where Save as was chosen - but taking the tab to what it wrote
-        // rebuilds this page, and the frames above the press go on reading the button that goes
-        // down with it. The browser holds that wait, because it outlives what the going destroys.
-        // The anchor goes along, so the copy opens on the design page this one shows.
-        const std::wstring path = std::wstring{ Browser::ConfigNames::homePath }.append(fileName);
-        tab().browserControl().goToLater(Url{ path, tab().anchor() });
-    }
-
-    std::wstring ThemePage::saveThemeAsFile(Control& initiator) const
-    {
-        // The prompt opens on the name this page already stands under - the name the user is
-        // working from, and the one they are about to vary. It is offered to be edited rather
-        // than taken: accepted as it stands the handler below refuses it, because Save as never
-        // writes over a theme that is already there and a built-in's name is reserved.
-        const std::wstring currentStem = std::filesystem::path{ pageData().name }.stem().wstring();
-
-        // Under what asked, which is this page's own Save as button when that is what was
-        // pressed, and whatever raised the leaving question when this is its fallback. A tab
-        // closed from the strip while another one is showing has no visible button of its own.
-        PromptDialog dialog{ initiator, L"Save theme as", currentStem, MessageIcon::Question };
-        dialog.onAccept([this](AcceptEditEvent& event) {
-            const std::wstring stem{ event.text.plainText() };
-            checkThemeNameShape(event, stem);
-            if (event.refused())
-                return;
-
-            // A NAME ALREADY TAKEN IS A QUESTION, NOT A REFUSAL. Writing over a theme is a thing
-            // the user may well have meant, and the one who typed the name is the only one who
-            // can say whether they did - so the name is put back to them rather than turned down.
-            // A built-in never reaches here: checkThemeNameShape has already refused its name,
-            // and there is no file of its own to write over.
-            std::error_code errorCode;
-            if (!std::filesystem::exists(themeFileName(stem), errorCode))
-                return;
-            if (!confirmReplacingTheme(event.askedBy, stem))
-                event.refuse();
-            });
-        if (!dialog.execute())
-            return {};
-
-        std::wstring fileName = std::wstring{ dialog.text() }.append(k_themeFileExtension);
-        writeThemeTo(themesManager().directory() / fileName);
-        return fileName;
-    }
-
-    bool ThemePage::confirmReplacingTheme(Control& initiator, const std::wstring_view stem) const
-    {
-        // Owned by the answer that asked for the name to be taken, so it stands on top of the
-        // naming question with the name the user typed still on screen behind it.
-        //
-        // A warning, not a question: the triangle is what says the answer cannot be taken back,
-        // and what stands under this name now is about to stop existing.
-        Text message{};
-        message << themeInQuestionText(stem) << L" already exists. Replace it?";
-
-        MessageDialog dialog{
-            initiator,
-            L"Replace theme",
-            message,
-            MessageIcon::Warning
-        };
-        dialog.add(DialogButton::Yes);
-        dialog.add(DialogButton::No);
-        // Dismissed without an answer is no, which is what makes Escape the safe way out of a
-        // question about something that cannot be brought back.
-        return dialog.execute() == DialogButton::Yes;
-    }
-
     bool ThemePage::confirmWritingToSource(Control& initiator) const
     {
         Text message{};
@@ -625,24 +495,13 @@ namespace ThisApp
         return dialog.execute() == DialogButton::Yes;
     }
 
-    void ThemePage::writeThemeTo(const std::filesystem::path& fileName) const
-    {
-        const Dom::FileFormat::ClaFi ff;
-        const Dom::Section& themeNode = (tabConfig() / k_themeDataAttrName).as<Dom::Section>();
-        ff.saveSectionToFile(*statedTheme(themeNode), fileName);
-    }
-
-    std::filesystem::path ThemePage::themeFileName(const std::wstring_view stem) const
-    {
-        return themesManager().directory() / std::wstring{ stem }.append(k_themeFileExtension);
-    }
-
     bool ThemePage::isBuiltIn() const
     {
         // Asked of the name, against the names the built-ins hold - the same test that keeps a
         // user theme from taking one. The extension cannot answer it: a file the user put in the
         // directory called Foo.theme carries the built-ins' extension and is not one of them.
-        return isReservedThemeName(std::filesystem::path{ pageData().name }.stem().wstring());
+        const std::wstring stem = std::filesystem::path{ pageData().name }.stem().wstring();
+        return ThemesManager::isReservedName(stem);
     }
 
     // The colour an element resolves to, walked down from the bare surface through everything
@@ -800,7 +659,7 @@ namespace ThisApp
         }
         else
         {
-            format.saveSectionToStream(*statedTheme(themeNode), stream);
+            format.saveSectionToStream(*ThemesManager::statedTheme(themeNode), stream);
         }
         showCode(stream.str(), box);
     }
@@ -814,12 +673,6 @@ namespace ThisApp
         // The document is what the box measures, so a new one is a new size for the scroll
         // box around it.
         box.invalidateFormAlign();
-    }
-
-    std::unique_ptr<Dom::Section> ThemePage::statedTheme(const Dom::Section& themeNode) const
-    {
-        const Dom::Value<AppTheme> defaults{ nullptr, AppTheme{} };
-        return Dom::withoutDefaults(themeNode, defaults);
     }
 
     void ThemePage::codeOptionPicked(ClickEvent&)

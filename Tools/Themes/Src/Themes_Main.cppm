@@ -2,7 +2,7 @@ export module ThisApp.Main;
 
 import ThisApp.ThemesBrowser;
 
-import ClaFi.Browser.Application;
+import ClaFi.Documents.Application;
 
 import ClaFi.App.Application;
 
@@ -30,14 +30,14 @@ namespace ThisApp
     // that platform has one. The name and both config schemas are supplied here, so an entry
     // point states nothing but the platform's own parameters.
     export template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend = void>
-    class ThemesApplication : public Browser::BrowserApplication<PlatformType, GpuBackend, ThemesBrowser>
+    class ThemesApplication
+        : public Documents::DocumentsApplication<PlatformType, GpuBackend, ThemesBrowser>
     {
     public:
-        using Base = Browser::BrowserApplication<PlatformType, GpuBackend, ThemesBrowser>;
+        using Base = Documents::DocumentsApplication<PlatformType, GpuBackend, ThemesBrowser>;
     public:
         explicit ThemesApplication(PlatformType::Params&&);
-        // Builds the main form on the themes directory, runs it, writes the config, and answers
-        // what the form answered.
+        // Runs the browser over the application's own themes, and answers what the form answered.
         [[nodiscard]] int run();
     };
 
@@ -52,8 +52,6 @@ namespace ThisApp
 
 //-----------------------------------------------------------------------------
 
-
-    constexpr MinSize k_mainFormMinSize{ 900.0f, 600.0f };
 
     template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend>
     ThemesApplication<PlatformType, GpuBackend>::ThemesApplication(typename PlatformType::Params&& platformParams)
@@ -71,12 +69,6 @@ namespace ThisApp
     template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend>
     int ThemesApplication<PlatformType, GpuBackend>::run()
     {
-        const std::unique_ptr<Form<ThemesBrowser>> form = this->createMainForm(
-            this->metrics().primaryWindow,
-            this->metrics().primaryWindowShadow,
-            UiElement::Dialog,
-            k_mainFormMinSize
-        );
-        return form->execute();
+        return Base::run(this->themes());
     }
 }

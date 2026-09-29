@@ -43,6 +43,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Themes.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesList.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesList.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesManager.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesManager.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesManager_Elements.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesManager_Serializers.cppm" />

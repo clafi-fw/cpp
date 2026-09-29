@@ -26,20 +26,85 @@ namespace ClaFi::Documents
 {
     using namespace Controls;
 
-    void DocumentsHomePage::selectItemByPagePath(const std::wstring_view value)
+    void DocumentsHomePageBase::selectItemByPagePath(const std::wstring_view value)
     {
-        m_tiles.setCurrentFileName(fileNameOfPage(value));
+        m_tiles->setCurrentFileName(fileNameOfPage(value));
     }
 
     // THE TILE THE USER IS ON, which a right click has just moved the current item to, so the
     // browser's Open and Open in new tab are about the tile the menu was raised from as well as
     // about the one the keyboard stands on.
-    std::wstring DocumentsHomePage::pathToOpen()
+    std::wstring DocumentsHomePageBase::pathToOpen()
     {
-        return pagePathOfDocument(m_tiles.currentFileName());
+        return pagePathOfDocument(m_tiles->currentFileName());
     }
 
-    void DocumentsHomePage::documentsRebuilt()
+    void DocumentsHomePageBase::connectTiles(IDocumentTiles& tiles)
+    {
+        m_tiles = &tiles;
+        StackView& view = tiles.view();
+
+        // Answered by the page, not by the button: the toolbar button, the Delete key and a menu
+        // item carrying the same action all land here, and the selection they act on is this
+        // page's.
+        onGetActionState([this](GetActionStateEvent& event) {
+            if (&event.action == &StdActions::del)
+                event.claim({ .enabled = !m_tiles->view().selection().empty() });
+        });
+        onActionClick([this](ActionClickEvent& event) {
+            // Under whatever presented the command, so a question about it stands where the user
+            // is looking. The Delete key presents nothing, and the toolbar button is where the
+            // command lives on this page.
+            if (&event.action == &StdActions::del)
+                deleteSelectedFiles(event.presenter ? *event.presenter : m_deleteButton);
+        });
+
+        view.onSelectionChange([](SelectionChangeEvent&) {
+            StdActions::del.invalidateState();
+        });
+        view.connectEvent([this](DocumentsRebuiltEvent&) {
+            documentsRebuilt();
+        });
+
+        // A PRESS ON THE TILE OPENS THE DOCUMENT, AND THE KEYBOARD'S PRESS IS A PRESS. Return and
+        // Space on the tile the keyboard stands on arrive as an ordinary click, so the mouse's
+        // single click and the keyboard's press are one event, and the form is what tells them
+        // apart. A modifier makes the press a selection command rather than an activation.
+        view.onClick([this](ClickEvent& event) {
+            DocumentTile* tile = m_tiles->currentTile();
+            if (!tile || tile != event.control)
+                return;
+            if (!event.form.isKeyboardClick() || event.modifiers.ctrl || event.modifiers.shift)
+                return;
+            openDocument(*tile, event.stamp);
+        });
+        view.onDoubleClick([this](DoubleClickEvent& event) {
+            DocumentTile* tile = m_tiles->currentTile();
+            if (!tile || tile != event.control)
+                return;
+            // THE GESTURE IS SPENT HERE. A double click that nothing stopped is read by the form
+            // as the press it also is, and that press would act on a tile the navigation is about
+            // to take down.
+            event.stopPropagation();
+            openDocument(*tile, event.stamp);
+        });
+    }
+
+    DocumentEditHandler DocumentsHomePageBase::editHandler()
+    {
+        return [this](DocumentTile& tile, AcceptEditEvent& event) {
+            acceptTileEdit(tile, event);
+        };
+    }
+
+    DocumentMenuHandler DocumentsHomePageBase::menuHandler()
+    {
+        return [this](DocumentTile& tile, ContextPopupEvent& event) {
+            showTileMenu(tile, event);
+        };
+    }
+
+    void DocumentsHomePageBase::documentsRebuilt()
     {
         if (!m_fileNameToRename.empty())
             renameAfterAlign(m_fileNameToRename);
@@ -49,17 +114,17 @@ namespace ClaFi::Documents
     // holds the list this tile is in, and clears it, and the editor runs a message loop of its
     // own. The tile has no layout yet either, so the editor waits for the form to settle by
     // itself - see WithInPlaceEdit::openEditor.
-    void DocumentsHomePage::renameAfterAlign(const std::wstring_view fileName)
+    void DocumentsHomePageBase::renameAfterAlign(const std::wstring_view fileName)
     {
         m_fileNameToRename = fileName;
         m_renameTimer.start(MilliSeconds{ 0u });
     }
 
-    void DocumentsHomePage::renamePendingTile()
+    void DocumentsHomePageBase::renamePendingTile()
     {
         // Found again rather than kept as a pointer: another rebuild may have run in between and
         // taken the tile with it.
-        DocumentTile* tile = m_tiles.tileByFileName(m_fileNameToRename);
+        DocumentTile* tile = m_tiles->tileByFileName(m_fileNameToRename);
         m_fileNameToRename.clear();
         if (!tile)
             return;
@@ -69,7 +134,7 @@ namespace ClaFi::Documents
         tile->openEditor();
     }
 
-    void DocumentsHomePage::acceptTileEdit(DocumentTile& tile, AcceptEditEvent& event)
+    void DocumentsHomePageBase::acceptTileEdit(DocumentTile& tile, AcceptEditEvent& event)
     {
         const std::wstring newName = folder().renameFile(tile.path(), event);
         if (newName.empty())
@@ -83,14 +148,14 @@ namespace ClaFi::Documents
         tile.invalidateFormAlign();
         // A RENAME MOVES THE TILE THE LIST REMEMBERS. The file name is the whole of a tile's
         // identity here, so the one to come back to after the rebuild is under the new name.
-        m_tiles.selectFileNameAfterRebuild(newName);
+        m_tiles->selectFileNameAfterRebuild(newName);
     }
 
     // THE MENU NAMES FOUR COMMANDS AND SETTLES NONE OF THEM. Rename is answered by the tile,
     // against the caption that is the file's name; Delete by the page, against the selection;
     // Open and Open in new tab by the browser, against the path this page names for whichever
     // tile is current.
-    void DocumentsHomePage::showTileMenu(DocumentTile& tile, ContextPopupEvent& event)
+    void DocumentsHomePageBase::showTileMenu(DocumentTile& tile, ContextPopupEvent& event)
     {
         Menu menu{ tile };
         menu.addToCommandBar(StdActions::rename);
@@ -105,12 +170,12 @@ namespace ClaFi::Documents
 
     // OPEN IS THE COMMAND, AND THE BROWSER ANSWERS IT, on a wait rather than from inside the
     // press that asked. The tile is the presenter: it is where the command was given.
-    void DocumentsHomePage::openDocument(Control& presenter, const InputStamp stamp)
+    void DocumentsHomePageBase::openDocument(Control& presenter, const InputStamp stamp)
     {
         Browser::Actions::open.invoke(form(), &presenter, stamp);
     }
 
-    void DocumentsHomePage::createNewFile()
+    void DocumentsHomePageBase::createNewFile()
     {
         const std::wstring fileName = folder().createFile();
         // The folder may have been made along with the file, and Open folder reads whether it is
@@ -121,50 +186,50 @@ namespace ClaFi::Documents
 
         // A document that has just been made is unnamed in every sense but the file system's, so
         // standing on it and opening an editor over it is the rest of creating it.
-        m_tiles.selectFileNameAfterRebuild(fileName);
+        m_tiles->selectFileNameAfterRebuild(fileName);
         m_fileNameToRename = fileName;
     }
 
-    void DocumentsHomePage::deleteSelectedFiles(Control& initiator)
+    void DocumentsHomePageBase::deleteSelectedFiles(Control& initiator)
     {
         if (!confirmDeleting(initiator))
             return;
 
         // Taken after the question, so a selection the user kept is left standing as it was.
-        m_tiles.selectFileNameAfterRebuild(fileNameAfterDeleting());
-        for (Control* item : m_tiles.selection())
+        m_tiles->selectFileNameAfterRebuild(fileNameAfterDeleting());
+        for (Control* item : m_tiles->view().selection())
         {
             std::error_code errorCode;
             std::filesystem::remove(static_cast<DocumentTile*>(item)->path(), errorCode);
         }
     }
 
-    std::wstring DocumentsHomePage::fileNameAfterDeleting() const
+    std::wstring DocumentsHomePageBase::fileNameAfterDeleting()
     {
         std::wstring previous{};
         bool seenSelected = false;
-        for (DocumentTile& tile : m_tiles.tiles())
+        for (DocumentTile* tile : m_tiles->tiles())
         {
-            if (m_tiles.selection().contains(&tile))
+            if (m_tiles->view().selection().contains(tile))
             {
                 seenSelected = true;
                 continue;
             }
             if (seenSelected)
-                return tile.fileName();
-            previous = tile.fileName();
+                return tile->fileName();
+            previous = tile->fileName();
         }
         return previous;
     }
 
-    bool DocumentsHomePage::confirmDeleting(Control& initiator)
+    bool DocumentsHomePageBase::confirmDeleting(Control& initiator)
     {
         // The one edited document where there is exactly one, so the question can name it.
         // Cleared by the second, which is where a count is all that can be said.
         const DocumentTile* soleEdited{};
         int selectedCount = 0;
         int editedCount = 0;
-        for (Control* item : m_tiles.selection())
+        for (Control* item : m_tiles->view().selection())
         {
             const DocumentTile* tile = static_cast<const DocumentTile*>(item);
             ++selectedCount;

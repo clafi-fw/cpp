@@ -23,8 +23,10 @@ one is the derived folder's, stated in its overrides. The folder is the applicat
 after the platform and outliving every window: the browser and its pages hold it by reference,
 handed over as a DocumentsFolder pointer prop, which is the exact type Props::get finds it by.
 The files are read from the disk on the first ask after the directory watch reports, and every
-listener is told; the list itself is read again by whoever asks for it. An empty directory is a
-folder the platform could not name, and nothing is ever written there.
+listener is told; the list itself is read again by whoever asks for it. A folder that keeps
+something per file - a parsed theme, say - rebuilds it in filesRead, which is told the list each
+time it has been read afresh, a missing directory included. An empty directory is a folder the
+platform could not name, and nothing is ever written there.
 
 ## Read
 
@@ -69,6 +71,10 @@ built again, and a document is the same document under the same name. A file who
 exist yet - just written, not yet reported - is named to selectFileNameAfterRebuild, and the
 rebuild that reads the name spends it.
 
+IDocumentTiles is what the home page works over, and DocumentsList is one answer to it: a flat
+wrapping list of the folder's files. A list of another shape - groups, tiles with no file behind
+them - answers it too, keyed by the same file names, and the home page is none the wiser.
+
 ## Pages
 
 A page carries a tool bar over what it shows and answers the browser's questions before a tab
@@ -77,7 +83,13 @@ where, and how to put the work on the disk. The initiator a question of the page
 under is what asked for the leaving - the crumb, the Up button, the tab being closed - so the
 second question stands where the first did.
 
-## DocumentsHomePage
+## DocumentsHomePageBase
+
+The commands, worked over whatever IDocumentTiles the page that built them connects - once,
+from its own constructor, after the tiles exist - through connectTiles; the handlers the tiles
+are built with come from editHandler and menuHandler. Nothing here runs before that connection:
+every command answers a press or a report. A derived page that owes the rebuilt tiles something
+of its own adds it after documentsRebuilt.
 
 New makes an empty file under the kind's new stem, numbered past the names taken, and puts an
 editor over its tile once the rebuild has made one - on a tick, because the rebuild that made the
@@ -85,6 +97,11 @@ tile is still on the stack. Delete is claimed by the page, so the tool bar butto
 and the menu item run one implementation against the page's selection. Open is the browser's
 command and the page names what to open: the tile the user is on, which a right click has just
 moved the current item to. A press on a tile opens it, and the keyboard's press is a press.
+
+## DocumentsHomePage
+
+The base with a list of the named type built as its scrolling body and connected - the whole of
+what a flat list of documents needs, and the shape a list of another kind derives from.
 
 ## DocumentPage
 
@@ -122,11 +139,13 @@ tab first. The one tab that must not have it is one standing on a page it was re
 view state already holds this document, edits and all, and those are exactly what has not reached
 the file yet. Every other tab wants the file - one arriving from another page carries the last
 page's document there, and one the user has just opened carries nothing at all. The tab answers
-that itself, isOnRestoredPage.
+that itself, isOnRestoredPage. The read goes through the page's loadDocument, which is
+readSavedDocument on the document node - so a page whose saved side is not a file, a built-in
+say, comes up on that side from the first read.
 
 ## Application
 
-The application owns the folder and hands it to the main form, and the browser and every page
-take it from their props. The name and the three config schemas are the application's: the
-document's attribute in the tab schema is typed as the document is, and the layer never names
-that type.
+The application owns or names the folder and hands it to run, which hands it to the main form,
+and the browser and every page take it from their props. The name and the three config schemas
+are the application's: the document's attribute in the tab schema is typed as the document is,
+and the layer never names that type.

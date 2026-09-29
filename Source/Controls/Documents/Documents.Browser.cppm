@@ -26,7 +26,7 @@ namespace ClaFi::Documents
     export constexpr TagValue k_documentPageTag = 2ull;
 
     export template<typename T>
-        concept IsDocumentsHomePage = std::derived_from<T, DocumentsHomePage>;
+        concept IsDocumentsHomePage = std::derived_from<T, DocumentsHomePageBase>;
     export template<typename T>
         concept IsDocumentPage = std::derived_from<T, DocumentPage>;
 
@@ -51,14 +51,16 @@ namespace ClaFi::Documents
         IconSize tabIconSize(BrowserTab&) override;
         void paintTabIcon(BrowserTab&, PaintIconEvent&) override;
         // The pages, built on the tab under the tag that tells them apart.
-        [[nodiscard]] virtual DocumentsHomePage& createHomePage(BrowserTab&) = 0;
+        [[nodiscard]] virtual DocumentsHomePageBase& createHomePage(BrowserTab&) = 0;
         [[nodiscard]] virtual DocumentPage& createDocumentPage(BrowserTab&) = 0;
         [[nodiscard]] static bool isHomePage(const PageData&);
-        [[nodiscard]] bool isDocumentPage(const PageData&) const;
+        // Whether a page is a document: one named with the kind's extension, unless a derived
+        // browser knows others.
+        [[nodiscard]] virtual bool isDocumentPage(const PageData&) const;
         // The document file a page stands for, and an empty path where there is none the user
         // may rename: the home page is not a file, and neither is a document whose file has gone.
         // Asked of the disk, not of the folder's list. See Documents#browser
-        [[nodiscard]] std::filesystem::path documentFileOf(const PageData&) const;
+        [[nodiscard]] virtual std::filesystem::path documentFileOf(const PageData&) const;
     private:
         DocumentsFolder& m_folder;
     };
@@ -70,7 +72,7 @@ namespace ClaFi::Documents
     public:
         using DocumentsBrowserBase::DocumentsBrowserBase;
     protected:
-        DocumentsHomePage& createHomePage(BrowserTab&) override;
+        DocumentsHomePageBase& createHomePage(BrowserTab&) override;
         DocumentPage& createDocumentPage(BrowserTab&) override;
     };
 
@@ -91,7 +93,7 @@ namespace ClaFi::Documents
     // DocumentsBrowser
 
     template<IsDocumentsHomePage HomePageType, IsDocumentPage DocumentPageType>
-    DocumentsHomePage& DocumentsBrowser<HomePageType, DocumentPageType>::createHomePage(
+    DocumentsHomePageBase& DocumentsBrowser<HomePageType, DocumentPageType>::createHomePage(
         BrowserTab& tab)
     {
         return tab.createPage<HomePageType>(Tag{ k_homePageTag }, &folder());

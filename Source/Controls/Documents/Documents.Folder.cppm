@@ -74,6 +74,9 @@ namespace ClaFi::Documents
         [[nodiscard]] virtual bool isEdited(const std::filesystem::path&) const = 0;
         // A document's mark, in the inks of where it stands: a crumb, a tab, a tile.
         virtual void paintIcon(std::wstring_view fileName, PaintIconEvent&) = 0;
+    protected:
+        // Told when the files have been read afresh, for a folder that keeps something per file.
+        virtual void filesRead(const FilePaths&) {}
     private:
         [[nodiscard]] std::filesystem::path newFile(int counter) const;
         // Puts the watch over a directory that was made after the watch was set up.

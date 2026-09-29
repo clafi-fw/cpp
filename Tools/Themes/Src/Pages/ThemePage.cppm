@@ -1,6 +1,6 @@
 export module ThisApp.ThemePage;
 
-import ThisApp.BasePage;
+import ThisApp.WithPreview;
 import ThisApp.CodeOptions;
 import ThisApp.Consts;
 import ThisApp.DesignPage;
@@ -20,9 +20,10 @@ import ClaFi.Icons.HueIcon;
 import ClaFi.Icons.SaturationIcon;
 import ClaFi.Icons.LuminosityIcon;
 
+import ClaFi.Documents.Page;
+
 import ClaFi.Browser.Control;
 
-import ClaFi.Controls.Base.MessageBoxBase;
 import ClaFi.Controls.Base.StackPanelBase;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.CheckBox;
@@ -36,7 +37,6 @@ import ClaFi.Controls.Panel;
 import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Divider;
-import ClaFi.Controls.PromptDialog;
 import ClaFi.Controls.Slider;
 import ClaFi.Controls.Spacer;
 import ClaFi.Controls.SplitButton;
@@ -52,6 +52,7 @@ import ClaFi.Application.ThemesManager_Elements;
 import ClaFi.StdActions;
 
 import ClaFi.Core.DomEngine;
+import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.DomEngine_Document;
 
 import ClaFi.Core.Foundation;
@@ -123,23 +124,25 @@ namespace ThisApp
         ) };
     };
 
-    export class ThemePage : public BasePage
+    // One theme, edited in place: the design page, the four code views and the edit history.
+    export class ThemePage : public WithPreview<Documents::DocumentPage>
     {
     public:
         template<typename... Args>
         explicit ThemePage(const CreateParams&, Args&&...);
     public:
         void restoreViewState() override;
-        [[nodiscard]] bool hasUnsavedEdits() const override;
         [[nodiscard]] bool canSaveEdits() const override { return !isBuiltIn(); }
-        [[nodiscard]] bool saveEdits(Control& initiator) const override;
-        const AppTheme* tabTheme() const override { return &m_editTheme; }
+        // The theme this page's tab stands for - what its icon is drawn from, edits and all.
+        [[nodiscard]] const AppTheme& tabTheme() const { return m_editTheme; }
     protected:
+        [[nodiscard]] bool readSavedDocument(Dom::DomNodeBase& into) const override;
         const AppTheme* selectedTheme() override { return &m_editTheme; }
         void visibilityChanged() override;
         // The pigment grid reads every element in the preview's mode.
         void previewColorModeChanged() override;
     private:
+        using Base = WithPreview<Documents::DocumentPage>;
         using ViewTabs = std::array<Tab*, static_cast<std::size_t>(ThemeView::Count)>;
         using EditHistory = History<AppTheme, DesignPlace>;
         // The pigment grid's columns, as their tags name them.
@@ -196,23 +199,8 @@ namespace ThisApp
         void showAnchor(const Browser::ShowAnchorEvent&);
         // A rule was added on the Design page, moved or taken away.
         void rulesChanged(EditPhase, const Text& what, const RuleSelection& at);
-        void saveTheme() const;
-        // Writes this page's work to a name the user gives, and takes the tab there. The original
-        // is left on the disk as it stands, which is what tells this from Save.
-        void saveThemeAs(Control& initiator);
-        // Asks for a name and writes the work to it, and does no more than that. Answers the file
-        // name it wrote, or nothing where the user would not give one.
-        [[nodiscard]] std::wstring saveThemeAsFile(Control& initiator) const;
-        // Puts the name the user typed back to them where a theme already stands under it, and
-        // answers whether they said to write over it. Raised from inside the naming question and
-        // owned by the answer that asked, so it stands on top of it - see AcceptEditEvent.
-        [[nodiscard]] bool confirmReplacingTheme(Control& initiator, std::wstring_view stem) const;
         // Asks whether the user is the one this button is for, and answers whether they said so.
         [[nodiscard]] bool confirmWritingToSource(Control& initiator) const;
-        void writeThemeTo(const std::filesystem::path& fileName) const;
-        // The file a user theme of this name stands in. Save's own file is named by the page and
-        // not through here: a built-in's page name already carries its own extension.
-        [[nodiscard]] std::filesystem::path themeFileName(std::wstring_view stem) const;
         // Whether this page stands for one of the built-ins. They are answered from the
         // compiled-in colours rather than from a file, so Save has nothing to write over and
         // falls back to Save as.
@@ -239,10 +227,6 @@ namespace ThisApp
         void writeThemeTo(const Dom::FileFormatBase&, TextBox&);
         // The document a box shows, replacing the one it holds.
         void showCode(const std::wstring& code, TextBox&);
-        // What a theme states: the tree the framework would have built is made beside the
-        // theme's own, and what differs is what gets written. A file states the same, so a
-        // theme carrying nothing of its own comes back as whatever the framework defaults to.
-        [[nodiscard]] std::unique_ptr<Dom::Section> statedTheme(const Dom::Section&) const;
         // A pick was made on this page. The action has already moved the answer and refreshed
         // every presenter of it; what is left is the document this page is showing.
         void codeOptionPicked(ClickEvent&);
@@ -253,34 +237,24 @@ namespace ThisApp
         static constexpr TagValue k_harmonyTag = 2ull;
         // The floor slider's end. Useful floors sit far below it; at 1 a surface has no room.
         static constexpr float k_maxDarkModeFloor = 0.5f;
-        // Save on the face, Save as behind the strip. Both are StdActions, so the page answers
-        // for them once and the keys reach the same answer the button does.
-        SplitButton& m_saveButton{ toolBar().add<SplitButton>(
-            StdActions::save,
-            ButtonViewMode::LeftIcon,
-            IconSize{ 18.0f }
-        ) };
     private:
         OnSelectPaletteMap m_onSelectPaletteMap;
         OnHueRuleChanged m_onPigmentChanged; // what the pigment editors call, held by address
 
-        Controls::Divider& m_sep1{ toolBar().add<Controls::Divider>(
-            Padding{ 4.0f }
-        ) };
-
-        // The face is the action, the strip is its list of steps - see dropUndoSteps. Mouse only
-        // keeps the focus on the edit; the keys reach the action on their own.
+        // After Save and its divider, which the page comes with. The face is the action, the strip
+        // is its list of steps - see dropUndoSteps. Mouse only keeps the focus on the edit; the
+        // keys reach the action on their own.
         SplitButton& m_undoButton{ toolBar().add<SplitButton>(
             StdActions::undo,
             ButtonViewMode::IconOnly,
-            IconSize{ 18.0f },
+            k_toolButtonIconSize,
             Interactivity::MouseOnly
         ) };
 
         SplitButton& m_redoButton{ toolBar().add<SplitButton>(
             StdActions::redo,
             ButtonViewMode::IconOnly,
-            IconSize{ 18.0f },
+            k_toolButtonIconSize,
             Interactivity::MouseOnly
         ) };
 
@@ -294,10 +268,6 @@ namespace ThisApp
         // What it calls to do that are the same handlers a user edit calls, and each of them ends
         // by writing the theme back and recording a step - see edited.
         bool m_restoring{ false };
-        // Set by Save as, which has just written this page's work under another name. What stands
-        // in the view state differs from this page's own file and always will - and nothing is at
-        // risk by it: the work is on the disk, and the tab is on its way to where it went.
-        bool m_savedUnderAnotherName{ false };
         // Set while showAnchor picks a design page, a pick the tab already stands on.
         bool m_showingAnchor{ false };
         // Where Write to source writes - empty where the tree it was compiled from is not there.
@@ -507,26 +477,19 @@ namespace ThisApp
     template<typename ...Args>
     ThemePage::ThemePage(const CreateParams& params, Args&& ...args)
         :
-        BasePage{ params, std::forward<Args>(args)... },
+        Base{ params, std::forward<Args>(args)... },
         m_onSelectPaletteMap{ [this]() { paletteMapChanged(); } },
         m_onPigmentChanged{ [this](const EditPhase phase, const Text& what) {
             pigmentChanged(phase, what);
         } }
     {
-        // The second half of the button IS Save as. A menu of one was a stop on the way to it,
-        // naming what the arrow already means and asking for a second press to get there; behind
-        // the strip the command names itself in the strip's tooltip and runs off one press.
-        m_saveButton.dropdownAction(StdActions::saveAs);
         m_undoButton.connectEvent(this, &ThemePage::dropUndoSteps);
         m_redoButton.connectEvent(this, &ThemePage::dropRedoSteps);
 
+        // Save and Save as are the page's own - see DocumentPage; the history's two are answered
+        // here, off the same handlers.
         onGetActionState([this](GetActionStateEvent& event) {
-            // Claiming says this page is what the command acts on. Neither is ever refused: a page
-            // with no file of its own still has somewhere to put the work, and Save asks where
-            // rather than saying no.
-            if (&event.action == &StdActions::save || &event.action == &StdActions::saveAs)
-                event.claim({});
-            else if (&event.action == &StdActions::undo)
+            if (&event.action == &StdActions::undo)
                 event.claim({ .enabled = m_history.canUndo() });
             else if (&event.action == &StdActions::redo)
                 event.claim({ .enabled = m_history.canRedo() });
@@ -534,46 +497,9 @@ namespace ThisApp
 
         onActionClick([this](ActionClickEvent& event) {
             if (&event.action == &StdActions::undo)
-            {
                 undoEdit();
-                return;
-            }
-            if (&event.action == &StdActions::redo)
-            {
+            else if (&event.action == &StdActions::redo)
                 redoEdit();
-                return;
-            }
-
-            const bool isSave = &event.action == &StdActions::save;
-            if (!isSave && &event.action != &StdActions::saveAs)
-                return;
-
-            // Under whatever showed the command. The strip is not a thing of its own for this -
-            // it is half of the button, and a question hanging off half of a button reads as
-            // being about that half - so the whole button carries it, which is also where the
-            // shortcut, shown by nothing, puts it. A message about what the command did stands
-            // there for the same reason.
-            Control& shownBy = event.presenter && !m_saveButton.containsNested(event.presenter)
-                ? *event.presenter
-                : m_saveButton;
-
-            // SAVE ON A PAGE WITH NO FILE OF ITS OWN IS SAVE AS. The work has somewhere to go and
-            // the press said to put it there, so the command that can reach the disk is the one
-            // that runs. This is the toolbar's half of what canLeavePage already does with the
-            // Save it offers.
-            if (isSave && canSaveEdits())
-            {
-                saveTheme();
-                // A write leaves nothing on screen to say it happened - the page looks exactly as
-                // it did - so the command says so itself, beside the button that ran it.
-                ContextMessage::show(shownBy, messageText(MessageIcon::Ok, L"Theme saved"));
-                return;
-            }
-
-            // SAVE AS SAYS NOTHING HERE. It takes the tab to the file it wrote, and the page it
-            // arrives at is the answer: a message hung off this button would be raised about a
-            // control the rebuild is about to destroy - see saveThemeAs.
-            saveThemeAs(shownBy);
             });
 
         for (std::size_t i = 0ull; i != m_harmonySelector.count(); ++i)

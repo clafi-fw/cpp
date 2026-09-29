@@ -23,9 +23,6 @@ namespace ClaFi::Documents
 {
     using namespace Controls;
 
-    // Named ahead of DocumentsRebuiltEvent, which carries one.
-    export class DocumentsList;
-
     // What a tile stands for, stated when it is built.
     export struct DocumentTileData
     {
@@ -41,6 +38,7 @@ namespace ClaFi::Documents
         explicit DocumentTile(const CreateParams&, Args&&...);
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"DocumentTile"; }
+        [[nodiscard]] DocumentsFolder& folder() const { return m_folder; }
         [[nodiscard]] const std::filesystem::path& path() const { return m_path; }
         [[nodiscard]] std::wstring fileName() const;
         [[nodiscard]] std::wstring stem() const;
@@ -53,6 +51,8 @@ namespace ClaFi::Documents
         const std::filesystem::path m_path;
     };
 
+    export using DocumentTiles = std::vector<DocumentTile*>;
+
     // A name has been typed over a tile, for a host that owns the file the name is kept on.
     export using DocumentEditHandler = std::function<void(DocumentTile&, AcceptEditEvent&)>;
 
@@ -60,15 +60,38 @@ namespace ClaFi::Documents
     // context popup is answered where it is raised and travels no further.
     export using DocumentMenuHandler = std::function<void(DocumentTile&, ContextPopupEvent&)>;
 
-    // The list has built its tiles afresh, and stands on whichever it was asked to.
+    // What a home page works over: tiles keyed by file name, in a view. See Documents#tiles
+    export class IDocumentTiles
+    {
+    public:
+        virtual ~IDocumentTiles() = default;
+    public:
+        // The view the tiles stand in - the selection, the current item, the clicks.
+        [[nodiscard]] virtual StackView& view() = 0;
+        // Every tile, in the order it is listed.
+        [[nodiscard]] virtual DocumentTiles tiles() = 0;
+        // The tile standing for this file, and nullptr where the list holds none.
+        [[nodiscard]] virtual DocumentTile* tileByFileName(std::wstring_view) = 0;
+        // The tile the current item is on, which is the document the list stands for.
+        [[nodiscard]] virtual DocumentTile* currentTile() const = 0;
+        // The file the list stands on, and nothing where it stands on no tile.
+        [[nodiscard]] virtual std::wstring currentFileName() const = 0;
+        virtual void setCurrentFileName(std::wstring_view) = 0;
+        // The file to stand on once the tiles have been built afresh - for a document whose file is
+        // written but whose tile does not exist yet. Spent by the rebuild that reads it.
+        virtual void selectFileNameAfterRebuild(std::wstring_view) = 0;
+    };
+
+    // The tiles have been built afresh, and stand on whichever they were asked to.
     export struct DocumentsRebuiltEvent : public Event
     {
-        explicit DocumentsRebuiltEvent(DocumentsList& list);
-        DocumentsList& list;   // the list that was rebuilt
+        explicit DocumentsRebuiltEvent(IDocumentTiles& tiles);
+        IDocumentTiles& tiles;   // the tiles that were rebuilt
     };
 
     // The documents in the folder, a tile each - the view alone, with no box. See Documents#tiles
-    export class DocumentsList : public StackView, public DocumentsFolder::IListener
+    export class DocumentsList : public StackView, public DocumentsFolder::IListener,
+        public IDocumentTiles
     {
     public:
         template<typename... Args>
@@ -76,18 +99,13 @@ namespace ClaFi::Documents
         ~DocumentsList() override;
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"DocumentsList"; }
-        // The tiles in the order they are listed, which is the folder's order.
-        [[nodiscard]] ControlsAs<DocumentTile> tiles() { return controlsAs<DocumentTile>(); }
-        // The tile standing for this file, and nullptr where the list holds none.
-        [[nodiscard]] DocumentTile* tileByFileName(std::wstring_view);
-        // The tile the current item is on, which is the document the list stands for.
-        [[nodiscard]] DocumentTile* currentTile() const;
-        // The file the list stands on, and nothing where it stands on no tile.
-        [[nodiscard]] std::wstring currentFileName() const;
-        void setCurrentFileName(std::wstring_view);
-        // The file to stand on once the tiles have been built afresh - for a document whose file is
-        // written but whose tile does not exist yet. Spent by the rebuild that reads it.
-        void selectFileNameAfterRebuild(std::wstring_view value) { m_fileNameToSelect = value; }
+        [[nodiscard]] StackView& view() override { return *this; }
+        [[nodiscard]] DocumentTiles tiles() override;
+        [[nodiscard]] DocumentTile* tileByFileName(std::wstring_view) override;
+        [[nodiscard]] DocumentTile* currentTile() const override;
+        [[nodiscard]] std::wstring currentFileName() const override;
+        void setCurrentFileName(std::wstring_view) override;
+        void selectFileNameAfterRebuild(std::wstring_view) override;
         // Builds every tile from the folder as it stands now, and comes back to the file the list
         // was on.
         void rebuild();

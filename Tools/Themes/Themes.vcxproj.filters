@@ -23,6 +23,9 @@
     <ClCompile Include="Src\Themes_Icon.cppm">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Themes_BrowserControl.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Themes_BrowserControl.cppm">
       <Filter>Src</Filter>
     </ClCompile>
@@ -34,9 +37,6 @@
     </ClCompile>
     <ClCompile Include="Src\Themes_Win32.cpp">
       <Filter>Src</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\Pages\BasePage.cppm">
-      <Filter>Src\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Src\Pages\DesignPage.cpp">
       <Filter>Src\Pages</Filter>
@@ -50,6 +50,9 @@
     <ClCompile Include="Src\Pages\ElementPage.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Pages\HomePage.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Pages\HomePage.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>
@@ -60,6 +63,9 @@
       <Filter>Src\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Src\Pages\ThemePage.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\WithPreview.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Src\Util\ThisApp.ApplyToControl.cpp">

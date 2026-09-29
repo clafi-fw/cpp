@@ -1,8 +1,10 @@
 module ClaFi.App.ThemesList;
 
 import ClaFi.App.ThemeIcon;
-import ClaFi.App.Themes;
 import ClaFi.Application.ThemesManager;
+
+import ClaFi.Documents.Folder;
+import ClaFi.Documents.List;
 
 import ClaFi.Controls.Base.ExpanderBase;
 import ClaFi.Controls.Base.StackPanelBase;
@@ -23,6 +25,7 @@ import ClaFi.StdLib;
 namespace ClaFi
 {
     using namespace Controls;
+    using namespace Documents;
 
     // ThemeTile
 
@@ -31,7 +34,7 @@ namespace ClaFi
         // Only a user theme is a file, and only a file has a name to change.
         if (!m_userTheme)
             return EditorMode::None;
-        return Base::editorMode();
+        return DocumentTile::editorMode();
     }
 
     void ThemeTile::paintIcon(PaintIconEvent& event)
@@ -39,35 +42,55 @@ namespace ClaFi
         paintThemeIcon(event, m_linkedTheme.colors);
     }
 
-    // ThemesRebuiltEvent
-
-    ThemesRebuiltEvent::ThemesRebuiltEvent(ThemesList& list)
-        :
-        list{ list }
-    {
-    }
-
     // ThemesList
 
     ThemesList::~ThemesList()
     {
-        appThemes().listeners().erase(this);
+        m_themes.listeners().erase(this);
     }
 
-    ThemeTile* ThemesList::tileByPath(const std::wstring_view path) const
+    DocumentTiles ThemesList::tiles()
+    {
+        DocumentTiles result{};
+        for (StackPanel* group : { &m_builtInTiles, &m_userTiles })
+            for (ThemeTile& tile : group->controlsAs<ThemeTile>())
+                result.push_back(&tile);
+        return result;
+    }
+
+    DocumentTile* ThemesList::tileByFileName(const std::wstring_view fileName)
     {
         for (StackPanel* group : { &m_builtInTiles, &m_userTiles })
             for (ThemeTile& tile : group->controlsAs<ThemeTile>())
-                if (tile.themePath() == path)
+                if (tile.fileName() == fileName)
                     return &tile;
         return nullptr;
     }
 
     // Only a tile can be the current item - canFocusItem admits nothing else here - so the cast
     // is the same one previewedTheme makes.
-    ThemeTile* ThemesList::currentTile() const
+    DocumentTile* ThemesList::currentTile() const
     {
         return static_cast<ThemeTile*>(currentItem());
+    }
+
+    std::wstring ThemesList::currentFileName() const
+    {
+        if (const DocumentTile* tile = currentTile())
+            return tile->fileName();
+        return {};
+    }
+
+    void ThemesList::setCurrentFileName(const std::wstring_view fileName)
+    {
+        if (DocumentTile* tile = tileByFileName(fileName))
+            setCurrentItem(*tile);
+    }
+
+    void ThemesList::selectFileNameAfterRebuild(const std::wstring_view fileName)
+    {
+        m_fileNameToSelect = fileName;
+        m_userGroup.header().setExpanded(true);
     }
 
     const AppTheme* ThemesList::previewedTheme() const
@@ -80,59 +103,38 @@ namespace ClaFi
         return &static_cast<ThemeTile*>(item)->theme();
     }
 
-    std::wstring ThemesList::currentPath() const
-    {
-        if (const ThemeTile* tile = currentTile())
-            return tile->themePath();
-        return {};
-    }
-
-    void ThemesList::setCurrentPath(const std::wstring_view path)
-    {
-        if (ThemeTile* tile = tileByPath(path))
-            setCurrentItem(*tile);
-    }
-
-    void ThemesList::expandUserGroup()
-    {
-        m_userGroup.header().setExpanded(true);
-    }
-
-    // THE PATH IS WHAT THE LIST COMES BACK TO, not the tile: every tile here is taken down and
-    // built again, and a theme is the same theme under the same path.
+    // THE FILE NAME IS WHAT THE LIST COMES BACK TO, not the tile: every tile here is taken down
+    // and built again, and a theme is the same theme under the same name. The built-in goes by
+    // the name its page goes by, so a tab coming up from it lands on its tile.
     void ThemesList::rebuild()
     {
-        std::wstring pathToStandOn = m_pathToSelect.empty() ? currentPath() : m_pathToSelect;
-        m_pathToSelect.clear();
+        const std::wstring fileNameToStandOn = m_fileNameToSelect.empty()
+            ? currentFileName()
+            : m_fileNameToSelect;
+        m_fileNameToSelect.clear();
 
         m_builtInTiles.clearControls();
         m_userTiles.clearControls();
 
-        addTile(m_builtInTiles, defaultTheme(), k_defaultThemePath, BuiltInThemes::defaultTheme,
-            nullptr);
-
-        for (const UserThemePtr& theme : appThemes().userThemes())
-        {
-            const std::wstring name = theme->path().stem().wstring();
-            addTile(m_userTiles, theme->theme(), ThemesManager::pathOf(*theme), name, &*theme);
-        }
+        addTile(m_builtInTiles, defaultTheme(), m_themes.fileOf(k_defaultThemeName), nullptr);
+        for (const UserThemePtr& theme : m_themes.userThemes())
+            addTile(m_userTiles, theme->theme(), theme->path(), &*theme);
 
         // A tile is as many lines of name as it needs inside a fixed width, so a list built
         // afresh is a new height. See the deferred-request rule: ask, do not lay out from here.
         form().invalidateAlign();
-        setCurrentPath(pathToStandOn);
-        emitEvent<ThemesRebuiltEvent>(*this);
+        setCurrentFileName(fileNameToStandOn);
+        emitEvent<DocumentsRebuiltEvent>(*this);
     }
 
     ThemeTile& ThemesList::addTile(StackPanel& group, const AppTheme& theme,
-        const std::wstring_view path, const std::wstring_view name, const UserTheme* userTheme)
+        const std::filesystem::path& file, const UserTheme* userTheme)
     {
         ThemeTile& tile = group.add<ThemeTile>(
-            ThemeTileData{ &theme, path, userTheme },
+            DocumentTileData{ &m_themes, file },
+            ThemeTileData{ &theme, userTheme },
             IndicatorStyle::Check,
-            m_tileViewMode,
-            m_tileIconSize,
-            Text{ std::wstring{ name } }
+            Text{ file.stem().wstring() }
         );
         if (m_editTheme && userTheme)
         {
@@ -147,11 +149,5 @@ namespace ClaFi
             });
         }
         return tile;
-    }
-
-    bool ThemesList::isSelectableGroup(const StackPanel& group) const
-    {
-        return &group == &m_userTiles
-            && selectionMode() == SelectionMode::Multi;
     }
 }

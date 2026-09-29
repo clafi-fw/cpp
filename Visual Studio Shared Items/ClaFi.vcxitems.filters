@@ -109,6 +109,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Settings.cppm">
       <Filter>Application</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesManager.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesManager.cppm">
       <Filter>Application</Filter>
     </ClCompile>

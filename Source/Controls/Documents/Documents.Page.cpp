@@ -56,6 +56,11 @@ namespace ClaFi::Documents
         return folder().fileOf(pageData().name);
     }
 
+    bool DocumentPage::loadDocument() const
+    {
+        return readSavedDocument(documentNode());
+    }
+
     bool DocumentPage::readSavedDocument(Dom::DomNodeBase& into) const
     {
         return folder().readDocument(documentFile(), into);
