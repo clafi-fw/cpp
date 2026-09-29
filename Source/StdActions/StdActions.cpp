@@ -96,6 +96,11 @@ namespace ClaFi::StdActions
         Shortcut{ Keys::F2 },
         Action::OnPaintIcon{ Icons::RenameIcon::paint }
     };
+    // No key and no icon. Every editor spells the key differently, and a key given here is given
+    // to every application at once; one that wants a key says so, as it would for clear.
+    Action reindent{
+        Text{ L"Reindent" }
+    };
 
     void registerAll()
     {
@@ -122,6 +127,7 @@ namespace ClaFi::StdActions
         actions.add(save);
         actions.add(saveAs);
         actions.add(rename);
+        actions.add(reindent);
     }
 
 }

@@ -98,6 +98,33 @@ namespace ClaFi::Syntax
     // A language's reading of the names a text declares. See Syntax#declarations
     export using DeclarationReader = Declarations (*)(std::wstring_view text);
 
+    // Where a language places one line of a text. See Syntax#indent
+    export struct LineIndent
+    {
+        std::size_t column{ 0 };      // where the line stands, worked out from the lines above it
+        bool placesItself{ false };   // its first word decides its column - a closer, an else
+        std::wstring_view closer{};   // what ends the block the line leaves open - empty for none
+    };
+
+    // The lines of a text as a language's indent rule reads them. See Syntax#indent
+    export class SourceLines
+    {
+    public:
+        virtual ~SourceLines() = default;
+    public:
+        [[nodiscard]] virtual std::size_t count() const = 0;
+        // The line without its newline.
+        [[nodiscard]] virtual std::wstring_view text(std::size_t line) const = 0;
+        // The line's tokens, in its own coordinates.
+        [[nodiscard]] virtual const Tokens& tokens(std::size_t line) const = 0;
+        // Whether the line starts inside a comment or a string the line before it left open.
+        [[nodiscard]] virtual bool continues(std::size_t line) const = 0;
+    };
+
+    // A language's reading of where a line stands, a level being `width` columns. See Syntax#indent
+    export using IndentRule = LineIndent (*)(const SourceLines&, std::size_t line,
+        std::size_t width);
+
     // What each kind of token is drawn in. See Syntax
     export class Inks
     {

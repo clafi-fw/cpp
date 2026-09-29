@@ -9,6 +9,7 @@ import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.StackPanel;
 
 import ClaFi.Core.Syntax.Completion;
+import ClaFi.Core.Syntax.Indent;
 import ClaFi.Core.Syntax.Lines;
 import ClaFi.Core.Syntax.Lexer;
 import ClaFi.Core.Syntax.Types;
@@ -17,6 +18,7 @@ import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.Timer;
@@ -30,6 +32,13 @@ namespace ClaFi::Controls
 
     // Whether the box asks which language each text it is handed is in. See Controls
     export enum class DetectLanguage
+    {
+        No,
+        Yes
+    };
+
+    // Whether the box reads the indent unit off each text it is handed. See Controls
+    export enum class DetectIndent
     {
         No,
         Yes
@@ -134,6 +143,11 @@ namespace ClaFi::Controls
         // The names the box completes to, held by whoever states them. None completes nothing.
         DECLARE_WRITABLE_PROPERTY(const Syntax::CompletionEntries*, completion, setCompletion,
             nullptr)
+        // What one level of indent is written as, where the text says nothing of its own.
+        DECLARE_WRITABLE_PROPERTY(Syntax::IndentUnit, indentUnit, setIndentUnit,
+            Syntax::IndentUnit{})
+        // Whether the unit is read off each text the box is handed. See Controls#indents
+        DECLARE_WRITABLE_PROPERTY(DetectIndent, detectIndent, setDetectIndent, DetectIndent::Yes)
     public:
         // Asked which language a text the box was handed whole is in. See Controls
         DECLARE_EVENT(DetectLanguageEvent, OnDetectLanguage, onDetectLanguage)
@@ -146,12 +160,30 @@ namespace ClaFi::Controls
         void setCompletion(const Syntax::CompletionEntries*);
         // Lists what the caret's place can complete to - Ctrl+Space. See Controls#completionlist
         void showCompletion();
+        // States the unit and ends detection: every indent the box writes is written in it.
+        void setIndentUnit(const Syntax::IndentUnit&);
+        // Yes reads the unit off the text the box holds now, and off every text handed whole.
+        void setDetectIndent(DetectIndent);
+        // What the box writes a level as: what the text says where it is read, else the property.
+        [[nodiscard]] Syntax::IndentUnit indentUnitInUse() const;
+        // Moves the lines the selection reaches, or the caret's, one stop on. See Controls#indents
+        void indentLines();
+        // Moves the lines the selection reaches, or the caret's, one stop back.
+        void outdentLines();
+        // Places the lines the selection reaches, or every line, where the language places them.
+        void reindentLines();
     protected:
         void textTaken(const Text&, const TextEdit*) const override;
         void textEdited() override;
         void caretMoved() override;
         void nestedKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
+        // Past the blanks the line opens with, and to the line's start from there.
+        [[nodiscard]] std::size_t rowHome(CaretHit) const override;
+        // A paste of several lines moved as one block to where the language places it.
+        void textPasted(const TextRange&) override;
+        // Reindent joins the edit menu of a box that can be typed into.
+        void editContextPopup(EditContextPopupEvent&) override;
     private:
         // The line the caret stands on, and where the caret stands in it.
         struct CaretLine
@@ -183,6 +215,26 @@ namespace ClaFi::Controls
         // Puts the row's name in place of the name typed, in one edit, with the list down.
         void takeCompletion(const CompletionRow&);
         [[nodiscard]] CaretLine caretLine() const;
+        // Answers the reindent action. Defined in CodeBox.cpp, which keeps the standard actions
+        // out of the interface - see TextBox::connectEditActions.
+        void connectIndentActions();
+        // The selection clamped to the text - select all states a length past its end.
+        [[nodiscard]] TextRange selectedRange() const;
+        // The lines as the indent is worked out over them, the line states in step with the text.
+        [[nodiscard]] Syntax::IndentLines sourceLines() const;
+        // Makes the indent edit the box's next step, the editor's own, landing where it says.
+        void applyIndentEdit(const std::optional<Syntax::IndentEdit>&);
+        // Tab with no selection, or one inside a line: the blanks to the next stop in its place.
+        void insertStop();
+        void shiftLines(bool back);
+        // Backspace at a caret in a line's indent takes it back to the previous stop. Answers
+        // whether it did, which a single blank to take never needs.
+        [[nodiscard]] bool unindentAtCaret();
+        // Places the caret's line where its first word says, where that word has just been
+        // finished - by the character before the caret, or by the caret itself.
+        void realignFinishedWord(bool byCharacter);
+        // What a line break just typed goes on to do. See Syntax#indent
+        void indentAfterBreak();
     private:
         // The list's rows, as many as the theme's tool button makes tall; a longer list scrolls.
         static constexpr float k_completionRows{ 10.0f };
@@ -214,6 +266,10 @@ namespace ClaFi::Controls
         bool m_completionTakesChar{ true };
         // Whether the edit under way is a row being taken, which is the one edit no list follows.
         bool m_takingCompletion{ false };
+        // The unit the text read whole says it is indented in, where the box reads one.
+        mutable std::optional<Syntax::IndentUnit> m_detectedIndent{};
+        // Whether the key before this one was Escape, which hands a Tab on to the form.
+        bool m_tabLeaves{ false };
         ScopedEventConnection m_formAligned{};
         ScopedEventConnection m_listAligned{};
     };
@@ -231,7 +287,9 @@ namespace ClaFi::Controls
         INIT_PROPERTY(language),
         INIT_PROPERTY(inks),
         INIT_PROPERTY(detectLanguage),
-        INIT_PROPERTY(completion)
+        INIT_PROPERTY(completion),
+        INIT_PROPERTY(indentUnit),
+        INIT_PROPERTY(detectIndent)
     {
         m_layout.setColorOverlay(this);
         // Connected here rather than given to the timer as a construction property: MSVC rejects
@@ -239,5 +297,6 @@ namespace ClaFi::Controls
         m_completionRequest.onTick([this](TimerEvent&){
             updateCompletion();
         });
+        connectIndentActions();
     }
 }

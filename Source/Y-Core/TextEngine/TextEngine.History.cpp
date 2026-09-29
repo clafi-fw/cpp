@@ -24,7 +24,8 @@ namespace ClaFi
     // TextHistory
 
     EditSelection TextHistory::apply(ControlText& text, EditKind kind, const TextRange& range,
-        const Text& inserted, const EditSelection& before)
+        const Text& inserted, const EditSelection& before,
+        const std::optional<EditSelection>& after)
     {
         if (!inSync(text))
             clear();
@@ -36,7 +37,7 @@ namespace ClaFi
         text.replaceText(range, inserted);
         m_textSize = text.plainText().size();
 
-        if (m_open && joins(kind, start, removed, inserted))
+        if (m_open && !after.has_value() && joins(kind, start, removed, inserted))
         {
             Record& record = m_records[m_next - 1];
             mergeInto(record, start, removed, inserted);
@@ -54,10 +55,12 @@ namespace ClaFi
             .removed = std::move(removed),
             .inserted = inserted,
             .before = before,
+            .after = after,
         });
         m_next = m_records.size();
-        // A step that replaced a selection is a boundary the user drew, so nothing joins it.
-        m_open = kind != EditKind::Replace;
+        // A step that replaced a selection is a boundary the user drew, and one that states where
+        // it lands is a step of its own, so nothing joins either.
+        m_open = kind != EditKind::Replace && !after.has_value();
         return landing(m_records.back());
     }
 
@@ -106,6 +109,8 @@ namespace ClaFi
 
     EditSelection TextHistory::landing(const Record& record)
     {
+        if (record.after.has_value())
+            return record.after.value();
         const std::size_t caretPos = record.start + record.inserted.plainText().size();
         return {
             .range = { caretPos, 0 },

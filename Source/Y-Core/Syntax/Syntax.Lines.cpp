@@ -65,6 +65,20 @@ namespace ClaFi::Syntax
         relexFrom(textAfter, firstLine, line);
     }
 
+    std::wstring_view LineStates::lineText(const std::wstring_view text,
+        const std::size_t line) const
+    {
+        const std::size_t start = m_starts[line];
+        const std::size_t end = line + 1 != lineCount() ? m_starts[line + 1] - 1 : text.size();
+        return text.substr(start, end - start);
+    }
+
+    std::size_t LineStates::lineAt(const std::size_t pos) const
+    {
+        const Starts::const_iterator past = std::ranges::upper_bound(m_starts, pos);
+        return static_cast<std::size_t>(past - m_starts.begin()) - 1;
+    }
+
     void LineStates::tokensOf(const std::size_t line, const std::wstring_view lineText,
         Tokens& tokens)
     {
@@ -89,19 +103,5 @@ namespace ClaFi::Syntax
                 break;
             m_states[next] = state;
         }
-    }
-
-    std::wstring_view LineStates::lineText(const std::wstring_view text,
-        const std::size_t line) const
-    {
-        const std::size_t start = m_starts[line];
-        const std::size_t end = line + 1 != lineCount() ? m_starts[line + 1] - 1 : text.size();
-        return text.substr(start, end - start);
-    }
-
-    std::size_t LineStates::lineAt(const std::size_t pos) const
-    {
-        const Starts::const_iterator past = std::ranges::upper_bound(m_starts, pos);
-        return static_cast<std::size_t>(past - m_starts.begin()) - 1;
     }
 }

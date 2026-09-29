@@ -32,9 +32,11 @@ namespace ClaFi
     public:
         // Replaces `range` with `inserted` and records the step. `before` is where the caret
         // stood, which is what undoing this step restores. Answers where the caret lands now:
-        // collapsed at the end of what went in.
+        // on `after` where one is stated - a step stating one joins no run, and none joins it -
+        // and otherwise collapsed at the end of what went in.
         [[nodiscard]] EditSelection apply(ControlText&, EditKind, const TextRange& range,
-            const Text& inserted, const EditSelection& before);
+            const Text& inserted, const EditSelection& before,
+            const std::optional<EditSelection>& after = std::nullopt);
         // Puts the text back the way the newest step in force found it, and answers where the
         // caret stood then. Empty when there is nothing to undo.
         [[nodiscard]] std::optional<EditSelection> undo(ControlText&);
@@ -58,15 +60,16 @@ namespace ClaFi
             Text removed{};
             Text inserted{};
             EditSelection before{};
+            std::optional<EditSelection> after{};   // where a redo lands, where the step stated it
         };
 
         // Bounded by its own capacity: once the store holds k_maxRecords, the record that goes
         // in takes the place of the oldest one, which is the whole of how the depth is kept.
         using RecordCollection = RingBuffer<Record>;
     private:
-        // Where the caret ends up once a record is in force: collapsed at the end of what went
-        // in, keeping the side and the affinity the step started with. Derived rather than
-        // stored, because that is all an edit leaves behind.
+        // Where the caret ends up once a record is in force: where the step stated it, and
+        // otherwise collapsed at the end of what went in, keeping the side and the affinity the
+        // step started with - derived rather than stored, since that is all an edit leaves.
         [[nodiscard]] static EditSelection landing(const Record&);
         // Whether an edit of this shape continues the run the newest record holds.
         [[nodiscard]] bool joins(EditKind, std::size_t start, const Text& removed,

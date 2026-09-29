@@ -50,7 +50,8 @@ language's at all, which is the language's own knowledge as much as its hook is:
 line looks like is written once, and the hook and the detector both read it. The reader of
 declarations says which names a text in the language declares for itself and where each is in
 force, which is what a box adds to its completion list - see Declarations. A language whose
-texts declare nothing states none.
+texts declare nothing states none. The indent rule says where a line of the language stands -
+see Indent; a language that states none is placed by its brackets.
 
 The keyword tables are looked up by bisection, so each is written in code unit order and
 asserted so where it is written. A language that reads a word in any case - Pascal - says so
@@ -188,3 +189,57 @@ it - so the name being typed at a section's end is no declaration until it is on
 The reader answers a fresh list each time and reads the whole text each time. It is asked
 when a list opens, and the box compares the answer with the one it has before it rebuilds
 any row - see Controls#completionlist.
+
+## Indent
+
+Where a line of source stands, worked out from the lines above it the way a writer places it
+by hand - from where those lines actually stand, so a text indented in any style keeps its
+own. The answer is a LineIndent: the column; whether the line's own first word decides it - a
+closer, an else, a section word - which is what realigns a line once that word is finished;
+and what closes the block the line leaves open at its end, which is what a block completion
+writes below it.
+
+A language states its reading through Language::indent. One that states none is placed by its
+brackets: the column of the line above, a level in for each bracket that line leaves open, and
+back to the column of the line that opened a bracket the line above closes; a line opening
+with a closing bracket stands where the line that opened it stands, and a line ending with an
+open brace or square bracket is closed below by its closer. Only punctuation counts, so a
+bracket inside a comment or a string is none. C++, JSON and ClaFi are placed this way, and a
+text in no language keeps the column of the line above. Whatever the language, a line starting
+inside a comment or a string the line before it left open keeps that column too: its words are
+not the language's.
+
+The Pascal reading is Borland's style, read back from the line over the words of the lines
+above - the comments, strings and directives the lexer found left out. A line stands one
+level in from a begin, a try, a case's of, a repeat, an asm, a record, and a class, interface
+or object that has a body; end and until stand at the line of the opener they close, found by
+matching every block and bracket between. except, finally and the visibility words stand at
+their block's opener and indent what follows them; else stands at the if its then pairs with,
+or at its case after a branch's semicolon. A then or a do at a line's end indents the next line
+alone: the line after that statement returns to where the statement started, however many
+thens it ran through, and a begin under a then or an else stands where the statement starts.
+A var, const, type or uses section indents its entries, and the next section word, a begin or
+a routine's header closes it and stands where it stood; a uses clause is closed by its own
+semicolon. A routine's header stands beside the routine closed before it, or one level inside
+a routine still open, whose body is still to come - a nested routine. A unit's parts stand at
+the file's column, as a unit's interface part's headers and a class's members stand at the
+column of those before them. A statement running on past its line is one level in from where
+it started, and the items of a bracket that opened a line before stand where the first did.
+
+The rule reads a SourceLines - the lines, their tokens, and whether each starts inside a
+comment - which IndentLines implements over a box's LineStates. IndentLines also restates
+lines ahead of an edit, so an edit that places several lines places each against the lines
+above as they will stand.
+
+IndentUnit is how one level is written: a width in columns, and whether a tab is written
+wherever a whole one fits - a tab reaching the layout's own stop, four columns. detectIndentUnit
+reads a text's own: tabs where more lines open with a tab than with a space, and otherwise the
+step taken most often between the indents of two lines in a row, a step of one being an
+alignment and no step at all saying nothing.
+
+The edits - breakEdit, realignEdit, shiftEdit, reindentEdit, pasteEdit - each answer one
+replacement of the text and the selection it leaves, which is what lets a box make each of
+them one step of its own; what each is for is under Controls#indents. The rule reads back
+only as far as the block or the statement it needs, so placing a line costs what that block
+holds rather than what the text does; a unit's closing end., which matches nothing, reads back
+to the text's start.

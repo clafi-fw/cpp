@@ -21,6 +21,13 @@ namespace ClaFi::Syntax
             std::size_t insertedLength);
         [[nodiscard]] std::size_t lineCount() const { return m_starts.size(); }
         [[nodiscard]] const Language& language() const { return m_language; }
+        // Where the line starts in the text.
+        [[nodiscard]] std::size_t lineStart(std::size_t line) const { return m_starts[line]; }
+        [[nodiscard]] const LineState& stateOf(std::size_t line) const { return m_states[line]; }
+        [[nodiscard]] std::wstring_view lineText(std::wstring_view text, std::size_t line) const;
+        // The line a position stands on. A position right after a newline is on the line that
+        // newline opened.
+        [[nodiscard]] std::size_t lineAt(std::size_t pos) const;
         // The tokens of one line, lexed now from the state it starts in. The line's text is the
         // caller's, since it is what the caller is about to draw.
         void tokensOf(std::size_t line, std::wstring_view lineText, Tokens&);
@@ -32,10 +39,6 @@ namespace ClaFi::Syntax
         // first line from `converged` on that already starts in the state the line before it
         // left, since everything past it stands as it was.
         void relexFrom(std::wstring_view text, std::size_t line, std::size_t converged);
-        [[nodiscard]] std::wstring_view lineText(std::wstring_view text, std::size_t line) const;
-        // The line a position stands on. A position right after a newline is on the line that
-        // newline opened.
-        [[nodiscard]] std::size_t lineAt(std::size_t pos) const;
     private:
         Language m_language{};
         // Where each line begins. A line ends at the next start less its newline, the last at

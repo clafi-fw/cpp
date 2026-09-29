@@ -91,6 +91,9 @@ written to by any other route leaves every position in here naming a string that
 gone, so this is checked rather than trusted: the plain length is compared on the way
 in, and a text that moved behind the history's back empties it instead of misplacing an
 edit. A rewrite of exactly the same length is the case that comparison does not see.
+A step may state where it lands. A redo then puts the selection there rather than collapsing
+it after what went in, and the step joins no run and is joined by none: a box moving several
+lines at once makes one step of it, and the lines stand selected again after a redo.
 
 ## ColorOverlay
 

@@ -36,6 +36,8 @@ namespace ClaFi::Syntax
 
     // The names a Pascal text declares, defined beside its hook. See Syntax#declarations
     [[nodiscard]] Declarations pascalDeclarations(std::wstring_view text);
+    // Where a line of a Pascal text stands, defined beside its hook. See Syntax#indent
+    [[nodiscard]] LineIndent pascalIndent(const SourceLines&, std::size_t line, std::size_t width);
 
     // Every table is written in code unit order, which is what a bisection reads it in, and the
     // assertion beside it is what catches a word put in out of place.
@@ -186,6 +188,7 @@ namespace ClaFi::Syntax
             .hook = pascalHook,
             .detect = pascalDetector,
             .declarations = pascalDeclarations,
+            .indent = pascalIndent,
         };
 
         // Comments as well, since the files that hold settings carry them. Strict JSON has none,

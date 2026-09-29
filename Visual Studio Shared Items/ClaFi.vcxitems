@@ -338,6 +338,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Languages.Pascal.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Completion.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Completion.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Indent.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Indent.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Formats.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Formats.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Conversion.cppm" />

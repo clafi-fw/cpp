@@ -430,6 +430,9 @@ where the language has a reader of declarations - see Syntax#declarations. A box
 list stated completes nothing, and a read-only box completes nothing either. What the list
 looks like and how the keys drive it is under CompletionList.
 
+A box places each line as it is typed, in the language's reading of where lines stand - Enter,
+Tab, Backspace, Home, a paste and Reindent. See Indents.
+
 ## CompletionList
 
 The list under the caret of the names the word being typed can complete to. It is what the
@@ -486,6 +489,64 @@ at least 180 units wide; hidden rather than destroyed when it closes, and opened
 its first row with no glide, since where it was left is not on screen to travel from; and
 placed under the caret's line with its left edge at the start of the name, so the rows stand
 under the letters they complete.
+
+## Indents
+
+What a CodeBox does with a line's indent as it is typed, by the language's reading of where a
+line stands - see Syntax#indent. Nothing here happens in a read-only box.
+
+ENTER. The new line stands where the language places a line after the one left. The line left
+loses its trailing blanks, all of them where it holds nothing else; where its first word has
+just been finished, it is placed by that word first - an else, an end. The text the break
+carried down loses its leading blanks and is placed as a line of its own, and a closer carried
+down from under its opener - begin|end, {|} - keeps an empty line between the two, with the
+caret on it. An opener left at the end of the line - begin, try, case, a class with a body, a
+brace - is closed below it when nothing below closes it yet: the next line holding anything
+stands inside the block, or at the block's column placing itself there.
+
+A FINISHED FIRST WORD PLACES ITS LINE. A line whose first word decides its column - end, until,
+else, except, finally, a visibility word, a begin under a then, a section word, a closing
+bracket - is realigned when that word is finished: by the character after it, by Enter, or by
+a completion row taken. Once only, so a line moved by hand afterwards stays where it was put.
+
+TAB AND SHIFT+TAB. With nothing selected, or a selection inside one line, Tab puts in the
+blanks that reach the next stop. A selection reaching past a line, or holding a whole line,
+moves every line it reaches that holds more than blanks to the next stop, and a line the
+selection reaches only at its start is left alone. Shift+Tab moves the lines back to the
+previous stop - the caret's line with nothing selected. The selection moves with the text.
+With Ctrl or Alt held, or right after Escape, Tab is the form's and moves the focus on, which
+is how the focus leaves a box that takes Tab; a read-only box never takes it.
+
+BACKSPACE in a line's indent, with nothing selected, takes the blanks back to the previous
+stop. HOME goes past the blanks the line opens with, and to the line's start from there.
+
+A PASTE of several lines moves as one block. The first line it writes whole goes where the
+language places it, and the rest keep the shape they had against it - against the column the
+paste gave that line, not the blanks standing before the paste. A paste whose own first line
+came without its indent says nothing of where that line stood, so the line after it is placed
+too, and the rest keep their shape against that one.
+
+REINDENT - StdActions::reindent, on the edit menu of a box that can be typed into, and
+reindentLines - places the lines the selection reaches, or every line with nothing selected,
+top down. A line of blanks alone is emptied, and a line running on inside a comment or a string
+is left as written. indentLines and outdentLines are Tab's and Shift+Tab's moves of lines, for
+a command to call.
+
+ONE STEP EACH, AND THE EDITOR'S OWN. Each of these is a single replacement of the text, undone
+as one. What the box does after a key - the indent after Enter, a realign after a word, the
+move after a paste - is a step of its own after the key's, so the first undo takes back what
+the box did and the second what was typed. A step that moves lines lands the selection where
+it put it, and a redo puts it back there - see TextEngine-Types#texthistory.
+
+THE UNIT is what one level is written as: the indentUnit property, four spaces unless stated,
+or with detectIndent on - the default - what the text itself says. See DetectIndent.
+
+## DetectIndent
+
+Whether the box reads the indent unit off each text it is handed whole, in textTaken beside the
+language's reading; a text that says nothing leaves the indentUnit property's. Yes by default.
+A unit stated through setIndentUnit ends detection, so a unit picked by hand is not overridden
+by the next text, and switching detection on reads the text the box holds at once.
 
 ## DetectLanguage
 

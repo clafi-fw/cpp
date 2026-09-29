@@ -5,22 +5,29 @@ import ClaFi.Controls.Button;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.StackPanel;
 
+import ClaFi.StdActions;
+
 import ClaFi.Core.Syntax.Completion;
+import ClaFi.Core.Syntax.Indent;
 import ClaFi.Core.Syntax.Lines;
 import ClaFi.Core.Syntax.Lexer;
 import ClaFi.Core.Syntax.Types;
 
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.History;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.Scaler;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
 namespace ClaFi::Controls
@@ -398,6 +405,61 @@ namespace ClaFi::Controls
         requestCompletion(true);
     }
 
+    void CodeBox::setIndentUnit(const Syntax::IndentUnit& value)
+    {
+        m_indentUnit = value;
+        m_detectIndent = DetectIndent::No;
+        m_detectedIndent.reset();
+    }
+
+    void CodeBox::setDetectIndent(const DetectIndent value)
+    {
+        m_detectIndent = value;
+        m_detectedIndent.reset();
+        if (value == DetectIndent::Yes)
+            m_detectedIndent = Syntax::detectIndentUnit(m_layoutText.plainText());
+    }
+
+    Syntax::IndentUnit CodeBox::indentUnitInUse() const
+    {
+        return m_detectedIndent.value_or(m_indentUnit);
+    }
+
+    void CodeBox::indentLines()
+    {
+        if (readOnly() == ReadOnly::Yes)
+            return;
+        shiftLines(false);
+    }
+
+    void CodeBox::outdentLines()
+    {
+        if (readOnly() == ReadOnly::Yes)
+            return;
+        shiftLines(true);
+    }
+
+    void CodeBox::reindentLines()
+    {
+        if (readOnly() == ReadOnly::Yes)
+            return;
+        ensureCaret();
+        const TextRange selection = selectedRange();
+        Syntax::IndentLines lines = sourceLines();
+        // Nothing selected is the whole text.
+        std::size_t first = 0;
+        std::size_t last = lines.count() - 1;
+        if (selection.length)
+        {
+            first = lines.lineAt(selection.start);
+            last = lines.lineAt(selection.end());
+            if (last > first && lines.start(last) == selection.end())
+                --last;
+        }
+        applyIndentEdit(Syntax::reindentEdit(lines, first, last, indentUnitInUse(), selection,
+            editProps()->caretOnLeft));
+    }
+
     void CodeBox::textTaken(const Text& text, const TextEdit* edit) const
     {
         m_declarationsStale = true;
@@ -410,6 +472,7 @@ namespace ClaFi::Controls
     void CodeBox::textEdited()
     {
         TextBox::textEdited();
+        m_tabLeaves = false;
         // A list up is about the name as it stood before the edit. A row being taken is the one
         // edit it does not follow: the list has just come down for it.
         if (completionShown() && !m_takingCompletion)
@@ -419,6 +482,9 @@ namespace ClaFi::Controls
     void CodeBox::caretMoved()
     {
         TextBox::caretMoved();
+        m_tabLeaves = false;
+        // The focus arriving or leaving is a caret move, and it changes what Reindent is about.
+        StdActions::reindent.invalidateState();
         // The caret has left the name the list was about - a click, an arrow key, the focus going.
         hideCompletion();
     }
@@ -428,6 +494,12 @@ namespace ClaFi::Controls
         // Every press settles whether its character belongs in the text before the character
         // arrives - see charPress.
         m_completionTakesChar = true;
+        // Escape hands the key after it to the form, so a Tab right after one moves the focus on.
+        // A modifier pressed on the way to that Tab is no key of its own.
+        const bool modifierAlone = event.key == Keys::Shift || event.key == Keys::Ctrl
+            || event.key == Keys::Alt;
+        const bool tabLeaves = modifierAlone ? m_tabLeaves : std::exchange(m_tabLeaves, false);
+        const bool writable = readOnly() == ReadOnly::No;
         const bool shown = completionShown();
         switch (event.key)
         {
@@ -455,6 +527,18 @@ namespace ClaFi::Controls
                     return;
                 }
             }
+            // Tab indents in a box that can be typed into; with Ctrl or Alt held, or right after
+            // Escape, it is the form's. See Controls#indents
+            if (event.key == Keys::Tab && writable && !tabLeaves && !event.modifiers.ctrl
+                && !event.modifiers.alt)
+            {
+                event.handled = true;
+                if (event.modifiers.shift)
+                    outdentLines();
+                else
+                    insertStop();
+                return;
+            }
             break;
 
         case Keys::Escape:
@@ -462,6 +546,15 @@ namespace ClaFi::Controls
             {
                 event.handled = true;
                 hideCompletion();
+                return;
+            }
+            m_tabLeaves = true;
+            break;
+
+        case Keys::BackSpace:
+            if (writable && event.modifiers.empty() && unindentAtCaret())
+            {
+                event.handled = true;
                 return;
             }
             break;
@@ -499,18 +592,64 @@ namespace ClaFi::Controls
             return;
         }
         TextBox::charPress(event);
+        if (readOnly() == ReadOnly::Yes)
+            return;
+        const wchar_t character = event.character();
+        if (character == Keys::Return)
+        {
+            indentAfterBreak();
+            return;
+        }
+        if (!std::iswprint(character))
+            return;
+        // A character that is no part of a name finishes the word before it, and a line's first
+        // word finished is what places a closer.
+        const bool names = Syntax::isNameChar(character, m_lines.language());
+        if (!names)
+            realignFinishedWord(true);
         // A name being typed, or a dot, is what lists names by itself. Asked after the edit,
         // which is what the list is about.
-        const wchar_t character = event.character();
-        const bool names = character == L'.' || Syntax::isNameChar(character, m_lines.language());
-        if (names)
+        if (names || character == L'.')
             requestCompletion(true);
+    }
+
+    std::size_t CodeBox::rowHome(const CaretHit caretHit) const
+    {
+        const std::size_t rowStart = TextBox::rowHome(caretHit);
+        const std::wstring_view text = this->text().plainText();
+        // A row a long line wraps onto opens with no indent of its own.
+        if (rowStart != 0 && (rowStart > text.size() || text[rowStart - 1] != L'\n'))
+            return rowStart;
+        std::size_t lineEnd = text.find(L'\n', rowStart);
+        if (lineEnd == std::wstring_view::npos)
+            lineEnd = text.size();
+        const std::size_t caret = std::clamp(caretHit.pos, rowStart, lineEnd) - rowStart;
+        return rowStart + Syntax::homeIndex(text.substr(rowStart, lineEnd - rowStart), caret);
+    }
+
+    void CodeBox::textPasted(const TextRange& pasted)
+    {
+        Syntax::IndentLines lines = sourceLines();
+        applyIndentEdit(Syntax::pasteEdit(lines, pasted, indentUnitInUse()));
+    }
+
+    void CodeBox::editContextPopup(EditContextPopupEvent& event)
+    {
+        if (readOnly() == ReadOnly::No)
+        {
+            event.actions.push_back(nullptr);
+            event.actions.push_back(&StdActions::reindent);
+        }
+        TextBox::editContextPopup(event);
     }
 
     void CodeBox::readWhole(const std::wstring_view text) const
     {
         m_completionRowsStale = true;
         m_declarationsStale = true;
+        m_detectedIndent.reset();
+        if (m_detectIndent == DetectIndent::Yes)
+            m_detectedIndent = Syntax::detectIndentUnit(text);
         if (m_detectLanguage == DetectLanguage::No)
         {
             m_lines.reset(m_language, text);
@@ -705,6 +844,7 @@ namespace ClaFi::Controls
         setSelection(line.start + place.wordStart, line.start + place.caret);
         replaceSelectedText(row.name());
         m_takingCompletion = false;
+        realignFinishedWord(false);
     }
 
     CodeBox::CaretLine CodeBox::caretLine() const
@@ -724,5 +864,119 @@ namespace ClaFi::Controls
             .text = text.substr(start, end - start),
             .caret = caret - start,
         };
+    }
+
+    void CodeBox::connectIndentActions()
+    {
+        onGetActionState([this](GetActionStateEvent& event){
+            if (&event.action == &StdActions::reindent)
+                event.claim({ .enabled = readOnly() == ReadOnly::No });
+        });
+        onActionClick([this](ActionClickEvent& event){
+            if (&event.action == &StdActions::reindent)
+                reindentLines();
+        });
+    }
+
+    TextRange CodeBox::selectedRange() const
+    {
+        const TextRange selection = editProps()->selRange;
+        if (selection.start == k_maxSize)
+            return { 0, 0 };
+        const std::size_t size = text().plainText().size();
+        const std::size_t start = std::min(selection.start, size);
+        return { start, std::min(selection.length, size - start) };
+    }
+
+    Syntax::IndentLines CodeBox::sourceLines() const
+    {
+        // Asked first: it brings the layout, and with it the line states, into step with an edit
+        // the layout has not been told about yet - see caretLine.
+        std::ignore = caretLineColumn();
+        return Syntax::IndentLines{ m_lines, text().plainText() };
+    }
+
+    void CodeBox::applyIndentEdit(const std::optional<Syntax::IndentEdit>& edit)
+    {
+        if (!edit.has_value())
+            return;
+        const EditSelection landing = {
+            .range = edit->selection,
+            .caretOnLeft = edit->caretOnLeft,
+        };
+        applyEdit(edit->replaced, Text{ edit->inserted }, EditKind::Replace, landing);
+    }
+
+    void CodeBox::insertStop()
+    {
+        const TextRange range = ensureCaret();
+        const TextRange selection = selectedRange();
+        const Syntax::IndentLines lines = sourceLines();
+        const std::size_t line = lines.lineAt(selection.start);
+        const std::size_t lineStart = lines.start(line);
+        const std::wstring_view lineText = lines.text(line);
+        // A selection reaching past its line, or holding the whole of one, moves lines instead.
+        const bool withinLine = selection.end() <= lineStart + lineText.size();
+        const bool wholeLine = selection.start == lineStart
+            && selection.end() == lineStart + lineText.size();
+        if (selection.length && (!withinLine || wholeLine))
+        {
+            shiftLines(false);
+            return;
+        }
+        const std::size_t column = Syntax::columnAt(lineText, selection.start - lineStart);
+        const std::wstring blanks = Syntax::stopInsertion(column, indentUnitInUse());
+        applyEdit(range, Text{ blanks }, range.length ? EditKind::Replace : EditKind::Typing);
+    }
+
+    void CodeBox::shiftLines(const bool back)
+    {
+        ensureCaret();
+        const TextRange selection = selectedRange();
+        Syntax::IndentLines lines = sourceLines();
+        const std::size_t first = lines.lineAt(selection.start);
+        std::size_t last = lines.lineAt(selection.end());
+        // A selection ending at a line's start takes nothing of that line.
+        if (last > first && lines.start(last) == selection.end())
+            --last;
+        applyIndentEdit(Syntax::shiftEdit(lines, first, last, back, indentUnitInUse(), selection,
+            editProps()->caretOnLeft));
+    }
+
+    bool CodeBox::unindentAtCaret()
+    {
+        const TextRange selection = selectedRange();
+        if (editProps()->selRange.start == k_maxSize || selection.length)
+            return false;
+        const CaretLine line = caretLine();
+        const std::optional<TextRange> blanks =
+            Syntax::unindentRange(line.text, line.caret, indentUnitInUse().width);
+        if (!blanks.has_value() || blanks->length < 2)
+            return false;
+        applyEdit({ line.start + blanks->start, blanks->length }, Text{}, EditKind::DeletingBack);
+        return true;
+    }
+
+    void CodeBox::realignFinishedWord(const bool byCharacter)
+    {
+        const CaretLine line = caretLine();
+        const Syntax::Language& language = m_lines.language();
+        bool finished = Syntax::firstWordEndsAt(language, line.text, line.caret);
+        if (byCharacter && line.caret != 0)
+            finished = finished || Syntax::firstWordEndsAt(language, line.text, line.caret - 1);
+        if (!finished)
+            return;
+        Syntax::IndentLines lines = sourceLines();
+        applyIndentEdit(Syntax::realignEdit(lines, line.index, indentUnitInUse(),
+            line.start + line.caret));
+    }
+
+    void CodeBox::indentAfterBreak()
+    {
+        const CaretLine line = caretLine();
+        if (line.index == 0 || line.caret != 0)
+            return;
+        Syntax::IndentLines lines = sourceLines();
+        applyIndentEdit(Syntax::breakEdit(lines, line.index, indentUnitInUse()));
     }
 }

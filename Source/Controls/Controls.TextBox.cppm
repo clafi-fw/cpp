@@ -198,6 +198,28 @@ namespace ClaFi::Controls
         // without looking away, so a click or an arrow key closes one with the text untouched.
         // An edit moves the caret without coming through here; textEdited is its tail.
         virtual void caretMoved();
+        // A selection range starts unset, which is what a text box with no caret in it looks
+        // like - EditProps::caretPos answers k_maxSize and no caret is painted. Anything
+        // that measures from the caret has to be given one first, and the start of the text is
+        // where a caret that was never placed belongs. Answers the range an edit acts on once
+        // there is a caret to answer from: what is selected, which is empty at a bare caret.
+        TextRange ensureCaret();
+        // The one door every edit goes through, and what keeps the history whole: a text written
+        // to around this would leave every position recorded in the history naming a string that
+        // is gone. Being that door is also what makes it the whole of what read-only refuses.
+        // The kind is what says whether this edit joins the run before it.
+        //
+        // The range is passed rather than read off the selection, because for the delete keys
+        // the two differ: the key names a range of its own with nothing selected, and the
+        // selection is still where undoing the key has to put the caret back. `landing` is where
+        // the selection stands once the edit is in, and where a redo puts it back; none leaves
+        // the caret collapsed after what went in.
+        void applyEdit(TextRange range, const Text& inserted, EditKind,
+            const std::optional<EditSelection>& landing = std::nullopt);
+        // Where Home takes a caret with Ctrl up: the start of the row it stands on.
+        [[nodiscard]] virtual std::size_t rowHome(CaretHit) const;
+        // A paste has gone in over that range of the text, as one edit of its own.
+        virtual void textPasted(const TextRange&) {}
     private:
         // What one page press crosses, and the rect the view is moved by to show it.
         struct PageMove
@@ -263,21 +285,6 @@ namespace ClaFi::Controls
         void carryPlaces(const TextEdit&);
         // Drops the history, for a change to the text the box cannot account for.
         void forgetPlaces();
-        // A selection range starts unset, which is what a text box with no caret in it looks
-        // like - EditProps::caretPos answers k_maxSize and no caret is painted. Anything
-        // that measures from the caret has to be given one first, and the start of the text is
-        // where a caret that was never placed belongs. Answers the range an edit acts on once
-        // there is a caret to answer from: what is selected, which is empty at a bare caret.
-        TextRange ensureCaret();
-        // The one door every edit goes through, and what keeps the history whole: a text written
-        // to around this would leave every position recorded in the history naming a string that
-        // is gone. Being that door is also what makes it the whole of what read-only refuses.
-        // The kind is what says whether this edit joins the run before it.
-        //
-        // The range is passed rather than read off the selection, because for the delete keys
-        // the two differ: the key names a range of its own with nothing selected, and the
-        // selection is still where undoing the key has to put the caret back.
-        void applyEdit(TextRange range, const Text& inserted, EditKind);
         // Puts the caret where an undone or redone step left it.
         void applySelection(const EditSelection&);
         // Emits CaretMoveEvent. Both of the tails end here: an edit moves the caret as surely
@@ -425,14 +432,19 @@ namespace ClaFi::Controls
 
         // Walked in the order pasteFormats states. Each asks for nothing unless the clipboard can
         // answer it, so at most one of them reads.
-        if (const std::optional<Text> rich = Transfer::take<Transfer::ClaFiText>(*offer))
+        std::optional<Text> pasted = Transfer::take<Transfer::ClaFiText>(*offer);
+        if (!pasted.has_value())
         {
-            applyEdit(ensureCaret(), *rich, EditKind::Replace);
-            return;
+            const std::optional<std::wstring> plain = Transfer::take<Transfer::PlainText>(*offer);
+            if (plain.has_value())
+                pasted = Text{ plain.value() };
         }
+        if (!pasted.has_value() || m_readOnly == ReadOnly::Yes)
+            return;
 
-        if (const std::optional<std::wstring> plain = Transfer::take<Transfer::PlainText>(*offer))
-            applyEdit(ensureCaret(), Text{ *plain }, EditKind::Replace);
+        const std::size_t start = std::min(ensureCaret().start, text().plainText().size());
+        applyEdit(ensureCaret(), pasted.value(), EditKind::Replace);
+        textPasted({ start, pasted->plainText().size() });
     }
 
     void TextBox::replaceSelectedText(std::wstring_view sw)
@@ -815,8 +827,7 @@ namespace ClaFi::Controls
                 if (event.modifiers.ctrl)
                     caretPos = 0;
                 else
-                    caretPos = syncedLayout(formContext, textBounds).rowStart(
-                        { caretPos, m_editProps.affinityTrailing });
+                    caretPos = rowHome({ caretPos, m_editProps.affinityTrailing });
                 m_editProps.affinityTrailing = false; // Home ALWAYS snaps to start of line
                 break;
 
@@ -919,6 +930,55 @@ namespace ClaFi::Controls
         restartCaretBlink();
         announceCaretMove();
         invalidateEditActions();
+    }
+
+    TextRange TextBox::ensureCaret()
+    {
+        if (m_editProps.selRange.start == k_maxSize)
+            m_editProps.selRange = { 0, 0 };
+        return m_editProps.selRange;
+    }
+
+    void TextBox::applyEdit(TextRange range, const Text& inserted, EditKind kind,
+        const std::optional<EditSelection>& landing)
+    {
+        // Every route that changes the text arrives here - the delete keys, typing, the edit
+        // actions and the box's own replace and delete calls - so one refusal covers all of them.
+        // A host still writes the text of a read-only box through setText.
+        if (m_readOnly == ReadOnly::Yes)
+            return;
+
+        const EditSelection before = {
+            m_editProps.selRange,
+            m_editProps.caretOnLeft,
+            m_editProps.affinityTrailing,
+        };
+
+        // What the text is about to have done to it, clamped the way replaceText clamps it, so the
+        // layout is told the edit that happened rather than the one that was asked for.
+        const std::size_t textSize = text().plainText().size();
+        const std::size_t editStart = std::min(range.start, textSize);
+        const TextEdit thisEdit{
+            .replaced = { editStart, std::min(range.length, textSize - editStart) },
+            .insertedLength = inserted.plainText().size(),
+        };
+        // Merged rather than replaced: a held key delivers characters faster than the paint loop
+        // consumes them, so several edits reach the text before anything asks the layout about it.
+        // A record that only carried the last of them would describe a change the text did not
+        // make, and syncedLayout would then state the whole text - which is the freeze a run of
+        // typing used to end in.
+        m_pendingEdit = m_pendingEdit.has_value()
+            ? mergedEdits(m_pendingEdit.value(), thisEdit)
+            : thisEdit;
+        carryPlaces(thisEdit);
+
+        applySelection(m_history.apply(text(), kind, range, inserted, before, landing));
+        textEdited();
+    }
+
+    std::size_t TextBox::rowHome(const CaretHit caretHit) const
+    {
+        return syncedLayout(formContext(), textBoundsInControl()).rowStart(caretHit);
     }
 
     FloatRect TextBox::textBoundsInControl() const
@@ -1070,49 +1130,6 @@ namespace ClaFi::Controls
         // range does not contain, and that half of the glyph is highlighted like the rest.
         std::size_t charPos = hit.trailing ? hit.pos - 1 : hit.pos;
         return charPos >= start && charPos < end;
-    }
-
-    TextRange TextBox::ensureCaret()
-    {
-        if (m_editProps.selRange.start == k_maxSize)
-            m_editProps.selRange = { 0, 0 };
-        return m_editProps.selRange;
-    }
-
-    void TextBox::applyEdit(TextRange range, const Text& inserted, EditKind kind)
-    {
-        // Every route that changes the text arrives here - the delete keys, typing, the edit
-        // actions and the box's own replace and delete calls - so one refusal covers all of them.
-        // A host still writes the text of a read-only box through setText.
-        if (m_readOnly == ReadOnly::Yes)
-            return;
-
-        const EditSelection before = {
-            m_editProps.selRange,
-            m_editProps.caretOnLeft,
-            m_editProps.affinityTrailing,
-        };
-
-        // What the text is about to have done to it, clamped the way replaceText clamps it, so the
-        // layout is told the edit that happened rather than the one that was asked for.
-        const std::size_t textSize = text().plainText().size();
-        const std::size_t editStart = std::min(range.start, textSize);
-        const TextEdit thisEdit{
-            .replaced = { editStart, std::min(range.length, textSize - editStart) },
-            .insertedLength = inserted.plainText().size(),
-        };
-        // Merged rather than replaced: a held key delivers characters faster than the paint loop
-        // consumes them, so several edits reach the text before anything asks the layout about it.
-        // A record that only carried the last of them would describe a change the text did not
-        // make, and syncedLayout would then state the whole text - which is the freeze a run of
-        // typing used to end in.
-        m_pendingEdit = m_pendingEdit.has_value()
-            ? mergedEdits(m_pendingEdit.value(), thisEdit)
-            : thisEdit;
-        carryPlaces(thisEdit);
-
-        applySelection(m_history.apply(text(), kind, range, inserted, before));
-        textEdited();
     }
 
     void TextBox::applySelection(const EditSelection& selection)

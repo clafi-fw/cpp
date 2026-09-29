@@ -1,5 +1,6 @@
 module ClaFi.Core.Syntax.Languages;
 
+import ClaFi.Core.Syntax.Indent;
 import ClaFi.Core.Syntax.Lexer;
 import ClaFi.Core.Syntax.Types;
 import ClaFi.Core.TextEngine.Types;
@@ -997,6 +998,754 @@ namespace ClaFi::Syntax
             }
             return result;
         }
+
+
+        //---------------------------------------------------------------------
+        // Placing a line
+
+
+        // The words that open a block an end closes, whatever follows them. Sorted, and lower
+        // case - as are the tables below.
+        constexpr auto k_pascalIndentOpeners = std::to_array<std::wstring_view>({
+            L"asm", L"begin", L"case", L"initialization", L"record", L"repeat", L"try"
+        });
+        static_assert(std::ranges::is_sorted(k_pascalIndentOpeners));
+
+        // The words that open a type body where one follows them - see opensBody.
+        constexpr auto k_pascalBodyWords = std::to_array<std::wstring_view>({
+            L"class", L"dispinterface", L"interface", L"object"
+        });
+        static_assert(std::ranges::is_sorted(k_pascalBodyWords));
+
+        constexpr auto k_pascalIndentClosers = std::to_array<std::wstring_view>({
+            L"end", L"until"
+        });
+        static_assert(std::ranges::is_sorted(k_pascalIndentClosers));
+
+        // The words that stand at their block's opener and indent what follows them.
+        constexpr auto k_pascalIndentMiddles = std::to_array<std::wstring_view>({
+            L"except", L"finalization", L"finally", L"private", L"protected", L"public",
+            L"published", L"strict"
+        });
+        static_assert(std::ranges::is_sorted(k_pascalIndentMiddles));
+
+        // The words a statement goes on past, onto the line after them.
+        constexpr auto k_pascalIndentHangers = std::to_array<std::wstring_view>({
+            L"do", L"then"
+        });
+        static_assert(std::ranges::is_sorted(k_pascalIndentHangers));
+
+        // The words that open a section of entries, which the next section word closes.
+        constexpr auto k_pascalIndentSections = std::to_array<std::wstring_view>({
+            L"const", L"exports", L"label", L"resourcestring", L"threadvar", L"type", L"uses",
+            L"var"
+        });
+        static_assert(std::ranges::is_sorted(k_pascalIndentSections));
+
+        // The sections whose one entry is the whole section, ended by its semicolon.
+        constexpr auto k_pascalOneEntrySections = std::to_array<std::wstring_view>({
+            L"exports", L"uses"
+        });
+        static_assert(std::ranges::is_sorted(k_pascalOneEntrySections));
+
+        // The words a file's parts open with, standing at the file's own column.
+        constexpr auto k_pascalFileParts = std::to_array<std::wstring_view>({
+            L"implementation", L"initialization", L"interface", L"library", L"program", L"unit"
+        });
+        static_assert(std::ranges::is_sorted(k_pascalFileParts));
+
+        // The blocks whose opener at a line's end is closed below it by the block completion.
+        constexpr auto k_pascalCompletedOpeners = std::to_array<std::wstring_view>({
+            L"asm", L"begin", L"record", L"try"
+        });
+        static_assert(std::ranges::is_sorted(k_pascalCompletedOpeners));
+
+        constexpr std::wstring_view k_pascalBlockCloser = L"end;";
+
+        // Where a Pascal line stands, read back from it over the words of the lines above - the
+        // block it is in, the statement before it, the section it closes. See Syntax#indent
+        class PascalIndent
+        {
+        public:
+            PascalIndent(const SourceLines&, std::size_t width);
+        public:
+            [[nodiscard]] LineIndent place(std::size_t line);
+        private:
+            // A word's place: its line, and where it stands among the line's words.
+            struct Place
+            {
+                std::size_t line{ 0 };
+                std::size_t index{ 0 };
+            };
+            // A statement's first word, and the word before it that ended what came before -
+            // nothing at the text's start.
+            struct StatementStart
+            {
+                Place first{};
+                std::optional<Place> stop{};
+            };
+            using LineWords = std::unordered_map<std::size_t, PascalWords>;
+        private:
+            [[nodiscard]] const PascalWords& wordsOf(std::size_t line);
+            [[nodiscard]] const PascalWord& wordAt(const Place&);
+            // The word before the place, from the lines above where the place is a line's first.
+            [[nodiscard]] std::optional<Place> before(const Place&);
+            [[nodiscard]] std::optional<Place> after(const Place&);
+            [[nodiscard]] std::size_t columnOf(std::size_t line) const;
+            // Whether the word is the keyword of that lower-case spelling.
+            [[nodiscard]] bool isWord(const Place&, std::wstring_view lower);
+            [[nodiscard]] bool isListed(const Place&, Words lowerWords);
+            [[nodiscard]] bool isMarkAt(const Place&, std::wstring_view mark);
+            [[nodiscard]] bool opensBlock(const Place&);
+            // Whether a class, an interface or an object word opens a body an end closes.
+            [[nodiscard]] bool opensBody(const Place&);
+            [[nodiscard]] bool opensAny(const Place&);
+            // The else of a case, which follows its last branch's semicolon.
+            [[nodiscard]] bool isCaseElse(const Place&);
+            [[nodiscard]] bool isMiddle(const Place&);
+            // A file part's word - an interface word opening a type body is not one.
+            [[nodiscard]] bool isFilePart(const Place&);
+            // The first word of a routine's header, a procedural type's word excepted.
+            [[nodiscard]] bool opensRoutine(const Place&);
+            // What a statement begun past this word cannot reach back over.
+            [[nodiscard]] bool isStop(const Place&);
+            // The opener of the block the place stands in, read back from it.
+            [[nodiscard]] std::optional<Place> openerBefore(const Place&);
+            // The opening bracket the closing one at the place closes.
+            [[nodiscard]] std::optional<Place> bracketOpener(const Place&);
+            // The statement the word ends, whole blocks and brackets inside it read as one.
+            [[nodiscard]] StatementStart statementStart(const Place& last);
+            // The column of the if an else pairs with, nothing where no then reaches it.
+            [[nodiscard]] std::optional<std::size_t> ifColumn(const Place& elseWord);
+            // The column of the section a section's word at the place closes - nothing inside a
+            // block, where the word is a statement's.
+            [[nodiscard]] std::optional<std::size_t> sectionColumn(const Place&);
+            // Where a routine's header at the place stands: beside the routine closed before it,
+            // or one level inside a routine still open - nothing for a member, or a file's first.
+            [[nodiscard]] std::optional<std::size_t> nestedRoutineColumn(const Place&);
+            // Whether a header at the place declares a routine whose body stands elsewhere - a
+            // member's header, or one of a unit's interface part.
+            [[nodiscard]] bool declaresOnly(const Place&);
+            // Whether a closing square bracket ends a line's attribute - an interface's GUID, a
+            // [Weak] - which is whole with no semicolon.
+            [[nodiscard]] bool closesAttribute(const Place&);
+            // Where a line stands that follows the word as a statement would.
+            [[nodiscard]] std::size_t followingColumn(const Place& previous);
+            // What closes the block the line leaves open at its end.
+            [[nodiscard]] std::wstring_view closerOf(std::size_t line);
+        private:
+            const SourceLines& m_lines;
+            std::size_t m_width;
+            LineWords m_words{};
+        };
+
+        PascalIndent::PascalIndent(const SourceLines& lines, const std::size_t width)
+            :
+            m_lines{ lines },
+            m_width{ width }
+        {
+        }
+
+        LineIndent PascalIndent::place(const std::size_t line)
+        {
+            LineIndent result;
+            result.closer = closerOf(line);
+            const Place first = { line, 0 };
+            const std::optional<Place> previous = before(first);
+            if (wordsOf(line).empty())
+            {
+                result.column = previous.has_value() ? followingColumn(previous.value()) : 0;
+                return result;
+            }
+
+            // A closer, or a word standing where its block opens: the opener's line.
+            if (isListed(first, k_pascalIndentClosers) || isListed(first, k_pascalIndentMiddles))
+            {
+                result.placesItself = true;
+                const std::optional<Place> opener = openerBefore(first);
+                result.column = opener.has_value() ? columnOf(opener->line) : 0;
+                return result;
+            }
+
+            if (isWord(first, L"else"))
+            {
+                result.placesItself = true;
+                if (previous.has_value() && isMarkAt(previous.value(), L";"))
+                {
+                    const std::optional<Place> opener = openerBefore(first);
+                    if (opener.has_value() && isWord(opener.value(), L"case"))
+                    {
+                        result.column = columnOf(opener->line);
+                        return result;
+                    }
+                }
+                if (const std::optional<std::size_t> column = ifColumn(first))
+                {
+                    result.column = column.value();
+                    return result;
+                }
+                result.column = previous.has_value() ? followingColumn(previous.value()) : 0;
+                return result;
+            }
+
+            if (isMarkAt(first, L")") || isMarkAt(first, L"]"))
+            {
+                result.placesItself = true;
+                const std::optional<Place> opener = bracketOpener(first);
+                result.column = opener.has_value() ? columnOf(opener->line) : 0;
+                return result;
+            }
+
+            const bool beginsBlock = isWord(first, L"begin");
+            const bool closesSection = beginsBlock || isFilePart(first) || opensRoutine(first)
+                || isListed(first, k_pascalIndentSections);
+            if (!closesSection)
+            {
+                result.column = previous.has_value() ? followingColumn(previous.value()) : 0;
+                return result;
+            }
+
+            result.placesItself = true;
+            if (!previous.has_value() || isFilePart(first))
+                return result;
+            if (opensRoutine(first))
+            {
+                if (const std::optional<std::size_t> column = nestedRoutineColumn(first))
+                {
+                    result.column = column.value();
+                    return result;
+                }
+            }
+            // Under the statement a then, a do or an else leaves waiting for it, not past it.
+            const bool afterHanger = isListed(previous.value(), k_pascalIndentHangers)
+                || isWord(previous.value(), L"else");
+            if (beginsBlock && afterHanger)
+            {
+                result.column = columnOf(statementStart(previous.value()).first.line);
+                return result;
+            }
+            if (const std::optional<std::size_t> column = sectionColumn(first))
+            {
+                result.column = column.value();
+                return result;
+            }
+            result.column = followingColumn(previous.value());
+            return result;
+        }
+
+        const PascalWords& PascalIndent::wordsOf(const std::size_t line)
+        {
+            const LineWords::const_iterator read = m_words.find(line);
+            if (read != m_words.end())
+                return read->second;
+            PascalWords& words = m_words[line];
+            appendLineWords(m_lines.text(line), 0, m_lines.tokens(line), words);
+            return words;
+        }
+
+        const PascalWord& PascalIndent::wordAt(const Place& place)
+        {
+            return wordsOf(place.line)[place.index];
+        }
+
+        std::optional<PascalIndent::Place> PascalIndent::before(const Place& place)
+        {
+            if (place.index != 0)
+                return Place{ place.line, place.index - 1 };
+            std::size_t line = place.line;
+            while (line != 0)
+            {
+                --line;
+                const PascalWords& words = wordsOf(line);
+                if (!words.empty())
+                    return Place{ line, words.size() - 1 };
+            }
+            return std::nullopt;
+        }
+
+        std::optional<PascalIndent::Place> PascalIndent::after(const Place& place)
+        {
+            if (place.index + 1 < wordsOf(place.line).size())
+                return Place{ place.line, place.index + 1 };
+            for (std::size_t line = place.line + 1; line < m_lines.count(); ++line)
+            {
+                if (!wordsOf(line).empty())
+                    return Place{ line, 0 };
+            }
+            return std::nullopt;
+        }
+
+        std::size_t PascalIndent::columnOf(const std::size_t line) const
+        {
+            return indentColumns(m_lines.text(line));
+        }
+
+        bool PascalIndent::isWord(const Place& place, const std::wstring_view lower)
+        {
+            const PascalWord& word = wordAt(place);
+            return word.kind == TokenKind::Keyword && spells(word, lower);
+        }
+
+        bool PascalIndent::isListed(const Place& place, const Words lowerWords)
+        {
+            const PascalWord& word = wordAt(place);
+            return word.kind == TokenKind::Keyword && isListedNoCase(lowerWords, word.text);
+        }
+
+        bool PascalIndent::isMarkAt(const Place& place, const std::wstring_view mark)
+        {
+            return isMark(wordAt(place), mark);
+        }
+
+        bool PascalIndent::opensBlock(const Place& place)
+        {
+            return isListed(place, k_pascalIndentOpeners);
+        }
+
+        bool PascalIndent::opensBody(const Place& place)
+        {
+            if (!isListed(place, k_pascalBodyWords))
+                return false;
+            const std::optional<Place> previous = before(place);
+            // A procedural type's `of object` opens nothing.
+            if (isWord(place, L"object"))
+                return !previous.has_value() || !isWord(previous.value(), L"of");
+            // A type's declaration is the one place the word follows an equals sign; anywhere
+            // else it is a member's own class word, or a unit's interface part.
+            if (!previous.has_value() || !isMarkAt(previous.value(), L"="))
+                return false;
+
+            // Past the modifiers, a helper's subject, the parent list and an interface's GUID
+            // stands the body's first word, or what says there is none: the semicolon of a
+            // forward or a short declaration, a class reference's of.
+            std::optional<Place> next = after(place);
+            while (next.has_value() && (isWord(next.value(), L"abstract")
+                || isWord(next.value(), L"sealed")))
+            {
+                next = after(next.value());
+            }
+            if (next.has_value() && isWord(next.value(), L"helper"))
+            {
+                next = after(next.value());
+                if (next.has_value())
+                    next = after(next.value());
+                if (next.has_value())
+                    next = after(next.value());
+            }
+            for (const std::wstring_view bracket : { L"(", L"[" })
+            {
+                if (!next.has_value() || !isMarkAt(next.value(), bracket))
+                    continue;
+                const std::wstring_view closer = bracket == L"(" ? L")" : L"]";
+                while (next.has_value() && !isMarkAt(next.value(), closer))
+                    next = after(next.value());
+                if (next.has_value())
+                    next = after(next.value());
+            }
+            if (!next.has_value())
+                return true;
+            return !isMarkAt(next.value(), L";") && !isWord(next.value(), L"of");
+        }
+
+        bool PascalIndent::opensAny(const Place& place)
+        {
+            return opensBlock(place) || opensBody(place);
+        }
+
+        bool PascalIndent::isCaseElse(const Place& place)
+        {
+            if (!isWord(place, L"else"))
+                return false;
+            const std::optional<Place> previous = before(place);
+            return previous.has_value() && isMarkAt(previous.value(), L";");
+        }
+
+        bool PascalIndent::isMiddle(const Place& place)
+        {
+            return isListed(place, k_pascalIndentMiddles) || isCaseElse(place);
+        }
+
+        bool PascalIndent::isFilePart(const Place& place)
+        {
+            if (!isListed(place, k_pascalFileParts))
+                return false;
+            return !isWord(place, L"interface") || !opensBody(place);
+        }
+
+        bool PascalIndent::opensRoutine(const Place& place)
+        {
+            if (isWord(place, L"class"))
+            {
+                const std::optional<Place> next = after(place);
+                return next.has_value() && next->line == place.line
+                    && isListed(next.value(), k_pascalRoutineOpeners);
+            }
+            if (!isListed(place, k_pascalRoutineOpeners))
+                return false;
+            const std::optional<Place> previous = before(place);
+            if (!previous.has_value())
+                return true;
+            for (const std::wstring_view typeMark : { L"=", L":", L":=", L"(", L"," })
+            {
+                if (isMarkAt(previous.value(), typeMark))
+                    return false;
+            }
+            return !isWord(previous.value(), L"of") && !isWord(previous.value(), L"class")
+                && !isWord(previous.value(), L"to");
+        }
+
+        bool PascalIndent::isStop(const Place& place)
+        {
+            return isMarkAt(place, L";") || isMarkAt(place, L"(") || isMarkAt(place, L"[")
+                || opensAny(place) || isListed(place, k_pascalIndentSections)
+                || isMiddle(place) || isFilePart(place);
+        }
+
+        std::optional<PascalIndent::Place> PascalIndent::openerBefore(const Place& place)
+        {
+            std::optional<Place> at = before(place);
+            while (at.has_value())
+            {
+                if (isListed(at.value(), k_pascalIndentClosers))
+                {
+                    const std::optional<Place> opener = openerBefore(at.value());
+                    if (!opener.has_value())
+                        return std::nullopt;
+                    at = before(opener.value());
+                    continue;
+                }
+                if (isMarkAt(at.value(), L")") || isMarkAt(at.value(), L"]"))
+                {
+                    const std::optional<Place> bracket = bracketOpener(at.value());
+                    if (!bracket.has_value())
+                        return std::nullopt;
+                    at = before(bracket.value());
+                    continue;
+                }
+                if (opensAny(at.value()))
+                {
+                    // A record's variant part opens with a case the record's own end closes.
+                    if (isWord(at.value(), L"case"))
+                    {
+                        const std::optional<Place> enclosing = openerBefore(at.value());
+                        if (enclosing.has_value() && isWord(enclosing.value(), L"record"))
+                            return enclosing;
+                    }
+                    return at;
+                }
+                at = before(at.value());
+            }
+            return std::nullopt;
+        }
+
+        std::optional<PascalIndent::Place> PascalIndent::bracketOpener(const Place& place)
+        {
+            std::size_t depth = 0;
+            std::optional<Place> at = before(place);
+            while (at.has_value())
+            {
+                if (isMarkAt(at.value(), L")") || isMarkAt(at.value(), L"]"))
+                    ++depth;
+                else if (isMarkAt(at.value(), L"(") || isMarkAt(at.value(), L"["))
+                {
+                    if (depth == 0)
+                        return at;
+                    --depth;
+                }
+                at = before(at.value());
+            }
+            return std::nullopt;
+        }
+
+        PascalIndent::StatementStart PascalIndent::statementStart(const Place& last)
+        {
+            StatementStart result{ .first = last };
+            std::optional<Place> at = last;
+            while (at.has_value())
+            {
+                if (at->line != last.line || at->index != last.index)
+                {
+                    if (isStop(at.value()))
+                    {
+                        result.stop = at;
+                        return result;
+                    }
+                }
+                std::optional<Place> groupStart;
+                if (isListed(at.value(), k_pascalIndentClosers))
+                    groupStart = openerBefore(at.value());
+                else if (isMarkAt(at.value(), L")") || isMarkAt(at.value(), L"]"))
+                    groupStart = bracketOpener(at.value());
+                else
+                    groupStart = at;
+                if (!groupStart.has_value())
+                    return result;
+                result.first = groupStart.value();
+                at = before(groupStart.value());
+            }
+            return result;
+        }
+
+        std::optional<std::size_t> PascalIndent::ifColumn(const Place& elseWord)
+        {
+            // The then first, whole blocks and brackets read past, and then its if.
+            bool thenFound = false;
+            std::optional<Place> at = before(elseWord);
+            while (at.has_value())
+            {
+                if (isListed(at.value(), k_pascalIndentClosers))
+                {
+                    const std::optional<Place> opener = openerBefore(at.value());
+                    if (!opener.has_value())
+                        return std::nullopt;
+                    at = before(opener.value());
+                    continue;
+                }
+                if (isMarkAt(at.value(), L")") || isMarkAt(at.value(), L"]"))
+                {
+                    const std::optional<Place> bracket = bracketOpener(at.value());
+                    if (!bracket.has_value())
+                        return std::nullopt;
+                    at = before(bracket.value());
+                    continue;
+                }
+                if (thenFound ? isWord(at.value(), L"if") : isWord(at.value(), L"then"))
+                {
+                    if (thenFound)
+                        return columnOf(at->line);
+                    thenFound = true;
+                }
+                else if (isMarkAt(at.value(), L";") || opensAny(at.value()) || isMiddle(at.value()))
+                    return std::nullopt;
+                at = before(at.value());
+            }
+            return std::nullopt;
+        }
+
+        std::optional<std::size_t> PascalIndent::sectionColumn(const Place& place)
+        {
+            // A routine whose body has been read past is closed, and so are its sections: the
+            // section the word closes stands before the routine's header. Each body read past
+            // waits for its own header, nested routines' included.
+            std::size_t bodies = 0;
+            std::optional<Place> at = before(place);
+            while (at.has_value())
+            {
+                if (isListed(at.value(), k_pascalIndentClosers))
+                {
+                    const std::optional<Place> opener = openerBefore(at.value());
+                    if (!opener.has_value())
+                        return 0;
+                    if (isWord(opener.value(), L"begin") || isWord(opener.value(), L"asm"))
+                        ++bodies;
+                    at = before(opener.value());
+                    continue;
+                }
+                if (isMarkAt(at.value(), L")") || isMarkAt(at.value(), L"]"))
+                {
+                    const std::optional<Place> bracket = bracketOpener(at.value());
+                    if (!bracket.has_value())
+                        return 0;
+                    at = before(bracket.value());
+                    continue;
+                }
+                if (bodies != 0 && opensRoutine(at.value()))
+                {
+                    --bodies;
+                    at = before(at.value());
+                    continue;
+                }
+                if (bodies == 0 && (isListed(at.value(), k_pascalIndentSections)
+                    || opensRoutine(at.value()) || isFilePart(at.value())))
+                {
+                    return columnOf(at->line);
+                }
+                if (isFilePart(at.value()) || opensAny(at.value()) || isMiddle(at.value())
+                    || isMarkAt(at.value(), L"(") || isMarkAt(at.value(), L"["))
+                {
+                    return std::nullopt;
+                }
+                at = before(at.value());
+            }
+            return 0;
+        }
+
+        std::optional<std::size_t> PascalIndent::nestedRoutineColumn(const Place& place)
+        {
+            // Each body read past - or a forward or an external, which says there is none - waits
+            // for its own header. The header that settles the first of them is the routine this
+            // one stands beside; a header with none waiting is a routine still open, its body to
+            // come, and this one stands inside it.
+            std::size_t bodies = 0;
+            std::optional<Place> at = before(place);
+            while (at.has_value())
+            {
+                if (isListed(at.value(), k_pascalIndentClosers))
+                {
+                    const std::optional<Place> opener = openerBefore(at.value());
+                    if (!opener.has_value())
+                        return std::nullopt;
+                    if (isWord(opener.value(), L"begin") || isWord(opener.value(), L"asm"))
+                        ++bodies;
+                    at = before(opener.value());
+                    continue;
+                }
+                if (isMarkAt(at.value(), L")") || isMarkAt(at.value(), L"]"))
+                {
+                    const std::optional<Place> bracket = bracketOpener(at.value());
+                    if (!bracket.has_value())
+                        return std::nullopt;
+                    at = before(bracket.value());
+                    continue;
+                }
+                if (isWord(at.value(), L"forward") || isWord(at.value(), L"external"))
+                    ++bodies;
+                else if (opensRoutine(at.value()))
+                {
+                    if (bodies == 1)
+                        return columnOf(at->line);
+                    if (bodies != 0)
+                    {
+                        --bodies;
+                        at = before(at.value());
+                        continue;
+                    }
+                    if (declaresOnly(at.value()))
+                        return std::nullopt;
+                    return columnOf(at->line) + m_width;
+                }
+                else if (isFilePart(at.value()) || opensAny(at.value()) || isMiddle(at.value()))
+                    return std::nullopt;
+                at = before(at.value());
+            }
+            return std::nullopt;
+        }
+
+        bool PascalIndent::declaresOnly(const Place& place)
+        {
+            // Back to what the header stands in: a type's body or a unit's interface part, where
+            // headers declare, or a routine's body, which says the headers here have their own.
+            std::optional<Place> at = before(place);
+            while (at.has_value())
+            {
+                if (isFilePart(at.value()))
+                    return isWord(at.value(), L"interface");
+                if (opensAny(at.value()) || isMiddle(at.value()))
+                    return true;
+                if (isListed(at.value(), k_pascalIndentClosers))
+                {
+                    const std::optional<Place> opener = openerBefore(at.value());
+                    if (!opener.has_value())
+                        return false;
+                    if (isWord(opener.value(), L"begin") || isWord(opener.value(), L"asm"))
+                        return false;
+                    at = before(opener.value());
+                    continue;
+                }
+                at = before(at.value());
+            }
+            return false;
+        }
+
+        bool PascalIndent::closesAttribute(const Place& place)
+        {
+            if (!isMarkAt(place, L"]"))
+                return false;
+            const std::optional<Place> opener = bracketOpener(place);
+            return opener.has_value() && opener->index == 0;
+        }
+
+        std::size_t PascalIndent::followingColumn(const Place& previous)
+        {
+            const std::size_t previousColumn = columnOf(previous.line);
+            if (isListed(previous, k_pascalIndentHangers))
+                return columnOf(statementStart(previous).first.line) + m_width;
+            if (isWord(previous, L"else") || opensAny(previous) || isMiddle(previous)
+                || isListed(previous, k_pascalIndentSections) || isWord(previous, L"of")
+                || isMarkAt(previous, L"(") || isMarkAt(previous, L"["))
+            {
+                return previousColumn + m_width;
+            }
+            if (isFilePart(previous))
+                return previousColumn;
+            // A class's parent list ends the line that opens its body.
+            if (isMarkAt(previous, L")"))
+            {
+                const std::optional<Place> bracket = bracketOpener(previous);
+                const std::optional<Place> named = bracket.has_value()
+                    ? before(bracket.value())
+                    : std::nullopt;
+                if (named.has_value() && opensBody(named.value()))
+                    return columnOf(named->line) + m_width;
+            }
+
+            const StatementStart start = statementStart(previous);
+            const std::size_t firstColumn = columnOf(start.first.line);
+            const bool bracketed = start.stop.has_value()
+                && (isMarkAt(start.stop.value(), L"(") || isMarkAt(start.stop.value(), L"["));
+            const bool sameLine = start.stop.has_value()
+                && start.stop->line == start.first.line;
+            const bool complete = isMarkAt(previous, L";") || isMarkAt(previous, L",")
+                || isListed(previous, k_pascalIndentClosers) || closesAttribute(previous);
+            if (!complete)
+            {
+                // The statement goes on past the line: one level in from where it starts, or
+                // the items of a bracket where the bracket opened a line before.
+                if (bracketed && !sameLine)
+                    return firstColumn;
+                if (bracketed)
+                    return columnOf(start.stop->line) + m_width;
+                return firstColumn + m_width;
+            }
+
+            if (!start.stop.has_value())
+                return firstColumn;
+            const Place stop = start.stop.value();
+            // A uses clause ends with its semicolon, and so does the section it is.
+            if (isMarkAt(previous, L";") && isListed(stop, k_pascalOneEntrySections))
+                return columnOf(stop.line);
+            // A statement on the same line as the block or the section it opens stands one
+            // level inside it, as the next one does.
+            const bool opening = opensAny(stop) || isMiddle(stop) || bracketed
+                || isListed(stop, k_pascalIndentSections);
+            if (opening && sameLine)
+                return columnOf(stop.line) + m_width;
+            return firstColumn;
+        }
+
+        std::wstring_view PascalIndent::closerOf(const std::size_t line)
+        {
+            const PascalWords& words = wordsOf(line);
+            if (words.empty())
+                return {};
+            const Place last = { line, words.size() - 1 };
+            if (isListed(last, k_pascalCompletedOpeners) || opensBody(last))
+                return k_pascalBlockCloser;
+            if (isMarkAt(last, L")"))
+            {
+                const std::optional<Place> bracket = bracketOpener(last);
+                const std::optional<Place> named = bracket.has_value()
+                    ? before(bracket.value())
+                    : std::nullopt;
+                if (named.has_value() && opensBody(named.value()))
+                    return k_pascalBlockCloser;
+                return {};
+            }
+            if (!isWord(last, L"of"))
+                return {};
+            // A case's header - but not a record's variant part, which the record's end closes.
+            for (std::size_t index = 0; index != words.size(); ++index)
+            {
+                const Place word = { line, index };
+                if (!isWord(word, L"case"))
+                    continue;
+                const std::optional<Place> enclosing = openerBefore(word);
+                if (enclosing.has_value() && isWord(enclosing.value(), L"record"))
+                    return {};
+                return k_pascalBlockCloser;
+            }
+            return {};
+        }
     }
 
     bool pascalHook(Scan& scan)
@@ -1086,5 +1835,12 @@ namespace ClaFi::Syntax
         const PascalWords words = pascalWords(text);
         PascalReader reader{ text, words };
         return reader.read();
+    }
+
+    LineIndent pascalIndent(const SourceLines& lines, const std::size_t line,
+        const std::size_t width)
+    {
+        PascalIndent placing{ lines, width };
+        return placing.place(line);
     }
 }
