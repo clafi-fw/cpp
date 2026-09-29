@@ -28,6 +28,19 @@ something per file - a parsed theme, say - rebuilds it in filesRead, which is to
 time it has been read afresh, a missing directory included. An empty directory is a folder the
 platform could not name, and nothing is ever written there.
 
+## Templates
+
+A template is a document a new file is made from, offered under its name: the node the file is
+written with, through writeDocument, and the stem the file is made under where the template has
+one of its own - the kind's otherwise. A template with no document makes an empty file. The
+folder holds them in the order New lists them, and the application fills the list before any
+page is built, because a page reads it once, when its buttons are made. With one template or
+none, New is a plain button making that template or an empty file; with more, the face makes the
+first and the strip lists them all. A file that still holds what a template put there holds no
+work, and matchesTemplate says so - by reading the file into a clone of each template's document
+and comparing - so a folder's isEdited asks it before it calls a file edited, and deleting a
+document that was only ever made asks no question.
+
 ## Read
 
 readDocument puts a file's document into a node, whole - nothing of what the node held before
@@ -91,12 +104,13 @@ are built with come from editHandler and menuHandler. Nothing here runs before t
 every command answers a press or a report. A derived page that owes the rebuilt tiles something
 of its own adds it after documentsRebuilt.
 
-New makes an empty file under the kind's new stem, numbered past the names taken, and puts an
-editor over its tile once the rebuild has made one - on a tick, because the rebuild that made the
-tile is still on the stack. Delete is claimed by the page, so the tool bar button, the Delete key
-and the menu item run one implementation against the page's selection. Open is the browser's
-command and the page names what to open: the tile the user is on, which a right click has just
-moved the current item to. A press on a tile opens it, and the keyboard's press is a press.
+New makes a file from the folder's first template, or an empty one where it has none - see
+Templates - numbered past the names taken, and puts an editor over its tile once the rebuild has
+made one - on a tick, because the rebuild that made the tile is still on the stack. Delete is
+claimed by the page, so the tool bar button, the Delete key and the menu item run one
+implementation against the page's selection. Open is the browser's command and the page names what
+to open: the tile the user is on, which a right click has just moved the current item to. A press
+on a tile opens it, and the keyboard's press is a press.
 
 ## DocumentsHomePage
 

@@ -10,6 +10,7 @@ import ClaFi.Controls.Button;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.ScrollBox;
+import ClaFi.Controls.SplitButton;
 import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.StackView;
 
@@ -65,7 +66,10 @@ namespace ClaFi::Documents
         void showTileMenu(DocumentTile&, ContextPopupEvent&);
         // Runs Open on the tile the list stands on. The stamp is the press behind the gesture.
         void openDocument(Control& presenter, InputStamp);
-        void createNewFile();
+        // Makes a file from the template, or an empty one, and puts an editor over its tile.
+        void createNewFile(const DocumentTemplate*);
+        // Lists the folder's templates under the strip, each making a file.
+        void showTemplates(DropdownEvent&);
         // Under `initiator`, which is what asked for the deletion - the question it may raise
         // stands there.
         void deleteSelectedFiles(Control& initiator);
@@ -85,7 +89,9 @@ namespace ClaFi::Documents
         std::wstring m_fileNameToRename{};
         UiTimer m_renameTimer{};
 
-        Button& m_newButton{ toolBar().add<ToolButton>(
+        // The face makes the first template; the strip lists them all, and stands only where
+        // there is more than one to list.
+        SplitButton& m_newButton{ toolBar().add<SplitButton>(
             k_buttonIconSize,
             ButtonViewMode::LeftIcon,
             Button::OnPaintIcon{ Icons::PlusMark::paint },
@@ -138,8 +144,14 @@ namespace ClaFi::Documents
         DocumentsBasePage{ params, std::forward<Args>(args)... }
     {
         m_newButton.onClick([this](ClickEvent&) {
-            createNewFile();
+            const DocumentTemplates& templates = folder().templates();
+            createNewFile(templates.empty() ? nullptr : &templates.front());
         });
+        m_newButton.onDropdown([this](DropdownEvent& event) {
+            showTemplates(event);
+        });
+        if (folder().templates().size() < 2ull)
+            m_newButton.secondaryPart()->setVisible(false);
         // A folder the platform could not name is nowhere to make a file.
         m_newButton.onGetState([this](GetStateEvent& event) {
             event.state.enabled = !folder().directory().empty();

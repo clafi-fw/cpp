@@ -379,6 +379,27 @@ namespace ClaFi
         return result.append(L"\\");
     }
 
+    std::wstring Platform::executableDirectory()
+    {
+        std::wstring file(MAX_PATH, L'\0');
+        while (true)
+        {
+            const DWORD length = ::GetModuleFileNameW(nullptr, file.data(),
+                static_cast<DWORD>(file.size()));
+            if (length == 0u)
+                return {};
+            // A name that fills the buffer was cut, and the buffer grows until it is not.
+            if (length < file.size())
+            {
+                file.resize(length);
+                break;
+            }
+            file.resize(file.size() * 2u);
+        }
+        std::wstring directory = std::filesystem::path{ file }.parent_path().wstring();
+        return directory.append(L"\\");
+    }
+
     void Platform::debugOutput(const std::wstring_view line)
     {
         std::wstring text{ line };

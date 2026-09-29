@@ -2,6 +2,7 @@ module ClaFi.Documents.Folder;
 
 import ClaFi.Controls.InPlaceEdit;
 
+import ClaFi.Core.DomEngine;
 import ClaFi.Core.System.DirWatch;
 import ClaFi.Core.TextEngine.Text;
 
@@ -74,25 +75,36 @@ namespace ClaFi::Documents
         return true;
     }
 
-    std::wstring DocumentsFolder::createFile()
+    std::wstring DocumentsFolder::createFile(const DocumentTemplate* documentTemplate)
     {
         if (m_directory.empty())
             return {};
         needDirectory();
 
+        const std::wstring_view stem = documentTemplate && !documentTemplate->newStem.empty()
+            ? std::wstring_view{ documentTemplate->newStem }
+            : m_kind.newStem;
         int counter = 0;
         std::filesystem::path file{};
         std::error_code errorCode;
         do
         {
             ++counter;
-            file = newFile(counter);
+            file = newFile(stem, counter);
         }
         while (std::filesystem::exists(file, errorCode));
 
-        const std::ofstream stream{ file, std::ios::binary | std::ios::trunc };
-        if (!stream)
-            return {};
+        if (documentTemplate && documentTemplate->document)
+        {
+            if (!writeDocument(*documentTemplate->document, file))
+                return {};
+        }
+        else
+        {
+            const std::ofstream stream{ file, std::ios::binary | std::ios::trunc };
+            if (!stream)
+                return {};
+        }
         return file.filename().wstring();
     }
 
@@ -146,9 +158,25 @@ namespace ClaFi::Documents
             event.refuse(L"A name cannot contain any of \\ / : * ? \" < > |");
     }
 
-    std::filesystem::path DocumentsFolder::newFile(const int counter) const
+    bool DocumentsFolder::matchesTemplate(const std::filesystem::path& path) const
     {
-        std::wstring name{ m_kind.newStem };
+        for (const DocumentTemplate& documentTemplate : m_templates)
+        {
+            if (!documentTemplate.document)
+                continue;
+            // A node of the template's own type, so the read fills what the comparison expects.
+            const std::unique_ptr<Dom::DomNodeBase> read =
+                documentTemplate.document->clone(nullptr);
+            if (readDocument(path, *read) && Dom::sameValue(*read, *documentTemplate.document))
+                return true;
+        }
+        return false;
+    }
+
+    std::filesystem::path DocumentsFolder::newFile(const std::wstring_view stem,
+        const int counter) const
+    {
+        std::wstring name{ stem };
         if (counter > 1)
             name.append(L" (").append(std::to_wstring(counter)).append(L")");
         name.append(m_kind.extension);

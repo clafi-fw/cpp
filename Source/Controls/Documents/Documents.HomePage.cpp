@@ -11,6 +11,7 @@ import ClaFi.Browser.Control;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Menu;
 import ClaFi.Controls.MessageDialog;
+import ClaFi.Controls.SplitButton;
 import ClaFi.Controls.StackView;
 
 import ClaFi.StdActions;
@@ -175,9 +176,9 @@ namespace ClaFi::Documents
         Browser::Actions::open.invoke(form(), &presenter, stamp);
     }
 
-    void DocumentsHomePageBase::createNewFile()
+    void DocumentsHomePageBase::createNewFile(const DocumentTemplate* documentTemplate)
     {
-        const std::wstring fileName = folder().createFile();
+        const std::wstring fileName = folder().createFile(documentTemplate);
         // The folder may have been made along with the file, and Open folder reads whether it is
         // there.
         m_exploreButton.invalidateState();
@@ -188,6 +189,18 @@ namespace ClaFi::Documents
         // standing on it and opening an editor over it is the rest of creating it.
         m_tiles->selectFileNameAfterRebuild(fileName);
         m_fileNameToRename = fileName;
+    }
+
+    void DocumentsHomePageBase::showTemplates(DropdownEvent& event)
+    {
+        Menu menu{ event.button() };
+        for (const DocumentTemplate& documentTemplate : folder().templates())
+        {
+            menu.add(documentTemplate.name, [this, &documentTemplate](Control&) {
+                createNewFile(&documentTemplate);
+            });
+        }
+        menu.executeUnder(event.button());
     }
 
     void DocumentsHomePageBase::deleteSelectedFiles(Control& initiator)
