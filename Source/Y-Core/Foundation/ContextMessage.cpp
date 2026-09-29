@@ -14,11 +14,13 @@ namespace ClaFi
 {
     Control* ContextMessage::s_control{ nullptr };
     Text ContextMessage::s_text{};
+    ContextMessage::Clock::time_point ContextMessage::s_raisedAt{};
 
     void ContextMessage::show(Control& about, Text text)
     {
         s_control = &about;
         s_text = std::move(text);
+        s_raisedAt = Clock::now();
 
         // Taken down before it is put up, rather than moved onto the new words: a tooltip already
         // standing about this control was measured and placed from what the control says for
@@ -27,6 +29,11 @@ namespace ClaFi
         // acting, and neither of those is happening inside this call.
         Tooltip::stopAndHide();
         about.form().tooltip().showRightNow(about);
+    }
+
+    bool ContextMessage::justRaised()
+    {
+        return s_control && Clock::now() - s_raisedAt < k_movesIgnoredFor;
     }
 
     bool ContextMessage::answer(const Control& about, GetTooltipEvent& event)

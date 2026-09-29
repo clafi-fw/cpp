@@ -29,7 +29,7 @@ namespace ClaFi
         };
 
         spot = ColorEffect{
-            { ColorRuleHueOp::ExactValue, 0.805479f },  // H
+            { ColorRuleHueOp::PaletteColor3, 0.805479f }, // H
             { ColorRuleOp::Set, 1.0f },                 // S
             { ColorRuleOp::Set, 0.648933f }             // E
         };

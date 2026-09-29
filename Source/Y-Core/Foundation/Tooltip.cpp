@@ -69,7 +69,12 @@ namespace ClaFi
         // text is one zone of it and the rest of the control is another - and crossing between
         // two zones of one control is not the pointer going anywhere. The window is left exactly
         // as it stands, rather than taken down and put back up a moment later.
-        if (ContextMessage::control() && ContextMessage::control() == Input::hoveredControl())
+        //
+        // Nor is a change arriving right after the message went up: the window the message was
+        // raised from has gone down under a still pointer, and the move that hands the pointer to
+        // this form says where it already was - see ContextMessage::justRaised.
+        const Control* about = ContextMessage::control();
+        if (about && (about == Input::hoveredControl() || ContextMessage::justRaised()))
             return;
 
         // The pointer has gone to something else, so the window goes - and the message goes with

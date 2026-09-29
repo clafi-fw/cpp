@@ -207,6 +207,8 @@ namespace ThisApp
         // answers whether they said to write over it. Raised from inside the naming question and
         // owned by the answer that asked, so it stands on top of it - see AcceptEditEvent.
         [[nodiscard]] bool confirmReplacingTheme(Control& initiator, std::wstring_view stem) const;
+        // Asks whether the user is the one this button is for, and answers whether they said so.
+        [[nodiscard]] bool confirmWritingToSource(Control& initiator) const;
         void writeThemeTo(const std::filesystem::path& fileName) const;
         // The file a user theme of this name stands in. Save's own file is named by the page and
         // not through here: a built-in's page name already carries its own extension.
@@ -244,7 +246,8 @@ namespace ThisApp
         // A pick was made on this page. The action has already moved the answer and refreshed
         // every presenter of it; what is left is the document this page is showing.
         void codeOptionPicked(ClickEvent&);
-        // Writes this theme as the framework's own, and says what came of it.
+        // Writes this theme as the framework's own once the user has said they are a ClaFi
+        // developer, and says beside the button what came of it.
         void writeToSource(ClickEvent&);
     private:
         static constexpr TagValue k_harmonyTag = 2ull;

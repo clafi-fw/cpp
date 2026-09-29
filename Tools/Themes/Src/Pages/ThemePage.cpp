@@ -607,6 +607,24 @@ namespace ThisApp
         return dialog.execute() == DialogButton::Yes;
     }
 
+    bool ThemePage::confirmWritingToSource(Control& initiator) const
+    {
+        Text message{};
+        message << L"This rewrites " << m_builtInColorsFile.filename().wstring()
+            << L" in the framework's source tree. Are you a ClaFi developer?";
+
+        MessageDialog dialog{
+            initiator,
+            L"Write to source",
+            message,
+            MessageIcon::Question
+        };
+        dialog.add(DialogButton::Yes);
+        // Opens on No: Return declines, Escape dismisses, and only a deliberate move reaches Yes.
+        dialog.add(DialogButton::No).setFocus();
+        return dialog.execute() == DialogButton::Yes;
+    }
+
     void ThemePage::writeThemeTo(const std::filesystem::path& fileName) const
     {
         const Dom::FileFormat::ClaFi ff;
@@ -814,24 +832,30 @@ namespace ThisApp
 
     void ThemePage::writeToSource(ClickEvent& event)
     {
-        Text message{};
-        MessageIcon icon = MessageIcon::Information;
+        Control& button = *event.control;
+        if (!confirmWritingToSource(button))
+            return;
+
         switch (writeBuiltInColors(m_builtInColorsFile, editColors()))
         {
         case SourceWrite::Written:
-            message << L"The theme is written to " << m_builtInColorsFile.wstring()
-                << L". It is the built-in theme from the next build.";
+            ContextMessage::show(
+                button,
+                messageText(MessageIcon::Ok, L"Written. The built-in theme from the next build")
+            );
             break;
         case SourceWrite::Unchanged:
-            message << m_builtInColorsFile.wstring() << L" already states this theme.";
+            ContextMessage::show(
+                button,
+                messageText(MessageIcon::Information, L"The source already states this theme")
+            );
             break;
         case SourceWrite::Failed:
-            message << m_builtInColorsFile.wstring() << L" could not be written.";
-            icon = MessageIcon::Error;
+            ContextMessage::show(
+                button,
+                messageText(MessageIcon::Error, L"The source could not be written")
+            );
             break;
         }
-        MessageDialog dialog{ *event.control, L"Write to source", message, icon };
-        dialog.add(DialogButton::Ok);
-        dialog.execute();
     }
 }
