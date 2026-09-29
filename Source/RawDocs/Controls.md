@@ -423,6 +423,55 @@ own. The inks are a Syntax::Inks, one per kind of token; a kind left in the text
 states no span at all, which is what keeps operators and punctuation from costing anything.
 WordWrap::No is stated before the caller's arguments, as HexView states it: source is lines.
 
+A box completes names out of a Syntax::CompletionEntries the host states through
+`completion` - named, not copied, so the host keeps it alive for as long as the box stands.
+The language's keywords join the list. A box with no list stated completes nothing, and a
+read-only box completes nothing either. What the list looks like and how the keys drive it
+is under CompletionList.
+
+## CompletionList
+
+The list under the caret of the names the word being typed can complete to. It is what the
+in-place editor's SuggestionList is, made for source: a window of its own standing on the
+box, nothing in it able to take the focus, the rows reached by the pointer and by the keys
+the box hands on. THE CARET STAYS IN THE BOX, and every key reaches the box first - see
+SuggestionList for the forward chain and wnd_char.
+
+WHEN IT OPENS. By itself on the first character of a name typed and on a typed dot, and
+narrowing with every character after; on demand on Ctrl+Space, which lists everything the
+place can take, a name typed or not. It closes when nothing matches, when the name is
+backspaced away, on Escape, and on the caret leaving - a click, an arrow key, the focus
+going. It never opens inside a comment or a string, and never over a paste: only a typed
+character asks for it, an edit merely brings a list already up up to date. The request is
+answered on a 0 ms timer once the input that made it has been delivered, and one that finds
+the form's layout unsettled waits on the pass that settles it, as the SuggestionList's does.
+
+WHAT IS LISTED. The rows are built once per language and list - the entries and the
+language's keywords in one scope, every class's methods and properties in the other - in
+name order under the language's case rule, and shown by scope and by prefix; see
+Syntax#completion for the place, the prefix rule and why members are one list. The first
+row shown is current when the list opens, and an exact match is that row. A row prints the
+name with the part typed so far in the accent ink, and the kind muted at the end of its line
+- function, procedure, class, property, keyword - the way a menu prints a key.
+
+THE HINT. The current row's signature, in the code style, and under it the hint's sentence,
+stand beside the list at the row's height - the form's tooltip, placed FormPlacement::Right
+on a rect at the list's edge, raised right away from the pass that lays the row out and
+after a keyboard move, and on hover as any hint is. A keyword, or an entry with neither
+signature nor hint, shows none. The hint goes with the list.
+
+A PICK IS A PICK. Return or Tab takes the current row, a click takes any row: the name as
+typed is replaced by the row's own spelling in one edit, undone as one, with the caret
+after it and the list down - so `str` becomes `StrToInt` in a language that ignores case.
+The character a taking press queued - Return's line break, Ctrl+Space's space - does not
+reach the text: the press settles it and the character reads it, as EditBox does for a
+Return the form takes. Up and Down walk the rows and stay at either end.
+
+The list is at most ten rows tall, the tool button's height each, and scrolls past that;
+at least 180 units wide; hidden rather than destroyed when it closes; and placed under the
+caret's line with its left edge at the start of the name, so the rows stand under the
+letters they complete.
+
 ## DetectLanguage
 
 Whether the box asks which language each text it is handed is in, rather than reading the

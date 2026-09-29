@@ -985,6 +985,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Colorize.cpp">
       <Filter>Y_Core\Syntax</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Completion.cpp">
+      <Filter>Y_Core\Syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Completion.cppm">
+      <Filter>Y_Core\Syntax</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Colorize.cppm">
       <Filter>Y_Core\Syntax</Filter>
     </ClCompile>

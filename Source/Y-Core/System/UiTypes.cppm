@@ -467,7 +467,8 @@ namespace ClaFi
         Bottom,
         Top,
         ContextMenu,
-        Mouse
+        Mouse,
+        Right   // beside the anchor, off its right edge and level with its top
     };
     export using TooltipPlacement = FormPlacement;
 

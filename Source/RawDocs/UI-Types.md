@@ -123,7 +123,11 @@ the width asked for; a platform that does not place toplevels for its client ans
 and leaves the position to the display server - see Wayland's `Window::place`.
 
 Everything else applies only to child popups, and the placement rect must be in the parent
-form's coordinates.
+form's coordinates. `Bottom` and `Top` drop the window under or over the rect, flipping to the
+other side when the side asked for has no room; `Right` stands it beside the rect, level with
+the rect's top and off its right edge, and off its left edge when the right has no room for it -
+the hint beside a completion list's current row is placed this way, on a rect standing at the
+list's edge. `ContextMenu` and `Mouse` hang it off the pointer.
 
 ## AutoFit
 

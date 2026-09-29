@@ -125,3 +125,32 @@ over the starts after them.
 The tokens of a line are read on demand, from its text and its stored state, by whoever is
 about to draw it. Nothing keeps them: a table of every token of a document would have to be
 spliced on every key press, and the lines on screen are the only ones anyone asks about.
+
+## Completion
+
+What a host offers a CodeBox to complete to, and the reading of a line that says what the
+caret's place can take. The data is a list of CompletionEntry - a name, its kind, the
+signature a hint shows, the hint's sentence - where an entry of kind Class carries two
+lists of its own, its methods and its properties, one level deep: a member has no members.
+The list is the host's, held by whoever read it, and a box names it rather than copying
+it. Nothing here reads a file: the framework's language files are the application's for
+now, and this is the shape they are read into.
+
+A CompletionPlace is a caret's place on a line: where the name the caret ends starts, and
+whether a dot stands right before that name. The name runs back from the caret over the
+language's name characters and is a name only if it opens as one, so a caret after `10`
+names no word. The dot counts only where what stands before it could carry a member - a
+name that is not a number, or a call's or an index's closing bracket - so a range's second
+dot and a number's decimal point name no member. What follows a dot is answered from every
+class's members, whichever class the name before the dot would have been: telling them apart
+needs the type of that name, which needs a reader of the script's own declarations that the
+box does not have. That reader is the follow-up; until it comes the members are one list.
+
+Matching is by prefix under the language's case rule - a language with `ignoreCase` matches
+any case and one without matches exactly - and the rows are ordered the same way, so among
+the names a prefix reaches the shortest, an exact match, stands first. A name is not
+completed inside a comment or a string: the line's tokens say where those stand, and a
+caret inside one or right at its end is left alone.
+
+The kinds are spelled once, in completionKindName, and read back by completionKindOf in any
+case - which is how an application's file states a kind by its word.

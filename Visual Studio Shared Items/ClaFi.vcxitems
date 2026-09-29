@@ -335,6 +335,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Colorize.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Languages.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Languages.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Completion.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Completion.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Formats.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Formats.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Transfer\Transfer.Conversion.cppm" />

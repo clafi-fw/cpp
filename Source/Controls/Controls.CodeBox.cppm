@@ -4,7 +4,11 @@ module;
 export module ClaFi.Controls.CodeBox;
 
 import ClaFi.Controls.TextBox;
+import ClaFi.Controls.Button;
+import ClaFi.Controls.ScrollBox;
+import ClaFi.Controls.StackPanel;
 
+import ClaFi.Core.Syntax.Completion;
 import ClaFi.Core.Syntax.Lines;
 import ClaFi.Core.Syntax.Lexer;
 import ClaFi.Core.Syntax.Types;
@@ -15,12 +19,14 @@ import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
+import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
     export class CodeBox;
+    class CompletionStack;
 
     // Whether the box asks which language each text it is handed is in. See Controls
     export enum class DetectLanguage
@@ -37,9 +43,72 @@ namespace ClaFi::Controls
         Syntax::Language language{};   // the answer, or none, which leaves the text plain
     };
 
+    // Which names a place on a line lists. See Controls#completionlist
+    enum class CompletionScope : std::uint8_t
+    {
+        Global,   // what stands on its own - the list's entries and the language's keywords
+        Member    // what follows a dot - every class's methods and properties
+    };
+
+    // One row of the completion list: a name the box can complete to, its kind beside it.
+    class CompletionRow : public Button
+    {
+    public:
+        CompletionRow(const CreateParams&, CompletionStack&, CompletionScope,
+            std::wstring_view name, Syntax::CompletionKind, const Syntax::CompletionEntry*);
+        [[nodiscard]] CompletionScope scope() const { return m_scope; }
+        [[nodiscard]] std::wstring_view name() const { return m_name; }
+    protected:
+        void getText(GetTextEvent&) const override;
+        // The signature and the hint beside the list. See Controls#completionlist
+        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedClick(ClickEvent&) override;
+    private:
+        CompletionStack& m_stack;
+        CompletionScope m_scope;
+        std::wstring m_name;
+        Syntax::CompletionKind m_kind;
+        const Syntax::CompletionEntry* m_entry;   // what the hint reads - null for a keyword
+    };
+
+    // The rows, shown by scope and by what is typed. See Controls#completionlist
+    class CompletionStack : public StackPanel
+    {
+    public:
+        CompletionStack(const CreateParams&, CodeBox&);
+        [[nodiscard]] CodeBox& box() const { return m_box; }
+        // The name as typed so far - what a row marks in its own.
+        [[nodiscard]] std::wstring_view typed() const { return m_typed; }
+        // Builds the rows anew: the list's names by scope and the language's keywords, in name
+        // order under the language's case rule, a member two classes name listed once.
+        void rebuild(const Syntax::Language&, const Syntax::CompletionEntries*);
+        // Shows the rows of the scope that begin with what is typed, the first of them current,
+        // and answers how many.
+        std::size_t filter(const Syntax::Language&, CompletionScope, std::wstring_view typed);
+        // Moves the current row one shown row up or down, staying at either end.
+        void moveCurrent(ScrollDirection);
+        [[nodiscard]] CompletionRow* currentRow() const;
+        // Puts the current row's hint up beside it, or takes the hint down with no row current.
+        void showCurrentHint();
+    protected:
+        // Every row may be current: the box moves it, and the base's answer would rule that out.
+        bool defaultCanFocusItem(Control&) override;
+        // The current row reads selected - the base says so only for a stack that follows the user.
+        void getControlState(GetStateEvent&) const override;
+    private:
+        void setCurrentRow(CompletionRow*);
+    private:
+        CodeBox& m_box;
+        std::wstring m_typed;
+    };
+
+    // The completion list as it is dropped: a box that scrolls, holding the rows.
+    using CompletionList = ScrollBoxWith<CompletionStack>;
+
     // A text box that colours its text as source in a language. See Controls
     export class CodeBox : public TextBox, private ColorOverlay
     {
+        friend CompletionRow;
     public:
         template<typename... Args>
         explicit CodeBox(const CreateParams&, Args&&...);
@@ -50,6 +119,9 @@ namespace ClaFi::Controls
         DECLARE_REF_PROPERTY(Syntax::Inks, inks, Syntax::defaultInks())
         // Whether the language is asked of OnDetectLanguage instead of read from language.
         DECLARE_WRITABLE_PROPERTY(DetectLanguage, detectLanguage, setDetectLanguage, DetectLanguage::No)
+        // The names the box completes to, held by whoever states them. None completes nothing.
+        DECLARE_WRITABLE_PROPERTY(const Syntax::CompletionEntries*, completion, setCompletion,
+            nullptr)
     public:
         // Asked which language a text the box was handed whole is in. See Controls
         DECLARE_EVENT(DetectLanguageEvent, OnDetectLanguage, onDetectLanguage)
@@ -58,20 +130,72 @@ namespace ClaFi::Controls
         void setLanguage(const Syntax::Language&);
         // Yes asks at once for the text the box holds, and again for every text handed whole.
         void setDetectLanguage(DetectLanguage);
+        // States the list the box completes from, or none. Named, not copied: it outlives the box.
+        void setCompletion(const Syntax::CompletionEntries*);
+        // Lists what the caret's place can complete to - Ctrl+Space. See Controls#completionlist
+        void showCompletion();
     protected:
         void textTaken(const Text&, const TextEdit*) const override;
+        void textEdited() override;
+        void caretMoved() override;
+        void nestedKeyDown(KeyDownEvent&) override;
+        void charPress(CharPressEvent&) override;
+    private:
+        // The line the caret stands on, and where the caret stands in it.
+        struct CaretLine
+        {
+            std::size_t index{ 0 };      // which line, counted from zero - the paragraph's index
+            std::size_t start{ 0 };      // where the line starts in the text
+            std::wstring_view text{};    // the line, without its newline
+            std::size_t caret{ 0 };      // the caret's index in the line
+        };
     private:
         // The language the text is read in from now on: the answer while detecting, else the one
         // stated. Reads the whole text again.
         void readWhole(std::wstring_view text) const;
         void paragraphColors(std::size_t paragraph, std::wstring_view paragraphText,
             std::vector<ColorSpan>& out) const override;
+        [[nodiscard]] bool completionShown() const;
+        // Asks for the list to be brought up to the text, once the input that asked has been
+        // delivered. Opening lists a name being typed; otherwise a list up is narrowed or taken
+        // down, and none is put up.
+        void requestCompletion(bool opening);
+        // Lists what the caret's place names, or takes the list down. See Controls#completionlist
+        void updateCompletion();
+        void hideCompletion();
+        // Makes the list's window, on the first request.
+        void ensureCompletionList();
+        // Puts the row's name in place of the name typed, in one edit, with the list down.
+        void takeCompletion(const CompletionRow&);
+        [[nodiscard]] CaretLine caretLine() const;
     private:
+        // The list's rows, as many as the theme's tool button makes tall; a longer list scrolls.
+        static constexpr float k_completionRows{ 10.0f };
+        static constexpr float k_completionPadding{ 4.0f };
+        static constexpr float k_completionMinWidth{ 180.0f };
         // The state every line starts in, kept beside the layout's shaping and on the same terms
         // - a memo of the box's own text, brought into step whenever the layout is.
         mutable Syntax::LineStates m_lines;
         // The tokens of the paragraph being drawn, grown once and reused for every paragraph after.
         mutable Syntax::Tokens m_tokens;
+        // The list, a window of its own on the box, shown and hidden as what is typed changes.
+        std::optional<Form<CompletionList>> m_completionList{};
+        // The list asked for on a key, answered once the input that asked has been delivered.
+        UiTimer m_completionRequest{};
+        bool m_completionOpening{ false };    // whether the request may put the list up
+        bool m_completionExplicit{ false };   // whether the request lists with nothing typed
+        // Whether a request found the layout unsettled and waits on the pass that settles it.
+        bool m_completionWaitsOnAlign{ false };
+        // Whether the rows are to be built anew - the language or the list has changed.
+        mutable bool m_completionRowsStale{ true };
+        // Whether the character of the press being answered belongs in the text. THE CHARACTER OF
+        // A PRESS IS QUEUED BEFORE THE PRESS IS ANSWERED, so a Return that took a row would still
+        // break the line: the press settles this and the character reads it - see charPress.
+        bool m_completionTakesChar{ true };
+        // Whether the edit under way is a row being taken, which is the one edit no list follows.
+        bool m_takingCompletion{ false };
+        ScopedEventConnection m_formAligned{};
+        ScopedEventConnection m_listAligned{};
     };
 
 
@@ -86,8 +210,14 @@ namespace ClaFi::Controls
         TextBox{ params, WordWrap::No, std::forward<Args>(args)... },
         INIT_PROPERTY(language),
         INIT_PROPERTY(inks),
-        INIT_PROPERTY(detectLanguage)
+        INIT_PROPERTY(detectLanguage),
+        INIT_PROPERTY(completion)
     {
         m_layout.setColorOverlay(this);
+        // Connected here rather than given to the timer as a construction property: MSVC rejects
+        // a this-capturing lambda in a default member initializer.
+        m_completionRequest.onTick([this](TimerEvent&){
+            updateCompletion();
+        });
     }
 }

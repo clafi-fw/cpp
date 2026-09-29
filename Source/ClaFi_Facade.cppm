@@ -93,6 +93,7 @@ export import ClaFi.Core.Syntax.Types;
 export import ClaFi.Core.Syntax.Lexer;
 export import ClaFi.Core.Syntax.Languages;
 export import ClaFi.Core.Syntax.Colorize;
+export import ClaFi.Core.Syntax.Completion;
 
 export import ClaFi.Core.AppTheme;
 

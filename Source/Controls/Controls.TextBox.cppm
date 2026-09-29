@@ -152,6 +152,9 @@ namespace ClaFi::Controls
         // the menu act on is the caret and the selection around it, so a menu dropped under a box
         // several lines tall is nowhere near either.
         [[nodiscard]] FloatRect contextMenuAnchor() const override;
+        // The rect a caret standing before that position takes, in form space - what a popup
+        // placed at a position in the text is placed by. Clamped to the text.
+        [[nodiscard]] FloatRect caretRectInForm(std::size_t pos) const;
         void setSelection(std::size_t otherPos, std::size_t caretPos);
         // The caret's one drawing site - the blink, the visual state and the window's focus meet.
         void paintText(PaintEvent&) override;
@@ -184,6 +187,17 @@ namespace ClaFi::Controls
         // Keyboard events
         void nestedKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
+        // The tail every edit shares. The caret is asked for after the pass rather than now: an
+        // edit can add or drop a row, and the box's height and the scroll range that follows it
+        // are the alignment's to give - see Control::scrollHotspot. A box that keeps something
+        // about the text beside the text - a list of what the caret's word completes to - takes
+        // its cue here, after the base's own tail.
+        virtual void textEdited();
+        // The tail every caret move shares, the box gaining or losing the focus included. It
+        // ends the undo run as well as restarting the blink: a run is what the user typed
+        // without looking away, so a click or an arrow key closes one with the text untouched.
+        // An edit moves the caret without coming through here; textEdited is its tail.
+        virtual void caretMoved();
     private:
         // What one page press crosses, and the rect the view is moved by to show it.
         struct PageMove
@@ -266,16 +280,8 @@ namespace ClaFi::Controls
         void applyEdit(TextRange range, const Text& inserted, EditKind);
         // Puts the caret where an undone or redone step left it.
         void applySelection(const EditSelection&);
-        // The tail every edit shares. The caret is asked for after the pass rather than now: an
-        // edit can add or drop a row, and the box's height and the scroll range that follows it
-        // are the alignment's to give - see Control::scrollHotspot.
-        void textEdited();
-        // The tail every caret move shares, the box gaining or losing the focus included. It
-        // ends the undo run as well as restarting the blink: a run is what the user typed
-        // without looking away, so a click or an arrow key closes one with the text untouched.
-        void caretMoved();
-        // Emits CaretMoveEvent. Both of the tails above end here: an edit moves the caret as
-        // surely as an arrow key does, and a listener has the same question either way.
+        // Emits CaretMoveEvent. Both of the tails end here: an edit moves the caret as surely
+        // as an arrow key does, and a listener has the same question either way.
         void announceCaretMove();
         // Asks every presenter of the edit actions again: an edit, a caret move and the focus
         // arriving or leaving each move what the box answers, and both tails end in it.
@@ -493,6 +499,12 @@ namespace ClaFi::Controls
         // afterwards. Same route Control::nestedGetTooltip takes for an OverText anchor.
         const FloatRect textBounds = this->textBounds(formContext(), boundsInForm());
         return caretRect(textBounds, { m_editProps.caretPos(), m_editProps.affinityTrailing });
+    }
+
+    FloatRect TextBox::caretRectInForm(const std::size_t pos) const
+    {
+        const FloatRect textBounds = this->textBounds(formContext(), boundsInForm());
+        return caretRect(textBounds, { std::min(pos, text().plainText().size()), false });
     }
 
     void TextBox::setSelection(std::size_t otherPos, std::size_t caretPos)
@@ -884,6 +896,31 @@ namespace ClaFi::Controls
         applyEdit(range, Text{ sw }, kind);
     }
 
+    void TextBox::textEdited()
+    {
+        m_editProps.targetX.reset();
+        // The link the pointer stood on was found in the text before the edit. The next move of
+        // the pointer finds it again in this one.
+        m_pointedLink = {};
+        invalidateFormAlign();
+        scrollIntoViewOnAlign();
+        restartCaretBlink();
+        announceCaretMove();
+        invalidateEditActions();
+        // LAST, once the box has finished with the edit. A listener is free to do anything with
+        // the text it has just been told about, the box included.
+        TextEditEvent event{ *this };
+        emitEvent(event);
+    }
+
+    void TextBox::caretMoved()
+    {
+        m_history.breakRun();
+        restartCaretBlink();
+        announceCaretMove();
+        invalidateEditActions();
+    }
+
     FloatRect TextBox::textBoundsInControl() const
     {
         return textBounds(formContext(), FloatRect::fromDimensions({ 0.0f, 0.0f }, dimensions()));
@@ -1083,31 +1120,6 @@ namespace ClaFi::Controls
         m_editProps.selRange = selection.range;
         m_editProps.caretOnLeft = selection.caretOnLeft;
         m_editProps.affinityTrailing = selection.affinityTrailing;
-    }
-
-    void TextBox::textEdited()
-    {
-        m_editProps.targetX.reset();
-        // The link the pointer stood on was found in the text before the edit. The next move of
-        // the pointer finds it again in this one.
-        m_pointedLink = {};
-        invalidateFormAlign();
-        scrollIntoViewOnAlign();
-        restartCaretBlink();
-        announceCaretMove();
-        invalidateEditActions();
-        // LAST, once the box has finished with the edit. A listener is free to do anything with
-        // the text it has just been told about, the box included.
-        TextEditEvent event{ *this };
-        emitEvent(event);
-    }
-
-    void TextBox::caretMoved()
-    {
-        m_history.breakRun();
-        restartCaretBlink();
-        announceCaretMove();
-        invalidateEditActions();
     }
 
     void TextBox::announceCaretMove()

@@ -681,6 +681,27 @@ namespace ClaFi::PlatformImplementation::Windows
                 anchor.topLeft() - placement.textOrigin, placement.size);
             break;
 
+        case FormPlacement::Right:
+        {
+            // Beside the anchor, level with its top: off its right edge, and off its left edge
+            // when the right has no room for the window and the left has. Neither holding it,
+            // the larger side takes it and the clamp below moves it in.
+            const float rightX = anchor.right + placement.clearance;
+            const float leftX = anchor.left - placement.clearance;
+            const float roomRight = screenArea.right - rightX;
+            const float roomLeft = leftX - screenArea.left;
+            const bool fitsRight = roomRight >= placement.size.x;
+            const bool fitsLeft = roomLeft >= placement.size.x;
+            bool placeLeft{};
+            if (fitsRight != fitsLeft)
+                placeLeft = fitsLeft;
+            else
+                placeLeft = !fitsRight && roomLeft > roomRight;
+            const float left = placeLeft ? leftX - placement.size.x : rightX;
+            result = FloatRect::fromDimensions({ left, anchor.top }, placement.size);
+            break;
+        }
+
         default: // top, bottom, mouse, mousePoint(contextMenu) cases
         {
             // The edge the window grows from on each side, and the room that side has between

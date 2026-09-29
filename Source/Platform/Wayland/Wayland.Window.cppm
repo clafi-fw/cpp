@@ -1584,6 +1584,18 @@ namespace ClaFi::PlatformImplementation::Wayland
             ::xdg_positioner_set_constraint_adjustment(positioner, k_menuConstraints);
             break;
 
+        case FormPlacement::Right:
+            // Grows rightwards from the anchor's top right corner, standing clear of it by the
+            // clearance; the compositor flips it to the left edge when the right has no room,
+            // and slides it up when the bottom has none.
+            ::xdg_positioner_set_anchor(positioner, XDG_POSITIONER_ANCHOR_TOP_RIGHT);
+            ::xdg_positioner_set_gravity(positioner, XDG_POSITIONER_GRAVITY_BOTTOM_RIGHT);
+            ::xdg_positioner_set_offset(positioner, toSurface(placement.clearance), 0);
+            ::xdg_positioner_set_constraint_adjustment(positioner,
+                XDG_POSITIONER_CONSTRAINT_ADJUSTMENT_FLIP_X
+                | XDG_POSITIONER_CONSTRAINT_ADJUSTMENT_SLIDE_Y);
+            break;
+
         default:
             // Bottom, ContextMenu and Mouse all grow downwards from the anchor's bottom edge. The
             // two pointer placements state an empty anchor and no clearance, so they hang off the
