@@ -19,6 +19,7 @@ import ClaFi.Core.DomEngine;
 import ClaFi.Core.Dom_StdSerializers;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.PaintIconEvent;
 
@@ -343,6 +344,12 @@ namespace ClaFi::Browser
     void BrowserControl::initialize(BrowserSettings& settings)
     {
         m_settings = &settings;
+
+        // The form is there by now, which is what puts this here rather than in the constructor.
+        form().onClosing([this](FormClosingEvent& event) {
+            if (!canCloseWindow())
+                event.refuse();
+        });
 
         initPageData(m_homePageData);
 
@@ -707,6 +714,20 @@ namespace ClaFi::Browser
     }
 
     // Everything in the strip was put there by addTab or restoreTab, which make BrowserTabs.
+    // A WINDOW CLOSING WITH THE SETTINGS UNKEPT IS EVERY TAB LEAVING ITS PAGE. A page's work
+    // waits in the tab's view state for the next run, and the view state reaches the disk only
+    // where the user allowed storing - so where it will not, each page is asked about now, under
+    // its own tab, and the first no keeps the window up.
+    bool BrowserControl::canCloseWindow()
+    {
+        if (appContext().configFolderExists())
+            return true;
+        for (BrowserTab& tab : tabs())
+            if (tab.page() && !canLeavePage(tab, tab))
+                return false;
+        return true;
+    }
+
     BrowserTab* BrowserControl::currentTab()
     {
         return static_cast<BrowserTab*>(m_tabs.currentItem());

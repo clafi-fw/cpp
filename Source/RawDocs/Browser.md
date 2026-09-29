@@ -102,3 +102,13 @@ document's SaveEvent - each one that was asked for, and every file in the folder
 names is removed then. So closing a tab changes nothing on the disk until the next save, and a
 run that ends without one leaves the files the last written entries name. BrowserApplication
 finalizes from its own destructor so that the exit save still finds the settings standing.
+
+## Closing
+
+A page's work waits in the tab's view state for the next run - that is what the tab files are
+for - and the view state reaches the disk only where the user allowed storing, which is the
+config folder existing. A window closing with no folder would drop that work, so the browser
+answers the form's FormClosingEvent: where the folder exists it says nothing, and otherwise it
+asks every tab with a page whether it may be left, under that tab, the way the crumb, the Up
+button and a tab's close button ask - Save, Discard or Cancel, and Cancel keeps the window up.
+A page with nothing unsaved is not asked.

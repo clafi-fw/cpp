@@ -158,9 +158,11 @@ namespace ClaFi::Controls
         Icons::XMark::paint(event);
     }
 
+    // Asked, not done: the form answers with readyToClose. The press does nothing else either.
     void CloseButton::nestedClick(ClickEvent& event)
     {
-        event.closeForm();
+        event.form.requestClose();
+        event.stopPropagation();
     }
 
     // DialogTitle

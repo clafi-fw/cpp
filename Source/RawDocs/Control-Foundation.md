@@ -29,6 +29,17 @@ The form's content has been laid out and nothing has asked for another pass. `se
 form. Raised at the end of the pass, so every rect in the form may be read from a handler; a
 message loop may not be started from one.
 
+## FormClosingEvent
+
+The form is asked to close from outside - the window's own close button, the system, a click
+on the form behind a popup. `sender()` is the form. A handler holding work the user has not
+finished settles it here, or calls `refuse()` and the window stays up; the press or the request
+that asked does nothing else either. Raised by `FormBase::readyToClose`, which answers with
+whether anything refused, and a form with an answer of its own overrides that instead - an
+in-place editor answers by whether its value was taken. `requestClose()` is the ask followed by
+the close, and is what the title bar's close button and the platform's close request both call.
+`close()` never asks: Escape has to work whatever state the form is in.
+
 ## FormPaintedEvent
 
 The form has painted: the rect it was asked to paint, and when the paint started and finished.

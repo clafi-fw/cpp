@@ -337,13 +337,26 @@ namespace ClaFi::Browser
             // is one of the lines of the list, and it is marked rather than left out - a list
             // missing the line the path went through reads as a list of somewhere else.
             //
-            // Disabled with it, because there is nowhere for a press on it to go. A menu closes on
-            // the command it ran, so a line that answered a press by doing nothing would still
-            // take the list away.
+            // ENABLED, AND ENTERED ON: the list opens with the keys on this line, so the arrows
+            // start from where the path is rather than from the top - a disabled line cannot be
+            // stood on, and the keys would skip it. A press on it goes where the tab already is,
+            // which the browser reads as staying - see BrowserControl::moveTab.
             line.setShowSelectionOnSurface(ShowSelectionOnSurface::Yes);
             line.onGetState([](GetStateEvent& event){
                 event.state.selected = true;
-                event.state.enabled = false;
+            });
+            // Ahead of the run: a form finds the focus already inside it and enters there.
+            line.setFocus();
+            // INTO VIEW ONCE THE LIST HAS ITS WINDOW. The pass that measures what to ask for is
+            // bounded by nothing, so nothing overruns in it and a scroll asked of it is spent on
+            // nothing; the aligned event is raised by the pass that lays the list out into the
+            // window it was given, and that is the one with a scroll range. Once: the scroll can
+            // ask for a pass of its own.
+            menu.onAligned([&line, scrolled = false](FormAlignedEvent&) mutable {
+                if (scrolled)
+                    return;
+                scrolled = true;
+                line.scrollIntoView();
             });
         }
         // Anchored to the whole crumb, which is what the user reads as the thing being dropped,

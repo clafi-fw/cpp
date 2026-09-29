@@ -48,6 +48,19 @@ namespace ClaFi
         using EventOf<FormBase>::EventOf;
     };
 
+    // The form is asked to close from outside, and may be refused. See Control-Foundation
+    export class FormClosingEvent : public EventOf<FormBase>
+    {
+    public:
+        using EventOf<FormBase>::EventOf;
+    public:
+        // Keeps the window up. The press or the request that asked does nothing else either.
+        void refuse() { m_refused = true; }
+        [[nodiscard]] bool refused() const { return m_refused; }
+    private:
+        bool m_refused{ false };
+    };
+
     /// @brief The form gained or lost the window focus. sender() is the form.
     export class FormFocusChangeEvent : public EventOf<FormBase>
     {
@@ -156,6 +169,7 @@ namespace ClaFi
         ~FormBase() override;
     public:
         DECLARE_EVENT(FormCloseEvent, OnClose, onClose)
+        DECLARE_EVENT(FormClosingEvent, OnClosing, onClosing)
         DECLARE_EVENT(FormFocusChangeEvent, OnFocusChange, onFocusChange)
         DECLARE_EVENT(FormPositionChangeEvent, OnPositionChange, onPositionChange)
         DECLARE_EVENT(FormAlignedEvent, OnAligned, onAligned)
@@ -267,6 +281,8 @@ namespace ClaFi
         void closeActivePopup();
         bool isKeyboardClick() const { return m_isKeyboardClick; }
         void close();
+        // Closes where readyToClose allows - how the window's close button and the system ask.
+        void requestClose();
         [[nodiscard]] CloseAction closeAction() const { return m_closeAction; }
         void setCloseAction(CloseAction value) { m_closeAction = value; }
         int execute();
@@ -289,14 +305,16 @@ namespace ClaFi
         [[nodiscard]] AutoFit autoFit() const { return m_autoFit; }
         void setAutoFit(AutoFit value) { m_autoFit = value; }
         // Asked before something OUTSIDE this form closes it - a click on the form behind a
-        // popup. False keeps the window up, and the press that asked does nothing else either.
+        // popup, the window's own close button. False keeps the window up, and the press that
+        // asked does nothing else either.
         //
         // IT IS ALLOWED TO ACT, which is why it is not spelled canClose(): a form holding work
         // the user has not finished settles that work here and answers by whether it could. That
         // is what lets an in-place editor whose value nothing will take stay open and say so,
         // rather than losing the edit to a click somewhere else. close() does not ask - Escape
-        // has to work whatever state the form is in.
-        [[nodiscard]] virtual bool readyToClose() { return true; }
+        // has to work whatever state the form is in. The answer as it stands is the handlers' -
+        // see FormClosingEvent - and a form with an answer of its own overrides it.
+        [[nodiscard]] virtual bool readyToClose();
     public:
         // Builds a popup window over this form and gives it back to the caller to run. What the
         // root control is - a list that tracks a current item, a panel that tracks nothing - is

@@ -481,6 +481,13 @@ namespace ClaFi
         emitEvent(event);
     }
 
+    // A form that is not ready stays up, and the request is spent.
+    void FormBase::requestClose()
+    {
+        if (readyToClose())
+            close();
+    }
+
     int FormBase::execute()
     {
         const bool claimedRootLoop = appContext().claimRootLoop(*this);
@@ -541,6 +548,13 @@ namespace ClaFi
         m_minWidth = value;
         if (m_placementValid)
             initPlacement();
+    }
+
+    bool FormBase::readyToClose()
+    {
+        FormClosingEvent event{ *this };
+        emitEvent(event);
+        return !event.refused();
     }
 
     void FormBase::maximize()
@@ -1346,7 +1360,7 @@ namespace ClaFi
 
     void FormBase::wnd_closeRequested()
     {
-        close();
+        requestClose();
     }
 
     void FormBase::forgetControl(Control* item)
