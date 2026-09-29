@@ -54,7 +54,7 @@ namespace ClaFi
             },
             ColorRule{
                 .inputs{ RuleInput::Hovered },
-                .andInputs{ RuleInput::Current, RuleInput::WindowFocused, RuleInput::Mouse },
+                .andInputs{ RuleInput::Current, RuleInput::Mouse },
                 .output = PaintChannel::Stroke,
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
