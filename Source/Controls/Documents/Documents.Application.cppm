@@ -7,6 +7,7 @@ import ClaFi.Browser.Application;
 
 import ClaFi.App.Application;
 
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;

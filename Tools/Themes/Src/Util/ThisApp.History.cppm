@@ -162,6 +162,6 @@ namespace ThisApp
             return;
 
         m_entries.set_capacity(std::min(k_maxStates,
-            std::max(k_firstStates, m_entries.capacity() * 2ull)));
+            std::max(k_firstStates, m_entries.capacity() * 2)));
     }
 }

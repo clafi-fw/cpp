@@ -25,15 +25,7 @@ namespace ThisApp
         return {
             .name = Text{ L"Themes" },
             .publisher = L"ClaFi Framework",
-            .description = Text{
-                L"Makes and edits the color themes ClaFi applications wear, "
-                L"and previews them live. Every theme also reads as C++, ClaFi, XML and JSON.",
-                TextOp::EndLine,
-                TextOp::EndLine,
-                L"The UI is terrible now - that long grid of sliders is unbearable, and it will be "
-                L"remade, as well as the internal data structures and file formats. "
-                L"But it serves great as a showcase of grids, expanders and in-place editors."
-            }
+            .description = Text{ L"Edits the themes other ClaFi applications use." }
         };
     }
 
