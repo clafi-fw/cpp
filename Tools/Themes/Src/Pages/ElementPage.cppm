@@ -1,5 +1,6 @@
 export module ThisApp.ElementPage;
 
+import ThisApp.ApplyToControl;
 import ThisApp.History;
 import ThisApp.RuleSlider;
 
@@ -33,8 +34,30 @@ namespace ThisApp
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // What an element page calls after it has moved its rules: where the edit stands, and its name.
-    export using OnRulesChanged = std::function<void(EditPhase, const Text& what)>;
+    // What an element page's grid holds, by the rules' places since its rows are rebuilt: the
+    // selected cell where there is one, and the rules whose rows are held beside it.
+    export struct RuleSelection
+    {
+        struct Cell
+        {
+            std::size_t rule{}; // the place of the rule the cell stands in
+            std::optional<Tag> column{}; // the cell's column, none for a row selected with no cell
+        };
+        std::optional<Cell> cell{};
+        std::vector<std::size_t> held{};
+    };
+
+    // Whether a selection put on from code takes the keyboard with it.
+    export enum class TakeFocus
+    {
+        No, // the focus stays where it is - the page is off screen
+        Yes
+    };
+
+    // What an element page calls after it has moved its rules: where the edit stands, its name,
+    // and what the grid held as it was made.
+    export using OnRulesChanged =
+        std::function<void(EditPhase, const Text& what, const RuleSelection& at)>;
     // The colour a rule of the list is applied to, which its value ramps are drawn from.
     export using OnGetListRuleBase = std::function<RuleBase(const ColorRule&, RuleChannel)>;
 
@@ -50,6 +73,10 @@ namespace ThisApp
             const ThemeColors&, OnGetListRuleBase, OnRulesChanged);
         // Builds a row for every rule in the list, in list order.
         void rebuild();
+        // What the grid holds selected, as an edit made on it is recorded.
+        [[nodiscard]] RuleSelection selection() const;
+        // Puts a selection back on the rows as they stand; a cell past them lands on the last.
+        void select(const RuleSelection&, TakeFocus);
     private:
         // The grid's columns, as their tags name them.
         enum class RuleColumn : TagValue
@@ -60,7 +87,6 @@ namespace ThisApp
             Elevation
         };
         using RuleRows = std::vector<Grids::RowContainer*>;
-        using RuleIndices = std::vector<std::size_t>;
     private:
         void addRule();
         void deleteSelectedRules();
@@ -72,7 +98,7 @@ namespace ThisApp
         [[nodiscard]] OnGetRuleBase ruleBaseOf(std::size_t index, RuleChannel) const;
         // What a change to one column of one rule is called - the rule named by its place.
         [[nodiscard]] Text ruleStepName(std::size_t index, std::wstring_view column) const;
-        void rulesChanged(EditPhase, const Text& what);
+        void rulesChanged(EditPhase, const Text& what, const RuleSelection& at);
     private:
         const std::wstring m_name; // what the list is called, which every step of it starts with
         ColorRules* m_rules{}; // the list the page shows, null until bound
@@ -81,9 +107,9 @@ namespace ThisApp
         const ThemeColors* m_colors{}; // what the hue editors read the palette from
         OnGetListRuleBase m_ruleBase{};
         OnRulesChanged m_onRulesChanged{};
-        OnRulesChanged m_onCellEdit; // what the cells' editors call, held by address
+        OnRuleChanged m_onCellEdit; // what the cells' editors call, held by address
         UiTimer m_deleteTimer{}; // deletes on the next tick, outside the event that asked
-        RuleIndices m_pendingDeletes{};
+        RuleSelection m_pendingDelete{}; // what Delete was asked on, its rows still to go
         RuleRows m_ruleRows{}; // one per rule, the header aside
 
         Panel& m_topBar{ createTopBar<Panel>(
@@ -159,7 +185,7 @@ namespace ThisApp
         Panel{ params, std::forward<Args>(args)... },
         m_name{ title },
         m_onCellEdit{ [this](const EditPhase phase, const Text& what) {
-            rulesChanged(phase, what);
+            rulesChanged(phase, what, selection());
         } }
     {
         m_title.text() << TextStyleId::SubTitle << title;

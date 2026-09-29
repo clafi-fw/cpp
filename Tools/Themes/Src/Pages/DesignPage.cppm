@@ -37,6 +37,13 @@ namespace ThisApp
         OptionalPaintChannel output{}; // the one channel the list's rules write, any if empty
     };
 
+    // Where in the design an edit is made, put back beside the theme an undo restores.
+    export struct DesignPlace
+    {
+        std::wstring page{}; // the token of the page the tree has picked
+        RuleSelection selection{}; // what that page's grid held, nothing for the palette
+    };
+
     // A theme's design, one element page at a time.
     export class DesignPage : public Panel
     {
@@ -48,6 +55,8 @@ namespace ThisApp
         [[nodiscard]] std::wstring_view pickedPage() const;
         // Picks and shows the page a token names, and the first page for a token naming none.
         void pickPage(std::wstring_view token);
+        // Picks the page a place names and puts its grid's selection back, once the rows stand.
+        void showPlace(const DesignPlace&);
         // Connects a handler raised when the tree picks another page, which pickPage then shows.
         template<typename F>
         EventConnection onPagePick(F&& callback);

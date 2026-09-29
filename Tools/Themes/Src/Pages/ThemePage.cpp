@@ -3,6 +3,8 @@ module ThisApp.ThemePage;
 import ThisApp.BasePage;
 import ThisApp.CodeOptions;
 import ThisApp.Consts;
+import ThisApp.DesignPage;
+import ThisApp.ElementPage;
 import ThisApp.History;
 import ThisApp.HueRuleControl;
 import ThisApp.RuleSlider;
@@ -404,7 +406,7 @@ namespace ThisApp
         m_designPage.rebuildRules();
     }
 
-    void ThemePage::edited(const EditPhase phase, const Text& what)
+    void ThemePage::edited(const EditPhase phase, const Text& what, const RuleSelection& at)
     {
         // A RESTORE IS NOT AN EDIT. showEditTheme brings the controls up by calling the same
         // handlers a user edit calls, and mapHuesToColors along the way fills the palette hues in
@@ -416,7 +418,8 @@ namespace ThisApp
             return;
 
         storeViewState();
-        m_history.record(m_editTheme, phase, what);
+        m_history.record(m_editTheme, phase, what,
+            DesignPlace{ .page = std::wstring{ m_designPage.pickedPage() }, .selection = at });
         // A presenter keeps the answer it was last given until it is told to ask again.
         StdActions::undo.invalidateState();
         StdActions::redo.invalidateState();
@@ -424,14 +427,14 @@ namespace ThisApp
 
     void ThemePage::undoEdit()
     {
-        if (const AppTheme* state = m_history.undo(1ull))
-            showHistoryState(*state);
+        if (const EditHistory::Landing landing = m_history.undo(1ull))
+            showHistoryState(landing);
     }
 
     void ThemePage::redoEdit()
     {
-        if (const AppTheme* state = m_history.redo(1ull))
-            showHistoryState(*state);
+        if (const EditHistory::Landing landing = m_history.redo(1ull))
+            showHistoryState(landing);
     }
 
     // Owned by the strip the press landed on, dropped under the whole button - see DropdownEvent.
@@ -441,7 +444,7 @@ namespace ThisApp
         for (std::size_t i = 0ull; i != m_history.undoDepth(); ++i)
             menu.add(m_history.undoStep(i));
         if (const std::size_t taken = menu.executeUnder(event.button()))
-            showHistoryState(*m_history.undo(taken));
+            showHistoryState(m_history.undo(taken));
     }
 
     void ThemePage::dropRedoSteps(DropdownEvent& event)
@@ -450,16 +453,19 @@ namespace ThisApp
         for (std::size_t i = 0ull; i != m_history.redoDepth(); ++i)
             menu.add(m_history.redoStep(i));
         if (const std::size_t taken = menu.executeUnder(event.button()))
-            showHistoryState(*m_history.redo(taken));
+            showHistoryState(m_history.redo(taken));
     }
 
-    void ThemePage::showHistoryState(const AppTheme& state)
+    void ThemePage::showHistoryState(const EditHistory::Landing& landing)
     {
         {
             const ScopedFlag restoring{ m_restoring };
-            m_editTheme = state;
+            m_editTheme = *landing.state;
             showEditTheme();
         }
+        // After the sync, which has rebuilt the rows the selection names. The tree's pick reaches
+        // the browser as the tab's anchor the way a click on it does - see designPagePicked.
+        m_designPage.showPlace(*landing.place);
         storeViewState();
         // A code page states the theme, and one of them may be the page showing.
         generateCode();
@@ -505,12 +511,13 @@ namespace ThisApp
         m_designPage.pickPage(event.url.anchor());
     }
 
-    void ThemePage::rulesChanged(const EditPhase phase, const Text& what)
+    void ThemePage::rulesChanged(const EditPhase phase, const Text& what,
+        const RuleSelection& at)
     {
         // A pigment's ramps stand on a surface the rules colour.
         m_pigmentGrid.invalidate();
         invalidatePreview();
-        edited(phase, what);
+        edited(phase, what, at);
     }
 
     void ThemePage::saveTheme() const

@@ -100,6 +100,8 @@ namespace ClaFi::Controls::Grids
         RowNewItem& addNewItemRow(PlaceHolderText);
         // Raises NewItemEvent, then selects the leading cell of the row a handler added.
         void requestNewItem();
+        // Puts the selection on one cell from code, as a pick does. See Grids#selection-from-code
+        void selectCell(RowBase&, const Column*);
         [[nodiscard]] Column* findColumnByTag(Tag tag) const { return columns().findByTag(tag); }
         [[nodiscard]] Column& columnByTag(Tag tag) const { return columns().byTag(tag); }
     protected:

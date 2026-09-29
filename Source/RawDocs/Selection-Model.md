@@ -18,6 +18,11 @@ and a rubber band both walk the whole subtree, not just the direct children.
 An action decides nothing on its own wherever what it means depends on the action that follows
 it - see `StackPanelBase::appliesGesture`.
 
+A set can be put on from code as well: `setSelection` holds exactly the items it is given, drops
+any the view would refuse the user (see `CanSelectItemEvent`), and does nothing on a view whose
+mode holds no set. The current item is not moved by it - a grid moves both together with
+`selectCell`, see Grids#selection-from-code.
+
 ## SelectionMode
 
 Whether a view holds a set of selected items on top of the current item that every StackPanel

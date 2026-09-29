@@ -469,6 +469,22 @@ namespace ClaFi::Controls
             doSelectionChanged();
     }
 
+    // Asked of a view holding no set, it does nothing: the mode says what the view can hold, not
+    // the call. An item the view would refuse the user is left out the same way.
+    void StackView::setSelection(const std::span<Control* const> items)
+    {
+        if (!isMultiSelect())
+            return;
+
+        s_tempSelectionBuffer.clear();
+        for (Control* item : items)
+            if (canSelectItem(item))
+                s_tempSelectionBuffer.insert(item);
+
+        if (replaceSelection(s_tempSelectionBuffer))
+            doSelectionChanged();
+    }
+
     // Stops at the first one, so the answer costs the same on a view of ten items and one of ten
     // million. That is what the question is chosen to be: "is anything still unselected" would
     // read better on a menu, and it walks every item once everything is selected - which is

@@ -4,6 +4,7 @@ import ThisApp.BasePage;
 import ThisApp.CodeOptions;
 import ThisApp.Consts;
 import ThisApp.DesignPage;
+import ThisApp.ElementPage;
 import ThisApp.FloorSlider;
 import ThisApp.History;
 import ThisApp.HueRuleControl;
@@ -140,6 +141,7 @@ namespace ThisApp
         void previewColorModeChanged() override;
     private:
         using ViewTabs = std::array<Tab*, static_cast<std::size_t>(ThemeView::Count)>;
+        using EditHistory = History<AppTheme, DesignPlace>;
         // The pigment grid's columns, as their tags name them.
         enum class PigmentColumn : TagValue
         {
@@ -176,22 +178,24 @@ namespace ThisApp
         //
         // Brings every control up on m_editTheme as it stands - what a restore and an undo share.
         void showEditTheme();
-        // Every edit ends here: the tab node takes the theme, and the history takes the step.
-        void edited(EditPhase, const Text& what);
+        // Every edit ends here: the tab node takes the theme, and the history takes the step and
+        // where it was made - the picked page, and for a grid edit the cells it was made on.
+        void edited(EditPhase, const Text& what, const RuleSelection& at = {});
         void undoEdit();
         void redoEdit();
         // The lists behind the two strips, each answering how many steps to take.
         void dropUndoSteps(DropdownEvent&);
         void dropRedoSteps(DropdownEvent&);
-        // Puts a state of the history on as the theme - on screen and in the tab node.
-        void showHistoryState(const AppTheme&);
+        // Puts a state of the history on as the theme - on screen and in the tab node - and the
+        // selection back where the step was made.
+        void showHistoryState(const EditHistory::Landing&);
         void storeViewState() const;
         void storeView() const;
         void restoreView();
         void designPagePicked(); // sends the pick to the browser as this tab's anchor
         void showAnchor(const Browser::ShowAnchorEvent&);
         // A rule was added on the Design page, moved or taken away.
-        void rulesChanged(EditPhase, const Text& what);
+        void rulesChanged(EditPhase, const Text& what, const RuleSelection& at);
         void saveTheme() const;
         // Writes this page's work to a name the user gives, and takes the tab there. The original
         // is left on the disk as it stands, which is what tells this from Save.
@@ -278,7 +282,7 @@ namespace ThisApp
         ) };
 
         AppTheme m_editTheme{};
-        History<AppTheme> m_history{}; // the states m_editTheme has been through
+        EditHistory m_history{}; // the states m_editTheme has been through
         // What the palette's edits are called in the history, held rather than spelled per edit.
         const Text m_anchorStep{ changeStepName(L"Anchor hue") };
         const Text m_floorStep{ changeStepName(L"Dark mode floor") };
@@ -657,8 +661,8 @@ namespace ThisApp
                 const RuleChannel channel) {
                 return elementRuleBase(element, rule, channel);
             },
-            [this](const EditPhase phase, const Text& what) {
-                rulesChanged(phase, what);
+            [this](const EditPhase phase, const Text& what, const RuleSelection& at) {
+                rulesChanged(phase, what, at);
             }
         );
         bindPigmentEditors();

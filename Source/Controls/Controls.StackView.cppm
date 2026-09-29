@@ -89,6 +89,8 @@ namespace ClaFi::Controls
     public:
         std::wstring_view diagnosticText() const override { return L"StackView"; }
         [[nodiscard]] ItemsViewSelection& selection() { return m_selection; }
+        // Holds exactly these items selected, and no others. See Selection-Model#stackview
+        void setSelection(std::span<Control* const>);
     protected:
         void toggleItemSelection(Control*, bool keepSelection = false);
         // A drag that started on an item, under DragMode::EasyDrag. Called on every move of

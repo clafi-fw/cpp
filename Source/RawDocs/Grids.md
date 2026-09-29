@@ -77,6 +77,16 @@ THE CLICK REACHES THE GRID AS A CLICK ON THE ROW. `RowContainer::nestedClick` re
 toggle, a plain press on a row already held - and it can make only a row current: handed the
 control, it would read the click as landing on nothing and clear the selection.
 
+## Selection from code
+
+`GridBase::selectCell(row, column)` puts the selection where a pick would: the row becomes the
+current item - which in a `SelectionMode::Multi` grid replaces the held set with that one row, as a
+plain pick does - and the cell in that column becomes the selected one; a null column selects the
+row with no cell, the state a control stop leaves. The focus is not moved: a pick moves it, and a
+restore of a grid that is off screen must not. A caller that wants the keyboard there calls
+`setFocus` on the row afterwards, and puts any wider held set on after that with
+`StackView::setSelection` - a focus arriving on a row the set does not hold reads as a pick.
+
 ## RowStop
 
 Where a key lands on a row that holds no cell to land on. The control is what takes the

@@ -109,6 +109,23 @@ namespace ThisApp
         showPickedPage();
     }
 
+    // The keyboard follows only while the design is on screen - with a code page up it stays in
+    // the code. A page change takes it to the tree item, as a click on the item does, and the
+    // page's selection takes it on into the grid.
+    void DesignPage::showPlace(const DesignPlace& place)
+    {
+        const TreeEntry* before = pickedEntry();
+        pickPage(place.page);
+        const TreeEntry* entry = pickedEntry();
+        if (!entry)
+            return;
+        const TakeFocus takeFocus = visible() ? TakeFocus::Yes : TakeFocus::No;
+        if (entry != before && takeFocus == TakeFocus::Yes)
+            entry->item->setFocus();
+        if (entry->rules)
+            entry->rules->select(place.selection, takeFocus);
+    }
+
     void DesignPage::bind(ThemeColors& colors, const OnGetElementRuleBase& ruleBase,
         const OnRulesChanged& onRulesChanged)
     {

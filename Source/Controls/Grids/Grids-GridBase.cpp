@@ -116,6 +116,16 @@ namespace ClaFi::Controls::Grids
         row.scrollIntoViewOnAlign();
     }
 
+    // The focus is left to the caller: a pick moves it, a restore of a grid off screen does not.
+    void GridBase::selectCell(RowBase& row, const Column* column)
+    {
+        setCurrentItem(row);
+        if (column)
+            row.selectColumn(*column);
+        else
+            m_descriptor.setSelectedCell(&row, nullptr);
+    }
+
     ScaledDimensions GridBase::calculateContent(AlignEvent& event)
     {
         ScaledDimensions result = StackView::calculateContent(event);

@@ -22,19 +22,31 @@ namespace ThisApp
     // The phase a slider's change reports: held while the pointer has the position.
     export [[nodiscard]] EditPhase editPhaseOf(const Controls::SliderBase&);
 
-    // The states a subject has been through, one whole copy each, walked by undo and redo.
-    export template<typename T>
+    // The states a subject has been through, one whole copy each, walked by undo and redo. Every
+    // step carries where it was made, which a walk answers beside the state it lands on.
+    export template<typename T, typename Place>
     class History
     {
     public:
+        // Where a walk lands: the state to put back, and where the last step it crossed was made -
+        // the oldest undone or the newest redone, which is where the user was left. Empty where
+        // the history does not reach.
+        struct Landing
+        {
+            const T* state{};
+            const Place* place{};
+            [[nodiscard]] explicit operator bool() const { return state != nullptr; }
+        };
+    public:
         // Forgets every step and stands on one state, the first an undo can reach.
         void reset(const T& state);
-        // Takes the state an edit left and its name; held steps share a state until one settles.
-        void record(const T& state, EditPhase, const Text& what);
-        // The state that many steps back, or null where the history does not reach.
-        [[nodiscard]] const T* undo(std::size_t steps);
-        // The state that many undone steps forward, or null where the history does not reach.
-        [[nodiscard]] const T* redo(std::size_t steps);
+        // Takes the state an edit left, its name and where it was made; held steps share a state
+        // until one settles, and the place of the first.
+        void record(const T& state, EditPhase, const Text& what, Place);
+        // That many steps back.
+        [[nodiscard]] Landing undo(std::size_t steps);
+        // That many undone steps forward.
+        [[nodiscard]] Landing redo(std::size_t steps);
         [[nodiscard]] std::size_t undoDepth() const { return m_current; }
         [[nodiscard]] std::size_t redoDepth() const;
         [[nodiscard]] bool canUndo() const { return undoDepth() != 0ull; }
@@ -44,11 +56,13 @@ namespace ThisApp
         // What the undone step that many on is called, the nearest at 0.
         [[nodiscard]] const Text& redoStep(std::size_t i) const;
     private:
-        // One state and what the step that produced it was called - nothing for the first.
+        // One state, and what the step that produced it was called and where it was made - nothing
+        // for the first.
         struct Entry
         {
             T state{};
             Text what{};
+            Place place{};
         };
         using Entries = RingBuffer<Entry>;
     private:
@@ -68,8 +82,8 @@ namespace ThisApp
     //----------------------------------------------------------------------------
 
 
-    template<typename T>
-    void History<T>::reset(const T& state)
+    template<typename T, typename Place>
+    void History<T, Place>::reset(const T& state)
     {
         m_entries.clear();
         reserveForEntry();
@@ -78,8 +92,9 @@ namespace ThisApp
         m_runOpen = false;
     }
 
-    template<typename T>
-    void History<T>::record(const T& state, const EditPhase phase, const Text& what)
+    template<typename T, typename Place>
+    void History<T, Place>::record(const T& state, const EditPhase phase, const Text& what,
+        Place place)
     {
         if (m_runOpen)
         {
@@ -93,52 +108,53 @@ namespace ThisApp
         reserveForEntry();
         if (!m_entries.full())
             ++m_current;
-        m_entries.push_back(Entry{ .state = state, .what = what });
+        m_entries.push_back(Entry{ .state = state, .what = what, .place = std::move(place) });
         m_runOpen = phase == EditPhase::Held;
     }
 
-    template<typename T>
-    const T* History<T>::undo(const std::size_t steps)
+    // The step undone last is the one just above where the walk stops.
+    template<typename T, typename Place>
+    typename History<T, Place>::Landing History<T, Place>::undo(const std::size_t steps)
     {
         if (steps == 0ull || steps > undoDepth())
-            return nullptr;
+            return {};
         m_runOpen = false;
         m_current -= steps;
-        return &m_entries[m_current].state;
+        return { &m_entries[m_current].state, &m_entries[m_current + 1ull].place };
     }
 
-    template<typename T>
-    const T* History<T>::redo(const std::size_t steps)
+    template<typename T, typename Place>
+    typename History<T, Place>::Landing History<T, Place>::redo(const std::size_t steps)
     {
         if (steps == 0ull || steps > redoDepth())
-            return nullptr;
+            return {};
         m_runOpen = false;
         m_current += steps;
-        return &m_entries[m_current].state;
+        return { &m_entries[m_current].state, &m_entries[m_current].place };
     }
 
-    template<typename T>
-    std::size_t History<T>::redoDepth() const
+    template<typename T, typename Place>
+    std::size_t History<T, Place>::redoDepth() const
     {
         if (m_entries.empty())
             return 0ull;
         return m_entries.size() - m_current - 1ull;
     }
 
-    template<typename T>
-    const Text& History<T>::undoStep(const std::size_t i) const
+    template<typename T, typename Place>
+    const Text& History<T, Place>::undoStep(const std::size_t i) const
     {
         return m_entries[m_current - i].what;
     }
 
-    template<typename T>
-    const Text& History<T>::redoStep(const std::size_t i) const
+    template<typename T, typename Place>
+    const Text& History<T, Place>::redoStep(const std::size_t i) const
     {
         return m_entries[m_current + 1ull + i].what;
     }
 
-    template<typename T>
-    void History<T>::reserveForEntry()
+    template<typename T, typename Place>
+    void History<T, Place>::reserveForEntry()
     {
         if (m_entries.size() != m_entries.capacity())
             return;

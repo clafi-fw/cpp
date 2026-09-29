@@ -50,6 +50,50 @@ namespace ThisApp
         form().invalidateAlign();
     }
 
+    // A row's tag is its rule's place, and only a rule row stands in m_ruleRows at its own place -
+    // which is what tells one from the header or the new-item row, whose tags say nothing.
+    RuleSelection ElementPage::selection() const
+    {
+        RuleSelection result{};
+        const Grids::GridDescriptor& descriptor = m_grid.descriptor();
+        if (const Control* row = descriptor.selectedRow())
+        {
+            const std::size_t index = row->tag().value;
+            if (index < m_ruleRows.size() && m_ruleRows[index] == row)
+            {
+                result.cell = RuleSelection::Cell{ .rule = index };
+                if (const Grids::Column* column = descriptor.selectedColumn())
+                    result.cell->column = column->tag();
+            }
+        }
+        for (const Control* row : m_grid.selection())
+            result.held.push_back(row->tag().value);
+        return result;
+    }
+
+    // The cell first and the held set last: a focus arriving on a row the set does not hold reads
+    // as a pick, and a pick replaces the set. A cell past the rows - its rule undone or deleted -
+    // lands on the last of them, so the keyboard stays in the grid.
+    void ElementPage::select(const RuleSelection& at, const TakeFocus takeFocus)
+    {
+        if (at.cell && !m_ruleRows.empty())
+        {
+            const std::size_t last = m_ruleRows.size() - 1ull;
+            Grids::RowContainer& row = *m_ruleRows[std::min(at.cell->rule, last)];
+            const Grids::Column* column = at.cell->column
+                ? m_grid.findColumnByTag(*at.cell->column)
+                : nullptr;
+            m_grid.selectCell(row, column);
+            if (takeFocus == TakeFocus::Yes)
+                row.setFocus();
+        }
+        std::vector<Control*> held{};
+        for (const std::size_t index : at.held)
+            if (index < m_ruleRows.size())
+                held.push_back(m_ruleRows[index]);
+        m_grid.setSelection(held);
+    }
+
     // A new rule is appended, so it applies after the rest of the list.
     void ElementPage::addRule()
     {
@@ -57,12 +101,17 @@ namespace ThisApp
         // Appending may move the list, and the hue and value editors hold their rules by address.
         for (Grids::RowContainer* row : m_ruleRows)
             bindEditors(*row);
-        addRow(m_rules->size() - 1ull);
+        const std::size_t index = m_rules->size() - 1ull;
+        addRow(index);
         form().invalidateAlign();
         Text what{};
         what << L"Add " << InkWell::accentInk() << L"rule " << m_rules->size() << PopColor{}
             << L" to " << InkWell::accentInk() << m_name << PopColor{};
-        rulesChanged(EditPhase::Settled, what);
+        // Made on the new rule, whose leading cell the grid is about to select.
+        rulesChanged(EditPhase::Settled, what, RuleSelection{
+            .cell = RuleSelection::Cell{ .rule = index, .column = Tag{ RuleColumn::ApplyTo } },
+            .held = { index }
+        });
     }
 
     // The Delete key arrives through the grid, whose rows the deletion takes down, so the rules
@@ -70,41 +119,45 @@ namespace ThisApp
     // names have not moved yet.
     void ElementPage::deleteSelectedRules()
     {
-        if (!m_pendingDeletes.empty())
+        if (!m_pendingDelete.held.empty())
             return;
-        for (const Control* row : m_grid.selection())
-            m_pendingDeletes.push_back(row->tag().value);
-        if (!m_pendingDeletes.empty())
-            m_deleteTimer.start(MilliSeconds{ 0u });
+        RuleSelection at = selection();
+        if (at.held.empty())
+            return;
+        m_pendingDelete = std::move(at);
+        m_deleteTimer.start(MilliSeconds{ 0u });
     }
 
     // From the last place to the first, so each erase leaves the places still to go where they
-    // were.
+    // were. The step is made on what Delete was asked on, which undo puts back held.
     void ElementPage::deletePendingRules()
     {
-        std::ranges::sort(m_pendingDeletes, std::ranges::greater{});
-        for (const std::size_t index : m_pendingDeletes)
+        RuleSelection at{};
+        std::swap(at, m_pendingDelete);
+        std::ranges::sort(at.held, std::ranges::greater{});
+        for (const std::size_t index : at.held)
             m_rules->erase(m_rules->begin() + static_cast<std::ptrdiff_t>(index));
         Text what{};
         what << L"Delete " << InkWell::accentInk();
-        if (m_pendingDeletes.size() == 1ull)
-            what << L"rule " << (m_pendingDeletes.front() + 1);
+        if (at.held.size() == 1ull)
+            what << L"rule " << (at.held.front() + 1);
         else
-            what << m_pendingDeletes.size() << L" rules";
+            what << at.held.size() << L" rules";
         what << PopColor{} << L" from " << InkWell::accentInk() << m_name << PopColor{};
-        m_pendingDeletes.clear();
         rebuild();
-        rulesChanged(EditPhase::Settled, what);
+        rulesChanged(EditPhase::Settled, what, at);
     }
 
-    // The button stands outside the grid, so the rows can go at once.
+    // The button stands outside the grid, so the rows can go at once - the selection is read
+    // before they do.
     void ElementPage::resetRules()
     {
+        const RuleSelection at = selection();
         *m_rules = *m_defaults;
         rebuild();
         Text what{};
         what << L"Reset " << InkWell::accentInk() << m_name << PopColor{} << L" to defaults";
-        rulesChanged(EditPhase::Settled, what);
+        rulesChanged(EditPhase::Settled, what, at);
     }
 
     // Every cell of a rule's row holds its editor.
@@ -187,10 +240,11 @@ namespace ThisApp
         return result;
     }
 
-    void ElementPage::rulesChanged(const EditPhase phase, const Text& what)
+    void ElementPage::rulesChanged(const EditPhase phase, const Text& what,
+        const RuleSelection& at)
     {
         m_resetButton.invalidateState();
         if (m_onRulesChanged)
-            m_onRulesChanged(phase, what);
+            m_onRulesChanged(phase, what, at);
     }
 }
