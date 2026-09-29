@@ -366,6 +366,19 @@ namespace ClaFi
 
     }
 
+    std::wstring Platform::documentsPath()
+    {
+        wchar_t* path = nullptr;
+        if (!SUCCEEDED(::SHGetKnownFolderPath(FOLDERID_Documents, 0, nullptr, &path)))
+        {
+            ::CoTaskMemFree(path);
+            return {};
+        }
+        std::wstring result = path;
+        ::CoTaskMemFree(path);
+        return result.append(L"\\");
+    }
+
     void Platform::debugOutput(const std::wstring_view line)
     {
         std::wstring text{ line };

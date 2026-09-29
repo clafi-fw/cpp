@@ -439,6 +439,8 @@ namespace ClaFi
             const std::wstring_view params = {}) { shellExecute(&form, file, params); }
         //
         static std::wstring appDataPath();
+        // The user's own documents folder, with a trailing separator - empty where there is none.
+        static std::wstring documentsPath();
         //
         // A line where a debugger shows it - the debugger's output on Win32, stderr elsewhere.
         static void debugOutput(std::wstring_view line);

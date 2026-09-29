@@ -355,6 +355,33 @@ namespace ClaFi
         return L"./";
     }
 
+    // The folder user-dirs.dirs names as XDG_DOCUMENTS_DIR - a quoted path with $HOME as its one
+    // variable - and ~/Documents where the file names none.
+    std::wstring Platform::documentsPath()
+    {
+        const char* home = std::getenv("HOME");
+        if (!home || !*home)
+            return {};
+
+        constexpr std::string_view k_key = "XDG_DOCUMENTS_DIR=";
+        constexpr std::string_view k_homeVariable = "$HOME";
+        std::ifstream userDirs{ toUtf8(appDataPath()).append("user-dirs.dirs") };
+        std::string line;
+        while (std::getline(userDirs, line))
+        {
+            if (!line.starts_with(k_key))
+                continue;
+            std::string value = line.substr(k_key.size());
+            std::erase(value, '"');
+            if (value.starts_with(k_homeVariable))
+                value.replace(0, k_homeVariable.size(), home);
+            if (!value.empty())
+                return fromUtf8(value) + L"/";
+        }
+
+        return fromUtf8(home) + L"/Documents/";
+    }
+
     void Platform::debugOutput(const std::wstring_view line)
     {
         std::string text = toUtf8(line);
