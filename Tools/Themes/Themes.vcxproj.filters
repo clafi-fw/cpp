@@ -83,6 +83,12 @@
     <ClCompile Include="Src\Util\ThisApp.FloorSlider.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.History.cpp">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.History.cppm">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Util\ThisApp.HueRuleControl.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>

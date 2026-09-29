@@ -1,5 +1,6 @@
 module ThisApp.ValueRuleControl;
 
+import ThisApp.History;
 import ThisApp.RuleSlider;
 import ThisApp.RuleText;
 import ThisApp.Utils;
@@ -203,12 +204,12 @@ namespace ThisApp
             return;
         m_value->setOperation(value);
         invalidateFormAlign();
-        changed();
+        changed(EditPhase::Settled);
     }
 
     // A value that may only be set is a stated one from its first move, whatever an older theme
     // left on it - otherwise one left at No change could never be moved at all.
-    void ValueRuleControl::setNormalizedValue(const float value)
+    void ValueRuleControl::setNormalizedValue(const float value, const EditPhase phase)
     {
         if (setOnly() && m_value->operation() != ColorRuleOp::Set)
         {
@@ -216,7 +217,7 @@ namespace ThisApp
             invalidateFormAlign();
         }
         m_value->setNormalizedValue(value);
-        changed();
+        changed(phase);
     }
 
     EditorMode ValueRuleControl::editorMode() const
@@ -289,7 +290,7 @@ namespace ThisApp
         }
         *m_value = rule.value();
         invalidateFormAlign();
-        changed();
+        changed(EditPhase::Settled);
     }
 
     // The face is one line, so the editor grows to the right with no ceiling of its own.
@@ -318,11 +319,11 @@ namespace ThisApp
         ValueRuleControlBase::charPress(event);
     }
 
-    void ValueRuleControl::changed()
+    void ValueRuleControl::changed(const EditPhase phase)
     {
         invalidate();
         if (m_onChanged)
-            m_onChanged();
+            m_onChanged(phase);
     }
 
     // ValueRulePopup
@@ -381,9 +382,13 @@ namespace ThisApp
         });
         // Every tile's caption is a value the slider sets, so the row is painted again with it.
         slider.onChange([this, &slider, tileRow](SliderChangeEvent&) {
-            m_owner.setNormalizedValue(slider.relativePosition());
+            m_owner.setNormalizedValue(slider.relativePosition(), editPhaseOf(slider));
             if (tileRow)
                 tileRow->invalidate();
+        });
+        // The value the pointer let go of is the one it stated - said once more, settled.
+        slider.onSettle([this, &slider](SliderSettleEvent&) {
+            m_owner.setNormalizedValue(slider.relativePosition(), EditPhase::Settled);
         });
         m_stateItems.push_back(&slider);
 

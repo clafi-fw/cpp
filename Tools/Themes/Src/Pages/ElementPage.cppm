@@ -1,5 +1,6 @@
 export module ThisApp.ElementPage;
 
+import ThisApp.History;
 import ThisApp.RuleSlider;
 
 import ClaFi.Icons.HueIcon;
@@ -32,8 +33,8 @@ namespace ThisApp
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // What an element page calls after it has changed the rules it is bound to.
-    export using OnRulesChanged = std::function<void()>;
+    // What an element page calls after it has moved its rules, and where the edit stands.
+    export using OnRulesChanged = std::function<void(EditPhase)>;
     // The colour a rule of the list is applied to, which its value ramps are drawn from.
     export using OnGetListRuleBase = std::function<RuleBase(const ColorRule&, RuleChannel)>;
 
@@ -69,7 +70,7 @@ namespace ThisApp
         void bindEditors(Grids::RowContainer&);
         [[nodiscard]] Grids::Column& column(RuleColumn);
         [[nodiscard]] OnGetRuleBase ruleBaseOf(std::size_t index, RuleChannel) const;
-        void rulesChanged();
+        void rulesChanged(EditPhase);
     private:
         ColorRules* m_rules{}; // the list the page shows, null until bound
         const ColorRules* m_defaults{}; // what a reset puts back, null until bound
@@ -153,8 +154,8 @@ namespace ThisApp
         Args&&... args)
         :
         Panel{ params, std::forward<Args>(args)... },
-        m_onCellEdit{ [this]() {
-            rulesChanged();
+        m_onCellEdit{ [this](const EditPhase phase) {
+            rulesChanged(phase);
         } }
     {
         m_title.text() << TextStyleId::SubTitle << title;

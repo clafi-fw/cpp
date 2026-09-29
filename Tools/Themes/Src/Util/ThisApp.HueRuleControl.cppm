@@ -1,6 +1,7 @@
 export module ThisApp.HueRuleControl;
 
 import ThisApp.Consts;
+import ThisApp.History;
 import ThisApp.Utils;
 
 import ClaFi.Controls.Base.ButtonBase;
@@ -39,9 +40,8 @@ namespace ThisApp
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    /// Told whenever the edited rule moves, so the page can store the theme and repaint what shows
-    /// it. Owned by the page: the control holds the address of one that outlives it.
-    export using OnHueRuleChanged = std::function<void()>;
+    // Told when the rule moves and where the edit stands - owned by the page, held by address.
+    export using OnHueRuleChanged = std::function<void(EditPhase)>;
 
     class HueRulePopup;
     class HueSlider;
@@ -175,8 +175,8 @@ namespace ThisApp
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
     private:
         void setOperation(ColorRuleHueOp);
-        void exactHueChanged();
-        void changed();
+        void exactHueChanged(EditPhase);
+        void changed(EditPhase);
     private:
         ColorRuleHue* m_rule{};
         bool m_canClear{ true };
@@ -363,20 +363,20 @@ namespace ThisApp
         if (m_rule->operation() == value)
             return;
         m_rule->setOperation(value);
-        changed();
+        changed(EditPhase::Settled);
     }
 
-    void HueRuleControl::exactHueChanged()
+    void HueRuleControl::exactHueChanged(const EditPhase phase)
     {
         m_rule->setExactValue(m_exactColor.hue);
-        changed();
+        changed(phase);
     }
 
-    void HueRuleControl::changed()
+    void HueRuleControl::changed(const EditPhase phase)
     {
         invalidate();
         if (m_onChanged and *m_onChanged)
-            (*m_onChanged)();
+            (*m_onChanged)(phase);
     }
 
     // HueRuleItem
@@ -546,9 +546,13 @@ namespace ThisApp
             if (m_owner.operation() != ColorRuleHueOp::ExactValue)
                 pick(ColorRuleHueOp::ExactValue);
             exactMark.invalidate();
-            m_owner.exactHueChanged();
+            m_owner.exactHueChanged(editPhaseOf(*m_slider));
             if (m_summary)
                 m_summary->invalidate();
+            });
+        // The hue the pointer let go of is the one it stated - said once more, settled.
+        m_slider->onSettle([this](SliderSettleEvent&) {
+            m_owner.exactHueChanged(EditPhase::Settled);
             });
 
         StackPanel& commandBar = add<StackPanel>(

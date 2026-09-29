@@ -24,6 +24,15 @@ namespace ClaFi::Controls
     {
     }
 
+    SliderSettleEvent::SliderSettleEvent(const SliderBase& slider, float newPosition,
+        float pressPosition)
+        :
+        slider{ slider },
+        newPosition{ newPosition },
+        pressPosition{ pressPosition }
+    {
+    }
+
 #pragma region SliderBase::ChildItem
 
     SliderBase::ChildItem::ChildItem(const CreateParams& params)
@@ -163,6 +172,7 @@ namespace ClaFi::Controls
         event.stopPropagation();
         // The pointer owns the position from here, and it takes it over at what is on screen.
         parent()->m_thumbPressed = true;
+        parent()->m_pressPosition = parent()->m_position;
         parent()->stopPositionAnimation();
         if (parent()->m_axis == ScrollAxis::Vertical)
             m_startTop = top();
@@ -335,6 +345,27 @@ namespace ClaFi::Controls
         emitEvent(event);
     }
 
+    void SliderBase::settled(SliderSettleEvent& event)
+    {
+        emitEvent(event);
+    }
+
+    void SliderBase::takeProxyHold()
+    {
+        if (m_heldByProxy)
+            return;
+        m_heldByProxy = true;
+        m_pressPosition = m_position;
+    }
+
+    void SliderBase::dropProxyHold()
+    {
+        if (!m_heldByProxy)
+            return;
+        m_heldByProxy = false;
+        settle();
+    }
+
     // A range that has shrunk under the position leaves the target beyond its end, and the glide
     // to the new end is the movement that closes the gap the shrinking opened. A target already
     // inside the range is untouched, so an alignment pass costs nothing here.
@@ -457,6 +488,7 @@ namespace ClaFi::Controls
         m_slotPressed = slotArea().contains(pt);
         if (!m_slotPressed)
             return;
+        m_pressPosition = m_position;
 
         float clickScrollTarget = slotPosition(pt);
         if (glidesToPosition())
@@ -471,8 +503,11 @@ namespace ClaFi::Controls
 
     void SliderBase::nestedPressUp(PressUpEvent&)
     {
+        const bool held = m_slotPressed || m_thumbPressed;
         m_slotPressed = false;
         m_thumbPressed = false;
+        if (held)
+            settle();
     }
 
     // The press sent the position to the point under the pointer, and the pointer goes on naming
@@ -500,6 +535,16 @@ namespace ClaFi::Controls
             SliderChangeEvent event{ *this, m_position, prevPosition };
             changed(event);
         }
+    }
+
+    // A hold that ends where it began raises nothing: no step was reported during it, so there
+    // is nothing for a listener to close.
+    void SliderBase::settle()
+    {
+        if (m_position == m_pressPosition)
+            return;
+        SliderSettleEvent event{ *this, m_position, m_pressPosition };
+        settled(event);
     }
 
     FloatRect SliderBase::slotArea() const

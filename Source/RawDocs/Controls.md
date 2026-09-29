@@ -528,15 +528,30 @@ It is as long as the slider it came from, so the same travel moves the value a t
 and never shorter than 200 design units, so a short slider still gets a usable one.
 
 The value moves as the finer slider moves: the slider it came from takes each position and
-reports it through its own OnChange. Releasing the pointer after a press on the finer slider
-closes the popup and keeps the value. Escape puts back the value the popup opened on; Return,
-or a click outside, keeps where it is.
+reports it through its own OnChange, and while the pointer holds the finer one the owner
+answers positionHeldByPointer too. Releasing the pointer after a press on the finer slider
+raises the owner's OnSettle, closes the popup and keeps the value. Escape puts back the value
+the popup opened on; Return, or a click outside, keeps where it is.
 
 An OnContextPopup handler that stops the event answers the click instead. A disabled slider
 opens nothing.
 
 A slider draws the finer one's slot through paintSlot, with the span of the range that slot
 covers, so a slot showing a ramp shows that part of it.
+
+## SliderSettleEvent
+
+The pointer has let go of a position it moved. OnChange reports every step of a drag as it
+happens, so a listener that treats a drag as one thing - an undo history recording one step
+for it, a document saving once - needs to know when the drag is over, and that is this event.
+It is raised from the press-up that ends a hold on the thumb or the slot, and carries where
+the position stood when the hold began; a hold that ends where it began raises nothing, since
+no step was reported during it and there is nothing to close. A step made by a key or the
+wheel raises no settle either: each of those stands on its own, and its OnChange is the whole
+of it. A position set from code raises OnChange as any step does, and no settle.
+
+A finer slider's hold counts as its owner's - see FineAdjust - so the owner's OnSettle comes
+when the pointer lets go of the finer one.
 
 ## ColorEditEvent
 

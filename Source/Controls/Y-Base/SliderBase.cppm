@@ -18,13 +18,22 @@ namespace ClaFi::Controls
 {
     export class SliderBase;
 
-    // The slider has come to rest on a new value.
+    // The position moved, once per step of a drag.
     export struct SliderChangeEvent : public Event
     {
         SliderChangeEvent(const SliderBase& slider, float newPosition, float previousPosition);
         const SliderBase& slider;
         const float newPosition;
         const float previousPosition;
+    };
+
+    // The pointer has let go of a position it moved. See Controls
+    export struct SliderSettleEvent : public Event
+    {
+        SliderSettleEvent(const SliderBase& slider, float newPosition, float pressPosition);
+        const SliderBase& slider;
+        const float newPosition;
+        const float pressPosition; // where the position stood when the pointer took hold of it
     };
 
     using SliderBaseClass = PanelBase;
@@ -135,8 +144,10 @@ namespace ClaFi::Controls
         // Which way the slider runs.
         DECLARE_WRITABLE_PROPERTY(ScrollAxis, axis, setAxis, ScrollAxis::Vertical)
     public:
-        // The slider has come to rest on a new value.
+        // The position moved, once per step of a drag.
         DECLARE_EVENT(SliderChangeEvent, OnChange, onChange)
+        // The pointer has let go of a position it moved. See Controls
+        DECLARE_EVENT(SliderSettleEvent, OnSettle, onSettle)
     public:
         void setScrollAxis(ScrollAxis);
         Thumb& thumb() const { return m_thumb; }
@@ -157,8 +168,12 @@ namespace ClaFi::Controls
         // it holds them until the button comes up. A host that carries its own anchors along
         // with its content leaves them where they are while this is true: the content moves
         // because the pointer moves, and an anchor following the content would add the content's
-        // travel to the pointer's own, so every move would name a larger one.
-        [[nodiscard]] bool positionHeldByPointer() const { return m_thumbPressed || m_slotPressed; }
+        // travel to the pointer's own, so every move would name a larger one. A finer slider
+        // holding the position holds it for the slider it came from.
+        [[nodiscard]] bool positionHeldByPointer() const
+        {
+            return m_thumbPressed || m_slotPressed || m_heldByProxy;
+        }
     protected:
         using ContainerBase::add;
         // Fixed for the whole life of the control, and known before its parts are built: which
@@ -172,6 +187,11 @@ namespace ClaFi::Controls
         void setAxis(ScrollAxis value) { m_axis = value; }
         void paintButton(ScrollButton&, PaintEvent&);
         virtual void changed(SliderChangeEvent&);
+        virtual void settled(SliderSettleEvent&);
+        // Another slider names this one's position for as long as the pointer holds it, and the
+        // settle comes when it lets go - the finer slider does this for the one it came from.
+        void takeProxyHold();
+        void dropProxyHold();
         ScrollDirection verticalDirection() const { return viewMode() == SliderViewMode::ScrollBar ? ScrollDirection::ToEnd : ScrollDirection::ToBegin; }
         virtual ScrollInfo controlScrollInfo() const = 0;
         // Brings the position back inside a range that has just changed. It glides, so a section
@@ -200,6 +220,8 @@ namespace ClaFi::Controls
         static constexpr float k_thumbSize = 20.0f;
     private:
         void applyPosition(float value, bool triggerChange);
+        // Raises the settle where the position moved while it was held.
+        void settle();
         // The travel the thumb runs along, in this control's own space.
         [[nodiscard]] FloatRect slotArea() const;
         // A point on the form in that same space.
@@ -227,6 +249,8 @@ namespace ClaFi::Controls
         // press-up, which is dispatched from the down item and so reaches this control however
         // far the pointer has travelled off the bar in between.
         bool m_thumbPressed{ false };
+        bool m_heldByProxy{ false }; // another slider is holding the position for this one
+        float m_pressPosition{ 0.0f }; // where the position stood when it was last taken hold of
         FloatRect m_sliderArea{};
         ScrollButton& m_beginButton{ createBar<ScrollButton>(
             barSlotFor(ScrollDirection::ToBegin), ScrollDirection::ToBegin) };

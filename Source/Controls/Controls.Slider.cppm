@@ -493,8 +493,12 @@ namespace ClaFi::Controls
         m_owner.paintSlot(event, slotRect, m_span);
     }
 
+    // The hold is taken before the position is passed on, so the owner's settle measures from
+    // where it stood.
     void FineSlider::changed(SliderChangeEvent& event)
     {
+        if (positionHeldByPointer())
+            m_owner.takeProxyHold();
         m_owner.setRelativePosition(m_span.at(relativePosition()));
         Slider::changed(event);
     }
@@ -505,8 +509,10 @@ namespace ClaFi::Controls
     {
         const bool held = positionHeldByPointer();
         Slider::nestedPressUp(event);
-        if (held)
-            form().close();
+        if (!held)
+            return;
+        m_owner.dropProxyHold();
+        form().close();
     }
 
     MinSize FineSlider::trackLengthOf(const Slider& owner)

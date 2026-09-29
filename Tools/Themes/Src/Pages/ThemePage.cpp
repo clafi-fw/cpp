@@ -3,6 +3,7 @@ module ThisApp.ThemePage;
 import ThisApp.BasePage;
 import ThisApp.CodeOptions;
 import ThisApp.Consts;
+import ThisApp.History;
 import ThisApp.HueRuleControl;
 import ThisApp.RuleSlider;
 import ThisApp.Palette.Controls;
@@ -26,6 +27,8 @@ import ClaFi.Dom;
 import ClaFi.Dom.Formats.ClaFi;
 import ClaFi.Dom.Formats.Json;
 import ClaFi.Dom.Formats.Xml;
+
+import ClaFi.StdActions;
 
 import ClaFi.Core.Foundation;
 
@@ -98,57 +101,9 @@ namespace ThisApp
         CodeOptions::restore(settings().appConfig());
         auto& themeNode = (tabConfig() / k_themeDataAttrName).as<Dom::Value<AppTheme>>();
         UserTheme::loadTheme(themeNode, m_editTheme);
-
-        // we're passing propagateChanges = false to trackingValueChanged,
-        // so it doesn't trigger the thumb tooltip unnecessary
-        m_anchorSlider.trackingValueChanged(false);
-
-        m_darkModeFloorSlider.setPosition(editColors().darkModeFloor, false);
-
-        // THE ANCHOR FIRST, THEN THE MAP, THEN THE PALETTE. Each step below is what the next one
-        // reads, so the order is the whole of it and anchorChanged() cannot stand in for the pair:
-        // it derives the palette, which is the last step, not the first.
-        //
-        // The anchor decides every colour a harmony is built from - ColorHarmony::anchorChanged
-        // fills m_colors out of it - and the search below matches on those colours.
-        m_harmonySelector.anchorChanged();
-        m_harmonyStack.invalidate();
-
-        for (ColorHarmonyItem& item : m_harmonyStack.controlsAs<ColorHarmonyItem>())
-        {
-            ColorHarmony& harmony = item.harmony();
-            if (harmony.kind() == editColors().harmonyKind)
-            {
-                PaletteMap* map = harmony.findMapByHueDegrees({
-                    hueDegreeOf(editColors().paletteHues[0]),
-                    hueDegreeOf(editColors().paletteHues[1]),
-                    hueDegreeOf(editColors().paletteHues[2])
-                    });
-                if (map)
-                    harmony.selectMap(*map);
-                m_harmonyStack.setCurrentItem(item);
-                break;
-            }
-        }
-
-        // THE PALETTE IS WHAT THE THEME STATES, so nothing derives it here. mapHuesToColors fills
-        // the hues in from the selected map, and at restore that is one of two things: the map the
-        // search above just matched, in which case it writes back the hues it was given, or the
-        // harmony's first map where nothing matched, in which case it writes a palette nobody
-        // chose over the one the file states. Never useful, and half the time a silent edit.
-        //
-        // What is wanted from it here is the invalidation at its end.
-        //
-        // TODO: a theme whose hues match no map of its harmony leaves the map selector standing on
-        // one that does not describe them - which is every stock theme, the defaults included:
-        // Monochromatic carries the single map {0,0,0} against defaults of 210/210/260, and the
-        // built-in Dark and Light state 207 against an anchor of 210. Should the selector show no
-        // map at all in that case, or should the theme carry the map it was built from rather than
-        // the hues that came out of it?
-        invalidatePreview();
-        m_darkModeFloorSlider.invalidate();
-        bindPigmentEditors();
-        m_designPage.rebuildRules();
+        showEditTheme();
+        // The theme as the controls now show it, palette hues included, is where undo bottoms out.
+        m_history.reset(m_editTheme);
         restoreView();
     }
 
@@ -220,14 +175,14 @@ namespace ThisApp
         m_pigmentGrid.invalidate();
     }
 
-    void ThemePage::anchorChanged()
+    void ThemePage::anchorChanged(const EditPhase phase)
     {
         m_harmonySelector.anchorChanged();
         m_harmonyStack.invalidate();
         m_otherPigmentsLabel.invalidate();
         mapHuesToColors();
 
-        storeViewState();
+        edited(phase);
     }
 
     void ThemePage::harmonyChanged()
@@ -240,13 +195,13 @@ namespace ThisApp
         m_otherPigmentsLabel.invalidate();
         mapHuesToColors();
 
-        storeViewState();
+        edited(EditPhase::Settled);
     }
 
     void ThemePage::paletteMapChanged()
     {
         mapHuesToColors();
-        storeViewState();
+        edited(EditPhase::Settled);
     }
 
     void ThemePage::mapHuesToColors()
@@ -350,32 +305,125 @@ namespace ThisApp
     }
 
     // Each ramp reads its rule's other channels, and the preview reads the pigment.
-    void ThemePage::pigmentChanged()
+    void ThemePage::pigmentChanged(const EditPhase phase)
     {
         m_pigmentGrid.invalidate();
         invalidatePreview();
-        storeViewState();
+        edited(phase);
     }
 
-    void ThemePage::darkModeFloorChanged()
+    void ThemePage::darkModeFloorChanged(const EditPhase phase)
     {
         editColors().darkModeFloor = m_darkModeFloorSlider.position();
         // Every swatch and every ramp that stands on a surface moves with the floor.
         m_pigmentGrid.invalidate();
         invalidatePreview();
-        storeViewState();
+        edited(phase);
     }
 
-    void ThemePage::storeViewState() const
+    // Called with m_restoring held: the handlers this goes through end in edited, and none of
+    // what they store or record is an edit.
+    void ThemePage::showEditTheme()
     {
-        // A RESTORE IS NOT AN EDIT. restoreViewState brings the controls up by calling the same
+        // we're passing propagateChanges = false to trackingValueChanged,
+        // so it doesn't trigger the thumb tooltip unnecessary
+        m_anchorSlider.trackingValueChanged(false);
+
+        m_darkModeFloorSlider.setPosition(editColors().darkModeFloor, false);
+
+        // THE ANCHOR FIRST, THEN THE MAP, THEN THE PALETTE. Each step below is what the next one
+        // reads, so the order is the whole of it and anchorChanged() cannot stand in for the pair:
+        // it derives the palette, which is the last step, not the first.
+        //
+        // The anchor decides every colour a harmony is built from - ColorHarmony::anchorChanged
+        // fills m_colors out of it - and the search below matches on those colours.
+        m_harmonySelector.anchorChanged();
+        m_harmonyStack.invalidate();
+        m_otherPigmentsLabel.invalidate();
+
+        for (ColorHarmonyItem& item : m_harmonyStack.controlsAs<ColorHarmonyItem>())
+        {
+            ColorHarmony& harmony = item.harmony();
+            if (harmony.kind() == editColors().harmonyKind)
+            {
+                PaletteMap* map = harmony.findMapByHueDegrees({
+                    hueDegreeOf(editColors().paletteHues[0]),
+                    hueDegreeOf(editColors().paletteHues[1]),
+                    hueDegreeOf(editColors().paletteHues[2])
+                    });
+                if (map)
+                    harmony.selectMap(*map);
+                m_harmonyStack.setCurrentItem(item);
+                break;
+            }
+        }
+
+        // THE PALETTE IS WHAT THE THEME STATES, so nothing derives it here. mapHuesToColors fills
+        // the hues in from the selected map, and at restore that is one of two things: the map the
+        // search above just matched, in which case it writes back the hues it was given, or the
+        // harmony's first map where nothing matched, in which case it writes a palette nobody
+        // chose over the one the file states. Never useful, and half the time a silent edit.
+        //
+        // What is wanted from it here is the invalidation at its end.
+        //
+        // TODO: a theme whose hues match no map of its harmony leaves the map selector standing on
+        // one that does not describe them - which is every stock theme, the defaults included:
+        // Monochromatic carries the single map {0,0,0} against defaults of 210/210/260, and the
+        // built-in Dark and Light state 207 against an anchor of 210. Should the selector show no
+        // map at all in that case, or should the theme carry the map it was built from rather than
+        // the hues that came out of it?
+        invalidatePreview();
+        m_darkModeFloorSlider.invalidate();
+        bindPigmentEditors();
+        m_designPage.rebuildRules();
+    }
+
+    void ThemePage::edited(const EditPhase phase)
+    {
+        // A RESTORE IS NOT AN EDIT. showEditTheme brings the controls up by calling the same
         // handlers a user edit calls, and mapHuesToColors along the way fills the palette hues in
         // from the harmony rather than reading them. Stored, that normalisation would stand in the
         // view state as a change nobody made, and the page would read as edited the moment it was
         // opened - which is exactly what a theme whose file does not carry those hues yet does.
+        // Recorded, it would stand in the history as a step the user never took.
         if (m_restoring)
             return;
 
+        storeViewState();
+        m_history.record(m_editTheme, phase);
+        // A presenter keeps the answer it was last given until it is told to ask again.
+        StdActions::undo.invalidateState();
+        StdActions::redo.invalidateState();
+    }
+
+    void ThemePage::undoEdit()
+    {
+        if (const AppTheme* state = m_history.undo())
+            showHistoryState(*state);
+    }
+
+    void ThemePage::redoEdit()
+    {
+        if (const AppTheme* state = m_history.redo())
+            showHistoryState(*state);
+    }
+
+    void ThemePage::showHistoryState(const AppTheme& state)
+    {
+        {
+            const ScopedFlag restoring{ m_restoring };
+            m_editTheme = state;
+            showEditTheme();
+        }
+        storeViewState();
+        // A code page states the theme, and one of them may be the page showing.
+        generateCode();
+        StdActions::undo.invalidateState();
+        StdActions::redo.invalidateState();
+    }
+
+    void ThemePage::storeViewState() const
+    {
         themesManager().saveTheme(m_editTheme, (tabConfig() / k_themeDataAttrName).as<Dom::Value<AppTheme>>());
     }
 
@@ -412,12 +460,12 @@ namespace ThisApp
         m_designPage.pickPage(event.url.anchor());
     }
 
-    void ThemePage::rulesChanged()
+    void ThemePage::rulesChanged(const EditPhase phase)
     {
         // A pigment's ramps stand on a surface the rules colour.
         m_pigmentGrid.invalidate();
         invalidatePreview();
-        storeViewState();
+        edited(phase);
     }
 
     void ThemePage::saveTheme() const

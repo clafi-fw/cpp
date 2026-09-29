@@ -476,6 +476,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Util/ThisApp.ApplyToControl.cpp"
         "${themes_dir}/Util/ThisApp.CodeOptions.cpp"
         "${themes_dir}/Util/ThisApp.FloorSlider.cpp"
+        "${themes_dir}/Util/ThisApp.History.cpp"
         "${themes_dir}/Util/ThisApp.RuleText.cpp"
         "${themes_dir}/Util/ThisApp.ThemeToCppCode.cpp"
         "${themes_dir}/Util/ThisApp.ValueRuleControl.cpp")
@@ -493,6 +494,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Util/ThisApp.CodeOptions.cppm"
         "${themes_dir}/Util/ThisApp.Consts.cppm"
         "${themes_dir}/Util/ThisApp.FloorSlider.cppm"
+        "${themes_dir}/Util/ThisApp.History.cppm"
         "${themes_dir}/Util/ThisApp.HueRuleControl.cppm"
         "${themes_dir}/Util/ThisApp.Palette.Controls.cppm"
         "${themes_dir}/Util/ThisApp.RuleSlider.cppm"

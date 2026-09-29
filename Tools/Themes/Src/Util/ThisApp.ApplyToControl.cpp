@@ -1,5 +1,7 @@
 module ThisApp.ApplyToControl;
 
+import ThisApp.History;
+
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.RadioButton;
@@ -234,7 +236,7 @@ namespace ThisApp
         invalidate();
         invalidateFormAlign();
         if (m_onChanged)
-            m_onChanged();
+            m_onChanged(EditPhase::Settled);
     }
 
     // ApplyToPopup

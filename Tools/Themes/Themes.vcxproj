@@ -245,6 +245,8 @@
     <ClCompile Include="Src\Util\ThisApp.Consts.cppm" />
     <ClCompile Include="Src\Util\ThisApp.FloorSlider.cpp" />
     <ClCompile Include="Src\Util\ThisApp.FloorSlider.cppm" />
+    <ClCompile Include="Src\Util\ThisApp.History.cpp" />
+    <ClCompile Include="Src\Util\ThisApp.History.cppm" />
     <ClCompile Include="Src\Util\ThisApp.HueRuleControl.cppm" />
     <ClCompile Include="Src\Util\ThisApp.Palette.Controls.cppm" />
     <ClCompile Include="Src\Util\ThisApp.RuleSlider.cppm" />

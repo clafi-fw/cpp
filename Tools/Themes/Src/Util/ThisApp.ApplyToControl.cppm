@@ -1,5 +1,7 @@
 export module ThisApp.ApplyToControl;
 
+import ThisApp.History;
+
 import ClaFi.Controls.Base.DropdownControlBase;
 
 import ClaFi.Core.AppTheme_Colors;
@@ -13,8 +15,8 @@ namespace ThisApp
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // What an Apply to control calls after it has changed its rule.
-    export using OnRuleChanged = std::function<void()>;
+    // What an Apply to control calls after it has changed its rule - a pick, so always settled.
+    export using OnRuleChanged = std::function<void(EditPhase)>;
 
     // Which of a rule's two input sets a column edits - inputs or andInputs.
     export using RuleClause = RuleInputs ColorRule::*;

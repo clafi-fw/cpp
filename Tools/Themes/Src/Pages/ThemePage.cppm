@@ -5,6 +5,7 @@ import ThisApp.CodeOptions;
 import ThisApp.Consts;
 import ThisApp.DesignPage;
 import ThisApp.FloorSlider;
+import ThisApp.History;
 import ThisApp.HueRuleControl;
 import ThisApp.RuleSlider;
 import ThisApp.ThemeToCppCode;
@@ -149,7 +150,7 @@ namespace ThisApp
     private:
         ThemeColors& editColors() { return m_editTheme.colors; }
         //
-        void anchorChanged();
+        void anchorChanged(EditPhase);
         void harmonyChanged();
         void paletteMapChanged();
         void mapHuesToColors();
@@ -165,15 +166,23 @@ namespace ThisApp
         [[nodiscard]] Grids::Column& pigmentColumn(PigmentColumn);
         // What a pigment's value is about to change: the surface its element stands on.
         [[nodiscard]] RuleBase pigmentRuleBase(UiElement, RuleChannel);
-        void pigmentChanged();
-        void darkModeFloorChanged();
+        void pigmentChanged(EditPhase);
+        void darkModeFloorChanged(EditPhase);
         //
+        // Brings every control up on m_editTheme as it stands - what a restore and an undo share.
+        void showEditTheme();
+        // Every edit ends here: the tab node takes the theme, and the history takes the step.
+        void edited(EditPhase);
+        void undoEdit();
+        void redoEdit();
+        // Puts a state of the history on as the theme - on screen and in the tab node.
+        void showHistoryState(const AppTheme&);
         void storeViewState() const;
         void storeView() const;
         void restoreView();
         void designPagePicked(); // sends the pick to the browser as this tab's anchor
         void showAnchor(const Browser::ShowAnchorEvent&);
-        void rulesChanged(); // a rule was added on the Design page or taken away
+        void rulesChanged(EditPhase); // a rule was added on the Design page, moved or taken away
         void saveTheme() const;
         // Writes this page's work to a name the user gives, and takes the tab there. The original
         // is left on the disk as it stands, which is what tells this from Save.
@@ -243,10 +252,26 @@ namespace ThisApp
             Padding{ 4.0f }
         ) };
 
+        // Words, icon and state come from the actions; mouse only keeps the focus on the edit.
+        ToolButton& m_undoButton{ toolBar().add<ToolButton>(
+            IconSize{ 18.0f },
+            ButtonViewMode::IconOnly,
+            StdActions::undo,
+            Interactivity::MouseOnly
+        ) };
+
+        ToolButton& m_redoButton{ toolBar().add<ToolButton>(
+            IconSize{ 18.0f },
+            ButtonViewMode::IconOnly,
+            StdActions::redo,
+            Interactivity::MouseOnly
+        ) };
+
         AppTheme m_editTheme{};
-        // Set while restoreViewState brings the controls up on the theme it has just read. What it
-        // calls to do that are the same handlers a user edit calls, and each of them ends by
-        // writing the theme back - see storeViewState.
+        History<AppTheme> m_history{}; // the states m_editTheme has been through
+        // Set while showEditTheme brings the controls up on a theme that was read or undone to.
+        // What it calls to do that are the same handlers a user edit calls, and each of them ends
+        // by writing the theme back and recording a step - see edited.
         bool m_restoring{ false };
         // Set by Save as, which has just written this page's work under another name. What stands
         // in the view state differs from this page's own file and always will - and nothing is at
@@ -463,7 +488,7 @@ namespace ThisApp
         :
         BasePage{ params, std::forward<Args>(args)... },
         m_onSelectPaletteMap{ [this]() { paletteMapChanged(); } },
-        m_onPigmentChanged{ [this]() { pigmentChanged(); } }
+        m_onPigmentChanged{ [this](const EditPhase phase) { pigmentChanged(phase); } }
     {
         // The second half of the button IS Save as. A menu of one was a stop on the way to it,
         // naming what the arrow already means and asking for a second press to get there; behind
@@ -476,9 +501,24 @@ namespace ThisApp
             // rather than saying no.
             if (&event.action == &StdActions::save || &event.action == &StdActions::saveAs)
                 event.claim({});
+            else if (&event.action == &StdActions::undo)
+                event.claim({ .enabled = m_history.canUndo() });
+            else if (&event.action == &StdActions::redo)
+                event.claim({ .enabled = m_history.canRedo() });
             });
 
         onActionClick([this](ActionClickEvent& event) {
+            if (&event.action == &StdActions::undo)
+            {
+                undoEdit();
+                return;
+            }
+            if (&event.action == &StdActions::redo)
+            {
+                redoEdit();
+                return;
+            }
+
             const bool isSave = &event.action == &StdActions::save;
             if (!isSave && &event.action != &StdActions::saveAs)
                 return;
@@ -521,8 +561,11 @@ namespace ThisApp
         // an argument list has no way to say which of the theme's floats a float* is.
         m_anchorSlider.setEditedHue(editColors().anchorHue);
 
-        m_anchorSlider.connectEvent([this](SliderChangeEvent&) {
-            anchorChanged();
+        m_anchorSlider.connectEvent([this](SliderChangeEvent& event) {
+            anchorChanged(editPhaseOf(event.slider));
+            });
+        m_anchorSlider.onSettle([this](SliderSettleEvent&) {
+            edited(EditPhase::Settled);
             });
 
         m_darkModeFloorSlider.setMaxPosition(k_maxDarkModeFloor);
@@ -530,8 +573,11 @@ namespace ThisApp
         m_darkModeFloorSlider.bind([this]() {
             return elementColor(UiElement::Page);
             });
-        m_darkModeFloorSlider.connectEvent([this](SliderChangeEvent&) {
-            darkModeFloorChanged();
+        m_darkModeFloorSlider.connectEvent([this](SliderChangeEvent& event) {
+            darkModeFloorChanged(editPhaseOf(event.slider));
+            });
+        m_darkModeFloorSlider.onSettle([this](SliderSettleEvent&) {
+            edited(EditPhase::Settled);
             });
 
         m_cppCodePage.box().setLanguage(Syntax::Languages::cpp);
@@ -593,8 +639,8 @@ namespace ThisApp
                 const RuleChannel channel) {
                 return elementRuleBase(element, rule, channel);
             },
-            [this]() {
-                rulesChanged();
+            [this](const EditPhase phase) {
+                rulesChanged(phase);
             }
         );
         bindPigmentEditors();

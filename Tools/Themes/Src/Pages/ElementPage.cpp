@@ -1,6 +1,7 @@
 module ThisApp.ElementPage;
 
 import ThisApp.ApplyToControl;
+import ThisApp.History;
 import ThisApp.HueRuleControl;
 import ThisApp.RuleSlider;
 import ThisApp.ValueRuleControl;
@@ -56,7 +57,7 @@ namespace ThisApp
             bindEditors(*row);
         addRow(m_rules->size() - 1ull);
         form().invalidateAlign();
-        rulesChanged();
+        rulesChanged(EditPhase::Settled);
     }
 
     // The Delete key arrives through the grid, whose rows the deletion takes down, so the rules
@@ -81,7 +82,7 @@ namespace ThisApp
             m_rules->erase(m_rules->begin() + static_cast<std::ptrdiff_t>(index));
         m_pendingDeletes.clear();
         rebuild();
-        rulesChanged();
+        rulesChanged(EditPhase::Settled);
     }
 
     // The button stands outside the grid, so the rows can go at once.
@@ -89,7 +90,7 @@ namespace ThisApp
     {
         *m_rules = *m_defaults;
         rebuild();
-        rulesChanged();
+        rulesChanged(EditPhase::Settled);
     }
 
     // Every cell of a rule's row holds its editor.
@@ -161,10 +162,10 @@ namespace ThisApp
         };
     }
 
-    void ElementPage::rulesChanged()
+    void ElementPage::rulesChanged(const EditPhase phase)
     {
         m_resetButton.invalidateState();
         if (m_onRulesChanged)
-            m_onRulesChanged();
+            m_onRulesChanged(phase);
     }
 }

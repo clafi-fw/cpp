@@ -1,5 +1,6 @@
 export module ThisApp.ValueRuleControl;
 
+import ThisApp.History;
 import ThisApp.RuleSlider;
 
 import ClaFi.Controls.Base.DropdownControlBase;
@@ -19,8 +20,8 @@ namespace ThisApp
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // What a value rule control calls after it has changed its value.
-    export using OnValueRuleChanged = std::function<void()>;
+    // What a value rule control calls after it has changed its value, and where the edit stands.
+    export using OnValueRuleChanged = std::function<void(EditPhase)>;
 
     // Which operations a value rule may take. A pigment is a colour of its own rather than a
     // change to one, so its saturation and elevation are stated values and nothing else.
@@ -50,7 +51,7 @@ namespace ThisApp
         [[nodiscard]] ColorRuleOp operation() const;
         [[nodiscard]] float normalizedValue() const;
         void setOperation(ColorRuleOp);
-        void setNormalizedValue(float);
+        void setNormalizedValue(float, EditPhase);
     protected:
         [[nodiscard]] EditorMode editorMode() const override;
         // The face is typed over on any press the grid leaves it, and the strip drops the popup.
@@ -64,7 +65,7 @@ namespace ThisApp
         void nestedKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
     private:
-        void changed();
+        void changed(EditPhase);
     private:
         ColorRuleValue* m_value{}; // null until bound
         RuleChannel m_channel{};
