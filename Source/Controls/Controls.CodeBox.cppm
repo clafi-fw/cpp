@@ -46,7 +46,7 @@ namespace ClaFi::Controls
     // Which names a place on a line lists. See Controls#completionlist
     enum class CompletionScope : std::uint8_t
     {
-        Global,   // what stands on its own - the list's entries and the language's keywords
+        Global,   // what stands on its own - the text's own names, the list's, the keywords
         Member    // what follows a dot - every class's methods and properties
     };
 
@@ -55,9 +55,13 @@ namespace ClaFi::Controls
     {
     public:
         CompletionRow(const CreateParams&, CompletionStack&, CompletionScope,
-            std::wstring_view name, Syntax::CompletionKind, const Syntax::CompletionEntry*);
+            std::wstring_view name, Syntax::CompletionKind, const Syntax::CompletionEntry*,
+            const Syntax::Declaration*);
         [[nodiscard]] CompletionScope scope() const { return m_scope; }
         [[nodiscard]] std::wstring_view name() const { return m_name; }
+        // Whether the name is in force at that position of the text - everywhere, for a name
+        // the text itself does not declare.
+        [[nodiscard]] bool inForceAt(std::size_t pos) const;
     protected:
         void getText(GetTextEvent&) const override;
         // The signature and the hint beside the list. See Controls#completionlist
@@ -69,6 +73,8 @@ namespace ClaFi::Controls
         std::wstring m_name;
         Syntax::CompletionKind m_kind;
         const Syntax::CompletionEntry* m_entry;   // what the hint reads - null for a keyword
+        // The text's own declaration the row stands for - null for a name from elsewhere.
+        const Syntax::Declaration* m_declaration;
     };
 
     // The rows, shown by scope and by what is typed. See Controls#completionlist
@@ -79,14 +85,19 @@ namespace ClaFi::Controls
         [[nodiscard]] CodeBox& box() const { return m_box; }
         // The name as typed so far - what a row marks in its own.
         [[nodiscard]] std::wstring_view typed() const { return m_typed; }
-        // Builds the rows anew: the list's names by scope and the language's keywords, in name
-        // order under the language's case rule, a member two classes name listed once.
-        void rebuild(const Syntax::Language&, const Syntax::CompletionEntries*);
-        // Shows the rows of the scope that begin with what is typed, the first of them current,
-        // and answers how many.
-        std::size_t filter(const Syntax::Language&, CompletionScope, std::wstring_view typed);
+        // Builds the rows anew: the text's own declarations first, the nearest scope's ahead,
+        // then the list's names by scope and the language's keywords - each run in name order
+        // under the language's case rule, a member two classes name listed once.
+        void rebuild(const Syntax::Language&, const Syntax::CompletionEntries*,
+            const Syntax::Declarations&);
+        // Shows the rows of the scope that begin with what is typed and are in force at the
+        // caret's position in the text, the first of them current, and answers how many.
+        std::size_t filter(const Syntax::Language&, CompletionScope, std::wstring_view typed,
+            std::size_t caret);
         // Moves the current row one shown row up or down, staying at either end.
         void moveCurrent(ScrollDirection);
+        // Moves the current row a view less one row up or down, staying at either end.
+        void moveCurrentByPage(ScrollDirection);
         [[nodiscard]] CompletionRow* currentRow() const;
         // Puts the current row's hint up beside it, or takes the hint down with no row current.
         void showCurrentHint();
@@ -96,6 +107,7 @@ namespace ClaFi::Controls
         // The current row reads selected - the base says so only for a stack that follows the user.
         void getControlState(GetStateEvent&) const override;
     private:
+        [[nodiscard]] std::vector<CompletionRow*> shownRows() const;
         void setCurrentRow(CompletionRow*);
     private:
         CodeBox& m_box;
@@ -162,6 +174,9 @@ namespace ClaFi::Controls
         void requestCompletion(bool opening);
         // Lists what the caret's place names, or takes the list down. See Controls#completionlist
         void updateCompletion();
+        // Reads the text's own declarations anew where the text has changed since the last
+        // reading; the rows follow only where the declarations did.
+        void readDeclarations();
         void hideCompletion();
         // Makes the list's window, on the first request.
         void ensureCompletionList();
@@ -186,8 +201,13 @@ namespace ClaFi::Controls
         bool m_completionExplicit{ false };   // whether the request lists with nothing typed
         // Whether a request found the layout unsettled and waits on the pass that settles it.
         bool m_completionWaitsOnAlign{ false };
-        // Whether the rows are to be built anew - the language or the list has changed.
+        // Whether the rows are to be built anew - the language, the list or the declarations
+        // have changed.
         mutable bool m_completionRowsStale{ true };
+        // The names the text declares for itself, as the language read them when the list last
+        // opened, and whether the text has changed since. See Controls#completionlist
+        Syntax::Declarations m_declarations{};
+        mutable bool m_declarationsStale{ true };
         // Whether the character of the press being answered belongs in the text. THE CHARACTER OF
         // A PRESS IS QUEUED BEFORE THE PRESS IS ANSWERED, so a Return that took a row would still
         // break the line: the press settles this and the character reads it - see charPress.

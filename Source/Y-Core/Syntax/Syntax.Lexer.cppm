@@ -57,7 +57,7 @@ namespace ClaFi::Syntax
     // A language's reading of a whole text, answering how sure it is of it. See Syntax
     export using Detector = Claim (*)(std::wstring_view text);
 
-    // A language, stated as tables, one hook and one detector. See Syntax
+    // A language, stated as tables, one hook, one detector and one reader. See Syntax
     export struct Language
     {
         std::wstring_view name;
@@ -76,6 +76,7 @@ namespace ClaFi::Syntax
         bool keyBeforeColon{ false };            // a string standing before : is a property
         Hook hook{ nullptr };
         Detector detect{ nullptr };              // null for a language only ever picked by hand
+        DeclarationReader declarations{ nullptr };   // null for a language that declares nothing
     };
 
     // The strings a line state cannot spell, held by id. See Syntax

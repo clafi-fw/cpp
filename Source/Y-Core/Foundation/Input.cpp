@@ -105,9 +105,12 @@ namespace ClaFi
     {
         const bool mouseTurnedOn = s_mouse.setActive(appContext, true);
         const bool keyboardTurnedOff = s_keyboard.setActive(appContext, false);
+        if (!mouseTurnedOn && !keyboardTurnedOff)
+            return;
+        if (mouseTurnedOn)
+            Tooltip::mouseTookOver();
         // The animations repaint from their first tick onwards; this is the frame before the first.
-        if (mouseTurnedOn || keyboardTurnedOff)
-            invalidateForControllers(s_hoveredControl);
+        invalidateForControllers(s_hoveredControl);
     }
 
     void Input::keyActed(AppContext& appContext)

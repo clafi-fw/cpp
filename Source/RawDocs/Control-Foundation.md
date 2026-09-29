@@ -264,10 +264,26 @@ the hint is about, and it is OWNED by that window - which is what keeps it above
 without being told anything about the rest of the screen. A form is the one thing that knows
 which window that is, so a form is what a tooltip is a member of.
 
-AT MOST ONE IS IN PLAY. Which form's tooltip that is follows the pointer, and Input keeps a
-single hovered control. The calls that are about whatever is on screen rather than about a
-form - the user pressed a key, a control is being destroyed - are static and reach it
-through s_current.
+WHAT A HINT IS ABOUT FOLLOWS THE CONTROLLER. While the mouse drives it is the control under the
+pointer, and the hover moving is what takes a hint down and starts the wait for the next. While
+the keyboard alone drives it is the item the focus rests on - the control a key landed on, which
+a container holds the focus for - and the focus landing does the same. Each hears its own
+controller and not the other: the hover moves under a still pointer, when a window appears under
+it or a hit-test follows a scroll, and a click lands the focus with the pointer's hint already
+standing for it. When the mouse takes over, the hover has its say at once, wherever the pointer
+was left - unless it rests on the very item the focus is on, where nothing changed hands. A hint
+already up about the control pointed at is left standing.
+
+AT MOST ONE IS IN PLAY. Which form's tooltip that is follows the control pointed at. The calls
+that are about whatever is on screen rather than about a form - the user pressed a key, a
+control is being destroyed - are static and reach it through s_current.
+
+A HINT STANDS WHERE ITS CONTROL COMES TO REST. A control a glide is still carrying - a list
+scrolling to the row a hint was put up beside - is measured where the glide will leave it, so
+the hint goes there at once and stands still while the content travels to it. After that the
+window goes with the control the way a popup goes with the control it was opened on: a pass
+that lays the form out again moves it by the control's step. A control scrolled out of its view
+is nothing to follow, and the hint stands where it was put.
 
 A HINT BREAKS ITS LINES AT k_lineWidth, 480 design units, and its window is sized to the widest
 line it came to - a short hint stays as short as its words. Bounded by the screen alone, a long

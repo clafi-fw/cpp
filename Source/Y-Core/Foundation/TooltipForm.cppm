@@ -4,7 +4,7 @@ export module ClaFi.Core.Foundation :TooltipForm;
 // `friend class TooltipLabel;`, which declares TooltipLabel attached to
 // ClaFi.Core.Foundation - so the class has to be defined in that same module, not in a
 // second one that imports it. Nothing outside Foundation names TooltipForm: Tooltip.cpp
-// is the only importer, and it is an implementation unit of this module.
+// and Form.cpp import it, and both are implementation units of this module.
 import :Control;
 import :Form;
 import :WithTextLayout;
@@ -70,6 +70,11 @@ namespace ClaFi
         [[nodiscard]] const Text& shownText() const { return m_shownText; }
     protected:
         void updateVisibility() override;
+        // The control the hint is about, which the window goes along with as a popup does.
+        [[nodiscard]] const Control* placementTarget() const override
+            { return TooltipLabel::m_control; }
+        // Where the control comes to rest, which is where a hint about it is placed.
+        [[nodiscard]] FloatRect placementTargetBounds(const Control&) const override;
     private:
         static constexpr ColorByte m_alpha = 255; // a bit of transparency looks good only when bg is blurred
     private:
@@ -192,6 +197,8 @@ namespace ClaFi
     void TooltipForm::setControl(Control& control, const GetTooltipEvent& event)
     {
         setControl(&control);
+        // Taken here too - a rect stated equal to the last one records nothing.
+        rememberPlacementTarget();
         m_measuredText = event.text;
         setPlacement(event.placement);
         m_hideOnUserInput = event.hideOnUserInput;
@@ -228,6 +235,14 @@ namespace ClaFi
             updatePlacement();
         startAlphaAnimation();
         window().show();
+    }
+
+    FloatRect TooltipForm::placementTargetBounds(const Control& target) const
+    {
+        // A glide carries the control there without moving the place, so the hint stands still.
+        FloatRect bounds = target.boundsInForm();
+        bounds.offset(-target.viewTravelRemaining());
+        return bounds;
     }
 
 }

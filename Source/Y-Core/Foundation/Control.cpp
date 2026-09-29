@@ -873,6 +873,10 @@ namespace ClaFi
         // has already invalidated both sides of the change.
         if (event.control != this)
             invalidateState();
+        // Told after the walk, so that a container has recorded the item it now answers for. A
+        // control a key lands on is what a hint is about while the keyboard drives, the way the
+        // one under the pointer is while the mouse does.
+        Tooltip::focusedControlChanged();
     }
 
     void Control::animatedClick(FormBase& form, const InputStamp stamp)

@@ -997,6 +997,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Languages.cpp">
       <Filter>Y_Core\Syntax</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Languages.Pascal.cpp">
+      <Filter>Y_Core\Syntax</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Syntax\Syntax.Languages.cppm">
       <Filter>Y_Core\Syntax</Filter>
     </ClCompile>

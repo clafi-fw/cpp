@@ -49,6 +49,55 @@ namespace ClaFi::Syntax
         bool operator==(const LineState&) const = default;
     };
 
+    // What a name offered for completion is. See Syntax#completion
+    export enum class CompletionKind : std::uint8_t
+    {
+        Keyword,
+        Type,
+        Class,
+        Function,
+        Procedure,
+        Property,
+        Field,
+        Constant,
+        Variable,
+        Count
+    };
+
+    export constexpr std::size_t k_completionKindCount =
+        static_cast<std::size_t>(CompletionKind::Count);
+
+    export struct CompletionEntry;
+    export using CompletionEntries = std::vector<CompletionEntry>;
+
+    // A name a host offers for completion, and what a hint says about it. See Syntax#completion
+    export struct CompletionEntry
+    {
+        std::wstring name;
+        CompletionKind kind{ CompletionKind::Variable };
+        std::wstring signature;        // the line a hint shows - empty where the name is all of it
+        std::wstring hint;             // what it does, in a sentence
+        std::wstring parent;           // the class this one derives from - empty for none
+        CompletionEntries methods;     // a class's methods - empty elsewhere
+        CompletionEntries properties;  // a class's properties - empty elsewhere
+        bool operator==(const CompletionEntry&) const = default;
+    };
+
+    // A name a text declares for itself, and where it is in force. See Syntax#declarations
+    export struct Declaration
+    {
+        CompletionEntry entry;    // the name, its kind, and the declaration as spelled for the hint
+        std::wstring type;        // the type the name is declared with, where one name spells it
+        TextRange scope;          // the run of the text the name is in force in
+        std::size_t depth{ 0 };   // how many routines stand around the declaration
+        bool operator==(const Declaration&) const = default;
+    };
+
+    export using Declarations = std::vector<Declaration>;
+
+    // A language's reading of the names a text declares. See Syntax#declarations
+    export using DeclarationReader = Declarations (*)(std::wstring_view text);
+
     // What each kind of token is drawn in. See Syntax
     export class Inks
     {

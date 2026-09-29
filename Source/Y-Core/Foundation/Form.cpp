@@ -6,6 +6,7 @@ import :Action;
 import :Input;
 import :Navigation;
 import :Tooltip;
+import :TooltipForm;
 
 import ClaFi.Diagnostic.Log;
 import ClaFi.Diagnostic.Options;
@@ -299,6 +300,10 @@ namespace ClaFi
     {
         if (m_activePopup && movedControl.containsNested(m_activePopup->popupTarget()))
             m_activePopup->followPopupTarget2();
+        // A hint stands on the control it is about the same way.
+        TooltipForm* hint = m_tooltip.m_form.get();
+        if (hint && movedControl.containsNested(hint->control()))
+            hint->followPopupTarget2();
     }
 
     void FormBase::controlHidden(const Control& control)
@@ -2088,9 +2093,10 @@ namespace ClaFi
 
     void FormBase::followPopupTarget2()
     {
-        if (!m_popupTarget)
+        const Control* target = placementTarget();
+        if (!target)
             return;
-        if (rectOfControl(m_popupTarget, true).empty())
+        if (rectOfControl(target, true).empty())
             return;
         if (m_placement == FormPlacement::Mouse || m_placement == FormPlacement::ContextMenu)
             return;
@@ -2104,7 +2110,7 @@ namespace ClaFi
         // CARRIED AS A CHANGE rather than taken from the target, because the rect is not always
         // the target's bounds - a caller is free to state one - and what it states should move
         // and grow with the control rather than be replaced by it.
-        const FloatRect targetBounds = m_popupTarget->boundsInForm();
+        const FloatRect targetBounds = placementTargetBounds(*target);
         const FloatPoint step = targetBounds.topLeft() - m_placementTargetBounds.topLeft();
         const FloatPoint grew = {
             targetBounds.width() - m_placementTargetBounds.width(),
@@ -2124,7 +2130,8 @@ namespace ClaFi
 
     void FormBase::rememberPlacementTarget()
     {
-        m_placementTargetBounds = m_popupTarget ? m_popupTarget->boundsInForm() : FloatRect{};
+        const Control* target = placementTarget();
+        m_placementTargetBounds = target ? placementTargetBounds(*target) : FloatRect{};
     }
 
     void FormBase::dropActivePopup()

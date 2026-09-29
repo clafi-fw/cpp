@@ -8,61 +8,13 @@ namespace ClaFi::Syntax
 {
     namespace
     {
-        // Emits from `start` to the closer on this line, or to the line's end with the mode kept
-        // for the line after. The search begins at index, which is past the opener when there is
-        // one on this line.
-        void takeToCloser(Scan& scan, const std::size_t start, const std::wstring_view closer,
-            const TokenKind kind, const std::uint8_t mode)
-        {
-            const std::size_t close = scan.line.find(closer, scan.index);
-            if (close == std::wstring_view::npos)
-            {
-                scan.emit(start, scan.line.size(), kind);
-                scan.index = scan.line.size();
-                scan.state.mode = mode;
-                return;
-            }
-            const std::size_t end = close + closer.size();
-            scan.emit(start, end, kind);
-            scan.index = end;
-            scan.state.mode = Mode::normal;
-        }
-
         void takeToLineEnd(Scan& scan, const TokenKind kind)
         {
             scan.emit(scan.index, scan.line.size(), kind);
             scan.index = scan.line.size();
         }
 
-
-        //---------------------------------------------------------------------
-        // Reading a whole text, which is what a detector is handed
-
-
         constexpr std::wstring_view k_blanks = L" \t\r\n";
-
-        // The text without the blanks at either end.
-        [[nodiscard]] std::wstring_view trimmed(const std::wstring_view text)
-        {
-            const std::size_t first = text.find_first_not_of(k_blanks);
-            if (first == std::wstring_view::npos)
-                return {};
-
-            const std::size_t last = text.find_last_not_of(k_blanks);
-            return text.substr(first, last - first + 1);
-        }
-
-        // The line starting at `start`, its blanks trimmed, and `start` moved to the next one.
-        [[nodiscard]] std::wstring_view lineFrom(const std::wstring_view text, std::size_t& start)
-        {
-            std::size_t lineEnd = text.find(L'\n', start);
-            if (lineEnd == std::wstring_view::npos)
-                lineEnd = text.size();
-
-            const std::wstring_view line = trimmed(text.substr(start, lineEnd - start));
-            start = lineEnd + 1;
-            return line;
-        }
 
         // Whether the text opens with one of the words.
         [[nodiscard]] bool opensWithAny(const std::wstring_view text, const Words words)
@@ -89,38 +41,89 @@ namespace ClaFi::Syntax
             }
             return true;
         }
+    }
 
-        [[nodiscard]] bool endsWithNoCase(const std::wstring_view text,
-            const std::wstring_view lowerWord)
+
+    //-------------------------------------------------------------------------
+    // Shared by the language files
+
+
+    // Emits from `start` to the closer on this line, or to the line's end with the mode kept
+    // for the line after. The search begins at index, which is past the opener when there is
+    // one on this line.
+    void takeToCloser(Scan& scan, const std::size_t start, const std::wstring_view closer,
+        const TokenKind kind, const std::uint8_t mode)
+    {
+        const std::size_t close = scan.line.find(closer, scan.index);
+        if (close == std::wstring_view::npos)
         {
-            return text.size() >= lowerWord.size()
-                && opensWithNoCase(text.substr(text.size() - lowerWord.size()), lowerWord);
+            scan.emit(start, scan.line.size(), kind);
+            scan.index = scan.line.size();
+            scan.state.mode = mode;
+            return;
         }
+        const std::size_t end = close + closer.size();
+        scan.emit(start, end, kind);
+        scan.index = end;
+        scan.state.mode = Mode::normal;
+    }
 
-        // Whether the text opens with one of the words whole - the word, and then no letter,
-        // digit or underscore - whatever the case it is spelled in.
-        [[nodiscard]] bool opensWithAnyWordNoCase(const std::wstring_view text,
-            const Words lowerWords)
+    // The text without the blanks at either end.
+    std::wstring_view trimmed(const std::wstring_view text)
+    {
+        const std::size_t first = text.find_first_not_of(k_blanks);
+        if (first == std::wstring_view::npos)
+            return {};
+
+        const std::size_t last = text.find_last_not_of(k_blanks);
+        return text.substr(first, last - first + 1);
+    }
+
+    // The line starting at `start`, its blanks trimmed, and `start` moved to the next one.
+    std::wstring_view lineFrom(const std::wstring_view text, std::size_t& start)
+    {
+        std::size_t lineEnd = text.find(L'\n', start);
+        if (lineEnd == std::wstring_view::npos)
+            lineEnd = text.size();
+
+        const std::wstring_view line = trimmed(text.substr(start, lineEnd - start));
+        start = lineEnd + 1;
+        return line;
+    }
+
+    bool endsWithNoCase(const std::wstring_view text,
+        const std::wstring_view lowerWord)
+    {
+        return text.size() >= lowerWord.size()
+            && opensWithNoCase(text.substr(text.size() - lowerWord.size()), lowerWord);
+    }
+
+    // Whether the text opens with one of the words whole - the word, and then no letter,
+    // digit or underscore - whatever the case it is spelled in.
+    bool opensWithAnyWordNoCase(const std::wstring_view text,
+        const Words lowerWords)
+    {
+        for (const std::wstring_view word : lowerWords)
         {
-            for (const std::wstring_view word : lowerWords)
-            {
-                if (!opensWithNoCase(text, word))
-                    continue;
-                if (text.size() == word.size())
-                    return true;
+            if (!opensWithNoCase(text, word))
+                continue;
+            if (text.size() == word.size())
+                return true;
 
-                const wchar_t after = text[word.size()];
-                if (std::iswalnum(after) == 0 && after != L'_')
-                    return true;
-            }
-            return false;
+            const wchar_t after = text[word.size()];
+            if (std::iswalnum(after) == 0 && after != L'_')
+                return true;
         }
+        return false;
+    }
 
 
-        //---------------------------------------------------------------------
-        // C++
+    //-------------------------------------------------------------------------
+    // C++
 
 
+    namespace
+    {
         namespace CppMode
         {
             constexpr std::uint8_t rawString = Mode::firstLanguageMode;
@@ -489,275 +492,6 @@ namespace ClaFi::Syntax
 
         const bool joins = joinsNames(text, L"::", L"") || joinsNames(text, L"->", L")]");
         return (isSourceShaped(signs) && joins) ? Claim::Likely : Claim::None;
-    }
-
-
-    //-------------------------------------------------------------------------
-    // Pascal
-
-
-    namespace
-    {
-        namespace PascalMode
-        {
-            constexpr std::uint8_t braceDirective = Mode::firstLanguageMode;
-            constexpr std::uint8_t parenDirective = Mode::firstLanguageMode + 1;
-        }
-
-        // A directive that is an everyday name as well - a property's accessors, a method's
-        // message - and a keyword only past a declaration's signature. Sorted, and lower case.
-        constexpr auto k_pascalContextual = std::to_array<std::wstring_view>({
-            L"default", L"dispid", L"implements", L"index", L"message", L"name", L"nodefault",
-            L"read", L"stored", L"write"
-        });
-        static_assert(std::ranges::is_sorted(k_pascalContextual));
-
-        // The words a declaration line opens with. Sorted, and lower case.
-        constexpr auto k_pascalDeclarers = std::to_array<std::wstring_view>({
-            L"class", L"constructor", L"destructor", L"function", L"operator", L"procedure",
-            L"property"
-        });
-        static_assert(std::ranges::is_sorted(k_pascalDeclarers));
-
-        // The header of a source file: one of these, a name, and a semicolon closing the line.
-        constexpr auto k_pascalHeaders = std::to_array<std::wstring_view>({
-            L"library", L"program", L"unit"
-        });
-
-        constexpr auto k_pascalBlockWords = std::to_array<std::wstring_view>({
-            L"begin", L"end"
-        });
-
-        constexpr auto k_pascalRoutineWords = std::to_array<std::wstring_view>({
-            L"function", L"procedure"
-        });
-
-        using DigitTest = bool (*)(wchar_t);
-
-        [[nodiscard]] bool isHexDigit(const wchar_t value)
-        {
-            return std::iswxdigit(value) != 0;
-        }
-
-        [[nodiscard]] bool isBinaryDigit(const wchar_t value)
-        {
-            return value == L'0' || value == L'1';
-        }
-
-        // From index to the end of the digits the test accepts from `digits` on, as one token.
-        void takeDigits(Scan& scan, const std::size_t digits, const DigitTest isDigitOf,
-            const TokenKind kind)
-        {
-            std::size_t end = digits;
-            while (end != scan.line.size() && isDigitOf(scan.line[end]))
-                ++end;
-
-            scan.emit(scan.index, end, kind);
-            scan.index = end;
-        }
-
-        // A string: quoted with single quotes, closed on its own line, and carrying a quote as
-        // two - drawn as an escape, the way a backslash and what it escapes are elsewhere.
-        void takePascalString(Scan& scan)
-        {
-            std::size_t runStart = scan.index;
-            std::size_t at = scan.index + 1;
-            while (at < scan.line.size())
-            {
-                if (scan.line[at] != L'\'')
-                {
-                    ++at;
-                    continue;
-                }
-                if (at + 1 < scan.line.size() && scan.line[at + 1] == L'\'')
-                {
-                    scan.emit(runStart, at, TokenKind::String);
-                    scan.emit(at, at + 2, TokenKind::Escape);
-                    at += 2;
-                    runStart = at;
-                    continue;
-                }
-                ++at;
-                break;
-            }
-            scan.emit(runStart, at, TokenKind::String);
-            scan.index = at;
-        }
-
-        // A character by its code - #13, #$0D - which a string may abut on either side.
-        void takeCharCode(Scan& scan)
-        {
-            if (scan.peek() == L'$')
-                takeDigits(scan, scan.index + 2, isHexDigit, TokenKind::Escape);
-            else
-                takeDigits(scan, scan.index + 1, isDigit, TokenKind::Escape);
-        }
-
-        // Whether the line opens with a word a declaration does.
-        [[nodiscard]] bool opensDeclaration(const Scan& scan)
-        {
-            const std::size_t start = scan.pastBlanks(0);
-            const std::size_t end = endOfName(scan.line, start, scan.language);
-            return isListedNoCase(k_pascalDeclarers, scan.line.substr(start, end - start));
-        }
-
-        // Whether a colon or a semicolon outside every bracket stands before index on the line -
-        // past a routine's parameters and a property's own name, where the directives begin.
-        [[nodiscard]] bool pastSignature(const Scan& scan)
-        {
-            int depth = 0;
-            for (std::size_t i = 0; i != scan.index; ++i)
-            {
-                switch (scan.line[i])
-                {
-                    case L'(':
-                    case L'[':
-                        ++depth;
-                        break;
-                    case L')':
-                    case L']':
-                        --depth;
-                        break;
-                    case L':':
-                    case L';':
-                        if (depth == 0)
-                            return true;
-                        break;
-                    default:
-                        break;
-                }
-            }
-            return false;
-        }
-
-        // A directive that is also a name, as a keyword where it stands as a directive. Anywhere
-        // else it is left to the tables, which list it nowhere.
-        [[nodiscard]] bool takeContextualDirective(Scan& scan)
-        {
-            const std::size_t end = endOfName(scan.line, scan.index, scan.language);
-            const std::wstring_view word = scan.line.substr(scan.index, end - scan.index);
-            if (!isListedNoCase(k_pascalContextual, word))
-                return false;
-            if (!opensDeclaration(scan) || !pastSignature(scan))
-                return false;
-
-            scan.emit(scan.index, end, TokenKind::Keyword);
-            scan.index = end;
-            return true;
-        }
-
-        // What a reading of the lines finds of the language's shape.
-        struct PascalSigns
-        {
-            bool header{ false };      // unit, program or library: the word, a name, a semicolon
-            bool directive{ false };   // a line opening a compiler directive
-            bool block{ false };       // a line opening with begin or end
-            bool routine{ false };     // a line opening with procedure or function
-        };
-
-        [[nodiscard]] PascalSigns readPascalSigns(const std::wstring_view text)
-        {
-            PascalSigns signs;
-            std::size_t start = 0;
-            while (start < text.size())
-            {
-                const std::wstring_view line = lineFrom(text, start);
-                if (line.empty())
-                    continue;
-
-                if (line.back() == L';' && opensWithAnyWordNoCase(line, k_pascalHeaders))
-                    signs.header = true;
-                if (line.starts_with(L"{$"))
-                    signs.directive = true;
-                if (opensWithAnyWordNoCase(line, k_pascalBlockWords))
-                    signs.block = true;
-                if (opensWithAnyWordNoCase(line, k_pascalRoutineWords))
-                    signs.routine = true;
-            }
-            return signs;
-        }
-    }
-
-    bool pascalHook(Scan& scan)
-    {
-        switch (scan.state.mode)
-        {
-            case PascalMode::braceDirective:
-                takeToCloser(scan, scan.index, L"}", TokenKind::Directive,
-                    PascalMode::braceDirective);
-                return true;
-            case PascalMode::parenDirective:
-                takeToCloser(scan, scan.index, L"*)", TokenKind::Directive,
-                    PascalMode::parenDirective);
-                return true;
-            default:
-                break;
-        }
-
-        const wchar_t current = scan.current();
-        const wchar_t next = scan.peek();
-        if (current == L'\'')
-        {
-            takePascalString(scan);
-            return true;
-        }
-        if (current == L'#' && (isDigit(next) || next == L'$'))
-        {
-            takeCharCode(scan);
-            return true;
-        }
-        if (current == L'$' && isHexDigit(next))
-        {
-            takeDigits(scan, scan.index + 1, isHexDigit, TokenKind::Number);
-            return true;
-        }
-        if (current == L'%' && isBinaryDigit(next))
-        {
-            takeDigits(scan, scan.index + 1, isBinaryDigit, TokenKind::Number);
-            return true;
-        }
-
-        // A compiler directive is a comment whose first character is a dollar, closed the way the
-        // comment is. The comments without one are the table's.
-        const std::size_t start = scan.index;
-        if (current == L'{' && next == L'$')
-        {
-            scan.index += 2;
-            takeToCloser(scan, start, L"}", TokenKind::Directive, PascalMode::braceDirective);
-            return true;
-        }
-        if (current == L'(' && next == L'*' && scan.peek(2) == L'$')
-        {
-            scan.index += 3;
-            takeToCloser(scan, start, L"*)", TokenKind::Directive, PascalMode::parenDirective);
-            return true;
-        }
-
-        // An ampersand makes a name of a reserved word, and the name is as plain as any.
-        if (current == L'&' && isNameStart(next, scan.language))
-        {
-            scan.index = endOfName(scan.line, start + 1, scan.language);
-            return true;
-        }
-        if (isNameStart(current, scan.language))
-            return takeContextualDirective(scan);
-        return false;
-    }
-
-    // A file's header, a compiler directive, or a program closed with `end.` past a begin: no
-    // other language here spells them. A block with an assignment or a routine in it is the
-    // shape of a script, which a text of another language could share.
-    Claim pascalDetector(const std::wstring_view text)
-    {
-        const PascalSigns signs = readPascalSigns(text);
-        const bool closesProgram = signs.block && endsWithNoCase(trimmed(text), L"end.");
-        if (signs.header || signs.directive || closesProgram)
-            return Claim::Certain;
-
-        const bool assigns = text.find(L":=") != std::wstring_view::npos;
-        if (signs.block && (signs.routine || assigns))
-            return Claim::Likely;
-        return Claim::None;
     }
 
 

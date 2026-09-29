@@ -39,7 +39,42 @@ namespace ClaFi::Controls
             std::wstring_view name;
             Syntax::CompletionKind kind;
             const Syntax::CompletionEntry* entry;
+            const Syntax::Declaration* declaration;   // null for a name the text does not declare
         };
+
+        // Whether one source lists before another: the text's own declarations ahead of the
+        // rest, the deeper of two ahead, and names in the language's order after that - so among
+        // the rows a typed prefix names the nearest scope's stand first, and within a scope the
+        // shortest, an exact match, does. Two declarations of one name in one scope stand
+        // together, in the text's order.
+        [[nodiscard]] bool listsBefore(const Syntax::Language& language, const RowSource& left,
+            const RowSource& right)
+        {
+            if (left.scope != right.scope)
+                return left.scope < right.scope;
+            const bool leftDeclared = left.declaration != nullptr;
+            const bool rightDeclared = right.declaration != nullptr;
+            if (leftDeclared != rightDeclared)
+                return leftDeclared;
+            if (leftDeclared && left.declaration->depth != right.declaration->depth)
+                return left.declaration->depth > right.declaration->depth;
+            if (Syntax::completionNameLess(language, left.name, right.name))
+                return true;
+            if (Syntax::completionNameLess(language, right.name, left.name))
+                return false;
+            return leftDeclared && left.declaration->scope.start < right.declaration->scope.start;
+        }
+
+        // Whether two sources are one row - a member two classes name, an entry stated twice.
+        // The text's own declarations are never folded: each stands for its own scope.
+        [[nodiscard]] bool sameRow(const Syntax::Language& language, const RowSource& left,
+            const RowSource& right)
+        {
+            return left.scope == right.scope
+                && !left.declaration
+                && !right.declaration
+                && Syntax::completionNamesEqual(language, left.name, right.name);
+        }
 
         [[nodiscard]] CompletionRow& rowOf(const ControlPtr& control)
         {
@@ -58,7 +93,8 @@ namespace ClaFi::Controls
 
     CompletionRow::CompletionRow(const CreateParams& params, CompletionStack& stack,
         const CompletionScope scope, const std::wstring_view name,
-        const Syntax::CompletionKind kind, const Syntax::CompletionEntry* entry)
+        const Syntax::CompletionKind kind, const Syntax::CompletionEntry* entry,
+        const Syntax::Declaration* declaration)
         :
         Button{ params,
             // The look of a dropdown's line: no surface at rest, and the current row on its own.
@@ -76,8 +112,17 @@ namespace ClaFi::Controls
         m_scope{ scope },
         m_name{ name },
         m_kind{ kind },
-        m_entry{ entry }
+        m_entry{ entry },
+        m_declaration{ declaration }
     {
+    }
+
+    bool CompletionRow::inForceAt(const std::size_t pos) const
+    {
+        if (!m_declaration)
+            return true;
+        const TextRange& scope = m_declaration->scope;
+        return scope.start <= pos && pos <= scope.end();
     }
 
     void CompletionRow::getText(GetTextEvent& event) const
@@ -134,61 +179,68 @@ namespace ClaFi::Controls
     }
 
     void CompletionStack::rebuild(const Syntax::Language& language,
-        const Syntax::CompletionEntries* entries)
+        const Syntax::CompletionEntries* entries, const Syntax::Declarations& declarations)
     {
         setCurrentItem(nullptr);
         clearControls();
 
         std::vector<RowSource> sources;
+        for (const Syntax::Declaration& declaration : declarations)
+        {
+            sources.push_back({
+                CompletionScope::Global, declaration.entry.name, declaration.entry.kind,
+                &declaration.entry, &declaration
+            });
+        }
         for (const std::wstring_view keyword : language.keywords)
         {
             sources.push_back({
-                CompletionScope::Global, keyword, Syntax::CompletionKind::Keyword, nullptr
+                CompletionScope::Global, keyword, Syntax::CompletionKind::Keyword, nullptr, nullptr
             });
         }
         if (entries)
         {
             for (const Syntax::CompletionEntry& entry : *entries)
             {
-                sources.push_back({ CompletionScope::Global, entry.name, entry.kind, &entry });
+                sources.push_back({
+                    CompletionScope::Global, entry.name, entry.kind, &entry, nullptr
+                });
                 // A member is listed whatever class it is read off - see the note. The parent's
                 // members stand in the list under the parent, so a class repeats none of them.
                 for (const Syntax::CompletionEntry& method : entry.methods)
                 {
                     sources.push_back({
-                        CompletionScope::Member, method.name, method.kind, &method
+                        CompletionScope::Member, method.name, method.kind, &method, nullptr
                     });
                 }
                 for (const Syntax::CompletionEntry& property : entry.properties)
                 {
                     sources.push_back({
-                        CompletionScope::Member, property.name, property.kind, &property
+                        CompletionScope::Member, property.name, property.kind, &property, nullptr
                     });
                 }
             }
         }
 
-        // In name order within a scope, so that among the rows a typed prefix names the shortest
-        // - the exact match - stands first. Stable, so of two classes naming one member the first
-        // in the list is the one kept.
+        // Stable, so of two classes naming one member the first in the list is the one kept.
         std::ranges::stable_sort(sources, [&](const RowSource& left, const RowSource& right){
-            if (left.scope != right.scope)
-                return left.scope < right.scope;
-            return Syntax::completionNameLess(language, left.name, right.name);
+            return listsBefore(language, left, right);
         });
         const auto duplicates = std::ranges::unique(sources,
             [&](const RowSource& left, const RowSource& right){
-                return left.scope == right.scope
-                    && Syntax::completionNamesEqual(language, left.name, right.name);
+                return sameRow(language, left, right);
             });
         sources.erase(duplicates.begin(), duplicates.end());
 
         for (const RowSource& source : sources)
-            add<CompletionRow>(*this, source.scope, source.name, source.kind, source.entry);
+        {
+            add<CompletionRow>(*this, source.scope, source.name, source.kind, source.entry,
+                source.declaration);
+        }
     }
 
     std::size_t CompletionStack::filter(const Syntax::Language& language,
-        const CompletionScope scope, const std::wstring_view typed)
+        const CompletionScope scope, const std::wstring_view typed, const std::size_t caret)
     {
         m_typed = typed;
         std::size_t shown = 0;
@@ -197,6 +249,7 @@ namespace ClaFi::Controls
         {
             CompletionRow& row = rowOf(control);
             const bool matches = row.scope() == scope
+                && row.inForceAt(caret)
                 && Syntax::completionMatches(language, row.name(), typed);
             row.setVisible(matches);
             if (!matches)
@@ -211,12 +264,7 @@ namespace ClaFi::Controls
 
     void CompletionStack::moveCurrent(const ScrollDirection direction)
     {
-        std::vector<CompletionRow*> shown;
-        for (const ControlPtr& control : controls())
-        {
-            if (control->visible())
-                shown.push_back(&rowOf(control));
-        }
+        const std::vector<CompletionRow*> shown = shownRows();
         if (shown.empty())
             return;
 
@@ -234,6 +282,36 @@ namespace ClaFi::Controls
         }
         if (at != shown.begin())
             setCurrentRow(*std::prev(at));
+    }
+
+    void CompletionStack::moveCurrentByPage(const ScrollDirection direction)
+    {
+        const std::vector<CompletionRow*> shown = shownRows();
+        if (shown.empty())
+            return;
+
+        const auto at = std::ranges::find(shown, currentRow());
+        if (at == shown.end())
+        {
+            setCurrentRow(shown.front());
+            return;
+        }
+
+        // The rows from the current one to the one it lands on fill the view at most, so the row
+        // left current is still in sight - the step FocusNavigator pages any items view by.
+        const float view = windowInForm().height();
+        const bool forward = direction == ScrollDirection::ToEnd;
+        std::size_t target = static_cast<std::size_t>(at - shown.begin());
+        float filled = shown[target]->boundsInForm().height();
+        while (forward ? target + 1 < shown.size() : target > 0)
+        {
+            const std::size_t next = forward ? target + 1 : target - 1;
+            filled += shown[next]->boundsInForm().height();
+            if (filled > view)
+                break;
+            target = next;
+        }
+        setCurrentRow(shown[target]);
     }
 
     CompletionRow* CompletionStack::currentRow() const
@@ -264,6 +342,17 @@ namespace ClaFi::Controls
             return;
         event.state.selected = &event.control == currentItem();
         event.stopPropagation();
+    }
+
+    std::vector<CompletionRow*> CompletionStack::shownRows() const
+    {
+        std::vector<CompletionRow*> shown;
+        for (const ControlPtr& control : controls())
+        {
+            if (control->visible())
+                shown.push_back(&rowOf(control));
+        }
+        return shown;
     }
 
     void CompletionStack::setCurrentRow(CompletionRow* row)
@@ -311,6 +400,7 @@ namespace ClaFi::Controls
 
     void CodeBox::textTaken(const Text& text, const TextEdit* edit) const
     {
+        m_declarationsStale = true;
         if (edit)
             m_lines.applyEdit(text.plainText(), edit->replaced, edit->insertedLength);
         else
@@ -386,6 +476,17 @@ namespace ClaFi::Controls
                 return;
             }
             break;
+
+        case Keys::Prior:
+        case Keys::Next:
+            if (shown && event.modifiers.empty())
+            {
+                event.handled = true;
+                m_completionList->content().body().moveCurrentByPage(
+                    event.key == Keys::Prior ? ScrollDirection::ToBegin : ScrollDirection::ToEnd);
+                return;
+            }
+            break;
         }
         TextBox::nestedKeyDown(event);
     }
@@ -409,6 +510,7 @@ namespace ClaFi::Controls
     void CodeBox::readWhole(const std::wstring_view text) const
     {
         m_completionRowsStale = true;
+        m_declarationsStale = true;
         if (m_detectLanguage == DetectLanguage::No)
         {
             m_lines.reset(m_language, text);
@@ -490,14 +592,18 @@ namespace ClaFi::Controls
             return;
         }
 
+        // The text's own names are read as the list opens, and again on demand; a list up keeps
+        // its reading, since the keys that narrow it change no declaration it is about.
+        if (!completionShown() || everything)
+            readDeclarations();
         ensureCompletionList();
         CompletionStack& rows = m_completionList->content().body();
         if (std::exchange(m_completionRowsStale, false))
-            rows.rebuild(language, m_completion);
+            rows.rebuild(language, m_completion, m_declarations);
         const CompletionScope scope = place.member
             ? CompletionScope::Member
             : CompletionScope::Global;
-        if (rows.filter(language, scope, typed) == 0)
+        if (rows.filter(language, scope, typed, line.start + line.caret) == 0)
         {
             hideCompletion();
             return;
@@ -509,7 +615,23 @@ namespace ClaFi::Controls
         anchor.left = caretRectInForm(line.start + place.wordStart).left;
         m_completionList->setPlacement(FormPlacement::Bottom, anchor);
         if (!completionShown())
+        {
+            // Opened at its first row: where the list was left is not on screen to glide from.
+            m_completionList->content().scrollToBegin();
             m_completionList->show();
+        }
+    }
+
+    void CodeBox::readDeclarations()
+    {
+        if (!std::exchange(m_declarationsStale, false))
+            return;
+        const Syntax::DeclarationReader reader = m_lines.language().declarations;
+        Syntax::Declarations read = reader ? reader(text().plainText()) : Syntax::Declarations{};
+        if (read == m_declarations)
+            return;
+        m_declarations = std::move(read);
+        m_completionRowsStale = true;
     }
 
     void CodeBox::hideCompletion()

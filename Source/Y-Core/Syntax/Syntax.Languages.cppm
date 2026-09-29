@@ -1,13 +1,26 @@
 export module ClaFi.Core.Syntax.Languages;
 
 import ClaFi.Core.Syntax.Lexer;
+import ClaFi.Core.Syntax.Types;
 import ClaFi.StdLib;
 
 namespace ClaFi::Syntax
 {
+    // What the language files share, defined in Languages.cpp.
+    // Emits from `start` to the closer on this line, or to the line's end with the mode kept.
+    void takeToCloser(Scan&, std::size_t start, std::wstring_view closer, TokenKind,
+        std::uint8_t mode);
+    // The text without the blanks at either end.
+    [[nodiscard]] std::wstring_view trimmed(std::wstring_view text);
+    // The line starting at `start`, its blanks trimmed, and `start` moved to the next one.
+    [[nodiscard]] std::wstring_view lineFrom(std::wstring_view text, std::size_t& start);
+    [[nodiscard]] bool endsWithNoCase(std::wstring_view text, std::wstring_view lowerWord);
+    // Whether the text opens with one of the words whole, whatever the case it is spelled in.
+    [[nodiscard]] bool opensWithAnyWordNoCase(std::wstring_view text, Words lowerWords);
+
     // The rules a table cannot state, one hook per language that has any. Defined in
-    // Languages.cpp; a language names its hook here, which is what lets the language stand as a
-    // constant.
+    // Languages.cpp, Pascal's in Languages.Pascal.cpp; a language names its hook here, which is
+    // what lets the language stand as a constant.
     bool cppHook(Scan&);
     bool pascalHook(Scan&);
     bool claFiHook(Scan&);
@@ -20,6 +33,9 @@ namespace ClaFi::Syntax
     Claim xmlDetector(std::wstring_view text);
     Claim claFiDetector(std::wstring_view text);
     Claim textDetector(std::wstring_view text);
+
+    // The names a Pascal text declares, defined beside its hook. See Syntax#declarations
+    [[nodiscard]] Declarations pascalDeclarations(std::wstring_view text);
 
     // Every table is written in code unit order, which is what a bisection reads it in, and the
     // assertion beside it is what catches a word put in out of place.
@@ -153,7 +169,8 @@ namespace ClaFi::Syntax
 
         // Delphi's Object Pascal, and the scripts written in its subset. The tables state no
         // string: its escape is a doubled quote, which is the hook's to read, as are the compiler
-        // directives inside a comment's brackets and the numbers spelled with $ and %.
+        // directives inside a comment's brackets and the numbers spelled with $ and %. The one
+        // language here whose texts declare names a box completes to.
         constexpr Language pascal{
             .name = L"Pascal",
             .keywords = PascalTables::keywords,
@@ -168,6 +185,7 @@ namespace ClaFi::Syntax
             .callIsFunction = true,
             .hook = pascalHook,
             .detect = pascalDetector,
+            .declarations = pascalDeclarations,
         };
 
         // Comments as well, since the files that hold settings carry them. Strict JSON has none,

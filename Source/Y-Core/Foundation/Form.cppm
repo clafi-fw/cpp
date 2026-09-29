@@ -407,6 +407,12 @@ namespace ClaFi
         void updatePlacement();
         virtual void updateVisibility(); // overriden in TooltipForm for alpha animation
         void clearPopupTarget() { m_popupTarget = nullptr; }
+        // The control this form is placed on, and moves along with - see followPopupTarget2.
+        [[nodiscard]] virtual const Control* placementTarget() const { return m_popupTarget; }
+        // Where that control stands, which the placement rect is carried against.
+        [[nodiscard]] virtual FloatRect placementTargetBounds(const Control& target) const
+            { return target.boundsInForm(); }
+        void rememberPlacementTarget();
     private:
         // What both of the above delegate to. They differ in nothing but how the owner form was
         // arrived at - through the control the popup stands on, or named outright.
@@ -470,7 +476,6 @@ namespace ClaFi
         [[nodiscard]] bool holdingScale() const
             { return m_popupTargetForm && m_scaler == &m_ownScaler; }
         void followPopupTarget2();
-        void rememberPlacementTarget();
         // Takes the active popup down with the control it stood on - see forgetControl.
         void dropActivePopup();
         SearchControlResult controlAt(Control&, PointInControl, FloatRect clipRect);

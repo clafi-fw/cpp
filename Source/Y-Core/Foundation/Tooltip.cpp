@@ -62,22 +62,91 @@ namespace ClaFi
             stopAndHide();
     }
 
+    // THE HOVER HAS ITS SAY WHILE THE MOUSE DRIVES. The hover moves without the pointer moving:
+    // a window put up under a still pointer is handed a move for it and the form beneath a leave
+    // - see FormBase::wnd_mouseMove - and a hit-test after a scroll or an edit lands wherever the
+    // pointer was left. None of that is the user pointing at anything, so nothing standing comes
+    // down for it and nothing starts waiting. A hint a key raised beside a list that opened under
+    // the pointer went down the frame it came up, taken for the pointer leaving.
     void Tooltip::hoveredControlChanged()
     {
-        // A MESSAGE STANDS WHILE THE POINTER IS STILL ON THE CONTROL IT IS ABOUT. This is
-        // called for a change of hover ZONE as much as for a change of control - a control's own
-        // text is one zone of it and the rest of the control is another - and crossing between
-        // two zones of one control is not the pointer going anywhere. The window is left exactly
-        // as it stands, rather than taken down and put back up a moment later.
+        if (!Input::mouse().active())
+            return;
+        pointedControlChanged();
+    }
+
+    void Tooltip::hoveredZoneChanged()
+    {
+        if (!Input::mouse().active())
+            return;
+        Control* hovered = Input::hoveredControl();
+        const Control* shown = control();
+        // A hint on screen about the hovered control, or about one it stands in, is asked again
+        // in place. An unchanged answer keeps the window where it stands, and an answer the new
+        // zone ends - the control's own text shown over it - takes it down.
+        for (Control* it = hovered; it && shown; it = it->parent())
+        {
+            if (it == shown)
+            {
+                s_current->showOrHide(hovered);
+                return;
+            }
+        }
+        pointedControlChanged();
+    }
+
+    // THE FOCUS HAS ITS SAY WHILE THE KEYBOARD ALONE DRIVES. A click lands the focus as well, and
+    // the pointer's hint is the one for that: the hover it reads is where the click went.
+    void Tooltip::focusedControlChanged()
+    {
+        if (Input::mouse().active())
+            return;
+        pointedControlChanged();
+    }
+
+    // Wherever the pointer was left - unless it rests on the very item the focus is on, where
+    // nothing has changed hands: a hint about that item is the hover's answer as much as the
+    // focus's.
+    void Tooltip::mouseTookOver()
+    {
+        Control* focused = Input::focusedControl();
+        if (focused && focused->focusDelegate() == Input::hoveredControl())
+            return;
+        pointedControlChanged();
+    }
+
+    Control* Tooltip::pointedControl()
+    {
+        if (Input::mouse().active())
+            return Input::hoveredControl();
+        // The holder answers for the item inside it - a container holds the focus for its current
+        // item, and the item is what the key landed on.
+        Control* focused = Input::focusedControl();
+        return focused ? focused->focusDelegate() : nullptr;
+    }
+
+    void Tooltip::pointedControlChanged()
+    {
+        Control* pointed = pointedControl();
+
+        // A MESSAGE STANDS WHILE WHAT IS POINTED AT IS STILL THE CONTROL IT IS ABOUT - crossing
+        // between two zones of one control is not the pointer going anywhere, and the window is
+        // left exactly as it stands rather than taken down and put back up a moment later.
         //
-        // Nor is a change arriving right after the message went up: the window the message was
-        // raised from has gone down under a still pointer, and the move that hands the pointer to
-        // this form says where it already was - see ContextMessage::justRaised.
+        // Nor does a change arriving right after the message went up move it: the window the
+        // message was raised from has gone down under a still pointer, and the move that hands
+        // the pointer to this form says where it already was - see ContextMessage::justRaised.
         const Control* about = ContextMessage::control();
-        if (about && (about == Input::hoveredControl() || ContextMessage::justRaised()))
+        if (about && (about == pointed || ContextMessage::justRaised()))
             return;
 
-        // The pointer has gone to something else, so the window goes - and the message goes with
+        // A hint already up about the control pointed at stands as it is: the mouse takes over
+        // with the pointer resting on the item the focus is on, or the pointer comes to a control
+        // whose hint was put up without the wait.
+        if (pointed && control() == pointed)
+            return;
+
+        // The user has gone to something else, so the window goes - and the message goes with
         // it rather than waiting to be pointed at again, which is what makes a message a thing
         // said once.
         ContextMessage::forget();
@@ -103,33 +172,14 @@ namespace ClaFi
             s_current->m_form->setControl(nullptr);
         }
 
-        Control* hovered = Input::hoveredControl();
-        if (!hovered)
+        if (!pointed)
             return;
-        Tooltip& tooltip = hovered->form().tooltip();
+        Tooltip& tooltip = pointed->form().tooltip();
         // The short wait is for a window still on screen: crossing a row of buttons reads as one
         // hint following the pointer rather than as a hint per button. It is this form's own
         // window that has to still be there - crossing from one window into another is not that
         // gesture, and answers with the full wait.
         tooltip.startWaiting(tooltip.stillVisible() ? MilliSeconds{ 110 } : MilliSeconds{ 1000 });
-    }
-
-    void Tooltip::hoveredZoneChanged()
-    {
-        Control* hovered = Input::hoveredControl();
-        const Control* shown = control();
-        // A hint on screen about the hovered control, or about one it stands in, is asked again
-        // in place. An unchanged answer keeps the window where it stands, and an answer the new
-        // zone ends - the control's own text shown over it - takes it down.
-        for (Control* it = hovered; it && shown; it = it->parent())
-        {
-            if (it == shown)
-            {
-                s_current->showOrHide(hovered);
-                return;
-            }
-        }
-        hoveredControlChanged();
     }
 
     void Tooltip::startWaiting(MilliSeconds delay)
@@ -143,7 +193,11 @@ namespace ClaFi
         TooltipForm& form = *m_form;
         if (!form.control())
             return;
-        form.setPlacementRect(anchorRect);
+        // Where the control comes to rest rather than where a glide has carried it so far - see
+        // TooltipForm::placementTargetBounds.
+        FloatRect restingRect = anchorRect;
+        restingRect.offset(-form.control()->viewTravelRemaining());
+        form.setPlacementRect(restingRect);
 
         // TODO: move this OverText height adjustment into form.initPlacement().
         //if (form.placement() == FormPlacement::OverText)
@@ -173,7 +227,7 @@ namespace ClaFi
     {
         if (control() == &target)
         {
-            updatePosition(target.boundsInForm(), true);
+            updatePosition(anchorOf(target), true);
         }
         else
         {
@@ -182,6 +236,16 @@ namespace ClaFi
             stopAndHide();
             showOrHide(&target);
         }
+    }
+
+    FloatRect Tooltip::anchorOf(Control& target) const
+    {
+        // Asked as showOrHide asks it, so a message about the control keeps the rect it states.
+        Text text{};
+        GetTooltipEvent event{ m_form->context(), target, text, EventPhase::Calculate };
+        if (!ContextMessage::answer(target, event))
+            target.nestedGetTooltip(event);
+        return event.anchorRect;
     }
 
     bool Tooltip::stopAndHide()
@@ -220,12 +284,12 @@ namespace ClaFi
     void Tooltip::showOrHide(Control* it)
     {
         if (!it)
-            it = Input::hoveredControl();
+            it = pointedControl();
         if (!it)
             return;
 
         // THE CONTROL IS ONE OF THIS FORM'S. The timer runs only while this tooltip is the one in
-        // play, and the one in play is the hovered control's form's - see hoveredControlChanged;
+        // play, and the one in play is the pointed control's form's - see pointedControlChanged;
         // the other way in is showRightNow, which a control reaches through its own form.
         TooltipForm& form = *m_form;
 

@@ -425,9 +425,10 @@ WordWrap::No is stated before the caller's arguments, as HexView states it: sour
 
 A box completes names out of a Syntax::CompletionEntries the host states through
 `completion` - named, not copied, so the host keeps it alive for as long as the box stands.
-The language's keywords join the list. A box with no list stated completes nothing, and a
-read-only box completes nothing either. What the list looks like and how the keys drive it
-is under CompletionList.
+The language's keywords join the list, and so do the names the text declares for itself,
+where the language has a reader of declarations - see Syntax#declarations. A box with no
+list stated completes nothing, and a read-only box completes nothing either. What the list
+looks like and how the keys drive it is under CompletionList.
 
 ## CompletionList
 
@@ -446,31 +447,45 @@ character asks for it, an edit merely brings a list already up up to date. The r
 answered on a 0 ms timer once the input that made it has been delivered, and one that finds
 the form's layout unsettled waits on the pass that settles it, as the SuggestionList's does.
 
-WHAT IS LISTED. The rows are built once per language and list - the entries and the
-language's keywords in one scope, every class's methods and properties in the other - in
-name order under the language's case rule, and shown by scope and by prefix; see
-Syntax#completion for the place, the prefix rule and why members are one list. The first
-row shown is current when the list opens, and an exact match is that row. A row prints the
-name with the part typed so far in the accent ink, and the kind muted at the end of its line
-- function, procedure, class, property, keyword - the way a menu prints a key.
+WHAT IS LISTED. The rows are built once per language, list and reading of the text - the
+text's own declarations, the entries and the language's keywords in one scope, every class's
+methods and properties in the other - and shown by scope, by prefix and by where the caret
+stands; see Syntax#completion for the place and the prefix rule, and why members are one
+list. The text's own names come first, the nearest scope's ahead: what the routine the caret
+stands in declares, then what the routines around it do, then the text's globals, and only
+then the host's names and the keywords - each run in name order under the language's case
+rule, so within a run an exact match stands first. A name is shown only where it is in
+force, so the locals of another routine are not listed, and a local and a global of one name
+both are, the local first; the host's name of the same spelling stands after both. The
+declarations are read by the language when the list opens, and again on Ctrl+Space with the
+list up; a list up keeps its reading while the keys narrow it. The reading is compared with
+the last before any row is rebuilt, so typing in a routine's body rebuilds nothing. See
+Syntax#declarations for what is read. The first row shown is current when the list opens,
+and an exact match is that row. A row prints the name with the part typed so far in the
+accent ink, and the kind muted at the end of its line - function, procedure, class,
+property, keyword, variable, constant - the way a menu prints a key.
 
 THE HINT. The current row's signature, in the code style, and under it the hint's sentence,
 stand beside the list at the row's height - the form's tooltip, placed FormPlacement::Right
 on a rect at the list's edge, raised right away from the pass that lays the row out and
 after a keyboard move, and on hover as any hint is. A keyword, or an entry with neither
-signature nor hint, shows none. The hint goes with the list.
+signature nor hint, shows none; one of the text's own names shows its declaration as
+spelled. The hint goes with the list.
 
 A PICK IS A PICK. Return or Tab takes the current row, a click takes any row: the name as
 typed is replaced by the row's own spelling in one edit, undone as one, with the caret
 after it and the list down - so `str` becomes `StrToInt` in a language that ignores case.
 The character a taking press queued - Return's line break, Ctrl+Space's space - does not
 reach the text: the press settles it and the character reads it, as EditBox does for a
-Return the form takes. Up and Down walk the rows and stay at either end.
+Return the form takes. Up and Down walk the rows and stay at either end; Page Up and Page
+Down walk them a view at a time, less the row left current, the step any items view pages
+by, and stay at either end too.
 
 The list is at most ten rows tall, the tool button's height each, and scrolls past that;
-at least 180 units wide; hidden rather than destroyed when it closes; and placed under the
-caret's line with its left edge at the start of the name, so the rows stand under the
-letters they complete.
+at least 180 units wide; hidden rather than destroyed when it closes, and opened again at
+its first row with no glide, since where it was left is not on screen to travel from; and
+placed under the caret's line with its left edge at the start of the name, so the rows stand
+under the letters they complete.
 
 ## DetectLanguage
 

@@ -7,39 +7,6 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Syntax
 {
-    // What a name offered for completion is. See Syntax#completion
-    export enum class CompletionKind : std::uint8_t
-    {
-        Keyword,
-        Type,
-        Class,
-        Function,
-        Procedure,
-        Property,
-        Field,
-        Constant,
-        Variable,
-        Count
-    };
-
-    export constexpr std::size_t k_completionKindCount =
-        static_cast<std::size_t>(CompletionKind::Count);
-
-    export struct CompletionEntry;
-    export using CompletionEntries = std::vector<CompletionEntry>;
-
-    // A name a host offers for completion, and what a hint says about it. See Syntax#completion
-    export struct CompletionEntry
-    {
-        std::wstring name;
-        CompletionKind kind{ CompletionKind::Variable };
-        std::wstring signature;        // the line a hint shows - empty where the name is all of it
-        std::wstring hint;             // what it does, in a sentence
-        std::wstring parent;           // the class this one derives from - empty for none
-        CompletionEntries methods;     // a class's methods - empty elsewhere
-        CompletionEntries properties;  // a class's properties - empty elsewhere
-    };
-
     // The kind's word, lower case - what a list prints beside a name.
     export [[nodiscard]] std::wstring_view completionKindName(CompletionKind);
     // The kind a word names, in any case, or nothing for a word that names none.

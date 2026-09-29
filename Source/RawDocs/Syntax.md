@@ -39,15 +39,18 @@ behind the text, so the structure of a line recedes from what the line carries.
 
 ## Language
 
-A language stated as tables, one hook and one detector, and passed by value: every member is
-a view over a constant, so a Language is a few pointers and stays valid for as long as the
-constants do. The tables say what a table can - the keywords, the comment and string
-delimiters, which characters are operators and which punctuation, how a name no table lists
-is taken for a type. The hook says what a table cannot - a raw string, a preprocessor line,
-an XML tag - and is asked before the tables at every token start, so it can claim a position
-the tables would otherwise take. The detector says whether a text is the language's at all,
-which is the language's own knowledge as much as its hook is: what a ClaFi line looks like
-is written once, and the hook and the detector both read it.
+A language stated as tables, one hook, one detector and one reader of declarations, and passed
+by value: every member is a view over a constant, so a Language is a few pointers and stays
+valid for as long as the constants do. The tables say what a table can - the keywords, the
+comment and string delimiters, which characters are operators and which punctuation, how a name
+no table lists is taken for a type. The hook says what a table cannot - a raw string, a
+preprocessor line, an XML tag - and is asked before the tables at every token start, so it can
+claim a position the tables would otherwise take. The detector says whether a text is the
+language's at all, which is the language's own knowledge as much as its hook is: what a ClaFi
+line looks like is written once, and the hook and the detector both read it. The reader of
+declarations says which names a text in the language declares for itself and where each is in
+force, which is what a box adds to its completion list - see Declarations. A language whose
+texts declare nothing states none.
 
 The keyword tables are looked up by bisection, so each is written in code unit order and
 asserted so where it is written. A language that reads a word in any case - Pascal - says so
@@ -143,8 +146,8 @@ names no word. The dot counts only where what stands before it could carry a mem
 name that is not a number, or a call's or an index's closing bracket - so a range's second
 dot and a number's decimal point name no member. What follows a dot is answered from every
 class's members, whichever class the name before the dot would have been: telling them apart
-needs the type of that name, which needs a reader of the script's own declarations that the
-box does not have. That reader is the follow-up; until it comes the members are one list.
+needs the type of that name, which a Declaration records and nothing reads yet. Until it is
+read the members are one list.
 
 Matching is by prefix under the language's case rule - a language with `ignoreCase` matches
 any case and one without matches exactly - and the rows are ordered the same way, so among
@@ -154,3 +157,34 @@ caret inside one or right at its end is left alone.
 
 The kinds are spelled once, in completionKindName, and read back by completionKindOf in any
 case - which is how an application's file states a kind by its word.
+
+## Declarations
+
+The names a text declares for itself, read off the whole text by the language's own reader
+so that a box lists them beside the host's names - a script's variables, constants and
+parameters ahead of the library it is written against. A Declaration is a CompletionEntry
+of the name's own - the name, its kind, and the declaration as spelled for the hint, with
+its blanks collapsed and cut past a hundred characters - and with it the type the name is
+declared with where one name spells it (an `array of Integer` spells none), the scope the
+name is in force in, as a range of the text, and the depth: how many routines stand around
+the declaration, none for a global. A global's scope is the whole text. A routine's own
+names - its parameters, its locals, the Result of a function with its return type - are in
+force from the routine's header to its closing end, and a nested routine's stand one depth
+deeper inside that. Where the words run out before the routine closes, the routine is being
+written, and its names reach the text's end.
+
+The Pascal reader walks the text as words - names, keywords, numbers and marks, with the
+comments, strings and compiler directives the lexer found left out, so nothing inside them
+declares - and reads the declaring part of the language: const, resourcestring, var and
+threadvar sections at every level, a header's parameters with their modifiers, an inline
+var or const inside a block and the variable of a `for var`, and the sections and blocks a
+routine is made of. Everything between is stepped over: a statement declares nothing, and a
+type section is read only so that the fields and methods inside a class, record, object or
+interface body are not taken for declarations of their own - a type declares no name yet.
+A header alone declares nothing either: a unit's interface part, a forward, an external.
+An entry counts once its shape is there - a name with its colon, comma or equals sign after
+it - so the name being typed at a section's end is no declaration until it is one.
+
+The reader answers a fresh list each time and reads the whole text each time. It is asked
+when a list opens, and the box compares the answer with the one it has before it rebuilds
+any row - see Controls#completionlist.

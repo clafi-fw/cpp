@@ -31,11 +31,16 @@ namespace ClaFi
         // Puts this form's tooltip up about one of this form's controls, without the wait.
         void showRightNow(Control&);
     public:
-        // The pointer went somewhere. The tooltip coming down belongs to the form the pointer was
-        // in, which is not always the form it has arrived in, so this is static.
+        // The pointer went somewhere. Heard while the mouse drives. The tooltip coming down
+        // belongs to the form the pointer was in, which is not always the form it has arrived
+        // in, so this is static.
         static void hoveredControlChanged();
         // The pointer crossed into another zone of the control it is on - into its text or out.
         static void hoveredZoneChanged();
+        // A key landed the focus somewhere. Heard while the keyboard alone drives.
+        static void focusedControlChanged();
+        // The mouse took over from the keyboard: the hover has its say from here on.
+        static void mouseTookOver();
         // The control is being destroyed and takes with it anything said about it.
         static void forgetControl(const Control*);
         // The user did something. A tooltip waits for them to stop, and this is them starting
@@ -47,9 +52,16 @@ namespace ClaFi
         // The control the tooltip on screen is about, or nullptr while none is on screen.
         [[nodiscard]] static Control* control();
     private:
+        // The control a hint is asked of: the hovered one while the mouse drives, the item the
+        // focus rests on while the keyboard alone does. See Control-Foundation#tooltip
+        [[nodiscard]] static Control* pointedControl();
+        // The control a hint is about has changed - to pointedControl(), or to nothing.
+        static void pointedControlChanged();
         void showOrHide(Control* = nullptr);
         void startWaiting(MilliSeconds);
         void updatePosition(const FloatRect& anchorRect, bool forceRepaint);
+        // The rect the control states for its hint - its bounds unless it names another.
+        [[nodiscard]] FloatRect anchorOf(Control&) const;
         [[nodiscard]] bool stillVisible() const;
         void destroyForm();
     private:
