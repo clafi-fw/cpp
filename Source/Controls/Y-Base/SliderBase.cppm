@@ -217,6 +217,8 @@ namespace ClaFi::Controls
         void nestedPressDown(PressDownEvent&) override;
         void nestedPressUp(PressUpEvent&) override;
         void nestedDrag(DragEvent&) override;
+        // The thumb and the buttons are the slider's parts.
+        bool isChildPart(const Control&) const override { return true; }
         static constexpr float k_thumbSize = 20.0f;
     private:
         void applyPosition(float value, bool triggerChange);

@@ -32,6 +32,16 @@ navigation (focusable items) and how it reacts to mouse move and click events - 
 animations. Interactivity is evaluated only after HitTest confirms the cursor is over the
 control.
 
+WHERE A PRESS PUTS THE FOCUS. A press walks up from the control under the pointer to the first
+one that can take the focus - Focusable or ActiveContainer - and puts it there, which is how a
+press on a label inside a tile selects the tile. A MouseOnly control is pressed for itself, and
+its press moves no focus at all: a tool bar's button beside an editor keeps the caret in the
+editor, a scroll bar's press keeps it in the box it scrolls. The one exception is a part - a
+slider's thumb, a check box's mark, a split button's strip, a control hosted in a grid cell -
+where the press is the owner's and the walk goes on from the owner. The owner says so through
+Control::isChildPart, the parent-query convention isChildBody follows: ButtonBase, SliderBase
+and Grids::RowContainer answer yes for every child of theirs.
+
 ## WindowRole
 
 What the platform layer switches on - window class, styles, activation, how it is shown.

@@ -277,6 +277,9 @@ namespace ClaFi::Controls
         // Emits CaretMoveEvent. Both of the tails above end here: an edit moves the caret as
         // surely as an arrow key does, and a listener has the same question either way.
         void announceCaretMove();
+        // Asks every presenter of the edit actions again: an edit, a caret move and the focus
+        // arriving or leaving each move what the box answers, and both tails end in it.
+        void invalidateEditActions();
         void rememberTargetX(const FloatRect& textBounds, std::size_t caretPos);
         // Makes the caret solid and starts its interval over. Every move of the caret and every
         // edit ends here: a caret left on its own schedule is dark for half the time, including
@@ -1092,6 +1095,7 @@ namespace ClaFi::Controls
         scrollIntoViewOnAlign();
         restartCaretBlink();
         announceCaretMove();
+        invalidateEditActions();
         // LAST, once the box has finished with the edit. A listener is free to do anything with
         // the text it has just been told about, the box included.
         TextEditEvent event{ *this };
@@ -1103,6 +1107,7 @@ namespace ClaFi::Controls
         m_history.breakRun();
         restartCaretBlink();
         announceCaretMove();
+        invalidateEditActions();
     }
 
     void TextBox::announceCaretMove()

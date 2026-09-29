@@ -118,14 +118,10 @@ namespace ClaFi::Controls
             return;
         m_readOnly = value;
         // Nothing the box draws turns on the mode: the caret, the selection band and the focus
-        // ring are the same either way. What the mode changes is the answer five of the edit
-        // actions give, and a presenter keeps the answer it was last given until it is asked
-        // again - see connectEditActions.
-        StdActions::cut.invalidateState();
-        StdActions::paste.invalidateState();
-        StdActions::del.invalidateState();
-        StdActions::undo.invalidateState();
-        StdActions::redo.invalidateState();
+        // ring are the same either way. What the mode changes is the answer the edit actions
+        // give, and a presenter keeps the answer it was last given until it is asked again -
+        // see connectEditActions.
+        invalidateEditActions();
     }
 
     bool TextBox::goToAnchor(std::wstring_view name)
@@ -368,10 +364,6 @@ namespace ClaFi::Controls
             else if (&event.action == &StdActions::redo)
                 redo();
             });
-        // TODO: a presenter of one of these actions is not refreshed when the answer changes -
-        // an edit alters what undo, redo, copy and select all report, and a caret move alters
-        // cut and delete. Should the box call invalidateState on each of them, or should a
-        // subject be able to say "my answers changed" once?
     }
 
     bool TextBox::followsLinks(KeyModifiers modifiers) const
@@ -557,5 +549,16 @@ namespace ClaFi::Controls
     {
         m_backPlaces.clear();
         m_forwardPlaces.clear();
+    }
+
+    void TextBox::invalidateEditActions()
+    {
+        StdActions::cut.invalidateState();
+        StdActions::copy.invalidateState();
+        StdActions::paste.invalidateState();
+        StdActions::del.invalidateState();
+        StdActions::selectAll.invalidateState();
+        StdActions::undo.invalidateState();
+        StdActions::redo.invalidateState();
     }
 }

@@ -138,7 +138,18 @@ namespace ClaFi
         {
             Control* controlToFocus = s_hoveredControl;
             while (controlToFocus && !controlToFocus->canTakeFocus())
-                controlToFocus = controlToFocus->m_parent;
+            {
+                Control* parent = controlToFocus->m_parent;
+                // A MOUSE-ONLY CONTROL IS PRESSED FOR ITSELF, and its press leaves the focus where
+                // it is: a tool bar's button beside an editor keeps the caret in the editor. A
+                // part is the exception - a slider's thumb, a check box's mark, a control hosted
+                // in a grid cell - there the press is the owner's, and the walk goes on from it.
+                // See UI-Types#interactivity
+                const bool mouseOnly = controlToFocus->interactivity() == Interactivity::MouseOnly;
+                const bool pressedForItself = mouseOnly
+                    && !(parent && parent->isChildPart(*controlToFocus));
+                controlToFocus = pressedForItself ? nullptr : parent;
+            }
             if (controlToFocus)
                 controlToFocus->setFocus();
 

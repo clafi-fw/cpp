@@ -1058,6 +1058,9 @@ namespace ClaFi
         // yes - see PanelBase. Asked through isHostedAsBody() above rather than read directly,
         // so the answer stays with the host that owns the slot.
         virtual bool isChildBody(const Control&) const { return false; }
+        // Whether this child is a part of this control - a thumb, a check mark, a strip - so that
+        // a press on it is a press on this control. See UI-Types#interactivity
+        virtual bool isChildPart(const Control&) const { return false; }
         // Whether this control decides that child's width rather than reading it off the child.
         // A container that lays its children across a lane or into a slot does - which is the
         // usual case, and the default.

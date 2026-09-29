@@ -42,6 +42,8 @@ namespace ClaFi::Controls::Grids
         ScaledDimensions calculateCellContent(ScaledCellMetrics&, const Column&, float boundW) override;
         RowContainer* asRowContainer() override { return this; }
         Control* cellControl(const Column& column) override { return controlAtColumn(column); }
+        // A hosted control and a group's mark are the row's: a press on one lands on the grid.
+        bool isChildPart(const Control&) const override { return true; }
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void nestedMouseMove(const MouseMoveEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;

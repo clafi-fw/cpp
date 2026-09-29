@@ -54,7 +54,7 @@ namespace ClaFi
     // How far a control takes part in input - focus, selection, hover. See UI-Types
     export enum class Interactivity {
         None,           // a static label or container, taking no input
-        MouseOnly,      // hovered and clicked with the mouse, and never focused
+        MouseOnly,      // hovered and clicked with the mouse, never focused; a press moves no focus
         Focusable,      // a button, a text box, a list item: focus, click and selection
         ActiveContainer // a container managing focus traversal and child selection
     };
