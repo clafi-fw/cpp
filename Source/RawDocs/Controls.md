@@ -21,8 +21,11 @@ left here is the primary action and handing the popup to the caller.
 
 THE DROPDOWN IS EITHER AN ACTION OR A HANDLER. Given an action - see
 dropdownAction - the strip shows that command and pressing it runs it, and OnDropdown is
-not raised at all. Given none, every press is handed to OnDropdown, which owns whatever
-popup it puts up.
+not raised at all; the strip is then a command of its own and stands whether or not the
+face's can be run. Given none, every press is handed to OnDropdown, which owns whatever
+popup it puts up, and the strip is half of the face's command: it greys with the face, so a
+list about a command that cannot run - the steps behind an Undo with nothing to undo - is
+never offered.
 
 ## ComboBox
 
@@ -96,6 +99,21 @@ visible, both where they were pressed.
 A popup list of commands, owned by the control it was opened from.
 Built on the stack where it is opened, filled, then run: execute() returns once the
 menu has closed, so nothing outlives the call that raised it.
+
+## StepsMenu
+
+A popup listing steps from the top, where the pointer picks how many to take - the list an
+undo button drops. Built on the stack like a Menu: made over the control that owns it with the
+verb the foot speaks ("Undo", "Redo"), filled with add(), the first step added standing at the
+top, then run with executeUnder(), which answers how many steps were taken from the top, or
+none where the menu was left by Escape or a click outside.
+
+The steps are MenuItems. A step under the pointer names a run - itself and every step above
+it - and the whole run reads as hovered, so the eye sees what one click takes; the arrows
+name the run the same way through the focus. A click on a step takes its run. The pointer
+leaving the steps - for the foot, the bar, or the outside - names no run, and the foot reads
+"Cancel" and closes on a click; while a step is under the pointer the foot says what a click
+on it takes ("Undo 3 steps"). The list scrolls past 400 design units.
 
 ## AcceptEditEvent
 

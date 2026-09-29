@@ -21,6 +21,7 @@ export import ClaFi.Controls.InPlaceEdit;
 export import ClaFi.Controls.Label;
 export import ClaFi.Controls.LabeledDivider;
 export import ClaFi.Controls.Menu;
+export import ClaFi.Controls.StepsMenu;
 export import ClaFi.Controls.MessageDialog;
 export import ClaFi.Controls.PromptDialog;
 export import ClaFi.Controls.PageControl;

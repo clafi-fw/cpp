@@ -62,9 +62,13 @@ namespace ClaFi::Controls
         void dropdownAction(Action&);
         [[nodiscard]] const Action* dropdownAction() const { return m_dropdownAction; }
     protected:
-        // The two halves are two commands, which is the whole of what a split button is. So the
-        // strip stands whether or not the face's command can be run.
-        [[nodiscard]] bool dropdownActsAlone() const override { return true; }
+        // The strip is a command of its own where one stands behind it, and then it stands whether
+        // or not the face's can be run. A strip handed to OnDropdown drops a list ABOUT the face's
+        // command - the steps behind Undo - so it is half of that command and greys with it.
+        [[nodiscard]] bool dropdownActsAlone() const override
+        {
+            return m_dropdownAction != nullptr;
+        }
         virtual void dropdown(DropdownEvent&);
         void showDropdown(Control& initiator) override;
         void adjustPaint(AdjustPaintEvent&) override;
@@ -104,8 +108,11 @@ namespace ClaFi::Controls
             m_dropdownAction->detach(*part);
 
         m_dropdownAction = &action;
-        if (part)
-            action.attach(*part, PresenterRole::Display);
+        if (!part)
+            return;
+        action.attach(*part, PresenterRole::Display);
+        // The strip now acts alone - see dropdownActsAlone - so its availability is asked again.
+        part->invalidateState();
     }
 
     void SplitButton::dropdown(DropdownEvent& event)

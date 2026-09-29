@@ -149,12 +149,13 @@ namespace ThisApp
     // ApplyToControl
 
     void ApplyToControl::bind(ColorRules& rules, const std::size_t index,
-        const OptionalPaintChannel onlyOutput, OnRuleChanged onChanged)
+        const OptionalPaintChannel onlyOutput, OnRuleChanged onChanged, Text what)
     {
         m_rules = &rules;
         m_index = index;
         m_onlyOutput = onlyOutput;
         m_onChanged = std::move(onChanged);
+        m_what = std::move(what);
         invalidate();
     }
 
@@ -236,7 +237,7 @@ namespace ThisApp
         invalidate();
         invalidateFormAlign();
         if (m_onChanged)
-            m_onChanged(EditPhase::Settled);
+            m_onChanged(EditPhase::Settled, m_what);
     }
 
     // ApplyToPopup

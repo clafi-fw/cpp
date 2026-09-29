@@ -21,6 +21,8 @@ import ClaFi.Controls.PromptDialog;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Grids_Dt;
 import ClaFi.Controls.Slider;
+import ClaFi.Controls.SplitButton;
+import ClaFi.Controls.StepsMenu;
 import ClaFi.Controls.TextBox;
 
 import ClaFi.Dom;
@@ -39,6 +41,7 @@ import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Palette;
 import ClaFi.Core.System.Events;
+import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Url;
 import ClaFi.Browser.Control;
@@ -182,7 +185,7 @@ namespace ThisApp
         m_otherPigmentsLabel.invalidate();
         mapHuesToColors();
 
-        edited(phase);
+        edited(phase, m_anchorStep);
     }
 
     void ThemePage::harmonyChanged()
@@ -195,13 +198,18 @@ namespace ThisApp
         m_otherPigmentsLabel.invalidate();
         mapHuesToColors();
 
-        edited(EditPhase::Settled);
+        const ColorHarmony& harmony = m_harmonySelector.harmony(
+            static_cast<std::size_t>(editColors().harmonyKind));
+        Text what{};
+        what << InkWell::accentInk() << L"Harmony" << PopColor{} << L" change to "
+            << InkWell::accentInk() << harmony.name() << PopColor{};
+        edited(EditPhase::Settled, what);
     }
 
     void ThemePage::paletteMapChanged()
     {
         mapHuesToColors();
-        edited(EditPhase::Settled);
+        edited(EditPhase::Settled, m_paletteMapStep);
     }
 
     void ThemePage::mapHuesToColors()
@@ -264,7 +272,8 @@ namespace ThisApp
             const UiElement element = row.tag<UiElement>();
             ColorEffect& rule = editColors().*uiElementOf(element).effect;
             row.controlAtColumnAs<HueRuleControl>(pigmentColumn(PigmentColumn::Hue))
-                .bind(rule.hue, editColors(), m_onPigmentChanged, false);
+                .bind(rule.hue, editColors(), m_onPigmentChanged, false,
+                    pigmentStepName(element, L"Hue"));
             row.controlAtColumnAs<ValueRuleControl>(pigmentColumn(PigmentColumn::Saturation)).bind(
                 rule.saturation,
                 RuleChannel::Saturation,
@@ -272,7 +281,8 @@ namespace ThisApp
                     return pigmentRuleBase(element, RuleChannel::Saturation);
                 },
                 m_onPigmentChanged,
-                ValueRuleOperations::SetOnly
+                ValueRuleOperations::SetOnly,
+                pigmentStepName(element, L"Saturation")
             );
             row.controlAtColumnAs<ValueRuleControl>(pigmentColumn(PigmentColumn::Elevation)).bind(
                 rule.elevation,
@@ -281,9 +291,25 @@ namespace ThisApp
                     return pigmentRuleBase(element, RuleChannel::Elevation);
                 },
                 m_onPigmentChanged,
-                ValueRuleOperations::SetOnly
+                ValueRuleOperations::SetOnly,
+                pigmentStepName(element, L"Elevation")
             );
         });
+    }
+
+    Text ThemePage::changeStepName(const std::wstring_view what)
+    {
+        Text result{};
+        result << InkWell::accentInk() << what << PopColor{} << L" change";
+        return result;
+    }
+
+    Text ThemePage::pigmentStepName(const UiElement element, const std::wstring_view column)
+    {
+        Text result{};
+        result << InkWell::accentInk() << column << PopColor{} << L" change in "
+            << InkWell::accentInk() << uiElementOf(element).name << PopColor{};
+        return result;
     }
 
     Grids::Column& ThemePage::pigmentColumn(const PigmentColumn tag)
@@ -305,11 +331,11 @@ namespace ThisApp
     }
 
     // Each ramp reads its rule's other channels, and the preview reads the pigment.
-    void ThemePage::pigmentChanged(const EditPhase phase)
+    void ThemePage::pigmentChanged(const EditPhase phase, const Text& what)
     {
         m_pigmentGrid.invalidate();
         invalidatePreview();
-        edited(phase);
+        edited(phase, what);
     }
 
     void ThemePage::darkModeFloorChanged(const EditPhase phase)
@@ -318,7 +344,7 @@ namespace ThisApp
         // Every swatch and every ramp that stands on a surface moves with the floor.
         m_pigmentGrid.invalidate();
         invalidatePreview();
-        edited(phase);
+        edited(phase, m_floorStep);
     }
 
     // Called with m_restoring held: the handlers this goes through end in edited, and none of
@@ -378,7 +404,7 @@ namespace ThisApp
         m_designPage.rebuildRules();
     }
 
-    void ThemePage::edited(const EditPhase phase)
+    void ThemePage::edited(const EditPhase phase, const Text& what)
     {
         // A RESTORE IS NOT AN EDIT. showEditTheme brings the controls up by calling the same
         // handlers a user edit calls, and mapHuesToColors along the way fills the palette hues in
@@ -390,7 +416,7 @@ namespace ThisApp
             return;
 
         storeViewState();
-        m_history.record(m_editTheme, phase);
+        m_history.record(m_editTheme, phase, what);
         // A presenter keeps the answer it was last given until it is told to ask again.
         StdActions::undo.invalidateState();
         StdActions::redo.invalidateState();
@@ -398,14 +424,33 @@ namespace ThisApp
 
     void ThemePage::undoEdit()
     {
-        if (const AppTheme* state = m_history.undo())
+        if (const AppTheme* state = m_history.undo(1ull))
             showHistoryState(*state);
     }
 
     void ThemePage::redoEdit()
     {
-        if (const AppTheme* state = m_history.redo())
+        if (const AppTheme* state = m_history.redo(1ull))
             showHistoryState(*state);
+    }
+
+    // Owned by the strip the press landed on, dropped under the whole button - see DropdownEvent.
+    void ThemePage::dropUndoSteps(DropdownEvent& event)
+    {
+        StepsMenu menu{ *event.control, Text{ StdActions::undo.text() } };
+        for (std::size_t i = 0ull; i != m_history.undoDepth(); ++i)
+            menu.add(m_history.undoStep(i));
+        if (const std::size_t taken = menu.executeUnder(event.button()))
+            showHistoryState(*m_history.undo(taken));
+    }
+
+    void ThemePage::dropRedoSteps(DropdownEvent& event)
+    {
+        StepsMenu menu{ *event.control, Text{ StdActions::redo.text() } };
+        for (std::size_t i = 0ull; i != m_history.redoDepth(); ++i)
+            menu.add(m_history.redoStep(i));
+        if (const std::size_t taken = menu.executeUnder(event.button()))
+            showHistoryState(*m_history.redo(taken));
     }
 
     void ThemePage::showHistoryState(const AppTheme& state)
@@ -460,12 +505,12 @@ namespace ThisApp
         m_designPage.pickPage(event.url.anchor());
     }
 
-    void ThemePage::rulesChanged(const EditPhase phase)
+    void ThemePage::rulesChanged(const EditPhase phase, const Text& what)
     {
         // A pigment's ramps stand on a surface the rules colour.
         m_pigmentGrid.invalidate();
         invalidatePreview();
-        edited(phase);
+        edited(phase, what);
     }
 
     void ThemePage::saveTheme() const

@@ -20,8 +20,8 @@ namespace ThisApp
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // What a value rule control calls after it has changed its value, and where the edit stands.
-    export using OnValueRuleChanged = std::function<void(EditPhase)>;
+    // What a value rule control calls after a change: where the edit stands, and what it is called.
+    export using OnValueRuleChanged = std::function<void(EditPhase, const Text& what)>;
 
     // Which operations a value rule may take. A pigment is a colour of its own rather than a
     // change to one, so its saturation and elevation are stated values and nothing else.
@@ -40,10 +40,10 @@ namespace ThisApp
         template<typename... Args>
         explicit ValueRuleControl(const CreateParams&, Args&&...);
     public:
-        // Takes the value by address, the channel it drives, its ramp's base, what to call and
-        // the operations the value may take.
+        // Takes the value by address, the channel it drives, its ramp's base, what to call, the
+        // operations the value may take and what to call the edit by.
         void bind(ColorRuleValue&, RuleChannel, OnGetRuleBase, OnValueRuleChanged,
-            ValueRuleOperations);
+            ValueRuleOperations, Text what);
         [[nodiscard]] const ColorRuleValue& value() const { return *m_value; }
         [[nodiscard]] RuleChannel channel() const { return m_channel; }
         [[nodiscard]] const OnGetRuleBase& ruleBase() const { return m_ruleBase; }
@@ -72,6 +72,7 @@ namespace ThisApp
         OnGetRuleBase m_ruleBase{};
         OnValueRuleChanged m_onChanged{};
         ValueRuleOperations m_operations{ ValueRuleOperations::Any };
+        Text m_what{}; // what an edit here is called, as the page records it
     };
 
 

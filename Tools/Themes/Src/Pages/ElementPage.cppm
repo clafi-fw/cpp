@@ -33,8 +33,8 @@ namespace ThisApp
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // What an element page calls after it has moved its rules, and where the edit stands.
-    export using OnRulesChanged = std::function<void(EditPhase)>;
+    // What an element page calls after it has moved its rules: where the edit stands, and its name.
+    export using OnRulesChanged = std::function<void(EditPhase, const Text& what)>;
     // The colour a rule of the list is applied to, which its value ramps are drawn from.
     export using OnGetListRuleBase = std::function<RuleBase(const ColorRule&, RuleChannel)>;
 
@@ -70,8 +70,11 @@ namespace ThisApp
         void bindEditors(Grids::RowContainer&);
         [[nodiscard]] Grids::Column& column(RuleColumn);
         [[nodiscard]] OnGetRuleBase ruleBaseOf(std::size_t index, RuleChannel) const;
-        void rulesChanged(EditPhase);
+        // What a change to one column of one rule is called - the rule named by its place.
+        [[nodiscard]] Text ruleStepName(std::size_t index, std::wstring_view column) const;
+        void rulesChanged(EditPhase, const Text& what);
     private:
+        const std::wstring m_name; // what the list is called, which every step of it starts with
         ColorRules* m_rules{}; // the list the page shows, null until bound
         const ColorRules* m_defaults{}; // what a reset puts back, null until bound
         OptionalPaintChannel m_output{}; // the one channel the list's rules write, any if empty
@@ -154,8 +157,9 @@ namespace ThisApp
         Args&&... args)
         :
         Panel{ params, std::forward<Args>(args)... },
-        m_onCellEdit{ [this](const EditPhase phase) {
-            rulesChanged(phase);
+        m_name{ title },
+        m_onCellEdit{ [this](const EditPhase phase, const Text& what) {
+            rulesChanged(phase, what);
         } }
     {
         m_title.text() << TextStyleId::SubTitle << title;

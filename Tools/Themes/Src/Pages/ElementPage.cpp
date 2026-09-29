@@ -13,6 +13,8 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 
@@ -57,7 +59,10 @@ namespace ThisApp
             bindEditors(*row);
         addRow(m_rules->size() - 1ull);
         form().invalidateAlign();
-        rulesChanged(EditPhase::Settled);
+        Text what{};
+        what << L"Add " << InkWell::accentInk() << L"rule " << m_rules->size() << PopColor{}
+            << L" to " << InkWell::accentInk() << m_name << PopColor{};
+        rulesChanged(EditPhase::Settled, what);
     }
 
     // The Delete key arrives through the grid, whose rows the deletion takes down, so the rules
@@ -80,9 +85,16 @@ namespace ThisApp
         std::ranges::sort(m_pendingDeletes, std::ranges::greater{});
         for (const std::size_t index : m_pendingDeletes)
             m_rules->erase(m_rules->begin() + static_cast<std::ptrdiff_t>(index));
+        Text what{};
+        what << L"Delete " << InkWell::accentInk();
+        if (m_pendingDeletes.size() == 1ull)
+            what << L"rule " << (m_pendingDeletes.front() + 1);
+        else
+            what << m_pendingDeletes.size() << L" rules";
+        what << PopColor{} << L" from " << InkWell::accentInk() << m_name << PopColor{};
         m_pendingDeletes.clear();
         rebuild();
-        rulesChanged(EditPhase::Settled);
+        rulesChanged(EditPhase::Settled, what);
     }
 
     // The button stands outside the grid, so the rows can go at once.
@@ -90,7 +102,9 @@ namespace ThisApp
     {
         *m_rules = *m_defaults;
         rebuild();
-        rulesChanged(EditPhase::Settled);
+        Text what{};
+        what << L"Reset " << InkWell::accentInk() << m_name << PopColor{} << L" to defaults";
+        rulesChanged(EditPhase::Settled, what);
     }
 
     // Every cell of a rule's row holds its editor.
@@ -103,7 +117,7 @@ namespace ThisApp
             padding,
             VerticalAlign::Fill
         );
-        applyTo.bind(*m_rules, index, m_output, m_onCellEdit);
+        applyTo.bind(*m_rules, index, m_output, m_onCellEdit, ruleStepName(index, L"Apply to"));
         row.addControl<HueRuleControl>(
             column(RuleColumn::Hue),
             padding,
@@ -130,20 +144,22 @@ namespace ThisApp
         const std::size_t index = row.tag().value;
         ColorEffect& effect = (*m_rules)[index].effect;
         row.controlAtColumnAs<HueRuleControl>(column(RuleColumn::Hue))
-            .bind(effect.hue, *m_colors, m_onCellEdit, true);
+            .bind(effect.hue, *m_colors, m_onCellEdit, true, ruleStepName(index, L"Hue"));
         row.controlAtColumnAs<ValueRuleControl>(column(RuleColumn::Saturation)).bind(
             effect.saturation,
             RuleChannel::Saturation,
             ruleBaseOf(index, RuleChannel::Saturation),
             m_onCellEdit,
-            ValueRuleOperations::Any
+            ValueRuleOperations::Any,
+            ruleStepName(index, L"Saturation")
         );
         row.controlAtColumnAs<ValueRuleControl>(column(RuleColumn::Elevation)).bind(
             effect.elevation,
             RuleChannel::Elevation,
             ruleBaseOf(index, RuleChannel::Elevation),
             m_onCellEdit,
-            ValueRuleOperations::Any
+            ValueRuleOperations::Any,
+            ruleStepName(index, L"Elevation")
         );
     }
 
@@ -162,10 +178,19 @@ namespace ThisApp
         };
     }
 
-    void ElementPage::rulesChanged(const EditPhase phase)
+    // Places count from one, as a person reads the rows.
+    Text ElementPage::ruleStepName(const std::size_t index, const std::wstring_view column) const
+    {
+        Text result{};
+        result << InkWell::accentInk() << column << PopColor{} << L" change in "
+            << InkWell::accentInk() << m_name << L", rule " << (index + 1) << PopColor{};
+        return result;
+    }
+
+    void ElementPage::rulesChanged(const EditPhase phase, const Text& what)
     {
         m_resetButton.invalidateState();
         if (m_onRulesChanged)
-            m_onRulesChanged(phase);
+            m_onRulesChanged(phase, what);
     }
 }

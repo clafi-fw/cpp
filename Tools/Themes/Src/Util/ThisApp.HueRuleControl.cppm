@@ -40,8 +40,8 @@ namespace ThisApp
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // Told when the rule moves and where the edit stands - owned by the page, held by address.
-    export using OnHueRuleChanged = std::function<void(EditPhase)>;
+    // Told when the rule moves, where the edit stands and what it is called - held by address.
+    export using OnHueRuleChanged = std::function<void(EditPhase, const Text& what)>;
 
     class HueRulePopup;
     class HueSlider;
@@ -155,7 +155,9 @@ namespace ThisApp
     public:
         // canClear says whether No change is a hue this rule may take. A window root's surface
         // states an absolute colour, so its hue has to be named and Clear is refused on it.
-        void bind(ColorRuleHue&, const ThemeColors&, const OnHueRuleChanged&, bool canClear);
+        // Takes the rule by address, the palette, what to call and what to call the edit by.
+        void bind(ColorRuleHue&, const ThemeColors&, const OnHueRuleChanged&, bool canClear,
+            Text what);
         [[nodiscard]] bool bound() const { return m_rule; }
         [[nodiscard]] bool canClear() const { return m_canClear; }
         [[nodiscard]] ColorRuleHueOp operation() const { return m_rule->operation(); }
@@ -182,6 +184,7 @@ namespace ThisApp
         bool m_canClear{ true };
         const ThemeColors* m_colors{};
         const OnHueRuleChanged* m_onChanged{};
+        Text m_what{}; // what an edit here is called, as the page records it
         // What the popup's slider edits. ColorSlider tracks an Hsl and a hue rule holds a bare
         // float, so the colour lives here and its hue is written back to the rule on every change.
         Hsl m_exactColor{ 0.0f, k_blobSaturation, k_blobLuminosity };
@@ -296,12 +299,13 @@ namespace ThisApp
     }
 
     void HueRuleControl::bind(ColorRuleHue& rule, const ThemeColors& colors,
-        const OnHueRuleChanged& onChanged, bool canClear)
+        const OnHueRuleChanged& onChanged, bool canClear, Text what)
     {
         m_rule = &rule;
         m_canClear = canClear;
         m_colors = &colors;
         m_onChanged = &onChanged;
+        m_what = std::move(what);
         m_exactColor.hue = rule.exactValue();
         invalidate();
     }
@@ -376,7 +380,7 @@ namespace ThisApp
     {
         invalidate();
         if (m_onChanged and *m_onChanged)
-            (*m_onChanged)(phase);
+            (*m_onChanged)(phase, m_what);
     }
 
     // HueRuleItem

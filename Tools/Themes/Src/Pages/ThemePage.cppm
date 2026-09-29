@@ -68,6 +68,7 @@ import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.Context.FormContext;
 
 import ClaFi.Core.System.Events;
+import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
@@ -163,18 +164,25 @@ namespace ThisApp
         // The name, and under it in gray what the pigment is used for.
         void pigmentNameCell(Grids::GetCellTextEvent&) const;
         void bindPigmentEditors(); // onto the rules they edit, which live in m_editTheme
+        // What a change to one thing of the palette is called.
+        [[nodiscard]] static Text changeStepName(std::wstring_view what);
+        // What a change to one column of a pigment is called.
+        [[nodiscard]] static Text pigmentStepName(UiElement, std::wstring_view column);
         [[nodiscard]] Grids::Column& pigmentColumn(PigmentColumn);
         // What a pigment's value is about to change: the surface its element stands on.
         [[nodiscard]] RuleBase pigmentRuleBase(UiElement, RuleChannel);
-        void pigmentChanged(EditPhase);
+        void pigmentChanged(EditPhase, const Text& what);
         void darkModeFloorChanged(EditPhase);
         //
         // Brings every control up on m_editTheme as it stands - what a restore and an undo share.
         void showEditTheme();
         // Every edit ends here: the tab node takes the theme, and the history takes the step.
-        void edited(EditPhase);
+        void edited(EditPhase, const Text& what);
         void undoEdit();
         void redoEdit();
+        // The lists behind the two strips, each answering how many steps to take.
+        void dropUndoSteps(DropdownEvent&);
+        void dropRedoSteps(DropdownEvent&);
         // Puts a state of the history on as the theme - on screen and in the tab node.
         void showHistoryState(const AppTheme&);
         void storeViewState() const;
@@ -182,7 +190,8 @@ namespace ThisApp
         void restoreView();
         void designPagePicked(); // sends the pick to the browser as this tab's anchor
         void showAnchor(const Browser::ShowAnchorEvent&);
-        void rulesChanged(EditPhase); // a rule was added on the Design page, moved or taken away
+        // A rule was added on the Design page, moved or taken away.
+        void rulesChanged(EditPhase, const Text& what);
         void saveTheme() const;
         // Writes this page's work to a name the user gives, and takes the tab there. The original
         // is left on the disk as it stands, which is what tells this from Save.
@@ -252,23 +261,28 @@ namespace ThisApp
             Padding{ 4.0f }
         ) };
 
-        // Words, icon and state come from the actions; mouse only keeps the focus on the edit.
-        ToolButton& m_undoButton{ toolBar().add<ToolButton>(
-            IconSize{ 18.0f },
-            ButtonViewMode::IconOnly,
+        // The face is the action, the strip is its list of steps - see dropUndoSteps. Mouse only
+        // keeps the focus on the edit; the keys reach the action on their own.
+        SplitButton& m_undoButton{ toolBar().add<SplitButton>(
             StdActions::undo,
+            ButtonViewMode::IconOnly,
+            IconSize{ 18.0f },
             Interactivity::MouseOnly
         ) };
 
-        ToolButton& m_redoButton{ toolBar().add<ToolButton>(
-            IconSize{ 18.0f },
-            ButtonViewMode::IconOnly,
+        SplitButton& m_redoButton{ toolBar().add<SplitButton>(
             StdActions::redo,
+            ButtonViewMode::IconOnly,
+            IconSize{ 18.0f },
             Interactivity::MouseOnly
         ) };
 
         AppTheme m_editTheme{};
         History<AppTheme> m_history{}; // the states m_editTheme has been through
+        // What the palette's edits are called in the history, held rather than spelled per edit.
+        const Text m_anchorStep{ changeStepName(L"Anchor hue") };
+        const Text m_floorStep{ changeStepName(L"Dark mode floor") };
+        const Text m_paletteMapStep{ changeStepName(L"Palette map") };
         // Set while showEditTheme brings the controls up on a theme that was read or undone to.
         // What it calls to do that are the same handlers a user edit calls, and each of them ends
         // by writing the theme back and recording a step - see edited.
@@ -488,12 +502,16 @@ namespace ThisApp
         :
         BasePage{ params, std::forward<Args>(args)... },
         m_onSelectPaletteMap{ [this]() { paletteMapChanged(); } },
-        m_onPigmentChanged{ [this](const EditPhase phase) { pigmentChanged(phase); } }
+        m_onPigmentChanged{ [this](const EditPhase phase, const Text& what) {
+            pigmentChanged(phase, what);
+        } }
     {
         // The second half of the button IS Save as. A menu of one was a stop on the way to it,
         // naming what the arrow already means and asking for a second press to get there; behind
         // the strip the command names itself in the strip's tooltip and runs off one press.
         m_saveButton.dropdownAction(StdActions::saveAs);
+        m_undoButton.connectEvent(this, &ThemePage::dropUndoSteps);
+        m_redoButton.connectEvent(this, &ThemePage::dropRedoSteps);
 
         onGetActionState([this](GetActionStateEvent& event) {
             // Claiming says this page is what the command acts on. Neither is ever refused: a page
@@ -565,7 +583,7 @@ namespace ThisApp
             anchorChanged(editPhaseOf(event.slider));
             });
         m_anchorSlider.onSettle([this](SliderSettleEvent&) {
-            edited(EditPhase::Settled);
+            edited(EditPhase::Settled, m_anchorStep);
             });
 
         m_darkModeFloorSlider.setMaxPosition(k_maxDarkModeFloor);
@@ -577,7 +595,7 @@ namespace ThisApp
             darkModeFloorChanged(editPhaseOf(event.slider));
             });
         m_darkModeFloorSlider.onSettle([this](SliderSettleEvent&) {
-            edited(EditPhase::Settled);
+            edited(EditPhase::Settled, m_floorStep);
             });
 
         m_cppCodePage.box().setLanguage(Syntax::Languages::cpp);
@@ -639,8 +657,8 @@ namespace ThisApp
                 const RuleChannel channel) {
                 return elementRuleBase(element, rule, channel);
             },
-            [this](const EditPhase phase) {
-                rulesChanged(phase);
+            [this](const EditPhase phase, const Text& what) {
+                rulesChanged(phase, what);
             }
         );
         bindPigmentEditors();

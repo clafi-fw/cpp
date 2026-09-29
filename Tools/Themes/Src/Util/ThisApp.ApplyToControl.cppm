@@ -6,6 +6,7 @@ import ClaFi.Controls.Base.DropdownControlBase;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -16,7 +17,7 @@ namespace ThisApp
     using namespace ::ClaFi::Controls;
 
     // What an Apply to control calls after it has changed its rule - a pick, so always settled.
-    export using OnRuleChanged = std::function<void(EditPhase)>;
+    export using OnRuleChanged = std::function<void(EditPhase, const Text& what)>;
 
     // Which of a rule's two input sets a column edits - inputs or andInputs.
     export using RuleClause = RuleInputs ColorRule::*;
@@ -29,7 +30,10 @@ namespace ThisApp
         explicit ApplyToControl(const CreateParams&, Args&&...);
     public:
         // Takes the rule by its place, the list's one channel if it has one, and what to call.
-        void bind(ColorRules&, std::size_t index, OptionalPaintChannel onlyOutput, OnRuleChanged);
+        // Takes the list and the rule's place in it, the one channel, what to call and what to
+        // call the edit by.
+        void bind(ColorRules&, std::size_t index, OptionalPaintChannel onlyOutput, OnRuleChanged,
+            Text what);
         [[nodiscard]] PaintChannel output() const;
         [[nodiscard]] bool canWrite(PaintChannel) const;
         [[nodiscard]] bool reads(RuleClause, RuleInput) const;
@@ -49,6 +53,7 @@ namespace ThisApp
         std::size_t m_index{};
         OptionalPaintChannel m_onlyOutput{}; // the one channel the list's rules write, any if empty
         OnRuleChanged m_onChanged{};
+        Text m_what{}; // what an edit here is called, as the page records it
     };
 
 

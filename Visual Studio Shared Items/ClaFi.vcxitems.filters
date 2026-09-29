@@ -1075,6 +1075,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\PromptDialog.cppm">
       <Filter>Controls\Dialogs</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\StepsMenu.cpp">
+      <Filter>Controls\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\StepsMenu.cppm">
+      <Filter>Controls\Dialogs</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemeIcon.cppm">
       <Filter>Application</Filter>
     </ClCompile>

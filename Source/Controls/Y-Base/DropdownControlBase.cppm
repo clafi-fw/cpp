@@ -110,9 +110,9 @@ namespace ClaFi::Controls
         [[nodiscard]] virtual bool dropOnPrimaryPress() const { return false; }
         // WHETHER THE STRIP IS A COMMAND OF ITS OWN, and so stands or falls apart from the
         // control's own face. A combo box says no - every part of it opens the same list, so a
-        // combo box that cannot be used cannot be dropped either. A split button says yes: its
-        // face carries one command and its strip another, and a Save with nothing to write over
-        // still has a Save as behind it.
+        // combo box that cannot be used cannot be dropped either. A split button says yes where
+        // an action stands behind the strip: its face carries one command and its strip another,
+        // and a Save with nothing to write over still has a Save as behind it.
         //
         // A strip that acts alone is available whenever it is SHOWN. A control that wants it
         // unavailable hides it, which the base already reads as the strip not being there at all -

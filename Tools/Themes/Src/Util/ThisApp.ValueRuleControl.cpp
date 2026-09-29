@@ -177,13 +177,15 @@ namespace ThisApp
     // ValueRuleControl
 
     void ValueRuleControl::bind(ColorRuleValue& value, const RuleChannel channel,
-        OnGetRuleBase ruleBase, OnValueRuleChanged onChanged, const ValueRuleOperations operations)
+        OnGetRuleBase ruleBase, OnValueRuleChanged onChanged, const ValueRuleOperations operations,
+        Text what)
     {
         m_value = &value;
         m_channel = channel;
         m_ruleBase = std::move(ruleBase);
         m_onChanged = std::move(onChanged);
         m_operations = operations;
+        m_what = std::move(what);
         invalidate();
     }
 
@@ -323,7 +325,7 @@ namespace ThisApp
     {
         invalidate();
         if (m_onChanged)
-            m_onChanged(phase);
+            m_onChanged(phase, m_what);
     }
 
     // ValueRulePopup

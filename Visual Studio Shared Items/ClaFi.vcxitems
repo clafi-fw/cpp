@@ -73,6 +73,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\MessageDialog.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\PromptDialog.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\PromptDialog.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\StepsMenu.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\StepsMenu.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowDivider.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-RowDivider.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-SubGrid.cppm" />
