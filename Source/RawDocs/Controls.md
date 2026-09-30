@@ -476,8 +476,9 @@ key.
 
 THE HINT. The current row's signature, in the code style, and under it the hint's sentence,
 stand beside the list at the row's height - the form's tooltip, placed FormPlacement::Right
-on a rect at the list's edge, raised right away from the pass that lays the row out and
-after a keyboard move, and on hover as any hint is. A keyword, or an entry with neither
+on a rect spanning the list, so a hint the right has no room for stands off the list's left
+edge and not over its rows; raised right away from the pass that lays the row out and after
+a keyboard move, and on hover as any hint is. A keyword, or an entry with neither
 signature nor hint, shows none; one of the text's own names shows its declaration as
 spelled. The hint goes with the list.
 

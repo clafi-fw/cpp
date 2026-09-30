@@ -126,8 +126,9 @@ Everything else applies only to child popups, and the placement rect must be in 
 form's coordinates. `Bottom` and `Top` drop the window under or over the rect, flipping to the
 other side when the side asked for has no room; `Right` stands it beside the rect, level with
 the rect's top and off its right edge, and off its left edge when the right has no room for it -
-the hint beside a completion list's current row is placed this way, on a rect standing at the
-list's edge. `ContextMenu` and `Mouse` hang it off the pointer.
+the hint beside a completion list's current row is placed this way, on a rect spanning the
+list, so that the left edge it flips to is the list's own. `ContextMenu` and `Mouse` hang it
+off the pointer.
 
 ## AutoFit
 

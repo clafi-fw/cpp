@@ -191,11 +191,12 @@ namespace ClaFi::Controls
             ? m_entry->name
             : m_entry->signature;
 
-        // Beside the list at this row's height, so the rows stay in view. In the coordinates of
-        // the list's form, which the row's own bounds are in.
-        const float edge = form().content().boundsInForm().right + scaler().scale(k_hintGap);
+        // Beside the list at this row's height, on a rect spanning it so either side stands clear
+        // of the rows. In the list form's coordinates, which the row's own bounds are in.
+        const FloatRect listBounds = form().content().boundsInForm();
+        const float gap = scaler().scale(k_hintGap);
         const FloatRect row = boundsInForm();
-        event.anchorRect = { edge, row.top, edge, row.bottom };
+        event.anchorRect = { listBounds.left - gap, row.top, listBounds.right + gap, row.bottom };
         event.placement = FormPlacement::Right;
         event.text << TextStyleId::Code << signature << PopTextStyle{};
         if (!m_entry->hint.empty())
