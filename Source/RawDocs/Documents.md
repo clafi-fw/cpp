@@ -163,3 +163,12 @@ The application owns or names the folder and hands it to run, which hands it to 
 and the browser and every page take it from their props. The name and the three config schemas
 are the application's: the document's attribute in the tab schema is typed as the document is,
 and the layer never names that type.
+
+## History
+
+A DocumentPage puts Undo and Redo after Save as HistoryButtons, and a derived page names the
+history they walk with setEditHistory - once, from its own constructor. The page then answers
+both actions and GetEditHistoryEvent for that history, and its buttons reach the page first, so
+they walk the document wherever the focus stands. A key inside a box still reaches the box: a
+script page names its CodeBox, so both come to the same steps, while the theme page names the
+theme's own history and its code boxes keep theirs.

@@ -568,7 +568,8 @@ namespace ClaFi::Controls
                 --last;
         }
         applyIndentEdit(Syntax::reindentEdit(lines, first, last, indentUnitInUse(), selection,
-            editProps()->caretOnLeft));
+            editProps()->caretOnLeft), EditKind::Replace,
+            linesStepName(L"Reindent", last - first + 1));
     }
 
     void CodeBox::textTaken(const Text& text, const TextEdit* edit) const
@@ -771,7 +772,7 @@ namespace ClaFi::Controls
     void CodeBox::textPasted(const TextRange& pasted)
     {
         Syntax::IndentLines lines = sourceLines();
-        applyIndentEdit(Syntax::pasteEdit(lines, pasted, indentUnitInUse()));
+        applyIndentEdit(Syntax::pasteEdit(lines, pasted, indentUnitInUse()), EditKind::Automatic);
     }
 
     void CodeBox::editContextPopup(EditContextPopupEvent& event)
@@ -1013,9 +1014,11 @@ namespace ClaFi::Controls
         hideCompletion();
         // One edit, undone as one: the name as typed goes, and the row's own spelling stands in
         // its place with the caret after it.
+        Text what{};
+        what << L"Complete " << InkWell::accentInk() << row.name() << PopColor{};
         m_takingCompletion = true;
         setSelection(line.start + place.wordStart, line.start + place.caret);
-        replaceSelectedText(row.name());
+        applyEdit(ensureCaret(), Text{ row.name() }, EditKind::Replace, what);
         m_takingCompletion = false;
         realignFinishedWord(false);
     }
@@ -1178,7 +1181,8 @@ namespace ClaFi::Controls
         return Syntax::IndentLines{ m_lines, text().plainText() };
     }
 
-    void CodeBox::applyIndentEdit(const std::optional<Syntax::IndentEdit>& edit)
+    void CodeBox::applyIndentEdit(const std::optional<Syntax::IndentEdit>& edit,
+        const EditKind kind, const Text& what)
     {
         if (!edit.has_value())
             return;
@@ -1186,7 +1190,7 @@ namespace ClaFi::Controls
             .range = edit->selection,
             .caretOnLeft = edit->caretOnLeft,
         };
-        applyEdit(edit->replaced, Text{ edit->inserted }, EditKind::Replace, landing);
+        applyEdit(edit->replaced, Text{ edit->inserted }, kind, what, landing);
     }
 
     void CodeBox::insertStop()
@@ -1222,7 +1226,16 @@ namespace ClaFi::Controls
         if (last > first && lines.start(last) == selection.end())
             --last;
         applyIndentEdit(Syntax::shiftEdit(lines, first, last, back, indentUnitInUse(), selection,
-            editProps()->caretOnLeft));
+            editProps()->caretOnLeft), EditKind::Replace,
+            linesStepName(back ? L"Outdent" : L"Indent", last - first + 1));
+    }
+
+    Text CodeBox::linesStepName(const std::wstring_view verb, const std::size_t lines)
+    {
+        Text result{};
+        result << verb << L' ' << InkWell::accentInk() << lines;
+        result << (lines == 1 ? L" line" : L" lines") << PopColor{};
+        return result;
     }
 
     bool CodeBox::unindentAtCaret()
@@ -1250,7 +1263,7 @@ namespace ClaFi::Controls
             return;
         Syntax::IndentLines lines = sourceLines();
         applyIndentEdit(Syntax::realignEdit(lines, line.index, indentUnitInUse(),
-            line.start + line.caret));
+            line.start + line.caret), EditKind::Automatic);
     }
 
     void CodeBox::indentAfterBreak()
@@ -1259,7 +1272,8 @@ namespace ClaFi::Controls
         if (line.index == 0 || line.caret != 0)
             return;
         Syntax::IndentLines lines = sourceLines();
-        applyIndentEdit(Syntax::breakEdit(lines, line.index, indentUnitInUse()));
+        applyIndentEdit(Syntax::breakEdit(lines, line.index, indentUnitInUse()),
+            EditKind::Automatic);
     }
 
     void CodeBox::paintIndentGuides(PaintEvent& event, TextLayout& layout, const FloatPoint origin)

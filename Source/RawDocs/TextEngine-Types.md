@@ -17,6 +17,13 @@ told from. It matches nothing, itself included, so a reader tests named() before
 A paste, or anything written over a selection. Stands on its own: the user drew the
 boundary it acted on, so it is a step of its own to take back.
 
+## EditKind::Automatic
+
+An edit the box makes on account of the one before it: the indent a line break brings, the block a
+paste is moved to, a closer word realigned. It joins the step the last edit made and is taken back
+with it, so the step the list names is what the user did. A caret move, an undo or a redo in
+between leaves it nothing to join, and it stands as a step of its own.
+
 ## TextLineColumn
 
 Where a position stands in the text as a reader counts it, both numbers from one. A LINE is
@@ -94,6 +101,21 @@ edit. A rewrite of exactly the same length is the case that comparison does not 
 A step may state where it lands. A redo then puts the selection there rather than collapsing
 it after what went in, and the step joins no run and is joined by none: a box moving several
 lines at once makes one step of it, and the lines stand selected again after a redo.
+A step is the change that made it and the automatic changes made on its account, in order. Undo
+takes them back newest first, and a step with automatic changes takes no more of its run, since
+a run growing past them would break that order. The bookkeeping is a StepHistory - see
+Control-Foundation - and a walk of several steps undoes or redoes each in turn.
+
+## Step names
+
+A step its caller named - Paste, Cut, Complete [WriteLn], Indent [3 lines] - shows that name. A
+step left unnamed is called after what it did to the text: Type with what went in, or Delete with
+what came out, the quoted part in the accent. The quote is the text's first line, cut at 24
+characters, with an ellipsis where more follows. Blanks draw nothing, so they are counted
+instead - space, 4 spaces, line break, 2 tabs.
+
+A run's name is written when the list asks, from the text the run holds by then, so a word typed
+a letter at a time costs nothing per key.
 
 ## ColorOverlay
 

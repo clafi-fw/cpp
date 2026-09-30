@@ -1,11 +1,11 @@
 export module ThisApp.ApplyToControl;
 
-import ThisApp.History;
 
 import ClaFi.Controls.Base.DropdownControlBase;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 

@@ -103,6 +103,21 @@ A list built out of data states a placeholder with setPlaceHolderText(), and a m
 holding nothing but that placeholder opens to show it. A menu with nothing to show at
 all does not open.
 
+## HistoryButton
+
+A SplitButton on Undo or Redo. The face is the action. The strip asks the action's subject - the
+control that would take the face's click, found from the strip - for its IEditHistory, and drops a
+StepsMenu of its steps; the run picked is walked in one go. The strip is half of the face's
+command, so it greys with it. A subject that names no history drops nothing.
+
+## TextBox history
+
+A text box is its own IEditHistory: the steps of its TextHistory, and none while it is read-only,
+so its Undo and Redo claims report disabled there. A walk of several steps puts the caret where
+the last step it crossed left it, and the box reports it as one edit. Names follow
+TextEngine-Types' step names; a CodeBox names its commands and folds the indents it makes on its
+own into the step that caused them.
+
 ## StepsMenu
 
 A popup listing steps from the top, where the pointer picks how many to take - the list an

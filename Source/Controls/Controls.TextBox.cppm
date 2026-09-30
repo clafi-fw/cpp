@@ -8,6 +8,7 @@ import ClaFi.Controls.Label;
 import ClaFi.StdActions.Transfer;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 
 import ClaFi.Core.TextEngine.History;
 import ClaFi.Core.TextEngine.Layout;
@@ -73,7 +74,7 @@ namespace ClaFi::Controls
     };
 
     // A label the user can type into.
-    export class TextBox : public WithTextLayout<Label>
+    export class TextBox : public WithTextLayout<Label>, public IEditHistory
     {
     public:
         template<typename... Args>
@@ -121,12 +122,16 @@ namespace ClaFi::Controls
         void replaceSelectedText(std::wstring_view);
         void deleteSelectedText();
 
-        // Takes back the newest edit, or does the newest one taken back over again. Each leaves
-        // the caret where the step it moved left it, so the user is looking at what changed.
-        void undo();
-        void redo();
-        [[nodiscard]] bool canUndo() const { return m_history.canUndo(); }
-        [[nodiscard]] bool canRedo() const { return m_history.canRedo(); }
+        // The box's own edits, and none while it is read-only. See Controls#textbox-history
+        [[nodiscard]] std::size_t undoDepth() const override;
+        [[nodiscard]] std::size_t redoDepth() const override;
+        void writeUndoStep(std::size_t i, Text&) const override;
+        void writeRedoStep(std::size_t i, Text&) const override;
+        // Each walk leaves the caret where the last step it crossed left it, on what changed.
+        void undo(std::size_t steps) override;
+        void redo(std::size_t steps) override;
+        [[nodiscard]] bool canUndo() const { return undoDepth() != 0; }
+        [[nodiscard]] bool canRedo() const { return redoDepth() != 0; }
 
         // Selects the text of the anchor of that name and brings its line to the top of the view,
         // remembering where the box stood. Answers false, and moves nothing, where the text holds
@@ -213,8 +218,9 @@ namespace ClaFi::Controls
         // the two differ: the key names a range of its own with nothing selected, and the
         // selection is still where undoing the key has to put the caret back. `landing` is where
         // the selection stands once the edit is in, and where a redo puts it back; none leaves
-        // the caret collapsed after what went in.
-        void applyEdit(TextRange range, const Text& inserted, EditKind,
+        // the caret collapsed after what went in. `what` names the step, and a step left unnamed
+        // is called after what it did to the text.
+        void applyEdit(TextRange range, const Text& inserted, EditKind, const Text& what = {},
             const std::optional<EditSelection>& landing = std::nullopt);
         // Where Home takes a caret with Ctrl up: the start of the row it stands on.
         [[nodiscard]] virtual std::size_t rowHome(CaretHit) const;
@@ -420,8 +426,10 @@ namespace ClaFi::Controls
 
     void TextBox::cutSelectedText(const InputStamp stamp)
     {
+        if (!m_editProps.selRange.length)
+            return;
         copySelectedText(stamp);
-        deleteSelectedText();
+        applyEdit(ensureCaret(), Text{}, EditKind::Replace, Text{ L"Cut" });
     }
 
     void TextBox::pasteClipboardText()
@@ -443,7 +451,7 @@ namespace ClaFi::Controls
             return;
 
         const std::size_t start = std::min(ensureCaret().start, text().plainText().size());
-        applyEdit(ensureCaret(), pasted.value(), EditKind::Replace);
+        applyEdit(ensureCaret(), pasted.value(), EditKind::Replace, Text{ L"Paste" });
         textPasted({ start, pasted->plainText().size() });
     }
 
@@ -457,32 +465,6 @@ namespace ClaFi::Controls
         if (!m_editProps.selRange.length)
             return;
         applyEdit(ensureCaret(), Text{}, EditKind::Replace);
-    }
-
-    void TextBox::undo()
-    {
-        // Undo and redo act on the history rather than on a range, so they are the two edits that
-        // do not come through applyEdit, and read-only is stated for them here.
-        if (m_readOnly == ReadOnly::Yes)
-            return;
-        const std::optional<EditSelection> selection = m_history.undo(text());
-        if (!selection.has_value())
-            return;
-        forgetPlaces();
-        applySelection(selection.value());
-        textEdited();
-    }
-
-    void TextBox::redo()
-    {
-        if (m_readOnly == ReadOnly::Yes)
-            return;
-        const std::optional<EditSelection> selection = m_history.redo(text());
-        if (!selection.has_value())
-            return;
-        forgetPlaces();
-        applySelection(selection.value());
-        textEdited();
     }
 
     FloatRect TextBox::scrollHotspot() const
@@ -939,7 +921,7 @@ namespace ClaFi::Controls
         return m_editProps.selRange;
     }
 
-    void TextBox::applyEdit(TextRange range, const Text& inserted, EditKind kind,
+    void TextBox::applyEdit(TextRange range, const Text& inserted, EditKind kind, const Text& what,
         const std::optional<EditSelection>& landing)
     {
         // Every route that changes the text arrives here - the delete keys, typing, the edit
@@ -972,7 +954,7 @@ namespace ClaFi::Controls
             : thisEdit;
         carryPlaces(thisEdit);
 
-        applySelection(m_history.apply(text(), kind, range, inserted, before, landing));
+        applySelection(m_history.apply(text(), kind, range, inserted, what, before, landing));
         textEdited();
     }
 

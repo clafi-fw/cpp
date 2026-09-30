@@ -1,6 +1,5 @@
 module ThisApp.ValueRuleControl;
 
-import ThisApp.History;
 import ThisApp.RuleSlider;
 import ThisApp.RuleText;
 import ThisApp.Utils;
@@ -18,6 +17,7 @@ import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.InkWell;
@@ -384,7 +384,7 @@ namespace ThisApp
         });
         // Every tile's caption is a value the slider sets, so the row is painted again with it.
         slider.onChange([this, &slider, tileRow](SliderChangeEvent&) {
-            m_owner.setNormalizedValue(slider.relativePosition(), editPhaseOf(slider));
+            m_owner.setNormalizedValue(slider.relativePosition(), slider.editPhase());
             if (tileRow)
                 tileRow->invalidate();
         });

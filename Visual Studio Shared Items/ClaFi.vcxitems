@@ -126,6 +126,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.StackPanel.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HexView.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HexView.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HistoryButton.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HistoryButton.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.PictureView.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.PictureView.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CodeBox.cppm" />
@@ -227,6 +229,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\PaintEvent.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\PaintEvent.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Fit.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\EditHistory.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\ContextMessage.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\ContextMessage.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Tooltip.cpp" />
@@ -291,6 +294,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.ShadowWindow.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Window.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\RingBuffer.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\StepHistory.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.Color.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.Color.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.TextTypes.cppm" />

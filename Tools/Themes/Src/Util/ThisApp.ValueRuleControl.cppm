@@ -1,6 +1,5 @@
 export module ThisApp.ValueRuleControl;
 
-import ThisApp.History;
 import ThisApp.RuleSlider;
 
 import ClaFi.Controls.Base.DropdownControlBase;
@@ -9,6 +8,7 @@ import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.TextEngine.Text;

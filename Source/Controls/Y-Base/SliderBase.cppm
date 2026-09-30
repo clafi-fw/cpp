@@ -5,6 +5,7 @@ export module ClaFi.Controls.Base.SliderBase;
 import ClaFi.Controls.Panel;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.System.Events;
@@ -173,6 +174,11 @@ namespace ClaFi::Controls
         [[nodiscard]] bool positionHeldByPointer() const
         {
             return m_thumbPressed || m_slotPressed || m_heldByProxy;
+        }
+        // What a change reports to a history: held while the pointer has the position.
+        [[nodiscard]] EditPhase editPhase() const
+        {
+            return positionHeldByPointer() ? EditPhase::Held : EditPhase::Settled;
         }
     protected:
         using ContainerBase::add;

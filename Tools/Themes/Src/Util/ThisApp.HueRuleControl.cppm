@@ -1,7 +1,6 @@
 export module ThisApp.HueRuleControl;
 
 import ThisApp.Consts;
-import ThisApp.History;
 import ThisApp.Utils;
 
 import ClaFi.Controls.Base.ButtonBase;
@@ -23,6 +22,7 @@ import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Metrics;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 
 import ClaFi.Core.Context.FormContext;
 
@@ -550,7 +550,7 @@ namespace ThisApp
             if (m_owner.operation() != ColorRuleHueOp::ExactValue)
                 pick(ColorRuleHueOp::ExactValue);
             exactMark.invalidate();
-            m_owner.exactHueChanged(editPhaseOf(*m_slider));
+            m_owner.exactHueChanged(m_slider->editPhase());
             if (m_summary)
                 m_summary->invalidate();
             });

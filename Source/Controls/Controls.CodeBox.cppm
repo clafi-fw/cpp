@@ -15,6 +15,7 @@ import ClaFi.Core.Syntax.Lexer;
 import ClaFi.Core.Syntax.Types;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.History;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -270,11 +271,14 @@ namespace ClaFi::Controls
         [[nodiscard]] TextRange selectedRange() const;
         // The lines as the indent is worked out over them, the line states in step with the text.
         [[nodiscard]] Syntax::IndentLines sourceLines() const;
-        // Makes the indent edit the box's next step, the editor's own, landing where it says.
-        void applyIndentEdit(const std::optional<Syntax::IndentEdit>&);
+        // Makes the indent edit a step, or part of the one before it, landing where it says.
+        void applyIndentEdit(const std::optional<Syntax::IndentEdit>&, EditKind,
+            const Text& what = {});
         // Tab with no selection, or one inside a line: the blanks to the next stop in its place.
         void insertStop();
         void shiftLines(bool back);
+        // What a step moving that many lines is called - Indent 3 lines.
+        [[nodiscard]] static Text linesStepName(std::wstring_view verb, std::size_t lines);
         // Backspace at a caret in a line's indent takes it back to the previous stop. Answers
         // whether it did, which a single blank to take never needs.
         [[nodiscard]] bool unindentAtCaret();

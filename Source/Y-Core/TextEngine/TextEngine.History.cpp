@@ -3,8 +3,8 @@ module ClaFi.Core.TextEngine.History;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
-import ClaFi.Core.System.RingBuffer;
-
+import ClaFi.Core.System.InkWell;
+import ClaFi.Core.System.StepHistory;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
@@ -21,10 +21,61 @@ namespace ClaFi
         return previousIsSpace != nextIsSpace;
     }
 
+    std::wstring countedText(const std::size_t count, const std::wstring_view one,
+        const std::wstring_view many)
+    {
+        if (count == 1)
+            return std::wstring{ one };
+        return std::to_wstring(count).append(L" ").append(many);
+    }
+
+    // Blanks draw nothing, so a name says what they are and how many.
+    std::wstring blanksText(const std::wstring_view text)
+    {
+        const std::size_t breaks = static_cast<std::size_t>(std::ranges::count(text, L'\n'));
+        if (breaks != 0)
+            return countedText(breaks, L"line break", L"line breaks");
+        const std::size_t tabs = static_cast<std::size_t>(std::ranges::count(text, L'\t'));
+        if (tabs == text.size())
+            return countedText(tabs, L"tab", L"tabs");
+        if (tabs == 0)
+            return countedText(text.size(), L"space", L"spaces");
+        return countedText(text.size(), L"blank", L"blanks");
+    }
+
+    // What a name quotes of a step's text: the first line of what it holds, cut at `maxChars`,
+    // with an ellipsis where more follows.
+    std::wstring quotedText(const std::wstring_view text, const std::size_t maxChars)
+    {
+        const auto isBlank = [](const wchar_t character) {
+            return std::iswspace(character) != 0;
+        };
+        const auto first = std::ranges::find_if_not(text, isBlank);
+        if (first == text.end())
+            return blanksText(text);
+
+        const auto last = std::ranges::find_if_not(text | std::views::reverse, isBlank).base();
+        const std::wstring_view shown{ first, last };
+        std::wstring_view line = shown.substr(0, shown.find(L'\n'));
+        while (!line.empty() && isBlank(line.back()))
+            line.remove_suffix(1);
+
+        bool cut = line.size() != shown.size();
+        if (line.size() > maxChars)
+        {
+            line = line.substr(0, maxChars);
+            cut = true;
+        }
+        std::wstring result{ line };
+        if (cut)
+            result += L'…';
+        return result;
+    }
+
     // TextHistory
 
     EditSelection TextHistory::apply(ControlText& text, EditKind kind, const TextRange& range,
-        const Text& inserted, const EditSelection& before,
+        const Text& inserted, const Text& what, const EditSelection& before,
         const std::optional<EditSelection>& after)
     {
         if (!inSync(text))
@@ -37,73 +88,106 @@ namespace ClaFi
         text.replaceText(range, inserted);
         m_textSize = text.plainText().size();
 
-        if (m_open && !after.has_value() && joins(kind, start, removed, inserted))
+        // AN AUTOMATIC EDIT IS PART OF THE STEP THAT CAUSED IT, and lands where it says: the
+        // indent a line break brings, the block a paste is moved to. The step is closed to its
+        // run from here, since undo takes its changes back in the reverse of the order they were
+        // made, and a run growing past them would break that order.
+        if (kind == EditKind::Automatic && m_takesAutomatic)
         {
-            Record& record = m_records[m_next - 1];
-            mergeInto(record, start, removed, inserted);
-            return landing(record);
+            Record& record = *m_records.newestStep();
+            const std::size_t end = start + inserted.plainText().size();
+            record.automatic.push_back(Change{
+                .start = start,
+                .removed = std::move(removed),
+                .inserted = inserted,
+            });
+            record.after = after.value_or(EditSelection{
+                .range = { end, 0 },
+                .caretOnLeft = record.before.caretOnLeft,
+                .affinityTrailing = record.before.affinityTrailing,
+            });
+            m_records.closeRun();
+            return record.after.value();
         }
 
-        // What was undone is dropped. Those steps were measured against a text that took a
-        // different turn from here, and no position in them names anything in this one.
-        m_records.resize(m_next);
+        Record* open = m_records.openStep();
+        if (open && !after.has_value() && joins(*open, kind, start, removed, inserted))
+        {
+            mergeInto(*open, start, removed, inserted);
+            return landing(*open);
+        }
 
-        reserveForRecord();
-        m_records.push_back(Record{
-            .kind = kind,
-            .start = start,
-            .removed = std::move(removed),
-            .inserted = inserted,
-            .before = before,
-            .after = after,
-        });
-        m_next = m_records.size();
         // A step that replaced a selection is a boundary the user drew, and one that states where
         // it lands is a step of its own, so nothing joins either.
-        m_open = kind != EditKind::Replace && !after.has_value();
-        return landing(m_records.back());
+        const bool opensRun = kind != EditKind::Replace && kind != EditKind::Automatic
+            && !after.has_value();
+        m_records.push(Record{
+            .kind = kind,
+            .change = {
+                .start = start,
+                .removed = std::move(removed),
+                .inserted = inserted,
+            },
+            .what = what,
+            .before = before,
+            .after = after,
+        }, opensRun);
+        m_takesAutomatic = true;
+        return landing(*m_records.newestStep());
     }
 
-    std::optional<EditSelection> TextHistory::undo(ControlText& text)
+    std::optional<EditSelection> TextHistory::undo(ControlText& text, const std::size_t steps)
     {
-        m_open = false;
+        breakRun();
         if (!inSync(text))
             clear();
-        if (!canUndo())
+        if (steps == 0 || steps > m_records.undoDepth())
             return {};
 
-        const Record& record = m_records[m_next - 1];
-        const std::size_t insertedSize = record.inserted.plainText().size();
-        text.replaceText({ record.start, insertedSize }, record.removed);
+        for (std::size_t i = 0; i != steps; ++i)
+            revert(text, m_records.undoStep(i));
+        const EditSelection result = m_records.undoStep(steps - 1).before;
+        m_records.back(steps);
         m_textSize = text.plainText().size();
-        --m_next;
-        return record.before;
+        return result;
     }
 
-    std::optional<EditSelection> TextHistory::redo(ControlText& text)
+    std::optional<EditSelection> TextHistory::redo(ControlText& text, const std::size_t steps)
     {
-        m_open = false;
+        breakRun();
         if (!inSync(text))
             clear();
-        if (!canRedo())
+        if (steps == 0 || steps > m_records.redoDepth())
             return {};
 
-        const Record& record = m_records[m_next];
-        const std::size_t removedSize = record.removed.plainText().size();
-        text.replaceText({ record.start, removedSize }, record.inserted);
+        for (std::size_t i = 0; i != steps; ++i)
+            reapply(text, m_records.redoStep(i));
+        const EditSelection result = landing(m_records.redoStep(steps - 1));
+        m_records.forward(steps);
         m_textSize = text.plainText().size();
-        ++m_next;
-        return landing(record);
+        return result;
+    }
+
+    void TextHistory::writeUndoStep(const std::size_t i, Text& text) const
+    {
+        writeStep(m_records.undoStep(i), text);
+    }
+
+    void TextHistory::writeRedoStep(const std::size_t i, Text& text) const
+    {
+        writeStep(m_records.redoStep(i), text);
+    }
+
+    void TextHistory::breakRun()
+    {
+        m_records.closeRun();
+        m_takesAutomatic = false;
     }
 
     void TextHistory::clear()
     {
-        // The records go, the block they stood in stays. A history is cleared because the text
-        // it was measured against moved, which says nothing about whether the box is still
-        // being edited - and it usually is.
         m_records.clear();
-        m_next = 0;
-        m_open = false;
+        m_takesAutomatic = false;
         m_textSize = 0;
     }
 
@@ -111,7 +195,8 @@ namespace ClaFi
     {
         if (record.after.has_value())
             return record.after.value();
-        const std::size_t caretPos = record.start + record.inserted.plainText().size();
+        const Change& change = record.change;
+        const std::size_t caretPos = change.start + change.inserted.plainText().size();
         return {
             .range = { caretPos, 0 },
             .caretOnLeft = record.before.caretOnLeft,
@@ -119,17 +204,16 @@ namespace ClaFi
         };
     }
 
-    bool TextHistory::joins(EditKind kind, std::size_t start, const Text& removed,
-        const Text& inserted) const
+    bool TextHistory::joins(const Record& last, const EditKind kind, const std::size_t start,
+        const Text& removed, const Text& inserted)
     {
-        const Record& last = m_records[m_next - 1];
         if (kind != last.kind)
             return false;
 
         const std::wstring& newRemoved = removed.plainText();
         const std::wstring& newInserted = inserted.plainText();
-        const std::wstring& runRemoved = last.removed.plainText();
-        const std::wstring& runInserted = last.inserted.plainText();
+        const std::wstring& runRemoved = last.change.removed.plainText();
+        const std::wstring& runInserted = last.change.inserted.plainText();
 
         switch (kind)
         {
@@ -138,7 +222,7 @@ namespace ClaFi
             // a selection written over is a boundary of the user's own.
             if (!newRemoved.empty() || newInserted.empty() || runInserted.empty())
                 return false;
-            if (start != last.start + runInserted.size())
+            if (start != last.change.start + runInserted.size())
                 return false;
             return !endsRun(runInserted.back(), newInserted.front());
 
@@ -147,7 +231,7 @@ namespace ClaFi
             // step ends exactly where the run so far begins.
             if (!newInserted.empty() || newRemoved.empty() || runRemoved.empty())
                 return false;
-            if (start + newRemoved.size() != last.start)
+            if (start + newRemoved.size() != last.change.start)
                 return false;
             return !endsRun(runRemoved.front(), newRemoved.back());
 
@@ -156,7 +240,7 @@ namespace ClaFi
             // step of the run starts at the same position.
             if (!newInserted.empty() || newRemoved.empty() || runRemoved.empty())
                 return false;
-            if (start != last.start)
+            if (start != last.change.start)
                 return false;
             return !endsRun(runRemoved.back(), newRemoved.front());
 
@@ -165,34 +249,64 @@ namespace ClaFi
         }
     }
 
-    void TextHistory::mergeInto(Record& record, std::size_t start, const Text& removed,
+    void TextHistory::mergeInto(Record& record, const std::size_t start, const Text& removed,
         const Text& inserted)
     {
         switch (record.kind)
         {
         case EditKind::Typing:
-            record.inserted << inserted;
+            record.change.inserted << inserted;
             break;
 
         case EditKind::DeletingBack:
             {
                 // The run grows towards the start of the text: this step took out what sits
-                // before everything the run has taken so far, so the record's start moves back
+                // before everything the run has taken so far, so the change's start moves back
                 // with it and what came out goes in front.
                 Text merged = removed;
-                merged << record.removed;
-                record.removed = std::move(merged);
-                record.start = start;
+                merged << record.change.removed;
+                record.change.removed = std::move(merged);
+                record.change.start = start;
                 break;
             }
 
         case EditKind::DeletingForward:
-            record.removed << removed;
+            record.change.removed << removed;
             break;
 
         default:
-            unreachable("A replacing step was merged into, and joins() refuses to join one");
+            unreachable("A step that joins no run was merged into");
         }
+    }
+
+    void TextHistory::revert(ControlText& text, const Record& record)
+    {
+        for (const Change& change : record.automatic | std::views::reverse)
+            text.replaceText({ change.start, change.inserted.plainText().size() }, change.removed);
+        const Change& change = record.change;
+        text.replaceText({ change.start, change.inserted.plainText().size() }, change.removed);
+    }
+
+    void TextHistory::reapply(ControlText& text, const Record& record)
+    {
+        const Change& change = record.change;
+        text.replaceText({ change.start, change.removed.plainText().size() }, change.inserted);
+        for (const Change& automatic : record.automatic)
+            text.replaceText({ automatic.start, automatic.removed.plainText().size() },
+                automatic.inserted);
+    }
+
+    void TextHistory::writeStep(const Record& record, Text& text)
+    {
+        if (!record.what.empty())
+        {
+            text << record.what;
+            return;
+        }
+        const bool typed = !record.change.inserted.empty();
+        const Text& shown = typed ? record.change.inserted : record.change.removed;
+        text << (typed ? L"Type " : L"Delete ") << InkWell::accentInk()
+            << quotedText(shown.plainText(), k_quotedChars) << PopColor{};
     }
 
     bool TextHistory::inSync(const Text& text) const
@@ -200,16 +314,4 @@ namespace ClaFi
         // An empty history holds no position to be wrong about, so it is in step with any text.
         return m_records.empty() || text.plainText().size() == m_textSize;
     }
-
-    void TextHistory::reserveForRecord()
-    {
-        if (m_records.size() != m_records.capacity())
-            return;
-        if (m_records.capacity() == k_maxRecords)
-            return;
-
-        m_records.set_capacity(std::min(k_maxRecords,
-            std::max(k_firstRecords, m_records.capacity() * 2)));
-    }
-
 }

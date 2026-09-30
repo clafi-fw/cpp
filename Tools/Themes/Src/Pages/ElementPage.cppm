@@ -1,7 +1,6 @@
 export module ThisApp.ElementPage;
 
 import ThisApp.ApplyToControl;
-import ThisApp.History;
 import ThisApp.RuleSlider;
 
 import ClaFi.Icons.HueIcon;
@@ -22,6 +21,7 @@ import ClaFi.StdActions;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Timer;

@@ -17,6 +17,7 @@ export import ClaFi.Controls.Expander;
 export import ClaFi.Controls.DialogTitle;
 export import ClaFi.Controls.Grids;
 export import ClaFi.Controls.HexView;
+export import ClaFi.Controls.HistoryButton;
 export import ClaFi.Controls.InPlaceEdit;
 export import ClaFi.Controls.Label;
 export import ClaFi.Controls.LabeledDivider;
@@ -71,12 +72,14 @@ export import ClaFi.StdActions;
 
 // Core
 export import ClaFi.Core.Foundation;
+export import ClaFi.Core.Foundation.EditHistory;
 export import ClaFi.Core.Foundation.Fit;
 export import ClaFi.Core.System.Animation;
 export import ClaFi.Core.System.Csv;
 export import ClaFi.Core.System.Events;
 export import ClaFi.Core.System.Props;
 export import ClaFi.Core.System.Scaler;
+export import ClaFi.Core.System.StepHistory;
 export import ClaFi.Core.System.Timer;
 export import ClaFi.Core.System.UiTypes;
 export import ClaFi.Core.System.Url;

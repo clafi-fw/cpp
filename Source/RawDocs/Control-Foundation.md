@@ -464,3 +464,48 @@ What reads it:
 - `TextBox`'s caret, drawn only while the factor is 1.
 
 `FormFocusChangeEvent` marks the moment of each change; the factor is what a paint reads.
+
+## EditPhase
+
+Where an edit stands while a history takes it. Held is the pointer still on the value - a slider's
+thumb or slot under a press - and every held step joins the one before it, so a drag is one step
+however many changes it raised. Settled stands on its own, or closes the run the pointer made:
+the press coming up raises one more change, settled, and that is the step's last state.
+`SliderBase::editPhase` answers it for a slider's change.
+
+## IEditHistory
+
+What an undo list and the Undo and Redo actions read of a history, whatever it keeps - deltas of a
+text, whole copies of a theme. Two depths, the name of each step the way the list shows it, and a
+walk of any number of steps each way; the newest step is 0 going back, the nearest undone one is 0
+going forward. A walk the history does not reach does nothing.
+
+The owner applies what it keeps - puts the text or the controls back, and the caret or the
+selection where the step left the user: where the OLDEST step undone was made, where the NEWEST
+step redone was. A walk of several steps is one walk, so the owner reports one change for it.
+
+## GetEditHistoryEvent
+
+Asked of the subject of Undo or Redo - the control that claims the action, found the way the
+action finds it - by whatever lists the steps. The subject writes the history its click acts on.
+A HistoryButton asks it from its strip, so the list is always the history the face would walk.
+
+## StepHistory
+
+The bookkeeping every undo history shares, over steps of whatever the owner keeps: one list in the
+order the steps were made, and a cursor splitting it into the steps in force and the steps undone.
+Undo and redo move the cursor; no step is ever carried between two stacks. A new step drops the
+undone ones first - they branch off a past the new step has left - and becomes the newest.
+
+The newest step can be open to a run: the owner decides that a step joins it, and the history only
+says which step that is. Walking either way closes it.
+
+The store grows from firstSteps to maxSteps and stays full there, the next step taking the oldest
+one's place; push answers the step it let go, for an owner whose first state rides on it.
+
+## StateHistory
+
+A StepHistory of whole copies: each step holds the state it left, its name and where it was made,
+and the history holds the state before the oldest step, where undo bottoms out. Right for a subject
+small enough to copy per step and put on by one sync. A held run keeps one step - the first
+step's name and place, and the latest state - until a settled step closes it.

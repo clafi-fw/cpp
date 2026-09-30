@@ -1,6 +1,5 @@
 module ThisApp.ApplyToControl;
 
-import ThisApp.History;
 
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Label;
@@ -12,6 +11,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;

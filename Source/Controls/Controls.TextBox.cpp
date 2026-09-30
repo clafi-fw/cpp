@@ -3,6 +3,7 @@ module ClaFi.Controls.TextBox;
 import ClaFi.Controls.Menu;
 import ClaFi.StdActions;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Transfer.Clipboard;
 import ClaFi.Core.Transfer.Offer;
@@ -122,6 +123,56 @@ namespace ClaFi::Controls
         // give, and a presenter keeps the answer it was last given until it is asked again -
         // see connectEditActions.
         invalidateEditActions();
+    }
+
+    std::size_t TextBox::undoDepth() const
+    {
+        if (m_readOnly == ReadOnly::Yes)
+            return 0;
+        return m_history.undoDepth();
+    }
+
+    std::size_t TextBox::redoDepth() const
+    {
+        if (m_readOnly == ReadOnly::Yes)
+            return 0;
+        return m_history.redoDepth();
+    }
+
+    void TextBox::writeUndoStep(const std::size_t i, Text& text) const
+    {
+        m_history.writeUndoStep(i, text);
+    }
+
+    void TextBox::writeRedoStep(const std::size_t i, Text& text) const
+    {
+        m_history.writeRedoStep(i, text);
+    }
+
+    // Undo and redo act on the history rather than on a range, so they are the two edits that do
+    // not come through applyEdit, and read-only is stated for them here.
+    void TextBox::undo(const std::size_t steps)
+    {
+        if (m_readOnly == ReadOnly::Yes)
+            return;
+        const std::optional<EditSelection> selection = m_history.undo(text(), steps);
+        if (!selection.has_value())
+            return;
+        forgetPlaces();
+        applySelection(selection.value());
+        textEdited();
+    }
+
+    void TextBox::redo(const std::size_t steps)
+    {
+        if (m_readOnly == ReadOnly::Yes)
+            return;
+        const std::optional<EditSelection> selection = m_history.redo(text(), steps);
+        if (!selection.has_value())
+            return;
+        forgetPlaces();
+        applySelection(selection.value());
+        textEdited();
     }
 
     bool TextBox::goToAnchor(std::wstring_view name)
@@ -331,10 +382,10 @@ namespace ClaFi::Controls
                 event.claim({ .enabled = !text().plainText().empty() });
             // Undo
             else if (&event.action == &StdActions::undo)
-                event.claim({ .enabled = editable && canUndo() });
+                event.claim({ .enabled = canUndo() });
             // Redo
             else if (&event.action == &StdActions::redo)
-                event.claim({ .enabled = editable && canRedo() });
+                event.claim({ .enabled = canRedo() });
             });
 
         onActionClick([this](ActionClickEvent& event) {
@@ -359,10 +410,15 @@ namespace ClaFi::Controls
                 selectAll();
             // Undo
             else if (&event.action == &StdActions::undo)
-                undo();
+                undo(1);
             // Redo
             else if (&event.action == &StdActions::redo)
-                redo();
+                redo(1);
+            });
+
+        // The list behind an Undo or Redo button is this box's own steps.
+        connectEvent([this](GetEditHistoryEvent& event) {
+            event.history = this;
             });
     }
 

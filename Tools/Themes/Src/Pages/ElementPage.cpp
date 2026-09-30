@@ -1,7 +1,6 @@
 module ThisApp.ElementPage;
 
 import ThisApp.ApplyToControl;
-import ThisApp.History;
 import ThisApp.HueRuleControl;
 import ThisApp.RuleSlider;
 import ThisApp.ValueRuleControl;
@@ -12,6 +11,7 @@ import ClaFi.Controls.StackView;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;

@@ -12,8 +12,11 @@ import ClaFi.Controls.MessageDialog;
 import ClaFi.Controls.PromptDialog;
 import ClaFi.Controls.Base.MessageBoxBase;
 
+import ClaFi.StdActions;
+
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Url;
 import ClaFi.Core.System.UiTypes;
@@ -64,6 +67,13 @@ namespace ClaFi::Documents
     bool DocumentPage::readSavedDocument(Dom::DomNodeBase& into) const
     {
         return folder().readDocument(documentFile(), into);
+    }
+
+    void DocumentPage::setEditHistory(IEditHistory& history)
+    {
+        m_editHistory = &history;
+        StdActions::undo.invalidateState();
+        StdActions::redo.invalidateState();
     }
 
     bool DocumentPage::writeDocument() const

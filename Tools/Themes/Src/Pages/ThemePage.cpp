@@ -5,7 +5,6 @@ import ThisApp.CodeOptions;
 import ThisApp.Consts;
 import ThisApp.DesignPage;
 import ThisApp.ElementPage;
-import ThisApp.History;
 import ThisApp.HueRuleControl;
 import ThisApp.RuleSlider;
 import ThisApp.Palette.Controls;
@@ -24,8 +23,6 @@ import ClaFi.Controls.MessageDialog;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Grids_Dt;
 import ClaFi.Controls.Slider;
-import ClaFi.Controls.SplitButton;
-import ClaFi.Controls.StepsMenu;
 import ClaFi.Controls.TextBox;
 
 import ClaFi.Dom;
@@ -36,6 +33,7 @@ import ClaFi.Dom.Formats.Xml;
 import ClaFi.StdActions;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -382,38 +380,29 @@ namespace ThisApp
         StdActions::redo.invalidateState();
     }
 
-    void ThemePage::undoEdit()
+    void ThemePage::writeUndoStep(const std::size_t i, Text& text) const
     {
-        if (const EditHistory::Landing landing = m_history.undo(1ull))
+        text << m_history.undoStep(i);
+    }
+
+    void ThemePage::writeRedoStep(const std::size_t i, Text& text) const
+    {
+        text << m_history.redoStep(i);
+    }
+
+    void ThemePage::undo(const std::size_t steps)
+    {
+        if (const ThemeHistory::Landing landing = m_history.undo(steps))
             showHistoryState(landing);
     }
 
-    void ThemePage::redoEdit()
+    void ThemePage::redo(const std::size_t steps)
     {
-        if (const EditHistory::Landing landing = m_history.redo(1ull))
+        if (const ThemeHistory::Landing landing = m_history.redo(steps))
             showHistoryState(landing);
     }
 
-    // Owned by the strip the press landed on, dropped under the whole button - see DropdownEvent.
-    void ThemePage::dropUndoSteps(DropdownEvent& event)
-    {
-        StepsMenu menu{ *event.control, Text{ StdActions::undo.text() } };
-        for (std::size_t i = 0ull; i != m_history.undoDepth(); ++i)
-            menu.add(m_history.undoStep(i));
-        if (const std::size_t taken = menu.executeUnder(event.button()))
-            showHistoryState(m_history.undo(taken));
-    }
-
-    void ThemePage::dropRedoSteps(DropdownEvent& event)
-    {
-        StepsMenu menu{ *event.control, Text{ StdActions::redo.text() } };
-        for (std::size_t i = 0ull; i != m_history.redoDepth(); ++i)
-            menu.add(m_history.redoStep(i));
-        if (const std::size_t taken = menu.executeUnder(event.button()))
-            showHistoryState(m_history.redo(taken));
-    }
-
-    void ThemePage::showHistoryState(const EditHistory::Landing& landing)
+    void ThemePage::showHistoryState(const ThemeHistory::Landing& landing)
     {
         {
             const ScopedFlag restoring{ m_restoring };

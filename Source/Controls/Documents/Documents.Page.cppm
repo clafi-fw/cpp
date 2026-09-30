@@ -6,6 +6,7 @@ import ClaFi.Documents.Utils;
 
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Divider;
+import ClaFi.Controls.HistoryButton;
 import ClaFi.Controls.SplitButton;
 import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.Base.MessageBoxBase;
@@ -14,6 +15,7 @@ import ClaFi.StdActions;
 
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -43,6 +45,8 @@ namespace ClaFi::Documents
         // Reads the saved side of the comparison behind hasUnsavedEdits into the node: the page's
         // own file, unless the derived page has another. Answers whether it could.
         [[nodiscard]] virtual bool readSavedDocument(Dom::DomNodeBase& into) const;
+        // Names what Undo and Redo act on wherever the focus stands. See Documents#history
+        void setEditHistory(IEditHistory&);
     protected:
         static constexpr IconSize k_toolButtonIconSize{ 18.0f };
     private:
@@ -68,6 +72,20 @@ namespace ClaFi::Documents
             Interactivity::MouseOnly
         ) };
         Divider& m_dividerAfterSave{ toolBar().add<Divider>(Padding{ 4.0f }) };
+        // The strips list the steps the history holds. See Documents#history
+        HistoryButton& m_undoButton{ toolBar().add<HistoryButton>(
+            HistoryDirection::Undo,
+            ButtonViewMode::IconOnly,
+            k_toolButtonIconSize,
+            Interactivity::MouseOnly
+        ) };
+        HistoryButton& m_redoButton{ toolBar().add<HistoryButton>(
+            HistoryDirection::Redo,
+            ButtonViewMode::IconOnly,
+            k_toolButtonIconSize,
+            Interactivity::MouseOnly
+        ) };
+        IEditHistory* m_editHistory{ nullptr }; // what Undo and Redo act on, where named
         // Set by Save as, which has just written this page's work under another name. What stands
         // in the view state differs from this page's own file and always will - and nothing is at
         // risk by it: the work is on the disk, and the tab is on its way to where it went.
@@ -126,6 +144,29 @@ namespace ClaFi::Documents
             // arrives at is the answer: a message hung off this button would be raised about a
             // control the rebuild is about to destroy - see saveAs.
             saveAs(shownBy);
+        });
+
+        // A page naming its history answers for Undo and Redo, and its buttons reach it first.
+        onGetActionState([this](GetActionStateEvent& event) {
+            if (!m_editHistory)
+                return;
+            if (&event.action == &StdActions::undo)
+                event.claim({ .enabled = m_editHistory->undoDepth() != 0 });
+            else if (&event.action == &StdActions::redo)
+                event.claim({ .enabled = m_editHistory->redoDepth() != 0 });
+        });
+
+        onActionClick([this](ActionClickEvent& event) {
+            if (!m_editHistory)
+                return;
+            if (&event.action == &StdActions::undo)
+                m_editHistory->undo(1);
+            else if (&event.action == &StdActions::redo)
+                m_editHistory->redo(1);
+        });
+
+        connectEvent([this](GetEditHistoryEvent& event) {
+            event.history = m_editHistory;
         });
     }
 }

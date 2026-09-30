@@ -6,7 +6,6 @@ import ThisApp.Consts;
 import ThisApp.DesignPage;
 import ThisApp.ElementPage;
 import ThisApp.FloorSlider;
-import ThisApp.History;
 import ThisApp.HueRuleControl;
 import ThisApp.RuleSlider;
 import ThisApp.ThemeToCppCode;
@@ -39,7 +38,6 @@ import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.Slider;
 import ClaFi.Controls.Spacer;
-import ClaFi.Controls.SplitButton;
 import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.TabStrip;
@@ -49,13 +47,12 @@ import ClaFi.Controls.Base.SliderBase;
 
 import ClaFi.Application.ThemesManager_Elements;
 
-import ClaFi.StdActions;
-
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.DomEngine_Document;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 
 import ClaFi.Core.Syntax.Languages;
 
@@ -125,7 +122,7 @@ namespace ThisApp
     };
 
     // One theme, edited in place: the design page, the four code views and the edit history.
-    export class ThemePage : public WithPreview<Documents::DocumentPage>
+    export class ThemePage : public WithPreview<Documents::DocumentPage>, private IEditHistory
     {
     public:
         template<typename... Args>
@@ -144,7 +141,7 @@ namespace ThisApp
     private:
         using Base = WithPreview<Documents::DocumentPage>;
         using ViewTabs = std::array<Tab*, static_cast<std::size_t>(ThemeView::Count)>;
-        using EditHistory = History<AppTheme, DesignPlace>;
+        using ThemeHistory = StateHistory<AppTheme, DesignPlace>;
         // The pigment grid's columns, as their tags name them.
         enum class PigmentColumn : TagValue
         {
@@ -184,14 +181,16 @@ namespace ThisApp
         // Every edit ends here: the tab node takes the theme, and the history takes the step and
         // where it was made - the picked page, and for a grid edit the cells it was made on.
         void edited(EditPhase, const Text& what, const RuleSelection& at = {});
-        void undoEdit();
-        void redoEdit();
-        // The lists behind the two strips, each answering how many steps to take.
-        void dropUndoSteps(DropdownEvent&);
-        void dropRedoSteps(DropdownEvent&);
+        // The page's history is the theme's: what the page's Undo and Redo walk.
+        [[nodiscard]] std::size_t undoDepth() const override { return m_history.undoDepth(); }
+        [[nodiscard]] std::size_t redoDepth() const override { return m_history.redoDepth(); }
+        void writeUndoStep(std::size_t i, Text&) const override;
+        void writeRedoStep(std::size_t i, Text&) const override;
+        void undo(std::size_t steps) override;
+        void redo(std::size_t steps) override;
         // Puts a state of the history on as the theme - on screen and in the tab node - and the
         // selection back where the step was made.
-        void showHistoryState(const EditHistory::Landing&);
+        void showHistoryState(const ThemeHistory::Landing&);
         void storeViewState() const;
         void storeView() const;
         void restoreView();
@@ -241,25 +240,8 @@ namespace ThisApp
         OnSelectPaletteMap m_onSelectPaletteMap;
         OnHueRuleChanged m_onPigmentChanged; // what the pigment editors call, held by address
 
-        // After Save and its divider, which the page comes with. The face is the action, the strip
-        // is its list of steps - see dropUndoSteps. Mouse only keeps the focus on the edit; the
-        // keys reach the action on their own.
-        SplitButton& m_undoButton{ toolBar().add<SplitButton>(
-            StdActions::undo,
-            ButtonViewMode::IconOnly,
-            k_toolButtonIconSize,
-            Interactivity::MouseOnly
-        ) };
-
-        SplitButton& m_redoButton{ toolBar().add<SplitButton>(
-            StdActions::redo,
-            ButtonViewMode::IconOnly,
-            k_toolButtonIconSize,
-            Interactivity::MouseOnly
-        ) };
-
         AppTheme m_editTheme{};
-        EditHistory m_history{}; // the states m_editTheme has been through
+        ThemeHistory m_history{}; // the states m_editTheme has been through
         // What the palette's edits are called in the history, held rather than spelled per edit.
         const Text m_anchorStep{ changeStepName(L"Anchor hue") };
         const Text m_floorStep{ changeStepName(L"Dark mode floor") };
@@ -483,24 +465,8 @@ namespace ThisApp
             pigmentChanged(phase, what);
         } }
     {
-        m_undoButton.connectEvent(this, &ThemePage::dropUndoSteps);
-        m_redoButton.connectEvent(this, &ThemePage::dropRedoSteps);
-
-        // Save and Save as are the page's own - see DocumentPage; the history's two are answered
-        // here, off the same handlers.
-        onGetActionState([this](GetActionStateEvent& event) {
-            if (&event.action == &StdActions::undo)
-                event.claim({ .enabled = m_history.canUndo() });
-            else if (&event.action == &StdActions::redo)
-                event.claim({ .enabled = m_history.canRedo() });
-            });
-
-        onActionClick([this](ActionClickEvent& event) {
-            if (&event.action == &StdActions::undo)
-                undoEdit();
-            else if (&event.action == &StdActions::redo)
-                redoEdit();
-            });
+        // The page's Undo and Redo walk the theme's history, wherever the focus stands.
+        setEditHistory(*this);
 
         for (std::size_t i = 0ull; i != m_harmonySelector.count(); ++i)
             m_harmonyStack.add<ColorHarmonyItem>(
@@ -513,7 +479,7 @@ namespace ThisApp
         m_anchorSlider.setEditedHue(editColors().anchorHue);
 
         m_anchorSlider.connectEvent([this](SliderChangeEvent& event) {
-            anchorChanged(editPhaseOf(event.slider));
+            anchorChanged(event.slider.editPhase());
             });
         m_anchorSlider.onSettle([this](SliderSettleEvent&) {
             edited(EditPhase::Settled, m_anchorStep);
@@ -525,7 +491,7 @@ namespace ThisApp
             return elementColor(UiElement::Page);
             });
         m_darkModeFloorSlider.connectEvent([this](SliderChangeEvent& event) {
-            darkModeFloorChanged(editPhaseOf(event.slider));
+            darkModeFloorChanged(event.slider.editPhase());
             });
         m_darkModeFloorSlider.onSettle([this](SliderSettleEvent&) {
             edited(EditPhase::Settled, m_floorStep);

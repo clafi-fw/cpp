@@ -5,13 +5,10 @@ import ThisApp.Scripts;
 
 import ClaFi.Documents.Page;
 
-import ClaFi.Controls.Button;
 import ClaFi.Controls.CodeBox;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.TextBox;
-
-import ClaFi.StdActions;
 
 import ClaFi.Core.Syntax.Completion;
 import ClaFi.Core.Syntax.Languages;
@@ -38,21 +35,6 @@ namespace ThisApp
         // Every edit ends here: the tab node takes the text as it stands on screen.
         void storeViewState() const;
     private:
-        // Answered by the box, which keeps the history and is found through the focus - which a
-        // mouse-only press leaves where it is.
-        Button& m_undoButton{ toolBar().add<ToolButton>(
-            StdActions::undo,
-            ButtonViewMode::IconOnly,
-            k_toolButtonIconSize,
-            Interactivity::MouseOnly
-        ) };
-        Button& m_redoButton{ toolBar().add<ToolButton>(
-            StdActions::redo,
-            ButtonViewMode::IconOnly,
-            k_toolButtonIconSize,
-            Interactivity::MouseOnly
-        ) };
-
         ScrollBox& m_scrollBox{ createBody<ScrollBox>(
             ScrollBars::Both
         ) };
@@ -76,6 +58,8 @@ namespace ThisApp
         // knows the language; the cast states that.
         const ScriptsFolder& scripts = static_cast<const ScriptsFolder&>(folder());
         m_box.setCompletion(&scripts.language().completion());
+        // The box keeps the script's history, and the page's Undo and Redo walk it.
+        setEditHistory(m_box);
         m_box.onTextEdit([this](TextEditEvent&) {
             storeViewState();
         });
