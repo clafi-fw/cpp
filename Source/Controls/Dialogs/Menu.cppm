@@ -119,9 +119,9 @@ namespace ClaFi::Controls
         /// not it fills one, so items with and without a picture still share a left edge.
         MenuItem& add(std::wstring_view text, MenuItemIcon icon, MenuItemCallback callback);
         void addSeparator();
-        /// Takes an action as a button in the strip across the top: its icon, no caption, named
-        /// by its tooltip. The strip appears with the first command put in it and reads left to
-        /// right in the order they arrive.
+        /// Takes an action as a button in the strip across the top: its icon with its name under
+        /// it, and the name and key in the tooltip. The strip appears with the first command put
+        /// in it and reads left to right in the order they arrive.
         MenuCommand& addToCommandBar(Action&);
         /// Whether the strip already shows this command.
         [[nodiscard]] bool onCommandBar(const Action&) const;
@@ -426,6 +426,8 @@ namespace ClaFi::Controls
             // A floor rather than a fixed size, so a long name widens its own button while the
             // short ones still stand as targets the same size as the rest of the strip.
             MinSize{ 56.0f },
+            // One line at its own width, which is what lets a long name widen the button.
+            WordWrap::No,
             std::forward<Args>(args)...
         }
     {

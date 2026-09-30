@@ -17,6 +17,11 @@ every share is as long as the largest item, so the single longest caption in the
 share and can drop a whole column out of the grid. A row of theme tiles fell from four to two that
 way, on one theme called "New Theme (10)".
 
+A caption stated `WordWrap::No` has nothing to wrap under the picture, and is measured on one line
+at its own width. `MenuCommand` in the menu strip is built that way, because the strip has to show
+every name whole. Measured at the icon's width, a word longer than the icon cannot break: the text
+engine reports it at the width it was asked about, and the paint cuts it.
+
 The other modes are unchanged. `LeftIcon` puts the caption BESIDE the picture, where the two
 together are the width and the caption has no reason to wrap to the icon; `TextLabel` has no
 picture; `IconOnly` lays no text out at all.

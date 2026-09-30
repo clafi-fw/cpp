@@ -377,9 +377,11 @@ namespace ClaFi::Controls
         // and the button is as wide as its name - a button wider than the thing it is built
         // around, and every name a different width. In a lane of equal shares that is worse than
         // untidy: the widest name in the stack sizes every share in it, so one long caption drops
-        // a whole column out of the grid. See Controls-Base
+        // a whole column out of the grid. A caption that does not wrap has nothing to wrap under
+        // the picture, and stands on one line at its own width. See Controls-Base
         const float iconWidth = event.scale(m_iconSize).x;
-        if (iconWidth > 0.0f
+        if (wordWrap()
+            && iconWidth > 0.0f
             && (hasTopIcon(m_viewMode) || m_viewMode == ButtonViewMode::BottomIcon))
         {
             asked.x = std::min(asked.x, iconWidth);

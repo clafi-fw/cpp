@@ -1300,7 +1300,9 @@ same thing.
 <em>icon's</em> width, so the caption wraps under the picture rather than making the button as
 wide as its name. In a wrapping stack under <code>ItemSizing::Equal</code>, where every share
 is as long as the largest item, one long caption measured on one line would size every share
-in the stack and can drop a whole column out of the grid.</p>
+in the stack and can drop a whole column out of the grid. A caption stated
+<code>WordWrap::No</code> is measured on one line at its own width instead, so a word longer
+than the icon widens the button rather than being cut.</p>
 
 <h3 id="grid-columns">Grid columns</h3>
 
