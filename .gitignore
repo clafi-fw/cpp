@@ -11,6 +11,7 @@ out/
 _to_delete/
 *.log
 *.mp4
+*.nativecodeanalysis.xml
 
 # Resource editor intermediate, regenerated from the .rc beside it
 *.aps

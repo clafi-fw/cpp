@@ -256,11 +256,13 @@ namespace ClaFi::Controls
     std::optional<std::size_t> TextBox::selectedFound() const
     {
         const std::vector<TextRange>& found = m_editProps.hits;
-        const auto candidate = std::ranges::lower_bound(found, m_editProps.selRange.start, {},
-            &TextRange::start);
-        if (candidate == found.end() || *candidate != m_editProps.selRange)
+        const std::size_t after = static_cast<std::size_t>(
+            std::ranges::upper_bound(found, m_editProps.selRange.start, {}, &TextRange::start)
+            - found.begin());
+        // A whole-text selection and an unplaced caret both end at k_maxSize, past every range.
+        if (after == 0 || m_editProps.selRange.end() > found[after - 1].end())
             return std::nullopt;
-        return static_cast<std::size_t>(candidate - found.begin());
+        return after - 1;
     }
 
     bool TextBox::find(const FindTarget target)
@@ -288,7 +290,8 @@ namespace ClaFi::Controls
                 index = after;
                 break;
             case FindTarget::Previous:
-                index = atOrAfter + found.size() - 1;
+                // Back from the range the count names, where the selection lies within one.
+                index = selectedFound().value_or(atOrAfter) + found.size() - 1;
                 break;
         }
         // Past the last range is the first again, and before the first is the last.

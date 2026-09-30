@@ -160,7 +160,7 @@ namespace ClaFi::Controls
         void setSearchText(std::wstring_view);
         [[nodiscard]] const std::wstring& searchText() const { return m_searchText; }
         [[nodiscard]] std::size_t foundCount() const { return m_editProps.hits.size(); }
-        // The found range the selection covers exactly, counted from zero.
+        // The found range the selection lies within, ends included, counted from zero.
         [[nodiscard]] std::optional<std::size_t> selectedFound() const;
         // Selects a found range and brings it into view. See Controls#search
         bool find(FindTarget);

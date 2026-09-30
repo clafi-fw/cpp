@@ -281,13 +281,17 @@ is next painted.
 find selects one found range and brings it into view, measured from where the selection starts.
 AtSelection takes the first range at or after it, which is what typing a search does: a match
 that still holds keeps its place as the search text grows, and one that stops holding gives way
-to the next. Next takes the first range after it and Previous the last before it. All three wrap
-at the ends of the text, and answer false with nothing found. selectedFound answers which found
-range the selection covers exactly.
+to the next. Next takes the first range after it. Previous takes the one before the range the
+selection lies within, and where it lies within none, the last range before it. All three wrap
+at the ends of the text, and answer false with nothing found.
+
+selectedFound answers the found range the selection lies within, ends included, so a caret
+standing in a match or against either end of it names that match. A caret where two ranges meet
+names the second. Next and Previous step from that range, so the count and the steps agree.
 
 A SearchBox is where a search is typed: a one-line box on the Page element with a placeholder,
-and a count at its right end while it holds text - "2 of 7", "? of 7" while the selection stands
-on no found range, and "No results" in the red pigment. It knows nothing of what it searches. It
+and a count at its right end while it holds text - "2 of 7", "? of 7" while the selection lies
+within no found range, and "No results" in the red pigment. It knows nothing of what it searches. It
 raises SearchEvent: Search for every change to its text, emptied included; Next and Previous for
 Enter and Shift+Enter; End for Escape, once the box is empty, which is where its owner hands the
 focus back to what was searched. Its text goes in and out as edits, so its own Undo walks it.
