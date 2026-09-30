@@ -30,6 +30,7 @@ export import ClaFi.Controls.Panel;
 export import ClaFi.Controls.RadioButton;
 export import ClaFi.Controls.ScrollBar;
 export import ClaFi.Controls.ScrollBox;
+export import ClaFi.Controls.SearchBox;
 export import ClaFi.Controls.Divider;
 export import ClaFi.Controls.Slider;
 export import ClaFi.Controls.Spacer;

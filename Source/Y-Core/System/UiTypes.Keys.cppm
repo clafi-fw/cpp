@@ -26,6 +26,7 @@ namespace ClaFi
         constexpr KeyCode Down = 0x28;
         constexpr KeyCode Delete = 0x2e;
         constexpr KeyCode F2 = 0x71;
+        constexpr KeyCode F3 = 0x72;
         constexpr KeyCode F4 = 0x73;
     }
 }

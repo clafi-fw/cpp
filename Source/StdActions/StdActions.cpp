@@ -101,6 +101,20 @@ namespace ClaFi::StdActions
     Action reindent{
         Text{ L"Reindent" }
     };
+    // No icon: a search is typed where the subject's page shows one, and the command only takes
+    // the user there.
+    Action find{
+        Text{ L"Find" },
+        Shortcut{ L'F', { .ctrl = true } }
+    };
+    Action findNext{
+        Text{ L"Find next" },
+        Shortcut{ Keys::F3 }
+    };
+    Action findPrevious{
+        Text{ L"Find previous" },
+        Shortcut{ Keys::F3, { .shift = true } }
+    };
 
     void registerAll()
     {
@@ -128,6 +142,9 @@ namespace ClaFi::StdActions
         actions.add(saveAs);
         actions.add(rename);
         actions.add(reindent);
+        actions.add(find);
+        actions.add(findNext);
+        actions.add(findPrevious);
     }
 
 }

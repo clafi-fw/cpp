@@ -766,9 +766,11 @@ namespace ClaFi::PlatformImplementation::Windows
             }
             };
 
-        for (const auto& hr : hitRanges)
+        if (!hitRanges.empty())
         {
-            drawLocalRangeBg(hr, controlContext.hit);
+            const Color found = controlContext.foundTextRgb();
+            for (const TextRange& hit : hitRanges)
+                drawLocalRangeBg(hit, found);
         }
         drawLocalRangeBg(selectionRange, controlContext.selectionRgb());
 

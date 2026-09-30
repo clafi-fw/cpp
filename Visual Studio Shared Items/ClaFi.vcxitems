@@ -128,6 +128,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HexView.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HistoryButton.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HistoryButton.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.SearchBox.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.SearchBox.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.PictureView.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.PictureView.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CodeBox.cppm" />

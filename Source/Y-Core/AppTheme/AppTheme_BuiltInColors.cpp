@@ -444,6 +444,15 @@ namespace ClaFi
             }
         };
 
+        rules.of(UiElement::FoundText) = {
+            ColorRule{
+                .effect{
+                    { ColorRuleOp::Set, 0.6f },             // S
+                    { ColorRuleOp::Offset, 0.12f }          // E
+                }
+            }
+        };
+
         rules.of(UiElement::SelectionIndicator) = {
             ColorRule{
                 .effect{

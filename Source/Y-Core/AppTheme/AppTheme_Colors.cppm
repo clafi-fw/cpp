@@ -178,6 +178,7 @@ namespace ClaFi
         Button,
         ToolButton,
         SelectedText,
+        FoundText,
         SelectionIndicator,
         HoverIndicator,
         Accent,
@@ -191,6 +192,14 @@ namespace ClaFi
 
     export constexpr std::size_t k_uiElementCount{ static_cast<std::size_t>(UiElement::Count) };
     export using OptionalUiElement = std::optional<UiElement>;
+
+    // The pigment whose hue an element's surface starts from, if not its base's. See AppTheme
+    export [[nodiscard]] constexpr std::optional<Pigment> seedPigmentOf(UiElement element)
+    {
+        if (element == UiElement::FoundText)
+            return Pigment::Yellow;
+        return std::nullopt;
+    }
 
     // What a colour rule reads.
     export enum class RuleInput

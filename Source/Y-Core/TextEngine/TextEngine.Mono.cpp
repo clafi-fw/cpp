@@ -281,8 +281,12 @@ namespace ClaFi
                 origin.y + m_lineHeight,
             }, color);
         };
-        for (const TextRange& hit : params.hits)
-            fillRange(hit, context.hit);
+        if (!params.hits.empty())
+        {
+            const Color found = context.foundTextRgb();
+            for (const TextRange& hit : params.hits)
+                fillRange(hit, found);
+        }
         fillRange(params.selection, context.selectionRgb());
 
         // Snapping puts the baseline on a whole device pixel, which is what keeps still text

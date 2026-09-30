@@ -47,8 +47,13 @@ namespace ClaFi::StdActions
     // Places the lines of source the subject holds where its language places them - the
     // selected lines, or all of them. It carries no key and no icon.
     export extern Action reindent;
+    // Takes the user to where a search is typed, holding what the subject has selected.
+    export extern Action find;
+    // The next and the previous of what the search in effect has found, wrapping at the ends.
+    export extern Action findNext;
+    export extern Action findPrevious;
 
-    // Puts all twelve in the application's scope, which is what a shortcut is looked up in.
+    // Puts all fifteen in the application's scope, which is what a shortcut is looked up in.
     // ApplicationBase::initialize calls it, so an application has the standard commands without
     // writing anything. An application that wants a key back clears that action's shortcut.
     export void registerAll();

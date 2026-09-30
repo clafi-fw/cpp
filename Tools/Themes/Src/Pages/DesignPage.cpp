@@ -77,7 +77,8 @@ namespace ThisApp
         constexpr std::array k_focusAndSelection{
             UiElement::SelectionIndicator,
             UiElement::HoverIndicator,
-            UiElement::SelectedText
+            UiElement::SelectedText,
+            UiElement::FoundText
         };
 
         constexpr std::array k_testSubjects{

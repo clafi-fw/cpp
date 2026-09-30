@@ -179,3 +179,13 @@ elevation the mode would orient, so a theme standing between the sides is drawn 
 That pair has a real colour half way, which the elevation axis does not: the tones are chosen for
 each side rather than mirrored, and a yellow that stays yellow on both sides stays yellow between
 them.
+
+## Found Text
+
+THE BAND BEHIND WHAT A SEARCH HAS FOUND starts from the Yellow pigment's hue over the surface it
+is laid on, rather than from that surface's own hue - seedPigmentOf states which element starts
+from which pigment. Its rules then move saturation and elevation the way any band's do, and a rule
+naming a hue still overrides the seed. ControlPaintContext::foundTextRgb resolves it where a
+paragraph holding found ranges is drawn, raised by the inputs of the control drawing it as the
+selection band is, and faded on a control that cannot be used. The Themes app seeds its preview of
+the element the same way.

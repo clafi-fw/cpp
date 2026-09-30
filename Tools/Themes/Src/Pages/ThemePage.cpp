@@ -502,6 +502,9 @@ namespace ThisApp
 
         const UiElementDescriptor& descriptor = uiElementOf(*element);
         Hsl result = elementColor(descriptor.base);
+        // The hue ControlPaintContext::foundTextRgb starts the band from.
+        if (const std::optional<Pigment> pigment = seedPigmentOf(*element))
+            result.hue = editColors().harmony().pigmentColor(*pigment).hsl().hue;
         if (descriptor.effect)
         {
             (editColors().*descriptor.effect).applyTo(result, 1.0f, editColors(),

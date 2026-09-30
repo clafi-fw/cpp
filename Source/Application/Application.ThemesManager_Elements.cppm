@@ -154,6 +154,13 @@ namespace ClaFi
             .token = L"SelectedText",
             .base = UiElement::Section
         },
+        // The band behind what a search has found, started from its seed pigment's hue.
+        UiElementDescriptor{
+            .name = L"Found Text",
+            .codeName = L"foundText",
+            .token = L"FoundText",
+            .base = UiElement::Section
+        },
         // The box of a check and the ring of a radio button, with the colour each takes when on.
         UiElementDescriptor{
             .name = L"Selection Indicator",

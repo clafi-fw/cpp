@@ -8,8 +8,10 @@ import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Transfer.Clipboard;
 import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
+import ClaFi.Core.TextEngine;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
@@ -93,6 +95,28 @@ namespace ClaFi::Controls
                     cut -= plain[cut - 1] >= 0xDC00 && plain[cut - 1] <= 0xDFFF ? 2 : 1;
             }
         }
+
+        // The locale the environment names, or the classic one where this machine has no such
+        // locale installed.
+        [[nodiscard]] std::locale userLocale()
+        {
+            try
+            {
+                return std::locale{ "" };
+            }
+            catch (const std::runtime_error&)
+            {
+                return std::locale::classic();
+            }
+        }
+
+        // One unit for one, so a position in the folded text is that position in the text. The
+        // user's locale rather than std::towlower, which reads the C locale and folds A to Z alone.
+        void foldCase(std::wstring& value, const std::locale& locale)
+        {
+            std::use_facet<std::ctype<wchar_t>>(locale).tolower(value.data(),
+                value.data() + value.size());
+        }
     }
 
     LinkClickEvent::LinkClickEvent(TextBox& box, std::wstring target, InputStamp stamp)
@@ -111,6 +135,14 @@ namespace ClaFi::Controls
         range{ range },
         tooltip{ tooltip }
     {
+    }
+
+    TextRange TextBox::selection() const
+    {
+        // An unplaced caret stands past the text, and a whole-text selection runs past it.
+        const std::size_t size = text().plainText().size();
+        const std::size_t start = std::min(m_editProps.selRange.start, size);
+        return { start, std::min(m_editProps.selRange.length, size - start) };
     }
 
     void TextBox::setReadOnly(ReadOnly value)
@@ -210,11 +242,102 @@ namespace ClaFi::Controls
         restorePlace(place);
     }
 
+    void TextBox::setSearchText(const std::wstring_view value)
+    {
+        if (value == m_searchText)
+            return;
+        m_searchText = value;
+        // Searched now rather than at the next paint: a caller asks what was found straight after.
+        m_foundStamp = {};
+        refreshFound();
+        invalidate();
+    }
+
+    std::optional<std::size_t> TextBox::selectedFound() const
+    {
+        const std::vector<TextRange>& found = m_editProps.hits;
+        const auto candidate = std::ranges::lower_bound(found, m_editProps.selRange.start, {},
+            &TextRange::start);
+        if (candidate == found.end() || *candidate != m_editProps.selRange)
+            return std::nullopt;
+        return static_cast<std::size_t>(candidate - found.begin());
+    }
+
+    bool TextBox::find(const FindTarget target)
+    {
+        refreshFound();
+        const std::vector<TextRange>& found = m_editProps.hits;
+        if (found.empty())
+            return false;
+
+        // A caret that was never placed stands at the start of the text.
+        const std::size_t from = m_editProps.selRange.start == k_maxSize
+            ? 0
+            : m_editProps.selRange.start;
+        const std::size_t atOrAfter = static_cast<std::size_t>(
+            std::ranges::lower_bound(found, from, {}, &TextRange::start) - found.begin());
+        const std::size_t after = static_cast<std::size_t>(
+            std::ranges::upper_bound(found, from, {}, &TextRange::start) - found.begin());
+        std::size_t index = 0;
+        switch (target)
+        {
+            case FindTarget::AtSelection:
+                index = atOrAfter;
+                break;
+            case FindTarget::Next:
+                index = after;
+                break;
+            case FindTarget::Previous:
+                index = atOrAfter + found.size() - 1;
+                break;
+        }
+        // Past the last range is the first again, and before the first is the last.
+        index %= found.size();
+
+        // A copy: the caret move below is announced, and a listener may search again.
+        const TextRange range = found[index];
+        m_editProps.targetX.reset();
+        setSelection(range.start, range.end());
+        // The view moves last, once the selection is written - the order nestedKeyDown keeps.
+        scrollIntoView();
+        return true;
+    }
+
     CursorShape TextBox::cursor() const
     {
         if (!enabled(true))
             return CursorShape::Arrow;
         return m_layout.hoveredLink().length ? CursorShape::Hand : CursorShape::IBeam;
+    }
+
+    // The placeholder goes through the engine's cache with no edit state, so the caret and the
+    // selection are drawn once, by the box's own layout over it.
+    DrawTextResult TextBox::drawText(PaintEvent& event, const FloatRect& textBounds,
+        const Text& text)
+    {
+        if (text.plainText().empty() && !m_placeHolderText.empty())
+        {
+            const Text shown{ InkWell::textInk(InkGrade::Muted), m_placeHolderText };
+            textEngine().drawText(event.controlContext(), textBounds, shown, textAnchor(), nullptr,
+                textRenderMode(), wordWrap());
+        }
+        return WithTextLayout<Label>::drawText(event, textBounds, text);
+    }
+
+    CalculatedDimensions TextBox::measureText(AlignEvent& event, ScaledDimensions asked,
+        const Text& text)
+    {
+        const CalculatedDimensions measured = WithTextLayout<Label>::measureText(event, asked,
+            text);
+        if (!text.plainText().empty() || m_placeHolderText.empty())
+            return measured;
+
+        const CalculatedDimensions placeHolder = textEngine().calculateText(event.formContext(),
+            m_placeHolderText, asked, false, wordWrap());
+        return {
+            std::max(measured.x, placeHolder.x),
+            std::max(measured.y, placeHolder.y),
+        };
     }
 
     void TextBox::mouseMove(MouseMoveEvent& event)
@@ -616,5 +739,30 @@ namespace ClaFi::Controls
         StdActions::selectAll.invalidateState();
         StdActions::undo.invalidateState();
         StdActions::redo.invalidateState();
+    }
+
+    void TextBox::refreshFound()
+    {
+        const TextStamp stamp = text().stamp();
+        if (stamp == m_foundStamp)
+            return;
+        m_foundStamp = stamp;
+        m_editProps.hits.clear();
+        if (m_searchText.empty())
+            return;
+
+        const std::locale locale = userLocale();
+        std::wstring pattern = m_searchText;
+        foldCase(pattern, locale);
+        std::wstring folded = text().plainText();
+        foldCase(folded, locale);
+        // Ranges that do not overlap, in text order - the order the engine draws them in and
+        // find walks.
+        std::size_t pos = folded.find(pattern);
+        while (pos != std::wstring::npos)
+        {
+            m_editProps.hits.push_back({ pos, pattern.size() });
+            pos = folded.find(pattern, pos + pattern.size());
+        }
     }
 }

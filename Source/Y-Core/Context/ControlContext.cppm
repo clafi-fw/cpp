@@ -46,6 +46,8 @@ namespace ClaFi
         [[nodiscard]] Hsl selectionInkHsl(Hsl runInk) const;
         // Whether a rule reaching the band writes the ink, so a run under it has to be re-inked.
         [[nodiscard]] bool selectionChangesInk() const;
+        // The band behind text a search has found, resolved when asked for.
+        [[nodiscard]] Color foundTextRgb() const;
         // What a colour becomes on a control that cannot be used: itself, moved toward the surface
         // it is drawn on. The alpha is the caller's and is put back untouched - Color::blend
         // carries alpha with it and the surface is opaque, so left to itself the blend would drag
@@ -67,16 +69,10 @@ namespace ClaFi
         float disabledAmount{ 0.0f };
         // The inputs of the control drawing this, as its ink reads them. The band reads them.
         RuleInputLevels ruleInputLevels{};
-        //
-        // TODO: nothing gives this a colour, so a found range would draw in the value below. It
-        // belongs with the selection band - the same rules at a different strength, or its own -
-        // and the decision is open. Nothing populates hitRanges yet, which is the only reason it
-        // does not show.
-        Color hit{ 0xff00FFff };
         Color surface;
     private:
-        // The band's rules on one channel: its own list, then Any element's.
-        void applySelectionRules(PaintChannel, Hsl& color, const RuleInputLevels&) const;
+        // A band's rules on one channel: the element's own list, then Any element's.
+        void applyBandRules(UiElement, PaintChannel, Hsl& color, const RuleInputLevels&) const;
     private:
         FormContext& m_formContext;
         const BakedColors* m_bakedColors;
@@ -168,7 +164,7 @@ namespace ClaFi
     Color ControlPaintContext::selectionRgb() const
     {
         Hsl result = surfaceHsl;
-        applySelectionRules(PaintChannel::Surface, result, ruleInputLevels);
+        applyBandRules(UiElement::SelectedText, PaintChannel::Surface, result, ruleInputLevels);
         return disabledRgb(result.toColor());
     }
 
@@ -177,7 +173,7 @@ namespace ClaFi
     Color ControlPaintContext::indicatorRgb() const
     {
         Hsl result = surfaceHsl;
-        applySelectionRules(PaintChannel::Surface, result, RuleInputLevels{});
+        applyBandRules(UiElement::SelectedText, PaintChannel::Surface, result, RuleInputLevels{});
         m_bakedColors->effect(UiElement::Accent).applyTo(result, 1.0f, lightness);
         return disabledRgb(result.toColor());
     }
@@ -186,7 +182,7 @@ namespace ClaFi
     // and an accent run stays accent.
     Hsl ControlPaintContext::selectionInkHsl(Hsl runInk) const
     {
-        applySelectionRules(PaintChannel::Text, runInk, ruleInputLevels);
+        applyBandRules(UiElement::SelectedText, PaintChannel::Text, runInk, ruleInputLevels);
         return runInk;
     }
 
@@ -200,13 +196,24 @@ namespace ClaFi
             or std::ranges::any_of(rules.shared, writesInk);
     }
 
-    // The order PaintEvent takes for the element a control wears. The band's rest is its own, so
+    // Seeded with its pigment's hue over the surface it is laid on, the way the Themes app shows
+    // it, and raised by the inputs of the control drawing it, as the selection band is.
+    Color ControlPaintContext::foundTextRgb() const
+    {
+        Hsl result = surfaceHsl;
+        if (const std::optional<Pigment> pigment = seedPigmentOf(UiElement::FoundText))
+            result.hue = m_bakedColors->pigmentHues[static_cast<std::size_t>(*pigment)];
+        applyBandRules(UiElement::FoundText, PaintChannel::Surface, result, ruleInputLevels);
+        return disabledRgb(result.toColor());
+    }
+
+    // The order PaintEvent takes for the element a control wears. A band's rest is its own, so
     // it is raised in full whether or not the control shows a surface at rest.
-    void ControlPaintContext::applySelectionRules(const PaintChannel channel, Hsl& color,
-        const RuleInputLevels& levels) const
+    void ControlPaintContext::applyBandRules(const UiElement element, const PaintChannel channel,
+        Hsl& color, const RuleInputLevels& levels) const
     {
         const BakedRules& rules = m_bakedColors->rules;
-        for (const BakedColorRules* list : { &rules.of(UiElement::SelectedText), &rules.shared })
+        for (const BakedColorRules* list : { &rules.of(element), &rules.shared })
         {
             for (const BakedColorRule& rule : *list)
             {

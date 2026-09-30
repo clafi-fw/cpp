@@ -9,6 +9,7 @@ import ClaFi.Controls.CodeBox;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
+import ClaFi.Controls.SearchBox;
 import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.TextBox;
 
@@ -44,9 +45,16 @@ namespace ThisApp
         void storeViewState() const;
         void writeCaretReadout();
         [[nodiscard]] static Text caretReading(TextLineColumn caret);
+        // Find, Find next and Find previous, answered for the script from anywhere on the page.
+        void connectSearchActions();
+        // Ctrl+F: the box takes the script's selection where the script holds the focus.
+        void startSearch();
+        void searchRequested(SearchRequest);
+        void writeSearchResult();
     private:
         static constexpr float k_caretReadoutWidth = 104.0f;
         static constexpr float k_caretReadoutFontSize = 11.0f;
+        static constexpr float k_searchWidth = 260.0f;
         // Both bars at all times: the corner the caret readout stands in shows only with both up.
         ScrollBox& m_scrollBox{ createBody<ScrollBox>(
             ScrollBars::Both
@@ -66,6 +74,11 @@ namespace ThisApp
             Padding{ 8.0f, 0.0f },
             HorizontalTextAnchor::Left,
             VerticalTextAnchor::Center
+        ) };
+        // At the tool bar's right end, over the script below it.
+        SearchBox& m_search{ topPanel().createRightBar<SearchBox>(
+            MinSize{ k_searchWidth, 0.0f },
+            MaxSize{ k_searchWidth, k_maxFloat }
         ) };
     };
 
@@ -90,6 +103,11 @@ namespace ThisApp
         });
         m_box.onCaretMove([this](CaretMoveEvent&) {
             writeCaretReadout();
+            writeSearchResult();
         });
+        m_search.onSearch([this](SearchEvent& event) {
+            searchRequested(event.request);
+        });
+        connectSearchActions();
     }
 }

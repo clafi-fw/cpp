@@ -151,6 +151,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HistoryButton.cppm">
       <Filter>Controls</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.SearchBox.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.SearchBox.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.InPlaceEdit.cpp">
       <Filter>Controls</Filter>
     </ClCompile>

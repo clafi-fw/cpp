@@ -42,6 +42,14 @@ namespace ClaFi::Controls
         Yes
     };
 
+    // Which found range a find selects, measured from the selection's start. See Controls#search
+    export enum class FindTarget
+    {
+        AtSelection,    // the first at or after it - what typing a search does
+        Next,           // the first after it
+        Previous        // the last before it
+    };
+
     export class TextBox;
 
     // The caret has come to rest somewhere new. See Controls
@@ -82,6 +90,8 @@ namespace ClaFi::Controls
     public:
         // Whether the text the box shows may be changed through the box.
         DECLARE_WRITABLE_PROPERTY(ReadOnly, readOnly, setReadOnly, ReadOnly::No)
+        // What the box shows, muted, while its text is empty.
+        DECLARE_REF_PROPERTY(PlaceHolderText, placeHolderText, PlaceHolderText{})
     public:
         // The caret has come to rest somewhere new. See Controls
         DECLARE_EVENT(CaretMoveEvent, OnCaretMove, onCaretMove)
@@ -102,6 +112,8 @@ namespace ClaFi::Controls
         // that was never placed answers the start of the text, which is where ensureCaret puts
         // one.
         [[nodiscard]] TextLineColumn caretLineColumn() const;
+        // What is selected, clamped to the text: empty at a bare caret and before one is placed.
+        [[nodiscard]] TextRange selection() const;
 
         // Defined in TextBox.cpp: a mode change alters what the edit actions answer, and saying so
         // means naming them.
@@ -143,6 +155,15 @@ namespace ClaFi::Controls
         void goForward();
         [[nodiscard]] bool canGoBack() const { return !m_backPlaces.empty(); }
         [[nodiscard]] bool canGoForward() const { return !m_forwardPlaces.empty(); }
+
+        // Marks every range of the text it matches, case ignored. See Controls#search
+        void setSearchText(std::wstring_view);
+        [[nodiscard]] const std::wstring& searchText() const { return m_searchText; }
+        [[nodiscard]] std::size_t foundCount() const { return m_editProps.hits.size(); }
+        // The found range the selection covers exactly, counted from zero.
+        [[nodiscard]] std::optional<std::size_t> selectedFound() const;
+        // Selects a found range and brings it into view. See Controls#search
+        bool find(FindTarget);
     protected:
         const EditProps* editProps() const override { return &m_editProps; }
         // The hand over a link the box follows, and the I-beam over the rest of the text. A box
@@ -163,6 +184,10 @@ namespace ClaFi::Controls
         void setSelection(std::size_t otherPos, std::size_t caretPos);
         // The caret's one drawing site - the blink, the visual state and the window's focus meet.
         void paintText(PaintEvent&) override;
+        // The placeholder while the text is empty, and the box's own layout over it for the caret.
+        DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
+        // Room for the placeholder while the text is empty.
+        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
         // What the layout is told when the box's text has moved. An edit reaches a paragraph or
         // two, and the rest of the document keeps the shaping it has - which is what the base's
         // answer, stating the whole text, cannot do.
@@ -300,6 +325,8 @@ namespace ClaFi::Controls
         // arriving or leaving each move what the box answers, and both tails end in it.
         void invalidateEditActions();
         void rememberTargetX(const FloatRect& textBounds, std::size_t caretPos);
+        // Searches again where the text has changed, by any route, since it was last searched.
+        void refreshFound();
         // Makes the caret solid and starts its interval over. Every move of the caret and every
         // edit ends here: a caret left on its own schedule is dark for half the time, including
         // the moment the user has just put it somewhere and is looking for it.
@@ -317,6 +344,9 @@ namespace ClaFi::Controls
         Places m_backPlaces;
         Places m_forwardPlaces;
         PointedLink m_pointedLink;
+        std::wstring m_searchText{};
+        // The state of the text the found ranges were read from.
+        TextStamp m_foundStamp{};
         // Which half of the blink the caret stands in - see paintText for whether it is drawn.
         bool m_caretOn{ true };
         // The edit that produced a text the layout has not been told about yet, recorded by
@@ -335,7 +365,8 @@ namespace ClaFi::Controls
     TextBox::TextBox(const CreateParams& params, Args&&... args)
         :
         WithTextLayout<Label>{ params, Interactivity::Focusable, std::forward<Args>(args)... },
-        INIT_PROPERTY(readOnly)
+        INIT_PROPERTY(readOnly),
+        INIT_PROPERTY(placeHolderText)
     {
         m_caretTimer.onTick([this](TimerEvent&){
             blinkCaret();
@@ -518,6 +549,8 @@ namespace ClaFi::Controls
 
     void TextBox::paintText(PaintEvent& event)
     {
+        // A host writes the text without the box hearing of it, and the marks name the text drawn.
+        refreshFound();
         m_editProps.caretVisible = m_caretOn
             && visualState().focused
             && event.windowFocusedFactor() >= 1.0f;
@@ -891,6 +924,8 @@ namespace ClaFi::Controls
 
     void TextBox::textEdited()
     {
+        // First, so both events below are raised with the marks already on the edited text.
+        refreshFound();
         m_editProps.targetX.reset();
         // The link the pointer stood on was found in the text before the edit. The next move of
         // the pointer finds it again in this one.

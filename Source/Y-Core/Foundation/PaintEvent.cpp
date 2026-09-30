@@ -251,12 +251,6 @@ namespace ClaFi
             applyColorRules(PaintChannel::Shadow, m_shadowHsl, &namedShadowHue);
             m_shadowHueStated = StateFactors::compose(m_shadowHueStated, namedShadowHue);
 
-            // The colours held as colours rather than resolved on demand. What the context
-            // resolves for itself carries the same fade, toward the same surface, as it is built -
-            // see ControlPaintContext::disabledRgb - so an ink asked for while painting matches
-            // one that was ready.
-            m_controlContext.hit = disabledFormOf(m_controlContext.hit);
-
             // Recorded after the fade rather than before it, so the inks resolved above are faded
             // once. What is resolved from here on has it applied as it is built, toward the same
             // surface, so an ink asked for while painting matches one that was ready.

@@ -371,8 +371,12 @@ namespace ClaFi::Platform::Linux
                 }, color);
             }
         };
-        for (const TextRange& hit : hitRanges)
-            fillRange(hit, controlContext.hit);
+        if (!hitRanges.empty())
+        {
+            const Color found = controlContext.foundTextRgb();
+            for (const TextRange& hit : hitRanges)
+                fillRange(hit, found);
+        }
         fillRange(selectionRange, controlContext.selectionRgb());
 
         const bool snap = backend->snapTextOrigins();

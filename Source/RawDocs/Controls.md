@@ -83,6 +83,9 @@ emptied value picks it. It still names the item for a lookup, so typing its firs
 it. The Themes app's No change is one: an operation cell that changes nothing has no value to
 type.
 
+A text box takes one too. It is drawn muted while the box's text is empty, with the caret over
+it, and the box is measured to fit it.
+
 ## DialogAnswerEvent
 
 An answer was given, and whether it settles the question.
@@ -262,6 +265,39 @@ A PLACE NAMES POSITIONS, AND AN EDIT MOVES THEM. An edit made through the box ca
 place it holds by what that edit did, so going back after typing lands where the user was. An
 undo or a redo changes the text by an amount the box is not told, and drops the history. A host
 writing the text leaves it standing, and a place is clamped to the text when it is gone to.
+
+## Search
+
+A text box marks every range of its text a search text matches - plain text, with case ignored
+by the user's locale - and draws each on the Found Text band, under the glyphs and under the
+selection. setSearchText states what is searched for, and an empty text marks nothing. Ranges
+do not overlap.
+
+THE MARKS FOLLOW THE TEXT, whatever route changes it. An edit made through the box searches
+again before anything is announced, so foundCount and selectedFound are current when
+CaretMoveEvent and TextEditEvent are raised. A text a host writes is searched again when the box
+is next painted.
+
+find selects one found range and brings it into view, measured from where the selection starts.
+AtSelection takes the first range at or after it, which is what typing a search does: a match
+that still holds keeps its place as the search text grows, and one that stops holding gives way
+to the next. Next takes the first range after it and Previous the last before it. All three wrap
+at the ends of the text, and answer false with nothing found. selectedFound answers which found
+range the selection covers exactly.
+
+A SearchBox is where a search is typed: a one-line box on the Page element with a placeholder,
+and a count at its right end while it holds text - "2 of 7", "? of 7" while the selection stands
+on no found range, and "No results" in the red pigment. It knows nothing of what it searches. It
+raises SearchEvent: Search for every change to its text, emptied included; Next and Previous for
+Enter and Shift+Enter; End for Escape, once the box is empty, which is where its owner hands the
+focus back to what was searched. Its text goes in and out as edits, so its own Undo walks it.
+startSearch puts the focus in the box with its text selected, replaced by a text given, and
+setResult is how the owner reports what was found.
+
+StdActions::find, findNext and findPrevious carry Ctrl+F, F3 and Shift+F3. A page holding a
+search box claims them for everything under it, so F3 steps from the searched text and from the
+box alike, and Ctrl+F fills the box from a one-line selection where the searched text holds the
+focus.
 
 ## ScrollBars::Auto
 
