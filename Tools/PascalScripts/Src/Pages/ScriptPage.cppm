@@ -6,6 +6,8 @@ import ThisApp.Scripts;
 import ClaFi.Documents.Page;
 
 import ClaFi.Controls.CodeBox;
+import ClaFi.Controls.Label;
+import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.TextBox;
@@ -14,7 +16,10 @@ import ClaFi.Core.Syntax.Completion;
 import ClaFi.Core.Syntax.Languages;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
@@ -32,9 +37,17 @@ namespace ThisApp
     public:
         void restoreViewState() override;
     private:
+        // Holds its own layout: a text per caret move would crowd the shared layout cache.
+        using CaretReadout = WithTextLayout<Label>;
+    private:
         // Every edit ends here: the tab node takes the text as it stands on screen.
         void storeViewState() const;
+        void writeCaretReadout();
+        [[nodiscard]] static Text caretReading(TextLineColumn caret);
     private:
+        static constexpr float k_caretReadoutWidth = 104.0f;
+        static constexpr float k_caretReadoutFontSize = 11.0f;
+        // Both bars at all times: the corner the caret readout stands in shows only with both up.
         ScrollBox& m_scrollBox{ createBody<ScrollBox>(
             ScrollBars::Both
         ) };
@@ -42,6 +55,17 @@ namespace ThisApp
         CodeBox& m_box{ m_scrollBox.createBody<CodeBox>(
             Syntax::Languages::pascal,
             Padding{ 12.0f }
+        ) };
+        Panel& m_corner{ m_scrollBox.createCorner<Panel>() };
+        // Anchored left in a stated width: a digit gained moves neither the reading nor the bar.
+        CaretReadout& m_caretReadout{ m_corner.createBody<CaretReadout>(
+            caretReading(TextLineColumn{}),
+            MinSize{ k_caretReadoutWidth, 0.0f },
+            MaxSize{ k_caretReadoutWidth, k_maxFloat },
+            WordWrap::No,
+            Padding{ 8.0f, 0.0f },
+            HorizontalTextAnchor::Left,
+            VerticalTextAnchor::Center
         ) };
     };
 
@@ -63,6 +87,9 @@ namespace ThisApp
         setEditHistory(m_box);
         m_box.onTextEdit([this](TextEditEvent&) {
             storeViewState();
+        });
+        m_box.onCaretMove([this](CaretMoveEvent&) {
+            writeCaretReadout();
         });
     }
 }

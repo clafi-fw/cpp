@@ -8,6 +8,7 @@ import ClaFi.Core.DomEngine;
 // The std::wstring serializer: without it the node's set and get read a string as a sequence.
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
@@ -31,5 +32,20 @@ namespace ThisApp
     void ScriptPage::storeViewState() const
     {
         documentNode().set(m_box.text().plainText());
+    }
+
+    void ScriptPage::writeCaretReadout()
+    {
+        m_caretReadout.text() = caretReading(m_box.caretLineColumn());
+        // The width is stated, so a repaint is the whole of what a new reading costs.
+        m_caretReadout.invalidate();
+    }
+
+    Text ScriptPage::caretReading(const TextLineColumn caret)
+    {
+        Text reading{};
+        reading << PushFontSize{ k_caretReadoutFontSize };
+        reading << Fmt{ L"Ln {}, Col {}", caret.line, caret.column };
+        return reading;
     }
 }
