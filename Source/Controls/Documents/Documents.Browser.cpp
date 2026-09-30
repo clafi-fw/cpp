@@ -94,20 +94,20 @@ namespace ClaFi::Documents
         // Under whatever leaving was asked from - the crumb, the Up button, the tab being closed -
         // so the question stands where the user is looking.
         MessageDialog dialog{ initiator, L"Unsaved changes", message, MessageIcon::Question };
-        dialog.add(DialogButton::Save);
-        dialog.add(DialogButton::Discard);
-        dialog.add(DialogButton::Cancel);
+        dialog.add(DialogAnswer::Save);
+        dialog.add(DialogAnswer::Discard);
+        dialog.add(DialogAnswer::Cancel);
         // Answered while the dialog is still standing: a save that did not reach the disk leaves
         // the question up, with what is being left still on screen behind it.
         dialog.onAnswer([page](DialogAnswerEvent& event) {
-            if (event.answer == DialogButton::Save && !page->saveEdits(event.button))
+            if (event.answer == DialogAnswer::Save && !page->saveEdits(event.button))
                 event.keepOpen();
         });
-        const DialogAnswer answer = dialog.execute();
+        const OptionalDialogAnswer answer = dialog.execute();
 
         // Save got here only by having saved. Discard is the only other way out - Cancel and a
         // dialog dismissed without an answer at all both mean stay.
-        return answer == DialogButton::Save || answer == DialogButton::Discard;
+        return answer == DialogAnswer::Save || answer == DialogAnswer::Discard;
     }
 
     bool DocumentsBrowserBase::canRenamePage(PageData& data)

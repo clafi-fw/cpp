@@ -801,7 +801,7 @@ namespace ClaFi
     };
 
     // One answer a dialog offers.
-    export enum class DialogButton
+    export enum class DialogAnswer
     {
         Ok,
         Cancel,

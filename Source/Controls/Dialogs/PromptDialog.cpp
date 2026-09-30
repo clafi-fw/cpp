@@ -106,7 +106,7 @@ namespace ClaFi::Controls
 
     void PromptDialog::buildAnswers()
     {
-        addAnswer(DialogButton::Ok, [this](ClickEvent& event) {
+        addAnswer(DialogAnswer::Ok, [this](ClickEvent& event) {
             // The answer that was pressed is what asked, so a handler with a question of its own
             // hangs it there - on top of this dialog, at the button the user just pressed.
             if (offerText(*event.control))
@@ -116,7 +116,7 @@ namespace ClaFi::Controls
             }
             box().showRefusal();
         });
-        addAnswer(DialogButton::Cancel, [](ClickEvent& event) {
+        addAnswer(DialogAnswer::Cancel, [](ClickEvent& event) {
             event.closeForm();
         });
     }

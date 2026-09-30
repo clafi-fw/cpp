@@ -157,9 +157,9 @@ namespace ClaFi::Documents
             message,
             MessageIcon::Warning
         };
-        dialog.add(DialogButton::Yes);
-        dialog.add(DialogButton::No);
+        dialog.add(DialogAnswer::Yes);
+        dialog.add(DialogAnswer::No);
         // Dismissed without an answer is no, which is what makes Escape the safe way out.
-        return dialog.execute() == DialogButton::Yes;
+        return dialog.execute() == DialogAnswer::Yes;
     }
 }

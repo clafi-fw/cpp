@@ -127,7 +127,7 @@ namespace ClaFi
                 k_textAnchor,
                 ToolButton::OnPaintIcon{ Icons::GaugeIcon::paint },
                 ToolButton::OnClick{ [this](ClickEvent& event) {
-                    run(AppMenuCommand::ShowDiagnostic, event);
+                    closeWith(AppMenuCommand::ShowDiagnostic, event);
                 } }
             );
         }
@@ -139,7 +139,7 @@ namespace ClaFi
             k_textAnchor,
             ToolButton::OnPaintIcon{ Icons::DoorIcon::paint },
             ToolButton::OnClick{ [this](ClickEvent& event) {
-                run(AppMenuCommand::Exit, event);
+                closeWith(AppMenuCommand::Exit, event);
             } }
         );
 
@@ -175,7 +175,7 @@ namespace ClaFi
         (appContext().config() / k_pageNodeName).set(std::wstring{ m_pageCaption });
     }
 
-    void AppMenu::run(const AppMenuCommand command, ClickEvent& event)
+    void AppMenu::closeWith(const AppMenuCommand command, ClickEvent& event)
     {
         m_command = command;
         m_commandStamp = event.stamp;

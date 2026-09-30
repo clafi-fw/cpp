@@ -68,7 +68,7 @@ namespace ClaFi
         }
         std::wstring result{ line };
         if (cut)
-            result += L'…';
+            result += L'\u2026'; // it's ellipsis
         return result;
     }
 

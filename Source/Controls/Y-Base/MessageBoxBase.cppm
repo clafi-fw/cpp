@@ -33,7 +33,7 @@ namespace ClaFi::Controls
 
     /// @brief The word an answer is offered under. Stated once, here, so two dialogs asking the
     /// same question never word it differently.
-    export [[nodiscard]] std::wstring_view captionOf(DialogButton);
+    export [[nodiscard]] std::wstring_view captionOf(DialogAnswer);
 
     /// @brief What a dialog's text stands in: a text box inside a scroll box. One line of text or
     /// fifty, the window comes out the same width, and past a height the text scrolls instead of
@@ -67,11 +67,11 @@ namespace ClaFi::Controls
         // pressing Return on it does nothing. A dialog whose answer is the text it holds says so
         // by focusing its own box after its answers are in.
         template <typename Handler>
-        Button& addAnswer(DialogButton button, Handler&& onClick)
+        Button& addAnswer(DialogAnswer answer, Handler&& onClick)
         {
             const bool isFirst = m_answers.controls().empty();
             Button& result = m_answers.add<Button>(
-                captionOf(button),
+                captionOf(answer),
                 // The word sits in the middle of the answer. The row divides itself evenly, so an
                 // answer is wider than its own caption and a Left anchored one reads as a word
                 // resting against the edge of a box rather than as the answer that box is. Both

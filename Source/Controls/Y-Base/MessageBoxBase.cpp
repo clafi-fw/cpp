@@ -104,24 +104,24 @@ namespace ClaFi::Controls
         return result;
     }
 
-    std::wstring_view captionOf(const DialogButton value)
+    std::wstring_view captionOf(const DialogAnswer value)
     {
         switch (value)
         {
-        case DialogButton::Ok:
+        case DialogAnswer::Ok:
             return L"OK";
-        case DialogButton::Cancel:
+        case DialogAnswer::Cancel:
             return L"Cancel";
-        case DialogButton::Yes:
+        case DialogAnswer::Yes:
             return L"Yes";
-        case DialogButton::No:
+        case DialogAnswer::No:
             return L"No";
-        case DialogButton::Save:
+        case DialogAnswer::Save:
             return L"Save";
-        case DialogButton::Discard:
+        case DialogAnswer::Discard:
             return L"Don't save";
         }
-        unreachable("a dialog button with no caption of its own");
+        unreachable("a dialog answer with no caption of its own");
     }
 
 

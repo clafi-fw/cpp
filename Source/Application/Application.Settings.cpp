@@ -514,9 +514,9 @@ namespace ClaFi
             MessageIcon::Question
         };
         dialog.onLinkClick(openLinkedFolder);
-        dialog.add(DialogButton::Ok);
-        dialog.add(DialogButton::Cancel);
-        if (dialog.execute() != DialogButton::Ok)
+        dialog.add(DialogAnswer::Ok);
+        dialog.add(DialogAnswer::Cancel);
+        if (dialog.execute() != DialogAnswer::Ok)
             return;
 
         appContext().ensureConfigFolder();
@@ -546,9 +546,9 @@ namespace ClaFi
             MessageIcon::Warning
         };
         dialog.onLinkClick(openLinkedFolder);
-        dialog.add(DialogButton::Yes);
-        dialog.add(DialogButton::Cancel);
-        if (dialog.execute() != DialogButton::Yes)
+        dialog.add(DialogAnswer::Yes);
+        dialog.add(DialogAnswer::Cancel);
+        if (dialog.execute() != DialogAnswer::Yes)
             return;
 
         appContext().deleteConfigFolder();

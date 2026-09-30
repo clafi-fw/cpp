@@ -478,10 +478,10 @@ namespace ThisApp
             message,
             MessageIcon::Question
         };
-        dialog.add(DialogButton::Yes);
+        dialog.add(DialogAnswer::Yes);
         // Opens on No: Return declines, Escape dismisses, and only a deliberate move reaches Yes.
-        dialog.add(DialogButton::No).setFocus();
-        return dialog.execute() == DialogButton::Yes;
+        dialog.add(DialogAnswer::No).setFocus();
+        return dialog.execute() == DialogAnswer::Yes;
     }
 
     bool ThemePage::isBuiltIn() const

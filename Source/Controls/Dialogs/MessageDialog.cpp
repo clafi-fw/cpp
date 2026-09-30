@@ -37,24 +37,24 @@ namespace ClaFi::Controls
         });
     }
 
-    Button& MessageDialog::add(const DialogButton button)
+    Button& MessageDialog::add(const DialogAnswer answer)
     {
-        return addAnswer(button, [this, button](ClickEvent& event) {
+        return addAnswer(answer, [this, answer](ClickEvent& event) {
             // Offered while the dialog is still standing, so that a handler with a question of
             // its own can raise it on top of this one - owned by the button just pressed.
-            DialogAnswerEvent answerEvent{ button, *event.control };
+            DialogAnswerEvent answerEvent{ answer, *event.control };
             emitEvent(answerEvent);
             if (!answerEvent.settled())
                 return;
 
             // Recorded first: closeForm stops the event, so the other order would leave the
             // dialog answering nothing at all.
-            m_answer = button;
+            m_answer = answer;
             event.closeForm();
         });
     }
 
-    DialogAnswer MessageDialog::execute()
+    OptionalDialogAnswer MessageDialog::execute()
     {
         runDialog();
         return m_answer;

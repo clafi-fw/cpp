@@ -38,8 +38,8 @@ namespace ClaFi
         // What the config keeps the last opened page under, by caption. See Application
         static constexpr std::wstring_view k_pageNodeName{ L"AppMenuPage" };
     private:
-        // Takes the command and closes the menu; whoever ran the menu carries it out.
-        void run(AppMenuCommand, ClickEvent&);
+        // Whoever ran the menu carries the command out, once the menu has closed.
+        void closeWith(AppMenuCommand, ClickEvent&);
         // A tab for a page, kept so that the stored page can be opened by its caption.
         void addPageTab(std::wstring_view caption, RichControl& page, const PaintIconFunc& paintIcon);
         // Opens the page under that caption, and answers whether the strip has one.
