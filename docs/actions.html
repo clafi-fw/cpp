@@ -393,7 +393,7 @@
             <p>Two words run through the whole subsystem, and everything is easier once they are apart:</p>
             <ul>
                 <li>The <strong>presenter</strong> - the button in the toolbar, the item in the menu. It shows the
-                action's text, tooltip and icon, carries its state, and delivers the click. You attach it.</li>
+                action's text, hint and icon, carries its state, and delivers the click. You attach it.</li>
                 <li>The <strong>subject</strong> - the control the action acts <em>on</em>. The text box Copy copies
                 from. You never attach it: it is found, because the user chose it by putting the focus there.</li>
             </ul>
@@ -413,7 +413,7 @@
 <span class="cm">// and hands back a reference, so declaring it and putting its key in reach are one line.</span>
 <span class="tp">Action</span>&amp; m_save{ <span class="fn">actions</span>().<span class="fn">add</span>(
     <span class="tp">Text</span>{ L<span class="st">"Save"</span> },
-    <span class="tp">TooltipText</span>{ L<span class="st">"Write the document to disk"</span> },
+    <span class="tp">HintText</span>{ L<span class="st">"Write the document to disk"</span> },
     <span class="tp">Shortcut</span>{ L<span class="st">'S'</span>, { .ctrl = <span class="kw">true</span> } },
     <span class="tp">Events</span>{
         [<span class="kw">this</span>](<span class="tp">ActionClickEvent</span>&amp;) { m_document.<span class="fn">save</span>(); },
@@ -456,7 +456,7 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
             <table>
                 <tr><th>The action's</th><th>Becomes the presenter's</th></tr>
                 <tr><td><code>text()</code></td><td>Text - but only if the control has none of its own.</td></tr>
-                <tr><td><code>tooltipText()</code></td><td>Tooltip, with the shortcut appended to it.</td></tr>
+                <tr><td><code>hintText()</code></td><td>Hint, with the shortcut appended to it.</td></tr>
                 <tr><td><code>OnPaintIcon</code></td><td>Icon, wherever that control paints one.</td></tr>
                 <tr><td>state</td><td>Enabled and selected.</td></tr>
                 <tr><td>-</td><td>A click on the presenter runs the action.</td></tr>
@@ -730,7 +730,7 @@ view.<span class="fn">onActionClick</span>([&amp;](<span class="tp">ActionClickE
                 <tr><td><code>OnClick</code>, <code>onClick</code></td><td>Run it - the fallback when no subject claims.</td></tr>
                 <tr><td><code>OnGetState</code>, <code>onGetState</code></td><td>Its own answer for its state.</td></tr>
                 <tr><td><code>OnPaintIcon</code>, <code>onPaintIcon</code></td><td>Its icon.</td></tr>
-                <tr><td><code>text()</code>, <code>tooltipText()</code></td><td>Mutable. Follow a change with <code>invalidateText()</code> or <code>invalidate()</code>.</td></tr>
+                <tr><td><code>text()</code>, <code>hintText()</code></td><td>Mutable. Follow a change with <code>invalidateText()</code> or <code>invalidate()</code>.</td></tr>
                 <tr><td><code>shortcut()</code>, <code>setShortcut()</code></td><td>The key, if it has one.</td></tr>
                 <tr><td><code>subject(form)</code></td><td>What would answer for it in that form, or null.</td></tr>
                 <tr><td><code>state(form)</code>, <code>enabled(form)</code></td><td>Ask for the state now.</td></tr>

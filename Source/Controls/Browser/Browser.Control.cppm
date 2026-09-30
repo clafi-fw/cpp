@@ -96,7 +96,7 @@ namespace ClaFi::Browser
         [[nodiscard]] bool isOnRestoredPage() const { return m_onRestoredPage; }
     protected:
         virtual RichControl* visualPage(RichControl*) override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedGetHint(GetHintEvent&) override;
         void getText(GetTextEvent&) const override;
         void paintIcon(PaintIconEvent&) override;
         void secondaryClicked(ClickEvent& event) override { closeThisTab(event); }

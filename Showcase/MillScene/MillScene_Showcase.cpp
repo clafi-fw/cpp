@@ -64,7 +64,7 @@ namespace ClaFi::Showcase
     constexpr float k_themeIconRadiusRatio{ 4.0f / k_themeIconSize };
     constexpr float k_themeLaneSpacing{ 12.0f };
 
-    // What the metrics tooltip says draws the scene. See writeMetricsTooltip
+    // What the metrics hint says draws the scene. See writeMetricsHint
     constexpr std::wstring_view k_drawnOnGpu{
         L"The scene is drawn through the graphics card - GPU acceleration is on in Settings." };
     constexpr std::wstring_view k_drawnOnCpu{
@@ -142,8 +142,8 @@ namespace ClaFi::Showcase
             OnEvent{ [this](GetTextEvent& event){
                 writeMetrics(event);
             } },
-            OnEvent{ [this](GetTooltipEvent& event){
-                writeMetricsTooltip(event);
+            OnEvent{ [this](GetHintEvent& event){
+                writeMetricsHint(event);
             } }
         );
 
@@ -415,7 +415,7 @@ namespace ClaFi::Showcase
         return result;
     }
 
-    void MillSceneShowcase::writeMetricsTooltip(GetTooltipEvent& event)
+    void MillSceneShowcase::writeMetricsHint(GetHintEvent& event)
     {
         event.placement = FormPlacement::Bottom;
         auto paintBullet = [](PaintIconEvent& event){

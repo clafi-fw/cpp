@@ -188,7 +188,7 @@ namespace ClaFi::Controls
             << Syntax::completionKindName(m_kind) << PopColor{};
     }
 
-    void CompletionRow::nestedGetTooltip(GetTooltipEvent& event)
+    void CompletionRow::nestedGetHint(GetHintEvent& event)
     {
         // A keyword, or an entry that says no more than its name, shows no hint.
         if (!m_entry)
@@ -422,9 +422,9 @@ namespace ClaFi::Controls
         if (!form().visible())
             return;
         if (CompletionRow* row = currentRow())
-            form().tooltip().showRightNow(*row);
+            form().hint().showRightNow(*row);
         else
-            Tooltip::stopAndHide();
+            Hint::stopAndHide();
     }
 
     bool CompletionStack::defaultCanFocusItem(Control& value)
@@ -503,7 +503,7 @@ namespace ClaFi::Controls
     CalculatedDimensions ParameterHint::measureText(AlignEvent& event, ScaledDimensions asked,
         const Text& text)
     {
-        asked.x = std::min(asked.x, Tooltip::k_lineWidth * event.scaleFactor());
+        asked.x = std::min(asked.x, Hint::k_lineWidth * event.scaleFactor());
         return WithTextLayout<FormControlBase>::measureText(event, asked, text);
     }
 
@@ -1034,7 +1034,7 @@ namespace ClaFi::Controls
         if (!completionShown())
             return;
         // The hint beside the current row goes with the list.
-        Tooltip::stopAndHide();
+        Hint::stopAndHide();
         m_completionList->close();
         // And the hint over the call comes back to its own side of the line.
         if (parameterHintShown())
@@ -1237,10 +1237,10 @@ namespace ClaFi::Controls
             appContext(),
             // A window the pointer goes through, standing beside the list's own without taking
             // its place as the popup on the box - which one window at a time is.
-            WindowRole::Tooltip,
+            WindowRole::Hint,
             this,
             Interactivity::None,
-            UiElement::Tooltip,
+            UiElement::Hint,
             WordWrap::Yes,
             metrics.secondaryWindow,
             metrics.secondaryWindowShadow

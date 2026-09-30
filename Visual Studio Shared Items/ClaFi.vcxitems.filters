@@ -133,6 +133,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ColorSlider.cppm">
       <Filter>Controls</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ColorSpelling.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ColorSpelling.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ComboBox.cpp">
       <Filter>Controls</Filter>
     </ClCompile>
@@ -383,6 +389,12 @@
       <Filter>Dom</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_TextSerializers.cppm">
+      <Filter>Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_UiSerializers.cpp">
+      <Filter>Dom</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_UiSerializers.cppm">
       <Filter>Dom</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Formats\Formats_ClaFi.cppm">
@@ -709,6 +721,15 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Form.cppm">
       <Filter>Y_Core\Foundation</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Hint.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Hint.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\HintForm.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Input.cpp">
       <Filter>Y_Core\Foundation</Filter>
     </ClCompile>
@@ -737,15 +758,6 @@
       <Filter>Y_Core\Foundation</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Spatial.cppm">
-      <Filter>Y_Core\Foundation</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Tooltip.cpp">
-      <Filter>Y_Core\Foundation</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Tooltip.cppm">
-      <Filter>Y_Core\Foundation</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\TooltipForm.cppm">
       <Filter>Y_Core\Foundation</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Traversal.cpp">
@@ -920,6 +932,9 @@
       <Filter>Y_Core\TextEngine</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.cppm">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Fmt.cpp">
       <Filter>Y_Core\TextEngine</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Fmt.cppm">

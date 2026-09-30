@@ -10,12 +10,6 @@ namespace ClaFi
     export using ColorAsUint = std::uint32_t;
     export using Opacity = float; // 0.0f to 1.0f
 
-    // The order the channels are written in a hex colour.
-    export enum class HexFormat {
-        RGBA,  // Web standard (#RRGGBBAA)
-        ARGB   // Microsoft/Android standard (#AARRGGBB)
-    };
-
     export struct Color
     {
     public:
@@ -103,10 +97,6 @@ namespace ClaFi
         Color(Color c1, Color c2, float k2);
         constexpr Color();
         ~Color() = default;
-    public:
-        // from/to hexStr
-        constexpr Color(std::wstring_view, HexFormat = HexFormat::RGBA);
-        std::wstring toStr(HexFormat format = HexFormat::RGBA) const;
     public:
         bool operator == (const Color& second) const
         {
@@ -280,54 +270,6 @@ namespace ClaFi
         :
         Color{ 0u, 0u, 0u, 0u }
     {
-    }
-
-    constexpr Color::Color(std::wstring_view hexStr, HexFormat format)
-        :
-        Color{ 0, 0, 0, 0 }
-    {
-        if (hexStr.empty())
-            return;
-
-        const std::size_t start = (hexStr[0] == L'#') ? 1 : 0;
-        std::uint32_t val = 0;
-
-        for (std::size_t i = start; i < hexStr.size(); ++i) {
-            const wchar_t ch = hexStr[i];
-            std::uint32_t digit;
-            if (ch >= L'0' && ch <= L'9')
-                digit = ch - L'0';
-            else if (ch >= L'a' && ch <= L'f')
-                digit = ch - L'a' + 10;
-            else if (ch >= L'A' && ch <= L'F')
-                digit = ch - L'A' + 10;
-            else
-                return; // Invalid character fallback
-
-            val = (val << 4) | digit;
-        }
-
-        std::size_t len = hexStr.size() - start;
-        if (len == 6) {
-            alpha = 255;
-            red = (val >> 16) & 0xFF;
-            green = (val >> 8) & 0xFF;
-            blue = val & 0xFF;
-        }
-        else if (len == 8) {
-            if (format == HexFormat::RGBA) {
-                red = (val >> 24) & 0xFF;
-                green = (val >> 16) & 0xFF;
-                blue = (val >> 8) & 0xFF;
-                alpha = val & 0xFF;
-            }
-            else { // HexFormat::ARGB
-                alpha = (val >> 24) & 0xFF;
-                red = (val >> 16) & 0xFF;
-                green = (val >> 8) & 0xFF;
-                blue = val & 0xFF;
-            }
-        }
     }
 
     Color constexpr Color::blend(Color c1, Color c2, float k2)

@@ -18,7 +18,7 @@ namespace ClaFi::Icons::SideBar
         //
         // It is an overlay, so it protrudes rather than fitting inside: the picture gives up a
         // strip on the left and at the bottom, the badge keeps the full icon rect, and the two are
-        // held apart by the gap of theme surface the glass carries.
+        // held apart by the halo of theme surface the glass carries.
         constexpr float k_badgeRatio = 0.62f;
         constexpr float k_protrusionRatio = 0.25f;
 
@@ -43,7 +43,7 @@ namespace ClaFi::Icons::SideBar
                 iconRect.bottomLeftSquare(badgeSide(iconRect)),
                 Magnifier::Lens::Empty,
                 Magnifier::Tail::Yes,
-                Magnifier::Gap::Yes
+                Magnifier::Halo::Yes
             );
         }
     }

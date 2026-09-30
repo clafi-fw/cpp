@@ -421,46 +421,6 @@ namespace ClaFi
         blend(c2, k2);
     }
 
-    std::wstring Color::toStr(HexFormat format) const
-    {
-        const wchar_t* abc = L"0123456789ABCDEF";
-
-        if (alpha == 255)
-        {
-            wchar_t buf[] = {
-                L'#',
-                abc[red >> 4], abc[red & 15],
-                abc[green >> 4], abc[green & 15],
-                abc[blue >> 4], abc[blue & 15],
-                0
-            };
-            return std::wstring(buf);
-        }
-
-        if (format == HexFormat::RGBA)
-        {
-            wchar_t buf[] = {
-                L'#',
-                abc[red >> 4], abc[red & 15],
-                abc[green >> 4], abc[green & 15],
-                abc[blue >> 4], abc[blue & 15],
-                abc[alpha >> 4], abc[alpha & 15],
-                0
-            };
-            return std::wstring(buf);
-        }
-
-        wchar_t buf[] = {
-            L'#',
-            abc[alpha >> 4], abc[alpha & 15],
-            abc[red >> 4], abc[red & 15],
-            abc[green >> 4], abc[green & 15],
-            abc[blue >> 4], abc[blue & 15],
-            0
-        };
-        return std::wstring(buf);
-    }
-
     Hsl::Hsl(float hue, float saturation, float luminosity)
         :
         hue{ hue },

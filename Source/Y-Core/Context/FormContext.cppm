@@ -392,8 +392,7 @@ namespace ClaFi
     {
     };
 
-    // What an application is built against - the statics every platform answers, the window
-    // factory and the clipboard the platform built for the display server owns. See Context
+    // What an application is built against: the statics, the windows, the clipboard. See Context
     export struct Platform
     {
         using FormNames = std::initializer_list<std::wstring_view>;
@@ -460,9 +459,7 @@ namespace ClaFi
         Transfer::Clipboard& m_clipboard;
     };
 
-    // Shows the wait shape while alive and puts back the shape the platform was showing when it
-    // was made - a sizing arrow the system set included - so scopes nest and a drag keeps its
-    // arrow.
+    // Shows the wait shape while alive, then puts back the shape it found. See Context
     export class ScopedWaitCursor
     {
     public:

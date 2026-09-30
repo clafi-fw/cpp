@@ -5,8 +5,8 @@ import :Control;
 import :Action;
 import :Input;
 import :Navigation;
-import :Tooltip;
-import :TooltipForm;
+import :Hint;
+import :HintForm;
 
 import ClaFi.Diagnostic.Log;
 import ClaFi.Diagnostic.Options;
@@ -187,11 +187,11 @@ namespace ClaFi
 
     FormBase::~FormBase()
     {
-        // FIRST, and not left to the member teardown that follows this body. The tooltip is a form
+        // FIRST, and not left to the member teardown that follows this body. The hint is a form
         // of its own whose window this form's window OWNS, and the system destroys an owned window
-        // along with its owner - so a tooltip taken down after m_window would be destroying a
+        // along with its owner - so a hint taken down after m_window would be destroying a
         // handle that had already been taken. It also reads this form on its way down.
-        m_tooltip.destroyForm();
+        m_hint.destroyForm();
 
         // What the form runs under its own key; FormControlBase stops what the root runs.
         m_appContext.animator().stop(this);
@@ -301,7 +301,7 @@ namespace ClaFi
         if (m_activePopup && movedControl.containsNested(m_activePopup->popupTarget()))
             m_activePopup->followPopupTarget2();
         // A hint stands on the control it is about the same way.
-        TooltipForm* hint = m_tooltip.m_form.get();
+        HintForm* hint = m_hint.m_form.get();
         if (hint && movedControl.containsNested(hint->control()))
             hint->followPopupTarget2();
     }
@@ -636,7 +636,7 @@ namespace ClaFi
     }
 
     // A theme switch passes over a form nobody can see, so one coming into view states its frame
-    // from the theme it comes into - here, because a tooltip replaces updateVisibility.
+    // from the theme it comes into - here, because a hint replaces updateVisibility.
     void FormBase::setVisible(bool value)
     {
         if (value == m_visible)
@@ -742,7 +742,7 @@ namespace ClaFi
     {
         bool handled{};
         wnd_mouseDown(pt, stamp, handled);
-        //Tooltip::handleUserInput();
+        //Hint::handleUserInput();
         //closeActivePopup();
     }
 
@@ -756,7 +756,7 @@ namespace ClaFi
     // to correct, and moving or sizing the form underneath takes the question with it.
     bool FormBase::wnd_systemMouseDown()
     {
-        Tooltip::handleUserInput();
+        Hint::handleUserInput();
         closeActivePopup();
         return !m_activePopup;
     }
@@ -772,7 +772,7 @@ namespace ClaFi
         m_mouseDownStamp = stamp;
         m_downItem = controlAt(m_mouseDownPos).control;
 
-        Tooltip::handleUserInput();
+        Hint::handleUserInput();
 
         Input::mouseActed(m_appContext);
         mouseTick(pt);
@@ -991,7 +991,7 @@ namespace ClaFi
 
     void FormBase::mouseWheelOrHwheel(PointInForm, const float wheelDelta, bool h)
     {
-        Tooltip::handleUserInput();
+        Hint::handleUserInput();
         Input::mouseActed(m_appContext);
         Control* control = Input::hoveredControl();
         if (!control)
@@ -1012,7 +1012,7 @@ namespace ClaFi
     // runs, as the key walk reads it: a side button goes back, and going back frees the page.
     void FormBase::wnd_sideButton(PointInForm, const SideButton button, const InputStamp stamp)
     {
-        Tooltip::handleUserInput();
+        Hint::handleUserInput();
         Input::mouseActed(m_appContext);
         Control* control = Input::hoveredControl();
         if (!control)
@@ -1103,15 +1103,15 @@ namespace ClaFi
             switch (event.key)
             {
             case Keys::Return:
-                Tooltip::handleUserInput();
+                Hint::handleUserInput();
                 break;
             }
         }
 
-        // ESCAPE IS THE FOCUSED CONTROL'S BEFORE IT IS THE TOOLTIP'S. Dismissing a tooltip is
+        // ESCAPE IS THE FOCUSED CONTROL'S BEFORE IT IS THE HINT'S. Dismissing a hint is
         // what Escape means when nothing else wants it, and the same test below says so once the
         // walk has passed. Answering it here as well took Escape away from any control with a
-        // meaning of its own for it, but only while a tooltip happened to be up - an in-place
+        // meaning of its own for it, but only while a hint happened to be up - an in-place
         // editor showing why a value was refused is exactly that state, and cancelling took two
         // presses.
 
@@ -1146,10 +1146,10 @@ namespace ClaFi
             {
             case Keys::Space:
             case Keys::Return:
-                Tooltip::handleUserInput();
+                Hint::handleUserInput();
                 break;
             case Keys::Escape:
-                event.handled = Tooltip::stopAndHide();
+                event.handled = Hint::stopAndHide();
                 break;
             }
         }
@@ -1172,7 +1172,7 @@ namespace ClaFi
             case Keys::Escape:
                 if (!holdsRootLoop())
                 {
-                    if (!Tooltip::stopAndHide())
+                    if (!Hint::stopAndHide())
                         close();
                     event.handled = true;
                     return;
@@ -1435,7 +1435,7 @@ namespace ClaFi
 
             switch (m_windowRole)
             {
-            case WindowRole::Tooltip:
+            case WindowRole::Hint:
                 // non activated windows
                 break;
             

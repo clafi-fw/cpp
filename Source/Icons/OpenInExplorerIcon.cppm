@@ -76,7 +76,7 @@ namespace ClaFi::Icons::OpenInExplorerIcon
 
         // It crosses the folder's corner, so it is stroked once wide in the surface colour and
         // then again properly: without that band the two outlines meet and neither is legible.
-        // Magnifier's Gap is the same trick carried all the way round a shape.
+        // Magnifier's Halo is the same trick carried all the way round a shape.
         canvas.drawPath(
             path,
             { PathDrawLayer::stroke(event.surfaceRgb(), strokeWidth * 2.0f) },

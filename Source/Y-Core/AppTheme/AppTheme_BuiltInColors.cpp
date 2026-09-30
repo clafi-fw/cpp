@@ -226,7 +226,7 @@ namespace ClaFi
             }
         };
 
-        rules.of(UiElement::Tooltip) = {
+        rules.of(UiElement::Hint) = {
             ColorRule{
                 .effect{
                     { ColorRuleHueOp::PaletteColor3 },      // H

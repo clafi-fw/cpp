@@ -87,7 +87,7 @@ namespace ThisApp
             IconSize{ 20.0f },
             ButtonViewMode::IconOnly,
             Control::OnPaintIcon{ Icons::MoonIcon::paint },
-            TooltipText{ L"Preview in dark mode" },
+            HintText{ L"Preview in dark mode" },
             Tag{ ColorMode::Dark }
         ) };
 
@@ -96,7 +96,7 @@ namespace ThisApp
             IconSize{ 20.0f },
             ButtonViewMode::IconOnly,
             Control::OnPaintIcon{ Icons::SunIcon::paint },
-            TooltipText{ L"Preview in light mode" },
+            HintText{ L"Preview in light mode" },
             Tag{ ColorMode::Light }
         ) };
 
@@ -108,7 +108,7 @@ namespace ThisApp
             IconSize{ 20.0f },
             ButtonViewMode::IconOnly,
             Control::OnPaintIcon{ Icons::SideBar::paintPanelIcon },
-            TooltipText{ L"Preview in application" }
+            HintText{ L"Preview in application" }
         ) };
 
         ToolButton& m_previewInSidebarButton{ m_rightToolBar.add<ToolButton>(
@@ -116,7 +116,7 @@ namespace ThisApp
             IconSize{ 20.0f },
             ButtonViewMode::IconOnly,
             Control::OnPaintIcon{ Icons::SideBar::paintRightBarIcon },
-            TooltipText{ L"Preview in sidebar" }
+            HintText{ L"Preview in sidebar" }
         ) };
 
         PreviewPanel& m_previewPanel{ this->template createRightBar<PreviewPanel>(

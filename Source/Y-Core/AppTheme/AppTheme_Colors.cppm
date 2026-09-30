@@ -170,7 +170,7 @@ namespace ClaFi
         ToolBar,
         DialogTitle,
         Menu,
-        Tooltip,
+        Hint,
         Divider,
         Grid,
         GridHeader,
@@ -340,7 +340,7 @@ namespace ClaFi
 
         // The second accent, over the palette's third hue: what stands apart from the interface
         // rather than answers to it - a brand mark, a run of emphasised text, and the tint a
-        // tooltip carries. Stated apart from the accent so that a theme can spend one sparingly
+        // hint carries. Stated apart from the accent so that a theme can spend one sparingly
         // while the other runs through every control.
         ColorEffect spot{};
 

@@ -7,8 +7,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Syntax
 {
-    // The state every line of a text starts in, kept in step with the text through its edits.
-    // See Syntax
+    // The state every line of a text starts in, kept in step with its edits. See Syntax
     export class LineStates
     {
     public:

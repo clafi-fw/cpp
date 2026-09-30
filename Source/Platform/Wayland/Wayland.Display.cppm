@@ -71,8 +71,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         [[nodiscard]] bool operator==(const SelectionOffer&) const = default;
     };
 
-    // The connection, the globals and the loop, one per process and the platform's member. See
-    // Platform
+    // The connection, the globals and the loop, one per process. See Platform
     export class DisplayManager
     {
     public:
@@ -446,9 +445,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         std::vector<pollfd> m_pollFds{};
     };
 
-    // A DESCRIPTOR'S PLACE IN THE LOOP, held for as long as this stands: registered on
-    // construction and taken back on destruction, so a platform member declared after the
-    // display and the manager it polls for is in the loop exactly while both are up. See Platform
+    // A DESCRIPTOR'S PLACE IN THE LOOP, held for as long as this stands. See Platform
     export class PollSource
     {
     public:
@@ -461,9 +458,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         const int m_fd;
     };
 
-    // WHAT STANDS BEHIND IPlatformServices ON WAYLAND. The one platform of a Wayland build derives
-    // from this, so a service handed the platform under its neutral name casts to it here and
-    // reaches the display. See Platform
+    // WHAT STANDS BEHIND IPlatformServices ON WAYLAND: the display. See Platform
     export class IDisplayAccess : public IPlatformServices
     {
     public:

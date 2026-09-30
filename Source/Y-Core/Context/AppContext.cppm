@@ -46,8 +46,7 @@ namespace ClaFi
         ThemeSwitchKind m_kind;
     };
 
-    // THE APPLICATION HAS CHANGED WHICH BACKEND ITS WINDOWS DRAW THROUGH. A form takes it at the
-    // top of its next frame - see FormBase::stateBackend. See Context
+    // THE APPLICATION HAS CHANGED WHICH BACKEND ITS WINDOWS DRAW THROUGH. See Context
     export struct BackendSwitchEvent : public Event
     {
     };

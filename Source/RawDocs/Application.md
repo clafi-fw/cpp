@@ -197,6 +197,19 @@ desktop - see `wornColorMode`.
 The page is built afresh every time the menu opens, so every option is read from where it
 lives at the moment it is shown and there is no state here to keep in step with anything.
 
+## ThemePick
+
+The themes an application can wear, on one line - the built-in first, then the user's own, each
+item drawn as a picture of its theme beside the name. A lane of the list takes ten themes before
+it turns a second, and the themes are spread evenly over the lanes that many needs.
+
+LOOKING AT AN ITEM WEARS IT, PICKING ONE STATES IT IN THE CONFIG. A theme under the pointer is
+tried on and nothing is written for it. A list closing on the theme it opened on puts the stated
+theme back on; closing on another states that one.
+
+The themes folder changing builds the items again, back on the path the picker stood on, and the
+application wears the stated theme as the list now holds it.
+
 ## ScaleSlider
 
 The scale slider on the Settings page, and a Slider in every other respect. What it adds is a

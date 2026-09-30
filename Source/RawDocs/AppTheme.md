@@ -108,7 +108,7 @@ its elevation instead would move it from black.
 A floor lies below 1: at 1 the axis has no room left, and `elevationOf` divides by zero. The
 Themes app's slider stops at 0.5.
 
-## BakedValue, BakedEffect, BakedColorRule
+## BakedValue
 
 WHAT A THEME BECOMES SO THAT TWO OF THEM HAVE A HALF WAY. A Theme names one operation per channel
 and the ThemesManager edits it; a baked channel carries every operation at a weight, and the paint

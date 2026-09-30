@@ -293,6 +293,16 @@ key and a pointer sweeping the stack each answer once, for the item they came to
 
 `item` is never null: a stack with nothing to settle on previews nothing at all.
 
+## LaneSizing
+
+How a lane's count is read. A CEILING IS SPREAD, A COUNT IS NOT.
+
+`Exact` - every lane takes the count, and the remainder stands in a short last lane.
+
+`UpTo` - the count is a ceiling: the items go into the fewest lanes it allows, and every lane but
+the last is filled to the same depth, so eleven under a ceiling of ten stand as six and five
+rather than ten and one. A hidden item is not one of the items counted.
+
 ## ItemSizing
 
 How a lane sizes the items in it. `Equal` reads on every orientation. On a wrapping
@@ -307,3 +317,16 @@ calculated. A row of answers reads as one band this way rather than as buttons o
 The lane is then AS LONG AS THE LARGEST ITEM TIMES THE COUNT, because a share has to hold every
 item that could stand in it - taking the natural total instead would divide a row that fits Save,
 Discard and Cancel into three widths none of which fits Discard.
+
+## PageSizing
+
+Which of its pages a page control answers for its own size with.
+
+`CurrentPage` - the page that shows, and nothing about the ones that do not. The pages nobody is
+looking at are never measured.
+
+`WidestPage` - the largest of them all, in both extents, so turning to another page does not
+resize what holds the page control: the application menu is as big as the largest page it can
+show. The hidden pages are measured once, and again when a page is added or taken away or the
+form's scale moves. A page that grows on its own while hidden, at the same scale, is not
+measured again.

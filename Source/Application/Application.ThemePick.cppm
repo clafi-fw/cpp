@@ -37,8 +37,7 @@ namespace ClaFi
         TextItems m_themeItems{};
     };
 
-    // The themes an application can wear, on one line - built-in first, then the user's own.
-    // Looking at an item wears it, picking one states it in the config. See Application
+    // The themes an application can wear, built-in first, then the user's own. See Application
     export class ThemePick : private ThemeItems, public ComboBox,
         public Documents::DocumentsFolder::IListener
     {

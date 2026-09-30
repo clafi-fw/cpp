@@ -19,11 +19,16 @@ namespace ClaFi::Controls
         return m_secondaryPart;
     }
 
+    SecondaryPartPlacement SplitButtonBase::secondaryPartPlacement() const
+    {
+        return SecondaryPartPlacement::Right;
+    }
+
     void SplitButtonBase::placeSecondaryPart(ScaledDimensions childArea)
     {
         Control* part = shownSecondaryPart();
         ScaledDimensions size = part->dimensions();
-        if (secondaryEdge() == SecondaryEdge::Bottom)
+        if (secondaryPartPlacement() == SecondaryPartPlacement::Bottom)
         {
             setControlPlacement(
                 *part,
@@ -69,7 +74,7 @@ namespace ClaFi::Controls
         // would defeat that. An edge part holds its axis either way, being structure.
         bool collapses = !secondaryReachesEdge();
         ScaledDimensions size = part->dimensions();
-        if (secondaryEdge() == SecondaryEdge::Bottom)
+        if (secondaryPartPlacement() == SecondaryPartPlacement::Bottom)
         {
             if (collapses && !size.y)
                 return { 0.0f, 0.0f };
@@ -106,7 +111,7 @@ namespace ClaFi::Controls
 
         ScaledDimensions extent = secondaryExtent(event.formContext(), event.padding, event.spacing);
         ScaledDimensions size = part->dimensions();
-        if (secondaryEdge() == SecondaryEdge::Bottom)
+        if (secondaryPartPlacement() == SecondaryPartPlacement::Bottom)
         {
             result.y += extent.y;
             result.x = std::max(result.x, size.x - event.padding.x * 2.0f);

@@ -17,8 +17,7 @@ namespace ClaFi::PlatformImplementation::Linux
         std::chrono::steady_clock::time_point targetTime;
     };
 
-    // Where every UiTimer ticks: a thread that waits out the delays and an eventfd it raises,
-    // which the display's loop polls. One per process, the platform's member. See Platform
+    // Where every UiTimer ticks on Linux. See Platform#timermanager-linux
     export class TimerManager
     {
     public:

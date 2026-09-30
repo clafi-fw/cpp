@@ -5,13 +5,12 @@ export module ClaFi.Diagnostic.Options;
 // import this - the platform layer included.
 namespace ClaFi::Diagnostic::Options
 {
-    /// @brief What a failed platform API call comes to: nothing, a line in the debugger's output
-    /// naming the call site, or a std::system_error thrown with the same words.
+    /// @brief What a failed platform API call comes to.
     export enum class ApiErrors
     {
-        Ignore,
-        Log,
-        Throw
+        Ignore, // nothing
+        Log,    // a line in the debugger's output naming the call site
+        Throw   // a std::system_error thrown with the same words
     };
 
     /// @brief The global diagnostic switch: turns everything off

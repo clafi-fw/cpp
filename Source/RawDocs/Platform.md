@@ -413,12 +413,13 @@ Without the global nothing is raised.
 
 WHAT A CONFIG KEEPS OF A FORM ON WIN32, and the client keeps the rectangle: the geometry the
 window comes back to when ordinary - WINDOWPLACEMENT's normal rect put into screen coordinates
-and stripped of the ring the window reaches past its geometry by - and whether it stands
-maximized over it. Handed to the window before its first placement, it is what that placement
-places instead of the default, on the monitor the geometry stands on, held up to the floor the
-content states now; SetWindowPlacement moves a rect that would be wholly off screen onto a
-visible monitor. The window forgets it at its first show, which is also where a maximized one
-is shown maximized.
+and stripped of the ring the window reaches past its geometry by - whether it stands maximized
+over it, and whether it is held above the others. Handed to the window before its first
+placement, it is what that placement places instead of the default, on the monitor the geometry
+stands on, held up to the floor the content states now; SetWindowPlacement moves a rect that
+would be wholly off screen onto a visible monitor. The window forgets it at its first show,
+which is also where a maximized one is shown maximized and one held above the others is put
+there.
 
 ## RememberedPlacement
 

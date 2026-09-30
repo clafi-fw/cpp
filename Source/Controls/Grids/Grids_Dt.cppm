@@ -30,6 +30,7 @@ namespace ClaFi::Controls::Grids::Dt
 {
     export using Grids::ShowInHeader;
     export using Grids::CellHighlightMode;
+    export using Grids::ColumnWidth;
     export using Grids::ColumnWidthMode;
     export using Grids::MovingText;
     export using Grids::Collapsible;

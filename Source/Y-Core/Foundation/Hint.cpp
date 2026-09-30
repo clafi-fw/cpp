@@ -1,12 +1,12 @@
 module ClaFi.Core.Foundation;
 
 import :ContextMessage;
-import :Tooltip;
+import :Hint;
 import :Control;
 import :Form;
 import :Input;
 
-import :TooltipForm;
+import :HintForm;
 
 import ClaFi.StdLib;
 import ClaFi.Core.System.Events;
@@ -17,34 +17,34 @@ import ClaFi.Core.Context.FormContext;
 
 namespace ClaFi
 {
-    Tooltip::Tooltip(FormBase& ownerForm)
+    Hint::Hint(FormBase& ownerForm)
         :
         m_ownerForm{ ownerForm },
-        // A TOOLTIP HAS NO TOOLTIP OF ITS OWN. Every form builds one with itself and a tooltip
+        // A HINT HAS NO HINT OF ITS OWN. Every form builds one with itself and a hint
         // window is a form like any other, so this is where that recursion ends.
         //
         // Built here rather than at the first hover, because a form owning its own window is what
         // this is for and there is nothing to wait for: the owner's window is standing by the time
         // its last member is initialized, which is what makes this the last member.
         m_form{
-            ownerForm.windowRole() == WindowRole::Tooltip
+            ownerForm.windowRole() == WindowRole::Hint
                 ? nullptr
-                : std::make_unique<TooltipForm>(ownerForm)
+                : std::make_unique<HintForm>(ownerForm)
         },
         m_timer{ OnEvent{ [this](TimerEvent&) { showOrHide(nullptr); } } }
     {
     }
 
-    Tooltip::~Tooltip()
+    Hint::~Hint()
     {
         destroyForm();
     }
 
     // Called from the TOP of ~FormBase rather than left to the member teardown below it. The
     // window this one is owned by is about to go, and the system destroys an owned window along
-    // with its owner - a tooltip taken down after that would be destroying a handle that had
+    // with its owner - a hint taken down after that would be destroying a handle that had
     // already been taken. Reaching the owner form from here also reaches it while it is whole.
-    void Tooltip::destroyForm()
+    void Hint::destroyForm()
     {
         m_timer.stop();
         if (s_current == this)
@@ -52,7 +52,7 @@ namespace ClaFi
         m_form.reset();
     }
 
-    void Tooltip::forgetControl(const Control* value)
+    void Hint::forgetControl(const Control* value)
     {
         // A control that is going takes with it anything raised about it: a message names the
         // control it stands under, and this one is about to stop being anywhere.
@@ -68,14 +68,14 @@ namespace ClaFi
     // pointer was left. None of that is the user pointing at anything, so nothing standing comes
     // down for it and nothing starts waiting. A hint a key raised beside a list that opened under
     // the pointer went down the frame it came up, taken for the pointer leaving.
-    void Tooltip::hoveredControlChanged()
+    void Hint::hoveredControlChanged()
     {
         if (!Input::mouse().active())
             return;
         pointedControlChanged();
     }
 
-    void Tooltip::hoveredZoneChanged()
+    void Hint::hoveredZoneChanged()
     {
         if (!Input::mouse().active())
             return;
@@ -97,7 +97,7 @@ namespace ClaFi
 
     // THE FOCUS HAS ITS SAY WHILE THE KEYBOARD ALONE DRIVES. A click lands the focus as well, and
     // the pointer's hint is the one for that: the hover it reads is where the click went.
-    void Tooltip::focusedControlChanged()
+    void Hint::focusedControlChanged()
     {
         if (Input::mouse().active())
             return;
@@ -107,7 +107,7 @@ namespace ClaFi
     // Wherever the pointer was left - unless it rests on the very item the focus is on, where
     // nothing has changed hands: a hint about that item is the hover's answer as much as the
     // focus's.
-    void Tooltip::mouseTookOver()
+    void Hint::mouseTookOver()
     {
         Control* focused = Input::focusedControl();
         if (focused && focused->focusDelegate() == Input::hoveredControl())
@@ -115,7 +115,7 @@ namespace ClaFi
         pointedControlChanged();
     }
 
-    Control* Tooltip::pointedControl()
+    Control* Hint::pointedControl()
     {
         if (Input::mouse().active())
             return Input::hoveredControl();
@@ -125,7 +125,7 @@ namespace ClaFi
         return focused ? focused->focusDelegate() : nullptr;
     }
 
-    void Tooltip::pointedControlChanged()
+    void Hint::pointedControlChanged()
     {
         Control* pointed = pointedControl();
 
@@ -151,7 +151,7 @@ namespace ClaFi
         // said once.
         ContextMessage::forget();
 
-        // THE ONE COMING DOWN IS NOT ALWAYS THE ONE ABOUT TO WAIT. Each form has a tooltip of its
+        // THE ONE COMING DOWN IS NOT ALWAYS THE ONE ABOUT TO WAIT. Each form has a hint of its
         // own, and the pointer crosses from one form to another - a menu raised over the form it
         // was raised from is two windows. The one to take down is named by s_current rather than
         // looked for under the pointer, because it is the form the pointer has LEFT that is
@@ -159,12 +159,12 @@ namespace ClaFi
         // hint up over a control the pointer is nowhere near.
         //
         // s_current IS NOT CLEARED HERE. A hidden window goes on being painted for the whole of
-        // its fade, and while it has pixels it is still the tooltip on screen - which is what
+        // its fade, and while it has pixels it is still the hint on screen - which is what
         // Escape answers by dismissing. It stops being the one only when another takes over
         // below, or when stopAndHide finishes it off.
         //
         // The CONTROL is let go of, which is what hides the window and what tells the label to
-        // keep the words it went out with rather than ask again - see TooltipLabel::getText. A
+        // keep the words it went out with rather than ask again - see HintLabel::getText. A
         // hint the pointer has left is about nothing from here on, exactly as one dismissed is.
         if (s_current)
         {
@@ -174,27 +174,27 @@ namespace ClaFi
 
         if (!pointed)
             return;
-        Tooltip& tooltip = pointed->form().tooltip();
+        Hint& hint = pointed->form().hint();
         // The short wait is for a window still on screen: crossing a row of buttons reads as one
         // hint following the pointer rather than as a hint per button. It is this form's own
         // window that has to still be there - crossing from one window into another is not that
         // gesture, and answers with the full wait.
-        tooltip.startWaiting(tooltip.stillVisible() ? MilliSeconds{ 110 } : MilliSeconds{ 1000 });
+        hint.startWaiting(hint.stillVisible() ? MilliSeconds{ 110 } : MilliSeconds{ 1000 });
     }
 
-    void Tooltip::startWaiting(MilliSeconds delay)
+    void Hint::startWaiting(MilliSeconds delay)
     {
         s_current = this;
         m_timer.start(delay);
     }
 
-    void Tooltip::updatePosition(const FloatRect& anchorRect, bool forceRepaint)
+    void Hint::updatePosition(const FloatRect& anchorRect, bool forceRepaint)
     {
-        TooltipForm& form = *m_form;
+        HintForm& form = *m_form;
         if (!form.control())
             return;
         // Where the control comes to rest rather than where a glide has carried it so far - see
-        // TooltipForm::placementTargetBounds.
+        // HintForm::placementTargetBounds.
         FloatRect restingRect = anchorRect;
         restingRect.offset(-form.control()->viewTravelRemaining());
         form.setPlacementRect(restingRect);
@@ -211,9 +211,9 @@ namespace ClaFi
         //    }
         //}
 
-        // A tooltip already on screen keeps the pixels it has: a resize paints only the part of
+        // A hint already on screen keeps the pixels it has: a resize paints only the part of
         // the window that was newly exposed, so whatever stood there before is still standing
-        // under the new text. Every caller whose content moves under a tooltip that is already
+        // under the new text. Every caller whose content moves under a hint that is already
         // up asks for the repaint - a thumb dragged along a slider with its value on the hint,
         // and a control that answers with different text than it did last time.
         if (forceRepaint)
@@ -223,7 +223,7 @@ namespace ClaFi
         }
     }
 
-    void Tooltip::showRightNow(Control& target)
+    void Hint::showRightNow(Control& target)
     {
         if (control() == &target)
         {
@@ -238,29 +238,29 @@ namespace ClaFi
         }
     }
 
-    FloatRect Tooltip::anchorOf(Control& target) const
+    FloatRect Hint::anchorOf(Control& target) const
     {
         // Asked as showOrHide asks it, so a message about the control keeps the rect it states.
         Text text{};
-        GetTooltipEvent event{ m_form->context(), target, text, EventPhase::Calculate };
+        GetHintEvent event{ m_form->context(), target, text, EventPhase::Calculate };
         if (!ContextMessage::answer(target, event))
-            target.nestedGetTooltip(event);
+            target.nestedGetHint(event);
         return event.anchorRect;
     }
 
-    bool Tooltip::stopAndHide()
+    bool Hint::stopAndHide()
     {
         if (!s_current)
             return false;
-        Tooltip& tooltip = *s_current;
+        Hint& hint = *s_current;
         s_current = nullptr;
-        tooltip.m_timer.stop();
-        const bool result = tooltip.m_form->stillVisible();
-        tooltip.m_form->setControl(nullptr);
+        hint.m_timer.stop();
+        const bool result = hint.m_form->stillVisible();
+        hint.m_form->setControl(nullptr);
         return result;
     }
 
-    void Tooltip::handleUserInput()
+    void Hint::handleUserInput()
     {
         if (!s_current)
             return;
@@ -271,38 +271,38 @@ namespace ClaFi
         stopAndHide();
     }
 
-    Control* Tooltip::control()
+    Control* Hint::control()
     {
         if (!s_current)
             return nullptr;
-        TooltipForm& form = *s_current->m_form;
+        HintForm& form = *s_current->m_form;
         if (!form.visible())
             return nullptr;
         return form.control();
     }
 
-    void Tooltip::showOrHide(Control* it)
+    void Hint::showOrHide(Control* it)
     {
         if (!it)
             it = pointedControl();
         if (!it)
             return;
 
-        // THE CONTROL IS ONE OF THIS FORM'S. The timer runs only while this tooltip is the one in
+        // THE CONTROL IS ONE OF THIS FORM'S. The timer runs only while this hint is the one in
         // play, and the one in play is the pointed control's form's - see pointedControlChanged;
         // the other way in is showRightNow, which a control reaches through its own form.
-        TooltipForm& form = *m_form;
+        HintForm& form = *m_form;
 
         Text tmpText{};
 
         while (it)
         {
             tmpText.clear();
-            GetTooltipEvent event{ form.context(), *it, tmpText, EventPhase::Calculate };
+            GetHintEvent event{ form.context(), *it, tmpText, EventPhase::Calculate };
             // A message raised about this control stands in front of whatever it would say for
             // itself, and is the whole of the answer wherever it stands.
             if (!ContextMessage::answer(*it, event))
-                it->nestedGetTooltip(event);
+                it->nestedGetHint(event);
             if (!tmpText.empty())
             {
                 // A control is free to answer differently from one hover to the next - a toggle
@@ -315,7 +315,7 @@ namespace ClaFi
                     form.setControl(*it, event);
                 // SHOWN BEFORE IT IS MEASURED OR PAINTED. While a form is not visible its label
                 // answers for it with the words the window went out with - see
-                // TooltipLabel::getText, which is how a window keeps them for the whole of its
+                // HintLabel::getText, which is how a window keeps them for the whole of its
                 // fade - and a placement measures the label. Taken before this, the window is
                 // sized to the PREVIOUS answer and the paint forced inside it puts that answer
                 // back on the screen: a box cut short of the words in it, or one left as wide as
@@ -336,7 +336,7 @@ namespace ClaFi
         form.setControl(nullptr);
     }
 
-    bool Tooltip::stillVisible() const
+    bool Hint::stillVisible() const
     {
         return m_form->stillVisible();
     }

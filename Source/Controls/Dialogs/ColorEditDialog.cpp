@@ -1,6 +1,7 @@
 module ClaFi.Controls.ColorEditDialog;
 
 import ClaFi.Controls.ColorSlider;
+import ClaFi.Controls.ColorSpelling;
 import ClaFi.Controls.Slider;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Label;
@@ -68,7 +69,7 @@ namespace ClaFi::Controls
     // ColorEditDialog
 
     ColorEditDialog::ColorEditDialog(Control& owner, const std::wstring_view title,
-        const Color original, ColorSpeller speller)
+        const Color original, const ColorSpelling spelling)
         :
         ColorEditForm{
             owner.appContext(),
@@ -87,7 +88,7 @@ namespace ClaFi::Controls
         m_original{ original },
         m_originalHsl{ original },
         m_color{ original },
-        m_speller{ std::move(speller) },
+        m_spelling{ spelling },
         m_title{ createTopBar<Label>(
             UiElement::SectionHeader,
             Radius{ 0.0f },
@@ -115,9 +116,9 @@ namespace ClaFi::Controls
             HorizontalAlign::Center,
             VerticalAlign::Center
         ) },
-        m_hue{ addRow(L"Hue", ColorAttribute::Hue) },
-        m_saturation{ addRow(L"Saturation", ColorAttribute::Saturation) },
-        m_luminosity{ addRow(L"Luminosity", ColorAttribute::Luminosity) },
+        m_hue{ addRow(L"Hue", HslChannel::Hue) },
+        m_saturation{ addRow(L"Saturation", HslChannel::Saturation) },
+        m_luminosity{ addRow(L"Luminosity", HslChannel::Luminosity) },
         m_linker{ m_hue.slider, m_saturation.slider, m_luminosity.slider },
         m_answerBar{ createBottomBar<Panel>(
             UiElement::ToolBar,
@@ -197,7 +198,7 @@ namespace ClaFi::Controls
     }
 
     ColorEditDialog::Row ColorEditDialog::addRow(const std::wstring_view name,
-        const ColorAttribute attribute)
+        const HslChannel channel)
     {
         StackPanel& row = m_column.add<StackPanel>(
             Orientation::Horizontal,
@@ -220,8 +221,8 @@ namespace ClaFi::Controls
         );
         result.slider = &row.add<ColorSlider>(
             MinSize{ k_sliderWidth, 0.0f },
-            &m_color,
-            attribute,
+            EditedColor{ m_color },
+            channel,
             SliderButtonMark::PlusMinus
         );
         return result;
@@ -242,7 +243,7 @@ namespace ClaFi::Controls
     void ColorEditDialog::copy(const InputStamp stamp)
     {
         Transfer::Source source{};
-        source.add<Transfer::PlainText>(m_speller(color()));
+        source.add<Transfer::PlainText>(spell(color(), m_spelling));
         formContext().clipboard().set(std::move(source), stamp);
     }
 

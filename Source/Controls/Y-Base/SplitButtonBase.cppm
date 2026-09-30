@@ -11,6 +11,13 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
+    // Where a split control's secondary part follows its content - to its right or below it.
+    export enum class SecondaryPartPlacement
+    {
+        Right,
+        Bottom
+    };
+
     // SplitButtonBase
 
     // A button carrying a second target that is pressed on its own account. See Controls-Base
@@ -49,7 +56,7 @@ namespace ClaFi::Controls
             requires std::derived_from<PartClass, Control>
         PartClass& createSecondaryPart(Args&&...);
 
-        [[nodiscard]] virtual SecondaryEdge secondaryEdge() const { return SecondaryEdge::Right; }
+        [[nodiscard]] virtual SecondaryPartPlacement secondaryPartPlacement() const;
         /// Whether the part runs out to the control's own edge, taking over the content padding on
         /// the side it sits on, or stays inside that padding like any other content.
         ///

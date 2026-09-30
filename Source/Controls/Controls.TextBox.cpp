@@ -63,7 +63,7 @@ namespace ClaFi::Controls
         {
             TextLayout layout;
             layout.setWrap(true);
-            layout.setBoundsAndScale({ Tooltip::k_lineWidth * scale, k_maxFloat }, scale);
+            layout.setBoundsAndScale({ Hint::k_lineWidth * scale, k_maxFloat }, scale);
             layout.setText(preview);
             const std::size_t length = preview.plainText().size();
             std::size_t cut = linesEnd(layout, k_previewLines);
@@ -127,13 +127,13 @@ namespace ClaFi::Controls
     {
     }
 
-    GetLinkTooltipEvent::GetLinkTooltipEvent(TextBox& box, std::wstring_view target,
-        TextRange range, GetTooltipEvent& tooltip)
+    GetLinkHintEvent::GetLinkHintEvent(TextBox& box, std::wstring_view target,
+        TextRange range, GetHintEvent& hint)
         :
         EventOf<TextBox>{ box },
         target{ target },
         range{ range },
-        tooltip{ tooltip }
+        hint{ hint }
     {
     }
 
@@ -357,17 +357,17 @@ namespace ClaFi::Controls
     void TextBox::hoverLeave()
     {
         Label::hoverLeave();
-        // The tooltip has heard about the pointer leaving from the hover change itself, and
+        // The hint has heard about the pointer leaving from the hover change itself, and
         // telling it again would start a second wait for whatever the pointer went to.
         m_pointedLink = {};
         hoverLink({});
     }
 
-    void TextBox::nestedGetTooltip(GetTooltipEvent& event)
+    void TextBox::nestedGetHint(GetHintEvent& event)
     {
         if (!m_pointedLink.range.length)
         {
-            Label::nestedGetTooltip(event);
+            Label::nestedGetHint(event);
             return;
         }
 
@@ -376,10 +376,10 @@ namespace ClaFi::Controls
         event.placement = FormPlacement::Top;
         event.anchorRect = pointedLinkLine();
 
-        GetLinkTooltipEvent linkEvent{ *this, m_pointedLink.target, m_pointedLink.range, event };
+        GetLinkHintEvent linkEvent{ *this, m_pointedLink.target, m_pointedLink.range, event };
         emitEvent(linkEvent);
         if (event.text.empty())
-            writeLinkTooltip(event.text);
+            writeLinkHint(event.text);
     }
 
     void TextBox::nestedClick(ClickEvent& event)
@@ -585,10 +585,10 @@ namespace ClaFi::Controls
         // pointer enters and leaves - so the box says when the part changed, the way a grid says
         // its hovered cell did. A hint already up is asked again where it stands, and one that is
         // not starts the wait.
-        Tooltip::hoveredZoneChanged();
+        Hint::hoveredZoneChanged();
     }
 
-    void TextBox::writeLinkTooltip(Text& out) const
+    void TextBox::writeLinkHint(Text& out) const
     {
         // THE PARAGRAPH, NOT THE ANCHOR. An anchor holds a few words - a clue's number, a
         // heading - and what the reader wants before jumping is what stands around them. Taken

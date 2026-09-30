@@ -3,6 +3,12 @@
 The words that no longer fit above a declaration in `Y-Core/System/UiTypes.cppm`. Referenced
 from that file.
 
+## Cursor
+
+The cursor as the platform holds it - a handle on Win32, a shape number on Wayland - answered by
+`Platform::cursor` and taken back by `Platform::setCursor`. Opaque above the platform layer, and
+never made by hand.
+
 ## InputStamp
 
 WHAT THE USER DID THAT LED HERE, in whatever form the display server states it. A display server
@@ -70,14 +76,14 @@ What a control does for an action it presents. Read where the action is attached
 `Action::attach` - and given as a construction property by a control that is not the plain case.
 
 `Button` delivers the action's click and shows nothing of the command but its face: a button, a
-toolbar item. Its tooltip falls back to the action's name and key, which a button has nowhere
+toolbar item. Its hint falls back to the action's name and key, which a button has nowhere
 else to state.
 
 `Line` delivers the click and writes the name and the key itself: a menu line. Nothing is
-composed for its tooltip, which would say back what the pointer is already standing on.
+composed for its hint, which would say back what the pointer is already standing on.
 
 `Display` shows the command without delivering it - a split button's strip, whose press is
-routed by the button it is part of. Tooltip as for a Button.
+routed by the button it is part of. Hint as for a Button.
 
 ## ActionState
 
@@ -140,15 +146,11 @@ popup that grows with what is typed into it needs.
 
 The placement clamps to the monitor either way, and that clamp is the bound of last resort.
 
-## ArrowPlacement
-
-Where the dropdown mark sits, and with it whether the control has a strip that can be pressed on
-its own.
-
 ## DropdownWidth
 
-Design width of the dropdown strip. It applies to `ArrowPlacement::Right` - a bottom strip is as
-tall as the text it carries, and an in-text mark has no strip to size.
+Design width of a dropdown strip standing at the control's right, which is where every face
+without a top icon has it. A strip below a top icon is as tall as the text it carries, and this
+width does not apply to it.
 
 ## ExpanderViewMode
 
@@ -343,7 +345,7 @@ the controls around it.
 ## InkColor::Spot
 
 The second accent, for what stands apart from the interface rather than answers to it:
-a brand mark, a run of emphasised text, the tint a tooltip carries. Held apart from the
+a brand mark, a run of emphasised text, the tint a hint carries. Held apart from the
 accent so that spending it sparingly is the theme's decision and not each caller's.
 
 ## InkColor::Yellow, Green, Blue, Red

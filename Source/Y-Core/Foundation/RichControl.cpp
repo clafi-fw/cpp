@@ -35,12 +35,12 @@ namespace ClaFi
         Control::getText(event);
     }
 
-    void RichControl::nestedGetTooltip(GetTooltipEvent& event)
+    void RichControl::nestedGetHint(GetHintEvent& event)
     {
-        event.text << m_tooltipText;
+        event.text << m_hintText;
         // The base emits the event and, if nothing produced text, adds the control's own
         // text when it is trimmed.
-        Control::nestedGetTooltip(event);
+        Control::nestedGetHint(event);
     }
 
 }

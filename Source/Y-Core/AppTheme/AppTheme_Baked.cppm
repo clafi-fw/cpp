@@ -8,8 +8,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // ONE CHANNEL OF A RULE, EVERY OPERATION CARRIED AT A WEIGHT SO TWO OF THEM HAVE A HALF WAY.
-    // See AppTheme
+    // ONE CHANNEL OF A RULE, EVERY OPERATION CARRIED AT A WEIGHT. See AppTheme
     export struct BakedValue
     {
     public:

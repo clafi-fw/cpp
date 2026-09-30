@@ -37,6 +37,7 @@ namespace ClaFi::Diagnostic
     using Grids::Dt::Cell;
     using Grids::Dt::Column;
     using Grids::Dt::Columns;
+    using Grids::Dt::ColumnWidth;
     using Grids::Dt::ColumnWidthMode;
     using Grids::Dt::Header;
     using Grids::Dt::MovingText;
@@ -64,7 +65,7 @@ namespace ClaFi::Diagnostic
 
     // What each row of the window grid is about.
     constexpr std::array<std::wstring_view, 6> k_windowRowNotes{
-        L"What kind of window it is: a Dialog, a Menu, a Tooltip or a Timer.",
+        L"What kind of window it is: a Dialog, a Menu, a Hint or a Timer.",
         L"The window's title, as its form last stated it.",
         L"The control at the root of the window, by its diagnostic name.",
         L"The surface painted, in pixels.",
@@ -131,8 +132,8 @@ namespace ClaFi::Diagnostic
         },
         m_caption{ body().add<Label>(
             Text{ TextStyleId::Section, L"Window under the pointer" },
-            OnEvent{ [](GetTooltipEvent& event) {
-                writeMethodTooltip(event);
+            OnEvent{ [](GetHintEvent& event) {
+                writeMethodHint(event);
             } }
         ) },
         // The Value column moves for the size alone, and the words beside it cost nothing to
@@ -141,8 +142,8 @@ namespace ClaFi::Diagnostic
             themeMetrics().page,
             UiElement::Section,
             GridLines::Horizontal,
-            OnEvent{ [this](GetCellTooltipEvent& event) {
-                writeWindowTooltip(event);
+            OnEvent{ [this](GetCellHintEvent& event) {
+                writeWindowHint(event);
             } },
             Columns{
                 Column{ Tag{ WindowColumn::Name } },
@@ -163,18 +164,21 @@ namespace ClaFi::Diagnostic
             themeMetrics().page,
             UiElement::Section,
             GridLines::Horizontal,
-            OnEvent{ [this](GetCellTooltipEvent& event) {
-                writeReadingTooltip(event);
+            OnEvent{ [this](GetCellHintEvent& event) {
+                writeReadingHint(event);
             } },
             Columns{
                 Column{ Tag{ Reading::Stats }, Text{ L"Stats" }, TextAlign::Right,
-                    ColumnWidthMode::Fixed, k_statsWidth, MovingText::Yes },
+                    ColumnWidthMode::Fixed, ColumnWidth{ k_statsWidth }, MovingText::Yes },
                 Column{ Tag{ Reading::Last }, Text{ L"Last" }, TextAlign::Right,
-                    ColumnWidthMode::Fixed, k_readingWidth, MovingText::Yes, VerticalTextAnchor::Center },
+                    ColumnWidthMode::Fixed, ColumnWidth{ k_readingWidth }, MovingText::Yes,
+                    VerticalTextAnchor::Center },
                 Column{ Tag{ Reading::Worst }, Text{ L"Worst" }, TextAlign::Right,
-                    ColumnWidthMode::Fixed, k_readingWidth, MovingText::Yes, VerticalTextAnchor::Center },
+                    ColumnWidthMode::Fixed, ColumnWidth{ k_readingWidth }, MovingText::Yes,
+                    VerticalTextAnchor::Center },
                 Column{ Tag{ Reading::Best }, Text{ L"Best" }, TextAlign::Right,
-                    ColumnWidthMode::Fixed, k_readingWidth, MovingText::Yes, VerticalTextAnchor::Center }
+                    ColumnWidthMode::Fixed, ColumnWidth{ k_readingWidth }, MovingText::Yes,
+                    VerticalTextAnchor::Center }
             },
             Header{},
             Rows{
@@ -188,7 +192,7 @@ namespace ClaFi::Diagnostic
             Orientation::Horizontal,
             Spacing{ 4.0f }
         ) },
-        // An icon-only button's words are its tooltip.
+        // An icon-only button's words are its hint.
         m_restartButton{ m_footerBar.add<ToolButton>(
             IconSize{ k_restartIconSize },
             ButtonViewMode::IconOnly,
@@ -209,8 +213,8 @@ namespace ClaFi::Diagnostic
         ) },
         m_chart{ body().add<FpsChart>(
             m_benchmark,
-            OnEvent{ [](GetTooltipEvent& event) {
-                writeChartTooltip(event);
+            OnEvent{ [](GetHintEvent& event) {
+                writeChartHint(event);
             } }
         ) },
         m_drive{ [this](RepeatEvent&) {
@@ -461,22 +465,22 @@ namespace ClaFi::Diagnostic
     }
 
     // Both columns of a row say the same thing: the row is one fact about the window.
-    void FpsPage::writeWindowTooltip(GetCellTooltipEvent& event) const
+    void FpsPage::writeWindowHint(GetCellHintEvent& event) const
     {
         if (&event.row() == m_windowGrid.header())
             return;
 
         const WindowRow row = event.row().tag().get<WindowRow>();
-        event.tooltip().placement = FormPlacement::Bottom;
+        event.hint().placement = FormPlacement::Bottom;
         event.text() << k_windowRowNotes[static_cast<std::size_t>(row)];
     }
 
     // A header cell says what its column holds; a data cell names its metric, says what it
     // measures, and then which reading of it this is.
-    void FpsPage::writeReadingTooltip(GetCellTooltipEvent& event) const
+    void FpsPage::writeReadingHint(GetCellHintEvent& event) const
     {
         const Reading reading = event.column().tag().get<Reading>();
-        event.tooltip().placement = FormPlacement::Bottom;
+        event.hint().placement = FormPlacement::Bottom;
         if (&event.row() == m_metricsGrid.header())
         {
             event.text() << k_headerNotes[static_cast<std::size_t>(reading)];
@@ -493,7 +497,7 @@ namespace ClaFi::Diagnostic
         };
     }
 
-    void FpsPage::writeMethodTooltip(GetTooltipEvent& event)
+    void FpsPage::writeMethodHint(GetHintEvent& event)
     {
         event.placement = FormPlacement::Bottom;
         event.text.clear();
@@ -507,7 +511,7 @@ namespace ClaFi::Diagnostic
         };
     }
 
-    void FpsPage::writeChartTooltip(GetTooltipEvent& event)
+    void FpsPage::writeChartHint(GetHintEvent& event)
     {
         event.placement = FormPlacement::Bottom;
         event.text.clear();

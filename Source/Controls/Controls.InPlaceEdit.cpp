@@ -63,18 +63,18 @@ namespace ClaFi::Controls
     {
         if (m_refusal.empty())
             return;
-        // Raised rather than waited for. A message is shown at once and goes as any tooltip goes,
+        // Raised rather than waited for. A message is shown at once and goes as any hint goes,
         // which is what puts the reason in front of a user who is looking at the keyboard;
-        // nestedGetTooltip below is what answers every hover after that, for as long as the value
+        // nestedGetHint below is what answers every hover after that, for as long as the value
         // is still refused.
         ContextMessage::show(*this, Text{ m_refusal });
     }
 
-    void EditBox::nestedGetTooltip(GetTooltipEvent& event)
+    void EditBox::nestedGetHint(GetHintEvent& event)
     {
         if (m_refusal.empty())
         {
-            TextBox::nestedGetTooltip(event);
+            TextBox::nestedGetHint(event);
             return;
         }
         // A refusal stands in front of anything else this box would say, and it is placed under
@@ -108,7 +108,7 @@ namespace ClaFi::Controls
     void EditBox::nestedPressDown(PressDownEvent& event)
     {
         // Clicking into the box to correct the value answers the refusal as much as typing
-        // does. The tooltip window is hidden by the form's own mouse handling; what has to go
+        // does. The hint window is hidden by the form's own mouse handling; what has to go
         // here is the box's memory of it, or every later hover reads the stale reason back.
         clearRefusal();
         TextBox::nestedPressDown(event);
@@ -135,7 +135,7 @@ namespace ClaFi::Controls
         if (m_refusal.empty())
             return;
         m_refusal.clear();
-        Tooltip::stopAndHide();
+        Hint::stopAndHide();
     }
 
     // SuggestionRow

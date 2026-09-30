@@ -101,8 +101,7 @@ namespace ClaFi::Controls
         LaneSizing sizing{ LaneSizing::Exact };
     };
 
-    // How large the popup list may become. Unconstrained by default: what stops a list
-    // growing is the room the placement found for it, and the bar comes up for what it cut.
+    // How large the popup list may become, unconstrained by default. See Controls
     export struct DropdownMaxSize : public DesignDimensions
     {
         using DesignDimensions::DesignDimensions;
@@ -134,7 +133,7 @@ namespace ClaFi::Controls
     protected:
         void paintIcon(PaintIconEvent&) override;
         void getText(GetTextEvent&) const override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedGetHint(GetHintEvent&) override;
         void nestedClick(ClickEvent&) override;
         ScaledDimensions calculateContent(AlignEvent& event) override {
             return Button::calculateContent(event);
@@ -315,10 +314,10 @@ namespace ClaFi::Controls
         m_comboBox.itemFaceText(m_comboBox.items()[m_itemIndex], event.text, event.phase());
     }
 
-    void ComboBoxItemControl::nestedGetTooltip(GetTooltipEvent& event)
+    void ComboBoxItemControl::nestedGetHint(GetHintEvent& event)
     {
-        event.text << m_comboBox.items()[m_itemIndex].tooltipText();
-        Button::nestedGetTooltip(event);
+        event.text << m_comboBox.items()[m_itemIndex].hintText();
+        Button::nestedGetHint(event);
     }
 
     void ComboBoxItemControl::nestedClick(ClickEvent& event)
@@ -472,9 +471,6 @@ namespace ClaFi::Controls
         {
             Text face{};
             itemFaceText(item, face, EventPhase::Calculate);
-            if (arrowPlacement() == ArrowPlacement::InText)
-                appendInTextMark(face);
-
             const CalculatedDimensions faceSize =
                 ComboBoxBaseClass::measureText(event, asked, face);
             result.x = std::max(result.x, faceSize.x);
@@ -505,10 +501,6 @@ namespace ClaFi::Controls
             // The face is one line. A label too wide for it fades at the end rather than breaking,
             // which a control of one line's height would collapse.
             WordWrap::No,
-            // What Auto means for a combo box. It comes before the caller's own arguments, so a
-            // caller that asks for a strip still gets one - Props takes the last match.
-            //ArrowPlacement::InText,
-
             // The size the combo box draws its own icon at.
             READ_PROPERTY(IconSize, s_defaultIconSize),
             // How the combo box lays that icon out against its text.

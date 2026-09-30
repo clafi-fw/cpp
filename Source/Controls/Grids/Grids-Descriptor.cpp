@@ -172,8 +172,8 @@ namespace ClaFi::Controls::Grids
             return;
         if (initiateHint)
         {
-            Tooltip::stopAndHide();
-            Tooltip::hoveredControlChanged();
+            Hint::stopAndHide();
+            Hint::hoveredControlChanged();
         }
     }
 

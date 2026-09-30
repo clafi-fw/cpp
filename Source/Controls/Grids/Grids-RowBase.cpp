@@ -207,12 +207,12 @@ namespace ClaFi::Controls::Grids
         }
     }
 
-    void RowBase::getCellTooltip(GetCellTooltipEvent& event)
+    void RowBase::getCellHint(GetCellHintEvent& event)
     {
         emitEvent(event);
         if (!event.propagationStopped())
         {
-            m_descriptor.m_owner.getCellTooltip(event);
+            m_descriptor.m_owner.getCellHint(event);
         }
     }
 
@@ -389,11 +389,11 @@ namespace ClaFi::Controls::Grids
     }
 
     // A CELL SAYS WHAT ITS COLUMN IS TOO NARROW TO SHOW, which is the over-text hint
-    // Control::nestedGetTooltip offers for a control's own text - see that one for the shape of the
+    // Control::nestedGetHint offers for a control's own text - see that one for the shape of the
     // answer. A row draws its cells rather than holding a control per cell, so the question is
     // asked of the row about one of its cells, and every part of the answer is worked out here
     // rather than read off what a paint recorded.
-    void RowBase::nestedGetTooltip(GetTooltipEvent& event)
+    void RowBase::nestedGetHint(GetHintEvent& event)
     {
         // ONLY THE ROW THE HOVER NAMES ANSWERS. The walk that asks this climbs from the control
         // under the pointer, so a row holding the hovered one is asked in its turn - and the
@@ -420,8 +420,8 @@ namespace ClaFi::Controls::Grids
         // the same way, and the anchor is set ahead so a placement against the cell needs
         // nothing more. Only a cell nobody spoke for goes on to repeat the words its column cut.
         event.anchorRect = cellRect;
-        GetCellTooltipEvent cellEvent{ *this, *hoveredColumn, event };
-        getCellTooltip(cellEvent);
+        GetCellHintEvent cellEvent{ *this, *hoveredColumn, event };
+        getCellHint(cellEvent);
         if (!event.text.empty())
             return;
 
@@ -447,7 +447,7 @@ namespace ClaFi::Controls::Grids
         if (!trimmed)
             return;
 
-        // Gathered into the tooltip's own buffer rather than copied into it: a Text holding an
+        // Gathered into the hint's own buffer rather than copied into it: a Text holding an
         // lvalue item list shares that list by reference, and this one's would be the local
         // above. Reached only once a hint is going up, so the second gather costs a hover.
         doGetCellText(*hoveredColumn, event.text);

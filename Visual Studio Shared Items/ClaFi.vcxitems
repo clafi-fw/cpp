@@ -79,6 +79,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Button.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CheckBox.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ColorSlider.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ColorSpelling.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ColorSpelling.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ComboBox.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ComboBox.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Expander.cppm" />
@@ -174,6 +176,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_StdSerializers.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_TextSerializers.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_TextSerializers.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_UiSerializers.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_UiSerializers.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Formats\Formats_ClaFi.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Formats\Formats_Json.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Formats\Formats_Xml.cppm" />
@@ -234,9 +238,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\EditHistory.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\ContextMessage.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\ContextMessage.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Tooltip.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Tooltip.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\TooltipForm.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Hint.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Hint.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\HintForm.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation_Facade.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Backend.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Backend.cpp" />
@@ -321,6 +325,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.BakedText.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Fmt.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Fmt.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.History.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.History.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Layout.cppm" />

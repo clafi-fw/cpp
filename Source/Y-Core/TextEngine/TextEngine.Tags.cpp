@@ -1,6 +1,8 @@
 module ClaFi.Core.TextEngine.Tags;
 
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.Dom_UiSerializers;
+import ClaFi.Core.DomEngine;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
@@ -233,7 +235,11 @@ namespace ClaFi
         [[nodiscard]] std::optional<FormatItem> colorOf(std::wstring_view arguments)
         {
             if (arguments.starts_with(L'#'))
-                return PushCustomColor{ Color{ arguments } };
+            {
+                Color color{};
+                Dom::ScalarSerializer<Color>::fromWString(arguments, color);
+                return PushCustomColor{ color };
+            }
 
             Ink ink;
             std::wstring_view rest = arguments;
@@ -295,7 +301,7 @@ namespace ClaFi
         {
             std::wstring result{ k_colorCommand };
             result += L' ';
-            result += push.color.toStr();
+            result += Dom::ScalarSerializer<Color>::toWString(push.color);
             return result;
         }
 

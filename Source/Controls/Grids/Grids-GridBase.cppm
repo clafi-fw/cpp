@@ -45,7 +45,7 @@ namespace ClaFi::Controls::Grids
         // The text an in-place edit was left with, on its way back to the cell's source. See Grids
         DECLARE_EVENT(AcceptCellTextEvent, OnAcceptCellText, onAcceptCellText)
         // The hint for one cell, asked while the pointer rests on it. See Grids
-        DECLARE_EVENT(GetCellTooltipEvent, OnGetCellTooltip, onGetCellTooltip)
+        DECLARE_EVENT(GetCellHintEvent, OnGetCellHint, onGetCellHint)
         // Raised when the new-item row asks for an item. See Grids
         DECLARE_EVENT(NewItemEvent, OnNewItem, onNewItem)
     public:

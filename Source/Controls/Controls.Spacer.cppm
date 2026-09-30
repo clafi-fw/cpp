@@ -16,12 +16,7 @@ namespace ClaFi::Controls
         Spacer(const CreateParams& params, float, float);
     };
 
-    // THE ROOM NOBODY ELSE CLAIMED. It measures the size it is given and takes what its lane
-    // has over, so what stands after it sits at the lane's end - the commands under a strip, the
-    // answer at the foot of a page. Two of them either side of an item centre it, and two at one
-    // end share what is left evenly. A lane is only as long as its stack was granted, so one in a
-    // stack that wraps, or in a stack nothing stretched, has nothing to take - and the size it
-    // was given is the gap that is left there. See Control::fillsLane
+    // THE ROOM NOBODY ELSE CLAIMED, so what stands after it sits at the lane's end. See Controls
     export class FlexSpacer : public SpacerBase
     {
     public:

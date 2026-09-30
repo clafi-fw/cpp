@@ -77,8 +77,7 @@ namespace ClaFi::PlatformImplementation::Windows
         LRESULT result;
     };
 
-    // What the manager's window procedure delivers to - every window it made, by the pointer in
-    // the window's user data - and what a message window hands its messages on to. See Platform
+    // WHAT THE MANAGER'S WINDOW PROCEDURE DELIVERS TO. See Platform
     export class IMessageSink
     {
     public:
@@ -95,8 +94,7 @@ namespace ClaFi::PlatformImplementation::Windows
     // being inside the window rect, and this band of the shadow is drawn by the window for that.
     export constexpr int k_resizeGrab = 8;
 
-    // A window's ordinary geometry in screen pixels, whether it stands maximized and whether it is
-    // held above the others. See Platform
+    // A window's ordinary geometry, and whether it is maximized and held on top. See Platform
     export struct NormalPlacement
     {
         IntRect geometry{};
@@ -207,11 +205,7 @@ namespace ClaFi::PlatformImplementation::Windows
         std::optional<NormalPlacement> m_normalPlacement{};
     };
 
-    // A MESSAGE-ONLY WINDOW: an HWND of the message class under HWND_MESSAGE, never shown, with
-    // none of what a platform window has - no frame, no placement, no alpha - so it stands on
-    // WindowBase alone. The timers tick through one and the clipboard listens on one; its
-    // messages go to the sink it is given, and what the sink leaves unhandled goes to the
-    // system's default. See Platform
+    // A MESSAGE-ONLY WINDOW, never shown; its messages go to the sink it is given. See Platform
     export class MessageWindow : public WindowBase, public IMessageSink
     {
     public:
@@ -225,9 +219,7 @@ namespace ClaFi::PlatformImplementation::Windows
         IMessageSink* m_sink{ nullptr };
     };
 
-    // WHAT STANDS BEHIND IPlatformServices ON WIN32. The one platform of a Windows build derives
-    // from this, so a service handed the platform under its neutral name casts to it here and
-    // asks for a message window. See Platform
+    // WHAT STANDS BEHIND IPlatformServices ON WIN32: a message window. See Platform
     export class IMessageWindowFactory : public IPlatformServices
     {
     public:
@@ -492,7 +484,7 @@ namespace ClaFi::PlatformImplementation::Windows
         DWORD flags = 0;
         switch (m_Role)
         {
-        case WindowRole::Tooltip:
+        case WindowRole::Hint:
             [[fallthrough]];
         case WindowRole::Menu:
             flags = SW_SHOWNA;
@@ -1095,9 +1087,9 @@ namespace ClaFi::PlatformImplementation::Windows
             className = k_popupClassName;
             exStyle |= WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW;
             break;
-        case WindowRole::Tooltip:
+        case WindowRole::Hint:
             className = k_popupClassName;
-            // NOT TOPMOST. A tooltip window is OWNED by the window whose control it is about -
+            // NOT TOPMOST. A hint window is OWNED by the window whose control it is about -
             // every form builds one - and an owned popup always stands above its owner, which is
             // the whole of what a hint needs. Topmost is what an unowned window needed instead,
             // and it put the hint over every other application on the screen as well.

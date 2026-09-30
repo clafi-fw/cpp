@@ -84,7 +84,7 @@ namespace ClaFi::Controls
     protected:
         void getText(GetTextEvent&) const override;
         // The signature and the hint beside the list. See Controls#completionlist
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedGetHint(GetHintEvent&) override;
         void nestedClick(ClickEvent&) override;
     private:
         CompletionStack& m_stack;

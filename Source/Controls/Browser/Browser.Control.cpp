@@ -129,7 +129,7 @@ namespace ClaFi::Browser
     {
         // Connected here rather than given to the button as a construction property: MSVC rejects
         // a this-capturing lambda in a default member initializer.
-        m_closeButton.onGetTooltip([this](GetTooltipEvent& event) {
+        m_closeButton.onGetHint([this](GetHintEvent& event) {
             event.text << L"Close " << InkWell::textInk(InkGrade::Muted);
             m_pageData->paintText(event.text);
             event.placement = FormPlacement::Mouse;
@@ -187,9 +187,9 @@ namespace ClaFi::Browser
         return &m_browserControl->m_breadCrumbArea;
     }
 
-    void BrowserTab::nestedGetTooltip(GetTooltipEvent& event)
+    void BrowserTab::nestedGetHint(GetHintEvent& event)
     {
-        Tab::nestedGetTooltip(event);
+        Tab::nestedGetHint(event);
         event.placement = FormPlacement::Bottom;
     }
 

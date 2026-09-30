@@ -138,8 +138,8 @@ namespace ClaFi
     };
 
     export class PlaceHolderText : DERIVED_TEXT_CLASS
-    // The text a control offers as its tooltip.
-    export class TooltipText : DERIVED_TEXT_CLASS
+    // The text a control offers as its hint.
+    export class HintText : DERIVED_TEXT_CLASS
     export class HeaderText : DERIVED_TEXT_CLASS
 
 #undef DERIVED_TEXT_CLASS

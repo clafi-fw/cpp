@@ -309,7 +309,7 @@ without it.</p>
 <code>empty()</code>, <code>clear()</code>, <code>hash()</code>, <code>hasFlexSpace()</code>,
 <code>anchorRange(name)</code>, and the editing calls <code>replaceText</code> and
 <code>selectedText</code>.
-<code>PlaceHolderText</code> and <code>TooltipText</code> are <code>Text</code> under another name,
+<code>PlaceHolderText</code> and <code>HintText</code> are <code>Text</code> under another name,
 so a control can tell which of its texts it was handed by the type alone.</p>
 
 <h3 id="fmt">Fmt and arguments</h3>
@@ -897,14 +897,14 @@ stands under it. While the pointer is on a link, the link's hint stands in for t
 <p>In a box the user types into, a muted line follows: <em>Ctrl+click to follow</em>. A plain click
 there places the caret, and nothing else on screen says the link can be followed at all.</p>
 
-<p><code>OnGetLinkTooltip</code> is raised first. Its event carries <code>target</code>,
-<code>range</code> - the text the link covers - and <code>tooltip</code>, the hint itself with its
-placement and anchor already stated. What a handler writes into <code>tooltip.text</code> is the
+<p><code>OnGetLinkHint</code> is raised first. Its event carries <code>target</code>,
+<code>range</code> - the text the link covers - and <code>hint</code>, the hint itself with its
+placement and anchor already stated. What a handler writes into <code>hint.text</code> is the
 whole of the hint, and the box then writes nothing.</p>
 
-<pre><code>box.<span class="fn">onGetLinkTooltip</span>([](<span class="tp">GetLinkTooltipEvent</span>&amp; event) {
+<pre><code>box.<span class="fn">onGetLinkHint</span>([](<span class="tp">GetLinkHintEvent</span>&amp; event) {
     <span class="kw">if</span> (event.target.<span class="fn">starts_with</span>(<span class="st">L"clafi:"</span>))
-        event.tooltip.text &lt;&lt; <span class="st">L"Opens the "</span> &lt;&lt; event.target.<span class="fn">substr</span>(6) &lt;&lt; <span class="st">L" page"</span>;
+        event.hint.text &lt;&lt; <span class="st">L"Opens the "</span> &lt;&lt; event.target.<span class="fn">substr</span>(6) &lt;&lt; <span class="st">L" page"</span>;
     });</code></pre>
 
 <div class="info">

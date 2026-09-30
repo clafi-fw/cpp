@@ -292,7 +292,7 @@ namespace ClaFi
         ) },
         m_autoButton{ m_themeRow.add<ToolButton>(
             L"Auto",
-            TooltipText{ L"Follow system" },
+            HintText{ L"Follow system" },
             ButtonViewMode::IconOnly,
             k_themeIconSize,
             OnPaintIcon{ Icons::SunMoonIcon::paint },
@@ -340,7 +340,7 @@ namespace ClaFi
             MinSize{ k_sliderWidth, 0.0f },
             MaxSize{ k_sliderWidth, k_maxFloat },
             ScrollButtons::No,
-            TooltipText{ L"Scales the UI on top of the system scale" }
+            HintText{ L"Scales the UI on top of the system scale" }
         ) },
         m_zAnimationRow{ m_appearanceGroup.add<StackPanel>(
             Orientation::Horizontal,
@@ -365,7 +365,7 @@ namespace ClaFi
             MaxSize{ k_sliderWidth, k_maxFloat },
             ScrollButtons::No,
             FineAdjust::No,
-            TooltipText{ L"How far controls move in depth under the pointer" }
+            HintText{ L"How far controls move in depth under the pointer" }
         ) },
         m_windowSection{ m_options.addSection(L"Main Window") },
         m_windowGroup{ m_windowSection.body() },
@@ -375,7 +375,7 @@ namespace ClaFi
         // above and below is the theme's, which is what holds the row's height.
         m_alwaysOnTop{ m_windowGroup.add<CheckBox>(
             L"Always on top",
-            TooltipText{ L"Keep above others" },
+            HintText{ L"Keep above others" },
             Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
         ) },
         m_graphicsSection{ m_options.addSection(L"Graphics") },
@@ -454,7 +454,7 @@ namespace ClaFi
             appContext().gpuAcceleration()->set(!appContext().usingGpu());
             m_gpuAcceleration.invalidateState();
         });
-        m_gpuAcceleration.onGetTooltip([](GetTooltipEvent& event) {
+        m_gpuAcceleration.onGetHint([](GetHintEvent& event) {
             event.text << Fmt{
                 L"[b]On[/b][tabto 26] The windows are drawn through the graphics card\n"
                 L"[b]Off[/b][tabto 26] They are drawn on the CPU instead"
@@ -479,7 +479,7 @@ namespace ClaFi
             m_keepSettings.invalidateState();
         });
         // Unticked, what the answer is for. Ticked, where the settings are kept.
-        m_keepSettings.onGetTooltip([this](GetTooltipEvent& event) {
+        m_keepSettings.onGetHint([this](GetHintEvent& event) {
             if (appContext().configFolderExists())
             {
                 event.text << L"Settings are stored in";

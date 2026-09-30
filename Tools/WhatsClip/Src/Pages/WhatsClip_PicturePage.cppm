@@ -2,6 +2,7 @@ export module ClaFi.Tools.WhatsClip.PicturePage;
 
 import ClaFi.Tools.WhatsClip.Page;
 
+import ClaFi.Controls.ColorSpelling;
 import ClaFi.Controls.PictureView;
 import ClaFi.Controls.SplitButton;
 import ClaFi.Controls.Slider;
@@ -20,15 +21,6 @@ import ClaFi.StdLib;
 namespace ClaFi::Tools::WhatsClip
 {
     using namespace Controls;
-
-    // How the readout writes the pixel's colour, and what a copy takes.
-    enum class ColorSpelling
-    {
-        HexRgb,       // 5F3929
-        HexBgr,       // 29395F - the order a COLORREF is written in
-        DecimalRgb,   // 95 57 41
-        CssHex        // #5F3929
-    };
 
     // THE PIXELS A FORMAT DECODES TO. The strip says how many; the corner reads the selected
     // pixel's place, then its colour as a swatch and a value whose digits wear their channel's
@@ -62,8 +54,6 @@ namespace ClaFi::Tools::WhatsClip
         // corner the readout sits in.
         void openEditor(Control& owner);
         [[nodiscard]] Text colorText(std::optional<Color>) const;
-        [[nodiscard]] static std::wstring spell(Color, ColorSpelling);
-        [[nodiscard]] static std::wstring_view nameOf(ColorSpelling);
         [[nodiscard]] static float zoomOf(float position);
         [[nodiscard]] static float positionOf(float zoom);
     private:

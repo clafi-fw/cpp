@@ -700,11 +700,11 @@
             <code>FormWindow</code> made from what it holds - the windows manager on Win32, the display on
             Wayland - and hands that to the window, so no window reaches for it by any other route. A popup is
             handed its parent's window the same way, through the parent form. <code>WindowRole</code> says what
-            kind of window: <code>Dialog</code>, <code>Menu</code> or <code>Tooltip</code>, and nothing else.</p>
+            kind of window: <code>Dialog</code>, <code>Menu</code> or <code>Hint</code>, and nothing else.</p>
 
             <h3 id="window-opacity">Window Opacity</h3>
             <p>A window's opacity is a byte on its <code>IPlatformWindow</code> - <code>alpha()</code> and
-            <code>setAlpha(ColorByte)</code> - applied to the whole window at once. A tooltip fades in and out
+            <code>setAlpha(ColorByte)</code> - applied to the whole window at once. A hint fades in and out
             this way, stepping the byte on <code>AnimationSlots::formAlpha</code>. Each platform applies the
             value where it costs least:</p>
             <table>
@@ -1031,7 +1031,7 @@ listener = platform.<span class="fn">createMessageWindow</span>();
                 <tr><td>Any <code>UiTimer</code></td><td>The platform's timer manager, through
                     <code>PlatformTimer::stop</code>.</td>
                     <td>Every <code>UiTimer</code> is owned by something the application or its context owns - a
-                    control, a form's tooltip, the animation controller, a directory watch - and the platform
+                    control, a form's hint, the animation controller, a directory watch - and the platform
                     outlives all of them. The hook finding no manager is <code>unreachable</code>.</td></tr>
                 <tr><td>The themes manager's <code>DirWatch</code></td><td>The platform's watch manager.</td>
                     <td><code>ApplicationBase</code>'s members go before the platform.</td></tr>

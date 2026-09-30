@@ -1,14 +1,14 @@
-export module ClaFi.Core.Foundation :TooltipForm;
+export module ClaFi.Core.Foundation :HintForm;
 
 // A partition rather than a module beside Foundation. Control.cppm says
-// `friend class TooltipLabel;`, which declares TooltipLabel attached to
+// `friend class HintLabel;`, which declares HintLabel attached to
 // ClaFi.Core.Foundation - so the class has to be defined in that same module, not in a
-// second one that imports it. Nothing outside Foundation names TooltipForm: Tooltip.cpp
+// second one that imports it. Nothing outside Foundation names HintForm: Hint.cpp
 // and Form.cpp import it, and both are implementation units of this module.
 import :Control;
 import :Form;
 import :WithTextLayout;
-import :Tooltip;
+import :Hint;
 import :ContextMessage;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.AppTheme_AnimationSlots;
@@ -20,39 +20,39 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    export class TooltipForm;
+    export class HintForm;
 
     // Holding its own layout rather than sharing the engine's cache. A hint over a slider being
     // dragged says something different on every frame of the drag, and a text nothing says twice
     // is a cache entry nothing will ever hit again - see WithTextLayout.
-    class TooltipLabel : public WithTextLayout<FormControlBase>
+    class HintLabel : public WithTextLayout<FormControlBase>
     {
-        friend TooltipForm;
+        friend HintForm;
     public:
         using WithTextLayout<FormControlBase>::WithTextLayout;
     protected:
         void getText(GetTextEvent&) const override;
         [[nodiscard]] float lineBreakWidth() const override { return m_breakWidth; }
-        // Asked no wider than Tooltip::k_lineWidth, unless it repeats lines broken elsewhere.
+        // Asked no wider than Hint::k_lineWidth, unless it repeats lines broken elsewhere.
         CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
         ScaledDimensions calculateContent(AlignEvent& event) override { return FormControlBase::calculateContent(event); }
     private:
         Control* m_control{ nullptr };
         // The width the words this hint repeats were broken at, and zero for a hint repeating
-        // none - see TooltipForm::setControl.
+        // none - see HintForm::setControl.
         float m_breakWidth{ 0.0f };
     };
 
-    export class TooltipForm : public Form<TooltipLabel>
+    export class HintForm : public Form<HintLabel>
     {
-        friend Tooltip;
-        friend TooltipLabel;
+        friend Hint;
+        friend HintLabel;
     public:
-        explicit TooltipForm(FormBase& ownerForm);
-        ~TooltipForm() override;
+        explicit HintForm(FormBase& ownerForm);
+        ~HintForm() override;
         Control* control() { return content().m_control; }
         void setControl(Control* control);
-        void setControl(Control&, const GetTooltipEvent&);
+        void setControl(Control&, const GetHintEvent&);
         void startAlphaAnimation();
         bool stillVisible() const;
         bool hideOnUserInput() const { return m_hideOnUserInput; }
@@ -66,13 +66,13 @@ namespace ClaFi
         //
         // THEY OUTLIVE THE CONTROL BEING CLEARED, because the pixels do. A window taken down goes
         // out over an alpha animation and is painted the whole way, and these are the words every
-        // one of those paints repeats - see TooltipLabel::getText.
+        // one of those paints repeats - see HintLabel::getText.
         [[nodiscard]] const Text& shownText() const { return m_shownText; }
     protected:
         void updateVisibility() override;
         // The control the hint is about, which the window goes along with as a popup does.
         [[nodiscard]] const Control* placementTarget() const override
-            { return TooltipLabel::m_control; }
+            { return HintLabel::m_control; }
         // Where the control comes to rest, which is where a hint about it is placed.
         [[nodiscard]] FloatRect placementTargetBounds(const Control&) const override;
     private:
@@ -80,7 +80,7 @@ namespace ClaFi
     private:
         bool m_hideOnUserInput{ true };
         Text m_measuredText{};
-        // Written by TooltipLabel::getText, which is const because asking a control for its text
+        // Written by HintLabel::getText, which is const because asking a control for its text
         // does not change the label. What that answer was is a record of the window rather than
         // state of the label, so the const does not propagate to it.
         mutable Text m_shownText{};
@@ -90,11 +90,11 @@ namespace ClaFi
     //-------------------------------------------------------------------------
 
 
-    // TooltipLabel
+    // HintLabel
 
-    void TooltipLabel::getText(GetTextEvent& event) const
+    void HintLabel::getText(GetTextEvent& event) const
     {
-        const TooltipForm& form = static_cast<const TooltipForm&>(this->form());
+        const HintForm& form = static_cast<const HintForm&>(this->form());
 
         // A WINDOW THAT HAS BEEN LET GO OF KEEPS THE WORDS IT WENT OUT WITH. It goes on being
         // painted for as long as its alpha runs down, and every one of those paints asks again -
@@ -116,15 +116,15 @@ namespace ClaFi
             return;
         }
 
-        GetTooltipEvent tooltipEvent{ form.context(), *m_control, event.text, event.phase() };
-        tooltipEvent.hideOnUserInput = form.m_hideOnUserInput;
-        tooltipEvent.placement = form.placement();
+        GetHintEvent hintEvent{ form.context(), *m_control, event.text, event.phase() };
+        hintEvent.hideOnUserInput = form.m_hideOnUserInput;
+        hintEvent.placement = form.placement();
         event.text.clear();
-        // Asked in the same order the tooltip asked it in when it decided there was something to
+        // Asked in the same order the hint asked it in when it decided there was something to
         // show. Asked of the control alone, a message standing about this control would be laid
-        // out as the control's own tooltip and the window would show the wrong words.
-        if (!ContextMessage::answer(*m_control, tooltipEvent))
-            m_control->nestedGetTooltip(tooltipEvent);
+        // out as the control's own hint and the window would show the wrong words.
+        if (!ContextMessage::answer(*m_control, hintEvent))
+            m_control->nestedGetHint(hintEvent);
         // WHAT A PAINT PRODUCED IS WHAT THE FADE REPEATS. A calculation is a measurement and is
         // answered with the room a later value will need, so recording that one would send the
         // window out saying a line it never showed.
@@ -132,24 +132,24 @@ namespace ClaFi
             form.m_shownText = event.text;
     }
 
-    CalculatedDimensions TooltipLabel::measureText(AlignEvent& event, ScaledDimensions asked,
+    CalculatedDimensions HintLabel::measureText(AlignEvent& event, ScaledDimensions asked,
         const Text& text)
     {
         // A hint the screen alone bounds runs a long sentence out as one line from the pointer to
         // the edge. The window is then sized to the widest line, so a short hint stays short.
         if (m_breakWidth == 0.0f)
-            asked.x = std::min(asked.x, Tooltip::k_lineWidth * event.scaleFactor());
+            asked.x = std::min(asked.x, Hint::k_lineWidth * event.scaleFactor());
         return WithTextLayout<FormControlBase>::measureText(event, asked, text);
     }
 
-    // TooltipForm
+    // HintForm
 
-    TooltipForm::TooltipForm(FormBase& ownerForm)
+    HintForm::HintForm(FormBase& ownerForm)
         :
         Form{
             ownerForm.appContext(),
             // The pointer goes through the window to whatever is behind it.
-            WindowRole::Tooltip,
+            WindowRole::Hint,
             // THE FORM IT STANDS OVER, NAMED DIRECTLY. Every other popup names the CONTROL it was
             // opened on and its form is read off that; this one is a member of the form it belongs
             // to and is built with it, before it is about any control at all. Owning the window to
@@ -159,13 +159,13 @@ namespace ClaFi
             // And the label under it is not pointed at either. Said in its own right rather than
             // taken from the window: the two are separate answers, and this one is the label's.
             Interactivity::None,
-            UiElement::Tooltip,
+            UiElement::Hint,
             ownerForm.appContext().themeMetrics().secondaryWindow,
             ownerForm.appContext().themeMetrics().secondaryWindowShadow
         }
     {
         window().setAlpha(0);
-        // A tooltip is sized by what is in it, and its text changes under it: the same control
+        // A hint is sized by what is in it, and its text changes under it: the same control
         // answers differently as its state moves, and a control it never left can hand it a
         // longer line than the window it is already showing in. Without this, an alignment lays
         // that line out inside the old bounds and it is cut; with it, every alignment is a
@@ -173,12 +173,12 @@ namespace ClaFi
         setAutoFit(AutoFit::Yes);
     }
 
-    TooltipForm::~TooltipForm()
+    HintForm::~HintForm()
     {
         appContext().animator().stop(this);
     }
 
-    void TooltipForm::setControl(Control* control)
+    void HintForm::setControl(Control* control)
     {
         content().m_control = control;
         if (!control)
@@ -194,7 +194,7 @@ namespace ClaFi
         content().invalidate();
     }
 
-    void TooltipForm::setControl(Control& control, const GetTooltipEvent& event)
+    void HintForm::setControl(Control& control, const GetHintEvent& event)
     {
         setControl(&control);
         // Taken here too - a rect stated equal to the last one records nothing.
@@ -213,7 +213,7 @@ namespace ClaFi
         invalidateAlign();
     }
 
-    void TooltipForm::startAlphaAnimation()
+    void HintForm::startAlphaAnimation()
     {
         const float currentValue = static_cast<float>(window().alpha());
         const float targetValue = static_cast<float>(visible()) * m_alpha;
@@ -223,12 +223,12 @@ namespace ClaFi
             });
     }
 
-    bool TooltipForm::stillVisible() const
+    bool HintForm::stillVisible() const
     {
         return window().alpha();
     }
 
-    void TooltipForm::updateVisibility()
+    void HintForm::updateVisibility()
     {
         // nope! Form::updateVisibility();
         if (visible())
@@ -237,7 +237,7 @@ namespace ClaFi
         window().show();
     }
 
-    FloatRect TooltipForm::placementTargetBounds(const Control& target) const
+    FloatRect HintForm::placementTargetBounds(const Control& target) const
     {
         // A glide carries the control there without moving the place, so the hint stands still.
         FloatRect bounds = target.boundsInForm();

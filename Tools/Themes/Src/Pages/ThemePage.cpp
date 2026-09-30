@@ -87,7 +87,7 @@ namespace ThisApp
                 case UiElement::Accent:
                     return L"Focus, emphasis, on state";
                 case UiElement::Spot:
-                    return L"Brand, highlights, tooltips";
+                    return L"Brand, highlights, hints";
                 default:
                     break;
             }
@@ -309,7 +309,7 @@ namespace ThisApp
     void ThemePage::showEditTheme()
     {
         // we're passing propagateChanges = false to trackingValueChanged,
-        // so it doesn't trigger the thumb tooltip unnecessary
+        // so it doesn't trigger the thumb hint unnecessary
         m_anchorSlider.trackingValueChanged(false);
 
         m_darkModeFloorSlider.setPosition(editColors().darkModeFloor, false);

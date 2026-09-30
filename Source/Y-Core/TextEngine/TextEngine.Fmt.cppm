@@ -48,14 +48,7 @@ namespace ClaFi
     {
         tb << *static_cast<const T*>(p);
     }
-    void dispatchColor(Text& tb, std::wstring_view spec, const void* p)
-    {
-        const ClaFi::Color& c = *static_cast<const ClaFi::Color*>(p);
-        if (spec == L"push_color")
-            tb << PushCustomColor{ c };
-        else
-            tb << c.toStr();
-    }
+    void dispatchColor(Text&, std::wstring_view spec, const void* p);
 
     // The spec is the extent behind a placeholder word: "{} 24,24,20" from [icon {} 24,24,20],
     // "icon 18,18" from {icon 18,18}, and nothing at all from a bare {}.

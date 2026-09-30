@@ -27,9 +27,7 @@ namespace ClaFi
         Wait
     };
 
-    // The cursor as the platform holds it - a handle on Win32, a shape number on Wayland -
-    // answered by Platform::cursor and taken back by Platform::setCursor. Opaque above the
-    // platform layer, and never made by hand.
+    // The cursor as the platform holds it, opaque above the platform layer. See UI-Types
     export struct Cursor
     {
         std::uintptr_t value{ 0 };
@@ -63,12 +61,10 @@ namespace ClaFi
     export enum class WindowRole {
         Dialog,
         Menu,       // menus, dropdowns, date pickers
-        Tooltip
+        Hint
     };
 
-    // The platform, as a service standing below the context sees it: a name and nothing else.
-    // Each platform layer states what stands behind it, and the service's half for that
-    // platform casts to it. See UI-Types
+    // The platform, as a service standing below the context sees it: a name. See UI-Types
     export class IPlatformServices
     {
     public:
@@ -470,7 +466,7 @@ namespace ClaFi
         Mouse,
         Right   // beside the anchor, off its right edge and level with its top
     };
-    export using TooltipPlacement = FormPlacement;
+    export using HintPlacement = FormPlacement;
 
     // Which way a form's size and its content settle against each other. See UI-Types
     export enum class AutoFit
@@ -705,22 +701,6 @@ namespace ClaFi
         Yes
     };
 
-    // Which side of the control a secondary part sits on.
-    export enum class SecondaryEdge
-    {
-        Right,
-        Bottom
-    };
-
-    // Where the dropdown mark sits, and whether the control has a strip of its own. See UI-Types
-    export enum class ArrowPlacement
-    {
-        Auto,        // resolved from the view mode: a top icon gives Bottom, anything else Right
-        InText,      // the mark rides in the control's own text; there is no separate strip
-        Right,       // a strip down the right hand side
-        Bottom       // a strip across the bottom
-    };
-
     // Where the dropdown mark points with the popup closed and with it open. See UI-Types
     export struct DropdownMarkTurn
     {
@@ -728,7 +708,7 @@ namespace ClaFi
         float open{ ChevronTurn::up };
     };
 
-    // Design width of the dropdown strip, which only ArrowPlacement::Right reads. See UI-Types
+    // Design width of a dropdown strip standing at the control's right. See UI-Types
     export struct DropdownWidth
     {
         float value{ 18.0f };

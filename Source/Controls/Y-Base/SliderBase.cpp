@@ -162,9 +162,9 @@ namespace ClaFi::Controls
         parent()->paintThumb(params);
     }
 
-    void SliderBase::Thumb::nestedGetTooltip(GetTooltipEvent& event)
+    void SliderBase::Thumb::nestedGetHint(GetHintEvent& event)
     {
-        parent()->getThumbTooltip(event);
+        parent()->getThumbHint(event);
     }
 
     void SliderBase::Thumb::nestedPressDown(PressDownEvent& event)

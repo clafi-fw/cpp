@@ -62,7 +62,7 @@ namespace ClaFi::Showcase
         void traceMetrics();
         void writeMetrics(GetTextEvent&);
         [[nodiscard]] WindowReadings windowReadings() const;
-        void writeMetricsTooltip(GetTooltipEvent&);
+        void writeMetricsHint(GetHintEvent&);
     private:
         // The config the picked scene theme is read out of and written back into.
         ApplicationBase& m_application;

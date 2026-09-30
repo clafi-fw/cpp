@@ -115,7 +115,7 @@ namespace ClaFi::Controls
             void getControlState(GetStateEvent&) const override;
             void adjustPaint(AdjustPaintEvent&) override;
             void paintSurface(PaintEvent&) override;
-            void nestedGetTooltip(GetTooltipEvent&) override;
+            void nestedGetHint(GetHintEvent&) override;
             void nestedPressDown(PressDownEvent&) override;
             void nestedDrag(DragEvent&) override;
         private:
@@ -214,7 +214,7 @@ namespace ClaFi::Controls
         virtual void adjustThumbPaint(AdjustPaintEvent&) = 0;
         virtual void paintButtonMark(PaintEvent&, float size, ScrollDirection) = 0;
         virtual void paintThumb(PaintEvent&) = 0;
-        virtual void getThumbTooltip(GetTooltipEvent&) {}
+        virtual void getThumbHint(GetHintEvent&) {}
         virtual void thumbPressDown() {}
         void controlFeedBack();
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;

@@ -245,7 +245,7 @@ what it is until its first state query.
 ## Shortcut
 
 A key and the modifiers held with it. An empty shortcut is one an action does not have:
-no key matches it, and it contributes nothing to a tooltip.
+no key matches it, and it contributes nothing to a hint.
 
 ## ActionEventBase
 
@@ -278,14 +278,14 @@ nothing here: neither the viewport nor a system clip rect narrows the walk, and 
 control the view is scrolled away from is visited like any other. For a walk that is
 about document order rather than about what is on screen.
 
-## Tooltip
+## Hint
 
-Tooltip is an internal class used by the framework - never use it directly
+Hint is an internal class used by the framework - never use it directly
 
 ONE PER FORM, BUILT WITH IT. The window a hint shows in stands over the window whose control
 the hint is about, and it is OWNED by that window - which is what keeps it above that window
 without being told anything about the rest of the screen. A form is the one thing that knows
-which window that is, so a form is what a tooltip is a member of.
+which window that is, so a form is what a hint is a member of.
 
 WHAT A HINT IS ABOUT FOLLOWS THE CONTROLLER. While the mouse drives it is the control under the
 pointer, and the hover moving is what takes a hint down and starts the wait for the next. While
@@ -297,7 +297,7 @@ standing for it. When the mouse takes over, the hover has its say at once, where
 was left - unless it rests on the very item the focus is on, where nothing changed hands. A hint
 already up about the control pointed at is left standing.
 
-AT MOST ONE IS IN PLAY. Which form's tooltip that is follows the control pointed at. The calls
+AT MOST ONE IS IN PLAY. Which form's hint that is follows the control pointed at. The calls
 that are about whatever is on screen rather than about a form - the user pressed a key, a
 control is being destroyed - are static and reach it through s_current.
 
@@ -371,24 +371,24 @@ control, so its slot is what tells it from the other one.
 ## ContextMessage
 
 Something said about a control without stopping the user: why the value they typed
-was refused, that the file they asked for was written. It is shown in the tooltip window,
+was refused, that the file they asked for was written. It is shown in the hint window,
 under the control it is about.
 
-A MESSAGE IS RAISED BY SOMETHING THE USER DID. That is what tells it from a tooltip,
+A MESSAGE IS RAISED BY SOMETHING THE USER DID. That is what tells it from a hint,
 which is about whatever the pointer happens to be on. It is placed under its control for
 the same reason: it answers an action, and the hand that took that action left the pointer
 wherever it happened to be.
 
 IT LIVES EXACTLY AS LONG AS THE WINDOW SHOWING IT. The pointer moving to another
 control takes it down, and so does anything the user does - the same two things that take
-a tooltip down - and it is forgotten as it goes, so there is nothing left to point at it
+a hint down - and it is forgotten as it goes, so there is nothing left to point at it
 for again. A message raised while the pointer rests on the control it is about therefore
 stands for as long as the pointer rests there, and needs no time of its own.
 
-ONE AT A TIME. There is one tooltip window, so a second message takes the place of
+ONE AT A TIME. There is one hint window, so a second message takes the place of
 the first rather than queueing behind it.
 
-WHAT A CONTROL HAS TO SAY EVERY TIME IT IS ASKED belongs in its nestedGetTooltip, not
+WHAT A CONTROL HAS TO SAY EVERY TIME IT IS ASKED belongs in its nestedGetHint, not
 here. A message is what is said once, at the moment it becomes true. A control that must
 go on saying it answers for itself as well - see EditBox and the value it has refused.
 
@@ -468,7 +468,7 @@ NOTHING SUBSCRIBES. A control reads the factor while it paints, through
 handed down the chain. The form cannot know which controls read it, so every step of the
 animation invalidates the whole window.
 
-A POPUP READS THE WINDOW IT STANDS ON. A Menu or Tooltip window never takes the focus -
+A POPUP READS THE WINDOW IT STANDS ON. A Menu or Hint window never takes the focus -
 `WS_EX_NOACTIVATE` on Win32, and an `xdg_popup` has no ACTIVATED state - so a popup answers its
 owner's factor, up to the first Dialog. A Dialog answers its own, owned or not. A Wayland
 layer-shell Dialog, placed `ScreenRight`, is sent no ACTIVATED state and reads 0.

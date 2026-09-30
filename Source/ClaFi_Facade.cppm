@@ -12,6 +12,7 @@ export import ClaFi.Controls.Button;
 export import ClaFi.Controls.CheckBox;
 export import ClaFi.Controls.CodeBox;
 export import ClaFi.Controls.ColorSlider;
+export import ClaFi.Controls.ColorSpelling;
 export import ClaFi.Controls.ComboBox;
 export import ClaFi.Controls.Expander;
 export import ClaFi.Controls.DialogTitle;

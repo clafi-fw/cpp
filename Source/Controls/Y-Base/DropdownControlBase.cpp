@@ -17,7 +17,8 @@ namespace ClaFi::Controls
 {
     // DropdownPart
 
-    DropdownPart::DropdownPart(const CreateParams& params, DropdownControlBase& owner, ArrowPlacement placement)
+    DropdownPart::DropdownPart(const CreateParams& params, DropdownControlBase& owner,
+        const SecondaryPartPlacement placement)
         :
         ToolButton{ params,
             Interactivity::MouseOnly,
@@ -33,7 +34,7 @@ namespace ClaFi::Controls
             IconSize{ DropdownControlBase::k_markBox },
             VerticalTextAnchor::Center,
             HorizontalTextAnchor::Center,
-            placement == ArrowPlacement::Bottom ? Padding{ 4.0f } : Padding{ 0.0f }
+            placement == SecondaryPartPlacement::Bottom ? Padding{ 4.0f } : Padding{ 0.0f }
         },
         m_owner{ owner }
     {
@@ -119,8 +120,7 @@ namespace ClaFi::Controls
 
     bool DropdownControlBase::canDropDown() const
     {
-        const Control* part = secondaryPart();
-        return !part || part->visible();
+        return secondaryPart()->visible();
     }
 
     void DropdownControlBase::dropDown()
@@ -135,17 +135,6 @@ namespace ClaFi::Controls
     void DropdownControlBase::getMainText(GetTextEvent& event) const
     {
         RichControl::getText(event);
-    }
-
-    void DropdownControlBase::appendInTextMark(Text& text) const
-    {
-        // The flexible space pushes the mark to the far edge, where it reads as belonging to the
-        // control rather than trailing the text.
-        if (!text.plainText().empty())
-            text << Space{ k_markSpacing };
-
-        text << FlexSpace{};
-        appendDropdownMark(text);
     }
 
     void DropdownControlBase::paintDropdownMark(PaintIconEvent& event) const
@@ -168,12 +157,9 @@ namespace ClaFi::Controls
         );
     }
 
-    SecondaryEdge DropdownControlBase::secondaryEdge() const
+    SecondaryPartPlacement DropdownControlBase::secondaryPartPlacement() const
     {
-        if (m_config.placement == ArrowPlacement::Bottom)
-            return SecondaryEdge::Bottom;
-
-        return SecondaryEdge::Right;
+        return m_config.placement;
     }
 
     void DropdownControlBase::placeSecondaryPart(ScaledDimensions childArea)
@@ -183,7 +169,7 @@ namespace ClaFi::Controls
         // two controls that happen to touch.
         Control* part = shownSecondaryPart();
         ScaledDimensions size = part->dimensions();
-        if (m_config.placement == ArrowPlacement::Bottom)
+        if (m_config.placement == SecondaryPartPlacement::Bottom)
         {
             setControlPlacement(*part, { 0.0f, childArea.y - size.y }, { childArea.x, size.y });
             return;
@@ -214,13 +200,6 @@ namespace ClaFi::Controls
     void DropdownControlBase::getText(GetTextEvent& event) const
     {
         getMainText(event);
-        // The mark rides in the control's own line only where it was asked to go. With a strip it
-        // is the strip's, and a strip that is not shown is a control with nothing to drop - which
-        // shows no mark at all, because one in the text would say there is something.
-        if (m_config.placement != ArrowPlacement::InText)
-            return;
-
-        appendInTextMark(event.text);
     }
 
     void DropdownControlBase::calculateChildren(FormBase& form)
@@ -228,7 +207,7 @@ namespace ClaFi::Controls
         // Sizes the selection indicator and calculates the strip.
         SplitButtonBase::calculateChildren(form);
         Control* part = shownSecondaryPart();
-        if (!part || m_config.placement == ArrowPlacement::Bottom)
+        if (!part || m_config.placement == SecondaryPartPlacement::Bottom)
             return;
 
         // A right hand strip is as wide as the caller asked for. Its own content would only size
@@ -263,7 +242,7 @@ namespace ClaFi::Controls
 
         // The seam side is square, so the two halves meet flush and only the control's outer
         // corners stay rounded.
-        if (m_config.placement == ArrowPlacement::Bottom)
+        if (m_config.placement == SecondaryPartPlacement::Bottom)
         {
             event.setCornerRadius(Corner::TopLeft, 0.0f);
             event.setCornerRadius(Corner::TopRight, 0.0f);
@@ -322,8 +301,8 @@ namespace ClaFi::Controls
     void DropdownControlBase::getDropdownPartText(GetTextEvent& event) const
     {
         // A STRIP THAT CARRIES NO TEXT STATES NONE. Its mark is its icon, and ButtonBase asks an
-        // icon-only control for its text to fill an empty tooltip - a chevron is not what a
-        // tooltip says.
+        // icon-only control for its text to fill an empty hint - a chevron is not what a
+        // hint says.
         if (!m_config.textOnDropdown)
             return;
 
@@ -372,14 +351,8 @@ namespace ClaFi::Controls
         animate(AnimationSlots::dropdownMark, m_droppedDownFactor, target,
             [this](AnimateParams& params) {
                 m_droppedDownFactor = params.value;
-                markHolder().invalidate();
+                secondaryPart()->invalidate();
             });
-    }
-
-    const Control& DropdownControlBase::markHolder() const
-    {
-        const Control* part = shownSecondaryPart();
-        return part ? *part : *this;
     }
 
 }

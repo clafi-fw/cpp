@@ -513,6 +513,7 @@ namespace ClaFi::Controls
         // Which edge of the box the tabs run along.
         TabsOrientation tabsOrientation = READ_PROPERTY(TabsOrientation, TabsOrientation::HorizontalTop);
         setTabsOrientation(tabsOrientation);
+        // How heavy the line the open tab draws along the strip is.
         m_tabLineThickness = READ_PROPERTY(TabLineThickness, Thickness::Thin).value;
         setOverlayHost(*this);
     }

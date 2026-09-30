@@ -2,7 +2,7 @@
 
 The words that no longer fit above a declaration.
 
-## Lens
+## Magnifier
 
 A magnifier - the lens and the tail hanging off its lower right.
 
@@ -30,7 +30,7 @@ Where a glyph goes and what it is drawn with, handed back by whichever container
 painted. The box is the badge's own square, so a glyph is written as fractions of the whole
 badge and one set of numbers reads the same under the disc and under the triangle.
 
-## Gap
+## Halo
 
 A band of theme surface carried all the way round the outside, so that the glass reads as
 lying on top of whatever is already drawn there rather than tangled in it. The same trick the
@@ -40,7 +40,7 @@ picture's own outlines meet and neither is legible. It costs the lens some size,
 band is taken out of the rect rather than added outside it.
 
 Off by default: an icon drawn on its own control has no picture underneath to be separated
-from, and the band would show there as a pale halo on the control's surface.
+from, and the band would show there as a pale ring on the control's surface.
 
 ## WedgeJoint
 

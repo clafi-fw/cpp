@@ -12,7 +12,7 @@ namespace ClaFi::Icons::Magnifier
 {
     using namespace ::ClaFi::Graphics;
 
-    // A magnifier - the lens and the tail hanging off its lower right. See Icons
+    // What the lens holds.
     export enum class Lens
     {
         Empty,
@@ -28,19 +28,19 @@ namespace ClaFi::Icons::Magnifier
     };
 
     // A band of theme surface round the outside, so the glass reads as lying on top. See Icons
-    export enum class Gap
+    export enum class Halo
     {
         No,
         Yes
     };
 
-    // Fills the icon rect.
-    export void paint(PaintIconEvent&, Lens = Lens::Empty, Tail = Tail::Yes, Gap = Gap::No);
+    // A magnifier filling the icon rect. See Icons#magnifier
+    export void paint(PaintIconEvent&, Lens = Lens::Empty, Tail = Tail::Yes, Halo = Halo::No);
     // The same glass in a rect of the caller's choosing, so it can sit on top of something else.
     // Pair it with FloatRect::bottomLeftSquare to badge another icon.
-    export void paintIn(PaintIconEvent&, const FloatRect& bounds, Lens = Lens::Empty, Tail = Tail::Yes, Gap = Gap::No);
+    export void paintIn(PaintIconEvent&, const FloatRect& bounds, Lens = Lens::Empty, Tail = Tail::Yes, Halo = Halo::No);
     // The rect a lens of this radius needs, room for the tail included - for a caller that thinks
-    // in lens sizes rather than in icon rects. No allowance for a gap: a caller that sizes by the
+    // in lens sizes rather than in icon rects. No allowance for a halo: a caller that sizes by the
     // lens is drawing the glass on its own, which is the case that does not want one.
     export FloatRect rectForLensRadius(FloatPoint center, float lensRadius);
 
@@ -72,28 +72,28 @@ namespace ClaFi::Icons::Magnifier
         return { center.x - half, center.y - half, center.x + half, center.y + half };
     }
 
-    void paint(PaintIconEvent& event, Lens lens, Tail tail, Gap gap)
+    void paint(PaintIconEvent& event, Lens lens, Tail tail, Halo halo)
     {
-        paintIn(event, event.iconRect(), lens, tail, gap);
+        paintIn(event, event.iconRect(), lens, tail, halo);
     }
 
-    void paintIn(PaintIconEvent& event, const FloatRect& bounds, Lens lens, Tail tail, Gap gap)
+    void paintIn(PaintIconEvent& event, const FloatRect& bounds, Lens lens, Tail tail, Halo halo)
     {
-        const bool separated = gap == Gap::Yes;
+        const bool withHalo = halo == Halo::Yes;
 
         // The band comes out of the same budget the lens is sized from, so asking for one shrinks
         // the glass instead of spilling it past the rect the caller reserved.
         const float side = std::min(bounds.width(), bounds.height());
-        const float radius = side / (k_extent + (separated ? 2.0f * k_strokeRatio : 0.0f));
+        const float radius = side / (k_extent + (withHalo ? 2.0f * k_strokeRatio : 0.0f));
         const float strokeWidth = std::max(1.0f, radius * k_strokeRatio);
-        const float gapWidth = separated ? strokeWidth : 0.0f;
+        const float haloWidth = withHalo ? strokeWidth : 0.0f;
 
         // With a tail the lens sits up and left, leaving the lower right for it. Without one there
         // is nothing to leave room for, so it goes back to the middle.
         const FloatPoint center = tail == Tail::Yes
             ? FloatPoint{
-                bounds.left + gapWidth + radius + strokeWidth * 0.5f,
-                bounds.top + gapWidth + radius + strokeWidth * 0.5f }
+                bounds.left + haloWidth + radius + strokeWidth * 0.5f,
+                bounds.top + haloWidth + radius + strokeWidth * 0.5f }
             : bounds.center();
 
         Canvas& canvas = event.canvas();
@@ -114,13 +114,13 @@ namespace ClaFi::Icons::Magnifier
         // shape rather than two overlapping halos.
         //
         // Same two endpoints as the ink, and nothing added past them. drawLine caps round, so a
-        // stroke this much wider already stands one gap proud of the tip - exactly what it stands
-        // along the sides. Extending the line as well put a second gap there, and the tail ended in
-        // a blob of surface with nothing inside it.
-        if (tail == Tail::Yes && separated)
-            canvas.drawLine(tailFrom, tailTo, surface, strokeWidth + gapWidth * 2.0f);
+        // stroke this much wider already stands one halo width proud of the tip - exactly what it
+        // stands along the sides. Extending the line as well put a second halo width there, and the
+        // tail ended in a blob of surface with nothing inside it.
+        if (tail == Tail::Yes && withHalo)
+            canvas.drawLine(tailFrom, tailTo, surface, strokeWidth + haloWidth * 2.0f);
 
-        canvas.fillCircle(center, radius + gapWidth, surface);
+        canvas.fillCircle(center, radius + haloWidth, surface);
 
         // After the glass, so it butts into the ring instead of crossing the lens. It starts just
         // inside the ring's own band, which is what keeps the two joined.

@@ -5,8 +5,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Transfer
 {
-    // THE FRAMEWORK'S OWN FORMATS, what a paste asks for; each platform serves one from a
-    // platform format of its own. See Transfer
+    // THE FRAMEWORK'S OWN FORMATS, what a paste asks for. See Transfer
     export enum class StandardFormat
     {
         Text,

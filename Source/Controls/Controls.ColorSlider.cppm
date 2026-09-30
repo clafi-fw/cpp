@@ -18,12 +18,18 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    // Which channel of a colour the slider moves.
-    export enum class ColorAttribute
+    // One of an Hsl's floats, numbered in the order the Hsl declares them.
+    export enum class HslChannel
     {
         Hue,
         Saturation,
         Luminosity
+    };
+
+    // The colour a slider moves one channel of, owned by the caller.
+    export struct EditedColor
+    {
+        Hsl& value;
     };
 
     // A slider that moves one channel of a colour and paints its range.
@@ -37,7 +43,7 @@ namespace ClaFi::Controls
         void invalidateSlot();
         void trackingValueChanged(bool propagateChanges = false);
         void paintValue(Text&, EventPhase) const;
-        void setTrackingAttribute(ColorAttribute);
+        void setChannel(HslChannel);
         void setEditedColor(Hsl& value);
         // A slider over a bare hue rather than over a colour. What it edits is one number, so the
         // saturation and luminosity its ramp and its thumb are drawn at are the palette's display
@@ -77,7 +83,7 @@ namespace ClaFi::Controls
         // slider draws goes on working from a whole colour.
         float* m_boundHue{ nullptr };
         Hsl m_displayColor{};
-        ColorAttribute m_trackingAttribute{};
+        HslChannel m_channel{};
         float* m_trackingValue{ nullptr };
         float m_originalValue{};
     };
@@ -103,10 +109,9 @@ namespace ClaFi::Controls
         Slider{ params, std::forward<Args>(args)... }
     {
         // Which channel of the colour the slider moves.
-        setTrackingAttribute(READ_PROPERTY(ColorAttribute, ColorAttribute::Hue));
-        // TODO: a bare const Color* has no property type of its own, so any pointer to a colour
-        // in the pack matches. It wants a named type before it can be declared.
-        setEditedColor(*Props::get(&s_nullColor, std::forward<Args>(args)...));
+        setChannel(READ_PROPERTY(HslChannel, HslChannel::Hue));
+        // The colour the slider moves a channel of, owned by the caller.
+        BIND_PROPERTY_VALUE(EditedColor, setEditedColor);
     }
 
     void ColorSlider::invalidateSlot()
@@ -131,9 +136,9 @@ namespace ClaFi::Controls
     void ColorSlider::paintValue(Text& text, EventPhase phase) const
     {
         const bool calcOnly = phase == EventPhase::Calculate;
-        switch (m_trackingAttribute)
+        switch (m_channel)
         {
-        case ColorAttribute::Hue:
+        case HslChannel::Hue:
         {
             if (calcOnly)
                 text << 360;
@@ -149,11 +154,11 @@ namespace ClaFi::Controls
         }
     }
 
-    void ColorSlider::setTrackingAttribute(ColorAttribute value)
+    void ColorSlider::setChannel(HslChannel value)
     {
-        m_trackingAttribute = value;
+        m_channel = value;
         static constexpr float k_maxPositions[]{ 360.0f, 300.0f, 500.0f };
-        setMaxPosition(k_maxPositions[static_cast<std::size_t>(m_trackingAttribute)]);
+        setMaxPosition(k_maxPositions[static_cast<std::size_t>(m_channel)]);
         relinkTrackingValue();
     }
 
@@ -167,7 +172,7 @@ namespace ClaFi::Controls
     {
         m_boundHue = &value;
         m_displayColor = paletteDisplayColor(value);
-        setTrackingAttribute(ColorAttribute::Hue);
+        setChannel(HslChannel::Hue);
         setEditedColor(m_displayColor);
     }
 
@@ -259,7 +264,7 @@ namespace ClaFi::Controls
 
     void ColorSlider::relinkTrackingValue()
     {
-        m_trackingValue = &reinterpret_cast<float*>(m_editedColor)[static_cast<std::size_t>(m_trackingAttribute)];
+        m_trackingValue = &reinterpret_cast<float*>(m_editedColor)[static_cast<std::size_t>(m_channel)];
         trackingValueChanged();
         invalidateSlot();
     }

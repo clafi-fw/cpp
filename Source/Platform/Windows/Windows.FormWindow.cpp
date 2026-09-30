@@ -400,7 +400,7 @@ namespace ClaFi
             // every sibling beneath it has been painted, which starves a hint standing over a
             // form that is repainting under a drag. Said here, the pointer falls through and the
             // painting is the window's own business.
-            if (role() == WindowRole::Tooltip)
+            if (role() == WindowRole::Hint)
             {
                 msg.result = HTTRANSPARENT;
                 msg.handled = true;
@@ -686,7 +686,7 @@ namespace ClaFi
         {
         case WindowRole::Dialog:
         case WindowRole::Menu:
-        case WindowRole::Tooltip:
+        case WindowRole::Hint:
             HWND h = handle();
             BOOL trueBool = TRUE;
             ::DwmSetWindowAttribute(h, DWMWA_USE_IMMERSIVE_DARK_MODE, &trueBool, sizeof BOOL);

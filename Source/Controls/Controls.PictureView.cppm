@@ -35,8 +35,7 @@ namespace ClaFi::Controls
         using EventOf<PictureView>::EventOf;
     };
 
-    // A picture at a zoom, standing where the zooms and the pans put it, one pixel of it
-    // selected. See Controls
+    // A picture at a zoom, where the zooms and the pans put it, one pixel selected. See Controls
     export class PictureView : public Control
     {
     public:
@@ -47,8 +46,7 @@ namespace ClaFi::Controls
         DECLARE_EVENT(PixelSelectEvent, OnPixelSelect, onPixelSelect)
         // The selected pixel was acted on: a double click on it. See Controls
         DECLARE_EVENT(PixelActivateEvent, OnPixelActivate, onPixelActivate)
-        // The zoom moved. See Controls
-        DECLARE_EVENT(ZoomChangeEvent, OnZoomChange, onZoomChange)
+        DECLARE_EVENT(ZoomChangeEvent, OnZoomChange, onZoomChange) // the zoom moved. See Controls
     public:
         // The picture shown, borrowed for as long as it is shown. Null shows nothing. A new
         // picture opens at the fit zoom with its middle pixel selected.

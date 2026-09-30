@@ -26,7 +26,7 @@ namespace ClaFi
         KeyModifiers modifiers{};
         [[nodiscard]] bool empty() const { return key == 0; }
         [[nodiscard]] bool matches(const KeyDownEvent&) const;
-        // "Ctrl+S", for a menu's shortcut column and for the tooltip line. Empty for a key with
+        // "Ctrl+S", for a menu's shortcut column and for the hint line. Empty for a key with
         // no name of its own, so that a caller never shows a modifier with nothing after it.
         [[nodiscard]] std::wstring text() const;
     };
@@ -110,12 +110,12 @@ namespace ClaFi
     public:
         [[nodiscard]] Text& text() { return m_text; }
         [[nodiscard]] const Text& text() const { return m_text; }
-        [[nodiscard]] TooltipText& tooltipText() { return m_tooltipText; }
-        [[nodiscard]] const TooltipText& tooltipText() const { return m_tooltipText; }
-        // Writes what this action says of itself into a tooltip, and does nothing to one that
+        [[nodiscard]] HintText& hintText() { return m_hintText; }
+        [[nodiscard]] const HintText& hintText() const { return m_hintText; }
+        // Writes what this action says of itself into a hint, and does nothing to one that
         // already says something. Every presenter is given it; a caller showing the command
         // somewhere the action is not attached - a line drawn by hand - asks for it here.
-        void getTooltip(GetTooltipEvent&) const;
+        void getHint(GetHintEvent&) const;
         //
         [[nodiscard]] Shortcut shortcut() const { return m_shortcut; }
         void setShortcut(const Shortcut value) { m_shortcut = value; }
@@ -192,7 +192,7 @@ namespace ClaFi
         static constexpr std::size_t k_presenterChannels = 7;
     private:
         Text m_text{};
-        TooltipText m_tooltipText{};
+        HintText m_hintText{};
         Shortcut m_shortcut{};
         AttachmentCollection m_attachments{};
     };
@@ -271,8 +271,8 @@ namespace ClaFi
         Props::ifThereIs<Shortcut>([&](const Shortcut& p) {
             m_shortcut = p;
         }, args...);
-        Props::ifThereIs<TooltipText>([&](const TooltipText& p) {
-            m_tooltipText = p;
+        Props::ifThereIs<HintText>([&](const HintText& p) {
+            m_hintText = p;
         }, std::forward<Args>(args)...);
     }
 

@@ -446,9 +446,9 @@ namespace ClaFi
         m_buffer = std::move(combined);
     }
 
-    // GetTooltipEvent
+    // GetHintEvent
 
-    GetTooltipEvent::GetTooltipEvent(const FormContext& formContext, const Control& control, Text& text, EventPhase phase)
+    GetHintEvent::GetHintEvent(const FormContext& formContext, const Control& control, Text& text, EventPhase phase)
         :
         ControlEventBaseC{ formContext },
         control{ control },
@@ -635,7 +635,7 @@ namespace ClaFi
                 invalidateFormAlign();
         }
 
-        Tooltip::forgetControl(this);
+        Hint::forgetControl(this);
     }
 
     void Control::deleteSelf()
@@ -876,7 +876,7 @@ namespace ClaFi
         // Told after the walk, so that a container has recorded the item it now answers for. A
         // control a key lands on is what a hint is about while the keyboard drives, the way the
         // one under the pointer is while the mouse does.
-        Tooltip::focusedControlChanged();
+        Hint::focusedControlChanged();
     }
 
     void Control::animatedClick(FormBase& form, const InputStamp stamp)
@@ -1622,7 +1622,7 @@ namespace ClaFi
         switch (event.key)
         {
         case Keys::Escape:
-            Tooltip::handleUserInput();
+            Hint::handleUserInput();
             break;
 
         case Keys::Return:
@@ -1635,17 +1635,17 @@ namespace ClaFi
         emitEvent(event);
     }
 
-    void Control::nestedGetTooltip(GetTooltipEvent& event)
+    void Control::nestedGetHint(GetHintEvent& event)
     {
         emitEvent(event);
         // A handler that produced text wins over the trimmed-text fallback below.
         if (!event.text.empty())
             return;
         // The fallback stands in for text this control has cut, so it starts where that text
-        // is and nowhere else. A tooltip given to the control is about the control and starts
+        // is and nowhere else. A hint given to the control is about the control and starts
         // anywhere inside it, which is why the pointer test guards this branch alone.
         // isTextHovered names THIS control, so a parent reached by the walk up from the hovered
-        // one answers with a tooltip of its own or with nothing.
+        // one answers with a hint of its own or with nothing.
         //
         // A scroll body is left out of it. Its text is reached by scrolling rather than
         // withheld, and one row cut against the body's width would be answered with the whole
@@ -1654,7 +1654,7 @@ namespace ClaFi
         {
             event.placement = FormPlacement::OverText;
             event.wordWrap = wordWrap();
-            // The tooltip reads its own text, so a named answer is put into it. Assigning what
+            // The hint reads its own text, so a named answer is put into it. Assigning what
             // the buffer already holds to itself is the gather having built one, and costs the
             // comparison in Text::operator= and nothing else.
             event.text = doGetText(event.formContext(), event.text, EventPhase::Paint);
@@ -1662,7 +1662,7 @@ namespace ClaFi
             // block inside that box - a line centred in a title bar sits half the band below its
             // top - and the placement lands the hint's own first glyph on this rect's top left.
             // The width is the box's, which is the width the lines were broken at and what
-            // TooltipForm breaks its own at.
+            // HintForm breaks its own at.
             const FloatRect textRect = textBounds(event.formContext(), boundsInForm());
             const CalculatedDimensions drawn = s_textEngine.calculateText(
                 event.formContext(),
@@ -2250,7 +2250,7 @@ namespace ClaFi
 
         // A grid expander depends on this: it wears GridRow and holds its section's rows,
         // so read as hovered it would light the whole section.
-        // Only the visual state is gated - a tooltip still asks isHovered().
+        // Only the visual state is gated - a hint still asks isHovered().
         const bool interactive = interactivity() != Interactivity::None;
 
         VisualState result{

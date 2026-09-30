@@ -359,7 +359,7 @@ namespace ThisApp
             // *** Text{ k_subHeaderFont, L"Anchor hue:" },
             // *** TextPlacement::Left,
             // *** VerticalTextAnchor::Center,
-            ColorAttribute::Hue,
+            HslChannel::Hue,
             ScrollButtons::No,
             Spacing{ 0.0f, 4.0f },
             //MaxSize{ 600.0f, k_maxFloat },
@@ -420,7 +420,7 @@ namespace ThisApp
             VerticalTextAnchor::Center,
             Padding{ 0.0f, 4.0f },
             Text{ k_labelPush, L"Other pigments:", m_labelsMargin, k_labelPop },
-            TooltipText{ L"Pigments safe to use in small doses" }
+            HintText{ L"Pigments safe to use in small doses" }
         ) };
 
         Spacer& m_floorSpacer{ m_paletteColumn1.add<Spacer>(16.0f) };

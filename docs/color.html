@@ -617,7 +617,7 @@ assigned:</p>
 <tr><td><code>paletteHues[1]</code></td><td><code>ColorRuleHueOp::PaletteColor2</code></td>
     <td>The accent - the hue the interactive states and the accent ink are drawn from.</td></tr>
 <tr><td><code>paletteHues[2]</code></td><td><code>ColorRuleHueOp::PaletteColor3</code></td>
-    <td>The spot - the second accent, and the tooltip's tint.</td></tr>
+    <td>The spot - the second accent, and the hint's tint.</td></tr>
 </table>
 
 <p>Separately, <code>anchorHue</code> and <code>harmonyKind</code> derive the harmony the four
@@ -684,7 +684,7 @@ in as its input rises. The inputs joined as "or" stand where any one of them wou
 <tr><td><code>Disabled</code></td><td>The enabled factor turned over.</td></tr>
 <tr><td><code>TextHovered</code></td><td>The pointer on the control's own text.</td></tr>
 <tr><td><code>Current</code></td><td>A container's current item - the one a Shift range grows from.</td></tr>
-<tr><td><code>WindowFocused</code></td><td>How far the window the control stands in holds the focus. A menu or a tooltip reads the window it stands on.</td></tr>
+<tr><td><code>WindowFocused</code></td><td>How far the window the control stands in holds the focus. A menu or a hint reads the window it stands on.</td></tr>
 <tr><td><code>Keyboard</code></td><td>How far the keyboard drives the input. The same on every control of every window.</td></tr>
 <tr><td><code>Mouse</code></td><td>How far the mouse drives the input. The same on every control of every window.</td></tr>
 </table>
@@ -820,7 +820,7 @@ behind a window is not the theme's to know.</p>
 
 <table>
 <tr><th>Element</th><th>Stands on</th><th>What wears it</th></tr>
-<tr><td><code>Dialog</code>, <code>Menu</code>, <code>Tooltip</code></td><td>The bare colour of the mode</td><td>The root of a window of that kind: its surface, its ink, its frame's stroke and the shadow it casts.</td></tr>
+<tr><td><code>Dialog</code>, <code>Menu</code>, <code>Hint</code></td><td>The bare colour of the mode</td><td>The root of a window of that kind: its surface, its ink, its frame's stroke and the shadow it casts.</td></tr>
 <tr><td><code>Page</code></td><td><code>Dialog</code></td><td>A page of content.</td></tr>
 <tr><td><code>Tab</code></td><td><code>Page</code></td><td>A tab in a strip. The open tab wears its page's surface, and its line runs the length of the page.</td></tr>
 <tr><td><code>Section</code></td><td><code>Page</code></td><td>A section of a page.</td></tr>

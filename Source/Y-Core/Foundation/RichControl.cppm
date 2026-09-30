@@ -26,7 +26,7 @@ namespace ClaFi
     //export class MouseMoveEvent;
     //export class GetTextEvent;
     //export class GetChildTextEvent;
-    //export class GetTooltipEvent;
+    //export class GetHintEvent;
     //export class DoubleClickEvent;
     //export class PressDownEvent;
     //export struct CreateParams;
@@ -52,7 +52,7 @@ namespace ClaFi
         // The control's own text, handed out live. See Control-Foundation#control-text
         ControlText& text() { return m_text; }
         const ControlText& text() const { return m_text; }
-        TooltipText& tooltipText() { return m_tooltipText; }
+        HintText& hintText() { return m_hintText; }
         // metrics
         const ControlMetrics& metrics() const { return m_metrics; }
         void setMetrics(const ControlMetrics& value) { m_metrics = value; }
@@ -97,12 +97,12 @@ namespace ClaFi
         void adjustMetrics(AdjustMetricsEvent&) const override final;
         void adjustPaint(AdjustPaintEvent&) override;
         void getText(GetTextEvent&) const override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedGetHint(GetHintEvent&) override;
     private:
         ControlMetrics m_metrics{};
         OptionalUiElement m_colorRules{};
         ControlText m_text{};
-        TooltipText m_tooltipText{};
+        HintText m_hintText{};
     };
 
 
@@ -124,7 +124,8 @@ namespace ClaFi
         BIND_PROPERTY_MEMBER(Padding, m_metrics.padding);
         // Space kept between the control's children.
         BIND_PROPERTY_MEMBER(Spacing, m_metrics.spacing);
-        BIND_PROPERTY_ACTION(Border, m_metrics.border = p.value); // how heavy the control's border is
+        // How heavy the control's border is.
+        BIND_PROPERTY_ACTION(Border, m_metrics.border = p.value);
         // Corner radius of the control's box.
         BIND_PROPERTY_ACTION(Radius, m_metrics.radius = p.value);
 
@@ -135,8 +136,7 @@ namespace ClaFi
 
         auto appendText = [&](const auto& p) { m_text << p; };
         BIND_PROPERTY_ACTION(Text, appendText(p)); // the control's own text
-        // The text the control offers as its tooltip.
-        BIND_PROPERTY_ACTION(TooltipText, m_tooltipText = p);
+        BIND_PROPERTY_ACTION(HintText, m_hintText = p); // the text the control offers as its hint
         // The control's own text, as a view.
         BIND_PROPERTY_ACTION(std::wstring_view, appendText(p));
         // The control's own text, as a literal.

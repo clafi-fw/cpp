@@ -68,7 +68,7 @@ namespace ClaFi::Controls::Grids
         // The text an in-place edit was left with, on its way back to the cell's source. See Grids
         DECLARE_EVENT(AcceptCellTextEvent, OnAcceptCellText, onAcceptCellText)
         // The hint for one cell, asked while the pointer rests on it. See Grids
-        DECLARE_EVENT(GetCellTooltipEvent, OnGetCellTooltip, onGetCellTooltip)
+        DECLARE_EVENT(GetCellHintEvent, OnGetCellHint, onGetCellHint)
     public:
         std::vector<float>& calculatedHeight() { return m_calculatedHeight; }
     protected:
@@ -100,8 +100,8 @@ namespace ClaFi::Controls::Grids
         //
         virtual void getCellText(const Column&, Text&);
         // The hint for one cell, asked of this row's listeners and then of the grid - the pair
-        // getCellText asks. Raised by nestedGetTooltip for the cell under the pointer.
-        virtual void getCellTooltip(GetCellTooltipEvent&);
+        // getCellText asks. Raised by nestedGetHint for the cell under the pointer.
+        virtual void getCellHint(GetCellHintEvent&);
         // The other end of getCellText: an in-place edit of this cell is being committed, and
         // this is the text it was left with. It goes to whatever answers getCellText, so a row
         // reading a cell out of a record writes it back to the field it read.
@@ -125,7 +125,7 @@ namespace ClaFi::Controls::Grids
         void paintOneCell(PaintEvent&, const RowCell&, bool isFirstRow);
         void doPaintColumns(PaintEvent&);
         void paintText(PaintEvent&) override {}
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedGetHint(GetHintEvent&) override;
         //
         void getControlState(GetStateEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;

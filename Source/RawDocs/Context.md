@@ -196,9 +196,15 @@ later than that arrives as a SystemColorModeEvent.
 Where the platform announces a change of what the desktop asks for - SystemColorModeEvent. One
 dispatcher for the process, standing before the first window is made and after the last is gone.
 
+## ScopedWaitCursor
+
+Shows the wait shape while alive and puts back the shape the platform was showing when it was
+made - a sizing arrow the system set included - so scopes nest and a drag keeps its arrow. What
+it puts back is `Platform::cursor`, read as it is built.
+
 ## AppContext::animator
 
-THE APPLICATION'S ANIMATIONS - every control's state fades, every glide, a tooltip's alpha and
+THE APPLICATION'S ANIMATIONS - every control's state fades, every glide, a hint's alpha and
 the theme crossing - stepped by one UiTimer, owned by the context that owns everything they
 run in. A control reaches it through its form - see Control::animate - and the crossing code
 here uses the member. The destructor stops the crossing first: its callbacks reach back into

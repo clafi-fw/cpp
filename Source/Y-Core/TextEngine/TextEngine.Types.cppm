@@ -208,9 +208,7 @@ namespace ClaFi
 
     export struct Space { float width; bool operator==(const Space&) const = default; };
     export struct VSpace { float height; bool operator==(const VSpace&) const = default; };
-    // A gap that takes the room its line has over, and never less than the width it states.
-    // That width is what shows on a line with nothing to spare, so a caller wanting the two
-    // sides held apart there states it here rather than writing a space beside the gap.
+    // A gap taking the room its line has over, never less than its width. See TextEngine-Types
     export struct FlexSpace
     {
         float minWidth{ 0.0f };

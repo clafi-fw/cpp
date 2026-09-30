@@ -98,22 +98,22 @@ namespace ClaFi
                 connection.disconnect();
     }
 
-    void Action::getTooltip(GetTooltipEvent& event) const
+    void Action::getHint(GetHintEvent& event) const
     {
         // Whatever else answered wins. An action supplies the words for a presenter that has
-        // none of its own, and a presenter that spells its own tooltip is stating an exception.
+        // none of its own, and a presenter that spells its own hint is stating an exception.
         if (!event.text.empty())
             return;
 
         // ITS OWN NAME WHERE IT SAYS NOTHING MORE. A command with a key has something to tell
-        // even when its tooltip would only repeat its label, because the key is shown nowhere
+        // even when its hint would only repeat its label, because the key is shown nowhere
         // else on a button. What the action says of itself is preferred where it says anything.
-        if (m_tooltipText.empty())
+        if (m_hintText.empty())
             event.text << m_text;
         else
-            event.text << m_tooltipText;
+            event.text << m_hintText;
         // A nameless action contributes nothing at all, so that the trimmed-text fallback
-        // Control::nestedGetTooltip ends with is left the way it was found.
+        // Control::nestedGetHint ends with is left the way it was found.
         if (event.text.empty())
             return;
 
@@ -282,11 +282,11 @@ namespace ClaFi
                 event.text << m_text;
         }));
 
-        // A Line states the command in full by itself, so nothing is composed for it: a tooltip
+        // A Line states the command in full by itself, so nothing is composed for it: a hint
         // there would say back the very line the pointer is standing on.
         if (role != PresenterRole::Line)
-            connections.push_back(presenter.onGetTooltip([this](GetTooltipEvent& event) {
-                getTooltip(event);
+            connections.push_back(presenter.onGetHint([this](GetHintEvent& event) {
+                getHint(event);
             }));
 
         connections.push_back(presenter.onPaintIcon([this](PaintIconEvent& event) {

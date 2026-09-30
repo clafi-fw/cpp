@@ -55,8 +55,7 @@ namespace ClaFi
         void nestedPressUp(PressUpEvent&) override;
     };
 
-    // The backstage's own page: the options every application has, on a box that scrolls under a
-    // foot that does not. See Application
+    // The backstage's page of the options every application has. See Application
     export class SettingsPage : public Controls::Panel
     {
     public:

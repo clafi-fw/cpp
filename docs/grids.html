@@ -710,8 +710,8 @@ same list. Add it where any control is added:</p>
 
 <pre><code><span class="tp">Grid</span>&amp; m_grid{ <span class="fn">add</span>&lt;<span class="tp">Grid</span>&gt;(
     <span class="tp">Grids::GridLines</span>::Horizontal,
-    <span class="tp">OnEvent</span>{ [<span class="kw">this</span>](<span class="tp">Grids::GetCellTooltipEvent</span>&amp; event) {
-        <span class="fn">writeTooltip</span>(event);
+    <span class="tp">OnEvent</span>{ [<span class="kw">this</span>](<span class="tp">Grids::GetCellHintEvent</span>&amp; event) {
+        <span class="fn">writeHint</span>(event);
     } },
     <span class="tp">Columns</span>{ <span class="cm">/* ... */</span> },
     <span class="tp">Header</span>{},

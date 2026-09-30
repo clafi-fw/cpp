@@ -19,8 +19,7 @@ namespace ClaFi::Controls
     public:
         // Room kept at the ends of the line.
         DECLARE_WRITABLE_PROPERTY(Padding, padding, setPadding, Padding{})
-        // How heavy the line is.
-        DECLARE_PROPERTY(Thickness, thickness, Thickness::Thin)
+        DECLARE_PROPERTY(Thickness, thickness, Thickness::Thin) // how heavy the line is
     public:
         void setPadding(Padding value) { m_padding = value; }
     protected:

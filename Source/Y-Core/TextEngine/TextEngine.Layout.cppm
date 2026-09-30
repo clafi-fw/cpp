@@ -234,7 +234,7 @@ namespace ClaFi
         // text asks for. A layout that has to repeat ANOTHER's line breaks states the width that
         // one was broken at, and is then free to stand in a box of any size: the box no longer
         // decides where a line ends, so a wider one shows what the narrower box cut instead of
-        // breaking the text somewhere else. See TooltipLabel, which an over-text hint is drawn
+        // breaking the text somewhere else. See HintLabel, which an over-text hint is drawn
         // from.
         void setBreakWidth(float);
         // Colours drawn over the text's own, or nothing. A draw-time question alone: the overlay

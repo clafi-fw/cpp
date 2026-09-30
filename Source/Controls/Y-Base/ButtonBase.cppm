@@ -62,7 +62,7 @@ namespace ClaFi::Controls
         virtual FloatRect iconRect(const PaintEvent&) const;
         void adjustTextRect(AdjustTextRectEvent&) const override;
         void getText(GetTextEvent&) const override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedGetHint(GetHintEvent&) override;
         CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
         void calculateChildren(FormBase& form) override;
         ScaledDimensions calculateContent(AlignEvent&) override;

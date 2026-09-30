@@ -26,7 +26,7 @@ namespace ClaFi::Controls
         DECLARE_REF_PROPERTY(Text, text, Text{}) // what the item says
         // Shown while the item's text is empty, for the item that stands for no value. See Controls
         DECLARE_REF_PROPERTY(PlaceHolderText, placeHolderText, PlaceHolderText{})
-        DECLARE_REF_PROPERTY(TooltipText, tooltipText, TooltipText{}) // the hint the item carries
+        DECLARE_REF_PROPERTY(HintText, hintText, HintText{}) // the hint the item carries
         DECLARE_PROPERTY(Tag, tag, Tag{}) // whatever the caller hangs on the item
     private:
     private:
@@ -91,7 +91,7 @@ namespace ClaFi::Controls
         :
         INIT_PROPERTY(text),
         INIT_PROPERTY(placeHolderText),
-        INIT_PROPERTY(tooltipText),
+        INIT_PROPERTY(hintText),
         INIT_PROPERTY(tag)
     {
     }

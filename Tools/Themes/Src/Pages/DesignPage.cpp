@@ -51,7 +51,7 @@ namespace ThisApp
         constexpr std::array k_windowRoots{
             UiElement::Dialog,
             UiElement::Menu,
-            UiElement::Tooltip
+            UiElement::Hint
         };
 
         constexpr std::array k_surfaces{

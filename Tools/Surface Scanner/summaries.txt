@@ -64,7 +64,7 @@ Source/Y-Core/Foundation/ContextMessage.cppm:9 | Something said about a control 
 Source/Y-Core/Foundation/Input.cppm:21 | The input state the whole framework reads.
 Source/Y-Core/Foundation/Spatial.cppm:28 | A rectangle turned so travel runs up the primary axis.
 Source/Y-Core/Foundation/Spatial.cppm:45 | How one candidate is ranked against another.
-Source/Y-Core/Foundation/Tooltip.cppm:17 | One per form, built with it: the window a hint shows in.
+Source/Y-Core/Foundation/Hint.cppm:17 | One per form, built with it: the window a hint shows in.
 Source/Y-Core/Foundation/Traversal.cppm:11 | Whether the visitor walks the children or the traversal does.
 Source/Y-Core/Foundation/Traversal.cppm:82 | Every control in the subtree, whatever the geometry says.
 Source/Y-Core/Graphics/Graphics.Cpu_Painter_Circle.cppm:10 | Circles, with pivots and radii already in buffer coordinates.

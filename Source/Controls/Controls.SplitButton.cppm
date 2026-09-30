@@ -50,7 +50,7 @@ namespace ClaFi::Controls
         DECLARE_EVENT(DropdownEvent, OnDropdown, onDropdown)
     public:
         std::wstring_view diagnosticText() const override { return L"SplitButton"; }
-        /// Puts a command behind the strip. The strip takes the action's tooltip, its key and
+        /// Puts a command behind the strip. The strip takes the action's hint, its key and
         /// its availability - an unavailable command greys its own half of the button - and
         /// pressing the strip runs it, by mouse and by the dropdown keys alike.
         ///
@@ -100,7 +100,7 @@ namespace ClaFi::Controls
     {
         Control* part = secondaryPart();
         // Whatever stood here stops standing for anything. Left attached it would go on
-        // answering for the strip's tooltip and its state behind the command that replaced it.
+        // answering for the strip's hint and its state behind the command that replaced it.
         if (m_dropdownAction && part)
             m_dropdownAction->detach(*part);
 

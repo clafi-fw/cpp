@@ -429,8 +429,6 @@ namespace ClaFi::Browser
     {
         // The strip is what says there is a list under this crumb, so a page with nothing under it
         // has none - and the mark, the two keys and the room all go with it, being the strip's.
-        // Every crumb has a strip to show or hide: the constructor asks for one and never for
-        // ArrowPlacement::InText.
         secondaryPart()->setVisible(m_data && m_data->hasSubItems());
     }
 

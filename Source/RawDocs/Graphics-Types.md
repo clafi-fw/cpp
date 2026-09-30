@@ -87,7 +87,7 @@ to skip whole tiles: a form painting one corner square costs one tile, and the m
 painted a strip at a time with the strip as the clip - by a form around its rectangle, by a
 shadow window around the window it shadows. A rectangle too small for its corner tiles to
 stand apart is cast directly - two corner tiles overlapping would each deny the other's arc -
-which is what tooltips and short menus get.
+which is what hints and short menus get.
 
 The cache holds no state of the window: the active and inactive looks differ by a constant
 alpha, and both windows apply that when they present.

@@ -62,14 +62,14 @@ namespace ClaFi::Controls::Grids
     };
 
     // The hint for one cell, asked while the pointer rests on it. See Grids
-    export class GetCellTooltipEvent : public CellEventBase
+    export class GetCellHintEvent : public CellEventBase
     {
     public:
-        GetCellTooltipEvent(const RowBase&, const Column&, GetTooltipEvent&);
-        [[nodiscard]] GetTooltipEvent& tooltip() { return m_tooltip; }
-        [[nodiscard]] Text& text() { return m_tooltip.text; }
+        GetCellHintEvent(const RowBase&, const Column&, GetHintEvent&);
+        [[nodiscard]] GetHintEvent& hint() { return m_hint; }
+        [[nodiscard]] Text& text() { return m_hint.text; }
     private:
-        GetTooltipEvent& m_tooltip;
+        GetHintEvent& m_hint;
     };
 
     // Stored cell callbacks, not construction properties. A handler passed when a grid or a
@@ -117,12 +117,12 @@ namespace ClaFi::Controls::Grids
     {
     }
 
-    // GetCellTooltipEvent
+    // GetCellHintEvent
 
-    GetCellTooltipEvent::GetCellTooltipEvent(const RowBase& row, const Column& column, GetTooltipEvent& tooltip)
+    GetCellHintEvent::GetCellHintEvent(const RowBase& row, const Column& column, GetHintEvent& hint)
         :
         CellEventBase{ row, column },
-        m_tooltip{ tooltip }
+        m_hint{ hint }
     {
     }
 

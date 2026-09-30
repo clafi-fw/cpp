@@ -34,7 +34,7 @@ namespace ThisApp
     {
         constexpr std::size_t k_operationCount{ static_cast<std::size_t>(ColorRuleOp::Set) + 1ull };
 
-        // What each operation does, as its tooltip names it.
+        // What each operation does, as its hint names it.
         constexpr std::array<std::wstring_view, k_operationCount> k_operationNames{
             L"No change",
             L"Add offset",
@@ -166,7 +166,7 @@ namespace ThisApp
         [[nodiscard]] MinSize indicatorSize(const AppTheme&) const override;
         void getText(GetTextEvent&) const override;
         void paintIcon(PaintIconEvent&) override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedGetHint(GetHintEvent&) override;
         void getControlState(GetStateEvent&) const override;
         void nestedClick(ClickEvent&) override;
     private:
@@ -240,11 +240,11 @@ namespace ThisApp
             writeValueContent(event.text, *m_value);
     }
 
-    void ValueRuleControl::nestedGetTooltip(GetTooltipEvent& event)
+    void ValueRuleControl::nestedGetHint(GetHintEvent& event)
     {
         if (m_value)
             event.text << k_operationNames[static_cast<std::size_t>(operation())];
-        DropdownControlBase::nestedGetTooltip(event);
+        DropdownControlBase::nestedGetHint(event);
     }
 
     void ValueRuleControl::getEditorText(Text& text) const
@@ -484,10 +484,10 @@ namespace ThisApp
         paintOperationBlob(event, m_operation);
     }
 
-    void OperationItem::nestedGetTooltip(GetTooltipEvent& event)
+    void OperationItem::nestedGetHint(GetHintEvent& event)
     {
         event.text << k_operationNames[static_cast<std::size_t>(m_operation)];
-        Button::nestedGetTooltip(event);
+        Button::nestedGetHint(event);
     }
 
     // Stopped here, so the tile row's current item is not written over the mark.

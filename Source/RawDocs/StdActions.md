@@ -2,7 +2,7 @@
 
 The words that no longer fit above a declaration.
 
-## RichText
+## ClaFiText
 
 THE FRAMEWORK'S OWN RICH TEXT ON THE CLIPBOARD. Declared here rather than in the Transfer
 core, which names no type above itself: a format is owned by whoever owns the content it

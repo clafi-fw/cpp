@@ -27,11 +27,17 @@ namespace ClaFi::Controls::Grids
     // How a column resolves its width during layout.
     export enum class ColumnWidthMode
     {
-        FitContent, // designWidth is ignored, the width comes from the rows' content
-        Fixed,      // designWidth is the width, in design units
-        Fill        // content sets the minimum, then designWidth divides the parent's
+        FitContent, // ColumnWidth is ignored, the width comes from the rows' content
+        Fixed,      // ColumnWidth is the width, in design units
+        Fill        // content sets the minimum, then ColumnWidth divides the parent's
                     // slack as a ratio against the sibling Fill columns. A single Fill
                     // column takes the whole remainder, so its ratio is ignored.
+    };
+
+    // A column's width in design units, or its share of the slack under Fill.
+    export struct ColumnWidth
+    {
+        float value;
     };
 
     // Whether the column's name is written in the grid's header.
@@ -248,8 +254,8 @@ namespace ClaFi::Controls::Grids
         INIT_PROPERTY(textAlign),
         INIT_PROPERTY(verticalTextAnchor),
         INIT_PROPERTY(movingText),
-        // TODO: a bare float has no property type of its own, so any float in the pack matches.
-        m_designWidth{ Props::get(0.0f, args...) },
+        // How wide the column is, or its share of the slack under Fill.
+        m_designWidth{ READ_PROPERTY(ColumnWidth, 0.0f).value },
         INIT_PROPERTY(tag)
     {
         // Copied from Control

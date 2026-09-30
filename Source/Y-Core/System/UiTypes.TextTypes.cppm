@@ -106,15 +106,12 @@ namespace ClaFi{
         Text,   // a shade of the ink the paint chain arrived at. See UI-Types
         Accent, // the hue the theme's own live states are drawn from. See UI-Types
         Spot,   // the second accent, for what stands apart from the interface. See UI-Types
-        // The palette's semantic hues, at the tones InkWell states. See UI-Types
-        Yellow,
-        Green,
-        Blue,
-        Red,
-        // Pure black and white, the same on either side of the theme. See UI-Types
-        Black,
-        White,
-        //
+        Yellow, // the yellow pigment, at InkWell's tone. See UI-Types#yellow-green-blue-red
+        Green,  // the green pigment, at InkWell's tone. See UI-Types#yellow-green-blue-red
+        Blue,   // the blue pigment, at InkWell's tone. See UI-Types#yellow-green-blue-red
+        Red,    // the red pigment, at InkWell's tone. See UI-Types#yellow-green-blue-red
+        Black,  // pure black, the same on either side of the theme. See UI-Types#black-white
+        White,  // pure white, the same on either side of the theme. See UI-Types#black-white
         Count
     };
 

@@ -4,6 +4,7 @@ module;
 export module ClaFi.Controls.ColorEditDialog;
 
 import ClaFi.Controls.ColorSlider;
+import ClaFi.Controls.ColorSpelling;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.StackPanel;
@@ -26,16 +27,13 @@ namespace ClaFi::Controls
         using EventOf<ColorEditDialog>::EventOf;
     };
 
-    // How a colour is written when it is copied.
-    export using ColorSpeller = std::function<std::wstring(Color)>;
-
     using ColorEditForm = Form<PanelBase>;
 
     // A colour under three sliders, with a preview, Copy and Close. See Controls
     export class ColorEditDialog : public ColorEditForm
     {
     public:
-        ColorEditDialog(Control& owner, std::wstring_view title, Color original, ColorSpeller);
+        ColorEditDialog(Control& owner, std::wstring_view title, Color original, ColorSpelling);
     public:
         // The colour moved under one of the sliders. See Controls
         DECLARE_EVENT(ColorEditEvent, OnEdit, onEdit)
@@ -69,7 +67,7 @@ namespace ClaFi::Controls
             WithTextLayout<Label>* value{ nullptr };
         };
     private:
-        [[nodiscard]] Row addRow(std::wstring_view name, ColorAttribute);
+        [[nodiscard]] Row addRow(std::wstring_view name, HslChannel);
         void colorChanged();
         void copy(InputStamp);
         void writeValues();
@@ -92,7 +90,7 @@ namespace ClaFi::Controls
         Color m_original;
         Hsl m_originalHsl;
         Hsl m_color;
-        ColorSpeller m_speller;
+        ColorSpelling m_spelling;
         Label& m_title;
         Panel& m_content;
         StackPanel& m_column;

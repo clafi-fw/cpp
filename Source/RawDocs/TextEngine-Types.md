@@ -36,6 +36,12 @@ the position fell on is a different question, asked of the layout - see TextLayo
 One pop for both, because one stack holds them: a script closes the nearest script
 still open, whichever of the two opened it.
 
+## FlexSpace
+
+A gap that takes the room its line has over, and never less than the width it states. That width
+is what shows on a line with nothing to spare, so a caller wanting the two sides held apart there
+states it here rather than writing a space beside the gap.
+
 ## TextRenderMode
 
 What a control's text has to survive, stated as three cases rather than as raster settings.

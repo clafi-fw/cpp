@@ -68,7 +68,7 @@ namespace ClaFi::Controls
     /// @note A large icon with the command's name under it. A command belongs up here when its
     /// picture says what it does at a glance, which is what buys the strip its width: four of
     /// them stand side by side in what the list would have spent on two lines.
-    /// @note There is no room beside the name for the key, so the tooltip states both.
+    /// @note There is no room beside the name for the key, so the hint states both.
     // The same base as an item, for the same reasons.
     using MenuCommandBase = Button;
     // A menu line that runs an action, showing its name and its key.
@@ -80,7 +80,7 @@ namespace ClaFi::Controls
     public:
         std::wstring_view diagnosticText() const override { return L"MenuCommand"; }
     protected:
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedGetHint(GetHintEvent&) override;
         void nestedClick(ClickEvent&) override;
     };
 
@@ -120,7 +120,7 @@ namespace ClaFi::Controls
         MenuItem& add(std::wstring_view text, MenuItemIcon icon, MenuItemCallback callback);
         void addSeparator();
         /// Takes an action as a button in the strip across the top: its icon with its name under
-        /// it, and the name and key in the tooltip. The strip appears with the first command put
+        /// it, and the name and key in the hint. The strip appears with the first command put
         /// in it and reads left to right in the order they arrive.
         MenuCommand& addToCommandBar(Action&);
         /// Whether the strip already shows this command.
@@ -360,7 +360,7 @@ namespace ClaFi::Controls
             // icon leaves?
             MaxSize{ k_maxItemWidth, k_maxFloat },
             // An item writes the command's name and its key into its own line - see getText -
-            // so an action attached here says nothing further in a tooltip.
+            // so an action attached here says nothing further in a hint.
             PresenterRole::Line,
             std::forward<Args>(args)...
         }
@@ -433,10 +433,10 @@ namespace ClaFi::Controls
     {
     }
 
-    void MenuCommand::nestedGetTooltip(GetTooltipEvent& event)
+    void MenuCommand::nestedGetHint(GetHintEvent& event)
     {
-        MenuCommandBase::nestedGetTooltip(event);
-        // An action says its own name and key - see Action::getTooltip - and this is what a
+        MenuCommandBase::nestedGetHint(event);
+        // An action says its own name and key - see Action::getHint - and this is what a
         // command with none says instead. The strip writes the name under each icon and has
         // nowhere to put the key beside it, so this is where the two are said together.
         if (!event.text.empty())
@@ -444,7 +444,7 @@ namespace ClaFi::Controls
 
         GetTextEvent textEvent{ event.formContext(), *this, event.text, EventPhase::Paint };
         getText(textEvent);
-        // The tooltip reads the buffer rather than the answer, so a named text is put in it.
+        // The hint reads the buffer rather than the answer, so a named text is put in it.
         textEvent.materialise();
         if (event.text.empty())
             return;

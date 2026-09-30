@@ -104,11 +104,11 @@ into a layout of their own for the one paint or measurement and discarded with i
 the cache never sees them. Per column, because a column is what says where a cell's text
 comes from.
 
-## GetCellTooltipEvent
+## GetCellHintEvent
 
 The hint for one cell, asked while the pointer rests on it. It goes to the pair
 GetCellTextEvent goes to - the row, then the grid - and a handler writes into text(),
-which is the tooltip's own buffer. The tooltip event underneath is reachable for its
+which is the hint's own buffer. The hint event underneath is reachable for its
 placement and anchor: the anchor arrives set to the cell's rect, and the placement to
 the pointer. A cell nobody wrote for falls back to repeating the words its column cut.
 
@@ -193,7 +193,7 @@ THE MARK LEADS THE SPAN'S FIRST CELL, the first column the span fills, left to r
 is an ExpanderButton the size of a check mark, standing where the column puts a line of
 text, and the cell's content starts after it. RowBase::cellLead is where a row keeps that
 room, and everything that finds a cell's content box reads it: calculateCell, paintCell,
-the tooltip, the in-place editor and the box a hosted control is given.
+the hint, the in-place editor and the box a hosted control is given.
 
 A CLOSED GROUP IS ITS SPAN ALONE, with a blank in every leaf column no span fills - this
 span, in the leaf or in a column above it, or the span of any group this one stands in,

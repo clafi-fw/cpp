@@ -75,6 +75,11 @@ The editor opens on the picked item's text as AdjustItemTextEvent words it, in p
 formatting and inline objects dropped. A value left as it opened names nothing new and is never
 offered.
 
+## DropdownMaxSize
+
+How large the popup list may become. Unconstrained by default: what stops a list growing is the
+room the placement found for it, and the bar comes up for what it cut.
+
 ## PlaceHolderText
 
 What a combo box item shows while its text is empty, which makes it the item that stands for no
@@ -215,9 +220,9 @@ it is handed. The click that followed a link goes no further up.
 
 ## Link hints
 
-The hint over a link in a TextBox. The tooltip asks a control for its hint once, when the pointer
+The hint over a link in a TextBox. The hint asks a control for its hint once, when the pointer
 comes onto it, and a link is a part of the box the pointer enters and leaves - so the box tells
-the tooltip when the link under the pointer changes, through Tooltip::hoveredZoneChanged, the way
+the hint when the link under the pointer changes, through Hint::hoveredZoneChanged, the way
 a grid tells it its hovered cell did. A hint already up is asked again where it stands, and one
 that is not starts the usual wait.
 
@@ -228,7 +233,7 @@ neither the link nor the line it reads in - FormPlacement::Top, which drops it u
 where the screen has no room above. While the pointer is on a link, the link's hint stands in for
 the box's own.
 
-GetLinkTooltipEvent is raised first, with the target, the range the link covers, and the hint's
+GetLinkHintEvent is raised first, with the target, the range the link covers, and the hint's
 placement and anchor already stated. What a handler writes is the whole of the hint. Where nothing
 is written the box writes its own:
 
@@ -236,7 +241,7 @@ is written the box writes its own:
   formatting - in the Ledger, the clue a reference names;
 - any other target: the target as the text states it.
 
-A PREVIEW STOPS AFTER SIX LINES. The box lays the paragraph out at Tooltip::k_lineWidth, the width
+A PREVIEW STOPS AFTER SIX LINES. The box lays the paragraph out at Hint::k_lineWidth, the width
 the hint breaks its lines at, and cuts it where the sixth line ends. An ellipsis ends what is left,
 in the styles still open where it stands - muted inside a muted run, regular after a bold word
 that ends at the cut. A word the ellipsis would push onto a seventh line goes with the rest, and
@@ -543,7 +548,7 @@ key the line states, less those the line holds already, and a key that lists non
 list. The kind printed is key or value.
 
 THE HINT. The current row's signature, in the code style, and under it the hint's sentence,
-stand beside the list at the row's height - the form's tooltip, placed FormPlacement::Right
+stand beside the list at the row's height - the form's hint, placed FormPlacement::Right
 on a rect spanning the list, so a hint the right has no room for stands off the list's left
 edge and not over its rows; raised right away from the pass that lays the row out and after
 a keyboard move, and on hover as any hint is. A keyword, or an entry with neither
@@ -575,7 +580,7 @@ The hint over a call: the signature of the routine being called, from where its 
 list opens, with the name of the argument the caret stands in set in bold - the words No
 parameters for a routine that lists none - and under it the entry's hint sentence where it has
 one. A window of its own standing on the box in the
-tooltip's role - the pointer goes through it, it takes no focus and it takes no place as the
+hint's role - the pointer goes through it, it takes no focus and it takes no place as the
 popup on the box, so it stands beside the completion list, above the line while the list is
 below it. THE CARET STAYS IN THE BOX.
 
@@ -832,6 +837,17 @@ of it. A position set from code raises OnChange as any step does, and no settle.
 A finer slider's hold counts as its owner's - see FineAdjust - so the owner's OnSettle comes
 when the pointer lets go of the finer one.
 
+## ColorSpelling
+
+HOW A USER WANTS TO SEE A COLOUR, and what a copy gives another application as plain text. It is
+the user's choice, made in a presenter: a readout offers every spelling and writes the one picked,
+and a copy takes the one in use. `spell` writes the plain text, `nameOf` the words a picker lists
+it under, and `appendSpelling` the same digits into a Text with each channel's run in the theme's
+Red, Green or Blue pigment.
+
+ClaFi never reads it back. A colour going from one ClaFi consumer to another is written in the
+stable spelling of its serializer - see Dom#scalarserializer-color.
+
 ## ColorEditEvent
 
 The colour moved under one of the sliders. The dialog answers color() and edited() from
@@ -854,6 +870,17 @@ THE ORIGINAL STANDS ON THE BAR. Once the colour has moved, the word Original and
 are written on the bar in the colour the dialog was given, so the edit is read against it.
 They take no click, and a colour back where it started hides them.
 
-COPY TAKES THE CLIPBOARD. The dialog is handed how a colour is written - a ColorSpeller -
+COPY TAKES THE CLIPBOARD. The dialog is handed how a colour is written - a ColorSpelling -
 and puts that text on as plain text, which is what an application that has never heard of
 this dialog can take. A window showing what the clipboard holds shows that text next.
+
+## FlexSpacer
+
+THE ROOM NOBODY ELSE CLAIMED. It measures the size it is given and takes what its lane has over,
+so what stands after it sits at the lane's end - the commands under a strip, the answer at the
+foot of a page. Two of them either side of an item centre it, and two at one end share what is
+left evenly.
+
+A lane is only as long as its stack was granted, so one in a stack that wraps, or in a stack
+nothing stretched, has nothing to take - and the size it was given is the gap that is left there.
+See `Control::fillsLane`.

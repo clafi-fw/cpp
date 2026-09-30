@@ -73,12 +73,12 @@ namespace ClaFi::Controls
     };
 
     // The hint of the link under the pointer is being asked for. See Controls#link-hints
-    export struct GetLinkTooltipEvent : public EventOf<TextBox>
+    export struct GetLinkHintEvent : public EventOf<TextBox>
     {
-        GetLinkTooltipEvent(TextBox&, std::wstring_view target, TextRange range, GetTooltipEvent&);
+        GetLinkHintEvent(TextBox&, std::wstring_view target, TextRange range, GetHintEvent&);
         std::wstring_view target;   // what the link names, as the text states it
         TextRange range;            // the text the link covers
-        GetTooltipEvent& tooltip;   // the hint itself: its text, placement and anchor
+        GetHintEvent& hint;         // the hint itself: its text, placement and anchor
     };
 
     // A label the user can type into.
@@ -100,7 +100,7 @@ namespace ClaFi::Controls
         // A link in the box's text was followed. See Controls
         DECLARE_EVENT(LinkClickEvent, OnLinkClick, onLinkClick)
         // The hint of the link under the pointer is being asked for. See Controls#link-hints
-        DECLARE_EVENT(GetLinkTooltipEvent, OnGetLinkTooltip, onGetLinkTooltip)
+        DECLARE_EVENT(GetLinkHintEvent, OnGetLinkHint, onGetLinkHint)
     public:
         // setCaretPosFromMouse Is calling from nestedPressDown, nestedContextPopup
         // and on popping in in-place edit form
@@ -202,7 +202,7 @@ namespace ClaFi::Controls
         void hoverLeave() override;
         // The hint of the link under the pointer, where there is one, and the box's own
         // otherwise. See Controls#link-hints
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedGetHint(GetHintEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         // Follows a link when the press and the release stayed on it and nothing was selected
         // between them. Defined in TextBox.cpp, with the rest of what a link does.
@@ -303,7 +303,7 @@ namespace ClaFi::Controls
         // Records the link the pointer stands on, and has the hint asked again when it changed.
         void pointAtLink(const std::optional<LinkHit>&);
         // What a link's hint says when no handler says it. See Controls#link-hints
-        void writeLinkTooltip(Text&) const;
+        void writeLinkHint(Text&) const;
         // The line of the pointed link the pointer is on, in form coordinates.
         [[nodiscard]] FloatRect pointedLinkLine() const;
         [[nodiscard]] Place currentPlace() const;
@@ -521,7 +521,7 @@ namespace ClaFi::Controls
 
         // Measured in FORM space by handing the form rect in: textBounds and caretRect both
         // answer in whatever space the rect they are given is in, so nothing is converted
-        // afterwards. Same route Control::nestedGetTooltip takes for an OverText anchor.
+        // afterwards. Same route Control::nestedGetHint takes for an OverText anchor.
         const FloatRect textBounds = this->textBounds(formContext(), boundsInForm());
         return caretRect(textBounds, { m_editProps.caretPos(), m_editProps.affinityTrailing });
     }

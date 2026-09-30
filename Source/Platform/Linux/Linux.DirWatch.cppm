@@ -32,8 +32,7 @@ namespace ClaFi::PlatformImplementation::Linux
     // record outright.
     constexpr std::size_t k_inotifyBufferSize = 16u * (sizeof(inotify_event) + NAME_MAX + 1u);
 
-    // One inotify descriptor serves every watch in the process, and the platform owns it. See
-    // Platform
+    // One inotify descriptor serves every watch in the process. See Platform
     export class DirWatchManager
     {
     public:

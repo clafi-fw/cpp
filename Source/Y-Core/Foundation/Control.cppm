@@ -351,12 +351,12 @@ namespace ClaFi
         using GetTextEventBase::GetTextEventBase;
     };
 
-    // TODO: derive GetTooltipEvent from GetTextEventBase, as GetTextEvent and GetChildTextEvent are.
-    // Asked for the tooltip the control shows.
-    export class GetTooltipEvent : public ControlEventBaseC
+    // TODO: derive GetHintEvent from GetTextEventBase, as GetTextEvent and GetChildTextEvent are.
+    // Asked for the hint the control shows.
+    export class GetHintEvent : public ControlEventBaseC
     {
     public:
-        GetTooltipEvent(const FormContext&, const Control&, Text&, EventPhase);
+        GetHintEvent(const FormContext&, const Control&, Text&, EventPhase);
     public:
         const Control& control;
         Text& text;
@@ -364,10 +364,10 @@ namespace ClaFi
         // otherwise it should hold the item's bounds (initialized in the constructor).
         // anchorRect is in the coordinates of the form the control stands in
         FloatRect anchorRect{};
-        TooltipPlacement placement{ TooltipPlacement::Mouse };
+        HintPlacement placement{ HintPlacement::Mouse };
         // Whether the words this hint repeats were broken to the box they were drawn in. Read
         // under OverText alone, where the hint is that same layout uncut - see
-        // TooltipForm::setControl.
+        // HintForm::setControl.
         bool wordWrap{ false };
         const EventPhase phase;
         bool hideOnUserInput{ true };
@@ -535,8 +535,8 @@ namespace ClaFi
         friend class Input;
         friend TraversalContext;
         friend PaintEvent;
-        friend class Tooltip;
-        friend class TooltipLabel;
+        friend class Hint;
+        friend class HintLabel;
         friend class FocusNavigator;
     public:
         template <typename... Args>
@@ -595,8 +595,7 @@ namespace ClaFi
         DECLARE_EVENT(GetTextEvent, OnGetText, onGetText)
         // The control being asked for a child's text.
         DECLARE_EVENT(GetChildTextEvent, OnGetChildText, onGetChildText)
-        // The control being asked for its tooltip.
-        DECLARE_EVENT(GetTooltipEvent, OnGetTooltip, onGetTooltip)
+        DECLARE_EVENT(GetHintEvent, OnGetHint, onGetHint)   // the control being asked for its hint
         DECLARE_EVENT(PaintEvent, OnPaint, onPaint)   // the control painting itself
         // The paint being set up, before anything is drawn.
         DECLARE_EVENT(AdjustPaintEvent, OnAdjustPaint, onAdjustPaint)
@@ -724,8 +723,8 @@ namespace ClaFi
         // leaves the focus nowhere.
         //
         // Deep, because disabling a container disables what it holds. Nothing inside a disabled
-        // control is interactive - the one thing that still works there is the tooltip, which is
-        // how a disabled control gets to say why it is disabled, and tooltips follow hover rather
+        // control is interactive - the one thing that still works there is the hint, which is
+        // how a disabled control gets to say why it is disabled, and hints follow hover rather
         // than focus. See also canClick, which answers the same way for the same reason.
         [[nodiscard]] bool canTakeFocus() const;
         // Whether this control moves in Z - towards the viewer as the pointer arrives, away from it
@@ -1176,7 +1175,7 @@ namespace ClaFi
         virtual void adjustViewPort(AdjustViewportEvent&) const {}
         //
         // Text routine (protected)
-        virtual void nestedGetTooltip(GetTooltipEvent&);
+        virtual void nestedGetHint(GetHintEvent&);
         virtual void getText(GetTextEvent&) const;
         // Moves where the children begin. The event arrives holding the content padding and
         // carries the scaler with it, so an override states its inset in design units.

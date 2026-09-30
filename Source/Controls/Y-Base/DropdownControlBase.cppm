@@ -47,7 +47,7 @@ namespace ClaFi::Controls
     {
         friend DropdownControlBase;
     public:
-        DropdownPart(const CreateParams&, DropdownControlBase&, ArrowPlacement);
+        DropdownPart(const CreateParams&, DropdownControlBase&, SecondaryPartPlacement);
         std::wstring_view diagnosticText() const override { return L"DropdownPart"; }
         [[nodiscard]] bool enabled(bool deep = false) const override;
         [[nodiscard]] Control& popupOwner() override;
@@ -70,9 +70,8 @@ namespace ClaFi::Controls
         friend DropdownPart;
     public:
         template <typename... Args>
-        DropdownControlBase(const CreateParams&, Args&&...);
+        explicit DropdownControlBase(const CreateParams&, Args&&...);
     public:
-        [[nodiscard]] ArrowPlacement arrowPlacement() const { return m_config.placement; }
         /// Whether the control's own text has moved onto the strip, which is what a ribbon layout
         /// does. Read by the strip as it is built, to settle what it shows.
         [[nodiscard]] bool textOnDropdown() const { return m_config.textOnDropdown; }
@@ -85,8 +84,7 @@ namespace ClaFi::Controls
         /// than with a selected state, which a container above it is free to write.
         [[nodiscard]] float droppedDownFactor() const { return m_droppedDownFactor; }
         /// Whether the control has a list to drop. A strip that is not shown says there is
-        /// nothing under this control; one that was never made - an in-text mark - says nothing
-        /// either way, and the control drops as it always does.
+        /// nothing under this control.
         [[nodiscard]] bool canDropDown() const;
         /// Opens the dropdown as if the control had been pressed. A control with nothing to drop
         /// answers nothing.
@@ -94,7 +92,7 @@ namespace ClaFi::Controls
     protected:
         struct Config
         {
-            ArrowPlacement placement{ ArrowPlacement::Right };
+            SecondaryPartPlacement placement{ SecondaryPartPlacement::Right };
             ButtonViewMode viewMode{ ButtonViewMode::TextLabel };
             float dropdownWidth{ DropdownWidth{}.value };
             // A ribbon control hands its text down to the strip and keeps only the icon on top.
@@ -120,24 +118,22 @@ namespace ClaFi::Controls
         // The control's own text, without the mark. Overridden by a control whose text is not
         // simply the text property - a combo box's is its selected item.
         virtual void getMainText(GetTextEvent&) const;
-        // The mark an InText control ends its line with, put after the text given.
-        void appendInTextMark(Text&) const;
         [[nodiscard]] virtual Ink dropdownMarkInk() const { return InkWell::textInk(InkGrade::Muted); }
         // Which way the mark points at each end of its turn. A control that means something by the
         // direction of its mark says so here - a breadcrumb crumb points along the path and turns
         // to point into the list it drops - and one that only means open or shut takes the
         // default, which reads as a list falling and being put back.
         [[nodiscard]] virtual DropdownMarkTurn dropdownMarkTurn() const { return {}; }
-        // Draws the mark in whatever slot it was given - the strip's icon, or the box an in-text
-        // mark holds in the control's own line. The two differ in where the slot comes from and in
-        // nothing else, so the colour and the turn are settled here for both.
+        // Draws the mark in whatever slot it was given - the strip's icon, or the box that ends a
+        // ribbon strip's text. The two differ in where the slot comes from and in nothing else, so
+        // the colour and the turn are settled here for both.
         void paintDropdownMark(PaintIconEvent&) const;
 
         // Drops a popup under this control and runs it.
         template <ClassOfFormControl ControlClass, typename... Args>
         int dropPopup(FormBase&, Args&&...);
 
-        [[nodiscard]] SecondaryEdge secondaryEdge() const override;
+        [[nodiscard]] SecondaryPartPlacement secondaryPartPlacement() const override;
         // The strip is the control's own edge on the side it sits on, so it takes the content
         // padding there with it.
         [[nodiscard]] bool secondaryReachesEdge() const override { return true; }
@@ -163,12 +159,9 @@ namespace ClaFi::Controls
         // runs the popup modally, so it returns once the popup has closed.
         void runDropdown(Control& initiator);
         void setDroppedDown(const bool value);
-        // The control the mark is drawn on: the strip when there is one, otherwise this control,
-        // whose own text line carries it.
-        [[nodiscard]] const Control& markHolder() const;
     private:
-        // Design box the mark is drawn in: the strip's icon size, and the room an in-text mark
-        // takes at the end of the text. The mark itself is smaller than its box.
+        // Design box the mark is drawn in: the strip's icon size, and the room the mark takes at
+        // the end of a ribbon strip's text. The mark itself is smaller than its box.
         inline static constexpr float k_markBox{ 12.0f };
         inline static constexpr float k_markSpacing{ 4.0f };
         Config m_config;
@@ -199,9 +192,6 @@ namespace ClaFi::Controls
         SplitButtonBase{ params, std::forward<Args>(args)..., mainViewMode(makeConfig(args...)) },
         m_config{ makeConfig(args...) }
     {
-        if (m_config.placement == ArrowPlacement::InText)
-            return;
-
         createSecondaryPart<DropdownPart>(*this, m_config.placement);
     }
 
@@ -228,18 +218,11 @@ namespace ClaFi::Controls
         result.viewMode = READ_PROPERTY(ButtonViewMode, ButtonViewMode::TextLabel);
         // The design width of the dropdown strip.
         result.dropdownWidth = READ_PROPERTY(DropdownWidth, DropdownWidth{}).value;
-        // Where the dropdown mark sits.
-        result.placement = READ_PROPERTY(ArrowPlacement, ArrowPlacement::Auto);
-        if (result.placement == ArrowPlacement::Auto)
-        {
-            if (hasTopIcon(result.viewMode))
-                result.placement = ArrowPlacement::Bottom;
-            else
-                result.placement = ArrowPlacement::Right;
-        }
-        result.textOnDropdown =
-            result.placement == ArrowPlacement::Bottom
-            && hasTopIcon(result.viewMode);
+        // A top icon takes the strip below it and moves the text onto the strip, as a ribbon
+        // control does. Any other face has the strip at its right.
+        const bool topIcon = hasTopIcon(result.viewMode);
+        result.placement = topIcon ? SecondaryPartPlacement::Bottom : SecondaryPartPlacement::Right;
+        result.textOnDropdown = topIcon;
         return result;
     }
 
