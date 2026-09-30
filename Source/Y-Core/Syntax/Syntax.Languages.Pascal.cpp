@@ -953,8 +953,8 @@ namespace ClaFi::Syntax
                     .name = std::wstring{ name },
                     .kind = kind,
                     .signature = std::move(spelled),
+                    .type = std::wstring{ type },
                 },
-                .type = std::wstring{ type },
                 .scope = { 0, m_text.size() },
                 .depth = depth,
             });

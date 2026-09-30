@@ -37,4 +37,22 @@ namespace ClaFi::Syntax
     // Whether the caret stands in a comment or a string of the line those tokens were read off,
     // where nothing is completed.
     export [[nodiscard]] bool completionBlocked(const Tokens& lineTokens, std::size_t caret);
+
+    // A link of a member's subject: a name, and whether brackets follow it. See Syntax#completion
+    export struct CompletionLink
+    {
+        std::wstring_view name;
+        bool bracketed{ false };   // a call's or an index's brackets stand between it and its dot
+    };
+
+    export using CompletionSubject = std::vector<CompletionLink>;
+    export using CompletionClasses = std::vector<const CompletionEntry*>;
+
+    // What the name before a member's dot is read through, root first. See Syntax#completion
+    export [[nodiscard]] CompletionSubject completionSubject(const Language&,
+        std::wstring_view line, const Tokens& lineTokens, const CompletionPlace&);
+    // The subject's class and its parents - none where its type is not known. See Syntax#completion
+    export [[nodiscard]] CompletionClasses completionMemberClasses(const Language&,
+        const CompletionEntries&, const Declarations&, const CompletionSubject&,
+        std::size_t caret);
 }

@@ -134,21 +134,37 @@ spliced on every key press, and the lines on screen are the only ones anyone ask
 
 What a host offers a CodeBox to complete to, and the reading of a line that says what the
 caret's place can take. The data is a list of CompletionEntry - a name, its kind, the
-signature a hint shows, the hint's sentence - where an entry of kind Class carries two
-lists of its own, its methods and its properties, one level deep: a member has no members.
-The list is the host's, held by whoever read it, and a box names it rather than copying
-it. Nothing here reads a file: the framework's language files are the application's for
-now, and this is the shape they are read into.
+signature a hint shows, the hint's sentence and the type it holds or a function answers -
+where an entry of kind Class names the class it derives from and carries two lists of its
+own, its methods and its properties, one level deep: a member has no members. The list is
+the host's, held by whoever read it, and a box names it rather than copying it. Nothing here
+reads a file: the framework's language files are the application's for now, and this is the
+shape they are read into.
 
 A CompletionPlace is a caret's place on a line: where the name the caret ends starts, and
 whether a dot stands right before that name. The name runs back from the caret over the
 language's name characters and is a name only if it opens as one, so a caret after `10`
-names no word. The dot counts only where what stands before it could carry a member - a
-name that is not a number, or a call's or an index's closing bracket - so a range's second
-dot and a number's decimal point name no member. What follows a dot is answered from every
-class's members, whichever class the name before the dot would have been: telling them apart
-needs the type of that name, which a Declaration records and nothing reads yet. Until it is
-read the members are one list.
+names no word. The dot counts only where what stands before it could carry a member - a name
+that is not a number, or a call's or an index's closing bracket - so a range's second dot
+and a number's decimal point name no member.
+
+What follows a dot is answered from the class of what stands before it, and from that
+class's parents. completionSubject reads the subject back from the dot as links, root first:
+a name, a call's or an index's brackets after it stepped over - a bracket inside a comment
+or a string counts for none - and a dot before the name linking it to the one before that,
+while a range's two dots end the chain. What is not a link - a bracketed expression, a name
+standing apart from its dot, a chain whose root is on the line above - leaves the subject
+unknown. completionMemberClasses resolves the links. The root is a name the text declares,
+in force at the caret, the innermost of several, read by its declared type; else a name the
+host offers, where a class stands for itself - so a class name and a cast to it both answer
+the class - and anything else for its type. Each link after the root is the member of that
+name its class states, the class's own ahead of a parent's, read by its type. A routine and
+a property answer their type whatever brackets follow them - a call's result, an indexed
+property's element - and a variable or a constant with brackets after it answers none, since
+what indexing it gives is stated nowhere. A type that names no class of the list leaves the
+subject unknown, and an unknown subject lists no member. The answer is the class and its
+parents, followed by name and each once, so a parent named in a loop ends the walk; of a
+member stated by several of them, the one nearest the class is listed.
 
 Matching is by prefix under the language's case rule - a language with `ignoreCase` matches
 any case and one without matches exactly - and the rows are ordered the same way, so among
@@ -163,15 +179,15 @@ case - which is how an application's file states a kind by its word.
 
 The names a text declares for itself, read off the whole text by the language's own reader
 so that a box lists them beside the host's names - a script's variables, constants and
-parameters ahead of the library it is written against. A Declaration is a CompletionEntry
-of the name's own - the name, its kind, and the declaration as spelled for the hint, with
-its blanks collapsed and cut past a hundred characters - and with it the type the name is
-declared with where one name spells it (an `array of Integer` spells none), the scope the
-name is in force in, as a range of the text, and the depth: how many routines stand around
-the declaration, none for a global. A global's scope is the whole text. A routine's own
-names - its parameters, its locals, the Result of a function with its return type - are in
-force from the routine's header to its closing end, and a nested routine's stand one depth
-deeper inside that. Where the words run out before the routine closes, the routine is being
+parameters ahead of the library it is written against. A Declaration is a CompletionEntry of
+the name's own - the name, its kind, the type it is declared with where one name spells it
+(an `array of Integer` spells none), and the declaration as spelled for the hint, with its
+blanks collapsed and cut past a hundred characters - and with it the scope the name is in
+force in, as a range of the text, and the depth: how many routines stand around the
+declaration, none for a global. A global's scope is the whole text. A routine's own names -
+its parameters, its locals, the Result of a function with its return type - are in force
+from the routine's header to its closing end, and a nested routine's stand one depth deeper
+inside that. Where the words run out before the routine closes, the routine is being
 written, and its names reach the text's end.
 
 The Pascal reader walks the text as words - names, keywords, numbers and marks, with the

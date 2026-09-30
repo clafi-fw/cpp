@@ -10,7 +10,7 @@
 #   cmake --build build -- -k 0
 #
 # CLAFI_PLATFORM=wayland builds the OS layer and the Wayland layer with it, and on top of them
-# the two showcases and the Themes app. It needs libwayland-dev and wayland-protocols installed -
+# the showcases and the tools. It needs libwayland-dev and wayland-protocols installed -
 # the second ships no library, only the XML the bindings are generated from - xkbcommon for the
 # keyboard, the font stack's development packages: freetype2, harfbuzz, fontconfig and
 # libunibreak, and dbus-1 for the desktop's settings. Each is named per distribution where it is
@@ -116,8 +116,8 @@ file(GLOB_RECURSE clafi_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/S
 # both Platform/Windows/ and Platform/Windows_Platform.cppm beside it.
 #
 # PROGRAMS RATHER THAN LIBRARY CODE live outside Source/ - Showcase/ holds one subsystem
-# demonstrated thoroughly (MillScene, TextEngine), Tools/ the applications used to do work (Themes
-# App, Dom Benchmark) - so the glob never sees them.
+# demonstrated thoroughly (MillScene, TextEngine), Tools/ the applications used to do work (Themes,
+# PascalScripts, WhatsClip, Dom Benchmark) - so the glob never sees them.
 set(clafi_excluded "/Platform/Windows")
 string(APPEND clafi_excluded "|/_to_delete/|/build|/out/")
 if(CLAFI_PLATFORM STREQUAL "none")
@@ -463,8 +463,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     # THEMES, the browser the themes are made in, laid out the same way: the Main module
     # and every page and control under it know nothing of any platform, and the entry point is one
     # file per platform. Its modules are named ThisApp.*, as an application's are - it imports the
-    # library and is no part of it. Dom Benchmark, the other tool, is a console program built by
-    # Visual Studio only.
+    # library and is no part of it. Dom Benchmark is a console program built by Visual Studio only.
     set(themes_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/Themes/Src")
     add_executable(Themes
         "${themes_dir}/Themes_Main.cpp"
@@ -506,4 +505,42 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Util/ThisApp.ValueRuleControl.cppm")
     target_link_libraries(Themes PRIVATE ClaFi)
     target_compile_options(Themes PRIVATE ${clafi_compile_options})
+
+    # PASCALSCRIPTS, the editor for Pascal scripts, laid out as Themes is and standing on the same
+    # Documents layer.
+    set(pascalscripts_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/PascalScripts")
+    add_executable(PascalScripts
+        "${pascalscripts_dir}/Src/PascalScripts_Main.cpp"
+        "${pascalscripts_dir}/Src/PascalScripts_Icon.cpp"
+        "${pascalscripts_dir}/Src/PascalScripts_Wayland.cpp"
+        "${pascalscripts_dir}/Src/Pages/ScriptPage.cpp"
+        "${pascalscripts_dir}/Src/Util/ThisApp.Language.cpp"
+        "${pascalscripts_dir}/Src/Util/ThisApp.Scripts.cpp")
+    target_sources(PascalScripts PRIVATE FILE_SET CXX_MODULES FILES
+        "${pascalscripts_dir}/Src/PascalScripts_Main.cppm"
+        "${pascalscripts_dir}/Src/PascalScripts_Icon.cppm"
+        "${pascalscripts_dir}/Src/PascalScripts_Browser.cppm"
+        "${pascalscripts_dir}/Src/Pages/ScriptPage.cppm"
+        "${pascalscripts_dir}/Src/Util/ThisApp.Consts.cppm"
+        "${pascalscripts_dir}/Src/Util/ThisApp.Language.cppm"
+        "${pascalscripts_dir}/Src/Util/ThisApp.Scripts.cppm")
+    target_link_libraries(PascalScripts PRIVATE ClaFi)
+    target_compile_options(PascalScripts PRIVATE ${clafi_compile_options})
+
+    # WHAT A SCRIPT IS, read from beside the executable when the config folder holds no copy of
+    # its own. Copied whenever it changes, as Visual Studio's CopyFileToFolders does, and not only
+    # when the executable is linked again.
+    if(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+        set(pascalscripts_language "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Language.cfg")
+    else()
+        set(pascalscripts_language "${CMAKE_CURRENT_BINARY_DIR}/Language.cfg")
+    endif()
+    add_custom_command(
+        OUTPUT "${pascalscripts_language}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${pascalscripts_dir}/Language.cfg" "${pascalscripts_language}"
+        DEPENDS "${pascalscripts_dir}/Language.cfg"
+        VERBATIM)
+    add_custom_target(PascalScripts_Language DEPENDS "${pascalscripts_language}")
+    add_dependencies(PascalScripts PascalScripts_Language)
 endif()

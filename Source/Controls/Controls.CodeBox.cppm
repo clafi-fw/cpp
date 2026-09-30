@@ -63,7 +63,7 @@ namespace ClaFi::Controls
     enum class CompletionScope : std::uint8_t
     {
         Global,   // what stands on its own - the text's own names, the list's, the keywords
-        Member    // what follows a dot - every class's methods and properties
+        Member    // what follows a dot - the methods and properties of the subject's classes
     };
 
     // One row of the completion list: a name the box can complete to, its kind beside it.
@@ -71,9 +71,10 @@ namespace ClaFi::Controls
     {
     public:
         CompletionRow(const CreateParams&, CompletionStack&, CompletionScope,
-            std::wstring_view name, Syntax::CompletionKind, const Syntax::CompletionEntry*,
-            const Syntax::Declaration*);
+            const Syntax::CompletionEntry* owner, std::wstring_view name, Syntax::CompletionKind,
+            const Syntax::CompletionEntry*, const Syntax::Declaration*);
         [[nodiscard]] CompletionScope scope() const { return m_scope; }
+        [[nodiscard]] const Syntax::CompletionEntry* owner() const { return m_owner; }
         [[nodiscard]] std::wstring_view name() const { return m_name; }
         // Whether the name is in force at that position of the text - everywhere, for a name
         // the text itself does not declare.
@@ -86,6 +87,7 @@ namespace ClaFi::Controls
     private:
         CompletionStack& m_stack;
         CompletionScope m_scope;
+        const Syntax::CompletionEntry* m_owner;   // the class a member is read off - null elsewhere
         std::wstring m_name;
         Syntax::CompletionKind m_kind;
         const Syntax::CompletionEntry* m_entry;   // what the hint reads - null for a keyword
@@ -103,13 +105,14 @@ namespace ClaFi::Controls
         [[nodiscard]] std::wstring_view typed() const { return m_typed; }
         // Builds the rows anew: the text's own declarations first, the nearest scope's ahead,
         // then the list's names by scope and the language's keywords - each run in name order
-        // under the language's case rule, a member two classes name listed once.
+        // under the language's case rule, a member once for every class stating it.
         void rebuild(const Syntax::Language&, const Syntax::CompletionEntries*,
             const Syntax::Declarations&);
-        // Shows the rows of the scope that begin with what is typed and are in force at the
-        // caret's position in the text, the first of them current, and answers how many.
-        std::size_t filter(const Syntax::Language&, CompletionScope, std::wstring_view typed,
-            std::size_t caret);
+        // Shows the rows of the scope that begin with what is typed, are in force at the caret's
+        // position in the text and, for a member, are read off the nearest of those classes to
+        // state it - the first of them current - and answers how many.
+        std::size_t filter(const Syntax::Language&, CompletionScope,
+            const Syntax::CompletionClasses&, std::wstring_view typed, std::size_t caret);
         // Moves the current row one shown row up or down, staying at either end.
         void moveCurrent(ScrollDirection);
         // Moves the current row a view less one row up or down, staying at either end.

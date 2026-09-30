@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Src\Pages">
+      <UniqueIdentifier>{c105315a-e170-492d-9793-b5df8ba2b14a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src\Util">
+      <UniqueIdentifier>{090562c3-8fd2-4caf-8538-0eb80e17efdc}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Src\PascalScripts_Browser.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\PascalScripts_Icon.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\PascalScripts_Icon.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\PascalScripts_Main.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\PascalScripts_Main.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\PascalScripts_Win32.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\ScriptPage.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Pages\ScriptPage.cppm">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.Consts.cppm">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.Language.cpp">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.Language.cppm">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.Scripts.cpp">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\ThisApp.Scripts.cppm">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Src\PascalScripts_Wayland.cpp">
+      <Filter>Src</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="Language.cfg" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PascalScripts.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="PascalScripts.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+</Project>

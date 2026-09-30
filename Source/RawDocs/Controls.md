@@ -453,21 +453,24 @@ the form's layout unsettled waits on the pass that settles it, as the Suggestion
 
 WHAT IS LISTED. The rows are built once per language, list and reading of the text - the
 text's own declarations, the entries and the language's keywords in one scope, every class's
-methods and properties in the other - and shown by scope, by prefix and by where the caret
-stands; see Syntax#completion for the place and the prefix rule, and why members are one
-list. The text's own names come first, the nearest scope's ahead: what the routine the caret
-stands in declares, then what the routines around it do, then the text's globals, and only
-then the host's names and the keywords - each run in name order under the language's case
-rule, so within a run an exact match stands first. A name is shown only where it is in
-force, so the locals of another routine are not listed, and a local and a global of one name
-both are, the local first; the host's name of the same spelling stands after both. The
-declarations are read by the language when the list opens, and again on Ctrl+Space with the
-list up; a list up keeps its reading while the keys narrow it. The reading is compared with
-the last before any row is rebuilt, so typing in a routine's body rebuilds nothing. See
-Syntax#declarations for what is read. The first row shown is current when the list opens,
-and an exact match is that row. A row prints the name with the part typed so far in the
-accent ink, and the kind muted at the end of its line - function, procedure, class,
-property, keyword, variable, constant - the way a menu prints a key.
+methods and properties in the other, each row keeping its class - and shown by scope, by
+prefix and by where the caret stands; see Syntax#completion for the place, the prefix rule
+and how the class a dot reads is found. After a dot only the members of that class and of
+its parents are shown, a member both state from the class itself, and where the class is not
+known the list does not open, Ctrl+Space included. The text's own names come first, the
+nearest scope's ahead: what the routine the caret stands in declares, then what the routines
+around it do, then the text's globals, and only then the host's names and the keywords -
+each run in name order under the language's case rule, so within a run an exact match stands
+first. A name is shown only where it is in force, so the locals of another routine are not
+listed, and a local and a global of one name both are, the local first; the host's name of
+the same spelling stands after both. The declarations are read by the language when the list
+opens, and again on Ctrl+Space with the list up; a list up keeps its reading while the keys
+narrow it. The reading is compared with the last before any row is rebuilt, so typing in a
+routine's body rebuilds nothing. See Syntax#declarations for what is read. The first row
+shown is current when the list opens, and an exact match is that row. A row prints the name
+with the part typed so far in the accent ink, and the kind muted at the end of its line -
+function, procedure, class, property, keyword, variable, constant - the way a menu prints a
+key.
 
 THE HINT. The current row's signature, in the code style, and under it the hint's sentence,
 stand beside the list at the row's height - the form's tooltip, placed FormPlacement::Right

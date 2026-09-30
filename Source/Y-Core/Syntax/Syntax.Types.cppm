@@ -77,6 +77,7 @@ namespace ClaFi::Syntax
         CompletionKind kind{ CompletionKind::Variable };
         std::wstring signature;        // the line a hint shows - empty where the name is all of it
         std::wstring hint;             // what it does, in a sentence
+        std::wstring type;             // the type it holds or a function answers - empty for none
         std::wstring parent;           // the class this one derives from - empty for none
         CompletionEntries methods;     // a class's methods - empty elsewhere
         CompletionEntries properties;  // a class's properties - empty elsewhere
@@ -86,8 +87,7 @@ namespace ClaFi::Syntax
     // A name a text declares for itself, and where it is in force. See Syntax#declarations
     export struct Declaration
     {
-        CompletionEntry entry;    // the name, its kind, and the declaration as spelled for the hint
-        std::wstring type;        // the type the name is declared with, where one name spells it
+        CompletionEntry entry;    // the name, its kind and type, and the declaration as spelled
         TextRange scope;          // the run of the text the name is in force in
         std::size_t depth{ 0 };   // how many routines stand around the declaration
         bool operator==(const Declaration&) const = default;

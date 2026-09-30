@@ -44,6 +44,7 @@ namespace ClaFi::Controls
         struct RowSource
         {
             CompletionScope scope;
+            const Syntax::CompletionEntry* owner;   // a member's class - null elsewhere
             std::wstring_view name;
             Syntax::CompletionKind kind;
             const Syntax::CompletionEntry* entry;
@@ -73,12 +74,13 @@ namespace ClaFi::Controls
             return leftDeclared && left.declaration->scope.start < right.declaration->scope.start;
         }
 
-        // Whether two sources are one row - a member two classes name, an entry stated twice.
-        // The text's own declarations are never folded: each stands for its own scope.
+        // Whether two sources are one row - an entry stated twice, a member its class states
+        // twice. The text's own declarations are never folded: each stands for its own scope.
         [[nodiscard]] bool sameRow(const Syntax::Language& language, const RowSource& left,
             const RowSource& right)
         {
             return left.scope == right.scope
+                && left.owner == right.owner
                 && !left.declaration
                 && !right.declaration
                 && Syntax::completionNamesEqual(language, left.name, right.name);
@@ -87,6 +89,37 @@ namespace ClaFi::Controls
         [[nodiscard]] CompletionRow& rowOf(const ControlPtr& control)
         {
             return static_cast<CompletionRow&>(*control);
+        }
+
+        // Where the run of rows starting at `at` ends. The member rows of one name stand
+        // together, ordered by name as they are, and every other row is a run of its own.
+        [[nodiscard]] std::size_t endOfRun(const Syntax::Language& language,
+            const ControlSpanC rows, const std::size_t at)
+        {
+            const CompletionRow& first = rowOf(rows[at]);
+            std::size_t end = at + 1;
+            if (first.scope() != CompletionScope::Member)
+                return end;
+            while (end != rows.size()
+                && rowOf(rows[end]).scope() == CompletionScope::Member
+                && Syntax::completionNamesEqual(language, rowOf(rows[end]).name(), first.name()))
+                ++end;
+            return end;
+        }
+
+        // How far from the first of the classes the row's class stands - none for a member of
+        // another class, and the first place for a row of no class.
+        [[nodiscard]] std::optional<std::size_t> rankOf(const CompletionRow& row,
+            const Syntax::CompletionClasses& classes)
+        {
+            if (row.scope() != CompletionScope::Member)
+                return std::size_t{ 0 };
+            for (std::size_t rank = 0; rank != classes.size(); ++rank)
+            {
+                if (classes[rank] == row.owner())
+                    return rank;
+            }
+            return std::nullopt;
         }
     }
 
@@ -100,9 +133,9 @@ namespace ClaFi::Controls
     // CompletionRow
 
     CompletionRow::CompletionRow(const CreateParams& params, CompletionStack& stack,
-        const CompletionScope scope, const std::wstring_view name,
-        const Syntax::CompletionKind kind, const Syntax::CompletionEntry* entry,
-        const Syntax::Declaration* declaration)
+        const CompletionScope scope, const Syntax::CompletionEntry* owner,
+        const std::wstring_view name, const Syntax::CompletionKind kind,
+        const Syntax::CompletionEntry* entry, const Syntax::Declaration* declaration)
         :
         Button{ params,
             // The look of a dropdown's line: no surface at rest, and the current row on its own.
@@ -118,6 +151,7 @@ namespace ClaFi::Controls
         },
         m_stack{ stack },
         m_scope{ scope },
+        m_owner{ owner },
         m_name{ name },
         m_kind{ kind },
         m_entry{ entry },
@@ -196,14 +230,15 @@ namespace ClaFi::Controls
         for (const Syntax::Declaration& declaration : declarations)
         {
             sources.push_back({
-                CompletionScope::Global, declaration.entry.name, declaration.entry.kind,
+                CompletionScope::Global, nullptr, declaration.entry.name, declaration.entry.kind,
                 &declaration.entry, &declaration
             });
         }
         for (const std::wstring_view keyword : language.keywords)
         {
             sources.push_back({
-                CompletionScope::Global, keyword, Syntax::CompletionKind::Keyword, nullptr, nullptr
+                CompletionScope::Global, nullptr, keyword, Syntax::CompletionKind::Keyword,
+                nullptr, nullptr
             });
         }
         if (entries)
@@ -211,26 +246,28 @@ namespace ClaFi::Controls
             for (const Syntax::CompletionEntry& entry : *entries)
             {
                 sources.push_back({
-                    CompletionScope::Global, entry.name, entry.kind, &entry, nullptr
+                    CompletionScope::Global, nullptr, entry.name, entry.kind, &entry, nullptr
                 });
-                // A member is listed whatever class it is read off - see the note. The parent's
-                // members stand in the list under the parent, so a class repeats none of them.
+                // A member keeps its class, which is what a dot shows it by. The parent's members
+                // stand under the parent, so a class repeats none of them.
                 for (const Syntax::CompletionEntry& method : entry.methods)
                 {
                     sources.push_back({
-                        CompletionScope::Member, method.name, method.kind, &method, nullptr
+                        CompletionScope::Member, &entry, method.name, method.kind, &method,
+                        nullptr
                     });
                 }
                 for (const Syntax::CompletionEntry& property : entry.properties)
                 {
                     sources.push_back({
-                        CompletionScope::Member, property.name, property.kind, &property, nullptr
+                        CompletionScope::Member, &entry, property.name, property.kind, &property,
+                        nullptr
                     });
                 }
             }
         }
 
-        // Stable, so of two classes naming one member the first in the list is the one kept.
+        // Stable, so of an entry stated twice the first statement is the one kept.
         std::ranges::stable_sort(sources, [&](const RowSource& left, const RowSource& right){
             return listsBefore(language, left, right);
         });
@@ -242,29 +279,52 @@ namespace ClaFi::Controls
 
         for (const RowSource& source : sources)
         {
-            add<CompletionRow>(*this, source.scope, source.name, source.kind, source.entry,
-                source.declaration);
+            add<CompletionRow>(*this, source.scope, source.owner, source.name, source.kind,
+                source.entry, source.declaration);
         }
     }
 
     std::size_t CompletionStack::filter(const Syntax::Language& language,
-        const CompletionScope scope, const std::wstring_view typed, const std::size_t caret)
+        const CompletionScope scope, const Syntax::CompletionClasses& classes,
+        const std::wstring_view typed, const std::size_t caret)
     {
         m_typed = typed;
         std::size_t shown = 0;
         CompletionRow* first = nullptr;
-        for (const ControlPtr& control : controls())
+        const ControlSpanC rows = controls();
+        std::size_t at = 0;
+        while (at != rows.size())
         {
-            CompletionRow& row = rowOf(control);
-            const bool matches = row.scope() == scope
-                && row.inForceAt(caret)
-                && Syntax::completionMatches(language, row.name(), typed);
-            row.setVisible(matches);
-            if (!matches)
-                continue;
-            ++shown;
-            if (!first)
-                first = &row;
+            // A run shows one row at most: the one read off the nearest class.
+            const std::size_t end = endOfRun(language, rows, at);
+            CompletionRow* pick = nullptr;
+            std::size_t pickRank = 0;
+            for (std::size_t i = at; i != end; ++i)
+            {
+                CompletionRow& row = rowOf(rows[i]);
+                const std::optional<std::size_t> rank = rankOf(row, classes);
+                const bool eligible = row.scope() == scope
+                    && row.inForceAt(caret)
+                    && rank.has_value();
+                if (eligible && (!pick || *rank < pickRank))
+                {
+                    pick = &row;
+                    pickRank = *rank;
+                }
+            }
+            const bool matches = pick && Syntax::completionMatches(language, pick->name(), typed);
+            for (std::size_t i = at; i != end; ++i)
+            {
+                CompletionRow& row = rowOf(rows[i]);
+                row.setVisible(matches && &row == pick);
+            }
+            if (matches)
+            {
+                ++shown;
+                if (!first)
+                    first = pick;
+            }
+            at = end;
         }
         setCurrentRow(first);
         return shown;
@@ -756,6 +816,20 @@ namespace ClaFi::Controls
         // its reading, since the keys that narrow it change no declaration it is about.
         if (!completionShown() || everything)
             readDeclarations();
+        // After a dot, the members of the subject's classes - and no list where they are not
+        // known. See Syntax#completion
+        Syntax::CompletionClasses classes;
+        if (place.member)
+        {
+            classes = Syntax::completionMemberClasses(language, *m_completion, m_declarations,
+                Syntax::completionSubject(language, line.text, m_tokens, place),
+                line.start + line.caret);
+            if (classes.empty())
+            {
+                hideCompletion();
+                return;
+            }
+        }
         ensureCompletionList();
         CompletionStack& rows = m_completionList->content().body();
         if (std::exchange(m_completionRowsStale, false))
@@ -763,7 +837,7 @@ namespace ClaFi::Controls
         const CompletionScope scope = place.member
             ? CompletionScope::Member
             : CompletionScope::Global;
-        if (rows.filter(language, scope, typed, line.start + line.caret) == 0)
+        if (rows.filter(language, scope, classes, typed, line.start + line.caret) == 0)
         {
             hideCompletion();
             return;
