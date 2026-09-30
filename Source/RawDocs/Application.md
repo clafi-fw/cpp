@@ -229,6 +229,14 @@ AppContext::description. It is a Text like the name, so it may carry inks and st
 spell the name inside it the way the name is spelled. An application that states none gets the
 page without it: the publisher is followed by the framework line, with one blank line between.
 
+WHAT ELSE THE APPLICATION HAS TO SAY FOLLOWS AS PARAGRAPHS. AppContext::addInformation takes a
+plain paragraph and AppContext::information answers them in the order added; the page prints them
+after the description and before the framework line, one blank line between each. They are for
+facts the application learns at startup rather than states in code - where a data file it read
+came from, say - so they are strings, not Texts, and the page does the one dressing they need:
+every address from https:// to the next blank is made a link, the punctuation closing the
+sentence around it left in the text.
+
 THE PAGE STATES HOW LONG ITS LINES RUN. The backstage is as wide as its widest page - see
 PageSizing::WidestPage - and a text with no maximum is measured one line per paragraph, so an
 unbounded description would widen the menu to fit it on one line. A maximum width breaks it into

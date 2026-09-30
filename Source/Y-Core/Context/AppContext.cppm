@@ -62,6 +62,8 @@ namespace ClaFi
     {
     };
 
+    export using InformationParagraphs = std::vector<std::wstring>;
+
     export class AppContext
     {
     public:
@@ -78,6 +80,10 @@ namespace ClaFi
         [[nodiscard]] std::wstring_view publisher() const { return m_publisher; }
         // What the application does, in a sentence or two - empty where it states none.
         [[nodiscard]] const Text& description() const { return m_description; }
+        // The paragraphs the Information page shows after the description, in the order added.
+        [[nodiscard]] const InformationParagraphs& information() const { return m_information; }
+        // States a paragraph for the Information page - where a data file came from, say.
+        void addInformation(std::wstring_view paragraph) { m_information.emplace_back(paragraph); }
 
         // ONE ANSWER FOR THE PROCESS, and the only place a form can ask for a backend: the kind
         // the application is on at that moment, so no two windows can disagree. See Context
@@ -197,6 +203,7 @@ namespace ClaFi
         Text m_appName;
         std::wstring_view m_publisher;
         Text m_description;
+        InformationParagraphs m_information{};
         // The GPU backend the application named, if it named one - see gpuAvailable. The CPU
         // backend needs no factory here: the core owns that type.
         BackendFactory m_createGpuBackend;

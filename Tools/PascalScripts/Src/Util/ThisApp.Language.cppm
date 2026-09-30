@@ -29,6 +29,8 @@ namespace ThisApp
         Language& operator=(const Language&) = delete;
     public:
         [[nodiscard]] const Documents::DocumentKind& kind() const { return m_kind; }
+        // How the file came about, for the Information page. Empty where the file states none.
+        [[nodiscard]] const std::wstring& information() const { return m_information; }
         [[nodiscard]] const ScriptTemplates& templates() const { return m_templates; }
         // The names the host offers, for a CodeBox to complete. Empty without a file.
         [[nodiscard]] const Syntax::CompletionEntries& completion() const { return m_completion; }
@@ -41,6 +43,7 @@ namespace ThisApp
         std::filesystem::path m_file;   // the config folder's, else the executable's, else empty
         std::wstring m_extension;   // what the kind's extension views, so it stands ahead of it
         Documents::DocumentKind m_kind;
+        std::wstring m_information{};
         ScriptTemplates m_templates{};
         Syntax::CompletionEntries m_completion{};
     };

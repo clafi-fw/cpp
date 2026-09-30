@@ -72,6 +72,8 @@ namespace ThisApp
             tabConfigBlueprint()
         }
     {
+        if (!m_language.information().empty())
+            this->context().addInformation(m_language.information());
     }
 
     template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend>

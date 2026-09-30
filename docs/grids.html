@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClaFi Grid - Developer Manual</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2064%2064%22%3E%3Ccircle%20cx=%2216%22%20cy=%2216%22%20r=%229%22%20fill=%22%239cde4c%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2216%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2216%22%20cy=%2248%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2248%22%20r=%229%22%20fill=%22%2373b722%22/%3E%3C/svg%3E">
     <style>
         :root {
             --bg-color: #f9f9fb; --text-color: #333; --accent-color: #0066cc;
@@ -104,11 +105,16 @@
         td code { font-size: 0.85em; }
         .grid-fig { width: 100%; max-width: 720px; margin: 1.5rem 0; display: block; }
         @media (max-width: 1200px) { .sidebar { display: none; } .page-content { margin-left: 0; width: 100%; } }
+        .manuals-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .manuals-link:hover { color: var(--accent-color); }
+        .manuals-link::before { content: "\2190\00a0"; }
+        header .manuals-link-line { margin: 0.2rem 0 0; }
+        .brand-link { text-decoration: none; }
     </style>
 </head>
 <body>
     <nav class="sidebar">
-        <div class="sidebar-brand"><span class="sidebar-brand-text">ClaFi</span></div>
+        <div class="sidebar-brand"><a class="brand-link" href="index.html"><span class="sidebar-brand-text">ClaFi</span></a></div>
         <div class="sidebar-header">Contents</div>
         <ul>
             <li><div class="nav-item-wrapper"><a href="#introduction">Introduction</a></div></li>
@@ -173,6 +179,7 @@
         <header>
             <h1>ClaFi Grid</h1>
             <p>Building grids was never that simple</p>
+            <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
         </header>
         <main>
 <h2 id="introduction">Introduction</h2>

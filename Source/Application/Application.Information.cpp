@@ -21,6 +21,8 @@ namespace ClaFi
     {
         // The name, its publisher, what the application does, and the framework with its address.
         [[nodiscard]] Text informationText(const AppContext&);
+        // Appends a plain paragraph, every web address in it made a link.
+        void appendLinked(Text&, std::wstring_view paragraph);
 
         // The room a page of options keeps around its column, so the name starts where options do.
         constexpr float k_pagePadding{ 12.0f };
@@ -62,12 +64,46 @@ namespace ClaFi
                 text << TextOp::EndLine;
                 text << TextOp::EndLine;
             }
+            for (const std::wstring& paragraph : context.information())
+            {
+                appendLinked(text, paragraph);
+                text << TextOp::EndLine;
+                text << TextOp::EndLine;
+            }
             text << L"Built with ClaFi - Clarity First the Framework";
             text << TextOp::EndLine;
             text << PushLink{ L"https://github.com/clafi-fw/cpp" };
             text << L"github.com/clafi-fw/cpp";
             text << PopLink{};
             return text;
+        }
+
+        // An address runs from its scheme to the next blank; punctuation closing the sentence
+        // around it stays in the text.
+        void appendLinked(Text& text, const std::wstring_view paragraph)
+        {
+            constexpr std::wstring_view k_scheme = L"https://";
+            // Punctuation a sentence closes with, a closing guillemet last.
+            constexpr std::wstring_view k_closers = L".,;:)\u00BB\"'";
+            std::size_t pos = 0;
+            while (pos < paragraph.size())
+            {
+                const std::size_t start = paragraph.find(k_scheme, pos);
+                if (start == std::wstring_view::npos)
+                    break;
+                std::size_t end = paragraph.find(L' ', start);
+                if (end == std::wstring_view::npos)
+                    end = paragraph.size();
+                while (end > start && k_closers.find(paragraph[end - 1]) != std::wstring_view::npos)
+                    --end;
+                const std::wstring_view address = paragraph.substr(start, end - start);
+                text << paragraph.substr(pos, start - pos);
+                text << PushLink{ std::wstring{ address } };
+                text << address;
+                text << PopLink{};
+                pos = end;
+            }
+            text << paragraph.substr(pos);
         }
     }
 }

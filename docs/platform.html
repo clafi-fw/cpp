@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClaFi Platform - Developer Manual</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2064%2064%22%3E%3Ccircle%20cx=%2216%22%20cy=%2216%22%20r=%229%22%20fill=%22%239cde4c%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2216%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2216%22%20cy=%2248%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2248%22%20r=%229%22%20fill=%22%2373b722%22/%3E%3C/svg%3E">
     <style>
         :root {
             --bg-color: #f9f9fb;
@@ -287,6 +288,10 @@
         table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 0.98rem; }
         th, td { border: 1px solid var(--border-color); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
         th { background-color: #f6f8fa; font-weight: 600; }
+        .manuals-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .manuals-link:hover { color: var(--accent-color); }
+        .manuals-link::before { content: "\2190\00a0"; }
+        header .manuals-link-line { margin: 0.2rem 0 0; }
     </style>
 </head>
 <body>
@@ -407,6 +412,7 @@
         <header>
             <h1>Platform and Ownership</h1>
             <p>ClaFi Framework Developer Manual</p>
+            <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
         </header>
 
         <main>

@@ -26,6 +26,7 @@ namespace ThisApp
         namespace Keys
         {
             constexpr std::wstring_view extension = L"Extension";
+            constexpr std::wstring_view information = L"Information";
             constexpr std::wstring_view templates = L"Templates";
             constexpr std::wstring_view completion = L"Completion";
             constexpr std::wstring_view name = L"Name";
@@ -127,6 +128,7 @@ namespace ThisApp
         using namespace Dom::Dt;
         const Section layout = {
             Value{ Keys::extension, std::wstring{} },
+            Value{ Keys::information, std::wstring{} },
             Sequence
             {
                 Keys::templates,
@@ -165,6 +167,7 @@ namespace ThisApp
             m_extension = extension;
             m_kind.extension = m_extension;
         }
+        m_information = stringOf(document, Keys::information);
 
         // A template with no name could not be listed, so it is left out.
         for (const Dom::Section& item : (document / Keys::templates).as<Sections>())
