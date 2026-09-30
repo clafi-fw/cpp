@@ -242,6 +242,7 @@ namespace ClaFi
         bool m_pressScaleApplied{ false };
         // Metrics
         float m_zDepthFactor{ 0.0f };
+        float m_zAnimationAmount{ 1.0f }; // the application's, inherited from the root
         // How far the Focus ring list reached the stroke. A ring stands out of the grow-in.
         float m_focusRingFactor{ 0.0f };
         float m_borderWidth;

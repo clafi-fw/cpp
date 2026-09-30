@@ -55,6 +55,9 @@ namespace ClaFi
     // The two ways between a percent and a point along the scale slot. See the definitions
     [[nodiscard]] static int percentAt(float position);
     [[nodiscard]] static float positionOf(int percent);
+    // The two ways between a Z animation amount and a point along its slot.
+    [[nodiscard]] static float amountAt(float position);
+    [[nodiscard]] static float positionOfAmount(float amount);
 
     namespace
     {
@@ -91,16 +94,19 @@ namespace ClaFi
     // The tallest the options may make the page - past it they scroll. See Application
     constexpr float k_optionsHeight{ 440.0f };
 
-    // WHAT EACH ROW OF THE APPEARANCE SECTION IS CALLED, in a box both rows share, so what they
+    // WHAT EACH ROW OF THE APPEARANCE SECTION IS CALLED, in a box the rows share, so what they
     // name starts at one left edge whichever word is the longer.
-    constexpr float k_rowCaptionWidth{ 52.0f };
+    constexpr float k_rowCaptionWidth{ 64.0f };
     // The box the percent is written in - wide enough for the widest of them, so the slot's left
     // edge holds still while the number under the pointer changes.
-    constexpr float k_scaleReadoutWidth{ 44.0f };
+    constexpr float k_readoutWidth{ 44.0f };
     // THE SLOT IS STATED, NOT FILLED. A lane hands every item the width it measured and only a
     // FlexSpacer takes what is over - see Control::fillsLane - so this is what the row comes to,
     // and it is stated to leave the row about as wide as the themes above it are capped at.
-    constexpr float k_scaleSliderWidth{ 250.0f };
+    constexpr float k_sliderWidth{ 250.0f };
+
+    // One unit of the Z-Hover slot is a hundredth of the amount.
+    constexpr float k_zAnimationSteps{ 100.0f };
 
     // SettingsPage
 
@@ -114,6 +120,16 @@ namespace ClaFi
     float positionOf(const int percent)
     {
         return static_cast<float>(percent - AppContext::k_minScalePercent);
+    }
+
+    float amountAt(const float position)
+    {
+        return std::round(position) / k_zAnimationSteps;
+    }
+
+    float positionOfAmount(const float amount)
+    {
+        return amount * k_zAnimationSteps;
     }
 
     // THE SYSTEM'S PART IS THE PLATFORM'S APPLICATION DATA ROOT, the floor deleteConfigFolder
@@ -313,18 +329,43 @@ namespace ClaFi
             WordWrap::No,
             VerticalTextAnchor::Center
         ) },
-        m_scaleReadout{ m_scaleRow.add<ScaleReadout>(
-            MinSize{ k_scaleReadoutWidth, 0.0f },
-            MaxSize{ k_scaleReadoutWidth, k_maxFloat },
+        m_scaleReadout{ m_scaleRow.add<PercentReadout>(
+            MinSize{ k_readoutWidth, 0.0f },
+            MaxSize{ k_readoutWidth, k_maxFloat },
             WordWrap::No,
             HorizontalTextAnchor::Right,
             VerticalTextAnchor::Center
         ) },
         m_scaleSlider{ m_scaleRow.add<ScaleSlider>(
-            MinSize{ k_scaleSliderWidth, 0.0f },
-            MaxSize{ k_scaleSliderWidth, k_maxFloat },
+            MinSize{ k_sliderWidth, 0.0f },
+            MaxSize{ k_sliderWidth, k_maxFloat },
             ScrollButtons::No,
             TooltipText{ L"Scales the UI on top of the system scale" }
+        ) },
+        m_zAnimationRow{ m_appearanceGroup.add<StackPanel>(
+            Orientation::Horizontal,
+            Spacing{ k_captionSpacing }
+        ) },
+        m_zAnimationCaption{ m_zAnimationRow.add<Label>(
+            Text{ InkGrade::Strong, L"Z-Hover:" },
+            MinSize{ k_rowCaptionWidth, 0.0f },
+            MaxSize{ k_rowCaptionWidth, k_maxFloat },
+            WordWrap::No,
+            VerticalTextAnchor::Center
+        ) },
+        m_zAnimationReadout{ m_zAnimationRow.add<PercentReadout>(
+            MinSize{ k_readoutWidth, 0.0f },
+            MaxSize{ k_readoutWidth, k_maxFloat },
+            WordWrap::No,
+            HorizontalTextAnchor::Right,
+            VerticalTextAnchor::Center
+        ) },
+        m_zAnimationSlider{ m_zAnimationRow.add<Slider>(
+            MinSize{ k_sliderWidth, 0.0f },
+            MaxSize{ k_sliderWidth, k_maxFloat },
+            ScrollButtons::No,
+            FineAdjust::No,
+            TooltipText{ L"How far controls move in depth under the pointer" }
         ) },
         m_windowSection{ m_options.addSection(L"Main Window") },
         m_windowGroup{ m_windowSection.body() },
@@ -377,6 +418,13 @@ namespace ClaFi
         m_scaleSlider.onChange([this](SliderChangeEvent& event) {
             appContext().scale().set(percentAt(event.newPosition));
             writeScaleReadout();
+        });
+        m_zAnimationSlider.setMaxPosition(k_zAnimationSteps);
+        m_zAnimationSlider.setPosition(positionOfAmount(appContext().zAnimationAmount()), false);
+        writeZAnimationReadout();
+        m_zAnimationSlider.onChange([this](SliderChangeEvent& event) {
+            appContext().zAnimation().set(amountAt(event.newPosition));
+            writeZAnimationReadout();
         });
         // The window the menu stands on, not the menu: a popup is held above its owner already,
         // and what the user means by this is where the application sits among other applications.
@@ -515,5 +563,14 @@ namespace ClaFi
         reading << Fmt{ L"{}%", appContext().scalePercent() };
         m_scaleReadout.text() = std::move(reading);
         m_scaleReadout.invalidate();
+    }
+
+    void SettingsPage::writeZAnimationReadout()
+    {
+        const int percent = static_cast<int>(std::round(appContext().zAnimationAmount() * 100.0f));
+        Text reading{};
+        reading << Fmt{ L"{}%", percent };
+        m_zAnimationReadout.text() = std::move(reading);
+        m_zAnimationReadout.invalidate();
     }
 }

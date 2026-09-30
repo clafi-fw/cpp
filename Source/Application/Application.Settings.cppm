@@ -64,8 +64,8 @@ namespace ClaFi
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"SettingsPage"; }
     private:
-        // The percent as it stands, in a box of its own.
-        using ScaleReadout = WithTextLayout<Label>;
+        // A percent as it stands, in a box of its own.
+        using PercentReadout = WithTextLayout<Label>;
     private:
         // Asks, and makes the folder where the answer allows it. See Application
         void allowStorage();
@@ -73,6 +73,8 @@ namespace ClaFi
         void withdrawStorage();
         // Writes the percent the application is drawn at into the readout. See Application
         void writeScaleReadout();
+        // Writes the Z animation amount the application moves at into the readout.
+        void writeZAnimationReadout();
     private:
         // EVERY OPTION THE PAGE HOLDS, ON ONE BOX THAT SCROLLS. The sections are expanders on
         // this column and nothing inside it scrolls on its own, so a group opened past the foot
@@ -92,8 +94,13 @@ namespace ClaFi
         StackPanel& m_scaleRow;
         Label& m_scaleCaption;
         // Stated, and the same on both rows: what each row names stands at one left edge.
-        ScaleReadout& m_scaleReadout;
+        PercentReadout& m_scaleReadout;
         ScaleSlider& m_scaleSlider;
+        // How far controls move in depth, as a row laid out the way the scale's is.
+        StackPanel& m_zAnimationRow;
+        Label& m_zAnimationCaption;
+        PercentReadout& m_zAnimationReadout;
+        Slider& m_zAnimationSlider;
         // Held whole: the whole of it goes where the platform has no keep-above to ask for.
         OptionsPage::Section& m_windowSection;
         StackPanel& m_windowGroup;

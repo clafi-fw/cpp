@@ -1500,6 +1500,9 @@ namespace ClaFi
         m_inputSwitchConnection{
             appContext.events().connect<InputSwitchEvent>(this, &FormBase::inputSwitched)
         },
+        m_zAnimationSwitchConnection{
+            appContext.events().connect<ZAnimationSwitchEvent>(this, &FormBase::zAnimationSwitched)
+        },
         m_popupTargetForm{ ownerForm },
         // Whichever part of its face the popup was opened on. See Control-Foundation#popup-owner
         m_popupTarget{ popupTarget ? &popupTarget->popupOwner() : nullptr },
@@ -1963,6 +1966,14 @@ namespace ClaFi
 
     // The whole window, since the form cannot know which controls read the factors. See Context
     void FormBase::inputSwitched(InputSwitchEvent&)
+    {
+        if (!visible())
+            return;
+        invalidate();
+    }
+
+    // The whole window, since every control that moves in depth rests at a new size.
+    void FormBase::zAnimationSwitched(ZAnimationSwitchEvent&)
     {
         if (!visible())
             return;

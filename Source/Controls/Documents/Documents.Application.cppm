@@ -39,8 +39,9 @@ namespace ClaFi::Documents
 
     //-----------------------------------------------------------------------------
 
-
-    constexpr MinSize k_mainFormMinSize{ 900.0f, 600.0f };
+    // These are actually end application dependent
+    constexpr MinSize k_mainFormMinSize{ 600.0f, 400.0f };
+    constexpr PreferredSize k_mainFormPreferredSize{ 900.0f, 600.0f };
 
     template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend,
         IsDocumentsBrowser BrowserType>
@@ -54,6 +55,7 @@ namespace ClaFi::Documents
             this->metrics().primaryWindowShadow,
             UiElement::Dialog,
             k_mainFormMinSize,
+            k_mainFormPreferredSize,
             folderProp
         );
         return form->execute();

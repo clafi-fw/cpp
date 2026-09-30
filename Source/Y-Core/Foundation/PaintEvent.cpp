@@ -6,6 +6,7 @@ import :Form;
 import :Control;
 import :Traversal;
 
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -76,9 +77,15 @@ namespace ClaFi
         // only settles when something else invalidates it - a pointer crossing the window.
         m_enabledFactor = control.enabledFactor() * (m_parentEvent ? m_parentEvent->m_enabledFactor : 1.0f);
         if (m_parentEvent)
+        {
             m_windowFocusedFactor = m_parentEvent->m_windowFocusedFactor;
+            m_zAnimationAmount = m_parentEvent->m_zAnimationAmount;
+        }
         else if (const FormBase* form = control.getForm())
+        {
             m_windowFocusedFactor = form->windowFocusedFactor();
+            m_zAnimationAmount = form->appContext().zAnimationAmount();
+        }
 
         // Metrics
         {
@@ -91,7 +98,9 @@ namespace ClaFi
             // Metrics say how much depth this control would take; the control says whether it takes
             // any. Read here rather than in pressScale(), so that everything downstream of the
             // scale - the transform, the text raster mode - sees one answer.
-            m_zDepthFactor = control.allowZAnimation() ? metrics.zDepthFactor : 0.0f;
+            m_zDepthFactor = control.allowZAnimation()
+                ? metrics.zDepthFactor * m_zAnimationAmount
+                : 0.0f;
             m_surfaceGrowInScale = metrics.surfaceGrowInScale;
         }
 

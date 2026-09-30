@@ -62,6 +62,11 @@ namespace ClaFi
     {
     };
 
+    // The Z animation amount has moved, and every window repaints. See Context
+    export struct ZAnimationSwitchEvent : public Event
+    {
+    };
+
     export using InformationParagraphs = std::vector<std::wstring>;
 
     export class AppContext
@@ -130,6 +135,7 @@ namespace ClaFi
         using ColorModeNode = Dom::Value<ColorModeSetting>;
         using GpuAccelerationNode = Dom::Value<bool>;
         using ScaleNode = Dom::Value<int>;
+        using ZAnimationNode = Dom::Value<float>;
         Dom::DocumentBase& config() { return m_config; }
         // The theme the application wears, as a path under a root - see AppTheme. The node holds
         // the path and nothing else: what a path names is answered where the themes are, which is
@@ -153,6 +159,11 @@ namespace ClaFi
         static constexpr int k_minScalePercent{ 75 };
         static constexpr int k_maxScalePercent{ 150 };
         static constexpr int k_defaultScalePercent{ 100 };
+        // Where the Z animation amount is kept - the Settings slider writes it. See Context
+        [[nodiscard]] ZAnimationNode& zAnimation() const { return m_zAnimation; }
+        // How much of the theme's Z animation every control takes: 0 none, 1 all of it.
+        [[nodiscard]] float zAnimationAmount() const { return m_zAnimationAmount; }
+        static constexpr float k_defaultZAnimationAmount{ 0.5f };
         // Whether the user has allowed storing - the config folder is that answer. See Context
         [[nodiscard]] bool configFolderExists() const { return m_configFolderExists; }
         void setConfigFolderExists(bool value) { m_configFolderExists = value; }
@@ -194,11 +205,16 @@ namespace ClaFi
         // The application is drawn at this percent from now on, and every window is told.
         // See Context
         void stateScale(int percent);
+        // Takes the amount the config holds and stands on the node for what follows.
+        void connectZAnimation();
+        // The application moves at this amount from now on, and every window is told.
+        void stateZAnimation(float amount);
     private:
         static constexpr std::wstring_view k_themeNodeName = L"Theme";
         static constexpr std::wstring_view k_colorModeNodeName = L"ColorMode";
         static constexpr std::wstring_view k_gpuAccelerationNodeName = L"GpuAcceleration";
         static constexpr std::wstring_view k_scaleNodeName = L"Scale";
+        static constexpr std::wstring_view k_zAnimationNodeName = L"ZAnimation";
         Platform& m_platform;
         Text m_appName;
         std::wstring_view m_publisher;
@@ -254,6 +270,10 @@ namespace ClaFi
         // to once it is up.
         int m_scalePercent{ k_defaultScalePercent };
         ScopedEventConnection m_scaleConnection{};
+        ZAnimationNode& m_zAnimation{
+            *(static_cast<ZAnimationNode*>(m_config.child(k_zAnimationNodeName))) };
+        float m_zAnimationAmount{ k_defaultZAnimationAmount };
+        ScopedEventConnection m_zAnimationConnection{};
         EventDispatcher m_events{};
     };
 
@@ -287,6 +307,7 @@ namespace ClaFi
     {
         connectGpuAcceleration();
         connectScale();
+        connectZAnimation();
     }
 
     AppContext::AppContext(Platform& platform, const Text& appName, const std::wstring_view publisher,
@@ -309,6 +330,7 @@ namespace ClaFi
     {
         connectGpuAcceleration();
         connectScale();
+        connectZAnimation();
     }
 
     AppContext::~AppContext()
@@ -329,7 +351,8 @@ namespace ClaFi
         Dom::Dt::Section section = {
             Dom::Dt::Value{ k_themeNodeName, std::wstring{ k_defaultThemePath } },
             Dom::Dt::Value{ k_colorModeNodeName, ColorModeSetting::Auto },
-            Dom::Dt::Value{ k_scaleNodeName, k_defaultScalePercent }
+            Dom::Dt::Value{ k_scaleNodeName, k_defaultScalePercent },
+            Dom::Dt::Value{ k_zAnimationNodeName, k_defaultZAnimationAmount }
         };
         if (withGpuAcceleration)
             section.append(Dom::Dt::Section{ Dom::Dt::Value{ k_gpuAccelerationNodeName, true } });
@@ -395,6 +418,24 @@ namespace ClaFi
             return;
         m_scalePercent = wanted;
         m_events.emit<ScaleSwitchEvent>();
+    }
+
+    void AppContext::connectZAnimation()
+    {
+        m_zAnimationAmount = std::clamp(m_zAnimation.get(), 0.0f, 1.0f);
+        m_zAnimationConnection = ScopedEventConnection{ m_zAnimation.connectEvent(
+            [this](Dom::ChangeEvent&) {
+                stateZAnimation(m_zAnimation.get());
+            }) };
+    }
+
+    void AppContext::stateZAnimation(const float amount)
+    {
+        const float wanted = std::clamp(amount, 0.0f, 1.0f);
+        if (wanted == m_zAnimationAmount)
+            return;
+        m_zAnimationAmount = wanted;
+        m_events.emit<ZAnimationSwitchEvent>();
     }
 
     std::filesystem::path AppContext::configFolder() const

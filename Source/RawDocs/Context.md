@@ -85,6 +85,15 @@ an alignment lays the content out inside the window that is already there and cu
 taken at the scale being left. Nothing else would ask: a popup is placed again when the control
 it stands on moves, and the form underneath is standing still by then.
 
+## ZAnimationSwitchEvent
+
+The Z animation amount has moved, raised on `AppContext::events()`. It carries nothing:
+`AppContext::zAnimationAmount` is what answers with it.
+
+EVERY WINDOW REPAINTS WHOLE. The amount scales how far below full size a control rests, so every
+control that takes the Z animation changes size at rest. Nothing is laid out again - the press
+scale is a paint transform.
+
 ## SystemColorModeEvent
 
 The desktop has changed the mode it asks applications to be drawn in, raised on
@@ -231,6 +240,17 @@ the answer that was taken, and it is what every window reads.
 `scalePercent` is taken from the node while the context is built, so a stored size is what the
 first window opens at rather than one it is moved to once it is up - FormBase::initialize is
 where a form reads it, so a window opened later matches the windows already up.
+
+## AppContext::zAnimation
+
+WHERE THE USER'S ANSWER IS KEPT: a `Dom::Value<float>` under ZAnimation, the share of the theme's
+Z animation every control takes - 0 none, 1 the depth the theme states, 0.5 by default. Writing
+it is the whole of a change - the node's own change reaches the context, which states the amount
+and raises ZAnimationSwitchEvent.
+
+The amount multiplies `ControlMetrics::zDepthFactor` where a paint reads it, so the resting depth
+and the held depth scale together and flush stays flush. It is brought inside 0 to 1 and taken
+from the node while the context is built, the way the scale percent is.
 
 ## AppContext::configFolderExists
 
