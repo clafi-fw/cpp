@@ -418,6 +418,8 @@ namespace ClaFi
         // arrived at - through the control the popup stands on, or named outright.
         FormBase(AppContext&, WindowRole, FormControlBase&, FormBase* ownerForm, Control* popupTarget, FormPlacement);
         void initPlacement();
+        // A setter moved what the placement reads. See Control-Foundation#formalignedevent
+        void placementChanged();
     protected:
         void initialize();
     private:

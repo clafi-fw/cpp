@@ -29,6 +29,12 @@ The form's content has been laid out and nothing has asked for another pass. `se
 form. Raised at the end of the pass, so every rect in the form may be read from a handler; a
 message loop may not be started from one.
 
+A FORM NOBODY CAN SEE IS NOT PLACED. A setter that moves what the placement reads -
+`setPlacement`, `setPlacementRect`, `setMinWidth` - places a visible form again at once and
+leaves a hidden one for `show()`, so the pass that raises this event runs with the form on
+screen. A handler that ignores a hidden form, as the completion list's hint does, hears the
+pass that lays out the form it is about to see.
+
 ## FormClosingEvent
 
 The form is asked to close from outside - the window's own close button, the system, a click

@@ -522,8 +522,8 @@ namespace ClaFi
         // gesture can steer the size of the form underneath without this one moving under the
         // pointer doing the steering, and a form that keeps its size while it walks across the
         // screen is half of that. See followScale, which places it again as the hold ends.
-        if (m_placementValid && !holdingScale())
-            initPlacement();
+        if (!holdingScale())
+            placementChanged();
     }
 
     void FormBase::setPlacement(FormPlacement value)
@@ -531,8 +531,7 @@ namespace ClaFi
         if (m_placement == value)
             return;
         m_placement = value;
-        if (m_placementValid)
-            initPlacement();
+        placementChanged();
     }
 
     void FormBase::setPlacement(FormPlacement placement, const FloatRect& placementRect)
@@ -542,8 +541,7 @@ namespace ClaFi
         m_placement = placement;
         m_placementRect = placementRect;
         rememberPlacementTarget();
-        if (m_placementValid)
-            initPlacement();
+        placementChanged();
     }
 
     void FormBase::setMinWidth(const float value)
@@ -551,8 +549,7 @@ namespace ClaFi
         if (m_minWidth == value)
             return;
         m_minWidth = value;
-        if (m_placementValid)
-            initPlacement();
+        placementChanged();
     }
 
     bool FormBase::readyToClose()
@@ -1642,6 +1639,21 @@ namespace ClaFi
         // Aligned unless the last pass asked for another, which the frame answers - see
         // wnd_beforePaint.
         m_aligned = m_layoutPass.valid();
+    }
+
+    // A FORM NOBODY CAN SEE IS PLACED BY show(). A pass run here would raise its FormAlignedEvent
+    // while the form is hidden, and show() would then find the placement valid and run none.
+    // See Control-Foundation#formalignedevent
+    void FormBase::placementChanged()
+    {
+        if (!m_placementValid)
+            return;
+        if (!m_visible)
+        {
+            m_placementValid = false;
+            return;
+        }
+        initPlacement();
     }
 
     void FormBase::initialize()
