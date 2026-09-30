@@ -779,7 +779,7 @@ namespace ClaFi
         if (Control* firstHotItem = Input::hoveredControl())
         {
             if (m_activePopup)
-                if (m_activePopup->m_popupTarget != firstHotItem)
+                if (m_activePopup->m_popupTarget != &firstHotItem->popupOwner())
                 {
                     closeActivePopup();
                     // The popup would not go, so the click that would have closed it does
@@ -822,9 +822,10 @@ namespace ClaFi
         {
             if (searhResult.control == m_downItem)
             {
-                if (m_activePopup && m_activePopup->m_popupTarget == m_downItem)
+                if (m_activePopup && m_activePopup->m_popupTarget == &m_downItem->popupOwner())
                 {
-                    // it's the case when we are closing dropped down window by clicking the same button second time
+                    // The second press on the popup's owner, on any part of it, closes the popup
+                    // and does nothing else.
                     closeActivePopup();
                     return;
                 }
@@ -1500,7 +1501,8 @@ namespace ClaFi
             appContext.events().connect<InputSwitchEvent>(this, &FormBase::inputSwitched)
         },
         m_popupTargetForm{ ownerForm },
-        m_popupTarget{ popupTarget },
+        // Whichever part of its face the popup was opened on. See Control-Foundation#popup-owner
+        m_popupTarget{ popupTarget ? &popupTarget->popupOwner() : nullptr },
         m_placement{ placement },
 
         // red squiggles in declaration

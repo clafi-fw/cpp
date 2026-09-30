@@ -171,7 +171,7 @@ namespace ThisApp
     protected:
         // Every part of the control opens the same popup, so there is no separate primary action.
         [[nodiscard]] bool dropOnPrimaryPress() const override { return true; }
-        void showDropdown(Control& initiator) override;
+        void showDropdown(Control&) override;
         void getMainText(GetTextEvent&) const override;
         void nestedGetTooltip(GetTooltipEvent&) override;
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
@@ -325,14 +325,14 @@ namespace ThisApp
         return hsl.toColor();
     }
 
-    void HueRuleControl::showDropdown(Control& initiator)
+    void HueRuleControl::showDropdown(Control&)
     {
         if (!bound())
             return;
         // The slider edits this colour in place, so it starts from what the rule holds rather than
         // from wherever the last popup left it.
         m_exactColor.hue = m_rule->exactValue();
-        dropPopup<HueRulePopup>(form(), initiator, *this);
+        dropPopup<HueRulePopup>(form(), *this);
     }
 
     // Measured as the widest face, No change, so a column of these keeps one width whatever

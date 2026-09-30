@@ -42,7 +42,7 @@ namespace ThisApp
         void toggleInput(RuleClause, RuleInput);
     protected:
         [[nodiscard]] bool dropOnPrimaryPress() const override { return true; }
-        void showDropdown(Control& initiator) override;
+        void showDropdown(Control&) override;
         void getMainText(GetTextEvent&) const override;
     private:
         [[nodiscard]] const ColorRule& rule() const;

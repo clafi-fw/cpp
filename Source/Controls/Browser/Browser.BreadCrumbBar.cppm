@@ -101,9 +101,9 @@ namespace ClaFi::Browser
     /// @brief One page of the path: the title it is known by, and the pages under it behind a
     /// chevron.
     // A dropdown control: the mark, the strip it rides on, the way that strip is squared against
-    // the crumb's outline, F4 and Alt+Down, and the rule about which half owns the popup all
-    // belong to the base. The in-place editor over the crumb's own title, and the gestures that
-    // open one, come from the mixin. What is left here is the page a crumb names.
+    // the crumb's outline, and F4 and Alt+Down all belong to the base. The in-place editor over
+    // the crumb's own title, and the gestures that open one, come from the mixin. What is left
+    // here is the page a crumb names.
     using BreadCrumbBarItemBase = WithInPlaceEdit<DropdownControlBase>;
     class BreadCrumbBarItem : public BreadCrumbBarItemBase
     {
@@ -359,8 +359,6 @@ namespace ClaFi::Browser
                 line.scrollIntoView();
             });
         }
-        // Anchored to the whole crumb, which is what the user reads as the thing being dropped,
-        // even when the strip of it is what owns the popup.
         menu.executeUnder(*this);
     }
 

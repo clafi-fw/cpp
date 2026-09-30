@@ -198,7 +198,7 @@ namespace ClaFi::Controls
     protected:
         // Whether a press on the face drops the list rather than opening the editor.
         [[nodiscard]] bool dropOnPrimaryPress() const override;
-        void showDropdown(Control& initiator) override;
+        void showDropdown(Control&) override;
         void itemIndexChanged() override;
         void paintItemIcon(PaintItemIconEvent&) const;
         void paintIcon(PaintIconEvent&) override;
@@ -400,12 +400,11 @@ namespace ClaFi::Controls
     {
     }
 
-    void ComboBox::showDropdown(Control& initiator)
+    void ComboBox::showDropdown(Control&)
     {
         m_previewedItemIndex.reset();
         dropPopup<ComboBoxDropdown>(
             form(),
-            initiator,
             HostProps{
                 themeMetrics().secondaryWindow,
                 themeMetrics().secondaryWindowShadow,

@@ -56,7 +56,7 @@ namespace ThisApp
         [[nodiscard]] EditorMode editorMode() const override;
         // The face is typed over on any press the grid leaves it, and the strip drops the popup.
         [[nodiscard]] bool clickOpensEditor() const override { return true; }
-        void showDropdown(Control& initiator) override;
+        void showDropdown(Control&) override;
         void getMainText(GetTextEvent&) const override;
         void nestedGetTooltip(GetTooltipEvent&) override;
         void getEditorText(Text&) const override;

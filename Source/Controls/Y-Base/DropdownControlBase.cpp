@@ -50,6 +50,11 @@ namespace ClaFi::Controls
         return state().enabled;
     }
 
+    Control& DropdownPart::popupOwner()
+    {
+        return m_owner;
+    }
+
     void DropdownPart::getControlState(GetStateEvent& event) const
     {
         ToolButton::getControlState(event);
@@ -254,8 +259,7 @@ namespace ClaFi::Controls
         if (&event.control() != secondaryPart())
             return;
 
-        // All below is for the dropdown strip. It owns the popup, so its hover, press and dropped
-        // down states are all its own and none of them are inherited from the control.
+        // All below is for the dropdown strip, whose hover and press states are its own.
 
         // The seam side is square, so the two halves meet flush and only the control's outer
         // corners stay rounded.
@@ -353,10 +357,6 @@ namespace ClaFi::Controls
 
     void DropdownControlBase::runDropdown(Control& initiator)
     {
-        // The mark answers for the control as a whole, so it turns for every route into the popup.
-        // The popup itself cannot be asked which those are: it is owned by the control the press
-        // landed on - the strip for a press on the strip, this control for a press on its face -
-        // and a mark reading that would turn for one route and stay put for the other.
         setDroppedDown(true);
         showDropdown(initiator);
         setDroppedDown(false);

@@ -756,6 +756,8 @@ namespace ClaFi
         [[nodiscard]] bool mayDropPopup(const ClickEvent&);
         // False when an implicit drop is refused. See Control-Foundation#droppopupevent
         [[nodiscard]] bool mayDropPopupImplicitly(const ClickEvent&);
+        // The control a popup opened from this one belongs to. See Control-Foundation#popup-owner
+        [[nodiscard]] virtual Control& popupOwner() { return *this; }
         //
         [[nodiscard]] bool visible() const { return !(cfHidden & m_flags); }
         void setVisible(const bool value);

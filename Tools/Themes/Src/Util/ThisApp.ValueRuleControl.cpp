@@ -227,11 +227,11 @@ namespace ThisApp
         return m_value ? EditorMode::Editable : EditorMode::None;
     }
 
-    void ValueRuleControl::showDropdown(Control& initiator)
+    void ValueRuleControl::showDropdown(Control&)
     {
         if (!m_value)
             return;
-        dropPopup<ValueRulePopup>(form(), initiator, *this);
+        dropPopup<ValueRulePopup>(form(), *this);
     }
 
     void ValueRuleControl::getMainText(GetTextEvent& event) const

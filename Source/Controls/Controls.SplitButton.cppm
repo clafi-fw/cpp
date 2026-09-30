@@ -26,12 +26,9 @@ namespace ClaFi::Controls
     {
     public:
         DropdownEvent(SplitButton&, Control& initiator, FormBase&);
-        /// The split button as a whole. The inherited control member is what the press landed on,
-        /// and that is what the popup must be owned by.
+        /// The split button as a whole. The inherited control is the part the press landed on.
         [[nodiscard]] SplitButton& button() const { return m_button; }
-        /// Builds the popup, drops it under the button and runs it. A handler that needs to
-        /// configure the form itself can call form.createPopup() - see the note on
-        /// DropdownControlBase::dropPopup about which control has to own it.
+        /// Builds the popup, drops it under the button and runs it.
         template <ClassOfFormControl ControlClass, typename... Args>
         int executeDropdown(Args&&...);
     private:
@@ -117,8 +114,7 @@ namespace ClaFi::Controls
 
     void SplitButton::dropdown(DropdownEvent& event)
     {
-        // control is what the press landed on - the strip, whichever way the dropdown was
-        // reached - and handing it over is what puts the command's own popup under it.
+        // The command's presenter is the strip, whichever way the dropdown was reached.
         if (m_dropdownAction)
         {
             m_dropdownAction->invoke(event.form, event.control, event.stamp);
@@ -156,8 +152,7 @@ namespace ClaFi::Controls
     template<ClassOfFormControl ControlClass, typename ...Args>
     int DropdownEvent::executeDropdown(Args&&... args)
     {
-        // control is what the press landed on, which is what has to own the popup.
-        return m_button.dropPopup<ControlClass>(form, *control, std::forward<Args>(args)...);
+        return m_button.dropPopup<ControlClass>(form, std::forward<Args>(args)...);
     }
 
 }

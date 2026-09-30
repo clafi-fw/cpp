@@ -50,6 +50,7 @@ namespace ClaFi::Controls
         DropdownPart(const CreateParams&, DropdownControlBase&, ArrowPlacement);
         std::wstring_view diagnosticText() const override { return L"DropdownPart"; }
         [[nodiscard]] bool enabled(bool deep = false) const override;
+        [[nodiscard]] Control& popupOwner() override;
     protected:
         void getControlState(GetStateEvent&) const override;
         void getText(GetTextEvent&) const override;
@@ -77,9 +78,7 @@ namespace ClaFi::Controls
         [[nodiscard]] bool textOnDropdown() const { return m_config.textOnDropdown; }
         [[nodiscard]] float dropdownWidth() const { return m_config.dropdownWidth; }
         void setDropdownWidth(const float value);
-        /// Whether the control's popup is up. True for every route into it - a press on the strip,
-        /// a press on the control's own face, F4, dropDown() - rather than for whichever half of
-        /// the control owns the popup.
+        /// Whether the control's popup is up, whichever route opened it.
         [[nodiscard]] bool droppedDown() const { return m_droppedDown; }
         /// How far the dropdown mark has turned: 0 with the popup closed, 1 with it open, animated
         /// between the two. A control painting a mark of its own follows the popup with this rather
@@ -101,8 +100,7 @@ namespace ClaFi::Controls
             // A ribbon control hands its text down to the strip and keeps only the icon on top.
             bool textOnDropdown{ false };
         };
-        // Runs the popup. The initiator is the control the press landed on, and it is what the
-        // popup has to be owned by - see dropPopup().
+        // Runs the popup. The initiator is the part of the control the press landed on.
         virtual void showDropdown(Control& initiator) = 0;
         // Whether pressing the control outside the strip opens the dropdown too. A combo box says
         // yes: every part of it opens the same list. A split button says no: its main half is a
@@ -136,13 +134,8 @@ namespace ClaFi::Controls
         void paintDropdownMark(PaintIconEvent&) const;
 
         // Drops a popup under this control and runs it.
-        //
-        // The owner must be the control the press actually landed on. FormBase::wnd_mouseUp only
-        // reads a second press as "close me" when the popup's target is the control the mouse
-        // went down on; owned by anything else, that press closes the popup and the click then
-        // reopens it on the way back up.
         template <ClassOfFormControl ControlClass, typename... Args>
-        int dropPopup(FormBase&, Control& owner, Args&&...);
+        int dropPopup(FormBase&, Args&&...);
 
         [[nodiscard]] SecondaryEdge secondaryEdge() const override;
         // The strip is the control's own edge on the side it sits on, so it takes the content
@@ -213,15 +206,13 @@ namespace ClaFi::Controls
     }
 
     template<ClassOfFormControl ControlClass, typename ...Args>
-    int DropdownControlBase::dropPopup(FormBase& form, Control& owner, Args&&... args)
+    int DropdownControlBase::dropPopup(FormBase& form, Args&&... args)
     {
         Form<ControlClass> popup = form.createPopup<ControlClass>(
-            &owner,
+            this,
             std::forward<Args>(args)...
         );
         popup.setDropdownClearance(1.0f);
-        // Anchored to the whole control, which is what the user reads as the thing being dropped,
-        // even when a strip of it is what owns the popup.
         popup.setPlacement(FormPlacement::Bottom, boundsInForm());
         // And at least as wide as it - a list narrower than the face it fell from reads as
         // belonging to something else. In design units, which a popup shares with its parent.

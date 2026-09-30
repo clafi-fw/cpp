@@ -212,6 +212,23 @@ the selection - see Grids#picking.
 A click that drops no popup asks nothing. A check box toggling in place and a button running its
 command act on every click they are given.
 
+## Popup owner
+
+THE CONTROL A POPUP IS ABOUT, answered by `Control::popupOwner`. A control answers itself; a part
+of another control's face answers that control, which is how a dropdown strip says it is half of
+the control it drops for. The form takes the answer as the popup is built, so
+`FormBase::popupTarget` is the owner whichever part the popup was opened on - through `dropPopup`,
+a `Menu` built on the pressed part, or a command whose presenter is the strip.
+
+A press asks the same question of the control it lands on. The second press on the owner, on any
+part of it, closes the popup and does nothing else: the strip and the face close a list either of
+them opened, and a press on a split button's face while its list is up does not run the face's
+command.
+
+Everything read off the target reads the owner: the whole control looks dropped down, a popup
+placed by its target alone falls from the whole control, and the popup goes down when the owner is
+hidden or deleted - hiding the strip alone leaves it up.
+
 ## GetActionStateEvent
 
 An action asks its two questions with `GetActionStateEvent` and `ActionClickEvent`, of each

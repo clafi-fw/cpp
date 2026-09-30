@@ -197,11 +197,11 @@ namespace ThisApp
         changed();
     }
 
-    void ApplyToControl::showDropdown(Control& initiator)
+    void ApplyToControl::showDropdown(Control&)
     {
         if (!m_rules)
             return;
-        dropPopup<ApplyToPopup>(form(), initiator, *this);
+        dropPopup<ApplyToPopup>(form(), *this);
     }
 
     // The channel the rule writes, and under it the states it reads, one grade down.
