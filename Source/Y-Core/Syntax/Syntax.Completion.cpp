@@ -19,7 +19,9 @@ namespace ClaFi::Syntax
             L"property",
             L"field",
             L"constant",
-            L"variable"
+            L"variable",
+            L"key",
+            L"value"
         };
 
         [[nodiscard]] wchar_t folded(const Language& language, const wchar_t value)
@@ -250,6 +252,62 @@ namespace ClaFi::Syntax
             }
             return nullptr;
         }
+
+        // What a title line spaces its parts with, a no-break space among them.
+        constexpr std::wstring_view k_titleBlanks = L" \t\u00A0";
+
+        [[nodiscard]] std::size_t pastTitleBlanks(const std::wstring_view line, std::size_t pos,
+            const std::size_t end)
+        {
+            while (pos < end && k_titleBlanks.find(line[pos]) != std::wstring_view::npos)
+                ++pos;
+            return pos;
+        }
+
+        [[nodiscard]] std::size_t beforeTitleBlanks(const std::wstring_view line,
+            const std::size_t start, std::size_t end)
+        {
+            while (end > start && k_titleBlanks.find(line[end - 1]) != std::wstring_view::npos)
+                --end;
+            return end;
+        }
+
+        // Whether the line holds nothing but comments and blanks, as a title block's lines do.
+        [[nodiscard]] bool commentsOnly(const SourceLines& lines, const std::size_t line)
+        {
+            const std::wstring_view text = lines.text(line);
+            std::size_t pos = 0;
+            for (const Token& token : lines.tokens(line))
+            {
+                const bool blanksBefore =
+                    pastTitleBlanks(text, pos, token.range.start) == token.range.start;
+                if (!blanksBefore || token.kind != TokenKind::Comment)
+                    return false;
+                pos = token.range.end();
+            }
+            return pastTitleBlanks(text, pos, text.size()) == text.size();
+        }
+
+        // The key a line of the title block states - empty for a line that states none.
+        [[nodiscard]] std::wstring_view titleKeyOf(const Language& language,
+            const TitleBlock& block, const std::wstring_view line)
+        {
+            if (!line.starts_with(block.prefix))
+                return {};
+            const std::size_t start = block.prefix.size();
+            return line.substr(start, endOfName(line, start, language) - start);
+        }
+
+        [[nodiscard]] const TitleKey* titleKeyNamed(const Language& language,
+            const TitleBlock& block, const std::wstring_view name)
+        {
+            for (const TitleKey& key : block.keys)
+            {
+                if (completionNamesEqual(language, key.entry.name, name))
+                    return &key;
+            }
+            return nullptr;
+        }
     }
 
     std::wstring_view completionKindName(const CompletionKind kind)
@@ -473,5 +531,84 @@ namespace ClaFi::Syntax
         if (classes.empty())
             return nullptr;
         return memberNamed(language, classes, name);
+    }
+
+    std::wstring_view TitlePlace::typed(const std::wstring_view line) const
+    {
+        return line.substr(wordStart, caret - wordStart);
+    }
+
+    std::optional<TitlePlace> completionTitlePlace(const Language& language,
+        const TitleBlock& block, const SourceLines& lines, const std::size_t line,
+        std::size_t caret)
+    {
+        if (block.prefix.empty() || line >= lines.count())
+            return std::nullopt;
+        const std::wstring_view text = lines.text(line);
+        caret = std::min(caret, text.size());
+        if (!text.starts_with(block.prefix) || caret < block.prefix.size())
+            return std::nullopt;
+        // The block runs to the first line of source; a key's line past that states nothing.
+        std::size_t blockEnd = 0;
+        while (blockEnd != lines.count() && commentsOnly(lines, blockEnd))
+            ++blockEnd;
+        if (line >= blockEnd)
+            return std::nullopt;
+
+        CompletionNames stated;
+        const std::size_t keyStart = block.prefix.size();
+        const std::size_t keyEnd = endOfName(text, keyStart, language);
+        if (caret <= keyEnd)
+        {
+            for (std::size_t other = 0; other != blockEnd; ++other)
+            {
+                const std::wstring_view key = titleKeyOf(language, block, lines.text(other));
+                if (other != line && !key.empty())
+                    stated.push_back(key);
+            }
+            return TitlePlace{
+                .wordStart = keyStart,
+                .caret = caret,
+                .stated = std::move(stated),
+            };
+        }
+
+        // A value follows the equals sign, and only a key that lists its values offers them.
+        const std::size_t sign = pastTitleBlanks(text, keyEnd, caret);
+        if (sign == caret || text[sign] != L'=')
+            return std::nullopt;
+        const TitleKey* key =
+            titleKeyNamed(language, block, text.substr(keyStart, keyEnd - keyStart));
+        if (!key || key->values.empty())
+            return std::nullopt;
+        // A list's value is the one between the commas around the caret; the rest are stated.
+        std::size_t valueStart = sign + 1;
+        if (key->list)
+        {
+            for (std::size_t itemStart = sign + 1; itemStart <= text.size();)
+            {
+                std::size_t itemEnd = text.find(L',', itemStart);
+                if (itemEnd == std::wstring_view::npos)
+                    itemEnd = text.size();
+                if (itemStart <= caret && caret <= itemEnd)
+                {
+                    valueStart = itemStart;
+                }
+                else
+                {
+                    const std::size_t from = pastTitleBlanks(text, itemStart, itemEnd);
+                    const std::size_t to = beforeTitleBlanks(text, from, itemEnd);
+                    if (from != to)
+                        stated.push_back(text.substr(from, to - from));
+                }
+                itemStart = itemEnd + 1;
+            }
+        }
+        return TitlePlace{
+            .wordStart = pastTitleBlanks(text, valueStart, caret),
+            .caret = caret,
+            .key = key,
+            .stated = std::move(stated),
+        };
     }
 }

@@ -107,19 +107,27 @@ namespace ClaFi::Controls
             return end;
         }
 
-        // How far from the first of the classes the row's class stands - none for a member of
-        // another class, and the first place for a row of no class.
+        // How far from the first of the owners the row's owner stands - none for a row read off
+        // another, and the first place for a row of the Global scope, which is read off none.
         [[nodiscard]] std::optional<std::size_t> rankOf(const CompletionRow& row,
-            const Syntax::CompletionClasses& classes)
+            const Syntax::CompletionClasses& owners)
         {
-            if (row.scope() != CompletionScope::Member)
+            if (row.scope() == CompletionScope::Global)
                 return std::size_t{ 0 };
-            for (std::size_t rank = 0; rank != classes.size(); ++rank)
+            for (std::size_t rank = 0; rank != owners.size(); ++rank)
             {
-                if (classes[rank] == row.owner())
+                if (owners[rank] == row.owner())
                     return rank;
             }
             return std::nullopt;
+        }
+
+        [[nodiscard]] bool isStated(const Syntax::Language& language,
+            const Syntax::CompletionNames& stated, const std::wstring_view name)
+        {
+            return std::ranges::any_of(stated, [&](const std::wstring_view other){
+                return Syntax::completionNamesEqual(language, other, name);
+            });
         }
     }
 
@@ -222,7 +230,8 @@ namespace ClaFi::Controls
     }
 
     void CompletionStack::rebuild(const Syntax::Language& language,
-        const Syntax::CompletionEntries* entries, const Syntax::Declarations& declarations)
+        const Syntax::CompletionEntries* entries, const Syntax::Declarations& declarations,
+        const Syntax::TitleBlock* title)
     {
         setCurrentItem(nullptr);
         clearControls();
@@ -267,6 +276,23 @@ namespace ClaFi::Controls
                 }
             }
         }
+        if (title)
+        {
+            // A value keeps its key, the way a member keeps its class.
+            for (const Syntax::TitleKey& key : title->keys)
+            {
+                sources.push_back({
+                    CompletionScope::Title, nullptr, key.entry.name, key.entry.kind, &key.entry,
+                    nullptr
+                });
+                for (const Syntax::CompletionEntry& value : key.values)
+                {
+                    sources.push_back({
+                        CompletionScope::Title, &key.entry, value.name, value.kind, &value, nullptr
+                    });
+                }
+            }
+        }
 
         // Stable, so of an entry stated twice the first statement is the one kept.
         std::ranges::stable_sort(sources, [&](const RowSource& left, const RowSource& right){
@@ -286,8 +312,9 @@ namespace ClaFi::Controls
     }
 
     std::size_t CompletionStack::filter(const Syntax::Language& language,
-        const CompletionScope scope, const Syntax::CompletionClasses& classes,
-        const std::wstring_view typed, const std::size_t caret)
+        const CompletionScope scope, const Syntax::CompletionClasses& owners,
+        const std::wstring_view typed, const std::size_t caret,
+        const Syntax::CompletionNames& stated)
     {
         m_typed = typed;
         std::size_t shown = 0;
@@ -296,17 +323,18 @@ namespace ClaFi::Controls
         std::size_t at = 0;
         while (at != rows.size())
         {
-            // A run shows one row at most: the one read off the nearest class.
+            // A run shows one row at most: the one read off the nearest owner.
             const std::size_t end = endOfRun(language, rows, at);
             CompletionRow* pick = nullptr;
             std::size_t pickRank = 0;
             for (std::size_t i = at; i != end; ++i)
             {
                 CompletionRow& row = rowOf(rows[i]);
-                const std::optional<std::size_t> rank = rankOf(row, classes);
+                const std::optional<std::size_t> rank = rankOf(row, owners);
                 const bool eligible = row.scope() == scope
                     && row.inForceAt(caret)
-                    && rank.has_value();
+                    && rank.has_value()
+                    && !isStated(language, stated, row.name());
                 if (eligible && (!pick || *rank < pickRank))
                 {
                     pick = &row;
@@ -506,6 +534,13 @@ namespace ClaFi::Controls
         hideParameterHint();
     }
 
+    void CodeBox::setTitleBlock(const Syntax::TitleBlock* block)
+    {
+        m_titleBlock = block;
+        m_completionRowsStale = true;
+        hideCompletion();
+    }
+
     void CodeBox::showCompletion()
     {
         m_completionExplicit = true;
@@ -638,10 +673,13 @@ namespace ClaFi::Controls
         case Keys::Space:
             // Ctrl+Space is the list's and Ctrl+Shift+Space the hint's, only in a box that has
             // one: elsewhere each is a space.
-            if (event.modifiers.ctrl && !event.modifiers.alt && m_completion && writable)
+            if (event.modifiers.ctrl && !event.modifiers.alt && writable)
             {
                 const bool hint = event.modifiers.shift;
-                if (!hint || m_lines.language().parameters)
+                const bool answered = hint
+                    ? m_completion && m_lines.language().parameters
+                    : m_completion || m_titleBlock;
+                if (answered)
                 {
                     event.handled = true;
                     m_completionTakesChar = false;
@@ -753,9 +791,13 @@ namespace ClaFi::Controls
         const bool names = Syntax::isNameChar(character, m_lines.language());
         if (!names)
             realignFinishedWord(true);
-        // A name being typed, or a dot, is what lists names by itself. Asked after the edit,
-        // which is what the list is about.
-        if (names || character == L'.')
+        // A name being typed, or a dot, is what lists names by itself - and the mark that opens a
+        // title block's key, its equals sign and a comma. Asked after the edit, which is what the
+        // list is about.
+        const bool titleMark = m_titleBlock
+            && (character == L'=' || character == L','
+                || m_titleBlock->prefix.ends_with(character));
+        if (names || character == L'.' || titleMark)
             requestCompletion(true);
         // A bracket opened is what shows a call's signature by itself.
         if (character == L'(' || character == L'[')
@@ -857,7 +899,7 @@ namespace ClaFi::Controls
     void CodeBox::requestCompletion(const bool opening)
     {
         // A box with nothing to complete from, or one nothing can be typed into, lists nothing.
-        if (!m_completion || readOnly() == ReadOnly::Yes)
+        if ((!m_completion && !m_titleBlock) || readOnly() == ReadOnly::Yes)
             return;
         m_completionOpening = m_completionOpening || opening;
         m_completionRequest.start(MilliSeconds{ 0u });
@@ -877,8 +919,21 @@ namespace ClaFi::Controls
         if (!opening && !completionShown())
             return;
 
-        const Syntax::Language& language = m_lines.language();
         const CaretLine line = caretLine();
+        // A title block's line lists its keys and values, typed or not. See Syntax#titleblock
+        if (const std::optional<Syntax::TitlePlace> title = titlePlace(line))
+        {
+            const Syntax::CompletionClasses owners = { title->key ? &title->key->entry : nullptr };
+            listCompletion(CompletionScope::Title, owners, title->stated, line, title->wordStart);
+            return;
+        }
+        if (!m_completion)
+        {
+            hideCompletion();
+            return;
+        }
+
+        const Syntax::Language& language = m_lines.language();
         const Syntax::CompletionPlace place =
             Syntax::completionPlace(language, line.text, line.caret);
         const std::wstring_view typed = place.typed(line.text);
@@ -911,14 +966,31 @@ namespace ClaFi::Controls
                 return;
             }
         }
-        ensureCompletionList();
-        CompletionStack& rows = m_completionList->content().body();
-        if (std::exchange(m_completionRowsStale, false))
-            rows.rebuild(language, m_completion, m_declarations);
         const CompletionScope scope = place.member
             ? CompletionScope::Member
             : CompletionScope::Global;
-        if (rows.filter(language, scope, classes, typed, line.start + line.caret) == 0)
+        listCompletion(scope, classes, {}, line, place.wordStart);
+    }
+
+    std::optional<Syntax::TitlePlace> CodeBox::titlePlace(const CaretLine& line) const
+    {
+        if (!m_titleBlock)
+            return std::nullopt;
+        return Syntax::completionTitlePlace(m_lines.language(), *m_titleBlock, sourceLines(),
+            line.index, line.caret);
+    }
+
+    void CodeBox::listCompletion(const CompletionScope scope,
+        const Syntax::CompletionClasses& owners, const Syntax::CompletionNames& stated,
+        const CaretLine& line, const std::size_t wordStart)
+    {
+        const Syntax::Language& language = m_lines.language();
+        ensureCompletionList();
+        CompletionStack& rows = m_completionList->content().body();
+        if (std::exchange(m_completionRowsStale, false))
+            rows.rebuild(language, m_completion, m_declarations, m_titleBlock);
+        const std::wstring_view typed = line.text.substr(wordStart, line.caret - wordStart);
+        if (rows.filter(language, scope, owners, typed, line.start + line.caret, stated) == 0)
         {
             hideCompletion();
             return;
@@ -926,8 +998,8 @@ namespace ClaFi::Controls
 
         // Under the caret's line, from where the name starts, so the rows stand under the letters
         // they complete. In the form's coordinates, which a popup's placement is stated in.
-        FloatRect anchor = caretRectInForm(line.start + place.caret);
-        anchor.left = caretRectInForm(line.start + place.wordStart).left;
+        FloatRect anchor = caretRectInForm(line.start + line.caret);
+        anchor.left = caretRectInForm(line.start + wordStart).left;
         m_completionList->setPlacement(FormPlacement::Bottom, anchor);
         if (!completionShown())
         {
@@ -1016,18 +1088,54 @@ namespace ClaFi::Controls
     void CodeBox::takeCompletion(const CompletionRow& row)
     {
         const CaretLine line = caretLine();
-        const Syntax::CompletionPlace place =
-            Syntax::completionPlace(m_lines.language(), line.text, line.caret);
+        const bool title = row.scope() == CompletionScope::Title;
+        std::size_t wordStart = 0;
+        std::wstring written{ row.name() };
+        bool valueFollows = false;
+        if (title)
+        {
+            const std::optional<Syntax::TitlePlace> place = titlePlace(line);
+            if (!place)
+            {
+                hideCompletion();
+                return;
+            }
+            // A key is written with its equals sign where nothing follows the caret, and its
+            // values are listed next; a value stands a blank off the sign or the comma before it.
+            // See Controls#completionlist
+            wordStart = place->wordStart;
+            const bool lineEnds =
+                line.text.find_first_not_of(L" \t", line.caret) == std::wstring_view::npos;
+            const wchar_t before = wordStart != 0 ? line.text[wordStart - 1] : L'\0';
+            if (!place->key && lineEnds)
+            {
+                written += L" = ";
+                valueFollows = true;
+            }
+            else if (place->key && (before == L'=' || before == L','))
+            {
+                written = L" " + written;
+            }
+        }
+        else
+        {
+            const Syntax::CompletionPlace place =
+                Syntax::completionPlace(m_lines.language(), line.text, line.caret);
+            wordStart = place.wordStart;
+        }
         hideCompletion();
         // One edit, undone as one: the name as typed goes, and the row's own spelling stands in
         // its place with the caret after it.
         Text what{};
         what << L"Complete " << InkWell::accentInk() << row.name() << PopColor{};
         m_takingCompletion = true;
-        setSelection(line.start + place.wordStart, line.start + place.caret);
-        applyEdit(ensureCaret(), Text{ row.name() }, EditKind::Replace, what);
+        setSelection(line.start + wordStart, line.start + line.caret);
+        applyEdit(ensureCaret(), Text{ written }, EditKind::Replace, what);
         m_takingCompletion = false;
-        realignFinishedWord(false);
+        if (valueFollows)
+            requestCompletion(true);
+        else if (!title)
+            realignFinishedWord(false);
     }
 
     bool CodeBox::parameterHintShown() const

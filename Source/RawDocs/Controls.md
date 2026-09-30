@@ -447,6 +447,11 @@ looks like and how the keys drive it is under CompletionList. Out of the same li
 shows the signature of the call the caret stands in, with the argument being written marked
 - see ParameterHint.
 
+A box completes the keys and values of a title block - the comment lines a text opens with
+to state its settings - out of a Syntax::TitleBlock the host states through `titleBlock`,
+named the same way. Those lines are the one place inside a comment the list opens. See
+Syntax#titleblock for the lines and the places on them.
+
 A box places each line as it is typed, in the language's reading of where lines stand - Enter,
 Tab, Backspace, Home, a paste and Reindent. See Indents. It draws a line down each block its
 text opens - see IndentGuides.
@@ -464,7 +469,10 @@ narrowing with every character after; on demand on Ctrl+Space, which lists every
 place can take, a name typed or not. It closes when nothing matches, when the name is
 backspaced away, on Escape, and on the caret leaving - a click, an arrow key, the focus
 going. It never opens inside a comment or a string, and never over a paste: only a typed
-character asks for it, an edit merely brings a list already up up to date. The request is
+character asks for it, an edit merely brings a list already up up to date. A title block's
+line is the exception to the comment: there the prefix's mark, the equals sign and a comma
+open the list too, and a place past any of them lists with nothing typed, as a dot does,
+so a blank typed after the sign keeps the list up. The request is
 answered on a 0 ms timer once the input that made it has been delivered, and one that finds
 the form's layout unsettled waits on the pass that settles it, as the SuggestionList's does.
 
@@ -489,6 +497,11 @@ with the part typed so far in the accent ink, and the kind muted at the end of i
 function, procedure, class, property, keyword, variable, constant - the way a menu prints a
 key.
 
+On a line of the title block the rows are the block's alone. Up to the sign they are its
+keys, less those the block's other lines state; past the sign they are the values of the
+key the line states, less those the line holds already, and a key that lists none opens no
+list. The kind printed is key or value.
+
 THE HINT. The current row's signature, in the code style, and under it the hint's sentence,
 stand beside the list at the row's height - the form's tooltip, placed FormPlacement::Right
 on a rect spanning the list, so a hint the right has no room for stands off the list's left
@@ -500,6 +513,10 @@ spelled. The hint goes with the list.
 A PICK IS A PICK. Return or Tab takes the current row, a click takes any row: the name as
 typed is replaced by the row's own spelling in one edit, undone as one, with the caret
 after it and the list down - so `str` becomes `StrToInt` in a language that ignores case.
+On a title block's line the edit makes the line whole: a key taken where nothing follows
+the caret is written with ` = ` after it, and its values are listed right after; a value
+taken right after the sign or a comma is written a blank off it. So `//#Doc` becomes
+`//#DocTypes = `, and a Return on Smeta `//#DocTypes = Smeta`.
 The character a taking press queued - Return's line break, Ctrl+Space's space - does not
 reach the text: the press settles it and the character reads it, as EditBox does for a
 Return the form takes. Up and Down walk the rows and stay at either end; Page Up and Page

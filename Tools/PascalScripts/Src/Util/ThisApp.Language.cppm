@@ -34,6 +34,8 @@ namespace ThisApp
         [[nodiscard]] const ScriptTemplates& templates() const { return m_templates; }
         // The names the host offers, for a CodeBox to complete. Empty without a file.
         [[nodiscard]] const Syntax::CompletionEntries& completion() const { return m_completion; }
+        // The comment lines a script opens with, for a CodeBox to complete. Empty without a file.
+        [[nodiscard]] const Syntax::TitleBlock& titleBlock() const { return m_titleBlock; }
     private:
         [[nodiscard]] static std::filesystem::path findFile(
             const std::filesystem::path& configFolder);
@@ -46,5 +48,6 @@ namespace ThisApp
         std::wstring m_information{};
         ScriptTemplates m_templates{};
         Syntax::CompletionEntries m_completion{};
+        Syntax::TitleBlock m_titleBlock{};
     };
 }

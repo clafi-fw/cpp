@@ -58,6 +58,7 @@ namespace ThisApp
         // knows the language; the cast states that.
         const ScriptsFolder& scripts = static_cast<const ScriptsFolder&>(folder());
         m_box.setCompletion(&scripts.language().completion());
+        m_box.setTitleBlock(&scripts.language().titleBlock());
         // The box keeps the script's history, and the page's Undo and Redo walk it.
         setEditHistory(m_box);
         m_box.onTextEdit([this](TextEditEvent&) {

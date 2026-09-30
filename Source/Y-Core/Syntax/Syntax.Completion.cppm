@@ -74,4 +74,22 @@ namespace ClaFi::Syntax
     export [[nodiscard]] const CompletionEntry* completionCallee(const Language&,
         const CompletionEntries&, const Declarations&, const CompletionSubject& callee,
         std::size_t caret);
+
+    export using CompletionNames = std::vector<std::wstring_view>;
+
+    // Where a completion on a line of a text's title block would go. See Syntax#titleblock
+    export struct TitlePlace
+    {
+        std::size_t wordStart{ 0 };       // where the key or the value being written starts
+        std::size_t caret{ 0 };
+        const TitleKey* key{ nullptr };   // the key a value is written for - null for a key
+        // What is left out: the keys on the block's other lines, or the line's other values.
+        CompletionNames stated;
+        // The key or the value as typed so far, which may be empty.
+        [[nodiscard]] std::wstring_view typed(std::wstring_view line) const;
+    };
+
+    // The place a caret on a title block's line names, if it names one. See Syntax#titleblock
+    export [[nodiscard]] std::optional<TitlePlace> completionTitlePlace(const Language&,
+        const TitleBlock&, const SourceLines&, std::size_t line, std::size_t caret);
 }

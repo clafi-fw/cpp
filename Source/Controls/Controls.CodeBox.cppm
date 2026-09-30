@@ -64,7 +64,8 @@ namespace ClaFi::Controls
     enum class CompletionScope : std::uint8_t
     {
         Global,   // what stands on its own - the text's own names, the list's, the keywords
-        Member    // what follows a dot - the methods and properties of the subject's classes
+        Member,   // what follows a dot - the methods and properties of the subject's classes
+        Title     // what a title block's line takes - its keys, or the values of the key it states
     };
 
     // One row of the completion list: a name the box can complete to, its kind beside it.
@@ -105,15 +106,16 @@ namespace ClaFi::Controls
         // The name as typed so far - what a row marks in its own.
         [[nodiscard]] std::wstring_view typed() const { return m_typed; }
         // Builds the rows anew: the text's own declarations first, the nearest scope's ahead,
-        // then the list's names by scope and the language's keywords - each run in name order
-        // under the language's case rule, a member once for every class stating it.
+        // then the list's names, the keywords and the title block's by scope - each run in name
+        // order under the language's case rule, a member once for every class stating it.
         void rebuild(const Syntax::Language&, const Syntax::CompletionEntries*,
-            const Syntax::Declarations&);
-        // Shows the rows of the scope that begin with what is typed, are in force at the caret's
-        // position in the text and, for a member, are read off the nearest of those classes to
-        // state it - the first of them current - and answers how many.
+            const Syntax::Declarations&, const Syntax::TitleBlock*);
+        // Shows the rows of the scope that begin with what is typed, are in force at the caret
+        // and not among the stated, each read off the nearest of those owners to state it - a
+        // Global row off none - the first shown current, and answers how many.
         std::size_t filter(const Syntax::Language&, CompletionScope,
-            const Syntax::CompletionClasses&, std::wstring_view typed, std::size_t caret);
+            const Syntax::CompletionClasses& owners, std::wstring_view typed, std::size_t caret,
+            const Syntax::CompletionNames& stated);
         // Moves the current row one shown row up or down, staying at either end.
         void moveCurrent(ScrollDirection);
         // Moves the current row a view less one row up or down, staying at either end.
@@ -174,6 +176,8 @@ namespace ClaFi::Controls
         // The names the box completes to, held by whoever states them. None completes nothing.
         DECLARE_WRITABLE_PROPERTY(const Syntax::CompletionEntries*, completion, setCompletion,
             nullptr)
+        // The title block the box completes keys and values in, held by whoever states it.
+        DECLARE_WRITABLE_PROPERTY(const Syntax::TitleBlock*, titleBlock, setTitleBlock, nullptr)
         // What one level of indent is written as, where the text says nothing of its own.
         DECLARE_WRITABLE_PROPERTY(Syntax::IndentUnit, indentUnit, setIndentUnit,
             Syntax::IndentUnit{})
@@ -191,6 +195,8 @@ namespace ClaFi::Controls
         void setDetectLanguage(DetectLanguage);
         // States the list the box completes from, or none. Named, not copied: it outlives the box.
         void setCompletion(const Syntax::CompletionEntries*);
+        // States the title block the box completes in, or none. Named, not copied, as the list is.
+        void setTitleBlock(const Syntax::TitleBlock*);
         // Lists what the caret's place can complete to - Ctrl+Space. See Controls#completionlist
         void showCompletion();
         // Shows the signature of the call the caret stands in - Ctrl+Shift+Space. See
@@ -245,6 +251,11 @@ namespace ClaFi::Controls
         void requestCompletion(bool opening);
         // Lists what the caret's place names, or takes the list down. See Controls#completionlist
         void updateCompletion();
+        // The place the caret names on a line of the title block, where it names one.
+        [[nodiscard]] std::optional<Syntax::TitlePlace> titlePlace(const CaretLine&) const;
+        // Shows the rows the place takes under the name being written, or takes the list down.
+        void listCompletion(CompletionScope, const Syntax::CompletionClasses& owners,
+            const Syntax::CompletionNames& stated, const CaretLine&, std::size_t wordStart);
         // Reads the text's own declarations anew where the text has changed since the last
         // reading; the rows follow only where the declarations did.
         void readDeclarations();
@@ -354,6 +365,7 @@ namespace ClaFi::Controls
         INIT_PROPERTY(inks),
         INIT_PROPERTY(detectLanguage),
         INIT_PROPERTY(completion),
+        INIT_PROPERTY(titleBlock),
         INIT_PROPERTY(indentUnit),
         INIT_PROPERTY(detectIndent),
         INIT_PROPERTY(indentGuides)

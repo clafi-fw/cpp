@@ -39,6 +39,10 @@ namespace ThisApp
             constexpr std::wstring_view parent = L"Parent";
             constexpr std::wstring_view methods = L"Methods";
             constexpr std::wstring_view properties = L"Properties";
+            constexpr std::wstring_view titlePrefix = L"TitlePrefix";
+            constexpr std::wstring_view titleKeys = L"TitleKeys";
+            constexpr std::wstring_view list = L"List";
+            constexpr std::wstring_view values = L"Values";
         }
 
         using Sections = Dom::Sequence<Dom::Section>;
@@ -89,6 +93,36 @@ namespace ThisApp
                         entry.properties);
                 }
                 into.push_back(std::move(entry));
+            }
+        }
+
+        // Reads the title block's keys and each key's values, leaving out those with no name.
+        void readTitleKeys(const Dom::DomNodeBase& list, Syntax::TitleKeys& into)
+        {
+            for (const Dom::Section& item : list.as<Sections>())
+            {
+                Syntax::TitleKey key = {
+                    .entry = {
+                        .name = stringOf(item, Keys::name),
+                        .kind = Syntax::CompletionKind::Key,
+                        .signature = stringOf(item, Keys::signature),
+                        .hint = stringOf(item, Keys::hint)
+                    },
+                    .list = (item / Keys::list).get<bool>()
+                };
+                if (key.entry.name.empty())
+                    continue;
+                for (const Dom::Section& value : (item / Keys::values).as<Sections>())
+                {
+                    Syntax::CompletionEntry entry = {
+                        .name = stringOf(value, Keys::name),
+                        .kind = Syntax::CompletionKind::Value,
+                        .hint = stringOf(value, Keys::hint)
+                    };
+                    if (!entry.name.empty())
+                        key.values.push_back(std::move(entry));
+                }
+                into.push_back(std::move(key));
             }
         }
     }
@@ -149,6 +183,27 @@ namespace ThisApp
                     Sequence{ Keys::methods, entryLayout() },
                     Sequence{ Keys::properties, entryLayout() }
                 }
+            },
+            Value{ Keys::titlePrefix, std::wstring{} },
+            Sequence
+            {
+                Keys::titleKeys,
+                Section
+                {
+                    Value{ Keys::name, std::wstring{} },
+                    Value{ Keys::signature, std::wstring{} },
+                    Value{ Keys::hint, std::wstring{} },
+                    Value{ Keys::list, false },
+                    Sequence
+                    {
+                        Keys::values,
+                        Section
+                        {
+                            Value{ Keys::name, std::wstring{} },
+                            Value{ Keys::hint, std::wstring{} }
+                        }
+                    }
+                }
             }
         };
         Dom::Document<Dom::FileFormat::ClaFi> document{
@@ -183,5 +238,7 @@ namespace ThisApp
         }
         readEntries(document / Keys::completion, true, Syntax::CompletionKind::Variable,
             m_completion);
+        m_titleBlock.prefix = stringOf(document, Keys::titlePrefix);
+        readTitleKeys(document / Keys::titleKeys, m_titleBlock.keys);
     }
 }

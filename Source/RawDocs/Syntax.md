@@ -174,7 +174,8 @@ Matching is by prefix under the language's case rule - a language with `ignoreCa
 any case and one without matches exactly - and the rows are ordered the same way, so among
 the names a prefix reaches the shortest, an exact match, stands first. A name is not
 completed inside a comment or a string: the line's tokens say where those stand, and a
-caret inside one or right at its end is left alone.
+caret inside one or right at its end is left alone. A title block's lines are the one
+exception, and what they take is their own - see TitleBlock.
 
 The kinds are spelled once, in completionKindName, and read back by completionKindOf in any
 case - which is how an application's file states a kind by its word.
@@ -256,6 +257,36 @@ one the host offers, of any kind. A chain is a member: the links before the last
 subject, resolved as a member's is - see Completion - and the last is the member of that name
 its classes state. A subject of a class the list does not know, or a name nothing states,
 resolves to nothing, and nothing is shown.
+
+## TitleBlock
+
+The comment lines a text opens with to state its settings, one key a line - a GrandSmeta
+macro's `//#DocTypes = Smeta, ObjSmeta` - and the reading of such a line that says what the
+caret's place there can take. A TitleBlock is the prefix every key's line opens with, a
+comment's opener and a mark, and the keys. A TitleKey is a CompletionEntry of kind Key - its
+name, the line a hint shows and the hint's sentence - whether it takes a list of values, and
+the values it takes, entries of kind Value. A key with no values takes any text, and nothing
+is listed for it; the values a key lists are the ones known, and it may take others - a
+category of the user's own. Like the completion list, the block is the host's, and a box
+names it rather than copying it.
+
+The block is the run of lines the text opens with while each holds nothing but comments and
+blanks: it ends at the first line of source, and a key's line past that states nothing. A
+line of the block names a place where it opens with the prefix at its first column and the
+caret stands past the prefix. Up to the end of the name after the prefix the place is the
+key, and the keys the block's other lines state are left out, since a key is stated once.
+Past the key, the blanks after it and an equals sign, the place is a value of that key - of
+a key the block knows and that lists its values. Any other sign, `:=` among them, names no
+place, so what the list leads to is what the host reads. A list's value is the text between
+the commas around the caret, and the values the line's other items state are left out; a
+key taking one value has the whole text after the sign as its value, so a value holding
+blanks - a category named in several words - is matched whole. The blanks are the space,
+the tab and the no-break space that aligned lines hold. The case rule is the language's, as
+the list's is.
+
+completionTitlePlace answers the place: where the key or the value being written starts, the
+key a value is written for, and the names left out, which are views into the text and hold
+while it does.
 
 ## Indent
 

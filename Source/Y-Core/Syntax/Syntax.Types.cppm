@@ -61,6 +61,8 @@ namespace ClaFi::Syntax
         Field,
         Constant,
         Variable,
+        Key,         // a key a title block states
+        Value,       // a value a title block's key takes
         Count
     };
 
@@ -82,6 +84,26 @@ namespace ClaFi::Syntax
         CompletionEntries methods;     // a class's methods - empty elsewhere
         CompletionEntries properties;  // a class's properties - empty elsewhere
         bool operator==(const CompletionEntry&) const = default;
+    };
+
+    // A key a text's title block states, and the values it takes. See Syntax#titleblock
+    export struct TitleKey
+    {
+        // The key: its name, of kind Key, the line a hint shows and the hint's sentence.
+        CompletionEntry entry;
+        bool list{ false };          // whether it takes several values, a comma between each
+        CompletionEntries values;    // what it takes, each of kind Value - empty for any text
+        bool operator==(const TitleKey&) const = default;
+    };
+
+    export using TitleKeys = std::vector<TitleKey>;
+
+    // The comment lines a text opens with, each stating a key and its value. See Syntax#titleblock
+    export struct TitleBlock
+    {
+        std::wstring prefix;   // what a key's line opens with - a comment's opener and a mark
+        TitleKeys keys;
+        bool operator==(const TitleBlock&) const = default;
     };
 
     // A name a text declares for itself, and where it is in force. See Syntax#declarations
