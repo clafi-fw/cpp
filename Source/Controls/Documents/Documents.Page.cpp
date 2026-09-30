@@ -42,7 +42,14 @@ namespace ClaFi::Documents
     bool DocumentPage::saveEdits(Control& initiator) const
     {
         if (canSaveEdits())
-            return writeDocument();
+        {
+            // The leaving question stays up on a failed write, so the reason stands under the
+            // answer that was pressed.
+            if (writeDocument())
+                return true;
+            ContextMessage::show(initiator, notSavedText());
+            return false;
+        }
         // A PAGE WITH NO FILE OF ITS OWN SAVES AS. The work still has to land somewhere and the
         // user is being asked before it is lost, so the command that can keep it is the one to
         // offer. It writes the file and no more: the tab is already on its way somewhere else.
@@ -78,7 +85,15 @@ namespace ClaFi::Documents
 
     bool DocumentPage::writeDocument() const
     {
+        // The folder can go while a page stands open on one of its files.
+        folder().needDirectory();
         return folder().writeDocument(documentNode(), documentFile());
+    }
+
+    Text DocumentPage::notSavedText() const
+    {
+        return messageText(MessageIcon::Error,
+            std::wstring{ L"The " }.append(folder().kind().noun).append(L" could not be saved"));
     }
 
     void DocumentPage::saveAs(Control& initiator)
@@ -133,10 +148,10 @@ namespace ClaFi::Documents
             return {};
 
         const std::wstring fileName = folder().fileNameOf(dialog.text());
+        folder().needDirectory();
         if (!folder().writeDocument(documentNode(), folder().fileOf(fileName)))
         {
-            ContextMessage::show(initiator, messageText(MessageIcon::Error,
-                std::wstring{ L"The " }.append(kind.noun).append(L" could not be saved")));
+            ContextMessage::show(initiator, notSavedText());
             return {};
         }
         return fileName;

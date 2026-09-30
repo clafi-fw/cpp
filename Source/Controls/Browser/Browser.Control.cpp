@@ -562,7 +562,8 @@ namespace ClaFi::Browser
                 }
             }
             setControlWidth(m_titleBox, m_titleBox.width() - delta);
-            Panel::alignContent(event, position, newDimensions);
+            // The title bar alone. A page aligned twice reads the sizes its first align handed out.
+            alignControl(&m_title, event, m_title.topLeft(), m_title.dimensions());
         }
     }
 

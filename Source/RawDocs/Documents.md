@@ -124,6 +124,10 @@ name, writes the work under it and takes the tab there; the original is left as 
 already taken is a question rather than a refusal. A page with no file of its own - one that
 answers no to canSaveEdits - is saved as on Save, and on the leaving question's Save alike.
 
+The folder is made again before either writes, since it can be deleted while a page stands open
+on one of its files. A write that does not get there says so beside whatever asked for it - the
+leaving question's Save included, and that question stays up.
+
 ## Unsaved
 
 The saved document is the other side of the comparison, not a flag kept as edits arrive. The

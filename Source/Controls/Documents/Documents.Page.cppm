@@ -16,6 +16,7 @@ import ClaFi.StdActions;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.EditHistory;
+import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -52,6 +53,7 @@ namespace ClaFi::Documents
     private:
         // Writes the page's work to its own file, and answers whether it got there.
         [[nodiscard]] bool writeDocument() const;
+        [[nodiscard]] Text notSavedText() const; // what a write that did not get there says
         // Writes this page's work to a name the user gives, and takes the tab there. The original
         // is left on the disk as it stands, which is what tells this from Save.
         void saveAs(Control& initiator);
@@ -135,8 +137,7 @@ namespace ClaFi::Documents
                 const std::wstring_view noun = folder().kind().noun;
                 ContextMessage::show(shownBy, writeDocument()
                     ? messageText(MessageIcon::Ok, capitalized(noun).append(L" saved"))
-                    : messageText(MessageIcon::Error,
-                        std::wstring{ L"The " }.append(noun).append(L" could not be saved")));
+                    : notSavedText());
                 return;
             }
 
