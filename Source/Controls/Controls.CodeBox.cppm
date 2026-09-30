@@ -142,8 +142,8 @@ namespace ClaFi::Controls
     {
     public:
         using WithTextLayout<FormControlBase>::WithTextLayout;
-        // States what the hint says: the signature from where its list opens, the name of the
-        // argument the caret stands in bold, and the entry's hint under it.
+        // States what the hint says: the signature from where its list opens with the argument
+        // the caret stands in bold, or No parameters where it lists none, and the entry's hint.
         void setCall(const Syntax::CompletionEntry&, const Syntax::SignatureParameters&,
             std::size_t argument);
     protected:

@@ -440,20 +440,27 @@ namespace ClaFi::Controls
     void ParameterHint::setCall(const Syntax::CompletionEntry& entry,
         const Syntax::SignatureParameters& parameters, const std::size_t argument)
     {
-        const std::wstring_view signature = entry.signature;
         m_text.clear();
-        m_text << TextStyleId::Code;
-        // A caret past the last parameter marks none, and the hint stands as it is.
-        std::size_t at = parameters.bracket;
-        if (argument < parameters.names.size())
+        if (parameters.names.empty())
         {
-            const TextRange& name = parameters.names[argument];
-            m_text << signature.substr(at, name.start - at)
-                << TextOp::PushBold << signature.substr(name.start, name.length)
-                << TextOp::PopBold;
-            at = name.end();
+            m_text << L"No parameters";
         }
-        m_text << signature.substr(at) << PopTextStyle{};
+        else
+        {
+            const std::wstring_view signature = entry.signature;
+            m_text << TextStyleId::Code;
+            // A caret past the last parameter marks none, and the hint stands as it is.
+            std::size_t at = parameters.bracket;
+            if (argument < parameters.names.size())
+            {
+                const TextRange& name = parameters.names[argument];
+                m_text << signature.substr(at, name.start - at)
+                    << TextOp::PushBold << signature.substr(name.start, name.length)
+                    << TextOp::PopBold;
+                at = name.end();
+            }
+            m_text << signature.substr(at) << PopTextStyle{};
+        }
         if (!entry.hint.empty())
             m_text << L"\n" << InkGrade::Muted << entry.hint << PopColor{};
         invalidate();
@@ -1078,9 +1085,12 @@ namespace ClaFi::Controls
             hideParameterHint();
             return;
         }
-        // Nothing to mark is nothing to show: a routine without parameters has no hint.
+        // A routine with no parameters says so. Any other name whose signature lists none - a type
+        // or a class cast, a property with no index, a variable - shows nothing.
         const Syntax::SignatureParameters parameters = language.parameters(entry->signature);
-        if (parameters.names.empty())
+        const bool routine = entry->kind == Syntax::CompletionKind::Function
+            || entry->kind == Syntax::CompletionKind::Procedure;
+        if (parameters.names.empty() && !routine)
         {
             hideParameterHint();
             return;

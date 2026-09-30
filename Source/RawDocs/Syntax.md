@@ -226,7 +226,7 @@ SignatureParameters is a language's reading of one signature, answered by its re
 parameters: where the list opens - the signature's size where it spells no list - and each
 parameter's name as a range of the signature, in the order a call fills them. A hint shows
 the signature from where the list opens and sets the current argument's name in bold; a
-signature naming no parameter shows no hint. The Pascal reader takes the first bracket
+routine's signature naming no parameter shows the words No parameters, any other no hint. The Pascal reader takes the first bracket
 outside a comment or a string, round or square - an indexed property's list is square - and
 reads the list up to its closer: a group is its names, one or several with commas between,
 a modifier ahead of them - const, var, out, constref - and its colon; what follows the

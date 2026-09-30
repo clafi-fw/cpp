@@ -515,8 +515,9 @@ under the letters they complete.
 ## ParameterHint
 
 The hint over a call: the signature of the routine being called, from where its parameter
-list opens, with the name of the argument the caret stands in set in bold, and under it the
-entry's hint sentence where it has one. A window of its own standing on the box in the
+list opens, with the name of the argument the caret stands in set in bold - the words No
+parameters for a routine that lists none - and under it the entry's hint sentence where it has
+one. A window of its own standing on the box in the
 tooltip's role - the pointer goes through it, it takes no focus and it takes no place as the
 popup on the box, so it stands beside the completion list, above the line while the list is
 below it. THE CARET STAYS IN THE BOX.
@@ -536,9 +537,10 @@ read as the hint opens; a hint up keeps its reading.
 
 WHEN IT CLOSES. On the caret leaving the call - past its closing bracket, out of it by a key
 or a click, or back before its opener; on Escape, which takes the completion list down first
-where both are up and the hint on the next press; and on the focus leaving the box. A
-routine that names no parameter shows nothing, and so does a name nothing resolves - a
-variable of the routine's name in force at the caret shadows it.
+where both are up and the hint on the next press; and on the focus leaving the box. A name
+nothing resolves shows nothing, and so does any name other than a routine whose signature
+names no parameter - a type or a class cast, a property with no index, a variable; a variable
+of the routine's name in force at the caret shadows it.
 
 Placed above the caret's line, its left edge at the opening bracket's, below the line when
 there is no room above - and below it while the completion list stands above the line, having
