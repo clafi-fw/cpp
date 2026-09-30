@@ -23,7 +23,7 @@ namespace ClaFi::Controls
     bool ItemsViewSelection::contains(const Control* value) const
     {
         Control* ptr = const_cast<Control*>(value);
-        return m_set.contains(ptr);
+        return m_set.contains( ptr);
     }
 
     void ItemsViewSelection::changed() const

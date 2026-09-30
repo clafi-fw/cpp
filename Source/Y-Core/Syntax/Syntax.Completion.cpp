@@ -166,6 +166,70 @@ namespace ClaFi::Syntax
             return found;
         }
 
+        // The links ending right before `end` on the line, root first: a name, a call's or an
+        // index's brackets after it stepped over, and a dot before it linking the name before
+        // that. Empty where what ends there is not a name.
+        [[nodiscard]] CompletionSubject subjectEndingAt(const Language& language,
+            const std::wstring_view line, const Tokens& lineTokens, const std::size_t end)
+        {
+            CompletionSubject subject;
+            std::size_t linkEnd = end;
+            while (true)
+            {
+                // A call's or an index's brackets stand between a link's name and its dot.
+                CompletionLink link;
+                std::size_t nameEnd = linkEnd;
+                while (nameEnd != 0 && (line[nameEnd - 1] == L')' || line[nameEnd - 1] == L']'))
+                {
+                    const std::optional<std::size_t> opener =
+                        openerOf(line, lineTokens, nameEnd - 1);
+                    if (!opener)
+                        return {};
+                    nameEnd = *opener;
+                    link.bracketed = true;
+                }
+                std::size_t start = nameEnd;
+                while (start != 0 && isNameChar(line[start - 1], language))
+                    --start;
+                if (start == nameEnd || !isNameStart(line[start], language))
+                    return {};
+                link.name = line.substr(start, nameEnd - start);
+                subject.push_back(link);
+                // A dot before the name links it to the name before that; a range's two dots do
+                // not.
+                if (start == 0 || line[start - 1] != L'.')
+                    break;
+                if (start >= 2 && line[start - 2] == L'.')
+                    break;
+                linkEnd = start - 1;
+            }
+            std::ranges::reverse(subject);
+            return subject;
+        }
+
+        // Whether the word stands in one of the language's tables, under its case rule.
+        [[nodiscard]] bool listedWord(const Language& language, const Words table,
+            const std::wstring_view word)
+        {
+            return language.ignoreCase ? isListedNoCase(table, word) : isListed(table, word);
+        }
+
+        // Whether the word before the name starting there opens a routine's header, so that
+        // the name's brackets open no call.
+        [[nodiscard]] bool headerBefore(const Language& language, const std::wstring_view line,
+            const std::size_t nameStart)
+        {
+            std::size_t end = nameStart;
+            while (end != 0 && isBlank(line[end - 1]))
+                --end;
+            std::size_t start = end;
+            while (start != 0 && isNameChar(line[start - 1], language))
+                --start;
+            if (start == end)
+                return false;
+            return listedWord(language, language.routineWords, line.substr(start, end - start));
+        }
+
         // The class the subject's root stands for: a name the text declares, by its type, else
         // one the host offers - a class naming itself, cast or not.
         [[nodiscard]] const CompletionEntry* rootClass(const Language& language,
@@ -284,39 +348,9 @@ namespace ClaFi::Syntax
     CompletionSubject completionSubject(const Language& language, const std::wstring_view line,
         const Tokens& lineTokens, const CompletionPlace& place)
     {
-        CompletionSubject subject;
         if (!place.member)
-            return subject;
-        std::size_t dot = place.wordStart - 1;
-        while (true)
-        {
-            // A call's or an index's brackets stand between a link's name and its dot.
-            CompletionLink link;
-            std::size_t end = dot;
-            while (end != 0 && (line[end - 1] == L')' || line[end - 1] == L']'))
-            {
-                const std::optional<std::size_t> opener = openerOf(line, lineTokens, end - 1);
-                if (!opener)
-                    return {};
-                end = *opener;
-                link.bracketed = true;
-            }
-            std::size_t start = end;
-            while (start != 0 && isNameChar(line[start - 1], language))
-                --start;
-            if (start == end || !isNameStart(line[start], language))
-                return {};
-            link.name = line.substr(start, end - start);
-            subject.push_back(link);
-            // A dot before the name links it to the name before that; a range's two dots do not.
-            if (start == 0 || line[start - 1] != L'.')
-                break;
-            if (start >= 2 && line[start - 2] == L'.')
-                break;
-            dot = start - 1;
-        }
-        std::ranges::reverse(subject);
-        return subject;
+            return {};
+        return subjectEndingAt(language, line, lineTokens, place.wordStart - 1);
     }
 
     CompletionClasses completionMemberClasses(const Language& language,
@@ -341,5 +375,103 @@ namespace ClaFi::Syntax
         if (!current)
             return {};
         return lineageOf(language, entries, *current);
+    }
+
+    std::optional<CompletionCall> completionCall(const Language& language,
+        const SourceLines& lines, const std::size_t line, const std::size_t caret)
+    {
+        if (line >= lines.count())
+            return std::nullopt;
+        std::size_t depth = 0;
+        std::size_t commas = 0;
+        std::size_t at = line;
+        std::wstring_view text = lines.text(at);
+        std::size_t pos = std::min(caret, text.size());
+        while (true)
+        {
+            const Tokens& tokens = lines.tokens(at);
+            while (pos != 0)
+            {
+                --pos;
+                if (literalAt(tokens, pos))
+                    continue;
+                const wchar_t value = text[pos];
+                if (value == L')' || value == L']')
+                {
+                    ++depth;
+                }
+                else if (value == L'(' || value == L'[')
+                {
+                    if (depth != 0)
+                    {
+                        --depth;
+                        continue;
+                    }
+                    // The bracket left open. A name before it is what is called; anything else
+                    // - an operator, a keyword such as if or not - groups an expression, whose
+                    // commas are its own and count for nothing.
+                    CompletionSubject callee = subjectEndingAt(language, text, tokens, pos);
+                    const bool keyword = callee.size() == 1
+                        && listedWord(language, language.keywords, callee.front().name);
+                    if (callee.empty() || keyword)
+                    {
+                        commas = 0;
+                        continue;
+                    }
+                    const std::size_t nameStart =
+                        static_cast<std::size_t>(callee.front().name.data() - text.data());
+                    if (headerBefore(language, text, nameStart))
+                        return std::nullopt;
+                    return CompletionCall{
+                        .line = at,
+                        .bracket = pos,
+                        .argument = commas,
+                        .callee = std::move(callee),
+                    };
+                }
+                else if (depth == 0 && value == L',')
+                {
+                    ++commas;
+                }
+                else if (depth == 0 && (value == L';' || value == L'{' || value == L'}'))
+                {
+                    // The statement's start, with no bracket left open before it.
+                    return std::nullopt;
+                }
+            }
+            if (at == 0)
+                return std::nullopt;
+            --at;
+            text = lines.text(at);
+            pos = text.size();
+        }
+    }
+
+    const CompletionEntry* completionCallee(const Language& language,
+        const CompletionEntries& entries, const Declarations& declarations,
+        const CompletionSubject& callee, const std::size_t caret)
+    {
+        if (callee.empty())
+            return nullptr;
+        const std::wstring_view name = callee.back().name;
+        if (callee.size() == 1)
+        {
+            const Declaration* declared = declarationNamed(language, declarations, name, caret);
+            if (declared)
+                return &declared->entry;
+            for (const CompletionEntry& entry : entries)
+            {
+                if (completionNamesEqual(language, entry.name, name))
+                    return &entry;
+            }
+            return nullptr;
+        }
+        // A member: the links before it are its subject, and it is read off those classes.
+        const CompletionSubject subject(callee.begin(), callee.end() - 1);
+        const CompletionClasses classes =
+            completionMemberClasses(language, entries, declarations, subject, caret);
+        if (classes.empty())
+            return nullptr;
+        return memberNamed(language, classes, name);
     }
 }

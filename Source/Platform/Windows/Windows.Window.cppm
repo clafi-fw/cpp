@@ -154,6 +154,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // The form's surface for a client area of this size.
         [[nodiscard]] IntSize surfaceSize(IntSize clientSize) const;
         PlacedWindow place(const WindowPlacement&) override;
+        [[nodiscard]] bool standsAbove() const override { return m_standsAbove; }
         ColorByte alpha() override;
         void setAlpha(ColorByte) override;
         void initiateWindowDrag(IntPoint pt, InputStamp) override;
@@ -202,6 +203,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // The rect last asked for, which is the only record of where a window that has never
         // been shown stands - see place.
         IntRect m_placedBounds{};
+        bool m_standsAbove{ false };   // where the last placement stood it - see standsAbove
         std::optional<NormalPlacement> m_normalPlacement{};
     };
 
@@ -827,6 +829,7 @@ namespace ClaFi::PlatformImplementation::Windows
         else
             result = placeWithin(
                 placement, anchor, reinterpret_cast<IntRect&>(monInfo.rcWork).toFloat());
+        m_standsAbove = onAnchor && !remembered && result.bottom <= anchor.top;
         IntRect windowRect = result.toInt();
         const FrameMargins band = ring();
         windowRect.left -= band.left;

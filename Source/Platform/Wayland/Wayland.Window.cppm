@@ -104,6 +104,11 @@ namespace ClaFi::PlatformImplementation::Wayland
         void setAlpha(ColorByte value) override;
         void initiateWindowDrag(IntPoint pt, InputStamp) override;
         void showWindowMenu(PointInForm, InputStamp) override;
+        // THE SIDE IS THE COMPOSITOR'S. A positioner may flip a popup for want of room and the
+        // configure that says so names a position this class does not read back yet, so the
+        // answer is the side the placement asked for.
+        [[nodiscard]] bool standsAbove() const override
+            { return m_placement.placement == FormPlacement::Top; }
         // KEEP ABOVE IS THE COMPOSITOR'S. No xdg request states it, the compositor toggles it from
         // its own menu and never tells the client, so nothing is set here and nothing is stored.
         [[nodiscard]] bool canSetAlwaysOnTop() const override { return false; }

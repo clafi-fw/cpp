@@ -194,12 +194,6 @@ namespace ClaFi::Syntax
         // Reading what a text declares
 
 
-        // The words that open a routine's header. Sorted, and lower case.
-        constexpr auto k_pascalRoutineOpeners = std::to_array<std::wstring_view>({
-            L"constructor", L"destructor", L"function", L"operator", L"procedure"
-        });
-        static_assert(std::ranges::is_sorted(k_pascalRoutineOpeners));
-
         // The directives a header may close with, each ended by its own semicolon. A header with
         // forward or external among them has no body. Sorted, and lower case.
         constexpr auto k_pascalRoutineDirectives = std::to_array<std::wstring_view>({
@@ -252,6 +246,15 @@ namespace ClaFi::Syntax
                 return static_cast<wchar_t>(std::towlower(value));
             };
             return std::ranges::equal(word.text, lower, std::ranges::equal_to{}, foldCase);
+        }
+
+        // Whether two names are one, in any case.
+        [[nodiscard]] bool sameName(const std::wstring_view left, const std::wstring_view right)
+        {
+            const auto foldCase = [](const wchar_t value){
+                return static_cast<wchar_t>(std::towlower(value));
+            };
+            return std::ranges::equal(left, right, std::ranges::equal_to{}, foldCase, foldCase);
         }
 
         [[nodiscard]] bool isMark(const PascalWord& word)
@@ -411,12 +414,19 @@ namespace ClaFi::Syntax
             void skipAngles();
             void declare(std::wstring_view name, CompletionKind, std::wstring spelled,
                 std::wstring_view type, std::size_t depth);
+            // Declares a routine's name once and answers where it stands, or nothing for a
+            // name a routine of the enclosing routine's own already has: a forward header and
+            // its body, an interface's header and the implementation's, spell one name.
+            [[nodiscard]] std::optional<std::size_t> declareRoutine(std::wstring_view name,
+                CompletionKind, std::size_t depth);
             // Gives every declaration made from `first` on at that depth the scope that runs
             // from `from` to the last word taken.
             void closeScope(std::size_t first, std::size_t depth, std::size_t from);
             // The text from the word at `from` up to the current word, with what the words
-            // leave out - a string, a comment - kept, and its blanks collapsed.
-            [[nodiscard]] std::wstring spelled(std::size_t from) const;
+            // leave out - a string, a comment - kept, its blanks collapsed and cut past the
+            // limit.
+            [[nodiscard]] std::wstring spelled(std::size_t from,
+                std::size_t limit = k_spelledLimit) const;
         private:
             // A hint's line is cut past this many characters.
             static constexpr std::size_t k_spelledLimit{ 100 };
@@ -473,10 +483,10 @@ namespace ClaFi::Syntax
         {
             if (atEnd())
                 return false;
-            if (isListedNoCase(k_pascalRoutineOpeners, current().text))
+            if (isListedNoCase(PascalTables::routineWords, current().text))
                 return true;
             return currentSpells(L"class") && m_at + 1 < m_words.size()
-                && isListedNoCase(k_pascalRoutineOpeners, m_words[m_at + 1].text);
+                && isListedNoCase(PascalTables::routineWords, m_words[m_at + 1].text);
         }
 
         bool PascalReader::endsSection() const
@@ -571,20 +581,39 @@ namespace ClaFi::Syntax
         void PascalReader::readRoutine(const std::size_t depth, const bool headerOnly)
         {
             const std::size_t headerStart = current().start;
+            const std::size_t headerWord = m_at;
             if (currentSpells(L"class"))
                 ++m_at;
             const bool function = currentSpells(L"function");
             ++m_at;
             // The name, qualified by its class for a method's implementation, either with its
             // generic parameters.
+            std::optional<std::size_t> nameWord;
+            bool qualified = false;
             while (!atEnd())
             {
-                if (currentIsName() || currentIsMark(L"."))
+                if (currentIsName())
+                {
+                    nameWord = m_at;
                     ++m_at;
+                }
+                else if (currentIsMark(L"."))
+                {
+                    qualified = true;
+                    ++m_at;
+                }
                 else if (currentIsMark(L"<"))
                     skipAngles();
                 else
                     break;
+            }
+            // A routine of the text's own is a name a call reaches; a method's implementation
+            // is its class's, which the type section that declares it does not read.
+            std::optional<std::size_t> routine;
+            if (nameWord && !qualified)
+            {
+                routine = declareRoutine(m_words[*nameWord].text,
+                    function ? CompletionKind::Function : CompletionKind::Procedure, depth);
             }
 
             const std::size_t firstLocal = m_out.size();
@@ -602,6 +631,12 @@ namespace ClaFi::Syntax
             }
             while (!atEnd() && !currentIsMark(L";") && !endsSection())
                 ++m_at;
+            // The header whole: a hint marks its parameters, so none of them is cut away.
+            if (routine)
+            {
+                m_out[*routine].entry.signature = spelled(headerWord, std::wstring::npos);
+                m_out[*routine].entry.type = std::wstring{ resultType };
+            }
             if (currentIsMark(L";"))
                 ++m_at;
 
@@ -960,6 +995,24 @@ namespace ClaFi::Syntax
             });
         }
 
+        std::optional<std::size_t> PascalReader::declareRoutine(const std::wstring_view name,
+            const CompletionKind kind, const std::size_t depth)
+        {
+            // Back over what the enclosing routine has declared so far, which is everything at
+            // its own locals' depth or deeper; the top level reaches the start.
+            for (std::size_t i = m_out.size(); i != 0 && m_out[i - 1].depth >= depth;)
+            {
+                --i;
+                const CompletionEntry& entry = m_out[i].entry;
+                const bool routine = entry.kind == CompletionKind::Function
+                    || entry.kind == CompletionKind::Procedure;
+                if (routine && m_out[i].depth == depth && sameName(entry.name, name))
+                    return std::nullopt;
+            }
+            declare(name, kind, {}, {}, depth);
+            return m_out.size() - 1;
+        }
+
         void PascalReader::closeScope(const std::size_t first, const std::size_t depth,
             const std::size_t from)
         {
@@ -973,7 +1026,7 @@ namespace ClaFi::Syntax
             }
         }
 
-        std::wstring PascalReader::spelled(const std::size_t from) const
+        std::wstring PascalReader::spelled(const std::size_t from, const std::size_t limit) const
         {
             const std::size_t start = m_words[from].start;
             const std::size_t end = atEnd() ? m_text.size() : std::max(start, current().start);
@@ -990,13 +1043,60 @@ namespace ClaFi::Syntax
                     result.push_back(L' ');
                 blank = false;
                 result.push_back(value);
-                if (result.size() == k_spelledLimit)
+                if (result.size() == limit)
                 {
                     result.append(L"...");
                     break;
                 }
             }
             return result;
+        }
+
+
+        //---------------------------------------------------------------------
+        // Reading a signature's parameters
+
+
+        // Steps `at` past the comment or the string opening there and answers whether one did.
+        // A string's quote is doubled inside it; a line comment runs to the text's end.
+        [[nodiscard]] bool skipPascalLiteral(const std::wstring_view text, std::size_t& at)
+        {
+            const std::wstring_view rest = text.substr(at);
+            std::wstring_view closer;
+            if (rest.starts_with(L'\''))
+            {
+                std::size_t end = at + 1;
+                while (end < text.size())
+                {
+                    if (text[end] != L'\'')
+                    {
+                        ++end;
+                        continue;
+                    }
+                    if (end + 1 < text.size() && text[end + 1] == L'\'')
+                    {
+                        end += 2;
+                        continue;
+                    }
+                    ++end;
+                    break;
+                }
+                at = end;
+                return true;
+            }
+            if (rest.starts_with(L"{"))
+                closer = L"}";
+            else if (rest.starts_with(L"(*"))
+                closer = L"*)";
+            else if (rest.starts_with(L"//"))
+                closer = {};
+            else
+                return false;
+            const std::size_t close = closer.empty()
+                ? std::wstring_view::npos
+                : text.find(closer, at + 1);
+            at = close == std::wstring_view::npos ? text.size() : close + closer.size();
+            return true;
         }
 
 
@@ -1412,9 +1512,9 @@ namespace ClaFi::Syntax
             {
                 const std::optional<Place> next = after(place);
                 return next.has_value() && next->line == place.line
-                    && isListed(next.value(), k_pascalRoutineOpeners);
+                    && isListed(next.value(), PascalTables::routineWords);
             }
-            if (!isListed(place, k_pascalRoutineOpeners))
+            if (!isListed(place, PascalTables::routineWords))
                 return false;
             const std::optional<Place> previous = before(place);
             if (!previous.has_value())
@@ -1869,6 +1969,83 @@ namespace ClaFi::Syntax
         const PascalWords words = pascalWords(text);
         PascalReader reader{ text, words };
         return reader.read();
+    }
+
+    SignatureParameters pascalParameters(const std::wstring_view signature)
+    {
+        SignatureParameters result = { .bracket = signature.size() };
+        std::size_t at = 0;
+        while (at < signature.size() && !skipPascalLiteral(signature, at))
+        {
+            if (signature[at] == L'(' || signature[at] == L'[')
+                break;
+            ++at;
+        }
+        if (at >= signature.size())
+            return result;
+        result.bracket = at;
+        ++at;
+
+        // A group is its names, a modifier ahead of them, up to its colon; what follows the
+        // colon - the type, a default - is stepped over to the semicolon that ends the group
+        // or the bracket that ends the list. An attribute's or an array type's brackets stand a
+        // depth down, where no name counts.
+        std::size_t depth = 1;
+        bool namesOpen = true;
+        std::vector<TextRange> group;
+        std::optional<std::size_t> wordStart;
+        const auto endWord = [&](const std::size_t end){
+            if (wordStart && depth == 1 && namesOpen)
+                group.push_back({ *wordStart, end - *wordStart });
+            wordStart.reset();
+        };
+        const auto closeGroup = [&](){
+            std::size_t first = 0;
+            if (!group.empty())
+            {
+                const std::wstring_view word = signature.substr(group[0].start, group[0].length);
+                if (isListedNoCase(k_pascalParameterModifiers, word))
+                    first = 1;
+            }
+            for (std::size_t i = first; i != group.size(); ++i)
+                result.names.push_back(group[i]);
+            group.clear();
+            namesOpen = true;
+        };
+        while (at < signature.size())
+        {
+            const wchar_t value = signature[at];
+            if (isNameChar(value, Languages::pascal))
+            {
+                if (!wordStart)
+                    wordStart = at;
+                ++at;
+                continue;
+            }
+            endWord(at);
+            if (skipPascalLiteral(signature, at))
+                continue;
+            if (value == L'(' || value == L'[')
+                ++depth;
+            else if (value == L')' || value == L']')
+            {
+                --depth;
+                if (depth == 0)
+                {
+                    closeGroup();
+                    return result;
+                }
+            }
+            else if (depth == 1 && value == L';')
+                closeGroup();
+            else if (depth == 1 && (value == L':' || value == L'='))
+                namesOpen = false;
+            ++at;
+        }
+        // A list left open is being written.
+        endWord(at);
+        closeGroup();
+        return result;
     }
 
     LineIndent pascalIndent(const SourceLines& lines, const std::size_t line,

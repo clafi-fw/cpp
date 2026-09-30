@@ -136,6 +136,26 @@ namespace ClaFi::Controls
     // The completion list as it is dropped: a box that scrolls, holding the rows.
     using CompletionList = ScrollBoxWith<CompletionStack>;
 
+    // The window a call's signature shows in, above the caret's line. See Controls#parameterhint
+    class ParameterHint : public WithTextLayout<FormControlBase>
+    {
+    public:
+        using WithTextLayout<FormControlBase>::WithTextLayout;
+        // States what the hint says: the signature from where its list opens, the name of the
+        // argument the caret stands in bold, and the entry's hint under it.
+        void setCall(const Syntax::CompletionEntry&, const Syntax::SignatureParameters&,
+            std::size_t argument);
+    protected:
+        void getText(GetTextEvent&) const override;
+        // Asked no wider than a hint's line, so a long signature wraps rather than runs.
+        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked,
+            const Text&) override;
+    private:
+        Text m_text{};
+    };
+
+    using ParameterHintForm = Form<ParameterHint>;
+
     // A text box that colours its text as source in a language. See Controls
     export class CodeBox : public TextBox, private ColorOverlay
     {
@@ -172,6 +192,9 @@ namespace ClaFi::Controls
         void setCompletion(const Syntax::CompletionEntries*);
         // Lists what the caret's place can complete to - Ctrl+Space. See Controls#completionlist
         void showCompletion();
+        // Shows the signature of the call the caret stands in - Ctrl+Shift+Space. See
+        // Controls#parameterhint
+        void showParameterHint();
         // States the unit and ends detection: every indent the box writes is written in it.
         void setIndentUnit(const Syntax::IndentUnit&);
         // Yes reads the unit off the text the box holds now, and off every text handed whole.
@@ -229,6 +252,16 @@ namespace ClaFi::Controls
         void ensureCompletionList();
         // Puts the row's name in place of the name typed, in one edit, with the list down.
         void takeCompletion(const CompletionRow&);
+        [[nodiscard]] bool parameterHintShown() const;
+        // Asks for the hint to be brought up to the caret, once the input that asked has been
+        // delivered. Opening shows the call the caret stands in; otherwise a hint up follows the
+        // caret or comes down, and none is put up.
+        void requestParameterHint(bool opening);
+        // Shows the call the caret stands in, or takes the hint down. See Controls#parameterhint
+        void updateParameterHint();
+        void hideParameterHint();
+        // Makes the hint's window, on the first request.
+        void ensureParameterHint();
         [[nodiscard]] CaretLine caretLine() const;
         // Answers the reindent action. Defined in CodeBox.cpp, which keeps the standard actions
         // out of the interface - see TextBox::connectEditActions.
@@ -283,6 +316,13 @@ namespace ClaFi::Controls
         bool m_completionTakesChar{ true };
         // Whether the edit under way is a row being taken, which is the one edit no list follows.
         bool m_takingCompletion{ false };
+        // The hint, a window of its own over the box, shown while the caret stands in a call.
+        std::optional<ParameterHintForm> m_parameterHint{};
+        // The hint asked for on a key, answered once the input that asked has been delivered.
+        UiTimer m_parameterHintRequest{};
+        bool m_parameterHintOpening{ false };   // whether the request may put the hint up
+        // Whether a request found the layout unsettled and waits on the pass that settles it.
+        bool m_parameterHintWaitsOnAlign{ false };
         // The unit the text read whole says it is indented in, where the box reads one.
         mutable std::optional<Syntax::IndentUnit> m_detectedIndent{};
         // Whether the key before this one was Escape, which hands a Tab on to the form.
@@ -291,6 +331,8 @@ namespace ClaFi::Controls
         mutable Syntax::SourceBlocks m_blocks{};
         mutable bool m_blocksStale{ true };
         ScopedEventConnection m_formAligned{};
+        ScopedEventConnection m_formMoved{};
+        ScopedEventConnection m_formFocusChanged{};
         ScopedEventConnection m_listAligned{};
     };
 
@@ -317,6 +359,27 @@ namespace ClaFi::Controls
         // a this-capturing lambda in a default member initializer.
         m_completionRequest.onTick([this](TimerEvent&){
             updateCompletion();
+        });
+        m_parameterHintRequest.onTick([this](TimerEvent&){
+            updateParameterHint();
+        });
+        // A request that found the layout unsettled is answered once the pass that settles it
+        // has run - see updateCompletion.
+        m_formAligned = form().onAligned([this](FormAlignedEvent&){
+            if (std::exchange(m_completionWaitsOnAlign, false))
+                m_completionRequest.start(MilliSeconds{ 0u });
+            if (std::exchange(m_parameterHintWaitsOnAlign, false))
+                m_parameterHintRequest.start(MilliSeconds{ 0u });
+        });
+        // The hint stands where the window stood when it was placed, and it is the box's alone
+        // to take down: the window moving out from under it, or losing the focus, takes it down
+        // the way the form takes a popup down.
+        m_formMoved = form().onPositionChange([this](FormPositionChangeEvent&){
+            hideParameterHint();
+        });
+        m_formFocusChanged = form().onFocusChange([this](FormFocusChangeEvent&){
+            if (!form().window().isFocused())
+                hideParameterHint();
         });
         connectIndentActions();
     }

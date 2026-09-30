@@ -428,7 +428,9 @@ A box completes names out of a Syntax::CompletionEntries the host states through
 The language's keywords join the list, and so do the names the text declares for itself,
 where the language has a reader of declarations - see Syntax#declarations. A box with no
 list stated completes nothing, and a read-only box completes nothing either. What the list
-looks like and how the keys drive it is under CompletionList.
+looks like and how the keys drive it is under CompletionList. Out of the same list the box
+shows the signature of the call the caret stands in, with the argument being written marked
+- see ParameterHint.
 
 A box places each line as it is typed, in the language's reading of where lines stand - Enter,
 Tab, Backspace, Home, a paste and Reindent. See Indents. It draws a line down each block its
@@ -493,6 +495,42 @@ at least 180 units wide; hidden rather than destroyed when it closes, and opened
 its first row with no glide, since where it was left is not on screen to travel from; and
 placed under the caret's line with its left edge at the start of the name, so the rows stand
 under the letters they complete.
+
+## ParameterHint
+
+The hint over a call: the signature of the routine being called, from where its parameter
+list opens, with the name of the argument the caret stands in set in bold, and under it the
+entry's hint sentence where it has one. A window of its own standing on the box in the
+tooltip's role - the pointer goes through it, it takes no focus and it takes no place as the
+popup on the box, so it stands beside the completion list, above the line while the list is
+below it. THE CARET STAYS IN THE BOX.
+
+WHEN IT OPENS. By itself on a typed opening bracket, round or square, after a name that
+resolves - a routine the host lists, a member through the subject before the dot, a routine
+the text declares for itself; and on demand on Ctrl+Shift+Space, wherever the caret stands
+inside a call. It never opens on a bracket inside a comment or a string. The request is
+answered on a 0 ms timer once the input that made it has been delivered, and one that finds
+the form's layout unsettled waits on the pass that settles it, as the list's does.
+
+WHILE IT STANDS. The mark follows the caret: every edit and every caret move reads the call
+again, so the mark moves with the commas typed or crossed, and past the last parameter
+nothing is marked. A call may span lines, and the hint stands above the caret's line
+wherever the call opened. See Syntax#parameters for the reading. The text's own routines are
+read as the hint opens; a hint up keeps its reading.
+
+WHEN IT CLOSES. On the caret leaving the call - past its closing bracket, out of it by a key
+or a click, or back before its opener; on Escape, which takes the completion list down first
+where both are up and the hint on the next press; and on the focus leaving the box. A
+routine that names no parameter shows nothing, and so does a name nothing resolves - a
+variable of the routine's name in force at the caret shadows it.
+
+Placed above the caret's line, its left edge at the opening bracket's, below the line when
+there is no room above - and below it while the completion list stands above the line, having
+found no room below: the hint takes the side of the line the list leaves, and comes back above
+when the list closes. It comes down when the window moves or loses the focus, as a popup does.
+Sized by what it shows, no wider than a hint's line, a long signature wrapping past that.
+Shown only in a box that has a list and can be typed into, and only in a language with a
+reader of parameters.
 
 ## Indents
 

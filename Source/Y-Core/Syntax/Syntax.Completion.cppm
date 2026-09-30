@@ -55,4 +55,23 @@ namespace ClaFi::Syntax
     export [[nodiscard]] CompletionClasses completionMemberClasses(const Language&,
         const CompletionEntries&, const Declarations&, const CompletionSubject&,
         std::size_t caret);
+
+    // The call the caret stands in: what is called, and which argument. See Syntax#parameters
+    export struct CompletionCall
+    {
+        std::size_t line{ 0 };       // the line the call's opening bracket stands on
+        std::size_t bracket{ 0 };    // where the bracket stands in that line
+        std::size_t argument{ 0 };   // the argument the caret stands in, the first being zero
+        CompletionSubject callee;    // what is called, read the way a member's subject is
+    };
+
+    // The innermost call the caret stands in, or nothing where it stands in none: the walk back
+    // from the caret, over the lines above, to the bracket left open. See Syntax#parameters
+    export [[nodiscard]] std::optional<CompletionCall> completionCall(const Language&,
+        const SourceLines&, std::size_t line, std::size_t caret);
+    // The entry a call is to - a routine the text declares, in force at the caret, else one the
+    // host offers, a member through its subject's classes - or null where none is known.
+    export [[nodiscard]] const CompletionEntry* completionCallee(const Language&,
+        const CompletionEntries&, const Declarations&, const CompletionSubject& callee,
+        std::size_t caret);
 }

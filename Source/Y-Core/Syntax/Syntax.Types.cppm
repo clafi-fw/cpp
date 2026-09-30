@@ -98,6 +98,17 @@ namespace ClaFi::Syntax
     // A language's reading of the names a text declares. See Syntax#declarations
     export using DeclarationReader = Declarations (*)(std::wstring_view text);
 
+    // The parameters a signature spells, and where its list opens. See Syntax#parameters
+    export struct SignatureParameters
+    {
+        std::size_t bracket{ 0 };      // where the list opens - the signature's size with no list
+        std::vector<TextRange> names;  // each parameter's name, in the order a call fills them
+        bool operator==(const SignatureParameters&) const = default;
+    };
+
+    // A language's reading of the parameters a signature spells. See Syntax#parameters
+    export using ParameterReader = SignatureParameters (*)(std::wstring_view signature);
+
     // Where a language places one line of a text. See Syntax#indent
     export struct LineIndent
     {

@@ -300,6 +300,10 @@ namespace ClaFi
         // or sliding, and holding the result inside the work area are all the platform's, which
         // is the only layer that can answer them at all.
         virtual PlacedWindow place(const WindowPlacement&) = 0;
+        // WHETHER THE LAST PLACEMENT STOOD THE WINDOW ABOVE ITS ANCHOR - a Top placement held, a
+        // Bottom one flipped for want of room. A window placed on no anchor answers false, and a
+        // platform whose compositor decides answers what it asked for.
+        [[nodiscard]] virtual bool standsAbove() const = 0;
         virtual ColorByte alpha() = 0;
         virtual void setAlpha(ColorByte value) = 0;
         // HANDS THE WINDOW TO THE SYSTEM TO BE DRAGGED, on the press that asked for it. The stamp

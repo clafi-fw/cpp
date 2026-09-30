@@ -36,6 +36,8 @@ namespace ClaFi::Syntax
 
     // The names a Pascal text declares, defined beside its hook. See Syntax#declarations
     [[nodiscard]] Declarations pascalDeclarations(std::wstring_view text);
+    // The parameters a Pascal signature spells, defined beside its hook. See Syntax#parameters
+    [[nodiscard]] SignatureParameters pascalParameters(std::wstring_view signature);
     // Where a line of a Pascal text stands, defined beside its hook. See Syntax#indent
     [[nodiscard]] LineIndent pascalIndent(const SourceLines&, std::size_t line, std::size_t width);
     // The blocks a Pascal text opens and closes, defined beside its hook. See Syntax#blocks
@@ -125,6 +127,12 @@ namespace ClaFi::Syntax
         });
         static_assert(std::ranges::is_sorted(constants));
 
+        // The words that open a routine's header, which the reader of declarations walks by.
+        constexpr auto routineWords = std::to_array<std::wstring_view>({
+            L"constructor", L"destructor", L"function", L"operator", L"procedure"
+        });
+        static_assert(std::ranges::is_sorted(routineWords));
+
         constexpr auto comments = std::to_array<CommentRule>({
             { L"//", L"" },
             { L"{", L"}" },
@@ -180,6 +188,7 @@ namespace ClaFi::Syntax
             .keywords = PascalTables::keywords,
             .types = PascalTables::types,
             .constants = PascalTables::constants,
+            .routineWords = PascalTables::routineWords,
             .comments = PascalTables::comments,
             .operators = L"*+-./:<=>@^",
             .punctuation = L"()[],;",
@@ -190,6 +199,7 @@ namespace ClaFi::Syntax
             .hook = pascalHook,
             .detect = pascalDetector,
             .declarations = pascalDeclarations,
+            .parameters = pascalParameters,
             .indent = pascalIndent,
             .blocks = pascalBlocks,
         };

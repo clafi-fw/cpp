@@ -10,7 +10,12 @@ in it; the pointer falls through it.
 ## PlacedWindow
 
 What the placement did. THE POSITION IS NOT IN IT and cannot be: a client is not always
-told where its own window was put, and nothing above the platform layer reads it.
+told where its own window was put, and nothing above the platform layer reads it. The one
+thing read back about where a window stands is IPlatformWindow::standsAbove - whether the
+last placement stood it above its anchor, a Top placement held or a Bottom one flipped for
+want of room - which is what lets a second window on the same anchor take the other side; a
+window placed on no anchor answers false, and a platform whose compositor decides the side
+answers the one it asked for.
 
 ## ThemeSwitchEvent
 

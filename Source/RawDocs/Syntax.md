@@ -39,19 +39,23 @@ behind the text, so the structure of a line recedes from what the line carries.
 
 ## Language
 
-A language stated as tables, one hook, one detector and one reader of declarations, and passed
-by value: every member is a view over a constant, so a Language is a few pointers and stays
-valid for as long as the constants do. The tables say what a table can - the keywords, the
-comment and string delimiters, which characters are operators and which punctuation, how a name
-no table lists is taken for a type. The hook says what a table cannot - a raw string, a
-preprocessor line, an XML tag - and is asked before the tables at every token start, so it can
-claim a position the tables would otherwise take. The detector says whether a text is the
-language's at all, which is the language's own knowledge as much as its hook is: what a ClaFi
-line looks like is written once, and the hook and the detector both read it. The reader of
-declarations says which names a text in the language declares for itself and where each is in
-force, which is what a box adds to its completion list - see Declarations. A language whose
-texts declare nothing states none. The indent rule says where a line of the language stands -
-see Indent; a language that states none is placed by its brackets.
+A language stated as tables, one hook, one detector, a reader of declarations and a reader of
+parameters, and passed by value: every member is a view over a constant, so a Language is a
+few pointers and stays valid for as long as the constants do. The tables say what a table can
+- the keywords, the comment and string delimiters, which characters are operators and which
+punctuation, how a name no table lists is taken for a type. The hook says what a table cannot
+- a raw string, a preprocessor line, an XML tag - and is asked before the tables at every
+token start, so it can claim a position the tables would otherwise take. The detector says
+whether a text is the language's at all, which is the language's own knowledge as much as
+its hook is: what a ClaFi line looks like is written once, and the hook and the detector both
+read it. The reader of declarations says which names a text in the language declares for
+itself and where each is in force, which is what a box adds to its completion list - see
+Declarations. A language whose texts declare nothing states none. The reader of parameters
+says which names a signature spells as its parameters, which is what a box marks in the hint
+over a call - see Parameters; a language with no signature to read states none, and its
+routineWords table names what opens a routine's header, so that the header's own brackets
+are not read as a call. The indent rule says where a line of the language stands - see
+Indent; a language that states none is placed by its brackets.
 
 The keyword tables are looked up by bisection, so each is written in code unit order and
 asserted so where it is written. A language that reads a word in any case - Pascal - says so
@@ -198,13 +202,60 @@ var or const inside a block and the variable of a `for var`, and the sections an
 routine is made of. Everything between is stepped over: a statement declares nothing, and a
 type section is read only so that the fields and methods inside a class, record, object or
 interface body are not taken for declarations of their own - a type declares no name yet.
-A header alone declares nothing either: a unit's interface part, a forward, an external.
-An entry counts once its shape is there - a name with its colon, comma or equals sign after
-it - so the name being typed at a section's end is no declaration until it is one.
+A routine declares its own name - a Function or a Procedure, its header as spelled and whole,
+since the hint over a call marks its parameters, and a function's result type as the type it
+answers - in force where the routine stands: everywhere for one at the top level, inside the
+enclosing routine for a nested one. A method's implementation, its name qualified by its
+class, declares no name of its own. A forward header and its body, an interface's header and
+the implementation's, spell one name, and it is declared once, with the first header. A
+header alone declares no parameter: a unit's interface part, a forward, an external. An entry
+counts once its shape is there - a name with its colon, comma or equals sign after it - so the
+name being typed at a section's end is no declaration until it is one.
 
 The reader answers a fresh list each time and reads the whole text each time. It is asked
 when a list opens, and the box compares the answer with the one it has before it rebuilds
 any row - see Controls#completionlist.
+
+## Parameters
+
+What a box shows over a call - the signature of the routine being called with the argument
+the caret stands in marked - and the two readings behind it: of the signature, and of the
+text around the caret.
+
+SignatureParameters is a language's reading of one signature, answered by its reader of
+parameters: where the list opens - the signature's size where it spells no list - and each
+parameter's name as a range of the signature, in the order a call fills them. A hint shows
+the signature from where the list opens and sets the current argument's name in bold; a
+signature naming no parameter shows no hint. The Pascal reader takes the first bracket
+outside a comment or a string, round or square - an indexed property's list is square - and
+reads the list up to its closer: a group is its names, one or several with commas between,
+a modifier ahead of them - const, var, out, constref - and its colon; what follows the
+colon, the type and a default, is stepped over to the semicolon that ends the group or the
+bracket that ends the list, the brackets of an attribute or an array type stepped over with
+it and the quotes of a string. A list left open is being written and is read as far as it
+goes.
+
+completionCall is the reading of the text: the innermost call the caret stands in, or none.
+It walks back from the caret, over the lines above, counting the brackets closed on the way
+and the commas at the caret's own depth, and stops at the bracket left open; a bracket, a
+comma or a semicolon inside a comment or a string counts for nothing, the line's tokens
+saying where those stand. What stands before the bracket says what it is. A name, read the
+way a member's subject is - a chain of names and the brackets after them, root first -
+names the routine called, and the commas counted are the argument the caret stands in, the
+first being zero. Anything else - an operator, a keyword such as if or not - opens no call:
+the bracket groups an expression, its commas are its own, and the walk goes on outward
+with the count started again. A name that one of the language's routineWords stands before
+- a header's own list - is no call either, and the walk ends. A semicolon at the caret's
+depth is the statement's start, where the walk ends with no call found; and a call may
+span lines, since the walk reads on above the caret's line until either. Where the caret
+itself stands inside a string, the call around it is still the call.
+
+completionCallee resolves what is called. A name alone is one the text declares, in force at
+the caret, the innermost of several - so a variable of the routine's name shadows it - else
+one the host offers, of any kind. A chain is a member: the links before the last are its
+subject, resolved as a member's is - see Completion - and the last is the member of that name
+its classes state. A subject of a class the list does not know, or a name nothing states,
+resolves to nothing, and nothing is shown.
 
 ## Indent
 
