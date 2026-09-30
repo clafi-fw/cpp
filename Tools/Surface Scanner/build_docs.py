@@ -3,7 +3,7 @@
     python "Tools/Surface Scanner/scan.py"          writes surface.json
     python "Tools/Surface Scanner/build_docs.py"    writes Controls-Reference.html
 
-Self-contained HTML, in the same vocabulary as the manuals under Documentation.
+Self-contained HTML, in the same vocabulary as the manuals under docs/.
 Nothing here is written by hand: every name, type, default and sentence on the page came out
 of a declaration, so a gap on the page is a gap in the source.
 """

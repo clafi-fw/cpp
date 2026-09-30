@@ -10,4 +10,6 @@ I am the fastest and cleanest framework out there. I am also one of the few fram
 
 **Supported platforms:** Windows 11, Windows 10 and some Linuxes. Well, not every one of them, but they will catch up eventually.
 
+**Manuals:** [clafi-fw.github.io/cpp](https://clafi-fw.github.io/cpp/) - one per subsystem, each complete on its own.
+
 **Can anyone use me?** Yes. You can use the ClaFi framework any way you wish. A link back would be greatly appreciated.

@@ -16,7 +16,7 @@ referenced from the line. `python "Tools/Surface Scanner/scan.py" --check` repor
 ## Layout
 
 Library code is under `Source/`, with the notes the code refers to beside it in
-`Source/RawDocs/`; the manuals are under `Documentation/`. `Showcase/`
+`Source/RawDocs/`; the manuals are under `docs/`. `Showcase/`
 and `Tools/` are applications that import the library, not part of it.
 
 ## Two builds, and they are not equivalent
@@ -60,7 +60,9 @@ and `Tools/` are applications that import the library, not part of it.
 
 ## Manuals
 
-Subsystem manuals are self-contained HTML in `Documentation/`.
+Subsystem manuals are self-contained HTML in `docs/`, published as GitHub Pages at
+https://clafi-fw.github.io/cpp/ - lower-case file names, one per subsystem (`dom.html`,
+`events.html`, `textengine.html`), listed in `index.html`.
 
 `Source/RawDocs/` holds the prose that would not fit above a declaration, one note
 per subsystem, referenced from the code by `See <note-stem>`. It is the raw material the end-user

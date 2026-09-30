@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi - Manuals</title>
+    <style>
+        :root {
+            --bg-color: #f9f9fb; --text-color: #333; --accent-color: #0066cc;
+            --code-bg: #1e1e1e; --code-text: #d4d4d4; --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6; color: var(--text-color); background-color: var(--bg-color);
+            margin: 0; padding: 0; display: flex;
+        }
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;
+            background-color: #fff; border-right: 1px solid var(--border-color);
+            overflow-y: auto; padding: 2rem 1rem; box-sizing: border-box; z-index: 100;
+        }
+        .sidebar-brand { padding: 0 0.5rem 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); }
+        .sidebar-brand-text {
+            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            font-size: 2.0rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            background: linear-gradient(90deg, #4EC9B0, #A6E22E);
+            -webkit-background-clip: text;
+            /*
+            background-clip: text;
+            */
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 8px rgba(78, 201, 176, 0.25);
+        }
+        .sidebar-brand-text::after {
+            content: "::";
+            margin-left: 0.2em;
+            font-weight: 400;
+        }
+        .sidebar-header { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; padding-left: 0.5rem; color: #111; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar > ul > li { margin-bottom: 0.8rem; }
+        .nav-item-wrapper {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.25rem 0.5rem; border-radius: 6px; transition: background-color 0.2s ease;
+        }
+        .nav-item-wrapper:hover { background-color: rgba(0, 0, 0, 0.02); }
+        .sidebar > ul > li > .nav-item-wrapper > a { font-size: 1rem; font-weight: 600; color: #111; flex-grow: 1; }
+        .sidebar ul ul {
+            padding-left: 0.8rem; margin-top: 0.3rem; margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color); margin-left: 1.1rem;
+        }
+        .sidebar ul ul li { margin-bottom: 0.4rem; }
+        .sidebar ul ul a { font-size: 0.9rem; color: #555; display: block; padding: 0.15rem 0; transition: color 0.15s ease; }
+        .sidebar a { text-decoration: none; display: block; transition: color 0.2s ease; }
+        .sidebar a:hover, .sidebar ul ul a:hover { color: var(--accent-color); }
+        .toggle-btn {
+            background: none; border: none; padding: 4px; margin: 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; color: #888;
+            border-radius: 4px; transition: background-color 0.2s, color 0.2s; outline: none;
+        }
+        .toggle-btn:hover { background-color: rgba(0, 0, 0, 0.05); color: var(--accent-color); }
+        .toggle-btn svg { width: 16px; height: 16px; fill: currentColor; transform: rotate(90deg); transition: transform 0.2s ease; }
+        .sidebar li.has-children.collapsed ul { display: none !important; }
+        .sidebar li.has-children.collapsed .toggle-btn svg { transform: rotate(0deg); }
+        .page-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        header { background-color: #fff; padding: 2rem; border-bottom: 1px solid var(--border-color); text-align: center; }
+        h1, h2, h3, h4 { color: #111; margin-top: 2rem; }
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+        main {
+            max-width: 900px; margin: 2rem auto; padding: 0 2rem; background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; padding-bottom: 2rem;
+        }
+        p, li { font-size: 1.1rem; }
+        pre {
+            background-color: var(--code-bg); color: var(--code-text); padding: 1.5rem;
+            border-radius: 8px; overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.95rem; line-height: 1.5;
+        }
+        code {
+            background-color: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.9em; color: #d14;
+        }
+        pre code { background-color: transparent; padding: 0; color: inherit; }
+        .kw { color: #569cd6; } .tp { color: #4ec9b0; } .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; } .fn { color: #dcdcaa; }
+        .warning { background-color: #fff3f3; border-left: 4px solid #cc0000; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .info { background-color: #f0f7ff; border-left: 4px solid #0066cc; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0; }
+        .rule-card { padding: 1.2rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .rule-card.dos { background-color: #f4faf4; border-left: 4px solid #2e7d32; }
+        .rule-card.donts { background-color: #fff8f8; border-left: 4px solid #c62828; }
+        .rule-card h4 { margin-top: 0; margin-bottom: 0.5rem; }
+        .rule-card ul { margin: 0; padding-left: 1.2rem; }
+        .rule-card li { font-size: 1rem; margin-bottom: 0.5rem; }
+        table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 0.98rem; }
+        th, td { border: 1px solid var(--border-color); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+        th { background-color: #f6f8fa; font-weight: 600; }
+        td code { font-size: 0.85em; }
+        .grid-fig { width: 100%; max-width: 720px; margin: 1.5rem 0; display: block; }
+        @media (max-width: 1200px) { .sidebar { display: none; } .page-content { margin-left: 0; width: 100%; } }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand"><span class="sidebar-brand-text">ClaFi</span></div>
+        <div class="sidebar-header">Manuals</div>
+        <ul>
+            <li><div class="nav-item-wrapper"><a href="platform.html">Platform</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="layout.html">Layout</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="color.html">Colour</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="events.html">Events</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="actions.html">Actions</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="grids.html">Grid</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="textengine.html">TextEngine</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="dom.html">Dom</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="cfg.html">Configuration format</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="faq.html">FAQ</a></div></li>
+        </ul>
+    </nav>
+    <div class="page-content">
+        <header>
+            <h1>ClaFi Manuals</h1>
+            <p>One manual per subsystem, each complete on its own</p>
+        </header>
+        <main>
+<h2 id="manuals">The manuals</h2>
+
+<p>These are the manuals of ClaFi, the Clarity First framework. Each one covers a
+subsystem from the caller's side: what it is, what a caller writes, and the rules that
+hold. They are listed in a reading order, and every one stands on its own.</p>
+
+<table>
+    <tr><th>Manual</th><th>Covers</th></tr>
+    <tr><td><a href="platform.html">Platform</a></td><td>The object an application is built against, and what it owns</td></tr>
+    <tr><td><a href="layout.html">Layout</a></td><td>Where everything ends up, and why</td></tr>
+    <tr><td><a href="color.html">Colour</a></td><td>The theme states hues; every colour is decided where it is used</td></tr>
+    <tr><td><a href="events.html">Events</a></td><td>How one object tells others that something happened</td></tr>
+    <tr><td><a href="actions.html">Actions</a></td><td>A named command: what it says, what it draws, what it does</td></tr>
+    <tr><td><a href="grids.html">Grid</a></td><td>Building grids was never that simple</td></tr>
+    <tr><td><a href="textengine.html">TextEngine</a></td><td>One string, a list of markers, and a layout somebody else already built</td></tr>
+    <tr><td><a href="dom.html">Dom</a></td><td>A schema-first representation of any hierarchical data, with its file formats</td></tr>
+    <tr><td><a href="cfg.html">Configuration format</a></td><td>Hierarchical, line-oriented text for configuration trees</td></tr>
+    <tr><td><a href="faq.html">FAQ</a></td><td>The question, the answer, and the reasoning folded away</td></tr>
+</table>
+
+<div class="info">
+The source of the framework, and of these pages, is at
+<a href="https://github.com/clafi-fw/cpp">github.com/clafi-fw/cpp</a>.
+</div>
+        </main>
+    </div>
+</body>
+</html>
