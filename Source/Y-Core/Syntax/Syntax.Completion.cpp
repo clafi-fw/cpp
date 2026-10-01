@@ -3,6 +3,8 @@ module ClaFi.Core.Syntax.Completion;
 import ClaFi.Core.Syntax.Lexer;
 import ClaFi.Core.Syntax.Types;
 
+import ClaFi.Core.TextEngine.Types;
+
 import ClaFi.StdLib;
 
 namespace ClaFi::Syntax
