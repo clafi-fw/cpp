@@ -267,6 +267,16 @@ namespace ClaFi
         return FloatRect::fromDimensions(frameOrigin(), m_placed.size);
     }
 
+    FloatRect FormBase::shownGeometry() const
+    {
+        FloatRect result = geometry();
+        result.left += static_cast<float>(m_frame.overhang.left);
+        result.top += static_cast<float>(m_frame.overhang.top);
+        result.right -= static_cast<float>(m_frame.overhang.right);
+        result.bottom -= static_cast<float>(m_frame.overhang.bottom);
+        return result;
+    }
+
     void FormBase::invalidateAlign()
     {
         m_aligned = false;

@@ -140,7 +140,7 @@ namespace ClaFi::PlatformImplementation::Windows
         void setFrame(const WindowFrame& value) override { m_frameDesign = value; }
         [[nodiscard]] const WindowFrame& frameDesign() const { return m_frameDesign; }
         // THE FRAME THIS WINDOW APPLIES, in real pixels: the design, less the corners when
-        // snapped, less everything when maximized.
+        // snapped; when maximized, only how far the window hangs past the work area.
         [[nodiscard]] WindowFrame appliedFrame() const;
         // HOW FAR THE WINDOW RECT REACHES PAST THE GEOMETRY on each side: k_resizeGrab scaled,
         // held within the margins, only on a window the user may size, and none while snapped.
@@ -571,11 +571,37 @@ namespace ClaFi::PlatformImplementation::Windows
         };
     }
 
+    // THE PART OF A WINDOW PAST ITS MONITOR'S WORK AREA. A maximized window is sized to the work
+    // area plus its resize borders and keeps all of it as client area - see WM_NCCALCSIZE in
+    // FormWindow - and what lands on a taskbar is covered by it, so the work area is what the
+    // screen shows.
+    [[nodiscard]] static FrameMargins overhangPastWorkArea(HWND hwnd)
+    {
+        ::RECT windowRect{};
+        if (!::GetWindowRect(hwnd, &windowRect))
+            return {};
+        const ::HMONITOR hMon = ::MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        ::MONITORINFO monInfo{};
+        monInfo.cbSize = sizeof ::MONITORINFO;
+        if (!::GetMonitorInfoW(hMon, &monInfo))
+            return {};
+        const ::RECT& work = monInfo.rcWork;
+        return {
+            std::max(0, static_cast<int>(work.left - windowRect.left)),
+            std::max(0, static_cast<int>(work.top - windowRect.top)),
+            std::max(0, static_cast<int>(windowRect.right - work.right)),
+            std::max(0, static_cast<int>(windowRect.bottom - work.bottom))
+        };
+    }
+
     WindowFrame Window::appliedFrame() const
     {
         WindowFrame result{};
         if (::IsZoomed(handle()))
+        {
+            result.overhang = overhangPastWorkArea(handle());
             return result;
+        }
         result.margins = m_frameDesign.margins;
         if (isArranged())
             return result;

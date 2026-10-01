@@ -145,7 +145,7 @@ namespace ClaFi
         InputStamp stamp;
     };
 
-    // THE ROOM A SURFACE KEEPS AROUND THE WINDOW IT SHOWS, in real pixels. See Context
+    // A LENGTH ON EACH EDGE OF A WINDOW, in real pixels. See Context
     export struct FrameMargins
     {
         int left{};
@@ -157,10 +157,11 @@ namespace ClaFi
         [[nodiscard]] bool operator==(const FrameMargins&) const = default;
     };
 
-    // The frame a window wears, in real pixels: margins and corner radius. See Context
+    // The frame a window wears, in real pixels: margins, overhang and corner radius. See Context
     export struct WindowFrame
     {
-        FrameMargins margins{};
+        FrameMargins margins{}; // the room the surface keeps around the window
+        FrameMargins overhang{}; // the part of the window the system places past the screen
         float radius{};
         [[nodiscard]] bool operator==(const WindowFrame&) const = default;
     };

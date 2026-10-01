@@ -4,8 +4,10 @@ The words that no longer fit above a declaration.
 
 ## FrameMargins
 
-THE ROOM A SURFACE KEEPS AROUND THE WINDOW IT SHOWS, in real pixels. The shadow is drawn
-in it; the pointer falls through it.
+A LENGTH ON EACH EDGE OF A WINDOW, in real pixels. WindowFrame carries two: the margins,
+which are the room a surface keeps around the window it shows - the shadow is drawn in them
+and the pointer falls through them - and the overhang, which is the part of the window the
+system places past the screen.
 
 ## PlacedWindow
 
@@ -121,12 +123,21 @@ Empty on a key nobody pressed - a shortcut the framework raised for itself.
 
 ## WindowFrame
 
-THE FRAME A WINDOW WEARS, in real pixels: the margins its shadow needs and the radius of its
-corners. A form states the DESIGN from its root's properties - see
-IPlatformWindow::setFrame; the platform answers with what it APPLIES - see
-IForm::wnd_resize. A maximized, fullscreen or docked window applies neither, a snapped or
-tiled one keeps the margins and applies no corners, and a platform that cannot composite a
-frame rounds no corners. The border is the root's own and is painted with its content.
+THE FRAME A WINDOW WEARS, in real pixels: the margins its shadow needs, how far it hangs past
+the screen, and the radius of its corners. A form states the DESIGN from its root's
+properties - see IPlatformWindow::setFrame; the platform answers with what it APPLIES - see
+IForm::wnd_resize. A maximized, fullscreen or docked window applies neither margins nor
+corners, a snapped or tiled one keeps the margins and applies no corners, and a platform that
+cannot composite a frame rounds no corners. The border is the root's own and is painted with
+its content.
+
+THE OVERHANG IS THE PLATFORM'S ALONE - the design states none. Win32 sizes a maximized window
+to the work area plus its resize borders, and the window takes the whole of it as its client
+area, so the edges of the geometry lie past the screen or under the taskbar. The overhang says
+by how much on each side, and FormBase::shownGeometry is the geometry less it. A control whose
+mark sits at the window's edge reads it to keep the mark where the screen shows it - a tab's
+indicator stands on the first row the screen shows. Wayland states a maximized window's size
+exactly and reports none.
 
 ## WindowPlacement
 

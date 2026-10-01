@@ -134,7 +134,8 @@ namespace ClaFi::Graphics
             geometry.lineWidth
         );
 
-        // 8. Draw the indicator over the line, flush with its outer edge
+        // 8. Draw the indicator over the line, flush with its outer edge, or with the screen's
+        // edge where the screen cuts the tab short
         if (colors.indicatorFactor > 0.0f)
         {
             // The line's outer edge around the peak - its centerline grown by half its width
@@ -172,8 +173,9 @@ namespace ClaFi::Graphics
             const float uIndEnd = uIndCenter + indWidth / 2.0f;
 
             // Geometry levels
-            const float vBottomInd = vOuter - geometry.indicatorHeight;
-            const float vTopIndOver = vOuter + halfWidth; // past the edge the clip draws
+            const float vShown = std::min(vOuter, geometry.shownProtrusion);
+            const float vBottomInd = vShown - geometry.indicatorHeight;
+            const float vTopIndOver = vShown + halfWidth; // past the clip's edge or the screen's
 
             // Calculate the corner radius for the indicator (capsule-bottom appearance)
             const float indRadius = std::clamp(geometry.indicatorHeight * 0.5f, 0.0f, indWidth * 0.5f);

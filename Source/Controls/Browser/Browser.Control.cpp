@@ -125,7 +125,7 @@ namespace ClaFi::Browser
 
     BrowserTab::BrowserTab(const CreateParams& params)
         :
-        Tab{ params, WordWrap::No, Spacing{ 4.0f }, Padding{ 8.0f, 4.0f }, MinSize{ 0.0f, 28.0f } }
+        Tab{ params, WordWrap::No, Spacing{ 4.0f }, Padding{ 8.0f, 4.0f }, MinSize{ 0.0f, 32.0f } }
     {
         // Connected here rather than given to the button as a construction property: MSVC rejects
         // a this-capturing lambda in a default member initializer.

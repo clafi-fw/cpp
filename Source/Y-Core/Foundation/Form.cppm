@@ -224,6 +224,8 @@ namespace ClaFi
         // surface coordinates. The root is laid out into it, or into as much of it as the content
         // asked for - see contentExtent.
         [[nodiscard]] FloatRect geometry() const;
+        // The part of the geometry the screen shows - the geometry less the frame's overhang.
+        [[nodiscard]] FloatRect shownGeometry() const;
         // What kind of window this is. It says nothing about the root control, which answers for
         // itself with Control::interactivity().
         [[nodiscard]] WindowRole windowRole() const { return m_windowRole; }

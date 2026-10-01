@@ -388,6 +388,7 @@ namespace ClaFi::Controls
         const float tabMargin = event.scale(4.0f) * (1.0f - visibilityFactor);
 
         m_profile.orientation = th.m_tabsOrientation;
+        m_profile.shownProtrusion = k_maxFloat;
         switch (m_profile.orientation)
         {
         case TabsOrientation::HorizontalTop:
@@ -397,6 +398,8 @@ namespace ClaFi::Controls
             headerStart = outEvent->left() - pt.x;
             headerEnd = outEvent->right() - pt.x;
             m_profile.tabProtrusion = height() - tabMargin;
+            // A maximized window may hang past the screen and cut the tab short. See Context
+            m_profile.shownProtrusion = m_profile.origin.y - form().shownGeometry().top;
             break;
 
         case TabsOrientation::HorizontalBottom:
