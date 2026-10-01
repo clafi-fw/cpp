@@ -106,7 +106,7 @@ namespace ThisApp
             if (extendedMode)
                 tt << L' '; // Space{ extSpace };
             else
-                tt << TextOp::EndLine << TextStyleId::SubBody;
+                tt << k_endLine << TextStyleId::SubBody;
             std::wstring hexString = toHex(color.asUint() & 0xFFFFFF);
             while (hexString.size() < 6ull)
                 hexString = L'0' + hexString;
@@ -116,7 +116,7 @@ namespace ThisApp
         {
             tt << InTextIcon{ 1.0f, k_markH, k_markH * 0.85, nullptr, nullptr };
             if (!extendedMode)
-                tt << TextOp::EndLine << TextStyleId::SubBody;
+                tt << k_endLine << TextStyleId::SubBody;
             tt << L' ';
         };
     }
@@ -128,7 +128,7 @@ namespace ThisApp
         {
             std::size_t index = map[i];
             if (!tt.empty())
-                tt << TextOp::EndLine;
+                tt << k_endLine;
             paintColorSpot(tt, harmony.color(index).rgb());
         }
     }

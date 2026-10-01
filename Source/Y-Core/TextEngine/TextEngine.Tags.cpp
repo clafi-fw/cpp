@@ -35,8 +35,6 @@ namespace ClaFi
 
         // The first entry for a marker is the spelling written; the rest are read only.
         constexpr std::array k_plainTags{
-            PlainTag{ L"n", PlainTagKind::Op, static_cast<int>(TextOp::EndLine) },
-            PlainTag{ L"end", PlainTagKind::Op, static_cast<int>(TextOp::EndLine) },
             PlainTag{ L"b", PlainTagKind::Op, static_cast<int>(TextOp::PushBold) },
             PlainTag{ L"/b", PlainTagKind::Op, static_cast<int>(TextOp::PopBold) },
             PlainTag{ L"i", PlainTagKind::Op, static_cast<int>(TextOp::PushItalic) },
@@ -328,12 +326,12 @@ namespace ClaFi
             return std::wstring{ plainTagName(PlainTagKind::Align, static_cast<int>(align)) };
         }
 
-        [[nodiscard]] std::wstring spell(const SetIndent& indent)
+        [[nodiscard]] std::wstring spell(const ParaIndent& indent)
         {
             return spellWith(L"indent", indent.indent);
         }
 
-        [[nodiscard]] std::wstring spell(const SetLineSpacing& spacing)
+        [[nodiscard]] std::wstring spell(const ParaLineSpacing& spacing)
         {
             return spellWith(L"linespacing", spacing.spacing);
         }
@@ -449,9 +447,9 @@ namespace ClaFi
         if (command == L"vspace")
             return VSpace{ takeFloat(arguments, 0.0f) };
         if (command == L"indent")
-            return SetIndent{ takeFloat(arguments, 0.0f) };
+            return ParaIndent{ takeFloat(arguments, 0.0f) };
         if (command == L"linespacing")
-            return SetLineSpacing{ takeFloat(arguments, 1.0f) };
+            return ParaLineSpacing{ takeFloat(arguments, 1.0f) };
         if (command == L"tabto")
             return TabTo{ takeFloat(arguments, 0.0f) };
         if (command == L"size")

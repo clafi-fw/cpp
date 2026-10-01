@@ -28,8 +28,7 @@ namespace ClaFi
         // A text stated whole, which is how a document hands one back: the plain text and the
         // markers standing in it, taken as they are. The markers are in text order with every
         // index inside the text, since that is what every route through a Text keeps, and a
-        // marker that puts a character in - a space, an icon, a line end - stands at that
-        // character.
+        // marker that puts a character in - a space, an icon - stands at that character.
         explicit Text(std::wstring plainText, Markers markers);
 
         // Anything the stream below takes, written as an assignment. What is assigned REPLACES
@@ -81,7 +80,8 @@ namespace ClaFi
         Text& operator<<(const PopTextStyle&);
         Text& operator<<(TextAlign);
         Text& operator<<(const InTextIcon&);
-        Text& operator<<(const SetIndent&);
+        Text& operator<<(const ParaIndent&);
+        Text& operator<<(const ParaLineSpacing&);
         Text& operator<<(const Space&);
         Text& operator<<(const VSpace&);
         Text& operator<<(const FlexSpace&);
@@ -97,8 +97,8 @@ namespace ClaFi
         Text& operator<<(const PopAnchor&);
         Text& operator<<(const Text&);
 
-        Text& setIndent(float indent);
-        Text& setLineSpacing(float spacing);
+        Text& setParaIndent(float indent);
+        Text& setParaLineSpacing(float spacing);
 
         bool empty() const { return m_plainText.empty(); }
         // Nothing written into it at all, markers included. A text carrying only markers says
@@ -221,15 +221,15 @@ namespace ClaFi
             changed();
         }
 
-        ControlText& setIndent(float indent)
+        ControlText& setParaIndent(float indent)
         {
-            Text::setIndent(indent);
+            Text::setParaIndent(indent);
             return changed();
         }
 
-        ControlText& setLineSpacing(float spacing)
+        ControlText& setParaLineSpacing(float spacing)
         {
-            Text::setLineSpacing(spacing);
+            Text::setParaLineSpacing(spacing);
             return changed();
         }
 

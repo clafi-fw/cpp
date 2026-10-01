@@ -465,10 +465,15 @@ namespace ClaFi
         m_plainText.push_back(L'\uFFFC');
         return *this;
     }
-    Text& Text::operator<<(const SetIndent& obj)
+    Text& Text::operator<<(const ParaIndent& obj)
     {
         m_markers.emplace_back(m_plainText.size(), obj);
         //m_text.push_back(L'\uFFFC');
+        return *this;
+    }
+    Text& Text::operator<<(const ParaLineSpacing& obj)
+    {
+        m_markers.emplace_back(m_plainText.size(), obj);
         return *this;
     }
     Text& Text::operator<<(const Space& obj) {
@@ -493,8 +498,6 @@ namespace ClaFi
     }
     Text& Text::operator<<(TextOp op) {
         m_markers.emplace_back(m_plainText.size(), op);
-        if (op == TextOp::EndLine)
-            m_plainText.push_back(L'\n');
         return *this;
     }
     Text& Text::operator<<(const PushFontSize& op) {
@@ -542,13 +545,13 @@ namespace ClaFi
         for (const auto& marker : other.m_markers) m_markers.emplace_back(marker.first + offset, marker.second);
         return *this;
     }
-    Text& Text::setIndent(float indent) {
-        m_markers.emplace_back(m_plainText.size(), SetIndent{ indent });
-        return *this;
+    Text& Text::setParaIndent(float indent)
+    {
+        return *this << ParaIndent{ indent };
     }
-    Text& Text::setLineSpacing(float spacing) {
-        m_markers.emplace_back(m_plainText.size(), SetLineSpacing{ spacing });
-        return *this;
+    Text& Text::setParaLineSpacing(float spacing)
+    {
+        return *this << ParaLineSpacing{ spacing };
     }
 
     void Text::clear() {
@@ -594,8 +597,8 @@ namespace ClaFi
                 }
                 else if constexpr (std::is_same_v<T, PushTextStyle>) combine(static_cast<std::size_t>(arg.style));
                 else if constexpr (std::is_same_v<T, TextAlign>) combine(static_cast<std::size_t>(arg));
-                else if constexpr (std::is_same_v<T, SetIndent>) combineFloat(arg.indent);
-                else if constexpr (std::is_same_v<T, SetLineSpacing>) combineFloat(arg.spacing);
+                else if constexpr (std::is_same_v<T, ParaIndent>) combineFloat(arg.indent);
+                else if constexpr (std::is_same_v<T, ParaLineSpacing>) combineFloat(arg.spacing);
                 else if constexpr (std::is_same_v<T, InTextIcon>) {
                     combineFloat(arg.designWidth);
                     combineFloat(arg.designHeight);
@@ -803,8 +806,8 @@ namespace ClaFi
 
         // For non-stackable "sticky" paragraph block states
         bool hasAlign = false; TextAlign lastAlign;
-        bool hasIndent = false; SetIndent lastIndent;
-        bool hasSpacing = false; SetLineSpacing lastSpacing;
+        bool hasIndent = false; ParaIndent lastIndent;
+        bool hasSpacing = false; ParaLineSpacing lastSpacing;
 
         // 1. Process markers before 'start' to build the initial active state
         for (const auto& marker : m_markers) {
@@ -832,8 +835,8 @@ namespace ClaFi
                     std::visit([&](const auto& arg) {
                         using T = std::decay_t<decltype(arg)>;
                         if constexpr (std::is_same_v<T, TextAlign>) { hasAlign = true; lastAlign = arg; }
-                        else if constexpr (std::is_same_v<T, SetIndent>) { hasIndent = true; lastIndent = arg; }
-                        else if constexpr (std::is_same_v<T, SetLineSpacing>) { hasSpacing = true; lastSpacing = arg; }
+                        else if constexpr (std::is_same_v<T, ParaIndent>) { hasIndent = true; lastIndent = arg; }
+                        else if constexpr (std::is_same_v<T, ParaLineSpacing>) { hasSpacing = true; lastSpacing = arg; }
                         }, item);
                 }
             }

@@ -247,7 +247,7 @@ is for text whose shape is known and whose values are not.</p>
 
 <pre><code><span class="cm">// The stream.</span>
 <span class="tp">Text</span> text;
-text &lt;&lt; <span class="tp">TextStyleId</span>::Section &lt;&lt; <span class="st">L"Performance"</span> &lt;&lt; <span class="tp">PopTextStyle</span>{} &lt;&lt; <span class="tp">TextOp</span>::EndLine
+text &lt;&lt; <span class="tp">TextStyleId</span>::Section &lt;&lt; <span class="st">L"Performance"</span> &lt;&lt; <span class="tp">PopTextStyle</span>{} &lt;&lt; k_endLine
      &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Muted) &lt;&lt; <span class="st">L"Frames: "</span> &lt;&lt; <span class="tp">PopColor</span>{}
      &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">accentInk</span>() &lt;&lt; frameCount;
 
@@ -294,10 +294,11 @@ without it.</p>
 <tr><td><code>TextStyleId</code>, <code>PopTextStyle{}</code></td><td>Pushes and pops a named style.</td></tr>
 <tr><td><code>PushFontSize{ f }</code>, <code>PopFontSize{}</code></td><td>Overrides the size within the current style.</td></tr>
 <tr><td><code>PushFontFamily{ L"..." }</code>, <code>PopFontFamily{}</code></td><td>Overrides the family.</td></tr>
-<tr><td><code>TextOp::PushBold</code> &hellip; <code>PopItalic</code>, <code>EndLine</code></td><td>Weight, slant, and the line break.</td></tr>
+<tr><td><code>k_endLine</code></td><td>Ends the paragraph. It is the character <code>L'\n'</code>, streamed as any other <code>wchar_t</code>.</td></tr>
+<tr><td><code>TextOp::PushBold</code> &hellip; <code>PopItalic</code></td><td>Weight and slant.</td></tr>
 <tr><td><code>TextOp::PushSuperscript</code>, <code>PushSubscript</code>, <code>PopScript</code></td><td>Raises or lowers the runs that follow, taking the size down with them.</td></tr>
 <tr><td><code>TextAlign</code></td><td>Alignment of the paragraph this lands in.</td></tr>
-<tr><td><code>SetIndent{ f }</code>, <code>setIndent(f)</code>, <code>setLineSpacing(f)</code></td><td>Paragraph geometry. An indent holds until it is set again, wrapped lines included.</td></tr>
+<tr><td><code>ParaIndent{ f }</code>, <code>ParaLineSpacing{ f }</code>, <code>setParaIndent(f)</code>, <code>setParaLineSpacing(f)</code></td><td>Paragraph geometry. An indent holds until it is set again, wrapped lines included.</td></tr>
 <tr><td><code>Space{ w }</code>, <code>FlexSpace{}</code>, <code>TabTo{ x }</code>, <code>VSpace{ h }</code></td><td>Inline spacing objects - see <a href="#tags-layout">below</a>.</td></tr>
 <tr><td><code>InTextIcon{ ... }</code></td><td>A painted object that sits in the text flow.</td></tr>
 <tr><td><code>PushLink{ L"..." }</code>, <code>PopLink{}</code></td><td>A link to the target named, over the runs between the two - see <a href="#links">Links and Anchors</a>.</td></tr>
@@ -431,7 +432,7 @@ reads, so that a text built from code can be written out and read back.
 <tr><td><code>[flex]</code>, <code>[fill]</code>, <code>[space flex]</code></td><td><code>FlexSpace{}</code></td><td>Takes the leftover width of the line, pushing what follows to the right.</td></tr>
 <tr><td><code>[tabto 150]</code></td><td><code>TabTo{ 150 }</code></td><td>Moves to an absolute x within the block.</td></tr>
 <tr><td><code>[vspace 60]</code></td><td><code>VSpace{ 60 }</code></td><td>A minimum height for the row it stands in. Shorter than the natural height, it does nothing.</td></tr>
-<tr><td><code>[indent 34]</code></td><td><code>SetIndent{ 34 }</code></td><td>Indents the block, wrapped lines included, until it is set again. <code>[indent 0]</code> returns.</td></tr>
+<tr><td><code>[indent 34]</code></td><td><code>ParaIndent{ 34 }</code></td><td>Indents the block, wrapped lines included, until it is set again. <code>[indent 0]</code> returns.</td></tr>
 </table>
 
 <h3 id="tags-icons">Icons</h3>

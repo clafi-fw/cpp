@@ -147,7 +147,7 @@ namespace ClaFi
 
         Text result{};
         result << VSpace{ 8.0f } << L"\n";
-        result << SetIndent{ 12.0f };
+        result << ParaIndent{ 12.0f };
         
         if (toDelete)
             result << PushLink{ folder };
@@ -483,14 +483,14 @@ namespace ClaFi
             if (appContext().configFolderExists())
             {
                 event.text << L"Settings are stored in";
-                event.text << TextOp::EndLine;
+                event.text << k_endLine;
                 event.text << folderText(appContext(), FolderDisplayPurpose::ToDisplay);
             }
             else
             {
                 event.text << appContext().appName();
                 event.text << L" will remember windows placement, settings and other";
-                event.text << TextOp::EndLine;
+                event.text << k_endLine;
                 event.text << L"things between sessions.";
             }
         });
@@ -504,7 +504,7 @@ namespace ClaFi
         Text message{};
         message << appContext().appName();
         message << L" will make a folder to store its settings:";
-        message << TextOp::EndLine;
+        message << k_endLine;
         message << folderText(appContext(), FolderDisplayPurpose::ToCreate);
 
         MessageDialog dialog{
@@ -534,9 +534,9 @@ namespace ClaFi
         message << L"Are you sure you want to remove ";
         message << appContext().appName();
         message << L" settings?";
-        message << TextOp::EndLine;
+        message << k_endLine;
         message << L"This folder will now be deleted:";
-        message << TextOp::EndLine;
+        message << k_endLine;
         message << folderText(appContext(), FolderDisplayPurpose::ToDelete);
 
         MessageDialog dialog{

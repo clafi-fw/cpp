@@ -205,8 +205,8 @@ namespace ClaFi
                     else if constexpr (std::is_same_v<T, PushFontFamily>) { familyStack.push_back(arg.family); updateFamily(nextMarkerPos); }
                     else if constexpr (std::is_same_v<T, PopFontFamily>) { if (!familyStack.empty()) familyStack.pop_back(); updateFamily(nextMarkerPos); }
                     else if constexpr (std::is_same_v<T, TextAlign>) { currentAlign = arg; }
-                    else if constexpr (std::is_same_v<T, SetIndent>) { currentIndent = arg.indent; }
-                    else if constexpr (std::is_same_v<T, SetLineSpacing>) { currentLineSpacing = arg.spacing; }
+                    else if constexpr (std::is_same_v<T, ParaIndent>) { currentIndent = arg.indent; }
+                    else if constexpr (std::is_same_v<T, ParaLineSpacing>) { currentLineSpacing = arg.spacing; }
                     else if constexpr (std::is_same_v<T, InTextIcon>) { m_inlineObjects.push_back({ nextMarkerPos, {arg.designWidth, arg.designHeight, arg.designBaseline, arg.paintLambda, arg.tag, false, false} }); }
                     else if constexpr (std::is_same_v<T, Space>) { m_inlineObjects.push_back({ nextMarkerPos, {arg.width, 0.0f, 0.0f, nullptr, {}, false, false} }); }
                     else if constexpr (std::is_same_v<T, VSpace>) { m_inlineObjects.push_back({ nextMarkerPos, {0.0f, arg.height, arg.height, nullptr, {}, false, false} }); }
@@ -226,10 +226,7 @@ namespace ClaFi
                         updateColor(nextMarkerPos);
                     }
                     else if constexpr (std::is_same_v<T, TextOp>) {
-                        if (arg == TextOp::EndLine) {
-                            // Handled by physical '\n' breaks
-                        }
-                        else if (arg == TextOp::PushBold) { boldCount++; updateWeight(nextMarkerPos); }
+                        if (arg == TextOp::PushBold) { boldCount++; updateWeight(nextMarkerPos); }
                         else if (arg == TextOp::PopBold) { if (boldCount > 0) boldCount--; updateWeight(nextMarkerPos); }
                         else if (arg == TextOp::PushItalic) { italicCount++; updateStyle(nextMarkerPos); }
                         else if (arg == TextOp::PopItalic) { if (italicCount > 0) italicCount--; updateStyle(nextMarkerPos); }

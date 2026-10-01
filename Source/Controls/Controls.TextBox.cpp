@@ -628,7 +628,7 @@ namespace ClaFi::Controls
         if (m_readOnly == ReadOnly::No)
         {
             out << L'\n';
-            out << SetIndent{ 0.0f };
+            out << ParaIndent{ 0.0f };
             out << TextAlign::Left;
             out << InkGrade::Muted;
             out << L"Ctrl+click to follow";

@@ -216,9 +216,10 @@ namespace ClaFi
     };
     export struct TabTo { float targetX; bool operator==(const TabTo&) const = default; };
 
-    // One instruction in a run of text: a break, or a style pushed or popped.
+    export constexpr wchar_t k_endLine = L'\n'; // the line end - LF alone, which cuts a paragraph
+
+    // One instruction in a run of text: a style pushed or popped.
     export enum class TextOp {
-        EndLine,
         PushBold,
         PopBold,
         PushItalic,
@@ -228,8 +229,8 @@ namespace ClaFi
         PopScript // one pop for both, because one stack holds them. See TextEngine-Types
     };
 
-    export struct SetIndent { float indent; bool operator==(const SetIndent&) const = default; };
-    export struct SetLineSpacing { float spacing; bool operator==(const SetLineSpacing&) const = default; };
+    export struct ParaIndent { float indent; bool operator==(const ParaIndent&) const = default; };
+    export struct ParaLineSpacing { float spacing; bool operator==(const ParaLineSpacing&) const = default; };
     export struct PushTextStyle { TextStyleId style; bool operator==(const PushTextStyle&) const = default; };
     export struct PopTextStyle { bool operator==(const PopTextStyle&) const = default; };
     export struct PushFontSize { float size; bool operator==(const PushFontSize&) const = default; };
@@ -258,7 +259,7 @@ namespace ClaFi
 
     export using FormatItem = std::variant<
         PushThemeColor, PushCustomColor, PopColor, PushTextStyle, PopTextStyle,
-        TextAlign, SetIndent, SetLineSpacing, InTextIcon, TextOp,
+        TextAlign, ParaIndent, ParaLineSpacing, InTextIcon, TextOp,
         PushFontSize, PopFontSize, PushFontFamily, PopFontFamily,
         Space, VSpace, FlexSpace, TabTo, PushLink, PopLink, PushAnchor, PopAnchor
     >;

@@ -147,7 +147,7 @@ namespace ClaFi::Showcase::TextEngine
             out << PopFontSize{};
             out << PopFontFamily{};
             out << TextAlign::Left;
-            out << TextOp::EndLine;
+            out << k_endLine;
         }
 
         // Notation inside a sentence: the family the display rows are set in, at the size of the
@@ -166,13 +166,13 @@ namespace ClaFi::Showcase::TextEngine
         void writeRow(Text& out, const Text& row)
         {
             out << row;
-            out << TextOp::EndLine;
+            out << k_endLine;
         }
 
         void writeRuleRow(Text& out, float ruleWidth)
         {
             out << InTextIcon{ ruleWidth, k_ruleHeight, k_ruleBaseline, paintRule };
-            out << TextOp::EndLine;
+            out << k_endLine;
         }
 
         // A fraction takes three rows: what is over the bar, the bar, and what is under it. The
@@ -195,7 +195,7 @@ namespace ClaFi::Showcase::TextEngine
             out << row;
             out << TabTo{ rightEdge };
             out << InTextIcon{ 7.0f, k_rowHeight, k_rowBaseline, bracketPiece(BracketSide::Right, part) };
-            out << TextOp::EndLine;
+            out << k_endLine;
         }
 
         // A root: the sign, the bar as wide as the page says the root reaches, and the radicand
@@ -308,7 +308,7 @@ namespace ClaFi::Showcase::TextEngine
         page << Fmt{ L"[i]x[/i] = " };
         page << InTextIcon{ 132.0f, k_ruleHeight, k_ruleBaseline, paintRule };
         page << Space{ 26.0f };
-        page << TextOp::EndLine;
+        page << k_endLine;
         writeRow(page, Text{ Fmt{ L"2[i]a[/i]" } });
         closeDisplay(page);
 
@@ -371,7 +371,7 @@ namespace ClaFi::Showcase::TextEngine
         writeBracketedRow(page,
             Text{ Fmt{ L"[i]a[/i][sub]31[/sub][tabto 62][i]a[/i][sub]32[/sub][tabto 111][i]a[/i][sub]33[/sub]" } },
             BracketPart::Bottom, 139.0f);
-        page << TextOp::EndLine;
+        page << k_endLine;
         writeBracketedRow(page, Text{ Fmt{ L"[i]a[/i][tabto 49][i]b[/i]" } },
             BracketPart::Middle, 65.0f);
         writeBracketedRow(page, Text{ Fmt{ L"[i]c[/i][tabto 49][i]d[/i]" } },
@@ -421,7 +421,7 @@ namespace ClaFi::Showcase::TextEngine
         page << Fmt{ L"[subbody]Euler's identity[/subbody]" };
         page << TabTo{ 230.0f };
         writeInline(page, Text{ Fmt{ L"[i]e[/i][sup][i]i[/i]π[/sup] + 1 = 0" } });
-        page << TextOp::EndLine;
+        page << k_endLine;
 
         page << Fmt{ L"[subbody]The Gaussian integral[/subbody]" };
         page << TabTo{ 230.0f };
@@ -430,7 +430,7 @@ namespace ClaFi::Showcase::TextEngine
             L"d[i]x[/i] = " } };
         writeRoot(gaussian, Text{ Fmt{ L"π" } }, 12.0f);
         writeInline(page, gaussian);
-        page << TextOp::EndLine;
+        page << k_endLine;
 
         page << Fmt{ L"[subbody]The binomial theorem[/subbody]" };
         page << TabTo{ 230.0f };
@@ -438,34 +438,34 @@ namespace ClaFi::Showcase::TextEngine
             L"([i]x[/i] + [i]y[/i])[sup][i]n[/i][/sup] = [size 22]∑[/size][sub][i]k[/i]=0[/sub]"
             L"[sup][i]n[/i][/sup] [i]C[/i][sub][i]n[/i],[i]k[/i][/sub] "
             L"[i]x[/i][sup][i]k[/i][/sup] [i]y[/i][sup][i]n[/i]−[i]k[/i][/sup]" } });
-        page << TextOp::EndLine;
+        page << k_endLine;
 
         page << Fmt{ L"[subbody]The Fourier transform[/subbody]" };
         page << TabTo{ 230.0f };
         writeInline(page, Text{ Fmt{
             L"[i]F[/i](ξ) = [size 22]∫[/size][sub]−∞[/sub][sup]∞[/sup] [i]f[/i]([i]x[/i]) "
             L"[i]e[/i][sup]−2π[i]ixξ[/i][/sup] d[i]x[/i]" } });
-        page << TextOp::EndLine;
+        page << k_endLine;
 
         page << Fmt{ L"[subbody]The Schrödinger equation[/subbody]" };
         page << TabTo{ 230.0f };
         writeInline(page, Text{ Fmt{
             L"[i]i[/i]ħ ∂ψ / ∂[i]t[/i] = [i]H[/i]ψ" } });
-        page << TextOp::EndLine;
+        page << k_endLine;
 
         page << Fmt{ L"[subbody]The Stokes theorem[/subbody]" };
         page << TabTo{ 230.0f };
         writeInline(page, Text{ Fmt{
             L"[size 22]∮[/size][sub]∂Σ[/sub] [i]F[/i] · d[i]r[/i] = [size 22]∬[/size][sub]Σ[/sub] "
             L"(∇ × [i]F[/i]) · d[i]Σ[/i]" } });
-        page << TextOp::EndLine;
+        page << k_endLine;
 
         page << Fmt{ L"[subbody]The Bayes rule[/subbody]" };
         page << TabTo{ 230.0f };
         writeInline(page, Text{ Fmt{
             L"[i]P[/i]([i]A[/i] | [i]B[/i]) = [i]P[/i]([i]B[/i] | [i]A[/i]) [i]P[/i]([i]A[/i]) / "
             L"[i]P[/i]([i]B[/i])" } });
-        page << TextOp::EndLine;
+        page << k_endLine;
 
         page << Fmt{ L"[subbody]The Euler product[/subbody]" };
         page << TabTo{ 230.0f };
@@ -473,13 +473,13 @@ namespace ClaFi::Showcase::TextEngine
             L"ζ([i]s[/i]) = [size 22]∑[/size][sub][i]n[/i]=1[/sub][sup]∞[/sup] 1 / "
             L"[i]n[/i][sup][i]s[/i][/sup] = [size 22]∏[/size][sub][i]p[/i][/sub] "
             L"(1 − [i]p[/i][sup]−[i]s[/i][/sup])[sup]−1[/sup]" } });
-        page << TextOp::EndLine;
+        page << k_endLine;
 
         page << Fmt{ L"[subbody]The Cauchy-Schwarz inequality[/subbody]" };
         page << TabTo{ 230.0f };
         writeInline(page, Text{ Fmt{
             L"| ⟨[i]u[/i], [i]v[/i]⟩ | ≤ ‖[i]u[/i]‖ ‖[i]v[/i]‖" } });
-        page << TextOp::EndLine;
+        page << k_endLine;
 
         page << Fmt{ L"[subbody]The Taylor series[/subbody]" };
         page << TabTo{ 230.0f };
@@ -487,9 +487,9 @@ namespace ClaFi::Showcase::TextEngine
             L"[i]f[/i]([i]x[/i]) = [size 22]∑[/size][sub][i]n[/i]=0[/sub][sup]∞[/sup] "
             L"[i]f[/i][sup]([i]n[/i])[/sup]([i]a[/i]) / [i]n[/i]! · "
             L"([i]x[/i] − [i]a[/i])[sup][i]n[/i][/sup]" } });
-        page << TextOp::EndLine;
+        page << k_endLine;
 
-        page << TextOp::EndLine;
+        page << k_endLine;
 
         // -----------------------------------------------------------------
         // 8. A derivation
@@ -539,7 +539,7 @@ namespace ClaFi::Showcase::TextEngine
         page << PushFontFamily{ std::wstring{ k_mathFamily } };
         page << PushFontSize{ k_displaySize };
         page << L"S = { x ∈ ℝ : x > 0 }";
-        page << TextOp::EndLine;
+        page << k_endLine;
         page << PopFontSize{};
         page << PopFontFamily{};
         page << TextAlign::Left;

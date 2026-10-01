@@ -142,16 +142,14 @@ namespace ClaFi
         doFormat<float>(text, spec, p);
     }
 
-    // A marker put into the text as itself. Two are stated through other spellings of Text's
-    // stream: a style is written as its TextStyleId, and a line spacing through setLineSpacing.
+    // A marker put into the text as itself. A style is the one stated through another spelling of
+    // Text's stream - it is written as its TextStyleId.
     void streamFormatItem(Text& tb, const FormatItem& item)
     {
         std::visit([&tb](const auto& value) {
             using T = std::decay_t<decltype(value)>;
             if constexpr (std::is_same_v<T, PushTextStyle>)
                 tb << value.style;
-            else if constexpr (std::is_same_v<T, SetLineSpacing>)
-                tb.setLineSpacing(value.spacing);
             else
                 tb << value;
         }, item);
@@ -161,20 +159,13 @@ namespace ClaFi
         std::size_t argIdx = 0, pos = 0;
         while (pos < fmt.size())
         {
-            std::size_t next = fmt.find_first_of(L"[{\n", pos);
+            std::size_t next = fmt.find_first_of(L"[{", pos);
             if (next > pos)
                 tb << fmt.substr(pos, next - pos);
             if (next == std::wstring_view::npos)
                 break;
 
             wchar_t opener = fmt[next];
-            if (opener == L'\n')
-            {
-                tb << TextOp::EndLine;
-                pos = next + 1;
-                continue;
-            }
-
             wchar_t closer = (opener == L'[') ? L']' : L'}';
             std::size_t end = fmt.find(closer, next);
             if (end == std::wstring_view::npos)
@@ -198,6 +189,11 @@ namespace ClaFi
                 {
                     args[argIdx].handler(tb, L"push_color", args[argIdx].ptr);
                     argIdx++;
+                }
+                // A line end is a character rather than a marker, so its two tags are Fmt's own.
+                else if (content == L"n" || content == L"end")
+                {
+                    tb << k_endLine;
                 }
                 else if (const std::optional<FormatItem> item = formatItemOf(content))
                 {

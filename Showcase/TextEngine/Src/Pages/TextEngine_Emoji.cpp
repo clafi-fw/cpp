@@ -114,7 +114,7 @@ namespace ClaFi::Showcase::TextEngine
             out << note;
             out << PopColor{};
             out << PopTextStyle{};
-            out << TextOp::EndLine;
+            out << k_endLine;
         }
 
         // A family, the set drawn in it, and what the family is. The name is set in the monospace
@@ -138,7 +138,7 @@ namespace ClaFi::Showcase::TextEngine
             writeBold(out, L"Family");
             writeHeading(out, L"The set", k_familySampleStop);
             writeHeading(out, L"What it is", k_familyNoteStop);
-            out << TextOp::EndLine;
+            out << k_endLine;
         }
 
         // A sequence, the picture it comes to, and the two counts. The counts are taken from the
@@ -164,7 +164,7 @@ namespace ClaFi::Showcase::TextEngine
             writeHeading(out, L"Points", k_sequenceCodePointStop);
             writeHeading(out, L"Units", k_sequenceUnitStop);
             writeHeading(out, L"What it is", k_sequenceNoteStop);
-            out << TextOp::EndLine;
+            out << k_endLine;
         }
     }
 
@@ -305,9 +305,9 @@ namespace ClaFi::Showcase::TextEngine
 
         page << PushFontSize{ k_largeSize };
         page << L"Fox, and the same 🦊 again";
-        page << TextOp::EndLine;
+        page << k_endLine;
         page << PopFontSize{};
-        page << TextOp::EndLine;
+        page << k_endLine;
 
         // -----------------------------------------------------------------
         // 6. The caret

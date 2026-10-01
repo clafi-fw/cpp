@@ -53,25 +53,25 @@ namespace ClaFi
         {
             Text text{
                 TextStyleId::Title, context.appName(), PopTextStyle{},
-                TextOp::EndLine,
+                k_endLine,
                 InkGrade::Muted, context.publisher(), PopColor{},
-                TextOp::EndLine,
-                TextOp::EndLine
+                k_endLine,
+                k_endLine
             };
             if (!context.description().empty())
             {
                 text << context.description();
-                text << TextOp::EndLine;
-                text << TextOp::EndLine;
+                text << k_endLine;
+                text << k_endLine;
             }
             for (const std::wstring& paragraph : context.information())
             {
                 appendLinked(text, paragraph);
-                text << TextOp::EndLine;
-                text << TextOp::EndLine;
+                text << k_endLine;
+                text << k_endLine;
             }
             text << L"Built with ClaFi - Clarity First the Framework";
-            text << TextOp::EndLine;
+            text << k_endLine;
             text << PushLink{ L"https://github.com/clafi-fw/cpp" };
             text << L"github.com/clafi-fw/cpp";
             text << PopLink{};

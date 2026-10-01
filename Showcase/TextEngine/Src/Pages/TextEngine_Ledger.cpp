@@ -181,7 +181,7 @@ namespace ClaFi::Showcase::TextEngine
 
         void writeRoundHeading(Text& out, std::size_t round, std::size_t line)
         {
-            out << SetIndent{ 0.0f };
+            out << ParaIndent{ 0.0f };
             out << TextStyleId::Heading;
             out << PushFontFamily{ std::wstring{ k_proseFamily } };
             out << L"Round ";
@@ -200,7 +200,7 @@ namespace ClaFi::Showcase::TextEngine
         // past a hundred of them sees sentences rather than a filled-in template.
         void writeClue(Text& out, std::size_t clue, std::size_t lastClue)
         {
-            out << SetIndent{ 0.0f };
+            out << ParaIndent{ 0.0f };
             out << PushFontFamily{ std::wstring{ k_proseFamily } };
             out << PushFontSize{ k_proseSize };
             out << TextOp::PushBold;
@@ -353,7 +353,7 @@ namespace ClaFi::Showcase::TextEngine
         // muted. Four shapes, shorter than the prose ones and still long enough to wrap.
         void writeClueBullet(Text& out, std::size_t clue)
         {
-            out << SetIndent{ k_bulletIndent };
+            out << ParaIndent{ k_bulletIndent };
             out << InTextIcon{ 0.0f, 18.0f, paintBullet };
             out << TextOp::PushBold;
             writeClueStatement(out, clue);
@@ -441,7 +441,7 @@ namespace ClaFi::Showcase::TextEngine
             const Ink markInk = settled ? InkWell::Green : InkWell::Red;
             const std::wstring_view mark = settled ? L"fixed" : L"open";
 
-            out << SetIndent{ 0.0f };
+            out << ParaIndent{ 0.0f };
             out << personFor(clue);
             out << TabTo{ 95.0f };
             out << occupationFor(clue);
@@ -462,7 +462,7 @@ namespace ClaFi::Showcase::TextEngine
         // What the round came to, pushed to the right of the line by the flex space.
         void writeRoundTally(Text& out, std::size_t round, std::size_t clue, std::size_t lastClue)
         {
-            out << SetIndent{ 0.0f };
+            out << ParaIndent{ 0.0f };
             out << InkWell::textInk(InkGrade::Muted);
             out << L"Round ";
             out << static_cast<int>(round);
@@ -492,7 +492,7 @@ namespace ClaFi::Showcase::TextEngine
         // An aside about the clues rather than a clue: the voice the puzzle keeps for itself.
         void writeAside(Text& out, std::size_t clue, std::size_t lastClue)
         {
-            out << SetIndent{ 0.0f };
+            out << ParaIndent{ 0.0f };
             out << PushFontFamily{ std::wstring{ k_proseFamily } };
             out << PushFontSize{ k_proseSize };
             out << InkWell::textInk(InkGrade::Muted);
@@ -696,7 +696,7 @@ namespace ClaFi::Showcase::TextEngine
             out << PopFontFamily{};
             endLine();
 
-            out << SetIndent{ k_bulletIndent };
+            out << ParaIndent{ k_bulletIndent };
             out << InTextIcon{ 0.0f, 18.0f, paintCheck };
             out << TextOp::PushBold;
             out << L"The people:";
@@ -757,7 +757,7 @@ namespace ClaFi::Showcase::TextEngine
             out << PopColor{};
             endLine();
 
-            out << SetIndent{ 0.0f };
+            out << ParaIndent{ 0.0f };
             endLine();
 
             out << PushFontFamily{ std::wstring{ k_proseFamily } };
@@ -831,7 +831,7 @@ namespace ClaFi::Showcase::TextEngine
                 ++lines;
                 };
 
-            out << SetIndent{ 0.0f };
+            out << ParaIndent{ 0.0f };
             out << TextAlign::Left;
             out << PushFontFamily{ std::wstring{ k_proseFamily } };
             out << TextStyleId::Section;

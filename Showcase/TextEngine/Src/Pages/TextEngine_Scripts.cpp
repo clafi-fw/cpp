@@ -122,7 +122,7 @@ namespace ClaFi::Showcase::TextEngine
             writeCodePoints(out, row.sample);
             out << PopColor{};
             out << PopTextStyle{};
-            out << TextOp::EndLine;
+            out << k_endLine;
         }
 
         void writeHeader(Text& out)
@@ -134,7 +134,7 @@ namespace ClaFi::Showcase::TextEngine
             out << TabTo{ k_pointStop };
             out << L"Code points";
             out << TextOp::PopBold;
-            out << TextOp::EndLine;
+            out << k_endLine;
         }
     }
 

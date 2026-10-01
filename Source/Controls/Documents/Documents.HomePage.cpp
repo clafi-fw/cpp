@@ -273,7 +273,7 @@ namespace ClaFi::Documents
             message << documentInQuestionText(subject)
                 << L" of " << selectedCount << L" have been edited.";
         }
-        message << TextOp::EndLine
+        message << k_endLine
             << L"Are you sure you want to permanently delete "
             << (soleEdited ? L"it?" : L"them?");
 
