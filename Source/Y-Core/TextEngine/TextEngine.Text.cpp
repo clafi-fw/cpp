@@ -10,6 +10,14 @@ namespace ClaFi
 {
     // =========================================================================
     namespace {
+        // The ink an InkColor stands for: that colour at Strongest.
+        [[nodiscard]] Ink inkOf(InkColor color)
+        {
+            Ink ink;
+            ink.color = color;
+            return ink;
+        }
+
         // Helper to categorize markers for pair matching
         enum class MarkerCat
         {
@@ -428,9 +436,7 @@ namespace ClaFi
     }
     Text& Text::operator<<(InkColor color)
     {
-        Ink ink;
-        ink.color = color;
-        return *this << ink;
+        return *this << inkOf(color);
     }
     Text& Text::operator<<(const PushThemeColor& op) {
         m_markers.emplace_back(m_plainText.size(), op);
@@ -559,73 +565,85 @@ namespace ClaFi
         m_markers.clear();
     }
 
+    namespace
+    {
+        constexpr std::size_t k_fnvOffset = 14695981039346656037ull;
+        constexpr std::size_t k_fnvPrime = 1099511628211ull;
+
+        // The markers folded into an FNV-1a hash: where each stands, its kind and what it says.
+        void combineMarkers(std::size_t& hash, const Text::Markers& markers)
+        {
+            auto combine = [&hash](std::size_t val) {
+                hash ^= val;
+                hash *= k_fnvPrime;
+            };
+
+            auto combineFloat = [&combine](float f) {
+                std::uint32_t bits;
+                std::memcpy(&bits, &f, sizeof(float));
+                combine(bits);
+            };
+
+            for (const auto& marker : markers) {
+                combine(marker.first);             // The index position
+                combine(marker.second.index());    // The std::variant type index
+
+                std::visit([&](const auto& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, PushThemeColor>) {
+                        // Every field an Ink carries. A hit is confirmed against the whole Text, so a
+                        // field left out here costs a rebuild rather than a wrong colour: the two inks
+                        // land on one key, and each paint evicts the other.
+                        combine(static_cast<std::size_t>(arg.ink.color));
+                        combineFloat(arg.ink.grade);
+                    }
+                    else if constexpr (std::is_same_v<T, PushCustomColor>) {
+                        // The four bytes operator== compares.
+                        combine(arg.color.asUint());
+                    }
+                    else if constexpr (std::is_same_v<T, PushTextStyle>) combine(static_cast<std::size_t>(arg.style));
+                    else if constexpr (std::is_same_v<T, TextAlign>) combine(static_cast<std::size_t>(arg));
+                    else if constexpr (std::is_same_v<T, ParaIndent>) combineFloat(arg.indent);
+                    else if constexpr (std::is_same_v<T, ParaLineSpacing>) combineFloat(arg.spacing);
+                    else if constexpr (std::is_same_v<T, InTextIcon>) {
+                        combineFloat(arg.designWidth);
+                        combineFloat(arg.designHeight);
+                        combineFloat(arg.designBaseline);
+                        combine(static_cast<std::size_t>(arg.tag.value));
+                    }
+                    else if constexpr (std::is_same_v<T, Space>) combineFloat(arg.width);
+                    else if constexpr (std::is_same_v<T, VSpace>) combineFloat(arg.height);
+                    else if constexpr (std::is_same_v<T, FlexSpace>) combine(1);
+                    else if constexpr (std::is_same_v<T, TabTo>) combineFloat(arg.targetX);
+                    else if constexpr (std::is_same_v<T, TextOp>) combine(static_cast<std::size_t>(arg));
+                    else if constexpr (std::is_same_v<T, PushFontSize>) combineFloat(arg.size);
+                    else if constexpr (std::is_same_v<T, PushFontFamily>) {
+                        for (wchar_t c : arg.family) combine(c);
+                    }
+                    else if constexpr (std::is_same_v<T, PushLink>)
+                    {
+                        for (const wchar_t c : arg.target)
+                            combine(c);
+                    }
+                    else if constexpr (std::is_same_v<T, PushAnchor>)
+                    {
+                        for (const wchar_t c : arg.name)
+                            combine(c);
+                    }
+                }, marker.second);
+            }
+        }
+    }
+
     std::size_t Text::hash() const {
         // FNV-1a 64-bit hash
-        std::size_t hash = 14695981039346656037ull;
-
-        auto combine = [&hash](std::size_t val) {
-            hash ^= val;
-            hash *= 1099511628211ull;
-        };
-
-        auto combineFloat = [&combine](float f) {
-            std::uint32_t bits;
-            std::memcpy(&bits, &f, sizeof(float));
-            combine(bits);
-        };
-
-        // 1. Hash the raw string
-        for (wchar_t c : m_plainText) combine(c);
-
-        // 2. Hash the formatting markers
-        for (const auto& marker : m_markers) {
-            combine(marker.first);             // The index position
-            combine(marker.second.index());    // The std::variant type index
-
-            std::visit([&](const auto& arg) {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, PushThemeColor>) {
-                    // Every field an Ink carries. A hit is confirmed against the whole Text, so a
-                    // field left out here costs a rebuild rather than a wrong colour: the two inks
-                    // land on one key, and each paint evicts the other.
-                    combine(static_cast<std::size_t>(arg.ink.color));
-                    combineFloat(arg.ink.grade);
-                }
-                else if constexpr (std::is_same_v<T, PushCustomColor>) {
-                    // The four bytes operator== compares.
-                    combine(arg.color.asUint());
-                }
-                else if constexpr (std::is_same_v<T, PushTextStyle>) combine(static_cast<std::size_t>(arg.style));
-                else if constexpr (std::is_same_v<T, TextAlign>) combine(static_cast<std::size_t>(arg));
-                else if constexpr (std::is_same_v<T, ParaIndent>) combineFloat(arg.indent);
-                else if constexpr (std::is_same_v<T, ParaLineSpacing>) combineFloat(arg.spacing);
-                else if constexpr (std::is_same_v<T, InTextIcon>) {
-                    combineFloat(arg.designWidth);
-                    combineFloat(arg.designHeight);
-                    combineFloat(arg.designBaseline);
-                    combine(static_cast<std::size_t>(arg.tag.value));
-                }
-                else if constexpr (std::is_same_v<T, Space>) combineFloat(arg.width);
-                else if constexpr (std::is_same_v<T, VSpace>) combineFloat(arg.height);
-                else if constexpr (std::is_same_v<T, FlexSpace>) combine(1);
-                else if constexpr (std::is_same_v<T, TabTo>) combineFloat(arg.targetX);
-                else if constexpr (std::is_same_v<T, TextOp>) combine(static_cast<std::size_t>(arg));
-                else if constexpr (std::is_same_v<T, PushFontSize>) combineFloat(arg.size);
-                else if constexpr (std::is_same_v<T, PushFontFamily>) {
-                    for (wchar_t c : arg.family) combine(c);
-                }
-                else if constexpr (std::is_same_v<T, PushLink>)
-                {
-                    for (const wchar_t c : arg.target)
-                        combine(c);
-                }
-                else if constexpr (std::is_same_v<T, PushAnchor>)
-                {
-                    for (const wchar_t c : arg.name)
-                        combine(c);
-                }
-            }, marker.second);
+        std::size_t hash = k_fnvOffset;
+        for (wchar_t c : m_plainText)
+        {
+            hash ^= c;
+            hash *= k_fnvPrime;
         }
+        combineMarkers(hash, m_markers);
         return hash;
     }
     bool Text::hasFlexSpace() const
@@ -894,5 +912,118 @@ namespace ClaFi
         // into.
 
         return result;
+    }
+
+    namespace
+    {
+        // The kinds a format holds one of, in the order it holds them.
+        enum class FormatKind
+        {
+            Color,
+            Style,
+            Size,
+            Family,
+            Bold,
+            Italic,
+            Align,
+            Indent,
+            LineSpacing
+        };
+
+        [[nodiscard]] FormatKind formatKindOf(const FormatItem& item)
+        {
+            return std::visit([](const auto& arg) -> FormatKind {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, PushThemeColor> || std::is_same_v<T, PushCustomColor>)
+                    return FormatKind::Color;
+                else if constexpr (std::is_same_v<T, PushTextStyle>)
+                    return FormatKind::Style;
+                else if constexpr (std::is_same_v<T, PushFontSize>)
+                    return FormatKind::Size;
+                else if constexpr (std::is_same_v<T, PushFontFamily>)
+                    return FormatKind::Family;
+                else if constexpr (std::is_same_v<T, TextOp>)
+                    return arg == TextOp::PushBold ? FormatKind::Bold : FormatKind::Italic;
+                else if constexpr (std::is_same_v<T, TextAlign>)
+                    return FormatKind::Align;
+                else if constexpr (std::is_same_v<T, ParaIndent>)
+                    return FormatKind::Indent;
+                else if constexpr (std::is_same_v<T, ParaLineSpacing>)
+                    return FormatKind::LineSpacing;
+                else
+                    unreachable("a marker no text format holds");
+            }, item);
+        }
+    }
+
+    // TextFormat
+
+    TextFormat& TextFormat::operator<<(Ink ink)
+    {
+        place(PushThemeColor{ ink });
+        return *this;
+    }
+
+    TextFormat& TextFormat::operator<<(InkGrade grade)
+    {
+        return *this << InkWell::textInk(grade);
+    }
+
+    TextFormat& TextFormat::operator<<(InkColor color)
+    {
+        return *this << inkOf(color);
+    }
+
+    TextFormat& TextFormat::operator<<(Color color)
+    {
+        place(PushCustomColor{ color });
+        return *this;
+    }
+
+    TextFormat& TextFormat::operator<<(TextStyleId style)
+    {
+        place(PushTextStyle{ style });
+        return *this;
+    }
+
+    TextFormat& TextFormat::operator<<(TextOp op)
+    {
+        if (op != TextOp::PushBold && op != TextOp::PushItalic)
+            unreachable("A text format takes bold and italic, and no other TextOp");
+        place(op);
+        return *this;
+    }
+
+    TextFormat& TextFormat::operator<<(const TextFormat& other)
+    {
+        for (const Text::Marker& marker : other.markers())
+            place(marker.second);
+        return *this;
+    }
+
+    std::size_t TextFormat::hash() const
+    {
+        std::size_t hash = k_fnvOffset;
+        combineMarkers(hash, m_markers);
+        return hash;
+    }
+
+    bool TextFormat::matches(const TextFormat* other) const
+    {
+        return other ? *this == *other : empty();
+    }
+
+    // In the order of the kinds rather than the order stated, so two formats saying the same
+    // thing are equal and hash alike however they were composed.
+    void TextFormat::place(FormatItem item)
+    {
+        const FormatKind kind = formatKindOf(item);
+        auto at = std::find_if(m_markers.begin(), m_markers.end(), [kind](const Text::Marker& marker){
+            return formatKindOf(marker.second) >= kind;
+        });
+        if (at != m_markers.end() && formatKindOf(at->second) == kind)
+            at->second = std::move(item);
+        else
+            m_markers.insert(at, { 0, std::move(item) });
     }
 }

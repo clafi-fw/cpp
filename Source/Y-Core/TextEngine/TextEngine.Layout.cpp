@@ -550,6 +550,14 @@ namespace ClaFi
         invalidate();
     }
 
+    void TextLayout::setFormat(const TextFormat* format)
+    {
+        if (m_format.matches(format))
+            return;
+        m_format = format ? *format : TextFormat{};
+        invalidate();
+    }
+
     // ONE paragraph re-shaped, and every paragraph after it moved. What makes that sound is that a
     // paragraph is an independent shaping: its own native layout, broken from its own slice of the
     // text. An edit that stays inside one of them cannot change what any other one says, only where
@@ -591,7 +599,7 @@ namespace ClaFi
         // From here the text this was built from is gone whatever happens, so every refusal below
         // leaves the layout invalidated for the setText that follows it.
         m_text = &text;
-        m_bakedText.rebuild(*m_text, m_editable);
+        m_bakedText.rebuild(*m_text, m_format, m_editable);
 
         // What lies outside the slice did not change in number, so what the rebuild came to is
         // what says how many paragraphs the slice became: fewer where a newline went, more where
@@ -1336,7 +1344,7 @@ namespace ClaFi
         if (m_layoutValid && m_text)
             return;
 
-        m_bakedText.rebuild(*m_text, m_editable);
+        m_bakedText.rebuild(*m_text, m_format, m_editable);
         m_paragraphs.clear();
         m_lines.clear();
         m_held.clear();

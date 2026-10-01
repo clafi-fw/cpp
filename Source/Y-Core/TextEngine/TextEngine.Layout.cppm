@@ -216,6 +216,8 @@ namespace ClaFi
     public:
         void setEventPhase(EventPhase);
         void setText(const Text&);
+        void setFormat(const TextFormat*); // the markers laid out ahead of the text's own, or none
+        [[nodiscard]] const TextFormat& format() const { return m_format; }
         // Whether a text has been stated at all - a layout holding none has nothing to shape
         [[nodiscard]] bool isTextStated() const { return m_text != nullptr; }
         // The text after an edit, and what the edit was. A paragraph the edit did not reach keeps
@@ -350,6 +352,7 @@ namespace ClaFi
         void releaseNatives(std::span<const std::size_t> paragraphs);
     private:
         const Text* m_text{ nullptr };
+        TextFormat m_format{}; // a copy, so the caller's may change or go
         BakedText m_bakedText;
         MaxSize m_bounds{ 0.0f, 0.0f };
         ScaleFactor m_scaleFactor{ 1.0f };

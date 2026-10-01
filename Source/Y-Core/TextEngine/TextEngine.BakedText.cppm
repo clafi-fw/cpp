@@ -36,7 +36,7 @@ namespace ClaFi
         // The Text is read, never copied, and it is the caller's for as long as this is used:
         // every span here indexes into its characters and plainText hands them straight back.
         // TextLayout is the only caller, and it bakes the Text its own pointer already names.
-        void rebuild(const Text& text, bool isEditable = false);
+        void rebuild(const Text& text, const TextFormat& format, bool isEditable = false);
         // Valid from the first rebuild. Nothing reads a BakedText before one - a layout bakes
         // before it shapes.
         const std::wstring& plainText() const { return *m_plainText; }
@@ -69,7 +69,7 @@ namespace ClaFi
     //-------------------------------------------------------------------------
 
 
-    void BakedText::rebuild(const Text& text, bool isEditable)
+    void BakedText::rebuild(const Text& text, const TextFormat& format, bool isEditable)
     {
         {
             m_colors.clear();
@@ -183,76 +183,216 @@ namespace ClaFi
             linkStart = end;
         };
 
-        std::size_t currentPos = 0;
-        std::size_t markerIdx = 0;
-        const auto& markers = text.markers();
-        std::size_t nextNewline = plain.find(L'\n', currentPos);
+        // How deep each stack stood once the format was in. See TextEngine-Types#textformat
+        struct Floors
+        {
+            std::size_t colors{ 0 };
+            std::size_t styles{ 0 };
+            std::size_t sizes{ 0 };
+            std::size_t families{ 0 };
+            std::size_t bold{ 0 };
+            std::size_t italic{ 0 };
+        };
+        Floors floors = {};
 
-        while (markerIdx < markers.size() || nextNewline != std::wstring::npos) {
-            std::size_t nextMarkerPos = (markerIdx < markers.size()) ? markers[markerIdx].first : std::wstring::npos;
-
-            if (nextMarkerPos <= nextNewline) {
-                const auto& item = markers[markerIdx].second;
-                std::visit([&](const auto& arg) {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, PushThemeColor>) { colorStack.push_back(arg.ink); updateColor(nextMarkerPos); }
-                    else if constexpr (std::is_same_v<T, PushCustomColor>) { colorStack.push_back(arg.color); updateColor(nextMarkerPos); }
-                    else if constexpr (std::is_same_v<T, PopColor>) { if (!colorStack.empty()) colorStack.pop_back(); updateColor(nextMarkerPos); }
-                    else if constexpr (std::is_same_v<T, PushTextStyle>) { styleStack.push_back(arg.style); updateWeight(nextMarkerPos); updateStyle(nextMarkerPos); updateSize(nextMarkerPos); updateFamily(nextMarkerPos); }
-                    else if constexpr (std::is_same_v<T, PopTextStyle>) { if (!styleStack.empty()) styleStack.pop_back(); updateWeight(nextMarkerPos); updateStyle(nextMarkerPos); updateSize(nextMarkerPos); updateFamily(nextMarkerPos); }
-                    else if constexpr (std::is_same_v<T, PushFontSize>) { sizeStack.push_back(arg.size); updateSize(nextMarkerPos); }
-                    else if constexpr (std::is_same_v<T, PopFontSize>) { if (!sizeStack.empty()) sizeStack.pop_back(); updateSize(nextMarkerPos); }
-                    else if constexpr (std::is_same_v<T, PushFontFamily>) { familyStack.push_back(arg.family); updateFamily(nextMarkerPos); }
-                    else if constexpr (std::is_same_v<T, PopFontFamily>) { if (!familyStack.empty()) familyStack.pop_back(); updateFamily(nextMarkerPos); }
-                    else if constexpr (std::is_same_v<T, TextAlign>) { currentAlign = arg; }
-                    else if constexpr (std::is_same_v<T, ParaIndent>) { currentIndent = arg.indent; }
-                    else if constexpr (std::is_same_v<T, ParaLineSpacing>) { currentLineSpacing = arg.spacing; }
-                    else if constexpr (std::is_same_v<T, InTextIcon>) { m_inlineObjects.push_back({ nextMarkerPos, {arg.designWidth, arg.designHeight, arg.designBaseline, arg.paintLambda, arg.tag, false, false} }); }
-                    else if constexpr (std::is_same_v<T, Space>) { m_inlineObjects.push_back({ nextMarkerPos, {arg.width, 0.0f, 0.0f, nullptr, {}, false, false} }); }
-                    else if constexpr (std::is_same_v<T, VSpace>) { m_inlineObjects.push_back({ nextMarkerPos, {0.0f, arg.height, arg.height, nullptr, {}, false, false} }); }
-                    else if constexpr (std::is_same_v<T, FlexSpace>) { m_inlineObjects.push_back({ nextMarkerPos, {arg.minWidth, 0.0f, 0.0f, nullptr, {}, true, false} }); }
-                    else if constexpr (std::is_same_v<T, TabTo>) { m_inlineObjects.push_back({ nextMarkerPos, {arg.targetX, 0.0f, 0.0f, nullptr, {}, false, true, arg.targetX} }); }
-                    else if constexpr (std::is_same_v<T, PushLink>)
+        // One marker, standing at an index of the plain text.
+        auto applyMarker = [&](const FormatItem& item, std::size_t at){
+            std::visit([&](const auto& arg){
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, PushThemeColor>)
+                {
+                    colorStack.push_back(arg.ink);
+                    updateColor(at);
+                }
+                else if constexpr (std::is_same_v<T, PushCustomColor>)
+                {
+                    colorStack.push_back(arg.color);
+                    updateColor(at);
+                }
+                else if constexpr (std::is_same_v<T, PopColor>)
+                {
+                    if (colorStack.size() > floors.colors)
+                        colorStack.pop_back();
+                    updateColor(at);
+                }
+                else if constexpr (std::is_same_v<T, PushTextStyle>)
+                {
+                    styleStack.push_back(arg.style);
+                    updateWeight(at);
+                    updateStyle(at);
+                    updateSize(at);
+                    updateFamily(at);
+                }
+                else if constexpr (std::is_same_v<T, PopTextStyle>)
+                {
+                    if (styleStack.size() > floors.styles)
+                        styleStack.pop_back();
+                    updateWeight(at);
+                    updateStyle(at);
+                    updateSize(at);
+                    updateFamily(at);
+                }
+                else if constexpr (std::is_same_v<T, PushFontSize>)
+                {
+                    sizeStack.push_back(arg.size);
+                    updateSize(at);
+                }
+                else if constexpr (std::is_same_v<T, PopFontSize>)
+                {
+                    if (sizeStack.size() > floors.sizes)
+                        sizeStack.pop_back();
+                    updateSize(at);
+                }
+                else if constexpr (std::is_same_v<T, PushFontFamily>)
+                {
+                    familyStack.push_back(arg.family);
+                    updateFamily(at);
+                }
+                else if constexpr (std::is_same_v<T, PopFontFamily>)
+                {
+                    if (familyStack.size() > floors.families)
+                        familyStack.pop_back();
+                    updateFamily(at);
+                }
+                else if constexpr (std::is_same_v<T, TextAlign>)
+                {
+                    currentAlign = arg;
+                }
+                else if constexpr (std::is_same_v<T, ParaIndent>)
+                {
+                    currentIndent = arg.indent;
+                }
+                else if constexpr (std::is_same_v<T, ParaLineSpacing>)
+                {
+                    currentLineSpacing = arg.spacing;
+                }
+                else if constexpr (std::is_same_v<T, InTextIcon>)
+                {
+                    const BakedInlineObject icon{
+                        .width = arg.designWidth,
+                        .height = arg.designHeight,
+                        .baseline = arg.designBaseline,
+                        .paintLambda = arg.paintLambda,
+                        .tag = arg.tag,
+                    };
+                    m_inlineObjects.push_back({ at, icon });
+                }
+                else if constexpr (std::is_same_v<T, Space>)
+                {
+                    const BakedInlineObject space{ .width = arg.width };
+                    m_inlineObjects.push_back({ at, space });
+                }
+                else if constexpr (std::is_same_v<T, VSpace>)
+                {
+                    const BakedInlineObject space{ .height = arg.height, .baseline = arg.height };
+                    m_inlineObjects.push_back({ at, space });
+                }
+                else if constexpr (std::is_same_v<T, FlexSpace>)
+                {
+                    const BakedInlineObject space{ .width = arg.minWidth, .isFlexSpace = true };
+                    m_inlineObjects.push_back({ at, space });
+                }
+                else if constexpr (std::is_same_v<T, TabTo>)
+                {
+                    const BakedInlineObject tab{
+                        .width = arg.targetX,
+                        .isTabTo = true,
+                        .tabTargetX = arg.targetX,
+                    };
+                    m_inlineObjects.push_back({ at, tab });
+                }
+                else if constexpr (std::is_same_v<T, PushLink>)
+                {
+                    pushLink(at);
+                    linkStack.push_back({ arg.target, colorStack.size() });
+                    updateColor(at);
+                }
+                else if constexpr (std::is_same_v<T, PopLink>)
+                {
+                    pushLink(at);
+                    if (!linkStack.empty())
+                        linkStack.pop_back();
+                    updateColor(at);
+                }
+                else if constexpr (std::is_same_v<T, TextOp>)
+                {
+                    switch (arg)
                     {
-                        pushLink(nextMarkerPos);
-                        linkStack.push_back({ arg.target, colorStack.size() });
-                        updateColor(nextMarkerPos);
-                    }
-                    else if constexpr (std::is_same_v<T, PopLink>)
-                    {
-                        pushLink(nextMarkerPos);
-                        if (!linkStack.empty())
-                            linkStack.pop_back();
-                        updateColor(nextMarkerPos);
-                    }
-                    else if constexpr (std::is_same_v<T, TextOp>) {
-                        if (arg == TextOp::PushBold) { boldCount++; updateWeight(nextMarkerPos); }
-                        else if (arg == TextOp::PopBold) { if (boldCount > 0) boldCount--; updateWeight(nextMarkerPos); }
-                        else if (arg == TextOp::PushItalic) { italicCount++; updateStyle(nextMarkerPos); }
-                        else if (arg == TextOp::PopItalic) { if (italicCount > 0) italicCount--; updateStyle(nextMarkerPos); }
-                        else if (arg == TextOp::PushSuperscript || arg == TextOp::PushSubscript)
+                        case TextOp::PushBold:
+                            ++boldCount;
+                            updateWeight(at);
+                            break;
+                        case TextOp::PopBold:
+                            if (boldCount > floors.bold)
+                                --boldCount;
+                            updateWeight(at);
+                            break;
+                        case TextOp::PushItalic:
+                            ++italicCount;
+                            updateStyle(at);
+                            break;
+                        case TextOp::PopItalic:
+                            if (italicCount > floors.italic)
+                                --italicCount;
+                            updateStyle(at);
+                            break;
+                        case TextOp::PushSuperscript:
+                        case TextOp::PushSubscript:
                         {
                             // Off the size the level is ENTERED at, so the step a script takes is
                             // the same fraction of what the reader sees beside it at every depth.
                             const float rise = (arg == TextOp::PushSuperscript
                                 ? ScriptMetrics::superRise
                                 : -ScriptMetrics::subDrop) * getEffectiveSize();
-                            scriptStack.push_back({ getEffectiveScale() * ScriptMetrics::sizeFactor, getEffectiveShift() + rise });
-                            updateSize(nextMarkerPos);
-                            updateScript(nextMarkerPos);
+                            scriptStack.push_back({
+                                getEffectiveScale() * ScriptMetrics::sizeFactor,
+                                getEffectiveShift() + rise,
+                            });
+                            updateSize(at);
+                            updateScript(at);
+                            break;
                         }
-                        else if (arg == TextOp::PopScript)
-                        {
+                        case TextOp::PopScript:
                             if (!scriptStack.empty())
                                 scriptStack.pop_back();
-                            updateSize(nextMarkerPos);
-                            updateScript(nextMarkerPos);
-                        }
+                            updateSize(at);
+                            updateScript(at);
+                            break;
                     }
-                    }, item);
+                }
+            }, item);
+        };
+
+        // The format first, at the start of the text: whatever the text says for itself stands
+        // over it.
+        for (const Text::Marker& marker : format.markers())
+            applyMarker(marker.second, 0);
+        floors = {
+            .colors = colorStack.size(),
+            .styles = styleStack.size(),
+            .sizes = sizeStack.size(),
+            .families = familyStack.size(),
+            .bold = boldCount,
+            .italic = italicCount,
+        };
+
+        std::size_t currentPos = 0;
+        std::size_t markerIdx = 0;
+        const auto& markers = text.markers();
+        std::size_t nextNewline = plain.find(L'\n', currentPos);
+
+        while (markerIdx < markers.size() || nextNewline != std::wstring::npos)
+        {
+            const std::size_t nextMarkerPos = markerIdx < markers.size()
+                ? markers[markerIdx].first
+                : std::wstring::npos;
+            if (nextMarkerPos <= nextNewline)
+            {
+                applyMarker(markers[markerIdx].second, nextMarkerPos);
                 markerIdx++;
             }
-            else {
+            else
+            {
                 m_paragraphs.push_back({ {currentParagraphStart, nextNewline - currentParagraphStart}, currentAlign, currentLineSpacing, currentIndent });
                 currentParagraphStart = nextNewline + 1;
                 nextNewline = plain.find(L'\n', currentParagraphStart);

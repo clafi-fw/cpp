@@ -331,7 +331,7 @@ namespace ClaFi::Controls
         {
             const Text shown{ InkWell::textInk(InkGrade::Muted), m_placeHolderText };
             textEngine().drawText(event.controlContext(), textBounds, shown, textAnchor(), nullptr,
-                textRenderMode(), wordWrap());
+                textRenderMode(), wordWrap(), textFormat());
         }
         return WithTextLayout<Label>::drawText(event, textBounds, text);
     }
@@ -345,7 +345,7 @@ namespace ClaFi::Controls
             return measured;
 
         const CalculatedDimensions placeHolder = textEngine().calculateText(event.formContext(),
-            m_placeHolderText, asked, false, wordWrap());
+            m_placeHolderText, asked, false, wordWrap(), textFormat());
         return {
             std::max(measured.x, placeHolder.x),
             std::max(measured.y, placeHolder.y),

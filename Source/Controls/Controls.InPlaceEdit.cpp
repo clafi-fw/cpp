@@ -291,6 +291,7 @@ namespace ClaFi::Controls
 
         EditBox& box = body();
         box.setHorizontalTextAnchor(target.textAnchor);
+        box.setTextFormat(target.textFormat ? *target.textFormat : TextFormat{});
         box.setReadOnly(target.readOnly);
 
         // A READER HAS NOTHING TO COMPLETE, and an editor with nothing listed has no list. Built

@@ -89,6 +89,8 @@ namespace ClaFi::Controls
         std::wstring_view typed{};
         // What the editor completes from, NAMED rather than copied. See Controls#suggestionlist
         const TextItems* suggestions{ nullptr };
+        // What the covered text is laid out over, or none. The editor lays its own out the same.
+        const TextFormat* textFormat{ nullptr };
     };
 
     // A text box that can refuse the value typed into it and say why. See Controls
@@ -478,7 +480,8 @@ namespace ClaFi::Controls
             editorMaxTextSize(textRect),
             mode == EditorMode::ReadOnly ? ReadOnly::Yes : ReadOnly::No,
             typed,
-            editorSuggestions()
+            editorSuggestions(),
+            this->textFormat()
         };
         // The call below runs a message loop and returns only once the editor is gone, so a local
         // outlives every read of it.

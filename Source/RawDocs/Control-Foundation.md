@@ -23,6 +23,23 @@ A `ControlText` rather than a `Text`: the control's own text is written once and
 about on every measurement and every paint, which is what a stamp is for. It is handed out as
 the live type so that what a caller writes through it is counted.
 
+## Text format
+
+What a control's text is laid out over - see TextEngine-Types#textformat. Control answers none.
+RichControl keeps one, stated through the TextFormat property - several compose kind by kind, a
+later one replacing what an earlier one said of the same kind - or through setTextFormat, which
+replaces the whole of it. It answers none while the format is empty. A class states its format as
+a property ahead of the arguments it forwards, never through setTextFormat in its constructor body:
+the body runs after the caller's properties were bound, and would wipe them.
+
+It is read where editProps is read. Control::drawText and Control::measureText hand it to the
+engine. WithTextLayout states it to its own layout and keeps it beside its last measurement. A
+TextBox lays its placeholder out over it, an in-place editor lays its text out over the covered
+control's, and an over-text hint repeats it: GetHintEvent::format carries it and HintLabel answers
+with it.
+
+Stating one invalidates nothing, the way setColorRules does not. The caller asks for the pass.
+
 ## FormAlignedEvent
 
 The form's content has been laid out and nothing has asked for another pass. `sender()` is the

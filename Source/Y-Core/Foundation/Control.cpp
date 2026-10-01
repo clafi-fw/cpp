@@ -1654,6 +1654,8 @@ namespace ClaFi
         {
             event.placement = FormPlacement::OverText;
             event.wordWrap = wordWrap();
+            if (const TextFormat* format = textFormat())
+                event.format = *format;
             // The hint reads its own text, so a named answer is put into it. Assigning what
             // the buffer already holds to itself is the gather having built one, and costs the
             // comparison in Text::operator= and nothing else.
@@ -1669,7 +1671,8 @@ namespace ClaFi
                 event.text,
                 textRect.dimensions(),
                 editProps() != nullptr,
-                wordWrap()
+                wordWrap(),
+                textFormat()
             );
             event.anchorRect = FloatRect::fromDimensions(
                 anchoredOrigin(textRect, drawn, textAnchor()),
@@ -1783,7 +1786,8 @@ namespace ClaFi
             textAnchor(),
             editProps(),
             textRenderMode(),
-            wordWrap()
+            wordWrap(),
+            textFormat()
         );
     }
 
@@ -1896,7 +1900,8 @@ namespace ClaFi
             text,
             asked,
             editProps() != nullptr,
-            wordWrap()
+            wordWrap(),
+            textFormat()
         );
     }
 

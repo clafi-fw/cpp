@@ -103,6 +103,7 @@ namespace ClaFi
         mutable TextStamp m_layoutStamp{};
         Measurement m_measurement{};
         CalculatedDimensions m_measured{};
+        TextFormat m_measuredFormat{}; // what the last measurement was laid out over
         // The engine generation the layout was built at. invalidateLayouts drops the cache and
         // moves that number on for anything a key does not carry - the font table above all - and
         // this layout is not in the cache to be dropped.
@@ -153,7 +154,10 @@ namespace ClaFi
         };
         // A measurement of a text with no life of its own is not kept: it would be recognised by
         // a stamp that names nothing, which is every other such measurement.
-        if (measurement.text.named() && measurement == m_measurement)
+        const TextFormat* format = this->textFormat();
+        if (measurement.text.named()
+            && measurement == m_measurement
+            && m_measuredFormat.matches(format))
             return m_measured;
 
         // Only the size reaches the layout, so the rect is built at the origin - see syncedLayout,
@@ -164,6 +168,8 @@ namespace ClaFi
             text
         ).calculatedDimensions();
         m_measurement = measurement;
+        if (!m_measuredFormat.matches(format))
+            m_measuredFormat = format ? *format : TextFormat{};
         return m_measured;
     }
 
@@ -209,6 +215,7 @@ namespace ClaFi
             m_layoutGeneration = Control::textEngine().layoutGeneration();
             m_layout.invalidate();
         }
+        m_layout.setFormat(this->textFormat());
         // Set here rather than in the constructor: it is a property, and a control told to stop
         // wrapping after it was built draws the answer to that on the next paint.
         m_layout.setWrap(this->wordWrap());

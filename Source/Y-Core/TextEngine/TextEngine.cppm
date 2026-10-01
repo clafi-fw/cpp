@@ -26,21 +26,22 @@ namespace ClaFi
         // anchoredOrigin, which is what a control holding a layout of its own measures through.
         DrawTextResult drawText(ControlPaintContext&, const FloatRect&, const Text&,
             TextAnchor, const EditProps* = nullptr, TextRenderMode = TextRenderMode::Static,
-            bool wrap = true);
+            bool wrap = true, const TextFormat* = nullptr);
         // Editable belongs to the layout rather than to the caller's convenience: an editable text
         // keeps the empty paragraph a trailing newline opens, because the caret has to be able to
         // stand on it. Measured as not editable, that row is missing from the size the control is
         // given, and the paint then places it past the control's own bottom edge where the clip
         // removes it - along with any caret standing on it.
         CalculatedDimensions calculateText(const FormContext&, const Text&,
-            MaxSize = { k_maxFloat, k_maxFloat }, bool editable = false, bool wrap = true);
+            MaxSize = { k_maxFloat, k_maxFloat }, bool editable = false, bool wrap = true,
+            const TextFormat* = nullptr);
         // Whether a box of that size cuts this text. calculatedDimensions is clamped to the box
         // it was measured against, so a measurement cannot answer this and the fit is asked for
         // outright - which is what a hint standing in for words a control has cut has to know
         // before it is shown. Keyed the way drawText keys it, so a box a paint has already drawn
         // this text in costs the lookup and no shaping.
         [[nodiscard]] bool isTextTrimmed(const FormContext&, const Text&, MaxSize,
-            bool wrap = true);
+            bool wrap = true, const TextFormat* = nullptr);
         // Positions in a text, and no layout between them and the answer. A caret is measured on a
         // TextLayout instead, by whoever holds one: an edited text is a different text on every
         // key, so a caret query routed through the cache below stores a copy of it per press and
@@ -66,6 +67,7 @@ namespace ClaFi
         struct LayoutKey
         {
             std::size_t textHash;
+            std::size_t formatHash; // zero where the text is laid out over no format
             std::uint32_t scaleFactor;
             bool editable;
             // A text broken to its box and the same text broken to nothing are two shapings, and
@@ -100,8 +102,8 @@ namespace ClaFi
         // frame. See TextLayout::acceptsWidth.
         using LayoutBucket = std::vector<CachedLayoutPtr>;
     private:
-        [[nodiscard]] TextLayout& select(const Text&, MaxSize, ScaleFactor, bool editable, bool wrap,
-            EventPhase);
+        [[nodiscard]] TextLayout& select(const Text&, const TextFormat*, MaxSize, ScaleFactor,
+            bool editable, bool wrap, EventPhase);
         void evict();
         static void highlightTextArea(ControlPaintContext&, const FloatRect& bounds,
             const FloatRect& textArea);
@@ -133,6 +135,7 @@ namespace ClaFi
             };
 
         combine(key.textHash);
+        combine(key.formatHash);
         combine(key.scaleFactor);
         combine(key.editable ? 1u : 0u);
         combine(key.wrap ? 1u : 0u);
@@ -142,12 +145,13 @@ namespace ClaFi
 
     DrawTextResult TextEngine::drawText(ControlPaintContext& controlContext, const FloatRect& bounds,
         const Text& text, const TextAnchor anchor,
-        const EditProps* editProps, TextRenderMode textRenderMode, bool wrap)
+        const EditProps* editProps, TextRenderMode textRenderMode, bool wrap,
+        const TextFormat* format)
     {
         if (text.plainText().empty() && !editProps)
             return {};
 
-        TextLayout& layout = select(text, bounds.dimensions(), controlContext.scaleFactor(),
+        TextLayout& layout = select(text, format, bounds.dimensions(), controlContext.scaleFactor(),
             editProps != nullptr, wrap, EventPhase::Paint);
         const FloatPoint anchoredPos = anchoredOrigin(bounds, layout.calculatedDimensions(), anchor);
 
@@ -162,14 +166,14 @@ namespace ClaFi
     }
 
     CalculatedDimensions TextEngine::calculateText(const FormContext& formContext, const Text& text,
-        MaxSize maxDimensions, bool editable, bool wrap)
+        MaxSize maxDimensions, bool editable, bool wrap, const TextFormat* format)
     {
-        return select(text, maxDimensions, formContext.scaleFactor(), editable, wrap,
+        return select(text, format, maxDimensions, formContext.scaleFactor(), editable, wrap,
             EventPhase::Calculate).calculatedDimensions();
     }
 
     bool TextEngine::isTextTrimmed(const FormContext& formContext, const Text& text,
-        MaxSize maxDimensions, bool wrap)
+        MaxSize maxDimensions, bool wrap, const TextFormat* format)
     {
         // An empty text is cut by no box, and drawText declines the same way rather than keeping
         // a layout for one.
@@ -178,7 +182,7 @@ namespace ClaFi
         // The paint's phase: the question is about the words on screen, and a text carrying flex
         // space is laid out differently in the two phases. A text without one names Calculate
         // whatever is asked for here, so both entry points share the entry.
-        return select(text, maxDimensions, formContext.scaleFactor(), false, wrap,
+        return select(text, format, maxDimensions, formContext.scaleFactor(), false, wrap,
             EventPhase::Paint).isTrimmed();
     }
 
@@ -193,11 +197,12 @@ namespace ClaFi
     // all state their inputs the same way and none of them can forget one - which the old sequence
     // of setters allowed: calculateText never set editable, and silently inherited whatever the
     // previous caller had left behind.
-    TextLayout& TextEngine::select(const Text& text, MaxSize bounds, ScaleFactor scaleFactor,
-        bool editable, bool wrap, EventPhase phase)
+    TextLayout& TextEngine::select(const Text& text, const TextFormat* format, MaxSize bounds,
+        ScaleFactor scaleFactor, bool editable, bool wrap, EventPhase phase)
     {
         LayoutKey key{
             .textHash = text.hash(),
+            .formatHash = format && !format->empty() ? format->hash() : 0,
             .scaleFactor = std::bit_cast<std::uint32_t>(static_cast<float>(scaleFactor)),
             .editable = editable,
             .wrap = wrap,
@@ -221,7 +226,9 @@ namespace ClaFi
         {
             for (const CachedLayoutPtr& entry : found->second)
             {
-                if (!entry->layout.acceptsWidth(bounds.x) || entry->text != text)
+                if (!entry->layout.acceptsWidth(bounds.x)
+                    || entry->text != text
+                    || !entry->layout.format().matches(format))
                     continue;
 
                 entry->lastUsed = ++m_useCounter;
@@ -257,6 +264,7 @@ namespace ClaFi
         entry.layout.setEventPhase(phase);
         entry.layout.setEditable(editable);
         entry.layout.setWrap(wrap);
+        entry.layout.setFormat(format);
         entry.layout.setText(entry.text);
         entry.layout.setBoundsAndScale(bounds, scaleFactor);
         return entry.layout;

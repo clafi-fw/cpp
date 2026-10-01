@@ -76,6 +76,41 @@ data like any other, so a caller that writes through such a reference writes beh
 stamp's back - which is why the machinery that edits a control's text, TextHistory above
 all, takes a ControlText and not a Text.
 
+## TextFormat
+
+Markers alone, with no characters: what a control's text is laid out over. It is never part of the
+text. The layout is handed it beside the text, and BakedText::rebuild reads it ahead of the text's
+first marker - so a control's own text stays named in the gather and recognised by its stamp, and
+nothing the text says is copied to put the format in front of it.
+
+It holds the values a text runs on from: a colour, a style, a size, a family, bold, italic, an
+alignment, an indent, a line spacing. Anything that puts a character in, a pop, a link and an
+anchor do not compile, and a TextOp other than PushBold and PushItalic is refused when it is
+streamed. A script is not held: how far one is raised depends on the size in force where it opens,
+so it would be the one value whose place among the others changes what is drawn.
+
+ONE OF EACH KIND. A value streamed in replaces what the format already holds of its kind. Along a
+chain of constructors - each class stating its own format ahead of the arguments it forwards - the
+caller's value wins for every kind it states, then the most derived class's, and so on down to the
+base. The values are kept in the order of the kinds rather than the order they were stated, so two
+formats saying the same thing are equal and share a cache entry however they were composed. Bold
+and italic, once stated, are held: nothing later in the chain can take them off.
+
+The text's own markers stand over it. A push the text makes is read after the format's. A
+paragraph property is read when the paragraph's newline is reached, so one the text states replaces
+the format's for the whole paragraph it stands in and for every paragraph after it.
+
+THE FORMAT IS THE FLOOR OF EVERY STACK. A pop the text holds no push for leaves what the format
+opened standing. For a text whose pushes and pops pair up, that is the same as the format written
+at index 0.
+
+It is how a control shows its text, not part of what the text says: selectedText, the clipboard,
+the history and a document never see it. A control with a format and no text is still blank.
+
+A layout keeps a copy and compares the one it is stated next, so a caller's format may change or
+go. The engine's cache keys on its hash beside the text's and confirms a hit against that copy. No
+format and an empty one are the same answer.
+
 ## TextEdit
 
 What one edit did, stated in the coordinates of the text BEFORE it: the range taken out and

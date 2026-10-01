@@ -249,4 +249,66 @@ namespace ClaFi
         TextStamp m_stamp{ ++s_lastId, 0 };
     };
 
+    // The markers a format takes as they are - each a value the text runs on from.
+    export template<typename Item>
+    concept IsFormatState = std::same_as<Item, PushThemeColor>
+        || std::same_as<Item, PushCustomColor>
+        || std::same_as<Item, TextAlign>
+        || std::same_as<Item, ParaIndent>
+        || std::same_as<Item, ParaLineSpacing>
+        || std::same_as<Item, PushFontSize>
+        || std::same_as<Item, PushFontFamily>;
+
+    // Markers alone, laid out ahead of a text's own and under them. See TextEngine-Types#textformat
+    export class TextFormat
+    {
+    public:
+        TextFormat() = default;
+        template<typename... Args>
+        explicit TextFormat(Args&&...);
+    public:
+        // Each replaces what the format already holds of its kind. See TextEngine-Types#textformat
+        template<IsFormatState Item>
+        TextFormat& operator<<(const Item&);
+        TextFormat& operator<<(Ink);
+        TextFormat& operator<<(InkGrade); // the framework's own ink at that step
+        TextFormat& operator<<(InkColor); // that colour at Strongest
+        TextFormat& operator<<(Color);
+        TextFormat& operator<<(TextStyleId);
+        TextFormat& operator<<(TextOp); // bold or italic
+        TextFormat& operator<<(const TextFormat&);
+        // Refused, a value that only converts to one of the above included - a wchar_t is no Color.
+        template<typename Other>
+        TextFormat& operator<<(const Other&) = delete;
+        [[nodiscard]] bool empty() const { return m_markers.empty(); }
+        [[nodiscard]] const Text::Markers& markers() const { return m_markers; }
+        [[nodiscard]] std::size_t hash() const;
+        // Whether this says what that one says, where none says nothing.
+        [[nodiscard]] bool matches(const TextFormat*) const;
+        bool operator==(const TextFormat&) const = default;
+    private:
+        void place(FormatItem);
+    private:
+        Text::Markers m_markers{}; // every one standing at 0, one of each kind in kind order
+    };
+
+
+//-----------------------------------------------------------------------------
+
+
+    template<typename... Args>
+    TextFormat::TextFormat(Args&&... args)
+        :
+        TextFormat{}
+    {
+        (*this << ... << std::forward<Args>(args));
+    }
+
+    template<IsFormatState Item>
+    TextFormat& TextFormat::operator<<(const Item& item)
+    {
+        place(item);
+        return *this;
+    }
+
 }

@@ -15,6 +15,12 @@ namespace ClaFi
 {
     // RichControl
 
+    // None where the format is empty, so the cache keys an unformatted text the one way.
+    const TextFormat* RichControl::textFormat() const
+    {
+        return m_textFormat.empty() ? nullptr : &m_textFormat;
+    }
+
     void RichControl::adjustMetrics(AdjustMetricsEvent& event) const
     {
         event.metrics = m_metrics;

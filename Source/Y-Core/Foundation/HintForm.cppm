@@ -32,6 +32,7 @@ namespace ClaFi
         using WithTextLayout<FormControlBase>::WithTextLayout;
     protected:
         void getText(GetTextEvent&) const override;
+        [[nodiscard]] const TextFormat* textFormat() const override;
         [[nodiscard]] float lineBreakWidth() const override { return m_breakWidth; }
         // Asked no wider than Hint::k_lineWidth, unless it repeats lines broken elsewhere.
         CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
@@ -41,6 +42,7 @@ namespace ClaFi
         // The width the words this hint repeats were broken at, and zero for a hint repeating
         // none - see HintForm::setControl.
         float m_breakWidth{ 0.0f };
+        mutable TextFormat m_format{}; // as the control last answered - written by getText
     };
 
     export class HintForm : public Form<HintLabel>
@@ -125,11 +127,17 @@ namespace ClaFi
         // out as the control's own hint and the window would show the wrong words.
         if (!ContextMessage::answer(*m_control, hintEvent))
             m_control->nestedGetHint(hintEvent);
+        m_format = hintEvent.format;
         // WHAT A PAINT PRODUCED IS WHAT THE FADE REPEATS. A calculation is a measurement and is
         // answered with the room a later value will need, so recording that one would send the
         // window out saying a line it never showed.
         if (event.phase() == EventPhase::Paint)
             form.m_shownText = event.text;
+    }
+
+    const TextFormat* HintLabel::textFormat() const
+    {
+        return m_format.empty() ? nullptr : &m_format;
     }
 
     CalculatedDimensions HintLabel::measureText(AlignEvent& event, ScaledDimensions asked,
