@@ -103,9 +103,24 @@ mouse rather than the keyboard drives the input.
 
 ## HorizontalTextAnchor
 
-Where the measured text block sits horizontally inside its designated zone. It carries the box
-each paragraph is aligned within, so text naming its own `TextAlign` is displaced by the anchor
-and by the alignment both - such text is anchored `Left` and placed by the `TextAlign` alone.
+Where the measured text block sits across its zone. `Left`, `Center` and `Right` each make a block:
+a layout told one of them places its lines in the width the text measures - its widest line - and
+`TextAlign` aligns each line inside that block, which the anchor then moves as a whole. A centred
+paragraph in a centred block is centred in the zone; a right-aligned one anchored `Left` ends at
+the right edge of its own widest line, and a single line anchored `Left` stays at the left whatever
+its alignment.
+
+`None`, the default, makes no block. The lines are aligned across the whole zone and nothing moves
+them after - the answer for a page, a grid cell, and anything whose lines align to the edges of the
+box it is drawn in.
+
+A wrapped text is never placed wider than it was broken at: a line wider than that overflowed it,
+and placing the others in its width would join them. A stated break width is where a text under
+`None` is placed - see TextLayout::setBreakWidth.
+
+An over-text hint repeats an anchored text inside its block. GetHintEvent::textAnchor comes back
+`Left`, the anchor rect starts where the block was put, and the hint's label places the lines in a
+block of its own from there.
 
 ## WordWrap
 

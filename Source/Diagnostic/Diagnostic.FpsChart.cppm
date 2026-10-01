@@ -449,7 +449,7 @@ namespace ClaFi::Diagnostic
                     PushFontSize{ static_cast<int>(k_axisFontSize) },
                     static_cast<int>(value)
                 },
-                { VerticalTextAnchor::Top, HorizontalTextAnchor::Left }
+                { VerticalTextAnchor::Top, HorizontalTextAnchor::None }
             );
         };
 

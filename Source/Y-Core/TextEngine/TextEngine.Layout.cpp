@@ -388,10 +388,9 @@ namespace ClaFi
             case VerticalTextAnchor::Top:
                 break;
         }
-        // The offset carries the paragraph boxes as well as the glyphs, because the layout is drawn
-        // from this point and each box reaches to the bounds width from it. Text naming its own
-        // TextAlign is therefore placed by the alignment and moved by the anchor on top of it, and
-        // wants Left here.
+        // None makes no block: the layout placed its lines across the bounds width, and nothing
+        // moves them. Any other anchor moves the block the text measures, inside which the layout
+        // placed them - see UI-Types#horizontaltextanchor.
         switch (anchor.horizontal)
         {
             case HorizontalTextAnchor::Center:
@@ -400,6 +399,7 @@ namespace ClaFi
             case HorizontalTextAnchor::Right:
                 origin.x = bounds.right - calculated.x;
                 break;
+            case HorizontalTextAnchor::None:
             case HorizontalTextAnchor::Left:
                 break;
         }
@@ -613,10 +613,10 @@ namespace ClaFi
         }
         const std::size_t newSliceCount = m_bakedText.paragraphs().size() - leading - trailing;
 
-        // A paragraph that is not leading has been told which box its lines sit in and a freshly
-        // built one has not - see ensureBoxWidth. Bringing one into line with its neighbours is a
-        // case this does not carry.
-        if (m_boxWidthApplied != m_builtBoundsX)
+        // A paragraph that is not leading has been told which width its lines sit in and a
+        // freshly built one has not - see ensurePlacement. Bringing one into line with its
+        // neighbours is a case this does not carry.
+        if (m_placedWidth != m_builtBoundsX)
         {
             for (std::size_t i = 0; i != newSliceCount; ++i)
             {
@@ -782,6 +782,11 @@ namespace ClaFi
             m_wrap = wrap;
             invalidate();
         }
+    }
+
+    void TextLayout::setHorizontalAnchor(const HorizontalTextAnchor value)
+    {
+        m_anchor = value;
     }
 
     void TextLayout::setBreakWidth(float value)
@@ -1333,7 +1338,7 @@ namespace ClaFi
     void TextLayout::ensureLayout()
     {
         ensureShaping();
-        ensureBoxWidth();
+        ensurePlacement();
         ensureVerticalFit();
     }
 
@@ -1377,7 +1382,7 @@ namespace ClaFi
         m_shapedWidth = maxW;
         m_shapedHeight = currentY;
         m_builtBoundsX = breakAt;
-        m_boxWidthApplied = breakAt;
+        m_placedWidth = breakAt;
         m_layoutValid = true;
         m_verticalValid = false;
     }
@@ -1479,18 +1484,14 @@ namespace ClaFi
         m_verticalValid = true;
     }
 
-    // A native layout places its lines inside the box it was told about, so a right-aligned or
+    // A native layout places its lines inside the width it was told about, so a right-aligned or
     // centred run keeps the offset the width it was built at gave it until this says otherwise.
-    // Only the placement moves: the box is never wider than the lines were broken at, so none of
-    // them can join and none has to split - see acceptsWidth.
-    void TextLayout::ensureBoxWidth()
+    // Only the placement moves: a wrapped text is never placed wider than its lines were broken
+    // at, so none of them can join and none has to split - see acceptsWidth and placementWidth.
+    void TextLayout::ensurePlacement()
     {
-        // A stated break width is the box the lines are PLACED in as well as broken at: a centred
-        // paragraph stands where the text it repeats stands, and a wider box would centre it
-        // somewhere else.
-        if (m_breakWidth > 0.0f)
-            return;
-        if (m_boxWidthApplied == m_bounds.x)
+        const float width = placementWidth();
+        if (m_placedWidth == width)
             return;
 
         for (const ParagraphLayoutState& p : m_paragraphs)
@@ -1506,15 +1507,15 @@ namespace ClaFi
             // acceptsWidth admits only a width that re-breaks no line.
             if (p.alignment == TextAlign::Left)
                 continue;
-            // A paragraph on cells reads the box as it is asked - see monoOffset - and one whose
-            // native layout was given back is told the box when it is built again.
+            // A paragraph on cells reads the width as it is asked - see monoOffset - and one whose
+            // native layout was given back is told the width when it is built again.
             if (!p.nativeLayout)
                 continue;
 
-            p.nativeLayout->setMaxWidth(std::max(1.0f, m_bounds.x - p.indent));
+            p.nativeLayout->setMaxWidth(std::max(1.0f, width - p.indent));
         }
 
-        m_boxWidthApplied = m_bounds.x;
+        m_placedWidth = width;
     }
 
     float TextLayout::breakWidth() const
@@ -1522,9 +1523,17 @@ namespace ClaFi
         return m_breakWidth > 0.0f ? m_breakWidth : m_bounds.x;
     }
 
+    // A STATED BREAK WIDTH IS WHERE AN UNANCHORED TEXT IS PLACED as well as broken: a centred
+    // paragraph stands where the text it repeats stands. See UI-Types#horizontaltextanchor
     float TextLayout::placementWidth() const
     {
-        return m_breakWidth > 0.0f ? m_breakWidth : m_bounds.x;
+        if (m_anchor == HorizontalTextAnchor::None)
+            return m_breakWidth > 0.0f ? m_breakWidth : m_bounds.x;
+        // A wrapped line wider than the width it was broken at overflowed it, and placing the
+        // others in its width would join them.
+        if (m_wrap)
+            return std::min(m_shapedWidth, m_builtBoundsX);
+        return m_shapedWidth;
     }
 
     std::span<const NativeLineMetrics> TextLayout::linesOf(const ParagraphLayoutState& p) const
@@ -2013,9 +2022,9 @@ namespace ClaFi
         if (!state.nativeLayout)
             unreachable("A paragraph shaped natively came out on cells when it was built again");
 
-        // The box ensureBoxWidth told the held layouts about since the text was shaped.
-        if (m_boxWidthApplied != m_builtBoundsX && style.alignment != TextAlign::Left)
-            state.nativeLayout->setMaxWidth(std::max(1.0f, m_boxWidthApplied - state.indent));
+        // The width ensurePlacement told the held layouts about since the text was shaped.
+        if (m_placedWidth != m_builtBoundsX && style.alignment != TextAlign::Left)
+            state.nativeLayout->setMaxWidth(std::max(1.0f, m_placedWidth - state.indent));
         return std::move(state.nativeLayout);
     }
 

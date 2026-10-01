@@ -371,6 +371,8 @@ namespace ClaFi
         bool wordWrap{ false };
         // What the words this hint repeats were laid out over. Read under OverText alone.
         TextFormat format{};
+        // How the hint places the words it repeats. Read under OverText alone.
+        HorizontalTextAnchor textAnchor{ HorizontalTextAnchor::None };
         const EventPhase phase;
         bool hideOnUserInput{ true };
     };

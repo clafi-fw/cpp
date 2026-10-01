@@ -1656,6 +1656,9 @@ namespace ClaFi
             event.wordWrap = wordWrap();
             if (const TextFormat* format = textFormat())
                 event.format = *format;
+            // The rect below starts at the block an anchor moved, and the lines stand in it.
+            if (horizontalTextAnchor() != HorizontalTextAnchor::None)
+                event.textAnchor = HorizontalTextAnchor::Left;
             // The hint reads its own text, so a named answer is put into it. Assigning what
             // the buffer already holds to itself is the gather having built one, and costs the
             // comparison in Text::operator= and nothing else.

@@ -153,6 +153,7 @@ namespace ClaFi
 
         TextLayout& layout = select(text, format, bounds.dimensions(), controlContext.scaleFactor(),
             editProps != nullptr, wrap, EventPhase::Paint);
+        layout.setHorizontalAnchor(anchor.horizontal);
         const FloatPoint anchoredPos = anchoredOrigin(bounds, layout.calculatedDimensions(), anchor);
 
         const DrawTextResult result = layout.draw(controlContext, anchoredPos, editProps,

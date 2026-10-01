@@ -1239,7 +1239,7 @@ paragraph and a wider one joins them, so the height is not knowable until the wi
 <table>
 <tr><th>Property</th><th>Values</th><th>Default</th></tr>
 <tr><td><code>WordWrap</code></td><td><code>Yes</code>, <code>No</code></td><td><code>Yes</code></td></tr>
-<tr><td><code>HorizontalTextAnchor</code></td><td><code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>Left</code></td></tr>
+<tr><td><code>HorizontalTextAnchor</code></td><td><code>None</code>, <code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>None</code></td></tr>
 <tr><td><code>VerticalTextAnchor</code></td><td><code>Top</code>, <code>Center</code>, <code>Bottom</code></td><td><code>Top</code></td></tr>
 </table>
 
@@ -1288,10 +1288,12 @@ box, and a box it cannot fit into shortens it rather than widening the control.<
 ) };</code></pre>
 
 <div class="info">
-The three anchors place the measured text <em>block</em> inside the control's own box, as a
-whole. <code>TextAlign</code>, written inside a <code>Text</code> or stated in the control's
-<code>TextFormat</code>, places the lines inside that block. A centred paragraph in a left-anchored label is both, and they do not mean the
-same thing.
+<code>Left</code>, <code>Center</code> and <code>Right</code> place the measured text
+<em>block</em> inside the control's own box, as a whole. <code>TextAlign</code>, written inside a
+<code>Text</code> or stated in the control's <code>TextFormat</code>, places the lines inside that
+block. <code>None</code>, the default, makes no block: the lines are aligned across the whole box.
+A single right-aligned line reaches the right edge under <code>None</code>; anchored
+<code>Left</code>, its block is the line itself, and it stays at the left.
 </div>
 
 <p>One measuring rule is worth knowing because it reaches a level away: a button whose
@@ -1887,7 +1889,7 @@ reason.</li>
 <tr><td><code>HorizontalAlign</code></td><td><code>Fill</code>, <code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>Fill</code></td></tr>
 <tr><td><code>VerticalAlign</code></td><td><code>Fill</code>, <code>Top</code>, <code>Center</code>, <code>Bottom</code></td><td><code>Fill</code></td></tr>
 <tr><td><code>WordWrap</code></td><td><code>Yes</code>, <code>No</code></td><td><code>Yes</code></td></tr>
-<tr><td><code>HorizontalTextAnchor</code></td><td><code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>Left</code></td></tr>
+<tr><td><code>HorizontalTextAnchor</code></td><td><code>None</code>, <code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>None</code></td></tr>
 <tr><td><code>VerticalTextAnchor</code></td><td><code>Top</code>, <code>Center</code>, <code>Bottom</code></td><td><code>Top</code></td></tr>
 <tr><td><code>TextFormat</code></td><td><code>TextFormat{ ... }</code> - what the control's text is laid out over; several compose kind by kind. See the <a href="textengine.html#format">TextEngine manual</a></td><td>none</td></tr>
 <tr><td><code>Padding</code>, <code>Spacing</code></td><td><code>{ x, y }</code> or one float</td><td>the theme block's, or zero</td></tr>

@@ -320,8 +320,8 @@ them: the object that draws the paragraph and answers a hit test or a character'
 A PARAGRAPH IS BUILT AGAIN WHEN IT IS DRAWN OR ASKED ABOUT, by shapeParagraph from what it was
 first built from - its slice of the baked text, the span cursors found by bisection at its start,
 the width the text was broken at and the event phase it was shaped in, a change of which
-reshapes the text. The box ensureBoxWidth told the held layouts about is stated to the rebuilt
-one after the build, the order a held one was told in.
+reshapes the text. The width ensurePlacement told the held layouts to place their lines in is
+stated to the rebuilt one after the build, the order a held one was told in.
 
 WHAT IS KEPT is the paragraphs nearest what the last draw showed, counted in paragraphs, up to
 k_heldLayoutBudget. A shaping keeps the first ones: all a text shorter than the budget has, so a

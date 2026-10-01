@@ -255,8 +255,8 @@ namespace ClaFi
     export constexpr ControlFlag cfNoWordWrap   = 64;
     export constexpr ControlFlag cfReserved7    = 128;
 
-    // What the second flagset holds at rest: text anchored Top and Left, the rest clear.
-    export constexpr ControlFlags2 cfDefaultFlags2 = cfVerticalTextAnchorBit1 | cfHorizontalTextAnchorBit1;
+    // What the second flagset holds at rest: text anchored Top and across None, the rest clear.
+    export constexpr ControlFlags2 cfDefaultFlags2 = cfVerticalTextAnchorBit1;
 
     // Where a control sits across the space its parent gives it.
     export enum class HorizontalAlign : FlagByte {
@@ -282,9 +282,10 @@ namespace ClaFi
         Bottom = cfVerticalTextAnchorBit1 | cfVerticalTextAnchorBit2
     };
 
-    // Where the text block sits across its zone, and the box TextAlign works in. See UI-Types
+    // Where the text block sits across its zone, or None for no block. See UI-Types
     export enum class HorizontalTextAnchor : FlagByte
     {
+        None = 0,
         Left = cfHorizontalTextAnchorBit1,
         Center = cfHorizontalTextAnchorBit2,
         Right = cfHorizontalTextAnchorBit1 | cfHorizontalTextAnchorBit2
@@ -301,7 +302,7 @@ namespace ClaFi
     export struct TextAnchor
     {
         VerticalTextAnchor vertical{ VerticalTextAnchor::Top };
-        HorizontalTextAnchor horizontal{ HorizontalTextAnchor::Left };
+        HorizontalTextAnchor horizontal{ HorizontalTextAnchor::None };
 
         bool operator==(const TextAnchor&) const = default;
     };

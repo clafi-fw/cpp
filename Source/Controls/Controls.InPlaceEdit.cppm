@@ -63,7 +63,7 @@ namespace ClaFi::Controls
         // Where the text being replaced is drawn, in the coordinates of the form the control
         // stands in - the space a placement rect is stated in, which is where this one goes.
         FloatRect textRect;
-        HorizontalTextAnchor textAnchor{ HorizontalTextAnchor::Left };
+        HorizontalTextAnchor textAnchor{ HorizontalTextAnchor::None };
         // How far the editor may grow, measured on the TEXT and not on the window: the frame
         // the editor draws around it is added on top, which is the padding correction a caller
         // stating its own control's MaxSize would otherwise have to make twice. Zero on an axis

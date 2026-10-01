@@ -231,6 +231,8 @@ namespace ClaFi
         void setBoundsAndScale(MaxSize bounds, ScaleFactor);
         void setEditable(bool editable);
         void setWrap(bool wrap);
+        // Lines across the box for None, inside the measured block for any other anchor.
+        void setHorizontalAnchor(HorizontalTextAnchor);
         // The width the lines are BROKEN at, when that is not the box they stand in. Zero, the
         // standing answer, breaks them at the box - which is what a control laying out its own
         // text asks for. A layout that has to repeat ANOTHER's line breaks states the width that
@@ -295,12 +297,12 @@ namespace ClaFi
         // Where those lines stand in the box: the collapse, the fades, and the size the text came
         // to. Runs on its own when only the height has moved.
         void ensureVerticalFit();
-        // Tells the built lines which box they stand in, when that is not the one they were broken
-        // at. Breaks nothing again - see acceptsWidth.
-        void ensureBoxWidth();
+        // Tells the built lines the width they are placed in, when that is not the one they were
+        // broken at. Breaks nothing again - see acceptsWidth.
+        void ensurePlacement();
         // The width a shaping breaks at: the stated one, or the box where none is stated.
         [[nodiscard]] float breakWidth() const;
-        // The width the lines are PLACED in: the stated break width, or the box.
+        // The width the lines are PLACED in: the box, the stated break width, or the block.
         [[nodiscard]] float placementWidth() const;
         // The paragraph's lines, out of the pool every paragraph's lines are kept in.
         [[nodiscard]] std::span<const NativeLineMetrics> linesOf(const ParagraphLayoutState&) const;
@@ -358,6 +360,7 @@ namespace ClaFi
         ScaleFactor m_scaleFactor{ 1.0f };
         bool m_editable{ false };
         bool m_wrap{ true };
+        HorizontalTextAnchor m_anchor{ HorizontalTextAnchor::None }; // see setHorizontalAnchor
         // Zero while the box the lines stand in is the width they are broken at - see
         // setBreakWidth.
         float m_breakWidth{ 0.0f };
@@ -376,9 +379,8 @@ namespace ClaFi
         float m_shapedHeight{ 0.0f };
         // The width they were broken at, which is the other end of what acceptsWidth answers over.
         float m_builtBoundsX{ 0.0f };
-        // The width the native layouts were last told about. They place their lines inside the box
-        // they know of, so a box that narrowed onto lines that still fit has to say so.
-        float m_boxWidthApplied{ -1.0f };
+        // The width the native layouts were last told to place their lines in.
+        float m_placedWidth{ -1.0f };
         float m_calcWidth{ 0.0f };
         float m_calcHeight{ 0.0f };
         std::vector<float> m_globalBaselinesToFade;

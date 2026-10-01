@@ -218,6 +218,8 @@ namespace ClaFi
         content().m_breakWidth = overText ? event.anchorRect.width() : 0.0f;
         const bool wrap = !overText or event.wordWrap;
         content().setWordWrap(wrap ? WordWrap::Yes : WordWrap::No);
+        content().setHorizontalTextAnchor(
+            overText ? event.textAnchor : HorizontalTextAnchor::None);
         invalidateAlign();
     }
 

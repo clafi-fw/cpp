@@ -681,6 +681,14 @@ size, and the anchor is the whole of what says where in the bounds that box was 
 leaves it out draws against a box the text does not occupy.
 </div>
 
+<p>The horizontal anchor also says where the lines stand. <code>None</code>, which a
+<code>TextAnchor</code> holds unless told otherwise, aligns them across the bounds.
+<code>Left</code>, <code>Center</code> and <code>Right</code> align them inside the block the text
+measures and move that block: a centred paragraph anchored <code>Center</code> is centred in the
+bounds, and a right-aligned line anchored <code>Left</code> stays at the left, because its block is
+the line. A <code>TextLayout</code> held by a control is told the same with
+<code>setHorizontalAnchor</code>.</p>
+
 <p><code>TextRenderMode</code> is a question about movement, not about quality:</p>
 
 <table>
@@ -1158,8 +1166,8 @@ the font: the controls and the format characters, combining marks, the right-to-
 scripts that reorder or stack, and anything past the basic plane. A wrapping layout keeps a
 paragraph on cells while its ink fits the width it breaks at - a line that fits is never broken -
 and hands one that does not to the native layout. Left, centre and right alignment are an offset
-inside the box, applied as the paragraph is drawn or hit rather than told to a layout, so a box
-that moves costs nothing.</p>
+inside the width the paragraph is placed in, applied as the paragraph is drawn or hit rather than
+told to a layout, so a box that moves costs nothing.</p>
 
 <p>Nothing in the API says which paragraphs are on cells. <code>[code]</code> text, a
 <code>CodeBox</code>, a <code>HexView</code> line and a label in a monospace family all take the

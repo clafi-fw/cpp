@@ -245,7 +245,7 @@ namespace ClaFi::Controls::Grids
         Text text;
         doGetCellText(column, text);
         const TextFormat& format = cellTextFormat(column);
-        const TextAnchor anchor = { column.verticalTextAnchor(), HorizontalTextAnchor::Left };
+        const TextAnchor anchor = { column.verticalTextAnchor(), HorizontalTextAnchor::None };
         if (column.movingText() == MovingText::Yes)
         {
             if (text.plainText().empty())
@@ -468,7 +468,7 @@ namespace ClaFi::Controls::Grids
         // box's, which is the width the lines were broken at.
         const TextAnchor anchor = {
             hoveredColumn->verticalTextAnchor(),
-            HorizontalTextAnchor::Left,
+            HorizontalTextAnchor::None,
         };
         event.anchorRect = FloatRect::fromDimensions(
             anchoredOrigin(textBounds, drawn, anchor),

@@ -351,14 +351,14 @@ namespace ClaFi::Controls::Grids
         Text text;
         row->doGetCellText(*column, text);
 
-        // Left, deliberately: paintCell lays a cell's text out left-anchored in that same rect,
-        // and what moves it to the other end of the column is the alignment in the column's
-        // format. The editor takes both - the rect as its minimum width, and the format - so it
-        // reproduces the same layout whichever way the column reads.
+        // None, deliberately: paintCell lays a cell's text out across that same rect, and what
+        // moves it to the other end of the column is the alignment in the column's format. The
+        // editor takes both - the rect as its minimum width, and the format - so it reproduces
+        // the same layout whichever way the column reads.
         const EditTarget target{
             .control = *row,
             .textRect = textRect,
-            .textAnchor = HorizontalTextAnchor::Left,
+            .textAnchor = HorizontalTextAnchor::None,
             // As wide as the grid can show and no wider. A value longer than its column is
             // worth seeing whole, which is half of why the editor is a window of its own; a
             // window wider than the grid it belongs to is not.

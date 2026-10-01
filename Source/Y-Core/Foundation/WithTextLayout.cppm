@@ -221,6 +221,7 @@ namespace ClaFi
         m_layout.setWrap(this->wordWrap());
         // Ahead of the bounds, which are accepted or refused against it.
         m_layout.setBreakWidth(this->lineBreakWidth());
+        m_layout.setHorizontalAnchor(this->horizontalTextAnchor());
         // Only the size: where the rect sits is the caller's business and the anchor's, and a
         // control scrolled sideways would otherwise rebuild for every pixel it moved.
         m_layout.setBoundsAndScale(textBounds.dimensions(), formContext.scaleFactor());
