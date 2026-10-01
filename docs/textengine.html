@@ -1111,10 +1111,13 @@ passes: a control is sized to what it measured, so the paint asks at a width ins
 the build the measurement just made. A width outside every interval takes a layout of its own, up to
 four to a text, and the least recently used of them goes.</p>
 
-<p>The box a layout stands in is not the width its lines were broken at. A native layout places a
-centred or right-aligned line at an offset measured from the box it was told about, so a shaping
-answering about a narrower box is told so before it is drawn or measured. Only the placement moves:
-the box is never wider than the width the lines were broken at.</p>
+<p>The box a layout stands in is not the width its lines were broken at, and moving lines into
+another width costs no shaping. A paragraph that came out as one line is placed by an offset the
+layout applies as it is drawn or hit; one of several lines is aligned by its native layout once,
+in the width it was broken at, and then moved as a whole. A wrapped text is never placed wider
+than it was broken at nor narrower than its widest line, so every line of it moves by the same
+amount. Justified lines are stretched to the width they stand in, and those alone are told a new
+one.</p>
 
 <p>The height is in none of this. It decides which line the text is cut off at and which lines fade,
 and that is read off the finished lines - so a box of another height keeps the shaping and reads the

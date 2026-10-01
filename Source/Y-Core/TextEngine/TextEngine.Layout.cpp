@@ -261,6 +261,10 @@ namespace ClaFi
     // text collapses and fades. A tenth of a pixel is invisible either way.
     constexpr float k_fitTolerance = 0.1f;
 
+    // How far a line may reach past the width it is aligned in and still be aligned - the rule
+    // the native layouts apply, kept here for the lines this layout places itself.
+    constexpr float k_alignTolerance = 0.1f;
+
     // Shaped as nothing: an empty paragraph is built from it, and it stands in for a line end.
     constexpr wchar_t k_zeroWidthSpace = 0x200B;
 
@@ -613,21 +617,6 @@ namespace ClaFi
         }
         const std::size_t newSliceCount = m_bakedText.paragraphs().size() - leading - trailing;
 
-        // A paragraph that is not leading has been told which width its lines sit in and a
-        // freshly built one has not - see ensurePlacement. Bringing one into line with its
-        // neighbours is a case this does not carry.
-        if (m_placedWidth != m_builtBoundsX)
-        {
-            for (std::size_t i = 0; i != newSliceCount; ++i)
-            {
-                if (m_bakedText.paragraphs()[leading + i].alignment == TextAlign::Left)
-                    continue;
-
-                invalidate();
-                return false;
-            }
-        }
-
         const float top = m_paragraphs[firstIndex].bounds.top;
         const float oldBottom = m_paragraphs[lastIndex].bounds.bottom;
 
@@ -744,6 +733,14 @@ namespace ClaFi
         m_shapedWidth = 0.0f;
         for (const ParagraphLayoutState& paragraph : m_paragraphs)
             m_shapedWidth = std::max(m_shapedWidth, paragraph.bounds.right);
+
+        // A justified paragraph shaped here is stretched to the width the rest stand in. Where
+        // that width moved, ensurePlacement places every paragraph again.
+        if (placementWidth() == m_placedWidth)
+        {
+            for (std::size_t i = firstIndex; i != firstIndex + newSliceCount; ++i)
+                alignParagraph(m_paragraphs[i], m_placedWidth);
+        }
 
         m_shapedHeight += heightDelta;
         // The lines moved, so where they sit inside the box is read off them again. Nothing here
@@ -965,7 +962,7 @@ namespace ClaFi
             {
                 MonoFont& font = *paragraph.monoFont;
                 FloatPoint origin = paraDrawBounds.topLeft();
-                const float offset = monoOffset(paragraph);
+                const float offset = paragraphOffset(paragraph);
                 origin.x += offset;
                 // The collapse line is moved by the offset to make room for what is appended to
                 // it, and no further left than the box, where the clip would take its start.
@@ -994,14 +991,32 @@ namespace ClaFi
             }
             else
             {
-                nativeOf(paragraph).draw(controlContext, paraDrawBounds,
+                const float offset = paragraphOffset(paragraph);
+                FloatRect nativeBounds = paraDrawBounds;
+                nativeBounds.left += offset;
+                float collapseXOffset = m_collapseXOffset;
+                // The collapse line moves to make room for what is appended to it, and no further
+                // left than the box. A layout moves no line left of where it put it, so a
+                // paragraph it holds at the leading edge is moved here as a whole.
+                if (collapsesHere && paragraph.alignedWidth == 0.0f)
+                {
+                    nativeBounds.left += std::max(m_collapseXOffset, -offset);
+                    collapseXOffset = 0.0f;
+                }
+                else if (collapsesHere)
+                {
+                    const float lineWidth = lineWidthAt(paragraph, localCollapseBaseline);
+                    collapseXOffset = std::max(m_collapseXOffset, -lineLead(paragraph, lineWidth));
+                }
+
+                nativeOf(paragraph).draw(controlContext, nativeBounds,
                     drawnColors,
                     buffers.scripts,
                     buffers.hits,
                     localSelection,
                     buffers.baselines,
                     localCollapseBaseline,
-                    m_collapseXOffset);
+                    collapseXOffset);
             }
 
             // Over the glyphs rather than under them: a selection band is filled by the draw
@@ -1087,10 +1102,11 @@ namespace ClaFi
             return {};
 
         const ParagraphLayoutState& p = m_paragraphs[paragraphAtY(pt.y)];
-        FloatPoint localPt = { pt.x - p.bounds.left, pt.y - p.bounds.top };
+        const float shift = paragraphOffset(p);
+        const FloatPoint localPt = { pt.x - p.bounds.left - shift, pt.y - p.bounds.top };
         bool isTrailing = false;
         std::size_t localPos = p.monoFont
-            ? p.monoFont->hitTest(paragraphText(p), localPt.x - monoOffset(p), &isTrailing)
+            ? p.monoFont->hitTest(paragraphText(p), localPt.x, &isTrailing)
             : nativeOf(p).hitTestPoint(localPt, &isTrailing);
 
         // Map DWrite char index + trailing half to a Logical Insertion Point
@@ -1125,10 +1141,11 @@ namespace ClaFi
             return std::nullopt;
 
         const FloatPoint localPt = { pt.x - p.bounds.left, pt.y - p.bounds.top };
+        const float offset = paragraphOffset(p);
         bool isTrailing = false;
         const std::size_t localPos = p.monoFont
-            ? p.monoFont->hitTest(paragraphText(p), localPt.x - monoOffset(p), &isTrailing)
-            : nativeOf(p).hitTestPoint(localPt, &isTrailing);
+            ? p.monoFont->hitTest(paragraphText(p), localPt.x - offset, &isTrailing)
+            : nativeOf(p).hitTestPoint({ localPt.x - offset, localPt.y }, &isTrailing);
         if (localPos >= p.textLength)
             return std::nullopt;
 
@@ -1382,7 +1399,8 @@ namespace ClaFi
         m_shapedWidth = maxW;
         m_shapedHeight = currentY;
         m_builtBoundsX = breakAt;
-        m_placedWidth = breakAt;
+        // Placed by ensurePlacement, which looks at every paragraph once after a shaping.
+        m_placedWidth = -1.0f;
         m_layoutValid = true;
         m_verticalValid = false;
     }
@@ -1484,38 +1502,38 @@ namespace ClaFi
         m_verticalValid = true;
     }
 
-    // A native layout places its lines inside the width it was told about, so a right-aligned or
-    // centred run keeps the offset the width it was built at gave it until this says otherwise.
-    // Only the placement moves: a wrapped text is never placed wider than its lines were broken
-    // at, so none of them can join and none has to split - see acceptsWidth and placementWidth.
+    // Most paragraphs are placed by paragraphOffset as they are asked about, and this tells the
+    // native layouts of the rest. See TextEngine-Types#paragraph-placement
     void TextLayout::ensurePlacement()
     {
         const float width = placementWidth();
         if (m_placedWidth == width)
             return;
 
-        for (const ParagraphLayoutState& p : m_paragraphs)
-        {
-            // A leading line sits at the leading edge whatever the box comes to, so it has no
-            // offset to recompute and nothing to be told. Telling it anyway is not free: every
-            // setter discards the analysis the build paid for, and the GetMetrics inside
-            // setMaxWidth then pays for it again - once per paragraph, for a placement that
-            // cannot have moved.
-            //
-            // Nothing setMaxWidth writes is missed. The alignment it resolves again is LEADING for
-            // a Left paragraph whatever the box, and the metrics cannot have moved, because
-            // acceptsWidth admits only a width that re-breaks no line.
-            if (p.alignment == TextAlign::Left)
-                continue;
-            // A paragraph on cells reads the width as it is asked - see monoOffset - and one whose
-            // native layout was given back is told the width when it is built again.
-            if (!p.nativeLayout)
-                continue;
-
-            p.nativeLayout->setMaxWidth(std::max(1.0f, width - p.indent));
-        }
-
+        for (ParagraphLayoutState& p : m_paragraphs)
+            alignParagraph(p, width);
         m_placedWidth = width;
+    }
+
+    // A PARAGRAPH ITS LAYOUT ALIGNED IN ONE WIDTH MOVES INTO ANOTHER AS A WHOLE. Its lines were
+    // broken at the width they are aligned in, and the width they are placed in is never wider
+    // than that nor narrower than the widest of them - see acceptsWidth and placementWidth - so
+    // every line moves by the same amount. Justified lines are stretched to the width, which no
+    // move reproduces, and those alone are told.
+    void TextLayout::alignParagraph(ParagraphLayoutState& p, const float width)
+    {
+        if (p.alignment != TextAlign::Justified || p.alignedWidth == 0.0f)
+            return;
+
+        const float placed = std::max(1.0f, width - p.indent);
+        if (p.alignedWidth == placed)
+            return;
+        // Telling a layout is not free: every setter discards the analysis the build paid for,
+        // and the GetMetrics inside setMaxWidth pays for it again. One given back is told when
+        // it is built again - see rebuiltNative.
+        if (p.nativeLayout)
+            p.nativeLayout->setMaxWidth(placed);
+        p.alignedWidth = placed;
     }
 
     float TextLayout::breakWidth() const
@@ -1569,29 +1587,64 @@ namespace ClaFi
         return static_cast<std::size_t>(below - m_paragraphs.begin());
     }
 
-    // The same rule the native layouts apply: a line wider than the box has no room left to be
-    // moved in, and moving it anyway carries its start off the leading edge where the clip
-    // takes it. Measured without the trailing whitespace, which is what a line is allowed to
-    // overhang with.
-    float TextLayout::monoOffset(const ParagraphLayoutState& p) const
+    // ONE LINE, OR A ROW OF CELLS, IS PLACED HERE from the leading edge its layout left it at. A
+    // paragraph its layout aligned moves as a whole, from the width it was aligned in to the one
+    // it is placed in. See TextEngine-Types#paragraph-placement
+    float TextLayout::paragraphOffset(const ParagraphLayoutState& p) const
     {
-        if (p.alignment == TextAlign::Left)
+        if (p.alignment == TextAlign::Left || p.lineCount == 0)
+            return 0.0f;
+        if (p.alignedWidth == 0.0f)
+            return lineLead(p, linesOf(p).front().width);
+        // Too wide for the width it was aligned in, and so for the one it is placed in.
+        if (p.inkWidth > p.alignedWidth + k_alignTolerance)
             return 0.0f;
 
-        const float box = std::max(1.0f, placementWidth() - p.indent);
-        const float ink = linesOf(p).front().width;
-        if (ink > box + 0.1f)
+        const float placed = std::max(1.0f, placementWidth() - p.indent);
+        switch (p.alignment)
+        {
+            case TextAlign::Center:
+                return (placed - p.alignedWidth) / 2.0f;
+            case TextAlign::Right:
+                return placed - p.alignedWidth;
+            case TextAlign::Left:
+            case TextAlign::Justified:
+                break;
+        }
+        return 0.0f;
+    }
+
+    // The rule the native layouts apply: a paragraph wider than its width has no room left to be
+    // moved in, and moving it anyway carries its start off the leading edge where the clip takes
+    // it. Measured without the trailing whitespace, which is what a line is allowed to overhang
+    // with. A justified line starts at the leading edge, stretched or the last.
+    float TextLayout::lineLead(const ParagraphLayoutState& p, const float lineWidth) const
+    {
+        const float placed = std::max(1.0f, placementWidth() - p.indent);
+        if (p.inkWidth > placed + k_alignTolerance)
             return 0.0f;
 
         switch (p.alignment)
         {
             case TextAlign::Center:
-                return (box - ink) / 2.0f;
+                return (placed - lineWidth) / 2.0f;
             case TextAlign::Right:
-                return box - ink;
+                return placed - lineWidth;
             case TextAlign::Left:
             case TextAlign::Justified:
                 break;
+        }
+        return 0.0f;
+    }
+
+    float TextLayout::lineWidthAt(const ParagraphLayoutState& p, const float baseline) const
+    {
+        float top = 0.0f;
+        for (const NativeLineMetrics& line : linesOf(p))
+        {
+            if (std::abs(top + line.baseline - baseline) < 0.5f)
+                return line.width;
+            top += line.height;
         }
         return 0.0f;
     }
@@ -1600,7 +1653,11 @@ namespace ClaFi
         bool trailing)
     {
         if (!p.monoFont)
-            return nativeOf(p).getCharRect(localPos, trailing);
+        {
+            FloatRect rect = nativeOf(p).getCharRect(localPos, trailing);
+            rect.offset(FloatPoint{ paragraphOffset(p), 0.0f });
+            return rect;
+        }
 
         // The position after the last character is the trailing edge of that character, and an
         // empty paragraph has one edge, which is both of its ends.
@@ -1608,7 +1665,7 @@ namespace ClaFi
         std::size_t edge = std::min(localPos, text.size());
         if (trailing && edge < text.size())
             ++edge;
-        const float x = monoOffset(p) + p.monoFont->cellLeft(text, edge);
+        const float x = paragraphOffset(p) + p.monoFont->cellLeft(text, edge);
         return { x, 0.0f, x, p.monoFont->lineHeight() };
     }
 
@@ -1697,16 +1754,17 @@ namespace ClaFi
     void TextLayout::appendInkAcross(const ParagraphLayoutState& paragraph, TextRange localRange,
         float bandTop, float bandBottom, std::vector<Graphics::InkExtent>& result)
     {
-        if (!paragraph.monoFont)
+        const std::size_t first = result.size();
+        if (paragraph.monoFont)
+        {
+            paragraph.monoFont->appendInkAcross(paragraphText(paragraph), localRange, bandTop,
+                bandBottom, result);
+        }
+        else
         {
             nativeOf(paragraph).appendInkAcross(localRange, bandTop, bandBottom, result);
-            return;
         }
-
-        const std::size_t first = result.size();
-        paragraph.monoFont->appendInkAcross(paragraphText(paragraph), localRange, bandTop,
-            bandBottom, result);
-        const float offset = monoOffset(paragraph);
+        const float offset = paragraphOffset(paragraph);
         for (std::size_t i = first; i != result.size(); ++i)
         {
             result[i].left += offset;
@@ -1844,6 +1902,8 @@ namespace ClaFi
                     .alignment = para.alignment,
                     .lineStart = lines.size() - 1,
                     .lineCount = 1,
+                    .inkWidth = extent.inkWidth,
+                    .alignedWidth = 0.0f,
                 };
             }
         }
@@ -1976,10 +2036,20 @@ namespace ClaFi
 
         // After the last build, which would have dropped it, and in EVERY phase: the cache hands
         // the layout a calculate pass built to the paint that follows, so a placement left to the
-        // paint phase never reaches a text the align pass saw first. A Left paragraph costs
-        // nothing here - the native layout answers an alignment it already applies without a
-        // setter - and the size read above is the same wherever the lines sit.
-        nativeLayout->setAlignment(para.alignment);
+        // paint phase never reaches a text the align pass saw first.
+        //
+        // ONLY A PARAGRAPH OF SEVERAL LINES IS TOLD, because only its layout can move each of its
+        // lines. One line is placed by paragraphOffset and costs no setter.
+        const std::size_t lineCount = lines.size() - lineStart;
+        float alignedWidth = 0.0f;
+        if (para.alignment != TextAlign::Left && lineCount > 1)
+        {
+            nativeLayout->setAlignment(para.alignment);
+            alignedWidth = availableWidth;
+        }
+        float inkWidth = 0.0f;
+        for (std::size_t line = lineStart; line != lines.size(); ++line)
+            inkWidth = std::max(inkWidth, lines[line].width);
         return {
             .nativeLayout = std::move(nativeLayout),
             .monoFont = nullptr,
@@ -1989,7 +2059,9 @@ namespace ClaFi
             .indent = paraIndent,
             .alignment = para.alignment,
             .lineStart = lineStart,
-            .lineCount = lines.size() - lineStart,
+            .lineCount = lineCount,
+            .inkWidth = inkWidth,
+            .alignedWidth = alignedWidth,
         };
     }
 
@@ -2022,9 +2094,10 @@ namespace ClaFi
         if (!state.nativeLayout)
             unreachable("A paragraph shaped natively came out on cells when it was built again");
 
-        // The width ensurePlacement told the held layouts about since the text was shaped.
-        if (m_placedWidth != m_builtBoundsX && style.alignment != TextAlign::Left)
-            state.nativeLayout->setMaxWidth(std::max(1.0f, m_placedWidth - state.indent));
+        // The width alignParagraph told the held layout since the text was shaped.
+        const float alignedWidth = m_paragraphs[paragraph].alignedWidth;
+        if (alignedWidth != state.alignedWidth)
+            state.nativeLayout->setMaxWidth(alignedWidth);
         return std::move(state.nativeLayout);
     }
 

@@ -296,8 +296,8 @@ file costs that line and no other.
 A wrapping layout keeps a paragraph on cells while its ink fits the width it breaks at: a
 line that fits is never broken, so nothing about line breaking is decided here, and a line
 that does not fit is broken natively. Justified is shaped natively; Left, Center and Right
-are an offset inside the placement box, computed as the paragraph is drawn or hit rather
-than told to a layout, so a box that moves costs nothing.
+are an offset inside the placement width, as for a native paragraph of one line - see
+Paragraph placement.
 
 What it buys is the shaping: a document of source is one pass over its characters instead of
 a native layout per paragraph, and its footprint is a paragraph record per line. The pixels
@@ -306,6 +306,31 @@ monospace run at column times advance already, the tab stops are the same, and t
 reach the same draw primitive - with one exception: a glyph per character means a face's
 ligatures are not applied, which Consolas and DejaVu Sans Mono do not have and Cascadia Code
 does.
+
+## Paragraph placement
+
+Where a paragraph's lines stand across the width it is placed in - the box, a stated break width,
+or the block an anchor moves (see UI-Types#horizontaltextanchor). Moving them there shapes nothing
+and, but for justified lines, tells a native layout nothing.
+
+ONE LINE, OR A ROW OF CELLS, IS PLACED BY THE LAYOUT. The native layout is never told the alignment
+and holds the line at the leading edge; paragraphOffset moves it by the alignment's share of the
+room the line leaves in the placement width, or not at all where the paragraph is wider than that
+width. Most text is this: a label, a caption, a cell, every text that does not wrap.
+
+SEVERAL LINES ARE ALIGNED BY THE NATIVE LAYOUT, once, in the width they were broken at
+(alignedWidth), because only it can place each line. It is told after its metrics are read - see
+shapeParagraph - and moved as a whole from there: half the difference between the two widths for
+Center, all of it for Right. That holds because the lines fit both widths or neither: a wrapped
+text is never placed wider than it was broken at nor narrower than its widest line - see
+TextLayout::acceptsWidth and placementWidth.
+
+JUSTIFIED LINES ARE STRETCHED TO THE WIDTH, which no move reproduces, so a justified paragraph of
+several lines is told every width it is placed in (alignParagraph) - the one setMaxWidth left.
+
+Every reader of the native layout's coordinates - the draw, both hit tests, charRect and the ink a
+link's underline is cut around - adds paragraphOffset. A collapse line a layout holds at the
+leading edge is moved by the draw's origin, since the layout moves no line left of where it put it.
 
 ## HeldLayouts
 

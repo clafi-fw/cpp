@@ -54,8 +54,7 @@ namespace ClaFi
         // Where finished lines sit inside the box, which is not what they are shaped from - so it
         // is set on a built layout the way a colour is, and a rebuild states it again.
         virtual void setAlignment(TextAlign) = 0;
-        // The box the finished lines are placed in. Never wider than the width they were built at,
-        // so the lines it moves are the lines that were already there.
+        // The width the finished lines are aligned in. See TextEngine-Types#paragraph-placement
         virtual void setMaxWidth(float availableWidth) = 0;
         virtual NativeParagraphMetrics getMetrics() const = 0;
         // The lines of the last build, appended to the caller's pool rather than answered in a
@@ -159,6 +158,9 @@ namespace ClaFi
         // whenever the height moves, which shapes nothing.
         std::size_t lineStart;
         std::size_t lineCount;
+        float inkWidth; // the widest line, without its trailing whitespace
+        // The width its layout aligns lines in, or zero. See TextEngine-Types#paragraph-placement
+        float alignedWidth;
     };
 
     // The paragraphs of a layout holding their native layout. See TextEngine-Types
@@ -297,9 +299,10 @@ namespace ClaFi
         // Where those lines stand in the box: the collapse, the fades, and the size the text came
         // to. Runs on its own when only the height has moved.
         void ensureVerticalFit();
-        // Tells the built lines the width they are placed in, when that is not the one they were
-        // broken at. Breaks nothing again - see acceptsWidth.
+        // Places every paragraph in the width placementWidth answers. Breaks nothing again.
         void ensurePlacement();
+        // Tells a justified paragraph the width its lines are stretched to.
+        void alignParagraph(ParagraphLayoutState&, float width);
         // The width a shaping breaks at: the stated one, or the box where none is stated.
         [[nodiscard]] float breakWidth() const;
         // The width the lines are PLACED in: the box, the stated break width, or the block.
@@ -314,9 +317,12 @@ namespace ClaFi
         // The paragraph a y falls in: the first whose bottom lies below it, and the last where
         // none does. A binary search, since the bottoms are in order.
         [[nodiscard]] std::size_t paragraphAtY(float y) const;
-        // Where a paragraph on cells stands inside the placement box: its alignment, applied
-        // as it is asked for rather than told to a native layout.
-        [[nodiscard]] float monoOffset(const ParagraphLayoutState&) const;
+        // How far a paragraph's lines stand right of where its layout put them.
+        [[nodiscard]] float paragraphOffset(const ParagraphLayoutState&) const;
+        // Where a line of that width starts across the width its paragraph is placed in.
+        [[nodiscard]] float lineLead(const ParagraphLayoutState&, float lineWidth) const;
+        // The width of the line standing on a baseline, in the paragraph's own coordinates.
+        [[nodiscard]] float lineWidthAt(const ParagraphLayoutState&, float baseline) const;
         // A character's leading or trailing edge as a caret rect, in the paragraph's own
         // coordinates, whichever way the paragraph was laid out.
         [[nodiscard]] FloatRect charRect(const ParagraphLayoutState&, std::size_t localPos,
@@ -379,8 +385,7 @@ namespace ClaFi
         float m_shapedHeight{ 0.0f };
         // The width they were broken at, which is the other end of what acceptsWidth answers over.
         float m_builtBoundsX{ 0.0f };
-        // The width the native layouts were last told to place their lines in.
-        float m_placedWidth{ -1.0f };
+        float m_placedWidth{ -1.0f }; // what ensurePlacement last placed in, or -1 after a shaping
         float m_calcWidth{ 0.0f };
         float m_calcHeight{ 0.0f };
         std::vector<float> m_globalBaselinesToFade;
