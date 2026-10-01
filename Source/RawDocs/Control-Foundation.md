@@ -295,7 +295,9 @@ controller and not the other: the hover moves under a still pointer, when a wind
 it or a hit-test follows a scroll, and a click lands the focus with the pointer's hint already
 standing for it. When the mouse takes over, the hover has its say at once, wherever the pointer
 was left - unless it rests on the very item the focus is on, where nothing changed hands. A hint
-already up about the control pointed at is left standing.
+already up is left standing while it is still the answer the control pointed at would be given -
+its own, or that of a control it stands in: crossing children that have no hint of their own is
+not leaving the control that has one.
 
 AT MOST ONE IS IN PLAY. Which form's hint that is follows the control pointed at. The calls
 that are about whatever is on screen rather than about a form - the user pressed a key, a

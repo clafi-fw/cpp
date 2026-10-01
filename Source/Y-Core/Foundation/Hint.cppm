@@ -57,6 +57,8 @@ namespace ClaFi
         [[nodiscard]] static Control* pointedControl();
         // The control a hint is about has changed - to pointedControl(), or to nothing.
         static void pointedControlChanged();
+        // Whether a hint up about a control this one stands in is still the answer this one gets.
+        [[nodiscard]] static bool answersFor(Control&);
         void showOrHide(Control* = nullptr);
         void startWaiting(MilliSeconds);
         void updatePosition(const FloatRect& anchorRect, bool forceRepaint);

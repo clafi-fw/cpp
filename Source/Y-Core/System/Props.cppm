@@ -29,8 +29,9 @@ namespace ClaFi::Props
     }
 
 #if 0
-    // usage example. A plain property type - an event handler does not go through here, it
-    // arrives as OnEvent and EventComponent's constructor connects it.
+    // usage example.
+    // A plain property type - an event handler does not go through here,
+    // it arrives as OnEvent and EventComponent's constructor connects it.
     Props::ifThereIs<Padding>([&](const auto& prop) {
         // Here use the prop;
         }, std::forward<Args>(args)...);

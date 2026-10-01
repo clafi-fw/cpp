@@ -145,6 +145,10 @@ namespace ClaFi
         // whose hint was put up without the wait.
         if (pointed && control() == pointed)
             return;
+        // Nor does one about a control the pointer has gone further into: crossing children that
+        // leave the answer to their container is not leaving the container.
+        if (pointed && answersFor(*pointed))
+            return;
 
         // The user has gone to something else, so the window goes - and the message goes with
         // it rather than waiting to be pointed at again, which is what makes a message a thing
@@ -180,6 +184,29 @@ namespace ClaFi
         // window that has to still be there - crossing from one window into another is not that
         // gesture, and answers with the full wait.
         hint.startWaiting(hint.stillVisible() ? MilliSeconds{ 110 } : MilliSeconds{ 1000 });
+    }
+
+    bool Hint::answersFor(Control& pointed)
+    {
+        const Control* shown = control();
+        Control* it = pointed.parent();
+        while (it && it != shown)
+            it = it->parent();
+        if (!it)
+            return false;
+        // Asked as showOrHide asks it. A control between them with a hint of its own says that
+        // instead, and the one the hint is about may answer differently from where the pointer is.
+        const HintForm& form = *s_current->m_form;
+        Text text{};
+        for (it = &pointed; it; it = it->parent())
+        {
+            GetHintEvent event{ form.context(), *it, text, EventPhase::Calculate };
+            if (!ContextMessage::answer(*it, event))
+                it->nestedGetHint(event);
+            if (it == shown || !text.empty())
+                break;
+        }
+        return it == shown && text == form.measuredText();
     }
 
     void Hint::startWaiting(MilliSeconds delay)
