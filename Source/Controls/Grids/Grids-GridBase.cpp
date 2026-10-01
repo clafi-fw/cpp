@@ -352,18 +352,19 @@ namespace ClaFi::Controls::Grids
         row->doGetCellText(*column, text);
 
         // Left, deliberately: paintCell lays a cell's text out left-anchored in that same rect,
-        // and what moves it to the other end of the column is the TextAlign doGetCellText puts
-        // at the head of the text. The editor takes both - the rect as its minimum width, and
-        // the text - so it reproduces the same layout whichever way the column reads.
+        // and what moves it to the other end of the column is the alignment in the column's
+        // format. The editor takes both - the rect as its minimum width, and the format - so it
+        // reproduces the same layout whichever way the column reads.
         const EditTarget target{
-            *row,
-            textRect,
-            HorizontalTextAnchor::Left,
+            .control = *row,
+            .textRect = textRect,
+            .textAnchor = HorizontalTextAnchor::Left,
             // As wide as the grid can show and no wider. A value longer than its column is
             // worth seeing whole, which is half of why the editor is a window of its own; a
             // window wider than the grid it belongs to is not.
-            { visibleRectInForm().width(), 0.0f },
-            readOnly ? ReadOnly::Yes : ReadOnly::No
+            .maxTextSize = { visibleRectInForm().width(), 0.0f },
+            .readOnly = readOnly ? ReadOnly::Yes : ReadOnly::No,
+            .textFormat = &row->cellTextFormat(*column),
         };
         InPlaceEdit::run(target, text, [this, row, column](AcceptEditEvent& event){
             // This runs while the editor is up, on the stack of the loop it is pumping, so the

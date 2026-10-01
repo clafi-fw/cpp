@@ -23,6 +23,11 @@ namespace ClaFi::Controls::Grids
         descriptor().owner().getHeaderCellText({ *this, column }, text);
     }
 
+    const TextFormat& GridHeader::cellTextFormat(const Column& column) const
+    {
+        return column.headerTextFormat();
+    }
+
     void GridHeader::adjustPaint(AdjustPaintEvent& event)
     {
         RowBase::adjustPaint(event);

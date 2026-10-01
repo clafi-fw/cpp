@@ -28,6 +28,8 @@ namespace ClaFi::Controls::Grids
         bool hasContent(const Column& column) const override { return column.showInHeader() == ShowInHeader::Yes; }
         [[nodiscard]] bool alwaysDrawGridLines() const override { return true; }
         void getCellText(const Column&, Text&) override;
+        // The column's alignment alone: a header names the column and holds none of its values.
+        [[nodiscard]] const TextFormat& cellTextFormat(const Column&) const override;
         void adjustPaint(AdjustPaintEvent&) override;
         void paintSurface(PaintEvent&) override;
     };

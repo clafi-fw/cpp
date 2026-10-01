@@ -99,6 +99,8 @@ namespace ClaFi::Controls::Grids
         void traverseLanes(FloatPoint origin, const LaneVisitor&) const;
         //
         virtual void getCellText(const Column&, Text&);
+        // What this row's cell in that column is laid out over - the column's cell format.
+        [[nodiscard]] virtual const TextFormat& cellTextFormat(const Column&) const;
         // The hint for one cell, asked of this row's listeners and then of the grid - the pair
         // getCellText asks. Raised by nestedGetHint for the cell under the pointer.
         virtual void getCellHint(GetCellHintEvent&);

@@ -124,6 +124,10 @@ namespace ClaFi::Controls::Grids
     public:
         [[nodiscard]] std::size_t index() const { return m_index; }
         [[nodiscard]] const Text& text() const { return m_text; }
+        // What the column's cells are laid out over, its alignment included. See Grids#column
+        [[nodiscard]] const TextFormat& cellTextFormat() const { return m_cellTextFormat; }
+        // What the header names the column over: the alignment alone. See Grids#column
+        [[nodiscard]] const TextFormat& headerTextFormat() const { return m_headerTextFormat; }
         //
         [[nodiscard]] float neededWidth() const { return m_neededWidth; }
         ColumnCollection* subColumns() const { return m_subColumns; }
@@ -170,6 +174,8 @@ namespace ClaFi::Controls::Grids
         ColumnCollection* m_subColumns{ nullptr };
         //
         Text m_text;
+        TextFormat m_cellTextFormat{};
+        TextFormat m_headerTextFormat{};
         //
         float m_designWidth;
         // all bellow is calculated
@@ -268,6 +274,19 @@ namespace ClaFi::Controls::Grids
         Props::ifThereIs<const wchar_t*>([&](const auto& p) {
             m_text << p;
             }, std::forward<Args>(args)...);
+
+        // The alignment first, so one a TextFormat states stands over it. Left is what a text
+        // runs on where nothing is said, so it is not said.
+        if (textAlign() != TextAlign::Left)
+            m_cellTextFormat << textAlign();
+        Props::ifThereIs<TextFormat>([&](const TextFormat& format) {
+            m_cellTextFormat << format;
+            }, args...);
+        for (const Text::Marker& marker : m_cellTextFormat.markers())
+        {
+            if (const TextAlign* align = std::get_if<TextAlign>(&marker.second))
+                m_headerTextFormat << *align;
+        }
     }
 
     // ColumnCollection

@@ -146,7 +146,7 @@ namespace ClaFi::Diagnostic
                 writeWindowHint(event);
             } },
             Columns{
-                Column{ Tag{ WindowColumn::Name } },
+                Column{ Tag{ WindowColumn::Name }, TextFormat{ InkGrade::Muted } },
                 Column{ Tag{ WindowColumn::Value }, ColumnWidthMode::Fill, MovingText::Yes }
             },
             Rows{
@@ -169,16 +169,17 @@ namespace ClaFi::Diagnostic
             } },
             Columns{
                 Column{ Tag{ Reading::Stats }, Text{ L"Stats" }, TextAlign::Right,
-                    ColumnWidthMode::Fixed, ColumnWidth{ k_statsWidth }, MovingText::Yes },
+                    TextFormat{ TextStyleId::Code }, ColumnWidthMode::Fixed,
+                    ColumnWidth{ k_statsWidth }, MovingText::Yes },
                 Column{ Tag{ Reading::Last }, Text{ L"Last" }, TextAlign::Right,
-                    ColumnWidthMode::Fixed, ColumnWidth{ k_readingWidth }, MovingText::Yes,
-                    VerticalTextAnchor::Center },
+                    TextFormat{ TextStyleId::Code }, ColumnWidthMode::Fixed,
+                    ColumnWidth{ k_readingWidth }, MovingText::Yes, VerticalTextAnchor::Center },
                 Column{ Tag{ Reading::Worst }, Text{ L"Worst" }, TextAlign::Right,
-                    ColumnWidthMode::Fixed, ColumnWidth{ k_readingWidth }, MovingText::Yes,
-                    VerticalTextAnchor::Center },
+                    TextFormat{ TextStyleId::Code }, ColumnWidthMode::Fixed,
+                    ColumnWidth{ k_readingWidth }, MovingText::Yes, VerticalTextAnchor::Center },
                 Column{ Tag{ Reading::Best }, Text{ L"Best" }, TextAlign::Right,
-                    ColumnWidthMode::Fixed, ColumnWidth{ k_readingWidth }, MovingText::Yes,
-                    VerticalTextAnchor::Center }
+                    TextFormat{ TextStyleId::Code }, ColumnWidthMode::Fixed,
+                    ColumnWidth{ k_readingWidth }, MovingText::Yes, VerticalTextAnchor::Center }
             },
             Header{},
             Rows{
@@ -371,7 +372,7 @@ namespace ClaFi::Diagnostic
     void FpsPage::writeWindowName(GetCellTextEvent& event) const
     {
         const WindowRow row = event.row().tag().get<WindowRow>();
-        event.text() << InkGrade::Muted << k_windowRowNames[static_cast<std::size_t>(row)];
+        event.text() << k_windowRowNames[static_cast<std::size_t>(row)];
     }
 
     void FpsPage::writeWindowValue(GetCellTextEvent& event) const
@@ -445,11 +446,11 @@ namespace ClaFi::Diagnostic
         const std::wstring_view unit = value ? spec.unit : std::wstring_view{};
         if (reading != Reading::Stats)
         {
-            event.text() << Fmt{ L"[code]{}[color muted]{}[/color]", number, unit };
+            event.text() << Fmt{ L"{}[color muted]{}[/color]", number, unit };
             return;
         }
         event.text() << Fmt{
-            L"[code][size 18]{}[/size][color muted]{}[/color]\n"
+            L"[size 18]{}[/size][color muted]{}[/color]\n"
             L"[subbody][color muted]{}[/color]",
             number, unit, spec.name
         };

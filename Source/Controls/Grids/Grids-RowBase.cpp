@@ -27,9 +27,10 @@ namespace ClaFi::Controls::Grids
         // put in the cache - see MovingText. Wrapped, as the engine's own drawText shapes a
         // cell; nothing here is editable. The text has to outlive the layout, which names it.
         void shapeAlone(TextLayout& layout, const FormContext& formContext, const Text& text,
-            MaxSize bounds, EventPhase phase)
+            const TextFormat& format, MaxSize bounds, EventPhase phase)
         {
             layout.setEventPhase(phase);
+            layout.setFormat(&format);
             layout.setText(text);
             layout.setWrap(true);
             layout.setBoundsAndScale(bounds, formContext.scaleFactor());
@@ -77,14 +78,17 @@ namespace ClaFi::Controls::Grids
     {
         Text cellText{};
         doGetCellText(column, cellText);
+        const TextFormat& format = cellTextFormat(column);
         MaxSize maxSize = { static_cast<float>(contentBoundsW), k_maxFloat };
         if (column.movingText() == MovingText::Yes)
         {
             TextLayout layout;
-            shapeAlone(layout, cellMetrics.formContext(), cellText, maxSize, EventPhase::Calculate);
+            shapeAlone(layout, cellMetrics.formContext(), cellText, format, maxSize,
+                EventPhase::Calculate);
             return layout.calculatedDimensions();
         }
-        ScaledDimensions result = textEngine().calculateText(cellMetrics.formContext(), cellText, maxSize);
+        ScaledDimensions result = textEngine().calculateText(cellMetrics.formContext(), cellText,
+            maxSize, false, true, &format);
         return result;
     }
 
@@ -207,6 +211,11 @@ namespace ClaFi::Controls::Grids
         }
     }
 
+    const TextFormat& RowBase::cellTextFormat(const Column& column) const
+    {
+        return column.cellTextFormat();
+    }
+
     void RowBase::getCellHint(GetCellHintEvent& event)
     {
         emitEvent(event);
@@ -235,13 +244,15 @@ namespace ClaFi::Controls::Grids
         textBounds.left += cellLead(column).x;
         Text text;
         doGetCellText(column, text);
+        const TextFormat& format = cellTextFormat(column);
         const TextAnchor anchor = { column.verticalTextAnchor(), HorizontalTextAnchor::Left };
         if (column.movingText() == MovingText::Yes)
         {
             if (text.plainText().empty())
                 return;
             TextLayout layout;
-            shapeAlone(layout, paintEvent.formContext(), text, textBounds.dimensions(), EventPhase::Paint);
+            shapeAlone(layout, paintEvent.formContext(), text, format, textBounds.dimensions(),
+                EventPhase::Paint);
             layout.draw(
                 paintEvent.controlContext(),
                 anchoredOrigin(textBounds, layout.calculatedDimensions(), anchor),
@@ -256,7 +267,9 @@ namespace ClaFi::Controls::Grids
             text,
             anchor,
             nullptr,
-            textRenderMode()
+            textRenderMode(),
+            true,
+            &format
         );
     }
 
@@ -437,9 +450,6 @@ namespace ClaFi::Controls::Grids
             return;
 
         Text cellText;
-        // doGetCellText rather than getCellText: the alignment it writes at the head of the text
-        // is one of the layout's inputs, so the question is asked over the text the cell was
-        // drawn from.
         doGetCellText(*hoveredColumn, cellText);
         CalculatedDimensions drawn{};
         const bool trimmed = isCellTextTrimmed(event.formContext(), *hoveredColumn, cellText,
@@ -451,6 +461,7 @@ namespace ClaFi::Controls::Grids
         // lvalue item list shares that list by reference, and this one's would be the local
         // above. Reached only once a hint is going up, so the second gather costs a hover.
         doGetCellText(*hoveredColumn, event.text);
+        event.format = cellTextFormat(*hoveredColumn);
         // THE HINT STANDS ON THE GLYPHS, NOT ON THE BOX THEY WERE GIVEN. The column's vertical
         // anchor moves the block inside that box - paintCell states the same anchor - and the
         // placement lands the hint's own first glyph on this rect's top left. The width is the
@@ -810,24 +821,24 @@ namespace ClaFi::Controls::Grids
     void RowBase::doGetCellText(const Column& column, Text& text)
     {
         text.clear();
-        text << column.textAlign();
         getCellText(column, text);
     }
 
     bool RowBase::isCellTextTrimmed(const FormContext& formContext, const Column& column,
         const Text& text, MaxSize bounds, CalculatedDimensions& drawn)
     {
+        const TextFormat& format = cellTextFormat(column);
         if (column.movingText() == MovingText::No)
         {
-            drawn = textEngine().calculateText(formContext, text, bounds);
-            return textEngine().isTextTrimmed(formContext, text, bounds);
+            drawn = textEngine().calculateText(formContext, text, bounds, false, true, &format);
+            return textEngine().isTextTrimmed(formContext, text, bounds, true, &format);
         }
 
         // A moving cell's layout is never put in the cache, so the block is read off the one
         // shaped here. Asking the engine to measure it would file a text that changes every
         // frame - see shapeAlone and MovingText.
         TextLayout layout;
-        shapeAlone(layout, formContext, text, bounds, EventPhase::Paint);
+        shapeAlone(layout, formContext, text, format, bounds, EventPhase::Paint);
         drawn = layout.calculatedDimensions();
         return layout.isTrimmed();
     }

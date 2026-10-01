@@ -117,8 +117,15 @@ the pointer. A cell nobody wrote for falls back to repeating the words its colum
 Column{ Tag{ ColumnTag::Hue }, Text{ L"Hue" }, Column{ ... }, Column{ ... } }
 
 Props are forwarded verbatim to ColumnCollection::add(), so everything that
-works there today (Tag, Text, ShowInHeader, ColumnWidthMode, widths, TextAlign)
-works here unchanged. Nested Column nodes become sub-columns.
+works there today (Tag, Text, ShowInHeader, ColumnWidthMode, widths, TextAlign,
+TextFormat) works here unchanged. Nested Column nodes become sub-columns.
+
+A column's cells are laid out over its TextFormat, with its TextAlign ahead of it - so a
+cell's writer states the value and not the look every cell of the column shares, and an
+alignment the format states stands over the TextAlign. The header takes the alignment
+alone: it names the column and holds none of its values. The format reaches a cell's hint
+and its in-place editor the way it reaches the paint, and none of it is written into the
+cell's text - see Control-Foundation#text-format.
 
 The Tag is read but not consumed: the design uses it to resolve cells and to
 check uniqueness, and add() receives it like any other property.
