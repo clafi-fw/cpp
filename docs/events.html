@@ -288,6 +288,10 @@
         .manuals-link { font-size: 0.95rem; color: #666; text-decoration: none; }
         .manuals-link:hover { color: var(--accent-color); }
         .manuals-link::before { content: "\2190\00a0"; }
+        .page-end { display: flex; justify-content: space-between; max-width: 900px; margin: 0 auto 2rem; padding: 0 2rem; }
+        .top-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .top-link:hover { color: var(--accent-color); }
+        .top-link::before { content: "\2191\00a0"; }
         header .manuals-link-line { margin: 0.2rem 0 0; }
     </style>
 </head>
@@ -716,6 +720,10 @@ form-&gt;<span class="fn">onClose</span>([](<span class="tp">FormCloseEvent</spa
             text. Handlers never go through them: they arrive as <code>OnEvent</code> and
             <code>EventComponent</code>'s constructor connects them.</div>
         </main>
+        <div class="page-end">
+            <a class="manuals-link" href="index.html">All manuals</a>
+            <a class="top-link" href="#top">Top</a>
+        </div>
     </div>
 
     <!-- Collapsible Sidebar Logic Script -->

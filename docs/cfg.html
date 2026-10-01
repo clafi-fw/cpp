@@ -202,6 +202,10 @@
         .manuals-link { font-size: 0.95rem; color: #666; text-decoration: none; }
         .manuals-link:hover { color: var(--accent-color); }
         .manuals-link::before { content: "\2190\00a0"; }
+        .page-end { display: flex; justify-content: space-between; }
+        .top-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .top-link:hover { color: var(--accent-color); }
+        .top-link::before { content: "\2191\00a0"; }
         header .manuals-link-line { margin: 0.2rem 0 0; }
     </style>
 </head>
@@ -240,7 +244,7 @@
                     <span class="m" style="font-family: 'Cascadia Code', monospace; font-size: 0.95em; color: var(--syntax-marker); margin-right: 8px;">@</span>Loaded and saved by: the Dom's <code>FileFormat::ClaFi</code> - see <a href="dom.html#supported-formats" style="color: inherit;">Dom</a>
                 </div>
                 <div>
-                    <span class="m" style="font-family: 'Cascadia Code', monospace; font-size: 0.95em; color: var(--syntax-marker); margin-right: 8px;">@</span>Sibling: Fmt, the text language - see <a href="text.html#fmt" style="color: inherit;">TextEngine</a>
+                    <span class="m" style="font-family: 'Cascadia Code', monospace; font-size: 0.95em; color: var(--syntax-marker); margin-right: 8px;">@</span>Sibling: Fmt, the text language - see <a href="text.html#fmt" style="color: inherit;">Writing Text</a>
                 </div>
             </div>
             <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
@@ -670,6 +674,10 @@
         <footer>
             ClaFi configuration format - v1.0 Standard - Simple, Escapeless Data.
         </footer>
+        <div class="page-end">
+            <a class="manuals-link" href="index.html">All manuals</a>
+            <a class="top-link" href="#top">Top</a>
+        </div>
     </main>
 
 </body>

@@ -108,6 +108,10 @@
         .manuals-link { font-size: 0.95rem; color: #666; text-decoration: none; }
         .manuals-link:hover { color: var(--accent-color); }
         .manuals-link::before { content: "\2190\00a0"; }
+        .page-end { display: flex; justify-content: space-between; max-width: 900px; margin: 0 auto 2rem; padding: 0 2rem; }
+        .top-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .top-link:hover { color: var(--accent-color); }
+        .top-link::before { content: "\2191\00a0"; }
         header .manuals-link-line { margin: 0.2rem 0 0; }
         .brand-link { text-decoration: none; }
     </style>
@@ -973,6 +977,10 @@ since most controls never ask. The band reads the inputs of the control drawing 
 selection. The indicator reads none of them, so a control's own state does not reach its caret or a
 tab's indicator.</p>
         </main>
+        <div class="page-end">
+            <a class="manuals-link" href="index.html">All manuals</a>
+            <a class="top-link" href="#top">Top</a>
+        </div>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
