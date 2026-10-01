@@ -35,9 +35,11 @@ namespace ClaFi::Controls
         std::wstring_view diagnosticText() const override { return L"ScrollBar"; }
         void setScrollInfo(const ScrollInfo&);
         float maxPosition() const { return m_scrollInfo.maxPos(); }
+        // How far a button press or a wheel notch moves the position, in scaled pixels.
+        void setStepSize(float value) { m_stepSize = value; }
     protected:
         ScrollInfo controlScrollInfo() const override;
-        float stepSize() override { return form().scaler().scaled20; }
+        float stepSize() override { return m_stepSize; }
         float buttonSize(const AppTheme&) override;
         void adjustButtonMetrics(AdjustMetricsEvent& event) const override { event.metrics = event.themeMetrics().scrollButton; }
         void adjustButtonPaint(AdjustPaintEvent&) override;
@@ -50,6 +52,8 @@ namespace ClaFi::Controls
         void paintThumb(PaintEvent& pp) override;
     private:
         ScrollInfo m_scrollInfo{};
+        // Stated by the box with every range it hands over, so there is never a range without one.
+        float m_stepSize{};
     };
 
 

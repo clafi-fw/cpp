@@ -499,7 +499,8 @@ Syntax#titleblock for the lines and the places on them.
 
 A box places each line as it is typed, in the language's reading of where lines stand - Enter,
 Tab, Backspace, Home, a paste and Reindent. See Indents. It draws a line down each block its
-text opens - see IndentGuides.
+text opens - see IndentGuides. It scrolls on until its last line is at the top - see
+ScrollMetrics.
 
 ## CompletionList
 
@@ -678,6 +679,57 @@ selection band covers a guide.
 A guide is a solid line one device pixel wide, at any scale, standing at the middle of its pixel
 column, in the text's Faint ink. The block the caret stands in - the innermost whose opener and
 closer lie either side of the caret's line - is drawn a grade over it, in the Subtle ink.
+
+## ScrollMetrics
+
+How the box scrolling a control carries it: the step, and whether the last step can be carried
+to the top. The body states both through Control::scrollMetrics, and its ScrollBox reads them
+once a pass, beside the height the body measured - ScrollBox::calculateChildren - and works out
+everything else itself. A body that says nothing answers ScrollMetrics{}: a step of 20 on both
+axes, and no scrolling past the end.
+
+THE STEP is how far a button press or a wheel notch carries the view, in design units. The box
+scales it and hands each bar its axis alongside the range, in the same align, and the bars step by
+nothing else. It is also how deep a fade at an edge is and how much travel brings the fade in, so
+a text fades by a line. A TextBox steps down by its last line's height and across by the default.
+The height is read off the layout the measuring pass left, without syncing it to the box the body
+is about to be laid out in, which would have the fit read once more at the paint.
+
+PAST THE END the last step - a text's last line - is carried up to where the first stands at rest,
+a padding below the top of the view, so a line written at the end of a text is written at eye
+height rather than along the bottom edge. A CodeBox answers it while it can be typed into, at any
+length: a text shorter than the view scrolls the same way. A ReadOnly one is a reading, with
+nothing to be written past its end, and stops at its last line.
+
+THE ROOM IS LAID OUT AS PART OF THE BODY. The box lays the body out into a box taller than the
+slot - PanelBase::bodyExtent: the travel that brings the last step to the top, plus the slot.
+The body takes that height in the one align that lays it out, so nothing is resized afterwards
+and no further pass is asked for. The body's surface paints the room, a press there reaches the
+body and puts the caret on the last line, and a drag selection autoscrolls into it. The bar's
+range is the body's height, as for any body.
+
+The room is read off what the body measured and off the slot, both settled before the body is
+laid out, so a resize keeps the last line where it stands. An edit moves it with the text: lines
+deleted at the end while the view stands in the room bring the range in, and the view glides
+back to the new end.
+
+Only a box whose height is dictated - Fill, or hosted as a body - lays the room out; a box
+growing to hold its body would grow by the room instead. A body that wraps takes none, since its
+align lays it out to its text whatever box it is handed, and neither does a body aligned other
+than Fill, which keeps the height it measured.
+
+THE BOTTOM FADE ENDS WITH THE CONTENT. It is measured to the height the body measured rather
+than to the room, so a last line near the bottom edge is not faded with nothing after it.
+
+The wheel, the bar, a drag and PageDown carry the view into the room. PageDown moves the view
+by the distance the caret travels, so near the end the caret keeps its place in the view and the
+view goes on into the room after it. Bringing the caret into view - Ctrl+End, a line typed below
+the view - moves the view only until the caret is inside its bottom margin, and so never into
+the room.
+
+Under ScrollBars::Auto the room counts as content: a box inside another puts its bar up for any
+text of two lines or more. A root box answers its bars in the measuring pass, which knows
+nothing of the room, so a text that fits it stands still.
 
 ## DetectIndent
 

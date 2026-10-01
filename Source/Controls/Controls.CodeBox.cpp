@@ -573,6 +573,13 @@ namespace ClaFi::Controls
         invalidate();
     }
 
+    ScrollMetrics CodeBox::scrollMetrics() const
+    {
+        ScrollMetrics result = TextBox::scrollMetrics();
+        result.pastEnd = readOnly() == ReadOnly::No;
+        return result;
+    }
+
     Syntax::IndentUnit CodeBox::indentUnitInUse() const
     {
         return m_detectedIndent.value_or(m_indentUnit);

@@ -164,6 +164,8 @@ namespace ClaFi::Controls
         [[nodiscard]] std::optional<std::size_t> selectedFound() const;
         // Selects a found range and brings it into view. See Controls#search
         bool find(FindTarget);
+        // A step down is the last line's height, read off the layout the measuring pass left.
+        [[nodiscard]] ScrollMetrics scrollMetrics() const override;
     protected:
         const EditProps* editProps() const override { return &m_editProps; }
         // The hand over a link the box follows, and the I-beam over the rest of the text. A box

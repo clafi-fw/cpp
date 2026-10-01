@@ -68,8 +68,12 @@ namespace ClaFi::Controls
         bool controlIsOnScrollBox(Control&) override;
         [[nodiscard]] bool scrollsChild(const Control&, ScrollAxis) const override;
 
+        // Keeps what the body measured and how it asks to be scrolled, for the pass and its paint.
+        void calculateChildren(FormBase&) override;
         void adjustChildMetrics(AdjustMetricsEvent&) const override;
         void bodySlotSettled(AlignEvent&) override;
+        // The slot and, below it, the room past the body's end. See Controls#scrollmetrics
+        [[nodiscard]] ScaledDimensions bodyExtent() const override;
         void adjustChildViewport(AdjustViewportEvent& event) const override;
         void adjustChildClip(const Control& child, FloatRect& clip) const override;
         void adjustChildPaint(AdjustPaintEvent&) override;
@@ -133,6 +137,10 @@ namespace ClaFi::Controls
         float m_viewportWidthInDesign{};
         // Whether the body stood past its slot the last time one was laid out. See Controls
         std::optional<bool> m_bodyOverranSlot{};
+        // The height the body measured. Laid out past the end, its height holds the room as well.
+        float m_bodyMeasuredHeight{};
+        // How the body asks to be scrolled, read beside its measured height.
+        ScrollMetrics m_bodyScroll{};
         ScrollBar& m_vScrollBar{ createRightBar<ScrollBar>(ScrollAxis::Vertical)};
         Panel& m_bottomBar{ createBottomBar<Panel>(UiElement::Section, themeMetrics().page) };
         ScrollBar& m_hScrollBar{ m_bottomBar.createBody<ScrollBar>(ScrollAxis::Horizontal)};
@@ -280,6 +288,10 @@ namespace ClaFi::Controls
 
         if (Control* control = body())
         {
+            const FloatPoint step = scaler().scaleF(m_bodyScroll.step);
+            m_hScrollBar.setStepSize(step.x);
+            m_vScrollBar.setStepSize(step.y);
+
             // hScroll
             {
                 ScrollInfo scrollInfo{
@@ -308,6 +320,17 @@ namespace ClaFi::Controls
     bool ScrollBox::scrollsChild(const Control& child, const ScrollAxis axis) const
     {
         return &child == body() && givesWay(axis);
+    }
+
+    // The body's height is what it measured only until it is laid out, and laid out past its end
+    // it holds the room as well - so it is taken here, where it has just been measured. The
+    // metrics are read once beside it: a text answers them off the layout that measure left.
+    void ScrollBox::calculateChildren(FormBase& form)
+    {
+        PanelBase::calculateChildren(form);
+        const Control* content = body();
+        m_bodyMeasuredHeight = content ? content->height() : 0.0f;
+        m_bodyScroll = content ? content->scrollMetrics() : ScrollMetrics{};
     }
 
     // A body that WRAPS is broken at the width the align pass grants it, and that width is the
@@ -422,6 +445,23 @@ namespace ClaFi::Controls
         event.invalidatePass();
     }
 
+    // THE ROOM IS LAID OUT AS PART OF THE BODY, in the one align that lays the body out: its
+    // surface paints the room and a press there reaches it. At the end of the travel the last
+    // step of the content - a text's last line - stands where the first stands at its start, a
+    // padding below the top of the slot.
+    ScaledDimensions ScrollBox::bodyExtent() const
+    {
+        ScaledDimensions result = PanelBase::bodyExtent();
+        const Control* content = body();
+        if (!content || !m_bodyScroll.pastEnd || !givesWay(ScrollAxis::Vertical))
+            return result;
+        const float padding = content->scaledPadding().y;
+        const float step = scaler().scaleF(m_bodyScroll.step.y);
+        const float lastStepTop = m_bodyMeasuredHeight - padding - step;
+        result.y = std::max(result.y, lastStepTop - padding + result.y);
+        return result;
+    }
+
     // The body is laid out to its whole content and carried under the slot by the scroll
     // position, so its own rect says where the content has reached, not where it shows. The
     // viewport is the slot itself: it holds still while the body travels, and it starts below a
@@ -488,33 +528,39 @@ namespace ClaFi::Controls
             corners[cornerIndex(Corner::TopRight)] = 0.0f;
         }
         const Color baseColor = event.surfaceRgb().withOpacity(1.0f);
-        const float fadeSize = event.scaleF(16.0f);
-        if (fadeSize <= 0.0f) return;
 
-        // Zero-overhead lambda to draw a dynamically scaled fade on any side
-        auto drawFade = [&](RectSide side, float currentOffset) {
-            if (currentOffset <= 0.0f) return;
-
+        // A fade is one step of the body deep and comes in over one step of travel, so a text
+        // fades by a line.
+        auto drawFade = [&](RectSide side, float currentOffset, float fadeSize) {
+            if (currentOffset <= 0.0f || fadeSize <= 0.0f)
+                return;
             const float intensity = std::min(currentOffset / fadeSize, 1.0f);
             event.canvas().fadeEdge(viewPort, corners, side, fadeSize, baseColor.withOpacity(intensity));
-            };
+        };
 
         if (m_vScrollBar.visible())
         {
             const float y = m_vScrollBar.position();
             const float maxY = m_vScrollBar.maxPosition();
+            const float fadeY = event.scaleF(m_bodyScroll.step.y);
 
-            drawFade(RectSide::Top, y);
-            drawFade(RectSide::Bottom, maxY - y);
+            // A body laid out past its end fades to where its content ends: the room holds nothing.
+            const float endY = m_bodyScroll.pastEnd
+                ? m_bodyMeasuredHeight - bodyRect().height()
+                : maxY;
+
+            drawFade(RectSide::Top, y, fadeY);
+            drawFade(RectSide::Bottom, endY - y, fadeY);
         }
 
         if (m_hScrollBar.visible())
         {
             float x = m_hScrollBar.position();
             float maxX = m_hScrollBar.maxPosition();
+            const float fadeX = event.scaleF(m_bodyScroll.step.x);
 
-            drawFade(RectSide::Left, x);
-            drawFade(RectSide::Right, maxX - x);
+            drawFade(RectSide::Left, x, fadeX);
+            drawFade(RectSide::Right, maxX - x, fadeX);
         }
     }
 

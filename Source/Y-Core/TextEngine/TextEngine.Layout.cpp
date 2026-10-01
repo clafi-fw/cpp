@@ -1048,6 +1048,19 @@ namespace ClaFi
         return { m_calcWidth, m_calcHeight };
     }
 
+    // A paragraph the shaping gave no lines is as tall as its bounds.
+    float TextLayout::lastLineHeight()
+    {
+        if (!isTextStated())
+            return 0.0f;
+        ensureShaping();
+        if (m_paragraphs.empty())
+            return 0.0f;
+        const ParagraphLayoutState& last = m_paragraphs.back();
+        const std::span<const NativeLineMetrics> lines = linesOf(last);
+        return lines.empty() ? last.bounds.height() : lines.back().height;
+    }
+
     bool TextLayout::isTrimmed()
     {
         ensureLayout();

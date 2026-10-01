@@ -64,6 +64,9 @@ namespace ClaFi::Controls
         // panel states ABOUT that slot reaches the body on the pass that settled it. See
         // Controls-Base
         virtual void bodySlotSettled(AlignEvent&) {}
+        // The box the body is laid out into - its slot, unless stated larger. See Controls-Base
+        [[nodiscard]] virtual ScaledDimensions bodyExtent() const
+            { return m_bodyRect.dimensions(); }
         const FloatRect& contentRect() const { return m_contentRect; }
         void adjustTextRect(AdjustTextRectEvent&) const override;
         void swapBarsClockWise();
@@ -360,12 +363,8 @@ namespace ClaFi::Controls
 
         if (isNotNullAndVisible(body()))
         {
-            float delta = body()->height();
-            alignControl(body(), event, m_bodyRect.topLeft(), m_bodyRect.dimensions());
-            delta = body()->height() - delta;
-
-            // The body came out taller than the slot it was offered, so this panel grows to hold
-            // it - unless its own height is dictated from outside, in which case growing fights
+            // A body coming out taller than the slot it was offered grows this panel to hold it -
+            // unless the panel's own height is dictated from outside, in which case growing fights
             // whoever set it. Two separate things dictate a height, and either one is enough:
             //
             //   Fill            - a parent stretches this panel to the space it was given, and
@@ -374,7 +373,15 @@ namespace ClaFi::Controls
             //   isHostedAsBody  - a host handed this panel exact dimensions for its body slot,
             //                     whatever this panel's own alignment says, and has already laid
             //                     the rest of itself out around the height it gave.
+            //
+            // So only a dictated panel lays its body out past the slot: a growing one would grow
+            // by whatever bodyExtent states.
             bool sizeComesFromOutside = verticalAlign() == VerticalAlign::Fill || isHostedAsBody();
+            float delta = body()->height();
+            alignControl(body(), event, m_bodyRect.topLeft(),
+                sizeComesFromOutside ? bodyExtent() : m_bodyRect.dimensions());
+            delta = body()->height() - delta;
+
             bool needExpand = (delta > 0.0f) && !sizeComesFromOutside;
             if (needExpand)
             {

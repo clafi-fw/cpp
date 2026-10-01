@@ -51,6 +51,14 @@ small window had, with the rest of the screen empty beside them.
 Called whether or not a body stands in the slot - the slot is settled either way, and a panel
 stating something about it should not have to ask whether anything is in it yet.
 
+### bodyExtent
+
+The box the body is laid out into: the slot, unless the panel states it larger. Asked right
+after bodySlotSettled, so the body is laid out once, at the size the panel wants, in the pass
+that settled the slot. Only a panel whose height is dictated - Fill, or hosted as a body - is
+asked: one growing to hold its body would grow by whatever it stated past the slot. ScrollBox
+states the room past its body's end here - see Controls#scrollmetrics.
+
 ## SplitButtonBase
 
 A button carrying a second target: a part that is pressed on its own account and answers

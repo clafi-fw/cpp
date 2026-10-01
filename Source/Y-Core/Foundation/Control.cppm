@@ -893,6 +893,8 @@ namespace ClaFi
         // reads is still on its way to where the press before it sent it, and measuring from
         // the view alone asks a second time for ground the previous press already claimed.
         [[nodiscard]] FloatPoint viewTravelRemaining() const;
+        // How the box scrolling this control carries it. See Controls#scrollmetrics
+        [[nodiscard]] virtual ScrollMetrics scrollMetrics() const { return {}; }
         //
         [[nodiscard]] ControlMetrics designMetrics() const;
         [[nodiscard]] Padding designPadding() const;

@@ -250,6 +250,8 @@ namespace ClaFi
 
         DrawTextResult draw(ControlPaintContext&, FloatPoint, const EditProps* = nullptr, TextRenderMode = TextRenderMode::Static);
         CalculatedDimensions calculatedDimensions();
+        // The height of the text's last line, from the shaping alone - the box is not asked.
+        [[nodiscard]] float lastLineHeight();
         // Whether the box this layout stands in cuts the text: a line wider than the box, or a
         // line past its bottom. The same fit draw() reports as trimmed - see ensureVerticalFit -
         // so a caller that has to know before there is a paint asks here.

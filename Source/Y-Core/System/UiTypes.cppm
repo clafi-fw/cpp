@@ -224,10 +224,9 @@ namespace ClaFi
         Forward     // XBUTTON2 on Windows, BTN_EXTRA on Linux
     };
 
-    // ControlFlags are declared here but there are no public members of this type exist.
-    // Only one out there declared in the BaseControl class and it's private.
-    // But the type is here because it's used in the Horizontal/VericalAlign enums,
-    // and they are public
+    // ControlFlags are declared here but there is no a public member of this type.
+    // Only one that exists declared in the Control class and is private.
+    // But the type is here because Horizontal/VericalAlign enums relay on it
     export using ControlFlag = FlagByte ;
     export using ControlFlags = FlagByte ;
     export using ControlFlags2 = FlagByte ;
@@ -244,7 +243,7 @@ namespace ClaFi
     // longer ordered by geometry - see Control::firstChildInViewport.
     export constexpr ControlFlag cfChildHidden = 64;
 
-    // Second flagset of ControlBase
+    // Second flagset of Control
     export constexpr ControlFlag cfPainted      = 1;
     export constexpr ControlFlag cfTextDrawn    = 2;
     export constexpr ControlFlag cfVerticalTextAnchorBit1 = 4;
@@ -753,6 +752,13 @@ namespace ClaFi
     {
         Yes,
         No
+    };
+
+    // How the box scrolling a control carries it. See Controls#scrollmetrics
+    export struct ScrollMetrics
+    {
+        FloatPoint step{ 20.0f, 20.0f };   // a button press or a wheel notch, in design units
+        bool pastEnd{ false };              // whether the last step can be carried to the top
     };
 
     // What a scrollable control reports about its range: the page it shows, and the whole.

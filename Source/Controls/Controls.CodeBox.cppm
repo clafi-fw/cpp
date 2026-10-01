@@ -207,6 +207,8 @@ namespace ClaFi::Controls
         // Yes reads the unit off the text the box holds now, and off every text handed whole.
         void setDetectIndent(DetectIndent);
         void setIndentGuides(IndentGuides);
+        // Past the end while it takes typing - the last line goes up to where the next is written.
+        [[nodiscard]] ScrollMetrics scrollMetrics() const override;
         // What the box writes a level as: what the text says where it is read, else the property.
         [[nodiscard]] Syntax::IndentUnit indentUnitInUse() const;
         // Moves the lines the selection reaches, or the caret's, one stop on. See Controls#indents

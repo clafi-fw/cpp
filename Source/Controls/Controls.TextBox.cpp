@@ -306,6 +306,15 @@ namespace ClaFi::Controls
         return true;
     }
 
+    // Read without syncing: the measure that runs ahead of every align has stated the text, and a
+    // sync to the bounds the body is about to leave would have its fit read again at the paint.
+    ScrollMetrics TextBox::scrollMetrics() const
+    {
+        ScrollMetrics result{};
+        result.step.y = m_layout.lastLineHeight() / scaler().factor();
+        return result;
+    }
+
     CursorShape TextBox::cursor() const
     {
         if (!enabled(true))
