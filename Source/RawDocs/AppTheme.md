@@ -189,3 +189,9 @@ naming a hue still overrides the seed. ControlPaintContext::foundTextRgb resolve
 paragraph holding found ranges is drawn, raised by the inputs of the control drawing it as the
 selection band is, and faded on a control that cannot be used. The Themes app seeds its preview of
 the element the same way.
+
+WHERE A SELECTION COVERS A MATCH, the selection is raised over the found band as over any surface
+text sits on. ControlPaintContext::selectedFoundRgb applies FoundText's rules, then SelectedText's,
+then the shared ones once, and each backend paints the result over the part of a match the
+selection covers. A SelectedText rule naming a hue replaces the seed there - the built-in one names
+Palette 2 - while the saturation and lift FoundText gave stay under the selection's offsets.

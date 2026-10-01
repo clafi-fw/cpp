@@ -19,6 +19,7 @@ namespace ClaFi
         // use last() only if the length is not 0;
         std::size_t last() const { return start + length - 1; }
         constexpr std::size_t end() const { return start + length; }
+        [[nodiscard]] TextRange overlap(const TextRange& other) const; // what both ranges cover
         bool operator==(const TextRange&) const = default;
     };
 
@@ -277,5 +278,19 @@ namespace ClaFi
         Movable,
         Moving
     };
+
+
+    //-------------------------------------------------------------------------
+
+
+    // Unplaced where the two do not meet.
+    TextRange TextRange::overlap(const TextRange& other) const
+    {
+        const std::size_t from = std::max(start, other.start);
+        const std::size_t to = std::min(end(), other.end());
+        if (from >= to)
+            return {};
+        return { from, to - from };
+    }
 
 }

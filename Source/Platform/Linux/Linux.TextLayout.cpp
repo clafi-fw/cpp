@@ -378,6 +378,12 @@ namespace ClaFi::Platform::Linux
                 fillRange(hit, found);
         }
         fillRange(selectionRange, controlContext.selectionRgb());
+        if (!hitRanges.empty() and selectionRange.length != 0)
+        {
+            const Color both = controlContext.selectedFoundRgb();
+            for (const TextRange& hit : hitRanges)
+                fillRange(hit.overlap(selectionRange), both);
+        }
 
         const bool snap = backend->snapTextOrigins();
         const float fadeWidth = controlContext.scaleF(30.0f);

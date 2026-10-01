@@ -1,5 +1,6 @@
 module ThisApp.DesignPage;
 
+import ThisApp.ApplyToControl;
 import ThisApp.Consts;
 import ThisApp.ElementPage;
 import ThisApp.RuleSlider;
@@ -22,6 +23,10 @@ namespace ThisApp
 {
     namespace
     {
+        constexpr std::array k_strokeOutput{ PaintChannel::Stroke };
+        constexpr std::array k_selectedTextOutputs{ PaintChannel::Surface, PaintChannel::Text };
+        constexpr std::array k_foundTextOutputs{ PaintChannel::Surface };
+
         constexpr SharedRules k_anyElement{
             .name = L"Any Element",
             .token = k_sharedRulesToken,
@@ -38,23 +43,41 @@ namespace ThisApp
             .name = L"Focus Ring",
             .token = k_focusRingRulesToken,
             .rules = &ThemeRules::focusRing,
-            .output = PaintChannel::Stroke
+            .outputs = k_strokeOutput
         };
 
-        // A branch of the tree: its name, and the elements under it in the order they are listed.
-        struct ElementCategory
+        // A page a branch of the tree lists: an element's own rules, or a list no one element owns.
+        struct CategoryEntry
         {
-            std::wstring_view name;
-            std::span<const UiElement> elements;
+            // Not explicit, so a branch lists elements and shared lists side by side.
+            constexpr CategoryEntry(UiElement value)
+                :
+                element{ value }
+            {
+            }
+            constexpr CategoryEntry(const SharedRules& value)
+                :
+                shared{ &value }
+            {
+            }
+            OptionalUiElement element{};
+            const SharedRules* shared{};
         };
 
-        constexpr std::array k_windowRoots{
+        // A branch of the tree: its name, and the pages under it in the order they are listed.
+        struct Category
+        {
+            std::wstring_view name{};
+            std::span<const CategoryEntry> entries{};
+        };
+
+        constexpr auto k_windowRoots = std::to_array<CategoryEntry>({
             UiElement::Dialog,
             UiElement::Menu,
             UiElement::Hint
-        };
+        });
 
-        constexpr std::array k_surfaces{
+        constexpr auto k_surfaces = std::to_array<CategoryEntry>({
             UiElement::Page,
             UiElement::Section,
             UiElement::SectionHeader,
@@ -64,35 +87,50 @@ namespace ThisApp
             UiElement::Grid,
             UiElement::GridHeader,
             UiElement::GridRow
-        };
+        });
 
-        constexpr std::array k_controls{
+        constexpr auto k_controls = std::to_array<CategoryEntry>({
             UiElement::Button,
             UiElement::ToolButton,
             UiElement::Tab,
             UiElement::ScrollButton,
             UiElement::ScrollThumb
-        };
+        });
 
-        constexpr std::array k_focusAndSelection{
+        constexpr auto k_focusAndSelection = std::to_array<CategoryEntry>({
+            k_focusRing,
             UiElement::SelectionIndicator,
             UiElement::HoverIndicator,
             UiElement::SelectedText,
             UiElement::FoundText
-        };
+        });
 
-        constexpr std::array k_testSubjects{
+        constexpr auto k_testSubjects = std::to_array<CategoryEntry>({
             UiElement::Testee,
             UiElement::Bestee
+        });
+
+        constexpr std::array k_categories{
+            Category{ L"Window roots", k_windowRoots },
+            Category{ L"Surfaces", k_surfaces },
+            Category{ L"Controls", k_controls },
+            Category{ L"Focus & Selection", k_focusAndSelection },
+            Category{ L"Test subjects", k_testSubjects }
         };
 
-        constexpr std::array k_elementCategories{
-            ElementCategory{ L"Window roots", k_windowRoots },
-            ElementCategory{ L"Surfaces", k_surfaces },
-            ElementCategory{ L"Controls", k_controls },
-            ElementCategory{ L"Focus & Selection", k_focusAndSelection },
-            ElementCategory{ L"Test subjects", k_testSubjects }
-        };
+        // A text band has no stroke and casts no shadow, and only the selection re-inks its text.
+        [[nodiscard]] PaintChannels elementOutputs(const UiElement element)
+        {
+            switch (element)
+            {
+                case UiElement::SelectedText:
+                    return k_selectedTextOutputs;
+                case UiElement::FoundText:
+                    return k_foundTextOutputs;
+                default:
+                    return {};
+            }
+        }
     }
 
     std::wstring_view DesignPage::pickedPage() const
@@ -141,15 +179,15 @@ namespace ThisApp
             const ColorRules& defaults = entry.element
                 ? m_defaultRules.of(*entry.element)
                 : m_defaultRules.*entry.shared->rules;
-            const OptionalPaintChannel output = entry.shared
-                ? entry.shared->output
-                : OptionalPaintChannel{};
+            const PaintChannels outputs = entry.shared
+                ? entry.shared->outputs
+                : elementOutputs(*entry.element);
             const OptionalUiElement element = entry.element;
             OnGetListRuleBase listRuleBase = [ruleBase, element](const ColorRule& rule,
                 const RuleChannel channel) {
                 return ruleBase(element, rule, channel);
             };
-            entry.rules->bind(list, defaults, output, colors, std::move(listRuleBase),
+            entry.rules->bind(list, defaults, outputs, colors, std::move(listRuleBase),
                 onRulesChanged);
         }
     }
@@ -175,14 +213,18 @@ namespace ThisApp
         addEntry(addRootItem(), TreeEntry{ .page = &m_palettePage });
         addEntry(addRootItem(), TreeEntry{ .shared = &k_anyElement });
         addEntry(addRootItem(), TreeEntry{ .shared = &k_anyWindow });
-        addEntry(addRootItem(), TreeEntry{ .shared = &k_focusRing });
         // Sets the theme-wide pages apart, so they read as peers of the categories.
         m_tree.add<Divider>(Thickness::Heavy, Padding{ 4.0f, 6.0f });
-        for (const ElementCategory& category : k_elementCategories)
+        for (const Category& category : k_categories)
         {
             TreeNode& node = m_tree.addNode(HeaderText{ InkGrade::Muted, category.name });
-            for (const UiElement element : category.elements)
-                addEntry(node.addItem(), TreeEntry{ .element = element });
+            for (const CategoryEntry& entry : category.entries)
+            {
+                addEntry(node.addItem(), TreeEntry{
+                    .element = entry.element,
+                    .shared = entry.shared
+                });
+            }
         }
         showPickedPage();
     }

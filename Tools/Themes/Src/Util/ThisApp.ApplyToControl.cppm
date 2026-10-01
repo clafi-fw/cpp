@@ -22,6 +22,9 @@ namespace ThisApp
     // Which of a rule's two input sets a column edits - inputs or andInputs.
     export using RuleClause = RuleInputs ColorRule::*;
 
+    // The channels a list's rules may write, any if empty.
+    export using PaintChannels = std::span<const PaintChannel>;
+
     // A rule's Apply to cell: the channel it writes and the inputs it reads, set from one dropdown.
     export class ApplyToControl : public DropdownControlBase
     {
@@ -29,11 +32,8 @@ namespace ThisApp
         template<typename... Args>
         explicit ApplyToControl(const CreateParams&, Args&&...);
     public:
-        // Takes the rule by its place, the list's one channel if it has one, and what to call.
-        // Takes the list and the rule's place in it, the one channel, what to call and what to
-        // call the edit by.
-        void bind(ColorRules&, std::size_t index, OptionalPaintChannel onlyOutput, OnRuleChanged,
-            Text what);
+        // Takes the rule by its place, the channels it may write, what to call and the edit's name.
+        void bind(ColorRules&, std::size_t index, PaintChannels outputs, OnRuleChanged, Text what);
         [[nodiscard]] PaintChannel output() const;
         [[nodiscard]] bool canWrite(PaintChannel) const;
         [[nodiscard]] bool reads(RuleClause, RuleInput) const;
@@ -51,7 +51,7 @@ namespace ThisApp
     private:
         ColorRules* m_rules{}; // null until bound
         std::size_t m_index{};
-        OptionalPaintChannel m_onlyOutput{}; // the one channel the list's rules write, any if empty
+        PaintChannels m_outputs{}; // the channels the rule may write
         OnRuleChanged m_onChanged{};
         Text m_what{}; // what an edit here is called, as the page records it
     };

@@ -288,6 +288,12 @@ namespace ClaFi
                 fillRange(hit, found);
         }
         fillRange(params.selection, context.selectionRgb());
+        if (!params.hits.empty() and params.selection.length != 0)
+        {
+            const Color both = context.selectedFoundRgb();
+            for (const TextRange& hit : params.hits)
+                fillRange(hit.overlap(params.selection), both);
+        }
 
         // Snapping puts the baseline on a whole device pixel, which is what keeps still text
         // crisp. Under a scale it quantizes, and the backend says whether that trade is made.

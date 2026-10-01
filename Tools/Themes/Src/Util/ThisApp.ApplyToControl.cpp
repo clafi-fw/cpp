@@ -76,19 +76,16 @@ namespace ThisApp
                 text << result;
         }
 
-        // When the rule applies: "at rest", "a or b", "(a or b) and c and d".
+        // When the rule applies: "a or b", "(a or b) and c and d".
         void writeCondition(Text& text, const ColorRule& rule)
         {
-            const bool joined = !rule.andInputs.empty();
-            if (rule.inputs.empty())
-                writeFramingWord(text, L"at rest");
-            else
+            const bool joined = !rule.inputs.empty() and !rule.andInputs.empty();
+            if (!rule.inputs.empty())
                 writeInputs(text, rule.inputs, L" or ", joined);
             if (joined)
-            {
                 writeFramingWord(text, L" and ");
+            if (!rule.andInputs.empty())
                 writeInputs(text, rule.andInputs, L" and ", false);
-            }
         }
 
         // A label that starts what it is shown in, with a capital.
@@ -149,11 +146,11 @@ namespace ThisApp
     // ApplyToControl
 
     void ApplyToControl::bind(ColorRules& rules, const std::size_t index,
-        const OptionalPaintChannel onlyOutput, OnRuleChanged onChanged, Text what)
+        const PaintChannels outputs, OnRuleChanged onChanged, Text what)
     {
         m_rules = &rules;
         m_index = index;
-        m_onlyOutput = onlyOutput;
+        m_outputs = outputs;
         m_onChanged = std::move(onChanged);
         m_what = std::move(what);
         invalidate();
@@ -166,7 +163,7 @@ namespace ThisApp
 
     bool ApplyToControl::canWrite(const PaintChannel channel) const
     {
-        return !m_onlyOutput or *m_onlyOutput == channel;
+        return m_outputs.empty() or std::ranges::find(m_outputs, channel) != m_outputs.end();
     }
 
     bool ApplyToControl::reads(const RuleClause clause, const RuleInput input) const
@@ -213,8 +210,9 @@ namespace ThisApp
         event.text << TextStyleId::SubHeading
             << itemLabel(k_channelLabels[static_cast<std::size_t>(value.output)])
             << PopTextStyle{};
-        if (!value.inputs.empty())
-            writeFramingWord(event.text, L", when");
+        if (value.atRest())
+            return;
+        writeFramingWord(event.text, L", when");
         event.text << L'\n'
             << InkGrade::Strong;
         writeCondition(event.text, value);

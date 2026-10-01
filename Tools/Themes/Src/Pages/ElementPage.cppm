@@ -68,8 +68,8 @@ namespace ThisApp
         template<typename... Args>
         explicit ElementPage(const CreateParams&, std::wstring_view title, Args&&...);
     public:
-        // Takes the list, its defaults, its one channel, the palette, its ramps' base and edits.
-        void bind(ColorRules&, const ColorRules& defaults, OptionalPaintChannel output,
+        // Takes the list, its defaults, its channels, the palette, its ramps' base and edits.
+        void bind(ColorRules&, const ColorRules& defaults, PaintChannels outputs,
             const ThemeColors&, OnGetListRuleBase, OnRulesChanged);
         // Builds a row for every rule in the list, in list order.
         void rebuild();
@@ -103,7 +103,7 @@ namespace ThisApp
         const std::wstring m_name; // what the list is called, which every step of it starts with
         ColorRules* m_rules{}; // the list the page shows, null until bound
         const ColorRules* m_defaults{}; // what a reset puts back, null until bound
-        OptionalPaintChannel m_output{}; // the one channel the list's rules write, any if empty
+        PaintChannels m_outputs{}; // the channels the list's rules may write
         const ThemeColors* m_colors{}; // what the hue editors read the palette from
         OnGetListRuleBase m_ruleBase{};
         OnRulesChanged m_onRulesChanged{};

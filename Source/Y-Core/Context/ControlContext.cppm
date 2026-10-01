@@ -48,6 +48,8 @@ namespace ClaFi
         [[nodiscard]] bool selectionChangesInk() const;
         // The band behind text a search has found, resolved when asked for.
         [[nodiscard]] Color foundTextRgb() const;
+        // The selection band raised over the found one, where a match is selected.
+        [[nodiscard]] Color selectedFoundRgb() const;
         // What a colour becomes on a control that cannot be used: itself, moved toward the surface
         // it is drawn on. The alpha is the caller's and is put back untouched - Color::blend
         // carries alpha with it and the surface is opaque, so left to itself the blend would drag
@@ -71,8 +73,11 @@ namespace ClaFi
         RuleInputLevels ruleInputLevels{};
         Color surface;
     private:
-        // A band's rules on one channel: the element's own list, then Any element's.
-        void applyBandRules(UiElement, PaintChannel, Hsl& color, const RuleInputLevels&) const;
+        // A band's rules on one channel: each element's own list in turn, then Any element's.
+        void applyBandRules(std::initializer_list<UiElement>, PaintChannel, Hsl& color,
+            const RuleInputLevels&) const;
+        // The surface in FoundText's seed hue, where the found band starts.
+        [[nodiscard]] Hsl foundSeedHsl() const;
     private:
         FormContext& m_formContext;
         const BakedColors* m_bakedColors;
@@ -164,7 +169,7 @@ namespace ClaFi
     Color ControlPaintContext::selectionRgb() const
     {
         Hsl result = surfaceHsl;
-        applyBandRules(UiElement::SelectedText, PaintChannel::Surface, result, ruleInputLevels);
+        applyBandRules({ UiElement::SelectedText }, PaintChannel::Surface, result, ruleInputLevels);
         return disabledRgb(result.toColor());
     }
 
@@ -173,7 +178,8 @@ namespace ClaFi
     Color ControlPaintContext::indicatorRgb() const
     {
         Hsl result = surfaceHsl;
-        applyBandRules(UiElement::SelectedText, PaintChannel::Surface, result, RuleInputLevels{});
+        applyBandRules({ UiElement::SelectedText }, PaintChannel::Surface, result,
+            RuleInputLevels{});
         m_bakedColors->effect(UiElement::Accent).applyTo(result, 1.0f, lightness);
         return disabledRgb(result.toColor());
     }
@@ -182,7 +188,7 @@ namespace ClaFi
     // and an accent run stays accent.
     Hsl ControlPaintContext::selectionInkHsl(Hsl runInk) const
     {
-        applyBandRules(UiElement::SelectedText, PaintChannel::Text, runInk, ruleInputLevels);
+        applyBandRules({ UiElement::SelectedText }, PaintChannel::Text, runInk, ruleInputLevels);
         return runInk;
     }
 
@@ -200,27 +206,45 @@ namespace ClaFi
     // it, and raised by the inputs of the control drawing it, as the selection band is.
     Color ControlPaintContext::foundTextRgb() const
     {
+        Hsl result = foundSeedHsl();
+        applyBandRules({ UiElement::FoundText }, PaintChannel::Surface, result, ruleInputLevels);
+        return disabledRgb(result.toColor());
+    }
+
+    // The selection is raised over the found band as over any surface text sits on, so the rules
+    // of both elements count, and the ones every element shares count once.
+    Color ControlPaintContext::selectedFoundRgb() const
+    {
+        Hsl result = foundSeedHsl();
+        applyBandRules({ UiElement::FoundText, UiElement::SelectedText }, PaintChannel::Surface,
+            result, ruleInputLevels);
+        return disabledRgb(result.toColor());
+    }
+
+    Hsl ControlPaintContext::foundSeedHsl() const
+    {
         Hsl result = surfaceHsl;
         if (const std::optional<Pigment> pigment = seedPigmentOf(UiElement::FoundText))
             result.hue = m_bakedColors->pigmentHues[static_cast<std::size_t>(*pigment)];
-        applyBandRules(UiElement::FoundText, PaintChannel::Surface, result, ruleInputLevels);
-        return disabledRgb(result.toColor());
+        return result;
     }
 
     // The order PaintEvent takes for the element a control wears. A band's rest is its own, so
     // it is raised in full whether or not the control shows a surface at rest.
-    void ControlPaintContext::applyBandRules(const UiElement element, const PaintChannel channel,
-        Hsl& color, const RuleInputLevels& levels) const
+    void ControlPaintContext::applyBandRules(const std::initializer_list<UiElement> elements,
+        const PaintChannel channel, Hsl& color, const RuleInputLevels& levels) const
     {
         const BakedRules& rules = m_bakedColors->rules;
-        for (const BakedColorRules* list : { &rules.of(element), &rules.shared })
-        {
-            for (const BakedColorRule& rule : *list)
+        auto apply = [&](const BakedColorRules& list){
+            for (const BakedColorRule& rule : list)
             {
                 if (rule.output == channel)
                     rule.effect.applyTo(color, rule.levelIn(levels), lightness);
             }
-        }
+        };
+        for (const UiElement element : elements)
+            apply(rules.of(element));
+        apply(rules.shared);
     }
 
 

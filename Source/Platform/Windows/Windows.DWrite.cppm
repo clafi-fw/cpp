@@ -773,6 +773,12 @@ namespace ClaFi::PlatformImplementation::Windows
                 drawLocalRangeBg(hit, found);
         }
         drawLocalRangeBg(selectionRange, controlContext.selectionRgb());
+        if (!hitRanges.empty() and selectionRange.length != 0)
+        {
+            const Color both = controlContext.selectedFoundRgb();
+            for (const TextRange& hit : hitRanges)
+                drawLocalRangeBg(hit.overlap(selectionRange), both);
+        }
 
         const std::size_t signature = runSignature(colors, scripts, controlContext);
         if (!m_runsWereApplied || signature != m_appliedRuns)

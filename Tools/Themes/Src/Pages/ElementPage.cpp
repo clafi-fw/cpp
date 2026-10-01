@@ -23,12 +23,12 @@ import ClaFi.StdLib;
 namespace ThisApp
 {
     void ElementPage::bind(ColorRules& rules, const ColorRules& defaults,
-        const OptionalPaintChannel output, const ThemeColors& colors, OnGetListRuleBase ruleBase,
+        const PaintChannels outputs, const ThemeColors& colors, OnGetListRuleBase ruleBase,
         OnRulesChanged onRulesChanged)
     {
         m_rules = &rules;
         m_defaults = &defaults;
-        m_output = output;
+        m_outputs = outputs;
         m_colors = &colors;
         m_ruleBase = std::move(ruleBase);
         m_onRulesChanged = std::move(onRulesChanged);
@@ -97,7 +97,10 @@ namespace ThisApp
     // A new rule is appended, so it applies after the rest of the list.
     void ElementPage::addRule()
     {
-        m_rules->push_back(ColorRule{ .output = m_output.value_or(PaintChannel::Surface) });
+        const PaintChannel output = m_outputs.empty()
+            ? PaintChannel::Surface
+            : m_outputs.front();
+        m_rules->push_back(ColorRule{ .output = output });
         // Appending may move the list, and the hue and value editors hold their rules by address.
         for (Grids::RowContainer* row : m_ruleRows)
             bindEditors(*row);
@@ -170,7 +173,7 @@ namespace ThisApp
             padding,
             VerticalAlign::Fill
         );
-        applyTo.bind(*m_rules, index, m_output, m_onCellEdit, ruleStepName(index, L"Apply to"));
+        applyTo.bind(*m_rules, index, m_outputs, m_onCellEdit, ruleStepName(index, L"Apply to"));
         row.addControl<HueRuleControl>(
             column(RuleColumn::Hue),
             padding,

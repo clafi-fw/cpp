@@ -1,5 +1,6 @@
 export module ThisApp.DesignPage;
 
+import ThisApp.ApplyToControl;
 import ThisApp.ElementPage;
 import ThisApp.RuleSlider;
 
@@ -34,7 +35,7 @@ namespace ThisApp
         std::wstring_view name{};
         std::wstring_view token{};
         ColorRules ThemeRules::* rules{ nullptr };
-        OptionalPaintChannel output{}; // the one channel the list's rules write, any if empty
+        PaintChannels outputs{}; // the channels the list's rules may write
     };
 
     // Where in the design an edit is made, put back beside the theme an undo restores.
