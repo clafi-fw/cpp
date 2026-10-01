@@ -50,8 +50,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         [[nodiscard]] int takeClickCount(IntPoint, std::uint32_t time);
         // WHICH EDGE OR CORNER THIS POINT SIZES THE WINDOW FROM, as an xdg_toplevel resize edge,
         // or zero for a point that sizes nothing. Only a window the user is allowed to size has
-        // any: a menu and a hint are whatever their content came to.
-        [[nodiscard]] std::uint32_t borderResizeEdges(IntPoint) const;
+        // any: a menu and a hint are whatever their content came to, and a maximized window is
+        // what the compositor holds it to.
+        [[nodiscard]] std::uint32_t borderResizeEdges(IntPoint);
         // A length stated at 100%, in the real pixels this window is drawn in.
         [[nodiscard]] int scaledLength(int length) const
         {
@@ -381,11 +382,13 @@ namespace ClaFi::PlatformImplementation::Wayland
     // THE SAME WIDTH THE SERVER STATES IT IN, deliberately. A display server's clock is 32 bits
     // of milliseconds and wraps every seven weeks; held in a wider type the subtraction below
     // stops wrapping with it, and one run of clicks in seven weeks is read as a single press.
-    std::uint32_t FormWindow::borderResizeEdges(IntPoint pt) const
+    std::uint32_t FormWindow::borderResizeEdges(IntPoint pt)
     {
         // A layer surface is sized by the compositor between its anchors, and has no edge the
-        // user may take hold of.
-        if (role() != WindowRole::Dialog || isLayerRole())
+        // user may take hold of. Nor has a maximized window: the compositor refuses to size it,
+        // so a press handed over from its edge would go nowhere, and the edge belongs to the
+        // controls standing there - see Edge reach in Control-Foundation.
+        if (role() != WindowRole::Dialog || isLayerRole() || isMaximized())
             return XDG_TOPLEVEL_RESIZE_EDGE_NONE;
 
         const IntSize size = m_buffers.size();

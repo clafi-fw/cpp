@@ -490,6 +490,24 @@ What reads it:
 
 `FormFocusChangeEvent` marks the moment of each change; the factor is what a paint reads.
 
+## Edge reach
+
+A POINTER PUSHED AGAINST A MAXIMIZED WINDOW'S EDGE MEETS WHAT STANDS k_edgeReach IN - eight
+design pixels, about what Win32 places past the screen. FormBase::searchPoint moves a point that
+close to the edge to that depth before the search, so a press against the top lands on a tab on
+the title and one in the corner on the close button, rather than on the root's border ring or the
+band above the tabs.
+
+On Win32 this changes nothing: the window's edges lie past the screen by about that much - see
+WindowFrame in Context - and the pointer never comes closer. Wayland states the window's size
+exactly, the pointer reaches the edge row, and the search is what puts it inside the controls.
+What a maximized Wayland window gives up is the band itself: the strip above a title's tabs
+answers as the tab, so it no longer drags the window.
+
+A point outside the window is left alone. A drag carried past the edge keeps the coordinates it
+has, and the positions handed to a drag are the pointer's own - only what the pointer meets is
+moved.
+
 ## EditPhase
 
 Where an edit stands while a history takes it. Held is the pointer still on the value - a slider's

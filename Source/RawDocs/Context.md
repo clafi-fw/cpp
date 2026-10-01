@@ -137,7 +137,8 @@ area, so the edges of the geometry lie past the screen or under the taskbar. The
 by how much on each side, and FormBase::shownGeometry is the geometry less it. A control whose
 mark sits at the window's edge reads it to keep the mark where the screen shows it - a tab's
 indicator stands on the first row the screen shows. Wayland states a maximized window's size
-exactly and reports none.
+exactly and reports none; what the overhang does for the pointer there, the search does - see
+Edge reach in Control-Foundation.
 
 ## WindowPlacement
 

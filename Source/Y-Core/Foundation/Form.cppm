@@ -485,6 +485,8 @@ namespace ClaFi
         void dropActivePopup();
         SearchControlResult controlAt(Control&, PointInControl, FloatRect clipRect);
         SearchControlResult controlAt(PointInForm);
+        // Where the search meets the pointer - a maximized window's edge is met further in.
+        [[nodiscard]] PointInForm searchPoint(PointInForm) const;
     private:
         FormControlBase& m_content;
 

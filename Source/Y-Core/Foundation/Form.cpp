@@ -38,6 +38,9 @@ namespace ClaFi
     // goes out on what the last pass produced rather than the application stopping.
     constexpr int k_maxAlignPasses{ 3 };
 
+    // How deep a maximized window's edge is met, in design pixels. See Control-Foundation
+    constexpr float k_edgeReach{ 8.0f };
+
     namespace
     {
         // The parts of rect outside hole - above it, below it, and beside it between those.
@@ -2252,9 +2255,26 @@ namespace ClaFi
     {
         return controlAt(
             m_content,
-            pt, // conversion not needed, assuming that m_content->boundsInParent() is at {0, 0}
+            // conversion not needed, assuming that m_content->boundsInParent() is at {0, 0}
+            searchPoint(pt),
             m_content.boundsInParent()
         );
+    }
+
+    // A POINTER PUSHED AGAINST A MAXIMIZED WINDOW'S EDGE MEETS WHAT STANDS k_edgeReach IN. A point
+    // outside the window is left where it is, so a drag carried past the edge keeps its course.
+    PointInForm FormBase::searchPoint(PointInForm pt) const
+    {
+        if (!window().isMaximized())
+            return pt;
+        const FloatRect area = geometry();
+        if (!area.contains(pt))
+            return pt;
+        const float reach = scaler().scale(k_edgeReach);
+        return {
+            std::clamp(pt.x, area.left + reach, area.right - reach),
+            std::clamp(pt.y, area.top + reach, area.bottom - reach)
+        };
     }
 
 }
