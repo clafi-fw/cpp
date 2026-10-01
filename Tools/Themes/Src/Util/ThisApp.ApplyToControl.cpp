@@ -45,6 +45,9 @@ namespace ThisApp
                 L"mouse"
             };
 
+        // Shaped with a line's height and no width.
+        constexpr wchar_t k_zeroWidthSpace = 0x200B;
+
         // A word framing a rule rather than naming its parts, gray and small.
         void writeFramingWord(Text& text, const std::wstring_view word)
         {
@@ -201,7 +204,8 @@ namespace ThisApp
         dropPopup<ApplyToPopup>(form(), *this);
     }
 
-    // The channel the rule writes, and under it the states it reads, one grade down.
+    // The channel the rule writes, and under it the states it reads, one grade down. Measured as
+    // two lines whatever the rule reads, so every row of the grid stands at one height.
     void ApplyToControl::getMainText(GetTextEvent& event) const
     {
         if (!m_rules)
@@ -211,7 +215,11 @@ namespace ThisApp
             << itemLabel(k_channelLabels[static_cast<std::size_t>(value.output)])
             << PopTextStyle{};
         if (value.atRest())
+        {
+            if (event.phase() == EventPhase::Calculate)
+                event.text << L'\n' << k_zeroWidthSpace;
             return;
+        }
         writeFramingWord(event.text, L", when");
         event.text << L'\n'
             << InkGrade::Strong;
