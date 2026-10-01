@@ -466,7 +466,8 @@ The useful ones:</p>
 <tr><td><code>ColumnWidthMode::FitContent</code></td><td>As wide as its widest cell. The default.</td></tr>
 <tr><td><code>ColumnWidthMode::Fixed</code></td><td>As wide as the <code>float</code> you also pass.</td></tr>
 <tr><td><code>ColumnWidthMode::Fill</code></td><td>Takes a share of the leftover width. With several <code>Fill</code> siblings the <code>float</code> acts as a ratio.</td></tr>
-<tr><td><code>TextAlign::...</code></td><td>Alignment for every cell in the column.</td></tr>
+<tr><td><code>TextAlign::...</code></td><td>Alignment for every cell in the column, the header's included.</td></tr>
+<tr><td><code>TextFormat{ ... }</code></td><td>What every data cell of the column is laid out over - a style, a colour, an alignment. The header takes the alignment alone. See <a href="#cells">Cells and content</a>.</td></tr>
 <tr><td><code>Tag{ ... }</code></td><td>Names the column, so a cell can refer to it and <code>columnByTag</code> can find it afterwards. Unique within the grid. Reaches the column like any other property.</td></tr>
 </table>
 
@@ -530,6 +531,23 @@ skip has no cell in that row: nothing is drawn, and either a neighbouring cell c
 space or it stays blank. A bare <code>Cell{ Tag{ ... } }</code> gives you a real, bordered,
 hoverable cell that happens to be empty. Both are useful; pick deliberately.
 </div>
+
+<p>A look every cell of a column shares belongs to the column, not to each provider. Stated as the
+column's <code>TextFormat</code> - see the <a href="textengine.html#format">TextEngine manual</a> - it is laid out under the text every cell writes, and it reaches a
+cell's hint and its in-place editor the way it reaches the paint:</p>
+
+<pre><code><span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Reading</span>::Last }, <span class="tp">Text</span>{ <span class="st">L"Last"</span> }, <span class="tp">TextAlign</span>::Right, <span class="tp">TextFormat</span>{ <span class="tp">TextStyleId</span>::Code } }
+
+<span class="kw">void</span> <span class="tp">FpsPage</span>::<span class="fn">writeReading</span>(<span class="tp">Grids::GetCellTextEvent</span>&amp; event) <span class="kw">const</span>
+{
+    <span class="cm">// The value alone - the column states the style.</span>
+    event.<span class="fn">text</span>() &lt;&lt; <span class="tp">Fmt</span>{ <span class="st">L"{}[color muted]{}[/color]"</span>, number, unit };
+}</code></pre>
+
+<p>A <code>TextAlign</code> the column takes goes in ahead of its <code>TextFormat</code>, so an
+alignment the format states wins. The header cell is laid out over the alignment alone: it names the
+column and holds none of its values. None of the format is written into the text a provider receives,
+so a value accepted from the editor holds what was typed and nothing else.</p>
 
 <h3 id="merging">Merging</h3>
 
@@ -1257,6 +1275,7 @@ are built in declaration order, so the grid read the set before it was built.</t
 <li>Resolve a column once and compare by address in anything the grid calls per cell.</li>
 <li>Use <code>std::ref</code> for anything shared or expensive.</li>
 <li>Use a bare <code>Cell{ Tag{ ... } }</code> when you want a present-but-empty cell.</li>
+<li>State a look every cell of a column shares as the column's <code>TextFormat</code>, not in each provider.</li>
 <li>Add an item's row inside the <code>NewItemEvent</code> handler, so the grid can select it.</li>
 <li>Ask <code>mayDropPopupImplicitly</code> before a cell control of your own drops a popup on a click, or <code>mayDropPopup</code> from a part whose one job is that popup.</li>
 <li>Give at least one sub-column in each group <code>Fill</code>.</li>
@@ -1290,6 +1309,8 @@ express.</p>
 <tr><td><code>columns.add(props...)</code></td><td><code>Column&amp;</code></td></tr>
 <tr><td><code>column.createSubColumns()</code></td><td><code>ColumnCollection&amp;</code>, creating on first use</td></tr>
 <tr><td><code>column.subColumns()</code></td><td><code>ColumnCollection*</code>, null if none</td></tr>
+<tr><td><code>column.cellTextFormat()</code></td><td><code>const TextFormat&amp;</code> - what the column's data cells are laid out over, its alignment included</td></tr>
+<tr><td><code>column.headerTextFormat()</code></td><td><code>const TextFormat&amp;</code> - the alignment alone, which the header cell is laid out over</td></tr>
 <tr><td><code>grid.addHeader()</code></td><td><code>Grids::GridHeader&amp;</code></td></tr>
 <tr><td><code>grid.addRow(props...)</code></td><td><code>Rt::Row&amp;</code></td></tr>
 <tr><td><code>grid.addControlRow(props...)</code></td><td><code>Rt::RowContainer&amp;</code></td></tr>

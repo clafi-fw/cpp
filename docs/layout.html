@@ -1289,8 +1289,8 @@ box, and a box it cannot fit into shortens it rather than widening the control.<
 
 <div class="info">
 The three anchors place the measured text <em>block</em> inside the control's own box, as a
-whole. <code>TextAlign</code>, written inside a <code>Text</code>, places the lines inside
-that block. A centred paragraph in a left-anchored label is both, and they do not mean the
+whole. <code>TextAlign</code>, written inside a <code>Text</code> or stated in the control's
+<code>TextFormat</code>, places the lines inside that block. A centred paragraph in a left-anchored label is both, and they do not mean the
 same thing.
 </div>
 
@@ -1889,6 +1889,7 @@ reason.</li>
 <tr><td><code>WordWrap</code></td><td><code>Yes</code>, <code>No</code></td><td><code>Yes</code></td></tr>
 <tr><td><code>HorizontalTextAnchor</code></td><td><code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>Left</code></td></tr>
 <tr><td><code>VerticalTextAnchor</code></td><td><code>Top</code>, <code>Center</code>, <code>Bottom</code></td><td><code>Top</code></td></tr>
+<tr><td><code>TextFormat</code></td><td><code>TextFormat{ ... }</code> - what the control's text is laid out over; several compose kind by kind. See the <a href="textengine.html#format">TextEngine manual</a></td><td>none</td></tr>
 <tr><td><code>Padding</code>, <code>Spacing</code></td><td><code>{ x, y }</code> or one float</td><td>the theme block's, or zero</td></tr>
 <tr><td><code>MinSize</code></td><td><code>{ x, y }</code></td><td>zero</td></tr>
 <tr><td><code>MaxSize</code></td><td><code>{ x, y }</code></td><td>no limit</td></tr>

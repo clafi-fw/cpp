@@ -154,6 +154,17 @@
                     <li><a href="#ex-icons">Bullets and inline icons</a></li>
                 </ul>
             </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#format">Text Format</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#format-holds">What it holds</a></li>
+                    <li><a href="#format-under">Under the text</a></li>
+                    <li><a href="#format-control">On a control</a></li>
+                </ul>
+            </li>
             <li><div class="nav-item-wrapper"><a href="#drawing">Drawing and Measuring</a></div></li>
             <li class="has-children">
                 <div class="nav-item-wrapper">
@@ -568,6 +579,82 @@ spaces of the font the paragraph starts in, so in a monospace font a tab is four
 <p>The same painter passed twice draws twice - the argument is read, not consumed destructively - so
 a list of any length costs one lambda and one argument per row.</p>
 
+<h2 id="format">Text Format</h2>
+
+<p>A <code>TextFormat</code> is markers alone: what a control's text is laid out over. It states
+the values a text runs on from - a colour, a style, an alignment - and holds no characters. The
+engine reads it ahead of the text's own markers, and it never becomes part of the text.</p>
+
+<pre><code><span class="cm">// Built like a Text: the stream, or the same sequence as one expression.</span>
+<span class="tp">TextFormat</span> format{ <span class="tp">TextAlign</span>::Center, <span class="tp">InkGrade</span>::Muted };
+format &lt;&lt; <span class="tp">TextStyleId</span>::SubBody;</code></pre>
+
+<h3 id="format-holds">What it holds</h3>
+
+<table>
+<tr><th>Streamed</th><th>Holds</th></tr>
+<tr><td><code>Ink</code>, <code>InkGrade</code>, <code>InkColor</code>, <code>Color</code>, <code>PushThemeColor{ ink }</code>, <code>PushCustomColor{ c }</code></td><td>The colour the text runs in, spelt as the stream spells it.</td></tr>
+<tr><td><code>TextStyleId</code></td><td>The style.</td></tr>
+<tr><td><code>PushFontSize{ f }</code>, <code>PushFontFamily{ L"..." }</code></td><td>A size or a family over the style's.</td></tr>
+<tr><td><code>TextOp::PushBold</code>, <code>TextOp::PushItalic</code></td><td>Weight and slant.</td></tr>
+<tr><td><code>TextAlign</code>, <code>ParaIndent{ f }</code>, <code>ParaLineSpacing{ f }</code></td><td>Paragraph geometry, for every paragraph of the text.</td></tr>
+<tr><td><code>TextFormat</code></td><td>Each value the other format holds.</td></tr>
+</table>
+
+<p>Anything that puts a character in - a string, an icon, a space, a tab stop - does not compile,
+and neither does a pop, a link or an anchor. A value that only converts to one of the above is
+refused as well, so a <code>wchar_t</code> is never taken for a <code>Color</code>. A script is not
+held: how far one is raised depends on the size in force where it opens. A <code>TextOp</code>
+other than <code>PushBold</code> and <code>PushItalic</code> is refused when it is streamed.</p>
+
+<p><strong>One of each kind.</strong> A value replaces what the format already holds of its kind,
+and kinds that differ combine. The values are kept in the order of their kinds rather than the order
+they were stated, so two formats that say the same thing are equal, and share a layout in the cache,
+however they were built. Bold and italic, once stated, stay stated.</p>
+
+<pre><code><span class="tp">TextFormat</span> format{ <span class="tp">TextAlign</span>::Center, <span class="tp">TextOp</span>::PushBold };
+format &lt;&lt; <span class="tp">TextFormat</span>{ <span class="tp">InkColor</span>::Red, <span class="tp">TextAlign</span>::Left };
+<span class="cm">// Left, red and bold.</span></code></pre>
+
+<h3 id="format-under">Under the text</h3>
+
+<p>The text's own markers stand over the format. A push the text makes is read after the format's.
+A paragraph property is read when the paragraph's newline is reached, so one the text states replaces
+the format's for the paragraph it stands in and for every paragraph after it.</p>
+
+<p><strong>The format is the floor of every stack.</strong> A pop the text holds no push for leaves
+what the format opened standing. For a text whose pushes and pops pair up, a format is the same as
+its values written at the start of the text.</p>
+
+<p>A format is how a control shows its text, not part of what the text says. A selection, the
+clipboard, the edit history and a document see the text alone: a range copied out of a centred box
+pastes uncentred. A control with a format and no text has no text.</p>
+
+<h3 id="format-control">On a control</h3>
+
+<p>Every control built on <code>RichControl</code> takes a <code>TextFormat</code> property and
+answers it from <code>textFormat()</code> - or none, while it is empty. Several in one argument list
+compose kind by kind, a later one standing over an earlier one, and <code>setTextFormat</code>
+replaces the whole of it. Stating one invalidates nothing; the caller asks for the pass.</p>
+
+<p>A class states its format ahead of the arguments it forwards, the way it states any other
+property. Along a chain of constructors the caller's value wins for every kind it states, then the
+most derived class's, and so on down to the base. A <code>CodeBox</code> is laid out in the
+monospace style that way, and the text handed to it states no style of its own:</p>
+
+<pre><code><span class="tp">TextBox</span>{ params, <span class="tp">WordWrap</span>::No, <span class="tp">TextFormat</span>{ <span class="tp">TextStyleId</span>::Code }, std::<span class="fn">forward</span>&lt;<span class="tp">Args</span>&gt;(args)... }</code></pre>
+
+<div class="warning">
+<strong>Never call <code>setTextFormat</code> in a constructor body.</strong> The body runs after the
+caller's properties were bound, and the call replaces them.
+</div>
+
+<p>The format reaches everything that lays the control's text out: the paint and the measurement, a
+<code>TextBox</code>'s placeholder, the hint that repeats a cut text over it
+(<code>GetHintEvent::format</code>), and an in-place editor, which lays its own text out over the
+covered control's (<code>EditTarget::textFormat</code>). A grid column states one for all of its
+cells - see the <a href="grids.html#cells">Grid manual</a>.</p>
+
 <h2 id="drawing">Drawing and Measuring</h2>
 
 <p>The engine builds the layout. A control hands it a text, a rectangle, the colours it resolved,
@@ -575,10 +662,14 @@ and where in that rectangle the text block belongs:</p>
 
 <pre><code><span class="tp">DrawTextResult</span> <span class="fn">drawText</span>(<span class="tp">ControlPaintContext</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp;, <span class="kw">const</span> <span class="tp">Text</span>&amp;,
     <span class="tp">TextAnchor</span>, <span class="kw">const</span> <span class="tp">EditProps</span>* = <span class="kw">nullptr</span>, <span class="tp">TextRenderMode</span> = <span class="tp">TextRenderMode</span>::Static,
-    <span class="kw">bool</span> wrap = <span class="kw">true</span>);
+    <span class="kw">bool</span> wrap = <span class="kw">true</span>, <span class="kw">const</span> <span class="tp">TextFormat</span>* = <span class="kw">nullptr</span>);
 
 <span class="tp">CalculatedDimensions</span> <span class="fn">calculateText</span>(<span class="kw">const</span> <span class="tp">FormContext</span>&amp;, <span class="kw">const</span> <span class="tp">Text</span>&amp;,
-    <span class="tp">MaxSize</span> = { k_maxFloat, k_maxFloat }, <span class="kw">bool</span> editable = <span class="kw">false</span>, <span class="kw">bool</span> wrap = <span class="kw">true</span>);</code></pre>
+    <span class="tp">MaxSize</span> = { k_maxFloat, k_maxFloat }, <span class="kw">bool</span> editable = <span class="kw">false</span>, <span class="kw">bool</span> wrap = <span class="kw">true</span>,
+    <span class="kw">const</span> <span class="tp">TextFormat</span>* = <span class="kw">nullptr</span>);</code></pre>
+
+<p>The format is laid out under the text - see <a href="#format">Text Format</a>. None and an empty
+one are the same answer, and <code>isTextTrimmed</code> takes one the same way.</p>
 
 <p>Colours arrive with the draw. A run names inks, and the paint context the draw is handed is
 what resolves them - so the same layout draws correctly through whichever backend owns the form it
@@ -685,6 +776,11 @@ moves.</p>
 <p>A layout held here stands outside the cache, so it answers <code>invalidateLayouts()</code>
 for itself: it compares <code>layoutGeneration()</code> against the number it was built at, and
 invalidates when the two have parted.</p>
+
+<p>The control's format reaches the layout the same way, on every call.
+<code>TextLayout::setFormat</code> keeps a copy and compares the one it is stated next, so an
+unchanged format invalidates nothing, and a measurement kept from an earlier call is answered again
+only while the format matches the one it was made over.</p>
 
 <p><code>takeText</code> states the <em>whole</em> of a text the layout has not been told about,
 which is what a text rewritten from nothing needs. A host that knows what changed overrides it and
@@ -951,6 +1047,7 @@ a view into the text the spans were baked from, and holds while that text stands
             <li><strong>Use <code>[tabto]</code> for columns and <code>[flex]</code> for two ends of a line.</strong> They answer different questions.</li>
             <li><strong>Pass the anchor</strong> that matches how the control positions its text.</li>
             <li><strong>Give an icon a <code>Tag</code></strong> when one painter serves several rows and has to tell them apart.</li>
+            <li><strong>State what every text of a control shares as its <code>TextFormat</code></strong>, ahead of the arguments a constructor forwards, rather than writing it into each text.</li>
             <li><strong>Answer your own link targets in <code>OnLinkClick</code> and stop the event.</strong> Of the rest, the box opens only http, https and mailto.</li>
         </ul>
     </div>
@@ -962,6 +1059,7 @@ a view into the text the spans were baked from, and holds while that text stands
             <li><strong>Don't mix argument order between the two syntaxes.</strong> There is one queue, and <code>[icon {}]</code> draws from it too.</li>
             <li><strong>Don't reach for <code>[color #RRGGBB]</code> in a control.</strong> A literal colour is right for art and wrong for interface.</li>
             <li><strong>Don't measure editable text as static</strong> and then draw it editable. The two answer different heights.</li>
+            <li><strong>Don't call <code>setTextFormat</code> in a constructor body.</strong> It replaces what the caller passed.</li>
             <li><strong>Don't put a text that is rewritten as the user watches through the cache.</strong> A control whose words change often derives from <code>WithTextLayout</code> and shapes them in place.</li>
             <li><strong>Don't write a link target holding <code>]</code> in a format string.</strong> The tag ends there; stream a <code>PushLink</code> instead.</li>
         </ul>
@@ -985,10 +1083,13 @@ it is drawn, so a theme change re-draws the same shaping rather than paying for 
 is absent for the same reason: where finished lines sit inside their box is set on a built layout,
 not shaped from.</p>
 
+<p>A format is walked first, at the start of the text. The depth of every stack is noted there and a
+pop stops at it, which is what keeps a format's values under the whole text.</p>
+
 <h3 id="hiw-cache">The layout cache</h3>
 
 <p>The engine keeps up to 512 layouts, keyed on a text rather than on a box: the text's hash, the
-scale factor, whether it is editable, and - for a text carrying a flex space - the event phase. A
+hash of the format it is laid out over, the scale factor, whether it is editable, and - for a text carrying a flex space - the event phase. A
 flex space is the one thing laid out differently for a measurement and for a paint, filling the box
 it is drawn in and contributing nothing to a size. Floats are held as their bits, because this is an
 identity question and not a numeric one.</p>
@@ -1012,8 +1113,8 @@ and that is read off the finished lines - so a box of another height keeps the s
 fit again.</p>
 
 <p>A hash is a way to find an entry, not proof it is the right one - two texts landing on one would
-draw the wrong words - so a hit is confirmed by comparing the <code>Text</code> itself. The cache
-owns that copy, because every caller's text is a temporary built for one paint while the layout keeps
+draw the wrong words - so a hit is confirmed by comparing the <code>Text</code> itself, and its
+format against the copy the layout keeps. The cache owns the text's copy, because every caller's text is a temporary built for one paint while the layout keeps
 a pointer to the one it was given.</p>
 
 <p><code>Text::hash</code> stands in for the whole <code>Text</code>, colour markers and all. A
