@@ -225,8 +225,8 @@ and the form runs one before the next paint.</p>
 
 <div class="info">
 This manual covers the layout. The other manuals cover what the controls <em>are</em>:
-<a href="grids.html">Grid manual</a> for grids, <a href="textengine.html">TextEngine manual</a>
-for text, <a href="events.html">Events manual</a> for handlers,
+<a href="grids.html">Grid manual</a> for grids, <a href="text.html">Writing Text</a> and
+<a href="textengine.html">Text in Controls</a> manuals for text, <a href="events.html">Events manual</a> for handlers,
 <a href="color.html">Colour manual</a> for how a control is painted.
 </div>
 
@@ -1293,7 +1293,8 @@ box, and a box it cannot fit into shortens it rather than widening the control.<
 <code>Text</code> or stated in the control's <code>TextFormat</code>, places the lines inside that
 block. <code>None</code>, the default, makes no block: the lines are aligned across the whole box.
 A single right-aligned line reaches the right edge under <code>None</code>; anchored
-<code>Left</code>, its block is the line itself, and it stays at the left.
+<code>Left</code>, its block is the line itself, and it stays at the left. See
+<a href="textengine.html#anchors">Text Anchors</a>.
 </div>
 
 <p>One measuring rule is worth knowing because it reaches a level away: a button whose
@@ -1891,7 +1892,7 @@ reason.</li>
 <tr><td><code>WordWrap</code></td><td><code>Yes</code>, <code>No</code></td><td><code>Yes</code></td></tr>
 <tr><td><code>HorizontalTextAnchor</code></td><td><code>None</code>, <code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>None</code></td></tr>
 <tr><td><code>VerticalTextAnchor</code></td><td><code>Top</code>, <code>Center</code>, <code>Bottom</code></td><td><code>Top</code></td></tr>
-<tr><td><code>TextFormat</code></td><td><code>TextFormat{ ... }</code> - what the control's text is laid out over; several compose kind by kind. See the <a href="textengine.html#format">TextEngine manual</a></td><td>none</td></tr>
+<tr><td><code>TextFormat</code></td><td><code>TextFormat{ ... }</code> - what the control's text is laid out over; several compose kind by kind. See the <a href="textengine.html#format">Text in Controls manual</a></td><td>none</td></tr>
 <tr><td><code>Padding</code>, <code>Spacing</code></td><td><code>{ x, y }</code> or one float</td><td>the theme block's, or zero</td></tr>
 <tr><td><code>MinSize</code></td><td><code>{ x, y }</code></td><td>zero</td></tr>
 <tr><td><code>MaxSize</code></td><td><code>{ x, y }</code></td><td>no limit</td></tr>
