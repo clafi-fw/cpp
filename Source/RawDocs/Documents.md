@@ -76,8 +76,9 @@ answer, isEdited.
 A tile is a button wearing the tool button look, its mark over its name. The caption is the name
 the file goes by, so an editor over it is a rename, and a list with no edit handler connected
 offers no Rename at all. Every tile takes the share of the lane it is handed, so the marks line up
-whatever the names are, and a long name wraps under the mark. The list is the view alone; what
-scrolls it is the host's, because a window gives the tiles the whole of its room.
+whatever the names are, and a long name wraps under the mark, every line of it centred - the tile's
+format, so an editor over it centres the same way. The list is the view alone; what scrolls it is
+the host's, because a window gives the tiles the whole of its room.
 
 The list comes back to a file name after a rebuild, not to a tile: every tile is taken down and
 built again, and a document is the same document under the same name. A file whose tile does not

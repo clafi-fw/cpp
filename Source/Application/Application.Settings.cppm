@@ -65,6 +65,12 @@ namespace ClaFi
     private:
         // A percent as it stands, in a box of its own.
         using PercentReadout = WithTextLayout<Label>;
+        // What a row of the appearance section is called, in the box the rows share.
+        class RowCaption : public Label
+        {
+        public:
+            RowCaption(const CreateParams&, std::wstring_view caption);
+        };
     private:
         // Asks, and makes the folder where the answer allows it. See Application
         void allowStorage();
@@ -83,7 +89,7 @@ namespace ClaFi
         StackPanel& m_appearanceGroup;
         // The theme and the mode it is worn in, as one row.
         StackPanel& m_themeRow;
-        Label& m_themeCaption;
+        RowCaption& m_themeCaption;
         ThemePick& m_themePick;
         ToolButton& m_autoButton;
         ToolButton& m_darkButton;
@@ -91,13 +97,13 @@ namespace ClaFi
         // The size everything is drawn at, as one row: what it is, what it stands at, and the
         // slot that moves it.
         StackPanel& m_scaleRow;
-        Label& m_scaleCaption;
+        RowCaption& m_scaleCaption;
         // Stated, and the same on both rows: what each row names stands at one left edge.
         PercentReadout& m_scaleReadout;
         ScaleSlider& m_scaleSlider;
         // How far controls move in depth, as a row laid out the way the scale's is.
         StackPanel& m_zAnimationRow;
-        Label& m_zAnimationCaption;
+        RowCaption& m_zAnimationCaption;
         PercentReadout& m_zAnimationReadout;
         Slider& m_zAnimationSlider;
         // Held whole: the whole of it goes where the platform has no keep-above to ask for.

@@ -169,6 +169,8 @@ namespace ClaFi::Controls
         static constexpr int k_shortOffsetColumns = 6;
         static constexpr int k_longOffsetColumns = 8;
         static constexpr std::size_t k_shortOffsetLimit = 0x1000000ull;
+        // What the measured run and every line are shaped in. See Controls#hexview
+        static const TextFormat s_lineFormat;
         // The run measured to get one character's width. Long enough that the rounding of a
         // single advance does not set the whole grid.
         static constexpr std::wstring_view k_measuredRun = L"0000000000000000";

@@ -65,6 +65,7 @@ namespace ClaFi::Tools::WhatsClip
             MaxSize{ k_readoutWidth, k_maxFloat },
             Padding{ k_readoutPaddingX, k_readoutPaddingY },
             WordWrap::No,
+            TextFormat{ PushFontSize{ k_readoutFontSize } },
             HorizontalTextAnchor::Left,
             VerticalTextAnchor::Center,
             themeMetrics().button,
@@ -80,6 +81,7 @@ namespace ClaFi::Tools::WhatsClip
             MinSize{ k_zoomReadoutWidth, 0.0f },
             MaxSize{ k_zoomReadoutWidth, k_maxFloat },
             WordWrap::No,
+            TextFormat{ PushFontSize{ k_readoutFontSize } },
             HorizontalTextAnchor::Right,
             VerticalTextAnchor::Center
         ) },
@@ -133,7 +135,6 @@ namespace ClaFi::Tools::WhatsClip
         body().setPicture(m_picture.empty() ? nullptr : &m_picture);
 
         Text status{};
-        status << TextStyleId::SubBody;
         if (m_picture.empty())
             status << k_noAnswer;
         else
@@ -145,7 +146,6 @@ namespace ClaFi::Tools::WhatsClip
     void PicturePage::writePixelReadout()
     {
         Text reading{};
-        reading << PushFontSize{ k_readoutFontSize };
         if (const std::optional<IntPoint> pixel = body().selection())
             reading << Fmt{ L"{}, {}", pixel->x, pixel->y };
 
@@ -161,7 +161,6 @@ namespace ClaFi::Tools::WhatsClip
     void PicturePage::writeZoomReadout()
     {
         Text reading{};
-        reading << PushFontSize{ k_readoutFontSize };
         reading << Fmt{ L"{}%", static_cast<int>(std::round(body().zoom() * 100.0f)) };
         m_zoomReadout.text() = std::move(reading);
         m_zoomReadout.invalidate();
@@ -295,7 +294,6 @@ namespace ClaFi::Tools::WhatsClip
     Text PicturePage::colorText(const std::optional<Color> color) const
     {
         Text text{};
-        text << PushFontSize{ k_readoutFontSize };
         if (!color)
         {
             text << InkGrade::Muted << L"No pixel" << PopColor{};

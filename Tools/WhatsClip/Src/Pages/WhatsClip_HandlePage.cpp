@@ -101,7 +101,6 @@ namespace ClaFi::Tools::WhatsClip
         const bool answered = entry && value;
 
         Text status{};
-        status << TextStyleId::SubBody;
         if (answered)
         {
             status << L"A handle to ";

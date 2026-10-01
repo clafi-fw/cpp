@@ -255,7 +255,6 @@ namespace ClaFi::Tools::WhatsClip
         const TextLineColumn caret = body().caretLineColumn();
 
         Text reading{};
-        reading << PushFontSize{ k_readoutFontSize };
         reading << Fmt{ L"Ln {}, Col {}", caret.line, caret.column };
 
         writeReadout(std::move(reading));
@@ -288,14 +287,6 @@ namespace ClaFi::Tools::WhatsClip
         // shaped to another width is another height and another longest line, which is what the
         // bars range over.
         body().invalidateFormAlign();
-    }
-
-    Text TextPageBase::wrapLabel()
-    {
-        Text text{};
-        text << PushFontSize{ k_readoutFontSize };
-        text << L"Wrap";
-        return text;
     }
 
     std::wstring TextPageBase::nameOf(const Transfer::Format& format)

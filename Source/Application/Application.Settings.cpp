@@ -260,6 +260,21 @@ namespace ClaFi
         form().followScale();
     }
 
+    SettingsPage::RowCaption::RowCaption(const CreateParams& params,
+        const std::wstring_view caption)
+        :
+        Label{
+            params,
+            Text{ caption },
+            TextFormat{ InkGrade::Strong },
+            MinSize{ k_rowCaptionWidth, 0.0f },
+            MaxSize{ k_rowCaptionWidth, k_maxFloat },
+            WordWrap::No,
+            VerticalTextAnchor::Center
+        }
+    {
+    }
+
     SettingsPage::SettingsPage(const CreateParams& params)
         :
         // The room around the options is the column's own, and the divider is what parts it from
@@ -279,13 +294,7 @@ namespace ClaFi
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
         ) },
-        m_themeCaption{ m_themeRow.add<Label>(
-            Text{ InkGrade::Strong, L"Theme:" },
-            MinSize{ k_rowCaptionWidth, 0.0f },
-            MaxSize{ k_rowCaptionWidth, k_maxFloat },
-            WordWrap::No,
-            VerticalTextAnchor::Center
-        ) },
+        m_themeCaption{ m_themeRow.add<RowCaption>(L"Theme:") },
         m_themePick{ m_themeRow.add<ThemePick>(
             MaxSize{ k_themesWidth, k_maxFloat },
             VerticalTextAnchor::Center
@@ -322,13 +331,7 @@ namespace ClaFi
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
         ) },
-        m_scaleCaption{ m_scaleRow.add<Label>(
-            Text{ InkGrade::Strong, L"Scale:" },
-            MinSize{ k_rowCaptionWidth, 0.0f },
-            MaxSize{ k_rowCaptionWidth, k_maxFloat },
-            WordWrap::No,
-            VerticalTextAnchor::Center
-        ) },
+        m_scaleCaption{ m_scaleRow.add<RowCaption>(L"Scale:") },
         m_scaleReadout{ m_scaleRow.add<PercentReadout>(
             MinSize{ k_readoutWidth, 0.0f },
             MaxSize{ k_readoutWidth, k_maxFloat },
@@ -346,13 +349,7 @@ namespace ClaFi
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
         ) },
-        m_zAnimationCaption{ m_zAnimationRow.add<Label>(
-            Text{ InkGrade::Strong, L"Z-Hover:" },
-            MinSize{ k_rowCaptionWidth, 0.0f },
-            MaxSize{ k_rowCaptionWidth, k_maxFloat },
-            WordWrap::No,
-            VerticalTextAnchor::Center
-        ) },
+        m_zAnimationCaption{ m_zAnimationRow.add<RowCaption>(L"Z-Hover:") },
         m_zAnimationReadout{ m_zAnimationRow.add<PercentReadout>(
             MinSize{ k_readoutWidth, 0.0f },
             MaxSize{ k_readoutWidth, k_maxFloat },

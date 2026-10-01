@@ -132,7 +132,8 @@ namespace ClaFi::Tools::WhatsClip
         Label& m_status{ m_strip.createBody<Label>(
             WordWrap::No,
             Padding{ 12.0f, 4.0f },
-            VerticalTextAnchor::Center
+            VerticalTextAnchor::Center,
+            TextFormat{ TextStyleId::SubBody }
         ) };
         // The corner in two parts: the reading as its body, and what a page stands after it.
         Panel& m_corner;
@@ -184,7 +185,6 @@ namespace ClaFi::Tools::WhatsClip
         void wrapState(GetStateEvent&) const;
         // The check was clicked. The box shapes its lines again, and the bars are re-ranged.
         void wrapClicked();
-        [[nodiscard]] static Text wrapLabel();
         // A custom format's name, empty for a standard one, which carries none this side can
         // read.
         [[nodiscard]] static std::wstring nameOf(const Transfer::Format&);
@@ -234,6 +234,7 @@ namespace ClaFi::Tools::WhatsClip
             MaxSize{ k_defaultReadoutWidth, k_maxFloat },
             WordWrap::No,
             Padding{ k_readoutPaddingX, 0.0f },
+            TextFormat{ PushFontSize{ k_readoutFontSize } },
             // Anchored Left, which is what holds a reading still. Centred, a number gaining a
             // digit moves every character of it half a digit sideways.
             HorizontalTextAnchor::Left,
@@ -288,7 +289,8 @@ namespace ClaFi::Tools::WhatsClip
         // THE MARK READS THE BOX AND THE CLICK WRITES IT: the box's own property is the
         // setting.
         m_wrapCheck{ createStripBar<CheckBox>(
-            wrapLabel(),
+            L"Wrap",
+            TextFormat{ PushFontSize{ k_readoutFontSize } },
             Padding{ k_pickPaddingX, 0.0f },
             VerticalTextAnchor::Center,
             CheckBox::OnGetState{ [this](GetStateEvent& event) {

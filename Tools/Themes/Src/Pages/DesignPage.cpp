@@ -187,12 +187,9 @@ namespace ThisApp
         showPickedPage();
     }
 
-    // The style goes in ahead of the name addEntry writes after it.
     TreeItem& DesignPage::addRootItem()
     {
-        TreeItem& item = m_tree.addItem();
-        item.text() << TextStyleId::SubHeading;
-        return item;
+        return m_tree.addItem(TextFormat{ TextStyleId::SubHeading });
     }
 
     void DesignPage::addEntry(TreeItem& item, TreeEntry entry)

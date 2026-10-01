@@ -14,7 +14,6 @@ import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
-import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Props;
 import ClaFi.StdLib;
@@ -79,7 +78,6 @@ namespace ClaFi::Tools::WhatsClip
         const std::wstring_view unit)
     {
         Text status{};
-        status << TextStyleId::SubBody;
         if (!text)
             status << k_noAnswer;
         else if (wholeSize > k_textLimit)

@@ -25,6 +25,8 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
+    const TextFormat HexView::s_lineFormat{ TextStyleId::Code };
+
     void HexView::setBytes(const ByteView value)
     {
         m_bytes = value;
@@ -371,10 +373,10 @@ namespace ClaFi::Controls
     void HexView::measureCharacterCell(const FormContext& formContext)
     {
         m_lineText.clear();
-        m_lineText << TextStyleId::Code << k_measuredRun;
+        m_lineText << k_measuredRun;
 
         const CalculatedDimensions measured = textEngine().calculateText(formContext, m_lineText,
-            { k_maxFloat, k_maxFloat }, false, false);
+            { k_maxFloat, k_maxFloat }, false, false, &s_lineFormat);
         m_charWidth = measured.x / static_cast<float>(k_measuredRun.size());
         m_lineHeight = measured.y;
     }
@@ -563,8 +565,6 @@ namespace ClaFi::Controls
             "both gaps are written below as a pair of literal spaces");
 
         m_lineText.clear();
-        m_lineText << TextStyleId::Code;
-
         m_lineText << InkGrade::Muted;
         appendHex(m_lineText, start, m_offsetColumns);
         m_lineText << PopColor{};
@@ -636,6 +636,7 @@ namespace ClaFi::Controls
         m_layout.setEventPhase(EventPhase::Paint);
         m_layout.setText(m_lineText);
         m_layout.setWrap(false);
+        m_layout.setFormat(&s_lineFormat);
         m_layout.setBoundsAndScale({ content.width(), m_lineHeight },
             event.formContext().scaleFactor());
         m_layout.draw(event.controlContext(), { content.left, top }, nullptr, textRenderMode());

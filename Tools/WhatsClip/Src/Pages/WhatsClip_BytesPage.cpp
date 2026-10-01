@@ -12,7 +12,6 @@ import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
-import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 import ClaFi.Core.System.Props;
@@ -48,7 +47,6 @@ namespace ClaFi::Tools::WhatsClip
         // writeByteCount;
         {
             Text status{};
-            status << TextStyleId::SubBody;
             if (m_bytes.empty())
                 status << k_noAnswer;
             else
@@ -62,7 +60,6 @@ namespace ClaFi::Tools::WhatsClip
     {
         Text reading{};
         //reading << TextStyleId::Code;
-        reading << PushFontSize{ k_readoutFontSize };
 
         // THE OFFSETS ARE THE VIEW'S OWN SPELLING - see HexView::offsetText - so the reading and
         // the left column cannot disagree about how wide an offset is. A single byte reads as

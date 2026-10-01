@@ -13,6 +13,7 @@ import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
@@ -154,6 +155,8 @@ namespace ClaFi::Documents
             ButtonViewMode::TopCenterIcon,
             k_documentTileIconSize,
             HorizontalTextAnchor::Center,
+            // Every line of a name that wraps centred under the mark, not the block alone.
+            TextFormat{ TextAlign::Center },
             // A tile takes the share of the lane it is handed, so every tile comes out the same
             // width whatever it is called, and a long name wraps under the mark rather than
             // widening the tile.

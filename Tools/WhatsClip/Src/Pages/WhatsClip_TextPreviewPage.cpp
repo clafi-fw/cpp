@@ -13,7 +13,6 @@ import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
-import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Props;
 import ClaFi.StdLib;
@@ -45,7 +44,6 @@ namespace ClaFi::Tools::WhatsClip
         const std::wstring* plain = std::any_cast<std::wstring>(&payload);
 
         Text status{};
-        status << TextStyleId::SubBody;
         if (marked)
         {
             status << Fmt{ L"{} characters, {} markers",

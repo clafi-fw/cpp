@@ -457,10 +457,12 @@ touches no others, which is what lets the view hold a buffer larger than a shape
 could be.
 
 EVERY COLUMN IS A COUNT OF CHARACTERS. One measurement of the monospace style per layout
-pass gives the cell, and a line is drawn as ONE text laid out on that same grid - so where
-a byte is drawn and where the view says it is cannot part. This holds for as long as
-TextStyleId::Code resolves to a font of one advance; a proportional fallback would slide the
-drawn line out from under the rects.
+pass gives the cell, and a line is drawn as ONE text laid out on that same grid - so where a
+byte is drawn and where the view says it is cannot part. The style is one format both are
+shaped under, so the run measured and the lines drawn cannot disagree about it either - see
+Control-Foundation#text-format. This holds for as long as TextStyleId::Code resolves to a
+font of one advance; a proportional fallback would slide the drawn line out from under the
+rects.
 
 THE BYTES ARE BORROWED. Whoever calls setBytes owns them, and they must outlive the view
 or be taken back with a setBytes of an empty span.
