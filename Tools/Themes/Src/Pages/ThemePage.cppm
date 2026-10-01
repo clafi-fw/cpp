@@ -41,7 +41,6 @@ import ClaFi.Controls.Spacer;
 import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.TabStrip;
-import ClaFi.Controls.TextBox;
 import ClaFi.Controls.TextItems;
 import ClaFi.Controls.Base.SliderBase;
 
@@ -223,9 +222,9 @@ namespace ThisApp
         //
         void generateCode();
         // The theme as one document, written into a box in the format's own spelling.
-        void writeThemeTo(const Dom::FileFormatBase&, TextBox&);
+        void writeThemeTo(const Dom::FileFormatBase&, CodeBox&);
         // The document a box shows, replacing the one it holds.
-        void showCode(const std::wstring& code, TextBox&);
+        void showCode(const std::wstring& code, CodeBox&);
         // A pick was made on this page. The action has already moved the answer and refreshed
         // every presenter of it; what is left is the document this page is showing.
         void codeOptionPicked(ClickEvent&);

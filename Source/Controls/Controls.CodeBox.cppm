@@ -361,8 +361,9 @@ namespace ClaFi::Controls
     CodeBox::CodeBox(const CreateParams& params, Args&&... args)
         :
         // Source is lines, and a line is never broken to the box it is drawn in - see HexView.
-        // Before the caller's own arguments, so a stated WordWrap still wins.
-        TextBox{ params, WordWrap::No, std::forward<Args>(args)... },
+        // It is columns too, which only the monospace style keeps. Both before the caller's own
+        // arguments, so a stated WordWrap or TextFormat still wins.
+        TextBox{ params, WordWrap::No, TextFormat{ TextStyleId::Code }, std::forward<Args>(args)... },
         INIT_PROPERTY(language),
         INIT_PROPERTY(inks),
         INIT_PROPERTY(detectLanguage),

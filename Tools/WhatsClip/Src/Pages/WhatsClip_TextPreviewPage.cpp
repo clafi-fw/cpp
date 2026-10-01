@@ -64,9 +64,9 @@ namespace ClaFi::Tools::WhatsClip
 
         Text report{};
         if (marked)
-            report << TextStyleId::Body << *marked;
+            report << *marked;
         else if (plain)
-            report << TextStyleId::Body << *plain;
+            report << *plain;
 
         showText(std::move(report));
     }

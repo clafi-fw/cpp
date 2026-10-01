@@ -23,7 +23,6 @@ import ClaFi.Controls.MessageDialog;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Grids_Dt;
 import ClaFi.Controls.Slider;
-import ClaFi.Controls.TextBox;
 
 import ClaFi.Dom;
 import ClaFi.Dom.Formats.ClaFi;
@@ -638,7 +637,7 @@ namespace ThisApp
             writeThemeTo(Dom::FileFormat::Json{}, m_jsonPage.box());
     }
 
-    void ThemePage::writeThemeTo(const Dom::FileFormatBase& format, TextBox& box)
+    void ThemePage::writeThemeTo(const Dom::FileFormatBase& format, CodeBox& box)
     {
         Dom::Value<AppTheme> themeNode{ nullptr, m_editTheme };
         themesManager().saveTheme(m_editTheme, themeNode);
@@ -656,12 +655,10 @@ namespace ThisApp
         showCode(stream.str(), box);
     }
 
-    void ThemePage::showCode(const std::wstring& code, TextBox& box)
+    void ThemePage::showCode(const std::wstring& code, CodeBox& box)
     {
         box.text().clear();
-        // Leading indentation and the C++ block's marker column only line up in a monospaced
-        // style.
-        box.text() << TextStyleId::Code << code;
+        box.text() << code;
         // The document is what the box measures, so a new one is a new size for the scroll
         // box around it.
         box.invalidateFormAlign();

@@ -26,8 +26,7 @@ namespace ThisApp
     void ScriptPage::restoreViewState()
     {
         m_box.text().clear();
-        // Source is columns, and only a monospaced style keeps them.
-        m_box.text() << TextStyleId::Code << documentNode().get<std::wstring>();
+        m_box.text() << documentNode().get<std::wstring>();
         // The document is what the box measures, so a new one is a new size for the scroll box
         // around it.
         m_box.invalidateFormAlign();

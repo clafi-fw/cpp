@@ -121,6 +121,6 @@ namespace ClaFi::Showcase::TextEngine
 
     Text buildCodeShowcase(std::size_t lineCount)
     {
-        return Text{ TextStyleId::Code, buildCppSource(lineCount), PopTextStyle{} };
+        return Text{ buildCppSource(lineCount) };
     }
 }

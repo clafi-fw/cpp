@@ -92,7 +92,7 @@ namespace ClaFi::Tools::WhatsClip
 
         Text report{};
         if (text)
-            report << TextStyleId::Code << *text;   // fixed pitch - code and columns as made
+            report << *text;
 
         showText(std::move(report), *m_format);
     }

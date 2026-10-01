@@ -482,6 +482,8 @@ The language is a Syntax::Language passed by value - one of Syntax::Languages, o
 own. The inks are a Syntax::Inks, one per kind of token; a kind left in the text's own ink
 states no span at all, which is what keeps operators and punctuation from costing anything.
 WordWrap::No is stated before the caller's arguments, as HexView states it: source is lines.
+So is TextFormat{ TextStyleId::Code }: source is columns too, so a text handed to the box states
+no style to be read in the monospace font - see Control-Foundation#text-format.
 
 A box completes names out of a Syntax::CompletionEntries the host states through
 `completion` - named, not copied, so the host keeps it alive for as long as the box stands.
