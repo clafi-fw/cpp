@@ -4,6 +4,7 @@ import ClaFi.Icons.PlusMark;
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Graphics.Canvas;
+import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.InkWell;
 import ClaFi.StdLib;
@@ -50,26 +51,30 @@ namespace ClaFi::Icons::Magnifier
 
     namespace
     {
-        // The shape, in units of the lens radius, carried over unchanged from the pixel painters.
-        // The tail starts a little inside the ring rather than on it, so the join survives whatever
-        // the two get rounded to.
-        constexpr float k_strokeRatio = 0.2167f;
-        constexpr float k_tailFrom = 0.666f;
-        // Reaches further than the 1.466 the pixel painters used. That length left the ink barely
-        // half the lens across, which is what made the band around it read as the longer of the two.
-        constexpr float k_tailTo = 1.7f;
+        // The shape in units of the lens radius. The ring is stroked on the radius itself.
+        constexpr float k_strokeRatio = 0.287f;
+        constexpr float k_tailWidthShare = 0.9f; // of the ring's band
+        constexpr float k_tailCornerShare = 0.23f; // of the tail's width, rounding its flat end
+        // On the ring's centre line, so the near end stays under the band however the two round.
+        constexpr float k_tailFrom = 1.0f;
+        constexpr float k_tailTo = 1.85f;
+        // Down and to the right, 22.6 degrees off vertical.
+        constexpr FloatPoint k_tailDirection{ 0.3836f, 0.9235f };
 
-        // What the whole thing spans, in the same units: the lens, half a stroke outside it on the
-        // upper left, and the tail reaching past it on the lower right. The lens is sized from this
-        // whether or not the tail is drawn, so turning tails off does not hand back a bigger circle
-        // - only a centred one.
-        constexpr float k_extent = 2.0f + k_strokeRatio + (k_tailTo - 1.0f);
-    }
+        // The outline's box in lens radii, measured from the lens centre.
+        struct Extent
+        {
+            float left{ 0.0f };
+            float top{ 0.0f };
+            float right{ 0.0f };
+            float bottom{ 0.0f };
+            [[nodiscard]] constexpr float width() const { return right - left; }
+            [[nodiscard]] constexpr float height() const { return bottom - top; }
+        };
 
-    FloatRect rectForLensRadius(FloatPoint center, float lensRadius)
-    {
-        const float half = lensRadius * k_extent * 0.5f;
-        return { center.x - half, center.y - half, center.x + half, center.y + half };
+        // A halo widens the box by one band on every side. The tail's end corners count unrounded.
+        [[nodiscard]] constexpr Extent extentOf(Halo);
+        [[nodiscard]] PixelPath tailOutline(FloatPoint center, float radius, float strokeWidth);
     }
 
     void paint(PaintIconEvent& event, Lens lens, Tail tail, Halo halo)
@@ -83,18 +88,20 @@ namespace ClaFi::Icons::Magnifier
 
         // The band comes out of the same budget the lens is sized from, so asking for one shrinks
         // the glass instead of spilling it past the rect the caller reserved.
-        const float side = std::min(bounds.width(), bounds.height());
-        const float radius = side / (k_extent + (withHalo ? 2.0f * k_strokeRatio : 0.0f));
-        const float strokeWidth = std::max(1.0f, radius * k_strokeRatio);
+        const Extent extent = extentOf(halo);
+        const float radius = std::min(bounds.width() / extent.width(), bounds.height() / extent.height());
+        const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         const float haloWidth = withHalo ? strokeWidth : 0.0f;
 
-        // With a tail the lens sits up and left, leaving the lower right for it. Without one there
-        // is nothing to leave room for, so it goes back to the middle.
+        // With a tail the whole outline is centred, which lifts the lens to leave the tail room
+        // below. The lens is sized for the tail either way, so turning tails off does not hand
+        // back a bigger circle - only a centred one.
+        const FloatPoint middle = bounds.center();
         const FloatPoint center = tail == Tail::Yes
             ? FloatPoint{
-                bounds.left + haloWidth + radius + strokeWidth * 0.5f,
-                bounds.top + haloWidth + radius + strokeWidth * 0.5f }
-            : bounds.center();
+                middle.x - radius * (extent.left + extent.right) * 0.5f,
+                middle.y - radius * (extent.top + extent.bottom) * 0.5f }
+            : middle;
 
         Canvas& canvas = event.canvas();
         const Color ink = event.textRgb(InkGrade::Strongest);
@@ -106,26 +113,19 @@ namespace ClaFi::Icons::Magnifier
         const Color rootSurface = event.bakedColors().rootSurface().toColor();
         const Color surface = event.applyDisabledFactor(rootSurface);
 
-        const FloatPoint tailFrom{ center.x + radius * k_tailFrom, center.y + radius * k_tailFrom };
-        const FloatPoint tailTo{ center.x + radius * k_tailTo, center.y + radius * k_tailTo };
+        const PixelPath tailPath = tailOutline(center, radius, strokeWidth);
 
-        // The band first, as one silhouette: the tail stroked wide, then the disc over it. Both are
-        // the same colour, so the disc doubles as the glass and the whole outline comes out as one
-        // shape rather than two overlapping halos.
-        //
-        // Same two endpoints as the ink, and nothing added past them. drawLine caps round, so a
-        // stroke this much wider already stands one halo width proud of the tip - exactly what it
-        // stands along the sides. Extending the line as well put a second halo width there, and the
-        // tail ended in a blob of surface with nothing inside it.
+        // The band first, as one silhouette: the tail's outline stroked twice the halo wide, then
+        // the disc over it. Both are the same colour, so the disc doubles as the glass and the
+        // whole outline comes out as one shape rather than two overlapping halos.
         if (tail == Tail::Yes && withHalo)
-            canvas.drawLine(tailFrom, tailTo, surface, strokeWidth + haloWidth * 2.0f);
+            canvas.drawPath(tailPath, surface, haloWidth * 2.0f);
 
         canvas.fillCircle(center, radius + haloWidth, surface);
 
-        // After the glass, so it butts into the ring instead of crossing the lens. It starts just
-        // inside the ring's own band, which is what keeps the two joined.
+        // After the glass, so it butts into the ring instead of crossing the lens.
         if (tail == Tail::Yes)
-            canvas.drawLine(tailFrom, tailTo, ink, strokeWidth);
+            canvas.fillPath(tailPath, ink);
 
         canvas.drawCircle(center, radius, ink, strokeWidth);
 
@@ -136,10 +136,66 @@ namespace ClaFi::Icons::Magnifier
             .canvas = canvas,
             .center = center,
             .size = radius,
-            .lineWidth = std::max(event.scaleBorder(0.6f), strokeWidth * 0.5f),
+            .lineWidth = event.scaledStrokeWidth(Thickness::Regular),
             .color = event.inkRgb(InkWell::accentInk())
         };
         mark.paintPlusOrMinus(lens == Lens::Plus);
+    }
+
+    FloatRect rectForLensRadius(FloatPoint center, float lensRadius)
+    {
+        const Extent extent = extentOf(Halo::No);
+        const float halfWidth = lensRadius * extent.width() * 0.5f;
+        const float halfHeight = lensRadius * extent.height() * 0.5f;
+        return { center.x - halfWidth, center.y - halfHeight, center.x + halfWidth, center.y + halfHeight };
+    }
+
+    namespace
+    {
+        constexpr Extent extentOf(Halo halo)
+        {
+            const float lens = 1.0f + k_strokeRatio * 0.5f;
+            const float halfWidth = k_strokeRatio * k_tailWidthShare * 0.5f;
+            const float endX = k_tailDirection.x * k_tailTo;
+            const float endY = k_tailDirection.y * k_tailTo;
+            const float acrossX = -k_tailDirection.y * halfWidth;
+            const float acrossY = k_tailDirection.x * halfWidth;
+            const float band = halo == Halo::Yes ? k_strokeRatio : 0.0f;
+
+            return {
+                .left = std::min({ -lens, endX + acrossX, endX - acrossX }) - band,
+                .top = std::min({ -lens, endY + acrossY, endY - acrossY }) - band,
+                .right = std::max({ lens, endX + acrossX, endX - acrossX }) + band,
+                .bottom = std::max({ lens, endY + acrossY, endY - acrossY }) + band
+            };
+        }
+
+        PixelPath tailOutline(FloatPoint center, float radius, float strokeWidth)
+        {
+            const float width = strokeWidth * k_tailWidthShare;
+            const FloatPoint across = {
+                -k_tailDirection.y * width * 0.5f,
+                k_tailDirection.x * width * 0.5f
+            };
+            const FloatPoint from = {
+                center.x + k_tailDirection.x * radius * k_tailFrom,
+                center.y + k_tailDirection.y * radius * k_tailFrom
+            };
+            const FloatPoint to = {
+                center.x + k_tailDirection.x * radius * k_tailTo,
+                center.y + k_tailDirection.y * radius * k_tailTo
+            };
+            const std::array<FloatPoint, 4> corners = {
+                FloatPoint{ from.x + across.x, from.y + across.y },
+                FloatPoint{ to.x + across.x, to.y + across.y },
+                FloatPoint{ to.x - across.x, to.y - across.y },
+                FloatPoint{ from.x - across.x, from.y - across.y }
+            };
+
+            PixelPath outline;
+            outline.addRoundedPolygon(corners, width * k_tailCornerShare);
+            return outline;
+        }
     }
 
 }

@@ -301,7 +301,7 @@ namespace ClaFi::Controls
         {
             // A ring the size of the glass, with the sign inside it.
             const Color ink = event.textRgb(InkGrade::Strong);
-            const float stroke = event.scaleF(1.5f);
+            const float stroke = event.scaledStrokeWidth(Thickness::Thin);
             event.canvas().drawCircle(event.center(), size, ink, stroke);
             Icons::PlusMark sign{
                 .canvas = event.canvas(),
@@ -320,7 +320,7 @@ namespace ClaFi::Controls
         // parent's hover already reaches the scroll bar's mark.
         //
         // Packed the same way ScrollBar packs one for its own mark. size is the lens radius, and
-        // the icon rect has to be wide enough to hold the tail beside it.
+        // the icon rect has to be big enough to hold the tail below it.
         PaintIconEvent iconEvent{
             event.controlContext(),
             Icons::Magnifier::rectForLensRadius(event.center(), size),
