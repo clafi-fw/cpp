@@ -13,7 +13,7 @@ namespace ClaFi::AnimationSlots
     // frames at 30Hz - a step, whatever the easing says. At 175ms it is ten, which is enough for
     // the intermediate coverage to read as a glide.
     export constexpr AnimationSlot hovered{
-        .duration{.rise = 77ms, .fall = 440ms },
+        .duration{.rise = 77ms, .fall = 330ms },
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseInOut },
         .tag = static_cast<AnimationTag>(VisualStateIndex::Hovered)
     };

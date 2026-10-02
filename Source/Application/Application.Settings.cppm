@@ -1,3 +1,6 @@
+module;
+#include "../Y-Core/System/Switches.h"
+
 export module ClaFi.App.Settings;
 
 import ClaFi.App.ThemePick;
@@ -78,8 +81,10 @@ namespace ClaFi
         void withdrawStorage();
         // Writes the percent the application is drawn at into the readout. See Application
         void writeScaleReadout();
+#if CLAFI_TEXT_MOVING
         // Writes the Z animation amount the application moves at into the readout.
         void writeZAnimationReadout();
+#endif
     private:
         // EVERY OPTION THE PAGE HOLDS, ON ONE BOX THAT SCROLLS. The sections are expanders on
         // this column and nothing inside it scrolls on its own, so a group opened past the foot
@@ -101,11 +106,13 @@ namespace ClaFi
         // Stated, and the same on both rows: what each row names stands at one left edge.
         PercentReadout& m_scaleReadout;
         ScaleSlider& m_scaleSlider;
+#if CLAFI_TEXT_MOVING
         // How far controls move in depth, as a row laid out the way the scale's is.
         StackPanel& m_zAnimationRow;
         RowCaption& m_zAnimationCaption;
         PercentReadout& m_zAnimationReadout;
         Slider& m_zAnimationSlider;
+#endif
         // Held whole: the whole of it goes where the platform has no keep-above to ask for.
         OptionsPage::Section& m_windowSection;
         StackPanel& m_windowGroup;

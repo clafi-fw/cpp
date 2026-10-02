@@ -66,9 +66,9 @@ namespace ClaFi
         // the focus ring on the side it reaches.
         static constexpr Thickness focusedBorder = Thickness::Regular;
         // The Z animation stated as depth. A control rests pressRestDepth into the surface, rises
-        // flush with it under the pointer and sinks to pressHeldDepth while held - the same
-        // distances for every control, so nothing on a surface travels further into it than
-        // anything else does.
+        // flush with it under the pointer or the keyboard's focus and sinks to pressHeldDepth
+        // while held - the same distances for every control, so nothing on a surface travels
+        // further into it than anything else does.
         //
         // Hover is exactly flush on purpose: nothing ever paints outside its own bounds, so no
         // control needs an inflated invalidate rect or an escape from its parent's clip. It is also

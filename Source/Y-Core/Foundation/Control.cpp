@@ -2347,35 +2347,7 @@ namespace ClaFi
 
     FloatPoint Control::pressOrigin(const PaintEvent& event) const
     {
-        const FloatPoint landmark = event.center();
-        // Weighted by the press, and by nothing else. A control at rest is not unscaled - it sits
-        // at pressRestScale - so its origin is live even when it is doing nothing, and an origin
-        // taken unconditionally would re-anchor every resting control on the form. Hover earns
-        // nothing either: a fully hovered control is at exactly 1.0, where no origin has any effect.
-        //
-        // This control's own press, deliberately, even where the scale itself takes a share of the
-        // parent's - see AdjustPaintEvent::setParentZAmount. A control standing for its parent is
-        // small and the press lands somewhere out on the parent, so leaning towards that point
-        // would slide the whole thing sideways instead of pushing it in. Its own press stays at
-        // zero, which leaves the origin on its own centre - what a small mark should turn about.
-        float engagement = pressedFactor();
-        if (engagement <= 0.0f)
-            return landmark;
-
-        // A keyboard press has no point to lean towards, and the stored position still holds
-        // whatever the last mouse press left there - on some other control entirely. The landmark
-        // is the answer for anything not driven by the mouse.
-        if (!Input::mouse().active())
-            return landmark;
-
-        // Where the press landed, not where the pointer is now. The point is fixed for the life of
-        // the press, so nothing has to repaint as the mouse travels, and the origin cannot drift
-        // out from under a control that is already animating.
-        FloatPoint pressPoint = form().mouseDownPos();
-        return {
-            std::lerp(landmark.x, pressPoint.x, engagement),
-            std::lerp(landmark.y, pressPoint.y, engagement)
-        };
+        return event.center();
     }
 
     void Control::announceControlsDeleted(Control& container, Control* ancestors)

@@ -1,5 +1,6 @@
 module;
 #include "../System/EventBindings.h"
+#include "../System/Switches.h"
 
 export module ClaFi.Core.Foundation :Form;
 
@@ -456,7 +457,9 @@ namespace ClaFi
         void backendSwitched(BackendSwitchEvent&);
         void scaleSwitched(ScaleSwitchEvent&);
         void inputSwitched(InputSwitchEvent&);
+#if CLAFI_TEXT_MOVING
         void zAnimationSwitched(ZAnimationSwitchEvent&);
+#endif
         // The control tree, painted in whatever the application is wearing - over the image it is
         // crossing from while it is between two themes. See the definition.
         void paintContent(const FloatRect& dirtyRect, const Graphics::PixelPath* contentClip);
@@ -571,7 +574,9 @@ namespace ClaFi
         ScopedEventConnection m_backendSwitchConnection;
         ScopedEventConnection m_scaleSwitchConnection;
         ScopedEventConnection m_inputSwitchConnection;
+#if CLAFI_TEXT_MOVING
         ScopedEventConnection m_zAnimationSwitchConnection;
+#endif
         // The application has moved to another backend and this form has not taken it yet.
         bool m_backendPending{ false };
 

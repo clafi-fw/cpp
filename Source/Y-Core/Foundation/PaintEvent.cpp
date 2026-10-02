@@ -9,7 +9,9 @@ import :Form;
 import :Control;
 import :Traversal;
 
+#if CLAFI_TEXT_MOVING
 import ClaFi.Core.Context.AppContext;
+#endif
 import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -85,12 +87,16 @@ namespace ClaFi
         if (m_parentEvent)
         {
             m_windowFocusedFactor = m_parentEvent->m_windowFocusedFactor;
+#if CLAFI_TEXT_MOVING
             m_zAnimationAmount = m_parentEvent->m_zAnimationAmount;
+#endif
         }
         else if (const FormBase* form = control.getForm())
         {
             m_windowFocusedFactor = form->windowFocusedFactor();
+#if CLAFI_TEXT_MOVING
             m_zAnimationAmount = form->appContext().zAnimationAmount();
+#endif
         }
 
         // Metrics
@@ -105,9 +111,13 @@ namespace ClaFi
             // any. Read here rather than in pressScale(), so that everything downstream of the
             // scale - the transform, and the text raster mode where it is compiled in - sees one
             // answer.
+#if CLAFI_TEXT_MOVING
             m_zDepthFactor = control.allowZAnimation()
                 ? metrics.zDepthFactor * m_zAnimationAmount
                 : 0.0f;
+#else
+            m_zDepthFactor = control.allowZAnimation() ? metrics.zDepthFactor : 0.0f;
+#endif
             m_surfaceGrowInScale = metrics.surfaceGrowInScale;
         }
 
@@ -329,10 +339,14 @@ namespace ClaFi
         if (!m_zDepthFactor)
             return 1.0f;
         const ThemeMetrics& metrics = themeMetrics();
-        // Rest to full size as the pointer arrives, then in again while it is held. Reading the
-        // two steps in that order is what keeps a keyboard press - held but never hovered - from
-        // growing the control on its way down.
-        float result = std::lerp(metrics.pressRestScale, 1.0f, zHoveredFactor());
+        // Rest to full size on arrival, then in again while held. The pointer arrives at the
+        // control it hovers and the keyboard at the one it focuses, so a key press travels as far
+        // as a mouse click. Taking the steps in that order keeps a press on a control nothing has
+        // arrived at from growing it on its way down.
+        const float keyboardArrived = zAnimationFactor(VisualStateIndex::Focused)
+            * Input::keyboard().factor();
+        const float arrived = std::max(zHoveredFactor(), keyboardArrived);
+        float result = std::lerp(metrics.pressRestScale, 1.0f, arrived);
         result = std::lerp(result, metrics.pressHeldScale, zPressedFactor());
         return std::lerp(1.0f, result, m_zDepthFactor);
     }

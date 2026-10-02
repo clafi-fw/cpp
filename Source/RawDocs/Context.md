@@ -96,6 +96,8 @@ EVERY WINDOW REPAINTS WHOLE. The amount scales how far below full size a control
 control that takes the Z animation changes size at rest. Nothing is laid out again - the press
 scale is a paint transform.
 
+Compiled only where CLAFI_TEXT_MOVING is 1 - see AppContext::zAnimation.
+
 ## SystemColorModeEvent
 
 The desktop has changed the mode it asks applications to be drawn in, raised on
@@ -269,6 +271,11 @@ and raises ZAnimationSwitchEvent.
 The amount multiplies `ControlMetrics::zDepthFactor` where a paint reads it, so the resting depth
 and the held depth scale together and flush stays flush. It is brought inside 0 to 1 and taken
 from the node while the context is built, the way the scale percent is.
+
+THE AMOUNT IS AN OPTION ONLY WHERE CLAFI_TEXT_MOVING IS 1. At 0 the node, the amount and
+ZAnimationSwitchEvent are left out of the build, and every control takes the depth the theme
+states, as an amount of 1 would. A ZAnimation key in a config written where the node stood is
+discarded as an unrecognised key when the config is read.
 
 ## AppContext::configFolderExists
 

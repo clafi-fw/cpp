@@ -138,10 +138,11 @@ The common options are Appearance, which is the theme, the size the application 
 how far its controls move in depth, a row each - Theme, a ThemePick over the themes the
 application can wear and a button for each colour mode setting, Auto first; Scale, the percent and
 the slot that moves it; and Z-Hover, the Z animation amount as a percent and its slot, laid out the
-way Scale is. The captions share a stated width, so what each row names starts at one left edge
-whichever word is the longer, and the slots carry no stepping buttons - a percent is stepped by an
-arrow key, and an end button on a slot that resizes the form it sits in walks out from under the
-pointer holding it. Then Always on top, which addresses the window the menu stands on rather than the menu; and
+way Scale is, where CLAFI_TEXT_MOVING is 1. The captions share a stated width, so what each row
+names starts at one left edge whichever word is the longer, and the slots carry no stepping
+buttons - a percent is stepped by an arrow key, and an end button on a slot that resizes the form
+it sits in walks out from under the pointer holding it. Then Always on top, which addresses the
+window the menu stands on rather than the menu; and
 Keep settings on this PC. THE SECTION GOES, NOT THE CHECK, where
 the platform has no keep-above a client may ask for - see IPlatformWindow::canSetAlwaysOnTop. A
 check that could be turned on and would not hold says something untrue about the window, and hiding
@@ -188,7 +189,9 @@ under the pointer changes.
 
 THE Z-HOVER SLIDER WRITES THE CONFIG THE SAME WAY. A step writes AppContext::zAnimation and every
 window repaints - see ZAnimationSwitchEvent. One unit of the slot is a hundredth of the amount, so
-the readout is the amount as a percent, and 100% is the depth the theme states.
+the readout is the amount as a percent, and 100% is the depth the theme states. At
+CLAFI_TEXT_MOVING 0 there is no row, and every control takes that depth - see
+AppContext::zAnimation.
 
 THE MODE IS STATED, NOT TRIED ON. A mode button writes the config the way a pick writes the path,
 and the node's change carries it to the theme - see `applyColorMode`. Auto hands the mode to the

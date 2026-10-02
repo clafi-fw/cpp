@@ -1,3 +1,6 @@
+module;
+#include "../System/Switches.h"
+
 module ClaFi.Core.Foundation;
 
 import :Form;
@@ -1513,9 +1516,11 @@ namespace ClaFi
         m_inputSwitchConnection{
             appContext.events().connect<InputSwitchEvent>(this, &FormBase::inputSwitched)
         },
+#if CLAFI_TEXT_MOVING
         m_zAnimationSwitchConnection{
             appContext.events().connect<ZAnimationSwitchEvent>(this, &FormBase::zAnimationSwitched)
         },
+#endif
         m_popupTargetForm{ ownerForm },
         // Whichever part of its face the popup was opened on. See Control-Foundation#popup-owner
         m_popupTarget{ popupTarget ? &popupTarget->popupOwner() : nullptr },
@@ -1985,6 +1990,7 @@ namespace ClaFi
         invalidate();
     }
 
+#if CLAFI_TEXT_MOVING
     // The whole window, since every control that moves in depth rests at a new size.
     void FormBase::zAnimationSwitched(ZAnimationSwitchEvent&)
     {
@@ -1992,6 +1998,7 @@ namespace ClaFi
             return;
         invalidate();
     }
+#endif
 
     // A theme change is one set of colours coming over another rather than replacing it, and the
     // coming over is made in the colours themselves: every control resolves its own once per theme

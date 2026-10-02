@@ -1,3 +1,6 @@
+module;
+#include "../Y-Core/System/Switches.h"
+
 module ClaFi.App.Settings;
 
 import ClaFi.App.ThemePick;
@@ -55,9 +58,11 @@ namespace ClaFi
     // The two ways between a percent and a point along the scale slot. See the definitions
     [[nodiscard]] static int percentAt(float position);
     [[nodiscard]] static float positionOf(int percent);
+#if CLAFI_TEXT_MOVING
     // The two ways between a Z animation amount and a point along its slot.
     [[nodiscard]] static float amountAt(float position);
     [[nodiscard]] static float positionOfAmount(float amount);
+#endif
 
     namespace
     {
@@ -105,8 +110,10 @@ namespace ClaFi
     // and it is stated to leave the row about as wide as the themes above it are capped at.
     constexpr float k_sliderWidth{ 250.0f };
 
+#if CLAFI_TEXT_MOVING
     // One unit of the Z-Hover slot is a hundredth of the amount.
     constexpr float k_zAnimationSteps{ 100.0f };
+#endif
 
     // SettingsPage
 
@@ -122,6 +129,7 @@ namespace ClaFi
         return static_cast<float>(percent - AppContext::k_minScalePercent);
     }
 
+#if CLAFI_TEXT_MOVING
     float amountAt(const float position)
     {
         return std::round(position) / k_zAnimationSteps;
@@ -131,6 +139,7 @@ namespace ClaFi
     {
         return amount * k_zAnimationSteps;
     }
+#endif
 
     // THE SYSTEM'S PART IS THE PLATFORM'S APPLICATION DATA ROOT, the floor deleteConfigFolder
     // stops at. Each ink is pushed inside the link, which keeps the link's own ink off it.
@@ -296,6 +305,9 @@ namespace ClaFi
         ) },
         m_themeCaption{ m_themeRow.add<RowCaption>(L"Theme:") },
         m_themePick{ m_themeRow.add<ThemePick>(
+            // Its metrics too: a tool button's grow the surface in, and a button's stands at rest.
+            params.themeMetrics().button,
+            UiElement::Button,
             MaxSize{ k_themesWidth, k_maxFloat },
             VerticalTextAnchor::Center
         ) },
@@ -345,6 +357,7 @@ namespace ClaFi
             ScrollButtons::No,
             HintText{ L"Scales the UI on top of the system scale" }
         ) },
+#if CLAFI_TEXT_MOVING
         m_zAnimationRow{ m_appearanceGroup.add<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
@@ -364,6 +377,7 @@ namespace ClaFi
             FineAdjust::No,
             HintText{ L"How far controls move in depth under the pointer" }
         ) },
+#endif
         m_windowSection{ m_options.addSection(L"Main Window") },
         m_windowGroup{ m_windowSection.body() },
         // NO ROOM AT THE SIDES, so the box stands where a label's text stands. A check box is
@@ -416,6 +430,7 @@ namespace ClaFi
             appContext().scale().set(percentAt(event.newPosition));
             writeScaleReadout();
         });
+#if CLAFI_TEXT_MOVING
         m_zAnimationSlider.setMaxPosition(k_zAnimationSteps);
         m_zAnimationSlider.setPosition(positionOfAmount(appContext().zAnimationAmount()), false);
         writeZAnimationReadout();
@@ -423,6 +438,7 @@ namespace ClaFi
             appContext().zAnimation().set(amountAt(event.newPosition));
             writeZAnimationReadout();
         });
+#endif
         // The window the menu stands on, not the menu: a popup is held above its owner already,
         // and what the user means by this is where the application sits among other applications.
         m_alwaysOnTop.onGetState([this](GetStateEvent& event) {
@@ -562,6 +578,7 @@ namespace ClaFi
         m_scaleReadout.invalidate();
     }
 
+#if CLAFI_TEXT_MOVING
     void SettingsPage::writeZAnimationReadout()
     {
         const int percent = static_cast<int>(std::round(appContext().zAnimationAmount() * 100.0f));
@@ -570,4 +587,5 @@ namespace ClaFi
         m_zAnimationReadout.text() = std::move(reading);
         m_zAnimationReadout.invalidate();
     }
+#endif
 }
