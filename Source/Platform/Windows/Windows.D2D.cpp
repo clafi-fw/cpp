@@ -24,7 +24,7 @@ namespace ClaFi::PlatformImplementation::Windows
         {
             D2D1_FACTORY_OPTIONS options{};
 
-            if constexpr (Diagnostic::Options::apiErrors != Diagnostic::Options::ApiErrors::Ignore)
+            if constexpr (Diagnostic::Options::apiErrors() != Diagnostic::Options::ApiErrors::Ignore)
                 options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 
             HRESULT hr = D2D1CreateFactory(

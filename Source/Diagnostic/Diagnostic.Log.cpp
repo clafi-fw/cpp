@@ -1,7 +1,6 @@
 module ClaFi.Diagnostic.Log;
 
 import ClaFi.Diagnostic.FpsPage;
-import ClaFi.Diagnostic.Options;
 
 import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.TabStrip;
@@ -44,23 +43,6 @@ import ClaFi.StdLib;
 namespace ClaFi
 {
     using namespace Controls;
-    // The config section of the window's own, and what it keeps.
-    constexpr std::wstring_view k_sectionName = L"Diagnostic";
-    constexpr std::wstring_view k_visibleName = L"Visible";
-    constexpr std::wstring_view k_tabName = L"Tab";
-    // THE TAB IS KEPT BY ITS CAPTION, which is what the config file then reads as. The captions
-    // are stated once here and the tabs are built from them, so the name written and the name
-    // matched cannot come apart.
-    constexpr std::wstring_view k_outputTabCaption = L"Output";
-    constexpr std::wstring_view k_fpsTabCaption = L"FPS";
-
-    Hsl lastObjColor{ 0.6f, 1.0f, 0.66f };
-    static std::unordered_map<const Control*, Color> colorMap{};
-
-    // THE WHOLE PAGE, which is what a log is copied FOR - StdActions::copy beside it takes the
-    // one row the menu was raised on. No shortcut and no icon: it is the second line of a menu
-    // two lines long, and it is named in words.
-    Action g_copyRows{ Text{ L"Copy all rows" } };
 
     class DiagnosticLogView : public StackView
     {
@@ -97,6 +79,10 @@ namespace ClaFi
         ) };
         bool m_stopped{};
         RichControl* m_itemToSelect{};
+        // THE WHOLE PAGE, which is what a log is copied FOR - StdActions::copy beside it takes
+        // the one row the menu was raised on. No shortcut and no icon: it is the second line of
+        // a menu two lines long, and it is named in words.
+        Action m_copyRows{ Text{ L"Copy all rows" } };
     };
 
     // The diagnostic window: a tabbed box under a title bar of its own, the Output page holding
@@ -144,69 +130,57 @@ namespace ClaFi
         // which page the window opens on is the config's answer, and that is not read yet.
         Tab& outputTab{ form.body().strip().addTab(k_outputTabCaption, Page{ output }) };
         Tab& fpsTab{ form.body().strip().addTab(k_fpsTabCaption, Page{ fps }) };
+        // The colour a line names each control in, and the hue the next control is given.
+        std::unordered_map<const Control*, Color> controlColors{};
+        Hsl nextControlColor{ 0.6f, 1.0f, 0.66f };
     };
 
-    static std::unique_ptr<DiagnosticWindow> g_diagnosticLogInstance{};
-
-    void writeLine(const Text& text, const Control* ptr, bool showPtr);
-
-    void diagnosticLog(const Text& text, const Control* ptr, bool showPtr)
+    // Not at namespace scope, where its destructor is registered at startup. See Diagnostic#Options
+    static std::unique_ptr<DiagnosticWindow>& diagnosticWindow()
     {
-        if constexpr (Diagnostic::Options::enabled)
-            writeLine(text, ptr, showPtr);
+        static std::unique_ptr<DiagnosticWindow> s_window{};
+        return s_window;
     }
 
-    void initializeDiagnosticLog(AppContext& appContext)
+    void openDiagnosticWindow(AppContext& appContext)
     {
-        if constexpr (Diagnostic::Options::enabled)
-            g_diagnosticLogInstance = std::make_unique<DiagnosticWindow>(appContext);
+        diagnosticWindow() = std::make_unique<DiagnosticWindow>(appContext);
     }
 
-    void finalizeDiagnosticLog()
+    void closeDiagnosticWindow()
     {
-        g_diagnosticLogInstance.reset();
+        diagnosticWindow().reset();
     }
 
-    void showDiagnosticWindow(const InputStamp stamp)
+    void activateDiagnosticWindow(const InputStamp stamp)
     {
-        if constexpr (Diagnostic::Options::enabled)
-            g_diagnosticLogInstance->showOrActivate(stamp);
+        diagnosticWindow()->showOrActivate(stamp);
     }
 
-    Dom::Dt::Section createDiagnosticLogConfigSchema()
+    void restoreDiagnosticWindow()
     {
-        return Dom::Dt::Section{
-            k_sectionName,
-            Dom::Dt::Value{ k_visibleName, false },
-            Dom::Dt::Value{ k_tabName, k_outputTabCaption }
-        };
+        diagnosticWindow()->restoreState();
     }
 
-    void restoreDiagnosticLogState()
+    void storeDiagnosticWindow()
     {
-        if constexpr (Diagnostic::Options::enabled)
-            g_diagnosticLogInstance->restoreState();
-    }
-
-    void storeDiagnosticLogState()
-    {
-        if constexpr (Diagnostic::Options::enabled)
-            g_diagnosticLogInstance->storeState();
+        diagnosticWindow()->storeState();
     }
 
     // One line into the Output page. A line about a control of the diagnostic window itself is
     // dropped: painting it would log, and logging would paint.
-    void writeLine(const Text& text, const Control* ptr, bool showPtr)
+    void writeDiagnosticLine(const Text& text, const Control* ptr, bool showPtr)
     {
         static bool inDiagnosticLog{};
         if (inDiagnosticLog)
             return;
         inDiagnosticLog = true;
 
-        OutputPage& output = g_diagnosticLogInstance->output;
+        DiagnosticWindow& window = *diagnosticWindow();
+        OutputPage& output = window.output;
         if (!output.stopped())
         {
-            if (ptr && g_diagnosticLogInstance->form.content().containsNested(ptr))
+            if (ptr && window.form.content().containsNested(ptr))
             {
                 inDiagnosticLog = false;
                 return;
@@ -223,14 +197,14 @@ namespace ClaFi
                 {
                     std::wstring_view s = ptr->diagnosticText();
                     Color color;
-                    if (!colorMap.contains(ptr))
+                    if (!window.controlColors.contains(ptr))
                     {
-                        color = lastObjColor.toColor();
-                        colorMap.insert({ ptr, color });
-                        lastObjColor.offsetHue(1.0f / 6.0f);
+                        color = window.nextControlColor.toColor();
+                        window.controlColors.insert({ ptr, color });
+                        window.nextControlColor.offsetHue(1.0f / 6.0f);
                     }
                     else
-                        color = colorMap[ptr];
+                        color = window.controlColors[ptr];
                     if (!s.empty())
                         newItem.text() << color << L" (" << s << L")";
                 }
@@ -238,7 +212,7 @@ namespace ClaFi
             // The same line where a debugger shows it, for the records the window is torn down
             // before it can paint - those of the exit save.
             Platform::debugOutput(newItem.text().plainText());
-            g_diagnosticLogInstance->form.invalidateAlign();
+            window.form.invalidateAlign();
         }
         inDiagnosticLog = false;
     }
@@ -266,14 +240,14 @@ namespace ClaFi
         onGetActionState([this](GetActionStateEvent& event) {
             if (&event.action == &StdActions::copy)
                 event.claim({ .enabled = body().currentItem() != nullptr });
-            else if (&event.action == &g_copyRows)
+            else if (&event.action == &m_copyRows)
                 event.claim({ .enabled = !body().controls().empty() });
         });
 
         onActionClick([this](ActionClickEvent& event) {
             if (&event.action == &StdActions::copy)
                 copyRows(body().currentItem(), event.stamp);
-            else if (&event.action == &g_copyRows)
+            else if (&event.action == &m_copyRows)
                 copyRows(nullptr, event.stamp);
         });
     }
@@ -312,7 +286,7 @@ namespace ClaFi
 
         ActionList items{
             &StdActions::copy,
-            &g_copyRows,
+            &m_copyRows,
         };
         Menu menu{ *this };
         menu.add(items);

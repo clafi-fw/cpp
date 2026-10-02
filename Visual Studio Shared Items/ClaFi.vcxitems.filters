@@ -373,6 +373,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Log.cpp">
       <Filter>Diagnostic</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Log.Switch.cpp">
+      <Filter>Diagnostic</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Log.cppm">
       <Filter>Diagnostic</Filter>
     </ClCompile>

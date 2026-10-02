@@ -28,6 +28,7 @@ fi
 cmake -S "$src" -B "$work/build" -G Ninja -Wno-experimental \
     -DCMAKE_TOOLCHAIN_FILE="$toolchain" \
     -DCLAFI_PLATFORM=wayland \
+    -DCLAFI_NO_DIAGNOSTIC=ON \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="$work/bin"
 cmake --build "$work/build" --target "$@" -- -k 0

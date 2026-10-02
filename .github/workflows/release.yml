@@ -107,7 +107,8 @@ jobs:
           $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild `
             -find 'MSBuild\**\Bin\amd64\MSBuild.exe' | Select-Object -First 1
           & $msbuild "$env:DIR\$env:APP.vcxproj" -nologo -m `
-            -p:Configuration=Release -p:Platform=x64 "-p:OutDir=$env:RUNNER_TEMP\out\"
+            -p:Configuration=Release -p:Platform=x64 -p:ClaFiNoDiagnostic=true `
+            "-p:OutDir=$env:RUNNER_TEMP\out\"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Package
         shell: pwsh

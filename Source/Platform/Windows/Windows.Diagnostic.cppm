@@ -11,7 +11,7 @@ import ClaFi.StdLib;
 namespace ClaFi::PlatformImplementation::Windows
 {
     using Diagnostic::Options::ApiErrors;
-    constexpr bool k_apiErrorsReported{ Diagnostic::Options::apiErrors != ApiErrors::Ignore };
+    constexpr bool k_apiErrorsReported{ Diagnostic::Options::apiErrors() != ApiErrors::Ignore };
 
     // A failed call, done with as Diagnostic::Options::apiErrors says: said into the debugger's
     // output or thrown as a std::system_error, either way naming the site the check stood at.
@@ -51,7 +51,7 @@ namespace ClaFi::PlatformImplementation::Windows
     {
         std::string message = std::format("ClaFi: API call failed in {} at {}:{} - {}",
             loc.function_name(), loc.file_name(), loc.line(), code.message());
-        if constexpr (Diagnostic::Options::apiErrors == ApiErrors::Throw)
+        if constexpr (Diagnostic::Options::apiErrors() == ApiErrors::Throw)
             throw std::system_error(code, message);
         else
         {

@@ -2,6 +2,43 @@
 
 The words that no longer fit above a declaration.
 
+## Options
+
+Diagnostic::Options holds the switches the diagnostic code stands behind, all of them at compile
+time. `enabled` is the global one. Every other option is stated in `Options::Stated` and read
+through the function of the same name - `logThemeCrossing()`, `apiErrors()` and the rest - which
+answers off, or `ApiErrors::Ignore`, while `enabled` is off. A caller asks one question and never
+checks `enabled` beside it.
+
+A RELEASE CARRIES NO DIAGNOSTIC. A build defining `CLAFI_NO_DIAGNOSTIC` holds `enabled` off,
+whatever the source says. A Visual Studio build defines it under `-p:ClaFiNoDiagnostic=true`
+(ClaFi.vcxitems), a CMake build under `-DCLAFI_NO_DIAGNOSTIC=ON`. The release recipe passes both -
+`.github/workflows/release.yml` for Windows, `.github/release/build-linux.sh` for Linux - so an
+application published from GitHub carries none, however the source was left.
+
+OFF MEANS NOT LINKED, not only not run. Code behind an option stands in an `if constexpr`, so a
+build with the option off has none of it. The diagnostic window asks for more: the controls it is
+built from - the FPS page's grids among them - must not reach an executable that never opens it.
+The two linkers decide that differently, and the module is laid out for both.
+
+- Clang links from a static library and pulls an object in as soon as anything references a
+  symbol it defines. An object that imports a module calls that module's initializer, so it pulls
+  the module's object in, and that object's vtables pull in the rest - an import with nothing
+  used is enough. The entry points ApplicationBase calls therefore stand in
+  `Diagnostic.Log.Switch.cpp`, which imports nothing of the window, and reach the window's half in
+  `Diagnostic.Log.cpp` only from inside `if constexpr (enabled)`. Off, nothing references that
+  object, and neither it nor the FPS page nor the grids are pulled in.
+- MSVC links every object of the project and drops only the functions nothing references. An
+  object's dynamic initializers always run, so a namespace-scope object keeps whatever its
+  constructor and destructor reach. The window is held in a function-local static,
+  `diagnosticWindow()`, and what it keeps - the copy action, the colours of the controls a line
+  names - are members of its classes. Nothing in `Diagnostic.Log.cpp` stands at namespace scope
+  with a constructor or destructor that does work.
+
+The config keeps its `Diagnostic` section and the `Diagnostic` form placement with the switch
+off. createDiagnosticLogConfigSchema stands with the entry points, so a config file reads the same
+whichever build wrote it.
+
 ## DiagnosticLog
 
 The diagnostic window is a window like any other: a title bar, the Output and FPS pages under it,

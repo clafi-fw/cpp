@@ -12,7 +12,7 @@ import ClaFi.StdLib;
 
 // The diagnostic window: an Output page, which is where every diagnosticLog line goes, and an
 // FPS page - see Diagnostic::FpsPage. Hidden until the application menu's Show diagnostic, or
-// until the config says it was up. The whole of it stands behind Diagnostic::Options::showForm;
+// until the config says it was up. The whole of it stands behind Diagnostic::Options::enabled;
 // off, nothing here opens a window or keeps a line.
 export
 namespace ClaFi
@@ -45,4 +45,23 @@ namespace ClaFi
         if constexpr (Diagnostic::Options::enabled)
             diagnosticLog(Text{ text }, ptr, true);
     }
+}
+
+// Shared by the module's two implementation units. See Diagnostic#Options
+namespace ClaFi
+{
+    // The config section of the window's own, and what it keeps. See Diagnostic#DiagnosticLog
+    constexpr std::wstring_view k_sectionName = L"Diagnostic";
+    constexpr std::wstring_view k_visibleName = L"Visible";
+    constexpr std::wstring_view k_tabName = L"Tab";
+    constexpr std::wstring_view k_outputTabCaption = L"Output";
+    constexpr std::wstring_view k_fpsTabCaption = L"FPS";
+
+    // The window's half, in Diagnostic.Log.cpp, called only while Diagnostic::Options::enabled
+    void openDiagnosticWindow(AppContext&);
+    void closeDiagnosticWindow();
+    void activateDiagnosticWindow(InputStamp);
+    void restoreDiagnosticWindow();
+    void storeDiagnosticWindow();
+    void writeDiagnosticLine(const Text&, const Control*, bool showPtr);
 }

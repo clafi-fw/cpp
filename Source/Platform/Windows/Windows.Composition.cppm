@@ -283,10 +283,10 @@ namespace ClaFi::PlatformImplementation::Windows
         else
         {
             const Clock::time_point startedAt =
-                Diagnostic::Options::logPresentWait ? Clock::now() : Clock::time_point{};
+                Diagnostic::Options::logPresentWait() ? Clock::now() : Clock::time_point{};
             hr = m_swapChain->ResizeBuffers(0, static_cast<UINT>(m_size.x),
                 static_cast<UINT>(m_size.y), DXGI_FORMAT_UNKNOWN, 0);
-            if constexpr (Diagnostic::Options::logPresentWait)
+            if constexpr (Diagnostic::Options::logPresentWait())
                 logWait(L"ResizeBuffers", startedAt);
         }
 
@@ -361,9 +361,9 @@ namespace ClaFi::PlatformImplementation::Windows
         parameters.DirtyRectsCount = 1;
         parameters.pDirtyRects = &dirty;
         constexpr Clock::time_point startedAt =
-            Diagnostic::Options::logPresentWait ? Clock::now() : Clock::time_point{};
+            Diagnostic::Options::logPresentWait() ? Clock::now() : Clock::time_point{};
         hr = m_swapChain->Present1(1, 0, &parameters);
-        if constexpr (Diagnostic::Options::logPresentWait)
+        if constexpr (Diagnostic::Options::logPresentWait())
             logWait(L"Present1", startedAt);
         if (FAILED(hr))
         {

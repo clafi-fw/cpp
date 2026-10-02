@@ -613,7 +613,7 @@ namespace ClaFi::Controls
         itemRect.offset(-scrollTravelRemaining());
 
         // Temporary, for the scroll-into-view defect.
-        if constexpr (Diagnostic::Options::logScrollIntoView)
+        if constexpr (Diagnostic::Options::logScrollIntoView())
         {
             const FloatPoint travel{ scrollTravelRemaining() };
             diagnosticLog(std::format(

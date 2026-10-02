@@ -1558,7 +1558,7 @@ namespace ClaFi
         // the window standing from the last one. The two disagree wherever a form has been handed
         // a scale since it was placed - see adjustRootMetrics, which reads the window in the
         // factor's own units.
-        if constexpr (Diagnostic::Options::logFormPlacement)
+        if constexpr (Diagnostic::Options::logFormPlacement())
         {
             diagnosticLog(std::format(
                 L"place enter  factor {:.3f}  window {:.0f} {:.0f}  autoFit {}",
@@ -1608,7 +1608,7 @@ namespace ClaFi
             // WHAT THE PASS ASKED FOR AND WHAT IT GOT. An ask that matches the content and a
             // grant short of it is the placement refusing; an ask already short of the content
             // is a measure that was bounded before it ran.
-            if constexpr (Diagnostic::Options::logFormPlacement)
+            if constexpr (Diagnostic::Options::logFormPlacement())
             {
                 diagnosticLog(std::format(
                     L"place pass {}  ask {:.0f} {:.0f}  got {:.0f} {:.0f}"
@@ -1947,7 +1947,7 @@ namespace ClaFi
         // Taken before the work rather than around it, so what is measured is the frame this
         // call makes and not the call. See Diagnostic::Options::logThemeCrossing
         const std::chrono::steady_clock::time_point startedAt =
-            Diagnostic::Options::logThemeCrossing
+            Diagnostic::Options::logThemeCrossing()
                 ? std::chrono::steady_clock::now()
                 : std::chrono::steady_clock::time_point{};
 
@@ -1958,7 +1958,7 @@ namespace ClaFi
 
         update();
 
-        if constexpr (Diagnostic::Options::logThemeCrossing)
+        if constexpr (Diagnostic::Options::logThemeCrossing())
             logCrossingFrame(startedAt);
     }
 

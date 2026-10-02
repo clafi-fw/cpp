@@ -168,6 +168,13 @@ set(clafi_compile_options
 )
 target_compile_options(ClaFi PRIVATE ${clafi_compile_options})
 
+# A BUILD WITH NO DIAGNOSTIC, whatever Diagnostic.Options says: CLAFI_NO_DIAGNOSTIC holds
+# Diagnostic::Options::enabled off. The release recipe builds with it.
+option(CLAFI_NO_DIAGNOSTIC "Build with every diagnostic off, whatever Diagnostic.Options says" OFF)
+if(CLAFI_NO_DIAGNOSTIC)
+    target_compile_definitions(ClaFi PRIVATE CLAFI_NO_DIAGNOSTIC)
+endif()
+
 if(CLAFI_PLATFORM STREQUAL "wayland")
     # A Wayland protocol is XML, and wayland-scanner turns it into a C header of inline request
     # senders plus a C file of interface tables. Neither is written by hand and neither is checked

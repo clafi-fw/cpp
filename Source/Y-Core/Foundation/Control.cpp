@@ -1748,7 +1748,7 @@ namespace ClaFi
         event.defaultPaintSurface();
 
         // The hit zone the pointer stands in, outlined - see Diagnostic::Options::highlightTextAreas.
-        if constexpr (Diagnostic::Options::highlightTextAreas)
+        if constexpr (Diagnostic::Options::highlightTextAreas())
         {
             float textFactor = m_factors.textHovered();
             if (textFactor)

@@ -175,7 +175,7 @@ namespace ClaFi
 #else
         const DrawTextResult result = layout.draw(controlContext, anchoredPos, editProps);
 #endif
-        if constexpr (Diagnostic::Options::highlightTextAreas)
+        if constexpr (Diagnostic::Options::highlightTextAreas())
         {
             highlightTextArea(controlContext, bounds,
                 FloatRect::fromDimensions(anchoredPos, layout.calculatedDimensions()));

@@ -11,6 +11,15 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)..\Source\Controls</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
+  <!--
+    -p:ClaFiNoDiagnostic=true builds with every diagnostic off, whatever Diagnostic.Options says:
+    CLAFI_NO_DIAGNOSTIC holds Diagnostic::Options::enabled off. The release recipe builds with it.
+  -->
+  <ItemDefinitionGroup Condition="'$(ClaFiNoDiagnostic)' == 'true'">
+    <ClCompile>
+      <PreprocessorDefinitions>CLAFI_NO_DIAGNOSTIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
@@ -368,6 +377,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.FpsPage.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.FpsPage.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Log.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Log.Switch.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Log.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Diagnostic\Diagnostic.Options.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\BrowseBackIcon.cppm" />
