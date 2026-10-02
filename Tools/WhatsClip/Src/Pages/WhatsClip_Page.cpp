@@ -2,6 +2,7 @@ module ClaFi.Tools.WhatsClip.Page;
 
 import ClaFi.Tools.WhatsClip.EncodingPick;
 import ClaFi.Tools.WhatsClip.LanguagePick;
+import ClaFi.Tools.WhatsClip.Encodings;
 
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.CodeBox;
@@ -30,9 +31,15 @@ namespace ClaFi::Tools::WhatsClip
 {
     namespace
     {
-        constexpr wchar_t k_nulSymbol = L'\u2400';
+        // What a NUL, any other control and a byte the encoding has no character for read as:
+        // marks the monospace faces have a cell for.
+        constexpr wchar_t k_nulStandIn = L'\u2219';
+        constexpr wchar_t k_controlStandIn = L'\u25AB';
+        constexpr wchar_t k_noCharacterStandIn = L'\u25CA';
         // A NUL ends the line after this much text - the least strings(1) calls a string.
         constexpr std::size_t k_minStringLength = 4;
+        // How much of a format's bytes isBinary judges.
+        constexpr std::size_t k_judgedBytes = 1024;
 
         // A text format whose block is one NUL-terminated string, and the byte width of
         // that terminator. The content is cut to the terminator before the encoding is judged.
@@ -112,7 +119,25 @@ namespace ClaFi::Tools::WhatsClip
             return value != L'\uFFFD';
         }
 
-        [[nodiscard]] std::wstring withNulsMarked(const std::wstring_view text)
+        // What no text holds: a control other than the tab, the line breaks and the form feed,
+        // and the replacement a failed reading leaves. The C1 controls are not counted - Latin-1
+        // is the reading of last resort, and it spells a code page's quotes and dashes as them.
+        [[nodiscard]] bool isBinaryCharacter(const wchar_t value)
+        {
+            if (value == L'\t' || value == L'\n' || value == L'\r' || value == L'\f')
+                return false;
+            return value < L' ' || value == L'\x7F' || value == L'\uFFFD';
+        }
+
+        // Every control but the tab and the line feed, which are laid out as themselves.
+        [[nodiscard]] bool isMarkedControl(const wchar_t value)
+        {
+            if (value == L'\t' || value == L'\n')
+                return false;
+            return value < L' ' || (value >= L'\x7F' && value <= L'\x9F');
+        }
+
+        [[nodiscard]] std::wstring withControlsMarked(const std::wstring_view text)
         {
             std::wstring result{};
             result.reserve(text.size());
@@ -121,14 +146,19 @@ namespace ClaFi::Tools::WhatsClip
             {
                 if (value == L'\0')
                 {
-                    result.push_back(k_nulSymbol);
+                    result.push_back(k_nulStandIn);
                     if (stringLength >= k_minStringLength)
                         result.push_back(L'\n');
                     stringLength = 0;
                 }
                 else
                 {
-                    result.push_back(value);
+                    if (isMarkedControl(value))
+                        result.push_back(k_controlStandIn);
+                    else if (value == L'\uFFFD')
+                        result.push_back(k_noCharacterStandIn);
+                    else
+                        result.push_back(value);
                     stringLength = isStringCharacter(value) ? stringLength + 1 : 0;
                 }
             }
@@ -210,12 +240,17 @@ namespace ClaFi::Tools::WhatsClip
     void TextPageBase::showText(Text&& value)
     {
         m_formatName.clear();
+        m_readText.reset();
         placeText(std::move(value));
     }
 
-    std::wstring TextPageBase::decode(const std::string_view bytes,
+    std::optional<std::wstring> TextPageBase::decode(const std::string_view bytes,
         const Transfer::Format& format)
     {
+        m_readText.reset();
+        if (bytes.empty())
+            return std::nullopt;
+
         m_encodingPick.setVisible(true);
         const std::wstring name = nameOf(format);
         // The block is bigger than the string it carries: an HGLOBAL is rounded up, and past a
@@ -229,7 +264,31 @@ namespace ClaFi::Tools::WhatsClip
         const std::wstring_view body = terminatorWidth != 0
             ? std::wstring_view{ decoded }
             : withoutTrailingNuls(decoded);
-        return withNulsMarked(body);
+        m_readText = std::wstring{ body };
+        return withControlsMarked(body);
+    }
+
+    bool TextPageBase::isBinary(const std::string_view bytes, const Transfer::Format& format) const
+    {
+        const std::wstring name = nameOf(format);
+        if (terminatorWidthOf(name) != 0)
+            return false;
+
+        // The encoding is claimed over every byte: a claim over the cut kilobyte would be turned
+        // down by the character the cut splits.
+        const std::optional<EncodingEntry> encoding = m_encodingPick.detect(name, bytes);
+        const std::string_view head = bytes.substr(0, k_judgedBytes);
+        const std::wstring decoded = encoding ? encoding->decode(head) : fromUtf8(head);
+
+        // A head holding every byte ends in the block's padding; a cut one can end in part of a
+        // character, which a reading answers with replacements.
+        std::wstring_view text = decoded;
+        if (head.size() == bytes.size())
+            text = withoutTrailingNuls(text);
+        else
+            text = text.substr(0, text.find_last_not_of(L'\uFFFD') + 1);
+
+        return std::ranges::any_of(text, isBinaryCharacter);
     }
 
     void TextPageBase::prepareLocale(Transfer::Offer& offer)
@@ -271,7 +330,11 @@ namespace ClaFi::Tools::WhatsClip
 
     void TextPageBase::answerLanguage(DetectLanguageEvent& event)
     {
-        event.language = m_languagePick.detect(m_formatName, event.text);
+        // A detector trims the CR a CRLF line ends with, and would not trim its stand-in.
+        const std::wstring_view text = m_readText.has_value()
+            ? std::wstring_view{ m_readText.value() }
+            : event.text;
+        event.language = m_languagePick.detect(m_formatName, text);
     }
 
     void TextPageBase::wrapState(GetStateEvent& event) const

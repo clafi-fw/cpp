@@ -298,6 +298,13 @@ namespace ClaFi
         No = cfNoWordWrap
     };
 
+    // How a line on cells meets a character its font lacks. See TextEngine-Types#mono-paragraph
+    export enum class CellFallback
+    {
+        Native,         // the line is laid out natively, where another font can draw the character
+        MissingGlyph    // the line stays on cells, and the character is the font's missing glyph
+    };
+
     // Both text anchors together, which is how every mapping reads them. See UI-Types
     export struct TextAnchor
     {

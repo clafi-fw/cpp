@@ -18,13 +18,19 @@ namespace ClaFi::Tools::WhatsClip
         return m_encodings[*picked];
     }
 
+    std::optional<EncodingEntry> EncodingPick::detect(const std::wstring_view formatName,
+        const std::string_view bytes) const
+    {
+        return detectEncoding(m_encodings, formatName, bytes);
+    }
+
     std::wstring EncodingPick::decode(const std::wstring_view formatName,
         const std::string_view bytes)
     {
         std::optional<EncodingEntry> entry = pickedEncoding();
         if (!entry)
         {
-            entry = detectEncoding(m_encodings, formatName, bytes);
+            entry = detect(formatName, bytes);
             setFoundName(entry ? entry->name : std::wstring_view{});
         }
 

@@ -360,6 +360,20 @@ the box's LinkClickEvent again as OnLinkClick, the same event object. A handler 
 keeps the box from opening the target through the shell; what no handler stops is opened the way
 any box opens it - see LinkClickEvent.
 
+## MessageBar
+
+A question about what a page shows, and the answers to it, standing in the page as a band
+across the top of what it is about rather than over it. Nothing waits on it: an answer runs its
+handler and the page goes on, and the page hides the band once the question is settled.
+
+A SPLIT BUTTON THAT TAKES NO INPUT. The icon stands in a column of its own, centred against the
+message; the message wraps beside it; the answers are the secondary part at the right end. The
+face is ButtonBase's and the layout SplitButtonBase's. A stripe down the left edge, in the icon's
+colour and following the band's corners, says what kind of message it is.
+
+AN ANSWER CARRIES ITS CALLER'S CAPTION. A dialog's answers are one fixed set worded once, because
+they answer the dialog. A band's answer is something the page does - Read as text - and says so.
+
 ## EditTarget
 
 What an in-place editor is placed over: the control it covers, where that

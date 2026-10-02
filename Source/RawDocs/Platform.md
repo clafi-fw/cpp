@@ -23,6 +23,22 @@ effect is also what DirectWrite breaks runs at, so two ranges that differ only i
 carry here still arrive as two runs - which is what lets a superscript stand beside a
 subscript of the same size.
 
+## FadeTextRenderer
+
+The IDWriteTextRenderer a DirectWrite layout is drawn through. It fades the lines the fit
+named, and draws the collapse: the lines below the last one that fits, carried on along its
+baseline.
+
+THE LINES ARE PLACED BY A TABLE STATED BEFORE THE DRAW. DirectWrite hands over every glyph
+run of a layout first and its inline objects after them, so the order the runs arrive in
+says nothing about where along a line they stand. DWriteLayout::draw reads the lines off the
+layout and states a LineMove for each: the collapse line moves by the collapse offset and no
+further left than the box, each line below it is lifted onto the collapse baseline and
+starts where the one before it ends, trailing whitespace included, and a line that would
+start past the right edge is left out. A run belongs to the line whose baseline lies nearest
+its own, which holds while pixel snapping rounds the baseline it arrives on. HarfBuzzLayout
+walks its lines in order and places them by the same rule.
+
 ## Direct2DBackend
 
 Satisfies the GPU backend contract: it renders into a window the platform owns. THE DEVICE

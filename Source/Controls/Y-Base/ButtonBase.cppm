@@ -82,6 +82,8 @@ namespace ClaFi::Controls
         void applyIndicatorVisibility();
         void injectCtrl(ClickEventBase&);
         void adjustForIndicator(ScaledSpacing spacing, FloatRect& rect) const;
+        // Takes the indicator and a left icon off the box the text stands in, with their gaps.
+        void adjustForSideParts(ScaledSpacing spacing, float iconWidth, FloatRect& rect) const;
         [[nodiscard]] bool showsIcon() const { return m_viewMode != ButtonViewMode::TextLabel; }
     private:
         

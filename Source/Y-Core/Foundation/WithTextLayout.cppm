@@ -37,6 +37,10 @@ namespace ClaFi
     public:
         template <typename... Args>
         explicit WithTextLayout(const CreateParams&, Args&&...);
+    public:
+        // What a line set in one monospace font does with a character the font lacks.
+        [[nodiscard]] CellFallback cellFallback() const { return m_cellFallback; }
+        void setCellFallback(CellFallback);
     protected:
         /// The two seams a control holding a layout of its own overrides. They are a pair:
         /// override one and the control measures on one layout and draws on another.
@@ -91,6 +95,7 @@ namespace ClaFi
             ScaleFactor scaleFactor{ 0.0f };
             float breakWidth{ 0.0f };
             bool wrap{ false };
+            CellFallback cellFallback{ CellFallback::Native };
             bool editable{ false };
             std::uint64_t layoutGeneration{ 0 };
             bool operator==(const Measurement&) const = default;
@@ -111,6 +116,7 @@ namespace ClaFi
         // moves that number on for anything a key does not carry - the font table above all - and
         // this layout is not in the cache to be dropped.
         mutable std::uint64_t m_layoutGeneration{ 0 };
+        CellFallback m_cellFallback{ CellFallback::Native };
     };
 
 
@@ -123,6 +129,16 @@ namespace ClaFi
         :
         HostClass{ params, std::forward<Args>(args)... }
     {
+    }
+
+    template <IsControl HostClass>
+    void WithTextLayout<HostClass>::setCellFallback(const CellFallback value)
+    {
+        if (m_cellFallback == value)
+            return;
+
+        m_cellFallback = value;
+        this->invalidateFormAlign();
     }
 
     template <IsControl HostClass>
@@ -160,6 +176,7 @@ namespace ClaFi
             .scaleFactor = event.scaleFactor(),
             .breakWidth = this->lineBreakWidth(),
             .wrap = this->wordWrap(),
+            .cellFallback = m_cellFallback,
             .editable = this->editProps() != nullptr,
             .layoutGeneration = Control::textEngine().layoutGeneration(),
         };
@@ -230,6 +247,7 @@ namespace ClaFi
         // Set here rather than in the constructor: it is a property, and a control told to stop
         // wrapping after it was built draws the answer to that on the next paint.
         m_layout.setWrap(this->wordWrap());
+        m_layout.setCellFallback(m_cellFallback);
         // Ahead of the bounds, which are accepted or refused against it.
         m_layout.setBreakWidth(this->lineBreakWidth());
         m_layout.setHorizontalAnchor(this->horizontalTextAnchor());

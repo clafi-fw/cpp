@@ -786,6 +786,15 @@ namespace ClaFi
         }
     }
 
+    void TextLayout::setCellFallback(const CellFallback value)
+    {
+        if (m_cellFallback == value)
+            return;
+
+        m_cellFallback = value;
+        invalidate();
+    }
+
     void TextLayout::setHorizontalAnchor(const HorizontalTextAnchor value)
     {
         m_anchor = value;
@@ -1855,7 +1864,11 @@ namespace ClaFi
         }
 
         MonoFont* font = monoFont(family, size * m_scaleFactor, weight, style);
-        if (!font || !font->covers(slice))
+        if (!font)
+            return nullptr;
+        // A character the font has no cell for is drawn by another font, which only the native
+        // layout can do - or as this font's missing glyph, where the caller stated that.
+        if (m_cellFallback == CellFallback::Native && !font->covers(slice))
             return nullptr;
         return font;
     }

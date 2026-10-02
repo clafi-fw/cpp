@@ -82,6 +82,63 @@ namespace ClaFi
             return character == L'\t' ? nextTabStop(column) : column + 1;
         }
 
+        // A character of a row and the column its first cell stands in.
+        struct CellPlace
+        {
+            std::size_t index;
+            std::size_t column;
+        };
+
+        // The column the character at pos starts in, counted on from a place at or before it.
+        // The stretch between two tabs is a column per character, so the row is scanned for tabs
+        // rather than walked.
+        std::size_t columnAt(std::wstring_view text, CellPlace from, std::size_t pos)
+        {
+            const std::size_t end = std::min(pos, text.size());
+            std::size_t index = from.index;
+            std::size_t column = from.column;
+            while (index < end)
+            {
+                const std::size_t tab = std::min(text.find(L'\t', index), end);
+                column += tab - index;
+                if (tab == end)
+                    break;
+                column = nextTabStop(column);
+                index = tab + 1;
+            }
+            return column;
+        }
+
+        // The first character whose cells reach past the column, or the end of the row where
+        // none does. Scanned for tabs, as columnAt is.
+        CellPlace placeOfColumn(std::wstring_view text, std::size_t column)
+        {
+            CellPlace place = { 0, 0 };
+            while (place.index != text.size())
+            {
+                const std::size_t tab = std::min(text.find(L'\t', place.index), text.size());
+                const std::size_t stretch = tab - place.index;
+                if (column < place.column + stretch)
+                {
+                    return {
+                        place.index + (column - place.column),
+                        column,
+                    };
+                }
+                place.index = tab;
+                place.column += stretch;
+                if (place.index == text.size())
+                    break;
+
+                const std::size_t next = nextTabStop(place.column);
+                if (column < next)
+                    break;
+                place.index += 1;
+                place.column = next;
+            }
+            return place;
+        }
+
         Color colorOf(const ColorDef& value, const ControlPaintContext& context)
         {
             return value.index() == 0
@@ -206,11 +263,7 @@ namespace ClaFi
 
     float MonoFont::cellLeft(std::wstring_view text, std::size_t pos)
     {
-        const std::size_t end = std::min(pos, text.size());
-        std::size_t column = 0;
-        for (std::size_t i = 0; i != end; ++i)
-            column = columnAfter(column, text[i]);
-        return static_cast<float>(column) * m_cellWidth;
+        return static_cast<float>(columnAt(text, { 0, 0 }, pos)) * m_cellWidth;
     }
 
     std::size_t MonoFont::hitTest(std::wstring_view text, float x, bool* isTrailing)
@@ -269,18 +322,33 @@ namespace ClaFi
         if (!backend)
             return;
 
-        // A band under a range of characters, from the leading edge of its first to the trailing
-        // edge of its last.
+        // The characters whose cells the clip shows, and a cell either side: a glyph's ink may
+        // hang past its own cell, and the division is made at the line's full width, where a
+        // float is coarse. Nothing outside them is looked up or drawn.
+        const float shownLeft = std::floor((params.clip.left - origin.x) / m_cellWidth) - 1.0f;
+        const float shownRight = std::ceil(
+            (std::min(params.clip.right, params.bounds.right) - origin.x) / m_cellWidth) + 1.0f;
+        if (shownRight <= 0.0f)
+            return;
+        const CellPlace shownStart = placeOfColumn(text,
+            shownLeft > 0.0f ? static_cast<std::size_t>(shownLeft) : 0);
+        const CellPlace shownEnd = placeOfColumn(text, static_cast<std::size_t>(shownRight));
+        if (shownStart.index >= shownEnd.index)
+            return;
+
+        // A band under the shown part of a range of characters, from the leading edge of its
+        // first to the trailing edge of its last.
         auto fillRange = [&](const TextRange& range, Color color){
             if (range.length == 0 || range.start == k_maxSize)
                 return;
-            const std::size_t end = std::min(range.end(), text.size());
-            if (range.start >= end)
+            const std::size_t start = std::max(range.start, shownStart.index);
+            const std::size_t end = std::min(range.end(), shownEnd.index);
+            if (start >= end)
                 return;
             canvas.fillRectangle({
-                origin.x + cellLeft(text, range.start),
+                origin.x + static_cast<float>(columnAt(text, shownStart, start)) * m_cellWidth,
                 origin.y,
-                origin.x + cellLeft(text, end),
+                origin.x + static_cast<float>(columnAt(text, shownStart, end)) * m_cellWidth,
                 origin.y + m_lineHeight,
             }, color);
         };
@@ -311,7 +379,11 @@ namespace ClaFi
 
         const Color defaultColor = context.textRgb(InkGrade::Strongest);
         const float fadeWidth = context.scaleF(30.0f);
-        std::size_t colorCursor = 0;
+        const std::span<const ColorSpan>::iterator shownColors = std::ranges::partition_point(
+            params.colors, [&](const ColorSpan& span){
+                return span.range.end() <= shownStart.index;
+            });
+        std::size_t colorCursor = static_cast<std::size_t>(shownColors - params.colors.begin());
 
         // Glyphs are gathered into one run for as long as their colour holds and no tab breaks
         // the cells, and drawn when either changes. A run standing past the box or ending before
@@ -340,8 +412,8 @@ namespace ClaFi
             glyphs.clear();
         };
 
-        std::size_t column = 0;
-        for (std::size_t i = 0; i != text.size(); ++i)
+        std::size_t column = shownStart.column;
+        for (std::size_t i = shownStart.index; i != shownEnd.index; ++i)
         {
             const wchar_t character = text[i];
             const float left = static_cast<float>(column) * m_cellWidth;

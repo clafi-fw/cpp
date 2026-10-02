@@ -2,6 +2,7 @@ module ClaFi.Controls.Base.SplitButtonBase;
 
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
@@ -85,6 +86,20 @@ namespace ClaFi::Controls
             return { 0.0f, 0.0f };
 
         return { std::max(spacing.x + size.x - taken.x, 0.0f), 0.0f };
+    }
+
+    // A part on the right stands beside a wrapping text, so its room comes off the box the text is
+    // broken in - the way adjustTextRect takes it off the box the text is drawn in.
+    CalculatedDimensions SplitButtonBase::measureText(AlignEvent& event, ScaledDimensions asked,
+        const Text& text)
+    {
+        if (wordWrap())
+        {
+            const ScaledDimensions extent = secondaryExtent(event.formContext(), event.padding,
+                event.spacing);
+            asked.x = std::max(asked.x - extent.x, 0.0f);
+        }
+        return ButtonBase::measureText(event, asked, text);
     }
 
     void SplitButtonBase::calculateChildren(FormBase& form)

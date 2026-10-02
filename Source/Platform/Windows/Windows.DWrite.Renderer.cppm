@@ -127,6 +127,15 @@ namespace ClaFi::PlatformImplementation::Windows
     export [[nodiscard]] const Graphics::Cpu::GlyphCoverage& coverageOf(FontGlyphs&,
         UINT16 glyphIndex, float emSize, DWRITE_MEASURING_MODE);
 
+    // How one line of a layout that a collapse falls in is drawn. See Platform#fadetextrenderer
+    export struct LineMove
+    {
+        float baseline{ 0.0f }; // the layout's own, from its top
+        float shift{ 0.0f };
+        bool lifted{ false }; // onto the collapse baseline
+        bool shown{ true };
+    };
+
     export class FadeTextRenderer : public IDWriteTextRenderer
     {
     public:
@@ -136,11 +145,10 @@ namespace ClaFi::PlatformImplementation::Windows
             float fadeWidth,
             std::span<const float> localBaselinesToFade,
             float globalCollapseBaseline,
-            float collapseXOffset,
+            std::span<const LineMove> lineMoves,
             Graphics::Canvas* canvas
         );
         virtual ~FadeTextRenderer() = default;
-        void notifyNewParagraph();
 
         HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override final;
         ULONG STDMETHODCALLTYPE AddRef() override;
@@ -183,6 +191,12 @@ namespace ClaFi::PlatformImplementation::Windows
             IUnknown* clientDrawingEffect) override final;
 
     private:
+        // The line a run on baselineY stands on, or none where nothing collapses.
+        [[nodiscard]] const LineMove* lineOf(float baselineY) const;
+        // Where a run is drawn, or nothing for one the box leaves out.
+        [[nodiscard]] std::optional<FloatPoint> placed(FloatPoint baselineOrigin) const;
+
+    private:
         ID2D1RenderTarget* m_rt;
         FloatRect m_bounds;
         float m_fadeWidth;
@@ -191,13 +205,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // it was made for, which is inside the call that owns that buffer.
         std::span<const float> m_localBaselinesToFade;
         float m_globalCollapseBaseline;
-        float m_collapseXOffset;
-        bool m_collapsing{ false };
-        float m_collapseX{ 0.0f };
-        bool m_needsGap{ false };
-        bool m_collapseOffsetClamped{ false };
-        float m_currentLayoutBaseline{ -9999.0f };
-        float m_currentLineEndX{ 0.0f };
+        std::span<const LineMove> m_lineMoves; // ordered by baseline, held the same way
 
         Graphics::Canvas* m_canvas;
         Graphics::Cpu::GlyphCompositor m_compositor;
@@ -219,7 +227,7 @@ namespace ClaFi::PlatformImplementation::Windows
         float fadeWidth,
         std::span<const float> localBaselinesToFade,
         float globalCollapseBaseline,
-        float collapseXOffset,
+        std::span<const LineMove> lineMoves,
         Graphics::Canvas* canvas
     )
         : m_rt(rt)
@@ -227,14 +235,9 @@ namespace ClaFi::PlatformImplementation::Windows
         , m_fadeWidth(fadeWidth)
         , m_localBaselinesToFade(localBaselinesToFade)
         , m_globalCollapseBaseline(globalCollapseBaseline)
-        , m_collapseXOffset(collapseXOffset)
+        , m_lineMoves(lineMoves)
         , m_canvas(canvas)
     {
-    }
-
-    void FadeTextRenderer::notifyNewParagraph()
-    {
-        m_needsGap = true;
     }
 
     HRESULT STDMETHODCALLTYPE FadeTextRenderer::QueryInterface(REFIID riid, void** ppv)
@@ -380,6 +383,38 @@ namespace ClaFi::PlatformImplementation::Windows
         return S_OK;
     }
 
+    const LineMove* FadeTextRenderer::lineOf(float baselineY) const
+    {
+        if (m_lineMoves.empty())
+            return nullptr;
+
+        // Nearest rather than equal: pixel snapping rounds the baseline a run arrives on.
+        const float baseline = baselineY - m_bounds.top;
+        const auto below = std::ranges::lower_bound(m_lineMoves, baseline, {}, &LineMove::baseline);
+        if (below == m_lineMoves.begin())
+            return &*below;
+        const auto above = std::prev(below);
+        if (below == m_lineMoves.end() || baseline - above->baseline < below->baseline - baseline)
+            return &*above;
+        return &*below;
+    }
+
+    std::optional<FloatPoint> FadeTextRenderer::placed(FloatPoint baselineOrigin) const
+    {
+        FloatPoint result = baselineOrigin;
+        if (const LineMove* move = lineOf(baselineOrigin.y))
+        {
+            if (!move->shown)
+                return std::nullopt;
+            result.x += move->shift;
+            if (move->lifted)
+                result.y = m_globalCollapseBaseline;
+        }
+        if (result.x >= m_bounds.right)
+            return std::nullopt;
+        return result;
+    }
+
     HRESULT STDMETHODCALLTYPE FadeTextRenderer::DrawGlyphRun(
         void* clientDrawingContext,
         FLOAT baselineOriginX,
@@ -416,61 +451,16 @@ namespace ClaFi::PlatformImplementation::Windows
             effectBrush = Graphics::SolidColor{ fallbackColor };
         }
 
-        float fontSize = glyphRun->fontEmSize;
-        float runWidth = 0.0f;
-        for (UINT32 i = 0; i < glyphRun->glyphCount; ++i)
-            runWidth += glyphRun->glyphAdvances[i];
-
-        float effectiveBaselineX = baselineOriginX;
-        if (std::abs(baselineOriginY - m_globalCollapseBaseline) < 0.5f)
-        {
-            if (!m_collapseOffsetClamped)
-            {
-                if (baselineOriginX + m_collapseXOffset < m_bounds.left) m_collapseXOffset = m_bounds.left - baselineOriginX;
-                m_collapseOffsetClamped = true;
-            }
-            effectiveBaselineX += m_collapseXOffset;
-        }
-
-        float drawX = effectiveBaselineX;
-        float drawY = baselineOriginY;
-
-        if (!m_collapsing && m_globalCollapseBaseline > -9000.0f && baselineOriginY > m_globalCollapseBaseline + 0.5f)
-            m_collapsing = true;
-
-        if (m_collapsing) {
-            drawY = m_globalCollapseBaseline;
-            drawX = m_collapseX;
-            if (m_needsGap)
-            {
-                drawX += fontSize * 0.25f;
-                m_needsGap = false;
-            }
-            m_collapseX = drawX + runWidth;
-        }
-        else
-        {
-            m_needsGap = false;
-            if (std::abs(baselineOriginY - m_currentLayoutBaseline) > 0.5f)
-            {
-                m_currentLayoutBaseline = baselineOriginY;
-                m_currentLineEndX = effectiveBaselineX + runWidth;
-            }
-            else
-                {
-                m_currentLineEndX = std::max(m_currentLineEndX, effectiveBaselineX + runWidth);
-            }
-            if (std::abs(baselineOriginY - m_globalCollapseBaseline) < 0.5f)
-                m_collapseX = m_currentLineEndX;
-        }
-
-        if (drawX >= m_bounds.right)
+        const std::optional<FloatPoint> origin = placed({ baselineOriginX, baselineOriginY });
+        if (!origin)
             return S_OK;
+        const float drawX = origin->x;
+        float drawY = origin->y;
 
         bool shouldFade = false;
         // Both sides of the comparison are put in the layout's own coordinates, so the baselines
         // arrive as the layout states them and no absolute copy of them is made.
-        float checkBaseline = (m_collapsing ? m_globalCollapseBaseline : baselineOriginY) - m_bounds.top;
+        float checkBaseline = drawY - m_bounds.top;
         for (float bf : m_localBaselinesToFade)
         {
             if (std::abs(checkBaseline - bf) < 0.5f) {
@@ -585,66 +575,13 @@ namespace ClaFi::PlatformImplementation::Windows
         DWRITE_INLINE_OBJECT_METRICS metrics;
         checkHr(inlineObject->GetMetrics(&metrics));
 
-        float baselineOriginY = originY + metrics.baseline;
-        float effectiveOriginX = originX;
-
-        if (std::abs(baselineOriginY - m_globalCollapseBaseline) < 0.5f)
-        {
-            if (!m_collapseOffsetClamped)
-            {
-                if (originX + m_collapseXOffset < m_bounds.left)
-                {
-                    m_collapseXOffset = m_bounds.left - originX;
-                }
-                m_collapseOffsetClamped = true;
-            }
-            effectiveOriginX += m_collapseXOffset;
-        }
-
-        float drawX = effectiveOriginX;
-        float drawY = originY;
-
-        if (!m_collapsing && m_globalCollapseBaseline > -9000.0f && baselineOriginY > m_globalCollapseBaseline + 0.5f)
-        {
-            m_collapsing = true;
-        }
-
-        if (m_collapsing)
-        {
-            drawY = m_globalCollapseBaseline - metrics.baseline;
-            drawX = m_collapseX;
-            if (m_needsGap)
-            {
-                drawX += metrics.height * 0.25f;
-                m_needsGap = false;
-            }
-            m_collapseX = drawX + metrics.width;
-        }
-        else
-        {
-            m_needsGap = false;
-            if (std::abs(baselineOriginY - m_currentLayoutBaseline) > 0.5f)
-            {
-                m_currentLayoutBaseline = baselineOriginY;
-                m_currentLineEndX = effectiveOriginX + metrics.width;
-            }
-            else
-            {
-                m_currentLineEndX = std::max(m_currentLineEndX, effectiveOriginX + metrics.width);
-            }
-
-            if (std::abs(baselineOriginY - m_globalCollapseBaseline) < 0.5f)
-            {
-                m_collapseX = m_currentLineEndX;
-            }
-        }
-
-        if (drawX >= m_bounds.right)
-        {
+        const std::optional<FloatPoint> origin = placed({ originX, originY + metrics.baseline });
+        if (!origin)
             return S_OK;
-        }
 
-        checkHr(inlineObject->Draw(clientDrawingContext, this, drawX, drawY, isSideways, isRightToLeft, clientDrawingEffect));
+        const float top = origin->y - metrics.baseline;
+        checkHr(inlineObject->Draw(clientDrawingContext, this, origin->x, top, isSideways,
+            isRightToLeft, clientDrawingEffect));
         return S_OK;
     }
 

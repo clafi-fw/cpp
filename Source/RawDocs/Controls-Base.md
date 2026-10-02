@@ -26,6 +26,14 @@ The other modes are unchanged. `LeftIcon` puts the caption BESIDE the picture, w
 together are the width and the caption has no reason to wrap to the icon; `TextLabel` has no
 picture; `IconOnly` lays no text out at all.
 
+### What stands beside the words comes off their width
+
+A wrapping caption is broken in the box it is drawn in, and the box `measureText` is handed is the
+content's. The indicator and a `LeftIcon` stand beside the caption, so `measureText` takes them off
+the way `adjustTextRect` does - `adjustForSideParts` states it for both - and `SplitButtonBase`
+takes a part on the right off as well. Measured at the whole box, a caption one word longer than
+its room comes out a line short, and the paint collapses the last line onto the one above.
+
 ## PanelBase
 
 ### bodySlotSettled
@@ -58,6 +66,13 @@ after bodySlotSettled, so the body is laid out once, at the size the panel wants
 that settled the slot. Only a panel whose height is dictated - Fill, or hosted as a body - is
 asked: one growing to hold its body would grow by whatever it stated past the slot. ScrollBox
 states the room past its body's end here - see Controls#scrollmetrics.
+
+### The text in the body slot
+
+A panel's own text in the body slot - `TextPlacement::Body` - is broken at the width of that slot,
+so that is the width it remembers once the bars are placed: the remembered text width every control
+carries - see Control-Foundation#remembered-text-width. `PanelBase::alignContent` states it in
+place of `Control::alignContent`, which would remember the whole content width.
 
 ## SplitButtonBase
 

@@ -236,6 +236,7 @@ namespace ClaFi
         void setBoundsAndScale(MaxSize bounds, ScaleFactor);
         void setEditable(bool editable);
         void setWrap(bool wrap);
+        void setCellFallback(CellFallback);
         // Lines across the box for None, inside the measured block for any other anchor.
         void setHorizontalAnchor(HorizontalTextAnchor);
         // The width the lines are BROKEN at, when that is not the box they stand in. Zero, the
@@ -373,6 +374,7 @@ namespace ClaFi
         ScaleFactor m_scaleFactor{ 1.0f };
         bool m_editable{ false };
         bool m_wrap{ true };
+        CellFallback m_cellFallback{ CellFallback::Native };
         HorizontalTextAnchor m_anchor{ HorizontalTextAnchor::None }; // see setHorizontalAnchor
         // Zero while the box the lines stand in is the width they are broken at - see
         // setBreakWidth.

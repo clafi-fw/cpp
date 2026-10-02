@@ -162,6 +162,26 @@ FormBase::wnd_beforePaint IS WHAT ANSWERS IT, and it answers a bounded number of
 `k_maxAlignPasses`. Past that the frame goes out on what the last pass produced and the next frame
 carries on, so a request that cannot converge costs frames rather than the application.
 
+## Remembered text width
+
+A wrapping text is measured at the width the last align broke it at. The measure runs against the
+control's own maximum, which states no width unless a MaxSize does, so without that width a text
+breaking into two lines in its box measures as one - and a control whose measured height is final,
+a panel's bar, is laid out one line short with the rest collapsed onto it.
+
+`Control::alignContent` remembers the content width it re-wraps the text at, and `calculateContent`
+measures against it - `textWidthLimit`. A width that has changed asks for one more pass through
+`invalidatePass`, and that pass hands back the same width. A control breaking its text somewhere
+else states its own: `PanelBase` remembers the body slot its text stands in.
+
+The guards are the ones every remembered width needs - see Item-Containers: design units,
+`isWidthGivenFromOutside()`, and nothing while the form measures for a placement. An empty text
+remembers nothing.
+
+The width remembered is the content's. A control drawing its text in a narrower box takes the
+difference off in `measureText`, so both passes break the text where the paint does - see
+Controls-Base#buttonbase.
+
 ## TraversalOrder
 
 Describes how a container orders its children, so the viewport range can be narrowed by a binary

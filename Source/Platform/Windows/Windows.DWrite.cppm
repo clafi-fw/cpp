@@ -124,6 +124,8 @@ namespace ClaFi::PlatformImplementation::Windows
 
     static LineMetricsBuffer g_lineMetrics;
     static HitTestBuffer g_hitTestMetrics;
+    // The lines of the layout a collapse falls in, as the draw moves them. Held the same way.
+    static std::vector<LineMove> g_lineMoves;
 
     // One font at the size a layout works in - what a tab stop interval is measured from.
     struct FontRequest
@@ -156,6 +158,13 @@ namespace ClaFi::PlatformImplementation::Windows
     // The font a paragraph starts in, at the size its layout works in.
     [[nodiscard]] static FontRequest leadingFont(const INativeTextLayout::BuildParams&);
 
+    // How far along a line of a layout its text stands.
+    struct LineExtent
+    {
+        float left{ 0.0f };
+        float right{ 0.0f };
+    };
+
     class DWriteLayout : public INativeTextLayout
     {
     public:
@@ -185,6 +194,11 @@ namespace ClaFi::PlatformImplementation::Windows
     private:
         // Aligns m_layout as the box allows, and answers whether that moved anything.
         bool alignLines();
+        // Where the text of a line stands, its trailing whitespace included.
+        [[nodiscard]] LineExtent lineExtent(UINT32 start, UINT32 length) const;
+        // How a collapse moves every line. See Platform#fadetextrenderer
+        void collectLineMoves(float localCollapseBaseline, float collapseXOffset, float width,
+            std::vector<LineMove>&) const;
     private:
         ComPtr<IDWriteTextLayout> m_layout;
         NativeParagraphMetrics m_metrics{ 0.0f, 0.0f };
@@ -855,19 +869,82 @@ namespace ClaFi::PlatformImplementation::Windows
             }
         }
 
-        const float absCollapseBaseline = localCollapseBaseline > -9000.0f ? localCollapseBaseline + bounds.top : localCollapseBaseline;
+        std::span<const LineMove> lineMoves{};
+        if (localCollapseBaseline > -9000.0f)
+        {
+            collectLineMoves(localCollapseBaseline, collapseXOffset, bounds.width(), g_lineMoves);
+            lineMoves = g_lineMoves;
+        }
 
         FadeTextRenderer renderer(
             rt,
             bounds,
             controlContext.scaleF(30.0f),
             localBaselinesToFade,
-            absCollapseBaseline,
-            collapseXOffset,
+            localCollapseBaseline + bounds.top,
+            lineMoves,
             &controlContext.canvas()
         );
 
         checkHr(m_layout->Draw(&controlContext, &renderer, bounds.left, bounds.top));
+    }
+
+    LineExtent DWriteLayout::lineExtent(UINT32 start, UINT32 length) const
+    {
+        UINT32 count = 0;
+        m_layout->HitTestTextRange(start, length, 0.0f, 0.0f, nullptr, 0, &count);
+        if (count == 0)
+            return {};
+
+        g_hitTestMetrics.resize(count);
+        checkHr(m_layout->HitTestTextRange(start, length, 0.0f, 0.0f, g_hitTestMetrics.data(),
+            count, &count));
+        LineExtent extent{ std::numeric_limits<float>::max(),
+            std::numeric_limits<float>::lowest() };
+        for (const DWRITE_HIT_TEST_METRICS& metrics : g_hitTestMetrics)
+        {
+            extent.left = std::min(extent.left, metrics.left);
+            extent.right = std::max(extent.right, metrics.left + metrics.width);
+        }
+        return extent;
+    }
+
+    void DWriteLayout::collectLineMoves(float localCollapseBaseline, float collapseXOffset,
+        float width, std::vector<LineMove>& moves) const
+    {
+        moves.clear();
+        UINT32 lineCount = 0;
+        m_layout->GetLineMetrics(nullptr, 0, &lineCount);
+        g_lineMetrics.resize(lineCount);
+        checkHr(m_layout->GetLineMetrics(g_lineMetrics.data(), lineCount, &lineCount));
+
+        float lineTop = 0.0f;
+        UINT32 lineStart = 0;
+        // Where the next line lifted onto the collapse baseline starts, from the collapse line on.
+        std::optional<float> tail{};
+        for (const DWRITE_LINE_METRICS& line : g_lineMetrics)
+        {
+            LineMove move{ .baseline = lineTop + line.baseline };
+            if (tail && *tail >= width)
+                move.shown = false;
+            else if (tail)
+            {
+                const LineExtent extent = lineExtent(lineStart, line.length);
+                move.shift = *tail - extent.left;
+                move.lifted = true;
+                *tail += extent.right - extent.left;
+            }
+            else if (move.baseline > localCollapseBaseline - 0.5f)
+            {
+                // No further left than the box, where the clip would take its start.
+                const LineExtent extent = lineExtent(lineStart, line.length);
+                move.shift = std::max(collapseXOffset, -extent.left);
+                tail = extent.right + move.shift;
+            }
+            moves.push_back(move);
+            lineTop += line.height;
+            lineStart += line.length;
+        }
     }
 
     bool DWriteLayout::alignLines()

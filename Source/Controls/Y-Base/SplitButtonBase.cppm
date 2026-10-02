@@ -4,6 +4,7 @@ export import ClaFi.Controls.Base.ButtonBase;
 
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
@@ -87,6 +88,7 @@ namespace ClaFi::Controls
         /// How much of the content box the part takes, on the axis it sits on.
         [[nodiscard]] ScaledDimensions secondaryExtent(const FormContext&, ScaledPadding, ScaledSpacing) const;
 
+        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
         void calculateChildren(FormBase&) override;
         ScaledDimensions calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;

@@ -35,8 +35,25 @@ namespace
     UINT s_ansiCodePage{ CP_ACP };
     UINT s_oemCodePage{ CP_OEMCP };
 
+    // Whether every character of the code page is one byte.
+    [[nodiscard]] bool isSingleByte(const UINT codePage)
+    {
+        CPINFO info{};
+        return ::GetCPInfo(codePage, &info) && info.MaxCharSize == 1;
+    }
+
+    // The block a single-byte code page reads the bytes it leaves unassigned into.
+    [[nodiscard]] bool isPrivateUse(const wchar_t value)
+    {
+        return value >= L'\xE000' && value <= L'\xF8FF';
+    }
+
     // Bytes read in one Windows code page. What the code page cannot spell becomes its own default
     // character; a code page not installed reads as nothing, which is itself an answer.
+    //
+    // A BYTE A SINGLE-BYTE CODE PAGE LEAVES UNASSIGNED READS AS THE REPLACEMENT CHARACTER, as the
+    // Encodings contract has it. Windows reads one as a private-use character - 0xFF in 1253 is
+    // U+F8FB, by Microsoft's own table - which no font draws.
     [[nodiscard]] std::wstring fromCodePage(const UINT codePage, const std::string_view bytes)
     {
         if (bytes.empty())
@@ -46,6 +63,8 @@ namespace
         const int length = ::MultiByteToWideChar(codePage, 0, bytes.data(), size, nullptr, 0);
         std::wstring result(static_cast<std::size_t>(length), L'\0');
         ::MultiByteToWideChar(codePage, 0, bytes.data(), size, result.data(), length);
+        if (isSingleByte(codePage))
+            std::ranges::replace_if(result, isPrivateUse, L'\uFFFD');
         return result;
     }
 

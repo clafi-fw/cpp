@@ -1232,6 +1232,10 @@ namespace ClaFi
         // needs to be the same for every control. The mirror of drawText above - a control that
         // overrides one and not the other measures on one layout and draws on another.
         virtual CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&);
+        // The width the own text is measured at. See Control-Foundation#remembered-text-width
+        [[nodiscard]] float textWidthLimit(const AlignEvent&) const;
+        // Keeps the width an align broke the own text at, and asks for a pass where it changed.
+        void rememberTextWidth(AlignEvent&, float width);
         void calculateChildrenSequentially(FormBase&);
         virtual void calculateChildren(FormBase&);
         virtual ScaledDimensions calculateContent(AlignEvent&);
@@ -1372,6 +1376,7 @@ namespace ClaFi
         inline static TextEngine s_textEngine{};
         static OnAnimate s_onAnimateState;
         static OnAnimate s_onClickRelease;
+        static constexpr float k_textWidthEpsilon{ 0.5f }; // under this two widths are one
     private:
         StateFactors m_factors{};
         ControlFlags m_flags{};
@@ -1380,6 +1385,7 @@ namespace ClaFi
         FloatPoint m_topLeft{};
         ScaledDimensions m_dimensions{};
         ScaledDimensions m_minDimensions{};
+        float m_textWidthInDesign{}; // the width the last align broke the own text at, zero before
     };
 
 

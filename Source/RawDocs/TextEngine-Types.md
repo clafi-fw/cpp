@@ -281,11 +281,14 @@ paragraph the native layout and nothing else, so the list errs toward refusing. 
 answered from a table and everything else from a map, so a document of source pays one
 lookup per character.
 
-The draw gathers glyphs into a run for as long as the colour holds and no tab breaks the
-cells, and hands each run to the platform with the colour's brush - a gradient to
-transparent over the box's right edge where the line fades. A run standing past the box, or
-ending before what is on screen, is not handed over at all, which is what a long line
-scrolled sideways costs.
+The draw walks only the characters whose cells the clip shows, and a cell either side for a
+glyph whose ink hangs past its own. The first of them is found by scanning the row for tabs,
+the stretch between two of them being a column per character, so a long line costs a scan
+for one character and what is on screen, not a lookup and a glyph per character of its
+length. cellLeft and the bands under the hits and the selection are counted the same way.
+Inside the shown span, glyphs are gathered into a run for as long as the colour holds and no
+tab breaks the cells, and each run is handed to the platform with the colour's brush - a
+gradient to transparent over the box's right edge where the line fades.
 
 The fonts live in one table for the application, found by family, size, weight and style;
 a request is resolved once, negative answers included.
@@ -313,6 +316,13 @@ monospace run at column times advance already, the tab stops are the same, and t
 reach the same draw primitive - with one exception: a glyph per character means a face's
 ligatures are not applied, which Consolas and DejaVu Sans Mono do not have and Cascadia Code
 does.
+
+A CHARACTER WITHOUT A CELL IS THE CALLER'S TO DECIDE - CellFallback, stated on a layout and
+through WithTextLayout::setCellFallback. Native, the standing answer, shapes that paragraph
+natively, where another font can draw the character. MissingGlyph keeps it on cells and draws
+the character as the font's missing glyph, so whatever a text holds costs one pass over its
+characters: the answer for a reading of bytes that are not text, where nearly every line holds
+one and the native path would shape millions of characters.
 
 ## Paragraph placement
 

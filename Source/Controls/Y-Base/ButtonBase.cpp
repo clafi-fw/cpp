@@ -305,14 +305,9 @@ namespace ClaFi::Controls
 
     void ButtonBase::adjustTextRect(AdjustTextRectEvent& event) const
     {
-        adjustForIndicator(event.spacing, event.textBounds);
+        adjustForSideParts(event.spacing, event.scale(m_iconSize.x), event.textBounds);
         switch (m_viewMode)
         {
-            case ButtonViewMode::LeftIcon:
-                event.textBounds.left += event.scale(m_iconSize.x);
-                if (event.textBounds.width() > 0)
-                    event.textBounds.left += event.spacing.x;
-                break;
             case ButtonViewMode::TopLeftIcon:
             case ButtonViewMode::TopCenterIcon:
                 event.textBounds.top += event.scale(m_iconSize.y);
@@ -324,6 +319,7 @@ namespace ClaFi::Controls
                 if (event.textBounds.height() > 0)
                     event.textBounds.bottom -= event.spacing.y;
                 break;
+            case ButtonViewMode::LeftIcon:
             case ButtonViewMode::TextLabel:
             case ButtonViewMode::IconOnly:
                 break;
@@ -372,6 +368,16 @@ namespace ClaFi::Controls
         if (m_viewMode == ButtonViewMode::IconOnly)
             return {};
 
+        const float iconWidth = event.scale(m_iconSize).x;
+        // A WRAPPING TEXT IS BROKEN IN THE BOX IT IS DRAWN IN, and the box handed in here is the
+        // content's: what stands beside the text is taken off it the way adjustTextRect takes it.
+        if (wordWrap())
+        {
+            FloatRect box = FloatRect::fromDimensions({ 0.0f, 0.0f }, asked.toFloat());
+            adjustForSideParts(event.spacing, iconWidth, box);
+            asked.x = std::max(box.width(), 0.0f);
+        }
+
         // A PICTURE STANDING OVER THE WORDS SETS THE WIDTH, and the words wrap under it. Asked
         // against the whole box instead, a caption longer than the picture comes out on ONE LINE
         // and the button is as wide as its name - a button wider than the thing it is built
@@ -379,7 +385,6 @@ namespace ClaFi::Controls
         // untidy: the widest name in the stack sizes every share in it, so one long caption drops
         // a whole column out of the grid. A caption that does not wrap has nothing to wrap under
         // the picture, and stands on one line at its own width. See Controls-Base
-        const float iconWidth = event.scale(m_iconSize).x;
         if (wordWrap()
             && iconWidth > 0.0f
             && (hasTopIcon(m_viewMode) || m_viewMode == ButtonViewMode::BottomIcon))
@@ -603,6 +608,17 @@ namespace ClaFi::Controls
                 }
                 break;
         }
+    }
+
+    void ButtonBase::adjustForSideParts(ScaledSpacing spacing, const float iconWidth,
+        FloatRect& rect) const
+    {
+        adjustForIndicator(spacing, rect);
+        if (m_viewMode != ButtonViewMode::LeftIcon)
+            return;
+        rect.left += iconWidth;
+        if (rect.width() > 0)
+            rect.left += spacing.x;
     }
 
 } // of namespace ClaFi

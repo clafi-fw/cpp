@@ -9,6 +9,7 @@ import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.CodeBox;
 import ClaFi.Controls.ComboBox;
 import ClaFi.Controls.Label;
+import ClaFi.Controls.MessageBar;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
@@ -102,6 +103,10 @@ namespace ClaFi::Tools::WhatsClip
         // body.
         template<IsControl ControlClass, typename... Args>
         ControlClass& createStripBar(Args&&...);
+        // A band under the strip, for a question about what the page shows rather than a part of
+        // it. It takes the strip's bottom slot, so a page has one.
+        template<typename... Args>
+        MessageBar& createMessageBar(Args&&...);
         // The size a reading is written at. Stated here so that two pages cannot disagree about
         // it, and small because the corner is a strip beside a scroll bar.
         static constexpr float k_readoutFontSize = 11.0f;
@@ -121,7 +126,8 @@ namespace ClaFi::Tools::WhatsClip
         static constexpr float k_defaultReadoutWidth = 104.0f;
     private:
         Panel& m_topPanel{ createTopBar<Panel>(
-            Padding{ 4.0f }
+            Padding{ 4.0f },
+            Spacing{ 4.0f }
             ) };
         // The strip is one surface: the status as its body, and what a page stands at its right
         // end on the same header - see stripBars.
@@ -164,12 +170,20 @@ namespace ClaFi::Tools::WhatsClip
         // The bytes as text, in the encoding picked. A terminated-string format - CF_TEXT and its
         // like - is cut to its content before the pick, so the block's slack sways neither the
         // encoding nor the text; any other is read whole and drops only the run its block is
-        // padded with. A NUL left in reads as its symbol, and ends the line where it closes a
-        // string. THE PICK STANDS WHERE THE PAGE READS BYTES THROUGH IT: hidden from construction,
-        // shown by the first call, never seen on a page whose text was decoded elsewhere.
-        [[nodiscard]] std::wstring decode(std::string_view bytes, const Transfer::Format&);
+        // padded with. A control left in reads as a stand-in - a dot for a NUL, a small square
+        // for the rest - and a byte the encoding has no character for as a lozenge, so the text
+        // stays on cells, and a NUL ends the line where it closes a string. None where there are
+        // no bytes. THE PICK STANDS WHERE THE PAGE READS BYTES THROUGH IT: hidden from
+        // construction, shown by the first call that has bytes, never seen on a page whose text
+        // was decoded elsewhere.
+        [[nodiscard]] std::optional<std::wstring> decode(std::string_view bytes,
+            const Transfer::Format&);
         // The encoding pick has moved. A page that keeps its bytes reads them again.
         virtual void encodingPicked() {}
+        // WHETHER A FORMAT'S BYTES ARE NO TEXT, judged from their first kilobyte in the encoding
+        // Auto claims over all of them: a NUL inside, a control other than tab, the line breaks
+        // and form feed, or a replacement character says so. A terminated-string format is text.
+        [[nodiscard]] bool isBinary(std::string_view bytes, const Transfer::Format&) const;
         // Resolves the code page a code-page reading uses from the offer, before the page decodes.
         // Called with the offer a read has in hand; a page keeps no offer of its own.
         void prepareLocale(Transfer::Offer&);
@@ -198,6 +212,8 @@ namespace ClaFi::Tools::WhatsClip
         // The name of the format whose bytes the text is - empty for a standard format, which
         // carries none, and for a text decoded from the bytes rather than read as them.
         std::wstring m_formatName{};
+        // What decode read, before its stand-ins - the text a language is judged by.
+        std::optional<std::wstring> m_readText{};
         EncodingPick& m_encodingPick;
         LanguagePick& m_languagePick;
         CheckBox& m_wrapCheck;
@@ -253,6 +269,12 @@ namespace ClaFi::Tools::WhatsClip
     ControlClass& RepresentationPage::createStripBar(Args&&... args)
     {
         return stripBars().add<ControlClass>(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    MessageBar& RepresentationPage::createMessageBar(Args&&... args)
+    {
+        return m_topPanel.createBottomBar<MessageBar>(std::forward<Args>(args)...);
     }
 
     template<typename... HProps, typename... BProps>

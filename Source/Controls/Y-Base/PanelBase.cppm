@@ -360,6 +360,8 @@ namespace ClaFi::Controls
         // The slot is settled here whether or not anything stands in it: its width takes no more
         // changes below, and the only one its height takes is the grow a body asks for.
         bodySlotSettled(event);
+        if (m_textPlacement == TextPlacement::Body && wordWrap() && m_textSize.y > 0.0f)
+            rememberTextWidth(event, m_bodyRect.width());
 
         if (isNotNullAndVisible(body()))
         {

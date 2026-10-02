@@ -1915,6 +1915,34 @@ namespace ClaFi
         );
     }
 
+    float Control::textWidthLimit(const AlignEvent& event) const
+    {
+        const float maxWidth = event.maxContentWidth();
+        if (m_textWidthInDesign <= 0.0f || !wordWrap())
+            return maxWidth;
+        // The guards every remembered width needs - see Item-Containers.
+        const FormBase* hostForm = getForm();
+        if (hostForm && hostForm->isMeasuringPlacement())
+            return maxWidth;
+        if (!isWidthGivenFromOutside())
+            return maxWidth;
+        return std::min(maxWidth, m_textWidthInDesign * event.scaleFactor());
+    }
+
+    void Control::rememberTextWidth(AlignEvent& event, const float width)
+    {
+        const float widthInDesign = width / event.scaleFactor();
+        if (std::abs(widthInDesign - m_textWidthInDesign) < k_textWidthEpsilon)
+            return;
+        if (!isWidthGivenFromOutside())
+            return;
+        const FormBase* hostForm = getForm();
+        if (hostForm && hostForm->isMeasuringPlacement())
+            return;
+        m_textWidthInDesign = widthInDesign;
+        event.invalidatePass();
+    }
+
     void Control::calculateChildrenSequentially(FormBase& form)
     {
         ControlSpan span = controls();
@@ -1930,7 +1958,7 @@ namespace ClaFi
 
     ScaledDimensions Control::calculateContent(AlignEvent& event)
     {
-        return calculateText(event, { event.maxContentWidth(), event.maxContentHeight() });
+        return calculateText(event, { textWidthLimit(event), event.maxContentHeight() });
     }
 
     void Control::alignContent(AlignEvent& event, ScaledPosition, ScaledDimensions& newDimensions)
@@ -1964,7 +1992,10 @@ namespace ClaFi
             // fraction of a pixel narrower than the width it was measured at.
             const ScaledDimensions measuredText = calculateText(event, { newDimensions.x, k_maxFloat });
             if (measuredText.x || measuredText.y)
+            {
+                rememberTextWidth(event, newDimensions.x);
                 newDimensions = measuredText;
+            }
         }
         else if (isOnScrollBox())
         {

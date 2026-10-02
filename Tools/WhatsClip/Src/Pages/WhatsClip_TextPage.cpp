@@ -4,6 +4,7 @@ import ClaFi.Tools.WhatsClip.Page;
 
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.CodeBox;
+import ClaFi.Controls.MessageBar;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.TextBox;
 import ClaFi.Controls.Base.PanelBase;
@@ -12,6 +13,7 @@ import ClaFi.Core.Transfer.Conversion;
 import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.Context.FormContext;
+import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
@@ -29,12 +31,18 @@ namespace ClaFi::Tools::WhatsClip
             picks,
             HostProps{ ScrollBars::Both },
             BodyProps{ ReadOnly::Yes, Padding{ 12.0f } }
-        }
+        },
+        m_question{ createMessageBar() }
     {
+        // The connection needs no scope: the band is this page's own and goes when it does.
+        m_question.addAnswer(L"Read as text", [this](ClickEvent&) {
+            readHeldBack();
+        });
+        m_question.setVisible(false);
     }
 
     // WHAT IS ON THE CLIPBOARD, AS TEXT: the format's own bytes, read in the encoding picked in
-    // the corner, NULs marked - see decode. Every format is a platform format here, its
+    // the corner, controls marked - see decode. Every format is a platform format here, its
     // bytes as they arrived - CF_UNICODETEXT's UTF-16 beside CF_TEXT's ANSI - so every one
     // goes through the pick. The framework's rich text comes out as the ClaFi it travels as,
     // and a format for which no encoding is right comes out as replacement characters -
@@ -49,6 +57,8 @@ namespace ClaFi::Tools::WhatsClip
         const std::string bytes = offer.readBytes(format);
         m_byteCount = bytes.size();
         m_bytes.assign(bytes, 0, k_textLimit);
+        m_binary = m_byteCount > k_askAbove && isBinary(m_bytes, format);
+        m_heldBack = m_binary;
         showBytes();
     }
 
@@ -67,11 +77,41 @@ namespace ClaFi::Tools::WhatsClip
 
     void TextPage::showBytes()
     {
-        std::optional<std::wstring> text{};
-        if (!m_bytes.empty())
-            text = decode(m_bytes, *m_format);
+        m_question.setVisible(m_heldBack);
+        if (m_heldBack)
+        {
+            showHeldBack();
+            return;
+        }
 
-        showReading(std::move(text), m_byteCount, L"bytes");
+        // A character the font lacks sends its line to DirectWrite, and binary bytes put one on
+        // nearly every line - so those stay on cells whatever they read as.
+        body().setCellFallback(m_binary ? CellFallback::MissingGlyph : CellFallback::Native);
+        showReading(decode(m_bytes, *m_format), m_byteCount, L"bytes");
+    }
+
+    // THE BOX IS EMPTIED rather than left showing the last format's text under a question about
+    // this one's, and it names no format, so the language is judged from nothing.
+    void TextPage::showHeldBack()
+    {
+        Text status{};
+        status << Fmt{ L"{} bytes", m_byteCount };
+        writeStatus(std::move(status));
+
+        Text question{};
+        question << Fmt{ L"This is not a text format: it holds {} bytes of binary data. "
+            L"Reading them as text can take minutes and slow the application down. "
+            L"Read them anyway?", m_byteCount };
+        m_question.setMessage(MessageIcon::Warning, question);
+        showText(Text{});
+    }
+
+    void TextPage::readHeldBack()
+    {
+        m_heldBack = false;
+        const ScopedWaitCursor waitCursor{};
+        showBytes();
+        scrollToBegin();
     }
 
     void TextPage::showReading(std::optional<std::wstring>&& text, const std::size_t wholeSize,
