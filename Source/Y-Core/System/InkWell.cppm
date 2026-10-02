@@ -147,17 +147,6 @@ namespace ClaFi
             return whiteInk(gradeOf(grade));
         }
 
-        // What each semantic hue is drawn at in either colour mode. Declared once, in code, and
-        // serving both modes from that one declaration, which is why it states a tone for each
-        // rather than one elevation the mode would orient: a yellow border going brown on a dark
-        // theme is a border doing its job, and a yellow warning icon going brown is one failing
-        // at its.
-        //
-        // The tones are tuned against pages at luminosity 0.13 and 0.87, from measurements taken
-        // at the 3:1 graphics threshold. A yellow's light tone reads as amber rather than lemon
-        // because nothing brighter clears 3:1 on a light page - a bright yellow IS light - which
-        // is why every system draws that icon amber on light and lemon on dark. Raising it back
-        // toward lemon breaks the contrast.
         [[nodiscard]] constexpr PigmentTones pigmentTones(Pigment pigment)
         {
             switch (pigment)
@@ -165,11 +154,11 @@ namespace ClaFi
                 case Pigment::Yellow:
                     return { .dark{ 1.0f, 0.9f }, .light{ 1.0f, 0.51f } };
                 case Pigment::Green:
-                    return { .dark{ 1.0f, 0.84f }, .light{ 1.0f, 0.49f } };
+                    return { .dark{ 1.0f, 0.66f }, .light{ 1.0f, 0.49f } };
                 case Pigment::Blue:
-                    return { .dark{ 1.0f, 0.47f }, .light{ 1.0f, 0.41f } };
+                    return { .dark{ 1.0f, 0.66f }, .light{ 1.0f, 0.41f } };
                 case Pigment::Red:
-                    return { .dark{ 1.0f, 0.56f }, .light{ 1.0f, 0.55f } };
+                    return { .dark{ 1.0f, 0.66f }, .light{ 1.0f, 0.55f } };
                 case Pigment::Count:
                     break;
             }
