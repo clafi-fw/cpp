@@ -154,6 +154,15 @@ jobs:
 
           - **Windows** - unpack the zip and run $app.exe.
           - **Linux** - unpack the archive and run $app. It needs glibc 2.35 or newer, a Wayland session and a processor with AVX2 and FMA. Supported-Distros.md inside lists the desktops, and clafi-check.sh answers whether a machine can run it."
+            case "$app" in
+              WhatsClip) site="https://whatsclip.app" ;;
+              *) site="" ;;
+            esac
+            if [ -n "$site" ]; then
+              notes+="
+
+          More about $app at $site."
+            fi
             args=(--target "$GITHUB_SHA" --title "$app $version" --notes "$notes" --generate-notes)
             if [ -n "$previous" ]; then
               args+=(--notes-start-tag "$previous")

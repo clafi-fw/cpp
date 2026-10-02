@@ -19,11 +19,15 @@ namespace ClaFi
 
     namespace
     {
-        // The name, its version and publisher, what it does, and the framework with its address.
+        // The name, its version, publisher and site, what it does, and the framework's address.
         [[nodiscard]] Text informationText(const AppContext&);
         // Appends a plain paragraph, every web address in it made a link.
         void appendLinked(Text&, std::wstring_view paragraph);
+        // The address as the page shows it - the scheme left out.
+        [[nodiscard]] std::wstring_view shownAddress(std::wstring_view address);
 
+        // The scheme every address the page links starts with.
+        constexpr std::wstring_view k_scheme{ L"https://" };
         // The room a page of options keeps around its column, so the name starts where options do.
         constexpr float k_pagePadding{ 12.0f };
         // The longest a line runs - a description wraps at it rather than widening the backstage.
@@ -67,6 +71,13 @@ namespace ClaFi
             text << context.publisher();
             text << PopColor{};
             text << k_endLine;
+            if (!context.site().empty())
+            {
+                text << PushLink{ std::wstring{ context.site() } };
+                text << shownAddress(context.site());
+                text << PopLink{};
+                text << k_endLine;
+            }
             text << k_endLine;
             if (!context.description().empty())
             {
@@ -92,7 +103,6 @@ namespace ClaFi
         // around it stays in the text.
         void appendLinked(Text& text, const std::wstring_view paragraph)
         {
-            constexpr std::wstring_view k_scheme = L"https://";
             // Punctuation a sentence closes with, a closing guillemet last.
             constexpr std::wstring_view k_closers = L".,;:)\u00BB\"'";
             std::size_t pos = 0;
@@ -114,6 +124,13 @@ namespace ClaFi
                 pos = end;
             }
             text << paragraph.substr(pos);
+        }
+
+        std::wstring_view shownAddress(const std::wstring_view address)
+        {
+            if (address.starts_with(k_scheme))
+                return address.substr(k_scheme.size());
+            return address;
         }
     }
 }

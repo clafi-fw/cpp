@@ -241,14 +241,19 @@ go of and does nothing.
 
 ## InformationPage
 
-The Information page of the application menu: the application's name, the publisher under it,
-what the application does, the framework the application is built with, and the framework's
-address as a link.
+The Information page of the application menu: the application's name, its version and publisher
+under it, the application's own site as a link, what the application does, the framework the
+application is built with, and the framework's address as a link.
+
+THE APPLICATION'S OWN SITE STANDS UNDER THE PUBLISHER. AppParams::site states the address and
+AppContext::site keeps it; the page links it and shows it without its scheme, the way the
+framework's address is written. An application that states none gets no line for it.
 
 WHAT THE APPLICATION DOES IS ITS OWN SENTENCE, stated in AppParams::description and kept by
 AppContext::description. It is a Text like the name, so it may carry inks and styles, and may
 spell the name inside it the way the name is spelled. An application that states none gets the
-page without it: the publisher is followed by the framework line, with one blank line between.
+page without it: the lines under the name are followed by the framework line, with one blank
+line between.
 
 WHAT ELSE THE APPLICATION HAS TO SAY FOLLOWS AS PARAGRAPHS. AppContext::addInformation takes a
 plain paragraph and AppContext::information answers them in the order added; the page prints them

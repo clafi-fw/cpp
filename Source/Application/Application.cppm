@@ -32,6 +32,7 @@ namespace ClaFi
         std::wstring_view publisher;
         Text description{}; // what the application does, shown on its Information page
         std::wstring_view version{}; // major.minor.patch, shown on its Information page
+        std::wstring_view site{}; // its own web address, shown as a link on its Information page
     };
 
     export class ApplicationBase
@@ -144,6 +145,7 @@ namespace ClaFi
             appParams.publisher,
             appParams.description,
             appParams.version,
+            appParams.site,
             initializeConfigPath(appParams),
             createBackend,
             Section{

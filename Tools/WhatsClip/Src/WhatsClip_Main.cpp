@@ -623,7 +623,8 @@ namespace ClaFi::Tools::WhatsClip
                 L"Shows what is on the clipboard, format by format, and follows it as it changes. "
                 L"A format reads as a picture, as text in a chosen encoding, or as raw bytes."
             },
-            .version = CLAFI_APP_VERSION
+            .version = CLAFI_APP_VERSION,
+            .site = L"https://whatsclip.app"
         };
     }
 
