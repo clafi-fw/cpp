@@ -1,3 +1,6 @@
+module;
+#include "../System/Switches.h"
+
 module ClaFi.Core.Foundation;
 
 import :Form;
@@ -1689,6 +1692,7 @@ namespace ClaFi
         emitEvent(event);
     }
 
+#if CLAFI_TEXT_MOVING
     TextRenderMode Control::textRenderMode() const
     {
         // Keyed on whether the control moves, not on whether it is interactive. Interactivity was
@@ -1718,6 +1722,7 @@ namespace ClaFi
             ? TextRenderMode::Moving
             : TextRenderMode::Movable;
     }
+#endif
 
     FloatRect Control::textBounds(const FormContext& formContext, const FloatRect& itemRect) const
     {
@@ -1788,7 +1793,9 @@ namespace ClaFi
             text,
             textAnchor(),
             editProps(),
+#if CLAFI_TEXT_MOVING
             textRenderMode(),
+#endif
             wordWrap(),
             textFormat()
         );

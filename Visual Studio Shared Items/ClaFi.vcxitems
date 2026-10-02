@@ -429,5 +429,6 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Headers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\EventBindings.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Switches.h" />
   </ItemGroup>
 </Project>

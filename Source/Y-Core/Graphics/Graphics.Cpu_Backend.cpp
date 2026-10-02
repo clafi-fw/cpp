@@ -1,5 +1,6 @@
 module;
 #include <immintrin.h>
+#include "../System/Switches.h"
 module ClaFi.Core.Graphics.Cpu.Canvas;
 
 import ClaFi.Core.Graphics.Cpu_Painter_Circle;
@@ -335,11 +336,13 @@ namespace ClaFi::Graphics::Cpu
         return stored.width() == m_size.x && stored.height() == m_size.y;
     }
 
+#if CLAFI_TEXT_MOVING
     TextAntialiasToken CpuBackend::beginTextRaster(const TextRasterizationParams& params)
     {
         m_snapTextOrigins = params.snapOrigins;
         return {};
     }
+#endif
 
     void CpuBackend::drawLine(FloatPoint pt1, FloatPoint pt2, const Brush& brush, float strokeWidth)
     {

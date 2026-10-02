@@ -1,6 +1,7 @@
 module;
 #include "Windows.Headers.h"
 #include <d3d11.h>
+#include "../../Y-Core/System/Switches.h"
 module ClaFi.Platform.Windows.D2D;
 
 import ClaFi.Platform.Windows.Diagnostic;
@@ -59,6 +60,7 @@ namespace ClaFi::PlatformImplementation::Windows
         return reinterpret_cast<const D2D1_MATRIX_3X2_F&>(local) * ambient;
     }
 
+#if CLAFI_TEXT_MOVING
     // The fields renderingParams() actually reads. Antialiasing is a separate setting on the
     // target, and origin snapping never reaches the target at all - lumping the three together
     // would rebuild rendering params for a run that only wanted a different antialiasing mode.
@@ -68,6 +70,7 @@ namespace ClaFi::PlatformImplementation::Windows
             && first.enhancedContrast == second.enhancedContrast
             && first.rasterizationMode == second.rasterizationMode;
     }
+#endif
 
     std::size_t BrushHash::operator()(const Brush& brush) const
     {
@@ -255,12 +258,17 @@ namespace ClaFi::PlatformImplementation::Windows
             return;
         }
 
-        // The transform and the text raster state belong to the TARGET, and an image is a second
-        // target. Both are carried across so that what a caller has asked the surface for is what
-        // the image is drawn under, and both are put back by the pop - a target keeps what it was
-        // last told between one BeginDraw and the next, so an image reused on a later frame would
-        // otherwise still be carrying the transform the last frame left on it.
+        // The transform belongs to the TARGET, and an image is a second target. It is carried
+        // across so that what a caller has asked the surface for is what the image is drawn under,
+        // and put back by the pop - a target keeps what it was last told between one BeginDraw and
+        // the next, so an image reused on a later frame would otherwise still be carrying the
+        // transform the last frame left on it.
+#if CLAFI_TEXT_MOVING
+        // The text raster state is carried the same way.
         ImagePush push{ .previousTarget = m_renderTarget, .installedRaster = m_installedRaster };
+#else
+        ImagePush push{ .previousTarget = m_renderTarget };
+#endif
         D2D1_MATRIX_3X2_F transform;
         m_renderTarget->GetTransform(&transform);
 
@@ -270,15 +278,18 @@ namespace ClaFi::PlatformImplementation::Windows
             m_renderTarget = target;
             m_renderTarget->BeginDraw();
             m_renderTarget->SetTransform(transform);
-            // Put into the state m_createdRaster stands for, both halves of it, and said outright
-            // rather than assumed: an image is REUSED between frames and keeps whatever the last
-            // run inside it installed, so a target claimed to be at the created state has to be
-            // put there. Without the second call a run asking for the created state finds
-            // m_installedRaster already naming it, installs nothing, and draws through the params
-            // the previous frame left on the image.
+            // ClearType, the mode the window's own target is put in, said outright rather than
+            // assumed: an image is a target of its own, made at the default mode and REUSED
+            // between frames.
             m_renderTarget->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE);
+#if CLAFI_TEXT_MOVING
+            // The rendering params as well, so the image stands at the state m_createdRaster
+            // names. Without them a run asking for the created state finds m_installedRaster
+            // already naming it, installs nothing, and draws through the params the previous
+            // frame left on the image.
             m_renderTarget->SetTextRenderingParams(nullptr);
             m_installedRaster = m_createdRaster;
+#endif
         }
 
         m_imageStack.push_back(std::move(push));
@@ -304,7 +315,9 @@ namespace ClaFi::PlatformImplementation::Windows
         }
 
         m_renderTarget = push.previousTarget;
+#if CLAFI_TEXT_MOVING
         m_installedRaster = push.installedRaster;
+#endif
     }
 
     void Direct2DBackend::drawImage(int index, float opacity)
@@ -406,6 +419,7 @@ namespace ClaFi::PlatformImplementation::Windows
             popImage();
         }
 
+#if CLAFI_TEXT_MOVING
         // Text raster state outlives the run that asked for it, so the frame puts it back once
         // rather than every run putting it back for itself.
         if (m_installedRaster.antialias != m_createdRaster.antialias)
@@ -417,6 +431,7 @@ namespace ClaFi::PlatformImplementation::Windows
             m_renderTarget->SetTextRenderingParams(nullptr);
         }
         m_installedRaster = m_createdRaster;
+#endif
 
         if (m_baseClip)
         {
@@ -460,6 +475,7 @@ namespace ClaFi::PlatformImplementation::Windows
         return rawBrush;
     }
 
+#if CLAFI_TEXT_MOVING
     TextAntialiasToken Direct2DBackend::beginTextRaster(const TextRasterizationParams& params)
     {
         // Read back per glyph run by the renderer, so it is recorded whether or not anything else
@@ -513,6 +529,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // state it was created in, so nothing leaks past the frame.
         m_snapTextOrigins = true;
     }
+#endif
 
     void Direct2DBackend::setTransform(const Matrix3x2& matrix)
     {
@@ -1236,10 +1253,12 @@ namespace ClaFi::PlatformImplementation::Windows
             m_generation = presenter.generation();
 
             // Left at the system's own rendering params, which is what a target that is asked for
-            // nothing in particular should draw with. This is the state m_createdRaster stands
-            // for, and the one endPaint returns to.
+            // nothing in particular should draw with.
             m_deviceContext->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE);
+#if CLAFI_TEXT_MOVING
+            // The state m_createdRaster stands for, and the one endPaint returns to.
             m_installedRaster = m_createdRaster;
+#endif
         }
         // Nothing is open at the top of a frame, so the target being drawn into is the window's.
         m_renderTarget = m_deviceContext;
@@ -1652,6 +1671,7 @@ namespace ClaFi::PlatformImplementation::Windows
         return d2dPath;
     }
 
+#if CLAFI_TEXT_MOVING
     // Translates one set of raster params into DirectWrite's own, and keeps the result.
     //
     // Each flag maps to a setting that decides how much of a glyph's raster depends on where it
@@ -1737,4 +1757,5 @@ namespace ClaFi::PlatformImplementation::Windows
 
         return params;
     }
+#endif
 }

@@ -1,3 +1,6 @@
+module;
+#include "../System/Switches.h"
+
 module ClaFi.Core.Foundation;
 
 import :PaintEvent;
@@ -65,6 +68,9 @@ namespace ClaFi
             m_overlayHost = m_parentEvent->m_overlayHost;
             m_overlayStage = m_parentEvent->m_overlayStage;
             m_pressScaleApplied = m_parentEvent->m_pressScaleApplied;
+#if !CLAFI_TEXT_MOVING
+            m_unpressedTransform = m_parentEvent->m_unpressedTransform;
+#endif
         }
 
         context.setVisitorData(this);
@@ -97,7 +103,8 @@ namespace ClaFi
             m_spacing = scale(metrics.spacing);
             // Metrics say how much depth this control would take; the control says whether it takes
             // any. Read here rather than in pressScale(), so that everything downstream of the
-            // scale - the transform, the text raster mode - sees one answer.
+            // scale - the transform, and the text raster mode where it is compiled in - sees one
+            // answer.
             m_zDepthFactor = control.allowZAnimation()
                 ? metrics.zDepthFactor * m_zAnimationAmount
                 : 0.0f;
@@ -739,9 +746,11 @@ namespace ClaFi
         {
             // The one place the press animation is applied. It goes on after the clip, so the
             // control stays clipped to the bounds it actually occupies, and it wraps the
-            // surface, the children and the text alike - which is what makes the whole button
-            // move as one piece about a single origin. A control inside one that is already
-            // scaled leaves it alone, so the origin is always the outermost animating control.
+            // surface and the children - which is what makes the whole button move as one piece
+            // about a single origin. The text moves with them while CLAFI_TEXT_MOVING is 1 and
+            // stands where it was laid out while it is 0 - see the paintText call below. A
+            // control inside one that is already scaled leaves it alone, so the origin is always
+            // the outermost animating control.
             Graphics::Matrix3x2 pressTransform = Graphics::Matrix3x2::identity();
             if (!m_pressScaleApplied)
             {
@@ -752,6 +761,9 @@ namespace ClaFi
                         * Graphics::Matrix3x2::scale(scale)
                         * Graphics::Matrix3x2::translation(-origin.x, -origin.y);
                     m_pressScaleApplied = true;
+#if !CLAFI_TEXT_MOVING
+                    m_unpressedTransform = canvas().transform();
+#endif
                 }
             }
             Graphics::ScopedCanvasTransform pressScaleTransform{ canvas(), pressTransform };
@@ -796,7 +808,23 @@ namespace ClaFi
             if (m_paintsSelf)
             {
                 control.doPaintTextInitialization();
+#if CLAFI_TEXT_MOVING
                 control.paintText(*this);
+#else
+                // Text stands where it was laid out: the press animation scales the surface and
+                // the children around it, and the text is drawn without it, so it never moves.
+                if (m_pressScaleApplied)
+                {
+                    const Graphics::Matrix3x2 pressed = canvas().transform();
+                    canvas().setTransform(m_unpressedTransform);
+                    control.paintText(*this);
+                    canvas().setTransform(pressed);
+                }
+                else
+                {
+                    control.paintText(*this);
+                }
+#endif
                 control.doPainted(*this);
                 if (m_strokeHeld)
                     paintStroke(surfaceShape(m_heldStrokeInset));

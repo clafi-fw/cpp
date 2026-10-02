@@ -1,3 +1,6 @@
+module;
+#include "../Y-Core/System/Switches.h"
+
 module ClaFi.Controls.HexView;
 
 import ClaFi.Controls.Menu;
@@ -639,7 +642,11 @@ namespace ClaFi::Controls
         m_layout.setFormat(&s_lineFormat);
         m_layout.setBoundsAndScale({ content.width(), m_lineHeight },
             event.formContext().scaleFactor());
+#if CLAFI_TEXT_MOVING
         m_layout.draw(event.controlContext(), { content.left, top }, nullptr, textRenderMode());
+#else
+        m_layout.draw(event.controlContext(), { content.left, top });
+#endif
     }
 
     void HexView::paintLineBands(PaintEvent& event, const FloatRect& content,

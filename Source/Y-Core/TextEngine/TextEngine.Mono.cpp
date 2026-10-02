@@ -1,3 +1,6 @@
+module;
+#include "../System/Switches.h"
+
 module ClaFi.Core.TextEngine.Mono;
 
 import ClaFi.Core.Context.ControlContext;
@@ -296,10 +299,15 @@ namespace ClaFi
         }
 
         // Snapping puts the baseline on a whole device pixel, which is what keeps still text
-        // crisp. Under a scale it quantizes, and the backend says whether that trade is made.
+        // crisp. Under a scale it quantizes, and with text moving compiled in the backend says
+        // whether that trade is made.
         float baselineY = origin.y + m_baseline;
+#if CLAFI_TEXT_MOVING
         if (backend->snapTextOrigins())
             baselineY = std::round(baselineY);
+#else
+        baselineY = std::round(baselineY);
+#endif
 
         const Color defaultColor = context.textRgb(InkGrade::Strongest);
         const float fadeWidth = context.scaleF(30.0f);

@@ -1,3 +1,6 @@
+module;
+#include "../System/Switches.h"
+
 export module ClaFi.Core.Graphics.Cpu.Canvas;
 
 import ClaFi.Core.Graphics.Types;
@@ -59,6 +62,7 @@ namespace ClaFi::Graphics::Cpu
         void* getNativeRenderTarget() const override { return nullptr; }
         void* getNativeBrush(const Brush&) override { return nullptr; }
 
+#if CLAFI_TEXT_MOVING
         // Only snapOrigins is honoured. This path averages DirectWrite's 3x1 ClearType texture down
         // to a single coverage value per pixel whatever is asked of it, so it is grayscale already
         // and an antialias of Subpixel costs it nothing to ignore - drawing subpixel here would mean
@@ -68,6 +72,7 @@ namespace ClaFi::Graphics::Cpu
         [[nodiscard]] TextAntialiasToken beginTextRaster(const TextRasterizationParams& params) override;
         void endTextRaster(TextAntialiasToken) override { m_snapTextOrigins = true; }
         [[nodiscard]] bool snapTextOrigins() const override { return m_snapTextOrigins; }
+#endif
 
         void setTransform(const Matrix3x2& matrix) override { m_transform = matrix; }
         void resetTransform() override { m_transform = Matrix3x2::identity(); }
@@ -160,7 +165,9 @@ namespace ClaFi::Graphics::Cpu
         // buffer while one is open. Every painter reaches its pixels through getActiveView, so
         // this is the whole of the redirection.
         Bitmap* m_target{ &m_backBuffer };
+#if CLAFI_TEXT_MOVING
         bool m_snapTextOrigins{ true };
+#endif
         Matrix3x2 m_transform{ Matrix3x2::identity() };
         std::vector<SavedClip> m_clipStack;
         PixelPath m_scratchPath;

@@ -1,3 +1,6 @@
+module;
+#include "../System/Switches.h"
+
 export module ClaFi.Core.TextEngine;
 
 import ClaFi.Diagnostic.Options;
@@ -24,9 +27,15 @@ namespace ClaFi
         // and the anchor is the whole of what says where in the bounds that box was put - so a
         // call that leaves it out draws against a box the text does not occupy. See
         // anchoredOrigin, which is what a control holding a layout of its own measures through.
+#if CLAFI_TEXT_MOVING
         DrawTextResult drawText(ControlPaintContext&, const FloatRect&, const Text&,
             TextAnchor, const EditProps* = nullptr, TextRenderMode = TextRenderMode::Static,
             bool wrap = true, const TextFormat* = nullptr);
+#else
+        DrawTextResult drawText(ControlPaintContext&, const FloatRect&, const Text&,
+            TextAnchor, const EditProps* = nullptr, bool wrap = true,
+            const TextFormat* = nullptr);
+#endif
         // Editable belongs to the layout rather than to the caller's convenience: an editable text
         // keeps the empty paragraph a trailing newline opens, because the caret has to be able to
         // stand on it. Measured as not editable, that row is missing from the size the control is
@@ -145,7 +154,11 @@ namespace ClaFi
 
     DrawTextResult TextEngine::drawText(ControlPaintContext& controlContext, const FloatRect& bounds,
         const Text& text, const TextAnchor anchor,
+#if CLAFI_TEXT_MOVING
         const EditProps* editProps, TextRenderMode textRenderMode, bool wrap,
+#else
+        const EditProps* editProps, bool wrap,
+#endif
         const TextFormat* format)
     {
         if (text.plainText().empty() && !editProps)
@@ -156,8 +169,12 @@ namespace ClaFi
         layout.setHorizontalAnchor(anchor.horizontal);
         const FloatPoint anchoredPos = anchoredOrigin(bounds, layout.calculatedDimensions(), anchor);
 
+#if CLAFI_TEXT_MOVING
         const DrawTextResult result = layout.draw(controlContext, anchoredPos, editProps,
             textRenderMode);
+#else
+        const DrawTextResult result = layout.draw(controlContext, anchoredPos, editProps);
+#endif
         if constexpr (Diagnostic::Options::highlightTextAreas)
         {
             highlightTextArea(controlContext, bounds,

@@ -1,3 +1,6 @@
+module;
+#include "../System/Switches.h"
+
 export module ClaFi.Core.TextEngine.Layout;
 
 import ClaFi.Core.AppTheme_Colors;
@@ -254,7 +257,11 @@ namespace ClaFi
         void setHoveredLink(TextRange);
         [[nodiscard]] TextRange hoveredLink() const { return m_hoveredLink; }
 
+#if CLAFI_TEXT_MOVING
         DrawTextResult draw(ControlPaintContext&, FloatPoint, const EditProps* = nullptr, TextRenderMode = TextRenderMode::Static);
+#else
+        DrawTextResult draw(ControlPaintContext&, FloatPoint, const EditProps* = nullptr);
+#endif
         CalculatedDimensions calculatedDimensions();
         // The height of the text's last line, from the shaping alone - the box is not asked.
         [[nodiscard]] float lastLineHeight();

@@ -1,3 +1,6 @@
+module;
+#include "../System/Switches.h"
+
 export module ClaFi.Core.Foundation :PaintEvent;
 
 import :Traversal;
@@ -240,6 +243,10 @@ namespace ClaFi
         // Set for the control that owns the press animation, and inherited by everything it
         // contains, so a child does not scale a second time about its own centre.
         bool m_pressScaleApplied{ false };
+#if !CLAFI_TEXT_MOVING
+        // The canvas transform outside the press animation, which text is drawn under.
+        Graphics::Matrix3x2 m_unpressedTransform{ Graphics::Matrix3x2::identity() };
+#endif
         // Metrics
         float m_zDepthFactor{ 0.0f };
         float m_zAnimationAmount{ 1.0f }; // the application's, inherited from the root

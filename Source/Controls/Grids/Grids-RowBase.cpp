@@ -1,3 +1,6 @@
+module;
+#include "../Y-Core/System/Switches.h"
+
 module ClaFi.Controls.Grids;
 
 import :Columns;
@@ -253,12 +256,19 @@ namespace ClaFi::Controls::Grids
             TextLayout layout;
             shapeAlone(layout, paintEvent.formContext(), text, format, textBounds.dimensions(),
                 EventPhase::Paint);
+#if CLAFI_TEXT_MOVING
             layout.draw(
                 paintEvent.controlContext(),
                 anchoredOrigin(textBounds, layout.calculatedDimensions(), anchor),
                 nullptr,
                 textRenderMode()
             );
+#else
+            layout.draw(
+                paintEvent.controlContext(),
+                anchoredOrigin(textBounds, layout.calculatedDimensions(), anchor)
+            );
+#endif
             return;
         }
         textEngine().drawText(
@@ -267,7 +277,9 @@ namespace ClaFi::Controls::Grids
             text,
             anchor,
             nullptr,
+#if CLAFI_TEXT_MOVING
             textRenderMode(),
+#endif
             true,
             &format
         );

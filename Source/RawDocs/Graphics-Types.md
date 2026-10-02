@@ -8,6 +8,8 @@ How a glyph's coverage is computed. Cached rasterization reuses one texture per 
 what every still run wants; Outline fills the glyph's beziers as geometry instead, with plain
 antialiasing that varies smoothly with position, and bypasses the cache to do it.
 
+Compiled in while CLAFI_TEXT_MOVING is 1 - see TextEngine-Types#textrendermode.
+
 ## PathRenderMode::OuterGlow
 
 The ramp both ways from the outline, as far in as out. What covers the inward half is
@@ -30,6 +32,8 @@ Names the raster params one text run wants. Every run states its own, including 
 wants what the target already carries - deciding that costs nothing is the backend's job,
 since it is the only thing that knows what is installed. A run that stayed silent would leave
 it guessing, and no default has to be agreed on anywhere above the backend.
+
+Compiled in while CLAFI_TEXT_MOVING is 1 - see TextEngine-Types#textrendermode.
 
 ## ScanLines
 
@@ -119,6 +123,8 @@ own stems and baseline onto pixel edges, and subpixel antialiasing gives an edge
 depends on which third of a pixel it covers. Any of them changing between two draws of the
 same unmoved run changes how it looks. A caller that wants a run to survive being moved has to
 turn off all three, and has to leave them off for as long as that run can move.
+
+Compiled in while CLAFI_TEXT_MOVING is 1 - see TextEngine-Types#textrendermode.
 
 ## PathRenderMode::Shadow
 

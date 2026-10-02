@@ -63,6 +63,13 @@ geometry instead of a glyph rasterized afresh at every frame's sub pixel positio
 expensive half - outlines bypass the glyph cache - so it is not paid by a control that is
 merely capable of moving.
 
+THE WHOLE PATH STANDS ON CLAFI_TEXT_MOVING, in Source/Y-Core/System/Switches.h, and it is 0.
+At 0 this type, Control::textRenderMode, the mode parameter of TextEngine::drawText and
+TextLayout::draw, and everything under them down to the backends' raster state are left out
+of the build, and every run is drawn the way Static asks. Nothing moves text at 0 either: the
+press animation scales a control's surface and children, and PaintEvent draws every control's
+text without it, where the text was laid out.
+
 ## ControlText
 
 A text a control keeps: written once or written often, and asked about on every measurement

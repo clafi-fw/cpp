@@ -1,3 +1,6 @@
+module;
+#include "../Y-Core/System/Switches.h"
+
 module ClaFi.Controls.TextBox;
 
 import ClaFi.Controls.Menu;
@@ -330,8 +333,13 @@ namespace ClaFi::Controls
         if (text.plainText().empty() && !m_placeHolderText.empty())
         {
             const Text shown{ InkWell::textInk(InkGrade::Muted), m_placeHolderText };
+#if CLAFI_TEXT_MOVING
             textEngine().drawText(event.controlContext(), textBounds, shown, textAnchor(), nullptr,
                 textRenderMode(), wordWrap(), textFormat());
+#else
+            textEngine().drawText(event.controlContext(), textBounds, shown, textAnchor(), nullptr,
+                wordWrap(), textFormat());
+#endif
         }
         return WithTextLayout<Label>::drawText(event, textBounds, text);
     }

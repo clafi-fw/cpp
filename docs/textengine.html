@@ -446,8 +446,8 @@ put it. The engine is told the anchor with every <code>drawText</code>, and a co
 and where in that rectangle the text block belongs:</p>
 
 <pre><code><span class="tp">DrawTextResult</span> <span class="fn">drawText</span>(<span class="tp">ControlPaintContext</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp;, <span class="kw">const</span> <span class="tp">Text</span>&amp;,
-    <span class="tp">TextAnchor</span>, <span class="kw">const</span> <span class="tp">EditProps</span>* = <span class="kw">nullptr</span>, <span class="tp">TextRenderMode</span> = <span class="tp">TextRenderMode</span>::Static,
-    <span class="kw">bool</span> wrap = <span class="kw">true</span>, <span class="kw">const</span> <span class="tp">TextFormat</span>* = <span class="kw">nullptr</span>);
+    <span class="tp">TextAnchor</span>, <span class="kw">const</span> <span class="tp">EditProps</span>* = <span class="kw">nullptr</span>, <span class="kw">bool</span> wrap = <span class="kw">true</span>,
+    <span class="kw">const</span> <span class="tp">TextFormat</span>* = <span class="kw">nullptr</span>);
 
 <span class="tp">CalculatedDimensions</span> <span class="fn">calculateText</span>(<span class="kw">const</span> <span class="tp">FormContext</span>&amp;, <span class="kw">const</span> <span class="tp">Text</span>&amp;,
     <span class="tp">MaxSize</span> = { k_maxFloat, k_maxFloat }, <span class="kw">bool</span> editable = <span class="kw">false</span>, <span class="kw">bool</span> wrap = <span class="kw">true</span>,
@@ -467,7 +467,11 @@ leaves it out draws against a box the text does not occupy. Where the anchors pu
 <a href="#anchors">Text Anchors</a>.
 </div>
 
-<p><code>TextRenderMode</code> is a question about movement, not about quality:</p>
+<p>With <code>CLAFI_TEXT_MOVING</code> set to 1 in <code>Source/Y-Core/System/Switches.h</code>,
+<code>drawText</code> and <code>TextLayout::draw</code> take a <code>TextRenderMode</code> after the
+<code>EditProps</code>, and the backends rasterize each run the way it asks. The switch is 0, and
+every run is drawn as <code>Static</code>. The mode is a question about movement, not about
+quality:</p>
 
 <table>
 <tr><th>Mode</th><th>For</th></tr>

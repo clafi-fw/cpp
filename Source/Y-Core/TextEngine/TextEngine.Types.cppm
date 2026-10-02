@@ -1,3 +1,6 @@
+module;
+#include "../System/Switches.h"
+
 export module ClaFi.Core.TextEngine.Types;
 
 import ClaFi.Core.Context.PaintIconEvent;
@@ -271,6 +274,7 @@ namespace ClaFi
         bool trimmed{};
     };
 
+#if CLAFI_TEXT_MOVING
     // What a control's text has to survive, stated as three cases. See TextEngine-Types
     export enum class TextRenderMode
     {
@@ -278,6 +282,7 @@ namespace ClaFi
         Movable,
         Moving
     };
+#endif
 
 
     //-------------------------------------------------------------------------

@@ -1,3 +1,6 @@
+module;
+#include "../System/Switches.h"
+
 export module ClaFi.Core.Graphics.Types;
 
 export import :PixelView;
@@ -22,6 +25,7 @@ namespace ClaFi::Graphics
         Direct2D
     };
 
+#if CLAFI_TEXT_MOVING
     // How a glyph's coverage is computed. See Graphics-Types
     export enum class TextRasterizationMode
     {
@@ -56,6 +60,7 @@ namespace ClaFi::Graphics
     // Opaque stand-in for a backend's own text antialiasing mode. Only the backend that produced
     // one may interpret it.
     export using TextAntialiasToken = std::uint32_t;
+#endif
 
     // How a stroke ends.
     export enum class StrokeCap {
@@ -432,6 +437,7 @@ namespace ClaFi::Graphics
         virtual void* getNativeRenderTarget() const = 0;
         virtual void* getNativeBrush(const Brush& brush) = 0;
 
+#if CLAFI_TEXT_MOVING
         // Rasterize text this way until the scope is closed. Returns what the antialiasing mode was
         // so the caller can hand it straight back. The token is the backend's own value rather than
         // anything this header names, so restoring cannot flatten a mode the shared code has no
@@ -441,6 +447,7 @@ namespace ClaFi::Graphics
         // The snapOrigins of the params currently in force. Read per glyph run, deep inside the
         // platform's own draw callback, which is too far from the caller to be passed a flag.
         [[nodiscard]] virtual bool snapTextOrigins() const = 0;
+#endif
 
         // Transforms
         virtual void setTransform(const Matrix3x2& matrix) = 0;
@@ -477,6 +484,7 @@ namespace ClaFi::Graphics
         virtual void drawPath(const PixelPath& path, std::span<const PathDrawLayer> layers, const Matrix3x2* transform = nullptr) = 0;
     };
 
+#if CLAFI_TEXT_MOVING
     // Names the raster params one text run wants. See Graphics-Types
     export class ScopedTextRaster
     {
@@ -498,5 +506,6 @@ namespace ClaFi::Graphics
         IBackend* m_backend;
         TextAntialiasToken m_restoreTo;
     };
+#endif
 
 }

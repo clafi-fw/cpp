@@ -1,3 +1,6 @@
+module;
+#include "../System/Switches.h"
+
 export module ClaFi.Core.Foundation :WithTextLayout;
 
 import :Control;
@@ -127,12 +130,20 @@ namespace ClaFi
         const FloatRect& textBounds, const Text& text)
     {
         TextLayout& layout = syncedLayout(event.formContext(), textBounds, text);
+#if CLAFI_TEXT_MOVING
         return layout.draw(
             event.controlContext(),
             anchoredOrigin(textBounds, layout.calculatedDimensions(), this->textAnchor()),
             this->editProps(),
             this->textRenderMode()
         );
+#else
+        return layout.draw(
+            event.controlContext(),
+            anchoredOrigin(textBounds, layout.calculatedDimensions(), this->textAnchor()),
+            this->editProps()
+        );
+#endif
     }
 
     // Measured on the layout the paint will draw from. Through TextEngine's cache instead, a

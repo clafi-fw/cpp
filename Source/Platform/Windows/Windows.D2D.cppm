@@ -1,5 +1,6 @@
 module;
 #include "Windows.Headers.h"
+#include "../../Y-Core/System/Switches.h"
 export module ClaFi.Platform.Windows.D2D;
 
 import ClaFi.Platform.Windows.Composition;
@@ -45,9 +46,11 @@ namespace ClaFi::PlatformImplementation::Windows
         void* getNativeRenderTarget() const override { return m_renderTarget.Get(); }
 
         void* getNativeBrush(const Brush& brush) override;
+#if CLAFI_TEXT_MOVING
         [[nodiscard]] TextAntialiasToken beginTextRaster(const TextRasterizationParams&) override;
         void endTextRaster(TextAntialiasToken) override;
         [[nodiscard]] bool snapTextOrigins() const override { return m_snapTextOrigins; }
+#endif
 
         // Transforms
         void setTransform(const Matrix3x2& matrix) override;
@@ -86,17 +89,21 @@ namespace ClaFi::PlatformImplementation::Windows
         void drawPath(const PixelPath& path, std::span<const PathDrawLayer> layers, const Matrix3x2* transform = nullptr) override;
 
     private:
+#if CLAFI_TEXT_MOVING
         struct CachedRenderingParams
         {
             TextRasterizationParams key;
             ComPtr<IDWriteRenderingParams> value;
         };
+#endif
         struct ImagePush
         {
             ComPtr<ID2D1RenderTarget> previousTarget;
+#if CLAFI_TEXT_MOVING
             // What the target being left was carrying. Text raster state belongs to the target, so
             // what m_installedRaster names while an image is open is the image's own.
             TextRasterizationParams installedRaster{};
+#endif
             ComPtr<ID2D1BitmapRenderTarget> begun;
         };
 
@@ -141,8 +148,10 @@ namespace ClaFi::PlatformImplementation::Windows
         ID2D1Brush* getNativeBrushInternal(const Brush& brush);
         ComPtr<ID2D1GradientStopCollection> createStopCollection(const std::vector<GradientStop>& stops);
         ComPtr<ID2D1PathGeometry> buildPathGeometry(const PixelPath& path, bool isFilled);
+#if CLAFI_TEXT_MOVING
         ComPtr<IDWriteRenderingParams> renderingParams(const TextRasterizationParams&);
         static ComPtr<IDWriteRenderingParams> makeRenderingParams(DWRITE_RENDERING_MODE1, DWRITE_GRID_FIT_MODE, bool zeroContrast);
+#endif
 
     private:
         // The window this backend draws for, asked for a whole repaint whenever the target is
@@ -151,7 +160,9 @@ namespace ClaFi::PlatformImplementation::Windows
         IPlatformWindow* m_window;
         IntSize m_size;
         bool m_isPainting{ false };
+#if CLAFI_TEXT_MOVING
         bool m_snapTextOrigins{ true };
+#endif
         // A frame that carries alpha starts from nothing - see IBackend::setTransparentBase - and
         // whether the frame's dirty rect is standing as a clip on the context.
         bool m_transparentBase{ false };
@@ -161,6 +172,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // the presenter answers at each paint.
         unsigned m_generation{ 0 };
         IDXGISurface* m_targetSurface{ nullptr };
+#if CLAFI_TEXT_MOVING
         // Built on demand and kept, because the parameters describe how to rasterize rather than
         // what, so one object serves every run that asks for the same thing. Bounded by the number
         // of distinct params any caller asks for, which is a handful, so it needs no eviction - a
@@ -175,6 +187,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // same object, and would leave the target off the settings it starts on.
         TextRasterizationParams m_createdRaster{};
         TextRasterizationParams m_installedRaster{};
+#endif
         // The window's own target - the device context, drawing into the target bitmap over the
         // presenter's frame texture - and the one being drawn into. They are the same object
         // except while a kept image is open, when the second is that image's target. Every draw

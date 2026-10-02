@@ -1,5 +1,6 @@
 module;
 #include "../System/EventBindings.h"
+#include "../System/Switches.h"
 
 export module ClaFi.Core.Foundation :Control;
 
@@ -1187,6 +1188,7 @@ namespace ClaFi
         // carries the scaler with it, so an override states its inset in design units.
         virtual void adjustChildInset(AdjustChildInsetEvent&) const {}
         virtual void adjustTextRect(AdjustTextRectEvent&) const {}
+#if CLAFI_TEXT_MOVING
         // How this control's text should be rasterized, asked each time the text is drawn so a
         // control can answer differently as its state changes. Nothing is stored and there is no
         // setter: a control states its case by overriding this, which keeps the answer next to the
@@ -1202,6 +1204,7 @@ namespace ClaFi
         // it. Override only for a control that allows the depth and still wants its text left
         // alone, which means accepting that the text will be moved while placed as if still.
         [[nodiscard]] virtual TextRenderMode textRenderMode() const;
+#endif
         FloatRect textBounds(const FormContext&, const FloatRect&) const;
         FloatRect textBounds(PaintEvent&) const;
 

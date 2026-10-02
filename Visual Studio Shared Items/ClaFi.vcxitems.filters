@@ -1215,6 +1215,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\EventBindings.h">
       <Filter>Y_Core\System</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Switches.h">
+      <Filter>Y_Core\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland_Facade.cppm">

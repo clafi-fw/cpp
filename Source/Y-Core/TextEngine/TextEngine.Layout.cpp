@@ -1,3 +1,6 @@
+module;
+#include "../System/Switches.h"
+
 module ClaFi.Core.TextEngine.Layout;
 
 import ClaFi.Core.Context.FormContext;
@@ -340,6 +343,7 @@ namespace ClaFi
         return isNewlineSelected(selection, paragraph.textStart + paragraph.textLength);
     }
 
+#if CLAFI_TEXT_MOVING
     // The one place a control's intent becomes raster settings. Kept above the platform so that a
     // backend is told what to do and never why, and kept in one function so the three cases cannot
     // drift apart - the whole failure this addresses is two of them disagreeing about a setting.
@@ -376,6 +380,7 @@ namespace ClaFi
             .rasterizationMode = Graphics::TextRasterizationMode::Cached,
         };
     }
+#endif
 
     FloatPoint anchoredOrigin(const FloatRect& bounds, const CalculatedDimensions calculated,
         const TextAnchor anchor)
@@ -808,8 +813,12 @@ namespace ClaFi
     DrawTextResult TextLayout::draw(
         ControlPaintContext& controlContext,
         FloatPoint position,
+#if CLAFI_TEXT_MOVING
         const EditProps* editProps,
         TextRenderMode textRenderMode)
+#else
+        const EditProps* editProps)
+#endif
     {
         auto nativeCanvas = controlContext.canvas().backend();
         if (!nativeCanvas)
@@ -820,10 +829,12 @@ namespace ClaFi
             m_held.beginDraw();
         DrawTextResult result{ .drawn = true, .trimmed = !m_globalBaselinesToFade.empty() };
 
+#if CLAFI_TEXT_MOVING
         // Held for the whole run rather than per paragraph, because on Direct2D this is render
         // target state. Every run names its settings, including one wanting what the target already
         // carries - the backend is what knows that, and charges nothing for it.
         Graphics::ScopedTextRaster textRaster{ *nativeCanvas, textRasterParams2(textRenderMode) };
+#endif
 
         // What is on screen, read before the layout narrows the clip to its own box. Control::paint
         // pushes the control's viewport already narrowed to the dirty rect, so this is the band a

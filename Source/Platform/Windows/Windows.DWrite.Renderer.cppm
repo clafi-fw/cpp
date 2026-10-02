@@ -1,5 +1,6 @@
 module;
 #include "Windows.Headers.h"
+#include "../../Y-Core/System/Switches.h"
 export module ClaFi.Platform.Windows.DWrite.Renderer;
 
 import ClaFi.Platform.Windows.Diagnostic;
@@ -250,12 +251,17 @@ namespace ClaFi::PlatformImplementation::Windows
     ULONG STDMETHODCALLTYPE FadeTextRenderer::AddRef() { return 1; }
     ULONG STDMETHODCALLTYPE FadeTextRenderer::Release() { return 1; }
 
+#if CLAFI_TEXT_MOVING
     HRESULT STDMETHODCALLTYPE FadeTextRenderer::IsPixelSnappingDisabled(void* clientDrawingContext, BOOL* disabled)
+#else
+    HRESULT STDMETHODCALLTYPE FadeTextRenderer::IsPixelSnappingDisabled(void*, BOOL* disabled)
+#endif
     {
         // Snapping puts each run's baseline origin on a whole device pixel, which is what keeps
         // still text crisp. Under a scale it quantizes: DirectWrite rounds every run's transformed
         // origin independently, so as the scale animates a run holds still and then jumps a whole
         // pixel, at a different moment from its neighbours.
+#if CLAFI_TEXT_MOVING
         //
         // Whether that trade is worth making is not decided here. The params in force say, and this
         // reports them, because DirectWrite asks per glyph run and the caller is too far away to be
@@ -263,6 +269,9 @@ namespace ClaFi::PlatformImplementation::Windows
         const auto* context = static_cast<ControlPaintContext*>(clientDrawingContext);
         const bool snap = !context || !context->canvas().backend() || context->canvas().backend()->snapTextOrigins();
         *disabled = snap ? FALSE : TRUE;
+#else
+        *disabled = FALSE;
+#endif
         return S_OK;
     }
 

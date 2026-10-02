@@ -1,5 +1,6 @@
 module;
 #include "Linux.TextHeaders.h"
+#include "../../Y-Core/System/Switches.h"
 module ClaFi.Platform.Linux.TextLayout;
 
 import ClaFi.Platform.Linux.Fonts;
@@ -385,7 +386,9 @@ namespace ClaFi::Platform::Linux
                 fillRange(hit.overlap(selectionRange), both);
         }
 
+#if CLAFI_TEXT_MOVING
         const bool snap = backend->snapTextOrigins();
+#endif
         const float fadeWidth = controlContext.scaleF(30.0f);
         const Graphics::Matrix3x2& canvasTransform = canvas.transform();
         const bool transformed = !(canvasTransform == Graphics::Matrix3x2::identity());
@@ -435,10 +438,15 @@ namespace ClaFi::Platform::Linux
             }
 
             // Snapping puts the baseline on a whole device pixel, which is what keeps still text
-            // crisp. Under a scale it quantizes, and the backend says whether that trade is made.
+            // crisp. Under a scale it quantizes, and with text moving compiled in the backend
+            // says whether that trade is made.
             float baselineY = bounds.top + drawBaseline;
+#if CLAFI_TEXT_MOVING
             if (snap)
                 baselineY = std::round(baselineY);
+#else
+            baselineY = std::round(baselineY);
+#endif
             const float originX = bounds.left + lineX;
 
             for (std::size_t runIndex = line.runStart; runIndex != line.runStart + line.runCount; ++runIndex)

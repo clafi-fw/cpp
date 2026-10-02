@@ -58,6 +58,12 @@ and `Tools/` are applications that import the library, not part of it.
 - **Import the specific declaring module, never a facade.** `*_Facade.cppm` and `ClaFi` are
   facades; importing one from inside a partition it re-exports closes a cycle.
 
+## Switches
+
+Compile-time switches are macros in `Source/Y-Core/System/Switches.h`. A file that tests one
+includes that header in its global module fragment - a file that does not sees the macro
+undefined, reads it as 0, and compiles the other branch without a word.
+
 ## Manuals
 
 Subsystem manuals are self-contained HTML in `docs/`, published as GitHub Pages at
