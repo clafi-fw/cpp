@@ -86,7 +86,8 @@ namespace ClaFi::Tools::WhatsClip
         TabbedBox{
             params,
             TabsOrientation::HorizontalTop,
-            TabLineThickness{ Thickness::Bold },
+            // TabLineThickness{ Thickness::Bold },
+            TabViewMode::ToolButton,
             Padding{ 0.0f },
             std::forward<Args>(args)...
             }

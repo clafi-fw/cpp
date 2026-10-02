@@ -36,6 +36,12 @@ namespace ClaFi::Controls
         Thickness value;
     };
 
+    export enum class TabViewMode
+    {
+        Tab,        
+        ToolButton  
+    };
+
     export class TabStripBase;
 
     // A tab is a button that paints a tab silhouette instead of a rounded rect, and whose

@@ -654,16 +654,16 @@ namespace ClaFi::Tools::WhatsClip
                     params.themeMetrics().primaryWindow,
                     params.themeMetrics().primaryWindowShadow,
 
-                    UiElement::Dialog, // Root window color, visible behind the formats bar
-                    Border{ Thickness::Regular },
+                    UiElement::ToolBar, // Root window color, visible behind the formats bar
+                    Border{ Thickness::Heavy },
                     Padding{ 0.0f },
                     Spacing{ 0.0f },
                     MinSize{ 422.0f, 280.0f },
                     PreferredSize{ 760.0f, 560.0f },
                 },
                 BodyProps{ // TabbedBox
-                    TabsOrientation::VerticalLeft,
-                    TabLineThickness{ Thickness::Bold }
+                    TabsOrientation::VerticalLeft
+                    //TabLineThickness{ Thickness::Hairline }
                 }
             }
         {
