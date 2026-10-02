@@ -77,11 +77,11 @@ namespace ClaFi
     {
     public:
         AppContext(Platform&, const Text& appName, std::wstring_view publisher,
-            const Text& description, const std::filesystem::path& configPath, BackendFactory,
-            Dom::Dt::Section&&);
+            const Text& description, std::wstring_view version,
+            const std::filesystem::path& configPath, BackendFactory, Dom::Dt::Section&&);
         AppContext(Platform&, const Text& appName, std::wstring_view publisher,
-            const Text& description, const std::filesystem::path& configPath, BackendFactory,
-            const Dom::Dt::Section&);
+            const Text& description, std::wstring_view version,
+            const std::filesystem::path& configPath, BackendFactory, const Dom::Dt::Section&);
         ~AppContext();
         // The name as it is shown. Its plain text is what the platform and the config folder know.
         [[nodiscard]] const Text& appName() const { return m_appName; }
@@ -89,6 +89,8 @@ namespace ClaFi
         [[nodiscard]] std::wstring_view publisher() const { return m_publisher; }
         // What the application does, in a sentence or two - empty where it states none.
         [[nodiscard]] const Text& description() const { return m_description; }
+        // The version the application states, major.minor.patch - empty where it states none.
+        [[nodiscard]] std::wstring_view version() const { return m_version; }
         // The paragraphs the Information page shows after the description, in the order added.
         [[nodiscard]] const InformationParagraphs& information() const { return m_information; }
         // States a paragraph for the Information page - where a data file came from, say.
@@ -231,6 +233,7 @@ namespace ClaFi
         Text m_appName;
         std::wstring_view m_publisher;
         Text m_description;
+        std::wstring_view m_version;
         InformationParagraphs m_information{};
         // The GPU backend the application named, if it named one - see gpuAvailable. The CPU
         // backend needs no factory here: the core owns that type.
@@ -302,13 +305,15 @@ namespace ClaFi
     // AppContext
 
     AppContext::AppContext(Platform& platform, const Text& appName, const std::wstring_view publisher,
-        const Text& description, const std::filesystem::path& configPath,
-        BackendFactory createGpuBackend, Dom::Dt::Section&& schema)
+        const Text& description, const std::wstring_view version,
+        const std::filesystem::path& configPath, BackendFactory createGpuBackend,
+        Dom::Dt::Section&& schema)
         :
         m_platform{ platform },
         m_appName{ appName },
         m_publisher{ publisher },
         m_description{ description },
+        m_version{ version },
         m_createGpuBackend{ createGpuBackend },
         m_configFolderExists{ std::filesystem::exists(configPath.parent_path()) },
         m_config{ configPath, Dom::AutoSave::No,
@@ -327,13 +332,15 @@ namespace ClaFi
     }
 
     AppContext::AppContext(Platform& platform, const Text& appName, const std::wstring_view publisher,
-        const Text& description, const std::filesystem::path& configPath,
-        BackendFactory createGpuBackend, const Dom::Dt::Section& schema)
+        const Text& description, const std::wstring_view version,
+        const std::filesystem::path& configPath, BackendFactory createGpuBackend,
+        const Dom::Dt::Section& schema)
         :
         m_platform{ platform },
         m_appName{ appName },
         m_publisher{ publisher },
         m_description{ description },
+        m_version{ version },
         m_createGpuBackend{ createGpuBackend },
         m_configFolderExists{ std::filesystem::exists(configPath.parent_path()) },
         m_config{ configPath, Dom::AutoSave::No,

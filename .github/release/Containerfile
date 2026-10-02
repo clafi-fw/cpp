@@ -1,0 +1,100 @@
+# The image ClaFi's Linux releases are built in. Ubuntu 22.04's glibc 2.35 sets the oldest
+# distribution a release starts on; what the tree needs and 22.04 lacks is built here.
+
+FROM ubuntu:22.04
+
+ARG LLVM_VERSION=22
+ARG CMAKE_VERSION=4.4.3
+# Jammy ships Ninja 1.10.1, and C++20 module scanning needs 1.11 or newer.
+ARG NINJA_VERSION=1.13.1
+# 1.48 is the floor the tree states, for xdg-session-management-v1.
+ARG WAYLAND_PROTOCOLS_VERSION=1.49
+# 22.04's libwayland is 1.20, and the tree speaks wl_surface version 6, whose listener fields
+# arrived in 1.22. The soname is the same, and 1.22's scanner emits nothing 1.20 cannot load.
+ARG WAYLAND_VERSION=1.22.0
+ARG LIBUNIBREAK_VERSION=7.0
+ARG LIBUNIBREAK_TAG=libunibreak_7_0
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates curl gnupg lsb-release software-properties-common \
+        build-essential pkg-config git xz-utils unzip python3 python3-pip \
+        libffi-dev libexpat1-dev libxml2-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# The libraries a release keeps as shared dependencies. Every desktop carries them.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libwayland-dev libxkbcommon-dev \
+        libfontconfig-dev libfreetype-dev libharfbuzz-dev libpng-dev \
+        libdbus-1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# libc++-NN-dev carries both the std module sources and libc++.a.
+RUN curl -fsSL https://apt.llvm.org/llvm.sh -o /tmp/llvm.sh \
+    && chmod +x /tmp/llvm.sh \
+    && /tmp/llvm.sh ${LLVM_VERSION} \
+    && apt-get install -y --no-install-recommends \
+        libc++-${LLVM_VERSION}-dev libc++abi-${LLVM_VERSION}-dev lld-${LLVM_VERSION} \
+    && rm -rf /var/lib/apt/lists/* /tmp/llvm.sh
+
+RUN curl -fsSL "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz" \
+        -o /tmp/cmake.tar.gz \
+    && mkdir -p /opt/cmake \
+    && tar -xzf /tmp/cmake.tar.gz -C /opt/cmake --strip-components=1 \
+    && rm /tmp/cmake.tar.gz
+ENV PATH="/opt/cmake/bin:${PATH}"
+
+RUN curl -fsSL "https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip" \
+        -o /tmp/ninja.zip \
+    && unzip -q /tmp/ninja.zip -d /usr/local/bin \
+    && chmod +x /usr/local/bin/ninja \
+    && rm /tmp/ninja.zip
+
+RUN pip3 install --no-cache-dir meson
+
+RUN curl -fsSL "https://gitlab.freedesktop.org/wayland/wayland-protocols/-/releases/${WAYLAND_PROTOCOLS_VERSION}/downloads/wayland-protocols-${WAYLAND_PROTOCOLS_VERSION}.tar.xz" \
+        -o /tmp/wp.tar.xz \
+    && mkdir -p /tmp/wp && tar -xJf /tmp/wp.tar.xz -C /tmp/wp --strip-components=1 \
+    && meson setup /tmp/wp/build /tmp/wp --prefix=/usr/local -Dtests=false \
+    && meson install -C /tmp/wp/build \
+    && rm -rf /tmp/wp /tmp/wp.tar.xz
+
+# wlr-protocols has no build system to install with, and no Debian or Ubuntu package. The XML is
+# copied and a .pc publishing pkgdatadir is written for it. The single quotes keep ${prefix} for
+# pkg-config to expand.
+RUN git clone --depth 1 https://gitlab.freedesktop.org/wlroots/wlr-protocols.git /tmp/wlr \
+    && rm -rf /tmp/wlr/.git \
+    && mkdir -p /usr/local/share/wlr-protocols /usr/local/share/pkgconfig \
+    && cp -r /tmp/wlr/. /usr/local/share/wlr-protocols/ \
+    && test -f /usr/local/share/wlr-protocols/unstable/wlr-layer-shell-unstable-v1.xml \
+    && printf '%s\n' \
+        'prefix=/usr/local' \
+        'datarootdir=${prefix}/share' \
+        'pkgdatadir=${datarootdir}/wlr-protocols' \
+        '' \
+        'Name: wlr-protocols' \
+        'Description: wlroots wayland protocols' \
+        'Version: 0.0.0' \
+        > /usr/local/share/pkgconfig/wlr-protocols.pc \
+    && rm -rf /tmp/wlr
+
+# Static only: with no .so beside the archive, -lunibreak can only resolve to it.
+RUN curl -fsSL "https://github.com/adah1972/libunibreak/releases/download/${LIBUNIBREAK_TAG}/libunibreak-${LIBUNIBREAK_VERSION}.tar.gz" \
+        -o /tmp/ub.tar.gz \
+    && mkdir -p /tmp/ub && tar -xzf /tmp/ub.tar.gz -C /tmp/ub --strip-components=1 \
+    && cd /tmp/ub && ./configure --prefix=/usr/local --disable-shared --enable-static \
+    && make -j"$(nproc)" && make install \
+    && rm -rf /tmp/ub /tmp/ub.tar.gz
+
+# Installed to /usr/local, which PKG_CONFIG_PATH puts ahead of the distribution's 1.20.
+RUN curl -fsSL "https://gitlab.freedesktop.org/wayland/wayland/-/releases/${WAYLAND_VERSION}/downloads/wayland-${WAYLAND_VERSION}.tar.xz" \
+        -o /tmp/wl.tar.xz \
+    && mkdir -p /tmp/wl && tar -xJf /tmp/wl.tar.xz -C /tmp/wl --strip-components=1 \
+    && meson setup /tmp/wl/build /tmp/wl --prefix=/usr/local \
+        -Ddocumentation=false -Dtests=false -Ddtd_validation=false \
+    && meson install -C /tmp/wl/build \
+    && rm -rf /tmp/wl /tmp/wl.tar.xz
+
+ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/local/share/pkgconfig
+ENV CLAFI_LLVM_ROOT=/usr/lib/llvm-${LLVM_VERSION}

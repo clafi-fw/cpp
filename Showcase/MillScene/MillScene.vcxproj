@@ -58,6 +58,9 @@
   <ImportGroup Label="Shared">
     <Import Project="..\..\Visual Studio Shared Items\ClaFi.vcxitems" Label="Shared" />
   </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="..\..\Visual Studio Shared Items\ClaFi.AppVersion.props" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>

@@ -61,7 +61,8 @@ namespace ClaFi::Showcase
                 L"Shows the ClaFi path painter at work: "
                 L"a watermill landscape animated on a single CPU thread or through the graphics card, "
                 L"in a choice of scene themes, with its frame times charted live."
-            }
+            },
+            .version = CLAFI_APP_VERSION
         };
     }
 

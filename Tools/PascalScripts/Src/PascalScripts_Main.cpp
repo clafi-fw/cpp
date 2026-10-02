@@ -22,7 +22,8 @@ namespace ThisApp
             .description = Text{
                 L"Keeps Pascal scripts in a folder of its own and edits them, "
                 L"with the source coloured as it is typed."
-            }
+            },
+            .version = CLAFI_APP_VERSION
         };
     }
 

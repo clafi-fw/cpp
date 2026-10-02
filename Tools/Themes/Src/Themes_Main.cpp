@@ -25,7 +25,8 @@ namespace ThisApp
         return {
             .name = Text{ L"Themes" },
             .publisher = L"ClaFi Framework",
-            .description = Text{ L"Edits the themes other ClaFi applications use." }
+            .description = Text{ L"Edits the themes other ClaFi applications use." },
+            .version = CLAFI_APP_VERSION
         };
     }
 

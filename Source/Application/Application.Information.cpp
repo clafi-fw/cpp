@@ -19,7 +19,7 @@ namespace ClaFi
 
     namespace
     {
-        // The name, its publisher, what the application does, and the framework with its address.
+        // The name, its version and publisher, what it does, and the framework with its address.
         [[nodiscard]] Text informationText(const AppContext&);
         // Appends a plain paragraph, every web address in it made a link.
         void appendLinked(Text&, std::wstring_view paragraph);
@@ -53,11 +53,21 @@ namespace ClaFi
         {
             Text text{
                 TextStyleId::Title, context.appName(), PopTextStyle{},
-                k_endLine,
-                InkGrade::Muted, context.publisher(), PopColor{},
-                k_endLine,
                 k_endLine
             };
+            if (!context.version().empty())
+            {
+                text << InkGrade::Muted;
+                text << L"Version ";
+                text << context.version();
+                text << PopColor{};
+                text << k_endLine;
+            }
+            text << InkGrade::Muted;
+            text << context.publisher();
+            text << PopColor{};
+            text << k_endLine;
+            text << k_endLine;
             if (!context.description().empty())
             {
                 text << context.description();

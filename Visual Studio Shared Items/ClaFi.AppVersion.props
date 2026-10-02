@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  An application's version, stated by hand in the version.txt beside its .vcxproj. It reaches
+  the code as CLAFI_APP_VERSION and the executable's file properties through ClaFi.AppVersion.rc.
+  The resource compiler strips a bare quote from a definition, so its quotes are escaped.
+-->
+<Project>
+  <PropertyGroup>
+    <ClaFiAppVersionFile>$(MSBuildProjectDirectory)\version.txt</ClaFiAppVersionFile>
+    <ClaFiAppVersion>$([System.IO.File]::ReadAllText('$(ClaFiAppVersionFile)').Trim())</ClaFiAppVersion>
+    <ClaFiAppVersionNumbers>$(ClaFiAppVersion.Replace('.', ',')),0</ClaFiAppVersionNumbers>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>CLAFI_APP_VERSION=L"$(ClaFiAppVersion)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>CLAFI_APP_NAME=\"$(TargetName)\";CLAFI_APP_VERSION_TEXT=\"$(ClaFiAppVersion)\";CLAFI_APP_VERSION_NUMBERS=$(ClaFiAppVersionNumbers);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ResourceCompile Include="$(MSBuildThisFileDirectory)ClaFi.AppVersion.rc" />
+  </ItemGroup>
+  <Target Name="ClaFiCheckAppVersion" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$([System.Text.RegularExpressions.Regex]::IsMatch(`$(ClaFiAppVersion)`, `^\d+\.\d+\.\d+$`))' != 'True'"
+      Text="$(ClaFiAppVersionFile) holds '$(ClaFiAppVersion)' - one version, major.minor.patch, is expected." />
+  </Target>
+</Project>

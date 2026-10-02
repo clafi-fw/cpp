@@ -143,7 +143,8 @@ namespace ClaFi::Showcase::TextEngine
             .description = Text{
                 L"Shows the ClaFi text engine at work: a long styled ledger, highlighted code, "
                 L"formulas, emoji and fifty-six writing systems."
-            }
+            },
+            .version = CLAFI_APP_VERSION
         };
     }
 

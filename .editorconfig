@@ -63,3 +63,6 @@ indent_size = 2
 
 [*.{cmd,bat,ps1}]
 end_of_line = crlf
+
+[{*.sh,Containerfile}]
+end_of_line = lf

@@ -369,6 +369,19 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
 endif()
 
 if(NOT CLAFI_PLATFORM STREQUAL "none")
+    # AN APPLICATION'S VERSION is stated by hand in the version.txt beside its project and reaches
+    # the code as CLAFI_APP_VERSION. Editing the file configures again.
+    function(clafi_app_version target version_file)
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${version_file}")
+        file(STRINGS "${version_file}" version LIMIT_COUNT 1)
+        string(STRIP "${version}" version)
+        if(NOT version MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+            message(FATAL_ERROR
+                    "${version_file} holds '${version}' - one version, major.minor.patch, is expected.")
+        endif()
+        target_compile_definitions(${target} PRIVATE "CLAFI_APP_VERSION=L\"${version}\"")
+    endfunction()
+
     # THE EXECUTABLES, built only with a platform layer because without one there is nothing to
     # link against. The MillScene showcase's sources are excluded from the library glob above -
     # a showcase is application code that imports ClaFi, not part of it - so the six files are
@@ -385,6 +398,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${millscene_dir}/MillScene_Main.cppm")
     target_link_libraries(MillScene PRIVATE ClaFi)
     target_compile_options(MillScene PRIVATE ${clafi_compile_options})
+    clafi_app_version(MillScene "${millscene_dir}/version.txt")
 
     # THE TEXT ENGINE SHOWCASE, laid out the same way: six page modules, the Icon module and the
     # Main module know nothing of any platform, and the entry point is one file per platform. It
@@ -412,6 +426,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${textengine_dir}/Pages/TextEngine_Scripts.cppm")
     target_link_libraries(TextEngine PRIVATE ClaFi)
     target_compile_options(TextEngine PRIVATE ${clafi_compile_options})
+    clafi_app_version(TextEngine "${CMAKE_CURRENT_SOURCE_DIR}/Showcase/TextEngine/version.txt")
 
     # WHATSCLIP, which lists what is on the clipboard and reads it - including the formats
     # nothing in the framework understands, which it shows as the bytes they arrived as. It
@@ -455,6 +470,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${whatsclip_dir}/Pages/WhatsClip_TextPage.cppm")
     target_link_libraries(WhatsClip_Lib PUBLIC ClaFi)
     target_compile_options(WhatsClip_Lib PRIVATE ${clafi_compile_options})
+    clafi_app_version(WhatsClip_Lib "${CMAKE_CURRENT_SOURCE_DIR}/Tools/WhatsClip/version.txt")
 
     add_executable(WhatsClip "${whatsclip_dir}/WhatsClip_Wayland.cpp")
     target_link_libraries(WhatsClip PRIVATE WhatsClip_Lib)
@@ -503,6 +519,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Util/ThisApp.ValueRuleControl.cppm")
     target_link_libraries(Themes PRIVATE ClaFi)
     target_compile_options(Themes PRIVATE ${clafi_compile_options})
+    clafi_app_version(Themes "${CMAKE_CURRENT_SOURCE_DIR}/Tools/Themes/version.txt")
 
     # PASCALSCRIPTS, the editor for Pascal scripts, laid out as Themes is and standing on the same
     # Documents layer.
@@ -524,6 +541,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${pascalscripts_dir}/Src/Util/ThisApp.Scripts.cppm")
     target_link_libraries(PascalScripts PRIVATE ClaFi)
     target_compile_options(PascalScripts PRIVATE ${clafi_compile_options})
+    clafi_app_version(PascalScripts "${pascalscripts_dir}/version.txt")
 
     # WHAT A SCRIPT IS, read from beside the executable when the config folder holds no copy of
     # its own. Copied whenever it changes, as Visual Studio's CopyFileToFolders does, and not only
