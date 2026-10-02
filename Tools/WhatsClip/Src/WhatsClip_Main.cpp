@@ -655,11 +655,13 @@ namespace ClaFi::Tools::WhatsClip
                     params.themeMetrics().primaryWindowShadow,
 
                     UiElement::ToolBar, // Root window color, visible behind the formats bar
-                    Border{ Thickness::Heavy },
-                    Padding{ 0.0f },
+                    Border{ Thickness::Thin },
+                    Padding{ 4.0f },
                     Spacing{ 0.0f },
                     MinSize{ 422.0f, 280.0f },
-                    PreferredSize{ 760.0f, 560.0f },
+                    
+                    // Width tuned to ensure the HexView on Bytes doesn't show horizontal scroll + a small slack for Linux
+                    PreferredSize{ 860.0f, 560.0f },
                 },
                 BodyProps{ // TabbedBox
                     TabsOrientation::VerticalLeft

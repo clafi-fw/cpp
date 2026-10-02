@@ -27,6 +27,8 @@ namespace ClaFi::Controls
         DECLARE_PROPERTY(TabsOrientation, tabsOrientation, TabsOrientation::VerticalLeft)
         // How heavy the line the open tab draws along the strip is.
         DECLARE_PROPERTY(TabLineThickness, tabLineThickness, Thickness::Thin)
+        // How the strip draws its tabs.
+        DECLARE_PROPERTY(TabViewMode, tabViewMode, TabViewMode::Tab)
     public:
         TabStripBase& strip() const { return m_strip; }
         PageControl& pageControl() const { return m_pageControl; }
@@ -63,6 +65,8 @@ namespace ClaFi::Controls
         // Only initialization by pass TabsOrientation to constructor allowed for now
         void setTabsOrientation(TabsOrientation);
         Thickness pageBorder() const;
+        // Whether the page's surface is carried across the strip's column to the tab line.
+        [[nodiscard]] bool pageMeetsTabLine() const;
         // Where the open tab draws its line: the strip's content right edge, which is the origin
         // Tab::prepareGeometry measures its silhouette from.
         [[nodiscard]] float tabLineX() const;
@@ -80,7 +84,8 @@ namespace ClaFi::Controls
         ScrollBox* m_stripBox{ nullptr };
         TabStripBase& m_strip{ createTabStrip(
             m_tabsOrientation,
-            m_tabLineThickness
+            m_tabLineThickness,
+            m_tabViewMode
         ) };
         PageControl& m_pageControl = createBody<PageControl>(
             UiElement::Page,
@@ -124,7 +129,8 @@ namespace ClaFi::Controls
         :
         PanelBase{ params, std::forward<Args>(args)..., Spacing{0.f, 0.f} },
         INIT_PROPERTY(tabsOrientation),
-        INIT_PROPERTY(tabLineThickness)
+        INIT_PROPERTY(tabLineThickness),
+        INIT_PROPERTY(tabViewMode)
     {
         m_strip.setOverlayHost(*this);
     }
@@ -133,6 +139,8 @@ namespace ClaFi::Controls
                                  ScaledDimensions& scaledDimensions)
     {
         PanelBase::alignContent(alignEvent, scaledPosition, scaledDimensions);
+        if (m_tabViewMode == TabViewMode::ToolButton)
+            return;
 
         // A horizontal strip closes the seam by moving its bar a border's width into the page:
         // the tab line then lands on the page's own border, and the open tab's fill covers the
@@ -157,7 +165,7 @@ namespace ClaFi::Controls
     void TabbedBox::adjustChildPaint(AdjustPaintEvent& event)
     {
         PanelBase::adjustChildPaint(event);
-        if (m_tabsOrientation != TabsOrientation::VerticalLeft)
+        if (!pageMeetsTabLine())
             return;
         // The page's left corners are square: the tab line stands along that whole edge, and a
         // round corner would leave the two meeting at a curve neither of them draws.
@@ -188,7 +196,7 @@ namespace ClaFi::Controls
     // order: the run ends where the page begins, and the strip's box has no surface of its own.
     void TabbedBox::paintChildren(PaintEvent& event)
     {
-        if (m_tabsOrientation != TabsOrientation::VerticalLeft)
+        if (!pageMeetsTabLine())
             return PanelBase::paintChildren(event);
 
         event.paintChild(m_pageControl);
@@ -217,6 +225,12 @@ namespace ClaFi::Controls
     Thickness TabbedBox::pageBorder() const
     {
         return static_cast<const RichControl*>(body())->border();
+    }
+
+    bool TabbedBox::pageMeetsTabLine() const
+    {
+        return m_tabsOrientation == TabsOrientation::VerticalLeft
+            && m_tabViewMode == TabViewMode::Tab;
     }
 
     float TabbedBox::tabLineX() const
@@ -253,31 +267,38 @@ namespace ClaFi::Controls
     template <typename ... Args>
     TabStripBase& TabbedBox::createTabStrip(Args&&... args)
     {
+        // Tool buttons stand a tool bar's distance in from every edge and from each other. Tabs
+        // leave room along the strip for the line to run on past the first and the last.
+        const bool toolButtons = m_tabViewMode == TabViewMode::ToolButton;
+        const Spacing spacing = toolButtons ? Spacing{ 4.0f } : Spacing{ 0.0f };
         switch (m_tabsOrientation)
         {
         case TabsOrientation::HorizontalTop:
             return createTopBar<TabStrip2>(
-                Padding{ 12.f, 0.f },
+                toolButtons ? Padding{ 4.0f } : Padding{ 12.0f, 0.0f },
+                spacing,
                 HorizontalAlign::Left,
                 std::forward<Args>(args)...
             );
         case TabsOrientation::HorizontalBottom:
             return createBottomBar<TabStrip2>(
-                Padding{ 12.f, 0.f },
+                toolButtons ? Padding{ 4.0f } : Padding{ 12.0f, 0.0f },
+                spacing,
                 HorizontalAlign::Right,
                 std::forward<Args>(args)...
             );
         case TabsOrientation::VerticalLeft:
         {
-            // No surface of its own. The column its scroll bar stands in is the page's, laid
-            // down by paintPageRun before this box paints, and a fill here would cover it.
+            // No surface of its own. Beside tabs the column its scroll bar stands in is the page's,
+            // laid down by paintPageRun before this box paints, and a fill here would cover it.
             ScrollBox& scrollBox{ createLeftBar<ScrollBox>(
                     ScrollBars::Vertical,
-                    Padding{ 0.0f, 8.0f })
+                    toolButtons ? Padding{ 0.0f } : Padding{ 0.0f, 8.0f })
             };
             m_stripBox = &scrollBox;
             return scrollBox.createBody<TabStrip2>(
-                Padding{ 0.f, 12.f },
+                toolButtons ? Padding{ 4.0f } : Padding{ 0.0f, 12.0f },
+                spacing,
                 std::forward<Args>(args)...
             );
         }

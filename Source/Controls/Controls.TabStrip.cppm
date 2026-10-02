@@ -9,6 +9,7 @@ import ClaFi.Core.Graphics.TabRenderer;
 
 import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
@@ -36,10 +37,11 @@ namespace ClaFi::Controls
         Thickness value;
     };
 
+    // How a strip draws its tabs.
     export enum class TabViewMode
     {
-        Tab,        
-        ToolButton  
+        Tab,            // a tab joined to the page by the line along the strip
+        ToolButton      // a tool button standing on its own, joined to nothing
     };
 
     export class TabStripBase;
@@ -67,6 +69,8 @@ namespace ClaFi::Controls
         RichControl* page() const { return m_page; }
         TabStripBase& parent() const;
         Tab& select();
+        // A tool button takes the depth a press gives it. A tab stays on the line it stands on.
+        [[nodiscard]] bool allowZAnimation() const override;
     protected:
         virtual RichControl* visualPage(RichControl* page);
         // Pressing a tab makes it the strip's current one, and a part on the tab is there to do
@@ -77,6 +81,9 @@ namespace ClaFi::Controls
         void nestedPressDown(PressDownEvent&) override;
         void nestedDrag(DragEvent&) override;
     private:
+        // A tool button's metrics in a strip drawing its tabs as tool buttons, a tab's elsewhere.
+        [[nodiscard]] static const ControlMetrics& metricsIn(const CreateParams&);
+        [[nodiscard]] bool drawnAsToolButton() const;
         void tabCreated(Control* parent);
         void prepareGeometry(const PaintEvent&, float visibilityFactor, PaintEvent*& outEvent);
         // How far the line stops short of the page corner named. A round corner is what the line
@@ -106,6 +113,9 @@ namespace ClaFi::Controls
     public:
         template <typename... Args>
         explicit TabStripBase(const CreateParams&, Args&&...);
+    public:
+        // How the strip draws its tabs.
+        DECLARE_PROPERTY(TabViewMode, tabViewMode, TabViewMode::Tab)
     public:
         std::wstring_view diagnosticText() const override { return L"TabStripBase"; }
         FitData fitData() const override { return { width() }; }
@@ -182,7 +192,7 @@ namespace ClaFi::Controls
         TabBaseClass{
             params,
             Interactivity::Focusable,
-            params.themeMetrics().tab,
+            metricsIn(params),
             std::forward<Args>(args)...
         }
     {
@@ -240,6 +250,11 @@ namespace ClaFi::Controls
         return *this;
     }
 
+    bool Tab::allowZAnimation() const
+    {
+        return drawnAsToolButton();
+    }
+
     RichControl* Tab::visualPage(RichControl* page)
     {
         return parent().visualPage(page);
@@ -248,6 +263,11 @@ namespace ClaFi::Controls
     void Tab::adjustPaint(AdjustPaintEvent& event)
     {
         TabBaseClass::adjustPaint(event);
+        if (drawnAsToolButton())
+        {
+            event.setColorRules(UiElement::ToolButton);
+            return;
+        }
         event.setColorRules(UiElement::Tab);
 
         if (m_actualPageColor.alpha)
@@ -278,6 +298,11 @@ namespace ClaFi::Controls
 
     void Tab::paintSurface(PaintEvent& event)
     {
+        if (drawnAsToolButton())
+        {
+            TabBaseClass::paintSurface(event);
+            return;
+        }
         const float geometryVisibilityFactor = factors().hoveredOrSelected(0.75f, 1.0f);
         PaintEvent* outEvent;
         prepareGeometry(event, geometryVisibilityFactor, outEvent);
@@ -340,6 +365,19 @@ namespace ClaFi::Controls
         //    return;
         //}
         TabBaseClass::nestedDrag(event);
+    }
+
+    const ControlMetrics& Tab::metricsIn(const CreateParams& params)
+    {
+        const TabStripBase* strip = static_cast<const TabStripBase*>(params.parent);
+        if (strip && strip->tabViewMode() == TabViewMode::ToolButton)
+            return params.themeMetrics().toolButton;
+        return params.themeMetrics().tab;
+    }
+
+    bool Tab::drawnAsToolButton() const
+    {
+        return parent().tabViewMode() == TabViewMode::ToolButton;
     }
 
     void Tab::tabCreated(Control* parent)
@@ -517,7 +555,8 @@ namespace ClaFi::Controls
         // ActiveContainer is what makes a strip keep a current item at all - see
         // StackPanelBase::followsUser - and the open tab is that item. Load-bearing and quiet:
         // drop it and everything still compiles, the tabs just stop answering to a click.
-        StackPanel{ params, Interactivity::ActiveContainer, std::forward<Args>(args)... }
+        StackPanel{ params, Interactivity::ActiveContainer, std::forward<Args>(args)... },
+        INIT_PROPERTY(tabViewMode)
     {
         // Which edge of the box the tabs run along.
         TabsOrientation tabsOrientation = READ_PROPERTY(TabsOrientation, TabsOrientation::HorizontalTop);
@@ -544,7 +583,8 @@ namespace ClaFi::Controls
 
     void TabStripBase::setOverlayHost(ContainerBase& value)
     {
-        if (m_overlayHost == &value)
+        // A tool button covers nothing beside it, so it is painted in its place with the rest.
+        if (m_tabViewMode == TabViewMode::ToolButton || m_overlayHost == &value)
             return;
         m_overlayHost = &value;
         if (currentItem())
@@ -560,13 +600,15 @@ namespace ClaFi::Controls
     {
         m_hotTabs.push_back(tab);
         m_allTabs.insert(tab);
+        // A tab stands on the line along the page, and a tool button in the middle of its bar.
+        const bool toolButton = m_tabViewMode == TabViewMode::ToolButton;
         switch (m_tabsOrientation)
         {
         case TabsOrientation::HorizontalTop:
-            tab->setVerticalAlign(VerticalAlign::Bottom);
+            tab->setVerticalAlign(toolButton ? VerticalAlign::Center : VerticalAlign::Bottom);
             break;
         case TabsOrientation::HorizontalBottom:
-            tab->setVerticalAlign(VerticalAlign::Top);
+            tab->setVerticalAlign(toolButton ? VerticalAlign::Center : VerticalAlign::Top);
             break;
         case TabsOrientation::VerticalLeft:
             break;
@@ -597,6 +639,11 @@ namespace ClaFi::Controls
 
     void TabStripBase::paintChildren(PaintEvent& event)
     {
+        if (!m_overlayHost)
+        {
+            StackPanel::paintChildren(event);
+            return;
+        }
         Control* selItem = currentItem();
 
         for (ControlPtr& control : controls())
@@ -629,7 +676,8 @@ namespace ClaFi::Controls
     // would and stacks under one held above it. A view too short for the tab holds it at the top.
     FloatPoint TabStripBase::overlayChildOffset(const Control& child) const
     {
-        if (&child != currentItem() || orientation() != Orientation::Vertical)
+        // Only a lifted tab is held. One painted in its place would slide under the tabs after it.
+        if (!m_overlayHost || &child != currentItem() || orientation() != Orientation::Vertical)
             return {};
         const float origin = child.parentContentOrigin().y;
         const float restTop = restLineInForm() - origin;
@@ -644,7 +692,7 @@ namespace ClaFi::Controls
     // held away from its place.
     void TabStripBase::scrollChildIntoView(Control& control, FloatRect controlRect)
     {
-        if (orientation() == Orientation::Vertical)
+        if (m_overlayHost && orientation() == Orientation::Vertical)
             controlRect.inflate(0.0f, scrollContentInset().y);
         StackPanel::scrollChildIntoView(control, controlRect);
     }

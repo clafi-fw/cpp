@@ -121,7 +121,7 @@ namespace ClaFi::Tools::WhatsClip
         static constexpr float k_defaultReadoutWidth = 104.0f;
     private:
         Panel& m_topPanel{ createTopBar<Panel>(
-            Padding{ 8.0f }
+            Padding{ 4.0f }
             ) };
         // The strip is one surface: the status as its body, and what a page stands at its right
         // end on the same header - see stripBars.

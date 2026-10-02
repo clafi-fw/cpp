@@ -34,6 +34,24 @@ namespace ClaFi
             { ColorRuleOp::Set, 0.648933f }             // E
         };
 
+        rules.anyWindow = {
+            ColorRule{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Offset, 0.1291775f }     // E
+                }
+            },
+            ColorRule{
+                .inputs{ RuleInput::WindowFocused },
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleOp::Set, 0.5f },             // S
+                    { ColorRuleOp::Offset, 0.09757227f }    // E
+                }
+            }
+        };
+
         rules.focusRing = {
             ColorRule{
                 .inputs{ RuleInput::Focused },
@@ -80,13 +98,6 @@ namespace ClaFi
                     { ColorRuleHueOp::PaletteColor1, 0.252055f }, // H
                     { ColorRuleOp::Set, 0.050285f },        // S
                     { ColorRuleOp::Set, 0.001878f }         // E
-                }
-            },
-            ColorRule{
-                .output = PaintChannel::Stroke,
-                .effect{
-                    {},                                     // S
-                    { ColorRuleOp::Offset, 0.120151f }      // E
                 }
             },
             ColorRule{
@@ -211,13 +222,6 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .output = PaintChannel::Stroke,
-                .effect{
-                    {},                                     // S
-                    { ColorRuleOp::Set, 0.5f }              // E
-                }
-            },
-            ColorRule{
                 .output = PaintChannel::Shadow,
                 .effect{
                     { ColorRuleOp::Set, 0.68912506f },      // S
@@ -232,13 +236,6 @@ namespace ClaFi
                     { ColorRuleHueOp::PaletteColor3 },      // H
                     { ColorRuleOp::Set, 0.12352588f },      // S
                     { ColorRuleOp::Set, 0.053887f }         // E
-                }
-            },
-            ColorRule{
-                .output = PaintChannel::Stroke,
-                .effect{
-                    {},                                     // S
-                    { ColorRuleOp::Set, 0.278328f }         // E
                 }
             },
             ColorRule{

@@ -1216,7 +1216,10 @@ the open one. <code>TabsOrientation</code> says which edge the strip runs along:
 <code>HorizontalTop</code>, <code>HorizontalBottom</code>, <code>VerticalLeft</code>,
 <code>VerticalRight</code>. <code>TabLineThickness</code> says how heavy the line along the open
 tab is - <code>Thin</code> unless stated, <code>Bold</code> for a strip that is the window's main
-navigation.</p>
+navigation. <code>TabViewMode</code> says what the strip draws: <code>Tab</code>, the default, joins
+the open tab to the page with that line; <code>ToolButton</code> draws each tab as a tool button,
+set a tool bar's distance in from the edge, the open one shown selected, with no line and nothing
+joined to the page.</p>
 
 <p><strong><code>StackView</code></strong> - a <code>StackPanel</code> that holds several
 items selected at once. Every layout property of <code>StackPanel</code> reads on it
@@ -1916,8 +1919,9 @@ reason.</li>
 <tr><td><code>ItemSizing</code></td><td><code>Natural</code>, <code>Equal</code></td></tr>
 <tr><td><code>ScrollBox</code></td><td><code>ScrollBars</code></td><td><code>Both</code>, <code>Vertical</code>, <code>Horizontal</code>, <code>None</code>, <code>Auto</code></td></tr>
 <tr><td><code>PageControl</code></td><td><code>PageSizing</code></td><td><code>CurrentPage</code>, <code>WidestPage</code></td></tr>
-<tr><td rowspan="2"><code>TabbedBox</code></td><td><code>TabsOrientation</code></td><td><code>HorizontalTop</code>, <code>HorizontalBottom</code>, <code>VerticalLeft</code>, <code>VerticalRight</code></td></tr>
+<tr><td rowspan="3"><code>TabbedBox</code></td><td><code>TabsOrientation</code></td><td><code>HorizontalTop</code>, <code>HorizontalBottom</code>, <code>VerticalLeft</code>, <code>VerticalRight</code></td></tr>
 <tr><td><code>TabLineThickness</code></td><td><code>{ Thickness }</code> - <code>Thin</code> unless stated</td></tr>
+<tr><td><code>TabViewMode</code></td><td><code>Tab</code>, <code>ToolButton</code></td></tr>
 <tr><td><code>Expander</code></td><td><code>ExpanderViewMode</code></td><td><code>Section</code>, <code>Divider</code>, <code>TreeNode</code></td></tr>
 <tr><td><code>PanelBase</code></td><td><code>TextPlacement</code></td><td><code>Body</code>, <code>Top</code>, <code>Left</code></td></tr>
 <tr><td>a grid column</td><td><code>ColumnWidthMode</code></td><td><code>FitContent</code>, <code>Fixed</code>, <code>Fill</code></td></tr>
