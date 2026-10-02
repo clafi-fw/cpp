@@ -374,6 +374,9 @@ namespace ClaFi::Controls
         INIT_PROPERTY(indentGuides)
     {
         m_layout.setColorOverlay(this);
+        // TextBox's constructor stated the empty text to the layout, where textTaken cannot reach
+        // this class, so the line states are brought into step with it here.
+        readWhole(m_layoutText.plainText());
         // Connected here rather than given to the timer as a construction property: MSVC rejects
         // a this-capturing lambda in a default member initializer.
         m_completionRequest.onTick([this](TimerEvent&){
