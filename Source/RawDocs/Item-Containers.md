@@ -1,7 +1,7 @@
 # Item Containers
 
-The words that no longer fit above a declaration in `ContainerBase.cppm`, `StackPanelBase.cppm`
-and `StackPanel.cppm`. Referenced from those files.
+The words that no longer fit above a declaration in `ContainerBase.cppm`, `StackPanelBase.cppm`,
+`StackPanel.cppm` and `TabStrip.cppm`. Referenced from those files.
 
 ## ContainerBase
 
@@ -334,3 +334,28 @@ resize what holds the page control: the application menu is as big as the larges
 show. The hidden pages are measured once, and again when a page is added or taken away or the
 form's scale moves. A page that grows on its own while hidden, at the same scale, is not
 measured again.
+
+## TabStrip padding
+
+Along the strip, the padding is the room the tab line runs on past the first and the last tab, and
+the layout lays it out at both ends.
+
+Across a `TabViewMode::Tab` strip, the padding stands on the outer side alone - the side away from
+the page. The open tab's line runs along the strip's inner edge, and the page starts there, so a
+padding on that side would lift the line off the page.
+
+`TabStripBase::adjustMetrics` hands the layout no padding on that axis, and the strip lays the
+stated value out itself. `calculateContent` adds it to the cross extent and to the calculated
+minimum, the way `Control::calculate` adds a padding. `alignContent` places the tabs past it: below
+it on `HorizontalTop`, right of it on `VerticalLeft`, and on the other two the room is left at the
+far side. Everything that reads the layout's padding - the paint, the hit test, the line's origin,
+`TabbedBox::tabLineX` - finds the inner edge.
+
+So the two answers differ on that axis: `padding()` is the stated value, `scaledPadding()` the one
+the layout sees.
+
+A `TabViewMode::ToolButton` strip joins nothing, and the layout lays its padding out on every
+side.
+
+A `TabbedBox` builds its strip with a padding of its own for each mode. `StripPadding` stands in
+place of it.

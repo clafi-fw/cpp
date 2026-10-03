@@ -108,6 +108,7 @@ namespace ClaFi
             UiElement::Menu,
             TabsOrientation::VerticalLeft,
             TabLineThickness{ Thickness::Bold },
+            StripPadding{ 8.0f, 12.0f },
             MinSize{ k_width, k_height },
             Padding{ -4.0f } // reducing borders clutter
         }
@@ -118,7 +119,6 @@ namespace ClaFi
 
         if constexpr (Diagnostic::Options::enabled)
         {
-            //strip().setPadding(8.0f);
             strip().add<ToolButton>(
                 Text{ TextStyleId::SubHeading, L"Show diagnostic" },
                 k_itemPadding,

@@ -16,7 +16,6 @@ import ClaFi.Controls.Divider;
 import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.PageControl;
-import ClaFi.Controls.Spacer;
 import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.TabStrip;
 import ClaFi.Controls.Base.PanelBase;
@@ -636,8 +635,6 @@ namespace ClaFi::Tools::WhatsClip
         {
         public:
             explicit MainForm(const CreateParams& params);
-        private:
-            Spacer& m_leftSpacer{ createLeftBar<Spacer>(8.0f) };
         };
 
         // The formats down the left, whichever one is open on the right. A clipboard is a list of
@@ -667,7 +664,8 @@ namespace ClaFi::Tools::WhatsClip
                     PreferredSize{ 860.0f, 560.0f },
                 },
                 BodyProps{ // TabbedBox
-                    TabsOrientation::VerticalLeft
+                    TabsOrientation::VerticalLeft,
+                    StripPadding{ 8.0f, 12.0f }
                     //TabLineThickness{ Thickness::Hairline }
                 }
             }

@@ -97,7 +97,7 @@ namespace ClaFi
         void setInteractivity(const Interactivity value) { m_interactivity = value; }
     protected:
         // Each override adds the state RichControl stores, then lets the base emit the event.
-        void adjustMetrics(AdjustMetricsEvent&) const override final;
+        void adjustMetrics(AdjustMetricsEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;
         void getText(GetTextEvent&) const override;
         void nestedGetHint(GetHintEvent&) override;

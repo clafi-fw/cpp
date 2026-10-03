@@ -396,6 +396,7 @@ namespace ClaFi::Browser
             VerticalAlign::Center
         ) };
         TabStrip& m_tabs{ m_titleBox.add<TabStrip>(
+            Padding{ 0.0f, 4.0f }
         ) };
         //Separator& m_plusButtonSeparator{ m_titleBox.add<Separator>(Padding{ 0.0f, 8.0f }) };
         ToolButton& m_plusButton{ m_titleBox.add<ToolButton>(

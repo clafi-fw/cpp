@@ -132,6 +132,10 @@ namespace ClaFi::Controls
     protected:
         using StackPanel::orientation;
         using StackPanel::setOrientation;
+        // Tab mode lays the padding across the strip on its outer side alone. See Item-Containers
+        void adjustMetrics(AdjustMetricsEvent&) const override;
+        ScaledDimensions calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void nestedControlDeleted(Control*) override;
         void childHoverEnter(Control&) override;
         void paintChildren(PaintEvent&) override;
@@ -143,6 +147,9 @@ namespace ClaFi::Controls
         bool defaultCanFocusItem(Control&) override;
         void currentItemChanged(CurrentItemChangeEvent&) override;
         virtual RichControl* visualPage(RichControl* page) { return page; }
+    private:
+        // The padding the strip lays out itself, on its outer side - none in ToolButton mode.
+        [[nodiscard]] float outerPadding() const;
     private:
         ContainerBase* m_overlayHost{};
         TabsOrientation m_tabsOrientation;
@@ -618,6 +625,73 @@ namespace ClaFi::Controls
         }
     }
 
+    void TabStripBase::adjustMetrics(AdjustMetricsEvent& event) const
+    {
+        StackPanel::adjustMetrics(event);
+        if (m_tabViewMode == TabViewMode::ToolButton)
+            return;
+        if (orientation() == Orientation::Horizontal)
+            event.metrics.padding.y = 0.0f;
+        else
+            event.metrics.padding.x = 0.0f;
+    }
+
+    // Carried the way Control::calculate carries a padding: not onto an extent with no bound, and
+    // not onto a floor of zero.
+    ScaledDimensions TabStripBase::calculateContent(AlignEvent& event)
+    {
+        ScaledDimensions result = StackPanel::calculateContent(event);
+        const float room = event.scale(outerPadding());
+        if (orientation() == Orientation::Horizontal)
+        {
+            if (result.y != k_maxFloat)
+                result.y += room;
+            if (event.calculatedMinSize.y > 0.0f)
+                event.calculatedMinSize.y += room;
+        }
+        else
+        {
+            if (result.x != k_maxFloat)
+                result.x += room;
+            if (event.calculatedMinSize.x > 0.0f)
+                event.calculatedMinSize.x += room;
+        }
+        return result;
+    }
+
+    void TabStripBase::alignContent(AlignEvent& event, ScaledPosition position,
+                                    ScaledDimensions& contentDimensions)
+    {
+        const float room = event.scale(outerPadding());
+        FloatPoint roomBefore{};
+        FloatPoint roomAfter{};
+        switch (m_tabsOrientation)
+        {
+        case TabsOrientation::HorizontalTop:
+            roomBefore.y = room;
+            break;
+        case TabsOrientation::HorizontalBottom:
+            roomAfter.y = room;
+            break;
+        case TabsOrientation::VerticalLeft:
+            roomBefore.x = room;
+            break;
+        case TabsOrientation::VerticalRight:
+            roomAfter.x = room;
+            break;
+        default: unreachable();
+        }
+        position.x += roomBefore.x;
+        position.y += roomBefore.y;
+        contentDimensions.x = std::max(contentDimensions.x - roomBefore.x - roomAfter.x, 0.0f);
+        contentDimensions.y = std::max(contentDimensions.y - roomBefore.y - roomAfter.y, 0.0f);
+        StackPanel::alignContent(event, position, contentDimensions);
+        // The content answers where it ends, counted from the origin, so the room before the tabs
+        // is in that answer already and only the room after them is added.
+        contentDimensions.x += roomAfter.x;
+        contentDimensions.y += roomAfter.y;
+    }
+
     void TabStripBase::nestedControlDeleted(Control* control)
     {
         StackPanel::nestedControlDeleted(control);
@@ -729,6 +803,13 @@ namespace ClaFi::Controls
         // is not scrolled - see Control::scrollIntoView. The strip brings it to its place instead.
         if (Control* item = currentItem(); item && item->isHeldInView())
             scrollChildIntoView(*item, item->boundsInParent());
+    }
+
+    float TabStripBase::outerPadding() const
+    {
+        if (m_tabViewMode == TabViewMode::ToolButton)
+            return 0.0f;
+        return orientation() == Orientation::Horizontal ? padding().y : padding().x;
     }
 
 }
