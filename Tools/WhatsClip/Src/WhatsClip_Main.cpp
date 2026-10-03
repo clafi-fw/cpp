@@ -619,10 +619,7 @@ namespace ClaFi::Tools::WhatsClip
             InkWell::spotInk(), L"Clip", PopColor{}
             },
             .publisher = L"ClaFi Framework",
-            .description = Text{
-                L"Shows what is on the clipboard, format by format, and follows it as it changes. "
-                L"A format reads as a picture, as text in a chosen encoding, or as raw bytes."
-            },
+            .description = Text{ L"A clipboard viewer done right." },
             .version = CLAFI_APP_VERSION,
             .site = L"https://whatsclip.app"
         };
