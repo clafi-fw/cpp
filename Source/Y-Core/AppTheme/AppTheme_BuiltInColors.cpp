@@ -49,6 +49,21 @@ namespace ClaFi
                     { ColorRuleOp::Set, 0.5f },             // S
                     { ColorRuleOp::Offset, 0.09757227f }    // E
                 }
+            },
+            ColorRule{
+                .output = PaintChannel::Shadow,
+                .effect{
+                    { ColorRuleOp::Set, 0.20879121f },      // S
+                    { ColorRuleOp::Set, 0.23626374f }       // E
+                }
+            },
+            ColorRule{
+                .inputs{ RuleInput::WindowFocused },
+                .output = PaintChannel::Shadow,
+                .effect{
+                    { ColorRuleOp::Set, 0.6904762f },       // S
+                    { ColorRuleOp::Set, 0.24358974f }       // E
+                }
             }
         };
 
@@ -98,14 +113,6 @@ namespace ClaFi
                     { ColorRuleHueOp::PaletteColor1, 0.252055f }, // H
                     { ColorRuleOp::Set, 0.050285f },        // S
                     { ColorRuleOp::Set, 0.001878f }         // E
-                }
-            },
-            ColorRule{
-                .output = PaintChannel::Shadow,
-                .effect{
-                    { ColorRuleHueOp::PaletteColor1 },      // H
-                    { ColorRuleOp::Set, 0.692649f },        // S
-                    { ColorRuleOp::Set, 0.238022f }         // E
                 }
             }
         };
@@ -220,13 +227,6 @@ namespace ClaFi
                     { ColorRuleOp::Set, 0.072888434f },     // S
                     { ColorRuleOp::Set, 0.0011279281f }     // E
                 }
-            },
-            ColorRule{
-                .output = PaintChannel::Shadow,
-                .effect{
-                    { ColorRuleOp::Set, 0.68912506f },      // S
-                    { ColorRuleOp::Set, 0.23544617f }       // E
-                }
             }
         };
 
@@ -236,14 +236,6 @@ namespace ClaFi
                     { ColorRuleHueOp::PaletteColor3 },      // H
                     { ColorRuleOp::Set, 0.12352588f },      // S
                     { ColorRuleOp::Set, 0.053887f }         // E
-                }
-            },
-            ColorRule{
-                .output = PaintChannel::Shadow,
-                .effect{
-                    { ColorRuleHueOp::PaletteColor3 },      // H
-                    { ColorRuleOp::Set, 0.69047594f },      // S
-                    { ColorRuleOp::Set, 0.23544617f }       // E
                 }
             }
         };
