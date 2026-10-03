@@ -44,6 +44,8 @@ namespace ClaFi::Controls::Grids
         Control* cellControl(const Column& column) override { return controlAtColumn(column); }
         // A hosted control and a group's mark are the row's: a press on one lands on the grid.
         bool isChildPart(const Control&) const override { return true; }
+        // A column fitted to its content reads a control's width off it. See Grids
+        [[nodiscard]] bool isChildWidthGiven(const Control&) const override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void nestedMouseMove(const MouseMoveEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;
@@ -120,6 +122,14 @@ namespace ClaFi::Controls::Grids
     {
         const RowContainer& self = *this;
         return const_cast<Control*>(self.controlAtColumn(column));
+    }
+
+    bool RowContainer::isChildWidthGiven(const Control& child) const
+    {
+        for (const ControlMap::value_type& entry : m_controlMap)
+            if (&*m_controls[entry.second] == &child)
+                return entry.first->calcMode() != ColumnWidthMode::FitContent;
+        return false;
     }
 
     ScaledDimensions RowContainer::calculateCellContent(ScaledCellMetrics& cellMetrics, const Column& column, float boundW)

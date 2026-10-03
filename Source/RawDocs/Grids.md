@@ -48,6 +48,12 @@ A key the control leaves goes on as it would have. Return and Space are the exce
 the control, the way FocusNavigator presses a control that has the focus, so Return on a
 check box cell toggles it and on a combo box cell drops its list or opens its editor.
 
+A FitContent column takes its width from its cells, so a control standing in one is as wide as
+it measured and remembers no width to break its text at - `RowContainer::isChildWidthGiven`, and
+see Item-Containers for the guard. A Fixed or Fill column hands its width out. Without that a combo
+box sized its own column: a pixel short after a scale change, "No change" broke onto two lines
+and the column shrank to its longer word.
+
 ## Picking
 
 A press on a control in a cell picks the cell first. A popup a click drops implicitly - the list a
