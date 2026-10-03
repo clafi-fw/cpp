@@ -118,15 +118,12 @@ namespace ClaFi::Tools::WhatsClip
         [[nodiscard]] StackPanel& stripBars();
     private:
         static constexpr float k_readoutPaddingX = 8.0f;
-        // Between the controls a page stands in the strip, and what they keep clear of its end.
-        static constexpr float k_stripBarSpacing = 8.0f;
-        static constexpr float k_stripBarPaddingX = 8.0f;
         // What the corner comes to where a page does not say otherwise: enough for a caret's
         // place in a document longer than anything a clipboard carries.
         static constexpr float k_defaultReadoutWidth = 104.0f;
     private:
         Panel& m_topPanel{ createTopBar<Panel>(
-            Padding{ 4.0f },
+            Padding{ 0.0f },
             Spacing{ 4.0f }
             ) };
         // The strip is one surface: the status as its body, and what a page stands at its right
@@ -243,7 +240,7 @@ namespace ClaFi::Tools::WhatsClip
     template<typename... Args>
     RepresentationPage::RepresentationPage(const CreateParams& params, Args&&... args)
         :
-        ScrollBox{ params, std::forward<Args>(args)... },
+        ScrollBox{ params, Spacing{ 4.0f }, Padding{ 4.0f }, std::forward<Args>(args)... },
         m_corner{ createCorner<Panel>() },
         m_readout{ m_corner.createBody<Readout>(
             MinSize{ k_defaultReadoutWidth, 0.0f },

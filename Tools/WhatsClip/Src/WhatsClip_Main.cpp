@@ -634,7 +634,8 @@ namespace ClaFi::Tools::WhatsClip
         {
         public:
             explicit MainForm(const CreateParams& params);
-        public:
+        private:
+            Spacer& m_leftSpacer{ createLeftBar<Spacer>(8.0f) };
         };
 
         // The formats down the left, whichever one is open on the right. A clipboard is a list of
@@ -656,7 +657,7 @@ namespace ClaFi::Tools::WhatsClip
 
                     UiElement::ToolBar, // Root window color, visible behind the formats bar
                     Border{ Thickness::Thin },
-                    Padding{ 4.0f },
+                    Padding{ 0.0f },
                     Spacing{ 0.0f },
                     MinSize{ 422.0f, 280.0f },
                     

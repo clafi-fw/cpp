@@ -221,8 +221,8 @@ namespace ClaFi::Tools::WhatsClip
         {
             m_stripBars = &m_strip.createRightBar<StackPanel>(
                 Orientation::Horizontal,
-                Padding{ k_stripBarPaddingX, 0.0f },
-                Spacing{ k_stripBarSpacing },
+                Padding{ 8.0f, 0.0f },
+                Spacing{ 8.0f },
                 VerticalAlign::Center
             );
         }
