@@ -40,7 +40,7 @@ namespace ClaFi
 {
     using namespace Controls;
 
-    void openAppMenu(ActionClickEvent&);
+    static void openAppMenu(ActionClickEvent&);
 
     constexpr Padding k_itemPadding{ 24.0f, 12.0f };
     // Twice what a button draws its icon at. The strip's items are the backstage's own headings,
@@ -70,7 +70,7 @@ namespace ClaFi
     // loop down under the click that asked.
     void openAppMenu(ActionClickEvent& event)
     {
-        Form<AppMenu> menu{ event.form.createPopup<AppMenu>(event.presenter) };
+        Form menu{ event.form.createPopup<AppMenu>(event.presenter) };
         // Under the button that opened it; a shortcut has none, so the menu takes the middle.
         menu.setPlacement(event.presenter ? FormPlacement::Bottom : FormPlacement::Default);
         menu.execute();
@@ -108,7 +108,8 @@ namespace ClaFi
             UiElement::Menu,
             TabsOrientation::VerticalLeft,
             TabLineThickness{ Thickness::Bold },
-            MinSize{ k_width, k_height }
+            MinSize{ k_width, k_height },
+            Padding{ -4.0f } // reducing borders clutter
         }
     {
         // AS WIDE AS THE WIDEST PAGE, not as the page that happens to be open: an application's
