@@ -25,6 +25,15 @@ namespace ClaFi::Controls
                 static_cast<int>(std::floor(clip.bottom)),
             };
         }
+
+        // The device pixel the picture's top left lands in, where the cache and the squares start.
+        [[nodiscard]] IntPoint originPixel(const FloatRect& pictureRect)
+        {
+            return {
+                static_cast<int>(std::lround(pictureRect.left)),
+                static_cast<int>(std::lround(pictureRect.top)),
+            };
+        }
     }
 
     // A new picture opens on its middle pixel, so the readout and the zoom have a pixel to stand
@@ -152,12 +161,14 @@ namespace ClaFi::Controls
         const FloatRect bounds = event.controlBounds();
         const FloatRect pictureRect = FloatRect::fromDimensions(bounds.topLeft() + m_pictureAt,
             pictureSize());
-        const FloatRect visible = FloatRect::intersection(event.viewport(),
-            FloatRect::intersection(pictureRect, bounds));
+        const FloatRect shown = FloatRect::intersection(event.viewport(), bounds);
+        const FloatRect visible = FloatRect::intersection(shown, pictureRect);
+        IntRect covered = {};
         if (!visible.empty())
-            paintPicture(event, pictureRect, visible);
+            covered = paintPicture(event, pictureRect, visible);
 
-        paintCrosshair(event, pictureRect);
+        paintBare(event, shown.roundedOut(), covered, originPixel(pictureRect));
+        paintCrosshair(event, pictureRect, covered);
     }
 
     // A PRESS STATES THE TARGET: the crosshair and the reading follow the button down rather than
@@ -176,7 +187,7 @@ namespace ClaFi::Controls
     }
 
     // The second press on a pixel asks for it to be acted on - the colour editor, where this
-    // viewer hangs one. A double click on the surface beside the picture names no pixel and asks
+    // viewer hangs one. A double click on the squares beside the picture names no pixel and asks
     // for nothing.
     void PictureView::nestedDoubleClick(DoubleClickEvent& event)
     {
@@ -215,7 +226,7 @@ namespace ClaFi::Controls
     }
 
     // A NOTCH SELECTS THE PIXEL UNDER THE POINTER AND ZOOMS ABOUT IT, so the crosshair and the
-    // readout land where the zoom is going without a click. Over the surface beside the
+    // readout land where the zoom is going without a click. Over the squares beside the
     // picture there is no pixel to take, and the selection stands while the zoom still keeps
     // the point under the pointer still.
     void PictureView::nestedMouseWheel(MouseWheelEvent& event)
@@ -466,13 +477,10 @@ namespace ClaFi::Controls
     // SAMPLED ONCE, COPIED AFTER. The cache holds the part of the picture on screen at the
     // zoom, so a paint copies its rows into the staging view: what a paint costs is set by
     // the size of the view, and what a zoom costs is one sampling of it.
-    void PictureView::paintPicture(PaintEvent& event, const FloatRect& pictureRect,
+    IntRect PictureView::paintPicture(PaintEvent& event, const FloatRect& pictureRect,
         const FloatRect& visible)
     {
-        const IntPoint at = {
-            static_cast<int>(std::lround(pictureRect.left)),
-            static_cast<int>(std::lround(pictureRect.top)),
-        };
+        const IntPoint at = originPixel(pictureRect);
         // The whole of the picture on screen, not the part this paint is asked for: a paint of
         // a corner must not shrink the cache to that corner.
         FloatRect onScreen = FloatRect::intersection(visibleRectInForm(), pictureRect);
@@ -490,7 +498,7 @@ namespace ClaFi::Controls
             static_cast<int>(std::ceil(size.y)),
         };
         if (!region.intersectWith(extent))
-            return;
+            return {};
 
         const bool held = m_cacheZoom == m_zoom
             && m_cacheRect.left <= region.left && m_cacheRect.top <= region.top
@@ -498,17 +506,17 @@ namespace ClaFi::Controls
         if (!held)
             renderCache(region);
 
-        const IntRect area = visible.roundedOut();
-        IntRect cached = m_cacheRect;
-        cached.offset(at);
+        IntRect drawn = m_cacheRect;
+        drawn.offset(at);
+        if (!drawn.intersectWith(visible.roundedOut()))
+            return {};
 
         using Graphics::PixelView;
         using Graphics::Matrix3x2;
-        event.canvas().stagingDraw(area.toFloat(), [&](PixelView view, const Matrix3x2&) {
-            IntRect span = area;
+        event.canvas().stagingDraw(drawn.toFloat(), [&](PixelView view, const Matrix3x2&) {
+            IntRect span = drawn;
             if (!span.intersectWith(view.ownedPixels())
-                || !span.intersectWith(wholePixelsInside(view.clipBox()))
-                || !span.intersectWith(cached))
+                || !span.intersectWith(wholePixelsInside(view.clipBox())))
             {
                 return;
             }
@@ -521,11 +529,71 @@ namespace ClaFi::Controls
                 std::copy_n(source, span.width(), line);
             }
         });
+        return drawn;
+    }
+
+    // THE BARE PART OF THE VIEW SHOWS THE SAME SQUARES AT HALF THE BRIGHTNESS, counted from the
+    // same pixel: they line up across the edge and pan with the picture, and the edge still shows.
+    // The strips are staged one by one, so no pixel the picture drew is staged again.
+    void PictureView::paintBare(PaintEvent& event, const IntRect& shown, const IntRect& covered,
+        const IntPoint pictureAt)
+    {
+        if (covered.empty())
+        {
+            paintSquares(event, shown, pictureAt);
+            return;
+        }
+
+        const IntRect strips[] = {
+            { shown.left, shown.top, shown.right, covered.top },
+            { shown.left, covered.top, covered.left, covered.bottom },
+            { covered.right, covered.top, shown.right, covered.bottom },
+            { shown.left, covered.bottom, shown.right, shown.bottom },
+        };
+        for (const IntRect& strip : strips)
+            paintSquares(event, strip, pictureAt);
+    }
+
+    // One row of each band is built and copied down the strip, so a row costs a copy.
+    void PictureView::paintSquares(PaintEvent& event, const IntRect& strip,
+        const IntPoint pictureAt)
+    {
+        if (strip.empty())
+            return;
+
+        using Graphics::PixelView;
+        using Graphics::Matrix3x2;
+        event.canvas().stagingDraw(strip.toFloat(), [&](PixelView view, const Matrix3x2&) {
+            IntRect span = strip;
+            if (!span.intersectWith(view.ownedPixels())
+                || !span.intersectWith(wholePixelsInside(view.clipBox())))
+            {
+                return;
+            }
+
+            const int width = span.width();
+            std::vector<Color> rows(static_cast<std::size_t>(width) * 2);
+            for (int i = 0; i < width; ++i)
+            {
+                const int x = span.left - pictureAt.x + i;
+                rows[static_cast<std::size_t>(i)] = bareSquareAt({ x, 0 });
+                rows[static_cast<std::size_t>(width + i)] = bareSquareAt({ x, k_checkerSize });
+            }
+
+            for (int y = span.top; y < span.bottom; ++y)
+            {
+                const Color* squares = rows.data() + (inOddBand(y - pictureAt.y) ? width : 0);
+                Color* line = view.scanLineAbs(static_cast<float>(span.left),
+                    static_cast<float>(y));
+                std::copy_n(squares, width, line);
+            }
+        });
     }
 
     // ONE HAIRLINE EACH WAY THROUGH THE PIXEL, EVERY PIXEL OF IT THE CONTRAST OF WHAT IT CROSSES:
-    // a picture pixel read from the cache, the surface past the picture's edge. See Controls
-    void PictureView::paintCrosshair(PaintEvent& event, const FloatRect& pictureRect)
+    // a picture pixel read from the cache, the square past the picture's edge. See Controls
+    void PictureView::paintCrosshair(PaintEvent& event, const FloatRect& pictureRect,
+        const IntRect& covered)
     {
         if (!m_selection)
             return;
@@ -545,11 +613,7 @@ namespace ClaFi::Controls
             return;
         }
 
-        const IntPoint at = {
-            static_cast<int>(std::lround(pictureRect.left)),
-            static_cast<int>(std::lround(pictureRect.top)),
-        };
-        const Color surfaceMark = contrasted(event.surfaceRgb().fullyOpaque());
+        const IntPoint at = originPixel(pictureRect);
 
         using Graphics::PixelView;
         using Graphics::Matrix3x2;
@@ -566,7 +630,7 @@ namespace ClaFi::Controls
                 Color* line = view.scanLineAbs(static_cast<float>(span.left),
                     static_cast<float>(cross.y));
                 for (int x = span.left; x < span.right; ++x)
-                    line[x - span.left] = crosshairPixelAt({ x, cross.y }, at, surfaceMark);
+                    line[x - span.left] = crosshairPixelAt({ x, cross.y }, at, covered);
             }
             if (cross.x >= span.left && cross.x < span.right)
             {
@@ -574,7 +638,7 @@ namespace ClaFi::Controls
                 {
                     Color* pixel = view.scanLineAbs(static_cast<float>(cross.x),
                         static_cast<float>(y));
-                    *pixel = crosshairPixelAt({ cross.x, y }, at, surfaceMark);
+                    *pixel = crosshairPixelAt({ cross.x, y }, at, covered);
                 }
             }
         });
@@ -626,7 +690,6 @@ namespace ClaFi::Controls
         const Color* first = m_picture->data() + static_cast<std::ptrdiff_t>(row.first) * stride;
         const Color* second = m_picture->data() + static_cast<std::ptrdiff_t>(row.second) * stride;
         const bool nearest = m_zoom >= k_nearestFromZoom;
-        const bool darkRow = ((at.y / k_checkerSize) & 1) != 0;
         for (int i = from; i < to; ++i)
         {
             const Tap& column = columns[i];
@@ -639,8 +702,7 @@ namespace ClaFi::Controls
                 // A TRANSLUCENT PIXEL IS LAID OVER SQUARES, and what leaves here is opaque: the
                 // staging view the cache is copied into is premultiplied, and a straight colour
                 // at partial alpha would be added to the surface rather than blended into it.
-                const bool darkColumn = (((at.x + i) / k_checkerSize) & 1) != 0;
-                Color square = darkRow != darkColumn ? k_checkerDark : k_checkerLight;
+                Color square = squareAt({ at.x + i, at.y });
                 square.paint_over_opaque(color);
                 color = square;
             }
@@ -700,14 +762,16 @@ namespace ClaFi::Controls
         return m_picture->data()[at];
     }
 
+    // A covered pixel is read from the cache: the picture is painted first, and brings the cache
+    // to hold every pixel it draws.
     Color PictureView::crosshairPixelAt(const IntPoint devicePoint, const IntPoint pictureAt,
-        const Color surfaceMark) const
+        const IntRect& covered) const
     {
-        const IntPoint inCache = { devicePoint.x - pictureAt.x, devicePoint.y - pictureAt.y };
-        if (m_cacheZoom != m_zoom || !m_cacheRect.contains(inCache))
-            return surfaceMark;
+        const IntPoint offset = devicePoint - pictureAt;
+        if (!covered.contains(devicePoint))
+            return contrasted(bareSquareAt(offset));
 
-        return contrasted(cacheRow(inCache.y)[inCache.x - m_cacheRect.left]);
+        return contrasted(cacheRow(offset.y)[offset.x - m_cacheRect.left]);
     }
 
     Color PictureView::contrasted(const Color pixel)
@@ -716,5 +780,23 @@ namespace ClaFi::Controls
             return value < k_contrastThreshold ? k_contrastLight : k_contrastDark;
         };
         return { channel(pixel.red), channel(pixel.green), channel(pixel.blue) };
+    }
+
+    Color PictureView::squareAt(const IntPoint offset)
+    {
+        return inOddBand(offset.x) != inOddBand(offset.y) ? k_checkerDark : k_checkerLight;
+    }
+
+    Color PictureView::bareSquareAt(const IntPoint offset)
+    {
+        return inOddBand(offset.x) != inOddBand(offset.y) ? k_bareDark : k_bareLight;
+    }
+
+    // Counted on both sides of the picture's top left pixel, so the band just before it is odd
+    // rather than a second band 0.
+    bool PictureView::inOddBand(const int offset)
+    {
+        constexpr int k_period = k_checkerSize * 2;
+        return (offset % k_period + k_period) % k_period >= k_checkerSize;
     }
 }

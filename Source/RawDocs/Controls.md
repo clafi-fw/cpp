@@ -790,7 +790,7 @@ reads what it needs from there.
 ## PixelActivateEvent
 
 The selected pixel was acted on: the second press of a double click on it. The view raises
-it only where a pixel lies under that press - a double click on the surface beside the
+it only where a pixel lies under that press - a double click on the squares beside the
 picture asks for nothing. It carries no position either: the pixel it is about is the one
 the press just selected, and the view answers selection() and selectedColor() for it.
 
@@ -828,6 +828,11 @@ zoom costs one sampling of the view, and a pan samples only the strip it uncover
 the one under it, so a pixel is drawn as the block it is. A translucent pixel is laid over
 grey squares, and what leaves for the surface is opaque.
 
+THE BARE PART OF THE VIEW SHOWS THE SAME SQUARES AT HALF THE BRIGHTNESS, counted from the
+picture's top left pixel, so they line up across its edge and pan with it, and the edge
+shows even where the picture's margin is transparent. Each strip around the picture is
+staged on its own, so nothing the picture drew is staged twice.
+
 THE SELECTION IS A PRESS OR A NOTCH. A press selects the pixel under it as the button goes
 down, and the crosshair moves there; so does a notch of the wheel, which selects the pixel
 under the pointer before it zooms, so the readout lands where the zoom is going. A press
@@ -863,10 +868,11 @@ THE CROSSHAIR IS A HAIRLINE OF CONTRAST. One row and one column of device pixels
 the middle of the selected pixel, reaching 24 design units each way, every pixel of them
 the contrast of what it crosses: channel by channel, near white where the channel is dark
 and near black where it is light, so the mark reads on any picture and covers nothing but
-the line it stands in. Past the picture's edge the surface is what it crosses, and the
-surface is contrasted the same way. What lies under the mark is read from the cache, never
-from the surface: a backend that draws through a staging buffer of its own hands back no
-pixels, and the cache holds every picture pixel on screen.
+the line it stands in. Past the picture's edge the squares are what it crosses, and they
+are contrasted the same way. What lies under the mark is worked out, never read back from
+the canvas: a backend that draws through a staging buffer of its own hands back no pixels.
+A pixel the picture drew is read from the cache, which holds every picture pixel on screen,
+and a square is known from where it stands.
 
 ## SliderButtonMark
 

@@ -150,8 +150,13 @@ namespace ClaFi::Controls
         void announceSelection();
         void announceActivate();
         void announceZoom();
-        void paintPicture(PaintEvent&, const FloatRect& pictureRect, const FloatRect& visible);
-        void paintCrosshair(PaintEvent&, const FloatRect& pictureRect);
+        // Draws the part of the picture in visible, and answers the device pixels it drew.
+        IntRect paintPicture(PaintEvent&, const FloatRect& pictureRect, const FloatRect& visible);
+        // Lays the squares over what is shown of the view, less what the picture covered.
+        void paintBare(PaintEvent&, const IntRect& shown, const IntRect& covered,
+            IntPoint pictureAt);
+        void paintSquares(PaintEvent&, const IntRect& strip, IntPoint pictureAt);
+        void paintCrosshair(PaintEvent&, const FloatRect& pictureRect, const IntRect& covered);
         // Brings the cache to hold this region of the picture at the zoom, sampling only what
         // it does not hold yet. The region is in the cache's coordinates: device pixels from
         // the picture's top left.
@@ -166,13 +171,17 @@ namespace ClaFi::Controls
         // The four pixels around a sample blended: tx toward b and d, ty toward c and d.
         [[nodiscard]] static Color blendOf(Color a, Color b, Color c, Color d, int tx, int ty);
         [[nodiscard]] Color pixelClamped(int x, int y) const;
-        // The crosshair's pixel at a device point: the contrast of the cache's pixel there, or
-        // of the surface's where the picture does not reach.
+        // The crosshair's pixel at a device point: the contrast of the picture or the square there.
         [[nodiscard]] Color crosshairPixelAt(IntPoint devicePoint, IntPoint pictureAt,
-            Color surfaceMark) const;
+            const IntRect& covered) const;
         // A colour turned against itself channel by channel, so a hairline of it reads on
         // whatever it crosses.
         [[nodiscard]] static Color contrasted(Color);
+        // The square under a translucent pixel this far from the picture's top left pixel.
+        [[nodiscard]] static Color squareAt(IntPoint offset);
+        // The square the bare view shows this far from the picture's top left pixel.
+        [[nodiscard]] static Color bareSquareAt(IntPoint offset);
+        [[nodiscard]] static bool inOddBand(int offset); // in an odd row or column of squares
     private:
         // From this zoom up a picture pixel is drawn as the block it is.
         static constexpr float k_nearestFromZoom = 4.0f;
@@ -182,10 +191,13 @@ namespace ClaFi::Controls
         static constexpr ColorByte k_contrastThreshold = 120;
         static constexpr ColorByte k_contrastLight = 255;
         static constexpr ColorByte k_contrastDark = 11;
-        // The squares a translucent pixel shows through, in device pixels.
+        // The squares under a translucent pixel and over the bare view, in device pixels.
         static constexpr int k_checkerSize = 8;
         static constexpr Color k_checkerLight{ 204, 204, 204 };
         static constexpr Color k_checkerDark{ 153, 153, 153 };
+        // The bare view's squares, half as bright, so the picture's edge shows on a clear margin.
+        static constexpr Color k_bareLight{ 102, 102, 102 };
+        static constexpr Color k_bareDark{ 77, 77, 77 };
         // How far a press travels before it pans rather than clicks, in design units.
         static constexpr float k_panThreshold = 3.0f;
         // How much of the picture stays in the window whatever pushes it out, in design units.
