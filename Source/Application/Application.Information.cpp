@@ -1,13 +1,17 @@
 module ClaFi.App.Information;
 
+import ClaFi.Controls.Button;
+import ClaFi.Controls.StackPanel;
 import ClaFi.Controls.TextBox;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.Context.UpdateCheck;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
@@ -19,8 +23,10 @@ namespace ClaFi
 
     namespace
     {
-        // The name, its version, publisher and site, what it does, and the framework's address.
+        // The page's text - name, version and the check's answer, site, description, framework.
         [[nodiscard]] Text informationText(const AppContext&);
+        // What the version line adds for the check's answer - nothing until there is one.
+        [[nodiscard]] std::wstring_view versionRemark(UpdateState);
         // Appends a plain paragraph, every web address in it made a link.
         void appendLinked(Text&, std::wstring_view paragraph);
         // The address as the page shows it - the scheme left out.
@@ -30,6 +36,8 @@ namespace ClaFi
         constexpr std::wstring_view k_scheme{ L"https://" };
         // The room a page of options keeps around its column, so the name starts where options do.
         constexpr float k_pagePadding{ 12.0f };
+        // Between the text and the button, as between the groups of a page of options.
+        constexpr float k_pageSpacing{ 10.0f };
         // The longest a line runs - a description wraps at it rather than widening the backstage.
         constexpr float k_lineWidth{ 400.0f };
     }
@@ -38,15 +46,55 @@ namespace ClaFi
 
     InformationPage::InformationPage(const CreateParams& params)
         :
-        TextBox{
+        StackPanel{
             params,
-            ReadOnly::Yes,
+            Orientation::Vertical,
             Padding{ k_pagePadding },
+            Spacing{ k_pageSpacing }
+        },
+        m_text{ add<TextBox>(
+            ReadOnly::Yes,
+            Padding{ 0.0f },
             HorizontalAlign::Left,
-            MaxSize{ k_lineWidth + k_pagePadding * 2.0f, k_maxFloat },
+            MaxSize{ k_lineWidth, k_maxFloat },
             informationText(params.appContext())
-        }
+        ) },
+        m_checkButton{ add<Button>(
+            L"Check for updates",
+            HorizontalAlign::Left
+        ) },
+        m_updateConnection{ appContext().updateCheck().onChange([this](UpdateCheckEvent&) {
+            showUpdateState();
+        }) }
     {
+        // Greyed while the question is out, so a second press cannot ask it twice.
+        m_checkButton.onGetState([this](GetStateEvent& event) {
+            event.state.enabled = appContext().updateCheck().state() != UpdateState::Checking;
+        });
+        m_checkButton.onClick([this](ClickEvent&) {
+            appContext().updateCheck().start();
+        });
+        stateCheckButton();
+    }
+
+    // THE ANSWER IS TEXT, so once there is one the button goes and the text says it. A check that
+    // got no answer keeps the button, offering to ask again.
+    void InformationPage::stateCheckButton()
+    {
+        const UpdateCheck& updates = appContext().updateCheck();
+        const UpdateState state = updates.state();
+        const bool answered = state == UpdateState::Latest || state == UpdateState::Newer;
+        m_checkButton.setVisible(updates.available() && !answered);
+        if (state == UpdateState::Failed)
+            m_checkButton.text() = Text{ L"Try again" };
+        m_checkButton.invalidateState();
+    }
+
+    void InformationPage::showUpdateState()
+    {
+        m_text.text() = informationText(appContext());
+        stateCheckButton();
+        invalidateFormAlign();
     }
 
     // informationText
@@ -55,6 +103,7 @@ namespace ClaFi
     {
         Text informationText(const AppContext& context)
         {
+            const UpdateCheck& updates = context.updateCheck();
             Text text{
                 TextStyleId::Title, context.appName(), PopTextStyle{},
                 k_endLine
@@ -64,7 +113,19 @@ namespace ClaFi
                 text << InkGrade::Muted;
                 text << L"Version ";
                 text << context.version();
+                text << versionRemark(updates.state());
                 text << PopColor{};
+                text << k_endLine;
+            }
+            if (updates.state() == UpdateState::Newer)
+            {
+                const std::wstring address = updates.releaseAddress();
+                text << L"Version ";
+                text << updates.newerVersion();
+                text << L" is out: ";
+                text << PushLink{ address };
+                text << shownAddress(address);
+                text << PopLink{};
                 text << k_endLine;
             }
             text << InkGrade::Muted;
@@ -99,12 +160,21 @@ namespace ClaFi
             return text;
         }
 
+        std::wstring_view versionRemark(const UpdateState state)
+        {
+            if (state == UpdateState::Latest)
+                return L" - you have the latest version";
+            if (state == UpdateState::Failed)
+                return L" - could not check for updates";
+            return {};
+        }
+
         // An address runs from its scheme to the next blank; punctuation closing the sentence
         // around it stays in the text.
         void appendLinked(Text& text, const std::wstring_view paragraph)
         {
             // Punctuation a sentence closes with, a closing guillemet last.
-            constexpr std::wstring_view k_closers = L".,;:)\u00BB\"'";
+            constexpr std::wstring_view k_closers = L".,;:)»\"'";
             std::size_t pos = 0;
             while (pos < paragraph.size())
             {

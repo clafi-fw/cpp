@@ -352,3 +352,44 @@ coordinates. What the menu does is the system's: a command chosen from it arrive
 WM_SYSCOMMAND on Win32 and as configures on Wayland, so a window closed from it is closed
 through wnd_closeRequested like any other.
 
+## AppContext::updateCheck
+
+The application's update check, built from AppParams::updates and the version. It asks nothing
+until start is called - the Information page calls it when its button is pressed - so an
+application makes no request the user did not make. It lives as long as the context, which is
+what lets an answer outlive the page that asked for it.
+
+## UpdateSource
+
+Where an application's releases are published: a GitHub repository, written owner/name, and the
+text each release's tag carries ahead of its version. ClaFi's own applications are released from
+clafi-fw/cpp under tags such as WhatsClip-v0.1.2, so WhatsClip states WhatsClip-v. Both parts are
+put into addresses as written, so neither may hold a character an address would need escaped. An
+application that names no repository has no update check.
+
+## UpdateCheckEvent
+
+Raised on every move of the state, on the UI thread: Checking when start sends the question, then
+one of Latest, Newer and Failed. A handler must not call start - start replaces the fetch whose
+done event the handler may be running inside.
+
+## UpdateCheck
+
+Asks GitHub whether a release newer than the running one is published.
+
+The question is one GET of api.github.com/repos/<repository>/git/matching-refs/tags/<tagPrefix>,
+which lists every tag that starts with the prefix - one application's tags rather than the
+repository's whole release list, about four hundred bytes each. A tag stands for a published
+release because the release recipe creates the two in one step.
+
+Each tag's version is read as major.minor.patch and compared number by number; a tag that does
+not read that way is skipped. The newest above the running version makes the state Newer, and its
+page is github.com/<repository>/releases/tag/<tagPrefix><version>. None above it makes the state
+Latest, so a version bumped and not yet released counts as the latest too.
+
+Failed is every way there is no answer to read: no connection, a redirect, a status other than
+200, or a body that is not a JSON array. GitHub allows sixty unauthenticated requests an hour from
+one address, and a request past them is answered 403.
+
+The check is available where the version reads as major.minor.patch and a repository is named.
+start does nothing while a question is out.

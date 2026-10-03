@@ -28,6 +28,7 @@ import ClaFi.App.Themes;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Syntax.Languages;
 import ClaFi.Core.System.UiTypes;
@@ -144,7 +145,11 @@ namespace ClaFi::Showcase::TextEngine
                 L"Shows the ClaFi text engine at work: a long styled ledger, highlighted code, "
                 L"formulas, emoji and fifty-six writing systems."
             },
-            .version = CLAFI_APP_VERSION
+            .version = CLAFI_APP_VERSION,
+            .updates = UpdateSource{
+                .repository = L"clafi-fw/cpp",
+                .tagPrefix = L"TextEngine-v"
+            }
         };
     }
 

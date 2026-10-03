@@ -8,6 +8,7 @@ import ClaFi.App.Application;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
@@ -62,7 +63,11 @@ namespace ClaFi::Showcase
                 L"a watermill landscape animated on a single CPU thread or through the graphics card, "
                 L"in a choice of scene themes, with its frame times charted live."
             },
-            .version = CLAFI_APP_VERSION
+            .version = CLAFI_APP_VERSION,
+            .updates = UpdateSource{
+                .repository = L"clafi-fw/cpp",
+                .tagPrefix = L"MillScene-v"
+            }
         };
     }
 

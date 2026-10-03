@@ -3,7 +3,8 @@
 A ClaFi application is a native Wayland client. It asks of a machine: glibc 2.35 or newer, a Wayland
 session, an x86-64 processor with AVX2 and FMA, and eight shared libraries every desktop already
 carries - libwayland-client, libxkbcommon, fontconfig, FreeType, HarfBuzz, libpng, zlib and
-libdbus-1. Everything else it needs is linked in.
+libdbus-1. Everything else it needs is linked in. Checking for updates uses the system's libcurl
+where one is installed.
 
 | Distribution (desktop) | Sharp at 125% | Placement kept | Clipboard unfocused | Edge-anchored windows | Level |
 |---|---|---|---|---|---|

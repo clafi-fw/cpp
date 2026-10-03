@@ -14,6 +14,7 @@ import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
+import ClaFi.Core.Context.UpdateCheck;
 
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
@@ -33,6 +34,7 @@ namespace ClaFi
         Text description{}; // what the application does, shown on its Information page
         std::wstring_view version{}; // major.minor.patch, shown on its Information page
         std::wstring_view site{}; // its own web address, shown as a link on its Information page
+        UpdateSource updates{}; // where its Information page looks for a newer release
     };
 
     export class ApplicationBase
@@ -146,6 +148,7 @@ namespace ClaFi
             appParams.description,
             appParams.version,
             appParams.site,
+            appParams.updates,
             initializeConfigPath(appParams),
             createBackend,
             Section{

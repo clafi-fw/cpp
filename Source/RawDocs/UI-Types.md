@@ -318,6 +318,22 @@ A directory that does not exist cannot be watched. The watch is then not establi
 is what puts the watch over it once it is there, and it does so before returning: a change
 made right after `restart()` is reported.
 
+## WebFetchEvent
+
+Raised once per fetch, on the UI thread, whether an answer arrived or not. status() is 0 where
+none did - no connection, a timeout, a body over the limit, a fetch the platform could not make.
+
+## WebFetch
+
+One HTTPS GET. The request starts with the object and runs on a thread of its own. What it brings
+back is handed to the UI thread through a UiTimer, the way a DirWatch hands over a change, and
+WebFetchEvent is raised there. No redirect is followed, and a body over a megabyte is refused
+whole.
+
+Destroying a fetch that is still running cancels it and waits for its thread, so the wait is
+short - see Platform for how each backend cancels. A fetch must not be destroyed from inside its
+own WebFetchEvent handler: the event is raised by the fetch's own timer.
+
 ## RepeatEvent::elapsedSeconds
 
 Time since the previous repeat. An action that moves at a speed multiplies by this

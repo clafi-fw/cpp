@@ -586,6 +586,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.DirWatch.cpp">
       <Filter>Platform\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.WebFetch.cpp">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.DWrite.cppm">
       <Filter>Platform\Windows</Filter>
     </ClCompile>
@@ -668,6 +671,12 @@
       <Filter>Y_Core\Context</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\FormContext.cppm">
+      <Filter>Y_Core\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\UpdateCheck.cpp">
+      <Filter>Y_Core\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\UpdateCheck.cppm">
       <Filter>Y_Core\Context</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\PaintIconEvent.cppm">
@@ -929,6 +938,12 @@
       <Filter>Y_Core\System</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Url.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\WebFetch.cpp">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\WebFetch.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Utils.cpp">
@@ -1242,6 +1257,9 @@
       <Filter>Platform\Linux</Filter>
     </None>
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.DirWatch.cppm">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.WebFetch.cpp">
       <Filter>Platform\Linux</Filter>
     </None>
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Fonts.cpp">

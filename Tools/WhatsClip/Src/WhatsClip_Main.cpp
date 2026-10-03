@@ -32,6 +32,7 @@ import ClaFi.Core.Transfer.Formats;
 
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
+import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -621,7 +622,11 @@ namespace ClaFi::Tools::WhatsClip
             .publisher = L"ClaFi Framework",
             .description = Text{ L"A clipboard viewer done right." },
             .version = CLAFI_APP_VERSION,
-            .site = L"https://whatsclip.app"
+            .site = L"https://whatsclip.app",
+            .updates = UpdateSource{
+                .repository = L"clafi-fw/cpp",
+                .tagPrefix = L"WhatsClip-v"
+            }
         };
     }
 

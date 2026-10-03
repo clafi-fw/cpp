@@ -5,6 +5,7 @@ import ThisApp.Consts;
 import ClaFi.App.Application;
 
 import ClaFi.Core.Context.FormContext;
+import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.TextEngine.Text;
 
@@ -23,7 +24,11 @@ namespace ThisApp
                 L"Keeps Pascal scripts in a folder of its own and edits them, "
                 L"with the source coloured as it is typed."
             },
-            .version = CLAFI_APP_VERSION
+            .version = CLAFI_APP_VERSION,
+            .updates = UpdateSource{
+                .repository = L"clafi-fw/cpp",
+                .tagPrefix = L"PascalScripts-v"
+            }
         };
     }
 

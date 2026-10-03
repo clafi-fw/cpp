@@ -11,6 +11,7 @@ import ClaFi.Core.DomEngine_Document;
 import ClaFi.Core.Dom_StdSerializers;
 
 import ClaFi.Core.Context.FormContext;
+import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Baked;
@@ -78,10 +79,12 @@ namespace ClaFi
     public:
         AppContext(Platform&, const Text& appName, std::wstring_view publisher,
             const Text& description, std::wstring_view version, std::wstring_view site,
-            const std::filesystem::path& configPath, BackendFactory, Dom::Dt::Section&&);
+            const UpdateSource& updates, const std::filesystem::path& configPath, BackendFactory,
+            Dom::Dt::Section&&);
         AppContext(Platform&, const Text& appName, std::wstring_view publisher,
             const Text& description, std::wstring_view version, std::wstring_view site,
-            const std::filesystem::path& configPath, BackendFactory, const Dom::Dt::Section&);
+            const UpdateSource& updates, const std::filesystem::path& configPath, BackendFactory,
+            const Dom::Dt::Section&);
         ~AppContext();
         // The name as it is shown. Its plain text is what the platform and the config folder know.
         [[nodiscard]] const Text& appName() const { return m_appName; }
@@ -97,6 +100,9 @@ namespace ClaFi
         [[nodiscard]] const InformationParagraphs& information() const { return m_information; }
         // States a paragraph for the Information page - where a data file came from, say.
         void addInformation(std::wstring_view paragraph) { m_information.emplace_back(paragraph); }
+        // Whether a newer release is published - asked only when the user asks. See Context
+        [[nodiscard]] UpdateCheck& updateCheck() { return m_updateCheck; }
+        [[nodiscard]] const UpdateCheck& updateCheck() const { return m_updateCheck; }
 
         // ONE ANSWER FOR THE PROCESS, and the only place a form can ask for a backend: the kind
         // the application is on at that moment, so no two windows can disagree. See Context
@@ -238,6 +244,7 @@ namespace ClaFi
         std::wstring_view m_version;
         std::wstring_view m_site;
         InformationParagraphs m_information{};
+        UpdateCheck m_updateCheck;
         // The GPU backend the application named, if it named one - see gpuAvailable. The CPU
         // backend needs no factory here: the core owns that type.
         BackendFactory m_createGpuBackend;
@@ -309,8 +316,8 @@ namespace ClaFi
 
     AppContext::AppContext(Platform& platform, const Text& appName, const std::wstring_view publisher,
         const Text& description, const std::wstring_view version, const std::wstring_view site,
-        const std::filesystem::path& configPath, BackendFactory createGpuBackend,
-        Dom::Dt::Section&& schema)
+        const UpdateSource& updates, const std::filesystem::path& configPath,
+        BackendFactory createGpuBackend, Dom::Dt::Section&& schema)
         :
         m_platform{ platform },
         m_appName{ appName },
@@ -318,6 +325,7 @@ namespace ClaFi
         m_description{ description },
         m_version{ version },
         m_site{ site },
+        m_updateCheck{ updates, version },
         m_createGpuBackend{ createGpuBackend },
         m_configFolderExists{ std::filesystem::exists(configPath.parent_path()) },
         m_config{ configPath, Dom::AutoSave::No,
@@ -337,8 +345,8 @@ namespace ClaFi
 
     AppContext::AppContext(Platform& platform, const Text& appName, const std::wstring_view publisher,
         const Text& description, const std::wstring_view version, const std::wstring_view site,
-        const std::filesystem::path& configPath, BackendFactory createGpuBackend,
-        const Dom::Dt::Section& schema)
+        const UpdateSource& updates, const std::filesystem::path& configPath,
+        BackendFactory createGpuBackend, const Dom::Dt::Section& schema)
         :
         m_platform{ platform },
         m_appName{ appName },
@@ -346,6 +354,7 @@ namespace ClaFi
         m_description{ description },
         m_version{ version },
         m_site{ site },
+        m_updateCheck{ updates, version },
         m_createGpuBackend{ createGpuBackend },
         m_configFolderExists{ std::filesystem::exists(configPath.parent_path()) },
         m_config{ configPath, Dom::AutoSave::No,

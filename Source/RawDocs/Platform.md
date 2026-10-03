@@ -484,3 +484,32 @@ arrives as a signal. 1 is Dark; 0, 2 and any value the portal adds later are Lig
 without a bus answers Light and is not asked again; a bus that hangs up leaves the last answer
 standing.
 
+## WebFetch on Windows
+
+WinHTTP in its blocking form, on the fetch's thread. The session takes the system's proxy
+settings (WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY) and TLS comes from the operating system, so
+nothing ships with an application for it. Each step - resolving, connecting, sending, receiving -
+may take ten seconds.
+
+Cancelling closes the request handle from the UI thread, which fails the call blocked on it. The
+thread registers the request under a mutex, and whichever side closes it first clears it there,
+so it is never closed twice. The thread reads the cancel flag after every call and makes no
+further call on a closed handle.
+
+## WebFetch on Linux
+
+libcurl, opened with dlopen when a fetch runs: libcurl.so.4, then libcurl-gnutls.so.4, the only
+one a fresh Ubuntu desktop carries. Nothing links against it - the build needs no libcurl
+headers, the executable names no libcurl, and a system without one answers every fetch with
+nothing. The few option and info numbers a fetch passes are libcurl's ABI and are written out in
+the source.
+
+The library is never closed. A transfer aborted while a name resolves leaves libcurl's resolver
+thread detached and running libcurl's code until the lookup returns, so unloading the library
+would take that code from under the thread.
+
+Cancelling is the progress callback answering nonzero, which libcurl asks at least once a second,
+so a cancel waits that long at most. The connection may take ten seconds and the whole transfer
+thirty. CURLOPT_NOSIGNAL is set because the fetch is not on the main thread. libcurl initialises
+itself on the first curl_easy_init; before 7.84 that is unsafe when two fetches start at the same
+moment.

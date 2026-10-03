@@ -243,7 +243,8 @@ go of and does nothing.
 
 The Information page of the application menu: the application's name, its version and publisher
 under it, the application's own site as a link, what the application does, the framework the
-application is built with, and the framework's address as a link.
+application is built with, and the framework's address as a link. Under the text, a button asks
+whether a newer version is published.
 
 THE APPLICATION'S OWN SITE STANDS UNDER THE PUBLISHER. AppParams::site states the address and
 AppContext::site keeps it; the page links it and shows it without its scheme, the way the
@@ -269,9 +270,24 @@ unbounded description would widen the menu to fit it on one line. A maximum widt
 lines there instead. The page is Left-aligned beside that maximum, because a maximum on a Fill
 axis is a caller error - see Control::align.
 
-THE PAGE IS A READ-ONLY TEXT BOX, the way a message dialog's text is, because a text box is what
+THE TEXT IS A READ-ONLY TEXT BOX, the way a message dialog's text is, because a text box is what
 follows a link: the address underlines under the pointer and opens on a click. The rest comes
-with it - the page takes the focus, shows a caret, and its text can be selected and copied.
+with it - the text takes the focus, shows a caret, and can be selected and copied. The page
+itself is a vertical StackPanel holding that box and the update button. The stack carries the
+page's padding, so the name starts where a page of options starts.
+
+THE BUTTON ASKS WHETHER A NEWER VERSION IS OUT, AND THE ANSWER IS TEXT. Check for updates stands
+under the text wherever AppContext::updateCheck is available - the application states a
+major.minor.patch version and AppParams::updates names a repository. A press starts the check and
+greys the button until it answers. Then the button goes and the version line carries the answer:
+"you have the latest version", or a line under it naming the newer version and linking its
+release page. A check that got no answer says so on the version line and keeps the button, as
+Try again.
+
+THE CHECK OUTLIVES THE PAGE. It is AppContext's, and the page is built again each time the menu
+opens, so a check still running when the menu closes is answered all the same and the next page
+reads what it found. The page holds its connection to the check's event in a
+ScopedEventConnection, which drops with the page.
 
 THE NAME IS A TEXT, AND ITS SPELLING IS SHOWN WHEREVER THE NAME IS. The page, the title bar an
 application builds from ApplicationBase::name, and the questions the Settings page asks all draw

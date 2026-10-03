@@ -9,6 +9,7 @@ import ClaFi.App.ThemeIcon;
 
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -26,7 +27,11 @@ namespace ThisApp
             .name = Text{ L"Themes" },
             .publisher = L"ClaFi Framework",
             .description = Text{ L"Edits the themes other ClaFi applications use." },
-            .version = CLAFI_APP_VERSION
+            .version = CLAFI_APP_VERSION,
+            .updates = UpdateSource{
+                .repository = L"clafi-fw/cpp",
+                .tagPrefix = L"Themes-v"
+            }
         };
     }
 
