@@ -171,10 +171,6 @@ namespace
     }
 }
 
-// THE WHOLE OF WHAT THIS PROJECT KNOWS ABOUT WINDOWS: the entry point the operating system calls,
-// the instance handle it hands over, and the two types the application is built out of. The viewer
-// itself is in ClaFi.Tools.WhatsClip.Main, beside the Wayland entry point that names it the
-// same way.
 int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, wchar_t*, int)
 {
     using namespace ClaFi;
@@ -185,9 +181,6 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, wchar_t*, int)
         Dom::Dt::Section{}
     };
 
-    // What the text pages read bytes in and colour text in, plus the resolver that gives the
-    // code-page readings the clipboard's own code page. An application built over this viewer adds
-    // its own encoding and language here.
     Tools::WhatsClip::PickLists picks{
         windowsEncodings(),
         Tools::WhatsClip::defaultLanguages(),
