@@ -22,6 +22,12 @@ namespace ClaFi::Controls
         using CustomFloatPoint::CustomFloatPoint;
     };
 
+    // The spacing of a box's tab strip, in place of the one the box gives it for its mode.
+    export struct StripSpacing : public CustomFloatPoint
+    {
+        using CustomFloatPoint::CustomFloatPoint;
+    };
+
     // A strip of tabs over a body that follows the open one.
     export class TabbedBox : public PanelBase
     {
@@ -79,6 +85,8 @@ namespace ClaFi::Controls
         void paintPageRun(PaintEvent&);
         // The stated StripPadding, or the mode's own where none is.
         [[nodiscard]] Padding stripPadding(Padding modeDefault) const;
+        // The stated StripSpacing, or the mode's own where none is.
+        [[nodiscard]] Spacing stripSpacing(Spacing modeDefault) const;
         template <typename... Args>
         TabStripBase& createTabStrip(Args&&... args);
     private:
@@ -87,8 +95,10 @@ namespace ClaFi::Controls
         static constexpr RectSidesBoolArray k_runSides{ true, false, true, false };
     private:
         PageSurface m_pageSurface{};
-        // The strip's padding where one is stated - declared before m_strip, which is built with it.
+        // The strip's padding where stated - declared before m_strip, which is built with it.
         std::optional<StripPadding> m_stripPadding;
+        // The strip's spacing where stated - declared before m_strip, which is built with it.
+        std::optional<StripSpacing> m_stripSpacing;
         // The box the strip is the body of, where there is one. Declared before m_strip, which is
         // what createTabStrip builds it for.
         ScrollBox* m_stripBox{ nullptr };
@@ -141,7 +151,8 @@ namespace ClaFi::Controls
         INIT_PROPERTY(tabsOrientation),
         INIT_PROPERTY(tabLineThickness),
         INIT_PROPERTY(tabViewMode),
-        m_stripPadding{ Props::find<StripPadding>(args...) }
+        m_stripPadding{ Props::find<StripPadding>(args...) },
+        m_stripSpacing{ Props::find<StripSpacing>(args...) }
     {
         m_strip.setOverlayHost(*this);
     }
@@ -282,13 +293,20 @@ namespace ClaFi::Controls
         return modeDefault;
     }
 
+    Spacing TabbedBox::stripSpacing(Spacing modeDefault) const
+    {
+        if (m_stripSpacing)
+            return Spacing{ *m_stripSpacing };
+        return modeDefault;
+    }
+
     template <typename ... Args>
     TabStripBase& TabbedBox::createTabStrip(Args&&... args)
     {
         // Tool buttons stand a tool bar's distance in from every edge and from each other. Tabs
         // leave room along the strip for the line to run on past the first and the last.
         const bool toolButtons = m_tabViewMode == TabViewMode::ToolButton;
-        const Spacing spacing = toolButtons ? Spacing{ 4.0f } : Spacing{ 0.0f };
+        const Spacing spacing = stripSpacing(toolButtons ? Spacing{ 4.0f } : Spacing{ 0.0f });
         switch (m_tabsOrientation)
         {
         case TabsOrientation::HorizontalTop:

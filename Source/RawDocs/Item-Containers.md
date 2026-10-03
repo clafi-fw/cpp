@@ -335,7 +335,7 @@ show. The hidden pages are measured once, and again when a page is added or take
 form's scale moves. A page that grows on its own while hidden, at the same scale, is not
 measured again.
 
-## TabStrip padding
+## TabStrip padding and spacing
 
 Along the strip, the padding is the room the tab line runs on past the first and the last tab, and
 the layout lays it out at both ends.
@@ -354,8 +354,14 @@ far side. Everything that reads the layout's padding - the paint, the hit test, 
 So the two answers differ on that axis: `padding()` is the stated value, `scaledPadding()` the one
 the layout sees.
 
-A `TabViewMode::ToolButton` strip joins nothing, and the layout lays its padding out on every
-side.
+Across a `TabViewMode::Tab` strip, the spacing is the gap an item that is not a tab keeps from the
+line - a button or a check box standing among the tabs. A single lane has no use for the spacing
+across it, so it is free for this. `adjustChildBox` cuts the gap off such an item's box on the
+line side, and `calculateContent` counts it on top of the widest of them. Tabs reach the line
+whatever the spacing is.
 
-A `TabbedBox` builds its strip with a padding of its own for each mode. `StripPadding` stands in
-place of it.
+A `TabViewMode::ToolButton` strip joins nothing. The layout lays its padding out on every side,
+and no item keeps a gap from a line.
+
+A `TabbedBox` builds its strip with a padding and a spacing of its own for each mode.
+`StripPadding` and `StripSpacing` stand in place of them.

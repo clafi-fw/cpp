@@ -132,10 +132,12 @@ namespace ClaFi::Controls
     protected:
         using StackPanel::orientation;
         using StackPanel::setOrientation;
-        // Tab mode lays the padding across the strip on its outer side alone. See Item-Containers
+        // Tab mode pads the outer side only and keeps non-tabs off the line. See Item-Containers
         void adjustMetrics(AdjustMetricsEvent&) const override;
         ScaledDimensions calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void adjustChildBox(const AlignEvent&, const Control& child, ScaledPosition& position,
+            ScaledDimensions& dimensions) const override;
         void nestedControlDeleted(Control*) override;
         void childHoverEnter(Control&) override;
         void paintChildren(PaintEvent&) override;
@@ -150,6 +152,9 @@ namespace ClaFi::Controls
     private:
         // The padding the strip lays out itself, on its outer side - none in ToolButton mode.
         [[nodiscard]] float outerPadding() const;
+        // What a non-tab keeps clear of the tab line: the Spacing across - none in ToolButton mode.
+        [[nodiscard]] float lineGap(const AlignEvent&) const;
+        [[nodiscard]] bool isTab(const Control&) const;
     private:
         ContainerBase* m_overlayHost{};
         TabsOrientation m_tabsOrientation;
@@ -636,26 +641,36 @@ namespace ClaFi::Controls
             event.metrics.padding.x = 0.0f;
     }
 
-    // Carried the way Control::calculate carries a padding: not onto an extent with no bound, and
-    // not onto a floor of zero.
+    // The room is carried the way Control::calculate carries a padding: not onto an extent with no
+    // bound, and not onto a floor of zero.
     ScaledDimensions TabStripBase::calculateContent(AlignEvent& event)
     {
         ScaledDimensions result = StackPanel::calculateContent(event);
+        const bool horizontal = orientation() == Orientation::Horizontal;
+        float& extent = horizontal ? result.y : result.x;
+        float& minExtent = horizontal ? event.calculatedMinSize.y : event.calculatedMinSize.x;
+
+        if (const float gap = lineGap(event); gap > 0.0f)
+        {
+            for (const ControlPtr& item : controls())
+            {
+                if (!item->visible() || isTab(*item))
+                    continue;
+                const float itemExtent = horizontal ? item->height() : item->width();
+                const ScaledDimensions itemMin = item->calculatedMinSize();
+                const float itemMinExtent = horizontal ? itemMin.y : itemMin.x;
+                if (extent != k_maxFloat)
+                    extent = std::max(extent, itemExtent + gap);
+                if (itemMinExtent > 0.0f)
+                    minExtent = std::max(minExtent, itemMinExtent + gap);
+            }
+        }
+
         const float room = event.scale(outerPadding());
-        if (orientation() == Orientation::Horizontal)
-        {
-            if (result.y != k_maxFloat)
-                result.y += room;
-            if (event.calculatedMinSize.y > 0.0f)
-                event.calculatedMinSize.y += room;
-        }
-        else
-        {
-            if (result.x != k_maxFloat)
-                result.x += room;
-            if (event.calculatedMinSize.x > 0.0f)
-                event.calculatedMinSize.x += room;
-        }
+        if (extent != k_maxFloat)
+            extent += room;
+        if (minExtent > 0.0f)
+            minExtent += room;
         return result;
     }
 
@@ -690,6 +705,32 @@ namespace ClaFi::Controls
         // is in that answer already and only the room after them is added.
         contentDimensions.x += roomAfter.x;
         contentDimensions.y += roomAfter.y;
+    }
+
+    void TabStripBase::adjustChildBox(const AlignEvent& event, const Control& child,
+        ScaledPosition& position, ScaledDimensions& dimensions) const
+    {
+        const float gap = lineGap(event);
+        if (gap <= 0.0f || isTab(child))
+            return;
+        switch (m_tabsOrientation)
+        {
+        case TabsOrientation::HorizontalTop:
+            dimensions.y = std::max(dimensions.y - gap, 0.0f);
+            break;
+        case TabsOrientation::HorizontalBottom:
+            position.y += gap;
+            dimensions.y = std::max(dimensions.y - gap, 0.0f);
+            break;
+        case TabsOrientation::VerticalLeft:
+            dimensions.x = std::max(dimensions.x - gap, 0.0f);
+            break;
+        case TabsOrientation::VerticalRight:
+            position.x += gap;
+            dimensions.x = std::max(dimensions.x - gap, 0.0f);
+            break;
+        default: unreachable();
+        }
     }
 
     void TabStripBase::nestedControlDeleted(Control* control)
@@ -810,6 +851,19 @@ namespace ClaFi::Controls
         if (m_tabViewMode == TabViewMode::ToolButton)
             return 0.0f;
         return orientation() == Orientation::Horizontal ? padding().y : padding().x;
+    }
+
+    float TabStripBase::lineGap(const AlignEvent& event) const
+    {
+        if (m_tabViewMode == TabViewMode::ToolButton)
+            return 0.0f;
+        return orientation() == Orientation::Horizontal ? event.spacing.y : event.spacing.x;
+    }
+
+    // The set is keyed by the pointers it was handed, and a lookup changes nothing.
+    bool TabStripBase::isTab(const Control& control) const
+    {
+        return m_allTabs.contains(const_cast<Control*>(&control));
     }
 
 }

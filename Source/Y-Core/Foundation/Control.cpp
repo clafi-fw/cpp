@@ -2153,6 +2153,8 @@ namespace ClaFi
 
     void Control::alignControl(Control* control, AlignEvent& parentEvent, ScaledPosition position, ScaledDimensions newDimensions)
     {
+        if (const Control* parent = control->m_parent)
+            parent->adjustChildBox(parentEvent, *control, position, newDimensions);
         control->align(parentEvent.formContext(), parentEvent.pass(), position, newDimensions);
     }
 

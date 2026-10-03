@@ -990,6 +990,9 @@ namespace ClaFi
         // the bounds alone would answer for the whole of it. The hit test asks this so it meets
         // a control where the paint drew it. See FormBase::controlAt.
         virtual void adjustChildClip(const Control&, FloatRect&) const {}
+        // May narrow the box a child is handed to align in. The event is this control's own.
+        virtual void adjustChildBox(const AlignEvent&, const Control&, ScaledPosition&,
+            ScaledDimensions&) const {}
         virtual void adjustChildPaint(AdjustPaintEvent& event);
 
         bool hasOverlayControls() const;

@@ -109,6 +109,7 @@ namespace ClaFi
             TabsOrientation::VerticalLeft,
             TabLineThickness{ Thickness::Bold },
             StripPadding{ 8.0f, 12.0f },
+            StripSpacing{ 4.0f, 0.0f },
             MinSize{ k_width, k_height },
             Padding{ -4.0f } // reducing borders clutter
         }
