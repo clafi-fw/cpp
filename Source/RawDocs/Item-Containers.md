@@ -222,11 +222,15 @@ Three things the remembered width is not allowed to do, and each is a guard:
   freely its host hands a width down - align gives the surplus back - so its width is its own
   content's answer and a bound taken from it eats itself: the rows wrap, the panel comes out
   narrower than the width it wrapped at, the next pass wraps THAT, and a stack aligned Left walks
-  from five items a row down to two. Above this control the same question is asked of every host
-  in turn, and one level is never enough: the backstage hands a width down through five of them
-  and is itself measured from the pages it holds. The walk ends at the first host that is as wide
-  as what it contains, and at the root it asks the form: a window asked for out of the content is
-  the content's answer once more, `AutoFit::Yes`.
+  from five items a row down to two. **An item of a row keeps what it measured too**, Fill or
+  not: a row sizes its items from what they measured, and hands a width out only to an item that
+  takes what the lane has over - `StackPanel::isChildWidthGiven`. Without that a crumb held its
+  own width as a ceiling: a longer title broke onto more lines, and a scale round trip left its
+  icon and strip, rounded per scale, a pixel short of the text. Above this control the same
+  question is asked of every host in turn, and one level is never enough: the backstage hands a
+  width down through five of them and is itself measured from the pages it holds. The walk ends at
+  the first host that is as wide as what it contains, and at the root it asks the form: a window
+  asked for out of the content is the content's answer once more, `AutoFit::Yes`.
 - It states nothing while the form is measuring to ASK for a window -
   `FormBase::isMeasuringPlacement`. That pass is where a form finds out what it wants, and one
   held to the width it was last given could never grow.

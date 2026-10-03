@@ -1378,14 +1378,14 @@ namespace ClaFi
         static OnAnimate s_onClickRelease;
         static constexpr float k_textWidthEpsilon{ 0.5f }; // under this two widths are one
     private:
+        Control* m_parent{};
         StateFactors m_factors{};
         ControlFlags m_flags{};
         ControlFlags2 m_flags2{ cfDefaultFlags2 };
-        Control* m_parent{};
+        float m_textWidthInDesign{}; // the width the last align broke the own text at, zero before
         FloatPoint m_topLeft{};
         ScaledDimensions m_dimensions{};
         ScaledDimensions m_minDimensions{};
-        float m_textWidthInDesign{}; // the width the last align broke the own text at, zero before
     };
 
 

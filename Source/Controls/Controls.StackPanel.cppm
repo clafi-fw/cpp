@@ -98,6 +98,9 @@ namespace ClaFi::Controls
     protected:
         ScaledDimensions calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        // A row reads its items' widths off them, unless one fills the lane. See Item-Containers
+        [[nodiscard]] bool isChildWidthGiven(const Control& child) const override
+            { return !lanesRunAcross() || child.fillsLane(); }
         NavigationWrap navigationWrap() const override;
         void nestedControlHovered(Control* hovered) override;
         void hoverLeave() override;
