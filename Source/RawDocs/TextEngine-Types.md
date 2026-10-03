@@ -42,6 +42,10 @@ A gap that takes the room its line has over, and never less than the width it st
 is what shows on a line with nothing to spare, so a caller wanting the two sides held apart there
 states it here rather than writing a space beside the gap.
 
+THE ROOM IS TAKEN LESS THE FIT TOLERANCE. The width is stated by building the line a second
+time, and a line filled to the box exactly can come back from that build a hair wider than the
+box - which a wrapping text breaks at the gap, and a one-line box then collapses.
+
 ## TextRenderMode
 
 What a control's text has to survive, stated as three cases rather than as raster settings.
