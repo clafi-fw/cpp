@@ -1,8 +1,11 @@
 module ThisApp.AppIcon;
 
 import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.ControlContext;
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
+import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -50,6 +53,13 @@ namespace ThisApp::AppIcon
             float left{};
             float right{};
             float top{};
+        };
+
+        // Where the Run arrow stands on the sheet: its left side's top, and that side's length.
+        struct ArrowPlace
+        {
+            FloatPoint topLeft{};
+            float side{};
         };
 
         constexpr float k_epsilon{ 0.0001f };
@@ -133,14 +143,22 @@ namespace ThisApp::AppIcon
         constexpr float k_sheetRight{ 26.0f };
         constexpr float k_sheetBottom{ 30.0f };
         constexpr float k_fold{ 6.0f };   // the side of the square the folded corner stands in
-        constexpr float k_barHeight{ 2.5f };
-        constexpr float k_barLeft{ 10.0f };
-        // The first bar is the keyword line, and it is the short one.
-        constexpr std::array<Bar, 3> k_bars{
-            Bar{ k_barLeft, 16.0f, 12.0f },
-            Bar{ k_barLeft, 22.0f, 17.0f },
-            Bar{ k_barLeft, 19.0f, 22.0f }
+        constexpr float k_cornerRadius{ 1.5f };   // every rounded corner, the fold's included
+        constexpr float k_foldShare{ gradeOf(InkGrade::Faint) * 0.5f };   // the fold's fill
+        constexpr float k_barHeight{ 1.5f };
+        // A begin and an end in the keyword ink, the body between them indented.
+        constexpr std::array<Bar, 2> k_keywordBars{
+            Bar{ 10.0f, 16.5f, 8.75f },
+            Bar{ 10.0f, 15.0f, 20.75f }
         };
+        constexpr std::array<Bar, 2> k_bodyBars{
+            Bar{ 13.0f, 22.0f, 12.75f },
+            Bar{ 13.0f, 22.0f, 16.75f }
+        };
+        constexpr ArrowPlace k_tileArrow{ .topLeft{ 18.0f, 20.5f }, .side = 7.5f };   // lower right
+        // Alone on the sheet, its centroid on the page's middle below the fold.
+        constexpr ArrowPlace k_smallArrow{ .topLeft{ 12.6f, 11.0f }, .side = 12.0f };
+        constexpr float k_smallIconSize{ 32.0f };   // logical pixels; below it, no lines
 
         [[nodiscard]] FloatPoint mix(FloatPoint from, FloatPoint to, float amount);
         [[nodiscard]] FloatPoint towards(FloatPoint from, FloatPoint to, float distance);
@@ -149,9 +167,13 @@ namespace ThisApp::AppIcon
         [[nodiscard]] Matrix3x2 fitTo(const FloatRect& bounds);
         [[nodiscard]] float scaleFor(const FloatRect& bounds);
         [[nodiscard]] Matrix3x2 fitSheetTo(const FloatRect& bounds);
+        [[nodiscard]] Matrix3x2 fitArrowTo(const Matrix3x2& sheet, const ArrowPlace&);
+        [[nodiscard]] ControlPaintContext paperContext(const ControlPaintContext& host);
 
         void addRoundedQuad(PixelPath& path, const Corners&, const CornerRadii& radii);
         void addArrow(PixelPath& path);
+        void addRoundedPolygon(PixelPath& path, std::span<const FloatPoint> corners,
+            std::span<const float> radii);
         void addSheet(PixelPath& path);
         void addFold(PixelPath& path);
         void addBar(PixelPath& path, const Bar&);
@@ -161,8 +183,9 @@ namespace ThisApp::AppIcon
         void paintLeaves(Canvas&, const Matrix3x2& transform);
         void fillArrowBand(Canvas&, const Matrix3x2& transform, const Band&);
         void paintArrow(Canvas&, const Matrix3x2& transform);
-        void paintSheet(Canvas&, const Matrix3x2& transform, float outlineWidth, Color paper,
-            Color edge, Color fold, Color keywordBar, Color textBar);
+        void paintSheet(Canvas&, const Matrix3x2& transform, float lineWidth, Color paper,
+            Color frame, Color fold);
+        void paintBars(Canvas&, const Matrix3x2& transform, std::span<const Bar> bars, Color);
     }
 }
 
@@ -187,16 +210,29 @@ namespace ThisApp::AppIcon
 
     void paintScriptIcon(PaintIconEvent& event)
     {
+        Canvas& canvas = event.canvas();
         const FloatRect& iconRect = event.iconRect();
-        // The outline is a stroke of the form's own weight, so it reads the same at a crumb's
-        // size and a tile's; stated in design units because the transform scales it.
-        const float outlineWidth = event.scaledStrokeWidth(Thickness::Thin) / scaleFor(iconRect);
-        paintSheet(event.canvas(), fitSheetTo(iconRect), outlineWidth,
-            event.surfaceRgb(),
-            event.textRgb(InkGrade::Strong),
-            event.textRgb(InkGrade::Subtle),
-            event.accentRgb(InkGrade::Strong),
-            event.textRgb(InkGrade::Muted));
+        const Matrix3x2 transform = fitSheetTo(iconRect);
+        // The form's own stroke weight, in design units because the transform scales it.
+        const float lineWidth = event.scaledStrokeWidth(Thickness::Thin) / scaleFor(iconRect);
+        const ControlPaintContext paper = paperContext(event.controlContext());
+        paintSheet(canvas, transform, lineWidth,
+            paper.surfaceRgb(),
+            paper.textRgb(InkGrade::Subtle),
+            paper.inkRgb(InkWell::textInk(k_foldShare)));
+
+        const float iconSide = std::min(iconRect.width(), iconRect.height());
+        if (iconSide / event.controlContext().scaleFactor() < k_smallIconSize)
+        {
+            paintArrow(canvas, fitArrowTo(transform, k_smallArrow));
+            return;
+        }
+
+        // The keywords keep the hue CodeBox gives them, softened to sit with the body lines.
+        const Color keywordInk = paper.inkRgb(InkWell::blueInk(InkGrade::Muted));
+        paintBars(canvas, transform, k_keywordBars, keywordInk);
+        paintBars(canvas, transform, k_bodyBars, paper.textRgb(InkGrade::Subtle));
+        paintArrow(canvas, fitArrowTo(transform, k_tileArrow));
     }
 
     namespace
@@ -283,6 +319,39 @@ namespace ThisApp::AppIcon
             return { scale, 0.0f, 0.0f, scale, left, top };
         }
 
+        // The app mark's Run arrow laid onto the sheet's design square at the place given.
+        Matrix3x2 fitArrowTo(const Matrix3x2& sheet, const ArrowPlace& place)
+        {
+            const float scale = place.side / (k_arrow[2].y - k_arrow[0].y);
+            const float left = place.topLeft.x - k_arrow[0].x * scale;
+            const float top = place.topLeft.y - k_arrow[0].y * scale;
+            return {
+                sheet.a * scale, 0.0f,
+                0.0f, sheet.d * scale,
+                sheet.e + left * sheet.a,
+                sheet.f + top * sheet.d
+            };
+        }
+
+        // The sheet is white whatever the theme, so its inks are the theme's light side on white.
+        ControlPaintContext paperContext(const ControlPaintContext& host)
+        {
+            ControlPaintContext result = host;
+            result.lightness = k_lightLightness;
+            result.surfaceHsl = {
+                host.textHsl.hue,
+                0.0f,
+                luminosityOf(0.0f, k_lightLightness)
+            };
+            result.textHsl = {
+                host.textHsl.hue,
+                host.textHsl.saturation,
+                luminosityOf(1.0f, k_lightLightness)
+            };
+            result.surface = result.surfaceHsl.toColor();
+            return result;
+        }
+
         void addRoundedQuad(PixelPath& path, const Corners& corners, const CornerRadii& radii)
         {
             bool started = false;
@@ -336,22 +405,105 @@ namespace ThisApp::AppIcon
             path.close();
         }
 
+        // Each corner turned on a circular arc of its radius; a radius of zero leaves it square.
+        void addRoundedPolygon(PixelPath& path, const std::span<const FloatPoint> corners,
+            const std::span<const float> radii)
+        {
+            const std::size_t count = corners.size();
+            for (std::size_t index = 0; index < count; ++index)
+            {
+                const FloatPoint previous = corners[(index + count - 1) % count];
+                const FloatPoint corner = corners[index];
+                const FloatPoint next = corners[(index + 1) % count];
+                const float previousLength = std::hypot(previous.x - corner.x,
+                    previous.y - corner.y);
+                const float nextLength = std::hypot(next.x - corner.x, next.y - corner.y);
+                const bool square = radii[index] < k_epsilon
+                    || previousLength < k_epsilon
+                    || nextLength < k_epsilon;
+                if (square)
+                {
+                    if (index == 0)
+                        path.moveTo(corner);
+                    else
+                        path.lineTo(corner);
+                    continue;
+                }
+
+                const FloatPoint toPrevious = {
+                    (previous.x - corner.x) / previousLength,
+                    (previous.y - corner.y) / previousLength
+                };
+                const FloatPoint toNext = {
+                    (next.x - corner.x) / nextLength,
+                    (next.y - corner.y) / nextLength
+                };
+                const float cosine = std::clamp(toPrevious.x * toNext.x + toPrevious.y * toNext.y,
+                    -1.0f, 1.0f);
+                const float angle = std::acos(cosine);
+                const float halfTangent = std::tan(angle * 0.5f);
+                // Where the arc meets each side, never past the side's middle.
+                const float room = std::min(previousLength, nextLength) * 0.5f;
+                const float cut = std::min(radii[index] / halfTangent, room);
+                const float radius = cut * halfTangent;
+                // How far each control leans back along its side for one cubic to trace the arc.
+                const float turn = std::numbers::pi_v<float> - angle;
+                const float pull = 4.0f / 3.0f * std::tan(turn * 0.25f) * radius;
+
+                const FloatPoint entry = {
+                    corner.x + toPrevious.x * cut,
+                    corner.y + toPrevious.y * cut
+                };
+                const FloatPoint exit = {
+                    corner.x + toNext.x * cut,
+                    corner.y + toNext.y * cut
+                };
+                const FloatPoint entryControl = {
+                    entry.x - toPrevious.x * pull,
+                    entry.y - toPrevious.y * pull
+                };
+                const FloatPoint exitControl = {
+                    exit.x - toNext.x * pull,
+                    exit.y - toNext.y * pull
+                };
+                if (index == 0)
+                    path.moveTo(entry);
+                else
+                    path.lineTo(entry);
+                path.cubicTo(entryControl, exitControl, exit);
+            }
+
+            path.close();
+        }
+
         void addSheet(PixelPath& path)
         {
-            path.moveTo(k_sheetLeft, k_sheetTop);
-            path.lineTo(k_sheetRight - k_fold, k_sheetTop);
-            path.lineTo(k_sheetRight, k_sheetTop + k_fold);
-            path.lineTo(k_sheetRight, k_sheetBottom);
-            path.lineTo(k_sheetLeft, k_sheetBottom);
-            path.close();
+            constexpr std::array<FloatPoint, 5> corners = {
+                FloatPoint{ k_sheetLeft, k_sheetTop },
+                FloatPoint{ k_sheetRight - k_fold, k_sheetTop },
+                FloatPoint{ k_sheetRight, k_sheetTop + k_fold },
+                FloatPoint{ k_sheetRight, k_sheetBottom },
+                FloatPoint{ k_sheetLeft, k_sheetBottom }
+            };
+            constexpr std::array<float, 5> radii = {
+                k_cornerRadius,
+                k_cornerRadius,
+                k_cornerRadius,
+                k_cornerRadius,
+                k_cornerRadius
+            };
+            addRoundedPolygon(path, corners, radii);
         }
 
         void addFold(PixelPath& path)
         {
-            path.moveTo(k_sheetRight - k_fold, k_sheetTop);
-            path.lineTo(k_sheetRight - k_fold, k_sheetTop + k_fold);
-            path.lineTo(k_sheetRight, k_sheetTop + k_fold);
-            path.close();
+            constexpr std::array<FloatPoint, 3> corners = {
+                FloatPoint{ k_sheetRight - k_fold, k_sheetTop },
+                FloatPoint{ k_sheetRight - k_fold, k_sheetTop + k_fold },
+                FloatPoint{ k_sheetRight, k_sheetTop + k_fold }
+            };
+            constexpr std::array<float, 3> radii = { 0.0f, k_cornerRadius, 0.0f };
+            addRoundedPolygon(path, corners, radii);
         }
 
         void addBar(PixelPath& path, const Bar& bar)
@@ -431,32 +583,34 @@ namespace ThisApp::AppIcon
             canvas.popClip();
         }
 
-        void paintSheet(Canvas& canvas, const Matrix3x2& transform, const float outlineWidth,
-            const Color paper, const Color edge, const Color fold, const Color keywordBar,
-            const Color textBar)
+        void paintSheet(Canvas& canvas, const Matrix3x2& transform, const float lineWidth,
+            const Color paper, const Color frame, const Color fold)
+        {
+            PixelPath outline;
+            addSheet(outline);
+            canvas.fillPath(outline, paper, &transform);
+
+            // Held inside the page, the fold's tips stop at the softened junctions.
+            PixelPath flap;
+            addFold(flap);
+            canvas.pushClip(outline, &transform);
+            canvas.drawPath(flap, {
+                PathDrawLayer::fill(fold),
+                PathDrawLayer::stroke(frame, lineWidth)
+            }, &transform);
+            canvas.popClip();
+
+            canvas.drawPath(outline, { PathDrawLayer::stroke(frame, lineWidth) }, &transform);
+        }
+
+        void paintBars(Canvas& canvas, const Matrix3x2& transform, const std::span<const Bar> bars,
+            const Color color)
         {
             PixelPath path;
-            addSheet(path);
-            canvas.drawPath(path, {
-                PathDrawLayer::fill(paper),
-                PathDrawLayer::stroke(edge, outlineWidth)
-            }, &transform);
+            for (const Bar& bar : bars)
+                addBar(path, bar);
 
-            path.clear();
-            addFold(path);
-            canvas.drawPath(path, {
-                PathDrawLayer::fill(fold),
-                PathDrawLayer::stroke(edge, outlineWidth)
-            }, &transform);
-
-            path.clear();
-            addBar(path, k_bars[0]);
-            canvas.drawPath(path, { PathDrawLayer::fill(keywordBar) }, &transform);
-
-            path.clear();
-            addBar(path, k_bars[1]);
-            addBar(path, k_bars[2]);
-            canvas.drawPath(path, { PathDrawLayer::fill(textBar) }, &transform);
+            canvas.fillPath(path, color, &transform);
         }
     }
 }

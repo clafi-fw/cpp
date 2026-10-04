@@ -13,6 +13,6 @@ namespace ThisApp::AppIcon
     export void paint(Canvas&, const FloatRect& bounds, Opacity);
     // The same mark shaped as a PaintIconFunc, so a control can take it as a property.
     export void paintIcon(PaintIconEvent&);
-    // A script's mark, in the inks of where it stands: a crumb, a tab, a tile.
+    // A script's mark: a white sheet with the app's Run arrow, and lines where there is room.
     export void paintScriptIcon(PaintIconEvent&);
 }
