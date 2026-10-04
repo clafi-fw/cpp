@@ -65,7 +65,7 @@ namespace ClaFi::Graphics
         inline FloatPoint bottomCenter() const { return m_bounds.bottomCenter(); }
         inline FloatPoint dimensions() const { return m_bounds.dimensions(); }
         static void fillPixelLine(Color* lineStart, std::size_t lineLength, Color);
-        void fill(Color, Opacity = 1.0f) const;
+        void fill(Color) const;
         void copyFrom(const PixelView& source) const { drawSurface(source, source.topLeft()); }
         void drawSurface(const PixelView& source, const FloatPoint& destPos) const;
         // The same placement as drawSurface, with each source pixel mixed into what is already

@@ -54,28 +54,28 @@ namespace ClaFi::Graphics::Cpu
     public:
         explicit PixelPathPainter(const PixelView& surface) : m_surface{ surface } {}
 
-        void drawPath(const PixelPath& path, std::span<const PathDrawLayer> layers, const Matrix3x2* transform = nullptr, Opacity globalOpacity = 1.0f);
-        void drawPath(const PixelPath& path, std::span<const PathDrawLayer> layers, const Matrix3x2& transform, Opacity globalOpacity = 1.0f);
+        void drawPath(const PixelPath& path, std::span<const PathDrawLayer> layers, const Matrix3x2* transform = nullptr);
+        void drawPath(const PixelPath& path, std::span<const PathDrawLayer> layers, const Matrix3x2& transform);
 
-        void drawPath(const PixelPath& path, std::initializer_list<PathDrawLayer> layers, const Matrix3x2* transform = nullptr, Opacity globalOpacity = 1.0f)
+        void drawPath(const PixelPath& path, std::initializer_list<PathDrawLayer> layers, const Matrix3x2* transform = nullptr)
         {
-            drawPath(path, std::span<const PathDrawLayer>{ layers.begin(), layers.end() }, transform, globalOpacity);
+            drawPath(path, std::span<const PathDrawLayer>{ layers.begin(), layers.end() }, transform);
         }
 
-        void drawPath(const PixelPath& path, std::initializer_list<PathDrawLayer> layers, const Matrix3x2& transform, Opacity globalOpacity = 1.0f)
+        void drawPath(const PixelPath& path, std::initializer_list<PathDrawLayer> layers, const Matrix3x2& transform)
         {
-            drawPath(path, std::span<const PathDrawLayer>{ layers.begin(), layers.end() }, & transform, globalOpacity);
+            drawPath(path, std::span<const PathDrawLayer>{ layers.begin(), layers.end() }, & transform);
         }
 
         // Single-layer convenience overloads (zero allocation) [CP]
-        void drawPath(const PixelPath& path, const PathDrawLayer& layer, const Matrix3x2* transform = nullptr, Opacity globalOpacity = 1.0f)
+        void drawPath(const PixelPath& path, const PathDrawLayer& layer, const Matrix3x2* transform = nullptr)
         {
-            drawPath(path, std::span<const PathDrawLayer>{ &layer, 1 }, transform, globalOpacity);
+            drawPath(path, std::span<const PathDrawLayer>{ &layer, 1 }, transform);
         }
 
-        void drawPath(const PixelPath& path, const PathDrawLayer& layer, const Matrix3x2& transform, Opacity globalOpacity = 1.0f)
+        void drawPath(const PixelPath& path, const PathDrawLayer& layer, const Matrix3x2& transform)
         {
-            drawPath(path, std::span<const PathDrawLayer>{ &layer, 1 }, & transform, globalOpacity);
+            drawPath(path, std::span<const PathDrawLayer>{ &layer, 1 }, & transform);
         }
 
         void setClipPath(const PixelPath& path, const Matrix3x2* transform = nullptr);
@@ -336,7 +336,7 @@ namespace ClaFi::Graphics::Cpu
 
     // --- Implementation of PixelPathPainter ---
 
-    void PixelPathPainter::drawPath(const PixelPath& path, std::span<const PathDrawLayer> layers, const Matrix3x2* transform, Opacity globalOpacity)
+    void PixelPathPainter::drawPath(const PixelPath& path, std::span<const PathDrawLayer> layers, const Matrix3x2* transform)
     {
         if (path.isEmpty() || layers.empty()) return;
 
@@ -408,13 +408,13 @@ namespace ClaFi::Graphics::Cpu
 
             // The glow's spread follows this painter's own scale factor rather than the
             // transform's, which is why it is passed separately.
-            m_rasterBuffers.composite(effectSurface, layer.brush, globalOpacity, transform, scaleFactor);
+            m_rasterBuffers.composite(effectSurface, layer.brush, transform, scaleFactor);
         }
     }
 
-    void PixelPathPainter::drawPath(const PixelPath& path, std::span<const PathDrawLayer> layers, const Matrix3x2& transform, Opacity globalOpacity)
+    void PixelPathPainter::drawPath(const PixelPath& path, std::span<const PathDrawLayer> layers, const Matrix3x2& transform)
     {
-        drawPath(path, layers, &transform, globalOpacity);
+        drawPath(path, layers, &transform);
     }
 
     void PixelPathPainter::setClipPath(const PixelPath& path, const Matrix3x2* transform)

@@ -50,7 +50,6 @@ namespace ClaFi::Graphics::Cpu
         void composite(
             const PixelView& target,
             const Brush& brush,
-            Opacity opacity,
             const Matrix3x2* brushTransform = nullptr,
             float glowSpreadScale = 1.0f,
             bool useOwnMask = true
@@ -70,7 +69,7 @@ namespace ClaFi::Graphics::Cpu
         std::vector<BakedPathPoint> m_worldPoints;
         std::vector<BakedPathPoint> m_bakedPointsCache;
     private:
-        void compositeSolid(const PixelView&, Color color, float opacity);
+        void compositeSolid(const PixelView&, Color color);
         static void buildGradientRamp(std::span<const GradientStop> stops, ColorAsUint* ramp);
 
         static void compositeGradient(
@@ -78,7 +77,6 @@ namespace ClaFi::Graphics::Cpu
             FloatPoint startPoint,
             FloatPoint endPoint,
             std::span<const GradientStop> stops,
-            Opacity opacity,
             const float* maskBase = nullptr,
             int maskStride = 0
         );

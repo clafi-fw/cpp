@@ -355,13 +355,13 @@ namespace ClaFi::Graphics::Cpu
     void CpuBackend::fillRectangle(const FloatRect& rect, const Brush& brush)
     {
         RectPainter painter{ getActiveView() };
-        painter.paintSolid(mapRect(rect), brush, 1.0f, &m_transform);
+        painter.paintSolid(mapRect(rect), brush, &m_transform);
     }
 
     void CpuBackend::drawRectangle(const FloatRect& rect, const Brush& brush, float strokeWidth)
     {
         RectPainter painter{ getActiveView() };
-        painter.paintBorder(mapRect(rect), brush, mapLength(strokeWidth), 1.0f, &m_transform);
+        painter.paintBorder(mapRect(rect), brush, mapLength(strokeWidth), &m_transform);
     }
 
     void CpuBackend::fillRoundedRectangle(const FloatRect& rect, float rx, float ry, const Brush& brush)
@@ -415,14 +415,14 @@ namespace ClaFi::Graphics::Cpu
     bool CpuBackend::fillPartialRoundedRectangle(const RoundedRectangleParts& parts, const Brush& brush)
     {
         RoundedRectPainter painter{ getActiveView() };
-        painter.fillPartial(mapParts(parts), brush, 1.0f, &m_transform);
+        painter.fillPartial(mapParts(parts), brush, &m_transform);
         return true;
     }
 
     bool CpuBackend::drawPartialRoundedRectangle(const RoundedRectangleParts& parts, const Brush& brush, float strokeWidth)
     {
         RoundedRectPainter painter{ getActiveView() };
-        painter.drawPartial(mapParts(parts), brush, mapLength(strokeWidth), 1.0f, &m_transform);
+        painter.drawPartial(mapParts(parts), brush, mapLength(strokeWidth), &m_transform);
         return true;
     }
 

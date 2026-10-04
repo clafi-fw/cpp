@@ -10,13 +10,8 @@ import ClaFi.StdLib;
 namespace ClaFi::Graphics::Cpu
 {
 
-    void RectPainter::paintSolid(const FloatRect& rect, const Brush& brush, float opacity, const Matrix3x2* brushTransform)
+    void RectPainter::paintSolid(const FloatRect& rect, const Brush& brush, const Matrix3x2* brushTransform)
     {
-        if (opacity <= 0.0f)
-        {
-            return;
-        }
-
         FloatRect boundary = rect;
         boundary.intersectWith(m_pixelView.clippedBounds());
         if (boundary.empty())
@@ -51,7 +46,7 @@ namespace ClaFi::Graphics::Cpu
                 return;
             }
 
-            const float finalAlpha = (color.alpha / 255.0f) * opacity;
+            const float finalAlpha = color.alpha / 255.0f;
             std::intptr_t stride = m_pixelView.stride();
 
             if (finalAlpha >= 0.999f)
@@ -122,7 +117,7 @@ namespace ClaFi::Graphics::Cpu
                 return;
             }
 
-            const float baseAlpha = (color.alpha / 255.0f) * opacity;
+            const float baseAlpha = color.alpha / 255.0f;
             std::intptr_t stride = m_pixelView.stride();
 
             Color* scanLine = m_pixelView.pixelAbs(static_cast<float>(startX), static_cast<float>(startY), false);
@@ -194,20 +189,20 @@ namespace ClaFi::Graphics::Cpu
             // buffers only for the entry point - a solid brush stays the no-op it has always been
             // here, because it is handled by the fast path above.
             float glowSpreadScale = brushTransform ? brushTransform->getScaleFactor() : 1.0f;
-            g_rasterBuffers.composite(targetView, brush, opacity, brushTransform, glowSpreadScale, false);
+            g_rasterBuffers.composite(targetView, brush, brushTransform, glowSpreadScale, false);
         }
     }
 
-    void RectPainter::paintBorder(const FloatRect& rect, const Brush& brush, float borderWidth, float opacity, const Matrix3x2* brushTransform)
+    void RectPainter::paintBorder(const FloatRect& rect, const Brush& brush, float borderWidth, const Matrix3x2* brushTransform)
     {
-        if (borderWidth <= 0.0f || opacity <= 0.0f)
+        if (borderWidth <= 0.0f)
         {
             return;
         }
 
-        paintSolid({ rect.left, rect.top, rect.right, rect.top + borderWidth }, brush, opacity, brushTransform);
-        paintSolid({ rect.left, rect.bottom - borderWidth, rect.right, rect.bottom }, brush, opacity, brushTransform);
-        paintSolid({ rect.left, rect.top + borderWidth, rect.left + borderWidth, rect.bottom - borderWidth }, brush, opacity, brushTransform);
-        paintSolid({ rect.right - borderWidth, rect.top + borderWidth, rect.right, rect.bottom - borderWidth }, brush, opacity, brushTransform);
+        paintSolid({ rect.left, rect.top, rect.right, rect.top + borderWidth }, brush, brushTransform);
+        paintSolid({ rect.left, rect.bottom - borderWidth, rect.right, rect.bottom }, brush, brushTransform);
+        paintSolid({ rect.left, rect.top + borderWidth, rect.left + borderWidth, rect.bottom - borderWidth }, brush, brushTransform);
+        paintSolid({ rect.right - borderWidth, rect.top + borderWidth, rect.right, rect.bottom - borderWidth }, brush, brushTransform);
     }
 }

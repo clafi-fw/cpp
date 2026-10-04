@@ -13,7 +13,7 @@ namespace ClaFi::Graphics::Cpu
     public:
         using PainterBase::PainterBase;
     public:
-        void fillPartial(const RoundedRectangleParts& parts, const Brush& brush, float opacity = 1.0f, const Matrix3x2* brushTransform = nullptr);
-        void drawPartial(const RoundedRectangleParts& parts, const Brush& brush, float borderWidth, float opacity = 1.0f, const Matrix3x2* brushTransform = nullptr);
+        void fillPartial(const RoundedRectangleParts& parts, const Brush& brush, const Matrix3x2* brushTransform = nullptr);
+        void drawPartial(const RoundedRectangleParts& parts, const Brush& brush, float borderWidth, const Matrix3x2* brushTransform = nullptr);
     };
 }

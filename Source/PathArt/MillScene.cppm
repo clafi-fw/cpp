@@ -17,6 +17,9 @@ namespace ClaFi::PathArt
     using namespace ::ClaFi::Graphics;
     using namespace ::ClaFi::Graphics::Cpu;
 
+    // The colour at a share of its own alpha.
+    [[nodiscard]] Color faded(Color color, float share);
+
     export class MillScene
     {
     public:
@@ -165,11 +168,10 @@ namespace ClaFi::PathArt
         FloatPoint reflectPos = { m_offset.x + m_sunPos.x, riverBounds.center().y };
         canvas.fillRectangle(riverBounds, PointGlow{
             .lightPos = reflectPos,
-            .lightColor = m_theme.sunGlow,
+            .lightColor = faded(m_theme.sunGlow, 0.2f),
             .lightSpread = 66.0f * m_objectsScale,
             .xRatio = 1.3f,
-            .shape = GlowShape::Circle,
-            .opacity = 0.2f
+            .shape = GlowShape::Circle
             });
 
         drawWaterLily(canvas, m_offset.x + w * 0.2f, riverBounds.top + 40.0f * m_objectsScale, m_objectsScale, t);
@@ -197,11 +199,10 @@ namespace ClaFi::PathArt
         // river fog
         canvas.fillRectangle(bounds, PointGlow{
             .lightPos = riverBounds.topCenter() + FloatPoint{ 0.0f, 20.0f * m_objectsScale },
-            .lightColor = m_theme.cloud,
+            .lightColor = faded(m_theme.cloud, 0.33f),
             .lightSpread = 60.0f * m_objectsScale,
             .xRatio = 0.08f,
-            .shape = GlowShape::Circle,
-            .opacity = 0.33f
+            .shape = GlowShape::Circle
             });
     }
 
@@ -258,8 +259,7 @@ namespace ClaFi::PathArt
                 .lightColor = m_theme.sunGlow,
                 .lightSpread = 166.0f * m_objectsScale,
                 .xRatio = 0.5f,
-                .shape = GlowShape::Circle,
-                .opacity = 1.0f
+                .shape = GlowShape::Circle
             })
             });
 
@@ -301,6 +301,12 @@ namespace ClaFi::PathArt
 
     // --- Utils ---
 
+    Color faded(Color color, float share)
+    {
+        color.alpha = static_cast<ColorByte>(std::lround(color.alpha * share));
+        return color;
+    }
+
     float MillScene::pseudoRand(int i, float shift)
     {
         return std::fmod(std::abs(std::sin((float)i * 12.9898f + shift)) * 43758.5453f, 1.0f);
@@ -318,11 +324,10 @@ namespace ClaFi::PathArt
         FloatRect shadowRect = { x - (r / 0.5f), y - r, x + (r / 0.5f), y + r };
         canvas.fillRectangle(shadowRect, PointGlow{
             .lightPos = { x, y },
-            .lightColor = m_theme.shadow,
+            .lightColor = faded(m_theme.shadow, 0.3f),
             .lightSpread = r,
             .xRatio = 0.5f,
-            .shape = GlowShape::Circle,
-            .opacity = 0.3f
+            .shape = GlowShape::Circle
             });
     }
 
@@ -1019,11 +1024,10 @@ namespace ClaFi::PathArt
 
                 canvas.fillRectangle({ pos.x - gS, pos.y - gS, pos.x + gS, pos.y + gS }, PointGlow{
                     .lightPos = pos,
-                    .lightColor = m_theme.effectColor2,
+                    .lightColor = faded(m_theme.effectColor2, 0.5f * opacity),
                     .lightSpread = gS,
                     .xRatio = 1.0f,
-                    .shape = GlowShape::Circle,
-                    .opacity = 0.5f * opacity
+                    .shape = GlowShape::Circle
                     });
 
                 PixelPath path;

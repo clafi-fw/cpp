@@ -193,6 +193,6 @@ namespace ClaFi::Graphics::Cpu
             }
         }
 
-        g_rasterBuffers.composite(target, brush, 1.0f);
+        g_rasterBuffers.composite(target, brush);
     }
 }

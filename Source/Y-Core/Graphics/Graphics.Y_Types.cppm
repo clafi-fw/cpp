@@ -133,7 +133,6 @@ namespace ClaFi::Graphics
         float lightSpread;
         float xRatio{ 1.0f };
         GlowShape shape{ GlowShape::Circle };
-        float opacity{ 1.0f };
         bool operator==(const PointGlow&) const = default;
     };
 

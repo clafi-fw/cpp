@@ -458,7 +458,7 @@ namespace ClaFi::Graphics::Cpu
         }
     }
 
-    void RasterBuffers::composite(const PixelView& target, const Brush& brush, Opacity opacity,
+    void RasterBuffers::composite(const PixelView& target, const Brush& brush,
         const Matrix3x2* brushTransform, float glowSpreadScale, bool useOwnMask)
     {
         const float* maskBase = useOwnMask ? mask.data() : nullptr;
@@ -471,13 +471,13 @@ namespace ClaFi::Graphics::Cpu
             {
                 if (!useOwnMask)
                     return;
-                compositeSolid(target, brushArg.color, opacity);
+                compositeSolid(target, brushArg.color);
             }
             else if constexpr (std::is_same_v<T, LinearGradient>)
             {
                 FloatPoint worldStart = brushTransform ? brushTransform->transform(brushArg.startPoint) : brushArg.startPoint;
                 FloatPoint worldEnd = brushTransform ? brushTransform->transform(brushArg.endPoint) : brushArg.endPoint;
-                compositeGradient(target, worldStart, worldEnd, brushArg.stops, opacity, maskBase, maskStride);
+                compositeGradient(target, worldStart, worldEnd, brushArg.stops, maskBase, maskStride);
             }
             else if constexpr (std::is_same_v<T, PointGlow>)
             {
@@ -487,17 +487,16 @@ namespace ClaFi::Graphics::Cpu
                     glowParams.lightPos = brushTransform->transform(glowParams.lightPos);
                 }
                 glowParams.lightSpread *= glowSpreadScale;
-                glowParams.opacity *= opacity;
                 compositePointGlow(target, glowParams, maskBase, maskStride);
             }
             // RadialGradient has no CPU path yet, and had none at any of the call sites either.
         }, brush);
     }
 
-    void RasterBuffers::compositeSolid(const PixelView& surface, Color color, float opacity)
+    void RasterBuffers::compositeSolid(const PixelView& surface, Color color)
     {
         SimdEnv env;
-        const __m256 vBaseAlpha = _mm256_set1_ps((color.alpha / 255.0f) * opacity);
+        const __m256 vBaseAlpha = _mm256_set1_ps(color.alpha / 255.0f);
         const __m256i vColorSimd = _mm256_set1_epi32(color.fullyOpaque().asUint());
         const bool useClip = hasActiveClip;
 
@@ -616,7 +615,7 @@ namespace ClaFi::Graphics::Cpu
     }
 
     void RasterBuffers::compositeGradient(const PixelView& target, FloatPoint startPoint,
-        FloatPoint endPoint, std::span<const GradientStop> stops, Opacity opacity,
+        FloatPoint endPoint, std::span<const GradientStop> stops,
         const float* maskBase, int maskStride)
     {
         FloatPoint axis = {
@@ -644,7 +643,6 @@ namespace ClaFi::Graphics::Cpu
         const __m256 v256 = _mm256_set1_ps(256.0f);
 
         const __m256 vAlphaNorm = _mm256_set1_ps(256.0f / 255.0f);
-        const __m256 vGlobalOpacity = _mm256_set1_ps(opacity);
         const __m256i vOpaqueMask = _mm256_set1_epi32(0xFF000000);
 
         // A kilobyte on the stack, built once per call. The inner loop reads it with a single
@@ -726,8 +724,7 @@ namespace ClaFi::Graphics::Cpu
 
                 __m256 vColorAlphaF = _mm256_cvtepi32_ps(_mm256_srli_epi32(vSrcColors, 24));
                 __m256i vWeightI = _mm256_cvtps_epi32(_mm256_mul_ps(vColorAlphaF,
-                    _mm256_mul_ps(vAlphaNorm,
-                        _mm256_mul_ps(vPathAlpha, vGlobalOpacity))));
+                    _mm256_mul_ps(vAlphaNorm, vPathAlpha)));
 
                 if (_mm256_movemask_epi8(_mm256_cmpeq_epi32(vWeightI, _mm256_setzero_si256())) != 0xFFFFFFFF)
                 {
@@ -747,7 +744,7 @@ namespace ClaFi::Graphics::Cpu
 
     void RasterBuffers::compositePointGlow(const PixelView& view, const PointGlow& p, const float* maskBase, int maskStride)
     {
-        if (p.lightSpread <= 0.0f || p.opacity <= 0.0f)
+        if (p.lightSpread <= 0.0f || p.lightColor.alpha == 0)
         {
             return;
         }
@@ -770,7 +767,7 @@ namespace ClaFi::Graphics::Cpu
 
         SimdEnv env;
         const __m256 vLightX = _mm256_set1_ps(p.lightPos.x);
-        const __m256 vFactor = _mm256_set1_ps(p.opacity * (p.lightColor.alpha / 255.0f));
+        const __m256 vFactor = _mm256_set1_ps(p.lightColor.alpha / 255.0f);
         const __m256i vColor = _mm256_set1_epi32(p.lightColor.fullyOpaque().asUint());
 
         // --- HOIST LOOP MULTIPLIER --- [CP]

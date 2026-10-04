@@ -99,7 +99,7 @@ namespace ClaFi::Graphics::Cpu
 
         if (canUseFastPath)
         {
-            paintDirectCircle(boundary, m_opacity);
+            paintDirectCircle(boundary);
             return;
         }
 
@@ -113,14 +113,14 @@ namespace ClaFi::Graphics::Cpu
         {
             g_rasterBuffers.prepareForEffect(boundaryWidth, boundaryHeight, true);
             rasterizeCircleMask(false, boundary, g_rasterBuffers.mask.data(), g_rasterBuffers.m_maskStride);
-            compositeBrush(m_pixelView.subView(boundary), m_backGroundColor, m_opacity, brushTransform);
+            compositeBrush(m_pixelView.subView(boundary), m_backGroundColor, brushTransform);
         }
 
         if (hasBorder)
         {
             g_rasterBuffers.prepareForEffect(boundaryWidth, boundaryHeight, true);
             rasterizeCircleMask(true, boundary, g_rasterBuffers.mask.data(), g_rasterBuffers.m_maskStride);
-            compositeBrush(m_pixelView.subView(boundary), m_borderColor, m_opacity, brushTransform);
+            compositeBrush(m_pixelView.subView(boundary), m_borderColor, brushTransform);
         }
     }
 
@@ -131,7 +131,6 @@ namespace ClaFi::Graphics::Cpu
         m_borderWidth = borderWidth;
         m_borderColor = borderBrush;
         m_backGroundColor = SolidColor{ Color{} };
-        m_opacity = 1.0f;
         m_corner = Corner::None;
 
         initBoundary();
@@ -145,14 +144,13 @@ namespace ClaFi::Graphics::Cpu
         m_borderWidth = 0.0f;
         m_borderColor = SolidColor{ Color{} };
         m_backGroundColor = bgColor;
-        m_opacity = 1.0f;
         m_corner = Corner::None;
 
         initBoundary();
         paint(brushTransform);
     }
 
-    void CirclePainter::paintDirectCircle(const FloatRect& boundary, float opacity)
+    void CirclePainter::paintDirectCircle(const FloatRect& boundary)
     {
         int startX = static_cast<int>(std::floor(boundary.left));
         int endX = static_cast<int>(std::ceil(boundary.right));
@@ -170,8 +168,8 @@ namespace ClaFi::Graphics::Cpu
         Color bgColor = hasBg ? std::get<SolidColor>(m_backGroundColor).color : Color{};
         Color borderColor = hasBorder ? std::get<SolidColor>(m_borderColor).color : Color{};
 
-        const float bgAlphaScale = (bgColor.alpha / 255.0f) * opacity;
-        const float borderAlphaScale = (borderColor.alpha / 255.0f) * opacity;
+        const float bgAlphaScale = bgColor.alpha / 255.0f;
+        const float borderAlphaScale = borderColor.alpha / 255.0f;
 
         const __m256i vBgColorSimd = _mm256_set1_epi32(bgColor.fullyOpaque().asUint());
         const __m256i vBorderColorSimd = _mm256_set1_epi32(borderColor.fullyOpaque().asUint());
@@ -344,9 +342,9 @@ namespace ClaFi::Graphics::Cpu
         }
     }
 
-    void CirclePainter::compositeBrush(const PixelView& target, const Brush& brush, float opacity, const Matrix3x2* brushTransform)
+    void CirclePainter::compositeBrush(const PixelView& target, const Brush& brush, const Matrix3x2* brushTransform)
     {
         float glowSpreadScale = brushTransform ? brushTransform->getScaleFactor() : 1.0f;
-        g_rasterBuffers.composite(target, brush, opacity, brushTransform, glowSpreadScale);
+        g_rasterBuffers.composite(target, brush, brushTransform, glowSpreadScale);
     }
 }

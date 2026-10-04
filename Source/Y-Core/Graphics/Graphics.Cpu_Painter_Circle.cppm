@@ -30,9 +30,6 @@ namespace ClaFi::Graphics::Cpu
         void setBackgroundColor(const Brush& value) { m_backGroundColor = value; }
         void setBackgroundColor(Color value) { m_backGroundColor = SolidColor{ value }; }
 
-        [[nodiscard]] float opacity() const { return m_opacity; }
-        void setOpacity(float value) { m_opacity = value; }
-
         void initBoundary();
         void initBoundary(Corner);
         void paint(const Matrix3x2* brushTransform = nullptr);
@@ -52,9 +49,9 @@ namespace ClaFi::Graphics::Cpu
         }
 
     private:
-        void paintDirectCircle(const FloatRect& boundary, float opacity);
+        void paintDirectCircle(const FloatRect& boundary);
         void rasterizeCircleMask(bool isRing, const FloatRect& bounds, float* mask, int stride);
-        static void compositeBrush(const PixelView& target, const Brush& brush, float opacity, const Matrix3x2* brushTransform);
+        static void compositeBrush(const PixelView& target, const Brush& brush, const Matrix3x2* brushTransform);
 
     private:
         FloatRect m_boundingBox;
@@ -63,7 +60,6 @@ namespace ClaFi::Graphics::Cpu
         float m_borderWidth{};
         Brush m_borderColor{ SolidColor{Color{}} };
         Brush m_backGroundColor{ SolidColor{Color{}} };
-        float m_opacity{ 1.0f };
         Corner m_corner{ Corner::None };
     };
 }

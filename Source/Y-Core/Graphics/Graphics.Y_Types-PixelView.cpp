@@ -67,7 +67,7 @@ namespace ClaFi::Graphics
 #endif
     }
 
-    void PixelView::fill(Color color, Opacity opacity) const
+    void PixelView::fill(Color color) const
     {
         // Rounding the clip out covers the edge pixels it only partly reaches. Meeting that
         // against the owned pixels is what keeps the expansion from writing past the
@@ -77,8 +77,6 @@ namespace ClaFi::Graphics
         {
             return;
         }
-
-        color.alpha = static_cast<ColorByte>(color.alpha * opacity);
 
         int width = area.width();
         Color* firstLinePtr = scanLineAbs(static_cast<float>(area.left), static_cast<float>(area.top));

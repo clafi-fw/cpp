@@ -127,7 +127,6 @@ namespace ClaFi::PlatformImplementation::Windows
                 combineFloat(arg.lightSpread);
                 combineFloat(arg.xRatio);
                 hashValue = hashValue * 31 + static_cast<std::size_t>(arg.shape);
-                combineFloat(arg.opacity);
             }
         }, brush);
 
