@@ -241,10 +241,15 @@ go of and does nothing.
 
 ## InformationPage
 
-The Information page of the application menu: the application's name, its version and publisher
-under it, the application's own site as a link, what the application does, the framework the
-application is built with, and the framework's address as a link. Under the text, a button asks
-whether a newer version is published.
+The Information page of the application menu. From the top: the application's name with its
+version at the far end of the same line; the update row - what the update check found, and a
+button asking it - with a line under it; then the publisher, the application's own site as a
+link, what the application does, the framework the application is built with, and the
+framework's address as a link.
+
+THE VERSION ENDS THE NAME'S LINE. Both are one paragraph, the version after a FlexSpace, so they
+share a baseline and the version stands at the line's far end, where the update button stands
+in the row under it. The FlexSpace keeps a gap between them on a line with nothing to spare.
 
 THE APPLICATION'S OWN SITE STANDS UNDER THE PUBLISHER. AppParams::site states the address and
 AppContext::site keeps it; the page links it and shows it without its scheme, the way the
@@ -267,26 +272,46 @@ sentence around it left in the text.
 THE PAGE STATES HOW LONG ITS LINES RUN. The backstage is as wide as its widest page - see
 PageSizing::WidestPage - and a text with no maximum is measured one line per paragraph, so an
 unbounded description would widen the menu to fit it on one line. A maximum width breaks it into
-lines there instead. The page is Left-aligned beside that maximum, because a maximum on a Fill
-axis is a caller error - see Control::align.
+lines there instead. The text under the line is Left-aligned beside that maximum, because a
+maximum on a Fill axis is a caller error - see Control::align. The name's line and the update row
+are one line each and state no maximum: they Fill, so they span the page whatever its width.
 
-THE TEXT IS A READ-ONLY TEXT BOX, the way a message dialog's text is, because a text box is what
-follows a link: the address underlines under the pointer and opens on a click. The rest comes
-with it - the text takes the focus, shows a caret, and can be selected and copied. The page
-itself is a vertical StackPanel holding that box and the update button. The stack carries the
-page's padding, so the name starts where a page of options starts.
+EVERY TEXT ON THE PAGE IS A READ-ONLY TEXT BOX, the way a message dialog's text is, because a
+text box is what follows a link: the address underlines under the pointer and opens on a click.
+The rest comes with it - the text takes the focus, shows a caret, and can be selected and copied.
+The page itself is a vertical StackPanel holding the name's line, the update row, a Divider and
+the text. The stack carries the page's padding, so the name starts where a page of options
+starts.
 
-THE BUTTON ASKS WHETHER A NEWER VERSION IS OUT, AND THE ANSWER IS TEXT. Check for updates stands
-under the text wherever AppContext::updateCheck is available - the application states a
-major.minor.patch version and AppParams::updates names a repository. A press starts the check and
-greys the button until it answers. Then the button goes and the version line carries the answer:
-"you have the latest version", or a line under it naming the newer version and linking its
-release page. A check that got no answer says so on the version line and keeps the button, as
-Try again.
+THE UPDATE ROW STANDS WHEREVER AppContext::updateCheck IS AVAILABLE - the application states a
+major.minor.patch version and AppParams::updates names a repository. Where it is not, the page
+has neither the row nor the Divider under it. The row is a horizontal StackPanel: the status on
+the left, a FlexSpacer, and the button at the end, both centred down the row.
 
-THE CHECK OUTLIVES THE PAGE. It is AppContext's, and the page is built again each time the menu
-opens, so a check still running when the menu closes is answered all the same and the next page
-reads what it found. The page holds its connection to the check's event in a
+THE STATUS SAYS WHAT THE CHECK FOUND, and the button stays whatever it found:
+
+- Unchecked - no status at all, only the button. This is the state of an application that has
+  never had an answer.
+- Checking - "Checking for updates…", with the button greyed until the answer arrives.
+- Latest - "You're up to date".
+- Newer - "Version 0.2.0 is out".
+- Failed - "Could not check for updates", and the button reads Try again.
+
+Under the status, in the SubBody style, "last check:" and how long ago the last answer arrived -
+"just now", then minutes, hours and days. A newer release names its page there instead, as a
+link reading Release page on GitHub: the address in full runs under the button at the page's
+usual width. A Failed or Checking status keeps the age of the last answer that did arrive; one
+that never did has no line under it.
+
+THE AGE IS WORKED OUT WHEN THE PAGE IS BUILT AND WHEN THE CHECK MOVES. The page is built each
+time the menu opens, so the age is current on every opening; it does not tick while the menu
+stays open.
+
+THE CHECK OUTLIVES THE PAGE, AND THE ANSWER OUTLIVES THE RUN. The check is AppContext's, and the
+page is built again each time the menu opens, so a check still running when the menu closes is
+answered all the same and the next page reads what it found. The last answer is kept in the
+config, so a page opened before anything is asked in a run shows the answer an earlier run got,
+with its age - see UpdateCheck::keepIn. The page holds its connection to the check's event in a
 ScopedEventConnection, which drops with the page.
 
 THE NAME IS A TEXT, AND ITS SPELLING IS SHOWN WHEREVER THE NAME IS. The page, the title bar an

@@ -19,14 +19,15 @@ namespace ClaFi
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"InformationPage"; }
     private:
-        // The button stands while there is something to ask. See Application
-        void stateCheckButton();
-        // The update check has moved: the text and the button state what it found.
-        void showUpdateState();
+        // The row the update check answers in, and the line under it. See Application
+        void addUpdateRow();
+        // The status, the line under it and the button's caption, as the check stands now.
+        void stateUpdateRow();
     private:
-        Controls::TextBox& m_text;
-        Controls::Button& m_checkButton;
+        // Null where the check is not available, as the button is.
+        Controls::TextBox* m_status{ nullptr };
+        Controls::Button* m_checkButton{ nullptr };
         // Dropped with the page - the check outlives it, on the application's context.
-        ScopedEventConnection m_updateConnection;
+        ScopedEventConnection m_updateConnection{};
     };
 }

@@ -188,7 +188,7 @@ namespace ClaFi::Controls
         void paintText(PaintEvent&) override;
         // The placeholder while the text is empty, and the box's own layout over it for the caret.
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
-        // Room for the placeholder while the text is empty.
+        // Room for the placeholder while the text is empty, and a flex space at its floor.
         CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
         // What the layout is told when the box's text has moved. An edit reaches a paragraph or
         // two, and the rest of the document keeps the shaping it has - which is what the base's

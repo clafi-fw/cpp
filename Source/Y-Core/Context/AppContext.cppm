@@ -213,7 +213,8 @@ namespace ClaFi
         [[nodiscard]] bool crossing() const;
     private:
         // The core's own section of an application's config - see the definition.
-        [[nodiscard]] static Dom::Dt::Section coreConfigSchema(bool withGpuAcceleration);
+        [[nodiscard]] static Dom::Dt::Section coreConfigSchema(bool withGpuAcceleration,
+            bool withUpdateCheck);
         // Takes the wish the config holds and stands on the node for what follows. See Context
         void connectGpuAcceleration();
         // The application is on this kind from now on, and every window is told. See Context
@@ -223,6 +224,8 @@ namespace ClaFi
         // The application is drawn at this percent from now on, and every window is told.
         // See Context
         void stateScale(int percent);
+        // Takes the answer the config holds and keeps every later one there. See Context
+        void connectUpdateCheck();
 #if CLAFI_TEXT_MOVING
         // Takes the amount the config holds and stands on the node for what follows.
         void connectZAnimation();
@@ -234,6 +237,7 @@ namespace ClaFi
         static constexpr std::wstring_view k_colorModeNodeName = L"ColorMode";
         static constexpr std::wstring_view k_gpuAccelerationNodeName = L"GpuAcceleration";
         static constexpr std::wstring_view k_scaleNodeName = L"Scale";
+        static constexpr std::wstring_view k_updateCheckSectionName = L"UpdateCheck";
 #if CLAFI_TEXT_MOVING
         static constexpr std::wstring_view k_zAnimationNodeName = L"ZAnimation";
 #endif
@@ -331,13 +335,14 @@ namespace ClaFi
         m_config{ configPath, Dom::AutoSave::No,
             Dom::Dt::Section{
                 std::move(schema),
-                coreConfigSchema(createGpuBackend != nullptr)
+                coreConfigSchema(createGpuBackend != nullptr, m_updateCheck.available())
             },
             Dom::WriteDefaults::No
         }
     {
         connectGpuAcceleration();
         connectScale();
+        connectUpdateCheck();
 #if CLAFI_TEXT_MOVING
         connectZAnimation();
 #endif
@@ -360,13 +365,14 @@ namespace ClaFi
         m_config{ configPath, Dom::AutoSave::No,
             Dom::Dt::Section{
                 schema,
-                coreConfigSchema(createGpuBackend != nullptr)
+                coreConfigSchema(createGpuBackend != nullptr, m_updateCheck.available())
             },
             Dom::WriteDefaults::No
         }
     {
         connectGpuAcceleration();
         connectScale();
+        connectUpdateCheck();
 #if CLAFI_TEXT_MOVING
         connectZAnimation();
 #endif
@@ -384,8 +390,10 @@ namespace ClaFi
     // connectAppThemes, which is what answers a change of either.
     //
     // THE GPU NODE STANDS ONLY WHERE A GPU BACKEND DOES, so an application that has none keeps no
-    // answer to a question it cannot ask, and a file it wrote holds nothing about a backend.
-    Dom::Dt::Section AppContext::coreConfigSchema(const bool withGpuAcceleration)
+    // answer to a question it cannot ask, and a file it wrote holds nothing about a backend. The
+    // update check's section stands only where the check is available, for the same reason.
+    Dom::Dt::Section AppContext::coreConfigSchema(const bool withGpuAcceleration,
+        const bool withUpdateCheck)
     {
         Dom::Dt::Section section = {
             Dom::Dt::Value{ k_themeNodeName, std::wstring{ k_defaultThemePath } },
@@ -399,6 +407,11 @@ namespace ClaFi
         };
         if (withGpuAcceleration)
             section.append(Dom::Dt::Section{ Dom::Dt::Value{ k_gpuAccelerationNodeName, true } });
+        if (withUpdateCheck)
+        {
+            section.children.push_back(std::make_unique<Dom::Dt::Section>(
+                k_updateCheckSectionName, UpdateCheck::createConfigSchema()));
+        }
         return section;
     }
 
@@ -461,6 +474,13 @@ namespace ClaFi
             return;
         m_scalePercent = wanted;
         m_events.emit<ScaleSwitchEvent>();
+    }
+
+    void AppContext::connectUpdateCheck()
+    {
+        if (!m_updateCheck.available())
+            return;
+        m_updateCheck.keepIn(m_config.childSection(k_updateCheckSectionName));
     }
 
 #if CLAFI_TEXT_MOVING

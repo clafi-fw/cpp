@@ -344,11 +344,17 @@ namespace ClaFi::Controls
         return WithTextLayout<Label>::drawText(event, textBounds, text);
     }
 
+    // A FLEX SPACE IS MEASURED AT ITS FLOOR, in the Calculate phase the engine measures a Label's
+    // text in. The box's own layout is built for the paint, where a flex space takes the room its
+    // line has over: measured on it, the text claims the whole width it is asked at, and a
+    // measuring pass asks at an unbounded one.
     CalculatedDimensions TextBox::measureText(AlignEvent& event, ScaledDimensions asked,
         const Text& text)
     {
-        const CalculatedDimensions measured = WithTextLayout<Label>::measureText(event, asked,
-            text);
+        const CalculatedDimensions measured = text.hasFlexSpace()
+            ? textEngine().calculateText(event.formContext(), text, asked, true, wordWrap(),
+                textFormat())
+            : WithTextLayout<Label>::measureText(event, asked, text);
         if (!text.plainText().empty() || m_placeHolderText.empty())
             return measured;
 

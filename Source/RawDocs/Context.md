@@ -359,6 +359,19 @@ until start is called - the Information page calls it when its button is pressed
 application makes no request the user did not make. It lives as long as the context, which is
 what lets an answer outlive the page that asked for it.
 
+The last answer is kept in the config, under UpdateCheck, so the next run starts from it - see
+AppContext::connectUpdateCheck.
+
+## AppContext::connectUpdateCheck
+
+Hands the check its section of the config. The section stands only where the check is
+available, the way the GPU node stands only where a GPU backend does, so an application with no
+repository keeps nothing about updates. The call is made while the context is built, before the
+config is read; the stored answer arrives with the load - see UpdateCheck::keepIn.
+
+Like everything else in the config, the answer reaches the disk only where the user allowed
+storing - see AppContext::configFolderExists.
+
 ## UpdateSource
 
 Where an application's releases are published: a GitHub repository, written owner/name, and the
@@ -370,8 +383,10 @@ application that names no repository has no update check.
 ## UpdateCheckEvent
 
 Raised on every move of the state, on the UI thread: Checking when start sends the question, then
-one of Latest, Newer and Failed. A handler must not call start - start replaces the fetch whose
-done event the handler may be running inside.
+one of Latest, Newer and Failed. A stored answer read back from the config raises it as well, as
+Latest or Newer. An answer that moves nothing - the state, the newer version and the time all as
+they were - raises nothing. A handler must not call start - start replaces the fetch whose done
+event the handler may be running inside.
 
 ## UpdateCheck
 
@@ -393,3 +408,40 @@ one address, and a request past them is answered 403.
 
 The check is available where the version reads as major.minor.patch and a repository is named.
 start does nothing while a question is out.
+
+answeredAt is when the last answer arrived, to the second, in this run or an earlier one. A
+failure leaves it where it is, so after Failed it still says when an answer last arrived. It is
+none until the first answer.
+
+## UpdateCheck::createConfigSchema
+
+The section an answer is kept in, for the application's config schema: AnsweredAt and
+NewestVersion, both text. AnsweredAt is UTC to the second, written as 2026-10-04T09:20:34Z.
+NewestVersion is the newest published version as its tag spells it after the prefix, kept
+whether or not it was newer than the version running then, and empty where no tag was
+published. AppContext puts the section in the config under UpdateCheck.
+
+## UpdateCheck::keepIn
+
+Takes a section built from createConfigSchema. The check reads the answer the section holds,
+and writes every later answer into it.
+
+THE SECTION'S OWN CHANGE IS WHAT A STORED ANSWER ARRIVES ON. The config is read after the
+context is built, and a document load is one transaction, so the section is told once, with both
+values in. keepIn also reads the section at once, so a section that was loaded before it was
+handed over is read as well.
+
+An answer is written the same way: both values in one transaction, so the handler never reads a
+new time beside the previous answer's version. The handler and the answer's own path reach the
+same state, and the second one moves nothing - see takeAnswer.
+
+A value that does not read - a time not spelled the way the check writes it, a date that does
+not exist - is no answer, and the state stays Unchecked. The config is text the user is free to
+edit.
+
+## UpdateCheck::takeAnswer
+
+The state an answer makes. The newest version is compared against the version running now, not
+the one that ran when the answer arrived: an update installed since then reads as Latest, and a
+version running ahead of every tag counts as the latest too. Nothing is raised where the answer
+moves nothing.
