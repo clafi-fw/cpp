@@ -116,7 +116,8 @@ namespace ClaFi::PlatformImplementation::Windows
         };
 
     private:
-        void drawPathWithBrush(const PixelPath& path, const Brush& brush, float strokeWidth, const Matrix3x2* transform = nullptr);
+        void drawPathWithBrush(const PixelPath& path, const Brush& brush, float strokeWidth, StrokeCap,
+            const Matrix3x2* transform = nullptr);
 
         // Lays a glow down as strokes of the same geometry, widest first, each one falling inside
         // the last. Direct2D offers no distance field, so the ramp is built out of the widths it
@@ -148,6 +149,7 @@ namespace ClaFi::PlatformImplementation::Windows
         ID2D1Brush* getNativeBrushInternal(const Brush& brush);
         ComPtr<ID2D1GradientStopCollection> createStopCollection(const std::vector<GradientStop>& stops);
         ComPtr<ID2D1PathGeometry> buildPathGeometry(const PixelPath& path, bool isFilled);
+        [[nodiscard]] ID2D1StrokeStyle* strokeStyle(StrokeCap);
 #if CLAFI_TEXT_MOVING
         ComPtr<IDWriteRenderingParams> renderingParams(const TextRasterizationParams&);
         static ComPtr<IDWriteRenderingParams> makeRenderingParams(DWRITE_RENDERING_MODE1, DWRITE_GRID_FIT_MODE, bool zeroContrast);
@@ -222,5 +224,10 @@ namespace ClaFi::PlatformImplementation::Windows
 
         // --- SINGLE UNIFIED CACHE FOR ALL BRUSHES ---
         std::unordered_map<Brush, ComPtr<ID2D1Brush>, BrushHash> m_brushCache;
+
+        // One per StrokeCap, made on first use. The factory owns them, so a lost device keeps them.
+        ComPtr<ID2D1StrokeStyle> m_roundCaps;
+        ComPtr<ID2D1StrokeStyle> m_buttCaps;
+        ComPtr<ID2D1StrokeStyle> m_squareCaps;
     };
 }

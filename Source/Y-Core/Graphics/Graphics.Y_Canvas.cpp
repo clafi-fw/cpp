@@ -667,7 +667,17 @@ namespace ClaFi::Graphics
         for (float& radius : centreline.radii)
             radius = (std::max)(0.0f, radius - halfStroke);
         PixelPath path = buildDrawPartialPath(centreline, halfStroke);
-        drawPath(path, brush, strokeWidth);
+        // Butt ends, since the builder has carried each open end out to the bounds edge already.
+        drawPath(
+            path,
+            { PathDrawLayer{
+                .geometry = {
+                    .mode = PathRenderMode::Stroke,
+                    .strokeWidth = strokeWidth,
+                    .strokeCap = StrokeCap::Butt
+                },
+                .brush{ brush }
+            } });
     }
 
     void Canvas::fillPartialRoundedRectangleDef(const RoundedRectangleParts& parts, const Brush& brush)

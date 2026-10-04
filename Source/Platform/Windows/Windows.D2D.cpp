@@ -660,7 +660,9 @@ namespace ClaFi::PlatformImplementation::Windows
             return;
         }
 
-        m_renderTarget->DrawLine(reinterpret_cast<D2D_POINT_2F&>(pt1), reinterpret_cast<D2D_POINT_2F&>(pt2), d2dBrush, strokeWidth);
+        // Round, a stroke layer's default cap, which the CPU backend draws a line with.
+        m_renderTarget->DrawLine(reinterpret_cast<D2D_POINT_2F&>(pt1), reinterpret_cast<D2D_POINT_2F&>(pt2), d2dBrush,
+            strokeWidth, strokeStyle(StrokeCap::Round));
     }
 
     void Direct2DBackend::drawRectangle(const FloatRect& rect, const Brush& brush, float strokeWidth)
@@ -958,7 +960,7 @@ namespace ClaFi::PlatformImplementation::Windows
             }
             else if (layer.geometry.mode == PathRenderMode::Stroke)
             {
-                drawPathWithBrush(path, layer.brush, layer.geometry.strokeWidth, transform);
+                drawPathWithBrush(path, layer.brush, layer.geometry.strokeWidth, layer.geometry.strokeCap, transform);
             }
             else if (layer.geometry.mode == PathRenderMode::OuterGlow)
             {
@@ -1023,7 +1025,7 @@ namespace ClaFi::PlatformImplementation::Windows
     }
 
     void Direct2DBackend::drawPathWithBrush(const PixelPath& path, const Brush& brush, float strokeWidth,
-        const Matrix3x2* transform)
+        StrokeCap strokeCap, const Matrix3x2* transform)
     {
         if (!m_isPainting || !m_renderTarget || path.isEmpty())
         {
@@ -1047,7 +1049,7 @@ namespace ClaFi::PlatformImplementation::Windows
             m_renderTarget->SetTransform(nestTransform(*transform, oldTransform));
         }
 
-        m_renderTarget->DrawGeometry(d2DPath.Get(), d2DBrush, strokeWidth);
+        m_renderTarget->DrawGeometry(d2DPath.Get(), d2DBrush, strokeWidth, strokeStyle(strokeCap));
 
         // Restore target transform state
         if (transform)
@@ -1083,6 +1085,7 @@ namespace ClaFi::PlatformImplementation::Windows
         const int ringCount = std::max(1, static_cast<int>(std::ceil(reach)));
         const float bandWidth = reach / static_cast<float>(ringCount);
         const FLOAT restoreOpacity = d2dBrush->GetOpacity();
+        ID2D1StrokeStyle* style = strokeStyle(layer.geometry.strokeCap);
 
         // A solid colour carries its alpha in the brush's colour, so a ring at full opacity covers
         // that much of a pixel and no more; the shares are sized for it.
@@ -1104,7 +1107,7 @@ namespace ClaFi::PlatformImplementation::Windows
                 continue;
             }
             d2dBrush->SetOpacity(restoreOpacity * share);
-            m_renderTarget->DrawGeometry(&geometry, d2dBrush, bandWidth * static_cast<float>(i) * 2.0f);
+            m_renderTarget->DrawGeometry(&geometry, d2dBrush, bandWidth * static_cast<float>(i) * 2.0f, style);
         }
 
         d2dBrush->SetOpacity(restoreOpacity);
@@ -1669,6 +1672,35 @@ namespace ClaFi::PlatformImplementation::Windows
 
         checkHr(sink->Close());
         return d2dPath;
+    }
+
+    ID2D1StrokeStyle* Direct2DBackend::strokeStyle(StrokeCap strokeCap)
+    {
+        ComPtr<ID2D1StrokeStyle>* style = &m_roundCaps;
+        D2D1_CAP_STYLE d2dCap = D2D1_CAP_STYLE_ROUND;
+        switch (strokeCap)
+        {
+            case StrokeCap::Round:
+                break;
+            case StrokeCap::Butt:
+                style = &m_buttCaps;
+                d2dCap = D2D1_CAP_STYLE_FLAT;
+                break;
+            case StrokeCap::Square:
+                style = &m_squareCaps;
+                d2dCap = D2D1_CAP_STYLE_SQUARE;
+                break;
+        }
+
+        if (!*style)
+        {
+            // Miter joins, as Direct2D strokes with no style: a partial outline's square corners
+            // are drawn by them.
+            const D2D1_STROKE_STYLE_PROPERTIES properties = D2D1::StrokeStyleProperties(d2dCap, d2dCap, d2dCap);
+            ComPtr<ID2D1Factory> factory = getD2DFactory();
+            checkHr(factory->CreateStrokeStyle(properties, nullptr, 0, style->GetAddressOf()));
+        }
+        return style->Get();
     }
 
 #if CLAFI_TEXT_MOVING
