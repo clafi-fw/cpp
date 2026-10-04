@@ -46,7 +46,7 @@ the folder, which is the permission - and belongs only where an application mean
 without being allowed to.
 
 AN APPLICATION MUST NOT WRITE OVER A LOADED VALUE to state its own default. The config is
-loaded before an application's own code runs, so `config() / L"Theme"` already holds
+loaded before an application's own code runs, so `config() / L"Appearance" / L"Theme"` already holds
 what the user last chose; an application whose default differs from the schema's states it
 behind `configFolderExists()`, which is false exactly when nothing was loaded.
 

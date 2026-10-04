@@ -247,10 +247,10 @@ stored answer is what the first window stands on rather than something switched 
 
 ## AppContext::scale
 
-WHERE THE USER'S ANSWER IS KEPT: a `Dom::Value<int>` under Scale, the percent of the design
-everything is drawn at, 100 by default. Writing it is the whole of a change - the node's own
-change reaches the context, which states the percent and raises ScaleSwitchEvent - which is the
-path the backend answer takes to the windows.
+WHERE THE USER'S ANSWER IS KEPT: a `Dom::Value<int>` under Scale in the Appearance section, the
+percent of the design everything is drawn at, 100 by default. Writing it is the whole of a
+change - the node's own change reaches the context, which states the percent and raises
+ScaleSwitchEvent - which is the path the backend answer takes to the windows.
 
 THE PERCENT IS BROUGHT INSIDE THE BAND, between `k_minScalePercent` and `k_maxScalePercent`. The
 config is text the user is free to edit, and a window drawn at a factor outside the band is one

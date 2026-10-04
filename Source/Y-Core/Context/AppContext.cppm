@@ -233,6 +233,7 @@ namespace ClaFi
         void stateZAnimation(float amount);
 #endif
     private:
+        static constexpr std::wstring_view k_appearanceSectionName = L"Appearance";
         static constexpr std::wstring_view k_themeNodeName = L"Theme";
         static constexpr std::wstring_view k_colorModeNodeName = L"ColorMode";
         static constexpr std::wstring_view k_gpuAccelerationNodeName = L"GpuAcceleration";
@@ -279,10 +280,11 @@ namespace ClaFi
         const AppTheme* m_taken{ &defaultTheme() };
         Lightness m_takenLightness{ k_darkLightness };
         Dom::Document<Dom::FileFormat::ClaFi> m_config;
+        Dom::Section& m_appearance{ m_config.childSection(k_appearanceSectionName) };
         ThemePathNode& m_themePath{
-            *(static_cast<ThemePathNode*>(m_config.child(k_themeNodeName))) };
+            *(static_cast<ThemePathNode*>(m_appearance.child(k_themeNodeName))) };
         ColorModeNode& m_colorMode{
-            *(static_cast<ColorModeNode*>(m_config.child(k_colorModeNodeName))) };
+            *(static_cast<ColorModeNode*>(m_appearance.child(k_colorModeNodeName))) };
         // Null where the schema carries no such node - see coreConfigSchema, which is the one
         // place the node's presence is decided.
         GpuAccelerationNode* m_gpuAcceleration{
@@ -293,7 +295,7 @@ namespace ClaFi
         bool m_usingGpu{ false };
         ScopedEventConnection m_gpuConnection{};
         ScaleNode& m_scale{
-            *(static_cast<ScaleNode*>(m_config.child(k_scaleNodeName))) };
+            *(static_cast<ScaleNode*>(m_appearance.child(k_scaleNodeName))) };
         // THE PERCENT EVERY WINDOW IS DRAWN AT. Taken from the node above while the context is
         // built, so a stored size is what the first window opens at rather than one it is moved
         // to once it is up.
@@ -395,16 +397,16 @@ namespace ClaFi
     Dom::Dt::Section AppContext::coreConfigSchema(const bool withGpuAcceleration,
         const bool withUpdateCheck)
     {
-        Dom::Dt::Section section = {
+        Dom::Dt::Section section = {};
+        section.children.push_back(std::make_unique<Dom::Dt::Section>(
+            k_appearanceSectionName,
             Dom::Dt::Value{ k_themeNodeName, std::wstring{ k_defaultThemePath } },
             Dom::Dt::Value{ k_colorModeNodeName, ColorModeSetting::Auto },
+            Dom::Dt::Value{ k_scaleNodeName, k_defaultScalePercent }));
 #if CLAFI_TEXT_MOVING
-            Dom::Dt::Value{ k_scaleNodeName, k_defaultScalePercent },
-            Dom::Dt::Value{ k_zAnimationNodeName, k_defaultZAnimationAmount }
-#else
-            Dom::Dt::Value{ k_scaleNodeName, k_defaultScalePercent }
+        section.append(Dom::Dt::Section{
+            Dom::Dt::Value{ k_zAnimationNodeName, k_defaultZAnimationAmount } });
 #endif
-        };
         if (withGpuAcceleration)
             section.append(Dom::Dt::Section{ Dom::Dt::Value{ k_gpuAccelerationNodeName, true } });
         if (withUpdateCheck)

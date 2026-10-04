@@ -36,6 +36,10 @@ namespace ClaFi::Browser
 
     namespace
     {
+        // The title's own room beside the tabs, which the tabs give way to so the window can
+        // always be dragged.
+        constexpr float k_titleDragWidth{ 48.0f };
+
         // Holds the page a fetch is running for, and lets it go however that fetch ends. Cleared
         // by a statement after the call instead, a fetch that threw would leave the browser
         // believing one was still running, and the next page named under it would be ordered
@@ -125,7 +129,14 @@ namespace ClaFi::Browser
 
     BrowserTab::BrowserTab(const CreateParams& params)
         :
-        Tab{ params, WordWrap::No, Spacing{ 4.0f }, Padding{ 8.0f, 4.0f }, MinSize{ 0.0f, 32.0f } }
+        Tab{
+            params,
+            WordWrap::No,
+            VerticalTextAnchor::Center,
+            Spacing{ 4.0f },
+            Padding{ 8.0f, 4.0f },
+            MinSize{ 0.0f, 32.0f }
+        }
     {
         // Connected here rather than given to the button as a construction property: MSVC rejects
         // a this-capturing lambda in a default member initializer.
@@ -546,10 +557,10 @@ namespace ClaFi::Browser
     {
         Panel::alignContent(event, position, newDimensions);
 
-        float clientWidth = m_title.bodyRect().width();
-        if (clientWidth < 0.0f)
+        const float spareWidth = m_title.bodyRect().width() - event.scale(k_titleDragWidth);
+        if (spareWidth < 0.0f)
         {
-            float delta = -clientWidth;
+            const float delta = -spareWidth;
             m_tabs.fitTabs(delta);
             for (ControlPtr& ptr : m_tabs.controls())
             {
