@@ -492,96 +492,21 @@ namespace ThisApp
         return ThemesManager::isReservedName(stem);
     }
 
-    // The colour an element resolves to, walked down from the bare surface through everything
-    // it sits on. Only resting rules are applied: nothing below the element is in a state.
     Hsl ThemePage::elementColor(OptionalUiElement element)
     {
-        if (!element)
-            return editColors().rootSurface(previewColorMode());
-
-        const UiElementDescriptor& descriptor = uiElementOf(*element);
-        Hsl result = elementColor(descriptor.base);
-        // The hue ControlPaintContext::foundTextRgb starts the band from.
-        if (const std::optional<Pigment> pigment = seedPigmentOf(*element))
-            result.hue = editColors().harmony().pigmentColor(*pigment).hsl().hue;
-        if (descriptor.effect)
-        {
-            (editColors().*descriptor.effect).applyTo(result, 1.0f, editColors(),
-                previewColorMode());
-        }
-        applyRestingRules(result, *element, PaintChannel::Surface);
-        return result;
+        return restingSurface(editColors(), element, previewColorMode());
     }
 
-    // The ink an element's text starts from, walked down the same nesting the surfaces use. Only
-    // text rules are applied on the way: what an element is painted on is a separate chain and
-    // does not reach the ink. No element is the bare ink of the colour mode, with nothing
-    // applied - a window root's own text rule is the first thing on the chain, exactly as its
-    // surface rule is the first thing on the other one. The one thing the surface lends the ink
-    // is its hue, until a text rule on the way names one - the seed PaintEvent takes.
-    Hsl ThemePage::elementTextColor(OptionalUiElement element, bool* hueNamed)
+    Hsl ThemePage::elementTextColor(OptionalUiElement element)
     {
-        if (!element)
-            return bareInk();
-
-        const UiElementDescriptor& descriptor = uiElementOf(*element);
-        bool named = false;
-        Hsl result = elementTextColor(descriptor.base, &named);
-        if (!named)
-            result.hue = elementColor(element).hue;
-        if (applyRestingRules(result, *element, PaintChannel::Text))
-            named = true;
-        if (hueNamed)
-            *hueNamed = named;
-        return result;
-    }
-
-    // The element's own list, the window's where the element is worn by a form's root control,
-    // then the shared list.
-    bool ThemePage::applyRestingRules(Hsl& color, const UiElement element,
-        const PaintChannel channel)
-    {
-        const ColorMode mode = previewColorMode();
-        const ThemeRules& rules = editColors().rules;
-        const ColorRules* windowRules = uiElementOf(element).isWindowRoot
-            ? &rules.anyWindow
-            : nullptr;
-        bool namesHue = false;
-        for (const ColorRules* list : { &rules.of(element), windowRules, &rules.shared })
-        {
-            if (!list)
-                continue;
-            for (const ColorRule& rule : *list)
-            {
-                if (!rule.atRest() or rule.output != channel)
-                    continue;
-                rule.effect.applyTo(color, 1.0f, editColors(), mode);
-                if (rule.effect.hue.operation() != ColorRuleHueOp::NoChange)
-                    namesHue = true;
-            }
-        }
-        return namesHue;
-    }
-
-    // The ink of the preview's colour mode before any rule: white at the dark end, black at the
-    // light one, in the hue of the bare surface - the theme's anchor.
-    Hsl ThemePage::bareInk()
-    {
-        const ColorMode mode = previewColorMode();
-        return {
-            editColors().rootSurface(mode).hue,
-            0.0f,
-            mode == ColorMode::Dark ? 1.0f : 0.0f
-        };
+        return restingInk(editColors(), element, previewColorMode());
     }
 
     // The seed BakedColors::windowShadow takes: a stroke starts at the element's surface and its
     // resting stroke rules move it, and a shadow rule naming no hue keeps the stroke's.
     Hsl ThemePage::bareShadow(OptionalUiElement element)
     {
-        Hsl stroke = elementColor(element);
-        if (element)
-            applyRestingRules(stroke, *element, PaintChannel::Stroke);
+        const Hsl stroke = restingStroke(editColors(), element, previewColorMode());
         return { stroke.hue, 0.0f, 0.0f };
     }
 

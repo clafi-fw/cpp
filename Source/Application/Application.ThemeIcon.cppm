@@ -1,5 +1,7 @@
 export module ClaFi.App.ThemeIcon;
 
+import ClaFi.Application.ThemesManager_Elements;
+
 import ClaFi.Icons.ChannelTile;
 
 import ClaFi.Core.Context.PaintIconEvent;
@@ -17,16 +19,34 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // What a theme's icon is drawn from - three palette hues and the form surface at either end.
+    // A theme's window in one mode, at rest, as its icon draws it.
+    export struct ThemeSampleColors
+    {
+        ThemeSampleColors() = default;
+        ThemeSampleColors(const ThemeColors&, ColorMode);
+
+        Hsl title{};
+        Hsl dialog{};
+        Hsl page{};
+        Hsl border{};
+        Hsl mutedText{};
+        Hsl accent{};
+        Hsl spot{};
+    };
+
+    // What a theme's icon is drawn from - three palette hues, and the surface and window per mode.
     export struct ThemeIconColors
     {
         ThemeIconColors() = default;
         explicit ThemeIconColors(const ThemeColors&);
         [[nodiscard]] Hsl surface(ColorMode) const;
+        [[nodiscard]] const ThemeSampleColors& sample(ColorMode) const;
 
         std::array<float, 3> paletteHues{};
         Hsl darkSurface{};
         Hsl lightSurface{};
+        ThemeSampleColors darkSample{};
+        ThemeSampleColors lightSample{};
     };
 
     // The theme's own surface over the rect given. What a theme's sample sits on, at any size.
@@ -136,19 +156,48 @@ namespace ClaFi
         }
     }
 
+    // ThemeSampleColors
+
+    ThemeSampleColors::ThemeSampleColors(const ThemeColors& colors, const ColorMode mode)
+        :
+        title{ restingSurface(colors, UiElement::DialogTitle, mode) },
+        dialog{ restingSurface(colors, UiElement::Dialog, mode) },
+        page{ restingSurface(colors, UiElement::Page, mode) },
+        border{ restingStroke(colors, UiElement::Dialog, mode) }
+    {
+        // The page's inks, resolved the way ControlPaintContext::inkHsl resolves them.
+        const Hsl ink = restingInk(colors, UiElement::Page, mode);
+        const float muted = gradeOf(InkGrade::Muted);
+        const float grade = mode == ColorMode::Light
+            ? lightGradeOf(muted, colors.darkModeFloor)
+            : muted;
+        mutedText = Hsl{ page, ink, grade };
+        accent = ink;
+        colors.accent.applyTo(accent, 1.0f, colors, mode);
+        spot = ink;
+        colors.spot.applyTo(spot, 1.0f, colors, mode);
+    }
+
     // ThemeIconColors
 
     ThemeIconColors::ThemeIconColors(const ThemeColors& colors)
         :
         paletteHues{ colors.paletteHues },
         darkSurface{ colors.rootSurface(ColorMode::Dark) },
-        lightSurface{ colors.rootSurface(ColorMode::Light) }
+        lightSurface{ colors.rootSurface(ColorMode::Light) },
+        darkSample{ colors, ColorMode::Dark },
+        lightSample{ colors, ColorMode::Light }
     {
     }
 
     Hsl ThemeIconColors::surface(const ColorMode mode) const
     {
         return mode == ColorMode::Dark ? darkSurface : lightSurface;
+    }
+
+    const ThemeSampleColors& ThemeIconColors::sample(const ColorMode mode) const
+    {
+        return mode == ColorMode::Dark ? darkSample : lightSample;
     }
 
     // Painting
@@ -189,15 +238,14 @@ namespace ClaFi
             event.scaleF(4.0f)
             );
         
-        // Stubs
-        Hsl etalonHsl = { 0.0f, 0.0f, 0.0f, };
-        Color titleColor = etalonHsl.withLuminosity(0.3f).toColor();
-        Color dialogColor = etalonHsl.withLuminosity(0.2f).toColor();
-        Color pageColor = etalonHsl.withLuminosity(0.1f).toColor();
-        Color mutedText = 0xFF'888888;
-        Color borderColor = 0xFF'666666;
-        Color accentColor = 0xFF'6677FF;
-        Color spotColor = 0xFF'FF9900;
+        const ThemeSampleColors& sample = colors.sample(mode);
+        const Color titleColor = event.applyDisabledFactor(sample.title.toColor());
+        const Color dialogColor = event.applyDisabledFactor(sample.dialog.toColor());
+        const Color pageColor = event.applyDisabledFactor(sample.page.toColor());
+        const Color mutedText = event.applyDisabledFactor(sample.mutedText.toColor());
+        const Color borderColor = event.applyDisabledFactor(sample.border.toColor());
+        const Color accentColor = event.applyDisabledFactor(sample.accent.toColor());
+        const Color spotColor = event.applyDisabledFactor(sample.spot.toColor());
 
         constexpr float k_titleShare = 0.25f;
 

@@ -183,11 +183,25 @@ namespace ClaFi // AppTheme serializers
         );
     }
 
+    export constexpr auto serializedFields(const ThemeSampleColors&) {
+        return std::make_tuple(
+            SerializedField{ L"Title", &ThemeSampleColors::title },
+            SerializedField{ L"Dialog", &ThemeSampleColors::dialog },
+            SerializedField{ L"Page", &ThemeSampleColors::page },
+            SerializedField{ L"Border", &ThemeSampleColors::border },
+            SerializedField{ L"MutedText", &ThemeSampleColors::mutedText },
+            SerializedField{ L"Accent", &ThemeSampleColors::accent },
+            SerializedField{ L"Spot", &ThemeSampleColors::spot }
+        );
+    }
+
     export constexpr auto serializedFields(const ThemeIconColors&) {
         return std::make_tuple(
             SerializedField{ L"PaletteHues", &ThemeIconColors::paletteHues },
             SerializedField{ L"DarkSurface", &ThemeIconColors::darkSurface },
-            SerializedField{ L"LightSurface", &ThemeIconColors::lightSurface }
+            SerializedField{ L"LightSurface", &ThemeIconColors::lightSurface },
+            SerializedField{ L"DarkSample", &ThemeIconColors::darkSample },
+            SerializedField{ L"LightSample", &ThemeIconColors::lightSample }
         );
     }
 

@@ -229,9 +229,79 @@ namespace ClaFi
     // an element added above is baked without anything here being touched.
     export [[nodiscard]] BakedColors bake(const ThemeColors&, ColorMode);
 
+    // An element's surface at rest, walked down from the bare colour of the mode.
+    export [[nodiscard]] Hsl restingSurface(const ThemeColors&, OptionalUiElement, ColorMode);
+    // The ink an element's text starts from, walked down the same nesting through text rules.
+    export [[nodiscard]] Hsl restingInk(const ThemeColors&, OptionalUiElement, ColorMode);
+    // An element's stroke at rest, which starts at its resting surface.
+    export [[nodiscard]] Hsl restingStroke(const ThemeColors&, OptionalUiElement, ColorMode);
+
 
     //-------------------------------------------------------------------------
 
+
+    namespace
+    {
+        // The element's own list, the window's where the element is worn by a form's root
+        // control, then the shared list. True where one of them names a hue.
+        bool applyRestingRules(Hsl& color, const ThemeColors& themeColors,
+            const UiElement element, const PaintChannel channel, const ColorMode mode)
+        {
+            const ThemeRules& rules = themeColors.rules;
+            const ColorRules* windowRules = uiElementOf(element).isWindowRoot
+                ? &rules.anyWindow
+                : nullptr;
+            bool namesHue = false;
+            for (const ColorRules* list : { &rules.of(element), windowRules, &rules.shared })
+            {
+                if (!list)
+                    continue;
+                for (const ColorRule& rule : *list)
+                {
+                    if (!rule.atRest() or rule.output != channel)
+                        continue;
+                    rule.effect.applyTo(color, 1.0f, themeColors, mode);
+                    if (rule.effect.hue.operation() != ColorRuleHueOp::NoChange)
+                        namesHue = true;
+                }
+            }
+            return namesHue;
+        }
+
+        // The ink of the colour mode before any rule: white at the dark end, black at the light
+        // one, in the hue of the bare surface - the theme's anchor.
+        [[nodiscard]] Hsl bareInk(const ThemeColors& themeColors, const ColorMode mode)
+        {
+            return {
+                themeColors.rootSurface(mode).hue,
+                0.0f,
+                mode == ColorMode::Dark ? 1.0f : 0.0f
+            };
+        }
+
+        // Only text rules are applied on the way: what an element is painted on is a separate
+        // chain and does not reach the ink. No element is the bare ink of the colour mode, with
+        // nothing applied - a window root's own text rule is the first thing on the chain,
+        // exactly as its surface rule is the first thing on the other one. The one thing the
+        // surface lends the ink is its hue, until a text rule on the way names one - the seed
+        // PaintEvent takes.
+        [[nodiscard]] Hsl walkInk(const ThemeColors& themeColors, const OptionalUiElement element,
+            const ColorMode mode, bool& hueNamed)
+        {
+            if (!element)
+                return bareInk(themeColors, mode);
+
+            const UiElementDescriptor& descriptor = uiElementOf(*element);
+            bool named = false;
+            Hsl result = walkInk(themeColors, descriptor.base, mode, named);
+            if (!named)
+                result.hue = restingSurface(themeColors, element, mode).hue;
+            if (applyRestingRules(result, themeColors, *element, PaintChannel::Text, mode))
+                named = true;
+            hueNamed = named;
+            return result;
+        }
+    }
 
     BakedColors bake(const ThemeColors& themeColors, ColorMode mode)
     {
@@ -255,6 +325,40 @@ namespace ClaFi
                 .pigmentColor(static_cast<Pigment>(pigment)).hsl().hue;
         }
         result.rules = bake(themeColors.rules, themeColors);
+        return result;
+    }
+
+    // Only resting rules are applied: nothing below the element is in a state.
+    Hsl restingSurface(const ThemeColors& themeColors, const OptionalUiElement element,
+        const ColorMode mode)
+    {
+        if (!element)
+            return themeColors.rootSurface(mode);
+
+        const UiElementDescriptor& descriptor = uiElementOf(*element);
+        Hsl result = restingSurface(themeColors, descriptor.base, mode);
+        // The hue ControlPaintContext::foundTextRgb starts the band from.
+        if (const std::optional<Pigment> pigment = seedPigmentOf(*element))
+            result.hue = themeColors.harmony().pigmentColor(*pigment).hsl().hue;
+        if (descriptor.effect)
+            (themeColors.*descriptor.effect).applyTo(result, 1.0f, themeColors, mode);
+        applyRestingRules(result, themeColors, *element, PaintChannel::Surface, mode);
+        return result;
+    }
+
+    Hsl restingInk(const ThemeColors& themeColors, const OptionalUiElement element,
+        const ColorMode mode)
+    {
+        bool hueNamed = false;
+        return walkInk(themeColors, element, mode, hueNamed);
+    }
+
+    Hsl restingStroke(const ThemeColors& themeColors, const OptionalUiElement element,
+        const ColorMode mode)
+    {
+        Hsl result = restingSurface(themeColors, element, mode);
+        if (element)
+            applyRestingRules(result, themeColors, *element, PaintChannel::Stroke, mode);
         return result;
     }
 }

@@ -207,11 +207,7 @@ namespace ThisApp
         [[nodiscard]] Hsl elementColor(OptionalUiElement);
         // The ink an element's text starts from: the same nesting as elementColor, walked
         // through text rules instead of surface ones.
-        [[nodiscard]] Hsl elementTextColor(OptionalUiElement, bool* hueNamed = nullptr);
-        // The resting rules on one channel of an element; true where one of them names a hue.
-        bool applyRestingRules(Hsl&, UiElement, PaintChannel);
-        // The ink of the colour mode before any rule has touched it.
-        [[nodiscard]] Hsl bareInk();
+        [[nodiscard]] Hsl elementTextColor(OptionalUiElement);
         // Black in the hue of an element's resting stroke, where its shadow starts.
         [[nodiscard]] Hsl bareShadow(OptionalUiElement);
         // What a value of a rule is about to change.
