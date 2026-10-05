@@ -493,8 +493,13 @@ namespace ClaFi
     };
 
     // TODO: move BakedPathCommand and BakedPathPoint to the CPU modules - nothing else uses them.
-    // Whether a baked path point begins a run or continues one.
-    export enum class BakedPathCommand { Move, Line };
+    // Whether a baked path point begins a figure, continues it, or closes it at its start.
+    export enum class BakedPathCommand
+    {
+        Move,
+        Line,
+        Close
+    };
     export struct BakedPathPoint {
         BakedPathPoint(FloatPoint p, BakedPathCommand c) : coord(p), command(c) {}
         BakedPathPoint(float x, float y, BakedPathCommand c) : coord{ x,y }, command(c) {}

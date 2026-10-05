@@ -1516,6 +1516,7 @@ namespace ClaFi::PlatformImplementation::Windows
         checkHr(d2dPath->Open(sink.GetAddressOf()));
 
         bool figureOpen = false;
+        bool afterClose = false;
         FloatPoint currentPoint = { 0.0f, 0.0f };
         FloatPoint subpathStart = { 0.0f, 0.0f };
 
@@ -1526,8 +1527,16 @@ namespace ClaFi::PlatformImplementation::Windows
             }
             sink->BeginFigure(reinterpret_cast<const D2D1_POINT_2F&>(pt), isFilled ? D2D1_FIGURE_BEGIN_FILLED : D2D1_FIGURE_BEGIN_HOLLOW);
             figureOpen = true;
+            afterClose = false;
             currentPoint = pt;
             subpathStart = pt;
+        };
+
+        // A segment after a close starts a new figure where the closed one started.
+        auto joinFigure = [&](){
+            if (afterClose)
+                beginFigure(subpathStart);
+            return figureOpen;
         };
 
         for (const auto& cmd : path.commands())
@@ -1546,7 +1555,7 @@ namespace ClaFi::PlatformImplementation::Windows
                 }
 
                 case PathCommandType::LineTo:
-                    if (figureOpen)
+                    if (joinFigure())
                     {
                         sink->AddLine(reinterpret_cast<const D2D1_POINT_2F&>(cmd.p1));
                         currentPoint = cmd.p1;
@@ -1554,7 +1563,7 @@ namespace ClaFi::PlatformImplementation::Windows
                     break;
 
                 case PathCommandType::LineBy:
-                    if (figureOpen)
+                    if (joinFigure())
                     {
                         FloatPoint absolute = { currentPoint.x + cmd.p1.x, currentPoint.y + cmd.p1.y };
                         sink->AddLine(reinterpret_cast<const D2D1_POINT_2F&>(absolute));
@@ -1563,7 +1572,7 @@ namespace ClaFi::PlatformImplementation::Windows
                     break;
 
                 case PathCommandType::HLineTo:
-                    if (figureOpen)
+                    if (joinFigure())
                     {
                         FloatPoint absolute = { cmd.p1.x, currentPoint.y };
                         sink->AddLine(reinterpret_cast<const D2D1_POINT_2F&>(absolute));
@@ -1572,7 +1581,7 @@ namespace ClaFi::PlatformImplementation::Windows
                     break;
 
                 case PathCommandType::HLineBy:
-                    if (figureOpen)
+                    if (joinFigure())
                     {
                         FloatPoint absolute = { currentPoint.x + cmd.p1.x, currentPoint.y };
                         sink->AddLine(reinterpret_cast<const D2D1_POINT_2F&>(absolute));
@@ -1581,7 +1590,7 @@ namespace ClaFi::PlatformImplementation::Windows
                     break;
 
                 case PathCommandType::VLineTo:
-                    if (figureOpen)
+                    if (joinFigure())
                     {
                         FloatPoint absolute = { currentPoint.x, cmd.p1.y };
                         sink->AddLine(reinterpret_cast<const D2D1_POINT_2F&>(absolute));
@@ -1590,7 +1599,7 @@ namespace ClaFi::PlatformImplementation::Windows
                     break;
 
                 case PathCommandType::VLineBy:
-                    if (figureOpen)
+                    if (joinFigure())
                     {
                         FloatPoint absolute = { currentPoint.x, currentPoint.y + cmd.p1.y };
                         sink->AddLine(reinterpret_cast<const D2D1_POINT_2F&>(absolute));
@@ -1599,7 +1608,7 @@ namespace ClaFi::PlatformImplementation::Windows
                     break;
 
                 case PathCommandType::QuadTo:
-                    if (figureOpen)
+                    if (joinFigure())
                     {
                         D2D1_QUADRATIC_BEZIER_SEGMENT quad = {
                             reinterpret_cast<const D2D1_POINT_2F&>(cmd.p1),
@@ -1611,7 +1620,7 @@ namespace ClaFi::PlatformImplementation::Windows
                     break;
 
                 case PathCommandType::QuadBy:
-                    if (figureOpen)
+                    if (joinFigure())
                     {
                         FloatPoint control = { currentPoint.x + cmd.p1.x, currentPoint.y + cmd.p1.y };
                         FloatPoint end = { currentPoint.x + cmd.p2.x, currentPoint.y + cmd.p2.y };
@@ -1625,7 +1634,7 @@ namespace ClaFi::PlatformImplementation::Windows
                     break;
 
                 case PathCommandType::CubicTo:
-                    if (figureOpen)
+                    if (joinFigure())
                     {
                         D2D1_BEZIER_SEGMENT cubic = {
                             reinterpret_cast<const D2D1_POINT_2F&>(cmd.p1),
@@ -1638,7 +1647,7 @@ namespace ClaFi::PlatformImplementation::Windows
                     break;
 
                 case PathCommandType::CubicBy:
-                    if (figureOpen)
+                    if (joinFigure())
                     {
                         FloatPoint firstControl = { currentPoint.x + cmd.p1.x, currentPoint.y + cmd.p1.y };
                         FloatPoint secondControl = { currentPoint.x + cmd.p2.x, currentPoint.y + cmd.p2.y };
@@ -1658,6 +1667,7 @@ namespace ClaFi::PlatformImplementation::Windows
                     {
                         sink->EndFigure(D2D1_FIGURE_END_CLOSED);
                         figureOpen = false;
+                        afterClose = true;
                         currentPoint = subpathStart;
                     }
                     break;

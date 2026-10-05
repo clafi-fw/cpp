@@ -22,21 +22,18 @@ namespace ClaFi::Graphics::Cpu
             m_points.clear();
         }
 
-        void moveTo(FloatPoint point) { m_points.emplace_back(point, BakedPathCommand::Move); }
-        void moveTo(float x, float y) { m_points.emplace_back(x, y, BakedPathCommand::Move); }
+        void moveTo(FloatPoint point);
+        void moveTo(float x, float y) { moveTo(FloatPoint{ x, y }); }
         void lineTo(FloatPoint p) { m_points.emplace_back(p, BakedPathCommand::Line); }
         void lineTo(float x, float y) { m_points.emplace_back(x, y, BakedPathCommand::Line); }
         void quadTo(FloatPoint ctrl, FloatPoint end, CurveQuality quality = CurveQuality::Medium, float scaleHint = 1.0f);
         void cubicTo(FloatPoint ctrl1, FloatPoint ctrl2, FloatPoint end, CurveQuality quality = CurveQuality::Medium, float scaleHint = 1.0f);
-        void close() { m_closed = true; }
-
-        // keeps m_points capacity alive!
-        void clear() { m_points.clear(); m_closed = false; }
+        void close();
+        void clear(); // empties the points and keeps their capacity
 
         void transform(const Matrix3x2& matrix);
         void bake(const PixelPath& path, CurveQuality quality = CurveQuality::Medium, float scaleHint = 1.0f);
 
-        bool isClosed() const { return m_closed; }
         bool isEmpty() const { return m_points.empty(); }
         const std::vector<BakedPathPoint>& points() const { return m_points; }
 
@@ -46,7 +43,7 @@ namespace ClaFi::Graphics::Cpu
         FloatPoint currentPoint() const;
 
         std::vector<BakedPathPoint>& m_points; // Pointer Reference [CP]
-        bool m_closed = false;
+        std::size_t m_figureStart{ 0 }; // index of the current figure's first point
     };
 
     export class PixelPathPainter
@@ -82,7 +79,7 @@ namespace ClaFi::Graphics::Cpu
         void clearClip() { m_rasterBuffers.hasActiveClip = false; }
     private:
         FloatRect prepareWorldPointsAndBounds(const BakedPixelPath& path, const Matrix3x2* transform, float padding);
-        void prepareEdges(const std::vector<BakedPathPoint>& pts, bool pathIsClosed, bool forceClose);
+        void prepareEdges(const std::vector<BakedPathPoint>& pts, bool forceClose);
         void addEdge(FloatPoint p1, FloatPoint p2);
 
     private:
@@ -93,6 +90,29 @@ namespace ClaFi::Graphics::Cpu
     // ========================================================================
     // Implementation: BakedPixelPath
     // ========================================================================
+
+    void BakedPixelPath::moveTo(FloatPoint point)
+    {
+        m_figureStart = m_points.size();
+        m_points.emplace_back(point, BakedPathCommand::Move);
+    }
+
+    // The close point lies on the figure's start, and a figure drawn on from it starts there too.
+    void BakedPixelPath::close()
+    {
+        if (m_points.empty())
+            return;
+
+        const FloatPoint start = m_points[m_figureStart].coord;
+        m_figureStart = m_points.size();
+        m_points.emplace_back(start, BakedPathCommand::Close);
+    }
+
+    void BakedPixelPath::clear()
+    {
+        m_points.clear();
+        m_figureStart = 0;
+    }
 
     void BakedPixelPath::cubicTo(FloatPoint ctrl1, FloatPoint ctrl2, FloatPoint end, CurveQuality quality, float scaleHint)
     {
@@ -370,7 +390,7 @@ namespace ClaFi::Graphics::Cpu
             {
                 // Fills completely overwrite the mask. Bypasses standard clearing entirely!
                 m_rasterBuffers.prepareForEffect(bWidth, bHeight, false);
-                prepareEdges(m_rasterBuffers.m_worldPoints, bakedPath.isClosed(), true);
+                prepareEdges(m_rasterBuffers.m_worldPoints, true);
                 m_rasterBuffers.prepareEdgeBuckets(bounds, maxPadding);
                 m_rasterBuffers.rasterizeFill(bounds, 0.0f);
             }
@@ -378,7 +398,7 @@ namespace ClaFi::Graphics::Cpu
             {
                 // Stroke accumulation requires a zero-cleared mask
                 m_rasterBuffers.prepareForEffect(bWidth, bHeight, true);
-                prepareEdges(m_rasterBuffers.m_worldPoints, bakedPath.isClosed(), false);
+                prepareEdges(m_rasterBuffers.m_worldPoints, false);
                 m_rasterBuffers.prepareEdgeBuckets(bounds, maxPadding);
                 float radius = (layer.geometry.strokeWidth * scaleFactor) * 0.5f;
                 m_rasterBuffers.rasterizeStrokeMask(bounds, radius, layer.geometry.strokeCap);
@@ -387,7 +407,7 @@ namespace ClaFi::Graphics::Cpu
             {
                 // Glow accumulation requires a zero-cleared mask
                 m_rasterBuffers.prepareForEffect(bWidth, bHeight, true);
-                prepareEdges(m_rasterBuffers.m_worldPoints, bakedPath.isClosed(), false);
+                prepareEdges(m_rasterBuffers.m_worldPoints, false);
                 m_rasterBuffers.prepareEdgeBuckets(bounds, maxPadding);
                 float radius = layer.geometry.strokeWidth * scaleFactor;
                 m_rasterBuffers.rasterizeGlowMask(bounds, radius, layer.geometry.strokeCap, layer.geometry.falloff);
@@ -399,7 +419,7 @@ namespace ClaFi::Graphics::Cpu
                 // between them. One set of edges serves both, closed, since a shadow is of what
                 // the shape covers.
                 m_rasterBuffers.prepareForEffect(bWidth, bHeight, false);
-                prepareEdges(m_rasterBuffers.m_worldPoints, bakedPath.isClosed(), true);
+                prepareEdges(m_rasterBuffers.m_worldPoints, true);
                 m_rasterBuffers.prepareEdgeBuckets(bounds, maxPadding);
                 m_rasterBuffers.rasterizeFill(bounds, 0.0f);
                 float radius = layer.geometry.strokeWidth * scaleFactor;
@@ -428,7 +448,7 @@ namespace ClaFi::Graphics::Cpu
         int bWidth = static_cast<int>(std::ceil(bounds.right)) - static_cast<int>(std::floor(bounds.left));
         int bHeight = static_cast<int>(std::ceil(bounds.bottom)) - static_cast<int>(std::floor(bounds.top));
 
-        prepareEdges(m_rasterBuffers.m_worldPoints, bakedPath.isClosed(), true);
+        prepareEdges(m_rasterBuffers.m_worldPoints, true);
         // Clipping masks are fills. Skip clearing!
         m_rasterBuffers.prepareForEffect(bWidth, bHeight, false);
         m_rasterBuffers.m_clipStride = m_rasterBuffers.m_maskStride;
@@ -461,37 +481,45 @@ namespace ClaFi::Graphics::Cpu
         return result;
     }
 
-    void PixelPathPainter::prepareEdges(const std::vector<BakedPathPoint>& pts, bool pathIsClosed, bool forceClose)
+    // A figure not ended by a Close point is closed when forced and capped otherwise.
+    void PixelPathPainter::prepareEdges(const std::vector<BakedPathPoint>& pts, bool forceClose)
     {
         m_rasterBuffers.m_edgeCache.clear();
-        if (pts.size() < 2) return;
+        if (pts.size() < 2)
+            return;
 
-        std::size_t subPathStart = 0;
-        bool hasEdges = false;
+        std::size_t figureStart = 0;
+        std::size_t firstEdge = 0;
 
-        for (std::size_t i = 1; i < pts.size(); ++i) {
-            if (pts[i].command == BakedPathCommand::Move) {
-                if (hasEdges) {
-                    if (forceClose || pathIsClosed) addEdge(pts[i - 1].coord, pts[subPathStart].coord);
-                    else m_rasterBuffers.m_edgeCache.back().isEndCap = true;
-                }
-                subPathStart = i;
-                hasEdges = false;
-                continue;
+        auto endOpenFigure = [&](std::size_t lastPoint){
+            if (m_rasterBuffers.m_edgeCache.size() == firstEdge)
+                return;
+            if (forceClose)
+            {
+                addEdge(pts[lastPoint].coord, pts[figureStart].coord);
+                return;
             }
+            m_rasterBuffers.m_edgeCache[firstEdge].isStartCap = true;
+            m_rasterBuffers.m_edgeCache.back().isEndCap = true;
+        };
 
-            std::size_t oldSize = m_rasterBuffers.m_edgeCache.size();
-            addEdge(pts[i - 1].coord, pts[i].coord);
-            if (m_rasterBuffers.m_edgeCache.size() > oldSize) {
-                if (!hasEdges) m_rasterBuffers.m_edgeCache.back().isStartCap = !(forceClose || pathIsClosed);
-                hasEdges = true;
+        for (std::size_t i = 1; i < pts.size(); ++i)
+        {
+            const BakedPathCommand command = pts[i].command;
+            if (command == BakedPathCommand::Move)
+                endOpenFigure(i - 1);
+            else
+                addEdge(pts[i - 1].coord, pts[i].coord);
+
+            // A move or a close starts the next figure at its own point.
+            if (command != BakedPathCommand::Line)
+            {
+                figureStart = i;
+                firstEdge = m_rasterBuffers.m_edgeCache.size();
             }
         }
 
-        if (hasEdges) {
-            if (forceClose || pathIsClosed) addEdge(pts.back().coord, pts[subPathStart].coord);
-            else m_rasterBuffers.m_edgeCache.back().isEndCap = true;
-        }
+        endOpenFigure(pts.size() - 1);
     }
 
     void PixelPathPainter::addEdge(FloatPoint p1, FloatPoint p2)
