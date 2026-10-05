@@ -40,6 +40,7 @@ namespace ClaFi::Graphics::Cpu
     private:
         void flattenQuadraticBezier(FloatPoint start, FloatPoint ctrl, FloatPoint end, float tolSq, int depth);
         void flattenCubicBezier(FloatPoint start, FloatPoint ctrl1, FloatPoint ctrl2, FloatPoint end, float tolSq, int depth);
+        void addArc(FloatPoint start, FloatPoint end, const PathCommand& arc, CurveQuality quality, float scaleHint);
         FloatPoint currentPoint() const;
 
         std::vector<BakedPathPoint>& m_points; // Pointer Reference [CP]
@@ -216,6 +217,17 @@ namespace ClaFi::Graphics::Cpu
                 cp = end;
                 break;
             }
+            case PathCommandType::ArcTo:
+                addArc(cp, cmd.p1, cmd, quality, scaleHint);
+                cp = cmd.p1;
+                break;
+            case PathCommandType::ArcBy:
+            {
+                const FloatPoint end = { cp.x + cmd.p1.x, cp.y + cmd.p1.y };
+                addArc(cp, end, cmd, quality, scaleHint);
+                cp = end;
+                break;
+            }
             case PathCommandType::Close:
                 close();
                 cp = subpathStart;
@@ -346,6 +358,20 @@ namespace ClaFi::Graphics::Cpu
             stack[stackPtr++] = { p0123, p123, p23, node.p3, node.depth + 1 };
             stack[stackPtr++] = { node.p0, p01, p012, p0123, node.depth + 1 };
         }
+    }
+
+    void BakedPixelPath::addArc(FloatPoint start, FloatPoint end, const PathCommand& arc, CurveQuality quality, float scaleHint)
+    {
+        const std::optional<ArcEllipse> ellipse = arcEllipse(start, end, arc.p2, arc.p3.x, arc.arcSize, arc.arcSweep);
+        if (!ellipse)
+        {
+            lineTo(end);
+            return;
+        }
+
+        const ArcCubics cubics = arcCubics(*ellipse, end);
+        for (const CubicSegment& segment : std::span{ cubics.segments.data(), cubics.count })
+            cubicTo(segment.control1, segment.control2, segment.end, quality, scaleHint);
     }
 
     FloatPoint BakedPixelPath::currentPoint() const

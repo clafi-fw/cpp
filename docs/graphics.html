@@ -463,21 +463,31 @@ draws every point of light as the ellipse <code>GlowShape::Circle</code> draws.
 
 <h3 id="paths">Paths and layers</h3>
 
-<p>A <code>PixelPath</code> is a list of commands - move, line, quadratic and cubic curve, close - each
-absolute or relative. A <code>moveTo</code> starts a new figure, and <code>close</code> joins a figure's
-end back to its start; a segment drawn on after a <code>close</code>, with no move between, starts a
-new figure at that same start. A path starts with a move: anything drawn before its first
-<code>moveTo</code> is undefined behaviour. Two helpers build a whole figure and start a fresh path to do it:
-<code>drawCircle(center, radius)</code>, and <code>drawRoundedRect(width, height, radius)</code>, which
-is centred on the origin. <code>addRoundedPolygon</code> appends a polygon with its corners rounded,
-keeping what the path already holds.</p>
+<p>A <code>PixelPath</code> is a list of commands - move, line, quadratic and cubic curve,
+elliptical arc, close - each absolute or relative, as SVG's path data has them. A <code>moveTo</code> starts a new figure, and <code>close</code> joins a figure's end
+back to its start; a segment drawn on after a <code>close</code>, with no move between, starts a new
+figure at that same start. A path starts with a move: anything drawn before its first
+<code>moveTo</code> is undefined behaviour. An arc is stated as SVG states one: the ellipse's radii
+and its rotation in degrees, <code>ArcSize::Small</code> or <code>Large</code> for which of the two
+arcs joining its ends it takes, and <code>ArcSweep::Clockwise</code> or
+<code>CounterClockwise</code> for the way it turns on the screen. Radii too small to reach its end
+grow together until they do, a radius of zero makes it a line, and an arc ending where it starts
+draws nothing. Three helpers build a whole figure and start a fresh path to do it:
+<code>drawCircle(center, radius)</code>, <code>drawEllipse(center, radiusX, radiusY)</code>, and
+<code>drawRoundedRect(width, height, radius)</code>, which is centred on the origin, or
+<code>drawRoundedRect(rect, radiusX, radiusY)</code>, which is SVG's <code>rect</code>, each radius cut to
+half its own side.
+<code>addRoundedPolygon</code> appends a polygon with its corners rounded, keeping what the path
+already holds.</p>
 
 <p><strong>A curve is drawn to within half a pixel of itself.</strong> A path keeps its curves as
 curves, and each backend turns them into what it rasterizes: Direct2D tessellates them itself, and
 the CPU backend cuts each one into straight segments, halving it until every piece lies within half
-a device pixel of its chord. The half pixel is measured on the screen, the path's transform and the
-canvas's included, so a curve drawn larger is cut into more segments and none comes out coarser. No
-call takes a precision.</p>
+a device pixel of its chord. An arc goes to Direct2D as an arc; the CPU backend first makes it
+cubics of at most a quarter turn each, none further from the ellipse than 0.03 percent of its
+radius. The half pixel is measured on the screen, the path's transform and the canvas's included, so
+a curve drawn larger is cut into more segments and none comes out coarser. No call takes a
+precision.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 262" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="A rounded corner at four on-screen radii, 10, 40, 160 and 640 pixels, cut by the CPU backend into 4, 8, 16 and 32 segments, each within half a device pixel of the curve.">
@@ -990,13 +1000,12 @@ is one pixel.</p>
 <tr><td><code>fillRectangle(rect, brush)</code><br><code>drawRectangle(rect, brush, width)</code></td>
     <td>A rectangle, or its outline inside it.</td></tr>
 <tr><td><code>fillRoundedRectangle(rect, rx, ry, brush)</code><br><code>drawRoundedRectangle(rect, rx, ry, brush, width)</code></td>
-    <td>A rectangle with round corners. Give both radii the same value - see
-    <a href="#differences">Backend differences</a>.</td></tr>
+    <td>A rectangle with round corners, each a quarter of the ellipse the two radii make.</td></tr>
 <tr><td><code>fillPartialRoundedRectangle(parts, brush)</code><br><code>drawPartialRoundedRectangle(parts, brush, width)</code></td>
     <td>A radius per corner, and for an outline a choice of sides - see
     <a href="#ref-parts">RoundedRectangleParts</a>.</td></tr>
 <tr><td><code>fillEllipse(center, rx, ry, brush)</code><br><code>drawEllipse(center, rx, ry, brush, width)</code></td>
-    <td>An ellipse. Drawn alike by both backends only while the radii are equal.</td></tr>
+    <td>An ellipse.</td></tr>
 <tr><td><code>fillCircle(center, radius, brush)</code><br><code>drawCircle(center, radius, brush, width)</code></td>
     <td>A circle, the outline inside it.</td></tr>
 <tr><td><code>drawLine(from, to, brush, width)</code></td>
@@ -1095,9 +1104,10 @@ is one pixel.</p>
 <tr><td><code>lineTo(p)</code>, <code>lineBy(d)</code>, <code>hLineTo(x)</code>, <code>hLineBy(dx)</code>, <code>vLineTo(y)</code>, <code>vLineBy(dy)</code></td><td>A straight segment.</td></tr>
 <tr><td><code>quadTo(control, end)</code>, <code>bezierBy(dControl, dEnd)</code></td><td>A quadratic curve, absolute or relative.</td></tr>
 <tr><td><code>cubicTo(c1, c2, end)</code>, <code>cubicBy(d1, d2, dEnd)</code></td><td>A cubic curve.</td></tr>
+<tr><td><code>arcTo(radii, rotation, size, sweep, end)</code>, <code>arcBy(radii, rotation, size, sweep, delta)</code></td><td>An elliptical arc, as SVG's <code>A</code> and <code>a</code>: the rotation in degrees, an <code>ArcSize</code> and an <code>ArcSweep</code>.</td></tr>
 <tr><td><code>close()</code></td><td>The segment back to the figure's start. A segment after it starts a new figure there.</td></tr>
 <tr><td><code>addRoundedPolygon(points, radius)</code></td><td>A closed polygon with its corners rounded, each cut back by the radius or half its shorter edge.</td></tr>
-<tr><td><code>drawRoundedRect(w, h, r)</code>, <code>drawCircle(center, r)</code></td><td>A whole figure, in a path cleared first. The rectangle is centred on the origin. Each quarter turn of a corner or the circle is one cubic, off a true circle by 0.03 percent of the radius at most.</td></tr>
+<tr><td><code>drawRoundedRect(w, h, r)</code>, <code>drawRoundedRect(rect, rx, ry)</code>, <code>drawCircle(center, r)</code>, <code>drawEllipse(center, rx, ry)</code></td><td>A whole figure of lines and arcs, in a path cleared first. The first rectangle is centred on the origin; the second is SVG's <code>rect</code>, each radius cut to half its own side.</td></tr>
 <tr><td><code>transform(m)</code>, <code>clear()</code></td><td>Every point moved through a matrix; nothing.</td></tr>
 </table>
 
@@ -1248,8 +1258,8 @@ other is a gap in the contract, and belongs in the table below.</p>
 than a feature of either backend, and the last column is what to keep to so that a picture comes out
 the same from both.</p>
 
-<svg class="grid-fig" viewBox="0 0 700 324" xmlns="http://www.w3.org/2000/svg" role="img"
-     aria-label="Four of the differences drawn: a stroke's corner round on the CPU and mitered on Direct2D; a glow round or square at a sharp corner; an ellipse with two radii drawn as a circle of the larger radius on the CPU; a rounded rectangle with two radii given round corners of the larger radius.">
+<svg class="grid-fig" viewBox="0 0 700 184" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Two of the differences drawn: a stroke's corner round on the CPU and mitered on Direct2D; a glow round or square at a sharp corner.">
   <style>
     .df-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
     .df-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
@@ -1275,18 +1285,6 @@ the same from both.</p>
   <path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="32" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="28" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="24" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="20" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="16" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="12" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="8" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="4" stroke-opacity="0.12" stroke-linejoin="miter"/>
   <path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="#0066cc"/>
   <path class="df-sep" d="M20,178 L690,178"/>
-  <text class="df-t" x="20" y="208" style="font-weight:600">drawEllipse, two radii</text>
-  <text class="df-t" x="20" y="224">the ellipse asked for, shaded</text>
-  <ellipse class="df-want" cx="330" cy="213.0" rx="30" ry="14"/>
-  <circle class="df-o" cx="330" cy="213.0" r="30" stroke-opacity="0.85"/>
-  <ellipse class="df-want" cx="570" cy="213.0" rx="30" ry="14"/>
-  <ellipse class="df-o" cx="570" cy="213.0" rx="28.25" ry="12.25" stroke-opacity="0.85"/>
-  <path class="df-sep" d="M20,248 L690,248"/>
-  <text class="df-t" x="20" y="278" style="font-weight:600">A rounded rectangle,</text>
-  <text class="df-t" x="20" y="294">two radii</text>
-  <rect x="270" y="261.0" width="120" height="44" rx="22" ry="22" fill="#eef4fb" stroke="#0066cc" stroke-width="2"/>
-  <rect x="510" y="261.0" width="120" height="44" rx="22" ry="8" fill="#eef4fb" stroke="#0066cc" stroke-width="2"/>
-  <path class="df-sep" d="M20,318 L690,318"/>
 </svg>
 
 <table>
@@ -1308,17 +1306,9 @@ the same from both.</p>
     <td>A transform that scales both axes alike.</td></tr>
 
 <tr><th colspan="4">Shapes and transforms</th></tr>
-<tr><td>An ellipse with two radii</td>
-    <td>A circle of the larger radius. Its outline straddles that circle.</td>
-    <td>The ellipse, its outline inside it.</td>
-    <td>Equal radii. An ellipse to fill is a circle path under a scale.</td></tr>
-<tr><td>A rounded rectangle with two radii</td>
-    <td>Round corners of the larger radius.</td>
-    <td>Elliptical corners.</td>
-    <td>Equal radii.</td></tr>
 <tr><td>A rectangle, rounded or partial rectangle under a rotation or a shear</td>
     <td>The upright box between where the transform puts its top-left and bottom-right
-        corners.</td>
+        corners. A rounded rectangle with two radii is a path, and turns.</td>
     <td>The turned shape.</td>
     <td>A path for anything that turns.</td></tr>
 <tr><td>Widths under unequal axes - strokes, radii, a glow's reach</td>
@@ -1335,10 +1325,12 @@ the same from both.</p>
     <td>Round, from the distance to the outline.</td>
     <td>Mitered, from one stroke per pixel of reach.</td>
     <td><code>castShadow</code> for a shadow; a glow round a curved outline.</td></tr>
-<tr><td>A curve</td>
-    <td>Cut into straight segments, each within half a device pixel of the curve.</td>
-    <td>Tessellated by Direct2D, to its own tolerance.</td>
-    <td>Nothing: the CPU's segments never stray half a pixel from the curve.</td></tr>
+<tr><td>A curve or an arc</td>
+    <td>Cut into straight segments, each within half a device pixel of the curve. An arc is made cubics
+        first, within 0.03 percent of its radius.</td>
+    <td>Tessellated by Direct2D, to its own tolerance. An arc is drawn as an arc.</td>
+    <td>Nothing: the CPU's segments never stray half a pixel from the curve, and an arc's cubics a
+        three-thousandth of its radius.</td></tr>
 
 <tr><th colspan="4">Clips and pixels</th></tr>
 <tr><td>A rectangle clip with a fractional edge</td>
@@ -1402,7 +1394,6 @@ transform rows are about a rotation, a shear and unequal axes alone.
             <li><strong>Cast a shadow before the shape it belongs to.</strong> The shape covers the solid part under it.</li>
             <li><strong>Fade one shape through its colour's alpha</strong>, and a group through <code>ScopedCanvasOpacity</code>.</li>
             <li><strong>Draw anything that turns as a path.</strong> A path is the one shape both backends turn exactly.</li>
-            <li><strong>Give a rounded rectangle and an ellipse one radius.</strong></li>
             <li><strong>Ask <code>hasImage</code> before drawing a kept image</strong>, and draw it again when the answer is no.</li>
             <li><strong>Look at the picture on both backends.</strong> GPU acceleration in Settings switches while the application runs.</li>
         </ul>
@@ -1444,17 +1435,19 @@ folded into the geometry where each call arrives: a rect's corners are mapped, a
 are scaled by the transform's scale factor. Rectangles, rounded rectangles and circles each have a
 painter of their own, written for axis-aligned spans; everything else is a path.</p>
 
-<p>A path is baked into segments first. A curve is halved until each piece lies within a tolerance
-of its chord, and the tolerance is divided by the scale the path is drawn at, the larger axis's under
-a transform that scales the two apart, so it holds on the screen. A piece halved thirteen times is
-taken as its chord, flat or not. The tolerance is a <code>CurveQuality</code>, and everything the
-canvas draws, a path clip included, is baked at <code>Medium</code>: half a device pixel.
-<code>Low</code>, <code>High</code> and <code>VeryHigh</code> - two pixels, a tenth and a hundredth -
-are for code that bakes a <code>BakedPixelPath</code> of its own, which nothing in the framework does.
-Each pixel's coverage comes from its distance to the nearest segment, and inside or
-outside from the segments its row crosses, which is the even-odd rule. A stroke is the band within
-half its width of a segment, so its corners come out round; a glow is the same distance taken as a
-ramp. The coverage is held as a mask, and the brush is composited through it.</p>
+<p>A path is baked into segments first. An arc is turned from SVG's endpoint form into its centre,
+radii and angles, and cut into cubics of at most a quarter turn. A curve is halved until each piece
+lies within a tolerance of its chord, and the tolerance is divided by the scale the path is drawn
+at, the larger axis's under a transform that scales the two apart, so it holds on the screen. A
+piece halved thirteen times is taken as its chord, flat or not. The tolerance is a
+<code>CurveQuality</code>, and everything the canvas draws, a path clip included, is baked at
+<code>Medium</code>: half a device pixel. <code>Low</code>, <code>High</code> and
+<code>VeryHigh</code> - two pixels, a tenth and a hundredth - are for code that bakes a
+<code>BakedPixelPath</code> of its own, which nothing in the framework does. Each pixel's coverage
+comes from its distance to the nearest segment, and inside or outside from the segments its row
+crosses, which is the even-odd rule. A stroke is the band within half its width of a segment, so its
+corners come out round; a glow is the same distance taken as a ramp. The coverage is held as a mask,
+and the brush is composited through it.</p>
 
 <p>A path clip is such a mask the size of its bounds, and a clip inside another is the two masks
 multiplied. An opacity layer is a buffer the size of the surface, kept for reuse, that starts as a
@@ -1471,7 +1464,9 @@ On Windows the coverage is DirectWrite's, averaged to one value a pixel.</p>
 
 <p>Direct2D carries the canvas transform on its render target, so every primitive and every brush is
 mapped by the device. An outline is moved in by half its stroke, Direct2D stroking centred on a
-shape. Strokes take the cap a layer asks for and miter their corners.</p>
+shape. Strokes take the cap a layer asks for and miter their corners. A path's arc goes into the
+geometry as an arc, its radii grown first by the same conversion the CPU backend makes, so the two
+agree on the ellipse wherever the radii given are too small.</p>
 
 <p>Direct2D has no distance field, so a glow is laid down as rings: one stroke of the outline per
 pixel of reach, the widest first, each given what it has to add to what is already down to leave the

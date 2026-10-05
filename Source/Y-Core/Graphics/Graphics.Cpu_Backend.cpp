@@ -366,9 +366,16 @@ namespace ClaFi::Graphics::Cpu
 
     void CpuBackend::fillRoundedRectangle(const FloatRect& rect, float rx, float ry, const Brush& brush)
     {
+        if (rx != ry)
+        {
+            m_scratchPath.drawRoundedRect(rect, rx, ry);
+            fillPath(m_scratchPath, brush);
+            return;
+        }
+
         RoundedRectangleParts parts{
             .bounds = rect,
-            .radii = uniformCorners((std::max)(rx, ry)),
+            .radii = uniformCorners(rx),
             .sides = k_allRectSidesTrue
         };
         fillPartialRoundedRectangle(parts, brush);
@@ -376,9 +383,20 @@ namespace ClaFi::Graphics::Cpu
 
     void CpuBackend::drawRoundedRectangle(const FloatRect& rect, float rx, float ry, const Brush& brush, float strokeWidth)
     {
+        if (rx != ry)
+        {
+            // As Direct2D: the centreline sits half a stroke inside, its radii shrunk by as much.
+            const float halfStroke = strokeWidth * 0.5f;
+            FloatRect centreline = rect;
+            centreline.inflate(-halfStroke);
+            m_scratchPath.drawRoundedRect(centreline, (std::max)(0.0f, rx - halfStroke), (std::max)(0.0f, ry - halfStroke));
+            drawPathWithBrush(m_scratchPath, brush, strokeWidth);
+            return;
+        }
+
         RoundedRectangleParts parts{
             .bounds = rect,
-            .radii = uniformCorners((std::max)(rx, ry)),
+            .radii = uniformCorners(rx),
             .sides = k_allRectSidesTrue
         };
         drawPartialRoundedRectangle(parts, brush, strokeWidth);
@@ -393,8 +411,7 @@ namespace ClaFi::Graphics::Cpu
             return;
         }
 
-        m_scratchPath.clear();
-        m_scratchPath.drawCircle(center, (std::max)(rx, ry));
+        m_scratchPath.drawEllipse(center, rx, ry);
         fillPath(m_scratchPath, brush);
     }
 
@@ -407,8 +424,9 @@ namespace ClaFi::Graphics::Cpu
             return;
         }
 
-        m_scratchPath.clear();
-        m_scratchPath.drawCircle(center, (std::max)(rx, ry));
+        // As Direct2D: the stroke lies inside the ellipse it was given.
+        const float halfStroke = strokeWidth * 0.5f;
+        m_scratchPath.drawEllipse(center, (std::max)(0.0f, rx - halfStroke), (std::max)(0.0f, ry - halfStroke));
         drawPathWithBrush(m_scratchPath, brush, strokeWidth);
     }
 

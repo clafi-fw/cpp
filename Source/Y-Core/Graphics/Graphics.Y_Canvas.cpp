@@ -18,16 +18,12 @@ namespace ClaFi::Graphics
         return result;
     }
 
-    // A quarter circle as one cubic: each handle's length as a share of the radius.
-    static constexpr float k_quarterArcHandle = 0.5522847f;
-
-    // The quarter circle from start to end, round the corner where their tangents meet.
-    static void addCornerArc(PixelPath& path, FloatPoint start, FloatPoint corner, FloatPoint end)
+    // A rounded corner of an outline running clockwise, from where the path stands to end.
+    static void addCornerArc(PixelPath& path, FloatPoint corner, FloatPoint end)
     {
-        path.cubicTo(
-            start + (corner - start) * k_quarterArcHandle,
-            end + (corner - end) * k_quarterArcHandle,
-            end);
+        const FloatPoint leg = end - corner;
+        const float radius = std::sqrt(leg.x * leg.x + leg.y * leg.y);
+        path.arcTo({ radius, radius }, 0.0f, ArcSize::Small, ArcSweep::Clockwise, end);
     }
 
     // The distance an open end travels past the point the outline reaches. A stroke straddles the
@@ -118,7 +114,7 @@ namespace ClaFi::Graphics
             {
                 if (segs[i].isArc)
                 {
-                    addCornerArc(path, segs[i].start, segs[i].ctrl, segs[i].end);
+                    addCornerArc(path, segs[i].ctrl, segs[i].end);
                 }
                 else if (segs[i].start.x != segs[i].end.x || segs[i].start.y != segs[i].end.y)
                 {
@@ -157,7 +153,7 @@ namespace ClaFi::Graphics
                     }
                     if (seg.isArc)
                     {
-                        addCornerArc(path, seg.start, seg.ctrl, seg.end);
+                        addCornerArc(path, seg.ctrl, seg.end);
                     }
                     else if (seg.start.x != seg.end.x || seg.start.y != seg.end.y)
                     {
@@ -219,7 +215,7 @@ namespace ClaFi::Graphics
         {
             if (segs[i].isArc)
             {
-                addCornerArc(path, segs[(i + 7) % 8].end, segs[i].ctrl, segs[i].end);
+                addCornerArc(path, segs[i].ctrl, segs[i].end);
             }
             else
             {
@@ -273,6 +269,25 @@ namespace ClaFi::Graphics
         float maxY = -1e10f;
         FloatPoint cp = { 0.0f, 0.0f };
         FloatPoint subpathStart = { 0.0f, 0.0f };
+
+        // A cubic lies inside its control points, so an arc's cubics' control points bound it.
+        auto includeArc = [&](FloatPoint start, FloatPoint end, const PathCommand& arc){
+            const std::optional<ArcEllipse> ellipse = arcEllipse(start, end, arc.p2, arc.p3.x, arc.arcSize, arc.arcSweep);
+            if (!ellipse)
+                return;
+            const ArcCubics cubics = arcCubics(*ellipse, end);
+            for (const CubicSegment& segment : std::span{ cubics.segments.data(), cubics.count })
+            {
+                for (FloatPoint point : { segment.control1, segment.control2 })
+                {
+                    const FloatPoint p = transform ? transform->transform(point) : point;
+                    minX = std::min(minX, p.x);
+                    maxX = std::max(maxX, p.x);
+                    minY = std::min(minY, p.y);
+                    maxY = std::max(maxY, p.y);
+                }
+            }
+        };
 
         for (const auto& cmd : path.commands())
         {
@@ -351,6 +366,17 @@ namespace ClaFi::Graphics
                     maxX = std::max({ maxX, p1.x, p2.x, p3.x });
                     minY = std::min({ minY, p1.y, p2.y, p3.y });
                     maxY = std::max({ maxY, p1.y, p2.y, p3.y });
+                    cp = end;
+                }
+                break;
+                case PathCommandType::ArcTo:
+                    includeArc(cp, cmd.p1, cmd);
+                    cp = cmd.p1;
+                    break;
+                case PathCommandType::ArcBy:
+                {
+                    const FloatPoint end = { cp.x + cmd.p1.x, cp.y + cmd.p1.y };
+                    includeArc(cp, end, cmd);
                     cp = end;
                 }
                 break;

@@ -131,6 +131,26 @@ Compiled in while CLAFI_TEXT_MOVING is 1 - see TextEngine-Types#textrendermode.
 The shape's own coverage, solid, and the ramp outward from it: what an opaque shape
 casts, wherever the shape itself then stands.
 
+## ArcEllipse
+
+An arc command is stated the way SVG's A states it: where it ends, the ellipse's two radii and
+its rotation in degrees, which of the two arcs joining the ends it takes, and which way it
+turns. That form is what a path stores and what an SVG writer would write back. The centre form
+is worked out from it each time the arc is drawn, by the conversion SVG's implementation notes
+give, and has no place in the path itself.
+
+Radii too small to reach from one end to the other grow together until they just do, which
+makes the arc half the ellipse. A radius of zero makes the arc a straight line to its end, and
+an arc ending where it starts draws nothing. Both backends take the grown radii from the same
+conversion: the CPU backend cuts the arc into cubics of at most a quarter turn each, within 0.03
+percent of the radius of the ellipse, and flattens those as any other curve; Direct2D is handed
+the arc itself, with the grown radii, and draws it.
+
+Under a matrix an arc stays an arc. Its end moves with the matrix, the ellipse's two axes are
+carried through its linear part and the radii and rotation read off the result, and a matrix
+that mirrors reverses the turn. Whether the arc is the larger or the smaller one does not
+change.
+
 ## IBackend
 
 Stroke alignment: every draw* here lays its stroke INSIDE the bounds it is given. The

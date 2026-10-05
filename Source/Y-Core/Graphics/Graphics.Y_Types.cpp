@@ -7,11 +7,152 @@ import ClaFi.StdLib;
 namespace ClaFi::Graphics
 {
     // ========================================================================
+    // Implementation: arcs
+    // ========================================================================
+
+    static constexpr float k_radiansPerDegree = std::numbers::pi_v<float> / 180.0f;
+    static constexpr float k_quarterTurn = std::numbers::pi_v<float> * 0.5f;
+
+    // In double: near radii that just span the ends, float rounding moves the centre visibly.
+    std::optional<ArcEllipse> arcEllipse(FloatPoint start, FloatPoint end,
+        FloatPoint radii, float rotation, ArcSize arcSize, ArcSweep arcSweep)
+    {
+        double radiusX = std::abs(static_cast<double>(radii.x));
+        double radiusY = std::abs(static_cast<double>(radii.y));
+        if (start == end || radiusX == 0.0 || radiusY == 0.0)
+            return std::nullopt;
+
+        const double angle = static_cast<double>(rotation) * std::numbers::pi / 180.0;
+        const double cosAngle = std::cos(angle);
+        const double sinAngle = std::sin(angle);
+
+        // Half the chord from end to start, in the ellipse's own axes.
+        const double chordX = (static_cast<double>(start.x) - end.x) * 0.5;
+        const double chordY = (static_cast<double>(start.y) - end.y) * 0.5;
+        const double x = cosAngle * chordX + sinAngle * chordY;
+        const double y = cosAngle * chordY - sinAngle * chordX;
+
+        const double reach = (x * x) / (radiusX * radiusX) + (y * y) / (radiusY * radiusY);
+        if (reach > 1.0)
+        {
+            const double growth = std::sqrt(reach);
+            radiusX *= growth;
+            radiusY *= growth;
+        }
+
+        const double squaredX = radiusX * radiusX;
+        const double squaredY = radiusY * radiusY;
+        const double across = squaredX * y * y + squaredY * x * x;
+        double offset = std::sqrt((std::max)(0.0, (squaredX * squaredY - across) / across));
+        if ((arcSize == ArcSize::Large) == (arcSweep == ArcSweep::Clockwise))
+            offset = -offset;
+        const double centerX = offset * radiusX * y / radiusY;
+        const double centerY = -offset * radiusY * x / radiusX;
+
+        const double startAngle = std::atan2((y - centerY) / radiusY, (x - centerX) / radiusX);
+        const double endAngle = std::atan2((-y - centerY) / radiusY, (-x - centerX) / radiusX);
+        double sweepAngle = endAngle - startAngle;
+        if (arcSweep == ArcSweep::Clockwise && sweepAngle < 0.0)
+            sweepAngle += 2.0 * std::numbers::pi;
+        else if (arcSweep == ArcSweep::CounterClockwise && sweepAngle > 0.0)
+            sweepAngle -= 2.0 * std::numbers::pi;
+
+        return ArcEllipse{
+            .center = {
+                static_cast<float>(cosAngle * centerX - sinAngle * centerY + (static_cast<double>(start.x) + end.x) * 0.5),
+                static_cast<float>(sinAngle * centerX + cosAngle * centerY + (static_cast<double>(start.y) + end.y) * 0.5),
+            },
+            .radii = { static_cast<float>(radiusX), static_cast<float>(radiusY) },
+            .rotation = static_cast<float>(angle),
+            .startAngle = static_cast<float>(startAngle),
+            .sweepAngle = static_cast<float>(sweepAngle),
+        };
+    }
+
+    ArcCubics arcCubics(const ArcEllipse& arc, FloatPoint end)
+    {
+        const float cosAngle = std::cos(arc.rotation);
+        const float sinAngle = std::sin(arc.rotation);
+        auto pointAt = [&](float angle){
+            const float x = arc.radii.x * std::cos(angle);
+            const float y = arc.radii.y * std::sin(angle);
+            return FloatPoint{
+                arc.center.x + cosAngle * x - sinAngle * y,
+                arc.center.y + sinAngle * x + cosAngle * y,
+            };
+        };
+        auto tangentAt = [&](float angle){
+            const float x = -arc.radii.x * std::sin(angle);
+            const float y = arc.radii.y * std::cos(angle);
+            return FloatPoint{ cosAngle * x - sinAngle * y, sinAngle * x + cosAngle * y };
+        };
+
+        // A sweep a hair over a whole number of quarter turns takes no extra piece.
+        const float quarters = std::ceil(std::abs(arc.sweepAngle) / k_quarterTurn - 0.001f);
+
+        ArcCubics result;
+        result.count = (std::max)(std::size_t{ 1 }, static_cast<std::size_t>(quarters));
+        const float step = arc.sweepAngle / static_cast<float>(result.count);
+        const float handle = std::tan(step * 0.25f) * (4.0f / 3.0f);
+        for (std::size_t i = 0; i < result.count; ++i)
+        {
+            const float from = arc.startAngle + step * static_cast<float>(i);
+            const float to = from + step;
+            const FloatPoint toPoint = i + 1 == result.count ? end : pointAt(to);
+            result.segments[i] = {
+                pointAt(from) + tangentAt(from) * handle,
+                toPoint - tangentAt(to) * handle,
+                toPoint,
+            };
+        }
+        return result;
+    }
+
+    // The ellipse carried through the matrix's linear part, and its turn reversed by a mirror.
+    static void transformArc(PathCommand& arc, const Matrix3x2& matrix)
+    {
+        const float angle = arc.p3.x * k_radiansPerDegree;
+        const float cosAngle = std::cos(angle);
+        const float sinAngle = std::sin(angle);
+        const FloatPoint axisX = matrix.transformVector({ arc.p2.x * cosAngle, arc.p2.x * sinAngle });
+        const FloatPoint axisY = matrix.transformVector({ -arc.p2.y * sinAngle, arc.p2.y * cosAngle });
+
+        // The mapped ellipse's axes are the eigenvectors of this symmetric matrix. The shorter one
+        // comes from the area, which a thin ellipse keeps where the smaller eigenvalue loses it.
+        const float xx = axisX.x * axisX.x + axisY.x * axisY.x;
+        const float xy = axisX.x * axisX.y + axisY.x * axisY.y;
+        const float yy = axisX.y * axisX.y + axisY.y * axisY.y;
+        const float mean = (xx + yy) * 0.5f;
+        const float spread = std::hypot((xx - yy) * 0.5f, xy);
+        const float determinant = matrix.a * matrix.d - matrix.b * matrix.c;
+        const float longer = std::sqrt(mean + spread);
+        const float shorter = longer > 0.0f ? std::abs(determinant * arc.p2.x * arc.p2.y) / longer : 0.0f;
+        arc.p2 = { longer, shorter };
+        arc.p3.x = std::atan2(2.0f * xy, xx - yy) * 0.5f / k_radiansPerDegree;
+
+        if (determinant < 0.0f)
+        {
+            arc.arcSweep = arc.arcSweep == ArcSweep::Clockwise
+                ? ArcSweep::CounterClockwise
+                : ArcSweep::Clockwise;
+        }
+    }
+
+    // ========================================================================
     // Implementation: PixelPath
     // ========================================================================
 
-    // A quarter circle as one cubic: each handle's length as a share of the radius.
-    static constexpr float k_quarterArcHandle = 0.5522847f;
+    void PixelPath::arcTo(FloatPoint radii, float rotation, ArcSize arcSize, ArcSweep arcSweep, FloatPoint end)
+    {
+        m_commands.push_back({ PathCommandType::ArcTo, end, radii, { rotation, 0.0f }, arcSize, arcSweep });
+        m_currentPoint = end;
+    }
+
+    void PixelPath::arcBy(FloatPoint radii, float rotation, ArcSize arcSize, ArcSweep arcSweep, FloatPoint delta)
+    {
+        m_commands.push_back({ PathCommandType::ArcBy, delta, radii, { rotation, 0.0f }, arcSize, arcSweep });
+        m_currentPoint = m_currentPoint + delta;
+    }
 
     void PixelPath::addRoundedPolygon(std::span<const FloatPoint> points, float radius)
     {
@@ -56,42 +197,44 @@ namespace ClaFi::Graphics
 
     void PixelPath::drawRoundedRect(float w, float h, float r)
     {
-        const float right = w * 0.5f;
-        const float bottom = h * 0.5f;
-        const float left = -right;
-        const float top = -bottom;
-        r = std::min({ r, right, bottom });
-        // How far from its corner each handle of the corner's arc lies.
-        const float reach = r * (1.0f - k_quarterArcHandle);
+        const float halfWidth = w * 0.5f;
+        const float halfHeight = h * 0.5f;
+        const float radius = std::min({ r, halfWidth, halfHeight });
+        drawRoundedRect({ -halfWidth, -halfHeight, halfWidth, halfHeight }, radius, radius);
+    }
+
+    // Each radius is cut to half its own side, as SVG cuts a rect's.
+    void PixelPath::drawRoundedRect(const FloatRect& rect, float radiusX, float radiusY)
+    {
+        const FloatPoint radii = {
+            (std::max)(0.0f, (std::min)(radiusX, rect.width() * 0.5f)),
+            (std::max)(0.0f, (std::min)(radiusY, rect.height() * 0.5f)),
+        };
 
         clear();
-        moveTo(left + r, top);
-        lineTo(right - r, top);
-        cubicTo({ right - reach, top }, { right, top + reach }, { right, top + r });
-        lineTo(right, bottom - r);
-        cubicTo({ right, bottom - reach }, { right - reach, bottom }, { right - r, bottom });
-        lineTo(left + r, bottom);
-        cubicTo({ left + reach, bottom }, { left, bottom - reach }, { left, bottom - r });
-        lineTo(left, top + r);
-        cubicTo({ left, top + reach }, { left + reach, top }, { left + r, top });
+        moveTo(rect.left + radii.x, rect.top);
+        lineTo(rect.right - radii.x, rect.top);
+        arcTo(radii, 0.0f, ArcSize::Small, ArcSweep::Clockwise, { rect.right, rect.top + radii.y });
+        lineTo(rect.right, rect.bottom - radii.y);
+        arcTo(radii, 0.0f, ArcSize::Small, ArcSweep::Clockwise, { rect.right - radii.x, rect.bottom });
+        lineTo(rect.left + radii.x, rect.bottom);
+        arcTo(radii, 0.0f, ArcSize::Small, ArcSweep::Clockwise, { rect.left, rect.bottom - radii.y });
+        lineTo(rect.left, rect.top + radii.y);
+        arcTo(radii, 0.0f, ArcSize::Small, ArcSweep::Clockwise, { rect.left + radii.x, rect.top });
         close();
     }
 
-    // A cubic a quarter turn, each off the circle by 0.03 percent of the radius at most.
-    void PixelPath::drawCircle(FloatPoint center, float radius)
+    // Two half turns, as an SVG path states an ellipse.
+    void PixelPath::drawEllipse(FloatPoint center, float radiusX, float radiusY)
     {
-        const float handle = radius * k_quarterArcHandle;
-        const float left = center.x - radius;
-        const float top = center.y - radius;
-        const float right = center.x + radius;
-        const float bottom = center.y + radius;
+        const FloatPoint radii = { radiusX, radiusY };
+        const FloatPoint top = { center.x, center.y - radiusY };
+        const FloatPoint bottom = { center.x, center.y + radiusY };
 
         clear();
-        moveTo(center.x, top);
-        cubicTo({ center.x + handle, top }, { right, center.y - handle }, { right, center.y });
-        cubicTo({ right, center.y + handle }, { center.x + handle, bottom }, { center.x, bottom });
-        cubicTo({ center.x - handle, bottom }, { left, center.y + handle }, { left, center.y });
-        cubicTo({ left, center.y - handle }, { center.x - handle, top }, { center.x, top });
+        moveTo(top);
+        arcTo(radii, 0.0f, ArcSize::Small, ArcSweep::Clockwise, bottom);
+        arcTo(radii, 0.0f, ArcSize::Small, ArcSweep::Clockwise, top);
         close();
     }
 
@@ -186,6 +329,18 @@ namespace ClaFi::Graphics
                     cmd.p1 = matrix.transformVector(cmd.p1);
                     cmd.p2 = matrix.transformVector(cmd.p2);
                     cmd.p3 = matrix.transformVector(cmd.p3);
+                    break;
+
+                case PathCommandType::ArcTo:
+                    cmd.p1 = matrix.transform(cmd.p1);
+                    transformArc(cmd, matrix);
+                    currentPoint = cmd.p1;
+                    break;
+
+                case PathCommandType::ArcBy:
+                    currentPoint = { currentPoint.x + cmd.p1.x, currentPoint.y + cmd.p1.y };
+                    cmd.p1 = matrix.transformVector(cmd.p1);
+                    transformArc(cmd, matrix);
                     break;
 
                 case PathCommandType::Close:

@@ -311,6 +311,20 @@ namespace ClaFi::Graphics
         bool operator==(const Matrix3x2& o) const = default;
     };
 
+    // Which of the two arcs between two points on an ellipse an arc takes, as SVG's large-arc flag.
+    export enum class ArcSize : std::uint8_t
+    {
+        Small,  // at most half a turn
+        Large   // at least half a turn
+    };
+
+    // The way an arc turns on the screen, y running down, as SVG's sweep flag.
+    export enum class ArcSweep : std::uint8_t
+    {
+        CounterClockwise,   // sweep flag 0
+        Clockwise           // sweep flag 1
+    };
+
     // One step of a path, absolute or relative.
     export enum class PathCommandType : std::uint8_t {
         MoveTo,      // M
@@ -325,15 +339,52 @@ namespace ClaFi::Graphics
         QuadBy,      // q
         CubicTo,     // C
         CubicBy,     // c
+        ArcTo,       // A
+        ArcBy,       // a
         Close        // Z/z
     };
 
+    // A step and its points; an arc's end is p1, its radii p2 and its rotation p3.x, in degrees.
     export struct PathCommand {
         PathCommandType type;
         FloatPoint p1{ 0.0f, 0.0f };
         FloatPoint p2{ 0.0f, 0.0f };
         FloatPoint p3{ 0.0f, 0.0f };
+        ArcSize arcSize{ ArcSize::Small };
+        ArcSweep arcSweep{ ArcSweep::CounterClockwise };
     };
+
+    // An arc in centre form, as SVG converts its endpoint form. See Graphics-Types#arcellipse
+    export struct ArcEllipse
+    {
+        FloatPoint center{ 0.0f, 0.0f };
+        FloatPoint radii{ 0.0f, 0.0f };
+        float rotation{ 0.0f };     // radians
+        float startAngle{ 0.0f };   // radians
+        float sweepAngle{ 0.0f };   // radians, positive clockwise on the screen
+    };
+
+    // A cubic from wherever the path stands.
+    export struct CubicSegment
+    {
+        FloatPoint control1{ 0.0f, 0.0f };
+        FloatPoint control2{ 0.0f, 0.0f };
+        FloatPoint end{ 0.0f, 0.0f };
+    };
+
+    // An arc as cubics of at most a quarter turn each.
+    export struct ArcCubics
+    {
+        std::array<CubicSegment, 4> segments{};
+        std::size_t count{ 0 };
+    };
+
+    // The ellipse an arc from start to end lies on, or nothing where the arc is a straight line.
+    export [[nodiscard]] std::optional<ArcEllipse> arcEllipse(FloatPoint start, FloatPoint end,
+        FloatPoint radii, float rotation, ArcSize, ArcSweep);
+
+    // The arc as cubics of at most a quarter turn each, the last ending exactly on end.
+    export [[nodiscard]] ArcCubics arcCubics(const ArcEllipse& arc, FloatPoint end);
 
     export class PixelPath {
     public:
@@ -358,6 +409,10 @@ namespace ClaFi::Graphics
         void cubicTo(FloatPoint ctrl1, FloatPoint ctrl2, FloatPoint end) { m_commands.push_back({ PathCommandType::CubicTo, ctrl1, ctrl2, end }); m_currentPoint = end; }
         void cubicBy(FloatPoint dCtrl1, FloatPoint dCtrl2, FloatPoint dEnd) { m_commands.push_back({ PathCommandType::CubicBy, dCtrl1, dCtrl2, dEnd }); m_currentPoint = { m_currentPoint.x + dEnd.x, m_currentPoint.y + dEnd.y }; }
 
+        // SVG's A and a, the rotation in degrees. See Graphics-Types#arcellipse
+        void arcTo(FloatPoint radii, float rotation, ArcSize, ArcSweep, FloatPoint end);
+        void arcBy(FloatPoint radii, float rotation, ArcSize, ArcSweep, FloatPoint delta);
+
         void close() { m_commands.push_back({ PathCommandType::Close }); }
         void clear() { m_commands.clear(); m_currentPoint = { 0.0f, 0.0f }; }
 
@@ -372,7 +427,9 @@ namespace ClaFi::Graphics
         void addRoundedPolygon(std::span<const FloatPoint> points, float radius);
 
         void drawRoundedRect(float w, float h, float r);
-        void drawCircle(FloatPoint center, float radius);
+        void drawRoundedRect(const FloatRect& rect, float radiusX, float radiusY); // as SVG's rect
+        void drawEllipse(FloatPoint center, float radiusX, float radiusY);
+        void drawCircle(FloatPoint center, float radius) { drawEllipse(center, radius, radius); }
 
         void transform(const Matrix3x2& matrix);
 

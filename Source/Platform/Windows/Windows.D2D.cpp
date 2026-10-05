@@ -1539,6 +1539,24 @@ namespace ClaFi::PlatformImplementation::Windows
             return figureOpen;
         };
 
+        // Direct2D draws the arc itself, given the radii grown as the CPU backend grows them.
+        auto addArc = [&](FloatPoint end, const PathCommand& arc){
+            const std::optional<ArcEllipse> ellipse = arcEllipse(currentPoint, end, arc.p2, arc.p3.x, arc.arcSize, arc.arcSweep);
+            if (!ellipse)
+            {
+                sink->AddLine(reinterpret_cast<const D2D1_POINT_2F&>(end));
+                return;
+            }
+            const D2D1_ARC_SEGMENT segment = {
+                reinterpret_cast<const D2D1_POINT_2F&>(end),
+                { ellipse->radii.x, ellipse->radii.y },
+                arc.p3.x,
+                arc.arcSweep == ArcSweep::Clockwise ? D2D1_SWEEP_DIRECTION_CLOCKWISE : D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE,
+                arc.arcSize == ArcSize::Large ? D2D1_ARC_SIZE_LARGE : D2D1_ARC_SIZE_SMALL
+            };
+            sink->AddArc(&segment);
+        };
+
         for (const auto& cmd : path.commands())
         {
             switch (cmd.type)
@@ -1658,6 +1676,23 @@ namespace ClaFi::PlatformImplementation::Windows
                             reinterpret_cast<const D2D1_POINT_2F&>(end)
                         };
                         sink->AddBezier(&cubic);
+                        currentPoint = end;
+                    }
+                    break;
+
+                case PathCommandType::ArcTo:
+                    if (joinFigure())
+                    {
+                        addArc(cmd.p1, cmd);
+                        currentPoint = cmd.p1;
+                    }
+                    break;
+
+                case PathCommandType::ArcBy:
+                    if (joinFigure())
+                    {
+                        FloatPoint end = { currentPoint.x + cmd.p1.x, currentPoint.y + cmd.p1.y };
+                        addArc(end, cmd);
                         currentPoint = end;
                     }
                     break;
