@@ -38,10 +38,10 @@ namespace ClaFi::Graphics::Cpu
         // The one way to composite a brush. A painter hands the brush and the parameters below
         // rather than visiting the Brush itself, so the compositing rules are stated once.
         //
-        // brushTransform places a gradient's endpoints and a glow's light position into the
-        // target's coordinates; null leaves them as written. glowSpreadScale scales a glow's
-        // radius, which is not always the transform's own scale - PixelPathPainter carries a
-        // separate one.
+        // brushTransform carries a brush into the target's coordinates - a linear gradient's
+        // endpoints, a glow's light position, a radial gradient whole; null leaves it as written.
+        // glowSpreadScale scales a glow's radius, which is not always the transform's own scale -
+        // PixelPathPainter carries a separate one.
         //
         // useOwnMask chooses between compositing through this instance's coverage mask and
         // writing every pixel of the target. A solid colour has no mask-free form, because
@@ -72,11 +72,27 @@ namespace ClaFi::Graphics::Cpu
         void compositeSolid(const PixelView&, Color color);
         static void buildGradientRamp(std::span<const GradientStop> stops, ColorAsUint* ramp);
 
-        static void compositeGradient(
+        // The stops' ramp through the mask and the clip, rowPosition(py) placing that row on it.
+        template<typename RowPosition>
+        static void compositeRamp(
+            const PixelView& target,
+            std::span<const GradientStop> stops,
+            const RowPosition& rowPosition,
+            const float* maskBase,
+            int maskStride
+        );
+        static void compositeLinearGradient(
             const PixelView& target,
             FloatPoint startPoint,
             FloatPoint endPoint,
             std::span<const GradientStop> stops,
+            const float* maskBase = nullptr,
+            int maskStride = 0
+        );
+        static void compositeRadialGradient(
+            const PixelView& target,
+            const RadialGradient& gradient,
+            const Matrix3x2& brushTransform,
             const float* maskBase = nullptr,
             int maskStride = 0
         );
@@ -90,8 +106,8 @@ namespace ClaFi::Graphics::Cpu
         static FloatRect calculateEdgeBounds(const RenderEdge& edge, float radius, FloatRect bounds);
         const EdgeIndices& edgeIndices(int y, int topOffset);
     private:
-        // The ramp carries one entry per 1/256th of the gradient axis, plus the endpoint, so the
-        // 0..256 position the loop already computes indexes it without a clamp.
+        // The ramp carries one entry per 1/256th of the stops' 0..1 range, plus one for 1 itself,
+        // so a position clamped to 0..1 and scaled by 256 indexes it.
         static constexpr int k_gradientRampLast = 256;
         // One bucket per scanline of the last prepareEdgeBuckets() bounds, holding the indices
         // into m_edgeCache whose padded vertical extent covers that scanline.

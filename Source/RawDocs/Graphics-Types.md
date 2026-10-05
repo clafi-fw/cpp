@@ -151,6 +151,28 @@ carried through its linear part and the radii and rotation read off the result, 
 that mirrors reverses the turn. Whether the arc is the larger or the smaller one does not
 change.
 
+## RadialGradient
+
+Stop position 0 stands at the origin, `center + offset`, and position 1 on the ellipse of
+`radiusX` and `radiusY` round `center`. Each straight line from the origin to the ellipse runs
+through the stops evenly, and past the ellipse the last stop holds. That is the definition
+Direct2D gives its radial brush, and the CPU backend computes the same position.
+
+The CPU backend takes each pixel back through the brush's transform into the brush's own
+coordinates and measures it from the origin in radii. There the ellipse is the unit circle, the
+origin is the point f = offset / radii inside it, and a pixel at d from the origin lies on the
+unit circle shrunk toward f by its position t:
+
+    |f + d / t| = 1,  so  t = (f.d + sqrt((f.d)^2 + (1 - |f|^2) |d|^2)) / (1 - |f|^2)
+
+With the origin at the centre, t is |d|, the distance in radii. The map back from a pixel is
+affine, so each pixel costs a multiply and an add per axis, then the root. The whole gradient
+goes back through the transform, so it turns, shears and scales with what it fills.
+
+The gradient is defined for an origin inside the ellipse and radii above zero. Direct2D calls
+its gradient outside that not well-defined; on the CPU the arithmetic meets an infinity or a NaN
+there, and the ramp's clamp keeps every pixel on the ramp without saying which colour it takes.
+
 ## IBackend
 
 Stroke alignment: every draw* here lays its stroke INSIDE the bounds it is given. The

@@ -358,25 +358,25 @@ takes a brush also takes a <code>Color</code>, which is a solid brush.</p>
 <tr><td><code>LinearGradient</code></td><td>Colour stops along a line from <code>startPoint</code> to
     <code>endPoint</code>, the same across it. Before the first stop and past the last the end colour
     holds.</td></tr>
-<tr><td><code>RadialGradient</code></td><td>Colour stops out from a centre over an ellipse.
-    <strong>Direct2D only</strong> - the CPU backend draws nothing with it.</td></tr>
+<tr><td><code>RadialGradient</code></td><td>Colour stops from the origin, <code>center</code> moved by
+    <code>offset</code>, out to the ellipse of <code>radiusX</code> and <code>radiusY</code> round
+    <code>center</code>. Past the ellipse the last colour holds.</td></tr>
 <tr><td><code>PointGlow</code></td><td>A point of light: its colour at <code>lightPos</code>, thinning
     straight to nothing at <code>lightSpread</code>.</td></tr>
 </table>
 
 <svg class="grid-fig" viewBox="0 0 700 182" xmlns="http://www.w3.org/2000/svg" role="img"
-     aria-label="The four brushes: a solid colour, a linear gradient between a start and an end point, a radial gradient drawn by Direct2D alone, and a point of light.">
+     aria-label="The four brushes: a solid colour, a linear gradient between a start and an end point, a radial gradient from an origin out to an ellipse round its centre, and a point of light.">
   <style>
     .br-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
     .br-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
     .br-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
     .br-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
-    .br-red { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#c62828; }
   </style>
   <defs>
     <pattern id="br-chk" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#ffffff"/><rect width="8" height="8" fill="#e3e7ec"/><rect x="8" y="8" width="8" height="8" fill="#e3e7ec"/></pattern>
     <linearGradient id="br-lin" gradientUnits="userSpaceOnUse" x1="225" y1="62" x2="305" y2="110"><stop offset="0" stop-color="#0066cc"/><stop offset="1" stop-color="#9cde4c"/></linearGradient>
-    <radialGradient id="br-rad" gradientUnits="userSpaceOnUse" cx="440" cy="86" r="70" gradientTransform="translate(440 86) scale(1 0.64) translate(-440 -86)"><stop offset="0" stop-color="#9cde4c"/><stop offset="1" stop-color="#0066cc"/></radialGradient>
+    <radialGradient id="br-rad" gradientUnits="userSpaceOnUse" cx="440" cy="86" r="70" fx="416" fy="70.375" gradientTransform="translate(440 86) scale(1 0.64) translate(-440 -86)"><stop offset="0" stop-color="#9cde4c"/><stop offset="1" stop-color="#0066cc"/></radialGradient>
     <radialGradient id="br-glow" gradientUnits="userSpaceOnUse" cx="615" cy="86" r="66" gradientTransform="translate(615 86) scale(1 0.5) translate(-615 -86)"><stop offset="0" stop-color="#ffb400" stop-opacity="0.95"/><stop offset="1" stop-color="#ffb400" stop-opacity="0"/></radialGradient>
   </defs>
   <text class="br-th" x="20" y="24">SolidColor</text>
@@ -390,12 +390,15 @@ takes a brush also takes a <code>Color</code>, which is a solid brush.</p>
   <circle cx="225" cy="62" r="3.5" fill="#fff" stroke="#111"/><circle cx="305" cy="110" r="3.5" fill="#fff" stroke="#111"/>
   <text class="br-m" x="232" y="58" style="fill:#fff">start</text><text class="br-m" x="270" y="126" style="fill:#111">end</text>
   <rect x="370" y="36" width="140" height="100" rx="4" fill="url(#br-rad)"/>
+  <path d="M416,76 L440,86" stroke="#fff" stroke-width="1" stroke-dasharray="3 2"/>
+  <circle cx="416" cy="76" r="3.5" fill="#fff" stroke="#111"/><circle cx="440" cy="86" r="3.5" fill="#fff" stroke="#111"/>
+  <text class="br-m" x="384" y="67" style="fill:#111">origin</text><text class="br-m" x="447" y="102" style="fill:#fff">center</text>
   <rect x="545" y="36" width="140" height="100" rx="4" fill="#24303c"/>
   <rect x="545" y="36" width="140" height="100" rx="4" fill="url(#br-glow)"/>
   <circle cx="615" cy="86" r="2.5" fill="#fff"/>
   <text class="br-t" x="20" y="156">one colour, its alpha</text><text class="br-t" x="20" y="171">letting the ground through</text>
   <text class="br-t" x="195" y="156">stops from start to end,</text><text class="br-t" x="195" y="171">the end colours past them</text>
-  <text class="br-t" x="370" y="156">stops over an ellipse</text><text class="br-red" x="370" y="171">Direct2D only</text>
+  <text class="br-t" x="370" y="156">stops from the origin</text><text class="br-t" x="370" y="171">out to the ellipse</text>
   <text class="br-t" x="545" y="156">a light at lightPos,</text><text class="br-t" x="545" y="171">thinning straight to nothing</text>
 </svg>
 
@@ -407,6 +410,9 @@ path moves, scales and turns with it.</p>
 
 <pre><code>canvas.<span class="fn">fillRectangle</span>(band, <span class="tp">LinearGradient</span>::<span class="fn">simple</span>(band.<span class="fn">topLeft</span>(), band.<span class="fn">bottomLeft</span>(), top, bottom));
 canvas.<span class="fn">fillTopBottomGradientRectangle</span>(band, top, bottom);   <span class="cm">// the same thing</span></code></pre>
+
+<p>A radial gradient's origin lies inside its ellipse, and both radii are above zero. An origin on
+the ellipse or past it, or a radius of zero, is undefined behaviour.</p>
 
 <p>A point of light lights whatever it is painted on. Its spread is the vertical radius, and
 <code>xRatio</code> divides it for the horizontal one, so 0.5 is a light twice as wide as it is tall.
@@ -1016,6 +1022,8 @@ is one pixel.</p>
     <td>A path as a stack of <code>PathDrawLayer</code>, in order.</td></tr>
 <tr><td><code>fillLinearGradientRectangle(rect, start, end, stops)</code><br><code>fillTopBottomGradientRectangle(rect, top, bottom)</code><br><code>fillLeftRightGradientRectangle(rect, left, right)</code></td>
     <td>A rectangle under a linear gradient.</td></tr>
+<tr><td><code>fillRadialGradientRectangle(rect, center, offset, radiusX, radiusY, stops)</code></td>
+    <td>A rectangle under a radial gradient.</td></tr>
 <tr><td><code>fadeEdge(rect, radii, side, size, color)</code></td>
     <td>A band along one side, the colour at the edge and clear <code>size</code> in. Its two corners
     on that edge take the rect's radii there, so a fade over a rounded view ends on its arc.</td></tr>
@@ -1055,7 +1063,6 @@ is one pixel.</p>
     <span class="kw">static</span> <span class="tp">LinearGradient</span> <span class="fn">simple</span>(<span class="tp">FloatPoint</span> start, <span class="tp">FloatPoint</span> end, <span class="tp">Color</span> startColor, <span class="tp">Color</span> endColor);
 };
 
-<span class="cm">// Direct2D only.</span>
 <span class="kw">struct</span> <span class="tp">RadialGradient</span>
 {
     <span class="tp">FloatPoint</span> center;
@@ -1291,17 +1298,14 @@ the same from both.</p>
 <tr><th>Case</th><th>CPU</th><th>Direct2D</th><th>Keep to</th></tr>
 
 <tr><th colspan="4">Brushes</th></tr>
-<tr><td><code>RadialGradient</code></td>
-    <td>Draws nothing.</td>
-    <td>Draws the gradient.</td>
-    <td>A <code>PointGlow</code> for light, a <code>LinearGradient</code> for a ramp.</td></tr>
 <tr><td><code>PointGlow::shape</code></td>
     <td>Draws <code>Circle</code>, <code>SoftRectangle</code> and <code>SharpRectangle</code>.</td>
     <td>Draws every glow as <code>Circle</code>.</td>
     <td><code>GlowShape::Circle</code>, the default.</td></tr>
 <tr><td>A brush under a rotation, a shear or unequal axes</td>
     <td>A glow keeps its axes on the screen's and its spread follows the larger axis. A linear
-        gradient's bands stay square to its mapped axis.</td>
+        gradient's bands stay square to its mapped axis. A radial gradient is carried with the
+        shape.</td>
     <td>The brush is carried with the shape.</td>
     <td>A transform that scales both axes alike.</td></tr>
 
@@ -1402,8 +1406,9 @@ transform rows are about a rotation, a shear and unequal axes alone.
         <h4>Don't</h4>
         <ul>
             <li><strong>Don't inset an outline by half its stroke.</strong> The backend already has.</li>
-            <li><strong>Don't draw with a <code>RadialGradient</code></strong>, or a glow of any shape but <code>Circle</code>.</li>
+            <li><strong>Don't draw a glow of any shape but <code>Circle</code>.</strong> Direct2D draws every glow as a circle.</li>
             <li><strong>Don't draw before a path's first <code>moveTo</code>.</strong> What comes before it is undefined behaviour.</li>
+            <li><strong>Don't put a radial gradient's origin on or past its ellipse.</strong> The gradient there is undefined behaviour.</li>
             <li><strong>Don't rely on a stroke's corner</strong> where the corner is sharp.</li>
             <li><strong>Don't read pixels back from a staging view.</strong> Under Direct2D it holds nothing that was drawn.</li>
             <li><strong>Don't draw a bitmap under a transform or a path clip</strong> and expect the backends to agree.</li>
@@ -1448,6 +1453,11 @@ comes from its distance to the nearest segment, and inside or outside from the s
 crosses, which is the even-odd rule. A stroke is the band within half its width of a segment, so its
 corners come out round; a glow is the same distance taken as a ramp. The coverage is held as a mask,
 and the brush is composited through it.</p>
+
+<p>A gradient is read from a ramp of 257 colours, built from its stops once per draw. A linear
+gradient places a pixel on the ramp by how far along its axis the pixel stands. A radial gradient
+takes the pixel back through the transform into the brush, and solves for the stop position at
+which the ellipse, shrunk toward the origin, passes through it.</p>
 
 <p>A path clip is such a mask the size of its bounds, and a clip inside another is the two masks
 multiplied. An opacity layer is a buffer the size of the surface, kept for reuse, that starts as a

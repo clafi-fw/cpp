@@ -175,6 +175,20 @@ namespace ClaFi::Graphics::Cpu
         return _mm256_max_ps(vDx, vDyNorm);
     }
 
+    // A matrix with no area has no inverse; the infinities it answers meet the ramp's clamp.
+    [[nodiscard]] static Matrix3x2 inverted(const Matrix3x2& matrix)
+    {
+        const float invDeterminant = 1.0f / (matrix.a * matrix.d - matrix.b * matrix.c);
+        return {
+            matrix.d * invDeterminant,
+            -matrix.b * invDeterminant,
+            -matrix.c * invDeterminant,
+            matrix.a * invDeterminant,
+            (matrix.c * matrix.f - matrix.d * matrix.e) * invDeterminant,
+            (matrix.b * matrix.e - matrix.a * matrix.f) * invDeterminant,
+        };
+    }
+
     __m256i SimdEnv::loadMask(int remaining) const
     {
         if (remaining >= 8)
@@ -477,7 +491,12 @@ namespace ClaFi::Graphics::Cpu
             {
                 FloatPoint worldStart = brushTransform ? brushTransform->transform(brushArg.startPoint) : brushArg.startPoint;
                 FloatPoint worldEnd = brushTransform ? brushTransform->transform(brushArg.endPoint) : brushArg.endPoint;
-                compositeGradient(target, worldStart, worldEnd, brushArg.stops, maskBase, maskStride);
+                compositeLinearGradient(target, worldStart, worldEnd, brushArg.stops, maskBase, maskStride);
+            }
+            else if constexpr (std::is_same_v<T, RadialGradient>)
+            {
+                const Matrix3x2 transform = brushTransform ? *brushTransform : Matrix3x2::identity();
+                compositeRadialGradient(target, brushArg, transform, maskBase, maskStride);
             }
             else if constexpr (std::is_same_v<T, PointGlow>)
             {
@@ -489,7 +508,6 @@ namespace ClaFi::Graphics::Cpu
                 glowParams.lightSpread *= glowSpreadScale;
                 compositePointGlow(target, glowParams, maskBase, maskStride);
             }
-            // RadialGradient has no CPU path yet, and had none at any of the call sites either.
         }, brush);
     }
 
@@ -614,34 +632,18 @@ namespace ClaFi::Graphics::Cpu
         }
     }
 
-    void RasterBuffers::compositeGradient(const PixelView& target, FloatPoint startPoint,
-        FloatPoint endPoint, std::span<const GradientStop> stops,
-        const float* maskBase, int maskStride)
+    template<typename RowPosition>
+    void RasterBuffers::compositeRamp(const PixelView& target, std::span<const GradientStop> stops,
+        const RowPosition& rowPosition, const float* maskBase, int maskStride)
     {
-        FloatPoint axis = {
-            endPoint.x - startPoint.x,
-            endPoint.y - startPoint.y,
-        };
-        float lenSq = axis.x * axis.x + axis.y * axis.y;
-        float invLenSq = (lenSq > 1e-6f) ? (1.0f / lenSq) : 0.0f;
-
         const FloatRect activeRect = target.clippedBounds();
         if (activeRect.empty())
         {
             return;
         }
 
-        const __m256 vP1x = _mm256_set1_ps(startPoint.x);
-        const __m256 vP1y = _mm256_set1_ps(startPoint.y);
-        const __m256 vDx = _mm256_set1_ps(axis.x);
-        const __m256 vDy = _mm256_set1_ps(axis.y);
-        const __m256 vInvLenSq = _mm256_set1_ps(invLenSq);
-        const __m256 vSteps = _mm256_setr_ps(0.5f, 1.5f, 2.5f, 3.5f, 4.5f, 5.5f, 6.5f, 7.5f);
-
-        const __m256 vZero = _mm256_setzero_ps();
-        const __m256 vOne = _mm256_set1_ps(1.0f);
-        const __m256 v256 = _mm256_set1_ps(256.0f);
-
+        SimdEnv env;
+        const __m256i vRampLast = _mm256_set1_epi32(k_gradientRampLast);
         const __m256 vAlphaNorm = _mm256_set1_ps(256.0f / 255.0f);
         const __m256i vOpaqueMask = _mm256_set1_epi32(0xFF000000);
 
@@ -680,8 +682,7 @@ namespace ClaFi::Graphics::Cpu
 
         for (int y = startY; y < endY; ++y)
         {
-            float py = static_cast<float>(y) + 0.5f;
-            __m256 vRy = _mm256_sub_ps(_mm256_set1_ps(py), vP1y);
+            auto positionAt = rowPosition(static_cast<float>(y) + 0.5f);
 
             Color* pixelRow = target.scanLineAbs(static_cast<float>(startX), static_cast<float>(y));
             const float* maskRow = maskBase ? &maskBase[(y - geomTop) * maskStride + (startX - geomLeft)] : nullptr;
@@ -698,18 +699,16 @@ namespace ClaFi::Graphics::Cpu
 
             for (int xOffset = 0; xOffset < width; xOffset += 8)
             {
-                int remaining = width - xOffset;
-                __m256i vLoadMask = (remaining >= 8) ? _mm256_set1_epi32(-1) :
-                    _mm256_loadu_si256(reinterpret_cast<const __m256i*>(g_maskTableMiddlePtr - remaining));
+                __m256i vLoadMask = env.loadMask(width - xOffset);
 
-                __m256 vPx = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(startX + xOffset)), vSteps);
-                __m256 vRx = _mm256_sub_ps(vPx, vP1x);
-                __m256 vDot = _mm256_add_ps(_mm256_mul_ps(vRx, vDx), _mm256_mul_ps(vRy, vDy));
-                __m256 vT = _mm256_min_ps(vOne, _mm256_max_ps(vZero, _mm256_mul_ps(vDot, vInvLenSq)));
-                __m256i vTI = _mm256_cvtps_epi32(_mm256_mul_ps(vT, v256));
+                __m256 vPx = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(startX + xOffset)), env.vSteps);
+                __m256 vT = _mm256_min_ps(env.vOne, _mm256_max_ps(env.vZero, positionAt(vPx)));
+                __m256i vTI = _mm256_cvtps_epi32(_mm256_mul_ps(vT, env.v256));
+                // A NaN position passes the float clamp and converts to INT_MIN.
+                vTI = _mm256_min_epi32(vRampLast, _mm256_max_epi32(env.vZeroi, vTI));
                 __m256i vSrcColors = _mm256_i32gather_epi32(reinterpret_cast<const int*>(ramp), vTI, 4);
 
-                __m256 vPathAlpha = maskRow ? _mm256_maskload_ps(const_cast<float*>(maskRow), vLoadMask) : vOne;
+                __m256 vPathAlpha = maskRow ? _mm256_maskload_ps(const_cast<float*>(maskRow), vLoadMask) : env.vOne;
 
                 if (clipRow)
                 {
@@ -719,7 +718,7 @@ namespace ClaFi::Graphics::Cpu
                 }
                 else if (useClip)
                 {
-                    vPathAlpha = vZero;
+                    vPathAlpha = env.vZero;
                 }
 
                 __m256 vColorAlphaF = _mm256_cvtepi32_ps(_mm256_srli_epi32(vSrcColors, 24));
@@ -740,6 +739,75 @@ namespace ClaFi::Graphics::Cpu
                 }
             }
         }
+    }
+
+    void RasterBuffers::compositeLinearGradient(const PixelView& target, FloatPoint startPoint,
+        FloatPoint endPoint, std::span<const GradientStop> stops,
+        const float* maskBase, int maskStride)
+    {
+        FloatPoint axis = {
+            endPoint.x - startPoint.x,
+            endPoint.y - startPoint.y,
+        };
+        float lenSq = axis.x * axis.x + axis.y * axis.y;
+        float invLenSq = (lenSq > 1e-6f) ? (1.0f / lenSq) : 0.0f;
+
+        const __m256 vP1x = _mm256_set1_ps(startPoint.x);
+        const __m256 vP1y = _mm256_set1_ps(startPoint.y);
+        const __m256 vDx = _mm256_set1_ps(axis.x);
+        const __m256 vDy = _mm256_set1_ps(axis.y);
+        const __m256 vInvLenSq = _mm256_set1_ps(invLenSq);
+
+        compositeRamp(target, stops, [&](float py){
+            const __m256 vRy = _mm256_sub_ps(_mm256_set1_ps(py), vP1y);
+            return [&, vRy](__m256 vPx){
+                __m256 vRx = _mm256_sub_ps(vPx, vP1x);
+                __m256 vDot = _mm256_add_ps(_mm256_mul_ps(vRx, vDx), _mm256_mul_ps(vRy, vDy));
+                return _mm256_mul_ps(vDot, vInvLenSq);
+            };
+        }, maskBase, maskStride);
+    }
+
+    void RasterBuffers::compositeRadialGradient(const PixelView& target,
+        const RadialGradient& gradient, const Matrix3x2& brushTransform,
+        const float* maskBase, int maskStride)
+    {
+        // A pixel is taken back into the brush and measured from the origin in radii, where the
+        // ellipse is the unit circle. See Graphics-Types
+        const FloatPoint origin = {
+            gradient.center.x + gradient.offset.x,
+            gradient.center.y + gradient.offset.y,
+        };
+        const FloatPoint focus = {
+            gradient.offset.x / gradient.radiusX,
+            gradient.offset.y / gradient.radiusY,
+        };
+        const Matrix3x2 pixelToRadii =
+            Matrix3x2::scale(1.0f / gradient.radiusX, 1.0f / gradient.radiusY)
+            * Matrix3x2::translation(-origin.x, -origin.y)
+            * inverted(brushTransform);
+        const float focusDepth = 1.0f - (focus.x * focus.x + focus.y * focus.y);
+
+        const __m256 vStepX = _mm256_set1_ps(pixelToRadii.a);
+        const __m256 vStepY = _mm256_set1_ps(pixelToRadii.b);
+        const __m256 vFocusX = _mm256_set1_ps(focus.x);
+        const __m256 vFocusY = _mm256_set1_ps(focus.y);
+        const __m256 vDepth = _mm256_set1_ps(focusDepth);
+        const __m256 vInvDepth = _mm256_set1_ps(1.0f / focusDepth);
+
+        compositeRamp(target, gradient.stops, [&](float py){
+            const __m256 vRowX = _mm256_set1_ps(pixelToRadii.c * py + pixelToRadii.e);
+            const __m256 vRowY = _mm256_set1_ps(pixelToRadii.d * py + pixelToRadii.f);
+            return [&, vRowX, vRowY](__m256 vPx){
+                __m256 vX = _mm256_add_ps(vRowX, _mm256_mul_ps(vPx, vStepX));
+                __m256 vY = _mm256_add_ps(vRowY, _mm256_mul_ps(vPx, vStepY));
+                __m256 vAlong = _mm256_add_ps(_mm256_mul_ps(vX, vFocusX), _mm256_mul_ps(vY, vFocusY));
+                __m256 vLengthSq = _mm256_add_ps(_mm256_mul_ps(vX, vX), _mm256_mul_ps(vY, vY));
+                __m256 vAlongSq = _mm256_mul_ps(vAlong, vAlong);
+                __m256 vRootSq = _mm256_add_ps(vAlongSq, _mm256_mul_ps(vDepth, vLengthSq));
+                return _mm256_mul_ps(_mm256_add_ps(vAlong, _mm256_sqrt_ps(vRootSq)), vInvDepth);
+            };
+        }, maskBase, maskStride);
     }
 
     void RasterBuffers::compositePointGlow(const PixelView& view, const PointGlow& p, const float* maskBase, int maskStride)
