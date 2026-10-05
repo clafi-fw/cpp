@@ -371,7 +371,7 @@ namespace ClaFi
                     ++groupEnd;
 
                 if (groupEnd != markers.size() && markers[groupEnd].first < markers[groupStart].first)
-                    unreachable("A marker vector reached cleanupMarkers out of text order");
+                    noReach("A marker vector reached cleanupMarkers out of text order");
 
                 if (groupEnd - groupStart >= 2)
                     annihilatedCount += annihilateGroup(markers, groupStart, groupEnd);
@@ -951,7 +951,7 @@ namespace ClaFi
                 else if constexpr (std::is_same_v<T, ParaLineSpacing>)
                     return FormatKind::LineSpacing;
                 else
-                    unreachable("a marker no text format holds");
+                    noReach("a marker no text format holds");
             }, item);
         }
     }
@@ -989,7 +989,7 @@ namespace ClaFi
     TextFormat& TextFormat::operator<<(TextOp op)
     {
         if (op != TextOp::PushBold && op != TextOp::PushItalic)
-            unreachable("A text format takes bold and italic, and no other TextOp");
+            noReach("A text format takes bold and italic, and no other TextOp");
         place(op);
         return *this;
     }

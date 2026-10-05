@@ -213,7 +213,7 @@ namespace ClaFi::Controls
         RoundedRectangleParts halfSphere{
             .bounds = slotRect,
             .radii = { radius, 0.0f, 0.0f, radius },
-            .sides = k_allRectSidesTrue
+            .sides = RectSides::all()
         };
         halfSphere.bounds.right = slotRect.left + radius;
         event.canvas().fillPartialRoundedRectangle(halfSphere, *bitmap.pixel(0, 0));

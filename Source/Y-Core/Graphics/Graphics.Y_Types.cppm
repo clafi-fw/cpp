@@ -101,10 +101,12 @@ namespace ClaFi::Graphics
         static LinearGradient simple(FloatPoint startPt, FloatPoint endPt, Color startColor, Color endColor)
         {
             return {
-                startPt,
-                endPt,
-                { { 0.0f, startColor }, { 1.0f, endColor } }
-            };
+                .startPoint = startPt,
+                .endPoint = endPt,
+                .stops = {
+                    { .position = 0.0f, .color = startColor },
+                    { .position = 1.0f, .color = endColor } }
+                };
         }
         bool operator==(const LinearGradient&) const = default;
     };
@@ -116,6 +118,19 @@ namespace ClaFi::Graphics
         float radiusX;
         float radiusY;
         std::vector<GradientStop> stops;
+        static RadialGradient simple(FloatPoint center, float radius, Color startColor, Color endColor)
+        {
+            return {
+                .center = center,
+                .offset = {},
+                .radiusX = radius,
+                .radiusY = radius,
+                .stops = {
+                    { .position = 0.0f, .color = startColor },
+                    { .position = 1.0f, .color = endColor }
+                }
+            };
+        }
         bool operator==(const RadialGradient&) const = default;
     };
 

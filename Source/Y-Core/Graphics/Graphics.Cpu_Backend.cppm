@@ -142,7 +142,7 @@ namespace ClaFi::Graphics::Cpu
 
         [[nodiscard]] RoundedRectangleParts mapParts(const RoundedRectangleParts& parts) const;
 
-        void applyClipStateToGlobal();
+        void applyClipStateToGlobal() const;
         void updateActiveView();
         // drawImage under a path clip: the image mixed in by the clip's coverage, pixel by pixel.
         void blendImageThroughClip(const PixelView& source, float opacity) const;

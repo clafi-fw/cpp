@@ -592,7 +592,7 @@ namespace ClaFi::Diagnostic
             case Reading::Stats:
                 break;
         }
-        unreachable("FpsPage: Stats is read over each metric's own window, never off the aggregate");
+        noReach("FpsPage: Stats is read over each metric's own window, never off the aggregate");
     }
 
     std::optional<double> FpsPage::rateOf(const std::optional<double> milliseconds)

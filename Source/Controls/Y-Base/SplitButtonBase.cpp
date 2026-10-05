@@ -47,7 +47,7 @@ namespace ClaFi::Controls
 
     void SplitButtonBase::secondaryClicked(ClickEvent&)
     {
-        unreachable("a secondary part was pressed, and the control that made it answers nothing");
+        noReach("a secondary part was pressed, and the control that made it answers nothing");
     }
 
     bool SplitButtonBase::pressedSecondary(const ClickEventBase& event) const

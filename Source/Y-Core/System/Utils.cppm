@@ -19,8 +19,8 @@ namespace ClaFi
     export constexpr std::size_t k_maxSize = std::numeric_limits<std::size_t>::max();
     export constexpr float k_2Pi = std::numbers::pi_v<float> * 2.0f;
 
-    export [[noreturn]] void unreachable() { std::terminate(); }
-    export [[noreturn]] void unreachable(const std::string& errorMessage) { throw std::logic_error{ errorMessage }; }
+    export [[noreturn]] void noReach() { std::terminate(); }
+    export [[noreturn]] void noReach(const std::string& errorMessage) { throw std::logic_error{ errorMessage }; }
 
     export template <typename T>
     struct ScopedPushPop

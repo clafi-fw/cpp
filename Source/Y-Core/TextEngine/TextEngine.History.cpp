@@ -275,7 +275,7 @@ namespace ClaFi
             break;
 
         default:
-            unreachable("A step that joins no run was merged into");
+            noReach("A step that joins no run was merged into");
         }
     }
 

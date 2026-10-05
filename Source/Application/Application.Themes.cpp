@@ -37,7 +37,7 @@ namespace ClaFi
     ThemesManager& appThemes()
     {
         if (!mutableAppThemes())
-            unreachable("appThemes: no themes manager - connectAppThemes has not run.");
+            noReach("appThemes: no themes manager - connectAppThemes has not run.");
         return *mutableAppThemes();
     }
 

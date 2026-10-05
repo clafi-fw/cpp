@@ -78,7 +78,7 @@ namespace ClaFi::Controls
             case ColorSpelling::CssHex:
                 return std::format(L"#{:02X}{:02X}{:02X}", color.red, color.green, color.blue);
         }
-        unreachable("a colour spelling with no writer of its own");
+        noReach("a colour spelling with no writer of its own");
     }
 
     std::wstring_view nameOf(const ColorSpelling spelling)
@@ -94,7 +94,7 @@ namespace ClaFi::Controls
             case ColorSpelling::CssHex:
                 return L"CSS";
         }
-        unreachable("a colour spelling with no name of its own");
+        noReach("a colour spelling with no name of its own");
     }
 
     void appendSpelling(Text& text, const Color color, const ColorSpelling spelling)

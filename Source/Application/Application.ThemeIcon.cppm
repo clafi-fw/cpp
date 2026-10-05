@@ -57,6 +57,8 @@ namespace ClaFi
 
     namespace
     {
+        constexpr float k_oneDegree = k_2Pi / 360.0f;
+
         // The icon's shape is taken from the theme's own colours, so a theme draws the same icon on
         // every run with nothing stored anywhere, and two themes share a shape only by sharing every
         // colour it is drawn from - the three palette hues and the surface they stand on.
@@ -64,8 +66,7 @@ namespace ClaFi
         constexpr std::uint32_t k_seedStep = 16777619u;
         constexpr std::uint32_t k_seedSalt = 4u;
         constexpr float k_hueSteps = 65535.0f;
-
-        constexpr float k_armOffset = k_2Pi * 14.0f / 360.0f;   // Either way, off the symmetric Y
+        constexpr float k_armOffset = 7.0f * k_oneDegree;   // Either way, off the symmetric Y
         constexpr float k_marginRatio = 0.09f;      // The ground left showing around the parts
         constexpr float k_leastSoftening = 0.06f;
         constexpr float k_mostSoftening = 0.23f;
@@ -162,8 +163,15 @@ namespace ClaFi
         // The same width at every size: a border that scaled with the icon would read as a frame
         // on a tile and as nothing at all on a crumb.
         const ColorMode mode = colorModeOf(event.lightness());
-        const Color surface = event.applyDisabledFactor(colors.surface(mode).toColor());
-        event.canvas().fillRoundedRectangle(rect, radius, radius, surface);
+        Hsl hsl = colors.surface(mode);
+        const Hsl hslInner = hsl;
+        hsl.luminosity = 0.5;
+        const Color innerSurface = event.applyDisabledFactor(hslInner.toColor());
+        const Color outerRim = event.applyDisabledFactor(hsl.toColor());
+        const float gradientRadius = rect.width() * 1.41f / 2.0f;
+        event.canvas().fillRoundedRectangle(rect, radius, radius,
+            Graphics::RadialGradient::simple(rect.center(), gradientRadius, outerRim, innerSurface)
+            );
     }
 
     void paintThemeIcon(PaintIconEvent& event, const ThemeColors& colors)
@@ -173,6 +181,25 @@ namespace ClaFi
 
     void paintThemeIcon(PaintIconEvent& event, const ThemeIconColors& colors)
     {
+        const ColorMode mode = colorModeOf(event.lightness());
+
+        const FloatRect backgroundRect = event.iconRect();
+        const float cornersRadius = event.scaleF(4.0f);
+        // Background
+        {
+            RoundedRectangleParts menuBackground{
+                .bounds = backgroundRect,
+                .radii = { cornersRadius },
+                .sides = RectSides::all()
+            };
+            menuBackground.bounds.right = backgroundRect.relativeX(0.66);
+
+            event.canvas().fillPartialRoundedRectangle(menuBackground, colors.surface(mode).toColor());
+        }
+
+
+        return;
+
         const float size = event.iconRect().height();
         const float radius = size * Icons::ChannelTile::k_cornerRatio;
         const FloatRect& iconRect = event.iconRect().centerRect(size);

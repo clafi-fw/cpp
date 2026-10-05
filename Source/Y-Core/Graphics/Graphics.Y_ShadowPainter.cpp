@@ -43,7 +43,7 @@ namespace ClaFi::Graphics
         {
             const RoundedRectangleParts silhouette{
                 .bounds = windowRect,
-                .radii = uniformCorners(m_design.radius)
+                .radii = CornerRadii::uniform(m_design.radius)
             };
             canvas.castShadow(silhouette, shadow);
             return;
@@ -112,7 +112,7 @@ namespace ClaFi::Graphics
             { static_cast<float>(side), static_cast<float>(side) });
         const RoundedRectangleParts silhouette{
             .bounds = rect,
-            .radii = uniformCorners(m_design.radius)
+            .radii = CornerRadii::uniform(m_design.radius)
         };
         canvas.castShadow(silhouette, m_design.shadow);
         Bitmap* painted = nullptr;

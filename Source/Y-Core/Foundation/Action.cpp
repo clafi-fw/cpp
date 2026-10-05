@@ -314,7 +314,7 @@ namespace ClaFi
             // in the property pack either. A state query is the earliest moment the answer is
             // the control's own, and it comes before the first paint.
             if (role != PresenterRole::Display && control->interactivity() == Interactivity::None)
-                unreachable("An action was attached to a control that never delivers a click");
+                noReach("An action was attached to a control that never delivers a click");
             event.state = state(control->form(), control);
         }));
 

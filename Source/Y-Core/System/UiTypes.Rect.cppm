@@ -14,19 +14,25 @@ namespace ClaFi
         Right,
         Bottom,
         Left,
-        Count
     };
 
-    export constexpr std::size_t k_rectSideTop = static_cast<std::size_t>(RectSide::Top);
-    export constexpr std::size_t k_rectSideRight = static_cast<std::size_t>(RectSide::Right);
-    export constexpr std::size_t k_rectSideBottom = static_cast<std::size_t>(RectSide::Bottom);
-    export constexpr std::size_t k_rectSideLeft = static_cast<std::size_t>(RectSide::Left);
-    export constexpr std::size_t k_rectSideCount = static_cast<std::size_t>(RectSide::Count);
-    export constexpr RectSide allEdges[k_rectSideCount] = { RectSide::Top, RectSide::Right, RectSide::Bottom, RectSide::Left };
-    export using RectSidesBoolArray = std::array<bool, k_rectSideCount>;
-
-    export constexpr RectSidesBoolArray k_allRectSidesTrue = { true, true, true, true };
-    export constexpr RectSidesBoolArray k_allRectSidesFalse = { false, false, false, false };
+    // Which sides to draw
+    export struct RectSides
+    {
+        bool top;
+        bool right;
+        bool bottom;
+        bool left;
+        constexpr bool operator==(const RectSides&) const = default;
+        constexpr static RectSides all();
+        constexpr static RectSides none();
+    };
+    constexpr RectSides RectSides::all() {
+        return { .top = true, .right = true, .bottom = true, .left = true };
+    };
+    constexpr RectSides RectSides::none() {
+        return { .top = false, .right = false, .bottom = false, .left = false };
+    };
 
     // One corner of a rectangle.
     export enum class Corner : std::size_t
@@ -34,26 +40,66 @@ namespace ClaFi
         TopLeft,
         TopRight,
         BottomRight,
-        BottomLeft,
-        None
+        BottomLeft
     };
     export constexpr std::size_t k_cornersNum = 4u;
-    export [[nodiscard]] constexpr std::size_t cornerIndex(Corner corner) { return static_cast<std::size_t>(corner); }
 
     // A radius per corner, in Corner order: top left, top right, bottom right, bottom left. A
     // corner is round while its radius is above zero.
-    export using CornerRadii = std::array<float, k_cornersNum>;
-    export constexpr CornerRadii k_squareCorners = {};
-    export [[nodiscard]] constexpr CornerRadii uniformCorners(float radius) { return { radius, radius, radius, radius }; }
-    export [[nodiscard]] constexpr bool isSquare(const CornerRadii& radii)
+    export struct CornerRadii
     {
-        return radii[0] <= 0.0f && radii[1] <= 0.0f && radii[2] <= 0.0f && radii[3] <= 0.0f;
-    }
-    export [[nodiscard]] constexpr bool isUniform(const CornerRadii& radii)
-    {
-        return radii[0] == radii[1] && radii[1] == radii[2] && radii[2] == radii[3];
-    }
-
+        float topLeft;
+        float topRight;
+        float bottomRight;
+        float bottomLeft;
+        void set(std::size_t cornerIndex, float value) { set(static_cast<Corner>(cornerIndex), value); }
+        void set(Corner corner, float value)
+        {
+            switch (corner)
+            {
+            case Corner::TopLeft: topLeft = value; return;
+            case Corner::TopRight: topRight = value; return;
+            case Corner::BottomRight: bottomRight = value; return;
+            case Corner::BottomLeft: bottomLeft = value; return;
+            }
+        }
+        float get(std::size_t cornerIndex) const { return get(static_cast<Corner>(cornerIndex)); }
+        float get(Corner corner) const
+        {
+            switch (corner)
+            {
+            case Corner::TopLeft: return topLeft;
+            case Corner::TopRight: return topRight;
+            case Corner::BottomRight: return bottomRight;
+            case Corner::BottomLeft: return bottomLeft;
+            }
+            noReach();
+        }
+        void clamp(float minValue, float maxValue)
+        {
+            topLeft = std::clamp(topLeft, minValue, maxValue);
+            topRight = std::clamp(topRight, minValue, maxValue);
+            bottomRight = std::clamp(bottomRight, minValue, maxValue);
+            bottomLeft = std::clamp(bottomLeft, minValue, maxValue);
+        }
+        void scale(float value)
+        {
+            topLeft *= value;
+            topRight *= value;
+            bottomRight *= value;
+            bottomLeft *= value;
+        }
+        [[nodiscard]] static constexpr CornerRadii square() { return {}; }
+        [[nodiscard]] static constexpr CornerRadii uniform(float radius) { return { radius, radius, radius, radius }; }
+        [[nodiscard]] constexpr bool isSquare() const
+        {
+            return topLeft <= 0.0f && topRight <= 0.0f && bottomRight <= 0.0f && bottomLeft <= 0.0f;
+        }
+        [[nodiscard]] constexpr bool isUniform() const
+        {
+            return topLeft == topRight && topRight == bottomRight && bottomRight == bottomLeft;
+        }
+    };
 
     export template <ArithmeticType T>
     struct Rect
@@ -178,8 +224,8 @@ namespace ClaFi
     export struct RoundedRectangleParts
     {
         FloatRect bounds;
-        CornerRadii radii{ k_squareCorners };
-        RectSidesBoolArray sides{ k_allRectSidesTrue };
+        CornerRadii radii{ CornerRadii::square() };
+        RectSides sides{ RectSides::all() };
         bool operator==(const RoundedRectangleParts&) const = default;
     };
 
@@ -530,10 +576,8 @@ namespace ClaFi
         case Corner::TopRight: return topRight(); break;
         case Corner::BottomRight: return bottomRight(); break;
         case Corner::BottomLeft: return bottomLeft(); break;
-        case Corner::None:
-            break;
         }
-        unreachable();
+        noReach();
     }
 
     CornerNook::CornerNook(Corner corner, FloatPoint pivot, float radius)
@@ -563,8 +607,6 @@ namespace ClaFi
         case Corner::BottomLeft:
             pivot = { rect.left + radius, rect.bottom - radius };
             break;
-        case Corner::None:
-            break;
         }
         computeOtherPoints();
     }
@@ -591,8 +633,6 @@ namespace ClaFi
             startPt = { pivot.x, pivot.y + radius };
             endPt = { pivot.x - radius, pivot.y };
             sharpPt = { endPt.x, startPt.y };
-            break;
-        case Corner::None:
             break;
         }
     }

@@ -92,7 +92,7 @@ namespace ClaFi::Controls
     private:
         // The run is open at both ends, so its top and bottom carry on into the page's own border
         // instead of closing a shape of their own.
-        static constexpr RectSidesBoolArray k_runSides{ true, false, true, false };
+        static constexpr RectSides k_runSides{ true, false, true, false };
     private:
         PageSurface m_pageSurface{};
         // The strip's padding where stated - declared before m_strip, which is built with it.
@@ -138,7 +138,7 @@ namespace ClaFi::Controls
             return *static_cast<TabbedBox*>(parent());
         case TabsOrientation::VerticalLeft:
             return parentAs<TabStripBase>().parentAs<TabbedBox>();
-        default: unreachable();
+        default: noReach();
         }
     }
 
@@ -270,8 +270,8 @@ namespace ClaFi::Controls
 
         RoundedRectangleParts run{
             .bounds = m_pageSurface.bounds,
-            .radii = k_squareCorners,
-            .sides = k_allRectSidesTrue
+            .radii = CornerRadii::square(),
+            .sides = RectSides::all()
         };
         run.bounds.left = tabLineX();
         run.bounds.right = m_pageSurface.bounds.left + m_pageSurface.strokeWidth;
@@ -341,7 +341,7 @@ namespace ClaFi::Controls
         case TabsOrientation::VerticalRight:
             break;
         }
-        unreachable();
+        noReach();
     }
 
 }

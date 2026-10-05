@@ -38,13 +38,17 @@ namespace ClaFi::Graphics::Cpu
         const FloatRect& bounds = parts.bounds;
         const float cap = std::min(bounds.width(), bounds.height()) / 2.0f;
         CornerJoints result;
-        for (std::size_t i = 0; i < k_cornersNum; ++i)
-            result.radii[i] = std::clamp(parts.radii[i], 0.0f, cap);
+        
+        result.radii.topLeft = std::clamp(parts.radii.topLeft, 0.0f, cap);
+        result.radii.topRight = std::clamp(parts.radii.topRight, 0.0f, cap);
+        result.radii.bottomRight = std::clamp(parts.radii.bottomRight, 0.0f, cap);
+        result.radii.bottomLeft = std::clamp(parts.radii.bottomLeft, 0.0f, cap);
+
         const CornerRadii& radii = result.radii;
-        result.topLeft = { nearJoint(bounds.left, radii[0]), nearJoint(bounds.top, radii[0]) };
-        result.topRight = { farJoint(bounds.right, radii[1]), nearJoint(bounds.top, radii[1]) };
-        result.bottomRight = { farJoint(bounds.right, radii[2]), farJoint(bounds.bottom, radii[2]) };
-        result.bottomLeft = { nearJoint(bounds.left, radii[3]), farJoint(bounds.bottom, radii[3]) };
+        result.topLeft = { nearJoint(bounds.left, radii.topLeft), nearJoint(bounds.top, radii.topLeft) };
+        result.topRight = { farJoint(bounds.right, radii.topRight), nearJoint(bounds.top, radii.topRight) };
+        result.bottomRight = { farJoint(bounds.right, radii.bottomRight), farJoint(bounds.bottom, radii.bottomRight) };
+        result.bottomLeft = { nearJoint(bounds.left, radii.bottomLeft), farJoint(bounds.bottom, radii.bottomLeft) };
         return result;
     }
 
@@ -66,7 +70,7 @@ namespace ClaFi::Graphics::Cpu
         }
 
         RectPainter rectPainter{ m_pixelView };
-        if (isSquare(parts.radii))
+        if (parts.radii.isSquare())
         {
             rectPainter.paintSolid(parts.bounds, brush, brushTransform);
             return;
@@ -99,13 +103,13 @@ namespace ClaFi::Graphics::Cpu
         CirclePainter circlePainter{ m_pixelView };
         circlePainter.setBackgroundColor(brush);
 
-        if (joints.radii[0] > 0.0f)
+        if (joints.radii.topLeft > 0.0f)
             paintCorner(circlePainter, Corner::TopLeft, joints.topLeft, joints.topLeft.x - left, joints.topLeft.y - top, brushTransform);
-        if (joints.radii[1] > 0.0f)
+        if (joints.radii.topRight > 0.0f)
             paintCorner(circlePainter, Corner::TopRight, joints.topRight, right - joints.topRight.x, joints.topRight.y - top, brushTransform);
-        if (joints.radii[2] > 0.0f)
+        if (joints.radii.bottomRight > 0.0f)
             paintCorner(circlePainter, Corner::BottomRight, joints.bottomRight, right - joints.bottomRight.x, bottom - joints.bottomRight.y, brushTransform);
-        if (joints.radii[3] > 0.0f)
+        if (joints.radii.bottomLeft > 0.0f)
             paintCorner(circlePainter, Corner::BottomLeft, joints.bottomLeft, joints.bottomLeft.x - left, bottom - joints.bottomLeft.y, brushTransform);
     }
 
@@ -117,7 +121,7 @@ namespace ClaFi::Graphics::Cpu
         }
 
         RectPainter rectPainter{ m_pixelView };
-        if (isSquare(parts.radii) && parts.sides == k_allRectSidesTrue)
+        if (parts.radii.isSquare() && parts.sides == RectSides::all())
         {
             rectPainter.paintBorder(parts.bounds, brush, borderWidth, brushTransform);
             return;
@@ -128,10 +132,10 @@ namespace ClaFi::Graphics::Cpu
         const float right = parts.bounds.right;
         const float bottom = parts.bounds.bottom;
         const CornerJoints joints = cornerJoints(parts);
-        const bool roundTopLeft = joints.radii[0] > 0.0f;
-        const bool roundTopRight = joints.radii[1] > 0.0f;
-        const bool roundBottomRight = joints.radii[2] > 0.0f;
-        const bool roundBottomLeft = joints.radii[3] > 0.0f;
+        const bool roundTopLeft = joints.radii.topLeft > 0.0f;
+        const bool roundTopRight = joints.radii.topRight > 0.0f;
+        const bool roundBottomRight = joints.radii.bottomRight > 0.0f;
+        const bool roundBottomLeft = joints.radii.bottomLeft > 0.0f;
 
         CirclePainter circlePainter{ m_pixelView };
         circlePainter.setBorderColor(brush);
@@ -146,8 +150,8 @@ namespace ClaFi::Graphics::Cpu
         // is not, the vertical side runs to the outer edge itself: the corner square is then the
         // butt joint against whatever shape shares this edge, and a side stopping short of it
         // leaves a notch one border wide in the line the two shapes form together.
-        const float verticalStart = parts.sides[0] ? top + borderWidth : top;
-        const float verticalEnd = parts.sides[2] ? bottom - borderWidth : bottom;
+        const float verticalStart = parts.sides.top ? top + borderWidth : top;
+        const float verticalEnd = parts.sides.bottom ? bottom - borderWidth : bottom;
 
         const float rightStart = roundTopRight ? joints.topRight.y : verticalStart;
         const float rightEnd = roundBottomRight ? joints.bottomRight.y : verticalEnd;
@@ -155,38 +159,38 @@ namespace ClaFi::Graphics::Cpu
         const float leftStart = roundTopLeft ? joints.topLeft.y : verticalStart;
         const float leftEnd = roundBottomLeft ? joints.bottomLeft.y : verticalEnd;
 
-        if (parts.sides[0] && joints.topLeft.x < joints.topRight.x)
+        if (parts.sides.top && joints.topLeft.x < joints.topRight.x)
         {
             rectPainter.paintSolid({ joints.topLeft.x, top, joints.topRight.x, top + borderWidth }, brush, brushTransform);
         }
 
-        if (parts.sides[1] && rightStart < rightEnd)
+        if (parts.sides.right && rightStart < rightEnd)
         {
             rectPainter.paintSolid({ right - borderWidth, rightStart, right, rightEnd }, brush, brushTransform);
         }
 
-        if (parts.sides[2] && joints.bottomLeft.x < joints.bottomRight.x)
+        if (parts.sides.bottom && joints.bottomLeft.x < joints.bottomRight.x)
         {
             rectPainter.paintSolid({ joints.bottomLeft.x, bottom - borderWidth, joints.bottomRight.x, bottom }, brush, brushTransform);
         }
 
-        if (parts.sides[3] && leftStart < leftEnd)
+        if (parts.sides.left && leftStart < leftEnd)
         {
             rectPainter.paintSolid({ left, leftStart, left + borderWidth, leftEnd }, brush, brushTransform);
         }
 
         // A corner arc is drawn only when at least one of the two sides it joins is present.
 
-        if (roundTopLeft && (parts.sides[0] || parts.sides[3]))
+        if (roundTopLeft && (parts.sides.top || parts.sides.left))
             paintCorner(circlePainter, Corner::TopLeft, joints.topLeft, joints.topLeft.x - left, joints.topLeft.y - top, brushTransform);
 
-        if (roundTopRight && (parts.sides[0] || parts.sides[1]))
+        if (roundTopRight && (parts.sides.top || parts.sides.right))
             paintCorner(circlePainter, Corner::TopRight, joints.topRight, right - joints.topRight.x, joints.topRight.y - top, brushTransform);
 
-        if (roundBottomRight && (parts.sides[1] || parts.sides[2]))
+        if (roundBottomRight && (parts.sides.right || parts.sides.bottom))
             paintCorner(circlePainter, Corner::BottomRight, joints.bottomRight, right - joints.bottomRight.x, bottom - joints.bottomRight.y, brushTransform);
 
-        if (roundBottomLeft && (parts.sides[2] || parts.sides[3]))
+        if (roundBottomLeft && (parts.sides.bottom || parts.sides.left))
             paintCorner(circlePainter, Corner::BottomLeft, joints.bottomLeft, joints.bottomLeft.x - left, bottom - joints.bottomLeft.y, brushTransform);
     }
 }

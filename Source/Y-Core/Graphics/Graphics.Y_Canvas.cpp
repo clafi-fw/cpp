@@ -11,10 +11,14 @@ namespace ClaFi::Graphics
     // cross.
     static CornerRadii clampedRadii(const RoundedRectangleParts& parts)
     {
-        const float cap = std::min(parts.bounds.width(), parts.bounds.height()) / 2.0f;
         CornerRadii result = parts.radii;
-        for (float& radius : result)
-            radius = std::clamp(radius, 0.0f, cap);
+        
+        const float cap = std::min(parts.bounds.width(), parts.bounds.height()) / 2.0f;
+        result.topLeft = std::clamp(result.topLeft, 0.0f, cap);
+        result.topRight = std::clamp(result.topRight, 0.0f, cap);
+        result.bottomRight = std::clamp(result.bottomRight, 0.0f, cap);
+        result.bottomLeft = std::clamp(result.bottomLeft, 0.0f, cap);
+
         return result;
     }
 
@@ -39,14 +43,14 @@ namespace ClaFi::Graphics
         float b = parts.bounds.bottom;
         const CornerRadii radii = clampedRadii(parts);
 
-        FloatPoint pTL_H = { l + radii[0], t };
-        FloatPoint pTR_H = { r - radii[1], t };
-        FloatPoint pTR_V = { r, t + radii[1] };
-        FloatPoint pBR_V = { r, b - radii[2] };
-        FloatPoint pBR_H = { r - radii[2], b };
-        FloatPoint pBL_H = { l + radii[3], b };
-        FloatPoint pBL_V = { l, b - radii[3] };
-        FloatPoint pTL_V = { l, t + radii[0] };
+        FloatPoint pTL_H = { l + radii.topLeft, t };
+        FloatPoint pTR_H = { r - radii.topRight, t };
+        FloatPoint pTR_V = { r, t + radii.topRight };
+        FloatPoint pBR_V = { r, b - radii.bottomRight };
+        FloatPoint pBR_H = { r - radii.bottomRight, b };
+        FloatPoint pBL_H = { l + radii.bottomLeft, b };
+        FloatPoint pBL_V = { l, b - radii.bottomLeft };
+        FloatPoint pTL_V = { l, t + radii.topLeft };
 
         struct Seg
         {
@@ -57,15 +61,15 @@ namespace ClaFi::Graphics
             FloatPoint ctrl;
         };
 
-        Seg segs[8] = {
-            { pTL_H, pTR_H, false, parts.sides[0], { 0.0f, 0.0f } },
-            { pTR_H, pTR_V, radii[1] > 0.0f, (parts.sides[0] || parts.sides[1]), { r, t } },
-            { pTR_V, pBR_V, false, parts.sides[1], { 0.0f, 0.0f } },
-            { pBR_V, pBR_H, radii[2] > 0.0f, (parts.sides[1] || parts.sides[2]), { r, b } },
-            { pBR_H, pBL_H, false, parts.sides[2], { 0.0f, 0.0f } },
-            { pBL_H, pBL_V, radii[3] > 0.0f, (parts.sides[2] || parts.sides[3]), { l, b } },
-            { pBL_V, pTL_V, false, parts.sides[3], { 0.0f, 0.0f } },
-            { pTL_V, pTL_H, radii[0] > 0.0f, (parts.sides[3] || parts.sides[0]), { l, t } }
+        const Seg segs[8] = {
+            { .start = pTL_H, .end = pTR_H, .isArc = false, .isDrawn = parts.sides.top, .ctrl = { 0.0f, 0.0f }},
+            { .start = pTR_H, .end = pTR_V, .isArc = radii.topRight > 0.0f, .isDrawn = (parts.sides.top || parts.sides.right), .ctrl = { r, t }},
+            { .start = pTR_V, .end = pBR_V, .isArc = false, .isDrawn = parts.sides.right, .ctrl = { 0.0f, 0.0f }},
+            { .start = pBR_V, .end = pBR_H, .isArc = radii.bottomRight > 0.0f, .isDrawn = (parts.sides.right || parts.sides.bottom), .ctrl = { r, b }},
+            { .start = pBR_H, .end = pBL_H, .isArc = false, .isDrawn = parts.sides.bottom, .ctrl = { 0.0f, 0.0f }},
+            { .start = pBL_H, .end = pBL_V, .isArc = radii.bottomLeft > 0.0f, .isDrawn = (parts.sides.bottom || parts.sides.left), .ctrl = { l, b }},
+            { .start = pBL_V, .end = pTL_V, .isArc = false, .isDrawn = parts.sides.left, .ctrl = { 0.0f, 0.0f }},
+            { .start = pTL_V, .end = pTL_H, .isArc = radii.topLeft > 0.0f, .isDrawn = (parts.sides.left || parts.sides.top), .ctrl = { l, t }}
         };
 
         // A square corner is a segment of zero length and states no direction of its own, so a
@@ -107,7 +111,7 @@ namespace ClaFi::Graphics
             return { 0.0f, 0.0f };
         };
 
-        if (parts.sides == k_allRectSidesTrue)
+        if (parts.sides == RectSides::all())
         {
             path.moveTo(segs[0].start);
             for (int i = 0; i < 8; ++i)
@@ -183,14 +187,14 @@ namespace ClaFi::Graphics
         float b = parts.bounds.bottom;
         const CornerRadii radii = clampedRadii(parts);
 
-        FloatPoint pTL_H = { l + radii[0], t };
-        FloatPoint pTR_H = { r_bound - radii[1], t };
-        FloatPoint pTR_V = { r_bound, t + radii[1] };
-        FloatPoint pBR_V = { r_bound, b - radii[2] };
-        FloatPoint pBR_H = { r_bound - radii[2], b };
-        FloatPoint pBL_H = { l + radii[3], b };
-        FloatPoint pBL_V = { l, b - radii[3] };
-        FloatPoint pTL_V = { l, t + radii[0] };
+        const FloatPoint pTL_H = { l + radii.topLeft, t };
+        const FloatPoint pTR_H = { r_bound - radii.topRight, t };
+        const FloatPoint pTR_V = { r_bound, t + radii.topRight };
+        const FloatPoint pBR_V = { r_bound, b - radii.bottomRight };
+        const FloatPoint pBR_H = { r_bound - radii.bottomRight, b };
+        const FloatPoint pBL_H = { l + radii.bottomLeft, b };
+        const FloatPoint pBL_V = { l, b - radii.bottomLeft };
+        const FloatPoint pTL_V = { l, t + radii.bottomLeft };
 
         struct Seg
         {
@@ -201,13 +205,13 @@ namespace ClaFi::Graphics
 
         Seg segs[8] = {
             { pTR_H, false, { 0.0f, 0.0f } },
-            { pTR_V, radii[1] > 0.0f, { r_bound, t } },
+            { pTR_V, radii.topRight > 0.0f, { r_bound, t } },
             { pBR_V, false, { 0.0f, 0.0f } },
-            { pBR_H, radii[2] > 0.0f, { r_bound, b } },
+            { pBR_H, radii.bottomRight > 0.0f, { r_bound, b } },
             { pBL_H, false, { 0.0f, 0.0f } },
-            { pBL_V, radii[3] > 0.0f, { l, b } },
+            { pBL_V, radii.bottomLeft > 0.0f, { l, b } },
             { pTL_V, false, { 0.0f, 0.0f } },
-            { pTL_H, radii[0] > 0.0f, { l, t } }
+            { pTL_H, radii.topLeft > 0.0f, { l, t } }
         };
 
         path.moveTo(pTL_H);
@@ -683,20 +687,20 @@ namespace ClaFi::Graphics
         if (parts.bounds.empty())
             return;
 
-        if (parts.sides == k_allRectSidesTrue)
+        if (parts.sides == RectSides::all())
         {
-            if (isSquare(parts.radii))
+            if (parts.radii.isSquare())
             {
                 drawRectangle(parts.bounds, brush, strokeWidth);
                 return;
             }
-            if (isUniform(parts.radii))
+            if ( parts.radii.isUniform())
             {
-                drawRoundedRectangle(parts.bounds, parts.radii[0], parts.radii[0], brush, strokeWidth);
+                drawRoundedRectangle(parts.bounds, parts.radii.topLeft, parts.radii.topLeft, brush, strokeWidth);
                 return;
             }
         }
-        if (parts.sides == k_allRectSidesFalse)
+        if (parts.sides == RectSides::none())
             return;
 
         // The two branches above delegate to primitives that place the stroke inside their
@@ -706,8 +710,12 @@ namespace ClaFi::Graphics
         centreline.bounds.inflate(-halfStroke);
         if (centreline.bounds.empty())
             return;
-        for (float& radius : centreline.radii)
-            radius = (std::max)(0.0f, radius - halfStroke);
+        
+        centreline.radii.topLeft = (std::max)(0.0f, centreline.radii.topLeft - halfStroke);
+        centreline.radii.topRight = (std::max)(0.0f, centreline.radii.topRight - halfStroke);
+        centreline.radii.bottomRight = (std::max)(0.0f, centreline.radii.bottomRight - halfStroke);
+        centreline.radii.bottomLeft = (std::max)(0.0f, centreline.radii.bottomLeft - halfStroke);
+
         PixelPath path = buildDrawPartialPath(centreline, halfStroke);
         // Butt ends, since the builder has carried each open end out to the bounds edge already.
         drawPath(
@@ -727,14 +735,14 @@ namespace ClaFi::Graphics
         if (parts.bounds.empty())
             return;
 
-        if (isSquare(parts.radii))
+        if (parts.radii.isSquare())
         {
             fillRectangle(parts.bounds, brush);
             return;
         }
-        if (isUniform(parts.radii))
+        if (parts.radii.isUniform())
         {
-            fillRoundedRectangle(parts.bounds, parts.radii[0], parts.radii[0], brush);
+            fillRoundedRectangle(parts.bounds, parts.radii.topLeft, parts.radii.topLeft, brush);
             return;
         }
 
@@ -770,12 +778,16 @@ namespace ClaFi::Graphics
         RoundedRectangleParts silhouette = parts;
         silhouette.bounds.offset(shadow.offset);
         silhouette.bounds.inflate(shadow.spread);
+        
         // A round corner grows with the spread; a square one stays square.
-        for (float& radius : silhouette.radii)
-        {
-            if (radius > 0.0f)
-                radius = std::max(0.0f, radius + shadow.spread);
-        }
+        if (silhouette.radii.topLeft > 0.0f)
+            silhouette.radii.topLeft = std::max(0.0f, silhouette.radii.topLeft + shadow.spread);
+        if (silhouette.radii.topRight > 0.0f)
+            silhouette.radii.topRight = std::max(0.0f, silhouette.radii.topRight + shadow.spread);
+        if (silhouette.radii.bottomRight > 0.0f)
+            silhouette.radii.bottomRight = std::max(0.0f, silhouette.radii.bottomRight + shadow.spread);
+        if (silhouette.radii.bottomLeft > 0.0f)
+            silhouette.radii.bottomLeft = std::max(0.0f, silhouette.radii.bottomLeft + shadow.spread);
 
         PixelPath path = buildFillPartialPath(silhouette);
         drawPath(path, {
@@ -865,40 +877,38 @@ namespace ClaFi::Graphics
     void Canvas::fadeEdge(const FloatRect& rect, const CornerRadii& radii, RectSide side, float fadeSize, Color opaqueColor)
     {
         const Color transparentColor = opaqueColor.withOpacity(0.0f);
-        RoundedRectangleParts band{ .bounds = rect, .radii = k_squareCorners };
+        RoundedRectangleParts band{ .bounds = rect, .radii = CornerRadii::square() };
         FloatPoint opaqueEnd = {};
         FloatPoint transparentEnd = {};
         switch (side)
         {
             case RectSide::Top:
                 band.bounds.bottom = rect.top + fadeSize;
-                band.radii[cornerIndex(Corner::TopLeft)] = radii[cornerIndex(Corner::TopLeft)];
-                band.radii[cornerIndex(Corner::TopRight)] = radii[cornerIndex(Corner::TopRight)];
+                band.radii.topLeft = radii.topLeft;
+                band.radii.topRight = radii.topRight;
                 opaqueEnd = band.bounds.topLeft();
                 transparentEnd = band.bounds.bottomLeft();
                 break;
             case RectSide::Bottom:
                 band.bounds.top = rect.bottom - fadeSize;
-                band.radii[cornerIndex(Corner::BottomRight)] = radii[cornerIndex(Corner::BottomRight)];
-                band.radii[cornerIndex(Corner::BottomLeft)] = radii[cornerIndex(Corner::BottomLeft)];
+                band.radii.bottomRight = radii.bottomRight;
+                band.radii.bottomLeft = radii.bottomLeft;
                 opaqueEnd = band.bounds.bottomLeft();
                 transparentEnd = band.bounds.topLeft();
                 break;
             case RectSide::Left:
                 band.bounds.right = rect.left + fadeSize;
-                band.radii[cornerIndex(Corner::TopLeft)] = radii[cornerIndex(Corner::TopLeft)];
-                band.radii[cornerIndex(Corner::BottomLeft)] = radii[cornerIndex(Corner::BottomLeft)];
+                band.radii.topLeft = radii.topLeft;
+                band.radii.bottomLeft = radii.bottomLeft;
                 opaqueEnd = band.bounds.topLeft();
                 transparentEnd = band.bounds.topRight();
                 break;
             case RectSide::Right:
                 band.bounds.left = rect.right - fadeSize;
-                band.radii[cornerIndex(Corner::TopRight)] = radii[cornerIndex(Corner::TopRight)];
-                band.radii[cornerIndex(Corner::BottomRight)] = radii[cornerIndex(Corner::BottomRight)];
+                band.radii.topRight = radii.topRight;
+                band.radii.bottomRight = radii.bottomRight;
                 opaqueEnd = band.bounds.topRight();
                 transparentEnd = band.bounds.topLeft();
-                break;
-            case RectSide::Count:
                 break;
         }
         fillPartialRoundedRectangle(band, LinearGradient::simple(opaqueEnd, transparentEnd, opaqueColor, transparentColor));

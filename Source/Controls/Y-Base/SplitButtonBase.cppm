@@ -124,7 +124,7 @@ namespace ClaFi::Controls
     PartClass& SplitButtonBase::createSecondaryPart(Args&&... args)
     {
         if (m_secondaryPart)
-            unreachable("SplitButtonBase carries one secondary part, and this control already made one");
+            noReach("SplitButtonBase carries one secondary part, and this control already made one");
 
         PartClass& result = static_cast<PartClass&>(
             addChild(std::make_unique<PartClass>(CreateParams{ *this }, std::forward<Args>(args)...))

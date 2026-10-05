@@ -109,7 +109,7 @@ namespace ClaFi::Browser
     {
         Dom::Section* entry = m_openTabs.childWhere(ConfigNames::id, tabId);
         if (!entry)
-            unreachable("BrowserSettings: no tab is listed under this id");
+            noReach("BrowserSettings: no tab is listed under this id");
         return *entry;
     }
 

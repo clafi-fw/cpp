@@ -698,7 +698,7 @@ namespace ClaFi
 
         // Guards the walk below, which reads the two lists in step.
         if (m_paragraphs.size() != m_bakedText.paragraphs().size())
-            unreachable("An incremental text edit left a paragraph count the text does not have");
+            noReach("An incremental text edit left a paragraph count the text does not have");
 
         const float heightDelta = sliceBottom - oldBottom;
         const std::ptrdiff_t textDelta = static_cast<std::ptrdiff_t>(edit.insertedLength)
@@ -725,14 +725,14 @@ namespace ClaFi
             if (paragraph.textStart != stated.range.start
                 || paragraph.textLength != stated.range.length)
             {
-                unreachable("An incremental text edit put a paragraph where the text has none");
+                noReach("An incremental text edit put a paragraph where the text has none");
             }
         }
 
         // The same check for the pool: the last paragraph's run has to end where the pool does.
         const ParagraphLayoutState& last = m_paragraphs.back();
         if (last.lineStart + last.lineCount != m_lines.size())
-            unreachable("An incremental text edit left lines no paragraph names");
+            noReach("An incremental text edit left lines no paragraph names");
 
         // The widest paragraph can have been one of those re-shaped, and it can have narrowed.
         m_shapedWidth = 0.0f;
@@ -2142,7 +2142,7 @@ namespace ClaFi
         ParagraphLayoutState state = shapeParagraph(style, 0.0f, m_builtBoundsX, cursors,
             m_rebuiltLines);
         if (!state.nativeLayout)
-            unreachable("A paragraph shaped natively came out on cells when it was built again");
+            noReach("A paragraph shaped natively came out on cells when it was built again");
 
         // The width alignParagraph told the held layout since the text was shaped.
         const float alignedWidth = m_paragraphs[paragraph].alignedWidth;

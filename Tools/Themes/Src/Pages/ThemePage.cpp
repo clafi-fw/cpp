@@ -90,7 +90,7 @@ namespace ThisApp
                 default:
                     break;
             }
-            unreachable("a pigment row names an element that is not a pigment");
+            noReach("a pigment row names an element that is not a pigment");
         }
     }
 
@@ -100,7 +100,7 @@ namespace ThisApp
         Base::restoreViewState();
         // Application wide, so they are read from the root section rather than from the tab's.
         CodeOptions::restore(settings().appConfig());
-        auto& themeNode = documentNode().as<Dom::Value<AppTheme>>();
+        const auto& themeNode = documentNode().as<Dom::Value<AppTheme>>();
         UserTheme::loadTheme(themeNode, m_editTheme);
         showEditTheme();
         // The theme as the controls now show it, palette hues included, is where undo bottoms out.

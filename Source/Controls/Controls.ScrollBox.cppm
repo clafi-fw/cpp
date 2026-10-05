@@ -524,8 +524,8 @@ namespace ClaFi::Controls
         if (event.pinnedTop() > 0.0f)
         {
             viewPort.top += event.pinnedTop();
-            corners[cornerIndex(Corner::TopLeft)] = 0.0f;
-            corners[cornerIndex(Corner::TopRight)] = 0.0f;
+            corners.topLeft = 0.0f;
+            corners.topRight = 0.0f;
         }
         const Color baseColor = event.surfaceRgb().withOpacity(1.0f);
 

@@ -5,6 +5,7 @@ module ClaFi.Core.Graphics.Cpu_Painter_Circle;
 import ClaFi.Core.Graphics.Cpu_Rasterizer;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
 namespace ClaFi::Graphics::Cpu
@@ -18,9 +19,12 @@ namespace ClaFi::Graphics::Cpu
         float y{ 0.0f };
     };
 
-    [[nodiscard]] static CornerSigns cornerSigns(Corner corner)
+    [[nodiscard]] static CornerSigns cornerSigns(std::optional<Corner> corner)
     {
-        switch (corner)
+        if (!corner.has_value())
+            return{};
+
+        switch (corner.value())
         {
             case Corner::TopLeft:
                 return { 1.0f, 1.0f };
@@ -30,14 +34,13 @@ namespace ClaFi::Graphics::Cpu
                 return { -1.0f, -1.0f };
             case Corner::BottomLeft:
                 return { 1.0f, -1.0f };
-            default:
-                return { 0.0f, 0.0f };
         }
+        noReach();
     }
 
     void CirclePainter::initBoundary()
     {
-        m_corner = Corner::None;
+        m_corner.reset();
         m_boundingBox = {
             m_pivot.x - m_radius,
             m_pivot.y - m_radius,
@@ -131,7 +134,7 @@ namespace ClaFi::Graphics::Cpu
         m_borderWidth = borderWidth;
         m_borderColor = borderBrush;
         m_backGroundColor = SolidColor{ Color{} };
-        m_corner = Corner::None;
+        m_corner.reset();
 
         initBoundary();
         paint(brushTransform);
@@ -144,7 +147,7 @@ namespace ClaFi::Graphics::Cpu
         m_borderWidth = 0.0f;
         m_borderColor = SolidColor{ Color{} };
         m_backGroundColor = bgColor;
-        m_corner = Corner::None;
+        m_corner.reset();
 
         initBoundary();
         paint(brushTransform);

@@ -306,10 +306,10 @@ namespace ClaFi::Controls::Grids
 
         // A cell at a corner of the grid turns the grid's corner there.
         cellFrame.radii = {
-            cell.isFirstColumn && isfirstVisibleSection ? gridRadii[0] : 0.0f,
-            snapToRight && isfirstVisibleSection ? gridRadii[1] : 0.0f,
-            snapToRight && snapToBottom ? gridRadii[2] : 0.0f,
-            snapToBottom && cell.isFirstColumn ? gridRadii[3] : 0.0f
+            cell.isFirstColumn && isfirstVisibleSection ? gridRadii.topLeft : 0.0f,
+            snapToRight && isfirstVisibleSection ? gridRadii.topRight : 0.0f,
+            snapToRight && snapToBottom ? gridRadii.bottomRight : 0.0f,
+            snapToBottom && cell.isFirstColumn ? gridRadii.bottomLeft : 0.0f
         };
 
         if (snapToRight)
@@ -322,8 +322,12 @@ namespace ClaFi::Controls::Grids
             cellFrame.bounds.bottom -= cellLt.border;
         }
         // One border tighter than the grid's corner: the cell's stroke lies inside the grid's frame.
-        for (float& radius : cellFrame.radii)
-            radius = std::max(0.0f, radius - cellLt.border);
+        
+        cellFrame.radii.topLeft = std::max(0.0f, cellFrame.radii.topLeft - cellLt.border);
+        cellFrame.radii.topRight = std::max(0.0f, cellFrame.radii.topRight - cellLt.border);
+        cellFrame.radii.bottomRight = std::max(0.0f, cellFrame.radii.bottomRight - cellLt.border);
+        cellFrame.radii.bottomLeft = std::max(0.0f, cellFrame.radii.bottomLeft - cellLt.border);
+
         const bool alwaysDrawLines = alwaysDrawGridLines();
         const bool drawsVertical = (alwaysDrawLines || m_descriptor.drawsVerticalLines()) && !snapToRight;
         const bool drawsHorizontal = (alwaysDrawLines || m_descriptor.drawsHorizontalLines()) && !snapToBottom;
@@ -385,7 +389,7 @@ namespace ClaFi::Controls::Grids
         else if (highlightMode != CellHighlightMode::None)
         {
             // highlight inner rect (hovered/selected)
-            cellFrame.sides = k_allRectSidesTrue;
+            cellFrame.sides = RectSides::all();
             float hlOpacity = StateFactors::compose(hotFactor * 0.25f, selFactor * 0.5f);
             if (hlOpacity)
             {

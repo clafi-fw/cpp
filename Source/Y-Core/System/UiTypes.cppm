@@ -571,7 +571,7 @@ namespace ClaFi
             case Thickness::Heavy:
                 return 4.0f;
         }
-        unreachable("strokeWidth: a Thickness with no width");
+        noReach("strokeWidth: a Thickness with no width");
     }
 
     export struct Border { Thickness value; };

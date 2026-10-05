@@ -375,8 +375,8 @@ namespace ClaFi::Graphics::Cpu
 
         RoundedRectangleParts parts{
             .bounds = rect,
-            .radii = uniformCorners(rx),
-            .sides = k_allRectSidesTrue
+            .radii = CornerRadii::uniform(rx),
+            .sides = RectSides::all()
         };
         fillPartialRoundedRectangle(parts, brush);
     }
@@ -396,8 +396,8 @@ namespace ClaFi::Graphics::Cpu
 
         RoundedRectangleParts parts{
             .bounds = rect,
-            .radii = uniformCorners(rx),
-            .sides = k_allRectSidesTrue
+            .radii = CornerRadii::uniform(rx),
+            .sides = RectSides::all()
         };
         drawPartialRoundedRectangle(parts, brush, strokeWidth);
     }
@@ -485,12 +485,16 @@ namespace ClaFi::Graphics::Cpu
     {
         RoundedRectangleParts result = parts;
         result.bounds = mapRect(parts.bounds);
-        for (float& radius : result.radii)
-            radius = mapLength(radius);
+
+        result.radii.topLeft = mapLength(result.radii.topLeft);
+        result.radii.topRight = mapLength(result.radii.topRight);
+        result.radii.bottomRight = mapLength(result.radii.bottomRight);
+        result.radii.bottomLeft = mapLength(result.radii.bottomLeft);
+
         return result;
     }
 
-    void CpuBackend::applyClipStateToGlobal()
+    void CpuBackend::applyClipStateToGlobal() const
     {
         if (m_clipStack.empty())
         {

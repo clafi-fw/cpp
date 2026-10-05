@@ -817,24 +817,26 @@ namespace ClaFi::PlatformImplementation::Windows
         bounds.offset(shadow.offset);
         bounds.inflate(shadow.spread);
         const float cap = (std::min)(bounds.width(), bounds.height()) / 2.0f;
+
         CornerRadii radii = parts.radii;
-        for (float& radius : radii)
-        {
-            if (radius > 0.0f)
-            {
-                radius = std::clamp(radius + shadow.spread, 0.0f, cap);
-            }
-        }
+        if (radii.topLeft > 0.0f)
+            radii.topLeft = std::clamp(radii.topLeft + shadow.spread, 0.0f, cap);
+        if (radii.topRight > 0.0f)
+            radii.topRight = std::clamp(radii.topRight + shadow.spread, 0.0f, cap);
+        if (radii.bottomRight > 0.0f)
+            radii.bottomRight = std::clamp(radii.bottomRight + shadow.spread, 0.0f, cap);
+        if (radii.bottomLeft > 0.0f)
+            radii.bottomLeft = std::clamp(radii.bottomLeft + shadow.spread, 0.0f, cap);
 
         const float reach = shadow.blur;
         const float left = bounds.left;
         const float top = bounds.top;
         const float right = bounds.right;
         const float bottom = bounds.bottom;
-        const float topLeft = radii[cornerIndex(Corner::TopLeft)];
-        const float topRight = radii[cornerIndex(Corner::TopRight)];
-        const float bottomRight = radii[cornerIndex(Corner::BottomRight)];
-        const float bottomLeft = radii[cornerIndex(Corner::BottomLeft)];
+        const float topLeft = radii.topLeft;
+        const float topRight = radii.topRight;
+        const float bottomRight = radii.bottomRight;
+        const float bottomLeft = radii.bottomLeft;
 
         ComPtr<ID2D1GradientStopCollection> edgeRamp = shadowRamp(shadow, 0.0f, reach);
         if (!edgeRamp)

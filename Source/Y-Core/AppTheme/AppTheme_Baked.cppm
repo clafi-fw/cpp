@@ -508,7 +508,7 @@ namespace ClaFi
             case InkColor::Count:
                 break;
         }
-        unreachable("an ink names a rule this theme does not hold");
+        noReach("an ink names a rule this theme does not hold");
     }
 
     // The two tones are one colour stated once for each side of the theme rather than one the

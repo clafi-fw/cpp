@@ -1,4 +1,4 @@
-﻿export module ClaFi.Controls.Grids :RowContainer;
+export module ClaFi.Controls.Grids :RowContainer;
 
 import :RowBase;
 import :Columns;
@@ -78,7 +78,7 @@ namespace ClaFi::Controls::Grids
         // One control per column. A silent second insert would be dropped by the map and
         // the control would never be aligned - owned, parented and invisible.
         if (!m_controlMap.insert({ &column, m_controls.size() }).second)
-            unreachable("Grid: this column already holds a control in this row");
+            noReach("Grid: this column already holds a control in this row");
         CreateParams params{ *this };
         m_controls.emplace_back(std::make_unique<ControlClass>(
             params,

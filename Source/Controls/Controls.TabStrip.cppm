@@ -187,7 +187,7 @@ namespace ClaFi::Controls
         case TabsOrientation::VerticalRight:
             return Orientation::Vertical;
         default:
-            unreachable();
+            noReach();
         }
     }
 
@@ -485,12 +485,12 @@ namespace ClaFi::Controls
             m_profile.origin = contentRect.topLeft().toFloat();
             m_profile.tabStart = tabRect.top + tabMargin;
             m_profile.tabEnd = tabRect.bottom - tabMargin;
-            headerStart = outEvent->top() + outEvent->cornerRadii()[cornerIndex(Corner::TopRight)] - pt.y;
-            headerEnd = outEvent->bottom() - outEvent->cornerRadii()[cornerIndex(Corner::BottomRight)] - pt.y;
+            headerStart = outEvent->top() + outEvent->cornerRadii().topRight - pt.y;
+            headerEnd = outEvent->bottom() - outEvent->cornerRadii().bottomRight - pt.y;
             m_profile.tabProtrusion = width() - tabMargin;
             break;
 
-        default: unreachable();
+        default: noReach();
         }
         headerStart += outEvent->borderWidth();
         headerEnd -= outEvent->borderWidth();
@@ -517,7 +517,7 @@ namespace ClaFi::Controls
 
     float Tab::pageCornerInset(Corner corner) const
     {
-        return m_actualPageRadii[cornerIndex(corner)];
+        return m_actualPageRadii.get(corner);
     }
 
     // Drawn from the strip's event, whose surface is what the tabs stand on. The shadow stays on
@@ -626,7 +626,7 @@ namespace ClaFi::Controls
             break;
         case TabsOrientation::VerticalRight:
             break;
-        default: unreachable();
+        default: noReach();
         }
     }
 
@@ -694,7 +694,7 @@ namespace ClaFi::Controls
         case TabsOrientation::VerticalRight:
             roomAfter.x = room;
             break;
-        default: unreachable();
+        default: noReach();
         }
         position.x += roomBefore.x;
         position.y += roomBefore.y;
@@ -729,7 +729,7 @@ namespace ClaFi::Controls
             position.x += gap;
             dimensions.x = std::max(dimensions.x - gap, 0.0f);
             break;
-        default: unreachable();
+        default: noReach();
         }
     }
 

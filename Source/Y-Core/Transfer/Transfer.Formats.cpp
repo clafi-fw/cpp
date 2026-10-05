@@ -24,7 +24,7 @@ namespace ClaFi::Transfer
     {
         const StandardFormat* held = std::get_if<StandardFormat>(&m_identity);
         if (!held)
-            unreachable("Transfer::Format::standard asked of a format that is not a standard one");
+            noReach("Transfer::Format::standard asked of a format that is not a standard one");
 
         return *held;
     }
@@ -33,7 +33,7 @@ namespace ClaFi::Transfer
     {
         const std::wstring* held = std::get_if<std::wstring>(&m_identity);
         if (!held)
-            unreachable("Transfer::Format::name asked of a format that carries no name");
+            noReach("Transfer::Format::name asked of a format that carries no name");
 
         return *held;
     }

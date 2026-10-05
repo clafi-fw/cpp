@@ -1,4 +1,4 @@
-﻿module ClaFi.Controls.Grids;
+module ClaFi.Controls.Grids;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
@@ -53,8 +53,8 @@ namespace ClaFi::Controls::Grids
         return {
             .bounds = headerRect,
             .radii = {
-                std::max(0.0f, gridRadii[cornerIndex(Corner::TopLeft)] - border),
-                std::max(0.0f, gridRadii[cornerIndex(Corner::TopRight)] - border),
+                std::max(0.0f, gridRadii.topLeft - border),
+                std::max(0.0f, gridRadii.topRight - border),
                 0.0f,
                 0.0f
             }

@@ -144,7 +144,7 @@ namespace ClaFi
                 if (tag.kind == kind && tag.value == value)
                     return tag.name;
             }
-            unreachable("a marker no plain tag spells");
+            noReach("a marker no plain tag spells");
         }
 
         [[nodiscard]] std::wstring_view colorName(InkColor color)
@@ -154,7 +154,7 @@ namespace ClaFi
                 if (named.color == color)
                     return named.name;
             }
-            unreachable("an ink colour with no name");
+            noReach("an ink colour with no name");
         }
 
         // A grade as the step it stands at, or as the share itself where no step stands.
@@ -199,7 +199,7 @@ namespace ClaFi
                 if (named.style == style)
                     return named.name;
             }
-            unreachable("a text style with no name");
+            noReach("a text style with no name");
         }
 
         [[nodiscard]] FormatItem markerOf(const PlainTag& tag)
@@ -225,7 +225,7 @@ namespace ClaFi
                 case PlainTagKind::Flex:
                     return FlexSpace{};
             }
-            unreachable("a plain tag of no kind");
+            noReach("a plain tag of no kind");
         }
 
         // What follows "color": a colour stated outright, or an ink colour and then a grade, either

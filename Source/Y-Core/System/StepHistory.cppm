@@ -94,7 +94,7 @@ namespace ClaFi
     void StepHistory<Step, firstSteps, maxSteps>::back(const std::size_t steps)
     {
         if (steps > m_next)
-            unreachable("A history was walked back past its oldest step");
+            noReach("A history was walked back past its oldest step");
         m_open = false;
         m_next -= steps;
     }
@@ -103,7 +103,7 @@ namespace ClaFi
     void StepHistory<Step, firstSteps, maxSteps>::forward(const std::size_t steps)
     {
         if (steps > redoDepth())
-            unreachable("A history was walked forward past its newest step");
+            noReach("A history was walked forward past its newest step");
         m_open = false;
         m_next += steps;
     }

@@ -168,7 +168,7 @@ namespace ClaFi
         {
             FloatRect rect{};
             CornerRadii radii{};
-            RectSidesBoolArray sides{};
+            RectSides sides{};
         };
     private:
         [[nodiscard]] float zAnimationFactor(VisualStateIndex) const;
@@ -358,7 +358,7 @@ namespace ClaFi
         // has the last word.
         [[nodiscard]] const CornerRadii& cornerRadii() const { return m_target.m_cornerRadii; }
         void setCornerRadii(const CornerRadii& value) { m_target.m_cornerRadii = value; }
-        void setCornerRadius(Corner corner, float value) { m_target.m_cornerRadii[cornerIndex(corner)] = value; }
+        void setCornerRadius(Corner corner, float value) { m_target.m_cornerRadii.set(corner, value); }
         void setInteractivity(Interactivity value) { m_target.m_interactivity = value; }
         void setBorderWidth(float value) { m_target.m_borderWidth = value; }
     private:

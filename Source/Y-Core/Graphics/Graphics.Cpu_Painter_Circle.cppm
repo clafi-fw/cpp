@@ -60,6 +60,6 @@ namespace ClaFi::Graphics::Cpu
         float m_borderWidth{};
         Brush m_borderColor{ SolidColor{Color{}} };
         Brush m_backGroundColor{ SolidColor{Color{}} };
-        Corner m_corner{ Corner::None };
+        std::optional<Corner> m_corner{};
     };
 }

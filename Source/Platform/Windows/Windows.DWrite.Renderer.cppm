@@ -541,17 +541,17 @@ namespace ClaFi::PlatformImplementation::Windows
                 const Graphics::Cpu::GlyphCoverage& coverage = coverageOf(fontGlyphs,
                     glyphRun->glyphIndices[i], glyphRun->fontEmSize, measuringMode);
 
-                FloatPoint origin = { penX, drawY };
+                FloatPoint origin2 = { penX, drawY };
                 if (glyphRun->glyphOffsets)
                 {
-                    origin.x += glyphRun->glyphOffsets[i].advanceOffset;
+                    origin2.x += glyphRun->glyphOffsets[i].advanceOffset;
                     // Positive ascenderOffset lifts the glyph, and y grows downwards.
-                    origin.y -= glyphRun->glyphOffsets[i].ascenderOffset;
+                    origin2.y -= glyphRun->glyphOffsets[i].ascenderOffset;
                 }
                 if (transformed)
-                    origin = canvasTransform.transform(origin);
+                    origin2 = canvasTransform.transform(origin2);
 
-                m_compositor.place(coverage, origin);
+                m_compositor.place(coverage, origin2);
 
                 if (!rightToLeft)
                     penX += advance;

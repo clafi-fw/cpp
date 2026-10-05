@@ -28,7 +28,7 @@ namespace ClaFi::Syntax
         const std::size_t insertedLength)
     {
         if (m_textLength - replaced.length + insertedLength != textAfter.size())
-            unreachable("An edit applied to the line states describes a text they do not hold.");
+            noReach("An edit applied to the line states describes a text they do not hold.");
 
         const std::size_t firstLine = lineAt(replaced.start);
         const std::size_t lastLine = lineAt(replaced.end());
@@ -83,7 +83,7 @@ namespace ClaFi::Syntax
         Tokens& tokens)
     {
         if (line >= lineCount())
-            unreachable("A line asked for its tokens past the lines the states hold.");
+            noReach("A line asked for its tokens past the lines the states hold.");
 
         tokens.clear();
         std::ignore = lexLine(m_language, lineText, m_states[line], m_strings, &tokens);

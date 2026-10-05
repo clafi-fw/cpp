@@ -32,7 +32,7 @@ namespace ClaFi::Controls
             case MessageIcon::None:
                 break;
         }
-        unreachable("a message icon with no stripe of its own");
+        noReach("a message icon with no stripe of its own");
     }
 
     // MessageBar

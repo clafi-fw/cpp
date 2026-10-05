@@ -176,7 +176,7 @@ namespace ClaFi::Syntax
                 return false;
 
             if (scan.index == before)
-                unreachable("A syntax hook claimed a position without moving past it.");
+                noReach("A syntax hook claimed a position without moving past it.");
             return true;
         }
     }
@@ -195,7 +195,7 @@ namespace ClaFi::Syntax
             if (scan.state.mode >= Mode::firstLanguageMode)
             {
                 if (!takeByHook(scan))
-                    unreachable("A line stands in a language mode its hook does not carry.");
+                    noReach("A line stands in a language mode its hook does not carry.");
                 continue;
             }
 
@@ -358,7 +358,7 @@ namespace ClaFi::Syntax
     std::wstring_view StateStrings::stringOf(const std::uint16_t id) const
     {
         if (id == 0 || id > m_strings.size())
-            unreachable("A line state names a string its table does not hold.");
+            noReach("A line state names a string its table does not hold.");
         return m_strings[id - 1];
     }
 

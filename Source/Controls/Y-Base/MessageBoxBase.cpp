@@ -89,7 +89,7 @@ namespace ClaFi::Controls
         case MessageIcon::Ok:
             return Icons::OkIcon::paint;
         }
-        unreachable("a message icon with no painter of its own");
+        noReach("a message icon with no painter of its own");
     }
 
     Text messageText(const MessageIcon icon, const std::wstring_view text)
@@ -121,7 +121,7 @@ namespace ClaFi::Controls
         case DialogAnswer::Discard:
             return L"Don't save";
         }
-        unreachable("a dialog answer with no caption of its own");
+        noReach("a dialog answer with no caption of its own");
     }
 
 

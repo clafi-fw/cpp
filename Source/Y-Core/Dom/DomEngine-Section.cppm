@@ -205,7 +205,7 @@ namespace ClaFi::Dom
                 return *static_cast<const Section*>(childPtr);
             }
         }
-        unreachable("Dom: Requested childSection does not exist in the schema.");
+        noReach("Dom: Requested childSection does not exist in the schema.");
     }
 
     Section& Section::childSection(std::wstring_view key)
@@ -219,7 +219,7 @@ namespace ClaFi::Dom
                 return *static_cast<Section*>(childPtr);
             }
         }
-        unreachable("Dom: Requested childSection does not exist in the schema.");
+        noReach("Dom: Requested childSection does not exist in the schema.");
     }
 
     void Section::setChild(std::wstring_view key, std::unique_ptr<DomNodeBase> node)

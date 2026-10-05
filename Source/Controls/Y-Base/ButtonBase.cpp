@@ -520,10 +520,10 @@ namespace ClaFi::Controls
     Control& ButtonBase::addChild(ControlPtr&& control)
     {
         if (!control)
-            unreachable("ButtonBase::addChild was given an empty control");
+            noReach("ButtonBase::addChild was given an empty control");
 
         if (m_childCount == k_maxChildren)
-            unreachable("ButtonBase has room for one child besides the selection indicator");
+            noReach("ButtonBase has room for one child besides the selection indicator");
 
         Control& result = *control;
         m_children[m_childCount] = std::move(control);
@@ -534,7 +534,7 @@ namespace ClaFi::Controls
     Control& ButtonBase::insertIndicator()
     {
         if (m_childCount == k_maxChildren)
-            unreachable("ButtonBase has room for one child besides the selection indicator");
+            noReach("ButtonBase has room for one child besides the selection indicator");
 
         // A derived class may have registered its child before the indicator was ever asked for,
         // so make room at the front rather than appending.

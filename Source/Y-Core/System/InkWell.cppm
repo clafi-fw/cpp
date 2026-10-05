@@ -162,7 +162,7 @@ namespace ClaFi
                 case Pigment::Count:
                     break;
             }
-            unreachable("a pigment with no tones");
+            noReach("a pigment with no tones");
         }
 
         constexpr Ink Yellow = yellowInk();

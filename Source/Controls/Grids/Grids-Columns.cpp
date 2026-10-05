@@ -1,4 +1,4 @@
-﻿module ClaFi.Controls.Grids;
+module ClaFi.Controls.Grids;
 
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
@@ -235,7 +235,7 @@ namespace ClaFi::Controls::Grids
     {
         Column* result = findByTag(tag);
         if (!result)
-            unreachable("Grid: no column carries the requested tag");
+            noReach("Grid: no column carries the requested tag");
         return *result;
     }
 }

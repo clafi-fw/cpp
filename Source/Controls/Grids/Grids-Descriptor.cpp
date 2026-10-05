@@ -156,7 +156,7 @@ namespace ClaFi::Controls::Grids
         for (std::size_t i = 0; i < k_cornersNum; ++i)
         {
             if (!(corners[i] == ownCorners[i]))
-                result[i] = std::max(result[i], gridEvent.radius());
+                result.set(i, std::max(result.get(i), gridEvent.radius()));
         }
         return result;
     }

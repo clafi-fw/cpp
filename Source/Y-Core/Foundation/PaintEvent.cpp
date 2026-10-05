@@ -659,7 +659,7 @@ namespace ClaFi
         const CornerPoints ownCorners = { bounds.topLeft(), bounds.topRight(), bounds.bottomRight(), bounds.bottomLeft() };
         const CornerPoints corners = { visible.topLeft(), visible.topRight(), visible.bottomRight(), visible.bottomLeft() };
         for (std::size_t i = 0; i < k_cornersNum; ++i)
-            m_cornerRadii[i] = corners[i] == ownCorners[i] ? m_radius : 0.0f;
+            m_cornerRadii.set(i, corners[i] == ownCorners[i] ? m_radius : 0.0f);
 
         const PaintEvent* container = containerEvent();
         if (!container)
@@ -680,7 +680,7 @@ namespace ClaFi
 
         for (std::size_t i = 0; i < k_cornersNum; ++i)
         {
-            const float containerRadius = container->m_cornerRadii[i];
+            const float containerRadius = container->m_cornerRadii.get(i);
             if (containerRadius <= 0.0f)
                 continue;
             const float insetX = (corners[i].x - containerCorners[i].x) * inward[i].x;
@@ -695,7 +695,7 @@ namespace ClaFi
             // bulging toward the container's corner point. Its farthest point from the
             // container's arc centre lies along the line through the two centres while this
             // centre is nearer the corner on both axes, and at one of the two ends otherwise.
-            const float own = m_cornerRadii[i];
+            const float own = m_cornerRadii.get(i);
             const float centreX = insetX + own - containerRadius;
             const float centreY = insetY + own - containerRadius;
             float reach = 0.0f;
@@ -713,7 +713,7 @@ namespace ClaFi
             }
             if (reach <= containerRadius - containerStroke)
                 continue;
-            m_cornerRadii[i] = std::max(own, concentric);
+            m_cornerRadii.set(i, std::max(own, concentric));
         }
     }
 
@@ -855,16 +855,22 @@ namespace ClaFi
         bounds.inflate(-scaleF(inset));
         // The surface is the part of the control in view, and the outline runs along the edges
         // that are the control's own: a cut edge carries no line.
-        FloatRect rect = FloatRect::intersection(bounds, viewport());
-        if (rect.empty())
-            return {};
-        const RectSidesBoolArray sides = {
-            rect.top == bounds.top,
-            rect.right == bounds.right,
-            rect.bottom == bounds.bottom,
-            rect.left == bounds.left
+        SurfaceShape result{
+            .rect = FloatRect::intersection(bounds, viewport()),
+            };
+        if (result.rect.empty())
+        {
+            result.radii = {};
+            result.sides = {};
+            return result;
+        }
+        result.sides = {
+            .top = result.rect.top == bounds.top,
+            .right = result.rect.right == bounds.right,
+            .bottom = result.rect.bottom == bounds.bottom,
+            .left = result.rect.left == bounds.left
         };
-        CornerRadii radii = m_cornerRadii;
+        result.radii = m_cornerRadii;
 
         // Only the fill and its stroke grow in - the icon and the caption are drawn elsewhere and
         // stay where they are, so this reads as a surface arriving behind the content rather
@@ -890,18 +896,17 @@ namespace ClaFi
                 // The same origin the press animation uses, so a control that anchors on its icon
                 // has its surface come out of that icon rather than out of its own middle.
                 FloatPoint origin = m_context.control().pressOrigin(*this);
-                rect = {
-                    std::lerp(origin.x, rect.left, scale),
-                    std::lerp(origin.y, rect.top, scale),
-                    std::lerp(origin.x, rect.right, scale),
-                    std::lerp(origin.y, rect.bottom, scale)
+                result.rect = {
+                    std::lerp(origin.x, result.rect.left, scale),
+                    std::lerp(origin.y, result.rect.top, scale),
+                    std::lerp(origin.x, result.rect.right, scale),
+                    std::lerp(origin.y, result.rect.bottom, scale)
                 };
                 // Kept proportional, so the shape that grows in is the shape that settles.
-                for (float& radius : radii)
-                    radius *= scale;
+                result.radii.scale(scale);
             }
         }
-        return { rect, radii, sides };
+        return result;
     }
 
     void PaintEvent::paintFill(const SurfaceShape& shape)
@@ -912,7 +917,7 @@ namespace ClaFi
         const RoundedRectangleParts parts{
             .bounds = shape.rect,
             .radii = shape.radii,
-            .sides = k_allRectSidesTrue
+            .sides = RectSides::all()
         };
         canvas().fillPartialRoundedRectangle(parts, color);
     }

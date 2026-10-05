@@ -699,7 +699,7 @@ namespace ClaFi::Controls::Grids::Dt
         context.spec.addCell(*column, CellTextFunc{});
         if (!context.container)
         {
-            unreachable(
+            noReach(
                 "Grid design: CellWith was used in a row that cannot host controls. Only a "
                 "RowContainer holds controls, and every row a design creates is one - as is a "
                 "group's span.");
