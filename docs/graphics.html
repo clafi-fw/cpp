@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi Graphics - Developer Manual</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2064%2064%22%3E%3Ccircle%20cx=%2216%22%20cy=%2216%22%20r=%229%22%20fill=%22%239cde4c%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2216%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2216%22%20cy=%2248%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2248%22%20r=%229%22%20fill=%22%2373b722%22/%3E%3C/svg%3E">
+    <style>
+        :root {
+            --bg-color: #f9f9fb; --text-color: #333; --accent-color: #0066cc;
+            --code-bg: #1e1e1e; --code-text: #d4d4d4; --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6; color: var(--text-color); background-color: var(--bg-color);
+            margin: 0; padding: 0; display: flex;
+        }
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;
+            background-color: #fff; border-right: 1px solid var(--border-color);
+            overflow-y: auto; padding: 2rem 1rem; box-sizing: border-box; z-index: 100;
+        }
+        .sidebar-brand { padding: 0 0.5rem 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); }
+        .sidebar-brand-text {
+            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            font-size: 2.0rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            background: linear-gradient(90deg, #4EC9B0, #A6E22E);
+            -webkit-background-clip: text;
+            /*
+            background-clip: text;
+            */
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 8px rgba(78, 201, 176, 0.25);
+        }
+        .sidebar-brand-text::after {
+            content: "::";
+            margin-left: 0.2em;
+            font-weight: 400;
+        }
+        .sidebar-header { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; padding-left: 0.5rem; color: #111; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar > ul > li { margin-bottom: 0.8rem; }
+        .nav-item-wrapper {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.25rem 0.5rem; border-radius: 6px; transition: background-color 0.2s ease;
+        }
+        .nav-item-wrapper:hover { background-color: rgba(0, 0, 0, 0.02); }
+        .sidebar > ul > li > .nav-item-wrapper > a { font-size: 1rem; font-weight: 600; color: #111; flex-grow: 1; }
+        .sidebar ul ul {
+            padding-left: 0.8rem; margin-top: 0.3rem; margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color); margin-left: 1.1rem;
+        }
+        .sidebar ul ul li { margin-bottom: 0.4rem; }
+        .sidebar ul ul a { font-size: 0.9rem; color: #555; display: block; padding: 0.15rem 0; transition: color 0.15s ease; }
+        .sidebar a { text-decoration: none; display: block; transition: color 0.2s ease; }
+        .sidebar a:hover, .sidebar ul ul a:hover { color: var(--accent-color); }
+        .toggle-btn {
+            background: none; border: none; padding: 4px; margin: 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; color: #888;
+            border-radius: 4px; transition: background-color 0.2s, color 0.2s; outline: none;
+        }
+        .toggle-btn:hover { background-color: rgba(0, 0, 0, 0.05); color: var(--accent-color); }
+        .toggle-btn svg { width: 16px; height: 16px; fill: currentColor; transform: rotate(90deg); transition: transform 0.2s ease; }
+        .sidebar li.has-children.collapsed ul { display: none !important; }
+        .sidebar li.has-children.collapsed .toggle-btn svg { transform: rotate(0deg); }
+        .page-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        header { background-color: #fff; padding: 2rem; border-bottom: 1px solid var(--border-color); text-align: center; }
+        h1, h2, h3, h4 { color: #111; margin-top: 2rem; }
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+        main {
+            max-width: 900px; margin: 2rem auto; padding: 0 2rem; background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; padding-bottom: 2rem;
+        }
+        p, li { font-size: 1.1rem; }
+        pre {
+            background-color: var(--code-bg); color: var(--code-text); padding: 1.5rem;
+            border-radius: 8px; overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.95rem; line-height: 1.5;
+        }
+        code {
+            background-color: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.9em; color: #d14;
+        }
+        pre code { background-color: transparent; padding: 0; color: inherit; }
+        .kw { color: #569cd6; } .tp { color: #4ec9b0; } .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; } .fn { color: #dcdcaa; }
+        .warning { background-color: #fff3f3; border-left: 4px solid #cc0000; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .info { background-color: #f0f7ff; border-left: 4px solid #0066cc; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0; }
+        .rule-card { padding: 1.2rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .rule-card.dos { background-color: #f4faf4; border-left: 4px solid #2e7d32; }
+        .rule-card.donts { background-color: #fff8f8; border-left: 4px solid #c62828; }
+        .rule-card h4 { margin-top: 0; margin-bottom: 0.5rem; }
+        .rule-card ul { margin: 0; padding-left: 1.2rem; }
+        .rule-card li { font-size: 1rem; margin-bottom: 0.5rem; }
+        table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 0.98rem; }
+        th, td { border: 1px solid var(--border-color); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+        th { background-color: #f6f8fa; font-weight: 600; }
+        td code { font-size: 0.85em; }
+        .grid-fig { width: 100%; max-width: 720px; margin: 1.5rem 0; display: block; }
+        @media (max-width: 1200px) { .sidebar { display: none; } .page-content { margin-left: 0; width: 100%; } }
+        .manuals-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .manuals-link:hover { color: var(--accent-color); }
+        .manuals-link::before { content: "\2190\00a0"; }
+        .page-end { display: flex; justify-content: space-between; max-width: 900px; margin: 0 auto 2rem; padding: 0 2rem; }
+        .top-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .top-link:hover { color: var(--accent-color); }
+        .top-link::before { content: "\2191\00a0"; }
+        header .manuals-link-line { margin: 0.2rem 0 0; }
+        .brand-link { text-decoration: none; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand"><a class="brand-link" href="index.html"><span class="sidebar-brand-text">ClaFi</span></a></div>
+        <div class="sidebar-header">Contents</div>
+        <ul>
+            <li><div class="nav-item-wrapper"><a href="#introduction">Introduction</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#quickstart">Quick Start</a></div></li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#concepts">Core Concepts</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#canvas-and-backend">The canvas and its backend</a></li>
+                    <li><a href="#coordinates">Coordinates</a></li>
+                    <li><a href="#strokes-inside">Strokes lie inside</a></li>
+                    <li><a href="#brushes">Brushes</a></li>
+                    <li><a href="#paths">Paths and layers</a></li>
+                    <li><a href="#clips">Clips</a></li>
+                    <li><a href="#transforms">Transforms</a></li>
+                    <li><a href="#opacity">Opacity layers</a></li>
+                    <li><a href="#shadows">Shadows</a></li>
+                    <li><a href="#images">Kept images</a></li>
+                    <li><a href="#pixels">Pixels</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#reference">Reference</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#ref-canvas">Canvas</a></li>
+                    <li><a href="#ref-brush">Brush</a></li>
+                    <li><a href="#ref-layers">PathDrawLayer</a></li>
+                    <li><a href="#ref-path">PixelPath</a></li>
+                    <li><a href="#ref-matrix">Matrix3x2</a></li>
+                    <li><a href="#ref-parts">RoundedRectangleParts</a></li>
+                    <li><a href="#ref-shadow">ShadowParams</a></li>
+                    <li><a href="#ref-guards">Scoped guards</a></li>
+                    <li><a href="#ref-offscreen">A canvas of your own</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#backends">The Backends</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#choosing">Which backend draws</a></li>
+                    <li><a href="#differences">Backend differences</a></li>
+                </ul>
+            </li>
+            <li><div class="nav-item-wrapper"><a href="#do-dont">Do and Don't</a></div></li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#howitworks">How It Works</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#hiw-canvas">The canvas</a></li>
+                    <li><a href="#hiw-cpu">The CPU backend</a></li>
+                    <li><a href="#hiw-d2d">The Direct2D backend</a></li>
+                    <li><a href="#hiw-switch">A switch of backend</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <div class="page-content">
+        <header>
+            <h1>ClaFi Graphics</h1>
+            <p>One canvas, drawn by the CPU or by the GPU</p>
+            <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
+        </header>
+        <main>
+<h2 id="introduction">Introduction</h2>
+
+<p>Everything a window shows is drawn on its <strong>canvas</strong>: a <code>Graphics::Canvas</code>
+the form owns and hands to every paint through the event. A caller states shapes, paths and brushes
+in the surface's pixels, and the canvas passes each one to the <strong>backend</strong> behind it -
+the CPU rasterizer that comes with the core, or Direct2D on Windows. Which of the two draws is the
+user's choice, made in Settings while the application runs, so a control does not know which one it
+is drawn by and must not need to.</p>
+
+<p><strong>Both backends answer to one contract</strong>: the drawing API promises nothing one of
+them cannot draw. A translucent brush is a colour with alpha, on both, and nothing beside a brush
+carries an opacity of its own. What the two still draw differently is listed in
+<a href="#differences">Backend differences</a>, each with what to keep to so that a picture comes out
+the same from either.</p>
+
+<p>What a caller draws with:</p>
+
+<ul>
+    <li><strong>Shapes</strong> - rectangles, rounded rectangles with a radius per corner and a choice
+        of sides, ellipses, circles and lines, each drawn as an outline or filled.</li>
+    <li><strong>Paths</strong> - a <code>PixelPath</code> of lines and curves, drawn as a stack of
+        layers: fill, stroke, glow and shadow.</li>
+    <li><strong>Brushes</strong> - a solid colour, a linear or a radial gradient, or a point of
+        light.</li>
+    <li><strong>State</strong> - clips, a transform, opacity layers and kept images, each a push and a
+        pop, with a scoped guard for each.</li>
+    <li><strong>Pixels</strong> - a bitmap drawn as it is, or a buffer the caller writes into
+        itself.</li>
+</ul>
+
+<div class="info">
+<strong>Module imports:</strong> the canvas and its scoped guards are in
+<code>ClaFi.Core.Graphics.Canvas</code>. Brushes, <code>PixelPath</code>, <code>PathDrawLayer</code>,
+<code>Matrix3x2</code>, <code>ShadowParams</code>, <code>Bitmap</code>, <code>PixelView</code> and
+<code>IBackend</code> are in <code>ClaFi.Core.Graphics.Types</code>. <code>Color</code>,
+<code>FloatRect</code> and <code>RoundedRectangleParts</code> come with
+<code>ClaFi.Core.System.UiTypes</code>. The CPU backend is <code>ClaFi.Core.Graphics.Cpu.Canvas</code>
+and the Direct2D one <code>ClaFi.Platform.Windows.D2D</code>; a caller drawing in a paint handler
+imports neither.
+</div>
+
+<h2 id="quickstart">Quick Start</h2>
+
+<p>A paint handler takes the canvas from its event and draws in the rect the event hands it. An
+icon's <code>PaintIconEvent</code> answers the canvas, the icon's rect, the stroke weights and the
+inks; a control's <code>PaintEvent</code> answers the same.</p>
+
+<pre><code><span class="kw">void</span> <span class="fn">paintAddIcon</span>(<span class="tp">PaintIconEvent</span>&amp; event)
+{
+    <span class="tp">Canvas</span>&amp; canvas = event.<span class="fn">canvas</span>();
+    <span class="kw">const</span> <span class="tp">FloatRect</span>&amp; box = event.<span class="fn">iconRect</span>();
+    <span class="kw">const float</span> size = <span class="tp">std</span>::<span class="fn">min</span>(box.<span class="fn">width</span>(), box.<span class="fn">height</span>());
+    <span class="kw">const float</span> stroke = event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Regular);
+
+    <span class="cm">// The frame. Its stroke lies inside the rect it is given.</span>
+    <span class="kw">const float</span> radius = size * <span class="kw">0.2f</span>;
+    canvas.<span class="fn">drawRoundedRectangle</span>(box, radius, radius, event.<span class="fn">textRgb</span>(<span class="tp">InkGrade</span>::Muted), stroke);
+
+    <span class="cm">// The plus, as a path in the icon's own coordinates placed by a translation.</span>
+    <span class="tp">PixelPath</span> path;
+    path.<span class="fn">moveTo</span>(size * <span class="kw">0.5f</span>, size * <span class="kw">0.28f</span>);
+    path.<span class="fn">lineTo</span>(size * <span class="kw">0.5f</span>, size * <span class="kw">0.72f</span>);
+    path.<span class="fn">moveTo</span>(size * <span class="kw">0.28f</span>, size * <span class="kw">0.5f</span>);
+    path.<span class="fn">lineTo</span>(size * <span class="kw">0.72f</span>, size * <span class="kw">0.5f</span>);
+    <span class="kw">const</span> <span class="tp">Matrix3x2</span> place = <span class="tp">Matrix3x2</span>::<span class="fn">translation</span>(box.<span class="fn">topLeft</span>());
+    <span class="kw">const</span> <span class="tp">Color</span> mark = event.<span class="fn">accentRgb</span>(<span class="tp">InkGrade</span>::Strongest);
+    canvas.<span class="fn">drawPath</span>(path, { <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(mark, stroke) }, &amp;place);
+}</code></pre>
+
+<p>Colours come from the event rather than from the code: an ink is resolved against the surface it
+is drawn on, which is the <a href="color.html">Colour</a> manual's subject. Everything below is what
+happens to a colour once it is in hand.</p>
+
+<h2 id="concepts">Core Concepts</h2>
+
+<h3 id="canvas-and-backend">The canvas and its backend</h3>
+
+<p>A canvas is a thin layer over an <code>IBackend</code> it owns. It keeps the clip rectangles and
+the transform it was told, builds out of paths the few shapes a backend may decline - a partial
+rounded rectangle, a shadow - and forwards everything else. The backend is what turns a call into
+pixels, and it is the only part that differs between the CPU and the GPU.</p>
+
+<p>A form's canvas is built by the application and drawn in the form's paint passes, so a paint
+handler never begins or ends a frame. A canvas of one's own - a picture baked once and cut up, say -
+is built over a CPU backend, which <a href="#ref-offscreen">A canvas of your own</a> shows.</p>
+
+<h3 id="coordinates">Coordinates</h3>
+
+<p>The canvas addresses the surface in its device pixels, from the top left corner, y growing
+downwards. The rects a paint event hands out are in those pixels already. A size written at design
+- a radius, a gap, a reach - becomes one through <code>scaleF</code>, and a line's weight through
+<code>scaledStrokeWidth</code>:</p>
+
+<pre><code><span class="kw">const float</span> radius = event.<span class="fn">scaleF</span>(<span class="kw">6.0f</span>);                         <span class="cm">// a design size in device pixels</span>
+<span class="kw">const float</span> line = event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin);    <span class="cm">// whole pixels, at least one</span></code></pre>
+
+<p>The weights run <code>Hairline</code>, <code>Thin</code>, <code>Regular</code>, <code>Bold</code>
+and <code>Heavy</code>. <code>scaledStrokeWidth</code> answers whole pixels, at least one, and from
+<code>Thin</code> up each grade is a pixel wider than the one below - so a line keeps its weight
+against its neighbours at every scale the application is drawn at.</p>
+
+<h3 id="strokes-inside">Strokes lie inside</h3>
+
+<p><strong>Every outline lays its stroke inside the bounds it is given.</strong> A rectangle, a
+rounded rectangle, an ellipse and a partial rounded rectangle drawn over the same bounds as their
+fill meet it exactly: the outer edge of the stroke is the edge of the shape, and no fill shows past
+the border.</p>
+
+<pre><code>canvas.<span class="fn">fillRoundedRectangle</span>(card, radius, radius, surface);
+canvas.<span class="fn">drawRoundedRectangle</span>(card, radius, radius, border, line);   <span class="cm">// the same rect, not an inset one</span></code></pre>
+
+<div class="warning">
+<strong>Do not inset the bounds by half the stroke.</strong> The backend does that itself - Direct2D
+strokes centred on a shape, so it moves the shape in - and a caller doing it as well leaves half a
+pixel of fill outside every border.
+</div>
+
+<p>A line and a path have no inside. Their stroke straddles the line or the path it follows, half on
+each side.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 212" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="An outline's stroke lies inside its bounds with its outer edge on them; Direct2D is handed the centreline half a stroke in; a line or a path is straddled by its stroke.">
+  <style>
+    .si-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .si-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .si-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .si-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .si-fill { fill:#eef4fb; }
+    .si-ink  { fill:none; stroke:#0066cc; stroke-width:12; stroke-opacity:0.85; }
+    .si-gh   { fill:none; stroke:#0066cc; stroke-width:12; stroke-opacity:0.16; }
+    .si-bnd  { fill:none; stroke:#333; stroke-width:1; stroke-dasharray:4 3; }
+    .si-mid  { fill:none; stroke:#111; stroke-width:1.2; stroke-dasharray:2 2; }
+    .si-ln   { fill:none; stroke:#0066cc; stroke-width:14; stroke-opacity:0.35; stroke-linecap:round; }
+  </style>
+  <text class="si-th" x="20" y="22">drawRoundedRectangle(rect, ...)</text>
+  <rect class="si-fill" x="40" y="40" width="170" height="120" rx="18"/>
+  <rect class="si-ink" x="46" y="46" width="158" height="108" rx="12"/>
+  <rect class="si-bnd" x="40" y="40" width="170" height="120" rx="18"/>
+  <text class="si-t" x="20" y="186">the outer edge is the bounds,</text>
+  <text class="si-t" x="20" y="202">and a fill of the same rect meets it</text>
+  <text class="si-th" x="250" y="22">what Direct2D is handed</text>
+  <rect class="si-gh" x="276" y="46" width="158" height="108" rx="12"/>
+  <rect class="si-bnd" x="270" y="40" width="170" height="120" rx="18"/>
+  <rect class="si-mid" x="276" y="46" width="158" height="108" rx="12"/>
+  <text class="si-t" x="250" y="186">the centreline, half a stroke in,</text>
+  <text class="si-t" x="250" y="202">its radii shrunk by as much</text>
+  <text class="si-th" x="480" y="22">drawLine, drawPath</text>
+  <path class="si-ln" d="M505,145 L665,60"/>
+  <path class="si-mid" d="M505,145 L665,60"/>
+  <circle cx="505" cy="145" r="3" fill="#fff" stroke="#111"/>
+  <circle cx="665" cy="60" r="3" fill="#fff" stroke="#111"/>
+  <text class="si-t" x="480" y="186">no inside: the stroke straddles</text>
+  <text class="si-t" x="480" y="202">the line, half on each side</text>
+</svg>
+
+<h3 id="brushes">Brushes</h3>
+
+<p>A <code>Brush</code> is what a shape is filled or stroked with, one of four kinds. Every call that
+takes a brush also takes a <code>Color</code>, which is a solid brush.</p>
+
+<table>
+<tr><th>Brush</th><th>Paints</th></tr>
+<tr><td><code>SolidColor</code></td><td>One colour. Its alpha is how much of what is underneath shows
+    through.</td></tr>
+<tr><td><code>LinearGradient</code></td><td>Colour stops along a line from <code>startPoint</code> to
+    <code>endPoint</code>, the same across it. Before the first stop and past the last the end colour
+    holds.</td></tr>
+<tr><td><code>RadialGradient</code></td><td>Colour stops out from a centre over an ellipse.
+    <strong>Direct2D only</strong> - the CPU backend draws nothing with it.</td></tr>
+<tr><td><code>PointGlow</code></td><td>A point of light: its colour at <code>lightPos</code>, thinning
+    straight to nothing at <code>lightSpread</code>.</td></tr>
+</table>
+
+<svg class="grid-fig" viewBox="0 0 700 182" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="The four brushes: a solid colour, a linear gradient between a start and an end point, a radial gradient drawn by Direct2D alone, and a point of light.">
+  <style>
+    .br-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .br-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .br-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .br-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .br-red { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#c62828; }
+  </style>
+  <defs>
+    <pattern id="br-chk" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#ffffff"/><rect width="8" height="8" fill="#e3e7ec"/><rect x="8" y="8" width="8" height="8" fill="#e3e7ec"/></pattern>
+    <linearGradient id="br-lin" gradientUnits="userSpaceOnUse" x1="225" y1="62" x2="305" y2="110"><stop offset="0" stop-color="#0066cc"/><stop offset="1" stop-color="#9cde4c"/></linearGradient>
+    <radialGradient id="br-rad" gradientUnits="userSpaceOnUse" cx="440" cy="86" r="70" gradientTransform="translate(440 86) scale(1 0.64) translate(-440 -86)"><stop offset="0" stop-color="#9cde4c"/><stop offset="1" stop-color="#0066cc"/></radialGradient>
+    <radialGradient id="br-glow" gradientUnits="userSpaceOnUse" cx="615" cy="86" r="66" gradientTransform="translate(615 86) scale(1 0.5) translate(-615 -86)"><stop offset="0" stop-color="#ffb400" stop-opacity="0.95"/><stop offset="1" stop-color="#ffb400" stop-opacity="0"/></radialGradient>
+  </defs>
+  <text class="br-th" x="20" y="24">SolidColor</text>
+  <text class="br-th" x="195" y="24">LinearGradient</text>
+  <text class="br-th" x="370" y="24">RadialGradient</text>
+  <text class="br-th" x="545" y="24">PointGlow</text>
+  <rect x="20" y="36" width="140" height="100" rx="4" fill="url(#br-chk)"/>
+  <rect x="20" y="36" width="140" height="100" rx="4" fill="#0066cc" fill-opacity="0.7"/>
+  <rect x="195" y="36" width="140" height="100" rx="4" fill="url(#br-lin)"/>
+  <path d="M225,62 L305,110" stroke="#fff" stroke-width="1" stroke-dasharray="3 2"/>
+  <circle cx="225" cy="62" r="3.5" fill="#fff" stroke="#111"/><circle cx="305" cy="110" r="3.5" fill="#fff" stroke="#111"/>
+  <text class="br-m" x="232" y="58" style="fill:#fff">start</text><text class="br-m" x="270" y="126" style="fill:#111">end</text>
+  <rect x="370" y="36" width="140" height="100" rx="4" fill="url(#br-rad)"/>
+  <rect x="545" y="36" width="140" height="100" rx="4" fill="#24303c"/>
+  <rect x="545" y="36" width="140" height="100" rx="4" fill="url(#br-glow)"/>
+  <circle cx="615" cy="86" r="2.5" fill="#fff"/>
+  <text class="br-t" x="20" y="156">one colour, its alpha</text><text class="br-t" x="20" y="171">letting the ground through</text>
+  <text class="br-t" x="195" y="156">stops from start to end,</text><text class="br-t" x="195" y="171">the end colours past them</text>
+  <text class="br-t" x="370" y="156">stops over an ellipse</text><text class="br-red" x="370" y="171">Direct2D only</text>
+  <text class="br-t" x="545" y="156">a light at lightPos,</text><text class="br-t" x="545" y="171">thinning straight to nothing</text>
+</svg>
+
+<p><strong>A brush is stated in the coordinates of the shape it fills.</strong> For a shape that is the
+canvas's coordinates; for a path drawn under a transform it is the path's own, so a gradient across a
+path moves, scales and turns with it.</p>
+
+<p>Stop positions run from 0 to 1 and ascend. A gradient of two colours has a shorthand:</p>
+
+<pre><code>canvas.<span class="fn">fillRectangle</span>(band, <span class="tp">LinearGradient</span>::<span class="fn">simple</span>(band.<span class="fn">topLeft</span>(), band.<span class="fn">bottomLeft</span>(), top, bottom));
+canvas.<span class="fn">fillTopBottomGradientRectangle</span>(band, top, bottom);   <span class="cm">// the same thing</span></code></pre>
+
+<p>A point of light lights whatever it is painted on. Its spread is the vertical radius, and
+<code>xRatio</code> divides it for the horizontal one, so 0.5 is a light twice as wide as it is tall.
+How strong the light is, is its colour's alpha:</p>
+
+<pre><code>canvas.<span class="fn">fillRectangle</span>(bounds, <span class="tp">PointGlow</span>{
+    .lightPos = bounds.<span class="fn">center</span>(),
+    .lightColor = lamp.<span class="fn">withOpacity</span>(<span class="kw">0.4f</span>),
+    .lightSpread = event.<span class="fn">scaleF</span>(<span class="kw">60.0f</span>),
+    .xRatio = <span class="kw">0.5f</span>
+});</code></pre>
+
+<svg class="grid-fig" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A point of light: its colour at lightPos, its vertical radius lightSpread and its horizontal one lightSpread divided by xRatio, its alpha falling straight to nothing at the spread.">
+  <style>
+    .pg-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .pg-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .pg-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .pg-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .pg-w  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#e6edf5; }
+    .pg-a  { stroke:#e6edf5; stroke-width:1.2; fill:none; }
+    .pg-ax { stroke:#5a6b7d; stroke-width:1; fill:none; }
+  </style>
+  <defs>
+    <radialGradient id="pg-glow" gradientUnits="userSpaceOnUse" cx="200" cy="105" r="124" gradientTransform="translate(200 105) scale(1 0.5) translate(-200 -105)"><stop offset="0" stop-color="#ffb400" stop-opacity="0.95"/><stop offset="1" stop-color="#ffb400" stop-opacity="0"/></radialGradient>
+    <marker id="pg-ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#e6edf5"/></marker>
+    <marker id="pg-ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#5a6b7d"/></marker>
+  </defs>
+  <rect x="20" y="20" width="360" height="170" rx="6" fill="#24303c"/>
+  <rect x="20" y="20" width="360" height="170" rx="6" fill="url(#pg-glow)"/>
+  <ellipse cx="200" cy="105" rx="124" ry="62" fill="none" stroke="#8a97a6" stroke-width="1" stroke-dasharray="4 3"/>
+  <circle cx="200" cy="105" r="3" fill="#fff"/>
+  <path class="pg-a" marker-end="url(#pg-ar)" d="M200,105 L200,47"/>
+  <path class="pg-a" marker-end="url(#pg-ar)" d="M200,105 L320,105"/>
+  <text class="pg-w" x="208" y="71">lightSpread</text>
+  <text class="pg-w" x="214" y="121">lightSpread / xRatio</text>
+  <text class="pg-w" x="148" y="121">lightPos</text>
+  <text class="pg-w" x="34" y="180">xRatio = 0.5: twice as wide as tall</text>
+  <text class="pg-th" x="420" y="30">alpha along any radius</text>
+  <path class="pg-ax" d="M440,40 L440,150 L680,150"/>
+  <path d="M440,50 L670,150" stroke="#ffb400" stroke-width="2.4" fill="none"/>
+  <text class="pg-m" x="450" y="46">lightColor.alpha</text>
+  <text class="pg-m" x="440" y="166" text-anchor="middle">lightPos</text>
+  <text class="pg-m" x="676" y="166" text-anchor="end">the spread</text>
+  <text class="pg-t" x="558" y="72">straight to nothing,</text>
+  <text class="pg-t" x="558" y="87">and nothing past it</text>
+</svg>
+
+<div class="warning">
+<strong>A glow is a circle.</strong> <code>PointGlow::shape</code> also names
+<code>SoftRectangle</code> and <code>SharpRectangle</code>, which only the CPU backend draws; Direct2D
+draws every point of light as the ellipse <code>GlowShape::Circle</code> draws.
+</div>
+
+<h3 id="paths">Paths and layers</h3>
+
+<p>A <code>PixelPath</code> is a list of commands - move, line, quadratic and cubic curve, close - each
+absolute or relative. A <code>moveTo</code> starts a new figure, and <code>close</code> joins a figure's
+end back to its start. Two helpers build a whole figure and start a fresh path to do it:
+<code>drawCircle(center, radius)</code>, and <code>drawRoundedRect(width, height, radius)</code>, which
+is centred on the origin. <code>addRoundedPolygon</code> appends a polygon with its corners rounded,
+keeping what the path already holds.</p>
+
+<p>A path is drawn as a stack of <strong>layers</strong>, each a <code>PathDrawLayer</code>: a mode,
+the geometry options the mode reads, and a brush. The layers are drawn in the order given, so a later
+one covers an earlier one.</p>
+
+<table>
+<tr><th>Mode</th><th>Draws</th></tr>
+<tr><td><code>PathRenderMode::Fill</code></td><td>The area the figures enclose, even-odd: a figure inside
+    another is a hole.</td></tr>
+<tr><td><code>PathRenderMode::Stroke</code></td><td>A line of <code>strokeWidth</code> along every figure,
+    straddling it, its open ends finished by <code>strokeCap</code>.</td></tr>
+<tr><td><code>PathRenderMode::OuterGlow</code></td><td>A ramp out from the outline to
+    <code>strokeWidth</code>, as far in as out. What covers the inward half is the shape drawn over
+    it.</td></tr>
+<tr><td><code>PathRenderMode::Shadow</code></td><td>The shape's own coverage, solid, and the ramp
+    outward from it to <code>strokeWidth</code> - what an opaque shape casts.</td></tr>
+</table>
+
+<svg class="grid-fig" viewBox="0 0 700 196" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Fill is even-odd, so a figure inside another is a hole; a stroke's open ends finish Round, Butt or Square, Round and Square reaching half a stroke past the end point.">
+  <style>
+    .fc-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .fc-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .fc-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .fc-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .fc-fill { fill:#0066cc; fill-opacity:0.85; fill-rule:evenodd; stroke:#003d7a; stroke-width:1.2; }
+    .fc-s { fill:none; stroke:#0066cc; stroke-width:18; stroke-opacity:0.85; }
+    .fc-g { stroke:#333; stroke-width:1; stroke-dasharray:3 3; }
+  </style>
+  <text class="fc-th" x="20" y="22">PathRenderMode::Fill - even-odd</text>
+  <path class="fc-fill" d="M62,36 L228,36 A22,22 0 0 1 250,58 L250,138 A22,22 0 0 1 228,160 L62,160 A22,22 0 0 1 40,138 L40,58 A22,22 0 0 1 62,36 Z M145,63 A35,35 0 1 0 145.01,63 Z"/>
+  <text class="fc-t" x="20" y="186">a figure inside another is a hole</text>
+  <text class="fc-th" x="330" y="22">strokeCap - how an open end finishes</text>
+  <path class="fc-s" stroke-linecap="round" d="M400,58 L600,58"/>
+  <circle cx="400" cy="58" r="3" fill="#fff" stroke="#111"/><circle cx="600" cy="58" r="3" fill="#fff" stroke="#111"/>
+  <text class="fc-th" x="630" y="62">Round</text>
+  <path class="fc-s" stroke-linecap="butt" d="M400,104 L600,104"/>
+  <circle cx="400" cy="104" r="3" fill="#fff" stroke="#111"/><circle cx="600" cy="104" r="3" fill="#fff" stroke="#111"/>
+  <text class="fc-th" x="630" y="108">Butt</text>
+  <path class="fc-s" stroke-linecap="square" d="M400,150 L600,150"/>
+  <circle cx="400" cy="150" r="3" fill="#fff" stroke="#111"/><circle cx="600" cy="150" r="3" fill="#fff" stroke="#111"/>
+  <text class="fc-th" x="630" y="154">Square</text>
+  <path class="fc-g" d="M400,36 L400,166 M600,36 L600,166"/>
+  <text class="fc-t" x="330" y="186">Round and Square reach half a stroke past the end point</text>
+</svg>
+
+<p>A glow's ramp thins by its <code>GlowFalloff</code>. <code>Linear</code> runs straight to nothing,
+which is what light wants: a lamp does not thin out, it runs out. <code>Smooth</code> is steep at the
+shape and level by the time it ends, which is what a shadow wants - a far end faint enough not to
+read as a border drawn round the shape.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="The two falloffs: Linear falls straight from the shape to nothing at the reach; Smooth, the square of it, is steep at the shape and level by the time it ends.">
+  <style>
+    .fo-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .fo-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .fo-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .fo-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .fo-ax { stroke:#5a6b7d; stroke-width:1; fill:none; }
+  </style>
+  <defs>
+    <linearGradient id="fo-lin" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#0066cc" stop-opacity="1"/><stop offset="1" stop-color="#0066cc" stop-opacity="0"/></linearGradient>
+    <linearGradient id="fo-smo" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#2e7d32" stop-opacity="1"/><stop offset="0.05" stop-color="#2e7d32" stop-opacity="0.9"/><stop offset="0.1" stop-color="#2e7d32" stop-opacity="0.81"/><stop offset="0.15" stop-color="#2e7d32" stop-opacity="0.72"/><stop offset="0.2" stop-color="#2e7d32" stop-opacity="0.64"/><stop offset="0.25" stop-color="#2e7d32" stop-opacity="0.56"/><stop offset="0.3" stop-color="#2e7d32" stop-opacity="0.49"/><stop offset="0.35" stop-color="#2e7d32" stop-opacity="0.42"/><stop offset="0.4" stop-color="#2e7d32" stop-opacity="0.36"/><stop offset="0.45" stop-color="#2e7d32" stop-opacity="0.3"/><stop offset="0.5" stop-color="#2e7d32" stop-opacity="0.25"/><stop offset="0.55" stop-color="#2e7d32" stop-opacity="0.2"/><stop offset="0.6" stop-color="#2e7d32" stop-opacity="0.16"/><stop offset="0.65" stop-color="#2e7d32" stop-opacity="0.12"/><stop offset="0.7" stop-color="#2e7d32" stop-opacity="0.09"/><stop offset="0.75" stop-color="#2e7d32" stop-opacity="0.06"/><stop offset="0.8" stop-color="#2e7d32" stop-opacity="0.04"/><stop offset="0.85" stop-color="#2e7d32" stop-opacity="0.02"/><stop offset="0.9" stop-color="#2e7d32" stop-opacity="0.01"/><stop offset="0.95" stop-color="#2e7d32" stop-opacity="0"/><stop offset="1" stop-color="#2e7d32" stop-opacity="0"/></linearGradient>
+  </defs>
+  <path class="fo-ax" d="M60,22 L60,150 L348,150"/>
+  <path d="M60,30 L340,150" stroke="#0066cc" stroke-width="2.2" fill="none"/>
+  <polyline points="60,30 67,35.93 74,41.7 81,47.32 88,52.8 95,58.12 102,63.3 109,68.33 116,73.2 123,77.92 130,82.5 137,86.92 144,91.2 151,95.32 158,99.3 165,103.12 172,106.8 179,110.33 186,113.7 193,116.92 200,120 207,122.92 214,125.7 221,128.32 228,130.8 235,133.12 242,135.3 249,137.32 256,139.2 263,140.93 270,142.5 277,143.93 284,145.2 291,146.32 298,147.3 305,148.12 312,148.8 319,149.32 326,149.7 333,149.93 340,150" stroke="#2e7d32" stroke-width="2.2" fill="none"/>
+  <text class="fo-m" x="52" y="34" text-anchor="end">1</text>
+  <text class="fo-m" x="52" y="154" text-anchor="end">0</text>
+  <text class="fo-m" x="60" y="168">the shape</text>
+  <text class="fo-m" x="340" y="168" text-anchor="end">the reach</text>
+  <text class="fo-th" x="214" y="80" style="fill:#0066cc">Linear</text>
+  <text class="fo-th" x="104" y="124" style="fill:#2e7d32">Smooth</text>
+  <text class="fo-th" x="400" y="40">GlowFalloff::Linear</text>
+  <rect x="400" y="48" width="280" height="26" fill="url(#fo-lin)"/>
+  <text class="fo-t" x="400" y="90">straight to nothing - a lamp runs out</text>
+  <text class="fo-th" x="400" y="118">GlowFalloff::Smooth</text>
+  <rect x="400" y="126" width="280" height="26" fill="url(#fo-smo)"/>
+  <text class="fo-t" x="400" y="168">steep at the shape, level by the end</text>
+</svg>
+
+<pre><code><span class="cm">// A badge: its glow first, so the fill covers the ramp's inward half, then the fill and its rim.</span>
+canvas.<span class="fn">drawPath</span>(badge, {
+    <span class="tp">PathDrawLayer</span>::<span class="fn">outerGlow</span>(halo, event.<span class="fn">scaleF</span>(<span class="kw">6.0f</span>)),
+    <span class="tp">PathDrawLayer</span>::<span class="fn">fill</span>(body),
+    <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(rim, line)
+}, &amp;place);</code></pre>
+
+<svg class="grid-fig" viewBox="0 0 700 188" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A path drawn as three layers in order: an outer glow both ways from the outline, a fill covering its inward half, a stroke straddling the outline, and the three together.">
+  <style>
+    .ly-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .ly-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .ly-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .ly-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .ly-o { fill:none; stroke:#333; stroke-width:1; stroke-dasharray:3 3; }
+    .ly-bg { fill:#f6f8fa; }
+  </style>
+  <rect class="ly-bg" x="15" y="34" width="160" height="126" rx="5"/>
+  <text class="ly-th" x="15" y="22">outerGlow(halo, 6)</text>
+  <path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="32" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="28" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="24" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="20" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="16" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="12" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="8" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="4" stroke-opacity="0.11" stroke-linejoin="round"/>
+  <path class="ly-o" d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z"/>
+  <text class="ly-t" x="15" y="178">both ways from the outline</text>
+  <rect class="ly-bg" x="190" y="34" width="160" height="126" rx="5"/>
+  <text class="ly-th" x="190" y="22">fill(body)</text>
+  <path d="M238,70 L302,70 A18,18 0 0 1 320,88 L320,106 A18,18 0 0 1 302,124 L238,124 A18,18 0 0 1 220,106 L220,88 A18,18 0 0 1 238,70 Z" fill="#0066cc"/>
+  <text class="ly-t" x="190" y="178">covers the inward half</text>
+  <rect class="ly-bg" x="365" y="34" width="160" height="126" rx="5"/>
+  <text class="ly-th" x="365" y="22">stroke(rim, line)</text>
+  <path d="M413,70 L477,70 A18,18 0 0 1 495,88 L495,106 A18,18 0 0 1 477,124 L413,124 A18,18 0 0 1 395,106 L395,88 A18,18 0 0 1 413,70 Z" fill="none" stroke="#003d7a" stroke-width="3"/>
+  <text class="ly-t" x="365" y="178">straddles the outline</text>
+  <rect class="ly-bg" x="540" y="34" width="160" height="126" rx="5"/>
+  <text class="ly-th" x="540" y="22">the three, in order</text>
+  <path d="M588,70 L652,70 A18,18 0 0 1 670,88 L670,106 A18,18 0 0 1 652,124 L588,124 A18,18 0 0 1 570,106 L570,88 A18,18 0 0 1 588,70 Z" fill="none" stroke="#ffb400" stroke-width="32" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M588,70 L652,70 A18,18 0 0 1 670,88 L670,106 A18,18 0 0 1 652,124 L588,124 A18,18 0 0 1 570,106 L570,88 A18,18 0 0 1 588,70 Z" fill="none" stroke="#ffb400" stroke-width="28" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M588,70 L652,70 A18,18 0 0 1 670,88 L670,106 A18,18 0 0 1 652,124 L588,124 A18,18 0 0 1 570,106 L570,88 A18,18 0 0 1 588,70 Z" fill="none" stroke="#ffb400" stroke-width="24" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M588,70 L652,70 A18,18 0 0 1 670,88 L670,106 A18,18 0 0 1 652,124 L588,124 A18,18 0 0 1 570,106 L570,88 A18,18 0 0 1 588,70 Z" fill="none" stroke="#ffb400" stroke-width="20" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M588,70 L652,70 A18,18 0 0 1 670,88 L670,106 A18,18 0 0 1 652,124 L588,124 A18,18 0 0 1 570,106 L570,88 A18,18 0 0 1 588,70 Z" fill="none" stroke="#ffb400" stroke-width="16" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M588,70 L652,70 A18,18 0 0 1 670,88 L670,106 A18,18 0 0 1 652,124 L588,124 A18,18 0 0 1 570,106 L570,88 A18,18 0 0 1 588,70 Z" fill="none" stroke="#ffb400" stroke-width="12" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M588,70 L652,70 A18,18 0 0 1 670,88 L670,106 A18,18 0 0 1 652,124 L588,124 A18,18 0 0 1 570,106 L570,88 A18,18 0 0 1 588,70 Z" fill="none" stroke="#ffb400" stroke-width="8" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M588,70 L652,70 A18,18 0 0 1 670,88 L670,106 A18,18 0 0 1 652,124 L588,124 A18,18 0 0 1 570,106 L570,88 A18,18 0 0 1 588,70 Z" fill="none" stroke="#ffb400" stroke-width="4" stroke-opacity="0.11" stroke-linejoin="round"/>
+  <path d="M588,70 L652,70 A18,18 0 0 1 670,88 L670,106 A18,18 0 0 1 652,124 L588,124 A18,18 0 0 1 570,106 L570,88 A18,18 0 0 1 588,70 Z" fill="#0066cc"/>
+  <path d="M588,70 L652,70 A18,18 0 0 1 670,88 L670,106 A18,18 0 0 1 652,124 L588,124 A18,18 0 0 1 570,106 L570,88 A18,18 0 0 1 588,70 Z" fill="none" stroke="#003d7a" stroke-width="3"/>
+  <text class="ly-t" x="540" y="178">the badge</text>
+</svg>
+
+<p>The one-brush calls are a single layer: <code>fillPath(path, brush)</code> is a fill, and
+<code>drawPath(path, brush, strokeWidth)</code> a stroke with round ends. The transform a path is
+given places the geometry and the brush together, and scales its stroke widths and reaches with
+them.</p>
+
+<div class="warning">
+<strong>Keep a stroked path's figures all closed or all open.</strong> Direct2D closes the figures that
+end in <code>close</code>; the CPU backend closes every figure of a path that has one. Two drawPath
+calls cost nothing a mixed path would save.
+</div>
+
+<h3 id="clips">Clips</h3>
+
+<p>A clip is a push and a pop. <code>pushClip(rect)</code> keeps what follows inside a rectangle;
+<code>pushClip(path, transform)</code> inside the area a path fills, antialiased at its edge. Clips
+nest, and each one pushed inside another is cut down to it.</p>
+
+<pre><code>canvas.<span class="fn">pushClip</span>(viewport);
+<span class="fn">paintRows</span>(canvas);
+canvas.<span class="fn">popClip</span>();</code></pre>
+
+<svg class="grid-fig" viewBox="0 0 700 192" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A path clip pushed inside a rectangle clip: what is drawn shows where both allow it, and clipBox answers the path's bounding box cut by the rectangle.">
+  <style>
+    .cl-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .cl-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .cl-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .cl-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .cl-r { fill:none; stroke:#0066cc; stroke-width:1.4; stroke-dasharray:5 3; }
+    .cl-c { fill:none; stroke:#2e7d32; stroke-width:1.4; stroke-dasharray:5 3; }
+    .cl-b { fill:none; stroke:#111; stroke-width:1; stroke-dasharray:2 2; }
+  </style>
+  <defs>
+    <pattern id="cl-st" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="12" height="12" fill="#eef4fb"/><rect width="6" height="12" fill="#0066cc"/></pattern>
+    <clipPath id="cl-rc"><rect x="60" y="40" width="220" height="110"/></clipPath>
+    <clipPath id="cl-cc"><circle cx="232" cy="95" r="70"/></clipPath>
+  </defs>
+  <rect x="30" y="20" width="300" height="150" fill="url(#cl-st)" opacity="0.14"/>
+  <g clip-path="url(#cl-rc)"><g clip-path="url(#cl-cc)"><rect x="30" y="20" width="300" height="150" fill="url(#cl-st)"/></g></g>
+  <rect class="cl-r" x="60" y="40" width="220" height="110"/>
+  <circle class="cl-c" cx="232" cy="95" r="70"/>
+  <rect class="cl-b" x="162" y="40" width="118" height="110"/>
+  <text class="cl-th" x="370" y="44" style="fill:#0066cc">pushClip(rect)</text>
+  <text class="cl-th" x="370" y="68" style="fill:#2e7d32">pushClip(path) inside it</text>
+  <text class="cl-t" x="370" y="96">what is drawn shows where both allow it,</text>
+  <text class="cl-t" x="370" y="112">the path&#39;s edge antialiased</text>
+  <text class="cl-th" x="370" y="140">clipBox()</text>
+  <text class="cl-t" x="370" y="158">the path&#39;s bounding box, cut by the rect</text>
+  <text class="cl-m" x="30" y="184">faint: what the caller drew</text>
+</svg>
+
+<p><code>clipBox()</code> answers the rectangle the canvas has recorded for the clip in force - a
+path clip's bounding box, cut by the clips around it - which is what a painter asks to skip what
+cannot show. A frame's own dirty rectangle is the first clip of every frame, and the clips a frame
+leaves pushed are popped when it ends.</p>
+
+<div class="info">
+A path clip is not free. The CPU backend holds it as a coverage mask the size of its bounds, so a
+clip shaped like one corner of a window costs a corner's worth of mask and one shaped like the whole
+window a window's worth. Clip to the part that needs the shape.
+</div>
+
+<h3 id="transforms">Transforms</h3>
+
+<p>The canvas carries one <code>Matrix3x2</code>, applied to everything drawn. A caller composes onto
+it rather than replacing it, through <code>ScopedCanvasTransform</code>, which puts the previous one
+back when it goes:</p>
+
+<pre><code><span class="cm">// Grows what follows about a point. The matrix to the right applies first.</span>
+<span class="kw">const</span> <span class="tp">Matrix3x2</span> grow = <span class="tp">Matrix3x2</span>::<span class="fn">translation</span>(origin)
+    * <span class="tp">Matrix3x2</span>::<span class="fn">scale</span>(<span class="kw">1.1f</span>)
+    * <span class="tp">Matrix3x2</span>::<span class="fn">translation</span>(-origin.x, -origin.y);
+<span class="kw">const</span> <span class="tp">ScopedCanvasTransform</span> scaled{ canvas, grow };</code></pre>
+
+<p>The framework uses the same guard to scale a pressed control about its press origin, so a paint
+handler is already drawing under a transform at times, and draws the same way whether it is or not.
+The local matrix is applied first and the one in force after it, so a scaled control inside another
+lands where both put it.</p>
+
+<p><strong>A uniform scale and a translation draw the same on both backends.</strong> A rotation, a
+shear or a scale that differs between the axes is drawn exactly only by a path: the CPU backend maps
+a rectangle's top-left and bottom-right corners and draws the upright box between them, and
+measures radii and widths on the larger axis. <a href="#differences">Backend differences</a> lists each case.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 216" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A rectangle under a 20 degree rotation: the CPU backend fills the upright box between the mapped top-left and bottom-right corners, Direct2D fills the turned shape, and a path is turned on both.">
+  <style>
+    .tr-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .tr-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .tr-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .tr-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .tr-s { fill:#0066cc; fill-opacity:0.85; }
+    .tr-a { fill:#eef4fb; stroke:#0066cc; stroke-width:1.4; }
+    .tr-d { fill:none; stroke:#333; stroke-width:1; stroke-dasharray:4 3; }
+  </style>
+  <text class="tr-th" x="20" y="24">fillRectangle(rect)</text>
+  <rect class="tr-a" x="60" y="76" width="120" height="60"/>
+  <text class="tr-t" x="20" y="192">the rect, under no transform</text>
+  <text class="tr-th" x="250" y="24">CPU, under rotation(20&#176;)</text>
+  <rect class="tr-s" x="303.88" y="57.29" width="92.24" height="97.42"/>
+  <polygon class="tr-d" points="303.88,57.29 416.64,98.33 396.12,154.71 283.36,113.67"/>
+  <circle cx="303.88" cy="57.29" r="3.5" fill="#fff" stroke="#111"/>
+  <circle cx="396.12" cy="154.71" r="3.5" fill="#fff" stroke="#111"/>
+  <text class="tr-t" x="250" y="192">the upright box between the mapped</text>
+  <text class="tr-t" x="250" y="207">top-left and bottom-right corners</text>
+  <text class="tr-th" x="480" y="24">Direct2D, and a path on both</text>
+  <polygon class="tr-s" points="533.88,57.29 646.64,98.33 626.12,154.71 513.36,113.67"/>
+  <text class="tr-t" x="480" y="192">the turned shape</text>
+</svg>
+
+<h3 id="opacity">Opacity layers</h3>
+
+<p>Everything drawn between <code>pushOpacity</code> and its pop reaches the surface as one image, at
+the layer's opacity. Two shapes overlapping inside a layer do not show each other through where they
+cross, and a shape drawn over another covers it as completely as it would at full strength. That is
+the reason a layer exists rather than an alpha folded into each brush: a group faded through its
+brushes shows its own background through its own text.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 198" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Two overlapping shapes faded through their brushes show each other through where they cross; drawn inside one opacity layer, the square covers the circle and the group fades as one image.">
+  <style>
+    .op-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .op-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .op-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .op-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .op-bg { fill:#f6f8fa; }
+    .op-bar { fill:#c9cfd6; }
+  </style>
+  <rect class="op-bg" x="20" y="34" width="310" height="120" rx="5"/>
+  <rect class="op-bar" x="34" y="48" width="282" height="7" rx="3.5"/>
+  <rect class="op-bar" x="34" y="69" width="282" height="7" rx="3.5"/>
+  <rect class="op-bar" x="34" y="90" width="282" height="7" rx="3.5"/>
+  <rect class="op-bar" x="34" y="111" width="282" height="7" rx="3.5"/>
+  <rect class="op-bar" x="34" y="132" width="282" height="7" rx="3.5"/>
+  <rect class="op-bg" x="370" y="34" width="310" height="120" rx="5"/>
+  <rect class="op-bar" x="384" y="48" width="282" height="7" rx="3.5"/>
+  <rect class="op-bar" x="384" y="69" width="282" height="7" rx="3.5"/>
+  <rect class="op-bar" x="384" y="90" width="282" height="7" rx="3.5"/>
+  <rect class="op-bar" x="384" y="111" width="282" height="7" rx="3.5"/>
+  <rect class="op-bar" x="384" y="132" width="282" height="7" rx="3.5"/>
+  <text class="op-th" x="20" y="22">each brush at half alpha</text>
+  <circle cx="135" cy="94" r="44" fill="#0066cc" fill-opacity="0.5"/>
+  <rect x="150" y="56" width="90" height="76" rx="10" fill="#ffb400" fill-opacity="0.5"/>
+  <text class="op-t" x="20" y="174">the circle shows through the square,</text>
+  <text class="op-t" x="20" y="189">and both let the ground through</text>
+  <text class="op-th" x="370" y="22">ScopedCanvasOpacity{ canvas, 0.5f }</text>
+  <g opacity="0.5"><circle cx="485" cy="94" r="44" fill="#0066cc"/><rect x="500" y="56" width="90" height="76" rx="10" fill="#ffb400"/></g>
+  <text class="op-t" x="370" y="174">the square covers the circle as it would</text>
+  <text class="op-t" x="370" y="189">at full strength, and the whole fades</text>
+</svg>
+
+<pre><code><span class="cm">// One layer for the whole mark: its parts overlap, and faded one by one they would show.</span>
+<span class="kw">const</span> <span class="tp">ScopedCanvasOpacity</span> layer{ canvas, <span class="kw">1.0f</span> - event.<span class="fn">disabledAmount</span>() };
+<span class="fn">paintLeaves</span>(canvas, transform);
+<span class="fn">paintBlot</span>(canvas, transform);</code></pre>
+
+<p><code>ScopedCanvasOpacity</code> opens nothing at full opacity, so a caller with a factor that may
+reach 1 states it there rather than branching round the passage it guards. One shape fading on its
+own needs no layer: its colour's alpha is the same thing, at no cost.</p>
+
+<div class="info">
+Text inside a layer is antialiased in grayscale under Direct2D, where it is ClearType outside one: the
+layer starts empty, and a glyph drawn into it has no opaque ground to lay its subpixel colour
+against.
+</div>
+
+<h3 id="shadows">Shadows</h3>
+
+<p><code>castShadow</code> draws the shadow a rounded rectangle casts on what is already drawn, and
+not the rectangle. Whatever casts a shadow covers it, so a caller casts the shadow first and draws
+the shape over it:</p>
+
+<pre><code><span class="kw">const</span> <span class="tp">RoundedRectangleParts</span> card{ .bounds = bounds, .radii = <span class="fn">uniformCorners</span>(radius) };
+<span class="kw">const</span> <span class="tp">ShadowParams</span> shadow{
+    .color = event.<span class="fn">inkRgb</span>(<span class="tp">InkWell</span>::Black).<span class="fn">withOpacity</span>(<span class="kw">0.3f</span>),
+    .blur = event.<span class="fn">scaleF</span>(<span class="kw">12.0f</span>),
+    .offset = { <span class="kw">0.0f</span>, event.<span class="fn">scaleF</span>(<span class="kw">2.0f</span>) }
+};
+canvas.<span class="fn">castShadow</span>(card, shadow);
+canvas.<span class="fn">fillPartialRoundedRectangle</span>(card, event.<span class="fn">surfaceRgb</span>());</code></pre>
+
+<p>The colour is the shadow where it is darkest, against the shape's edge, so its alpha is the whole
+of how heavy the shadow reads. <code>blur</code> is how far the ramp reaches past the shape,
+<code>offset</code> which way the light falls, and <code>spread</code> how much the shape is grown
+before its shadow is taken - which moves the whole ramp out rather than stretching it, so a shadow
+can sit wider without growing softer. A round corner grows with the spread; a square one stays
+square.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A shadow cast before its shape: the silhouette is the shape moved by the offset and grown by the spread, solid in the shadow's colour, with the ramp running out from its edge to the blur; the shape drawn after covers what is under it.">
+  <style>
+    .sh-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .sh-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .sh-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .sh-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .sh-shape { fill:#ffffff; stroke:#9aa5b1; stroke-width:1; }
+    .sh-sil { fill:none; stroke:#c62828; stroke-width:1; stroke-dasharray:4 3; }
+    .sh-reach { fill:none; stroke:#5a6b7d; stroke-width:1; stroke-dasharray:1.5 2.5; }
+  </style>
+  <rect x="20" y="10" width="400" height="230" rx="5" fill="#f6f8fa"/>
+  <path d="M126,48 L304,48 A22,22 0 0 1 326,70 L326,158 A22,22 0 0 1 304,180 L126,180 A22,22 0 0 1 104,158 L104,70 A22,22 0 0 1 126,48 Z" fill="#1f2a36" fill-opacity="0.45"/>
+  <path d="M126,47 L304,47 A23,23 0 0 1 327,70 L327,158 A23,23 0 0 1 304,181 L126,181 A23,23 0 0 1 103,158 L103,70 A23,23 0 0 1 126,47 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.42" stroke-width="2.15"/>
+  <path d="M126,45 L304,45 A25,25 0 0 1 329,70 L329,158 A25,25 0 0 1 304,183 L126,183 A25,25 0 0 1 101,158 L101,70 A25,25 0 0 1 126,45 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.36" stroke-width="2.15"/>
+  <path d="M126,43 L304,43 A27,27 0 0 1 331,70 L331,158 A27,27 0 0 1 304,185 L126,185 A27,27 0 0 1 99,158 L99,70 A27,27 0 0 1 126,43 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.31" stroke-width="2.15"/>
+  <path d="M126,41 L304,41 A29,29 0 0 1 333,70 L333,158 A29,29 0 0 1 304,187 L126,187 A29,29 0 0 1 97,158 L97,70 A29,29 0 0 1 126,41 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.26" stroke-width="2.15"/>
+  <path d="M126,39 L304,39 A31,31 0 0 1 335,70 L335,158 A31,31 0 0 1 304,189 L126,189 A31,31 0 0 1 95,158 L95,70 A31,31 0 0 1 126,39 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.22" stroke-width="2.15"/>
+  <path d="M126,37 L304,37 A33,33 0 0 1 337,70 L337,158 A33,33 0 0 1 304,191 L126,191 A33,33 0 0 1 93,158 L93,70 A33,33 0 0 1 126,37 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.18" stroke-width="2.15"/>
+  <path d="M126,35 L304,35 A35,35 0 0 1 339,70 L339,158 A35,35 0 0 1 304,193 L126,193 A35,35 0 0 1 91,158 L91,70 A35,35 0 0 1 126,35 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.14" stroke-width="2.15"/>
+  <path d="M126,33 L304,33 A37,37 0 0 1 341,70 L341,158 A37,37 0 0 1 304,195 L126,195 A37,37 0 0 1 89,158 L89,70 A37,37 0 0 1 126,33 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.11" stroke-width="2.15"/>
+  <path d="M126,31 L304,31 A39,39 0 0 1 343,70 L343,158 A39,39 0 0 1 304,197 L126,197 A39,39 0 0 1 87,158 L87,70 A39,39 0 0 1 126,31 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.08" stroke-width="2.15"/>
+  <path d="M126,29 L304,29 A41,41 0 0 1 345,70 L345,158 A41,41 0 0 1 304,199 L126,199 A41,41 0 0 1 85,158 L85,70 A41,41 0 0 1 126,29 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.06" stroke-width="2.15"/>
+  <path d="M126,27 L304,27 A43,43 0 0 1 347,70 L347,158 A43,43 0 0 1 304,201 L126,201 A43,43 0 0 1 83,158 L83,70 A43,43 0 0 1 126,27 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.04" stroke-width="2.15"/>
+  <path d="M126,25 L304,25 A45,45 0 0 1 349,70 L349,158 A45,45 0 0 1 304,203 L126,203 A45,45 0 0 1 81,158 L81,70 A45,45 0 0 1 126,25 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.02" stroke-width="2.15"/>
+  <path d="M126,23 L304,23 A47,47 0 0 1 351,70 L351,158 A47,47 0 0 1 304,205 L126,205 A47,47 0 0 1 79,158 L79,70 A47,47 0 0 1 126,23 Z" fill="none" stroke="#1f2a36" stroke-opacity="0.01" stroke-width="2.15"/>
+  <path d="M126,21 L304,21 A49,49 0 0 1 353,70 L353,158 A49,49 0 0 1 304,207 L126,207 A49,49 0 0 1 77,158 L77,70 A49,49 0 0 1 126,21 Z" fill="none" stroke="#1f2a36" stroke-opacity="0" stroke-width="2.15"/>
+  <path d="M126,19 L304,19 A51,51 0 0 1 355,70 L355,158 A51,51 0 0 1 304,209 L126,209 A51,51 0 0 1 75,158 L75,70 A51,51 0 0 1 126,19 Z" fill="none" stroke="#1f2a36" stroke-opacity="0" stroke-width="2.15"/>
+  <path class="sh-shape" d="M126,40 L304,40 A16,16 0 0 1 320,56 L320,144 A16,16 0 0 1 304,160 L126,160 A16,16 0 0 1 110,144 L110,56 A16,16 0 0 1 126,40 Z"/>
+  <path class="sh-sil" d="M126,48 L304,48 A22,22 0 0 1 326,70 L326,158 A22,22 0 0 1 304,180 L126,180 A22,22 0 0 1 104,158 L104,70 A22,22 0 0 1 126,48 Z"/>
+  <path class="sh-reach" d="M126,18 L304,18 A52,52 0 0 1 356,70 L356,158 A52,52 0 0 1 304,210 L126,210 A52,52 0 0 1 74,158 L74,70 A52,52 0 0 1 126,18 Z"/>
+  <text class="sh-t" x="215.0" y="104.0" text-anchor="middle">the shape, drawn after the shadow</text>
+  <path class="sh-l" d="M326,150 L450,150"/>
+  <path class="sh-l" d="M353,186 L450,186"/>
+  <text class="sh-th" x="456" y="52">castShadow(parts, shadow)</text>
+  <text class="sh-t" x="456" y="76">the silhouette: the shape carried by</text>
+  <text class="sh-t" x="456" y="92">offset and grown by spread, solid in</text>
+  <text class="sh-t" x="456" y="108">the shadow&#39;s colour</text>
+  <text class="sh-t" x="456" y="154" style="fill:#c62828">the silhouette&#39;s edge</text>
+  <text class="sh-t" x="456" y="190">blur: the ramp, out to here</text>
+  <text class="sh-t" x="456" y="226">the shape covers what is under it;</text>
+  <text class="sh-t" x="456" y="242">a translucent fill shows it through</text>
+</svg>
+
+<div class="warning">
+<strong>Under the shape the shadow is solid.</strong> The silhouette is filled in the shadow's colour
+and the ramp runs outward from its edge, so the shape drawn over it is what hides it. A shape with a
+translucent fill shows the shadow through, and wants its shadow clipped to the outside of it.
+</div>
+
+<h3 id="images">Kept images</h3>
+
+<p>A kept image is a picture the size of the surface that outlives the frame it was drawn in, named
+by an index. Everything drawn between <code>pushImage(index)</code> and its pop goes into it rather
+than onto the surface, and <code>drawImage(index, opacity)</code> puts it back at an opacity. A
+caller holding two can build the next picture of a crossfade out of the last one and trade them
+over.</p>
+
+<pre><code><span class="kw">if</span> (!canvas.<span class="fn">hasImage</span>(<span class="kw">0</span>))
+{
+    <span class="kw">const</span> <span class="tp">ScopedCanvasImage</span> into{ canvas, <span class="kw">0</span> };
+    <span class="fn">paintScene</span>(canvas);
+}
+canvas.<span class="fn">drawImage</span>(<span class="kw">0</span>, fade);</code></pre>
+
+<p>An image is drawn into under the canvas's transform and put back on the surface's own pixels,
+whatever transform is in force when it is. A new image is transparent, and a push does not clear it:
+what a caller leaves uncovered keeps what was there before.</p>
+
+<div class="warning">
+<strong>The store belongs to the surface.</strong> A resize empties it, a switch of backend empties
+it, and so does a lost device under Direct2D. <code>hasImage</code> is how a caller finds out that
+what it drew is gone and has to be drawn again.
+</div>
+
+<h3 id="pixels">Pixels</h3>
+
+<p>A <code>Bitmap</code> is a block of pixels the caller owns, and <code>drawBitmap(bitmap,
+position)</code> draws it as it is. <code>decodePng</code> reads one out of a PNG file's bytes, from
+<code>ClaFi.Core.Graphics.Png</code>, and <code>decodeDib</code> and <code>decodeBmpFile</code> out of a
+bitmap's, from <code>ClaFi.Core.Graphics.Dib</code>. A
+<code>PixelView</code> is a window onto such a block - its bounds, its clip and its scan lines - and
+<code>drawPixelView</code> draws one.</p>
+
+<p><code>stagingDraw</code> goes the other way: it hands the caller a view to write pixels into
+itself, and draws what was written when the callback returns. Whatever the caller writes there is
+outside the canvas transform by construction, so the transform is handed in beside the view, in the
+coordinates the caller already works in:</p>
+
+<pre><code>canvas.<span class="fn">stagingDraw</span>(rect, [&amp;](<span class="tp">PixelView</span> view, <span class="kw">const</span> <span class="tp">Matrix3x2</span>&amp; canvasTransform) {
+    <span class="kw">const</span> <span class="tp">Matrix3x2</span> place = canvasTransform * <span class="tp">Matrix3x2</span>::<span class="fn">translation</span>(rect.<span class="fn">topLeft</span>());
+    <span class="fn">rasterize</span>(view, place);
+});</code></pre>
+
+<p>Pixels are where the backends differ most - what a view holds before the caller writes, whether a
+bitmap follows the transform, and how either meets what is already drawn.
+<a href="#differences">Backend differences</a> has each of them, and the rule that keeps both the
+same: write opaque pixels, read none back, and draw a bitmap under no transform and no path
+clip.</p>
+
+<h2 id="reference">Reference</h2>
+
+<h3 id="ref-canvas">Canvas</h3>
+
+<p>Every call that takes a <code>Brush</code> also takes a <code>Color</code>. A stroke width left out
+is one pixel.</p>
+
+<table>
+<tr><th>Call</th><th>Draws</th></tr>
+<tr><td><code>fillRectangle(rect, brush)</code><br><code>drawRectangle(rect, brush, width)</code></td>
+    <td>A rectangle, or its outline inside it.</td></tr>
+<tr><td><code>fillRoundedRectangle(rect, rx, ry, brush)</code><br><code>drawRoundedRectangle(rect, rx, ry, brush, width)</code></td>
+    <td>A rectangle with round corners. Give both radii the same value - see
+    <a href="#differences">Backend differences</a>.</td></tr>
+<tr><td><code>fillPartialRoundedRectangle(parts, brush)</code><br><code>drawPartialRoundedRectangle(parts, brush, width)</code></td>
+    <td>A radius per corner, and for an outline a choice of sides - see
+    <a href="#ref-parts">RoundedRectangleParts</a>.</td></tr>
+<tr><td><code>fillEllipse(center, rx, ry, brush)</code><br><code>drawEllipse(center, rx, ry, brush, width)</code></td>
+    <td>An ellipse. Drawn alike by both backends only while the radii are equal.</td></tr>
+<tr><td><code>fillCircle(center, radius, brush)</code><br><code>drawCircle(center, radius, brush, width)</code></td>
+    <td>A circle, the outline inside it.</td></tr>
+<tr><td><code>drawLine(from, to, brush, width)</code></td>
+    <td>A line with round ends, straddling the two points.</td></tr>
+<tr><td><code>fillPath(path, brush, transform)</code><br><code>drawPath(path, brush, width, transform)</code></td>
+    <td>A path filled, or stroked with round ends.</td></tr>
+<tr><td><code>drawPath(path, layers, transform)</code></td>
+    <td>A path as a stack of <code>PathDrawLayer</code>, in order.</td></tr>
+<tr><td><code>fillLinearGradientRectangle(rect, start, end, stops)</code><br><code>fillTopBottomGradientRectangle(rect, top, bottom)</code><br><code>fillLeftRightGradientRectangle(rect, left, right)</code></td>
+    <td>A rectangle under a linear gradient.</td></tr>
+<tr><td><code>fadeEdge(rect, radii, side, size, color)</code></td>
+    <td>A band along one side, the colour at the edge and clear <code>size</code> in. Its two corners
+    on that edge take the rect's radii there, so a fade over a rounded view ends on its arc.</td></tr>
+<tr><td><code>castShadow(parts, shadow)</code></td>
+    <td>The shadow a rounded rectangle casts, and not the rectangle.</td></tr>
+<tr><td><code>pushClip(rect)</code>, <code>pushClip(path, transform)</code>, <code>popClip()</code>, <code>clipBox()</code></td>
+    <td>Clips - see <a href="#clips">Clips</a>.</td></tr>
+<tr><td><code>transform()</code>, <code>setTransform(m)</code>, <code>resetTransform()</code></td>
+    <td>The transform in force. Prefer <code>ScopedCanvasTransform</code> to setting it.</td></tr>
+<tr><td><code>pushOpacity(o)</code>, <code>popOpacity()</code></td>
+    <td>An opacity layer. Prefer <code>ScopedCanvasOpacity</code>.</td></tr>
+<tr><td><code>pushImage(i)</code>, <code>popImage()</code>, <code>drawImage(i, o)</code>, <code>hasImage(i)</code></td>
+    <td>Kept images. Prefer <code>ScopedCanvasImage</code> to the pair.</td></tr>
+<tr><td><code>drawBitmap(bitmap, position)</code>, <code>drawPixelView(view)</code></td>
+    <td>Pixels as they are.</td></tr>
+<tr><td><code>stagingDraw(rect, callback)</code></td>
+    <td>A view the callback writes pixels into, drawn when it returns.</td></tr>
+<tr><td><code>width()</code>, <code>height()</code>, <code>backend()</code></td>
+    <td>The surface's size, and the backend drawing it.</td></tr>
+<tr><td><code>beginPaint</code>, <code>endPaint</code>, <code>resize</code>, <code>setBackend</code></td>
+    <td>The frame and the surface. A form calls these; a canvas of your own calls the first
+    two.</td></tr>
+</table>
+
+<h3 id="ref-brush">Brush</h3>
+
+<pre><code><span class="kw">using</span> <span class="tp">Brush</span> = <span class="tp">std</span>::<span class="tp">variant</span>&lt;<span class="tp">SolidColor</span>, <span class="tp">LinearGradient</span>, <span class="tp">RadialGradient</span>, <span class="tp">PointGlow</span>&gt;;
+
+<span class="kw">struct</span> <span class="tp">SolidColor</span> { <span class="tp">Color</span> color; };
+<span class="kw">struct</span> <span class="tp">GradientStop</span> { <span class="kw">float</span> position; <span class="tp">Color</span> color; };
+
+<span class="kw">struct</span> <span class="tp">LinearGradient</span>
+{
+    <span class="tp">FloatPoint</span> startPoint;
+    <span class="tp">FloatPoint</span> endPoint;
+    <span class="tp">std</span>::<span class="tp">vector</span>&lt;<span class="tp">GradientStop</span>&gt; stops;
+    <span class="kw">static</span> <span class="tp">LinearGradient</span> <span class="fn">simple</span>(<span class="tp">FloatPoint</span> start, <span class="tp">FloatPoint</span> end, <span class="tp">Color</span> startColor, <span class="tp">Color</span> endColor);
+};
+
+<span class="cm">// Direct2D only.</span>
+<span class="kw">struct</span> <span class="tp">RadialGradient</span>
+{
+    <span class="tp">FloatPoint</span> center;
+    <span class="tp">FloatPoint</span> offset;     <span class="cm">// where the stops start from, relative to the centre</span>
+    <span class="kw">float</span> radiusX;
+    <span class="kw">float</span> radiusY;
+    <span class="tp">std</span>::<span class="tp">vector</span>&lt;<span class="tp">GradientStop</span>&gt; stops;
+};
+
+<span class="kw">struct</span> <span class="tp">PointGlow</span>
+{
+    <span class="tp">FloatPoint</span> lightPos;
+    <span class="tp">Color</span> lightColor;              <span class="cm">// its alpha is the light's strength</span>
+    <span class="kw">float</span> lightSpread;             <span class="cm">// the vertical radius</span>
+    <span class="kw">float</span> xRatio{ <span class="kw">1.0f</span> };           <span class="cm">// the horizontal radius is lightSpread / xRatio</span>
+    <span class="tp">GlowShape</span> shape{ <span class="tp">GlowShape</span>::Circle };
+};</code></pre>
+
+<h3 id="ref-layers">PathDrawLayer</h3>
+
+<pre><code><span class="kw">struct</span> <span class="tp">PathGeometryOptions</span>
+{
+    <span class="tp">PathRenderMode</span> mode = <span class="tp">PathRenderMode</span>::Fill;
+    <span class="kw">float</span> strokeWidth = <span class="kw">1.0f</span>;                       <span class="cm">// a stroke's width, a glow's reach</span>
+    <span class="tp">StrokeCap</span> strokeCap = <span class="tp">StrokeCap</span>::Round;           <span class="cm">// Round, Butt or Square</span>
+    <span class="tp">GlowFalloff</span> falloff = <span class="tp">GlowFalloff</span>::Linear;      <span class="cm">// read by OuterGlow and Shadow</span>
+};
+
+<span class="kw">struct</span> <span class="tp">PathDrawLayer</span> { <span class="tp">PathGeometryOptions</span> geometry; <span class="tp">Brush</span> brush; };</code></pre>
+
+<table>
+<tr><th>Shorthand</th><th>Layer</th></tr>
+<tr><td><code>PathDrawLayer::fill(color)</code></td><td>A fill in a colour.</td></tr>
+<tr><td><code>PathDrawLayer::stroke(color, width)</code></td><td>A stroke with round ends.</td></tr>
+<tr><td><code>PathDrawLayer::linearGradient(start, end, startColor, endColor)</code></td><td>A fill under a two-stop gradient.</td></tr>
+<tr><td><code>PathDrawLayer::pointGlow(glow)</code></td><td>A fill under a point of light.</td></tr>
+<tr><td><code>PathDrawLayer::outerGlow(color, reach, cap = Round, falloff = Linear)</code></td><td>A glow both ways from the outline.</td></tr>
+<tr><td><code>PathDrawLayer::shadow(color, reach, falloff = Smooth)</code></td><td>The shape solid, and its ramp outward.</td></tr>
+</table>
+
+<h3 id="ref-path">PixelPath</h3>
+
+<table>
+<tr><th>Call</th><th>Adds</th></tr>
+<tr><td><code>moveTo(p)</code>, <code>moveBy(d)</code></td><td>The start of a new figure.</td></tr>
+<tr><td><code>lineTo(p)</code>, <code>lineBy(d)</code>, <code>hLineTo(x)</code>, <code>hLineBy(dx)</code>, <code>vLineTo(y)</code>, <code>vLineBy(dy)</code></td><td>A straight segment.</td></tr>
+<tr><td><code>quadTo(control, end)</code>, <code>bezierBy(dControl, dEnd)</code></td><td>A quadratic curve, absolute or relative.</td></tr>
+<tr><td><code>cubicTo(c1, c2, end)</code>, <code>cubicBy(d1, d2, dEnd)</code></td><td>A cubic curve.</td></tr>
+<tr><td><code>close()</code></td><td>The segment back to the figure's start.</td></tr>
+<tr><td><code>addRoundedPolygon(points, radius)</code></td><td>A closed polygon with its corners rounded, each cut back by the radius or half its shorter edge.</td></tr>
+<tr><td><code>drawRoundedRect(w, h, r)</code>, <code>drawCircle(center, r)</code></td><td>A whole figure, in a path cleared first. The rectangle is centred on the origin.</td></tr>
+<tr><td><code>transform(m)</code>, <code>clear()</code></td><td>Every point moved through a matrix; nothing.</td></tr>
+</table>
+
+<h3 id="ref-matrix">Matrix3x2</h3>
+
+<p>An affine transform, binary compatible with Direct2D's <code>D2D1_MATRIX_3X2_F</code>. In
+<code>a * b</code>, <code>b</code> applies first - the opposite order to Direct2D's own
+<code>operator*</code>, which matters only to code that mixes the two.</p>
+
+<pre><code><span class="tp">Matrix3x2</span>::<span class="fn">identity</span>();
+<span class="tp">Matrix3x2</span>::<span class="fn">translation</span>(dx, dy);    <span class="tp">Matrix3x2</span>::<span class="fn">translation</span>(point);
+<span class="tp">Matrix3x2</span>::<span class="fn">scale</span>(s);               <span class="tp">Matrix3x2</span>::<span class="fn">scale</span>(sx, sy);
+<span class="tp">Matrix3x2</span>::<span class="fn">rotation</span>(radians);     <span class="tp">Matrix3x2</span>::<span class="fn">rotationDeg</span>(degrees);
+
+<span class="tp">FloatPoint</span> p = m.<span class="fn">transform</span>(point);         <span class="cm">// a point</span>
+<span class="tp">FloatPoint</span> v = m.<span class="fn">transformVector</span>(vector);  <span class="cm">// a direction, translation left out</span>
+<span class="tp">FloatRect</span> r = m.<span class="fn">mapRect</span>(rect);             <span class="cm">// the upright box between the two mapped corners</span>
+<span class="kw">float</span> k = m.<span class="fn">getScaleFactor</span>();             <span class="cm">// the larger of the two axes' scales</span></code></pre>
+
+<h3 id="ref-parts">RoundedRectangleParts</h3>
+
+<pre><code><span class="kw">struct</span> <span class="tp">RoundedRectangleParts</span>
+{
+    <span class="tp">FloatRect</span> bounds;
+    <span class="tp">CornerRadii</span> radii{ k_squareCorners };         <span class="cm">// top left, top right, bottom right, bottom left</span>
+    <span class="tp">RectSidesBoolArray</span> sides{ k_allRectSidesTrue }; <span class="cm">// top, right, bottom, left</span>
+};</code></pre>
+
+<p>A corner is round while its radius is above zero, and no corner reaches past the middle of the
+shorter side. <code>uniformCorners(r)</code> gives every corner the same radius.</p>
+
+<p><code>sides</code> says which edges an outline draws; a fill covers the whole shape whatever it
+holds. A corner arc is drawn while either side it joins is. An open end runs to the edge of the
+bounds rather than stopping at the outline, so two shapes sharing an edge - the cells of a grid -
+join into one unbroken line.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="RoundedRectangleParts: four radii in top left, top right, bottom right, bottom left order and four sides in top, right, bottom, left order; a cell drawing no left side runs its open ends to its bounds edge and meets its neighbour's border in one line.">
+  <style>
+    .rp-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .rp-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .rp-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .rp-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .rp-f { fill:#eef4fb; stroke:#0066cc; stroke-width:2; }
+    .rp-band { fill:#0066cc; }
+    .rp-cell { fill:#eef4fb; }
+    .rp-bnd { fill:none; stroke:#333; stroke-width:1; stroke-dasharray:3 3; }
+  </style>
+  <text class="rp-th" x="20" y="22">radii and sides, in their order</text>
+  <path class="rp-f" d="M96,56 L300,56 L300,128 A44,44 0 0 1 256,172 L78,172 A8,8 0 0 1 70,164 L70,82 A26,26 0 0 1 96,56 Z"/>
+  <text class="rp-m" x="74" y="82">radii[0]</text>
+  <text class="rp-m" x="214" y="74">radii[1] = 0</text>
+  <text class="rp-m" x="208" y="158">radii[2]</text>
+  <text class="rp-m" x="84" y="162">radii[3]</text>
+  <text class="rp-th" x="185.0" y="48" text-anchor="middle">sides[0]</text>
+  <text class="rp-th" x="308" y="118.0">sides[1]</text>
+  <text class="rp-th" x="185.0" y="190" text-anchor="middle">sides[2]</text>
+  <text class="rp-th" x="62" y="118.0" text-anchor="end">sides[3]</text>
+  <text class="rp-t" x="20" y="212">top left, top right, bottom right, bottom left; top, right, bottom, left</text>
+  <text class="rp-th" x="400" y="22">two cells sharing an edge</text>
+  <rect class="rp-cell" x="412" y="56" width="240" height="90"/>
+  <rect class="rp-band" x="412" y="56" width="120" height="8"/>
+  <rect class="rp-band" x="412" y="138" width="120" height="8"/>
+  <rect class="rp-band" x="412" y="56" width="8" height="90"/>
+  <rect class="rp-band" x="524" y="56" width="8" height="90"/>
+  <rect class="rp-band" x="532" y="56" width="120" height="8"/>
+  <rect class="rp-band" x="532" y="138" width="120" height="8"/>
+  <rect class="rp-band" x="644" y="56" width="8" height="90"/>
+  <rect class="rp-bnd" x="532" y="50" width="120" height="102"/>
+  <text class="rp-th" x="472.0" y="105.0" text-anchor="middle">A</text>
+  <text class="rp-th" x="592.0" y="105.0" text-anchor="middle">B</text>
+  <text class="rp-t" x="400" y="172">B draws no left side; its top and bottom run</text>
+  <text class="rp-t" x="400" y="188">to its bounds&#39; edge, B&#39;s dashed, and meet A&#39;s</text>
+  <text class="rp-t" x="400" y="204">border in one unbroken line</text>
+</svg>
+
+<h3 id="ref-shadow">ShadowParams</h3>
+
+<pre><code><span class="kw">struct</span> <span class="tp">ShadowParams</span>
+{
+    <span class="tp">Color</span> color{};                                <span class="cm">// the darkest point; its alpha is the shadow's weight</span>
+    <span class="kw">float</span> blur{ <span class="kw">0.0f</span> };                             <span class="cm">// how far the ramp reaches past the shape</span>
+    <span class="tp">FloatPoint</span> offset{};                          <span class="cm">// which way the light falls</span>
+    <span class="kw">float</span> spread{ <span class="kw">0.0f</span> };                           <span class="cm">// how much the shape grows first</span>
+    <span class="tp">GlowFalloff</span> falloff{ <span class="tp">GlowFalloff</span>::Smooth };
+};</code></pre>
+
+<p>A shadow with no blur, no alpha or empty bounds draws nothing.</p>
+
+<h3 id="ref-guards">Scoped guards</h3>
+
+<table>
+<tr><th>Guard</th><th>For as long as it lives</th></tr>
+<tr><td><code>ScopedCanvasTransform{ canvas, local }</code></td><td>Composes <code>local</code> onto the
+    transform in force and puts the previous one back. An identity matrix touches nothing.</td></tr>
+<tr><td><code>ScopedCanvasOpacity{ canvas, opacity }</code></td><td>Holds an opacity layer open. Full
+    opacity opens none.</td></tr>
+<tr><td><code>ScopedCanvasImage{ canvas, index }</code></td><td>Draws into the kept image at that index,
+    and puts the surface back.</td></tr>
+</table>
+
+<h3 id="ref-offscreen">A canvas of your own</h3>
+
+<p>A picture drawn once and used many times - the window's shadow is baked this way and cut into
+tiles - is drawn on a canvas over a CPU backend, which needs nothing but a size. The frame is begun
+and ended as a form's is, and the end hands back the pixels:</p>
+
+<pre><code><span class="kw">auto</span> backend = <span class="tp">std</span>::<span class="fn">make_unique</span>&lt;<span class="tp">Graphics</span>::<span class="tp">Cpu</span>::<span class="tp">CpuBackend</span>&gt;(size);
+backend-&gt;<span class="fn">setTransparentBase</span>(<span class="kw">true</span>);   <span class="cm">// start from nothing, not from what the buffer held</span>
+<span class="tp">Graphics</span>::<span class="tp">Canvas</span> canvas{ <span class="tp">std</span>::<span class="fn">move</span>(backend) };
+
+<span class="kw">const</span> <span class="tp">IntRect</span> whole = { <span class="kw">0</span>, <span class="kw">0</span>, size.x, size.y };
+canvas.<span class="fn">beginPaint</span>(<span class="kw">nullptr</span>, whole);
+canvas.<span class="fn">castShadow</span>(silhouette, shadow);
+<span class="tp">Graphics</span>::<span class="tp">Bitmap</span>* painted = <span class="kw">nullptr</span>;
+canvas.<span class="fn">endPaint</span>(<span class="kw">nullptr</span>, whole, painted);   <span class="cm">// the backend's own buffer, alive as long as the canvas</span></code></pre>
+
+<p>Draw between the two calls. A CPU canvas draws outside a frame as well, but nothing promises that
+of a backend, and Direct2D draws nothing there.</p>
+
+<h2 id="backends">The Backends</h2>
+
+<h3 id="choosing">Which backend draws</h3>
+
+<p><strong>The CPU backend is always there.</strong> It is the core's own, it is the only one on
+Wayland, and it draws everything made off-screen whatever the platform. A GPU backend is the
+application's to name, in its type:</p>
+
+<pre><code><span class="cm">// Win32: Direct2D beside the CPU backend.</span>
+<span class="kw">using</span> <span class="tp">Win32Application</span> = <span class="tp">Application</span>&lt;<span class="tp">Win32Platform</span>, <span class="tp">Direct2DBackend</span>&gt;;
+
+<span class="cm">// Wayland: no GPU backend.</span>
+<span class="kw">using</span> <span class="tp">WaylandApplication</span> = <span class="tp">Application</span>&lt;<span class="tp">WaylandPlatform</span>&gt;;</code></pre>
+
+<p>An application that names one shows <strong>GPU acceleration</strong> on its Settings page, kept in
+its config and on by default. One that names none shows no such setting and keeps no answer about
+it. A change of the setting reaches every window at the top of its next frame, so a switch asked for
+from inside a click cannot land between the passes of a frame being painted.</p>
+
+<p><code>canvas.backend()-&gt;type()</code> answers <code>BackendType::Cpu</code> or
+<code>BackendType::Direct2D</code>. Asking is for platform code - the text engine asks, to reach
+DirectWrite's own glyph drawing. A control that draws one way on one backend and another way on the
+other is a gap in the contract, and belongs in the table below.</p>
+
+<h3 id="differences">Backend differences</h3>
+
+<p>These are the calls the two backends draw differently. Each row is a gap in the contract rather
+than a feature of either backend, and the last column is what to keep to so that a picture comes out
+the same from both.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 394" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Five of the differences drawn: a stroke's corner round on the CPU and mitered on Direct2D; a glow round or square at a sharp corner; an ellipse with two radii drawn as a circle of the larger radius on the CPU; a rounded rectangle with two radii given round corners of the larger radius; a path's close also closing its open figure on the CPU.">
+  <style>
+    .df-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .df-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .df-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .df-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .df-h { font-family:-apple-system,"Segoe UI",sans-serif; font-size:12.5px; fill:#111; font-weight:600; }
+    .df-sep { stroke:#e1e4e8; stroke-width:1; }
+    .df-want { fill:#dfe7f1; }
+    .df-o { fill:none; stroke:#0066cc; stroke-width:3.5; }
+  </style>
+  <text class="df-h" x="330" y="22" text-anchor="middle">CPU</text>
+  <text class="df-h" x="570" y="22" text-anchor="middle">Direct2D</text>
+  <path class="df-sep" d="M20,38 L690,38"/>
+  <text class="df-t" x="20" y="68" style="font-weight:600">A stroke's corner</text>
+  <path d="M286,55.0 L330,87.0 L374,55.0" fill="none" stroke="#0066cc" stroke-width="14" stroke-opacity="0.85" stroke-linejoin="round" stroke-linecap="butt"/>
+  <path d="M286,55.0 L330,87.0 L374,55.0" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="2 2"/>
+  <path d="M526,55.0 L570,87.0 L614,55.0" fill="none" stroke="#0066cc" stroke-width="14" stroke-opacity="0.85" stroke-linejoin="miter" stroke-linecap="butt"/>
+  <path d="M526,55.0 L570,87.0 L614,55.0" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="2 2"/>
+  <path class="df-sep" d="M20,108 L690,108"/>
+  <text class="df-t" x="20" y="138" style="font-weight:600">A glow at a sharp corner</text>
+  <path d="M296,129 L364,129 L364,157 L296,157 L296,129 Z" fill="none" stroke="#ffb400" stroke-width="32" stroke-opacity="0.12" stroke-linejoin="round"/><path d="M296,129 L364,129 L364,157 L296,157 L296,129 Z" fill="none" stroke="#ffb400" stroke-width="28" stroke-opacity="0.12" stroke-linejoin="round"/><path d="M296,129 L364,129 L364,157 L296,157 L296,129 Z" fill="none" stroke="#ffb400" stroke-width="24" stroke-opacity="0.12" stroke-linejoin="round"/><path d="M296,129 L364,129 L364,157 L296,157 L296,129 Z" fill="none" stroke="#ffb400" stroke-width="20" stroke-opacity="0.12" stroke-linejoin="round"/><path d="M296,129 L364,129 L364,157 L296,157 L296,129 Z" fill="none" stroke="#ffb400" stroke-width="16" stroke-opacity="0.12" stroke-linejoin="round"/><path d="M296,129 L364,129 L364,157 L296,157 L296,129 Z" fill="none" stroke="#ffb400" stroke-width="12" stroke-opacity="0.12" stroke-linejoin="round"/><path d="M296,129 L364,129 L364,157 L296,157 L296,129 Z" fill="none" stroke="#ffb400" stroke-width="8" stroke-opacity="0.12" stroke-linejoin="round"/><path d="M296,129 L364,129 L364,157 L296,157 L296,129 Z" fill="none" stroke="#ffb400" stroke-width="4" stroke-opacity="0.12" stroke-linejoin="round"/>
+  <path d="M296,129 L364,129 L364,157 L296,157 L296,129 Z" fill="#0066cc"/>
+  <path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="32" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="28" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="24" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="20" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="16" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="12" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="8" stroke-opacity="0.12" stroke-linejoin="miter"/><path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="none" stroke="#ffb400" stroke-width="4" stroke-opacity="0.12" stroke-linejoin="miter"/>
+  <path d="M536,129 L604,129 L604,157 L536,157 L536,129 Z" fill="#0066cc"/>
+  <path class="df-sep" d="M20,178 L690,178"/>
+  <text class="df-t" x="20" y="208" style="font-weight:600">drawEllipse, two radii</text>
+  <text class="df-t" x="20" y="224">the ellipse asked for, shaded</text>
+  <ellipse class="df-want" cx="330" cy="213.0" rx="30" ry="14"/>
+  <circle class="df-o" cx="330" cy="213.0" r="30" stroke-opacity="0.85"/>
+  <ellipse class="df-want" cx="570" cy="213.0" rx="30" ry="14"/>
+  <ellipse class="df-o" cx="570" cy="213.0" rx="28.25" ry="12.25" stroke-opacity="0.85"/>
+  <path class="df-sep" d="M20,248 L690,248"/>
+  <text class="df-t" x="20" y="278" style="font-weight:600">A rounded rectangle,</text>
+  <text class="df-t" x="20" y="294">two radii</text>
+  <rect x="270" y="261.0" width="120" height="44" rx="22" ry="22" fill="#eef4fb" stroke="#0066cc" stroke-width="2"/>
+  <rect x="510" y="261.0" width="120" height="44" rx="22" ry="8" fill="#eef4fb" stroke="#0066cc" stroke-width="2"/>
+  <path class="df-sep" d="M20,318 L690,318"/>
+  <text class="df-t" x="20" y="348" style="font-weight:600">A path with a closed and</text>
+  <text class="df-t" x="20" y="364">an open figure, stroked</text>
+  <path d="M260,371.0 L284,333.0 L308,371.0 Z" fill="none" stroke="#0066cc" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M336,333.0 L336,371.0 L392,371.0" fill="none" stroke="#0066cc" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M392,371.0 L336,333.0" fill="none" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+  <path d="M500,371.0 L524,333.0 L548,371.0 Z" fill="none" stroke="#0066cc" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M576,333.0 L576,371.0 L632,371.0" fill="none" stroke="#0066cc" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path class="df-sep" d="M20,388 L690,388"/>
+  <text class="df-m" x="400" y="351.0" style="fill:#c62828">closed</text>
+  <text class="df-m" x="400" y="365.0" style="fill:#c62828">as well</text>
+</svg>
+
+<table>
+<tr><th>Case</th><th>CPU</th><th>Direct2D</th><th>Keep to</th></tr>
+
+<tr><th colspan="4">Brushes</th></tr>
+<tr><td><code>RadialGradient</code></td>
+    <td>Draws nothing.</td>
+    <td>Draws the gradient.</td>
+    <td>A <code>PointGlow</code> for light, a <code>LinearGradient</code> for a ramp.</td></tr>
+<tr><td><code>PointGlow::shape</code></td>
+    <td>Draws <code>Circle</code>, <code>SoftRectangle</code> and <code>SharpRectangle</code>.</td>
+    <td>Draws every glow as <code>Circle</code>.</td>
+    <td><code>GlowShape::Circle</code>, the default.</td></tr>
+<tr><td>A brush under a rotation, a shear or unequal axes</td>
+    <td>A glow keeps its axes on the screen's and its spread follows the larger axis. A linear
+        gradient's bands stay square to its mapped axis.</td>
+    <td>The brush is carried with the shape.</td>
+    <td>A transform that scales both axes alike.</td></tr>
+
+<tr><th colspan="4">Shapes and transforms</th></tr>
+<tr><td>An ellipse with two radii</td>
+    <td>A circle of the larger radius. Its outline straddles that circle.</td>
+    <td>The ellipse, its outline inside it.</td>
+    <td>Equal radii. An ellipse to fill is a circle path under a scale.</td></tr>
+<tr><td>A rounded rectangle with two radii</td>
+    <td>Round corners of the larger radius.</td>
+    <td>Elliptical corners.</td>
+    <td>Equal radii.</td></tr>
+<tr><td>A rectangle, rounded or partial rectangle under a rotation or a shear</td>
+    <td>The upright box between where the transform puts its top-left and bottom-right
+        corners.</td>
+    <td>The turned shape.</td>
+    <td>A path for anything that turns.</td></tr>
+<tr><td>Widths under unequal axes - strokes, radii, a glow's reach</td>
+    <td>Scaled by the larger of the two axes.</td>
+    <td>Scaled along each axis.</td>
+    <td>A transform that scales both axes alike.</td></tr>
+
+<tr><th colspan="4">Paths</th></tr>
+<tr><td>A stroke's corner</td>
+    <td>Round.</td>
+    <td>Mitered.</td>
+    <td>Corners that are curves, or two strokes with round ends meeting.</td></tr>
+<tr><td>An <code>OuterGlow</code> or <code>Shadow</code> layer at a sharp corner</td>
+    <td>Round, from the distance to the outline.</td>
+    <td>Mitered, from one stroke per pixel of reach.</td>
+    <td><code>castShadow</code> for a shadow; a glow round a curved outline.</td></tr>
+<tr><td>A path with closed and open figures, stroked or glowing</td>
+    <td>One <code>close</code> closes every figure.</td>
+    <td>Each figure is closed as it ends.</td>
+    <td>One path for the closed figures and another for the open ones.</td></tr>
+
+<tr><th colspan="4">Clips and pixels</th></tr>
+<tr><td>A rectangle clip with a fractional edge</td>
+    <td>Every pixel the edge touches is inside.</td>
+    <td>The edge pixel is antialiased.</td>
+    <td>Clips on whole pixels.</td></tr>
+<tr><td><code>drawBitmap</code>, <code>drawPixelView</code></td>
+    <td>Copies the pixels over what is there, ignores the canvas transform, and is cut by a path
+        clip's bounding box.</td>
+    <td>Composites the pixels over what is there, follows the transform, and is cut by a path
+        clip's shape.</td>
+    <td>An opaque bitmap, under no transform and no path clip.</td></tr>
+<tr><td><code>stagingDraw</code></td>
+    <td>The view is the surface: it holds what is drawn there, a write lands at once, and a path
+        clip cuts writes to its bounding box.</td>
+    <td>The view is a cleared buffer, composited over the surface when the callback returns, its
+        pixels taken as premultiplied. A path clip cuts it to its shape.</td>
+    <td>Opaque pixels, and nothing read back.</td></tr>
+
+<tr><th colspan="4">Layers, images and text</th></tr>
+<tr><td>An opacity layer, or <code>drawImage</code>, over translucent pixels</td>
+    <td>A layer starts as a copy of what is under it and is mixed back. An image is mixed in, its
+        own alpha taking no part.</td>
+    <td>A layer starts empty and is composited. An image is composited over.</td>
+    <td>Opaque pixels under the layer or the image - the two agree there.</td></tr>
+<tr><td>Text</td>
+    <td>Glyph coverage in grayscale. Under a scale, glyphs move with the transform and keep their
+        size.</td>
+    <td>ClearType, grayscale inside an opacity layer. Glyphs scale with the transform.</td>
+    <td>Text drawn under no scale. The antialiasing is the platform's.</td></tr>
+<tr><td>Kept images</td>
+    <td>Lost on a resize and on a switch of backend.</td>
+    <td>Also lost when the device goes.</td>
+    <td><code>hasImage</code> before every <code>drawImage</code>.</td></tr>
+
+<tr><th colspan="4">The frame</th></tr>
+<tr><td>Drawing outside <code>beginPaint</code> and <code>endPaint</code></td>
+    <td>Draws into the buffer.</td>
+    <td>Draws nothing.</td>
+    <td>Drawing inside a frame.</td></tr>
+<tr><td><code>getNativeRenderTarget</code>, <code>getNativeBrush</code></td>
+    <td>Null.</td>
+    <td>The device context, and a brush with a reference added for the caller.</td>
+    <td>Platform code only.</td></tr>
+</table>
+
+<div class="info">
+<code>castShadow</code> is answered in two ways - built by the canvas as a <code>Shadow</code> layer on
+the CPU, stated in one piece by Direct2D - and draws the same shadow from both. A uniform scale and a
+translation, which is what the framework's own transforms are, add nothing to the table: its
+transform rows are about a rotation, a shear and unequal axes alone.
+</div>
+
+<h2 id="do-dont">Do and Don't</h2>
+
+<div class="rules-grid">
+    <div class="rule-card dos">
+        <h4>Do</h4>
+        <ul>
+            <li><strong>Hand an outline the bounds of its fill.</strong> The stroke lies inside them.</li>
+            <li><strong>Cast a shadow before the shape it belongs to.</strong> The shape covers the solid part under it.</li>
+            <li><strong>Fade one shape through its colour's alpha</strong>, and a group through <code>ScopedCanvasOpacity</code>.</li>
+            <li><strong>Draw anything that turns as a path.</strong> A path is the one shape both backends turn exactly.</li>
+            <li><strong>Give a rounded rectangle and an ellipse one radius.</strong></li>
+            <li><strong>Ask <code>hasImage</code> before drawing a kept image</strong>, and draw it again when the answer is no.</li>
+            <li><strong>Look at the picture on both backends.</strong> GPU acceleration in Settings switches while the application runs.</li>
+        </ul>
+    </div>
+    <div class="rule-card donts">
+        <h4>Don't</h4>
+        <ul>
+            <li><strong>Don't inset an outline by half its stroke.</strong> The backend already has.</li>
+            <li><strong>Don't draw with a <code>RadialGradient</code></strong>, or a glow of any shape but <code>Circle</code>.</li>
+            <li><strong>Don't mix closed and open figures</strong> in one stroked or glowing path.</li>
+            <li><strong>Don't rely on a stroke's corner</strong> where the corner is sharp.</li>
+            <li><strong>Don't read pixels back from a staging view.</strong> Under Direct2D it holds nothing that was drawn.</li>
+            <li><strong>Don't draw a bitmap under a transform or a path clip</strong> and expect the backends to agree.</li>
+            <li><strong>Don't keep a native brush or render target past the frame.</strong> Direct2D's go with the device, and the CPU backend has none.</li>
+        </ul>
+    </div>
+</div>
+
+<h2 id="howitworks">How It Works</h2>
+
+<h3 id="hiw-canvas">The canvas</h3>
+
+<p>The canvas forwards nearly every call as it is. What it keeps is what the backend interface does
+not report: the clip rectangles, for <code>clipBox</code>, and the transform, so a guard can compose
+onto it and put it back.</p>
+
+<p>Three calls a backend may decline - <code>fillPartialRoundedRectangle</code>,
+<code>drawPartialRoundedRectangle</code> and <code>castShadow</code> - by answering false, and the
+canvas then builds the shape out of a path and draws that. The CPU backend answers the two partial
+rectangles with painters of its own and declines the shadow, since its glow is already a distance
+field; Direct2D declines the partial rectangles and answers the shadow. A backend with no view of
+its own surface to hand a staging callback - Direct2D - is given a cleared buffer by the canvas
+instead.</p>
+
+<h3 id="hiw-cpu">The CPU backend</h3>
+
+<p>The CPU backend rasterizes into a pixel buffer with no transform stage, so the canvas transform is
+folded into the geometry where each call arrives: a rect's corners are mapped, and radii and widths
+are scaled by the transform's scale factor. Rectangles, rounded rectangles and circles each have a
+painter of their own, written for axis-aligned spans; everything else is a path.</p>
+
+<p>A path is baked into segments, its curves flattened to within half a pixel at the scale it is
+drawn at. Each pixel's coverage comes from its distance to the nearest segment, and inside or
+outside from the segments its row crosses, which is the even-odd rule. A stroke is the band within
+half its width of a segment, so its corners come out round; a glow is the same distance taken as a
+ramp. The coverage is held as a mask, and the brush is composited through it.</p>
+
+<p>A path clip is such a mask the size of its bounds, and a clip inside another is the two masks
+multiplied. An opacity layer is a buffer the size of the surface, kept for reuse, that starts as a
+copy of what is under it - every painter mixes toward its colour by coverage, which is the arithmetic
+of drawing on something opaque - and is mixed back when the layer closes. A frame that carries alpha
+clears its dirty rectangle first; any other frame keeps what the last one left, which costs nothing
+while the children cover every pixel.</p>
+
+<p>Text reaches the backend as glyph coverage, cached once per glyph at a whole pixel origin and
+composited for a whole run through one mask, the fraction of each pen position resolved by sampling.
+On Windows the coverage is DirectWrite's, averaged to one value a pixel.</p>
+
+<h3 id="hiw-d2d">The Direct2D backend</h3>
+
+<p>Direct2D carries the canvas transform on its render target, so every primitive and every brush is
+mapped by the device. An outline is moved in by half its stroke, Direct2D stroking centred on a
+shape. Strokes take the cap a layer asks for and miter their corners.</p>
+
+<p>Direct2D has no distance field, so a glow is laid down as rings: one stroke of the outline per
+pixel of reach, the widest first, each given what it has to add to what is already down to leave the
+falloff standing. A <code>Shadow</code> layer is the rings under a layer that masks out the
+silhouette, and then the silhouette filled, both aliased so that the two meet on the same pixels.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 224" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A glow on the two backends: on the CPU every pixel takes its share from its distance to the outline, one smooth ramp rounded past a corner; on Direct2D the ramp is strokes of the outline, one per pixel of reach, widest first, mitered at the corner.">
+  <style>
+    .gb-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .gb-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .gb-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .gb-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+  </style>
+  <text class="gb-th" x="20" y="22">CPU: the distance to the outline</text>
+  <path d="M80,65.5 L230,65.5 A0.5,0.5 0 0 1 230.5,66 L230.5,140 A0.5,0.5 0 0 1 230,140.5 L80,140.5 A0.5,0.5 0 0 1 79.5,140 L79.5,66 A0.5,0.5 0 0 1 80,65.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.89" stroke-width="1.15"/>
+  <path d="M80,64.5 L230,64.5 A1.5,1.5 0 0 1 231.5,66 L231.5,140 A1.5,1.5 0 0 1 230,141.5 L80,141.5 A1.5,1.5 0 0 1 78.5,140 L78.5,66 A1.5,1.5 0 0 1 80,64.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.85" stroke-width="1.15"/>
+  <path d="M80,63.5 L230,63.5 A2.5,2.5 0 0 1 232.5,66 L232.5,140 A2.5,2.5 0 0 1 230,142.5 L80,142.5 A2.5,2.5 0 0 1 77.5,140 L77.5,66 A2.5,2.5 0 0 1 80,63.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.82" stroke-width="1.15"/>
+  <path d="M80,62.5 L230,62.5 A3.5,3.5 0 0 1 233.5,66 L233.5,140 A3.5,3.5 0 0 1 230,143.5 L80,143.5 A3.5,3.5 0 0 1 76.5,140 L76.5,66 A3.5,3.5 0 0 1 80,62.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.8" stroke-width="1.15"/>
+  <path d="M80,61.5 L230,61.5 A4.5,4.5 0 0 1 234.5,66 L234.5,140 A4.5,4.5 0 0 1 230,144.5 L80,144.5 A4.5,4.5 0 0 1 75.5,140 L75.5,66 A4.5,4.5 0 0 1 80,61.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.77" stroke-width="1.15"/>
+  <path d="M80,60.5 L230,60.5 A5.5,5.5 0 0 1 235.5,66 L235.5,140 A5.5,5.5 0 0 1 230,145.5 L80,145.5 A5.5,5.5 0 0 1 74.5,140 L74.5,66 A5.5,5.5 0 0 1 80,60.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.73" stroke-width="1.15"/>
+  <path d="M80,59.5 L230,59.5 A6.5,6.5 0 0 1 236.5,66 L236.5,140 A6.5,6.5 0 0 1 230,146.5 L80,146.5 A6.5,6.5 0 0 1 73.5,140 L73.5,66 A6.5,6.5 0 0 1 80,59.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.7" stroke-width="1.15"/>
+  <path d="M80,58.5 L230,58.5 A7.5,7.5 0 0 1 237.5,66 L237.5,140 A7.5,7.5 0 0 1 230,147.5 L80,147.5 A7.5,7.5 0 0 1 72.5,140 L72.5,66 A7.5,7.5 0 0 1 80,58.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.68" stroke-width="1.15"/>
+  <path d="M80,57.5 L230,57.5 A8.5,8.5 0 0 1 238.5,66 L238.5,140 A8.5,8.5 0 0 1 230,148.5 L80,148.5 A8.5,8.5 0 0 1 71.5,140 L71.5,66 A8.5,8.5 0 0 1 80,57.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.65" stroke-width="1.15"/>
+  <path d="M80,56.5 L230,56.5 A9.5,9.5 0 0 1 239.5,66 L239.5,140 A9.5,9.5 0 0 1 230,149.5 L80,149.5 A9.5,9.5 0 0 1 70.5,140 L70.5,66 A9.5,9.5 0 0 1 80,56.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.61" stroke-width="1.15"/>
+  <path d="M80,55.5 L230,55.5 A10.5,10.5 0 0 1 240.5,66 L240.5,140 A10.5,10.5 0 0 1 230,150.5 L80,150.5 A10.5,10.5 0 0 1 69.5,140 L69.5,66 A10.5,10.5 0 0 1 80,55.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.59" stroke-width="1.15"/>
+  <path d="M80,54.5 L230,54.5 A11.5,11.5 0 0 1 241.5,66 L241.5,140 A11.5,11.5 0 0 1 230,151.5 L80,151.5 A11.5,11.5 0 0 1 68.5,140 L68.5,66 A11.5,11.5 0 0 1 80,54.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.56" stroke-width="1.15"/>
+  <path d="M80,53.5 L230,53.5 A12.5,12.5 0 0 1 242.5,66 L242.5,140 A12.5,12.5 0 0 1 230,152.5 L80,152.5 A12.5,12.5 0 0 1 67.5,140 L67.5,66 A12.5,12.5 0 0 1 80,53.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.52" stroke-width="1.15"/>
+  <path d="M80,52.5 L230,52.5 A13.5,13.5 0 0 1 243.5,66 L243.5,140 A13.5,13.5 0 0 1 230,153.5 L80,153.5 A13.5,13.5 0 0 1 66.5,140 L66.5,66 A13.5,13.5 0 0 1 80,52.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.5" stroke-width="1.15"/>
+  <path d="M80,51.5 L230,51.5 A14.5,14.5 0 0 1 244.5,66 L244.5,140 A14.5,14.5 0 0 1 230,154.5 L80,154.5 A14.5,14.5 0 0 1 65.5,140 L65.5,66 A14.5,14.5 0 0 1 80,51.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.46" stroke-width="1.15"/>
+  <path d="M80,50.5 L230,50.5 A15.5,15.5 0 0 1 245.5,66 L245.5,140 A15.5,15.5 0 0 1 230,155.5 L80,155.5 A15.5,15.5 0 0 1 64.5,140 L64.5,66 A15.5,15.5 0 0 1 80,50.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.43" stroke-width="1.15"/>
+  <path d="M80,49.5 L230,49.5 A16.5,16.5 0 0 1 246.5,66 L246.5,140 A16.5,16.5 0 0 1 230,156.5 L80,156.5 A16.5,16.5 0 0 1 63.5,140 L63.5,66 A16.5,16.5 0 0 1 80,49.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.4" stroke-width="1.15"/>
+  <path d="M80,48.5 L230,48.5 A17.5,17.5 0 0 1 247.5,66 L247.5,140 A17.5,17.5 0 0 1 230,157.5 L80,157.5 A17.5,17.5 0 0 1 62.5,140 L62.5,66 A17.5,17.5 0 0 1 80,48.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.38" stroke-width="1.15"/>
+  <path d="M80,47.5 L230,47.5 A18.5,18.5 0 0 1 248.5,66 L248.5,140 A18.5,18.5 0 0 1 230,158.5 L80,158.5 A18.5,18.5 0 0 1 61.5,140 L61.5,66 A18.5,18.5 0 0 1 80,47.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.34" stroke-width="1.15"/>
+  <path d="M80,46.5 L230,46.5 A19.5,19.5 0 0 1 249.5,66 L249.5,140 A19.5,19.5 0 0 1 230,159.5 L80,159.5 A19.5,19.5 0 0 1 60.5,140 L60.5,66 A19.5,19.5 0 0 1 80,46.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.32" stroke-width="1.15"/>
+  <path d="M80,45.5 L230,45.5 A20.5,20.5 0 0 1 250.5,66 L250.5,140 A20.5,20.5 0 0 1 230,160.5 L80,160.5 A20.5,20.5 0 0 1 59.5,140 L59.5,66 A20.5,20.5 0 0 1 80,45.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.28" stroke-width="1.15"/>
+  <path d="M80,44.5 L230,44.5 A21.5,21.5 0 0 1 251.5,66 L251.5,140 A21.5,21.5 0 0 1 230,161.5 L80,161.5 A21.5,21.5 0 0 1 58.5,140 L58.5,66 A21.5,21.5 0 0 1 80,44.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.26" stroke-width="1.15"/>
+  <path d="M80,43.5 L230,43.5 A22.5,22.5 0 0 1 252.5,66 L252.5,140 A22.5,22.5 0 0 1 230,162.5 L80,162.5 A22.5,22.5 0 0 1 57.5,140 L57.5,66 A22.5,22.5 0 0 1 80,43.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.23" stroke-width="1.15"/>
+  <path d="M80,42.5 L230,42.5 A23.5,23.5 0 0 1 253.5,66 L253.5,140 A23.5,23.5 0 0 1 230,163.5 L80,163.5 A23.5,23.5 0 0 1 56.5,140 L56.5,66 A23.5,23.5 0 0 1 80,42.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.2" stroke-width="1.15"/>
+  <path d="M80,41.5 L230,41.5 A24.5,24.5 0 0 1 254.5,66 L254.5,140 A24.5,24.5 0 0 1 230,164.5 L80,164.5 A24.5,24.5 0 0 1 55.5,140 L55.5,66 A24.5,24.5 0 0 1 80,41.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.17" stroke-width="1.15"/>
+  <path d="M80,40.5 L230,40.5 A25.5,25.5 0 0 1 255.5,66 L255.5,140 A25.5,25.5 0 0 1 230,165.5 L80,165.5 A25.5,25.5 0 0 1 54.5,140 L54.5,66 A25.5,25.5 0 0 1 80,40.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.14" stroke-width="1.15"/>
+  <path d="M80,39.5 L230,39.5 A26.5,26.5 0 0 1 256.5,66 L256.5,140 A26.5,26.5 0 0 1 230,166.5 L80,166.5 A26.5,26.5 0 0 1 53.5,140 L53.5,66 A26.5,26.5 0 0 1 80,39.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.11" stroke-width="1.15"/>
+  <path d="M80,38.5 L230,38.5 A27.5,27.5 0 0 1 257.5,66 L257.5,140 A27.5,27.5 0 0 1 230,167.5 L80,167.5 A27.5,27.5 0 0 1 52.5,140 L52.5,66 A27.5,27.5 0 0 1 80,38.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.08" stroke-width="1.15"/>
+  <path d="M80,37.5 L230,37.5 A28.5,28.5 0 0 1 258.5,66 L258.5,140 A28.5,28.5 0 0 1 230,168.5 L80,168.5 A28.5,28.5 0 0 1 51.5,140 L51.5,66 A28.5,28.5 0 0 1 80,37.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.05" stroke-width="1.15"/>
+  <path d="M80,36.5 L230,36.5 A29.5,29.5 0 0 1 259.5,66 L259.5,140 A29.5,29.5 0 0 1 230,169.5 L80,169.5 A29.5,29.5 0 0 1 50.5,140 L50.5,66 A29.5,29.5 0 0 1 80,36.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.02" stroke-width="1.15"/>
+  <rect x="80" y="66" width="150" height="74" fill="#0066cc"/>
+  <text class="gb-t" x="20" y="200">every pixel its own share: one smooth ramp, round</text>
+  <text class="gb-t" x="20" y="215">past a corner, where the nearest point is the corner</text>
+  <text class="gb-th" x="380" y="22">Direct2D: one stroke per pixel of reach</text>
+  <path d="M412.5,38.5 L617.5,38.5 L617.5,167.5 L412.5,167.5 L412.5,38.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.15" stroke-width="5" stroke-linejoin="miter"/>
+  <path d="M410,36 L620,36 L620,170 L410,170 L410,36 Z" fill="none" stroke="#8a6d00" stroke-width="0.6" stroke-opacity="0.6"/>
+  <path d="M417.5,43.5 L612.5,43.5 L612.5,162.5 L417.5,162.5 L417.5,43.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.3" stroke-width="5" stroke-linejoin="miter"/>
+  <path d="M415,41 L615,41 L615,165 L415,165 L415,41 Z" fill="none" stroke="#8a6d00" stroke-width="0.6" stroke-opacity="0.6"/>
+  <path d="M422.5,48.5 L607.5,48.5 L607.5,157.5 L422.5,157.5 L422.5,48.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.45" stroke-width="5" stroke-linejoin="miter"/>
+  <path d="M420,46 L610,46 L610,160 L420,160 L420,46 Z" fill="none" stroke="#8a6d00" stroke-width="0.6" stroke-opacity="0.6"/>
+  <path d="M427.5,53.5 L602.5,53.5 L602.5,152.5 L427.5,152.5 L427.5,53.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.6" stroke-width="5" stroke-linejoin="miter"/>
+  <path d="M425,51 L605,51 L605,155 L425,155 L425,51 Z" fill="none" stroke="#8a6d00" stroke-width="0.6" stroke-opacity="0.6"/>
+  <path d="M432.5,58.5 L597.5,58.5 L597.5,147.5 L432.5,147.5 L432.5,58.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.75" stroke-width="5" stroke-linejoin="miter"/>
+  <path d="M430,56 L600,56 L600,150 L430,150 L430,56 Z" fill="none" stroke="#8a6d00" stroke-width="0.6" stroke-opacity="0.6"/>
+  <path d="M437.5,63.5 L592.5,63.5 L592.5,142.5 L437.5,142.5 L437.5,63.5 Z" fill="none" stroke="#ffb400" stroke-opacity="0.9" stroke-width="5" stroke-linejoin="miter"/>
+  <path d="M435,61 L595,61 L595,145 L435,145 L435,61 Z" fill="none" stroke="#8a6d00" stroke-width="0.6" stroke-opacity="0.6"/>
+  <rect x="440" y="66" width="150" height="74" fill="#0066cc"/>
+  <text class="gb-t" x="380" y="200">rings widest first, each given what it adds -</text>
+  <text class="gb-t" x="380" y="215">six drawn here; mitered at a corner</text>
+</svg>
+
+<p><code>castShadow</code> skips the rings. A rounded rectangle's distance field is made of pieces a
+gradient states exactly: beside a straight edge a linear gradient out from it, round a corner a
+radial one from the arc's centre, and between them the silhouette solid. Each piece is an
+axis-aligned rectangle drawn aliased, so no pixel is painted twice, and the ramp is stated in
+sixteen steps of the falloff.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Direct2D's castShadow: the silhouette cut into solid rectangles, a linear gradient band beside each straight edge, and a radial gradient square round each corner from the arc's centre, every piece axis-aligned and drawn aliased.">
+  <style>
+    .cs-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .cs-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .cs-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .cs-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .cs-solid { fill:#0066cc; }
+    .cs-cut { fill:none; stroke:#ffffff; stroke-width:1.5; }
+    .cs-arc { fill:none; stroke:#ffffff; stroke-width:1; stroke-dasharray:3 2; }
+  </style>
+  <defs>
+    <linearGradient id="cs-up" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#0066cc" stop-opacity="1"/><stop offset="0.08" stop-color="#0066cc" stop-opacity="0.84"/><stop offset="0.17" stop-color="#0066cc" stop-opacity="0.69"/><stop offset="0.25" stop-color="#0066cc" stop-opacity="0.56"/><stop offset="0.33" stop-color="#0066cc" stop-opacity="0.44"/><stop offset="0.42" stop-color="#0066cc" stop-opacity="0.34"/><stop offset="0.5" stop-color="#0066cc" stop-opacity="0.25"/><stop offset="0.58" stop-color="#0066cc" stop-opacity="0.17"/><stop offset="0.67" stop-color="#0066cc" stop-opacity="0.11"/><stop offset="0.75" stop-color="#0066cc" stop-opacity="0.06"/><stop offset="0.83" stop-color="#0066cc" stop-opacity="0.03"/><stop offset="0.92" stop-color="#0066cc" stop-opacity="0.01"/><stop offset="1" stop-color="#0066cc" stop-opacity="0"/></linearGradient>
+    <linearGradient id="cs-dn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0066cc" stop-opacity="1"/><stop offset="0.08" stop-color="#0066cc" stop-opacity="0.84"/><stop offset="0.17" stop-color="#0066cc" stop-opacity="0.69"/><stop offset="0.25" stop-color="#0066cc" stop-opacity="0.56"/><stop offset="0.33" stop-color="#0066cc" stop-opacity="0.44"/><stop offset="0.42" stop-color="#0066cc" stop-opacity="0.34"/><stop offset="0.5" stop-color="#0066cc" stop-opacity="0.25"/><stop offset="0.58" stop-color="#0066cc" stop-opacity="0.17"/><stop offset="0.67" stop-color="#0066cc" stop-opacity="0.11"/><stop offset="0.75" stop-color="#0066cc" stop-opacity="0.06"/><stop offset="0.83" stop-color="#0066cc" stop-opacity="0.03"/><stop offset="0.92" stop-color="#0066cc" stop-opacity="0.01"/><stop offset="1" stop-color="#0066cc" stop-opacity="0"/></linearGradient>
+    <linearGradient id="cs-lf" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#0066cc" stop-opacity="1"/><stop offset="0.08" stop-color="#0066cc" stop-opacity="0.84"/><stop offset="0.17" stop-color="#0066cc" stop-opacity="0.69"/><stop offset="0.25" stop-color="#0066cc" stop-opacity="0.56"/><stop offset="0.33" stop-color="#0066cc" stop-opacity="0.44"/><stop offset="0.42" stop-color="#0066cc" stop-opacity="0.34"/><stop offset="0.5" stop-color="#0066cc" stop-opacity="0.25"/><stop offset="0.58" stop-color="#0066cc" stop-opacity="0.17"/><stop offset="0.67" stop-color="#0066cc" stop-opacity="0.11"/><stop offset="0.75" stop-color="#0066cc" stop-opacity="0.06"/><stop offset="0.83" stop-color="#0066cc" stop-opacity="0.03"/><stop offset="0.92" stop-color="#0066cc" stop-opacity="0.01"/><stop offset="1" stop-color="#0066cc" stop-opacity="0"/></linearGradient>
+    <linearGradient id="cs-rt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0066cc" stop-opacity="1"/><stop offset="0.08" stop-color="#0066cc" stop-opacity="0.84"/><stop offset="0.17" stop-color="#0066cc" stop-opacity="0.69"/><stop offset="0.25" stop-color="#0066cc" stop-opacity="0.56"/><stop offset="0.33" stop-color="#0066cc" stop-opacity="0.44"/><stop offset="0.42" stop-color="#0066cc" stop-opacity="0.34"/><stop offset="0.5" stop-color="#0066cc" stop-opacity="0.25"/><stop offset="0.58" stop-color="#0066cc" stop-opacity="0.17"/><stop offset="0.67" stop-color="#0066cc" stop-opacity="0.11"/><stop offset="0.75" stop-color="#0066cc" stop-opacity="0.06"/><stop offset="0.83" stop-color="#0066cc" stop-opacity="0.03"/><stop offset="0.92" stop-color="#0066cc" stop-opacity="0.01"/><stop offset="1" stop-color="#0066cc" stop-opacity="0"/></linearGradient>
+    <radialGradient id="cs-tl" gradientUnits="userSpaceOnUse" cx="162" cy="98" r="76"><stop offset="0" stop-color="#0066cc" stop-opacity="1"/><stop offset="0.42" stop-color="#0066cc" stop-opacity="1"/><stop offset="0.47" stop-color="#0066cc" stop-opacity="0.84"/><stop offset="0.52" stop-color="#0066cc" stop-opacity="0.69"/><stop offset="0.57" stop-color="#0066cc" stop-opacity="0.56"/><stop offset="0.61" stop-color="#0066cc" stop-opacity="0.44"/><stop offset="0.66" stop-color="#0066cc" stop-opacity="0.34"/><stop offset="0.71" stop-color="#0066cc" stop-opacity="0.25"/><stop offset="0.76" stop-color="#0066cc" stop-opacity="0.17"/><stop offset="0.81" stop-color="#0066cc" stop-opacity="0.11"/><stop offset="0.86" stop-color="#0066cc" stop-opacity="0.06"/><stop offset="0.9" stop-color="#0066cc" stop-opacity="0.03"/><stop offset="0.95" stop-color="#0066cc" stop-opacity="0.01"/><stop offset="1" stop-color="#0066cc" stop-opacity="0"/></radialGradient>
+    <radialGradient id="cs-tr" gradientUnits="userSpaceOnUse" cx="378" cy="98" r="76"><stop offset="0" stop-color="#0066cc" stop-opacity="1"/><stop offset="0.42" stop-color="#0066cc" stop-opacity="1"/><stop offset="0.47" stop-color="#0066cc" stop-opacity="0.84"/><stop offset="0.52" stop-color="#0066cc" stop-opacity="0.69"/><stop offset="0.57" stop-color="#0066cc" stop-opacity="0.56"/><stop offset="0.61" stop-color="#0066cc" stop-opacity="0.44"/><stop offset="0.66" stop-color="#0066cc" stop-opacity="0.34"/><stop offset="0.71" stop-color="#0066cc" stop-opacity="0.25"/><stop offset="0.76" stop-color="#0066cc" stop-opacity="0.17"/><stop offset="0.81" stop-color="#0066cc" stop-opacity="0.11"/><stop offset="0.86" stop-color="#0066cc" stop-opacity="0.06"/><stop offset="0.9" stop-color="#0066cc" stop-opacity="0.03"/><stop offset="0.95" stop-color="#0066cc" stop-opacity="0.01"/><stop offset="1" stop-color="#0066cc" stop-opacity="0"/></radialGradient>
+    <radialGradient id="cs-br" gradientUnits="userSpaceOnUse" cx="378" cy="164" r="76"><stop offset="0" stop-color="#0066cc" stop-opacity="1"/><stop offset="0.42" stop-color="#0066cc" stop-opacity="1"/><stop offset="0.47" stop-color="#0066cc" stop-opacity="0.84"/><stop offset="0.52" stop-color="#0066cc" stop-opacity="0.69"/><stop offset="0.57" stop-color="#0066cc" stop-opacity="0.56"/><stop offset="0.61" stop-color="#0066cc" stop-opacity="0.44"/><stop offset="0.66" stop-color="#0066cc" stop-opacity="0.34"/><stop offset="0.71" stop-color="#0066cc" stop-opacity="0.25"/><stop offset="0.76" stop-color="#0066cc" stop-opacity="0.17"/><stop offset="0.81" stop-color="#0066cc" stop-opacity="0.11"/><stop offset="0.86" stop-color="#0066cc" stop-opacity="0.06"/><stop offset="0.9" stop-color="#0066cc" stop-opacity="0.03"/><stop offset="0.95" stop-color="#0066cc" stop-opacity="0.01"/><stop offset="1" stop-color="#0066cc" stop-opacity="0"/></radialGradient>
+    <radialGradient id="cs-bl" gradientUnits="userSpaceOnUse" cx="162" cy="164" r="76"><stop offset="0" stop-color="#0066cc" stop-opacity="1"/><stop offset="0.42" stop-color="#0066cc" stop-opacity="1"/><stop offset="0.47" stop-color="#0066cc" stop-opacity="0.84"/><stop offset="0.52" stop-color="#0066cc" stop-opacity="0.69"/><stop offset="0.57" stop-color="#0066cc" stop-opacity="0.56"/><stop offset="0.61" stop-color="#0066cc" stop-opacity="0.44"/><stop offset="0.66" stop-color="#0066cc" stop-opacity="0.34"/><stop offset="0.71" stop-color="#0066cc" stop-opacity="0.25"/><stop offset="0.76" stop-color="#0066cc" stop-opacity="0.17"/><stop offset="0.81" stop-color="#0066cc" stop-opacity="0.11"/><stop offset="0.86" stop-color="#0066cc" stop-opacity="0.06"/><stop offset="0.9" stop-color="#0066cc" stop-opacity="0.03"/><stop offset="0.95" stop-color="#0066cc" stop-opacity="0.01"/><stop offset="1" stop-color="#0066cc" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect x="86" y="22" width="76" height="76" fill="url(#cs-tl)"/>
+  <rect x="378" y="22" width="76" height="76" fill="url(#cs-tr)"/>
+  <rect x="378" y="164" width="76" height="76" fill="url(#cs-br)"/>
+  <rect x="86" y="164" width="76" height="76" fill="url(#cs-bl)"/>
+  <rect x="162" y="22" width="216" height="44" fill="url(#cs-up)"/>
+  <rect x="162" y="196" width="216" height="44" fill="url(#cs-dn)"/>
+  <rect x="86" y="98" width="44" height="66" fill="url(#cs-lf)"/>
+  <rect x="410" y="98" width="44" height="66" fill="url(#cs-rt)"/>
+  <rect class="cs-solid" x="130" y="98" width="280" height="66"/>
+  <rect class="cs-solid" x="162" y="66" width="216" height="32"/>
+  <rect class="cs-solid" x="162" y="164" width="216" height="32"/>
+  <path class="cs-cut" d="M162,22 L162,240 M378,22 L378,240 M86,98 L454,98 M86,164 L454,164 M162,66 L378,66 M162,196 L378,196 M130,98 L130,164 M410,98 L410,164"/>
+  <path class="cs-arc" d="M162,66 L378,66 A32,32 0 0 1 410,98 L410,164 A32,32 0 0 1 378,196 L162,196 A32,32 0 0 1 130,164 L130,98 A32,32 0 0 1 162,66 Z"/>
+  <text class="cs-th" x="270.0" y="135.0" text-anchor="middle" style="fill:#ffffff">solid</text>
+  <text class="cs-th" x="270.0" y="42.0" text-anchor="middle">linear band</text>
+  <text class="cs-th" x="414" y="236">radial corner</text>
+  <text class="cs-th" x="520" y="40">solid</text>
+  <text class="cs-t" x="520" y="56">the silhouette cut into</text>
+  <text class="cs-t" x="520" y="71">rectangles</text>
+  <text class="cs-th" x="520" y="104">linear band</text>
+  <text class="cs-t" x="520" y="120">beside a straight edge,</text>
+  <text class="cs-t" x="520" y="135">out to the reach</text>
+  <text class="cs-th" x="520" y="168">radial corner</text>
+  <text class="cs-t" x="520" y="184">from the arc&#39;s centre: full</text>
+  <text class="cs-t" x="520" y="199">to the arc, the falloff past it</text>
+  <text class="cs-t" x="520" y="232">every piece axis-aligned,</text>
+  <text class="cs-t" x="520" y="247">drawn aliased, none overlapping</text>
+</svg>
+
+<p>Staged pixels are uploaded into one bitmap the size of the surface and drawn back texel for texel,
+untransformed - they were rasterized at the animated size already. Native brushes are cached for a
+frame and let go at its end. A lost device is reported by the frame's end; the backend drops what the
+device owned, builds again on the next frame and asks for a whole repaint.</p>
+
+<h3 id="hiw-switch">A switch of backend</h3>
+
+<p>The setting is a config node, and its change is what reaches the application's context. The
+context states the answer once and tells every window. Each form takes it at the top of its next
+frame: it builds a backend through the factory the application named and hands it to its canvas.
+Everything the old backend held goes with it - its brushes, its geometries, its kept images - which
+is what a resize already drops, so nothing above the canvas is told. The whole surface is drawn
+again, and a window opened after the switch is built on what the application wears at that
+moment.</p>
+<svg class="grid-fig" viewBox="0 0 700 158" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A switch of backend: the Settings check changes the GpuAcceleration node, the application context states the answer and tells every window, and each form at the top of its next frame builds a backend through the application's factory and hands it to its canvas.">
+  <style>
+    .sw-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .sw-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .sw-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .sw-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .sw-box { fill:#eef4fb; stroke:#0066cc; stroke-width:1.2; }
+    .sw-box2 { fill:#f2f7f2; stroke:#2e7d32; stroke-width:1.2; }
+    .sw-ar { stroke:#5a6b7d; stroke-width:1.4; fill:none; }
+  </style>
+  <defs>
+    <marker id="sw-m" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#5a6b7d"/></marker>
+  </defs>
+  <rect class="sw-box" x="20" y="20" width="196" height="44" rx="5"/>
+  <text class="sw-th" x="30" y="38">Settings: GPU acceleration</text>
+  <text class="sw-t" x="30" y="55">the check is clicked</text>
+  <rect class="sw-box" x="252" y="20" width="196" height="44" rx="5"/>
+  <text class="sw-th" x="262" y="38">the GpuAcceleration node</text>
+  <text class="sw-t" x="262" y="55">the config value changes</text>
+  <rect class="sw-box" x="484" y="20" width="196" height="44" rx="5"/>
+  <text class="sw-th" x="494" y="38">AppContext::stateBackend</text>
+  <text class="sw-t" x="494" y="55">states it, tells every window</text>
+  <path class="sw-ar" marker-end="url(#sw-m)" d="M218,42.0 L248,42.0"/>
+  <path class="sw-ar" marker-end="url(#sw-m)" d="M450,42.0 L480,42.0"/>
+  <rect class="sw-box2" x="20" y="104" width="196" height="44" rx="5"/>
+  <text class="sw-th" x="30" y="122">each form, next frame</text>
+  <text class="sw-t" x="30" y="139">FormBase::stateBackend</text>
+  <rect class="sw-box2" x="252" y="104" width="196" height="44" rx="5"/>
+  <text class="sw-th" x="262" y="122">createBackend</text>
+  <text class="sw-t" x="262" y="139">the factory the app named</text>
+  <rect class="sw-box2" x="484" y="104" width="196" height="44" rx="5"/>
+  <text class="sw-th" x="494" y="122">Canvas::setBackend</text>
+  <text class="sw-t" x="494" y="139">old resources gone, all repainted</text>
+  <path class="sw-ar" marker-end="url(#sw-m)" d="M218,126.0 L248,126.0"/>
+  <path class="sw-ar" marker-end="url(#sw-m)" d="M450,126.0 L480,126.0"/>
+  <path class="sw-ar" marker-end="url(#sw-m)" d="M582.0,66 L582.0,82 L118.0,82 L118.0,100"/>
+</svg>
+
+        </main>
+        <div class="page-end">
+            <a class="manuals-link" href="index.html">All manuals</a>
+            <a class="top-link" href="#top">Top</a>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const collapsibleElements = document.querySelectorAll('.sidebar li.has-children');
+            collapsibleElements.forEach(li => {
+                const btn = li.querySelector('.toggle-btn');
+                const link = li.querySelector('.nav-item-wrapper > a');
+                const toggle = (e) => { e.preventDefault(); e.stopPropagation(); li.classList.toggle('collapsed'); };
+                if (btn) btn.addEventListener('click', toggle);
+                if (link) link.addEventListener('click', () => {
+                    if (li.classList.contains('collapsed')) li.classList.remove('collapsed');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
