@@ -466,7 +466,8 @@ draws every point of light as the ellipse <code>GlowShape::Circle</code> draws.
 <p>A <code>PixelPath</code> is a list of commands - move, line, quadratic and cubic curve, close - each
 absolute or relative. A <code>moveTo</code> starts a new figure, and <code>close</code> joins a figure's
 end back to its start; a segment drawn on after a <code>close</code>, with no move between, starts a
-new figure at that same start. Two helpers build a whole figure and start a fresh path to do it:
+new figure at that same start. A path starts with a move: anything drawn before its first
+<code>moveTo</code> is undefined behaviour. Two helpers build a whole figure and start a fresh path to do it:
 <code>drawCircle(center, radius)</code>, and <code>drawRoundedRect(width, height, radius)</code>, which
 is centred on the origin. <code>addRoundedPolygon</code> appends a polygon with its corners rounded,
 keeping what the path already holds.</p>
@@ -1090,7 +1091,7 @@ is one pixel.</p>
 
 <table>
 <tr><th>Call</th><th>Adds</th></tr>
-<tr><td><code>moveTo(p)</code>, <code>moveBy(d)</code></td><td>The start of a new figure.</td></tr>
+<tr><td><code>moveTo(p)</code>, <code>moveBy(d)</code></td><td>The start of a new figure. A path's first command; anything before it is undefined behaviour.</td></tr>
 <tr><td><code>lineTo(p)</code>, <code>lineBy(d)</code>, <code>hLineTo(x)</code>, <code>hLineBy(dx)</code>, <code>vLineTo(y)</code>, <code>vLineBy(dy)</code></td><td>A straight segment.</td></tr>
 <tr><td><code>quadTo(control, end)</code>, <code>bezierBy(dControl, dEnd)</code></td><td>A quadratic curve, absolute or relative.</td></tr>
 <tr><td><code>cubicTo(c1, c2, end)</code>, <code>cubicBy(d1, d2, dEnd)</code></td><td>A cubic curve.</td></tr>
@@ -1334,10 +1335,6 @@ the same from both.</p>
     <td>Round, from the distance to the outline.</td>
     <td>Mitered, from one stroke per pixel of reach.</td>
     <td><code>castShadow</code> for a shadow; a glow round a curved outline.</td></tr>
-<tr><td>Segments before a path's first move</td>
-    <td>Drawn: a first line's end is taken as the figure's start, and a first curve starts at the origin.</td>
-    <td>Dropped.</td>
-    <td>A <code>moveTo</code> before anything else.</td></tr>
 <tr><td>A curve</td>
     <td>Cut into straight segments, each within half a device pixel of the curve.</td>
     <td>Tessellated by Direct2D, to its own tolerance.</td>
@@ -1415,7 +1412,7 @@ transform rows are about a rotation, a shear and unequal axes alone.
         <ul>
             <li><strong>Don't inset an outline by half its stroke.</strong> The backend already has.</li>
             <li><strong>Don't draw with a <code>RadialGradient</code></strong>, or a glow of any shape but <code>Circle</code>.</li>
-            <li><strong>Don't draw before a path's first <code>moveTo</code>.</strong> Direct2D drops what comes before it.</li>
+            <li><strong>Don't draw before a path's first <code>moveTo</code>.</strong> What comes before it is undefined behaviour.</li>
             <li><strong>Don't rely on a stroke's corner</strong> where the corner is sharp.</li>
             <li><strong>Don't read pixels back from a staging view.</strong> Under Direct2D it holds nothing that was drawn.</li>
             <li><strong>Don't draw a bitmap under a transform or a path clip</strong> and expect the backends to agree.</li>
