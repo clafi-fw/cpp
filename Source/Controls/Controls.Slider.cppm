@@ -306,7 +306,7 @@ namespace ClaFi::Controls
             Icons::PlusMark sign{
                 .canvas = event.canvas(),
                 .center = event.center(),
-                .size = size,
+                .size = size * 1.32f,
                 .lineWidth = stroke,
                 .color = ink
             };

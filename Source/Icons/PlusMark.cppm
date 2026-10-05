@@ -29,7 +29,7 @@ namespace ClaFi::Icons
 
     void PlusMark::paintPlusOrMinus(bool plus)
     {
-        float sz = (size - lineWidth) * 0.66f;
+        float sz = (size - lineWidth) * 0.5f;
         canvas.drawLine({ center.x - sz, center.y }, { center.x + sz, center.y }, color, lineWidth);
         if (plus)
             canvas.drawLine({ center.x, center.y - sz }, { center.x, center.y + sz }, color, lineWidth);

@@ -135,7 +135,7 @@ namespace ClaFi::Icons::Magnifier
         PlusMark mark{
             .canvas = canvas,
             .center = center,
-            .size = radius,
+            .size = radius * 1.32f,
             .lineWidth = event.scaledStrokeWidth(Thickness::Regular),
             .color = event.inkRgb(InkWell::accentInk())
         };
