@@ -227,6 +227,7 @@ namespace ClaFi
         void scaleLuminosity(float k);
         int hueDegree() const { return hueDegreeOf(hue); }
         void setHueDegree(int value) { hue = hueFromDegree(value); }
+        Hsl withLuminosity(float value) const { return { hue, saturation, value }; }
     public:
         float hue;
         float saturation;

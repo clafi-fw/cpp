@@ -184,19 +184,88 @@ namespace ClaFi
         const ColorMode mode = colorModeOf(event.lightness());
 
         const FloatRect backgroundRect = event.iconRect();
-        const float cornersRadius = event.scaleF(4.0f);
-        // Background
+        const float cornersRadius = std::min(
+            backgroundRect.height() / 8.0f,
+            event.scaleF(4.0f)
+            );
+        
+        // Stubs
+        Hsl etalonHsl = { 0.0f, 0.0f, 0.0f, };
+        Color titleColor = etalonHsl.withLuminosity(0.3f).toColor();
+        Color dialogColor = etalonHsl.withLuminosity(0.2f).toColor();
+        Color pageColor = etalonHsl.withLuminosity(0.1f).toColor();
+        Color mutedText = 0xFF'888888;
+        Color borderColor = 0xFF'666666;
+        Color accentColor = 0xFF'6677FF;
+        Color spotColor = 0xFF'FF9900;
+
+        constexpr float k_titleShare = 0.25f;
+
+        // Title
         {
-            RoundedRectangleParts menuBackground{
+            RoundedRectangleParts backgroundPart{
                 .bounds = backgroundRect,
-                .radii = { cornersRadius },
+                .radii = CornerRadii::topSideRound(cornersRadius),
                 .sides = RectSides::all()
             };
-            menuBackground.bounds.right = backgroundRect.relativeX(0.66);
+            backgroundPart.bounds.bottom = backgroundRect.relativeY(k_titleShare) + 1.0f;
 
-            event.canvas().fillPartialRoundedRectangle(menuBackground, colors.surface(mode).toColor());
+            event.canvas().fillPartialRoundedRectangle(backgroundPart, titleColor);
         }
 
+        // Left strip Background
+        {
+            RoundedRectangleParts backgroundPart{
+                .bounds = backgroundRect,
+                .radii = CornerRadii::oneRound(Corner::BottomLeft, cornersRadius),
+                .sides = RectSides::all()
+            };
+            backgroundPart.bounds.top = backgroundRect.relativeY(k_titleShare) - 1.0f;
+            backgroundPart.bounds.right = backgroundRect.relativeX(0.33f) + 1.0f;
+
+            event.canvas().fillPartialRoundedRectangle(backgroundPart, dialogColor);
+        }
+        
+        // Page background
+        {
+            RoundedRectangleParts backgroundPart{
+                .bounds = backgroundRect,
+                .radii = CornerRadii::rightSideRound(cornersRadius),
+                .sides = RectSides::all()
+            };
+            backgroundPart.bounds.top = backgroundRect.relativeY(k_titleShare) - 1.0f;
+            backgroundPart.bounds.left = backgroundRect.relativeX(0.33f) - 1.0f;
+
+            event.canvas().fillPartialRoundedRectangle(backgroundPart, pageColor);
+        }
+
+        // Rows
+        {
+            const std::array rowColors{ spotColor, mutedText, accentColor };
+
+            float rowSize = backgroundRect.height() / 8.0f;
+            float rowMargin = rowSize;
+            float rowPadding = 0.25f;
+            float x = backgroundRect.relativeX(rowPadding);
+            float x2 = backgroundRect.relativeX(1.0f - rowPadding);
+
+            float y = backgroundRect.relativeY(0.2f);
+            for (std::size_t i = 0; i != rowColors.size(); ++i)
+            {
+                FloatRect boxRect = { x, y, x + rowSize, y + rowSize };
+                // Box
+                event.canvas().fillRectangle(boxRect, rowColors[i]);
+                // Label
+                boxRect.left = boxRect.right + rowSize;
+                boxRect.right = x2;
+                event.canvas().fillRectangle(boxRect, rowColors[i]);
+                y = boxRect.bottom + rowMargin;
+            }
+        }
+
+        // Border
+        event.canvas().drawRoundedRectangle(backgroundRect, cornersRadius, cornersRadius,
+            borderColor, event.scaledStrokeWidth(Thickness::Thin));
 
         return;
 

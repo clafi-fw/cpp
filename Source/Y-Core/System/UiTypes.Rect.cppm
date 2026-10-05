@@ -48,12 +48,12 @@ namespace ClaFi
     // corner is round while its radius is above zero.
     export struct CornerRadii
     {
-        float topLeft;
-        float topRight;
-        float bottomRight;
-        float bottomLeft;
+        float topLeft{};
+        float topRight{};
+        float bottomRight{};
+        float bottomLeft{};
         void set(std::size_t cornerIndex, float value) { set(static_cast<Corner>(cornerIndex), value); }
-        void set(Corner corner, float value)
+        constexpr void set(Corner corner, float value)
         {
             switch (corner)
             {
@@ -90,7 +90,17 @@ namespace ClaFi
             bottomLeft *= value;
         }
         [[nodiscard]] static constexpr CornerRadii square() { return {}; }
-        [[nodiscard]] static constexpr CornerRadii uniform(float radius) { return { radius, radius, radius, radius }; }
+        [[nodiscard]] static constexpr CornerRadii uniform(float radius) { return { .topLeft = radius, .topRight = radius, .bottomRight = radius, .bottomLeft = radius }; }
+        [[nodiscard]] static constexpr CornerRadii topSideRound(float radius) { return { .topLeft = radius, .topRight = radius, .bottomRight = 0.0f, .bottomLeft = 0.0f }; }
+        [[nodiscard]] static constexpr CornerRadii leftSideRound(float radius) { return { .topLeft = radius, .topRight = 0.0f, .bottomRight = 0.0f, .bottomLeft = radius }; }
+        [[nodiscard]] static constexpr CornerRadii rightSideRound(float radius) { return { .topLeft = 0.0f, .topRight = radius, .bottomRight = radius, .bottomLeft = 0.0f }; }
+        [[nodiscard]] static constexpr CornerRadii bottomSideRound(float radius) { return { .topLeft = 0.0f, .topRight = 0.0f, .bottomRight = radius, .bottomLeft = radius }; }
+        [[nodiscard]] static constexpr CornerRadii oneRound(Corner corner, float radius)
+        {
+            CornerRadii result{};
+            result.set(corner, radius);
+            return result;
+        }
         [[nodiscard]] constexpr bool isSquare() const
         {
             return topLeft <= 0.0f && topRight <= 0.0f && bottomRight <= 0.0f && bottomLeft <= 0.0f;
