@@ -344,6 +344,7 @@
                     <li><a href="#first-and-last">First Up, Last Down</a></li>
                     <li><a href="#lifetime">The Whole Lifetime</a></li>
                     <li><a href="#app-context">AppContext</a></li>
+                    <li><a href="#backend">The Backend</a></li>
                 </ul>
             </li>
             <li class="has-children collapsed">
@@ -449,10 +450,11 @@
             found a broken order and says so.</p>
 
             <h2 id="basic-usage">Basic Usage Example</h2>
-            <p>An application is <code>Application&lt;Platform, Backend&gt;</code>, or a class derived from it,
-            built from the platform's <code>Params</code>. The entry point is the whole of what a program knows
-            about its platform:</p>
-<pre><span class="cm">// Win32 - the Direct2D backend</span>
+            <p>An application is <code>Application&lt;Platform, GpuBackend&gt;</code>, or a class derived from
+            it, built from the platform's <code>Params</code>. The second argument names the GPU backend the
+            application offers and may be left out, which offers none. The entry point is the whole of what a
+            program knows about its platform:</p>
+<pre><span class="cm">// Win32 - Direct2D beside the CPU backend</span>
 <span class="kw">int</span> __stdcall <span class="fn">wWinMain</span>(<span class="tp">HINSTANCE</span> hInstance, <span class="tp">HINSTANCE</span>, <span class="kw">wchar_t</span>*, <span class="kw">int</span>)
 {
     <span class="kw">using namespace</span> ClaFi;
@@ -461,19 +463,21 @@
     <span class="kw">return</span> app.<span class="fn">run</span>();
 }
 
-<span class="cm">// Wayland - the CPU backend, there being no GPU backend on this platform</span>
+<span class="cm">// Wayland - no GPU backend is named, because this platform has none</span>
 <span class="kw">int</span> <span class="fn">main</span>()
 {
     <span class="kw">using namespace</span> ClaFi;
 
-    <span class="tp">ThisApp</span>::<span class="tp">ThemesApplication</span>&lt;<span class="tp">WaylandPlatform</span>, <span class="tp">Graphics</span>::<span class="tp">Cpu</span>::<span class="tp">CpuBackend</span>&gt; app{ <span class="tp">WaylandPlatform</span>::<span class="tp">Params</span>{} };
+    <span class="tp">ThisApp</span>::<span class="tp">ThemesApplication</span>&lt;<span class="tp">WaylandPlatform</span>&gt; app{ <span class="tp">WaylandPlatform</span>::<span class="tp">Params</span>{} };
     <span class="kw">return</span> app.<span class="fn">run</span>();
 }</pre>
             <p>Two aliases name the common pairings: <code>Win32Application</code> is
             <code>Application&lt;Win32Platform, Direct2DBackend&gt;</code> and <code>WaylandApplication</code> is
-            <code>Application&lt;WaylandPlatform, Graphics::Cpu::CpuBackend&gt;</code>. The backend is the
-            application's choice, not the platform's: <code>Application&lt;Win32Platform, CpuBackend&gt;</code> is
-            as valid as the Direct2D pairing.</p>
+            <code>Application&lt;WaylandPlatform&gt;</code>. The CPU backend is the core's own and every
+            application has it, so naming no GPU backend is an answer rather than a gap:
+            <code>Application&lt;Win32Platform&gt;</code> draws on the CPU and offers nothing to turn on. One that
+            names Direct2D carries both and starts on whichever its config holds - see
+            <a href="#backend">The Backend</a>.</p>
             <div class="warning"><strong>A platform that cannot start throws.</strong> <code>WaylandPlatform</code>'s
             constructor connects to the compositor, and where there is none it throws a
             <code>std::runtime_error</code> naming what <code>WAYLAND_DISPLAY</code> held. Left uncaught, that
@@ -495,14 +499,18 @@
                     <code>keyName</code>, <code>keyModifiers</code>, <code>beep</code>, <code>globalScaleFactor</code>,
                     <code>caretBlinkTime</code>, <code>processCpuTime</code>, <code>setCursor</code>, <code>cursor</code>,
                     <code>getCursorInfo</code>, <code>shellExecute</code>, <code>appDataPath</code>,
-                    <code>debugOutput</code>, <code>systemColorMode</code>, <code>events</code></td>
+                    <code>documentsPath</code>, <code>executableDirectory</code>, <code>debugOutput</code>, <code>systemColorMode</code>, <code>events</code></td>
                     <td>Each platform supplies the bodies in its own unit - <code>Wayland.Platform.cpp</code>, an
                     implementation unit of the Context module, and <code>Windows_Facade.cppm</code>. A static that
                     needs the display server reaches it through a standing pointer - see
                     <a href="#standing">The Standing Pointer</a>.</td></tr>
-                <tr><td>One virtual</td><td><code>createWindow(IForm&amp;, WindowRole, IForm* parentForm)</code></td>
-                    <td>The derived platform, which holds what a window is made from. A form calls it through
-                    <code>appContext().platform()</code> when it builds its window.</td></tr>
+                <tr><td>Two virtuals</td><td><code>createWindow(IForm&amp;, WindowRole, IForm* parentForm)</code>,
+                    <code>diagnosticLines()</code></td>
+                    <td>The derived platform, which holds what a window is made from. A form calls
+                    <code>createWindow</code> through <code>appContext().platform()</code> when it builds its window.
+                    <code>diagnosticLines</code> answers what the platform found the display server offering, one
+                    line each, and nothing unless a platform says otherwise; the application writes them into the
+                    diagnostic log as it starts. Wayland names the optional protocols present and missing.</td></tr>
                 <tr><td>One owned object, by reference</td><td><code>clipboard()</code></td>
                     <td>The derived platform owns the <code>Transfer::Clipboard</code> as a member and names it to
                     the base at construction: <code>Platform(Transfer::Clipboard&amp;)</code>.</td></tr>
@@ -626,7 +634,7 @@
             <h2 id="application">Where the Platform Stands in an Application</h2>
 
             <h3 id="first-and-last">First Up, Last Down</h3>
-            <p><code>Application&lt;Platform, Backend&gt;</code> holds its platform in a base, not a member:</p>
+            <p><code>Application&lt;Platform, GpuBackend&gt;</code> holds its platform in a base, not a member:</p>
 <pre><span class="kw">template</span> &lt;<span class="tp">IsPlatform</span> <span class="tp">PlatformType</span>&gt;
 <span class="kw">class</span> <span class="tp">PlatformHolder</span>
 {
@@ -634,7 +642,7 @@
     <span class="tp">PlatformType</span> m_platform;
 };
 
-<span class="kw">export template</span> &lt;<span class="tp">IsPlatform</span> <span class="tp">PlatformType</span>, <span class="tp">IsBackend</span> <span class="tp">Backend</span>&gt;
+<span class="kw">export template</span> &lt;<span class="tp">IsPlatform</span> <span class="tp">PlatformType</span>, <span class="tp">IsOptionalGpuBackend</span> <span class="tp">GpuBackend</span> = <span class="kw">void</span>&gt;
 <span class="kw">class</span> <span class="tp">Application</span> : <span class="kw">private</span> <span class="tp">PlatformHolder</span>&lt;<span class="tp">PlatformType</span>&gt;, <span class="kw">public</span> <span class="tp">ApplicationBase</span>
 {
     ...
@@ -657,14 +665,16 @@
                     platform's members in their declared order, each on the ones before it. The platform stands
                     whole from here.</td></tr>
                 <tr><td>2</td><td><code>ApplicationBase</code> is built on it: the config path, the
-                    <code>AppContext</code> holding a <code>Platform&amp;</code>, the <code>ThemesManager</code>.</td></tr>
+                    <code>AppContext</code> holding a <code>Platform&amp;</code> and the GPU backend's factory where
+                    the application named one, the <code>ThemesManager</code>.</td></tr>
                 <tr><td>3</td><td><code>Application</code>'s constructor body calls
                     <code>ApplicationBase::initialize()</code>: the application id is stated to the platform, the
                     standard actions and the transfer formats are registered - the paste action connecting to the
-                    platform's clipboard - the app menu and themes are connected, the config is read.</td></tr>
+                    platform's clipboard - the app menu is connected, the diagnostic log is built and given the
+                    platform's <code>diagnosticLines</code>, the themes are connected, the config is read.</td></tr>
                 <tr><td>4</td><td>The application's own members and its <code>run()</code>: forms are built, each
-                    asking the platform for its window, and the main form's loop runs on the platform's event
-                    loop.</td></tr>
+                    asking the platform for its window and the context for a backend to draw it, and the main form's
+                    loop runs on the platform's event loop.</td></tr>
                 <tr><td>5</td><td>The application's own members go. A form's root stops its animations while it can
                     still name its form; a container stops its subtree's before detaching it - see
                     <a href="#teardown">Teardown</a>.</td></tr>
@@ -680,16 +690,45 @@
 
             <h3 id="app-context">AppContext</h3>
             <p><code>AppContext</code> is what a form or a control means by "the application". It holds the platform
-            by reference and hands it out as <code>platform()</code>, and it owns the one process-wide object
-            that is not the platform's: the <code>AnimationController</code>, as <code>animator()</code>. The
-            animation controller belongs here rather than to the platform because it is the application's -
+            by reference and hands it out as <code>platform()</code>, and it owns what the application runs for
+            itself rather than what the platform makes from the operating system: the
+            <code>AnimationController</code>, as <code>animator()</code>, and the <code>UpdateCheck</code>, as
+            <code>updateCheck()</code>. The animation controller belongs here rather than to the platform because it is the application's -
             every control's state fades, every glide, the theme crossing - stepped by one <code>UiTimer</code>
             that the platform's timer manager serves. Its owner has to stand below the platform and above every
             control, which is exactly where the context stands.</p>
+            <p>The update check holds a <code>WebFetch</code> while it asks: one request on a thread of its own,
+            answered on the UI thread through a <code>UiTimer</code>. A fetch cancels its request and joins its
+            thread in its destructor, and the context goes before the platform, so the timer it stops on the way
+            out finds the timer manager up.</p>
             <p>A <code>FormContext</code> holds a <code>const Platform&amp;</code> and hands out the one thing a
             control asks the platform for directly, the clipboard, as <code>clipboard()</code>. It is not
             <code>const</code>: the clipboard is the process's state rather than the context's, and a copy made
             from a const context is still a copy.</p>
+            <h3 id="backend">The Backend</h3>
+            <p>The platform makes a form's window; a <strong>backend</strong> draws into it. A form asks the context
+            for one as it is built - <code>AppContext::createBackend(window, size)</code> - and is handed the GPU
+            backend the application named while GPU acceleration is on, the CPU backend otherwise. The two kinds
+            are built from different things, and a concept states each:</p>
+            <table>
+                <tr><th>Concept</th><th>Built from</th><th>Why</th></tr>
+                <tr><td><code>IsGpuBackend</code></td><td><code>(IPlatformWindow&amp;, IntSize)</code></td>
+                    <td>It draws into a window the platform owns, and reads the native object it needs out of that
+                    window.</td></tr>
+                <tr><td><code>IsCpuBackend</code></td><td><code>(IntSize)</code></td>
+                    <td>It owns its pixel buffer, which the window presents.</td></tr>
+            </table>
+            <p>Besides its size, a backend is told one thing about its window: whether the window carries an alpha
+            channel, so that a frame starts from nothing where the pixels outside a rounded corner are read.</p>
+            <p>The choice is made in the application's type. <code>Application</code> is a template and a form is
+            not, so it travels down as a function pointer - <code>gpuBackendFactory&lt;GpuBackend&gt;()</code>,
+            null where none was named - and <code>AppContext::gpuAvailable()</code> is that pointer's answer.
+            Where there is one, the config holds a <code>GpuAcceleration</code> value, on by default, and the
+            Settings page shows the check that writes it; a change reaches every window at the top of its next
+            frame, and the window's canvas lets go of everything the old backend held. Where there is none,
+            neither the value nor the check exists.</p>
+            <p>Nothing else in the platform depends on which backend draws, and nothing in a control does. What
+            the two draw, and where they still differ, is the <a href="graphics.html">Graphics</a> manual's.</p>
             <h2 id="from-above">Reaching the Platform From Above</h2>
             <p>Code above the context - forms, controls, an application's own pages - never names
             <code>Win32Platform</code> or <code>WaylandPlatform</code>. It reaches what it needs through the
@@ -700,7 +739,7 @@
 <pre><span class="tp">std</span>::<span class="tp">unique_ptr</span>&lt;<span class="tp">IPlatformWindow</span>&gt; m_window{
     m_appContext.<span class="fn">platform</span>().<span class="fn">createWindow</span>(*<span class="kw">this</span>, m_windowRole, <span class="fn">popupTargetForm</span>())
 };</pre>
-            <p><code>createWindow</code> is the platform's one virtual. The derived platform answers with a
+            <p><code>createWindow</code> is the virtual every platform answers. The derived platform answers with a
             <code>FormWindow</code> made from what it holds - the windows manager on Win32, the display on
             Wayland - and hands that to the window, so no window reaches for it by any other route. A popup is
             handed its parent's window the same way, through the parent form. <code>WindowRole</code> says what
@@ -1035,10 +1074,14 @@ listener = platform.<span class="fn">createMessageWindow</span>();
                 <tr><td>Any <code>UiTimer</code></td><td>The platform's timer manager, through
                     <code>PlatformTimer::stop</code>.</td>
                     <td>Every <code>UiTimer</code> is owned by something the application or its context owns - a
-                    control, a form's hint, the animation controller, a directory watch - and the platform
+                    control, a form's hint, the animation controller, a directory watch, a web fetch - and the platform
                     outlives all of them. The hook finding no manager is <code>unreachable</code>.</td></tr>
                 <tr><td>The themes manager's <code>DirWatch</code></td><td>The platform's watch manager.</td>
                     <td><code>ApplicationBase</code>'s members go before the platform.</td></tr>
+                <tr><td>The update check's <code>WebFetch</code></td><td>Its own thread, and the timer manager for
+                    the timer it answers through.</td><td>Its destructor cancels the request and joins the thread
+                    while the timer manager stands: the check is the context's member, and the context goes before
+                    the platform.</td></tr>
                 <tr><td><code>AppContext</code></td><td>Its own animation controller, to stop the theme
                     crossing.</td><td>The controller is its member, stopped in its destructor body before the
                     members go.</td></tr>
@@ -1075,6 +1118,10 @@ listener = platform.<span class="fn">createMessageWindow</span>();
                     They are caches: what they hold is rebuilt on demand and released in no order.</td></tr>
                 <tr><td>The Wayland appearance portal</td><td>A lazily connected session bus, read for the desktop's
                     colour mode; its descriptor is polled by the display's loop while it is open.</td></tr>
+                <tr><td>libcurl, on Linux</td><td>Nothing a variable holds: the library is opened with
+                    <code>dlopen</code> when a fetch runs and never closed. A transfer aborted while a name resolves
+                    leaves libcurl's resolver thread running its code, and unloading the library would take that
+                    code from under it.</td></tr>
                 <tr><td><code>WindowsManager::appsColorMode</code></td><td>The desktop's mode as last read, which a
                     broadcast is compared against.</td></tr>
                 <tr><td>The diagnostic log</td><td>A form, held in a static <code>unique_ptr</code> in the Diagnostic
@@ -1116,16 +1163,20 @@ listener = platform.<span class="fn">createMessageWindow</span>();
                 <tr><td><code>clipboard()</code></td><td>The one clipboard, a <code>Transfer::Clipboard&amp;</code>.</td></tr>
                 <tr><td><code>createWindow(IForm&amp;, WindowRole, IForm* parentForm)</code></td><td>A form's
                     window, answered by the derived platform.</td></tr>
+                <tr><td><code>diagnosticLines()</code></td><td>What the platform found the display server offering,
+                    one diagnostic log line each. Empty unless the derived platform answers.</td></tr>
                 <tr><td>The statics</td><td>See <a href="#neutral-platform">Platform, the Neutral Half</a>.</td></tr>
             </table>
             <p>The two platforms and their facades:</p>
             <table>
                 <tr><th>Name</th><th>Module</th><th>Notes</th></tr>
                 <tr><td><code>Win32Platform</code>, <code>Win32Application</code></td><td><code>ClaFi.Platform.Windows</code></td>
-                    <td><code>Params{ HINSTANCE appInstance }</code>. Derives from <code>IMessageWindowFactory</code>.</td></tr>
+                    <td><code>Params{ HINSTANCE appInstance }</code>. Derives from <code>IMessageWindowFactory</code>.
+                    <code>Win32Application</code> is <code>Application&lt;Win32Platform, Direct2DBackend&gt;</code>.</td></tr>
                 <tr><td><code>WaylandPlatform</code>, <code>WaylandApplication</code></td><td><code>ClaFi.Platform.Wayland</code></td>
                     <td><code>Params{ bool watchesClipboard }</code>. Derives from <code>IDisplayAccess</code>. The
-                    constructor throws <code>std::runtime_error</code> with no compositor.</td></tr>
+                    constructor throws <code>std::runtime_error</code> with no compositor.
+                    <code>WaylandApplication</code> is <code>Application&lt;WaylandPlatform&gt;</code>.</td></tr>
             </table>
             <p>The seams:</p>
             <table>
@@ -1150,6 +1201,11 @@ listener = platform.<span class="fn">createMessageWindow</span>();
                 <tr><th>Accessor</th><th>Answers</th></tr>
                 <tr><td><code>AppContext::platform()</code></td><td>The <code>Platform&amp;</code>.</td></tr>
                 <tr><td><code>AppContext::animator()</code></td><td>The application's <code>AnimationController</code>.</td></tr>
+                <tr><td><code>AppContext::updateCheck()</code></td><td>The application's <code>UpdateCheck</code>.</td></tr>
+                <tr><td><code>AppContext::createBackend(window, size)</code></td><td>A form's backend: the GPU
+                    backend while one was named and GPU acceleration is on, the CPU backend otherwise.</td></tr>
+                <tr><td><code>AppContext::gpuAvailable()</code>, <code>usingGpu()</code></td><td>Whether the
+                    application named a GPU backend, and whether the windows draw through it now.</td></tr>
                 <tr><td><code>FormContext::clipboard()</code></td><td>The platform's <code>Transfer::Clipboard</code>.</td></tr>
                 <tr><td><code>Control::animator()</code></td><td>The controller through the form, or null in no form.</td></tr>
                 <tr><td><code>Control::animate(slot, current, end, onAnimate)</code></td><td>Runs an animation

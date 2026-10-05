@@ -470,6 +470,112 @@ end back to its start. Two helpers build a whole figure and start a fresh path t
 is centred on the origin. <code>addRoundedPolygon</code> appends a polygon with its corners rounded,
 keeping what the path already holds.</p>
 
+<p><strong>A curve is drawn to within half a pixel of itself.</strong> A path keeps its curves as
+curves, and each backend turns them into what it rasterizes: Direct2D tessellates them itself, and
+the CPU backend cuts each one into straight segments, halving it until every piece lies within half
+a device pixel of its chord. The half pixel is measured on the screen, the path's transform and the
+canvas's included, so a curve drawn larger is cut into more segments and none comes out coarser. No
+call takes a precision.</p>
+
+<svg class="grid-fig" viewBox="0 0 700 262" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A rounded corner at four on-screen radii, 10, 40, 160 and 640 pixels, cut by the CPU backend into 4, 8, 16 and 32 segments, each within half a device pixel of the curve.">
+  <style>
+    .cq-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
+    .cq-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
+    .cq-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
+    .cq-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
+    .cq-true { fill:none; stroke:#c62828; stroke-width:1; stroke-dasharray:3 2; }
+    .cq-seg { fill:none; stroke:#0066cc; stroke-width:2.2; stroke-linejoin:round; }
+    .cq-bg { fill:#f6f8fa; }
+  </style>
+  <rect class="cq-bg" x="20" y="40" width="152" height="150" rx="5"/>
+  <path class="cq-true" d="M38,172 Q38,56 154,56"/>
+  <polyline class="cq-seg" points="38,172 45.25,121.25 67,85 103.25,63.25 154,56"/>
+  <circle cx="38" cy="172" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="45.25" cy="121.25" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="67" cy="85" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="103.25" cy="63.25" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="154" cy="56" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <text class="cq-th" x="20" y="26">r = 10 px</text>
+  <text class="cq-t" x="20" y="210">4 segments, shown at 11.6x</text>
+  <rect class="cq-bg" x="192" y="40" width="152" height="150" rx="5"/>
+  <path class="cq-true" d="M210,172 Q210,56 326,56"/>
+  <polyline class="cq-seg" points="210,172 211.81,144.81 217.25,121.25 226.31,101.31 239,85 255.31,72.31 275.25,63.25 298.81,57.81 326,56"/>
+  <circle cx="210" cy="172" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="211.81" cy="144.81" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="217.25" cy="121.25" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="226.31" cy="101.31" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="239" cy="85" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="255.31" cy="72.31" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="275.25" cy="63.25" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="298.81" cy="57.81" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="326" cy="56" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <text class="cq-th" x="192" y="26">r = 40 px</text>
+  <text class="cq-t" x="192" y="210">8 segments, shown at 2.9x</text>
+  <rect class="cq-bg" x="364" y="40" width="152" height="150" rx="5"/>
+  <path class="cq-true" d="M382,172 Q382,56 498,56"/>
+  <polyline class="cq-seg" points="382,172 382.45,157.95 383.81,144.81 386.08,132.58 389.25,121.25 393.33,110.83 398.31,101.31 404.2,92.7 411,85 418.7,78.2 427.31,72.31 436.83,67.33 447.25,63.25 458.58,60.08 470.81,57.81 483.95,56.45 498,56"/>
+  <circle cx="382" cy="172" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="382.45" cy="157.95" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="383.81" cy="144.81" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="386.08" cy="132.58" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="389.25" cy="121.25" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="393.33" cy="110.83" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="398.31" cy="101.31" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="404.2" cy="92.7" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="411" cy="85" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="418.7" cy="78.2" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="427.31" cy="72.31" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="436.83" cy="67.33" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="447.25" cy="63.25" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="458.58" cy="60.08" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="470.81" cy="57.81" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="483.95" cy="56.45" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="498" cy="56" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <text class="cq-th" x="364" y="26">r = 160 px</text>
+  <text class="cq-t" x="364" y="210">16 segments, shown at 0.7x</text>
+  <rect class="cq-bg" x="536" y="40" width="152" height="150" rx="5"/>
+  <path class="cq-true" d="M554,172 Q554,56 670,56"/>
+  <polyline class="cq-seg" points="554,172 554.11,164.86 554.45,157.95 555.02,151.27 555.81,144.81 556.83,138.58 558.08,132.58 559.55,126.8 561.25,121.25 563.18,115.93 565.33,110.83 567.71,105.96 570.31,101.31 573.14,96.89 576.2,92.7 579.49,88.74 583,85 586.74,81.49 590.7,78.2 594.89,75.14 599.31,72.31 603.96,69.71 608.83,67.33 613.93,65.18 619.25,63.25 624.8,61.55 630.58,60.08 636.58,58.83 642.81,57.81 649.27,57.02 655.95,56.45 662.86,56.11 670,56"/>
+  <circle cx="554" cy="172" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="554.11" cy="164.86" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="554.45" cy="157.95" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="555.02" cy="151.27" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="555.81" cy="144.81" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="556.83" cy="138.58" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="558.08" cy="132.58" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="559.55" cy="126.8" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="561.25" cy="121.25" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="563.18" cy="115.93" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="565.33" cy="110.83" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="567.71" cy="105.96" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="570.31" cy="101.31" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="573.14" cy="96.89" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="576.2" cy="92.7" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="579.49" cy="88.74" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="583" cy="85" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="586.74" cy="81.49" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="590.7" cy="78.2" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="594.89" cy="75.14" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="599.31" cy="72.31" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="603.96" cy="69.71" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="608.83" cy="67.33" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="613.93" cy="65.18" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="619.25" cy="63.25" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="624.8" cy="61.55" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="630.58" cy="60.08" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="636.58" cy="58.83" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="642.81" cy="57.81" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="649.27" cy="57.02" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="655.95" cy="56.45" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="662.86" cy="56.11" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <circle cx="670" cy="56" r="2.6" fill="#fff" stroke="#003d7a" stroke-width="1.2"/>
+  <text class="cq-th" x="536" y="26">r = 640 px</text>
+  <text class="cq-t" x="536" y="210">32 segments, shown at 0.2x</text>
+  <text class="cq-t" x="20" y="236">One rounded corner - a quadTo through its corner point - at four sizes on the screen. The dashed red</text>
+  <text class="cq-t" x="20" y="252">line is the curve; every segment stays within half a device pixel of it, so the larger the corner, the more segments.</text>
+</svg>
+
 <p>A path is drawn as a stack of <strong>layers</strong>, each a <code>PathDrawLayer</code>: a mode,
 the geometry options the mode reads, and a brush. The layers are drawn in the order given, so a later
 one covers an earlier one.</p>
@@ -1247,6 +1353,10 @@ the same from both.</p>
     <td>One <code>close</code> closes every figure.</td>
     <td>Each figure is closed as it ends.</td>
     <td>One path for the closed figures and another for the open ones.</td></tr>
+<tr><td>A curve</td>
+    <td>Cut into straight segments, each within half a device pixel of the curve.</td>
+    <td>Tessellated by Direct2D, to its own tolerance.</td>
+    <td>Nothing: the CPU's segments never stray half a pixel from the curve.</td></tr>
 
 <tr><th colspan="4">Clips and pixels</th></tr>
 <tr><td>A rectangle clip with a fractional edge</td>
@@ -1352,8 +1462,14 @@ folded into the geometry where each call arrives: a rect's corners are mapped, a
 are scaled by the transform's scale factor. Rectangles, rounded rectangles and circles each have a
 painter of their own, written for axis-aligned spans; everything else is a path.</p>
 
-<p>A path is baked into segments, its curves flattened to within half a pixel at the scale it is
-drawn at. Each pixel's coverage comes from its distance to the nearest segment, and inside or
+<p>A path is baked into segments first. A curve is halved until each piece lies within a tolerance
+of its chord, and the tolerance is divided by the scale the path is drawn at, the larger axis's under
+a transform that scales the two apart, so it holds on the screen. A piece halved thirteen times is
+taken as its chord, flat or not. The tolerance is a <code>CurveQuality</code>, and everything the
+canvas draws, a path clip included, is baked at <code>Medium</code>: half a device pixel.
+<code>Low</code>, <code>High</code> and <code>VeryHigh</code> - two pixels, a tenth and a hundredth -
+are for code that bakes a <code>BakedPixelPath</code> of its own, which nothing in the framework does.
+Each pixel's coverage comes from its distance to the nearest segment, and inside or
 outside from the segments its row crosses, which is the even-odd rule. A stroke is the band within
 half its width of a segment, so its corners come out round; a glow is the same distance taken as a
 ramp. The coverage is held as a mask, and the brush is composited through it.</p>
