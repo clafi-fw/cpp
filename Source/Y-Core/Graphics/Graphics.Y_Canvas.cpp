@@ -18,6 +18,18 @@ namespace ClaFi::Graphics
         return result;
     }
 
+    // A quarter circle as one cubic: each handle's length as a share of the radius.
+    static constexpr float k_quarterArcHandle = 0.5522847f;
+
+    // The quarter circle from start to end, round the corner where their tangents meet.
+    static void addCornerArc(PixelPath& path, FloatPoint start, FloatPoint corner, FloatPoint end)
+    {
+        path.cubicTo(
+            start + (corner - start) * k_quarterArcHandle,
+            end + (corner - end) * k_quarterArcHandle,
+            end);
+    }
+
     // The distance an open end travels past the point the outline reaches. A stroke straddles the
     // outline it follows, so an end that stops on the outline stops half a stroke short of the
     // bounds, and a shape sharing that edge with another starts its ink half a stroke past it -
@@ -106,7 +118,7 @@ namespace ClaFi::Graphics
             {
                 if (segs[i].isArc)
                 {
-                    path.quadTo(segs[i].ctrl, segs[i].end);
+                    addCornerArc(path, segs[i].start, segs[i].ctrl, segs[i].end);
                 }
                 else if (segs[i].start.x != segs[i].end.x || segs[i].start.y != segs[i].end.y)
                 {
@@ -136,12 +148,16 @@ namespace ClaFi::Graphics
                 {
                     if (!inFigure)
                     {
-                        path.moveTo(seg.start - departure(index) * openEndExtent);
+                        const FloatPoint figureStart = seg.start - departure(index) * openEndExtent;
+                        path.moveTo(figureStart);
+                        // Before an arc the extension is a line, so the arc stays a quarter circle.
+                        if (seg.isArc && figureStart != seg.start)
+                            path.lineTo(seg.start);
                         inFigure = true;
                     }
                     if (seg.isArc)
                     {
-                        path.quadTo(seg.ctrl, seg.end);
+                        addCornerArc(path, seg.start, seg.ctrl, seg.end);
                     }
                     else if (seg.start.x != seg.end.x || seg.start.y != seg.end.y)
                     {
@@ -203,7 +219,7 @@ namespace ClaFi::Graphics
         {
             if (segs[i].isArc)
             {
-                path.quadTo(segs[i].ctrl, segs[i].end);
+                addCornerArc(path, segs[(i + 7) % 8].end, segs[i].ctrl, segs[i].end);
             }
             else
             {

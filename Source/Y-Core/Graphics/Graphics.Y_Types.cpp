@@ -10,6 +10,9 @@ namespace ClaFi::Graphics
     // Implementation: PixelPath
     // ========================================================================
 
+    // A quarter circle as one cubic: each handle's length as a share of the radius.
+    static constexpr float k_quarterArcHandle = 0.5522847f;
+
     void PixelPath::addRoundedPolygon(std::span<const FloatPoint> points, float radius)
     {
         const std::size_t count = points.size();
@@ -53,49 +56,42 @@ namespace ClaFi::Graphics
 
     void PixelPath::drawRoundedRect(float w, float h, float r)
     {
-        float halfWidth = w * 0.5f;
-        float halfHeight = h * 0.5f;
-        r = std::min({ r, halfWidth, halfHeight });
+        const float right = w * 0.5f;
+        const float bottom = h * 0.5f;
+        const float left = -right;
+        const float top = -bottom;
+        r = std::min({ r, right, bottom });
+        // How far from its corner each handle of the corner's arc lies.
+        const float reach = r * (1.0f - k_quarterArcHandle);
 
         clear();
-        moveTo(-halfWidth + r, -halfHeight);
-
-        // Top Edge -> Top-Right Corner
-        lineTo(halfWidth - r, -halfHeight);
-        quadTo({ halfWidth, -halfHeight }, { halfWidth, -halfHeight + r });
-
-        // Right Edge -> Bottom-Right Corner
-        lineTo(halfWidth, halfHeight - r);
-        quadTo({ halfWidth, halfHeight }, { halfWidth - r, halfHeight });
-
-        // Bottom Edge -> Bottom-Left Corner
-        lineTo(-halfWidth + r, halfHeight);
-        quadTo({ -halfWidth, halfHeight }, { -halfWidth, halfHeight - r });
-
-        // Left Edge -> Top-Left Corner
-        lineTo(-halfWidth, -halfHeight + r);
-        quadTo({ -halfWidth, -halfHeight }, { -halfWidth + r, -halfHeight });
-
+        moveTo(left + r, top);
+        lineTo(right - r, top);
+        cubicTo({ right - reach, top }, { right, top + reach }, { right, top + r });
+        lineTo(right, bottom - r);
+        cubicTo({ right, bottom - reach }, { right - reach, bottom }, { right - r, bottom });
+        lineTo(left + r, bottom);
+        cubicTo({ left + reach, bottom }, { left, bottom - reach }, { left, bottom - r });
+        lineTo(left, top + r);
+        cubicTo({ left, top + reach }, { left + reach, top }, { left + r, top });
         close();
     }
 
-    // Four quadratic beziers per circle. The two constants are the standard control point offsets
-    // for approximating a 45 degree arc with a quadratic: tan(pi/8) and sin(pi/4).
+    // A cubic a quarter turn, each off the circle by 0.03 percent of the radius at most.
     void PixelPath::drawCircle(FloatPoint center, float radius)
     {
-        float controlOffset = radius * 0.4142f;
-        float diagonal = radius * 0.7071f;
+        const float handle = radius * k_quarterArcHandle;
+        const float left = center.x - radius;
+        const float top = center.y - radius;
+        const float right = center.x + radius;
+        const float bottom = center.y + radius;
 
         clear();
-        moveTo(center.x, center.y - radius);
-        quadTo({ center.x + controlOffset, center.y - radius }, { center.x + diagonal, center.y - diagonal });
-        quadTo({ center.x + radius, center.y - controlOffset }, { center.x + radius, center.y });
-        quadTo({ center.x + radius, center.y + controlOffset }, { center.x + diagonal, center.y + diagonal });
-        quadTo({ center.x + controlOffset, center.y + radius }, { center.x, center.y + radius });
-        quadTo({ center.x - controlOffset, center.y + radius }, { center.x - diagonal, center.y + diagonal });
-        quadTo({ center.x - radius, center.y + controlOffset }, { center.x - radius, center.y });
-        quadTo({ center.x - radius, center.y - controlOffset }, { center.x - diagonal, center.y - diagonal });
-        quadTo({ center.x - controlOffset, center.y - radius }, { center.x, center.y - radius });
+        moveTo(center.x, top);
+        cubicTo({ center.x + handle, top }, { right, center.y - handle }, { right, center.y });
+        cubicTo({ right, center.y + handle }, { center.x + handle, bottom }, { center.x, bottom });
+        cubicTo({ center.x - handle, bottom }, { left, center.y + handle }, { left, center.y });
+        cubicTo({ left, center.y - handle }, { center.x - handle, top }, { center.x, top });
         close();
     }
 
