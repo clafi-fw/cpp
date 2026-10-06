@@ -504,7 +504,7 @@ namespace ClaFi::Controls::Grids
         // selection where it holds several rows. Never the container's current item.
         //
         // THE WALK ENDS HERE, and it has to. `Control::state()` runs leaf to root and the last
-        // writer wins; a grid is an ActiveContainer, so `StackPanelBase::getControlState` above
+        // writer wins; a grid is an ActiveContainer, so `StackBase::getControlState` above
         // answers for its items with `m_currentItem == item` and would replace this. That answer
         // is true of the one row the user last landed on and false of every row that merely holds
         // the cell inside it, which is exactly the set this rule exists to name.
@@ -678,7 +678,7 @@ namespace ClaFi::Controls::Grids
     }
 
     // The user is on a cell while it is the selected one and, in a view holding a selection,
-    // while its row is held as well - StackPanelBase reads a press on anything else as a pick.
+    // while its row is held as well - StackBase reads a press on anything else as a pick.
     void RowBase::recordPress(const KeyModifiers modifiers)
     {
         if (!Input::mouse().active())

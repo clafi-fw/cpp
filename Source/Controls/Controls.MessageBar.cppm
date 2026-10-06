@@ -2,7 +2,7 @@ export module ClaFi.Controls.MessageBar;
 
 import ClaFi.Controls.Base.SplitButtonBase;
 import ClaFi.Controls.Button;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -42,7 +42,7 @@ namespace ClaFi::Controls
         static constexpr float k_stripeWidth = 4.0f;
         static constexpr float k_answerSpacing = 8.0f;
     private:
-        StackPanel& m_answers;
+        Stack& m_answers;
         MessageIcon m_icon{ MessageIcon::None };
     };
 
@@ -65,7 +65,7 @@ namespace ClaFi::Controls
             Spacing{ k_spacing },
             std::forward<Args>(args)...
         },
-        m_answers{ createSecondaryPart<StackPanel>(
+        m_answers{ createSecondaryPart<Stack>(
             Orientation::Horizontal,
             Spacing{ k_answerSpacing },
             VerticalAlign::Center

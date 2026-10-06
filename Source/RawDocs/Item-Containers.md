@@ -1,7 +1,7 @@
 # Item Containers
 
-The words that no longer fit above a declaration in `ContainerBase.cppm`, `StackPanelBase.cppm`,
-`StackPanel.cppm` and `TabStrip.cppm`. Referenced from those files.
+The words that no longer fit above a declaration in `ContainerBase.cppm`, `StackBase.cppm`,
+`Stack.cppm` and `TabStrip.cppm`. Referenced from those files.
 
 ## ContainerBase
 
@@ -17,14 +17,14 @@ grid stands in, so that what the header draws around itself lands on the page in
 stopping at the grid's edge. What hosting costs is that this container's children are walked
 twice for every paint.
 
-## StackPanelBase
+## StackBase
 
-A base for the StackPanel and PageControl classes.
+A base for the Stack and PageControl classes.
 
 It owns the current item - the single item a container tracks. A PageControl shows its visible
 page through it and a TabStrip its open tab, and neither of them can hold more than one.
 
-PageControl does not need a stack alignment - that part lives in StackPanel - but it does need
+PageControl does not need a stack alignment - that part lives in Stack - but it does need
 the current item, so that part is here.
 
 Holding several items selected at once is a different idea, and it lives in StackView.
@@ -39,7 +39,7 @@ Whether an item may join a SELECTION is a different question, asked separately a
 rubber band asks only about selection, and a container with no selection at all still asks this
 one.
 
-## StackPanel
+## Stack
 
 A container that places its items in lanes. `Orientation` says which way a lane runs and whether
 the stack wraps into further lanes; `ItemSizing` says how a lane divides itself between the items
@@ -232,7 +232,7 @@ Three things the remembered length is not allowed to do, and each is a guard:
   out narrower than the width it wrapped at, the next pass wraps THAT, and a stack aligned Left
   walks from five items a row down to two. **An item of a row keeps what it measured too**, Fill or
   not: a row sizes its items from what they measured, and hands a width out only to an item that
-  takes what the lane has over - `StackPanel::isChildWidthGiven`. Without that a crumb held its
+  takes what the lane has over - `Stack::isChildWidthGiven`. Without that a crumb held its
   own width as a ceiling: a longer title broke onto more lines, and a scale round trip left its
   icon and strip, rounded per scale, a pixel short of the text. Above this control the same
   question is asked of every host in turn, and one level is never enough: the backstage hands a
@@ -242,7 +242,7 @@ Three things the remembered length is not allowed to do, and each is a guard:
 
   The height walk is the same walk down the other axis. A control that does not fill downwards
   keeps the height it measured. A column sizes its items from what they measured and hands a
-  height out only to an item that takes what the lane has over - `StackPanel::isChildHeightGiven`.
+  height out only to an item that takes what the lane has over - `Stack::isChildHeightGiven`.
   A panel's top and bottom bars are as tall as they measured, while its side bars and its body are
   handed the slot's height - `PanelBase::isChildHeightGiven`. A scroll box gives its body no height
   on an axis it scrolls - `ScrollBox::isChildHeightGiven`, and see the next section.
@@ -315,7 +315,7 @@ was built for. `PreviewMode` says which item that is.
 
 Raised a moment after the item settles rather than for every item passed on the way, so a held
 key and a pointer sweeping the stack each answer once, for the item they came to rest on. See
-`StackPanel::startPreviewTimer`.
+`Stack::startPreviewTimer`.
 
 `item` is never null: a stack with nothing to settle on previews nothing at all.
 

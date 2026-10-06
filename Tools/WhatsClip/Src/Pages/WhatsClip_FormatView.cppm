@@ -4,7 +4,7 @@ import ClaFi.Tools.WhatsClip.Page;
 
 import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.TabStrip;
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 
 import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;

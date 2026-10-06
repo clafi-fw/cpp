@@ -3,7 +3,7 @@ module ClaFi.App.Information;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.Spacer;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 
 import ClaFi.Core.Foundation;
@@ -57,7 +57,7 @@ namespace ClaFi
 
     InformationPage::InformationPage(const CreateParams& params)
         :
-        StackPanel{
+        Stack{
             params,
             Orientation::Vertical,
             Padding{ k_pagePadding },
@@ -84,7 +84,7 @@ namespace ClaFi
     // status is hidden until there is something to say - see stateUpdateRow.
     void InformationPage::addUpdateRow()
     {
-        StackPanel& row = add<StackPanel>(
+        Stack& row = add<Stack>(
             Orientation::Horizontal,
             Spacing{ k_pageSpacing }
         );

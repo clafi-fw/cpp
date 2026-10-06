@@ -5,7 +5,7 @@ import ThisApp.Utils;
 import ClaFi;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Graphics.Types;
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.Context.PaintIconEvent;
@@ -36,7 +36,7 @@ namespace ThisApp
         void dropdown(DropdownEvent&) override;
         void paintIcon(PaintIconEvent&) override;
     private:
-        class DropDownMenu : public StackPanel
+        class DropDownMenu : public Stack
         {
         public:
             DropDownMenu(const CreateParams&, const ColorHarmonyItem&);
@@ -88,7 +88,7 @@ namespace ThisApp
 
     ColorHarmonyItem::DropDownMenu::DropDownMenu(const CreateParams& params, const ColorHarmonyItem& item)
         :
-        StackPanel{
+        Stack{
             params,
             Orientation::HorizontalWrap,
             Interactivity::ActiveContainer,
@@ -129,7 +129,7 @@ namespace ThisApp
 
     void ColorHarmonyItem::DropDownMenu::nestedClick(ClickEvent& event)
     {
-        StackPanel::nestedClick(event);
+        Stack::nestedClick(event);
         std::size_t tagValue = event.control->tag().value;
         m_harmony.selectMap(m_harmony.maps()[tagValue]);
         //invalidateChildrenStates();
@@ -196,7 +196,7 @@ namespace ThisApp
 
     void ColorHarmonyItem::dropdown(DropdownEvent& event)
     {
-        static_cast<StackPanel*>(parent())->setCurrentItem(this);
+        static_cast<Stack*>(parent())->setCurrentItem(this);
         event.executeDropdown<DropDownPanel>(*this);
     }
 
@@ -224,7 +224,7 @@ namespace ThisApp
 
     void ColorHarmonyItem::dropDown(Control& dropDownButton)
     {
-        static_cast<StackPanel*>(parent())->setCurrentItem(this);
+        static_cast<Stack*>(parent())->setCurrentItem(this);
 
         Form<DropDownPanel> menuForm{ form().createPopup<DropDownPanel>(&dropDownButton, *this) };
 

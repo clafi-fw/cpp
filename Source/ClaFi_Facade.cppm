@@ -37,7 +37,7 @@ export import ClaFi.Controls.Divider;
 export import ClaFi.Controls.Slider;
 export import ClaFi.Controls.Spacer;
 export import ClaFi.Controls.SplitButton;
-export import ClaFi.Controls.StackPanel;
+export import ClaFi.Controls.Stack;
 export import ClaFi.Controls.StackView;
 export import ClaFi.Controls.TabbedBox;
 export import ClaFi.Controls.TabStrip;

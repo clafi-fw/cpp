@@ -19,12 +19,12 @@ namespace ThisApp
     private:
         inline static bool m_selectedRb{ true };
 
-        StackPanel& m_stackPanel{ createBody<StackPanel>(
+        Stack& m_stack{ createBody<Stack>(
             Padding{ 12.0 },
             Spacing{ 8.0 }
         ) };
 
-        Label& m_titleLabel{ m_stackPanel.add<Label>(
+        Label& m_titleLabel{ m_stack.add<Label>(
             Text{ TextAlign::Center, TextStyleId::SubTitle, L"Live preview" },
             WordWrap::No,
             HorizontalAlign::Center,
@@ -34,10 +34,10 @@ namespace ThisApp
         ) };
 
         // Consumes every excessive height
-        FlexSpacer& m_flexSpacer1{ m_stackPanel.add<FlexSpacer>() };
-        Divider& m_divider1{ m_stackPanel.add<Divider>(VerticalAlign::Center) };
+        FlexSpacer& m_flexSpacer1{ m_stack.add<FlexSpacer>() };
+        Divider& m_divider1{ m_stack.add<Divider>(VerticalAlign::Center) };
 
-        TextBox& m_textBox{ m_stackPanel.add<TextBox>(
+        TextBox& m_textBox{ m_stack.add<TextBox>(
             Padding{ 4.0f },
             Text{
                 TextAlign::Center,
@@ -50,11 +50,11 @@ namespace ThisApp
             }
         ) };
 
-        Divider& m_divider2{ m_stackPanel.add<Controls::Divider>() };
+        Divider& m_divider2{ m_stack.add<Controls::Divider>() };
         // Consumes every excessive height
-        FlexSpacer& m_flexSpacer2{ m_stackPanel.add<FlexSpacer>() };
+        FlexSpacer& m_flexSpacer2{ m_stack.add<FlexSpacer>() };
 
-        Button& m_button1{ m_stackPanel.add<Button>(
+        Button& m_button1{ m_stack.add<Button>(
             Text{ TextAlign::Center, L"Test Button" }
         ) };
 
@@ -71,12 +71,12 @@ namespace ThisApp
         EventConnection m_button1Click3{ m_button1.onClick([](ClickEvent&) {
             }) };
 
-        CheckBox2& m_checkBox{ m_stackPanel.add<CheckBox2>(
+        CheckBox2& m_checkBox{ m_stack.add<CheckBox2>(
             L"CheckBox",
             Checked::Yes
         ) };
 
-        RadioButton& m_radioButton1{ m_stackPanel.add<RadioButton>(
+        RadioButton& m_radioButton1{ m_stack.add<RadioButton>(
             L"RadioButton 1",
             OnEvent{ [](ClickEvent& event) {
                 m_selectedRb = false;
@@ -84,7 +84,7 @@ namespace ThisApp
             } },
             OnGetState{ [](GetStateEvent& event) { event.state.selected = !m_selectedRb; }}
         ) };
-        RadioButton& m_radioButton2{ m_stackPanel.add<RadioButton>(
+        RadioButton& m_radioButton2{ m_stack.add<RadioButton>(
             L"RadioButton 2",
             OnEvent{ [](ClickEvent& event) {
                 m_selectedRb = true;
@@ -94,14 +94,14 @@ namespace ThisApp
         ) };
 
         // A button's metrics give a stroke something to be drawn at; focusable gives the states.
-        RichControl& m_testee{ m_stackPanel.add<RichControl>(
+        RichControl& m_testee{ m_stack.add<RichControl>(
             themeMetrics().button,
             Interactivity::Focusable,
             UiElement::Testee,
             Text{ L"Testee" }
         ) };
 
-        RichControl& m_bestee{ m_stackPanel.add<RichControl>(
+        RichControl& m_bestee{ m_stack.add<RichControl>(
             themeMetrics().button,
             Interactivity::Focusable,
             UiElement::Bestee,

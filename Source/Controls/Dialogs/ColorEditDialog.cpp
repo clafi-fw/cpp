@@ -6,7 +6,7 @@ import ClaFi.Controls.Slider;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.Base.ButtonBase;
 import ClaFi.Controls.Base.PanelBase;
 import ClaFi.Controls.Base.SliderBase;
@@ -100,7 +100,7 @@ namespace ClaFi::Controls
             Radius{ 0.0f },
             Padding{ k_contentPadding }
         ) },
-        m_column{ m_content.createBody<StackPanel>(
+        m_column{ m_content.createBody<Stack>(
             Orientation::Vertical,
             Spacing{ k_rowSpacing }
         ) },
@@ -125,7 +125,7 @@ namespace ClaFi::Controls
             Radius{ 0.0f },
             Padding{ k_barPaddingX, k_barPaddingY }
         ) },
-        m_answers{ m_answerBar.createBody<StackPanel>(
+        m_answers{ m_answerBar.createBody<Stack>(
             Orientation::Horizontal,
             Spacing{ k_answerSpacing },
             ItemSizing::Equal
@@ -200,7 +200,7 @@ namespace ClaFi::Controls
     ColorEditDialog::Row ColorEditDialog::addRow(const std::wstring_view name,
         const HslChannel channel)
     {
-        StackPanel& row = m_column.add<StackPanel>(
+        Stack& row = m_column.add<Stack>(
             Orientation::Horizontal,
             Spacing{ k_cellSpacing }
         );

@@ -1,4 +1,4 @@
-module ClaFi.Controls.Base.StackPanelBase;
+module ClaFi.Controls.Base.StackBase;
 
 import ClaFi.Controls.Base.Container;
 import ClaFi.Core.Foundation;
@@ -9,7 +9,7 @@ namespace ClaFi::Controls
 {
     // CanFocusItemEvent
 
-    CanFocusItemEvent::CanFocusItemEvent(StackPanelBase& itemsView,
+    CanFocusItemEvent::CanFocusItemEvent(StackBase& itemsView,
         const Control& item, bool canFocus)
         :
         itemsView{ itemsView },
@@ -20,16 +20,16 @@ namespace ClaFi::Controls
 
     // CurrentItemChangeEvent
 
-    CurrentItemChangeEvent::CurrentItemChangeEvent(StackPanelBase& itemsView, Control* previousItem)
+    CurrentItemChangeEvent::CurrentItemChangeEvent(StackBase& itemsView, Control* previousItem)
         :
         itemsView{ itemsView },
         previousItem{ previousItem }
     {
     }
 
-    // StackPanelBase
+    // StackBase
 
-    void StackPanelBase::setCurrentItem(Control* item)
+    void StackBase::setCurrentItem(Control* item)
     {
         Control* previousItem = currentItem();
         recordCurrentItem(item);
@@ -43,7 +43,7 @@ namespace ClaFi::Controls
             item->scrollIntoViewOnAlign();
     }
 
-    void StackPanelBase::recordCurrentItem(Control* value)
+    void StackBase::recordCurrentItem(Control* value)
     {
         if (m_currentItem == value)
             return;
@@ -63,7 +63,7 @@ namespace ClaFi::Controls
         doCurrentItemChanged(previousValue);
     }
 
-    bool StackPanelBase::canFocusItem(Control* value)
+    bool StackBase::canFocusItem(Control* value)
     {
         if (!value)
             return true;
@@ -77,7 +77,7 @@ namespace ClaFi::Controls
         return event.canFocus;
     }
 
-    Control* StackPanelBase::itemAt(Control* control)
+    Control* StackBase::itemAt(Control* control)
     {
         while (control && control != this)
         {
@@ -89,29 +89,29 @@ namespace ClaFi::Controls
         return nullptr;
     }
 
-    bool StackPanelBase::isNotNullAndCannotBeCurrent(Control* value)
+    bool StackBase::isNotNullAndCannotBeCurrent(Control* value)
     {
         return value && !canFocusItem(value);
     }
 
-    void StackPanelBase::currentItemChanged(CurrentItemChangeEvent&)
+    void StackBase::currentItemChanged(CurrentItemChangeEvent&)
     {
     }
 
     // A container that does not move its current item itself has none to offer, and inside one
     // that does, an item is a control the user can land on rather than a caption or a panel
     // sitting between them.
-    bool StackPanelBase::defaultCanFocusItem(Control& value)
+    bool StackBase::defaultCanFocusItem(Control& value)
     {
         return followsUser() && value.interactivity() == Interactivity::Focusable;
     }
 
-    bool StackPanelBase::isItemSelected(const Control& item) const
+    bool StackBase::isItemSelected(const Control& item) const
     {
         return m_currentItem == &item;
     }
 
-    void StackPanelBase::nestedControlDeleted(Control* item)
+    void StackBase::nestedControlDeleted(Control* item)
     {
         Container::nestedControlDeleted(item);
         if (item == m_currentItem)
@@ -121,7 +121,7 @@ namespace ClaFi::Controls
         }
     }
 
-    void StackPanelBase::getControlState(GetStateEvent& event) const
+    void StackBase::getControlState(GetStateEvent& event) const
     {
         Container::getControlState(event);
         if (event.propagationStopped())
@@ -136,12 +136,12 @@ namespace ClaFi::Controls
         event.stopPropagation();
     }
 
-    Control* StackPanelBase::focusDelegate()
+    Control* StackBase::focusDelegate()
     {
         return m_currentItem ? m_currentItem : this;
     }
 
-    void StackPanelBase::nestedClick(ClickEvent& event)
+    void StackBase::nestedClick(ClickEvent& event)
     {
         //if (!Input::mouse().active())
         {
@@ -155,7 +155,7 @@ namespace ClaFi::Controls
     // A press on the current item is still a pick while the selection does not hold it - a view
     // keeping a set can have its current item outside the set. Focus arriving any other way
     // moves nothing there.
-    void StackPanelBase::nestedControlFocusing(FocusEvent& event)
+    void StackBase::nestedControlFocusing(FocusEvent& event)
     {
         const bool alreadyPicked = event.control == currentItem()
             && (!Input::mouse().active() || isItemSelected(*event.control));
@@ -173,12 +173,12 @@ namespace ClaFi::Controls
         Container::nestedControlFocusing(event);
     }
 
-    bool StackPanelBase::followsUser() const
+    bool StackBase::followsUser() const
     {
         return interactivity() == Interactivity::ActiveContainer;
     }
 
-    void StackPanelBase::autoSelectItem(Control& item, KeyModifiers modifiers, bool& handled, bool applyGesture)
+    void StackBase::autoSelectItem(Control& item, KeyModifiers modifiers, bool& handled, bool applyGesture)
     {
         if (!followsUser())
             return;
@@ -198,7 +198,7 @@ namespace ClaFi::Controls
         currentItemPicked(&item, previousItem, modifiers, applyGesture);
     }
 
-    void StackPanelBase::doCurrentItemChanged(Control* previous)
+    void StackBase::doCurrentItemChanged(Control* previous)
     {
         CurrentItemChangeEvent event{ *this, previous };
         currentItemChanged(event);
@@ -229,7 +229,7 @@ namespace ClaFi::Controls
     //
     // For a container keeping a selection of one this is the current item, and a press on that
     // never reaches here - adjustFocus answers it before asking.
-    bool StackPanelBase::appliesGesture(const Control& item, KeyModifiers modifiers) const
+    bool StackBase::appliesGesture(const Control& item, KeyModifiers modifiers) const
     {
         if (!Input::mouse().active())
             return modifiers.shift || !modifiers.ctrl;

@@ -5,7 +5,7 @@ import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.Spacer;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -102,7 +102,7 @@ namespace ThisApp
     }
 
     // The outputs as radio buttons, then each of the two input sets as a column of check boxes.
-    class ApplyToPopup : public StackPanel
+    class ApplyToPopup : public Stack
     {
     public:
         ApplyToPopup(const CreateParams&, ApplyToControl&);
@@ -111,7 +111,7 @@ namespace ThisApp
         void setOutput(PaintChannel);
         void toggleInput(RuleClause, RuleInput);
     private:
-        StackPanel& addColumn(std::wstring_view header);
+        Stack& addColumn(std::wstring_view header);
         void addInputColumn(std::wstring_view header, RuleClause);
         void refreshItems();
     private:
@@ -250,7 +250,7 @@ namespace ThisApp
 
     ApplyToPopup::ApplyToPopup(const CreateParams& params, ApplyToControl& owner)
         :
-        StackPanel{ params,
+        Stack{ params,
             Orientation::Horizontal,
             Interactivity::ActiveContainer,
             params.themeMetrics().secondaryWindow,
@@ -261,7 +261,7 @@ namespace ThisApp
         },
         m_owner{ owner }
     {
-        StackPanel& outputs = addColumn(L"Apply to");
+        Stack& outputs = addColumn(L"Apply to");
         for (std::size_t i = 0ull; i != k_channelLabels.size(); ++i)
             m_items.push_back(&outputs.add<OutputItem>(*this, static_cast<PaintChannel>(i)));
         addInputColumn(L"When", &ColorRule::inputs);
@@ -280,9 +280,9 @@ namespace ThisApp
         refreshItems();
     }
 
-    StackPanel& ApplyToPopup::addColumn(const std::wstring_view header)
+    Stack& ApplyToPopup::addColumn(const std::wstring_view header)
     {
-        StackPanel& result = add<StackPanel>(
+        Stack& result = add<Stack>(
             Orientation::Vertical,
             Interactivity::ActiveContainer,
             VerticalAlign::Top
@@ -297,7 +297,7 @@ namespace ThisApp
 
     void ApplyToPopup::addInputColumn(const std::wstring_view header, const RuleClause clause)
     {
-        StackPanel& column = addColumn(header);
+        Stack& column = addColumn(header);
         for (std::size_t i = 0ull; i != k_inputLabels.size(); ++i)
             m_items.push_back(&column.add<InputItem>(*this, clause, static_cast<RuleInput>(i)));
     }

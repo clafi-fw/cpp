@@ -8,7 +8,7 @@ import ClaFi.Controls.Button;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.HistoryButton;
 import ClaFi.Controls.SplitButton;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.Base.MessageBoxBase;
 
 import ClaFi.StdActions;

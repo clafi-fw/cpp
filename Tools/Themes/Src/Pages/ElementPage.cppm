@@ -14,7 +14,7 @@ import ClaFi.Controls.Grids_Dt;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 
 import ClaFi.StdActions;
@@ -120,7 +120,7 @@ namespace ThisApp
             VerticalTextAnchor::Center
         ) };
 
-        StackPanel& m_tools{ m_topBar.createRightBar<StackPanel>(
+        Stack& m_tools{ m_topBar.createRightBar<Stack>(
             Orientation::Horizontal,
             Interactivity::ActiveContainer,
             Spacing{ 4.0f }
@@ -145,7 +145,7 @@ namespace ThisApp
         // A row names its rule by the rule's place in the list, carried as the row's tag.
         Grids::Dt::Grid& m_grid{ createBody<ScrollBox>(
             ScrollBars::Vertical
-        ).createBody<StackPanel>(
+        ).createBody<Stack>(
             Orientation::Vertical,
             Padding{ 12.0f }
         ).add<Grids::Dt::Grid>(

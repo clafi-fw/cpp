@@ -12,7 +12,7 @@ import ClaFi.Controls.Divider;
 import ClaFi.Controls.LabeledDivider;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Icons.XMark;
 import ClaFi.StdActions;
@@ -239,7 +239,7 @@ namespace ThisApp
     /// choice. Everything is built with the popup: a popup is sized to its content once, when it
     /// opens, so a control appearing in it afterwards would have nowhere to go, and a line of text
     /// growing in it would have no room to grow into.
-    class HueRulePopup : public StackPanel
+    class HueRulePopup : public Stack
     {
         friend HueRuleItem;
         friend HueSlider;
@@ -463,7 +463,7 @@ namespace ThisApp
 
     HueRulePopup::HueRulePopup(const CreateParams& params, HueRuleControl& owner)
         :
-        StackPanel{ params,
+        Stack{ params,
             Orientation::Vertical,
             Interactivity::ActiveContainer,
             params.themeMetrics().secondaryWindow,
@@ -494,7 +494,7 @@ namespace ThisApp
         // maps: one lane of radio marked tiles. Written out rather than looped over
         // ColorRuleHueOp, whose order leads with the palette entries so that an enumerator indexes
         // straight into paletteHues - a storage concern, not a reading one.
-        StackPanel& tileRow = add<StackPanel>(
+        Stack& tileRow = add<Stack>(
             Orientation::HorizontalWrap,
             Interactivity::ActiveContainer,
             LaneSize{ 3 },
@@ -559,7 +559,7 @@ namespace ThisApp
             m_owner.exactHueChanged(EditPhase::Settled);
             });
 
-        StackPanel& commandBar = add<StackPanel>(
+        Stack& commandBar = add<Stack>(
             UiElement::Section,
             Orientation::Horizontal,
             Spacing{ 12.0f },

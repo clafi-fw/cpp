@@ -7,7 +7,7 @@ import ClaFi.Controls.ColorSlider;
 import ClaFi.Controls.ColorSpelling;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.Base.PanelBase;
 
 import ClaFi.Core.Foundation;
@@ -93,7 +93,7 @@ namespace ClaFi::Controls
         ColorSpelling m_spelling;
         Label& m_title;
         Panel& m_content;
-        StackPanel& m_column;
+        Stack& m_column;
         Preview& m_preview;
         Label& m_originalSample;
         Row m_hue;
@@ -101,7 +101,7 @@ namespace ClaFi::Controls
         Row m_luminosity;
         ColorSlidersLinker m_linker;
         Panel& m_answerBar;
-        StackPanel& m_answers;
+        Stack& m_answers;
     };
 
 

@@ -4,7 +4,7 @@ import ClaFi.Controls.Menu;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;

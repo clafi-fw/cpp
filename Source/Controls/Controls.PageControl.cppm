@@ -1,6 +1,6 @@
 export module ClaFi.Controls.PageControl;
 
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Scaler;
 import ClaFi.Core.System.UiTypes;
@@ -16,11 +16,11 @@ namespace ClaFi::Controls
     };
 
     // A stack showing one of its pages at a time.
-    export class PageControl : public StackPanelBase
+    export class PageControl : public StackBase
     {
     public:
-        using StackPanelBase::StackPanelBase;
-        using StackPanelBase::add;
+        using StackBase::StackBase;
+        using StackBase::add;
         std::wstring_view diagnosticText() const override { return L"PageControl"; }
         // Whether the pages nobody is looking at count towards this control's size. See Controls
         [[nodiscard]] PageSizing pageSizing() const { return m_pageSizing; }
@@ -58,7 +58,7 @@ namespace ClaFi::Controls
 
     void PageControl::controlAdded(Control& control)
     {
-        StackPanelBase::controlAdded(control);
+        StackBase::controlAdded(control);
         control.hide();
         // A page arriving is a page nobody has measured.
         m_measuredScale.reset();
@@ -66,13 +66,13 @@ namespace ClaFi::Controls
 
     void PageControl::nestedControlDeleted(Control* control)
     {
-        StackPanelBase::nestedControlDeleted(control);
+        StackBase::nestedControlDeleted(control);
         m_measuredScale.reset();
     }
 
     void PageControl::childVisibilityChanged(Control& control)
     {
-        StackPanelBase::childVisibilityChanged(control);
+        StackBase::childVisibilityChanged(control);
 
         if (control.visible())
             recordCurrentItem(control);
@@ -90,7 +90,7 @@ namespace ClaFi::Controls
 
     void PageControl::currentItemChanged(CurrentItemChangeEvent& event)
     {
-        StackPanelBase::currentItemChanged(event);
+        StackBase::currentItemChanged(event);
         if (event.previousItem)
             event.previousItem->hide();
         if (currentItem())
@@ -109,7 +109,7 @@ namespace ClaFi::Controls
     // application menu is - never meets it.
     void PageControl::calculateChildren(FormBase& form)
     {
-        StackPanelBase::calculateChildren(form);
+        StackBase::calculateChildren(form);
         if (m_pageSizing == PageSizing::CurrentPage)
             return;
 
@@ -132,7 +132,7 @@ namespace ClaFi::Controls
     // is as big as the largest page it can show, whichever it happens to be showing.
     ScaledDimensions PageControl::calculateContent(AlignEvent& event)
     {
-        ScaledDimensions result = StackPanelBase::calculateContent(event);
+        ScaledDimensions result = StackBase::calculateContent(event);
         if (m_pageSizing == PageSizing::CurrentPage)
             return result;
 

@@ -12,7 +12,7 @@ import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Slider;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.Divider;
 
 import ClaFi.Core.Foundation;
@@ -25,17 +25,17 @@ namespace ClaFi
     using namespace Controls;
 
     // A page of captioned option groups - the shape the backstage's pages share. See Application
-    export class OptionsPage : public StackPanel
+    export class OptionsPage : public Stack
     {
     public:
         // A caption and the column of options it heads, as one control. See Application
-        using Section = ExpanderWith<StackPanel>;
+        using Section = ExpanderWith<Stack>;
     public:
         explicit OptionsPage(const CreateParams&);
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"OptionsPage"; }
         // A caption with a column of options under it, added down the page.
-        [[nodiscard]] StackPanel& addGroup(std::wstring_view caption)
+        [[nodiscard]] Stack& addGroup(std::wstring_view caption)
             { return addSection(caption).body(); }
         // The same, as the whole section - for a page that shows or hides one. See Application
         [[nodiscard]] Section& addSection(std::wstring_view caption);
@@ -91,9 +91,9 @@ namespace ClaFi
         // of the menu is reached by scrolling the page rather than through a bar of its own.
         ScrollBoxWith<OptionsPage>& m_optionsBox;
         OptionsPage& m_options;
-        StackPanel& m_appearanceGroup;
+        Stack& m_appearanceGroup;
         // The theme and the mode it is worn in, as one row.
-        StackPanel& m_themeRow;
+        Stack& m_themeRow;
         RowCaption& m_themeCaption;
         ThemePick& m_themePick;
         ToolButton& m_autoButton;
@@ -101,30 +101,30 @@ namespace ClaFi
         ToolButton& m_lightButton;
         // The size everything is drawn at, as one row: what it is, what it stands at, and the
         // slot that moves it.
-        StackPanel& m_scaleRow;
+        Stack& m_scaleRow;
         RowCaption& m_scaleCaption;
         // Stated, and the same on both rows: what each row names stands at one left edge.
         PercentReadout& m_scaleReadout;
         ScaleSlider& m_scaleSlider;
 #if CLAFI_TEXT_MOVING
         // How far controls move in depth, as a row laid out the way the scale's is.
-        StackPanel& m_zAnimationRow;
+        Stack& m_zAnimationRow;
         RowCaption& m_zAnimationCaption;
         PercentReadout& m_zAnimationReadout;
         Slider& m_zAnimationSlider;
 #endif
         // Held whole: the whole of it goes where the platform has no keep-above to ask for.
         OptionsPage::Section& m_windowSection;
-        StackPanel& m_windowGroup;
+        Stack& m_windowGroup;
         CheckBox& m_alwaysOnTop;
         // Held whole for the same reason the window's is: all of it goes where the application
         // named no GPU backend.
         OptionsPage::Section& m_graphicsSection;
-        StackPanel& m_graphicsGroup;
+        Stack& m_graphicsGroup;
         CheckBox& m_gpuAcceleration;
         // The foot of the page, outside the box: the answer here is about the page as a whole,
         // so it stands where it can be seen rather than travelling with the options.
-        StackPanel& m_footer;
+        Stack& m_footer;
         Controls::Divider& m_footerDivider;
         CheckBox& m_keepSettings;
     };

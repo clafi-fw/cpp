@@ -1,14 +1,14 @@
 # Selection Model
 
-What StackView holds on top of the current item every StackPanel already tracks, and what the
+What StackView holds on top of the current item every Stack already tracks, and what the
 two enums that shape it mean. Referenced from `Source/Controls/StackView.cppm`.
 
 ## StackView
 
-StackView is a StackPanel that traps its children's focus, and that can hold several items
+StackView is a Stack that traps its children's focus, and that can hold several items
 selected at once when it is given `SelectionMode::Multi`.
 
-The two ideas stay apart. The focused item belongs to the StackPanel underneath and moves with
+The two ideas stay apart. The focused item belongs to the Stack underneath and moves with
 the keyboard and with plain clicks; the selection belongs to the view, and is spanned with
 Shift, toggled with Ctrl and a click or Ctrl+Space, and swept by dragging a rubber band across
 the items. Ctrl held over a navigation key moves the focused item alone and leaves the
@@ -16,7 +16,7 @@ selection standing. Items sitting in panels nested inside the view are selectabl
 and a rubber band both walk the whole subtree, not just the direct children.
 
 An action decides nothing on its own wherever what it means depends on the action that follows
-it - see `StackPanelBase::appliesGesture`.
+it - see `StackBase::appliesGesture`.
 
 A set can be put on from code as well: `setSelection` holds exactly the items it is given, drops
 any the view would refuse the user (see `CanSelectItemEvent`), and does nothing on a view whose
@@ -25,7 +25,7 @@ mode holds no set. The current item is not moved by it - a grid moves both toget
 
 ## SelectionMode
 
-Whether a view holds a set of selected items on top of the current item that every StackPanel
+Whether a view holds a set of selected items on top of the current item that every Stack
 already tracks. A Shift range runs between the selection anchor and the current item, and the
 anchor is recorded by every pick that is not a Shift. Neither the anchor nor the current item
 is a member of the set unless something put it there. A press on a current item the set does
@@ -51,4 +51,4 @@ rectangle is swept from the surface alone. For a view whose items are moved.
 `CanSelectItemEvent` is the view's own question, and nothing but the view asks it - a rubber
 band sweeping the subtree wants an answer for controls it never intends to make current.
 Whether an item may be the CURRENT one is asked separately, a level down - see
-`CanFocusItemEvent` in `StackPanelBase`.
+`CanFocusItemEvent` in `StackBase`.

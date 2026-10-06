@@ -8,7 +8,7 @@ import ClaFi.Documents.Folder;
 
 import ClaFi.Controls.ComboBox;
 import ClaFi.Controls.TextItems;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_Theme;

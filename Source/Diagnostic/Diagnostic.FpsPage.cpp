@@ -8,7 +8,7 @@ import ClaFi.Controls.Grids;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Base.ButtonBase;
 import ClaFi.Controls.Label;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Icons.RestartIcon;
 
@@ -189,7 +189,7 @@ namespace ClaFi::Diagnostic
                 metricRow(Metric::CpuCore)
             }
         ) },
-        m_footerBar{ body().add<StackPanel>(
+        m_footerBar{ body().add<Stack>(
             Orientation::Horizontal,
             Spacing{ 4.0f }
         ) },

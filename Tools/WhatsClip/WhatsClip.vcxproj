@@ -304,7 +304,7 @@
     <ClCompile Update="..\..\Source\Controls\Controls.SplitButton.cppm">
       <FileType>Document</FileType>
     </ClCompile>
-    <ClCompile Update="..\..\Source\Controls\Controls.StackPanel.cppm">
+    <ClCompile Update="..\..\Source\Controls\Controls.Stack.cppm">
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="..\..\Source\Controls\Controls.StackView.cppm">

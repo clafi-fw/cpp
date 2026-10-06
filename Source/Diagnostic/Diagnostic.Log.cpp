@@ -6,7 +6,7 @@ import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.TabStrip;
 import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Spacer;

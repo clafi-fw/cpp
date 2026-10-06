@@ -6,7 +6,7 @@ import ClaFi.Browser.Control;
 
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.Panel;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
@@ -38,12 +38,12 @@ namespace ClaFi::Documents
         // page's own stands under the initiator - the crumb, the Up button, the tab being closed.
         [[nodiscard]] virtual bool saveEdits(Control& /*initiator*/) const { return true; }
     protected:
-        [[nodiscard]] StackPanel& toolBar() const { return m_toolBar; }
+        [[nodiscard]] Stack& toolBar() const { return m_toolBar; }
         // The panel the tool bar is the body of, for a page adding a bar of its own beside it.
         [[nodiscard]] Panel& topPanel() const { return m_topPanel; }
     private:
         DocumentsFolder& m_folder;
-        StackPanel& m_topStack{ createTopBar<StackPanel>(
+        Stack& m_topStack{ createTopBar<Stack>(
             Orientation::Vertical,
             UiElement::ToolBar
         ) };
@@ -54,7 +54,7 @@ namespace ClaFi::Documents
         Divider& m_topDivider{ m_topStack.add<Divider>(
             Padding{ 0.0f, 0.0f }
         ) };
-        StackPanel& m_toolBar{ m_topPanel.createBody<StackPanel>(
+        Stack& m_toolBar{ m_topPanel.createBody<Stack>(
             Orientation::Horizontal,
             Interactivity::ActiveContainer
         ) };

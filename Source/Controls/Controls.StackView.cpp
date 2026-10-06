@@ -1,7 +1,7 @@
 module ClaFi.Controls.StackView;
 
-import ClaFi.Controls.StackPanel;
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Stack;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.Base.Container;
 import ClaFi.StdActions;
 import ClaFi.Core.Foundation;
@@ -215,14 +215,14 @@ namespace ClaFi::Controls
     bool StackView::isItemSelected(const Control& item) const
     {
         if (!isMultiSelect())
-            return StackPanel::isItemSelected(item);
+            return Stack::isItemSelected(item);
 
         return m_selection.contains(&item);
     }
 
     void StackView::adjustNestedControlVisualState(const Control& control, VisualState& state) const
     {
-        StackPanel::adjustNestedControlVisualState(control, state);
+        Stack::adjustNestedControlVisualState(control, state);
 
         // Only a multi-select view has anything to say here. Everywhere else the focused item
         // is the selected item and is already drawn as one, so marking it current on top of
@@ -233,7 +233,7 @@ namespace ClaFi::Controls
 
     void StackView::nestedControlDeleted(Control* item)
     {
-        StackPanel::nestedControlDeleted(item);
+        Stack::nestedControlDeleted(item);
         if (m_selectionAnchor == item)
             m_selectionAnchor = nullptr;
         m_anchorSelection.erase(item);
@@ -243,7 +243,7 @@ namespace ClaFi::Controls
 
     void StackView::nestedDrag(DragEvent& event)
     {
-        StackPanel::nestedDrag(event);
+        Stack::nestedDrag(event);
 
         if (!isMultiSelect())
             return;
@@ -288,7 +288,7 @@ namespace ClaFi::Controls
 
     void StackView::nestedPressUp(PressUpEvent& event)
     {
-        StackPanel::nestedPressUp(event);
+        Stack::nestedPressUp(event);
         if (m_selectionOverlayRect)
         {
             invalidateSelectionOverlay();
@@ -308,7 +308,7 @@ namespace ClaFi::Controls
 
     void StackView::paintChildren(PaintEvent& event)
     {
-        StackPanel::paintChildren(event);
+        Stack::paintChildren(event);
         // The band is the view's own paint, laid over the rows and under whatever stands in front
         // of them, and it is translucent - drawn a second time it would come out at twice its
         // opacity. Two stages can reach here, and it belongs to neither of them:

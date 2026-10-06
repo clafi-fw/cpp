@@ -207,7 +207,7 @@ namespace ClaFi
         void followScale();
         [[nodiscard]] Control& content() { return m_content; }
         // The control the focus goes to when this form is entered. THE ROOT ANSWERS, and only a
-        // root that keeps a current item has anything but itself to answer with: a StackPanel or
+        // root that keeps a current item has anything but itself to answer with: a Stack or
         // a Grid names the item it is on, and a plain Panel names itself. The form stores
         // nothing of its own - remembering where the focus was is what a container does, and a
         // form whose root is not one has no second place to keep it.

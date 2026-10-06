@@ -3,7 +3,7 @@ module ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.TextItems;
 import ClaFi.Controls.TextBox;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Panel;
 
@@ -177,7 +177,7 @@ namespace ClaFi::Controls
 
     SuggestionStack::SuggestionStack(const CreateParams& params, InPlaceEditRoot& root)
         :
-        StackPanel{ params,
+        Stack{ params,
             Orientation::Vertical,
             // A SCROLLED BODY KEEPS THE SIZE IT MEASURED - see ComboBoxDropdownStack.
             WordWrap::No
@@ -243,7 +243,7 @@ namespace ClaFi::Controls
 
     void SuggestionStack::getControlState(GetStateEvent& event) const
     {
-        StackPanel::getControlState(event);
+        Stack::getControlState(event);
         if (event.propagationStopped())
             return;
         event.state.selected = &event.control == currentItem();

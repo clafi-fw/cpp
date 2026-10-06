@@ -23,7 +23,7 @@ import ClaFi.Documents.Page;
 
 import ClaFi.Browser.Control;
 
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.CodeBox;
@@ -38,7 +38,7 @@ import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.Slider;
 import ClaFi.Controls.Spacer;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.TabStrip;
 import ClaFi.Controls.TextItems;
@@ -86,14 +86,14 @@ namespace ThisApp
     public:
         template<typename... Args>
         explicit CodePage(const CreateParams&, Args&&...);
-        [[nodiscard]] StackPanel& options() { return m_options; }
-        [[nodiscard]] StackPanel& contentGroup() { return m_contentGroup; }
+        [[nodiscard]] Stack& options() { return m_options; }
+        [[nodiscard]] Stack& contentGroup() { return m_contentGroup; }
         [[nodiscard]] CodeBox& box() { return m_box; }
     private:
-        StackPanel& m_options{ createLeftBar<ScrollBox>(
+        Stack& m_options{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,
             UiElement::Section
-        ).createBody<StackPanel>(
+        ).createBody<Stack>(
             Orientation::Vertical,
             Padding{ 8.0f, 4.0f },
             Spacing{ 4.0f }
@@ -105,7 +105,7 @@ namespace ThisApp
 
         // One container per set of choices: a click repaints its siblings, so the group is what
         // bounds the buttons a choice excludes.
-        StackPanel& m_contentGroup{ m_options.add<StackPanel>(
+        Stack& m_contentGroup{ m_options.add<Stack>(
             Orientation::Vertical
         ) };
 
@@ -274,7 +274,7 @@ namespace ThisApp
             Text{ TextStyleId::Section, L"Scope" }
         ) };
 
-        StackPanel& m_cppScopeGroup{ m_cppCodePage.options().add<StackPanel>(
+        Stack& m_cppScopeGroup{ m_cppCodePage.options().add<Stack>(
             Orientation::Vertical
         ) };
 
@@ -323,12 +323,12 @@ namespace ThisApp
             &m_jsonTab
         };
 
-        StackPanel& m_paletteBody{ m_designPage.paletteView().add<StackPanel>(
+        Stack& m_paletteBody{ m_designPage.paletteView().add<Stack>(
             Orientation::HorizontalWrap,
             Padding{ 8.0f, 8.0f }
         ) };
 
-        StackPanel& m_paletteColumn1{ m_paletteBody.add<StackPanel>(
+        Stack& m_paletteColumn1{ m_paletteBody.add<Stack>(
             Orientation::Vertical
         ) };
 
@@ -370,7 +370,7 @@ namespace ThisApp
             Spacing{ 8.0f }
         ) };
 
-        StackPanel& m_harmonyStack{ m_harmonyPanel.createBody<StackPanel>(
+        Stack& m_harmonyStack{ m_harmonyPanel.createBody<Stack>(
             Orientation::HorizontalWrap,
             Interactivity::ActiveContainer,
             Padding{ 12.0f, 4.0f },

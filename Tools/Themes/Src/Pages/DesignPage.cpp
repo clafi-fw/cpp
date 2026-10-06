@@ -7,7 +7,7 @@ import ThisApp.RuleSlider;
 
 import ClaFi.Application.ThemesManager_Elements;
 
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.TreeView;

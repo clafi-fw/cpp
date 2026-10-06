@@ -7,7 +7,7 @@ import ClaFi.Browser.PageData;
 import ClaFi.Browser.Settings;
 
 import ClaFi.Controls.Base.ButtonBase;
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Menu;

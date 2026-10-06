@@ -12,7 +12,7 @@ import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Core.Foundation;
 
@@ -197,7 +197,7 @@ namespace ClaFi::Controls
             Radius{ 0.0f },
             Padding{ k_barPaddingX, k_barPaddingY }
         ) },
-        m_answers{ m_answerBar.createBody<StackPanel>(
+        m_answers{ m_answerBar.createBody<Stack>(
             Orientation::Horizontal,
             Spacing{ k_answerSpacing },
             // The answers divide the strip between them, so the row reads as one band of answers

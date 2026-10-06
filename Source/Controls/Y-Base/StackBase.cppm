@@ -1,6 +1,6 @@
 module;
 #include "../Y-Core/System/EventBindings.h"
-export module ClaFi.Controls.Base.StackPanelBase;
+export module ClaFi.Controls.Base.StackBase;
 
 import ClaFi.Controls.Base.Container;
 import ClaFi.Core.Foundation;
@@ -11,31 +11,31 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    export class StackPanelBase;
+    export class StackBase;
 
     // May this item be the container's current one? See Item-Containers
     export struct CanFocusItemEvent : public Event
     {
-        CanFocusItemEvent(StackPanelBase&, const Control&, bool canFocus);
-        StackPanelBase& itemsView;   // the container asking
-        const Control& item;         // the item the answer is about
-        bool canFocus;               // the answer, as the container gave it before any handler
+        CanFocusItemEvent(StackBase&, const Control&, bool canFocus);
+        StackBase& itemsView;   // the container asking
+        const Control& item;    // the item the answer is about
+        bool canFocus;          // the answer, as the container gave it before any handler
     };
 
     // The container whose current item has just changed.
     export struct CurrentItemChangeEvent : public Event
     {
-        CurrentItemChangeEvent(StackPanelBase& itemsView, Control* previousItem);
-        StackPanelBase& itemsView;   // the container the current item belongs to
-        Control* previousItem;       // what was current before, null where nothing was
+        CurrentItemChangeEvent(StackBase& itemsView, Control* previousItem);
+        StackBase& itemsView;    // the container the current item belongs to
+        Control* previousItem;   // what was current before, null where nothing was
     };
 
-    // A base for StackPanel and PageControl, owning the current item. See Item-Containers
-    export class StackPanelBase : public Container
+    // A base for Stack and PageControl, owning the current item. See Item-Containers
+    export class StackBase : public Container
     {
     public:
         template <typename... Args>
-        explicit StackPanelBase(const CreateParams&, Args&&...);
+        explicit StackBase(const CreateParams&, Args&&...);
     public:
         // Asked before an item becomes the current one.
         DECLARE_EVENT(CanFocusItemEvent, OnCanFocusItem, onCanFocusItem)
@@ -122,13 +122,13 @@ namespace ClaFi::Controls
     // ------------------------------------------------------------------------
 
 
-    // StackPanelBase
+    // StackBase
     //
     // The constructor is the one definition that has to stay here: it is a template, so every
-    // caller instantiates it from this interface. Every other body lives in StackPanelBase.cpp.
+    // caller instantiates it from this interface. Every other body lives in StackBase.cpp.
 
     template<typename ...Args>
-    StackPanelBase::StackPanelBase(const CreateParams& params, Args && ...args)
+    StackBase::StackBase(const CreateParams& params, Args && ...args)
         :
         Container{ params, std::forward<Args>(args)...}
     {

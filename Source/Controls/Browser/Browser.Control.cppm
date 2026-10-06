@@ -13,7 +13,7 @@ import ClaFi.Controls.Base.ButtonBase;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.InPlaceEdit;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.TabStrip;
@@ -387,7 +387,7 @@ namespace ClaFi::Browser
                         << event.control().appContext().appName();
             } }
         ) };
-        StackPanel& m_titleBox{ m_title.createLeftBar<StackPanel>(
+        Stack& m_titleBox{ m_title.createLeftBar<Stack>(
             Orientation::Horizontal,
             Padding{ 4.0f, 0.0f },
             Spacing{ 4.0f, 0.0f }
@@ -416,7 +416,7 @@ namespace ClaFi::Browser
         ) };
         BreadCrumbBar& m_breadCrumbBar{ m_breadCrumbArea.createBody<BreadCrumbBar>(
         ) };
-        StackPanel& m_navigationBar{ m_breadCrumbArea.createLeftBar<StackPanel>(
+        Stack& m_navigationBar{ m_breadCrumbArea.createLeftBar<Stack>(
             Orientation::Horizontal
         ) };
         Button& m_backButton{ m_navigationBar.add<ToolButton>(

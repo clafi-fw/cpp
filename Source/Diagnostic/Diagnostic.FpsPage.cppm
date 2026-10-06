@@ -7,7 +7,7 @@ import ClaFi.Controls.Grids_Dt;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Label;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Core.TextEngine.Text;
 
@@ -25,7 +25,7 @@ namespace ClaFi::Diagnostic
     using namespace Controls;
 
     // What the framework window under the pointer costs to paint. See Diagnostic
-    export class FpsPage : public ScrollBoxWith<StackPanel>
+    export class FpsPage : public ScrollBoxWith<Stack>
     {
     public:
         explicit FpsPage(const CreateParams&);
@@ -178,7 +178,7 @@ namespace ClaFi::Diagnostic
         Grid& m_windowGrid;
         Grid& m_metricsGrid;
         // The restart button and the count of what it would discard, on one line.
-        StackPanel& m_footerBar;
+        Stack& m_footerBar;
         ToolButton& m_restartButton;
         Readout& m_footer;
         FpsChart& m_chart;

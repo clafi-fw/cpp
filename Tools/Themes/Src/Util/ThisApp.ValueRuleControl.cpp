@@ -9,7 +9,7 @@ import ClaFi.Controls.Button;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.LabeledDivider;
 import ClaFi.Controls.Slider;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -141,7 +141,7 @@ namespace ThisApp
 
     // The three operations as tiles, a slider for the value, and the Clear and Close commands.
     // A value that may only be set has nothing to pick and nothing to clear: the slider and Close.
-    class ValueRulePopup : public StackPanel
+    class ValueRulePopup : public Stack
     {
     public:
         ValueRulePopup(const CreateParams&, ValueRuleControl&);
@@ -332,7 +332,7 @@ namespace ThisApp
 
     ValueRulePopup::ValueRulePopup(const CreateParams& params, ValueRuleControl& owner)
         :
-        StackPanel{ params,
+        Stack{ params,
             Orientation::Vertical,
             Interactivity::ActiveContainer,
             params.themeMetrics().secondaryWindow,
@@ -345,7 +345,7 @@ namespace ThisApp
         m_owner{ owner }
     {
         // A single tile would be a choice of one, so a value that may only be set shows none.
-        StackPanel* tileRow{};
+        Stack* tileRow{};
         if (!m_owner.setOnly())
         {
             add<LabeledDivider>(
@@ -353,7 +353,7 @@ namespace ThisApp
                 Padding{ 0.0f, k_spacing }
             );
 
-            tileRow = &add<StackPanel>(
+            tileRow = &add<Stack>(
                 Orientation::HorizontalWrap,
                 Interactivity::ActiveContainer,
                 LaneSize{ k_tileOperations.size() },
@@ -394,7 +394,7 @@ namespace ThisApp
         });
         m_stateItems.push_back(&slider);
 
-        StackPanel& commandBar = add<StackPanel>(
+        Stack& commandBar = add<Stack>(
             UiElement::Section,
             Orientation::Horizontal,
             Spacing{ 12.0f },

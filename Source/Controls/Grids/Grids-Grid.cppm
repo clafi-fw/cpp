@@ -15,7 +15,7 @@ import :GridHeader;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.Utils;

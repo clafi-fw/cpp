@@ -8,7 +8,7 @@ import ClaFi.Controls.Base.ButtonBase;
 import ClaFi.Controls.Base.DropdownControlBase;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Menu;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Icons.Chevron;
 
@@ -151,7 +151,7 @@ namespace ClaFi::Browser
     // BreadCrumbBar
 
     /// @brief The path down to the page a tab is showing, one crumb per level.
-    export class BreadCrumbBar : public StackPanel
+    export class BreadCrumbBar : public Stack
     {
         friend BreadCrumbBarItem;
     public:
@@ -436,7 +436,7 @@ namespace ClaFi::Browser
 
     BreadCrumbBar::BreadCrumbBar(const CreateParams& params)
         :
-        StackPanel{ params, Interactivity::ActiveContainer }
+        Stack{ params, Interactivity::ActiveContainer }
     {
         const AppTheme& theme = params.theme();
         setMetrics(theme.metrics.page);

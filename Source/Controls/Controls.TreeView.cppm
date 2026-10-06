@@ -2,7 +2,7 @@ export module ClaFi.Controls.TreeView;
 
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Expander;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
@@ -48,7 +48,7 @@ namespace ClaFi::Controls
         explicit TreeNode(const CreateParams&, std::size_t level, Args&&...);
     public:
         // The rows under the header.
-        [[nodiscard]] StackPanel& rows() { return m_rows; }
+        [[nodiscard]] Stack& rows() { return m_rows; }
         // Adds a row a pick can land on, one level in.
         template<typename... Args>
         TreeItem& addItem(Args&&...);
@@ -64,7 +64,7 @@ namespace ClaFi::Controls
         [[nodiscard]] bool answerTreeKey(KeyCode);
     private:
         std::size_t m_level;
-        StackPanel& m_rows;
+        Stack& m_rows;
     };
 
     // A list of rows nested in branches, every level stepped in by one mark slot.
@@ -121,7 +121,7 @@ namespace ClaFi::Controls
             std::forward<Args>(args)...
         },
         m_level{ level },
-        m_rows{ createBody<StackPanel>(Orientation::Vertical) }
+        m_rows{ createBody<Stack>(Orientation::Vertical) }
     {
         layOutHeader(params.themeMetrics().button);
     }

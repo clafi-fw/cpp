@@ -1,7 +1,7 @@
 export module ClaFi.App.Information;
 
 import ClaFi.Controls.Button;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 
 import ClaFi.Core.Foundation;
@@ -12,7 +12,7 @@ import ClaFi.StdLib;
 namespace ClaFi
 {
     // The backstage page naming the application, what it does and its framework. See Application
-    export class InformationPage : public Controls::StackPanel
+    export class InformationPage : public Controls::Stack
     {
     public:
         explicit InformationPage(const CreateParams&);

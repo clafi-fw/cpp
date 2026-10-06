@@ -11,7 +11,7 @@ import ClaFi.Controls.Divider;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.SplitButton;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 
 import ClaFi.Icons.OpenInExplorerIcon;

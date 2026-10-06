@@ -14,7 +14,7 @@ import ClaFi.Browser.Settings;
 
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Panel;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.Divider;
 
 import ClaFi.Icons.MoonIcon;
@@ -67,7 +67,7 @@ namespace ThisApp
         virtual const AppTheme* selectedTheme() { return nullptr; }
         void visibilityChanged() override;
     private:
-        StackPanel& m_rightToolBar{ this->topPanel().template createRightBar<StackPanel>(
+        Stack& m_rightToolBar{ this->topPanel().template createRightBar<Stack>(
             Orientation::Horizontal,
             Interactivity::ActiveContainer
         ) };
@@ -76,7 +76,7 @@ namespace ThisApp
         // so that the panel and the application show one theme. Not asked of the list per paint: a
         // list answers with the tile it is ON, and between a tile being reached and the preview
         // delay elapsing that is a tile ahead of the one the preview has been asked for. See
-        // StackPanel::previewItem
+        // Stack::previewItem
         const AppTheme* m_previewTheme{ nullptr };
         // What that theme is painted from, kept beside it because the panel paints from a
         // reference the adjustment hands on.

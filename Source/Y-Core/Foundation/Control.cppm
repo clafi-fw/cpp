@@ -659,7 +659,7 @@ namespace ClaFi
         // holds, and a bound stated under one of those narrows the very thing it came from. The
         // walk ends at the first control that is not handed its width - that one's content
         // decides it - and at the root, where the window does, unless the window was asked for
-        // out of the content too. See StackPanel::wrapLengthLimit
+        // out of the content too. See Stack::wrapLengthLimit
         [[nodiscard]] bool isWidthGivenFromOutside() const;
         // The same walk for the height. See Item-Containers
         [[nodiscard]] bool isHeightGivenFromOutside() const;
@@ -1308,7 +1308,7 @@ namespace ClaFi
         // The children come from controls(), so the override that answers is the one belonging
         // to the class being destroyed - each owner announces the storage it owns and no other.
         // An owner that detaches on its own leaves its children dying unheard, and a form root's
-        // current item or a stack panel's is left naming freed memory.
+        // current item or a stack's is left naming freed memory.
         void releaseChildren();
 
         // HOW THE CONTROL READS, which is not always where the framework's pointers are: a

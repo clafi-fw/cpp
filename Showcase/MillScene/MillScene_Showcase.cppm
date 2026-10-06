@@ -7,7 +7,7 @@ import ClaFi.Diagnostic.FpsChart;
 
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.Slider;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.App.Application;
 import ClaFi.App.Settings;
@@ -71,7 +71,7 @@ namespace ClaFi::Showcase
         std::size_t m_pickedTheme{ 0 };
         // The backstage's Scene page, refilled every time that page is built: a pick repaints the
         // button it left as well as the one it took, and the stack is what the preview returns to.
-        Controls::StackPanel* m_themeLanes{ nullptr };
+        Controls::Stack* m_themeLanes{ nullptr };
         std::vector<Control*> m_themeButtons{};
         MillScene m_scene{};
         FpsBenchmark m_benchmark{};

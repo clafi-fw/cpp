@@ -1102,7 +1102,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ScrollBox.cppm">
       <Filter>Controls\Containers</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.StackPanel.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Stack.cppm">
       <Filter>Controls\Containers</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.StackView.cpp">
@@ -1174,10 +1174,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\SplitButtonBase.cppm">
       <Filter>Controls\Y-Base</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackPanelBase.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackBase.cpp">
       <Filter>Controls\Y-Base</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackPanelBase.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackBase.cppm">
       <Filter>Controls\Y-Base</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TextItems.cppm">

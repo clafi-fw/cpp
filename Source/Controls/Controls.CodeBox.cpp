@@ -3,7 +3,7 @@ module ClaFi.Controls.CodeBox;
 import ClaFi.Controls.TextBox;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.StdActions;
 
@@ -220,7 +220,7 @@ namespace ClaFi::Controls
 
     CompletionStack::CompletionStack(const CreateParams& params, CodeBox& box)
         :
-        StackPanel{ params,
+        Stack{ params,
             Orientation::Vertical,
             // A SCROLLED BODY KEEPS THE SIZE IT MEASURED - see ComboBoxDropdownStack.
             WordWrap::No
@@ -434,7 +434,7 @@ namespace ClaFi::Controls
 
     void CompletionStack::getControlState(GetStateEvent& event) const
     {
-        StackPanel::getControlState(event);
+        Stack::getControlState(event);
         if (event.propagationStopped())
             return;
         event.state.selected = &event.control == currentItem();

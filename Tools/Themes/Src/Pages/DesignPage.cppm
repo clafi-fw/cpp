@@ -8,7 +8,7 @@ import ClaFi.Controls.Label;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.TreeView;
 
 import ClaFi.Core.AppTheme_Colors;
@@ -62,7 +62,7 @@ namespace ThisApp
         template<typename F>
         EventConnection onPagePick(F&& callback);
         // The Palette page's body, which the theme page fills.
-        [[nodiscard]] StackPanel& paletteView() { return m_paletteView; }
+        [[nodiscard]] Stack& paletteView() { return m_paletteView; }
         // Hands every page its list of the theme's rules, its ramps' base and what to call.
         void bind(ThemeColors&, const OnGetElementRuleBase&, const OnRulesChanged&);
         // Builds every page's rows again from the rules as they stand.
@@ -113,9 +113,9 @@ namespace ThisApp
             Text{ TextStyleId::SubTitle, k_paletteTitle }
         ) };
 
-        StackPanel& m_paletteView{ m_palettePage.createBody<ScrollBox>(
+        Stack& m_paletteView{ m_palettePage.createBody<ScrollBox>(
             ScrollBars::Vertical
-        ).createBody<StackPanel>(
+        ).createBody<Stack>(
             Orientation::Vertical,
             Padding{ 12.0f },
             Spacing{ 8.0f }

@@ -149,7 +149,7 @@
 //
 //     StackView::StackView(const CreateParams& params, Args&&... args)
 //         :
-//         StackPanel{ params, std::forward<Args>(args)... },
+//         Stack{ params, std::forward<Args>(args)... },
 //         INIT_PROPERTY(selectionMode),
 //         INIT_PROPERTY(dragMode)
 //

@@ -98,7 +98,7 @@ disabled.
 
 ## OptionsPage
 
-A page of option sections, and a StackPanel itself - THE PAGE IS THE STACK, a Panel with slots
+A page of option sections, and a Stack itself - THE PAGE IS THE STACK, a Panel with slots
 having come up empty here. It is the shape every page of the backstage shares: the Settings page
 below holds one, and so does each page an application asks for.
 
@@ -279,13 +279,13 @@ are one line each and state no maximum: they Fill, so they span the page whateve
 EVERY TEXT ON THE PAGE IS A READ-ONLY TEXT BOX, the way a message dialog's text is, because a
 text box is what follows a link: the address underlines under the pointer and opens on a click.
 The rest comes with it - the text takes the focus, shows a caret, and can be selected and copied.
-The page itself is a vertical StackPanel holding the name's line, the update row, a Divider and
+The page itself is a vertical Stack holding the name's line, the update row, a Divider and
 the text. The stack carries the page's padding, so the name starts where a page of options
 starts.
 
 THE UPDATE ROW STANDS WHEREVER AppContext::updateCheck IS AVAILABLE - the application states a
 major.minor.patch version and AppParams::updates names a repository. Where it is not, the page
-has neither the row nor the Divider under it. The row is a horizontal StackPanel: the status on
+has neither the row nor the Divider under it. The row is a horizontal Stack: the status on
 the left, a FlexSpacer, and the button at the end, both centred down the row.
 
 THE STATUS SAYS WHAT THE CHECK FOUND, and the button stays whatever it found:
@@ -327,7 +327,7 @@ handed an OptionsPage and calls addGroup for each caption it wants, filling the 
 back:
 
     connectAppPage(L"Scene", [](OptionsPage& page){
-        StackPanel& picked = page.addGroup(L"Picked Window");
+        Stack& picked = page.addGroup(L"Picked Window");
         picked.add<CheckBox>(L"Highlight corners");
     });
 

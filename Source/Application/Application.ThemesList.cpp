@@ -7,11 +7,11 @@ import ClaFi.Documents.Folder;
 import ClaFi.Documents.List;
 
 import ClaFi.Controls.Base.ExpanderBase;
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.InPlaceEdit;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 
 import ClaFi.Core.Foundation;
@@ -78,7 +78,7 @@ namespace ClaFi
     DocumentTiles ThemesList::tiles()
     {
         DocumentTiles result{};
-        for (StackPanel* group : { &m_builtInTiles, &m_userTiles })
+        for (Stack* group : { &m_builtInTiles, &m_userTiles })
             for (ThemeTile& tile : group->controlsAs<ThemeTile>())
                 result.push_back(&tile);
         return result;
@@ -86,7 +86,7 @@ namespace ClaFi
 
     DocumentTile* ThemesList::tileByFileName(const std::wstring_view fileName)
     {
-        for (StackPanel* group : { &m_builtInTiles, &m_userTiles })
+        for (Stack* group : { &m_builtInTiles, &m_userTiles })
             for (ThemeTile& tile : group->controlsAs<ThemeTile>())
                 if (tile.fileName() == fileName)
                     return &tile;
@@ -153,7 +153,7 @@ namespace ClaFi
         emitEvent<DocumentsRebuiltEvent>(*this);
     }
 
-    ThemeTile& ThemesList::addTile(StackPanel& group, const AppTheme& theme,
+    ThemeTile& ThemesList::addTile(Stack& group, const AppTheme& theme,
         const std::filesystem::path& file, const UserTheme* userTheme)
     {
         ThemeTile& tile = group.add<ThemeTile>(

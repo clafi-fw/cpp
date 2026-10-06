@@ -9,7 +9,7 @@ import ClaFi.Controls.CodeBox;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 import ClaFi.Controls.Base.PanelBase;
 
@@ -202,11 +202,11 @@ namespace ClaFi::Tools::WhatsClip
         m_readout.setMaxSize(MaxSize{ value, k_maxFloat });
     }
 
-    StackPanel& RepresentationPage::cornerBars()
+    Stack& RepresentationPage::cornerBars()
     {
         if (!m_cornerBars)
         {
-            m_cornerBars = &m_corner.createRightBar<StackPanel>(
+            m_cornerBars = &m_corner.createRightBar<Stack>(
                 Orientation::Horizontal,
                 Padding{ 0.0f }
             );
@@ -215,11 +215,11 @@ namespace ClaFi::Tools::WhatsClip
         return *m_cornerBars;
     }
 
-    StackPanel& RepresentationPage::stripBars()
+    Stack& RepresentationPage::stripBars()
     {
         if (!m_stripBars)
         {
-            m_stripBars = &m_strip.createRightBar<StackPanel>(
+            m_stripBars = &m_strip.createRightBar<Stack>(
                 Orientation::Horizontal,
                 Padding{ 8.0f, 0.0f },
                 Spacing{ 8.0f },

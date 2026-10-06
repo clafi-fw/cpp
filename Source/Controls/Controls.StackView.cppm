@@ -2,8 +2,8 @@ module;
 #include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Controls.StackView;
 
-import ClaFi.Controls.StackPanel;
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Stack;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
@@ -67,12 +67,12 @@ namespace ClaFi::Controls
         bool canSelect;         // the answer, as the view itself gave it before any handler saw it
     };
 
-    // A StackPanel that traps child focus and holds several items selected. See Selection-Model
-    export class StackView : public StackPanel
+    // A Stack that traps child focus and holds several items selected. See Selection-Model
+    export class StackView : public Stack
     {
         friend ItemsViewSelection;
     public:
-        using StackPanel::recordCurrentItem;
+        using Stack::recordCurrentItem;
     public:
         template <typename... Args>
         explicit StackView(const CreateParams& params, Args&&... args);
@@ -168,7 +168,7 @@ namespace ClaFi::Controls
     template<typename ...Args>
     StackView::StackView(const CreateParams& params, Args && ...args)
         :
-        StackPanel{ params,
+        Stack{ params,
             Interactivity::ActiveContainer, //to traps children focus on keyboard navigation
             std::forward<Args>(args)... },
         INIT_PROPERTY(selectionMode),

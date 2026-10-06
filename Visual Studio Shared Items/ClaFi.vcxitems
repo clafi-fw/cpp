@@ -134,7 +134,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-GridHeader.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids_Dt.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Panel.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.StackPanel.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Stack.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HexView.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HexView.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HistoryButton.cppm" />
@@ -181,8 +181,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\SpacerBase.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\SplitButtonBase.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\SplitButtonBase.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackPanelBase.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackPanelBase.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackBase.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackBase.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_Facade.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_StdSerializers.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_TextSerializers.cppm" />

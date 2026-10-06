@@ -3,7 +3,7 @@ export module ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.TextItems;
 import ClaFi.Controls.TextBox;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Panel;
 
@@ -148,7 +148,7 @@ namespace ClaFi::Controls
     };
 
     // The rows the typed text names, and the row the keys are on. See Controls#suggestionlist
-    class SuggestionStack : public StackPanel
+    class SuggestionStack : public Stack
     {
     public:
         SuggestionStack(const CreateParams&, InPlaceEditRoot&);
@@ -563,7 +563,7 @@ namespace ClaFi::Controls
         // already holds the focus, so the case being detected is reported rather than skipped.
         //
         // focusChanged cannot answer this. A container that owns its items retargets the event
-        // to itself - StackPanelBase does - so the focus is written to the CONTAINER and an item
+        // to itself - StackBase does - so the focus is written to the CONTAINER and an item
         // is only its focusDelegate. No such item is ever told its focus changed.
         if (event.control == this)
             m_wasCurrentBeforePress = this->isFocused();

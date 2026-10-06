@@ -154,7 +154,7 @@
                     <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
                 </div>
                 <ul>
-                    <li><a href="#stackpanel">StackPanel</a></li>
+                    <li><a href="#stack">Stack</a></li>
                     <li><a href="#wrapping">Wrapping stacks</a></li>
                     <li><a href="#panel">Panel and its five slots</a></li>
                     <li><a href="#withbody">WithBody, HostProps, BodyProps</a></li>
@@ -217,7 +217,7 @@ control above it does with that answer. Everything in this manual is one of thos
 
 <p>Both halves are stated where the control is built, as ordinary construction properties:</p>
 
-<pre><code><span class="tp">StackPanel</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+<pre><code><span class="tp">Stack</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">Stack</span>&gt;(
     <span class="tp">Orientation</span>::Horizontal,   <span class="cm">// what this panel does with its children</span>
     <span class="tp">Padding</span>{ <span class="st">4.0f</span> },             <span class="cm">// what this panel says about itself</span>
     <span class="tp">Spacing</span>{ <span class="st">4.0f</span> }
@@ -244,7 +244,7 @@ the shape most applications open with, and it is four controls.</p>
     <span class="kw">using</span> <span class="tp">Panel</span>::Panel;
 <span class="kw">private</span>:
     <span class="cm">// Across the top, left to right.</span>
-    <span class="tp">StackPanel</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+    <span class="tp">Stack</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">Stack</span>&gt;(
         <span class="tp">Orientation</span>::Horizontal,
         <span class="tp">Padding</span>{ <span class="st">4.0f</span> },
         <span class="tp">Spacing</span>{ <span class="st">4.0f</span> }
@@ -262,7 +262,7 @@ the shape most applications open with, and it is four controls.</p>
     ) };
 
     <span class="cm">// Across the foot, as tall as what stands in it.</span>
-    <span class="tp">StackPanel</span>&amp; m_status{ <span class="fn">createBottomBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+    <span class="tp">Stack</span>&amp; m_status{ <span class="fn">createBottomBar</span>&lt;<span class="tp">Stack</span>&gt;(
         <span class="tp">Orientation</span>::Horizontal,
         <span class="tp">Padding</span>{ <span class="st">4.0f</span> }
     ) };
@@ -309,7 +309,7 @@ somewhere in it.</li>
   <text class="lp-th" x="10" y="20">1 &middot; The measure - calculate()</text>
   <rect class="lp-up" x="10"  y="30"  width="130" height="28" rx="4"/><text class="lp-t" x="22"  y="48">Form root</text>
   <rect class="lp-up" x="40"  y="80"  width="130" height="28" rx="4"/><text class="lp-t" x="52"  y="98">Panel</text>
-  <rect class="lp-up" x="70"  y="130" width="130" height="28" rx="4"/><text class="lp-t" x="82"  y="148">StackPanel</text>
+  <rect class="lp-up" x="70"  y="130" width="130" height="28" rx="4"/><text class="lp-t" x="82"  y="148">Stack</text>
   <rect class="lp-up" x="100" y="180" width="130" height="28" rx="4"/><text class="lp-t" x="112" y="198">Button</text>
   <path class="lp-ab" marker-end="url(#ab)" d="M150,180 L150,160"/>
   <path class="lp-ab" marker-end="url(#ab)" d="M120,130 L120,110"/>
@@ -322,7 +322,7 @@ somewhere in it.</li>
   <text class="lp-th" x="10" y="228">2 &middot; The align - align()</text>
   <rect class="lp-dn" x="10"  y="240" width="130" height="30" rx="4"/><text class="lp-t" x="22" y="259">Form root</text>
   <rect class="lp-dn" x="160" y="240" width="130" height="30" rx="4"/><text class="lp-t" x="172" y="259">Panel</text>
-  <rect class="lp-dn" x="310" y="240" width="130" height="30" rx="4"/><text class="lp-t" x="322" y="259">StackPanel</text>
+  <rect class="lp-dn" x="310" y="240" width="130" height="30" rx="4"/><text class="lp-t" x="322" y="259">Stack</text>
   <rect class="lp-dn" x="460" y="240" width="130" height="30" rx="4"/><text class="lp-t" x="472" y="259">Button</text>
   <path class="lp-ag" marker-end="url(#ag)" d="M140,255 L156,255"/>
   <path class="lp-ag" marker-end="url(#ag)" d="M290,255 L306,255"/>
@@ -812,17 +812,17 @@ space in its own line, which is what lands every key on the same edge. See the
 
 <table>
 <tr><th>Container</th><th>Arranges by</th><th>Reach for it when</th></tr>
-<tr><td><code>StackPanel</code></td><td>lanes - a row, a column, or a wrap of either</td><td>things follow one another in order</td></tr>
+<tr><td><code>Stack</code></td><td>lanes - a row, a column, or a wrap of either</td><td>things follow one another in order</td></tr>
 <tr><td><code>Panel</code></td><td>five named slots around a body</td><td>something frames something else</td></tr>
 <tr><td><code>ScrollBox</code></td><td>a viewport over a body laid out whole</td><td>the content outruns the room</td></tr>
 <tr><td><code>Grid</code></td><td>columns shared by every row</td><td>values line up across rows</td></tr>
 </table>
 
-<h3 id="stackpanel">StackPanel</h3>
+<h3 id="stack">Stack</h3>
 
 <p>A container that places its items in lanes. Three properties say how.</p>
 
-<pre><code><span class="tp">StackPanel</span>&amp; m_column{ <span class="fn">createBody</span>&lt;<span class="tp">StackPanel</span>&gt;(
+<pre><code><span class="tp">Stack</span>&amp; m_column{ <span class="fn">createBody</span>&lt;<span class="tp">Stack</span>&gt;(
     <span class="tp">Orientation</span>::Vertical,
     <span class="tp">Padding</span>{ <span class="st">12.0f</span> },
     <span class="tp">Spacing</span>{ <span class="st">8.0f</span> }
@@ -904,7 +904,7 @@ a set of equal shares.</p>
 </svg>
 
 <pre><code><span class="cm">// Save, Discard and Cancel as one band, each as wide as the widest.</span>
-<span class="tp">StackPanel</span>&amp; m_answers{ <span class="fn">createBottomBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+<span class="tp">Stack</span>&amp; m_answers{ <span class="fn">createBottomBar</span>&lt;<span class="tp">Stack</span>&gt;(
     <span class="tp">Orientation</span>::Horizontal,
     <span class="tp">ItemSizing</span>::Equal,
     <span class="tp">Spacing</span>{ <span class="st">8.0f</span> }
@@ -998,7 +998,7 @@ and the wrapping panel under it wraps at its own natural width whatever the wind
 </div>
 
 <pre><code><span class="cm">// A section whose body is a wrapping panel of tiles.</span>
-<span class="kw">using</span> <span class="tp">ThemesGroup</span> = <span class="tp">ExpanderWith</span>&lt;<span class="tp">StackPanel</span>&gt;;
+<span class="kw">using</span> <span class="tp">ThemesGroup</span> = <span class="tp">ExpanderWith</span>&lt;<span class="tp">Stack</span>&gt;;
 
 <span class="tp">ThemesGroup</span>&amp; m_group{ <span class="fn">add</span>&lt;<span class="tp">ThemesGroup</span>&gt;(
     <span class="tp">HostProps</span>{
@@ -1049,10 +1049,10 @@ created in.</p>
   <text class="pn-m" x="440" y="228">spans the content width</text>
 </svg>
 
-<pre><code><span class="tp">StackPanel</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">StackPanel</span>&gt;(<span class="tp">Orientation</span>::Horizontal) };
-<span class="tp">StackView</span>&amp;  m_tree{    <span class="fn">createLeftBar</span>&lt;<span class="tp">StackView</span>&gt;(<span class="tp">MinSize</span>{ <span class="st">180.0f</span>, <span class="st">0.0f</span> }) };
-<span class="tp">ScrollBox</span>&amp;  m_view{    <span class="fn">createBody</span>&lt;<span class="tp">ScrollBox</span>&gt;() };
-<span class="tp">StackPanel</span>&amp; m_status{  <span class="fn">createBottomBar</span>&lt;<span class="tp">StackPanel</span>&gt;(<span class="tp">Orientation</span>::Horizontal) };</code></pre>
+<pre><code><span class="tp">Stack</span>&amp;     m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">Stack</span>&gt;(<span class="tp">Orientation</span>::Horizontal) };
+<span class="tp">StackView</span>&amp; m_tree{    <span class="fn">createLeftBar</span>&lt;<span class="tp">StackView</span>&gt;(<span class="tp">MinSize</span>{ <span class="st">180.0f</span>, <span class="st">0.0f</span> }) };
+<span class="tp">ScrollBox</span>&amp; m_view{    <span class="fn">createBody</span>&lt;<span class="tp">ScrollBox</span>&gt;() };
+<span class="tp">Stack</span>&amp;     m_status{  <span class="fn">createBottomBar</span>&lt;<span class="tp">Stack</span>&gt;(<span class="tp">Orientation</span>::Horizontal) };</code></pre>
 
 <p>The order the slots are settled in is fixed: top, bottom, left, right, body. A top or
 bottom bar spans the content width and is as tall as it measured. A left or right bar is as
@@ -1086,7 +1086,7 @@ while the same column inside a window simply fills the window.
 hosts:</p>
 
 <pre><code><span class="tp">ScrollBoxWith</span>&lt;<span class="tp">OptionsPage</span>&gt;    <span class="cm">// a scroll box whose body is an OptionsPage</span>
-<span class="tp">ExpanderWith</span>&lt;<span class="tp">StackPanel</span>&gt;      <span class="cm">// a section whose body is a stack</span></code></pre>
+<span class="tp">ExpanderWith</span>&lt;<span class="tp">Stack</span>&gt;           <span class="cm">// a section whose body is a stack</span></code></pre>
 
 <p>Two controls are being built, so the properties arrive in two bags. Each bag routes by
 type, and a bag must not carry the same property type twice.</p>
@@ -1221,8 +1221,8 @@ the open tab to the page with that line; <code>ToolButton</code> draws each tab 
 set a tool bar's distance in from the edge, the open one shown selected, with no line and nothing
 joined to the page.</p>
 
-<p><strong><code>StackView</code></strong> - a <code>StackPanel</code> that holds several
-items selected at once. Every layout property of <code>StackPanel</code> reads on it
+<p><strong><code>StackView</code></strong> - a <code>Stack</code> that holds several
+items selected at once. Every layout property of <code>Stack</code> reads on it
 unchanged; what it adds is selection, which is a different manual.</p>
 
 <p><strong><code>Divider</code></strong> - a line across whatever it stands in. It measures its
@@ -1467,7 +1467,7 @@ from. A wrapping panel in an auto-fitting window therefore stands at its
     .ch-n { font-family:"Fira Code",Consolas,monospace; font-size:9.5px; fill:#5a6b7d; }
   </style>
 
-  <text class="ch-k" x="20" y="20">StackPanel</text>
+  <text class="ch-k" x="20" y="20">Stack</text>
   <rect class="ch-o" x="20" y="30" width="130" height="94" rx="4"/>
   <rect class="ch-i" x="30" y="40" width="110" height="22" rx="2"/>
   <rect class="ch-i" x="30" y="68" width="110" height="22" rx="2"/>
@@ -1507,13 +1507,13 @@ from. A wrapping panel in an auto-fitting window therefore stands at its
 
 <table>
 <tr><th>If the controls...</th><th>Reach for</th></tr>
-<tr><td>follow one another in reading order</td><td><code>StackPanel</code>, <code>Horizontal</code> or <code>Vertical</code></td></tr>
-<tr><td>are a set that should flow to fill the room</td><td><code>StackPanel</code>, <code>HorizontalWrap</code> or <code>VerticalWrap</code></td></tr>
+<tr><td>follow one another in reading order</td><td><code>Stack</code>, <code>Horizontal</code> or <code>Vertical</code></td></tr>
+<tr><td>are a set that should flow to fill the room</td><td><code>Stack</code>, <code>HorizontalWrap</code> or <code>VerticalWrap</code></td></tr>
 <tr><td>frame something - a strip over a view, a bar beside it</td><td><code>Panel</code>, with the framed thing in the body</td></tr>
 <tr><td>are one thing that may outrun its room</td><td><code>ScrollBox</code> around it</td></tr>
 <tr><td>are values that must line up across rows</td><td><code>Grid</code></td></tr>
 <tr><td>are one of several views of the same place</td><td><code>PageControl</code>, or <code>TabbedBox</code> with a strip</td></tr>
-<tr><td>are a group the user should be able to put away</td><td><code>ExpanderWith&lt;StackPanel&gt;</code></td></tr>
+<tr><td>are a group the user should be able to put away</td><td><code>ExpanderWith&lt;Stack&gt;</code></td></tr>
 </table>
 
 <p><strong>Then: for each control, who decides its size?</strong> That is the alignment, and
@@ -1531,7 +1531,7 @@ surplus goes.</li>
 
 <div class="info">
 Nest rather than reach. A row of buttons where two are grouped is a
-<code>StackPanel</code> inside a <code>StackPanel</code>, not a special property on either.
+<code>Stack</code> inside a <code>Stack</code>, not a special property on either.
 Nesting costs one control, and each level answers one question - which is what keeps a layout
 readable a year later.
 </div>
@@ -1542,7 +1542,7 @@ readable a year later.
 
 <p>One <code>FlexSpacer</code>. Everything after it is pushed to the end of the lane.</p>
 
-<pre><code><span class="tp">StackPanel</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+<pre><code><span class="tp">Stack</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">Stack</span>&gt;(
     <span class="tp">Orientation</span>::Horizontal,
     <span class="tp">Spacing</span>{ <span class="st">4.0f</span> }
 ) };
@@ -1577,7 +1577,7 @@ needed:</p>
 <p>Not a flex spacer - a slot. A bottom bar is laid out against the bottom edge of the panel's
 content, and the body takes what is left between the two.</p>
 
-<pre><code><span class="tp">StackPanel</span>&amp; m_footer{ <span class="fn">createBottomBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+<pre><code><span class="tp">Stack</span>&amp; m_footer{ <span class="fn">createBottomBar</span>&lt;<span class="tp">Stack</span>&gt;(
     <span class="tp">Orientation</span>::Vertical,
     <span class="tp">Padding</span>{ <span class="st">12.0f</span> },
     <span class="tp">Spacing</span>{ <span class="st">10.0f</span> }
@@ -1615,7 +1615,7 @@ own. In a window, where the box simply fills whatever it is given, state
 
 <p>Three things together, and each of them is doing one job.</p>
 
-<pre><code><span class="tp">StackPanel</span>&amp; m_tiles{ <span class="fn">createBody</span>&lt;<span class="tp">StackPanel</span>&gt;(
+<pre><code><span class="tp">Stack</span>&amp; m_tiles{ <span class="fn">createBody</span>&lt;<span class="tp">Stack</span>&gt;(
     <span class="tp">Orientation</span>::HorizontalWrap,   <span class="cm">// rows that break when the width runs out</span>
     <span class="tp">ItemSizing</span>::Equal,             <span class="cm">// every tile the width of the widest</span>
     <span class="tp">Padding</span>{ <span class="st">12.0f</span>, <span class="st">4.0f</span> },
@@ -1647,7 +1647,7 @@ of any size and a wider host gives it room around the lane instead of a fifth ti
 <p>A section is an <code>Expander</code> whose body is the column its options stand in, so
 collapsing the header takes the options with it.</p>
 
-<pre><code><span class="kw">using</span> <span class="tp">Section</span> = <span class="tp">ExpanderWith</span>&lt;<span class="tp">StackPanel</span>&gt;;
+<pre><code><span class="kw">using</span> <span class="tp">Section</span> = <span class="tp">ExpanderWith</span>&lt;<span class="tp">Stack</span>&gt;;
 
 <span class="tp">Section</span>&amp; <span class="tp">OptionsPage</span>::<span class="fn">addSection</span>(<span class="kw">const</span> std::wstring_view caption)
 {
@@ -1724,7 +1724,7 @@ laid the rest of itself out around that height.</li>
 </ul>
 
 <p>Give the panel <code>VerticalAlign::Top</code>. It is the <em>host</em> that needs it, not
-the wrapping panel inside - a <code>StackPanel</code> grows to its lanes whatever its own
+the wrapping panel inside - a <code>Stack</code> grows to its lanes whatever its own
 alignment says.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" role="img"
@@ -1864,7 +1864,7 @@ zero, and a control with no height paints nothing at all. Give it a
 slot it was offered.</li>
 <li>Put the <code>ScrollBox</code> where the room is decided, not inside the view.</li>
 <li>State a <code>MinSize</code> on anything that must survive a window being cut down.</li>
-<li>Nest a second <code>StackPanel</code> rather than looking for a property.</li>
+<li>Nest a second <code>Stack</code> rather than looking for a property.</li>
 <li>Write every number in design units, and forget that scaling exists.</li>
 </ul>
 </div>
@@ -1914,7 +1914,7 @@ reason.</li>
 
 <table>
 <tr><th>Container</th><th>Property</th><th>Values</th></tr>
-<tr><td rowspan="3"><code>StackPanel</code></td><td><code>Orientation</code></td><td><code>Horizontal</code>, <code>Vertical</code>, <code>HorizontalWrap</code>, <code>VerticalWrap</code></td></tr>
+<tr><td rowspan="3"><code>Stack</code></td><td><code>Orientation</code></td><td><code>Horizontal</code>, <code>Vertical</code>, <code>HorizontalWrap</code>, <code>VerticalWrap</code></td></tr>
 <tr><td><code>LaneSize</code></td><td><code>{ n }</code> - items per lane</td></tr>
 <tr><td><code>ItemSizing</code></td><td><code>Natural</code>, <code>Equal</code></td></tr>
 <tr><td><code>ScrollBox</code></td><td><code>ScrollBars</code></td><td><code>Both</code>, <code>Vertical</code>, <code>Horizontal</code>, <code>None</code>, <code>Auto</code></td></tr>

@@ -6,7 +6,7 @@ export module ClaFi.Controls.CodeBox;
 import ClaFi.Controls.TextBox;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Core.Syntax.Completion;
 import ClaFi.Core.Syntax.Indent;
@@ -98,7 +98,7 @@ namespace ClaFi::Controls
     };
 
     // The rows, shown by scope and by what is typed. See Controls#completionlist
-    class CompletionStack : public StackPanel
+    class CompletionStack : public Stack
     {
     public:
         CompletionStack(const CreateParams&, CodeBox&);

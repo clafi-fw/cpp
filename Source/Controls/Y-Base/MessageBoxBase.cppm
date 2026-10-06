@@ -7,7 +7,7 @@ import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Events;
@@ -94,7 +94,7 @@ namespace ClaFi::Controls
         Label& m_icon;
         MessageBoxBody& m_box;
         Panel& m_answerBar;
-        StackPanel& m_answers;
+        Stack& m_answers;
     };
 
 }

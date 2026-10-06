@@ -11,7 +11,7 @@ import ClaFi.Icons.SunIcon;
 import ClaFi.Icons.SunMoonIcon;
 
 import ClaFi.Controls.Base.SliderBase;
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.MessageDialog;
 import ClaFi.Controls.CheckBox;
@@ -20,7 +20,7 @@ import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Slider;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 import ClaFi.Controls.Divider;
 
@@ -212,7 +212,7 @@ namespace ClaFi
     // page's width by the lane it stands in.
     OptionsPage::OptionsPage(const CreateParams& params)
         :
-        StackPanel{
+        Stack{
             params,
             Orientation::Vertical,
             Padding{ k_pagePadding },
@@ -299,7 +299,7 @@ namespace ClaFi
         ) },
         m_options{ m_optionsBox.body() },
         m_appearanceGroup{ m_options.addGroup(L"Appearance") },
-        m_themeRow{ m_appearanceGroup.add<StackPanel>(
+        m_themeRow{ m_appearanceGroup.add<Stack>(
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
         ) },
@@ -339,7 +339,7 @@ namespace ClaFi
             VerticalAlign::Center,
             Tag{ ColorModeSetting::Light }
         ) },
-        m_scaleRow{ m_appearanceGroup.add<StackPanel>(
+        m_scaleRow{ m_appearanceGroup.add<Stack>(
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
         ) },
@@ -358,7 +358,7 @@ namespace ClaFi
             HintText{ L"Scales the UI on top of the system scale" }
         ) },
 #if CLAFI_TEXT_MOVING
-        m_zAnimationRow{ m_appearanceGroup.add<StackPanel>(
+        m_zAnimationRow{ m_appearanceGroup.add<Stack>(
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
         ) },
@@ -395,7 +395,7 @@ namespace ClaFi
             L"GPU acceleration",
             Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
         ) },
-        m_footer{ createBottomBar<StackPanel>(
+        m_footer{ createBottomBar<Stack>(
             Orientation::Vertical,
             Padding{ k_pagePadding },
             Spacing{ k_pageSpacing }

@@ -9,7 +9,7 @@ import ClaFi.Documents.HomePage;
 // The page's box: the home page template is instantiated here, and clang wants what a template
 // body names imported where it is instantiated.
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 
 import ClaFi.Core.Foundation;

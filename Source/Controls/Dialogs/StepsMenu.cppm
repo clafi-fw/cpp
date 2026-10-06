@@ -4,7 +4,7 @@ import ClaFi.Controls.Menu;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
@@ -56,11 +56,11 @@ namespace ClaFi::Controls
             Padding{ 4.0f }
         ) };
 
-        StackPanel& m_list{ m_box.createBody<StackPanel>(
+        Stack& m_list{ m_box.createBody<Stack>(
             Orientation::Vertical
         ) };
 
-        StackPanel& m_footBar{ createBottomBar<StackPanel>(
+        Stack& m_footBar{ createBottomBar<Stack>(
             Orientation::Vertical,
             Padding{ 4.0f }
         ) };

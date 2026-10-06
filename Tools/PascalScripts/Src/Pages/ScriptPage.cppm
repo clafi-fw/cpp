@@ -10,7 +10,7 @@ import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.SearchBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 
 import ClaFi.Core.Syntax.Completion;

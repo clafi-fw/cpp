@@ -4,7 +4,7 @@ import ClaFi.Documents.Folder;
 
 import ClaFi.Controls.Button;
 import ClaFi.Controls.InPlaceEdit;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 import ClaFi.Controls.Base.Container;
 

@@ -15,8 +15,8 @@ import :RowGroup;
 import :RowNewItem;
 
 import ClaFi.Core.Foundation;
-import ClaFi.Controls.Base.StackPanelBase;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Base.StackBase;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;

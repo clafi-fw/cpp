@@ -20,7 +20,7 @@ import ClaFi.Controls.TabStrip;
 import ClaFi.Controls.TextBox;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.Base.PanelBase;
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 
 import ClaFi.App.Application;
 import ClaFi.App.Themes;

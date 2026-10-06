@@ -5,7 +5,7 @@ import :RowNewItem;
 
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.TextBox;
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Core.Context.FormContext;
 
 import ClaFi.Core.Foundation;

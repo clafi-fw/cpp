@@ -19,7 +19,7 @@ import ClaFi.Controls.PageControl;
 import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.TabStrip;
 import ClaFi.Controls.Base.PanelBase;
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 
 import ClaFi.App.Application;
 

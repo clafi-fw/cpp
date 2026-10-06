@@ -13,7 +13,7 @@ import ClaFi.Controls.MessageBar;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 import ClaFi.Controls.Base.PanelBase;
 
@@ -113,9 +113,9 @@ namespace ClaFi::Tools::WhatsClip
     private:
         // Where the corner bars stand: made on the first call, since a panel has one right bar
         // and a page that stands nothing after the reading keeps the corner it had.
-        [[nodiscard]] StackPanel& cornerBars();
+        [[nodiscard]] Stack& cornerBars();
         // The same for the strip above.
-        [[nodiscard]] StackPanel& stripBars();
+        [[nodiscard]] Stack& stripBars();
     private:
         static constexpr float k_readoutPaddingX = 8.0f;
         // What the corner comes to where a page does not say otherwise: enough for a caret's
@@ -141,8 +141,8 @@ namespace ClaFi::Tools::WhatsClip
         // The corner in two parts: the reading as its body, and what a page stands after it.
         Panel& m_corner;
         Readout& m_readout;
-        StackPanel* m_cornerBars{ nullptr };   // null until a page asks - see cornerBars
-        StackPanel* m_stripBars{ nullptr };    // null until a page asks - see stripBars
+        Stack* m_cornerBars{ nullptr };   // null until a page asks - see cornerBars
+        Stack* m_stripBars{ nullptr };    // null until a page asks - see stripBars
     };
 
     // Bases for both: TextPage and TextPreviewPage

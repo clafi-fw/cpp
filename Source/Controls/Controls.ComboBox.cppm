@@ -6,9 +6,9 @@ import ClaFi.Controls.TextItems;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Base.DropdownControlBase;
 import ClaFi.Controls.Button;
-import ClaFi.Controls.Base.StackPanelBase;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.StackView;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.ScrollBox;
 
 import ClaFi.Core.AppTheme_Colors;

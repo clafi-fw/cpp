@@ -19,7 +19,7 @@ import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.Slider;
-import ClaFi.Controls.StackPanel;
+import ClaFi.Controls.Stack;
 
 import ClaFi.App.Application;
 import ClaFi.App.Settings;
@@ -101,7 +101,7 @@ namespace ClaFi::Showcase
     {
         DialogTitle& titleBar = content.createTopBar<DialogTitle>(m_application.name());
 
-        StackPanel& leftBar = titleBar.createLeftBar<StackPanel>(
+        Stack& leftBar = titleBar.createLeftBar<Stack>(
             Orientation::Horizontal,
             Padding{ 4.0f }
         );
@@ -130,7 +130,7 @@ namespace ClaFi::Showcase
 
     void MillSceneShowcase::buildInfoBar()
     {
-        StackPanel& infoBar = m_scenePanel->createRightBar<StackPanel>(Orientation::Vertical);
+        Stack& infoBar = m_scenePanel->createRightBar<Stack>(Orientation::Vertical);
 
         infoBar.add<MetricsReadout>(
             // THE WIDTH IS STATED, and it is the chart's. The reading is rewritten every frame, so
@@ -155,18 +155,18 @@ namespace ClaFi::Showcase
     // the dropdown's items: the swatch, the name beside it, and the lanes it opened as.
     void MillSceneShowcase::buildScenePage(OptionsPage& page)
     {
-        StackPanel& group = page.addGroup(L"Scene Theme");
+        Stack& group = page.addGroup(L"Scene Theme");
         // THE LANES ARE STATED, NOT WRAPPED. A wrapping stack's MINIMUM is one lane - wrapping is
         // its promise to fit whatever width it is given - so nothing measuring this page could
         // learn that it wants three, and the third lane was laid out past the popup's edge. A row
         // of columns has the width of its columns for a minimum, which is the truth.
         //
         // THE ROW OWNS THE BUTTONS, not the columns: a container answers canFocusItem only where
-        // it follows the user (Interactivity::ActiveContainer, see StackPanelBase::followsUser),
+        // it follows the user (Interactivity::ActiveContainer, see StackBase::followsUser),
         // and the walk from the pointer returns the first control it says yes to - the button,
-        // through the column standing between them. That is what StackPanel::nestedControlHovered
+        // through the column standing between them. That is what Stack::nestedControlHovered
         // means by a stack holding its items in groups.
-        StackPanel& lanes = group.add<StackPanel>(
+        Stack& lanes = group.add<Stack>(
             Orientation::Horizontal,
             Spacing{ k_themeLaneSpacing, 0.0f },
             VerticalAlign::Top,
@@ -192,14 +192,14 @@ namespace ClaFi::Showcase
 
         m_themeButtons.clear();
         m_themeButtons.reserve(Themes::allThemes.size());
-        StackPanel* lane = nullptr;
+        Stack* lane = nullptr;
         std::size_t index = 0;
         for (const SceneTheme& theme : Themes::allThemes)
         {
             // A column every k_themeLaneSize themes, so the count follows the list rather than
             // being stated beside it.
             if (index % k_themeLaneSize == 0)
-                lane = &lanes.add<StackPanel>(Orientation::Vertical);
+                lane = &lanes.add<Stack>(Orientation::Vertical);
 
             ToolButton& item = lane->add<ToolButton>(
                 Text{ theme.name },

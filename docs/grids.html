@@ -316,7 +316,7 @@ are exactly the ones you list, and nothing else.
 
 <pre><code><span class="kw">import</span> ClaFi.Controls.Grids_Dt;
 <span class="kw">import</span> ClaFi.Controls.Grids;
-<span class="kw">import</span> ClaFi.Controls.StackPanel;
+<span class="kw">import</span> ClaFi.Controls.Stack;
 <span class="kw">import</span> ClaFi.Core.TextEngine.Text;
 <span class="kw">import</span> ClaFi.Core.Foundation;
 <span class="kw">import</span> ClaFi.Core.System.UiTypes;
@@ -333,7 +333,7 @@ are exactly the ones you list, and nothing else.
         Size
     };
 
-    <span class="kw">class</span> <span class="tp">FilesPage</span> : <span class="kw">public</span> <span class="tp">StackPanel</span>
+    <span class="kw">class</span> <span class="tp">FilesPage</span> : <span class="kw">public</span> <span class="tp">Stack</span>
     {
     <span class="kw">public</span>:
         <span class="kw">explicit</span> <span class="tp">FilesPage</span>(<span class="kw">const</span> <span class="tp">CreateParams</span>&amp;);
@@ -367,7 +367,7 @@ are exactly the ones you list, and nothing else.
 
     <span class="tp">FilesPage::FilesPage</span>(<span class="kw">const</span> <span class="tp">CreateParams</span>&amp; params)
         :
-        <span class="tp">StackPanel</span>{ params, <span class="tp">Orientation</span>::Vertical }
+        <span class="tp">Stack</span>{ params, <span class="tp">Orientation</span>::Vertical }
     {
     }
 }</code></pre>
