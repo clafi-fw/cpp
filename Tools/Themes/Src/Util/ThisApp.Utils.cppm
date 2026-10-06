@@ -125,28 +125,20 @@ namespace ThisApp
         RoundedRectangleParts parts{};
         const float radius = event.iconWidth() / 8.0f;
 
-        const float deflate = -event.scaleF(0.66f);
-        float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
-        Color strokeColor = event.textRgb(InkGrade::Muted);
+        const float halfGap = event.scaleF(0.66f);
 
-        constexpr auto outline = false;
-
-        parts.radii = { radius, radius, 0.0f, 0.0f };
-        parts.bounds = event.iconRect().relativeRect({ 0.0f, 0.0f }, { 1.0f, 0.333f }).inflated(deflate);
+        parts.radii = CornerRadii::topSideRound(radius);
+        parts.bounds = event.iconRect().relativeRect({ 0.0f, 0.0f }, { 1.0f, 0.333f });
+        parts.bounds.bottom -= halfGap;
         event.canvas().fillPartialRoundedRectangle(parts, harmony.color(map[0]).rgb());
-        if (outline)
-            event.canvas().drawPartialRoundedRectangle(parts, strokeColor, strokeWidth);
 
-        parts.bounds = event.iconRect().relativeRect({ 0.0f, 0.333f }, { 1.0f, 0.666f }).inflated(deflate);
+        parts.bounds = event.iconRect().relativeRect({ 0.0f, 0.333f }, { 1.0f, 0.666f }).inflated(0.0f, -halfGap);
         event.canvas().fillRectangle(parts.bounds, harmony.color(map[1]).rgb());
-        if (outline)
-            event.canvas().drawRectangle(parts.bounds, strokeColor, strokeWidth);
 
-        parts.bounds = event.iconRect().relativeRect({ 0.0f, 0.666f }, { 1.0f, 1.0f }).inflated(deflate);
-        parts.radii = { 0.0f, 0.0f, radius, radius };
+        parts.bounds = event.iconRect().relativeRect({ 0.0f, 0.666f }, { 1.0f, 1.0f });
+        parts.bounds.top += halfGap;
+        parts.radii = CornerRadii::bottomSideRound(radius);
         event.canvas().fillPartialRoundedRectangle(parts, harmony.color(map[2]).rgb());
-        if (outline)
-            event.canvas().drawPartialRoundedRectangle(parts, strokeColor, strokeWidth);
     }
 
     PaintIconFunc ColorSpot::paint
