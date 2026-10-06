@@ -1,5 +1,7 @@
 export module ClaFi.Application.ThemesManager_Serializers;
 
+export import ClaFi.Core.Dom_UiSerializers;
+
 import ClaFi.Application.ThemesManager_Elements;
 import ClaFi.App.ThemeIcon;
 

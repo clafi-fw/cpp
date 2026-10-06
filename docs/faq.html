@@ -159,6 +159,15 @@
                     <li><a href="#file-link">Why does a file: link do nothing?</a></li>
                 </ul>
             </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#documents">Settings and documents</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#serializer-missing">Why does the build say a type must define serializedFields?</a></li>
+                </ul>
+            </li>
         </ul>
     </nav>
     <div class="page-content">
@@ -619,6 +628,101 @@ its box. With no handler, it goes nowhere.
 <p>
 The whole of what a followed link does is in the TextEngine manual, under
 <a href="textengine.html#links-following">Following a link in a TextBox</a>.
+</p>
+
+</div>
+</details>
+</div>
+
+<h2 id="documents">Settings and documents</h2>
+
+<div class="faq">
+<h3 id="serializer-missing">Why does the build say a type must define serializedFields?</h3>
+
+<p class="faq-a">Import the serializer's module where the value is read or written, or re-export it
+from the module that states the struct's fields.</p>
+
+<details class="faq-more">
+<summary>Why</summary>
+<div class="faq-body">
+
+<p>
+The symptom: a struct gains a <code>Color</code> member - or any other type with a
+<code>ScalarSerializer</code> - and the build stops in the Dom engine at
+<code>static assertion failed: 'Type must define k_serializedFields, serializedFields member, or an ADL serializedFields() function.'</code>
+The serializer exists, and the struct's fields are stated.
+</p>
+
+<h4>The serializer is out of sight</h4>
+
+<p>
+The engine decides whether a type is a scalar by looking for its <code>ScalarSerializer</code> in
+the file that reads or writes the value. Where none is in sight, the type is taken for a struct,
+and a struct whose fields are not stated stops the build. The file sees a serializer when it
+imports the serializer's module itself, or imports a module that re-exports it. A plain
+<code>import</code> in a module further up the chain does not carry it.
+</p>
+
+<p>
+The instantiation context in the error names the file the import belongs in - the
+<code>get&lt;T&gt;()</code>, <code>set()</code> or <code>Dt::Value</code> that reads or writes the
+struct - and further down, the member type whose serializer it could not see.
+</p>
+
+<h4>The fields module re-exports what its members need</h4>
+
+<p>
+The module that states <code>serializedFields</code> for a struct is the one that knows which
+serializers its members need. Re-exported from there, they reach every file that can see the
+fields:
+</p>
+
+<pre><code><span class="kw">export module</span> <span class="tp">MyApp.Swatch</span>;
+
+<span class="kw">export import</span> <span class="tp">ClaFi.Core.Dom_UiSerializers</span>;
+
+<span class="kw">import</span> <span class="tp">ClaFi.Core.System.Serialization</span>;
+<span class="kw">import</span> <span class="tp">ClaFi.Core.System.UiTypes</span>;
+<span class="kw">import</span> <span class="tp">ClaFi.StdLib</span>;
+
+<span class="kw">export struct</span> <span class="tp">Swatch</span>
+{
+    <span class="tp">Color</span> fill{};
+    <span class="tp">Color</span> stroke{};
+};
+
+<span class="kw">export constexpr auto</span> <span class="fn">serializedFields</span>(<span class="kw">const</span> <span class="tp">Swatch</span>&amp;)
+{
+    <span class="kw">return</span> <span class="tp">std::make_tuple</span>(
+        <span class="tp">SerializedField</span>{ <span class="st">L"Fill"</span>, &amp;<span class="tp">Swatch</span>::fill },
+        <span class="tp">SerializedField</span>{ <span class="st">L"Stroke"</span>, &amp;<span class="tp">Swatch</span>::stroke }
+    );
+}</code></pre>
+
+<div class="rules-grid">
+    <div class="rule-card dos">
+        <h4>Do</h4>
+        <ul>
+            <li>Re-export the serializers a struct's members need from the module that states its
+                fields.</li>
+            <li>Import <code>ClaFi.Dom</code> in application code that reads or writes values. It
+                re-exports the standard and the UI serializers.</li>
+        </ul>
+    </div>
+    <div class="rule-card donts">
+        <h4>Don't</h4>
+        <ul>
+            <li>Import the serializer without <code>export</code> into a module further up the
+                chain. The file that reads or writes the value still does not see it.</li>
+            <li>State fields for a scalar type to silence the error. Wherever its serializer is in
+                sight the type is still a scalar, so one type would be written two ways.</li>
+        </ul>
+    </div>
+</div>
+
+<p>
+Which module holds which serializer is in the Dom manual, under
+<a href="dom.html#serializer-imports">Where a Serializer Must Be Imported</a>.
 </p>
 
 </div>

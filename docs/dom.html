@@ -322,6 +322,7 @@
                     <li><a href="#structs">Structs & Classes</a></li>
                     <li><a href="#external-structs">External Structs (Non-Intrusive)</a></li>
                     <li><a href="#enums">Enums</a></li>
+                    <li><a href="#serializer-imports">Where a Serializer Must Be Imported</a></li>
                 </ul>
             </li>
             <li class="has-children collapsed">
@@ -409,10 +410,10 @@
             <div class="info">
                 <strong>Module Imports:</strong> To use the DOM subsystem and its declarative DSL, import the core DOM subsystem module in your C++20 code:
                 <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
-<span class="kw">import</span> <span class="tp">ClaFi.Core.Dom</span>;</pre>
+<span class="kw">import</span> <span class="tp">ClaFi.Dom</span>;</pre>
                 If you need built-in file format support, also import the corresponding format module:
                 <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
-<span class="kw">import</span> <span class="tp">ClaFi.Dom.FileFormat.ClaFi</span>; <span class="cm">// or ClaFi.Dom.FileFormat.Json</span></pre>
+<span class="kw">import</span> <span class="tp">ClaFi.Dom.Formats.ClaFi</span>; <span class="cm">// or ClaFi.Dom.Formats.Json</span></pre>
             </div>
 
             <div class="info">
@@ -429,8 +430,8 @@
             <h2 id="basic-usage">Basic Usage Example</h2>
             <p>The Dom subsystem utilizes a declarative DSL blueprint pattern. This example shows how to initialize a serialized Document container on disk, bind native class methods as event listeners, load, alter, and save configuration or document settings.</p>
 
-            <pre><code><span class="kw">import</span> <span class="tp">ClaFi.Core.Dom</span>;
-<span class="kw">import</span> <span class="tp">ClaFi.Dom.FileFormat.ClaFi</span>;
+            <pre><code><span class="kw">import</span> <span class="tp">ClaFi.Dom</span>;
+<span class="kw">import</span> <span class="tp">ClaFi.Dom.Formats.ClaFi</span>;
 
 <span class="kw">class</span> <span class="tp">MyForm</span>
 {
@@ -480,7 +481,7 @@
             <p>Before using custom types within blueprints, the developer must declare their serialization rules. The system provides mapping architectures for primitives, structs (or classes), and enums.</p>
 
             <h3 id="primitives">Scalar Values</h3>
-            <p>Basic types (<code>int</code>, <code>float</code>, <code>bool</code>, <code>std::wstring</code>) are handled automatically. Custom scalar types can be registered by specializing the single-parameter template <code>ScalarSerializer</code>.</p>
+            <p>Basic types (<code>int</code>, <code>float</code>, <code>bool</code>, <code>std::wstring</code>) come with serializers, imported as described in <a href="#serializer-imports">Where a Serializer Must Be Imported</a>. Custom scalar types can be registered by specializing the single-parameter template <code>ScalarSerializer</code>.</p>
             <p>Each custom serializer can optionally expose an internal <code>StorageType</code> alias. Declaring this alias is only required when the type you pass to your serializer differs from the type that should be permanently stored in the DOM. For example, string-like views (such as <code>std::wstring_view</code> or <code>const wchar_t*</code>) use this mechanism to declare <code>using StorageType = std::wstring;</code>, forcing the DOM engine to instantiate an owned <code>std::wstring</code> node and preventing dangling pointer bugs. If no <code>StorageType</code> alias is declared, the engine seamlessly falls back to the decayed type of your template parameter.</p>
             <pre><code><span class="kw">template</span> &lt;&gt;
 <span class="kw">struct</span> <span class="tp">ClaFi::Dom::ScalarSerializer</span>&lt;<span class="tp">MyIntType</span>&gt;
@@ -551,6 +552,40 @@
 <span class="kw">constexpr auto</span> <span class="fn">enumNames</span>(<span class="tp">ColorMode</span>)
 {
     <span class="kw">return</span> <span class="tp">std::array</span>{ <span class="st">L"Dark"</span>, <span class="st">L"Light"</span> };
+}</code></pre>
+
+            <h3 id="serializer-imports">Where a Serializer Must Be Imported</h3>
+            <p>A serializer serves the file that reads or writes the value - the file holding the <code>Dt::Value</code>, the <code>get&lt;T&gt;()</code>, the <code>set()</code> or the <code>getTo()</code>. That file imports the serializer's module itself, or imports a module that re-exports it. A plain <code>import</code> in a module further up the chain does not carry it.</p>
+            <p>The rule reaches every member of a struct. The engine looks for each member's serializer in that same file, and a member whose serializer is out of sight is taken for a struct of its own. The build then stops in the engine at:</p>
+            <pre><code>static assertion failed: 'Type must define k_serializedFields, serializedFields member, or an ADL serializedFields() function.'</code></pre>
+            <p>The instantiation context names the file the import belongs in, and further down, the member type whose serializer it could not see.</p>
+            <p>The built-in serializers live in three modules. <code>ClaFi.Dom</code> re-exports the first two.</p>
+            <ul>
+                <li><code>ClaFi.Core.Dom_StdSerializers</code> - <code>std::wstring</code> and the string-like types, <code>bool</code>, <code>int</code>, <code>std::size_t</code>, <code>float</code>, and every enum with <code>enumNames</code>.</li>
+                <li><code>ClaFi.Core.Dom_UiSerializers</code> - <code>Color</code>.</li>
+                <li><code>ClaFi.Core.Dom_TextSerializers</code> - <code>Text</code> and its markers.</li>
+            </ul>
+            <p>The module that states <code>serializedFields</code> for a struct re-exports the serializers its members need. Every file that can see the fields can then read and write the struct, with no import of its own:</p>
+            <pre><code><span class="kw">export module</span> <span class="tp">MyApp.Swatch</span>;
+
+<span class="kw">export import</span> <span class="tp">ClaFi.Core.Dom_UiSerializers</span>;
+
+<span class="kw">import</span> <span class="tp">ClaFi.Core.System.Serialization</span>;
+<span class="kw">import</span> <span class="tp">ClaFi.Core.System.UiTypes</span>;
+<span class="kw">import</span> <span class="tp">ClaFi.StdLib</span>;
+
+<span class="kw">export struct</span> <span class="tp">Swatch</span>
+{
+    <span class="tp">Color</span> fill{};
+    <span class="tp">Color</span> stroke{};
+};
+
+<span class="kw">export constexpr auto</span> <span class="fn">serializedFields</span>(<span class="kw">const</span> <span class="tp">Swatch</span>&amp;)
+{
+    <span class="kw">return</span> <span class="tp">std::make_tuple</span>(
+        <span class="tp">SerializedField</span>{ <span class="st">L"Fill"</span>, &amp;<span class="tp">Swatch</span>::fill },
+        <span class="tp">SerializedField</span>{ <span class="st">L"Stroke"</span>, &amp;<span class="tp">Swatch</span>::stroke }
+    );
 }</code></pre>
 
             <h2 id="declarative-dsl">Blueprint Declaration</h2>
@@ -625,7 +660,7 @@
             <pre><code><span class="cm">// AppSchemas.ixx (a small module the rest of the app shares)</span>
 <span class="kw">export module</span> <span class="tp">MyProject.AppSchemas</span>;
 
-<span class="kw">import</span> <span class="tp">ClaFi.Core.Dom</span>;
+<span class="kw">import</span> <span class="tp">ClaFi.Dom</span>;
 
 <span class="kw">export namespace</span> <span class="tp">MyProject::Schemas</span>
 {
@@ -643,7 +678,7 @@
 <span class="cm">// NetworkSchema.cpp (a schema fragment built through a function, not a</span>
 <span class="cm">// static reference -- every value here is an ordinary, fixed default</span>
 <span class="cm">// known at compile time, same as if it were written inline)</span>
-<span class="kw">import</span> <span class="tp">ClaFi.Core.Dom</span>;
+<span class="kw">import</span> <span class="tp">ClaFi.Dom</span>;
 
 <span class="tp">Dt::Section</span> <span class="fn">makeNetworkSection</span>()
 {
@@ -656,7 +691,7 @@
 }
 
 <span class="cm">// AppSettings.cpp (assembling everything into one document)</span>
-<span class="kw">import</span> <span class="tp">ClaFi.Core.Dom</span>;
+<span class="kw">import</span> <span class="tp">ClaFi.Dom</span>;
 <span class="kw">import</span> <span class="tp">ClaFi.FileFormat.ClaFi</span>;
 <span class="kw">import</span> <span class="tp">MyProject.AppSchemas</span>;
 
@@ -969,7 +1004,7 @@ dynamicTabs.<span class="fn">clear</span>();
 <span class="kw">#include</span> <span class="st">&lt;../../../nlohmann/json.hpp&gt;</span>
 <span class="kw">export module</span> ThisApp.DomFormats.JsonNlohmann;
 
-<span class="kw">import</span> <span class="tp">ClaFi.Core.Dom</span>;
+<span class="kw">import</span> <span class="tp">ClaFi.Dom</span>;
 <span class="kw">import</span> <span class="tp">ClaFi.StdLib</span>;
 
 <span class="kw">namespace</span> <span class="tp">ThisApp::DomFormats</span>
