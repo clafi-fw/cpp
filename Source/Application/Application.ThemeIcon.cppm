@@ -25,18 +25,18 @@ namespace ClaFi
         ThemeSampleColors() = default;
         ThemeSampleColors(const ThemeColors&, ColorMode);
 
-        Hsl rootSurface{};
+        Color rootSurface{};
         
-        Hsl title{};
-        Hsl dialog{};
-        Hsl toolBar{};
-        Hsl page{};
-        Hsl section{};
-        Hsl border{};
+        Color title{};
+        Color dialog{};
+        Color toolBar{};
+        Color page{};
+        Color section{};
+        Color border{};
 
-        Hsl mutedText{};
-        Hsl accent{};
-        Hsl spot{};
+        Color mutedText{};
+        Color accent{};
+        Color spot{};
     };
 
     // What a theme's icon is drawn from - three palette hues, and the surface and window per mode.
@@ -60,27 +60,34 @@ namespace ClaFi
 
     ThemeSampleColors::ThemeSampleColors(const ThemeColors& colors, const ColorMode mode)
         :
-        rootSurface{ colors.rootSurface(mode) },
+        rootSurface{ colors.rootSurface(mode).toColor() },
 
-        title{ restingSurface(colors, UiElement::DialogTitle, mode) },
-        dialog{ restingSurface(colors, UiElement::Dialog, mode) },
-        toolBar{ restingSurface(colors, UiElement::ToolBar, mode) },
-        page{ restingSurface(colors, UiElement::Page, mode) },
-        section{ restingSurface(colors, UiElement::Section, mode) },
+        title{ restingSurface(colors, UiElement::DialogTitle, mode).toColor() },
+        dialog{ restingSurface(colors, UiElement::Dialog, mode).toColor() },
+        toolBar{ restingSurface(colors, UiElement::ToolBar, mode).toColor() },
+        page{ restingSurface(colors, UiElement::Page, mode).toColor() },
+        section{ restingSurface(colors, UiElement::Section, mode).toColor() },
 
-        border{ restingStroke(colors, UiElement::Dialog, mode) }
+        border{ restingStroke(colors, UiElement::Dialog, mode).toColor() }
     {
         // The page's inks, resolved the way ControlPaintContext::inkHsl resolves them.
-        const Hsl ink = restingInk(colors, UiElement::Page, mode);
+        const Hsl pageInk = restingInk(colors, UiElement::Page, mode);
         constexpr float muted = gradeOf(InkGrade::Muted);
         const float grade = mode == ColorMode::Light
             ? lightGradeOf(muted, colors.darkModeFloor)
             : muted;
-        mutedText = Hsl{ dialog, ink, grade };
-        accent = ink;
-        colors.accent.applyTo(accent, 1.0f, colors, mode);
-        spot = ink;
-        colors.spot.applyTo(spot, 1.0f, colors, mode);
+
+        Hsl dialogHsl = restingSurface(colors, UiElement::Dialog, mode);
+        Hsl tmpHsl = Hsl{ dialogHsl, pageInk, grade };
+        mutedText = tmpHsl.toColor();
+        
+        tmpHsl = dialogHsl;
+        colors.accent.applyTo(tmpHsl, 1.0f, colors, mode);
+        accent = tmpHsl.toColor();
+
+        tmpHsl = dialogHsl;
+        colors.spot.applyTo(tmpHsl, 1.0f, colors, mode);
+        spot = tmpHsl.toColor();
     }
 
     // ThemeIconColors
@@ -118,16 +125,16 @@ namespace ClaFi
             );
         
         const ThemeSampleColors& sample = colors.sample(mode);
-        const Color titleColor = event.applyDisabledFactor(sample.title.toColor());
-        const Color dialogColor = event.applyDisabledFactor(sample.dialog.toColor());
-        const Color pageColor = event.applyDisabledFactor(sample.page.toColor());
-        const Color sectionColor = event.applyDisabledFactor(sample.section.toColor());
+        const Color titleColor = event.applyDisabledFactor(sample.title);
+        const Color dialogColor = event.applyDisabledFactor(sample.dialog);
+        const Color pageColor = event.applyDisabledFactor(sample.page);
+        const Color sectionColor = event.applyDisabledFactor(sample.section);
 
-        const Color barColor = event.applyDisabledFactor(sample.toolBar.toColor());
-        const Color mutedText = event.applyDisabledFactor(sample.mutedText.toColor());
-        const Color borderColor = event.applyDisabledFactor(sample.border.toColor());
-        const Color accentColor = event.applyDisabledFactor(sample.accent.toColor());
-        const Color spotColor = event.applyDisabledFactor(sample.spot.toColor());
+        const Color barColor = event.applyDisabledFactor(sample.toolBar);
+        const Color mutedText = event.applyDisabledFactor(sample.mutedText);
+        const Color borderColor = event.applyDisabledFactor(sample.border);
+        const Color accentColor = event.applyDisabledFactor(sample.accent);
+        const Color spotColor = event.applyDisabledFactor(sample.spot);
 
         constexpr float k_titleShare = 0.25f;
         constexpr float k_stripShare = 0.28f;
