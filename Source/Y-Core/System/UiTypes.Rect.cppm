@@ -120,10 +120,10 @@ namespace ClaFi
         T bottom;
 
         Rect();
-        Rect(const T left, const T top, const T right, const T bottom);
-        Rect(const Rect&, const T inflate);
-        Rect(const Rect&, const T inflateX, const T inflateY);
-        Rect(const Rect&, const Point<T> inflate);
+        Rect(T left, T top, T right, T bottom);
+        Rect(const Rect&, T inflate);
+        Rect(const Rect&, T inflateX, T inflateY);
+        Rect(const Rect&, Point<T> inflate);
         Rect(const Rect&);
 
         T width() const { return right - left; }
@@ -145,15 +145,15 @@ namespace ClaFi
         Rect<float> centerRect(float w, float h) const;
         Rect<float> fitRect(float wRatio, float hRatio) const;
         Rect<float> relativeRect(FloatPoint topLeft, FloatPoint bottomRight) const;
-        const float centerX() const { return (left + right) / 2.0f; }
-        const float centerY() const { return (top + bottom) / 2.0f; }
-        const float relativeX(float x) const { return left + width() * x; }
-        const float relativeY(float y) const { return top + height() * y; }
-        const Point<float> relativePt(float x, float y) const { return { relativeX(x) , relativeY(y) }; }
-        const Point<float> relativePt(FloatPoint pt) const { return relativePt(pt.x, pt.y); }
-        const Point<float> center() const { return { centerX(), centerY() }; }
-        const Point<float> topCenter() const { return { centerX(), static_cast<float>(top) }; }
-        const Point<float> bottomCenter() const { return { centerX(), static_cast<float>(bottom) }; }
+        float centerX() const { return (left + right) / 2.0f; }
+        float centerY() const { return (top + bottom) / 2.0f; }
+        float relativeX(float x) const { return left + width() * x; }
+        float relativeY(float y) const { return top + height() * y; }
+        Point<float> relativePt(float x, float y) const { return { relativeX(x) , relativeY(y) }; }
+        Point<float> relativePt(FloatPoint pt) const { return relativePt(pt.x, pt.y); }
+        Point<float> center() const { return { centerX(), centerY() }; }
+        Point<float> topCenter() const { return { centerX(), static_cast<float>(top) }; }
+        Point<float> bottomCenter() const { return { centerX(), static_cast<float>(bottom) }; }
         // Corners come out by value. A reference into the four edges let a caller write one
         // corner and silently resize the rect, which reads like a move and is not one. To move a
         // rect use offset() or setTopLeft(); to build one from a corner and a size, fromDimensions().
@@ -166,10 +166,10 @@ namespace ClaFi
         Rect<T> topRightSquare(T sideSize) const;
         Rect<T> bottomRightSquare(T sideSize) const;
         Point<T> dimensions() const {   return { width(), height() }; }
-        void setDimensions(const Point<T> value);
-        void setDimensions(const T w, const T h);
+        void setDimensions(Point<T> value);
+        void setDimensions(T w, T h);
         // Moves the rect so its top-left lands on value. The dimensions are carried along.
-        void setTopLeft(const Point<T> value);
+        void setTopLeft(Point<T> value);
         static Rect<T> fromDimensions(Point<T> position, Point<T> dimensions);
         void inflateX(T value);
         void inflateY(T value);
@@ -179,13 +179,13 @@ namespace ClaFi
         Rect<T> inflated(T value) const;
         template<ArithmeticType T2>
         void inflate(const Point<T2> value) { inflate(value.x, value.y); }
-        void offset(const T x, const T y);
+        void offset(T x, T y);
         void offset(const Point<T>& value)  { offset(value.x, value.y); }
         void unionWith(const Rect&);
         bool intersectWith(const Rect&);
         static  Rect<T> intersection(Rect, const Rect&);
         bool intersects(const Rect&) const;
-        bool contains(const T x, const T y) const;
+        bool contains(T x, T y) const;
         bool contains(const Point<T> pt) const { return contains(pt.x, pt.y); }
         void clampTo(Rect<T> boundary);
         Point<T> closestPoint(Point<T> value) const;

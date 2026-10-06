@@ -185,6 +185,7 @@ namespace ClaFi // AppTheme serializers
 
     export constexpr auto serializedFields(const ThemeSampleColors&) {
         return std::make_tuple(
+            SerializedField{ L"RootSurface", &ThemeSampleColors::rootSurface },
             SerializedField{ L"Title", &ThemeSampleColors::title },
             SerializedField{ L"Dialog", &ThemeSampleColors::dialog },
             SerializedField{ L"Section", &ThemeSampleColors::section },
@@ -199,8 +200,6 @@ namespace ClaFi // AppTheme serializers
     export constexpr auto serializedFields(const ThemeIconColors&) {
         return std::make_tuple(
             SerializedField{ L"PaletteHues", &ThemeIconColors::paletteHues },
-            SerializedField{ L"DarkSurface", &ThemeIconColors::darkSurface },
-            SerializedField{ L"LightSurface", &ThemeIconColors::lightSurface },
             SerializedField{ L"DarkSample", &ThemeIconColors::darkSample },
             SerializedField{ L"LightSample", &ThemeIconColors::lightSample }
         );
