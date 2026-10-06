@@ -40,7 +40,7 @@ namespace ThisApp
         {
         public:
             DropDownMenu(const CreateParams&, const ColorHarmonyItem&);
-            void getChildText(GetChildTextEvent&) const override;
+        protected:
             void nestedClick(ClickEvent&) override;
             void nestedDoubleClick(DoubleClickEvent& event) override { event.closeForm(); }
         private:
@@ -127,12 +127,6 @@ namespace ThisApp
         }
     }
 
-    void ThisApp::ColorHarmonyItem::DropDownMenu::getChildText(GetChildTextEvent& event) const
-    {
-        const TagValue tagValue = event.control().tag().value;
-        paintPaletteMap(event.text, m_harmony, m_harmony.maps()[tagValue]);
-    }
-
     void ColorHarmonyItem::DropDownMenu::nestedClick(ClickEvent& event)
     {
         StackPanel::nestedClick(event);
@@ -208,7 +202,7 @@ namespace ThisApp
 
     void ColorHarmonyItem::paintIcon(PaintIconEvent& event)
     {
-        paintPaletteMap(event, m_harmony, *m_harmony.selectedMap(), slantForIndex(static_cast<std::size_t>(m_harmony.kind())));
+        paintPaletteMap(event, m_harmony, *m_harmony.selectedMap(), static_cast<std::size_t>(m_harmony.kind()));
     }
 
     ColorHarmonyItem::DropDownPanel::DropDownPanel(const CreateParams& params, const ColorHarmonyItem& harmonyItem)

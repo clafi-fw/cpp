@@ -36,7 +36,6 @@ namespace ThisApp
     export void writeBlobGlyph(Text&, std::wstring_view glyph);
 
     export void paintColorCell(Text&, Color, bool extendedMode = false);
-    export void paintPaletteMap(Text&, const ColorHarmony&, const PaletteMap&);
     export void paintPaletteMap(PaintIconEvent&, const ColorHarmony&, const PaletteMap&);
 
 
@@ -121,24 +120,12 @@ namespace ThisApp
         };
     }
 
-    void paintPaletteMap(Text& tt, const ColorHarmony& harmony, const PaletteMap& map)
-    {
-        tt << TextAlign::Center << TextStyleId::SubBody;
-        for (std::size_t i = 0ull; i != map.size(); ++i)
-        {
-            std::size_t index = map[i];
-            if (!tt.empty())
-                tt << k_endLine;
-            paintColorSpot(tt, harmony.color(index).rgb());
-        }
-    }
-
     void paintPaletteMap(PaintIconEvent& event, const ColorHarmony& harmony, const PaletteMap& map)
     {
         RoundedRectangleParts parts{};
         const float radius = event.iconWidth() / 8.0f;
 
-        float deflate = -event.scaleF(0.66f);
+        const float deflate = -event.scaleF(0.66f);
         float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         Color strokeColor = event.textRgb(InkGrade::Muted);
 
@@ -190,25 +177,7 @@ namespace ThisApp
     // outline comes from a clip instead - which also means the corner rounding no longer has to be
     // spelled out per band.
 
-        // Six ways for the two inner lines to lean. Every one of them splits the tile into three equal
-        // areas; what differs is the shape. Named rather than numbered so a caller spreading them over
-        // a list is choosing something it can read back later.
-    export enum class PaletteMapSlant
-    {
-        Converging,     // Lines lean towards each other - the middle band narrows to the right
-        ConvergingLow,  // The same, with most of the lean carried by the lower line
-        Diverging,      // The middle band widens to the right
-        DivergingHigh,  // The same, with most of the lean carried by the upper line
-        Falling,        // Both lines lean down to the right
-        Rising,         // Both lean up to the right
-        Count
-    };
-
-    export void paintPaletteMap(PaintIconEvent&, const ColorHarmony&, const PaletteMap&, PaletteMapSlant);
-
-    // A slant for an arbitrary index, for handing every theme in a list a different one. Wraps, so
-    // the caller can pass a row number or a hash without range-checking it.
-    export PaletteMapSlant slantForIndex(std::size_t index);
+    export void paintPaletteMap(PaintIconEvent&, const ColorHarmony&, const PaletteMap&, size_t slantIndex);
 
 
     //----------------------------------------------------------------------------
@@ -216,12 +185,6 @@ namespace ThisApp
 
     namespace
     {
-        constexpr int k_bandCount = 3;
-
-        // 1 - pi/4: what a quarter circle leaves behind in the square that boxes it, which is what
-        // one rounded corner takes out of the tile.
-        constexpr float k_quarterCircleDeficit = 1.0f - k_2Pi / 8.0f;
-
         // How far each inner line leans across the full width, as a fraction of the tile height.
         // Positive leans down to the right.
         struct SlantPair
@@ -230,12 +193,11 @@ namespace ThisApp
             float lower;
         };
 
-        constexpr auto k_leanFactor = 0.15f;
-
         // Deliberately a narrow spread. The six only have to be told apart from each other at a
         // glance in a list; leaning harder than this makes each tile look like a statement rather
         // than a variation, and the middle band starts to read as a wedge.
-        constexpr std::array<SlantPair, static_cast<std::size_t>(PaletteMapSlant::Count)> k_slants = {
+        constexpr auto k_leanFactor = 0.15f;
+        constexpr std::array k_slants = {
             SlantPair{ -0.13f * k_leanFactor,  0.05f * k_leanFactor },    // DivergingHigh
             SlantPair{  0.12f * k_leanFactor, -0.07f * k_leanFactor },    // Converging
             SlantPair{  0.10f * k_leanFactor,  0.15f * k_leanFactor },    // Falling
@@ -243,6 +205,20 @@ namespace ThisApp
             SlantPair{ -0.06f * k_leanFactor,  0.15f * k_leanFactor },    // Diverging
             SlantPair{ -0.15f * k_leanFactor, -0.08f * k_leanFactor },    // Rising
         };
+
+        // A slant for an arbitrary index, for handing every theme in a list a different one. Wraps, so
+        // the caller can pass a row number or a hash without range-checking it.
+        size_t slantForIndex(std::size_t index)
+        {
+            return index % k_slants.size();
+        }
+
+        constexpr int k_bandCount = 3;
+
+        // 1 - pi/4: what a quarter circle leaves behind in the square that boxes it, which is what
+        // one rounded corner takes out of the tile.
+        constexpr float k_quarterCircleDeficit = 1.0f - k_2Pi / 8.0f;
+
 
         // An inner line, as where it crosses the tile's vertical centreline and how steeply it runs.
         struct Divider
@@ -266,7 +242,7 @@ namespace ThisApp
         // none, so the line has to drop to make the top band's share back up.
         float upperCrossing(float width, float height, float radius)
         {
-            float cornerLoss = radius * radius * k_quarterCircleDeficit;
+            const float cornerLoss = radius * radius * k_quarterCircleDeficit;
             return 1.0f / 3.0f + 2.0f / 3.0f * cornerLoss / (width * height);
         }
 
@@ -275,7 +251,7 @@ namespace ThisApp
         // as a level one instead of a slightly wider one.
         float dividerEdge(const Divider& divider, float x, float halfGap, float towards)
         {
-            float normalScale = std::sqrt(1.0f + divider.slope * divider.slope);
+            const float normalScale = std::sqrt(1.0f + divider.slope * divider.slope);
             return divider.centreY + divider.slope * x + towards * halfGap * normalScale;
         }
 
@@ -284,13 +260,13 @@ namespace ThisApp
         void addBand(Graphics::PixelPath& path, int band, const std::array<Divider, k_bandCount - 1>& dividers,
                      float outerX, float reach, float halfGap)
         {
-            bool hasLineAbove = band > 0;
-            bool hasLineBelow = band < k_bandCount - 1;
+            const bool hasLineAbove = band > 0;
+            const bool hasLineBelow = band < k_bandCount - 1;
 
-            float topLeft = hasLineAbove ? dividerEdge(dividers[band - 1], -outerX, halfGap, 1.0f) : -reach;
-            float topRight = hasLineAbove ? dividerEdge(dividers[band - 1], outerX, halfGap, 1.0f) : -reach;
-            float bottomLeft = hasLineBelow ? dividerEdge(dividers[band], -outerX, halfGap, -1.0f) : reach;
-            float bottomRight = hasLineBelow ? dividerEdge(dividers[band], outerX, halfGap, -1.0f) : reach;
+            const float topLeft = hasLineAbove ? dividerEdge(dividers[band - 1], -outerX, halfGap, 1.0f) : -reach;
+            const float topRight = hasLineAbove ? dividerEdge(dividers[band - 1], outerX, halfGap, 1.0f) : -reach;
+            const float bottomLeft = hasLineBelow ? dividerEdge(dividers[band], -outerX, halfGap, -1.0f) : reach;
+            const float bottomRight = hasLineBelow ? dividerEdge(dividers[band], outerX, halfGap, -1.0f) : reach;
 
             path.clear();
             path.moveTo(-outerX, topLeft);
@@ -301,39 +277,34 @@ namespace ThisApp
         }
     }
 
-    PaletteMapSlant slantForIndex(std::size_t index)
-    {
-        return static_cast<PaletteMapSlant>(index % static_cast<std::size_t>(PaletteMapSlant::Count));
-    }
-
     void paintPaletteMap(PaintIconEvent& event, const ColorHarmony& harmony, const PaletteMap& map,
-        PaletteMapSlant slant)
+        size_t slantIndex)
     {
         Graphics::Canvas& canvas = event.canvas();
 
         // The old deflate did two jobs and still does both: it is the inset of the whole tile, and
         // half the gap left between bands.
-        float inset = event.scaleF(0.66f);
+        const float inset = event.scaleF(0.66f);
         FloatRect mapRect = event.iconRect().inflated(-inset);
-        float width = mapRect.width();
-        float height = mapRect.height();
-        float radius = event.iconWidth() / 8.0f;
+        const float width = mapRect.width();
+        const float height = mapRect.height();
+        const float radius = event.iconWidth() / 8.0f;
 
-        const SlantPair& lean = k_slants[static_cast<std::size_t>(slant)];
-        float crossing = upperCrossing(width, height, radius);
+        const SlantPair& lean = k_slants[slantForIndex(slantIndex)];
+        const float crossing = upperCrossing(width, height, radius);
 
         // A lean is given per tile height but applied per x, so it converts on the way in. On a
         // square tile the two are the same and this is a multiply by one.
-        float slopeScale = height / width;
+        const float slopeScale = height / width;
         std::array<Divider, k_bandCount - 1> dividers = {
             Divider{ (crossing - 0.5f) * height, lean.upper * slopeScale },
             Divider{ (0.5f - crossing) * height, lean.lower * slopeScale }
         };
 
         // Built around the origin, the way drawRoundedRect builds, and placed by one matrix.
-        Graphics::Matrix3x2 transform = Graphics::Matrix3x2::translation(mapRect.center());
-        float outerX = width;       // Past the clip on the left and right
-        float reach = height;       // Past the clip above the first band and below the last
+        const Graphics::Matrix3x2 transform = Graphics::Matrix3x2::translation(mapRect.center());
+        const float outerX = width;       // Past the clip on the left and right
+        const float reach = height;       // Past the clip above the first band and below the last
 
         Graphics::PixelPath path;
         path.drawRoundedRect(width, height, radius);
