@@ -99,12 +99,12 @@ shared above them come out half again as wide as the tracks they stand under. Th
 is the one that leaves the tracks alone. A lane still never takes more room than it has, whatever
 the share comes to: one long item can make a lane that is already at the length.
 
-NOT WHAT THE STACK HAS OVER WHAT IT MEASURED, which is the same number on the row axis and nonsense
-on the column axis. `Control::calculateRows` measures against a maximum - the remembered width - so
-`dimensions()` there really is the longest row; `calculateColumns` takes no maximum, so a wrapping
-stack of columns measures ONE lane holding everything, a million items tall, and its difference
-with what it was granted says nothing about the layout being placed. Reading the longest lane, which
-this pass has just cut, is the same answer for rows and the only right one for columns.
+NOT WHAT THE STACK HAS OVER WHAT IT MEASURED, which is a number only where the measure ran against
+the length the align cuts at. Where it did not - a stack of columns on a box that scrolls, measured
+against no maximum, or any stack on the pass before it has a length to remember - it measured ONE
+lane holding everything, a million items tall, and its difference with what it was granted says
+nothing about the layout being placed. Reading the longest lane, which this pass has just cut, is
+the right answer in every case.
 
 ONE GATE: THE STACK'S OWN ALIGNMENT, read along the lane - `fillsMain`. It is tempting to let the
 granted length answer for itself, since `Control::align` normally hands the surplus back to a stack
@@ -165,8 +165,8 @@ the lane of long names holding two while the one above it holds three, at shares
 size, so the third slot stands empty for no reason.
 
 THE ALIGN PASS ASKS THAT QUESTION AND THE MEASURE DOES NOT. The measure has no length of its own to
-ask it against: the only one it could use is the width the last pass laid out - see the remembered
-width below - and a count taken from that is a count derived from its own last answer. A narrow
+ask it against: the only one it could use is the length the last pass laid out - see the remembered
+length below - and a count taken from that is a count derived from its own last answer. A narrow
 pass shrinks what the panel asks for, a host measured from the panel grants that, and the lane
 walks down one item per pass and never comes back. The largest item, on the other hand, is safe to
 read during the align: `calculateChildren` re-measures every child before the parent measures
@@ -178,23 +178,29 @@ than the items measured, and an item overrunning its share is clipped rather tha
 its text was never broken at is not a width its text fits. A theme tile called "New Theme" lost its
 last letter that way while the tile beside it, called "1", left half its share empty.
 
-### A wrapping panel and the width it is given
+### A wrapping panel and the length it is given
 
 WITHOUT A LANE COUNT the two passes have nothing in common. The measure runs bottom-up against
-the maximum the panel states; the width the panel will be handed is settled top-down, in the
-align pass that follows. A panel stretched by its host therefore wraps at a width the measure
-never saw, and the rows it does not use stand under the items as dead space with the same dead
-travel on the bar beside them.
+the maximum the panel states; the length the panel will be handed is settled top-down, in the
+align pass that follows. A panel stretched by its host therefore wraps at a length the measure
+never saw. Where the measure counted more lanes than the align cuts, the ones it does not use
+stand beside the items as dead space, with the same dead travel on the bar beside them. Where it
+counted fewer, the lanes past the counted ones stand outside the box the host measured for the
+panel: a stack of columns in a side bar is as wide as the one column it measured and as tall as
+the slot, so the column breaks at the slot and the next one stands past the bar's edge, clipped.
 
-So a wrapping panel carries the width over: `alignIntoLanes` remembers the content width it broke
-the rows at, and the next measure breaks them at that same width - `wrapWidthLimit`. Where that
-width has CHANGED, the panel asks for one more pass through `AlignEvent::invalidatePass` and
-the pass after it hands back the same number, which is what ends it. Asking on anything else
-cannot end: comparing the height the rows came to against the height they measured looks like the
-sharper test and is a program that lays itself out for ever, because `Control::calculate` ceils
-the content it measured and the align pass does not - a fraction of a unit that never agrees.
-Rows are monotone in width besides - a narrower panel never wraps into fewer of them - so the one
-loop that could feed back, a bar appearing and narrowing the viewport, settles rather than rings.
+So a wrapping panel carries the length over: `alignIntoLanes` remembers the length it broke the
+lanes at - the content width for rows, the content height for columns - and the next measure
+breaks them at that same length - `wrapLengthLimit`, handed to `Control::calculateRows` or
+`Control::calculateColumns` as a maximum. Where that length has CHANGED, the panel asks for one
+more pass through `AlignEvent::invalidatePass` and the pass after it hands back the same number,
+which is what ends it. Asking on anything else cannot end: comparing the extent the lanes came to
+across against the extent they measured looks like the sharper test and is a program that lays
+itself out for ever, because `Control::calculate` ceils the content it measured and the align
+pass does not - a fraction of a unit that never agrees. Lanes are monotone in length besides - a
+shorter length never wraps into fewer of them - so the one loop that could feed back, a bar
+appearing and narrowing the viewport, settles rather than rings. A side bar has no such loop: its
+height is the slot's, whatever width its columns take.
 
 THE BOX ABOVE CARRIES ITS OWN. `ScrollBox` states the viewport as a wrapping body's maximum, and
 it writes that width in `PanelBase::bodySlotSettled` - the moment the slot is settled and before
@@ -209,20 +215,22 @@ overrides the measure there and the panel never reads the stale answer.
 The panel cannot ask in the box's place: the stale viewport reaches it as its own maximum, so the
 width it remembers and the width it is handed agree, and it sees nothing to ask about.
 
-THE ROWS ALONE CARRY THIS, and it is the one thing that is not mirrored. The width is the extent
-the measure runs against - `Control::calculateRows` takes a maximum and `calculateColumns` does not
-- so a stack of columns has no answer to carry back and nothing to ask another pass about.
+BOTH AXES CARRY IT, in one member read along the lane. The length is the extent the measure runs
+against - `Control::calculateRows` and `Control::calculateColumns` each take a maximum - and
+whether it may be kept is asked the same way round: `isWidthGivenFromOutside` for a stack of rows,
+`isHeightGivenFromOutside` for a stack of columns, which `isLaneLengthGivenFromOutside` picks
+between. A change of orientation drops what was kept, since it was measured along the other axis.
 
-Three things the remembered width is not allowed to do, and each is a guard:
+Three things the remembered length is not allowed to do, and each is a guard:
 
 - It is stored in DESIGN UNITS, at the scale that laid it out. Converting it at whatever scale
-  reads it next latches a form taken to 250% and back at a fraction of the width it has.
-- It is kept only where `isWidthGivenFromOutside()`, which asks the question ALL THE WAY UP and
-  asks it of this control first. **A control that does not FILL keeps what it measured**, however
-  freely its host hands a width down - align gives the surplus back - so its width is its own
-  content's answer and a bound taken from it eats itself: the rows wrap, the panel comes out
-  narrower than the width it wrapped at, the next pass wraps THAT, and a stack aligned Left walks
-  from five items a row down to two. **An item of a row keeps what it measured too**, Fill or
+  reads it next latches a form taken to 250% and back at a fraction of the length it has.
+- It is kept only where the length is given from outside, which asks the question ALL THE WAY UP
+  and asks it of this control first. **A control that does not FILL keeps what it measured**,
+  however freely its host hands a width down - align gives the surplus back - so its width is
+  its own content's answer and a bound taken from it eats itself: the rows wrap, the panel comes
+  out narrower than the width it wrapped at, the next pass wraps THAT, and a stack aligned Left
+  walks from five items a row down to two. **An item of a row keeps what it measured too**, Fill or
   not: a row sizes its items from what they measured, and hands a width out only to an item that
   takes what the lane has over - `StackPanel::isChildWidthGiven`. Without that a crumb held its
   own width as a ceiling: a longer title broke onto more lines, and a scale round trip left its
@@ -231,9 +239,16 @@ Three things the remembered width is not allowed to do, and each is a guard:
   width down through five of them and is itself measured from the pages it holds. The walk ends at
   the first host that is as wide as what it contains, and at the root it asks the form: a window
   asked for out of the content is the content's answer once more, `AutoFit::Yes`.
+
+  The height walk is the same walk down the other axis. A control that does not fill downwards
+  keeps the height it measured. A column sizes its items from what they measured and hands a
+  height out only to an item that takes what the lane has over - `StackPanel::isChildHeightGiven`.
+  A panel's top and bottom bars are as tall as they measured, while its side bars and its body are
+  handed the slot's height - `PanelBase::isChildHeightGiven`. A scroll box gives its body no height
+  on an axis it scrolls - `ScrollBox::isChildHeightGiven`, and see the next section.
 - It states nothing while the form is measuring to ASK for a window -
   `FormBase::isMeasuringPlacement`. That pass is where a form finds out what it wants, and one
-  held to the width it was last given could never grow.
+  held to the size it was last given could never grow.
 
 THE SAME THREE GOVERN THE VIEWPORT A SCROLL BOX STATES FOR ITS BODY, which is a remembered width
 of the same kind - see ScrollBox::adjustChildMetrics, and Controls-Base for where it is written.
@@ -244,18 +259,20 @@ lets it through, and a menu taken from 165% to 227% arrives at its placement hol
 104 design units where its own page needs 374. The measure then collapses onto whatever MinSize
 the root states and the window comes out at that floor.
 
-A first open therefore shows the lane count's answer, then the width's: the placement is asked
-for off the first, and the pass that lays the content into the window is where the width arrives.
-A page that converges SHORTER keeps the window it already asked for.
+A first open therefore shows the lane count's answer, then the length's: the placement is asked
+for off the first, and the pass that lays the content into the window is where the length
+arrives. A page that converges SHORTER keeps the window it already asked for.
 
-So a panel in a window fills the width it is given, and a panel in something sized by what it
-holds stands at its lane count. Which is the right answer to each: there is no width to fill in
-a host that has no width of its own yet.
+So a panel in a window fills the length it is given, and a panel in something sized by what it
+holds stands at its lane count. Which is the right answer to each: there is no length to fill in
+a host that has none of its own yet. A stack of columns in a side bar is the first kind: the
+window decides the bar's height, the columns break at it, and the bar is as wide as the columns
+that makes, with the body beside it giving up the room.
 
 ### A column on a box that scrolls
 
-A COLUMN IS NOT BROKEN AT A HEIGHT ITS HOST SCROLLS. `calculateColumns` breaks a column at the
-stack's own maximum and nowhere else, and a scroll box hands its body the viewport whatever the
+A COLUMN IS NOT BROKEN AT A HEIGHT ITS HOST SCROLLS. There `calculateColumns` breaks a column at
+the stack's own maximum and nowhere else, and a scroll box hands its body the viewport whatever the
 body measured. Cut at the viewport, the columns are ones the measure never counted. A dropdown
 cut short by its placement would show it: `ScrollBars::Auto` puts the bar up for the one column
 the list measured, the cut makes two, the body comes out exactly as tall as the viewport so the
@@ -266,6 +283,11 @@ So where `Control::isScrolledByParent` answers yes for the vertical axis, the co
 at least the height it measured, and the lanes the align cuts are the lanes the measure counted.
 A `ScrollBox` answers from its bars: `Both`, `Vertical` and `Auto` scroll the body's height,
 which is the same reading `ScrollBox::stateSizeGivenWay` makes of what the body can give up.
+
+NOTHING IS REMEMBERED THERE EITHER. `ScrollBox::isChildHeightGiven` answers no for a body whose
+height the box scrolls, so `isHeightGivenFromOutside` stops at the box and the measure has no
+length to break the column at but the stack's own maximum. A remembered viewport would turn a list
+that scrolls into one that flows sideways the moment it outgrew the height it was last laid out at.
 
 A box that scrolls only across - a list of columns flowing sideways, `ScrollBars::Horizontal` -
 still hands the viewport as the height, and the columns break at it. Rows take none of this: the

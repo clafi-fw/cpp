@@ -77,6 +77,9 @@ namespace ClaFi::Controls
         // is where each of those is handed out, and this says the same thing before the fact.
         bool isChildWidthGiven(const Control& child) const override
             { return &child != leftBar() && &child != rightBar(); }
+        // A top or bottom bar is as tall as it measured; the rest are handed the slot's height.
+        [[nodiscard]] bool isChildHeightGiven(const Control& child) const override
+            { return &child != topBar() && &child != bottomBar(); }
         [[nodiscard]] ControlSlots navigationSlots() const override { return m_slots; }
     private:
         static bool isNotNullAndVisible(const Control* item) { return item && item->visible(); }

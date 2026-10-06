@@ -674,6 +674,20 @@ namespace ClaFi
         return hostForm && hostForm->autoFit() == AutoFit::No;
     }
 
+    bool Control::isHeightGivenFromOutside() const
+    {
+        const Control* control = this;
+        while (control->verticalAlign() == VerticalAlign::Fill
+            && control->isHeightGivenByParent())
+        {
+            control = control->m_parent;
+        }
+        if (control->m_parent)
+            return false;
+        const FormBase* hostForm = control->getForm();
+        return hostForm && hostForm->autoFit() == AutoFit::No;
+    }
+
     FormBase& Control::form()
     {
         return *getForm();
@@ -2136,7 +2150,8 @@ namespace ClaFi
         );
     }
 
-    ScaledDimensions Control::calculateColumns(AlignEvent& event, ControlSpan controls, const bool autoWrap, std::size_t wrapCount)
+    ScaledDimensions Control::calculateColumns(AlignEvent& event, ControlSpan controls, const bool autoWrap,
+        std::size_t wrapCount, const float maxContentHeight)
     {
         event.calculatedMinSize = composeLaneMinSize(controls, LaneAxis::Vertical, autoWrap, event.spacing.y);
         return calculateLanes(
@@ -2144,7 +2159,7 @@ namespace ClaFi
             [](const auto& item) { return item->height(); },
             [](const auto& item) { return item->width(); },
             event.spacing.y,
-            event.maxContentHeight(),
+            std::min(event.maxContentHeight(), maxContentHeight),
             [](auto& res, float val) { res.y = std::max(res.y, val); },
             [](auto& res, float val) { res.x += val; },
             [&event](std::size_t lines) { return event.totalSpacingX(lines); }

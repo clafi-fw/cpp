@@ -647,6 +647,9 @@ namespace ClaFi
         // good. See ScrollBox::adjustChildMetrics, which is what asked for this.
         [[nodiscard]] bool isWidthGivenByParent() const
             { return m_parent && m_parent->isChildWidthGiven(*this); }
+        // Whose answer this control's height is, read the same way as its width.
+        [[nodiscard]] bool isHeightGivenByParent() const
+            { return m_parent && m_parent->isChildHeightGiven(*this); }
         // Whether the host scrolls this control along the axis, so its extent there is its own.
         [[nodiscard]] bool isScrolledByParent(ScrollAxis axis) const
             { return m_parent && m_parent->scrollsChild(*this, axis); }
@@ -656,8 +659,10 @@ namespace ClaFi
         // holds, and a bound stated under one of those narrows the very thing it came from. The
         // walk ends at the first control that is not handed its width - that one's content
         // decides it - and at the root, where the window does, unless the window was asked for
-        // out of the content too. See StackPanel::wrapWidthLimit
+        // out of the content too. See StackPanel::wrapLengthLimit
         [[nodiscard]] bool isWidthGivenFromOutside() const;
+        // The same walk for the height. See Item-Containers
+        [[nodiscard]] bool isHeightGivenFromOutside() const;
         virtual std::wstring_view diagnosticText() const { return {}; }
         FormBase& form();
         const FormBase& form() const;
@@ -1076,6 +1081,8 @@ namespace ClaFi
         // A container that lays its children across a lane or into a slot does - which is the
         // usual case, and the default.
         virtual bool isChildWidthGiven(const Control&) const { return true; }
+        // Whether this control decides that child's height rather than reading it off the child.
+        [[nodiscard]] virtual bool isChildHeightGiven(const Control&) const { return true; }
         virtual void getChildText(GetChildTextEvent& event) const;
         virtual void childHoverEnter(Control&) {}
         virtual void childHoverLeave(Control&) {}
@@ -1266,11 +1273,11 @@ namespace ClaFi
         // A menu the keyboard asked of this host, for the same child.
         static void forwardContextPopup(Control& control, ContextPopupEvent& event) { control.nestedContextPopup(event); }
 
-        // A row breaks on the lane count, or on the smaller of the maximum the control states and
-        // the width handed in here - see StackPanel::wrapWidthLimit, the one caller that states one.
+        // A lane breaks on its count, or past the stated maximum or the length handed in here.
         static ScaledDimensions calculateRows(AlignEvent&, ControlSpan, const bool autoWrap,
             std::size_t wrapCount = k_maxSize, float maxContentWidth = k_maxFloat);
-        static ScaledDimensions calculateColumns(AlignEvent&, ControlSpan, const bool autoWrap, std::size_t wrapCount = k_maxSize);
+        static ScaledDimensions calculateColumns(AlignEvent&, ControlSpan, const bool autoWrap,
+            std::size_t wrapCount = k_maxSize, float maxContentHeight = k_maxFloat);
 
         static void alignControl(Control*, AlignEvent& parentEvent, ScaledPosition, ScaledDimensions);
         // What a lane has over what its items measured, divided among those that asked for it.

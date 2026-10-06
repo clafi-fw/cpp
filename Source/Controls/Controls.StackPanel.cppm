@@ -101,6 +101,9 @@ namespace ClaFi::Controls
         // A row reads its items' widths off them, unless one fills the lane. See Item-Containers
         [[nodiscard]] bool isChildWidthGiven(const Control& child) const override
             { return !lanesRunAcross() || child.fillsLane(); }
+        // A column reads its items' heights off them unless one fills the lane. See Item-Containers
+        [[nodiscard]] bool isChildHeightGiven(const Control& child) const override
+            { return lanesRunAcross() || child.fillsLane(); }
         NavigationWrap navigationWrap() const override;
         void nestedControlHovered(Control* hovered) override;
         void hoverLeave() override;
@@ -175,12 +178,13 @@ namespace ClaFi::Controls
             { return lanesRunAcross() ? value.y : value.x; }
         [[nodiscard]] FloatPoint lanePoint(float main, float cross) const
             { return lanesRunAcross() ? FloatPoint{ main, cross } : FloatPoint{ cross, main }; }
-        // The width the last align pass broke this panel's rows at, at the scale measuring now,
-        // and no limit where there is none to state. See Item-Containers
-        [[nodiscard]] float wrapWidthLimit(const AlignEvent&) const;
-        // Carries the width this pass broke the rows at over to the pass that measures next, and
-        // asks for that pass where it has changed. See Item-Containers
-        void rememberWrapWidth(AlignEvent&, float limitWidth);
+        // Whether the length the lanes run along is the host's to give. See Item-Containers
+        [[nodiscard]] bool isLaneLengthGivenFromOutside() const
+            { return lanesRunAcross() ? isWidthGivenFromOutside() : isHeightGivenFromOutside(); }
+        // The remembered length at the scale measuring now, or no limit. See Item-Containers
+        [[nodiscard]] float wrapLengthLimit(const AlignEvent&) const;
+        // Carries the length this pass broke the lanes at to the next measure. See Item-Containers
+        void rememberWrapLength(AlignEvent&, float limitLength);
         // How many items one lane of this stack takes, which is what its count amounts to
         // read either way. Asked by the measure and the align alike, so that the lanes one
         // cuts are the lanes the other measured. See Item-Containers
@@ -219,9 +223,7 @@ namespace ClaFi::Controls
         // last wrapping align. Seeds to k_maxFloat so that a panel queried before it has
         // ever been aligned reports a lane nothing can precede, and culls nothing.
         float m_maxLaneExtent{ k_maxFloat };
-        // The content width the last align pass broke the rows at, in design units, and zero
-        // until this panel has been laid out once. See Item-Containers
-        float m_wrapWidthInDesign{};
+        float m_wrapLengthInDesign{};   // the length the lanes were last broken at, in design units
         // Connected in the constructor rather than handed its handler here. The constructor is a
         // template, so a default member initializer is instantiated in whatever translation unit
         // builds a StackPanel, and OnEvent's deduction does not survive the trip - onTick names
@@ -262,6 +264,8 @@ namespace ClaFi::Controls
         if (m_orientation == value)
             return;
         m_orientation = value;
+        // A length remembered along the other axis bounds nothing on this one.
+        m_wrapLengthInDesign = 0.0f;
         invalidateFormAlign();
     }
 
@@ -303,9 +307,10 @@ namespace ClaFi::Controls
         switch (m_orientation)
         {
         case Orientation::VerticalWrap:
-            return calculateColumns(event, controls(), true, itemsPerLane());
+            return calculateColumns(event, controls(), true, itemsPerLane(),
+                wrapLengthLimit(event));
         case Orientation::HorizontalWrap:
-            return calculateRows(event, controls(), true, itemsPerLane(), wrapWidthLimit(event));
+            return calculateRows(event, controls(), true, itemsPerLane(), wrapLengthLimit(event));
         case Orientation::Vertical:
         {
             ScaledDimensions result = calculateColumns(event, controls(), false);
@@ -568,10 +573,7 @@ namespace ClaFi::Controls
             crossOf(position) += laneCross + crossSpacing;
             ++index;
         }
-        // Only the rows: the width is the extent the measure runs against - see calculateRows -
-        // and there is no height for it to answer the same question about.
-        if (lanesRunAcross())
-            rememberWrapWidth(event, limitMain);
+        rememberWrapLength(event, limitMain);
     }
 
     StackPanel::LaneCut StackPanel::nextLane(ControlSpan::iterator begin, const AlignEvent& event,
@@ -616,7 +618,7 @@ namespace ClaFi::Controls
     // than the shares it holds.
     //
     // ASKED BY THE ALIGN PASS AND ONLY BY IT. The measure must not break its lanes on this: it
-    // would be measuring against the width the last pass laid out - see wrapWidthLimit - so a
+    // would be measuring against the length the last pass laid out - see wrapLengthLimit - so a
     // narrow pass would shrink what the panel asks for, a host measured from the panel would grant
     // that, and the count would walk down one pass at a time and never come back.
     std::size_t StackPanel::sharesThatFit(const float largest, const float spacing,
@@ -717,49 +719,49 @@ namespace ClaFi::Controls
         alignControl(&control, event, itemPosition, lanePoint(extent, laneCross));
     }
 
-    float StackPanel::wrapWidthLimit(const AlignEvent& event) const
+    float StackPanel::wrapLengthLimit(const AlignEvent& event) const
     {
-        if (m_wrapWidthInDesign <= 0.0f)
+        if (m_wrapLengthInDesign <= 0.0f)
             return k_maxFloat;
         // NOT WHILE THE FORM IS ASKING FOR A WINDOW. That pass is where a form finds out what it
-        // wants, and one held to the width it was last given could never grow - see
+        // wants, and one held to the size it was last given could never grow - see
         // FormBase::isMeasuringPlacement.
         const FormBase* hostForm = getForm();
         if (hostForm && hostForm->isMeasuringPlacement())
             return k_maxFloat;
-        // NOT WHERE THE WIDTH IS THE CONTENT'S OWN ANSWER, however many hosts down. A bound
-        // stated there is derived from the thing it bounds: the rows wrap, the panel comes out
-        // narrower, the host measured from it comes out narrower, and the next pass wraps them
+        // NOT WHERE THE LENGTH IS THE CONTENT'S OWN ANSWER, however many hosts down. A bound
+        // stated there is derived from the thing it bounds: the lanes wrap, the panel comes out
+        // shorter along them, the host measured from it follows, and the next pass wraps them
         // again - a backstage walked down to three tiles a lane, one pass at a time.
-        if (!isWidthGivenFromOutside())
+        if (!isLaneLengthGivenFromOutside())
             return k_maxFloat;
-        return m_wrapWidthInDesign * event.scaleFactor();
+        return m_wrapLengthInDesign * event.scaleFactor();
     }
 
     // IN DESIGN UNITS, WITH THE SCALE THAT LAID IT OUT. Converting it at the scale in force when
     // it is read puts the two at different scales, and a form taken to 250% and back is left
-    // measuring against a fraction of the width it has - see ScrollBox::adjustChildMetrics.
+    // measuring against a fraction of the length it has - see ScrollBox::adjustChildMetrics.
     //
-    // A WIDTH THAT HAS NOT CHANGED ASKS FOR NOTHING, and that is what ends this. Comparing what
-    // the rows CAME TO against what they measured cannot: Control::calculate ceils the content it
-    // measured and the align pass does not, so a height with a fraction in it differs by up to a
-    // whole unit for ever - every pass asks for another, and the program lays itself out until it
-    // is killed. The width converges in one step because the pass that measures against it hands
-    // back the same number.
-    void StackPanel::rememberWrapWidth(AlignEvent& event, const float limitWidth)
+    // A LENGTH THAT HAS NOT CHANGED ASKS FOR NOTHING, and that is what ends this. Comparing what
+    // the lanes CAME TO across against what they measured cannot: Control::calculate ceils the
+    // content it measured and the align pass does not, so an extent with a fraction in it differs
+    // by up to a whole unit for ever - every pass asks for another, and the program lays itself
+    // out until it is killed. The length converges in one step because the pass that measures
+    // against it hands back the same number.
+    void StackPanel::rememberWrapLength(AlignEvent& event, const float limitLength)
     {
-        if (!isWidthGivenFromOutside())
+        if (!isLaneLengthGivenFromOutside())
             return;
-        // NOT WHILE THE FORM IS ASKING FOR A WINDOW. That pass lays the rows out at the content's
-        // own size, not at a width the window gave - see FormBase::isMeasuringPlacement.
+        // NOT WHILE THE FORM IS ASKING FOR A WINDOW. That pass lays the lanes out at the content's
+        // own size, not at a size the window gave - see FormBase::isMeasuringPlacement.
         const FormBase* hostForm = getForm();
         if (hostForm && hostForm->isMeasuringPlacement())
             return;
-        const float widthInDesign = limitWidth / event.scaleFactor();
-        if (std::abs(widthInDesign - m_wrapWidthInDesign) < k_wrapEpsilon)
+        const float lengthInDesign = limitLength / event.scaleFactor();
+        if (std::abs(lengthInDesign - m_wrapLengthInDesign) < k_wrapEpsilon)
             return;
-        m_wrapWidthInDesign = widthInDesign;
-        // The rows this pass laid out were measured against another width. Ask, do not lay out
+        m_wrapLengthInDesign = lengthInDesign;
+        // The lanes this pass laid out were measured against another length. Ask, do not lay out
         // from here - see AlignEvent::invalidatePass.
         event.invalidatePass();
     }

@@ -67,6 +67,8 @@ namespace ClaFi::Controls
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         bool controlIsOnScrollBox(Control&) override;
         [[nodiscard]] bool scrollsChild(const Control&, ScrollAxis) const override;
+        // The body's height is its own while the box scrolls it. See Item-Containers
+        [[nodiscard]] bool isChildHeightGiven(const Control&) const override;
 
         // Keeps what the body measured and how it asks to be scrolled, for the pass and its paint.
         void calculateChildren(FormBase&) override;
@@ -320,6 +322,11 @@ namespace ClaFi::Controls
     bool ScrollBox::scrollsChild(const Control& child, const ScrollAxis axis) const
     {
         return &child == body() && givesWay(axis);
+    }
+
+    bool ScrollBox::isChildHeightGiven(const Control& child) const
+    {
+        return PanelBase::isChildHeightGiven(child) && !scrollsChild(child, ScrollAxis::Vertical);
     }
 
     // The body's height is what it measured only until it is laid out, and laid out past its end
