@@ -127,7 +127,7 @@ namespace ClaFi
         void paintChild(Control&) const;
         // The inset is stated here rather than left on the event for this call to find. It is a
         // design value and is scaled on the way in.
-        void defaultPaintSurface(FloatPoint inset = {});
+        void defaultPaintSurface(FloatPoint inset = {}, bool onlyStroke = false);
         bool overlayStage() const { return m_overlayStage; }
         const Control* overlayHost() const { return m_overlayHost; }
         // Whether this is the stage that paints the control itself. The surface, the text and

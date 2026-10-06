@@ -39,7 +39,7 @@ namespace ClaFi::Documents
 
     //-----------------------------------------------------------------------------
 
-    // These are actually end application dependent
+    // These are actually should be stated by the end application
     constexpr MinSize k_mainFormMinSize{ 600.0f, 400.0f };
     constexpr PreferredSize k_mainFormPreferredSize{ 900.0f, 600.0f };
 

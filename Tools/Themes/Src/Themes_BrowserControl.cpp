@@ -52,13 +52,7 @@ namespace ThisApp
             Base::paintTabIcon(tab, event);
             return;
         }
-        // The page's theme, edits and all, while there is a page. A tab restored from settings has
-        // none until it is first opened, and its entry carries what the icon is drawn from, written
-        // when the page was last left - so the tab's own file is not read for the icon.
-        if (const AppTheme* theme = tabTheme(tab))
-            paintThemeIcon(event, theme->colors);
-        else
-            paintThemeIcon(event, tabIconColors(tab));
+        paintThemeIcon(event, tabIconColors(tab));
     }
 
     // Writes into the entry what the icon is drawn from, for the runs in which this tab is
@@ -99,6 +93,8 @@ namespace ThisApp
 
     ThemeIconColors ThemesBrowser::tabIconColors(const BrowserTab& tab)
     {
+        if (const AppTheme* theme = tabTheme(tab))
+            return ThemeIconColors{ theme->colors };
         return (settings().tabEntry(tab.id()) / k_tabIconAttrName).get<ThemeIconColors>();
     }
 }

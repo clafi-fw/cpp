@@ -52,6 +52,10 @@ namespace ClaFi
 
     export void paintThemeIcon(PaintIconEvent&, const ThemeIconColors&);
     export void paintThemeIcon(PaintIconEvent&, const ThemeColors&);
+    export void paintThemeBackground(Graphics::Canvas& canvas, const FloatRect& rect,
+        float cornerRadius, const ThemeSampleColors& sample, float borderWidth);
+    export void paintThemeIconOnly(Graphics::Canvas& canvas, const FloatRect& iconRect,
+        bool isSmall, const ThemeSampleColors& sample);
 
 
     //-----------------------------------------------------------------------------
@@ -107,6 +111,93 @@ namespace ClaFi
 
     // Painting
 
+    void paintThemeBackground(Graphics::Canvas& canvas, const FloatRect& rect,
+        float cornerRadius, const ThemeSampleColors& sample, float borderWidth)
+    {
+        constexpr float k_topShare = 0.3f;
+        constexpr float k_bottomShare = 0.3f;
+
+        const float titleBottom = rect.relativeY(k_topShare) + 0.5f;
+        const float bodyTop = titleBottom - 1.0f;
+
+        const float bottomBarTop = rect.relativeY(1.0f - k_bottomShare) - 0.5f;
+        const float bodyBottom = bottomBarTop + 1.0f;
+
+        // Title
+        {
+            RoundedRectangleParts backgroundPart{
+                .bounds = rect,
+                .radii = CornerRadii::topSideRound(cornerRadius),
+                .sides = RectSides::all()
+            };
+            backgroundPart.bounds.bottom = titleBottom + 1.0f;
+            canvas.fillPartialRoundedRectangle(backgroundPart, sample.title);
+        }
+
+        // Middle background
+        {
+            RoundedRectangleParts backgroundPart{
+                .bounds = {
+                    rect.left,
+                    bodyTop,
+                    rect.right,
+                    bodyBottom
+                },
+                .radii = CornerRadii::square(),
+                .sides = RectSides::all()
+            };
+            canvas.fillPartialRoundedRectangle(backgroundPart, sample.section);
+        }
+
+        // Bottom bar
+        {
+            RoundedRectangleParts backgroundPart{
+                .bounds = rect,
+                .radii = CornerRadii::bottomSideRound(cornerRadius),
+                .sides = RectSides::all()
+            };
+            backgroundPart.bounds.top = bottomBarTop;
+            canvas.fillPartialRoundedRectangle(backgroundPart, sample.toolBar);
+        }
+
+        // Border
+        canvas.drawRoundedRectangle(rect, cornerRadius, cornerRadius,
+            sample.border, borderWidth);
+    }
+
+    void paintThemeIconOnly(Graphics::Canvas& canvas, const FloatRect& iconRect, bool isSmall, const ThemeSampleColors& sample )
+    {
+        // Rows
+        {
+            const std::array rowColors{ sample.mutedText, sample.accent, sample.spot };
+
+            float rowSize = iconRect.height() / 6.0f;
+            float rowMargin = rowSize / 2.0;
+            float rowPadding = 0.25f;
+            float x = iconRect.relativeX(rowPadding);
+            float x2 = iconRect.relativeX(1.0f - rowPadding);
+            float boxRadius = rowSize / 2.0f;
+            float rowRadius = rowSize / 2.0f;
+
+            bool b = true;
+            float y = iconRect.relativeY(0.2f);
+            for (std::size_t i = 0; i != rowColors.size(); ++i)
+            {
+                FloatRect boxRect = { x, y,  b ? x2 : x + rowSize, y + rowSize };
+                if (!b)
+                {
+                    // Box
+                    canvas.fillRoundedRectangle(boxRect, boxRadius, boxRadius, sample.accent);
+                    // Label
+                    boxRect.left = boxRect.right + rowSize;
+                    boxRect.right = x2;
+                }
+                canvas.fillRoundedRectangle(boxRect, rowRadius, rowRadius, rowColors[i]);
+                y = boxRect.bottom + rowMargin;
+            }
+        }
+    }
+
     void paintThemeIcon(PaintIconEvent& event, const ThemeColors& colors)
     {
         paintThemeIcon(event, ThemeIconColors{ colors });
@@ -114,139 +205,15 @@ namespace ClaFi
 
     void paintThemeIcon(PaintIconEvent& event, const ThemeIconColors& colors)
     {
-        const ColorMode mode = colorModeOf(event.lightness());
-        float iconSize = event.iconWidth();
-        bool isSmall = event.unScale(iconSize) < 32.0f;
-
         const FloatRect backgroundRect = event.iconRect();
-        const float cornersRadius = std::min(
-            backgroundRect.height() / 8.0f,
-            event.scaleF(4.0f)
-            );
-        
+        const float iconSize = backgroundRect.width();
+        const float cornersRadius = backgroundRect.height() / 8.0f;
+        const ColorMode mode = colorModeOf(event.lightness());
         const ThemeSampleColors& sample = colors.sample(mode);
-        const Color titleColor = event.applyDisabledFactor(sample.title);
-        const Color dialogColor = event.applyDisabledFactor(sample.dialog);
-        const Color pageColor = event.applyDisabledFactor(sample.page);
-        const Color sectionColor = event.applyDisabledFactor(sample.section);
-
-        const Color barColor = event.applyDisabledFactor(sample.toolBar);
-        const Color mutedText = event.applyDisabledFactor(sample.mutedText);
-        const Color borderColor = event.applyDisabledFactor(sample.border);
-        const Color accentColor = event.applyDisabledFactor(sample.accent);
-        const Color spotColor = event.applyDisabledFactor(sample.spot);
-
-        constexpr float k_titleShare = 0.25f;
-        constexpr float k_stripShare = 0.28f;
-        constexpr float k_barShare = 0.25f;
+        paintThemeBackground(event.canvas(), backgroundRect, cornersRadius, sample,
+            event.scaledStrokeWidth(Thickness::Thin));
         
-        const float titleBottom = backgroundRect.relativeY(k_titleShare) + 0.5f;
-        const float bodyTop = titleBottom - 1.0f;
-
-        const float bottomBarTop = backgroundRect.relativeY(1.0f - k_barShare) - 0.5f;
-        const float bodyBottom = bottomBarTop + 1.0f;
-        const float bodyLeft = backgroundRect.relativeX(k_stripShare);
-        const float bodyRight = backgroundRect.relativeX(1.0f - k_stripShare);
-
-        // Title
-        {
-            RoundedRectangleParts backgroundPart{
-                .bounds = backgroundRect,
-                .radii = CornerRadii::topSideRound(cornersRadius),
-                .sides = RectSides::all()
-            };
-            backgroundPart.bounds.bottom = titleBottom + 1.0f;
-            event.canvas().fillPartialRoundedRectangle(backgroundPart, titleColor);
-        }
-
-        // Left strip background
-        {
-            RoundedRectangleParts backgroundPart{
-                .bounds = {
-                    backgroundRect.left,
-                    bodyTop,
-                    bodyLeft + 0.5f,
-                    bodyBottom
-                },
-                .radii = CornerRadii::square(),
-                .sides = RectSides::all()
-            };
-            event.canvas().fillPartialRoundedRectangle(backgroundPart, dialogColor);
-        }
-        
-        // Middle page background
-        {
-            RoundedRectangleParts backgroundPart{
-                .bounds = {
-                    bodyLeft - 0.5f,
-                    bodyTop,
-                    bodyRight + 0.5f,
-                    bodyBottom
-                },
-                .radii = CornerRadii::square(),
-                .sides = RectSides::all()
-            };
-            event.canvas().fillPartialRoundedRectangle(backgroundPart, pageColor);
-        }
-
-        // Right strip background
-        {
-            RoundedRectangleParts backgroundPart{
-                .bounds = {
-                    bodyRight - 0.5f,
-                    bodyTop,
-                    backgroundRect.right,
-                    bodyBottom
-                },
-                .radii = CornerRadii::square(),
-                .sides = RectSides::all()
-            };
-            event.canvas().fillPartialRoundedRectangle(backgroundPart, sectionColor);
-        }
-
-        // Bottom bar
-        {
-            RoundedRectangleParts backgroundPart{
-                .bounds = backgroundRect,
-                .radii = CornerRadii::bottomSideRound(cornersRadius),
-                .sides = RectSides::all()
-            };
-            backgroundPart.bounds.top = bottomBarTop;
-            event.canvas().fillPartialRoundedRectangle(backgroundPart, barColor);
-        }
-
-        // Rows
-        {
-            const std::array rowColors{ spotColor, mutedText, mutedText };
-
-            float rowSize = backgroundRect.height() / 8.0f;
-            float rowMargin = rowSize;
-            float rowPadding = 0.25f;
-            float x = backgroundRect.relativeX(rowPadding);
-            float x2 = backgroundRect.relativeX(1.0f - rowPadding);
-            float boxRadius = rowSize / 2.0f;
-            float rowRadius = rowSize / 2.0f;
-
-            float y = backgroundRect.relativeY(0.2f);
-            for (std::size_t i = 0; i != rowColors.size(); ++i)
-            {
-                FloatRect boxRect = { x, y,  isSmall ? x2 : x + rowSize, y + rowSize };
-                if (!isSmall)
-                {
-                    // Box
-                    event.canvas().fillRoundedRectangle(boxRect, boxRadius, boxRadius, accentColor);
-                    // Label
-                    boxRect.left = boxRect.right + rowSize;
-                    boxRect.right = x2;
-                }
-                event.canvas().fillRoundedRectangle(boxRect, rowRadius, rowRadius, rowColors[i]);
-                y = boxRect.bottom + rowMargin;
-            }
-        }
-
-        // Border
-        event.canvas().drawRoundedRectangle(backgroundRect, cornersRadius, cornersRadius,
-            borderColor, event.scaledStrokeWidth(Thickness::Thin));
+        paintThemeIconOnly(event.canvas(), backgroundRect, true, sample);
     }
 
 }

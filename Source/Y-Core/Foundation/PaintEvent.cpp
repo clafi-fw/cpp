@@ -458,12 +458,13 @@ namespace ClaFi
         childContext.traverse();
     }
 
-    void PaintEvent::defaultPaintSurface(FloatPoint inset)
+    void PaintEvent::defaultPaintSurface(FloatPoint inset, bool onlyStroke)
     {
         const SurfaceShape shape = surfaceShape(inset);
         if (shape.rect.empty())
             return;
-        paintFill(shape);
+        if (!onlyStroke)
+            paintFill(shape);
         if (m_strokeOverContent)
         {
             m_strokeHeld = true;

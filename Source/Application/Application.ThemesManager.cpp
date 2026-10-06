@@ -153,6 +153,8 @@ namespace ClaFi
 
     void ThemesManager::paintIcon(const std::wstring_view fileName, PaintIconEvent& event)
     {
+        return;
+
         // The list is asked for first, so that a theme file reaches themeByName even when nothing
         // has read the directory yet.
         static_cast<void>(userThemes());

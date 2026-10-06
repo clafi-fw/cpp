@@ -32,7 +32,7 @@ namespace ThisApp
         const AppTheme* selectedTheme() override;
         void documentsRebuilt() override;
     private:
-        using Base = WithPreview<Documents::DocumentsHomePage<ThemesList>>;
+        using Base = WithPreview;
     };
 
 
