@@ -56,6 +56,18 @@ namespace ClaFi
         event.defaultPaintSurface(0.0f, true);
     }
 
+    // The mark stands on the title band paintSurface fills, not on the surface the tile's rules
+    // arrive at and never paint - so it is told the band, and its fill, stroke and fade answer
+    // to that. See AdjustPaintEvent::setSurfaceHsl
+    void ThemeTile::adjustChildPaint(AdjustPaintEvent& event)
+    {
+        DocumentTile::adjustChildPaint(event);
+        if (&event.control() != indicator())
+            return;
+        const ThemeSampleColors sample{ m_linkedTheme.colors, colorModeOf(event.lightness()) };
+        event.setSurfaceHsl(sample.titleHsl);
+    }
+
     // ThemesList
 
     ThemesList::~ThemesList()

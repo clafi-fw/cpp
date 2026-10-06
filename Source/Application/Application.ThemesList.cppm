@@ -50,6 +50,7 @@ namespace ClaFi
         [[nodiscard]] EditorMode editorMode() const override;
         void paintIcon(PaintIconEvent&) override;
         void paintSurface(PaintEvent&) override;
+        void adjustChildPaint(AdjustPaintEvent&) override;
     private:
         const AppTheme& m_linkedTheme;
         const UserTheme* m_userTheme{ nullptr };

@@ -48,6 +48,8 @@ namespace ClaFi::Controls
 
         ControlSpan controls() override;
         virtual MinSize indicatorSize(const AppTheme&) const;
+        // The selection indicator, and nullptr while none has been asked for.
+        [[nodiscard]] const Control* indicator() const { return m_indicator; }
 
         void adjustChildMetrics(AdjustMetricsEvent& event) const override;
         void adjustChildPaint(AdjustPaintEvent&) override;

@@ -241,7 +241,7 @@ namespace ThisApp
             SlantPair{  0.10f * k_leanFactor,  0.15f * k_leanFactor },    // Falling
             SlantPair{  0.06f * k_leanFactor, -0.14f * k_leanFactor },    // ConvergingLow
             SlantPair{ -0.06f * k_leanFactor,  0.15f * k_leanFactor },    // Diverging
-            SlantPair{ -0.15f * k_leanFactor, -0.08f * k_leanFactor },     // Rising
+            SlantPair{ -0.15f * k_leanFactor, -0.08f * k_leanFactor },    // Rising
         };
 
         // An inner line, as where it crosses the tile's vertical centreline and how steeply it runs.

@@ -26,7 +26,8 @@ namespace ClaFi
         ThemeSampleColors(const ThemeColors&, ColorMode);
 
         Color rootSurface{};
-        
+
+        Hsl titleHsl{}; // the title band as a surface, for a control standing on it
         Color title{};
         Color dialog{};
         Color toolBar{};
@@ -66,7 +67,8 @@ namespace ClaFi
         :
         rootSurface{ colors.rootSurface(mode).toColor() },
 
-        title{ restingSurface(colors, UiElement::DialogTitle, mode).toColor() },
+        titleHsl{ restingSurface(colors, UiElement::DialogTitle, mode) },
+        title{ titleHsl.toColor() },
         dialog{ restingSurface(colors, UiElement::Dialog, mode).toColor() },
         toolBar{ restingSurface(colors, UiElement::ToolBar, mode).toColor() },
         page{ restingSurface(colors, UiElement::Page, mode).toColor() },
