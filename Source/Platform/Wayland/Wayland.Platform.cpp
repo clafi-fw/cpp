@@ -43,7 +43,7 @@ namespace ClaFi
         {
             DisplayManager* display = DisplayManager::standing();
             if (display == nullptr)
-                unreachable("Platform: no display stands - asked outside the platform's life");
+                noReach("Platform: no display stands - asked outside the platform's life");
 
             return *display;
         }

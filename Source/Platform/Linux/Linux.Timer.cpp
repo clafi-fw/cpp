@@ -16,7 +16,7 @@ namespace ClaFi::PlatformTimer
     {
         TimerManager* manager = TimerManager::standing();
         if (manager == nullptr)
-            unreachable("PlatformTimer: no timer manager stands - a UiTimer outlives the platform");
+            noReach("PlatformTimer: no timer manager stands - a UiTimer outlives the platform");
 
         return *manager;
     }

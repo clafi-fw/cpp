@@ -56,7 +56,7 @@ namespace ClaFi
     {
         DirWatchManager* manager = DirWatchManager::standing();
         if (manager == nullptr)
-            unreachable("DirWatch: no watch manager stands - a DirWatch outlives the platform");
+            noReach("DirWatch: no watch manager stands - a DirWatch outlives the platform");
 
         return *manager;
     }

@@ -169,7 +169,7 @@ namespace ThisApp
     // outline comes from a clip instead - which also means the corner rounding no longer has to be
     // spelled out per band.
 
-    export void paintPaletteMap(PaintIconEvent&, const ColorHarmony&, const PaletteMap&, size_t slantIndex);
+    export void paintPaletteMap(PaintIconEvent&, const ColorHarmony&, const PaletteMap&, std::size_t slantIndex);
 
 
     //----------------------------------------------------------------------------
@@ -200,7 +200,7 @@ namespace ThisApp
 
         // A slant for an arbitrary index, for handing every theme in a list a different one. Wraps, so
         // the caller can pass a row number or a hash without range-checking it.
-        size_t slantForIndex(std::size_t index)
+        std::size_t slantForIndex(std::size_t index)
         {
             return index % k_slants.size();
         }
@@ -270,7 +270,7 @@ namespace ThisApp
     }
 
     void paintPaletteMap(PaintIconEvent& event, const ColorHarmony& harmony, const PaletteMap& map,
-        size_t slantIndex)
+        std::size_t slantIndex)
     {
         Graphics::Canvas& canvas = event.canvas();
 

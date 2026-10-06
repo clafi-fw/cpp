@@ -99,7 +99,7 @@ namespace ClaFi::Platform::Linux
     FontFace::FontFace(FT_Library library, const std::string& path, int faceIndex)
     {
         if (FT_New_Face(library, path.c_str(), faceIndex, &m_ftFace) != 0)
-            unreachable("FreeType cannot open the face fontconfig matched: " + path);
+            noReach("FreeType cannot open the face fontconfig matched: " + path);
 
         m_unitsPerEm = static_cast<float>(m_ftFace->units_per_EM);
 
@@ -271,7 +271,7 @@ namespace ClaFi::Platform::Linux
             FcChar8* path = nullptr;
             int faceIndex = 0;
             if (FcPatternGetString(font, FC_FILE, 0, &path) != FcResultMatch)
-                unreachable("fontconfig named a face with no file");
+                noReach("fontconfig named a face with no file");
             FcPatternGetInteger(font, FC_INDEX, 0, &faceIndex);
             slot = &m_set.openFace(reinterpret_cast<const char*>(path), faceIndex);
         }
@@ -287,10 +287,10 @@ namespace ClaFi::Platform::Linux
     FontSet::FontSet()
     {
         if (FT_Init_FreeType(&m_library) != 0)
-            unreachable("FreeType failed to initialize");
+            noReach("FreeType failed to initialize");
         m_config = FcInitLoadConfigAndFonts();
         if (!m_config)
-            unreachable("fontconfig failed to load its configuration");
+            noReach("fontconfig failed to load its configuration");
     }
 
     FontSet::~FontSet()
@@ -344,7 +344,7 @@ namespace ClaFi::Platform::Linux
         {
             if (fonts)
                 FcFontSetDestroy(fonts);
-            unreachable("fontconfig has no face for " + family);
+            noReach("fontconfig has no face for " + family);
         }
         return fonts;
     }
