@@ -30,6 +30,7 @@ namespace ClaFi
         Hsl title{};
         Hsl dialog{};
         Hsl toolBar{};
+        Hsl page{};
         Hsl section{};
         Hsl border{};
 
@@ -43,9 +44,7 @@ namespace ClaFi
     {
         ThemeIconColors() = default;
         explicit ThemeIconColors(const ThemeColors&);
-        [[nodiscard]] Hsl surface2(ColorMode) const;
         [[nodiscard]] const ThemeSampleColors& sample(ColorMode) const;
-
         std::array<float, 3> paletteHues{};
         ThemeSampleColors darkSample{};
         ThemeSampleColors lightSample{};
@@ -62,10 +61,13 @@ namespace ClaFi
     ThemeSampleColors::ThemeSampleColors(const ThemeColors& colors, const ColorMode mode)
         :
         rootSurface{ colors.rootSurface(mode) },
+
         title{ restingSurface(colors, UiElement::DialogTitle, mode) },
         dialog{ restingSurface(colors, UiElement::Dialog, mode) },
         toolBar{ restingSurface(colors, UiElement::ToolBar, mode) },
+        page{ restingSurface(colors, UiElement::Page, mode) },
         section{ restingSurface(colors, UiElement::Section, mode) },
+
         border{ restingStroke(colors, UiElement::Dialog, mode) }
     {
         // The page's inks, resolved the way ControlPaintContext::inkHsl resolves them.
@@ -89,11 +91,6 @@ namespace ClaFi
         darkSample{ colors, ColorMode::Dark },
         lightSample{ colors, ColorMode::Light }
     {
-    }
-
-    Hsl ThemeIconColors::surface2(const ColorMode mode) const
-    {
-        return mode == ColorMode::Dark ? darkSample.rootSurface : lightSample.rootSurface;
     }
 
     const ThemeSampleColors& ThemeIconColors::sample(const ColorMode mode) const
@@ -123,7 +120,9 @@ namespace ClaFi
         const ThemeSampleColors& sample = colors.sample(mode);
         const Color titleColor = event.applyDisabledFactor(sample.title.toColor());
         const Color dialogColor = event.applyDisabledFactor(sample.dialog.toColor());
-        const Color pageColor = event.applyDisabledFactor(sample.dialog.toColor());
+        const Color pageColor = event.applyDisabledFactor(sample.page.toColor());
+        const Color sectionColor = event.applyDisabledFactor(sample.section.toColor());
+
         const Color barColor = event.applyDisabledFactor(sample.toolBar.toColor());
         const Color mutedText = event.applyDisabledFactor(sample.mutedText.toColor());
         const Color borderColor = event.applyDisabledFactor(sample.border.toColor());
@@ -131,7 +130,16 @@ namespace ClaFi
         const Color spotColor = event.applyDisabledFactor(sample.spot.toColor());
 
         constexpr float k_titleShare = 0.25f;
+        constexpr float k_stripShare = 0.28f;
         constexpr float k_barShare = 0.25f;
+        
+        const float titleBottom = backgroundRect.relativeY(k_titleShare) + 0.5f;
+        const float bodyTop = titleBottom - 1.0f;
+
+        const float bottomBarTop = backgroundRect.relativeY(1.0f - k_barShare) - 0.5f;
+        const float bodyBottom = bottomBarTop + 1.0f;
+        const float bodyLeft = backgroundRect.relativeX(k_stripShare);
+        const float bodyRight = backgroundRect.relativeX(1.0f - k_stripShare);
 
         // Title
         {
@@ -140,35 +148,53 @@ namespace ClaFi
                 .radii = CornerRadii::topSideRound(cornersRadius),
                 .sides = RectSides::all()
             };
-            backgroundPart.bounds.bottom = backgroundRect.relativeY(k_titleShare) + 1.0f;
-
+            backgroundPart.bounds.bottom = titleBottom + 1.0f;
             event.canvas().fillPartialRoundedRectangle(backgroundPart, titleColor);
         }
 
-        // Left strip Background
+        // Left strip background
         {
             RoundedRectangleParts backgroundPart{
-                .bounds = backgroundRect,
-                .radii = CornerRadii::oneRound(Corner::BottomLeft, cornersRadius),
+                .bounds = {
+                    backgroundRect.left,
+                    bodyTop,
+                    bodyLeft + 0.5f,
+                    bodyBottom
+                },
+                .radii = CornerRadii::square(),
                 .sides = RectSides::all()
             };
-            backgroundPart.bounds.top = backgroundRect.relativeY(k_titleShare) - 1.0f;
-            backgroundPart.bounds.right = backgroundRect.relativeX(0.33f) + 1.0f;
-
             event.canvas().fillPartialRoundedRectangle(backgroundPart, dialogColor);
         }
         
-        // Page background
+        // Middle page background
         {
             RoundedRectangleParts backgroundPart{
-                .bounds = backgroundRect,
-                .radii = CornerRadii::rightSideRound(cornersRadius),
+                .bounds = {
+                    bodyLeft - 0.5f,
+                    bodyTop,
+                    bodyRight + 0.5f,
+                    bodyBottom
+                },
+                .radii = CornerRadii::square(),
                 .sides = RectSides::all()
             };
-            backgroundPart.bounds.top = backgroundRect.relativeY(k_titleShare) - 1.0f;
-            backgroundPart.bounds.left = backgroundRect.relativeX(0.33f) - 1.0f;
-
             event.canvas().fillPartialRoundedRectangle(backgroundPart, pageColor);
+        }
+
+        // Right strip background
+        {
+            RoundedRectangleParts backgroundPart{
+                .bounds = {
+                    bodyRight - 0.5f,
+                    bodyTop,
+                    backgroundRect.right,
+                    bodyBottom
+                },
+                .radii = CornerRadii::square(),
+                .sides = RectSides::all()
+            };
+            event.canvas().fillPartialRoundedRectangle(backgroundPart, sectionColor);
         }
 
         // Bottom bar
@@ -178,8 +204,7 @@ namespace ClaFi
                 .radii = CornerRadii::bottomSideRound(cornersRadius),
                 .sides = RectSides::all()
             };
-            backgroundPart.bounds.top = backgroundRect.relativeY(1.0f - k_barShare);
-
+            backgroundPart.bounds.top = bottomBarTop;
             event.canvas().fillPartialRoundedRectangle(backgroundPart, barColor);
         }
 
