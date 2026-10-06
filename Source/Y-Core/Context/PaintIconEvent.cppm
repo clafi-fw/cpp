@@ -21,6 +21,7 @@ namespace ClaFi
         Tag tag() const { return m_tag; }
         const FloatRect& iconRect() const { return m_iconRect; }
         float iconWidth() const { return m_iconRect.width(); }
+        float iconHeight() const { return m_iconRect.height(); }
         FloatPoint iconCenter() const { return m_iconRect.center(); }
         [[nodiscard]] Lightness lightness() const { return m_controlContext.lightness; }
         [[nodiscard]] Color surfaceRgb() const { return m_controlContext.surfaceRgb(); }

@@ -27,7 +27,8 @@ namespace ClaFi
 
         Hsl title{};
         Hsl dialog{};
-        Hsl page{};
+        Hsl toolBar{};
+        Hsl section{};
         Hsl border{};
         Hsl mutedText{};
         Hsl accent{};
@@ -162,16 +163,17 @@ namespace ClaFi
         :
         title{ restingSurface(colors, UiElement::DialogTitle, mode) },
         dialog{ restingSurface(colors, UiElement::Dialog, mode) },
-        page{ restingSurface(colors, UiElement::Page, mode) },
+        toolBar{ restingSurface(colors, UiElement::ToolBar, mode) },
+        section{ restingSurface(colors, UiElement::Section, mode) },
         border{ restingStroke(colors, UiElement::Dialog, mode) }
     {
         // The page's inks, resolved the way ControlPaintContext::inkHsl resolves them.
         const Hsl ink = restingInk(colors, UiElement::Page, mode);
-        const float muted = gradeOf(InkGrade::Muted);
+        constexpr float muted = gradeOf(InkGrade::Muted);
         const float grade = mode == ColorMode::Light
             ? lightGradeOf(muted, colors.darkModeFloor)
             : muted;
-        mutedText = Hsl{ page, ink, grade };
+        mutedText = Hsl{ dialog, ink, grade };
         accent = ink;
         colors.accent.applyTo(accent, 1.0f, colors, mode);
         spot = ink;
@@ -231,6 +233,8 @@ namespace ClaFi
     void paintThemeIcon(PaintIconEvent& event, const ThemeIconColors& colors)
     {
         const ColorMode mode = colorModeOf(event.lightness());
+        float iconSize = event.iconWidth();
+        bool isSmall = event.unScale(iconSize) < 32.0f;
 
         const FloatRect backgroundRect = event.iconRect();
         const float cornersRadius = std::min(
@@ -241,13 +245,15 @@ namespace ClaFi
         const ThemeSampleColors& sample = colors.sample(mode);
         const Color titleColor = event.applyDisabledFactor(sample.title.toColor());
         const Color dialogColor = event.applyDisabledFactor(sample.dialog.toColor());
-        const Color pageColor = event.applyDisabledFactor(sample.page.toColor());
+        const Color pageColor = event.applyDisabledFactor(sample.dialog.toColor());
+        const Color barColor = event.applyDisabledFactor(sample.toolBar.toColor());
         const Color mutedText = event.applyDisabledFactor(sample.mutedText.toColor());
         const Color borderColor = event.applyDisabledFactor(sample.border.toColor());
         const Color accentColor = event.applyDisabledFactor(sample.accent.toColor());
         const Color spotColor = event.applyDisabledFactor(sample.spot.toColor());
 
         constexpr float k_titleShare = 0.25f;
+        constexpr float k_barShare = 0.25f;
 
         // Title
         {
@@ -287,26 +293,43 @@ namespace ClaFi
             event.canvas().fillPartialRoundedRectangle(backgroundPart, pageColor);
         }
 
+        // Bottom bar
+        {
+            RoundedRectangleParts backgroundPart{
+                .bounds = backgroundRect,
+                .radii = CornerRadii::bottomSideRound(cornersRadius),
+                .sides = RectSides::all()
+            };
+            backgroundPart.bounds.top = backgroundRect.relativeY(1.0f - k_barShare);
+
+            event.canvas().fillPartialRoundedRectangle(backgroundPart, barColor);
+        }
+
         // Rows
         {
-            const std::array rowColors{ spotColor, mutedText, accentColor };
+            const std::array rowColors{ spotColor, mutedText, mutedText };
 
             float rowSize = backgroundRect.height() / 8.0f;
             float rowMargin = rowSize;
             float rowPadding = 0.25f;
             float x = backgroundRect.relativeX(rowPadding);
             float x2 = backgroundRect.relativeX(1.0f - rowPadding);
+            float boxRadius = rowSize / 2.0f;
+            float rowRadius = rowSize / 2.0f;
 
             float y = backgroundRect.relativeY(0.2f);
             for (std::size_t i = 0; i != rowColors.size(); ++i)
             {
-                FloatRect boxRect = { x, y, x + rowSize, y + rowSize };
-                // Box
-                event.canvas().fillRectangle(boxRect, rowColors[i]);
-                // Label
-                boxRect.left = boxRect.right + rowSize;
-                boxRect.right = x2;
-                event.canvas().fillRectangle(boxRect, rowColors[i]);
+                FloatRect boxRect = { x, y,  isSmall ? x2 : x + rowSize, y + rowSize };
+                if (!isSmall)
+                {
+                    // Box
+                    event.canvas().fillRoundedRectangle(boxRect, boxRadius, boxRadius, accentColor);
+                    // Label
+                    boxRect.left = boxRect.right + rowSize;
+                    boxRect.right = x2;
+                }
+                event.canvas().fillRoundedRectangle(boxRect, rowRadius, rowRadius, rowColors[i]);
                 y = boxRect.bottom + rowMargin;
             }
         }

@@ -32,6 +32,7 @@ namespace ClaFi
         float scaleF(float) const;
         FloatPoint scaleF(FloatPoint) const;
         FloatPoint scale(FloatPoint) const;
+        float unScale(float) const;
     public:
         float scaled1;
         float scaled2;
@@ -166,6 +167,11 @@ namespace ClaFi
     FloatPoint Scaler::scale(FloatPoint value) const
     {
         return { scale(value.x), scale(value.y) };
+    }
+
+    float Scaler::unScale(float value) const
+    {
+        return value / m_factor;
     }
 
     void Scaler::factorChanged()

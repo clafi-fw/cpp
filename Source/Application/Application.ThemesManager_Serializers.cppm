@@ -187,7 +187,8 @@ namespace ClaFi // AppTheme serializers
         return std::make_tuple(
             SerializedField{ L"Title", &ThemeSampleColors::title },
             SerializedField{ L"Dialog", &ThemeSampleColors::dialog },
-            SerializedField{ L"Page", &ThemeSampleColors::page },
+            SerializedField{ L"Section", &ThemeSampleColors::section },
+            SerializedField{ L"ToolBar", &ThemeSampleColors::toolBar },
             SerializedField{ L"Border", &ThemeSampleColors::border },
             SerializedField{ L"MutedText", &ThemeSampleColors::mutedText },
             SerializedField{ L"Accent", &ThemeSampleColors::accent },
