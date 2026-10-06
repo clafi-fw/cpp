@@ -1,7 +1,7 @@
-module ThisApp.CodeOptions;
+module Themes_App.CodeOptions;
 
-import ThisApp.Consts;
-import ThisApp.ThemeToCppCode;
+import Themes_App.Consts;
+import Themes_App.ThemeToCppCode;
 
 import ClaFi.Dom;
 
@@ -11,7 +11,7 @@ import ClaFi.Core.TextEngine.Text;
 
 import ClaFi.StdLib;
 
-namespace ThisApp::CodeOptions
+namespace Themes_App::CodeOptions
 {
     using namespace ClaFi;
 

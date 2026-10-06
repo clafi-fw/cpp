@@ -1,11 +1,12 @@
-export module ClaFi.Showcase.MillScene.Icon;
+export module MillScene_App.Icon;
 
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.UiTypes;
 
-namespace ClaFi::Showcase::AppIcon
+namespace MillScene_App::AppIcon
 {
+    using namespace ::ClaFi;
     using namespace ::ClaFi::Graphics;
 
     // The application's mark, in its own colours: it stands on task bars and title bars alike.

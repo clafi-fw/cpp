@@ -1,9 +1,9 @@
-module ThisApp.DesignPage;
+module Themes_App.DesignPage;
 
-import ThisApp.ApplyToControl;
-import ThisApp.Consts;
-import ThisApp.ElementPage;
-import ThisApp.RuleSlider;
+import Themes_App.ApplyToControl;
+import Themes_App.Consts;
+import Themes_App.ElementPage;
+import Themes_App.RuleSlider;
 
 import ClaFi.Application.ThemesManager_Elements;
 
@@ -19,7 +19,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     namespace
     {

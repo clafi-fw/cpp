@@ -1,6 +1,6 @@
-module ThisApp.Language;
+module PascalScripts_App.Language;
 
-import ThisApp.Consts;
+import PascalScripts_App.Consts;
 
 import ClaFi.Documents.Folder;
 import ClaFi.Dom.Formats.ClaFi;
@@ -17,7 +17,7 @@ import ClaFi.Core.Dom_StdSerializers;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace PascalScripts_App
 {
     using namespace ::ClaFi;
 

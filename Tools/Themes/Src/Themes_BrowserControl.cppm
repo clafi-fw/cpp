@@ -1,8 +1,8 @@
-export module ThisApp.ThemesBrowser;
+export module Themes_App.ThemesBrowser;
 
-import ThisApp.AppIcon;
-import ThisApp.HomePage;
-import ThisApp.ThemePage;
+import Themes_App.AppIcon;
+import Themes_App.HomePage;
+import Themes_App.ThemePage;
 
 import ClaFi.App.ThemeIcon;
 
@@ -20,7 +20,7 @@ import ClaFi.Core.Context.PaintIconEvent;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

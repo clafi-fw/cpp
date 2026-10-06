@@ -1,6 +1,6 @@
-export module ClaFi.Showcase.MillScene.Main;
+export module MillScene_App.Main;
 
-import ClaFi.Showcase.MillScene;
+import MillScene_App;
 
 import ClaFi.Controls.Panel;
 
@@ -19,8 +19,9 @@ import ClaFi.StdLib;
 // operating system asks for and the two types the application is built out of; everything else -
 // the form, its size, its title and what is built into it - stands here and would run over any
 // platform the framework has.
-namespace ClaFi::Showcase
+namespace MillScene_App
 {
+    using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
     // A bare panel. The scene draws the whole of the window's inside, and the frame around it is
     // the framework's own.

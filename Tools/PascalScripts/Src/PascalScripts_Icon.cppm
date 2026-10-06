@@ -1,10 +1,10 @@
-export module ThisApp.AppIcon;
+export module PascalScripts_App.AppIcon;
 
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.UiTypes;
 
-namespace ThisApp::AppIcon
+namespace PascalScripts_App::AppIcon
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Graphics;

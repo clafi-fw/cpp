@@ -1,11 +1,13 @@
-module ClaFi.Showcase.TextEngine.Code;
+module TextEngine_App.Code;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.StdLib;
 
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
+
     namespace
     {
         // Where the repetition number is written into a line.

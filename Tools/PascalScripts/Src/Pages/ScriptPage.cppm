@@ -1,7 +1,7 @@
-export module ThisApp.ScriptPage;
+export module PascalScripts_App.ScriptPage;
 
-import ThisApp.Language;
-import ThisApp.Scripts;
+import PascalScripts_App.Language;
+import PascalScripts_App.Scripts;
 
 import ClaFi.Documents.Page;
 
@@ -24,7 +24,7 @@ import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace PascalScripts_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

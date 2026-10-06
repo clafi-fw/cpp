@@ -1,4 +1,4 @@
-module ClaFi.Showcase.TextEngine.Rich;
+module TextEngine_App.Rich;
 
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Context.FormContext;
@@ -8,8 +8,10 @@ import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
+
     namespace
     {
         // THE CAST. Five lists of PRIME length, each stepped by a stride of its own, so the tuple

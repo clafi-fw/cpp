@@ -1,4 +1,4 @@
-module ThisApp.ScriptPage;
+module PascalScripts_App.ScriptPage;
 
 import ClaFi.Documents.Page;
 
@@ -18,7 +18,7 @@ import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace PascalScripts_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

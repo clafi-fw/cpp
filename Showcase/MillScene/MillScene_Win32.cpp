@@ -1,4 +1,4 @@
-import ClaFi.Showcase.MillScene.Main;
+import MillScene_App.Main;
 
 import ClaFi.App.Application;
 import ClaFi.Platform.Windows;
@@ -7,7 +7,7 @@ import ClaFi.Core.Foundation;
 
 // THE WHOLE OF WHAT THIS PROJECT KNOWS ABOUT WINDOWS: the entry point the operating system calls,
 // the instance handle it hands over, and the type the application is built out of. The showcase
-// itself is in ClaFi.Showcase.MillScene.Main and names neither.
+// itself is in MillScene_App.Main and names neither.
 //
 // DIRECT2D COMES WITH Win32Application, beside the CPU backend, and GPU acceleration in Settings
 // picks which of the two draws the scene.
@@ -17,9 +17,9 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, wchar_t
 
     Win32Application app{
         { .appInstance = hInstance },
-        Showcase::millSceneAppParams(),
-        Showcase::createMillSceneConfigSchema()
+        MillScene_App::millSceneAppParams(),
+        MillScene_App::createMillSceneConfigSchema()
     };
 
-    return Showcase::runMillSceneShowcase(app);
+    return MillScene_App::runMillSceneShowcase(app);
 }

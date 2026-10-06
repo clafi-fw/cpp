@@ -1,7 +1,7 @@
-export module ThisApp.HueRuleControl;
+export module Themes_App.HueRuleControl;
 
-import ThisApp.Consts;
-import ThisApp.Utils;
+import Themes_App.Consts;
+import Themes_App.Utils;
 
 import ClaFi.Controls.Base.ButtonBase;
 import ClaFi.Controls.Base.DropdownControlBase;
@@ -35,7 +35,7 @@ import ClaFi.Core.System.InkWell;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

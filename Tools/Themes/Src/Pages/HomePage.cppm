@@ -1,6 +1,6 @@
-export module ThisApp.HomePage;
+export module Themes_App.HomePage;
 
-import ThisApp.WithPreview;
+import Themes_App.WithPreview;
 
 import ClaFi.App.ThemesList;
 
@@ -17,7 +17,7 @@ import ClaFi.Core.AppTheme_Theme;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

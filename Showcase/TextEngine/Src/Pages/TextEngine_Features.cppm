@@ -1,4 +1,4 @@
-export module ClaFi.Showcase.TextEngine;
+export module TextEngine_App;
 
 import ClaFi.Icons.Eye;
 import ClaFi.Core.Context.FormContext;
@@ -9,8 +9,10 @@ import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
+
     export Text buildTextEngineShowcase()
     {
         // Arguments the format string draws from, in the order it consumes them.

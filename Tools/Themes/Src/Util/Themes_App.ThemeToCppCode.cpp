@@ -1,4 +1,4 @@
-module ThisApp.ThemeToCppCode;
+module Themes_App.ThemeToCppCode;
 
 import ClaFi.Application.ThemesManager_Serializers;
 import ClaFi.Application.ThemesManager_Elements;
@@ -10,7 +10,7 @@ import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ClaFi;
 

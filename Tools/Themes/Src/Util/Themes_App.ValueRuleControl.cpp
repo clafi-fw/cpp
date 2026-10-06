@@ -1,8 +1,8 @@
-module ThisApp.ValueRuleControl;
+module Themes_App.ValueRuleControl;
 
-import ThisApp.RuleSlider;
-import ThisApp.RuleText;
-import ThisApp.Utils;
+import Themes_App.RuleSlider;
+import Themes_App.RuleText;
+import Themes_App.Utils;
 
 import ClaFi.Controls.Base.SliderBase;
 import ClaFi.Controls.Button;
@@ -28,7 +28,7 @@ import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     namespace
     {

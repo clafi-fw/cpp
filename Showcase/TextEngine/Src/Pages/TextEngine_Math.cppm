@@ -1,9 +1,11 @@
-export module ClaFi.Showcase.TextEngine.Math;
+export module TextEngine_App.Math;
 
 import ClaFi.Core.TextEngine.Text;
 
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
+
     // A page of mathematical notation, written as text.
     //
     // Nothing here is an image and nothing here is a control: a formula is one Text, and every

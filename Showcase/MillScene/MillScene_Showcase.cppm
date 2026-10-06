@@ -1,4 +1,4 @@
-export module ClaFi.Showcase.MillScene;
+export module MillScene_App;
 
 import ClaFi.PathArt.MillScene;
 
@@ -18,8 +18,9 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ClaFi::Showcase
+namespace MillScene_App
 {
+    using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
     using namespace ::ClaFi::Diagnostic;
     using namespace ::ClaFi::PathArt;

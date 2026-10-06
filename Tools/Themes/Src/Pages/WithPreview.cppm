@@ -1,7 +1,7 @@
-export module ThisApp.WithPreview;
+export module Themes_App.WithPreview;
 
-import ThisApp.Consts;
-import ThisApp.PreviewPanel;
+import Themes_App.Consts;
+import Themes_App.PreviewPanel;
 
 import ClaFi.Application.ThemesManager;
 import ClaFi.Application.ThemesManager_Elements;
@@ -32,7 +32,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

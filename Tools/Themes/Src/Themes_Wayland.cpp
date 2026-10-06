@@ -1,5 +1,5 @@
 // THE WHOLE OF WHAT THIS ENTRY POINT KNOWS ABOUT WAYLAND: the two types the application is built
-// out of. The application itself is in ThisApp.Main, beside the Win32 entry point that names it
+// out of. The application itself is in Themes_App.Main, beside the Win32 entry point that names it
 // the same way. A missing compositor is thrown from the platform's constructor, naming what was
 // looked for, and ends the process as an uncaught exception does.
 //
@@ -8,7 +8,7 @@
 //   cmake --build build
 //   ./build/Themes
 
-import ThisApp.Main;
+import Themes_App.Main;
 
 import ClaFi.Platform.Wayland;
 
@@ -17,7 +17,7 @@ int main()
     using namespace ClaFi;
 
     // No GPU backend is named, because this platform has none.
-    ThisApp::ThemesApplication<WaylandPlatform> app{ WaylandPlatform::Params{} };
+    Themes_App::ThemesApplication<WaylandPlatform> app{ WaylandPlatform::Params{} };
 
     return app.run();
 }

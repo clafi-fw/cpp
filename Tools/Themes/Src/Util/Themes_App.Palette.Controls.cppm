@@ -1,6 +1,6 @@
-export module ThisApp.Palette.Controls;
+export module Themes_App.Palette.Controls;
 
-import ThisApp.Utils;
+import Themes_App.Utils;
 //
 import ClaFi;
 import ClaFi.Core.AppTheme_Colors;
@@ -10,7 +10,7 @@ import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.Context.PaintIconEvent;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

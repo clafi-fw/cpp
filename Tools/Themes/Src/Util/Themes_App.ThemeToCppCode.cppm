@@ -1,4 +1,4 @@
-export module ThisApp.ThemeToCppCode;
+export module Themes_App.ThemeToCppCode;
 
 import ClaFi.Application.ThemesManager_Elements;
 
@@ -7,7 +7,7 @@ import ClaFi.Core.AppTheme_Palette;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ClaFi;
 
@@ -30,7 +30,7 @@ namespace ThisApp
     };
 
     // The names the file uses, spelled to match the enumerators. What a person reads is the text
-    // of the command that states each choice, in ThisApp.CodeOptions.
+    // of the command that states each choice, in Themes_App.CodeOptions.
     export constexpr std::array<std::wstring_view, static_cast<std::size_t>(CodeContent::Count)>
         k_codeContentKeys{
             L"Differences",

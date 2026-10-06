@@ -1,6 +1,6 @@
-export module ThisApp.ValueRuleControl;
+export module Themes_App.ValueRuleControl;
 
-import ThisApp.RuleSlider;
+import Themes_App.RuleSlider;
 
 import ClaFi.Controls.Base.DropdownControlBase;
 import ClaFi.Controls.InPlaceEdit;
@@ -15,7 +15,7 @@ import ClaFi.Core.TextEngine.Text;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

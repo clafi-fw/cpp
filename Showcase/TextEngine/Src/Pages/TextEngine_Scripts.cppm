@@ -1,9 +1,11 @@
-export module ClaFi.Showcase.TextEngine.Scripts;
+export module TextEngine_App.Scripts;
 
 import ClaFi.Core.TextEngine.Text;
 
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
+
     // Fifty-six writing systems, three characters each, drawn in the styles the page states and no
     // family named at all - so every row is a question put to the platform's fallback rather than
     // to a font the page chose.

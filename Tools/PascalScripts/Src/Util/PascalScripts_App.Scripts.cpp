@@ -1,7 +1,7 @@
-module ThisApp.Scripts;
+module PascalScripts_App.Scripts;
 
-import ThisApp.AppIcon;
-import ThisApp.Language;
+import PascalScripts_App.AppIcon;
+import PascalScripts_App.Language;
 
 import ClaFi.Documents.Folder;
 import ClaFi.Documents.TextFile;
@@ -13,7 +13,7 @@ import ClaFi.Core.Dom_StdSerializers;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace PascalScripts_App
 {
     using namespace ::ClaFi;
 

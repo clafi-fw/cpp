@@ -1,7 +1,7 @@
-export module ThisApp.ThemeButton;
+export module Themes_App.ThemeButton;
 
-import ThisApp.Consts;
-import ThisApp.Utils;
+import Themes_App.Consts;
+import Themes_App.Utils;
 
 import ClaFi.Diagnostic.Log;
 
@@ -29,7 +29,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

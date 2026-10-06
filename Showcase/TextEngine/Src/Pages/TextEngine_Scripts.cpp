@@ -1,4 +1,4 @@
-module ClaFi.Showcase.TextEngine.Scripts;
+module TextEngine_App.Scripts;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -6,8 +6,10 @@ import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
+
     namespace
     {
         // Wide enough for the longest name the table carries - Canadian Aboriginal - so no row

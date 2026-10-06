@@ -1,4 +1,4 @@
-export module ThisApp.Utils;
+export module Themes_App.Utils;
 
 import ClaFi;
 import ClaFi.App.ThemeIcon;
@@ -6,7 +6,7 @@ import ClaFi.Application.ThemesManager;
 import ClaFi.Diagnostic.Log;
 import ClaFi.Browser;
 
-import ThisApp.Consts;
+import Themes_App.Consts;
 
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.AppTheme_Palette;
@@ -19,7 +19,7 @@ import ClaFi.Core.System.Utils;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
@@ -158,7 +158,7 @@ namespace ThisApp
 
 
 
-    // Drop-in replacement for ThisApp.Utils::paintPaletteMap, plus the slant enum it takes.
+    // Drop-in replacement for Themes_App.Utils::paintPaletteMap, plus the slant enum it takes.
     //
     // Needs, on top of what the module already imports:
     //     import ClaFi.Core.Graphics.Types;     // PixelPath, Matrix3x2, FloatRect

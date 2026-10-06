@@ -1,4 +1,4 @@
-module ThisApp.AppIcon;
+module Themes_App.AppIcon;
 
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Graphics.Canvas;
@@ -8,7 +8,7 @@ import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
-namespace ThisApp::AppIcon
+namespace Themes_App::AppIcon
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Graphics;
@@ -185,7 +185,7 @@ namespace ThisApp::AppIcon
 
 //-----------------------------------------------------------------------------
 
-namespace ThisApp::AppIcon
+namespace Themes_App::AppIcon
 {
     void paint(Canvas& canvas, const FloatRect& bounds, const Opacity opacity)
     {

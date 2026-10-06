@@ -1,6 +1,6 @@
-module ThisApp.Main;
+module PascalScripts_App.Main;
 
-import ThisApp.Consts;
+import PascalScripts_App.Consts;
 
 import ClaFi.App.Application;
 
@@ -11,7 +11,7 @@ import ClaFi.Core.TextEngine.Text;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace PascalScripts_App
 {
     using namespace ClaFi;
 

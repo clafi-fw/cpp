@@ -1,9 +1,11 @@
-export module ClaFi.Showcase.TextEngine.Emoji;
+export module TextEngine_App.Emoji;
 
 import ClaFi.Core.TextEngine.Text;
 
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
+
     // A page of emoji, set in one font family after another.
     //
     // Emoji ask the text path questions nothing else in the showcase asks. A character above the

@@ -1,7 +1,7 @@
-module ThisApp.Main;
+module Themes_App.Main;
 
-import ThisApp.ThemeToCppCode;
-import ThisApp.Consts;
+import Themes_App.ThemeToCppCode;
+import Themes_App.Consts;
 
 import ClaFi.Application.ThemesManager;
 import ClaFi.App.Application;
@@ -17,7 +17,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ClaFi;
 

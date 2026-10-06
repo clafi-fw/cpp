@@ -1,4 +1,4 @@
-export module ThisApp.FloorSlider;
+export module Themes_App.FloorSlider;
 
 import ClaFi.Controls.Slider;
 
@@ -8,7 +8,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

@@ -1,8 +1,8 @@
-export module ThisApp.DesignPage;
+export module Themes_App.DesignPage;
 
-import ThisApp.ApplyToControl;
-import ThisApp.ElementPage;
-import ThisApp.RuleSlider;
+import Themes_App.ApplyToControl;
+import Themes_App.ElementPage;
+import Themes_App.RuleSlider;
 
 import ClaFi.Controls.Label;
 import ClaFi.Controls.PageControl;
@@ -20,7 +20,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

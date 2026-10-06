@@ -1,10 +1,12 @@
-export module ClaFi.Showcase.TextEngine.Rich;
+export module TextEngine_App.Rich;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.StdLib;
 
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
+
     // A page of formatted prose, for measuring what a document costs when its paragraphs carry
     // inline objects and change font from run to run.
     //

@@ -1,17 +1,17 @@
-export module ThisApp.ThemePage;
+export module Themes_App.ThemePage;
 
-import ThisApp.WithPreview;
-import ThisApp.CodeOptions;
-import ThisApp.Consts;
-import ThisApp.DesignPage;
-import ThisApp.ElementPage;
-import ThisApp.FloorSlider;
-import ThisApp.HueRuleControl;
-import ThisApp.RuleSlider;
-import ThisApp.ThemeToCppCode;
-import ThisApp.Utils;
-import ThisApp.ValueRuleControl;
-import ThisApp.Palette.Controls;
+import Themes_App.WithPreview;
+import Themes_App.CodeOptions;
+import Themes_App.Consts;
+import Themes_App.DesignPage;
+import Themes_App.ElementPage;
+import Themes_App.FloorSlider;
+import Themes_App.HueRuleControl;
+import Themes_App.RuleSlider;
+import Themes_App.ThemeToCppCode;
+import Themes_App.Utils;
+import Themes_App.ValueRuleControl;
+import Themes_App.Palette.Controls;
 
 // Icons
 import ClaFi.Icons.SaveIcon;
@@ -73,7 +73,7 @@ import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

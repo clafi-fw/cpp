@@ -1,4 +1,4 @@
-export module ThisApp.RuleText;
+export module Themes_App.RuleText;
 
 import ClaFi.Controls.InPlaceEdit;
 
@@ -6,7 +6,7 @@ import ClaFi.Core.AppTheme_Colors;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

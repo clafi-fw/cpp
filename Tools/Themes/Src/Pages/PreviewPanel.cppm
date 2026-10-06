@@ -1,11 +1,11 @@
-export module ThisApp.PreviewPanel;
+export module Themes_App.PreviewPanel;
 
 import ClaFi;
 import ClaFi.Controls.TextBox;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.System.InkWell;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

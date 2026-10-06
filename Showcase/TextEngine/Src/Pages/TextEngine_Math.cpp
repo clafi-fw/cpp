@@ -1,4 +1,4 @@
-module ClaFi.Showcase.TextEngine.Math;
+module TextEngine_App.Math;
 
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.TextEngine.Text;
@@ -8,8 +8,10 @@ import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
+
     namespace
     {
         // Cambria for the notation: it carries a real italic face, which is what a variable is

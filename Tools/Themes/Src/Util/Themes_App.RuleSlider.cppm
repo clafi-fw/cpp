@@ -1,4 +1,4 @@
-export module ThisApp.RuleSlider;
+export module Themes_App.RuleSlider;
 
 import ClaFi.Controls.Base.SliderBase;
 import ClaFi.Controls.Slider;
@@ -11,7 +11,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

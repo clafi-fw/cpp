@@ -1,8 +1,8 @@
 module;
 #include <cstdio>
-module ClaFi.Showcase.MillScene;
+module MillScene_App;
 
-import ClaFi.Showcase.MillScene.Icon;
+import MillScene_App.Icon;
 
 import ClaFi.PathArt.MillScene;
 import ClaFi.PathArt.Themes;
@@ -41,7 +41,7 @@ import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
-namespace ClaFi::Showcase
+namespace MillScene_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

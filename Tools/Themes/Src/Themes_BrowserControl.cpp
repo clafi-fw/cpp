@@ -1,7 +1,7 @@
-module ThisApp.ThemesBrowser;
+module Themes_App.ThemesBrowser;
 
-import ThisApp.Consts;
-import ThisApp.ThemePage;
+import Themes_App.Consts;
+import Themes_App.ThemePage;
 
 import ClaFi.Application.ThemesManager;
 import ClaFi.App.ThemeIcon;
@@ -21,7 +21,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Browser;

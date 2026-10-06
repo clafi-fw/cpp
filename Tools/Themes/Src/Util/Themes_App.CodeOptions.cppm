@@ -1,11 +1,11 @@
-export module ThisApp.CodeOptions;
+export module Themes_App.CodeOptions;
 
-import ThisApp.ThemeToCppCode;
+import Themes_App.ThemeToCppCode;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Dom;
 
-namespace ThisApp::CodeOptions
+namespace Themes_App::CodeOptions
 {
     using namespace ClaFi;
 

@@ -1,4 +1,4 @@
-export module ClaFi.Showcase.TextEngine.Main;
+export module TextEngine_App.Main;
 
 import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.Panel;
@@ -12,8 +12,9 @@ import ClaFi.StdLib;
 // system asks for and the two types the application is built out of; everything else - the form,
 // its pages, its tabs and the caret readout in each corner - stands here and runs over any platform
 // the framework has.
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
     export class MainForm : public WithBody<Panel, TabbedBox>

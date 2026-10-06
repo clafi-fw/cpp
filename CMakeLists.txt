@@ -483,10 +483,10 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     target_link_libraries(WhatsClip PRIVATE WhatsClip_Lib)
     target_compile_options(WhatsClip PRIVATE ${clafi_compile_options})
 
-    # THEMES, the browser the themes are made in, laid out the same way: the Main module
-    # and every page and control under it know nothing of any platform, and the entry point is one
-    # file per platform. Its modules are named ThisApp.*, as an application's are - it imports the
-    # library and is no part of it. Dom Benchmark is a console program built by Visual Studio only.
+    # THEMES, the browser the themes are made in, laid out the same way: the Main module and every
+    # page and control under it know nothing of any platform, and the entry point is one file per
+    # platform. Its modules are named Themes_App.*, as an application's are - it imports the library
+    # and is no part of it. Dom Benchmark is a console program built by Visual Studio only.
     set(themes_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/Themes/Src")
     add_executable(Themes
         "${themes_dir}/Themes_Main.cpp"
@@ -497,12 +497,12 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Pages/ElementPage.cpp"
         "${themes_dir}/Pages/HomePage.cpp"
         "${themes_dir}/Pages/ThemePage.cpp"
-        "${themes_dir}/Util/ThisApp.ApplyToControl.cpp"
-        "${themes_dir}/Util/ThisApp.CodeOptions.cpp"
-        "${themes_dir}/Util/ThisApp.FloorSlider.cpp"
-        "${themes_dir}/Util/ThisApp.RuleText.cpp"
-        "${themes_dir}/Util/ThisApp.ThemeToCppCode.cpp"
-        "${themes_dir}/Util/ThisApp.ValueRuleControl.cpp")
+        "${themes_dir}/Util/Themes_App.ApplyToControl.cpp"
+        "${themes_dir}/Util/Themes_App.CodeOptions.cpp"
+        "${themes_dir}/Util/Themes_App.FloorSlider.cpp"
+        "${themes_dir}/Util/Themes_App.RuleText.cpp"
+        "${themes_dir}/Util/Themes_App.ThemeToCppCode.cpp"
+        "${themes_dir}/Util/Themes_App.ValueRuleControl.cpp")
     target_sources(Themes PRIVATE FILE_SET CXX_MODULES FILES
         "${themes_dir}/Themes_Main.cppm"
         "${themes_dir}/Themes_Icon.cppm"
@@ -513,17 +513,17 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Pages/PreviewPanel.cppm"
         "${themes_dir}/Pages/ThemePage.cppm"
         "${themes_dir}/Pages/WithPreview.cppm"
-        "${themes_dir}/Util/ThisApp.ApplyToControl.cppm"
-        "${themes_dir}/Util/ThisApp.CodeOptions.cppm"
-        "${themes_dir}/Util/ThisApp.Consts.cppm"
-        "${themes_dir}/Util/ThisApp.FloorSlider.cppm"
-        "${themes_dir}/Util/ThisApp.HueRuleControl.cppm"
-        "${themes_dir}/Util/ThisApp.Palette.Controls.cppm"
-        "${themes_dir}/Util/ThisApp.RuleSlider.cppm"
-        "${themes_dir}/Util/ThisApp.RuleText.cppm"
-        "${themes_dir}/Util/ThisApp.ThemeToCppCode.cppm"
-        "${themes_dir}/Util/ThisApp.Utils.cppm"
-        "${themes_dir}/Util/ThisApp.ValueRuleControl.cppm")
+        "${themes_dir}/Util/Themes_App.ApplyToControl.cppm"
+        "${themes_dir}/Util/Themes_App.CodeOptions.cppm"
+        "${themes_dir}/Util/Themes_App.Consts.cppm"
+        "${themes_dir}/Util/Themes_App.FloorSlider.cppm"
+        "${themes_dir}/Util/Themes_App.HueRuleControl.cppm"
+        "${themes_dir}/Util/Themes_App.Palette.Controls.cppm"
+        "${themes_dir}/Util/Themes_App.RuleSlider.cppm"
+        "${themes_dir}/Util/Themes_App.RuleText.cppm"
+        "${themes_dir}/Util/Themes_App.ThemeToCppCode.cppm"
+        "${themes_dir}/Util/Themes_App.Utils.cppm"
+        "${themes_dir}/Util/Themes_App.ValueRuleControl.cppm")
     target_link_libraries(Themes PRIVATE ClaFi)
     target_compile_options(Themes PRIVATE ${clafi_compile_options})
     clafi_app_version(Themes "${CMAKE_CURRENT_SOURCE_DIR}/Tools/Themes/version.txt")
@@ -536,16 +536,16 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${pascalscripts_dir}/Src/PascalScripts_Icon.cpp"
         "${pascalscripts_dir}/Src/PascalScripts_Wayland.cpp"
         "${pascalscripts_dir}/Src/Pages/ScriptPage.cpp"
-        "${pascalscripts_dir}/Src/Util/ThisApp.Language.cpp"
-        "${pascalscripts_dir}/Src/Util/ThisApp.Scripts.cpp")
+        "${pascalscripts_dir}/Src/Util/PascalScripts_App.Language.cpp"
+        "${pascalscripts_dir}/Src/Util/PascalScripts_App.Scripts.cpp")
     target_sources(PascalScripts PRIVATE FILE_SET CXX_MODULES FILES
         "${pascalscripts_dir}/Src/PascalScripts_Main.cppm"
         "${pascalscripts_dir}/Src/PascalScripts_Icon.cppm"
         "${pascalscripts_dir}/Src/PascalScripts_Browser.cppm"
         "${pascalscripts_dir}/Src/Pages/ScriptPage.cppm"
-        "${pascalscripts_dir}/Src/Util/ThisApp.Consts.cppm"
-        "${pascalscripts_dir}/Src/Util/ThisApp.Language.cppm"
-        "${pascalscripts_dir}/Src/Util/ThisApp.Scripts.cppm")
+        "${pascalscripts_dir}/Src/Util/PascalScripts_App.Consts.cppm"
+        "${pascalscripts_dir}/Src/Util/PascalScripts_App.Language.cppm"
+        "${pascalscripts_dir}/Src/Util/PascalScripts_App.Scripts.cppm")
     target_link_libraries(PascalScripts PRIVATE ClaFi)
     target_compile_options(PascalScripts PRIVATE ${clafi_compile_options})
     clafi_app_version(PascalScripts "${pascalscripts_dir}/version.txt")

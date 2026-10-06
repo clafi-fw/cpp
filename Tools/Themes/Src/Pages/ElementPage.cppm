@@ -1,7 +1,7 @@
-export module ThisApp.ElementPage;
+export module Themes_App.ElementPage;
 
-import ThisApp.ApplyToControl;
-import ThisApp.RuleSlider;
+import Themes_App.ApplyToControl;
+import Themes_App.RuleSlider;
 
 import ClaFi.Icons.HueIcon;
 import ClaFi.Icons.LuminosityIcon;
@@ -29,7 +29,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

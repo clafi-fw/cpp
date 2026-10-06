@@ -1,7 +1,7 @@
-export module ThisApp.ScriptsBrowser;
+export module PascalScripts_App.ScriptsBrowser;
 
-import ThisApp.AppIcon;
-import ThisApp.ScriptPage;
+import PascalScripts_App.AppIcon;
+import PascalScripts_App.ScriptPage;
 
 import ClaFi.Documents.Browser;
 import ClaFi.Documents.HomePage;
@@ -17,7 +17,7 @@ import ClaFi.Core.Foundation;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace PascalScripts_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;

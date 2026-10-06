@@ -1,12 +1,12 @@
-module ClaFi.Showcase.TextEngine.Main;
+module TextEngine_App.Main;
 
-import ClaFi.Showcase.TextEngine;
-import ClaFi.Showcase.TextEngine.Code;
-import ClaFi.Showcase.TextEngine.Rich;
-import ClaFi.Showcase.TextEngine.Math;
-import ClaFi.Showcase.TextEngine.Emoji;
-import ClaFi.Showcase.TextEngine.Scripts;
-import ClaFi.Showcase.TextEngine.Icon;
+import TextEngine_App;
+import TextEngine_App.Code;
+import TextEngine_App.Rich;
+import TextEngine_App.Math;
+import TextEngine_App.Emoji;
+import TextEngine_App.Scripts;
+import TextEngine_App.Icon;
 
 import ClaFi.Controls.AppButton;
 import ClaFi.Controls.CodeBox;
@@ -40,8 +40,9 @@ import ClaFi.Core.System.Utils;
 import ClaFi.Core.System.Props;
 import ClaFi.StdLib;
 
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
     namespace

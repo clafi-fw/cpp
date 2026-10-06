@@ -1,4 +1,4 @@
-module ThisApp.ApplyToControl;
+module Themes_App.ApplyToControl;
 
 
 import ClaFi.Controls.CheckBox;
@@ -18,7 +18,7 @@ import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     namespace
     {

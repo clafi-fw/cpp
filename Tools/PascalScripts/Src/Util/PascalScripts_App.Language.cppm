@@ -1,4 +1,4 @@
-export module ThisApp.Language;
+export module PascalScripts_App.Language;
 
 import ClaFi.Documents.Folder;
 
@@ -6,7 +6,7 @@ import ClaFi.Core.Syntax.Types;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace PascalScripts_App
 {
     using namespace ::ClaFi;
 

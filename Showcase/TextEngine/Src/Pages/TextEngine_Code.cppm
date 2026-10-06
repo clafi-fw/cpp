@@ -1,10 +1,12 @@
-export module ClaFi.Showcase.TextEngine.Code;
+export module TextEngine_App.Code;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.StdLib;
 
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
+
     // A page of source, for measuring what an editor's key press costs.
     //
     // What makes source the interesting input is its shape rather than its meaning: a few thousand

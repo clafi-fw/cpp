@@ -1,9 +1,9 @@
-module ThisApp.ElementPage;
+module Themes_App.ElementPage;
 
-import ThisApp.ApplyToControl;
-import ThisApp.HueRuleControl;
-import ThisApp.RuleSlider;
-import ThisApp.ValueRuleControl;
+import Themes_App.ApplyToControl;
+import Themes_App.HueRuleControl;
+import Themes_App.RuleSlider;
+import Themes_App.ValueRuleControl;
 
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.StackView;
@@ -20,7 +20,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     void ElementPage::bind(ColorRules& rules, const ColorRules& defaults,
         const PaintChannels outputs, const ThemeColors& colors, OnGetListRuleBase ruleBase,

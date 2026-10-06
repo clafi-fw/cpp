@@ -1,4 +1,4 @@
-module ClaFi.Showcase.TextEngine.Emoji;
+module TextEngine_App.Emoji;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -6,8 +6,10 @@ import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
-namespace ClaFi::Showcase::TextEngine
+namespace TextEngine_App
 {
+    using namespace ::ClaFi;
+
     namespace
     {
         // The set every family row is asked for. The first four are basic-plane characters a text

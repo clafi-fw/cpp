@@ -1,6 +1,6 @@
-export module ThisApp.Main;
+export module Themes_App.Main;
 
-import ThisApp.ThemesBrowser;
+import Themes_App.ThemesBrowser;
 
 import ClaFi.Documents.Application;
 
@@ -19,7 +19,7 @@ import ClaFi.StdLib;
 // system asks for and the two types the application is built out of; everything else - what the
 // application is called, what its config holds, the main form and its size - stands here and runs
 // over any platform the framework has.
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ClaFi;
 

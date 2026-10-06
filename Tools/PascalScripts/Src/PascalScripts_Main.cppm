@@ -1,8 +1,8 @@
-export module ThisApp.Main;
+export module PascalScripts_App.Main;
 
-import ThisApp.ScriptsBrowser;
-import ThisApp.Scripts;
-import ThisApp.Language;
+import PascalScripts_App.ScriptsBrowser;
+import PascalScripts_App.Scripts;
+import PascalScripts_App.Language;
 
 import ClaFi.Documents.Application;
 
@@ -18,7 +18,7 @@ import ClaFi.StdLib;
 // system asks for and the two types the application is built out of; everything else - what the
 // application is called, what its config holds, where its scripts stand - stands here and runs
 // over any platform the framework has.
-namespace ThisApp
+namespace PascalScripts_App
 {
     using namespace ClaFi;
 

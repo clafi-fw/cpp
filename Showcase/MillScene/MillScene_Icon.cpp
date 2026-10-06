@@ -1,4 +1,4 @@
-module ClaFi.Showcase.MillScene.Icon;
+module MillScene_App.Icon;
 
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Graphics.Canvas;
@@ -7,8 +7,9 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ClaFi::Showcase::AppIcon
+namespace MillScene_App::AppIcon
 {
+    using namespace ::ClaFi;
     using namespace ::ClaFi::Graphics;
 
     namespace
@@ -222,7 +223,7 @@ namespace ClaFi::Showcase::AppIcon
 
 //-----------------------------------------------------------------------------
 
-namespace ClaFi::Showcase::AppIcon
+namespace MillScene_App::AppIcon
 {
     void paint(Canvas& canvas, const FloatRect& bounds)
     {

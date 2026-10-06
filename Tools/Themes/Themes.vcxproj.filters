@@ -68,55 +68,55 @@
     <ClCompile Include="Src\Pages\WithPreview.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.ApplyToControl.cpp">
+    <ClCompile Include="Src\Util\Themes_App.ApplyToControl.cpp">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.ApplyToControl.cppm">
+    <ClCompile Include="Src\Util\Themes_App.ApplyToControl.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.CodeOptions.cpp">
+    <ClCompile Include="Src\Util\Themes_App.CodeOptions.cpp">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.CodeOptions.cppm">
+    <ClCompile Include="Src\Util\Themes_App.CodeOptions.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.Consts.cppm">
+    <ClCompile Include="Src\Util\Themes_App.Consts.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.FloorSlider.cpp">
+    <ClCompile Include="Src\Util\Themes_App.FloorSlider.cpp">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.FloorSlider.cppm">
+    <ClCompile Include="Src\Util\Themes_App.FloorSlider.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.HueRuleControl.cppm">
+    <ClCompile Include="Src\Util\Themes_App.HueRuleControl.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.Palette.Controls.cppm">
+    <ClCompile Include="Src\Util\Themes_App.Palette.Controls.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.RuleSlider.cppm">
+    <ClCompile Include="Src\Util\Themes_App.RuleSlider.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.RuleText.cpp">
+    <ClCompile Include="Src\Util\Themes_App.RuleText.cpp">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.RuleText.cppm">
+    <ClCompile Include="Src\Util\Themes_App.RuleText.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.ThemeToCppCode.cpp">
+    <ClCompile Include="Src\Util\Themes_App.ThemeToCppCode.cpp">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.ThemeToCppCode.cppm">
+    <ClCompile Include="Src\Util\Themes_App.ThemeToCppCode.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.Utils.cppm">
+    <ClCompile Include="Src\Util\Themes_App.Utils.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.ValueRuleControl.cpp">
+    <ClCompile Include="Src\Util\Themes_App.ValueRuleControl.cpp">
       <Filter>Src\Util</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Util\ThisApp.ValueRuleControl.cppm">
+    <ClCompile Include="Src\Util\Themes_App.ValueRuleControl.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
   </ItemGroup>

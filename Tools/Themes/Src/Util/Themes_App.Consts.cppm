@@ -1,4 +1,4 @@
-export module ThisApp.Consts;
+export module Themes_App.Consts;
 
 import ClaFi.Application.ThemesManager;
 import ClaFi.Browser;
@@ -8,7 +8,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     using namespace ClaFi;
 

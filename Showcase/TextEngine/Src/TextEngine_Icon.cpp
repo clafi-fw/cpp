@@ -1,4 +1,4 @@
-module ClaFi.Showcase.TextEngine.Icon;
+module TextEngine_App.Icon;
 
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Graphics.Canvas;
@@ -7,7 +7,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ClaFi::Showcase::TextEngine::AppIcon
+namespace TextEngine_App::AppIcon
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Graphics;
@@ -162,7 +162,7 @@ namespace ClaFi::Showcase::TextEngine::AppIcon
 
 //-----------------------------------------------------------------------------
 
-namespace ClaFi::Showcase::TextEngine::AppIcon
+namespace TextEngine_App::AppIcon
 {
     void paint(Canvas& canvas, const FloatRect& bounds, const Opacity opacity)
     {

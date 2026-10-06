@@ -1,6 +1,6 @@
-export module ThisApp.Scripts;
+export module PascalScripts_App.Scripts;
 
-import ThisApp.Language;
+import PascalScripts_App.Language;
 
 import ClaFi.Documents.Folder;
 
@@ -9,7 +9,7 @@ import ClaFi.Core.DomEngine;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace PascalScripts_App
 {
     using namespace ::ClaFi;
 

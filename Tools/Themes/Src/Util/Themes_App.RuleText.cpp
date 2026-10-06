@@ -1,4 +1,4 @@
-module ThisApp.RuleText;
+module Themes_App.RuleText;
 
 import ClaFi.Controls.InPlaceEdit;
 
@@ -8,7 +8,7 @@ import ClaFi.Core.TextEngine.Text;
 
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace Themes_App
 {
     namespace
     {

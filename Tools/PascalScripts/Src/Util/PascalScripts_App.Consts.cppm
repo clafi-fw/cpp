@@ -1,9 +1,9 @@
-export module ThisApp.Consts;
+export module PascalScripts_App.Consts;
 
 import ClaFi.Documents.Folder;
 import ClaFi.StdLib;
 
-namespace ThisApp
+namespace PascalScripts_App
 {
     using namespace ClaFi;
 

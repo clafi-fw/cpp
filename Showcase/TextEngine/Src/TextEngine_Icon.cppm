@@ -1,10 +1,10 @@
-export module ClaFi.Showcase.TextEngine.Icon;
+export module TextEngine_App.Icon;
 
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.UiTypes;
 
-namespace ClaFi::Showcase::TextEngine::AppIcon
+namespace TextEngine_App::AppIcon
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Graphics;

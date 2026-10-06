@@ -459,7 +459,7 @@
 {
     <span class="kw">using namespace</span> ClaFi;
 
-    <span class="tp">ThisApp</span>::<span class="tp">ThemesApplication</span>&lt;<span class="tp">Win32Platform</span>, <span class="tp">Direct2DBackend</span>&gt; app{ { hInstance } };
+    <span class="tp">Themes_App</span>::<span class="tp">ThemesApplication</span>&lt;<span class="tp">Win32Platform</span>, <span class="tp">Direct2DBackend</span>&gt; app{ { hInstance } };
     <span class="kw">return</span> app.<span class="fn">run</span>();
 }
 
@@ -468,7 +468,7 @@
 {
     <span class="kw">using namespace</span> ClaFi;
 
-    <span class="tp">ThisApp</span>::<span class="tp">ThemesApplication</span>&lt;<span class="tp">WaylandPlatform</span>&gt; app{ <span class="tp">WaylandPlatform</span>::<span class="tp">Params</span>{} };
+    <span class="tp">Themes_App</span>::<span class="tp">ThemesApplication</span>&lt;<span class="tp">WaylandPlatform</span>&gt; app{ <span class="tp">WaylandPlatform</span>::<span class="tp">Params</span>{} };
     <span class="kw">return</span> app.<span class="fn">run</span>();
 }</pre>
             <p>Two aliases name the common pairings: <code>Win32Application</code> is

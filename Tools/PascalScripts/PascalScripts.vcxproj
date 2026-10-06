@@ -234,11 +234,11 @@
     <ClCompile Include="Src\PascalScripts_Main.cpp" />
     <ClCompile Include="Src\PascalScripts_Main.cppm" />
     <ClCompile Include="Src\PascalScripts_Win32.cpp" />
-    <ClCompile Include="Src\Util\ThisApp.Consts.cppm" />
-    <ClCompile Include="Src\Util\ThisApp.Language.cpp" />
-    <ClCompile Include="Src\Util\ThisApp.Language.cppm" />
-    <ClCompile Include="Src\Util\ThisApp.Scripts.cpp" />
-    <ClCompile Include="Src\Util\ThisApp.Scripts.cppm" />
+    <ClCompile Include="Src\Util\PascalScripts_App.Consts.cppm" />
+    <ClCompile Include="Src\Util\PascalScripts_App.Language.cpp" />
+    <ClCompile Include="Src\Util\PascalScripts_App.Language.cppm" />
+    <ClCompile Include="Src\Util\PascalScripts_App.Scripts.cpp" />
+    <ClCompile Include="Src\Util\PascalScripts_App.Scripts.cppm" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Src\PascalScripts_Wayland.cpp" />
