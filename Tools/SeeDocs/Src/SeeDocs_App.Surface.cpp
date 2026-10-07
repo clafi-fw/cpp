@@ -224,6 +224,21 @@ namespace SeeDocs_App
         return nullptr;
     }
 
+    std::wstring Surface::resolvedBase(const std::wstring_view spelled,
+        std::wstring_view nameSpace) const
+    {
+        std::wstring result = std::wstring{ spelled };
+        for (std::size_t depth = 0; depth != k_aliasDepth; ++depth)
+        {
+            const Type* type = lookUp(plainType(withoutArguments(result)), nameSpace);
+            if (!type || type->kind != TypeKind::Alias || type->isPublic())
+                return result;
+            result = type->target;
+            nameSpace = type->nameSpace;
+        }
+        return result;
+    }
+
     // The chain is walked by spelling: an alias stands for its target, and a base that is one of
     // a template's parameters stands for the argument the spelling passed in that place.
     bool Surface::reachesControl(const Type& type) const

@@ -1,14 +1,18 @@
 # SeeDocs
 
-The tools that read the framework's design surface out of its source and put it to use. This
-first part is the scanner: it reads every module under `Source/`, writes what it finds into one
-database, and holds the tree to the declaration routine.
+The tools that read the framework's design surface out of its source and put it to use. Two
+programs so far: the scanner, which reads every module under `Source/`, writes what it finds into
+one database and holds the tree to the declaration routine; and the studio, a window over that
+database showing the surface as the documentation it is to become.
 
     seedocs scan [tree] [--out file]    writes the database, Tools/SeeDocs/Surface.cfg by default
     seedocs check [tree]                reports deviations, exit code 1 if any are errors
+    seedocs-studio [tree]               opens the studio over the tree's database and notes
 
-The tree is the folder holding `Source/`; the working directory when left out. The report reads
-`file:line: level: text`, one line per finding, in file and line order.
+The tree is the folder holding `Source/`; for the scanner the working directory when left out,
+for the studio the nearest folder holding one at or above the working directory, else above the
+executable. The report reads `file:line: level: text`, one line per finding, in file and line
+order.
 
 ## How it reads
 
@@ -34,8 +38,9 @@ class template's may sit between the `template` line and the `class` line, or ab
 
 `Surface.cfg` is a document in the framework's own configuration format, written through the
 Dom with the layout `SeeDocs_App::databaseLayout()` states, and read back through the same
-layout. An entry states only what it has - a key at its default is left out - so a reader applies
-the layout and takes the rest from the file.
+layout by `readDatabase`, which answers the surface the scanner would have filled. An entry
+states only what it has - a key at its default is left out - so a reader applies the layout and
+takes the rest from the file.
 
 Where an entry says the same thing a `Language.cfg` completion entry says, it uses the same key:
 `Name`, `Kind`, `Signature`, `Hint`, `Type`, and a class's `Methods` and `Properties` as two lists.
@@ -62,7 +67,9 @@ The two files are meant to become one.
 
 `Control` marks a type whose base chain reaches `Control` or `RichControl`, template arguments
 walked as bases, which is what makes it a toolbox entry; `Category` is its folder under
-`Source/`. A property's `Form` says how its line was written (`declared`, `writable`,
+`Source/`. `Bases` are written as a reader can follow them: an alias the database does not
+carry - a private `using ComboBoxBaseClass = WithInPlaceEdit<DropdownControlBase>` - is replaced
+by what it names. A property's `Form` says how its line was written (`declared`, `writable`,
 `reference`, `storage`, `member`, `call`, `value`, `action`, `read`, or `required` - a
 `REQUIRE_PROPERTY`, which the pack has to carry and which therefore has no `Default`) and
 `ValueKind` what a designer shows the value as: `bool`, `int`, `float`, `text`, `float2`,
@@ -71,6 +78,24 @@ wired the way an event is) or `unknown`. A `std::optional` of a kind is that kin
 `Optional` set. Several bindings landing on one target are one property, the further types
 under `Accepts`. An event's `Name` is its struct, whose payload is that struct's own `Fields`
 entry.
+
+## The studio
+
+`SeeDocs Studio` opens `Surface.cfg` and the notes under `Source/RawDocs` and shows them as
+pages: down the left a tree of chapters - the folders under `Source/`, a reader's names for them
+- each holding its modules and each module the types it exports, controls first; on the right the
+page of whatever is picked. Opening a chapter or a module shows its overview, a table of its
+types with their hints; picking a type shows its page - its hint as the lead, where it is
+declared and what it derives from, the note its comment references, then its properties, events,
+methods, fields or members, each with its hint and the note its own comment references under
+its line. A type whose comment references nothing takes the section named exactly after it from
+a note of its own folder, marked as matched by name. Where the surface states no hint the page
+says so, in place of the words, so what the documentation still lacks is read off the preview.
+
+A type's name on a page is a link to its page; the tree follows. The pages are built by
+`SeeDocs_App.Pages` as blocks - title, lead, headings, paragraphs, code, bullets, tables - out of
+the surface and the notes, and the studio renders those blocks as a Text; a generator renders the
+same blocks as files.
 
 ## The checks
 
@@ -92,8 +117,11 @@ entry.
 
 ## Building
 
-`SeeDocs.sln` builds it with Visual Studio against the shared items. The CMake target `SeeDocs`
-builds it on Linux with or without a platform layer - the Dom, the Syntax lexer and the text
+`SeeDocs.sln` builds both programs with Visual Studio against the shared items: `SeeDocs` the
+scanner and `SeeDocs Studio` the studio, which share the Surface, Database, Notes and Pages
+modules under `Src/`, the studio's own standing under `Src/Studio/`. The CMake target
+`SeeDocsStudio` builds the studio on Wayland beside the other applications. The CMake target
+`SeeDocs` builds the scanner on Linux with or without a platform layer - the Dom, the Syntax lexer and the text
 file reader reach no further down than `UiTypes` - so a `check` runs wherever the tree is
 checked out:
 

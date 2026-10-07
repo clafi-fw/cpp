@@ -267,7 +267,10 @@ namespace SeeDocs_App
             setScoped(section, surface, type.nameSpace, type.module, type.place);
             setText(section, Keys::kind, kindWord(type.kind));
             setText(section, Keys::templateParameters, type.templateParameters);
-            setList(section, Keys::bases, type.bases);
+            Names bases;
+            for (const std::wstring& base : type.bases)
+                bases.push_back(surface.resolvedBase(base, type.nameSpace));
+            setList(section, Keys::bases, bases);
             setText(section, Keys::target, type.target);
             setFlag(section, Keys::control, type.isControl);
             setText(section, Keys::category, type.category);
@@ -413,6 +416,259 @@ namespace SeeDocs_App
             }
             return result;
         }
+
+        [[nodiscard]] std::wstring textOf(const Dom::DomNodeBase& entry, const std::wstring_view key)
+        {
+            return (entry / key).get<std::wstring>();
+        }
+
+        [[nodiscard]] bool flagOf(const Dom::DomNodeBase& entry, const std::wstring_view key)
+        {
+            return (entry / key).get<bool>();
+        }
+
+        [[nodiscard]] std::size_t numberOf(const Dom::DomNodeBase& entry,
+            const std::wstring_view key)
+        {
+            return (entry / key).get<std::size_t>();
+        }
+
+        [[nodiscard]] Names listOf(const Dom::DomNodeBase& entry, const std::wstring_view key)
+        {
+            Names names;
+            for (const std::wstring& name : (entry / key).as<Strings>().get())
+                names.push_back(name);
+            return names;
+        }
+
+        [[nodiscard]] std::wstring qualifiedNameOf(const std::wstring& nameSpace,
+            const std::wstring& name)
+        {
+            if (nameSpace.empty())
+                return name;
+            return nameSpace + L"::" + name;
+        }
+
+        // The entries of the file, back into the records the scanner fills.
+        class Reader
+        {
+        public:
+            explicit Reader(Surface&);
+            void readModules(const Dom::DomNodeBase& list);
+            void readTypes(const Dom::DomNodeBase& list);
+            void readFunctions(const Dom::DomNodeBase& list);
+            void readConstants(const Dom::DomNodeBase& list);
+        private:
+            [[nodiscard]] std::size_t fileOf(const std::wstring& relative, const std::wstring& module);
+            [[nodiscard]] static Place placeOf(const Dom::Section& entry, std::size_t file);
+            [[nodiscard]] static Comment commentOf(const Dom::Section& entry);
+            [[nodiscard]] static Access accessIn(const Dom::Section& entry);
+            // A member states its access and its specifiers; an entry at namespace scope does not.
+            [[nodiscard]] static Function functionOf(const Dom::Section& entry, std::size_t file,
+                bool member);
+            [[nodiscard]] static Field fieldOf(const Dom::Section& entry, std::size_t file,
+                bool member);
+        private:
+            Surface& m_surface;
+            std::map<std::wstring, std::size_t> m_files;   // a file's index by its relative path
+        };
+
+        Reader::Reader(Surface& surface)
+            :
+            m_surface{ surface }
+        {
+        }
+
+        void Reader::readModules(const Dom::DomNodeBase& list)
+        {
+            for (const Dom::Section& entry : list.as<Sections>())
+            {
+                Module module{
+                    .name = textOf(entry, Keys::name),
+                    .isInterface = flagOf(entry, Keys::interface)
+                };
+                module.file = fileOf(textOf(entry, Keys::file), module.name);
+                for (const std::wstring& name : listOf(entry, Keys::imports))
+                    module.imports.push_back({ .name = name, .exported = false });
+                for (const std::wstring& name : listOf(entry, Keys::exportedImports))
+                    module.imports.push_back({ .name = name, .exported = true });
+                m_surface.addModule(std::move(module));
+            }
+        }
+
+        void Reader::readTypes(const Dom::DomNodeBase& list)
+        {
+            for (const Dom::Section& entry : list.as<Sections>())
+            {
+                Type type{
+                    .name = textOf(entry, Keys::name),
+                    .nameSpace = textOf(entry, Keys::nameSpace),
+                    .kind = typeKindOf(textOf(entry, Keys::kind)).value_or(TypeKind::Class),
+                    .module = textOf(entry, Keys::module),
+                    .templateParameters = textOf(entry, Keys::templateParameters),
+                    .bases = listOf(entry, Keys::bases),
+                    .target = textOf(entry, Keys::target),
+                    .exported = true,
+                    .isControl = flagOf(entry, Keys::control),
+                    .category = textOf(entry, Keys::category)
+                };
+                type.qualifiedName = qualifiedNameOf(type.nameSpace, type.name);
+                const std::size_t file = fileOf(textOf(entry, Keys::file), type.module);
+                type.place = placeOf(entry, file);
+                type.comment = commentOf(entry);
+
+                for (const Dom::Section& item : (entry / Keys::properties).as<Sections>())
+                {
+                    type.properties.push_back({
+                        .name = textOf(item, Keys::name),
+                        .type = textOf(item, Keys::type),
+                        .accepts = listOf(item, Keys::accepts),
+                        .defaultValue = textOf(item, Keys::defaultValue),
+                        .setter = textOf(item, Keys::setter),
+                        .target = textOf(item, Keys::target),
+                        .form = formOf(textOf(item, Keys::form)).value_or(PropertyForm::Declared),
+                        .valueKind = textOf(item, Keys::valueKind),
+                        .optional = flagOf(item, Keys::optional),
+                        .access = accessIn(item),
+                        .place = placeOf(item, file),
+                        .comment = commentOf(item)
+                    });
+                }
+                for (const Dom::Section& item : (entry / Keys::events).as<Sections>())
+                {
+                    type.events.push_back({
+                        .type = textOf(item, Keys::name),
+                        .alias = textOf(item, Keys::alias),
+                        .method = textOf(item, Keys::method),
+                        .access = accessIn(item),
+                        .place = placeOf(item, file),
+                        .comment = commentOf(item)
+                    });
+                }
+                for (const Dom::Section& item : (entry / Keys::methods).as<Sections>())
+                    type.functions.push_back(functionOf(item, file, true));
+                for (const Dom::Section& item : (entry / Keys::fields).as<Sections>())
+                    type.fields.push_back(fieldOf(item, file, true));
+                for (const Dom::Section& item : (entry / Keys::members).as<Sections>())
+                {
+                    type.members.push_back({
+                        .name = textOf(item, Keys::name),
+                        .value = textOf(item, Keys::value),
+                        .place = placeOf(item, file),
+                        .comment = commentOf(item)
+                    });
+                }
+                m_surface.addType(std::move(type));
+            }
+        }
+
+        void Reader::readFunctions(const Dom::DomNodeBase& list)
+        {
+            for (const Dom::Section& entry : list.as<Sections>())
+            {
+                FreeFunction free{
+                    .nameSpace = textOf(entry, Keys::nameSpace),
+                    .module = textOf(entry, Keys::module),
+                    .exported = true
+                };
+                const std::size_t file = fileOf(textOf(entry, Keys::file), free.module);
+                free.function = functionOf(entry, file, false);
+                m_surface.addFunction(std::move(free));
+            }
+        }
+
+        void Reader::readConstants(const Dom::DomNodeBase& list)
+        {
+            for (const Dom::Section& entry : list.as<Sections>())
+            {
+                Variable variable{
+                    .nameSpace = textOf(entry, Keys::nameSpace),
+                    .module = textOf(entry, Keys::module),
+                    .exported = true
+                };
+                const std::size_t file = fileOf(textOf(entry, Keys::file), variable.module);
+                variable.field = fieldOf(entry, file, false);
+                m_surface.addVariable(std::move(variable));
+            }
+        }
+
+        std::size_t Reader::fileOf(const std::wstring& relative, const std::wstring& module)
+        {
+            const auto found = m_files.find(relative);
+            if (found != m_files.end())
+                return found->second;
+            const std::size_t index = m_surface.addFile({
+                .path = std::filesystem::path{ relative },
+                .relative = relative,
+                .module = module
+            });
+            m_files[relative] = index;
+            return index;
+        }
+
+        Place Reader::placeOf(const Dom::Section& entry, const std::size_t file)
+        {
+            return { .file = file, .line = numberOf(entry, Keys::line) };
+        }
+
+        Comment Reader::commentOf(const Dom::Section& entry)
+        {
+            Comment comment{ .text = textOf(entry, Keys::hint) };
+            const std::wstring note = textOf(entry, Keys::note);
+            if (note.empty())
+                return comment;
+            const std::size_t hash = note.find(L'#');
+            comment.reference = Reference{
+                .note = note.substr(0, hash),
+                .anchor = hash == std::wstring::npos ? std::wstring{} : note.substr(hash + 1)
+            };
+            return comment;
+        }
+
+        Access Reader::accessIn(const Dom::Section& entry)
+        {
+            return accessOf(textOf(entry, Keys::access)).value_or(Access::Public);
+        }
+
+        Function Reader::functionOf(const Dom::Section& entry, const std::size_t file,
+            const bool member)
+        {
+            Function function{
+                .name = textOf(entry, Keys::name),
+                .kind = functionKindOf(textOf(entry, Keys::kind)).value_or(FunctionKind::Function),
+                .signature = textOf(entry, Keys::signature),
+                .returnType = textOf(entry, Keys::type),
+                .templateParameters = textOf(entry, Keys::templateParameters),
+                .place = placeOf(entry, file),
+                .comment = commentOf(entry)
+            };
+            if (member)
+            {
+                function.isStatic = flagOf(entry, Keys::isStatic);
+                function.isVirtual = flagOf(entry, Keys::isVirtual);
+                function.isDeleted = flagOf(entry, Keys::isDeleted);
+                function.access = accessIn(entry);
+            }
+            return function;
+        }
+
+        Field Reader::fieldOf(const Dom::Section& entry, const std::size_t file, const bool member)
+        {
+            Field field{
+                .name = textOf(entry, Keys::name),
+                .type = textOf(entry, Keys::type),
+                .value = textOf(entry, Keys::value),
+                .isConstant = flagOf(entry, Keys::isConstant),
+                .place = placeOf(entry, file),
+                .comment = commentOf(entry)
+            };
+            if (member)
+            {
+                field.isStatic = flagOf(entry, Keys::isStatic);
+                field.access = accessIn(entry);
+            }
+            return field;
+        }
     }
 
     Dom::Dt::Section databaseLayout()
@@ -502,6 +758,26 @@ namespace SeeDocs_App
         document.format().saveSectionToFile(*compacted(document, layout), path);
     }
 
+    std::optional<Surface> readDatabase(const std::filesystem::path& path)
+    {
+        Dom::Document<Dom::FileFormat::ClaFi> document{
+            path,
+            Dom::AutoSave::No,
+            databaseLayout(),
+            Dom::WriteDefaults::No
+        };
+        if (!document.load())
+            return std::nullopt;
+
+        Surface surface;
+        Reader reader{ surface };
+        reader.readModules(document / Keys::modules);
+        reader.readTypes(document / Keys::types);
+        reader.readFunctions(document / Keys::functions);
+        reader.readConstants(document / Keys::constants);
+        return surface;
+    }
+
     std::wstring_view kindWord(const TypeKind kind)
     {
         switch (kind)
@@ -576,5 +852,50 @@ namespace SeeDocs_App
                 return L"private";
         }
         return {};
+    }
+
+    std::optional<TypeKind> typeKindOf(const std::wstring_view word)
+    {
+        for (const TypeKind kind : { TypeKind::Class, TypeKind::Struct, TypeKind::Union,
+            TypeKind::Enum, TypeKind::Alias, TypeKind::Concept })
+        {
+            if (kindWord(kind) == word)
+                return kind;
+        }
+        return std::nullopt;
+    }
+
+    std::optional<FunctionKind> functionKindOf(const std::wstring_view word)
+    {
+        for (const FunctionKind kind : { FunctionKind::Function, FunctionKind::Constructor,
+            FunctionKind::Destructor })
+        {
+            if (kindWord(kind) == word)
+                return kind;
+        }
+        return std::nullopt;
+    }
+
+    std::optional<PropertyForm> formOf(const std::wstring_view word)
+    {
+        for (const PropertyForm form : { PropertyForm::Declared, PropertyForm::Writable,
+            PropertyForm::ByReference, PropertyForm::Storage, PropertyForm::BoundMember,
+            PropertyForm::BoundCall, PropertyForm::BoundValue, PropertyForm::BoundAction,
+            PropertyForm::Read, PropertyForm::Required })
+        {
+            if (formWord(form) == word)
+                return form;
+        }
+        return std::nullopt;
+    }
+
+    std::optional<Access> accessOf(const std::wstring_view word)
+    {
+        for (const Access access : { Access::Public, Access::Protected, Access::Private })
+        {
+            if (accessWord(access) == word)
+                return access;
+        }
+        return std::nullopt;
     }
 }

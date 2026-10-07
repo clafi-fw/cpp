@@ -1,15 +1,12 @@
 module SeeDocs_App.Checks;
 
+import SeeDocs_App.Notes;
 import SeeDocs_App.Surface;
-
-import ClaFi.Documents.TextFile;
 
 import ClaFi.StdLib;
 
 namespace SeeDocs_App
 {
-    using namespace ClaFi;
-
     namespace
     {
         constexpr std::wstring_view k_eventSuffix = L"Event";
@@ -17,75 +14,12 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_memberPrefix = L"m_";
         constexpr std::wstring_view k_unknownKind = L"unknown";
         constexpr std::wstring_view k_baseFolder = L"Source/Controls/Base/";
-        constexpr std::wstring_view k_noteExtension = L".md";
         // What a trailing comment costs beyond its words: the blank, the slashes, the blank.
         constexpr std::size_t k_trailingCost = 4;
 
         [[nodiscard]] std::wstring number(const std::size_t value)
         {
             return std::to_wstring(value);
-        }
-
-        // The notes under RawDocs, read once each, as the anchors their headings offer.
-        class Notes
-        {
-        public:
-            explicit Notes(std::filesystem::path folder);
-            [[nodiscard]] bool exists(std::wstring_view stem);
-            [[nodiscard]] bool reaches(std::wstring_view stem, std::wstring_view anchor);
-        private:
-            using Anchors = std::set<std::wstring>;
-            [[nodiscard]] const Anchors* anchorsOf(std::wstring_view stem);
-        private:
-            std::filesystem::path m_folder;
-            std::map<std::wstring, std::optional<Anchors>> m_read;
-        };
-
-        Notes::Notes(std::filesystem::path folder)
-            :
-            m_folder{ std::move(folder) }
-        {
-        }
-
-        bool Notes::exists(const std::wstring_view stem)
-        {
-            return anchorsOf(stem) != nullptr;
-        }
-
-        bool Notes::reaches(const std::wstring_view stem, const std::wstring_view anchor)
-        {
-            const Anchors* anchors = anchorsOf(stem);
-            return anchors && anchors->contains(std::wstring{ anchor });
-        }
-
-        const Notes::Anchors* Notes::anchorsOf(const std::wstring_view stem)
-        {
-            const auto found = m_read.find(std::wstring{ stem });
-            if (found != m_read.end())
-                return found->second ? &*found->second : nullptr;
-
-            std::optional<Anchors>& anchors = m_read[std::wstring{ stem }];
-            const std::filesystem::path file =
-                m_folder / (std::wstring{ stem } + std::wstring{ k_noteExtension });
-            const std::optional<std::wstring> text = Documents::readTextFile(file);
-            if (!text)
-                return nullptr;
-            anchors.emplace();
-            std::size_t start = 0;
-            while (start < text->size())
-            {
-                std::size_t end = text->find(L'\n', start);
-                if (end == std::wstring::npos)
-                    end = text->size();
-                std::wstring_view line = std::wstring_view{ *text }.substr(start, end - start);
-                start = end + 1;
-                if (!line.starts_with(L'#'))
-                    continue;
-                while (line.starts_with(L'#'))
-                    line.remove_prefix(1);
-                anchors->insert(slug(trimmed(line)));
-            }
-            return &*anchors;
         }
 
         // The rules, run over one surface.

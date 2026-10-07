@@ -481,6 +481,31 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     target_link_libraries(WhatsClip PRIVATE WhatsClip_Lib)
     target_compile_options(WhatsClip PRIVATE ${clafi_compile_options})
 
+    # SEEDOCS STUDIO, the window over the scanner's database: the surface as a tree, and the page
+    # of whatever is picked, as the documentation it is to become. It shares the Surface, Database,
+    # Notes and Pages modules with the SeeDocs scanner at the end of this file, and reads the
+    # Tools/SeeDocs/Surface.cfg that scanner writes.
+    set(seedocs_studio_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/Src")
+    add_executable(SeeDocsStudio
+        "${seedocs_studio_dir}/Studio/SeeDocsStudio_Wayland.cpp"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Main.cpp"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.PageText.cpp"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.SurfaceView.cpp"
+        "${seedocs_studio_dir}/SeeDocs_App.Database.cpp"
+        "${seedocs_studio_dir}/SeeDocs_App.Notes.cpp"
+        "${seedocs_studio_dir}/SeeDocs_App.Pages.cpp"
+        "${seedocs_studio_dir}/SeeDocs_App.Surface.cpp")
+    target_sources(SeeDocsStudio PRIVATE FILE_SET CXX_MODULES FILES
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Main.cppm"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.PageText.cppm"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.SurfaceView.cppm"
+        "${seedocs_studio_dir}/SeeDocs_App.Database.cppm"
+        "${seedocs_studio_dir}/SeeDocs_App.Notes.cppm"
+        "${seedocs_studio_dir}/SeeDocs_App.Pages.cppm"
+        "${seedocs_studio_dir}/SeeDocs_App.Surface.cppm")
+    target_link_libraries(SeeDocsStudio PRIVATE ClaFi)
+    target_compile_options(SeeDocsStudio PRIVATE ${clafi_compile_options})
+
     # THEMES, the browser the themes are made in, laid out the same way: the Main module and every
     # page and control under it know nothing of any platform, and the entry point is one file per
     # platform. Its modules are named Themes_App.*, as an application's are - it imports the library
@@ -576,12 +601,14 @@ add_executable(SeeDocs
     "${seedocs_dir}/SeeDocs_App.Checks.cpp"
     "${seedocs_dir}/SeeDocs_App.Database.cpp"
     "${seedocs_dir}/SeeDocs_App.Main.cpp"
+    "${seedocs_dir}/SeeDocs_App.Notes.cpp"
     "${seedocs_dir}/SeeDocs_App.Scanner.cpp"
     "${seedocs_dir}/SeeDocs_App.Surface.cpp")
 target_sources(SeeDocs PRIVATE FILE_SET CXX_MODULES FILES
     "${seedocs_dir}/SeeDocs_App.Checks.cppm"
     "${seedocs_dir}/SeeDocs_App.Database.cppm"
     "${seedocs_dir}/SeeDocs_App.Main.cppm"
+    "${seedocs_dir}/SeeDocs_App.Notes.cppm"
     "${seedocs_dir}/SeeDocs_App.Scanner.cppm"
     "${seedocs_dir}/SeeDocs_App.Surface.cppm")
 target_link_libraries(SeeDocs PRIVATE ClaFi)

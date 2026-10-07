@@ -273,6 +273,10 @@ namespace SeeDocs_App
         // enclosing namespace's, or the one type of that bare name anywhere. Aliases are followed.
         [[nodiscard]] const Type* resolve(std::wstring_view spelled,
             std::wstring_view nameSpace) const;
+        // A base's spelling with an alias the database does not carry replaced by what it names,
+        // followed until the spelling names a type the database does carry.
+        [[nodiscard]] std::wstring resolvedBase(std::wstring_view spelled,
+            std::wstring_view nameSpace) const;
         // Whether a type's base chain reaches Control, template arguments walked as bases.
         [[nodiscard]] bool reachesControl(const Type&) const;
         // What a designer shows a property of the type as.

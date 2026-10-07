@@ -13,8 +13,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{7c1e4a2d-5b8f-4e36-9a71-3d2c6f0b8e15}</ProjectGuid>
-    <RootNamespace>SeeDocs</RootNamespace>
+    <ProjectGuid>{9e3b7f41-2c6d-4a58-b1f0-6d7e2c5a9b13}</ProjectGuid>
+    <RootNamespace>SeeDocsStudio</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -50,7 +50,7 @@
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_ITERATOR_DEBUG_LEVEL=2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_ITERATOR_DEBUG_LEVEL=2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
@@ -72,14 +72,17 @@
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Manifest>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
@@ -100,31 +103,35 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Manifest>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Src\SeeDocs_App.Checks.cpp" />
-    <ClCompile Include="Src\SeeDocs_App.Checks.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Database.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Database.cppm" />
-    <ClCompile Include="Src\SeeDocs_App.Main.cpp" />
-    <ClCompile Include="Src\SeeDocs_App.Main.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Notes.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Notes.cppm" />
-    <ClCompile Include="Src\SeeDocs_App.Scanner.cpp" />
-    <ClCompile Include="Src\SeeDocs_App.Scanner.cppm" />
+    <ClCompile Include="Src\SeeDocs_App.Pages.cpp" />
+    <ClCompile Include="Src\SeeDocs_App.Pages.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cppm" />
-    <ClCompile Include="Src\SeeDocs_Win32.cpp" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Main.cpp" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Main.cppm" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageText.cpp" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageText.cppm" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.SurfaceView.cpp" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.SurfaceView.cppm" />
+    <ClCompile Include="Src\Studio\SeeDocsStudio_Win32.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Src\SeeDocs_Linux.cpp" />
-    <None Include="README.md" />
+    <None Include="Src\Studio\SeeDocsStudio_Wayland.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

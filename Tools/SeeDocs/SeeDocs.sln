@@ -5,6 +5,8 @@ VisualStudioVersion = 18.1.11312.151
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SeeDocs", "SeeDocs.vcxproj", "{7C1E4A2D-5B8F-4E36-9A71-3D2C6F0B8E15}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SeeDocs Studio", "SeeDocs Studio.vcxproj", "{9E3B7F41-2C6D-4A58-B1F0-6D7E2C5A9B13}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClaFi", "..\..\Visual Studio Shared Items\ClaFi.vcxitems", "{78FE27B6-0279-4412-8B4B-A8D197604250}"
 EndProject
 Global
@@ -17,6 +19,10 @@ Global
 		{7C1E4A2D-5B8F-4E36-9A71-3D2C6F0B8E15}.Debug|x64.Build.0 = Debug|x64
 		{7C1E4A2D-5B8F-4E36-9A71-3D2C6F0B8E15}.Release|x64.ActiveCfg = Release|x64
 		{7C1E4A2D-5B8F-4E36-9A71-3D2C6F0B8E15}.Release|x64.Build.0 = Release|x64
+		{9E3B7F41-2C6D-4A58-B1F0-6D7E2C5A9B13}.Debug|x64.ActiveCfg = Debug|x64
+		{9E3B7F41-2C6D-4A58-B1F0-6D7E2C5A9B13}.Debug|x64.Build.0 = Debug|x64
+		{9E3B7F41-2C6D-4A58-B1F0-6D7E2C5A9B13}.Release|x64.ActiveCfg = Release|x64
+		{9E3B7F41-2C6D-4A58-B1F0-6D7E2C5A9B13}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -27,5 +33,6 @@ Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{78fe27b6-0279-4412-8b4b-a8d197604250}*SharedItemsImports = 9
 		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{7c1e4a2d-5b8f-4e36-9a71-3d2c6f0b8e15}*SharedItemsImports = 4
+		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{9e3b7f41-2c6d-4a58-b1f0-6d7e2c5a9b13}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal
