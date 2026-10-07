@@ -15,6 +15,17 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
+    // How far a control is drawn from where it was laid out, by a hold on it or on anything
+    // holding it: the hold reaches everything inside the control held, the way
+    // Control::scrollChildIntoView climbs. Zero for a control drawn where it was laid out.
+    [[nodiscard]] static FloatPoint holdOffset(const Control& control)
+    {
+        FloatPoint result;
+        for (const Control* item = &control; item; item = item->parent())
+            result += item->floatOffset();
+        return result;
+    }
+
     void FocusNavigator::formKeyDown(KeyDownEvent& event)
     {
         // NAVIGATION IS WITHIN THE FORM THE KEY WAS DELIVERED TO, and the focus is one per
@@ -267,8 +278,8 @@ namespace ClaFi
         if (FloatRect::intersection(m_form.rectOfControl(&focusedItem), containerViewport).empty())
         {
             // Scrolling has carried the focused item outside the viewport. The page to cross is
-            // then the one on screen: an item a hundred pages away names a band the walker does
-            // not reach, and widening the walk to reach it costs the whole distance scrolled.
+            // then the one on screen, the rule the grid's page walk keeps as well, rather than
+            // the one around an item a hundred pages away.
             rect.primary.end = pageRect.primary.end - overlap;
             rect.primary.start = rect.primary.end - itemExtent;
         }
@@ -285,8 +296,7 @@ namespace ClaFi
             &container,
             nullptr,
             SearchMethod::Spatial,
-            SearchFilter::Focusable,
-            pageExtent
+            SearchFilter::Focusable
         );
 
         return result ? result : edgeItem(container, direction);
@@ -300,7 +310,7 @@ namespace ClaFi
         KeyCode key,
         ScrollDirection entryEdge,
         OrientedRect rect,
-        const Control* searchRoot,
+        Control* searchRoot,
         Control* current
         )
     {
@@ -339,14 +349,33 @@ namespace ClaFi
 
     Control* FocusNavigator::spatialSearch(
         KeyCode key, const OrientedRect& src,
-        const Control* searchRoot, Control* excludeSubtree,
-        SearchMethod searchMethod, SearchFilter filter, float lookAhead)
+        Control* searchRoot, Control* excludeSubtree,
+        SearchMethod searchMethod, SearchFilter filter)
     {
         Control* bestCandidate = nullptr;
         Score bestScore;
 
-        ControlTreeWalker controlTreeWalker{ m_form.content(), TraversalMode::Auto };
-        controlTreeWalker.setLookAhead(m_form.scaler().scaled48 + lookAhead);
+        // THE WALK IS AROUND THE SOURCE, NOT THE VIEWPORT, AND IN THE SPACE THE CONTROLS WERE
+        // LAID OUT IN. A source the scroll has carried off the screen still has its neighbours,
+        // and they are what a key from it reaches - the row after the first, not the first row
+        // the screen happens to show. A screenful each way reaches the next stop from any source,
+        // and a page press, whose source is the rect it projected, the stop past that. A held
+        // control is scored where it was laid out, the way the source is placed - see
+        // orientedRect - so a header held over the rows of its body is the stop before the first
+        // of them and not a stop between two of them, and one pushed away past the view is the
+        // stop it was before the hold.
+        //
+        // Rooted at the container searched, whose own bounds span everything it scrolls. The
+        // walk culls a subtree by its bounds against the reach, and the box scrolling the
+        // container is no wider than its slot: rooted above the container, a reach standing
+        // outside the window would be culled at the box with the container inside it.
+        FloatRect reach = src.unorient(key);
+        const FloatRect viewport = m_form.content().visibleRectInForm(m_form);
+        reach.inflate(viewport.width(), viewport.height());
+
+        Control& walkRoot = searchRoot ? *searchRoot : m_form.content();
+        ControlTreeWalker controlTreeWalker{ walkRoot, TraversalMode::Auto, &reach };
+        controlTreeWalker.setClipMode(ClipMode::SystemClipOnly);
         controlTreeWalker.traverse([&](TraversalContext& context) {
             Control& candidate = context.control();
 
@@ -354,13 +383,13 @@ namespace ClaFi
             // screen. The center of a container taller or wider than its viewport sits
             // somewhere the user cannot see, and it slides with every scroll, so scoring it
             // whole makes the container win or lose the match by its scroll position.
-            // The look-ahead margin also visits controls that are entirely outside the
-            // viewport; their viewport is empty, and their own bounds are what places them
-            // ahead of the source.
+            // The walk also visits controls that are entirely outside the viewport; their
+            // viewport is empty, and their own bounds are what places them ahead of the source.
             // A control that acts for a whole strip is placed by the strip instead, so it is
             // met from anywhere along it rather than from the corner it occupies.
             FloatRect candidateRect;
-            if (const Control* extent = candidate.navigationExtent())
+            const Control* extent = candidate.navigationExtent();
+            if (extent)
                 candidateRect = extent->visibleRectInForm(m_form);
             else
             {
@@ -368,6 +397,7 @@ namespace ClaFi
                 if (candidateRect.empty())
                     candidateRect = context.controlBounds();
             }
+            candidateRect.offset(-holdOffset(extent ? *extent : candidate));
             const OrientedRect candidateBounds = OrientedRect::orient(candidateRect, key);
 
             if (candidateBounds == src)
@@ -458,8 +488,13 @@ namespace ClaFi
     OrientedRect FocusNavigator::orientedRect(Control* control, KeyCode key)
     {
         // The strip a control acts for is where a move away from it starts, the same rect a move
-        // towards it is scored against.
+        // towards it is scored against. A held control starts where it was laid out: a hold draws
+        // it elsewhere, and the row after it is the row laid out after it, not the one drawn
+        // under it.
         const Control* extent = control->navigationExtent();
-        return OrientedRect::orient((extent ? extent : control)->visibleRectInForm(m_form), key);
+        const Control& placed = extent ? *extent : *control;
+        FloatRect rect = placed.visibleRectInForm(m_form);
+        rect.offset(-holdOffset(placed));
+        return OrientedRect::orient(rect, key);
     }
 }

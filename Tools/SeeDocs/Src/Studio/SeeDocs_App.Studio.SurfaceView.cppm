@@ -25,14 +25,14 @@ namespace SeeDocs_App
     using namespace ::ClaFi::Controls;
 
     // The surface down the left as a tree of chapters, modules and types, and on the right the
-    // page of whichever of them is picked - opening a node shows its page, picking a row its own.
+    // page of whichever row is picked - a chapter's, a module's or a type's.
     export class SurfaceView : public Panel
     {
     public:
         template<typename... Args>
         explicit SurfaceView(const CreateParams&, Args&&...);
     public:
-        // Builds the tree over the surface, once, and opens its first chapter.
+        // Builds the tree over the surface, once, and picks its first chapter, open.
         void bind(const Surface&, Notes&);
         // Shows the page of the type or module named and picks it in the tree. False for a name
         // the surface does not carry.
@@ -54,13 +54,14 @@ namespace SeeDocs_App
         using EntryIndexes = std::unordered_map<std::wstring, std::size_t>;
     private:
         void buildTree();
-        void connectNode(std::size_t index);
         void show(std::size_t index);
         void showPage(const Page&);
+        [[nodiscard]] static Control& rowOf(const Entry&);
         [[nodiscard]] static Text rowText(const Type&);
     private:
         static constexpr float k_treeWidth = 300.0f;
         static constexpr float k_pagePadding = 24.0f;
+        static constexpr float k_iconGap = 5.0f; // between a row's icon and its text
         static constexpr std::size_t k_root = std::numeric_limits<std::size_t>::max();
 
         const Surface* m_surface{ nullptr };
@@ -68,7 +69,6 @@ namespace SeeDocs_App
         ContentsChapters m_contents{};
         Entries m_entries{};
         EntryIndexes m_entryByName{};   // types by qualified name, modules by name
-        bool m_opening{ false };        // a jump is opening the nodes on its way, pages held back
 
         TreeView& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,

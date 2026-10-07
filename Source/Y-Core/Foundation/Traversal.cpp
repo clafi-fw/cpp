@@ -131,14 +131,14 @@ namespace ClaFi
         // for the pointer - and a child the pointer could reach was dropped from the paint.
         FloatRect localViewPort = m_viewport;
         localViewPort.offset(-m_contentPosition);
-        // No system clip rect is no clip at all, which is what traverse() above already
-        // makes of one - the mode names the rect to clip by, and there is none to widen the
-        // child range to.
+        // The mode names the rect to clip by, and the range is that rect's alone: a clip far
+        // from the viewport walks the children around the clip, not every child between the two.
+        // No system clip rect is no clip at all, which is what traverse() above already makes of
+        // one, and the range stays the viewport's.
         if (m_owner.clipMode() == ClipMode::SystemClipOnly && m_owner.systemClipRect())
         {
-            FloatRect localClip = *m_owner.systemClipRect();
-            localClip.offset(-m_contentPosition);
-            localViewPort.unionWith(localClip);
+            localViewPort = *m_owner.systemClipRect();
+            localViewPort.offset(-m_contentPosition);
         }
 
         if (float lookAhead = m_owner.lookAhead())

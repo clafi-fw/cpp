@@ -1,5 +1,6 @@
 module SeeDocs_App.Studio.SurfaceView;
 
+import SeeDocs_App.Studio.Icons;
 import SeeDocs_App.Studio.PageText;
 import SeeDocs_App.Database;
 import SeeDocs_App.Notes;
@@ -28,8 +29,11 @@ namespace SeeDocs_App
         m_notes = &notes;
         m_contents = contentsOf(surface);
         buildTree();
-        if (!m_entries.empty())
-            m_entries.front().node->header().setExpanded(true);
+        if (m_entries.empty())
+            return;
+        ExpanderHeader& first = m_entries.front().node->header();
+        first.setExpanded(true);
+        m_tree.setCurrentItem(first);
     }
 
     bool SurfaceView::showNamed(const std::wstring_view name)
@@ -38,27 +42,26 @@ namespace SeeDocs_App
         if (found == m_entryByName.end())
             return false;
         const std::size_t index = found->second;
-
-        // Opened from the chapter down, so the row stands in the tree before it is picked.
-        m_opening = true;
-        for (std::size_t at = m_entries[index].parent; at != k_root; at = m_entries[at].parent)
-            m_entries[at].node->header().setExpanded(true);
-        m_opening = false;
-
         const Entry& entry = m_entries[index];
-        if (entry.item)
+
+        // Opened from the chapter down, so the row stands in the tree before it is picked. A
+        // node named is opened as well, so what it holds stands under it.
+        for (std::size_t at = entry.parent; at != k_root; at = m_entries[at].parent)
+            m_entries[at].node->header().setExpanded(true);
+        if (entry.node)
+            entry.node->header().setExpanded(true);
+
+        // Picking the row shows the page, except where the row is picked already.
+        Control& row = rowOf(entry);
+        if (m_tree.currentItem() == &row)
         {
-            // Picking the row shows the page, except where the row is picked already.
-            if (m_tree.currentItem() == entry.item)
-                show(index);
-            else
-                m_tree.setCurrentItem(*entry.item);
-            entry.item->scrollIntoViewOnAlign();
-            return true;
+            show(index);
+            row.scrollIntoViewOnAlign();
         }
-        entry.node->header().setExpanded(true);
-        show(index);
-        entry.node->scrollIntoViewOnAlign();
+        else
+        {
+            m_tree.setCurrentItem(row);
+        }
         return true;
     }
 
@@ -77,22 +80,24 @@ namespace SeeDocs_App
     {
         for (const ContentsChapter& chapter : m_contents)
         {
-            TreeNode& chapterNode = m_tree.addNode(HeaderText{ chapter.name });
+            TreeNode& chapterNode = m_tree.addNode(
+                HeaderText{ rowIcon(RowIcon::Chapter), Space{ k_iconGap }, chapter.name });
+            const std::size_t chapterIndex = m_entries.size();
+            chapterNode.header().setTag(Tag{ chapterIndex });
             m_entries.push_back({ .chapter = &chapter, .node = &chapterNode });
-            const std::size_t chapterIndex = m_entries.size() - 1;
-            connectNode(chapterIndex);
             for (const ContentsModule& module : chapter.modules)
             {
-                TreeNode& moduleNode = chapterNode.addNode(HeaderText{ module.shortName });
+                TreeNode& moduleNode = chapterNode.addNode(
+                    HeaderText{ rowIcon(RowIcon::Module), Space{ k_iconGap }, module.shortName });
+                const std::size_t moduleIndex = m_entries.size();
+                moduleNode.header().setTag(Tag{ moduleIndex });
                 m_entries.push_back({
                     .chapter = &chapter,
                     .module = &module,
                     .node = &moduleNode,
                     .parent = chapterIndex
                 });
-                const std::size_t moduleIndex = m_entries.size() - 1;
                 m_entryByName[module.name] = moduleIndex;
-                connectNode(moduleIndex);
                 for (const Type* type : module.types)
                 {
                     TreeItem& item = moduleNode.addItem(rowText(*type));
@@ -108,16 +113,6 @@ namespace SeeDocs_App
                 }
             }
         }
-    }
-
-    // A node opened by hand shows its page; one opened on the way to a row does not.
-    void SurfaceView::connectNode(const std::size_t index)
-    {
-        m_entries[index].node->header().connectEvent<ToggleExpandedEvent>(
-            [this, index](ToggleExpandedEvent& event) {
-                if (event.expanded() && !m_opening)
-                    show(index);
-            });
     }
 
     void SurfaceView::show(const std::size_t index)
@@ -136,10 +131,19 @@ namespace SeeDocs_App
         showText(textOf(page));
     }
 
-    // A control's row is its name alone; any other type's says what kind it is.
+    // The row an entry is picked by: an item's is the item, a node's is its header.
+    Control& SurfaceView::rowOf(const Entry& entry)
+    {
+        if (entry.item)
+            return *entry.item;
+        return entry.node->header();
+    }
+
+    // A row leads with the mark of its kind. A control's row is its name alone; any other
+    // type's says what kind it is.
     Text SurfaceView::rowText(const Type& type)
     {
-        Text text{ type.name };
+        Text text{ rowIcon(rowIconOf(type)), Space{ k_iconGap }, type.name };
         if (!type.isControl)
         {
             text << L"  " << TextStyleId::SubBody << InkGrade::Muted << kindWord(type.kind)

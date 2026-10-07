@@ -64,6 +64,27 @@ namespace ClaFi
         return orient(FloatRect{ point.x, point.y, point.x, point.y }, key);
     }
 
+    FloatRect OrientedRect::unorient(KeyCode key) const
+    {
+        switch (key)
+        {
+        case Keys::Right:
+            return { primary.start, secondary.start, primary.end, secondary.end };
+
+        case Keys::Down:
+            return { secondary.start, primary.start, secondary.end, primary.end };
+
+        case Keys::Left:
+            return { -primary.end, -secondary.end, -primary.start, -secondary.start };
+
+        case Keys::Up:
+            return { -secondary.end, -primary.end, -secondary.start, -primary.start };
+
+        default:
+            return {};
+        }
+    }
+
     void OrientedRect::implode()
     {
         primary.end = primary.start;

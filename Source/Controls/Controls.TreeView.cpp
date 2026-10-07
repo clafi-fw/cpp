@@ -1,5 +1,6 @@
 module ClaFi.Controls.TreeView;
 
+import ClaFi.Controls.Menu;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.StackView;
@@ -8,6 +9,7 @@ import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Scaler;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
@@ -69,26 +71,25 @@ namespace ClaFi::Controls
         mark.setMinSize(0.0f);
     }
 
-    // Right opens a closed node from its mark and Left closes an open one. Left from inside a
-    // node goes to its mark, and from a closed mark it is left to the node holding this one, so
-    // a run of presses climbs the tree a level at a time.
+    // Right opens a closed node from its header and Left closes an open one. Left from a row
+    // inside the node goes to the header, and from a closed header it is left to the node
+    // holding this one, so a run of presses climbs the tree a level at a time.
     bool TreeNode::answerTreeKey(const KeyCode key)
     {
         ExpanderHeader& strip = header();
-        ExpanderButton& mark = strip.button();
-        const bool onMark = mark.isFocused();
+        const bool onHeader = strip.isFocused();
         switch (key)
         {
             case Keys::Right:
-                if (!onMark || strip.expanded())
+                if (!onHeader || strip.expanded())
                     return false;
                 strip.setExpanded(true);
                 return true;
             case Keys::Left:
-                if (!onMark)
+                if (!onHeader)
                 {
-                    mark.setFocus();
-                    mark.scrollIntoView();
+                    strip.setFocus();
+                    strip.scrollIntoView();
                     return true;
                 }
                 if (!strip.expanded())
@@ -101,23 +102,137 @@ namespace ClaFi::Controls
 
     // TreeView
 
+    void TreeView::expandAll()
+    {
+        for (TreeNode* node : m_nodes)
+            node->header().setExpanded(true);
+        showCurrentRow();
+    }
+
+    void TreeView::collapseAll()
+    {
+        for (TreeNode* node : m_nodes)
+            node->header().setExpanded(false);
+        showCurrentRow();
+    }
+
+    void TreeView::collapseOthers()
+    {
+        for (TreeNode* node : m_nodes)
+        {
+            if (!holdsCurrentRow(*node))
+                node->header().setExpanded(false);
+        }
+        showCurrentRow();
+    }
+
     // A node's mark opens the node rather than standing as a row, so it is no item.
     bool TreeView::defaultCanFocusItem(Control& value)
     {
         return StackView::defaultCanFocusItem(value) && isRow(value);
     }
 
-    // A mark stands in its node's header, and a header is no body.
+    // The application has first refusal, and a handler that stops the event has replaced the
+    // menu outright. Stopped here before the menu runs, so nothing above raises a second menu
+    // behind this one.
+    void TreeView::nestedContextPopup(ContextPopupEvent& event)
+    {
+        StackView::nestedContextPopup(event);
+        if (event.propagationStopped() || m_nodes.empty())
+            return;
+        event.stopPropagation();
+        Menu menu{ *this };
+        menu.add(m_expandAll);
+        menu.add(m_collapseAll);
+        menu.add(m_collapseOthers);
+        menu.execute();
+    }
+
+    void TreeView::nestedControlDeleted(Control* item)
+    {
+        StackView::nestedControlDeleted(item);
+        std::erase_if(m_nodes, [item](const TreeNode* node) {
+            return node == item;
+        });
+    }
+
+    // Claiming says this tree is what the command acts on; what it claims says whether there is
+    // anything left for it to move.
+    void TreeView::connectActions()
+    {
+        onGetActionState([this](GetActionStateEvent& event) {
+            if (&event.action == &m_expandAll)
+                event.claim({ .enabled = hasNode(false) });
+            else if (&event.action == &m_collapseAll)
+                event.claim({ .enabled = hasNode(true) });
+            else if (&event.action == &m_collapseOthers)
+                event.claim({ .enabled = hasOtherNodeOpen() });
+        });
+        onActionClick([this](ActionClickEvent& event) {
+            if (&event.action == &m_expandAll)
+                expandAll();
+            else if (&event.action == &m_collapseAll)
+                collapseAll();
+            else if (&event.action == &m_collapseOthers)
+                collapseOthers();
+        });
+    }
+
+    // A node's header stands in the node, outside its rows, and the node stands in the rows of
+    // another or in the tree. What stands inside the header - its mark - has the header for a
+    // parent, and a header is in no rows, which is what keeps it out.
     bool TreeView::isRow(const Control& control) const
     {
-        const Control* rows = control.parent();
-        while (rows && rows != this)
+        const Control* parent = control.parent();
+        if (!parent)
+            return false;
+        if (parent == this)
+            return true;
+        if (parent->isHostedAsBody())
+            return isRow(*parent->parent());
+        const Control* nodeParent = parent->parent();
+        const bool nodeInRows = nodeParent && (nodeParent == this || nodeParent->isHostedAsBody());
+        return nodeInRows && !control.isHostedAsBody() && isRow(*parent);
+    }
+
+    bool TreeView::holdsCurrentRow(const TreeNode& node) const
+    {
+        const Control* row = currentItem();
+        if (!row)
+            return false;
+        return row == &node.header() || node.rows().containsNested(row);
+    }
+
+    bool TreeView::hasNode(const bool expanded) const
+    {
+        return std::ranges::any_of(m_nodes, [expanded](const TreeNode* node) {
+            return node->header().expanded() == expanded;
+        });
+    }
+
+    bool TreeView::hasOtherNodeOpen() const
+    {
+        return std::ranges::any_of(m_nodes, [this](const TreeNode* node) {
+            return node->header().expanded() && !holdsCurrentRow(*node);
+        });
+    }
+
+    // The nodes are listed with every node after the one holding it, so the first closed node
+    // over the row is the outermost one.
+    void TreeView::showCurrentRow()
+    {
+        Control* row = currentItem();
+        if (!row)
+            return;
+        for (TreeNode* node : m_nodes)
         {
-            if (!rows->isHostedAsBody())
-                return false;
-            rows = rows->parent()->parent();
+            if (!node->header().expanded() && node->rows().containsNested(row))
+            {
+                node->header().scrollIntoViewOnAlign();
+                return;
+            }
         }
-        return rows == this;
+        row->scrollIntoViewOnAlign();
     }
 
 }

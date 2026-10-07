@@ -80,7 +80,10 @@ namespace ClaFi::Controls
         m_header.connectEvent<ToggleExpandedEvent>([this](ToggleExpandedEvent& event) {
             body()->setVisible(event.expanded());
         });
-        m_header.setRadius(params.themeMetrics().page.radius - padding().x);
+        // A tree row keeps the tool button's radius it was given. The other looks turn the page's
+        // corner, less the padding that stands between the header and the page's edge.
+        if (m_header.viewMode() != ExpanderViewMode::TreeNode)
+            m_header.setRadius(params.themeMetrics().page.radius - padding().x);
         holdHeader(m_header);
         Props::ifThereIs<HeaderText>([&](const auto& headerText) {
             setHeaderText(headerText);

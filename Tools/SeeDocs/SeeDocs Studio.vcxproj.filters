@@ -34,6 +34,12 @@
     <ClCompile Include="Src\SeeDocs_App.Surface.cppm">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Icons.cpp">
+      <Filter>Src\Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Icons.cppm">
+      <Filter>Src\Studio</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Main.cpp">
       <Filter>Src\Studio</Filter>
     </ClCompile>

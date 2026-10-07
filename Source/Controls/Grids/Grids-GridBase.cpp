@@ -412,8 +412,9 @@ namespace ClaFi::Controls::Grids
 
         FieldStops stops;
         const std::size_t sourceIndex = collectField(stops);
-        // The selection is out of view, so there is no position to move from. The navigator
-        // takes over and lands on a row that is in view.
+        // The selection is out of view, so there is no position in the field to move from. The
+        // navigator takes over, walking around the selected row rather than the viewport, and
+        // the row it lands on is scrolled back into view.
         if (sourceIndex == k_maxSize)
             return false;
 

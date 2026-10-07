@@ -122,6 +122,8 @@
     <ClCompile Include="Src\SeeDocs_App.Pages.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cppm" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Icons.cpp" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Icons.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Main.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Main.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageText.cpp" />

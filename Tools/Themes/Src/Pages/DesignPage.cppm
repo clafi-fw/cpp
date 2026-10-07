@@ -38,6 +38,33 @@ namespace Themes_App
         PaintChannels outputs{}; // the channels the list's rules may write
     };
 
+    // A page a branch of the tree lists: an element's own rules, or a list no one element owns.
+    struct CategoryEntry
+    {
+        // Not explicit, so a branch lists elements and shared lists side by side.
+        constexpr CategoryEntry(UiElement value)
+            :
+            element{ value }
+        {
+        }
+        constexpr CategoryEntry(const SharedRules& value)
+            :
+            shared{ &value }
+        {
+        }
+        OptionalUiElement element{};
+        const SharedRules* shared{};
+    };
+
+    // A branch of the tree: its name, what its page goes by, and the pages under it in the order
+    // they are listed.
+    struct Category
+    {
+        std::wstring_view name{};
+        std::wstring_view token{};
+        std::span<const CategoryEntry> entries{};
+    };
+
     // Where in the design an edit is made, put back beside the theme an undo restores.
     export struct DesignPlace
     {
@@ -52,7 +79,8 @@ namespace Themes_App
         template<typename... Args>
         explicit DesignPage(const CreateParams&, Args&&...);
     public:
-        // The token of the page that shows - an element's or a shared list's - or nothing yet.
+        // The token of the page that shows - an element's, a shared list's or a category's - or
+        // nothing yet.
         [[nodiscard]] std::wstring_view pickedPage() const;
         // Picks and shows the page a token names, and the first page for a token naming none.
         void pickPage(std::wstring_view token);
@@ -70,22 +98,35 @@ namespace Themes_App
     protected:
         void visibilityChanged() override;
     private:
-        // An item of the tree and the page it opens.
+        using IndexRows = std::vector<RichControl*>;
+        using EntryIndexes = std::vector<std::size_t>;
+
+        // A row of the tree and the page it opens.
         struct TreeEntry
         {
-            OptionalUiElement element{}; // nothing for a shared list and for the palette
-            const SharedRules* shared{}; // null for an element's own list and for the palette
-            Control* item{};
+            OptionalUiElement element{}; // an element's own list, nothing for every other row
+            const SharedRules* shared{}; // a list no one element owns, null for every other row
+            const Category* category{};  // a category's node, null for every other row
+            Control* item{};             // the row: an item, or a category node's header
             Control* page{};
-            ElementPage* rules{}; // the page, where it shows a list of rules
+            ElementPage* rules{};        // the page, where it shows a list of rules
+            const ColorRules* list{};    // the rules that page shows, from bind on
+            IndexRows indexRows{};       // a category page's rows, one per page under it
         };
         using TreeEntries = std::vector<TreeEntry>;
     private:
         void buildTree();
         [[nodiscard]] TreeItem& addRootItem(); // a theme-wide page's row, a step larger
-        void addEntry(TreeItem&, TreeEntry);
+        std::size_t addItemEntry(TreeItem&, TreeEntry); // names the item, answers the index
+        std::size_t addEntry(RichControl& row, TreeEntry); // answers the entry's index
+        // Builds a category's page: the pages under it listed as rows that open them.
+        void buildCategoryPage(std::size_t category, const EntryIndexes& members);
+        void openEntry(std::size_t index);
+        // Writes each row of a category page again, with the rule count as it stands.
+        void refreshIndex(const TreeEntry& category);
         void showPickedPage();
         [[nodiscard]] const TreeEntry* pickedEntry() const;
+        [[nodiscard]] static Text indexRowText(const TreeEntry&);
         [[nodiscard]] static std::wstring_view nameOf(const TreeEntry&);
         [[nodiscard]] static std::wstring_view tokenOf(const TreeEntry&);
     private:

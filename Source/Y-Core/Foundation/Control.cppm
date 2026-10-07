@@ -857,8 +857,9 @@ namespace ClaFi
         [[nodiscard]] FloatPoint floatOffset() const;
         // Whether this control is drawn away from where it was laid out, which is what a container
         // holding a control against the viewport does to it - a grid's header, for as long as the
-        // rows it heads are scrolled past it. Such a control is on screen for as long as the hold
-        // lasts, and the place it is held away from says nothing about where it is.
+        // rows it heads are scrolled past it. The place it is held away from says nothing about
+        // where it is drawn, and it is where a request to show the control is answered - see
+        // scrollIntoView.
         [[nodiscard]] bool isHeldInView() const { return floatOffset() != FloatPoint{}; }
         // Carries the view this control is scrolled in by `delta`, applied at once rather than as
         // a glide: what stood on one line of the view now stands `delta` further along the

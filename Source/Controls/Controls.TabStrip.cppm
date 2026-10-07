@@ -840,8 +840,9 @@ namespace ClaFi::Controls
             if (currentItem())
                 m_overlayHost->addOverlayControl(*currentItem(), ClippingMode::Unbounded);
         }
-        // A tab opened while the strip has it cut off is held from that moment, and a held control
-        // is not scrolled - see Control::scrollIntoView. The strip brings it to its place instead.
+        // A tab opened while the strip has it cut off is held from that moment. The strip brings
+        // it to its place here, whatever path made it current; a request made of the tab itself
+        // answers the same way - see Control::scrollIntoView.
         if (Control* item = currentItem(); item && item->isHeldInView())
             scrollChildIntoView(*item, item->boundsInParent());
     }

@@ -41,13 +41,12 @@ namespace ClaFi
         // entryEdge is the end a container met along the way is entered at, which is the end the
         // step arrived from.
         Control* structuralSearch(KeyCode, ScrollDirection entryEdge, OrientedRect,
-            const Control* searchRoot, Control* it);
-        // lookAhead widens the walk beyond the viewport edge margin. A search whose source sits
-        // outside the viewport must pass the distance it reaches over, since the walker visits
-        // nothing further out than this and no candidate there can be scored.
+            Control* searchRoot, Control* it);
+        // The walk is around the source, a screenful each way, wherever the viewport stands, and
+        // it is rooted at searchRoot: the form content is the root only where there is none.
         Control* spatialSearch(KeyCode, const OrientedRect& src,
-            const Control* searchRoot, Control* excludeSubtree,
-            SearchMethod, SearchFilter, float lookAhead = 0.0f);
+            Control* searchRoot, Control* excludeSubtree,
+            SearchMethod, SearchFilter);
         OrientedRect orientedRect(Control*, KeyCode);
     private:
         FormBase& m_form;

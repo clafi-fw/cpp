@@ -34,6 +34,8 @@ namespace ClaFi
         // A single point, as the empty rectangle standing on it. The line a move keeps is one
         // coordinate, and it has to be mirrored with everything it is compared against.
         [[nodiscard]] static OrientedRect orient(FloatPoint, KeyCode);
+        // The rectangle turned back, by the key that turned it.
+        [[nodiscard]] FloatRect unorient(KeyCode) const;
         void implode();
         bool operator==(const OrientedRect& other) const { return primary == other.primary && secondary == other.secondary; }
     };

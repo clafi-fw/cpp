@@ -939,9 +939,12 @@ namespace ClaFi
 
     void Control::scrollIntoView(const FloatRect& rectInControl)
     {
-        // A held control is in view because it is held, and the rect handed up from here is the
-        // place it is held away from - see isHeldInView.
-        if (!m_parent || isHeldInView())
+        // A HELD CONTROL IS SHOWN WHERE IT WAS LAID OUT, which is the rect handed up from here:
+        // the hold is where the control is drawn, not where it is, and a request to show it - a
+        // key landing on it, Home on a tree whose first row heads an open node, a click on the
+        // held strip - brings the view to its place, with what it heads under it. For the first
+        // row of a tree that is the top of the tree.
+        if (!m_parent)
             return;
         FloatRect rectInParent = rectInControl;
         rectInParent.offset(boundsInParent().topLeft());
@@ -1425,9 +1428,9 @@ namespace ClaFi
 
     void Control::scrollChildIntoView(Control& control, FloatRect controlRect)
     {
-        // The hold reaches everything inside it: a child of a held control has no offset of its
-        // own to say so, and its rect is measured from the same place its host is held away from.
-        if (!m_parent || isHeldInView())
+        // The rect is measured from where this control was laid out, whatever hold draws it
+        // elsewhere - see scrollIntoView.
+        if (!m_parent)
             return;
         controlRect.offset(topLeft());
         controlRect.offset(childInset(formContext(), scaledPadding()));

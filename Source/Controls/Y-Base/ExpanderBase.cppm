@@ -8,6 +8,7 @@ import ClaFi.Controls.Divider;
 import ClaFi.Icons.ExpanderMark;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.Context.FormContext;
@@ -21,9 +22,9 @@ import ClaFi.Core.Context.PaintIconEvent;
 
 namespace ClaFi::Controls
 {
-    // Only a section draws itself. The other two name no colour rules, and a control that names
-    // none paints nothing in any state, which is what leaves it standing on the surface it was
-    // put on.
+    // What an expander draws of itself: a section its rules, the other two looks nothing - a
+    // control that names no colour rules paints nothing in any state, which is what leaves it
+    // standing on the surface it was put on. The header answers for its own look.
     export [[nodiscard]] inline OptionalUiElement expanderColorRules(
         UiElement rules, ExpanderViewMode viewMode)
     {
@@ -104,7 +105,10 @@ namespace ClaFi::Controls
             PanelBase::paintSurface(event);
         };
     private:
+        [[nodiscard]] static ControlMetrics metricsFor(const CreateParams&, ExpanderViewMode);
+        [[nodiscard]] static Interactivity interactivityFor(ExpanderViewMode);
         [[nodiscard]] static TextPlacement textPlacementFor(ExpanderViewMode);
+        [[nodiscard]] static OptionalUiElement colorRulesFor(ExpanderViewMode);
         ExpanderButton& createChevronButton();
         void createDividerLine();
         void paintButton(PaintIconEvent&) const;
@@ -160,20 +164,28 @@ namespace ClaFi::Controls
         :
         PanelBase{
             params,
+            // What the expander draws of itself, which is what the header is measured by.
+            metricsFor(params, READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
             Padding{ 4.0f },
             Spacing{ 4.0f },
-            // What the expander draws of itself, which is what places its text.
+            // The same, which is what puts the header in the keyboard's order or leaves it out.
+            interactivityFor(READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
+            // The same, which is what places its text.
             textPlacementFor(READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
-            expanderColorRules(UiElement::SectionHeader,
-                // The same, for the colour rules the header paints from.
-                READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
+            // The same, for the colour rules the header paints from.
+            colorRulesFor(READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
             std::forward<Args>(args)...
         },
-        // What the expander draws of itself.
-        m_viewMode{ READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section) }
+        m_viewMode{ READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section) } // the same, kept
     {
         m_button.connectEvent<PaintIconEvent>(this, &ExpanderHeader::paintButton);
-        m_button.onClick([this](ClickEvent&) { toggleExpanded(); });
+        m_button.onClick([this](ClickEvent& event) {
+            toggleExpanded();
+            // In the tree look the header is a row of the view around it, and a click climbing
+            // past the button would pick that row. The button opens the node and nothing more.
+            if (m_viewMode == ExpanderViewMode::TreeNode)
+                event.stopPropagation();
+        });
         createDividerLine();
     }
 
@@ -222,10 +234,12 @@ namespace ClaFi::Controls
         return { .bounds = headerRect, .radii = { radius, radius, 0.0f, 0.0f } };
     }
 
+    // A section's header sits on its open body, so the corners between the two are squared. A
+    // tree row's surface is its own and keeps all four.
     void ExpanderHeader::adjustPaint(AdjustPaintEvent& event)
     {
         PanelBase::adjustPaint(event);
-        if (m_expanded)
+        if (m_expanded && m_viewMode == ExpanderViewMode::Section)
         {
             event.setCornerRadius(Corner::BottomRight, 0.0f);
             event.setCornerRadius(Corner::BottomLeft, 0.0f);
@@ -272,6 +286,24 @@ namespace ClaFi::Controls
         event.textBounds.offset(event.scale(m_lead), 0.0f);
     }
 
+    // The tree look's header is a tool button in metrics as in paint, being a row of the tree.
+    // The other two looks have no metrics of their own beyond what the expander sets on them.
+    ControlMetrics ExpanderHeader::metricsFor(const CreateParams& params, ExpanderViewMode viewMode)
+    {
+        if (viewMode == ExpanderViewMode::TreeNode)
+            return params.themeMetrics().toolButton;
+        return {};
+    }
+
+    // Only the tree look's header takes the keyboard, being the row that stands for its node.
+    // Elsewhere the button is the key's target and the header is the strip it sits on.
+    Interactivity ExpanderHeader::interactivityFor(ExpanderViewMode viewMode)
+    {
+        if (viewMode == ExpanderViewMode::TreeNode)
+            return Interactivity::Focusable;
+        return Interactivity::None;
+    }
+
     // The divider look holds its label against the left edge, which is what frees the body slot
     // for the line. The other two leave the label in the body, where a panel puts it by default -
     // and a panel places its bars before its body, so a label in the body follows the chevron
@@ -283,16 +315,33 @@ namespace ClaFi::Controls
         return TextPlacement::Body;
     }
 
+    // A section's header is a filled strip, and the tree look's a tool button that shows its
+    // hover, its focus and its pick. A divider line's names nothing and so paints nothing.
+    OptionalUiElement ExpanderHeader::colorRulesFor(ExpanderViewMode viewMode)
+    {
+        switch (viewMode)
+        {
+            case ExpanderViewMode::Section:
+                return UiElement::SectionHeader;
+            case ExpanderViewMode::TreeNode:
+                return UiElement::ToolButton;
+            case ExpanderViewMode::Divider:
+                break;
+        }
+        return std::nullopt;
+    }
+
     // A bar field takes its control once, so the look is settled here and holds for the life of
     // the header. TreeNode leads the strip with the button; the other two put it at the far end,
     // past the label and past whatever the header carries between them. On a divider line the
-    // button wears a button's look, with a surface at rest; elsewhere a tool button's.
+    // button wears a button's look, with a surface at rest; elsewhere a tool button's. In the
+    // tree look the header is the row the keyboard lands on, so the button is the mouse's alone.
     ExpanderButton& ExpanderHeader::createChevronButton()
     {
         if (m_viewMode == ExpanderViewMode::Divider)
             return createRightBar<ExpanderButton>(UiElement::Button, themeMetrics().button);
         if (m_viewMode == ExpanderViewMode::TreeNode)
-            return createLeftBar<ExpanderButton>();
+            return createLeftBar<ExpanderButton>(Interactivity::MouseOnly);
         return createRightBar<ExpanderButton>();
     }
 

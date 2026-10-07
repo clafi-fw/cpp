@@ -488,6 +488,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     set(seedocs_studio_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/Src")
     add_executable(SeeDocsStudio
         "${seedocs_studio_dir}/Studio/SeeDocsStudio_Wayland.cpp"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Icons.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Main.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.PageText.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.SurfaceView.cpp"
@@ -496,6 +497,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_studio_dir}/SeeDocs_App.Pages.cpp"
         "${seedocs_studio_dir}/SeeDocs_App.Surface.cpp")
     target_sources(SeeDocsStudio PRIVATE FILE_SET CXX_MODULES FILES
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Icons.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Main.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.PageText.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.SurfaceView.cppm"
