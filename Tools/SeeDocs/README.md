@@ -103,11 +103,12 @@ the computer.
 The pages: down the left a tree of chapters - the tree's folders, a reader's names for them
 - each holding its modules and each module the types it exports, controls first; on the right the
 page of whatever is picked. A page is a column of controls: its title with its hint under it,
-a grid of facts - namespace, module, source, what it derives from - and then a section per
-expander. A chapter's or a module's page holds a grid of its types with their kinds and hints,
-the chapter's grouped by module under held headers. A type's page holds its inheritance as a
-tree - its bases followed up, a mixin's through the argument it was given, and the types derived
-from it followed down - the note its comment references as prose, and a grid per member kind:
+a grid of facts - namespace, module, source - and then a section per expander. A type's title
+carries the ways up through its bases under it, written the C++ way - a colon before each base,
+a mixin's host through the argument it was given, a second line where the bases fork. A
+chapter's or a module's page holds a grid of its types with their kinds and hints, the chapter's
+grouped by module under held headers. A type's page holds the types derived from it as a tree,
+the note its comment references as prose, and a grid per member kind:
 properties, events, methods with the protected ones under a header of their own, fields or
 members, each with its hint. A member whose comment references a note carries a mark in a column
 of its own, and the note stands as a footnote under the grid; the mark leads to it. A type whose
@@ -116,7 +117,7 @@ folder, marked as matched by name. Where the surface states no hint the page say
 the words, so what the documentation still lacks is read off the preview.
 
 A type's name on a page is a link to its page, in a grid cell as in prose, and a row of the
-inheritance tree opens the type it names; the tree on the left follows. The pages are built by
+derived types opens the type it names; the tree on the left follows. The pages are built by
 `SeeDocs_App.Pages` - facts, sections, tables of rows with their footnotes, branches of a tree,
 and blocks of prose - out of the surface and the notes; the studio builds controls from them
 (`SeeDocs_App.Studio.PageView`) and a generator renders the same pages as files.

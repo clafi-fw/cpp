@@ -53,6 +53,7 @@ namespace SeeDocs_App
         constexpr wchar_t k_codeMark = L'`';
         constexpr std::wstring_view k_scope = L"::";
         constexpr std::wstring_view k_separator = L" \u00B7 ";
+        constexpr std::wstring_view k_baseJoin = L": ";
         constexpr std::wstring_view k_sourceJoin = L" \u203A ";
         constexpr std::size_t k_maxTreeDepth = 16;   // what a base chain is followed to
 
@@ -502,17 +503,6 @@ namespace SeeDocs_App
             addFact(page, L"namespace", { code(type.nameSpace) });
             addFact(page, L"module", { code(type.module, type.module) });
             addFact(page, L"source", { code(fileLineOf(surface, type.place)) });
-            if (!type.bases.empty())
-            {
-                Runs bases;
-                for (const std::wstring& base : type.bases)
-                {
-                    if (!bases.empty())
-                        bases.push_back(muted(L", "));
-                    bases.push_back(typeRun(surface, base, type.nameSpace));
-                }
-                addFact(page, L"derives from", std::move(bases));
-            }
             if (!type.target.empty())
             {
                 const bool alias = type.kind == TypeKind::Alias;
@@ -521,33 +511,48 @@ namespace SeeDocs_App
             }
         }
 
-        // The inheritance tree
+        // The ways up through the bases
 
-        // Under a type's branch, its bases: a base that is one of the type's template parameters
-        // stands for the argument the spelling gave it, which is how a mixin hands its host on.
-        void addBases(Branches& branches, const Surface& surface, const Type& type,
-            const std::wstring_view spelled, const std::wstring_view nameSpace, std::size_t depth);
+        // Along a type's bases: a base that is one of the type's template parameters stands for
+        // the argument the spelling gave it, which is how a mixin hands its host on.
+        void addBaseChains(Chains& chains, Runs& chain, const Surface& surface, const Type& type,
+            std::wstring_view spelled, std::wstring_view nameSpace, std::size_t depth);
 
-        // A base as a branch: its spelling with a private alias replaced, the type its head
-        // names, and that type's own bases under it. A nested base is a part of some type, not
-        // a type of its own, and is left out.
-        void addBase(Branches& branches, const Surface& surface, const std::wstring_view spelled,
-            const std::wstring_view nameSpace, const std::size_t depth)
+        // A base put on the way: a colon, then its spelling, linked where the surface has its page.
+        void joinBase(Runs& chain, std::wstring spelling, const Type* type)
+        {
+            chain.push_back(muted(std::wstring{ k_baseJoin }));
+            if (type && type->isPublic())
+                chain.push_back(code(std::move(spelling), type->qualifiedName));
+            else
+                chain.push_back(code(std::move(spelling)));
+        }
+
+        // A base on the way: its spelling with a private alias replaced, the type its head names,
+        // and that type's own bases after it; a way that ends here is a line. A nested base is a
+        // part of some type, not a type of its own, and is left out.
+        void addBaseChain(Chains& chains, Runs& chain, const Surface& surface,
+            const std::wstring_view spelled, const std::wstring_view nameSpace,
+            const std::size_t depth)
         {
             const std::wstring resolvedSpelling = surface.resolvedBase(spelled, nameSpace);
             const Type* type = surface.resolve(resolvedSpelling, nameSpace);
             if (type && isNested(*type))
                 return;
-            Branch branch{
-                .text = { code(resolvedSpelling) },
-                .type = type && type->isPublic() ? type : nullptr
-            };
+            const std::size_t length = chain.size();
+            const std::size_t count = chains.size();
+            joinBase(chain, resolvedSpelling, type);
             if (type && depth < k_maxTreeDepth)
-                addBases(branch.children, surface, *type, resolvedSpelling, nameSpace, depth + 1);
-            branches.push_back(std::move(branch));
+            {
+                addBaseChains(chains, chain, surface, *type, resolvedSpelling, nameSpace,
+                    depth + 1);
+            }
+            if (chains.size() == count)
+                chains.push_back(chain);
+            chain.resize(length);
         }
 
-        void addBases(Branches& branches, const Surface& surface, const Type& type,
+        void addBaseChains(Chains& chains, Runs& chain, const Surface& surface, const Type& type,
             const std::wstring_view spelled, const std::wstring_view nameSpace,
             const std::size_t depth)
         {
@@ -559,16 +564,31 @@ namespace SeeDocs_App
                 const auto parameter = std::ranges::find(parameters, head);
                 if (parameter == parameters.end())
                 {
-                    addBase(branches, surface, base, type.nameSpace, depth);
+                    addBaseChain(chains, chain, surface, base, type.nameSpace, depth);
                     continue;
                 }
                 const std::size_t index = static_cast<std::size_t>(parameter - parameters.begin());
                 if (index < arguments.size())
-                    addBase(branches, surface, arguments[index], nameSpace, depth);
-                else
-                    branches.push_back({ .text = { code(base) } });
+                {
+                    addBaseChain(chains, chain, surface, arguments[index], nameSpace, depth);
+                    continue;
+                }
+                const std::size_t length = chain.size();
+                joinBase(chain, base, nullptr);
+                chains.push_back(chain);
+                chain.resize(length);
             }
         }
+
+        void addTypeBases(Page& page, const Surface& surface, const Type& type)
+        {
+            if (type.kind != TypeKind::Class && type.kind != TypeKind::Struct)
+                return;
+            Runs chain;
+            addBaseChains(page.bases, chain, surface, type, type.name, type.nameSpace, 0);
+        }
+
+        // The derived types
 
         // Whether a type names another among its bases - as the base, or as the argument a mixin
         // base hands on: one whose template's own bases name the parameter standing in that place.
@@ -628,21 +648,16 @@ namespace SeeDocs_App
             }
         }
 
-        void addInheritance(Page& page, const Surface& surface, const Type& type)
+        void addDerivedTypes(Page& page, const Surface& surface, const Type& type)
         {
             if (type.kind != TypeKind::Class && type.kind != TypeKind::Struct)
                 return;
-            Branch bases{ .text = { muted(L"Bases") } };
-            addBases(bases.children, surface, type, type.name, type.nameSpace, 0);
-            Branch derived{ .text = { muted(L"Derived types") } };
-            addDerived(derived.children, surface, type, 0);
-            if (bases.children.empty() && derived.children.empty())
+            Branches derived;
+            addDerived(derived, surface, type, 0);
+            if (derived.empty())
                 return;
-            Section& section = addSection(page, SectionKind::Tree, { plain(L"Inheritance") });
-            if (!bases.children.empty())
-                section.branches.push_back(std::move(bases));
-            if (!derived.children.empty())
-                section.branches.push_back(std::move(derived));
+            Section& section = addSection(page, SectionKind::Tree, { plain(L"Derived types") });
+            section.branches = std::move(derived);
         }
 
         // The type's own note, where its comment references one or a section is named after it.
@@ -1040,7 +1055,8 @@ namespace SeeDocs_App
     {
         Page page;
         addTypeHead(page, surface, type);
-        addInheritance(page, surface, type);
+        addTypeBases(page, surface, type);
+        addDerivedTypes(page, surface, type);
         addTypeNote(page, notes, type);
         addProperties(page, surface, notes, type);
         addEvents(page, surface, notes, type);

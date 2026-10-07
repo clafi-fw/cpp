@@ -1,6 +1,7 @@
 export module SeeDocs_App.Studio.PageView;
 
 import SeeDocs_App.Pages;
+import SeeDocs_App.Surface;
 
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Grids;
@@ -24,8 +25,8 @@ namespace SeeDocs_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // A link on the page named a type or a module to open.
-    export class OpenNameEvent : public Event
+    // A link on the page named a type or a module to open. The surface has an Event of its own.
+    export class OpenNameEvent : public ::ClaFi::Event
     {
     public:
         explicit OpenNameEvent(std::wstring name);
@@ -33,9 +34,9 @@ namespace SeeDocs_App
         const std::wstring name;   // a type's qualified name or a module's name
     };
 
-    // A page as controls: its title in a bar that stays, and under it, scrolling, its lead, its
-    // facts and an expander per section holding the section's prose, tree or grid. See the
-    // README beside the project.
+    // A page as controls: its title and bases in a bar that stays, and under it, scrolling, its
+    // lead, its facts and an expander per section holding the section's prose, tree or grid. See
+    // the README beside the project.
     export class PageView : public Panel
     {
     public:
@@ -58,6 +59,7 @@ namespace SeeDocs_App
         };
     private:
         void clear();
+        void connectHeadLinks();
         void addHead();
         void addLead();
         void addFacts();
@@ -65,7 +67,10 @@ namespace SeeDocs_App
         void addProse(Expander&, const Excerpt&);
         void addTree(Expander&, const Branches&);
         void addTable(Expander&, const Table&);
-        void addTreeRows(Controls::TreeNode&, const Branches&);
+        // Under the tree or a node of it: a branch with nothing under it is an item, any other
+        // a node, open; a click on either opens the type the branch names.
+        template<typename Holder>
+        void addTreeRows(Holder&, const Branches&);
         [[nodiscard]] Text treeRowText(const Branch&) const;
         [[nodiscard]] HeaderText treeHeaderText(const Branch&) const;
         void addTableRows(Grids::GridBase&, const Table&, const TableGroup&, Footnotes&);
@@ -76,6 +81,7 @@ namespace SeeDocs_App
     private:
         static constexpr float k_pagePadding = 24.0f;
         static constexpr float k_headPadding = 12.0f;   // above and below the title
+        static constexpr float k_basesIndent = 24.0f;   // of the lines of bases under the title
         static constexpr float k_sectionSpacing = 12.0f;
         static constexpr float k_prosePadding = 12.0f;
         static constexpr float k_treePadding = 4.0f;
@@ -117,11 +123,37 @@ namespace SeeDocs_App
         :
         Panel{ params, UiElement::Page, std::forward<Args>(args)... }
     {
+        connectHeadLinks();
     }
 
     template<typename F>
     EventConnection PageView::onOpenName(F&& callback)
     {
         return connectEvent<OpenNameEvent>(std::forward<F>(callback));
+    }
+
+    template<typename Holder>
+    void PageView::addTreeRows(Holder& holder, const Branches& branches)
+    {
+        for (const Branch& branch : branches)
+        {
+            const Type* type = branch.type;
+            if (branch.children.empty())
+            {
+                TreeItem& item = holder.addItem(treeRowText(branch));
+                item.onClick([this, type](ClickEvent&) {
+                    if (type)
+                        open(type->qualifiedName);
+                });
+                continue;
+            }
+            Controls::TreeNode& node = holder.addNode(treeHeaderText(branch));
+            addTreeRows(node, branch.children);
+            node.header().setExpanded(true);
+            node.header().onClick([this, type](ClickEvent&) {
+                if (type)
+                    open(type->qualifiedName);
+            });
+        }
     }
 }

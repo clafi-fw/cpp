@@ -33,7 +33,7 @@ namespace SeeDocs_App
 
     OpenNameEvent::OpenNameEvent(std::wstring linkName)
         :
-        Event{},
+        ::ClaFi::Event{},
         name{ std::move(linkName) }
     {
     }
@@ -87,7 +87,16 @@ namespace SeeDocs_App
         m_parts.clear();
     }
 
-    // The title with what it is beside it, in the bar that stays.
+    // A link in the head names a base to open.
+    void PageView::connectHeadLinks()
+    {
+        m_head.onLinkClick([this](LinkClickEvent& event) {
+            open(event.target);
+        });
+    }
+
+    // The title with what it is beside it and the ways up through its bases under it, in the bar
+    // that stays.
     void PageView::addHead()
     {
         Text head;
@@ -97,6 +106,11 @@ namespace SeeDocs_App
             head << L"   " << TextStyleId::SubBody;
             writeRuns(head, m_page.badges);
             head << PopTextStyle{};
+        }
+        for (const Runs& chain : m_page.bases)
+        {
+            head << k_endLine << ParaIndent{ k_basesIndent };
+            writeRuns(head, chain);
         }
         m_head.text() = head;
         m_head.setVisible(true);
@@ -167,44 +181,13 @@ namespace SeeDocs_App
         box.text() = textOf(excerpt.blocks);
     }
 
-    // A branch with nothing under it is an item; any other is a node, open. A click on either
-    // opens the type the branch names.
     void PageView::addTree(Expander& expander, const Branches& branches)
     {
         TreeView& tree = expander.createBody<TreeView>(
             Padding{ k_treePadding },
             HorizontalAlign::Left
         );
-        for (const Branch& branch : branches)
-        {
-            Controls::TreeNode& node = tree.addNode(treeHeaderText(branch));
-            addTreeRows(node, branch.children);
-            node.header().setExpanded(true);
-        }
-    }
-
-    void PageView::addTreeRows(Controls::TreeNode& node, const Branches& branches)
-    {
-        for (const Branch& branch : branches)
-        {
-            const Type* type = branch.type;
-            if (branch.children.empty())
-            {
-                TreeItem& item = node.addItem(treeRowText(branch));
-                item.onClick([this, type](ClickEvent&) {
-                    if (type)
-                        open(type->qualifiedName);
-                });
-                continue;
-            }
-            Controls::TreeNode& child = node.addNode(treeHeaderText(branch));
-            addTreeRows(child, branch.children);
-            child.header().setExpanded(true);
-            child.header().onClick([this, type](ClickEvent&) {
-                if (type)
-                    open(type->qualifiedName);
-            });
-        }
+        addTreeRows(tree, branches);
     }
 
     // A row leads with the mark of the type's kind where it names one, and ends with its kind word.

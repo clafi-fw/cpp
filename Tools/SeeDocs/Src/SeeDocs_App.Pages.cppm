@@ -138,11 +138,15 @@ namespace SeeDocs_App
 
     export using Sections = std::vector<Section>;
 
+    // The ways up from a type through its bases to the roots, a line each.
+    export using Chains = std::vector<Runs>;
+
     export struct Page
     {
         std::wstring title;
-        Runs badges;   // what the title is - the kind, control, template
-        Runs lead;     // the hint
+        Runs badges;    // what the title is - the kind, control, template
+        Chains bases;   // under the title, the C++ way: a colon before each base
+        Runs lead;      // the hint
         Facts facts;
         Sections sections;
     };
