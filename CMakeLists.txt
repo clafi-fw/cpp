@@ -397,11 +397,9 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     set(millscene_dir "${CMAKE_CURRENT_SOURCE_DIR}/Showcase/MillScene")
     add_executable(MillScene
         "${millscene_dir}/MillScene_Icon.cpp"
-        "${millscene_dir}/MillScene_Showcase.cpp"
         "${millscene_dir}/MillScene_Wayland.cpp")
     target_sources(MillScene PRIVATE FILE_SET CXX_MODULES FILES
         "${millscene_dir}/MillScene_Icon.cppm"
-        "${millscene_dir}/MillScene_Showcase.cppm"
         "${millscene_dir}/MillScene_Main.cppm")
     target_link_libraries(MillScene PRIVATE ClaFi)
     target_compile_options(MillScene PRIVATE ${clafi_compile_options})

@@ -199,10 +199,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="MillScene_Icon.cppm" />
-    <ClCompile Include="MillScene_Showcase.cppm" />
     <ClCompile Include="MillScene_Main.cppm" />
     <ClCompile Include="MillScene_Icon.cpp" />
-    <ClCompile Include="MillScene_Showcase.cpp" />
     <ClCompile Include="MillScene_Win32.cpp" />
   </ItemGroup>
   <ItemGroup>
