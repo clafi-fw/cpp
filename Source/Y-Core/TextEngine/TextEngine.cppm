@@ -65,6 +65,9 @@ namespace ClaFi
         TextRange wordAt(const Text& text, std::size_t pos);
         TextRange paragraphAt(const Text& text, std::size_t pos);
 
+        // A form's alignment pass starts here. What it and the pass before it ask for is held
+        // through the sweep. See TextEngine-Types#layout-cache
+        void beginPass();
         // Drops every retained layout. For anything that changes what a build would produce without
         // being part of the key - the font table above all.
         void invalidateLayouts();
@@ -107,6 +110,7 @@ namespace ClaFi
             Text text;
             TextLayout layout;
             std::uint64_t lastUsed{ 0 };
+            std::uint64_t lastPass{ 0 }; // the pass this entry was last asked for in
         };
 
         using CachedLayoutPtr = std::unique_ptr<CachedLayout>;
@@ -122,16 +126,22 @@ namespace ClaFi
         static void highlightTextArea(ControlPaintContext&, const FloatRect& bounds,
             const FloatRect& textArea);
     private:
-        static constexpr std::size_t k_maxCachedLayouts = 512;
+        // The entry count the first sweep runs at. See TextEngine-Types#layout-cache
+        static constexpr std::size_t k_sweepLayouts = 512;
+        // The count past which a pass gives up its own entries, oldest use first.
+        static constexpr std::size_t k_maxCachedLayouts = 4096;
         // How many widths one text keeps a layout for. A control drawing the same text at two
         // widths that break it differently is ordinary; a dozen is a text being animated through
         // them, and the oldest goes rather than the cache filling with one text.
         static constexpr std::size_t k_maxWidthsPerText = 4;
 
         std::unordered_map<LayoutKey, LayoutBucket, LayoutKeyHash> m_layouts;
-        // Entries across every bucket, which is what k_maxCachedLayouts counts.
+        // Entries across every bucket, which is what the two limits above count.
         std::size_t m_entryCount{ 0 };
+        // The entry count the next sweep runs at - see evict.
+        std::size_t m_sweepAt{ k_sweepLayouts };
         std::uint64_t m_useCounter{ 0 };
+        std::uint64_t m_pass{ 1 }; // the pass under way, which beginPass moves on
         std::uint64_t m_layoutGeneration{ 0 };
     };
 
@@ -265,6 +275,7 @@ namespace ClaFi
                     continue;
 
                 entry->lastUsed = ++m_useCounter;
+                entry->lastPass = m_pass;
                 // Neither the height nor a width the lines already fit is in the key, so the
                 // entry is told the box this caller asked about. What that moved is dropped and
                 // the lines are kept.
@@ -294,6 +305,7 @@ namespace ClaFi
         CachedLayout& entry = *bucket.back();
         entry.text = text;
         entry.lastUsed = ++m_useCounter;
+        entry.lastPass = m_pass;
         entry.layout.setEventPhase(phase);
         entry.layout.setEditable(editable);
         entry.layout.setWrap(wrap);
@@ -303,22 +315,27 @@ namespace ClaFi
         return entry.layout;
     }
 
+    void TextEngine::beginPass()
+    {
+        ++m_pass;
+    }
+
+    // What the pass asked for is kept, and what the pass before it asked for; past the ceiling,
+    // the most recent half by use. See TextEngine-Types#layout-cache
     void TextEngine::evict()
     {
-        if (m_entryCount < k_maxCachedLayouts)
-        {
+        if (m_entryCount < m_sweepAt)
             return;
-        }
 
-        // Swept rather than kept in order, because this runs once per cache full instead of once
-        // per lookup, and an ordered list would charge every hit for a case that is rare.
+        const bool atCeiling = m_entryCount >= k_maxCachedLayouts;
         const std::uint64_t keep = k_maxCachedLayouts / 2;
         const std::uint64_t cutoff = m_useCounter > keep ? m_useCounter - keep : 0;
+        const std::uint64_t heldSince = m_pass - 1;
         for (auto it = m_layouts.begin(); it != m_layouts.end(); )
         {
             LayoutBucket& bucket = it->second;
-            m_entryCount -= std::erase_if(bucket, [cutoff](const CachedLayoutPtr& entry){
-                return entry->lastUsed < cutoff;
+            m_entryCount -= std::erase_if(bucket, [&](const CachedLayoutPtr& entry){
+                return atCeiling ? entry->lastUsed < cutoff : entry->lastPass < heldSince;
             });
 
             if (bucket.empty())
@@ -326,6 +343,7 @@ namespace ClaFi
             else
                 ++it;
         }
+        m_sweepAt = std::max(k_sweepLayouts, m_entryCount + k_sweepLayouts / 2);
     }
 
     // The diagnostic overlay behind Diagnostic::Options::highlightTextAreas: the box the text took

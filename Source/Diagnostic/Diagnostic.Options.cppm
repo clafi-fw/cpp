@@ -29,7 +29,7 @@ namespace ClaFi::Diagnostic::Options
         constexpr bool logScrollIntoView{ false };
         constexpr bool logFormPlacement{ false };
         constexpr bool highlightTextAreas{ false };
-        constexpr bool logTextLayout{ true };
+        constexpr bool logTextLayout{ false }; // with this true don't go to FPS page - it will be stuck
     }
 
     /// @brief How a failed platform API call is handled - see ApiErrors. Anything but Ignore

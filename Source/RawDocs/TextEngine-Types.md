@@ -353,6 +353,32 @@ Every reader of the native layout's coordinates - the draw, both hit tests, char
 link's underline is cut around - adds paragraphOffset. A collapse line a layout holds at the
 leading edge is moved by the draw's origin, since the layout moves no line left of where it put it.
 
+## Layout cache
+
+TextEngine::select holds one TextLayout per text per width it was broken at, keyed on what the
+text says - see LayoutKey - and confirmed against the copy the entry keeps. A measurement and
+the paint after it ask for the same entry: the paint's box is the measured size, which
+acceptsWidth takes for the width the lines were broken at.
+
+WHAT THE PASS ASKED FOR IS KEPT. Every entry is stamped with the pass it was last asked for in,
+and FormBase::reAlign starts a pass through beginPass. A sweep drops only the entries no pass
+since the one before the current asked for: the measurement and the paint that draws it are
+one pass, and a hint or a popup laying out between them is a pass of its own, which the
+second generation covers. A cache swept by use alone lost the top of a page before its first
+paint - a SeeDocs page measures the surface tree and every cell on the page before it paints,
+many more than the sweep kept, and the rows a window shows are the first a pass measures. The
+paint then built those layouts again, at the box's own width, and a text broken at a width equal
+to its own measured width fell to a second line on the ULP the rect round trip loses.
+
+THE SWEEP RUNS AT A THRESHOLD, k_sweepLayouts, and the threshold moves with what the sweep
+left: the next one waits for the count to grow by half of k_sweepLayouts again. A page asking
+for more entries than that keeps every one of them, and is not swept on every insert for it.
+
+PAST k_maxCachedLayouts a pass is holding more than the cache will carry for it, and its own
+entries go too, down to the most recent half by use. A list of a million fixed-size items never
+gets there, since a fixed size is not measured; a page of that many texts churns the entries
+its paints need, as every page did before.
+
 ## HeldLayouts
 
 Which paragraphs of a TextLayout hold their native layout while k_releaseNativeLayouts is on -

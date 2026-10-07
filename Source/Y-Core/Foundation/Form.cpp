@@ -14,6 +14,7 @@ import :HintForm;
 import ClaFi.Diagnostic.Log;
 import ClaFi.Diagnostic.Options;
 
+import ClaFi.Core.TextEngine;
 import ClaFi.Core.TextEngine.Text;
 
 import ClaFi.Core.System.Animation;
@@ -2020,6 +2021,8 @@ namespace ClaFi
         // bounded by that window. A measuring pass stays one through its align: that lays the
         // content out at its own size, and no width in it is one the window gave.
         m_measuringPlacement = initPlacementMode;
+        // The layouts this pass measures are the ones its paint draws - see TextEngine::evict.
+        Control::textEngine().beginPass();
         // calculate() must be ALWAYS called – the align() implementations depend on it.
         m_content.calculate(*this);
         // What the content ASKED FOR, taken before the align gives it its extent instead.
