@@ -90,10 +90,11 @@ types under `Accepts`. An event's `Name` is its struct, whose payload is that st
 ## Building
 
 `SeeDocs.sln` builds it with Visual Studio against the shared items. The CMake target `SeeDocs`
-builds it on Linux beside the applications - the modules it draws on stand on the platform layer
-through `TextEngine.Types`, so it is linked the way they are:
+builds it on Linux with or without a platform layer - the Dom, the Syntax lexer and the text
+file reader reach no further down than `UiTypes` - so a `check` runs wherever the tree is
+checked out:
 
-    cmake -S . -B build -G Ninja -DCLAFI_PLATFORM=wayland \
+    cmake -S . -B build -G Ninja -DCLAFI_PLATFORM=none \
           -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_BUILD_TYPE=Release
     cmake --build build --target SeeDocs
     ./build/SeeDocs check .

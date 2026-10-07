@@ -2,6 +2,8 @@ export module ClaFi.Core.System.UiTypes :TextTypes;
 
 import :Color;
 
+import ClaFi.Core.System.Utils;
+
 import ClaFi.StdLib;
 
 namespace ClaFi{
@@ -150,4 +152,45 @@ namespace ClaFi{
         float grade{ gradeOf(InkGrade::Strongest) };
     };
 
+    // A run of a text, by where it starts and how long it is - unplaced while start is k_maxSize.
+    export struct TextRange
+    {
+    public:
+        std::size_t start{ k_maxSize };
+        std::size_t length{ 0 };
+    public:
+        void reset();
+        // The last position the run covers, which a run of no length does not have.
+        [[nodiscard]] std::size_t last() const { return start + length - 1; }
+        [[nodiscard]] constexpr std::size_t end() const { return start + length; }
+        [[nodiscard]] TextRange overlap(const TextRange& other) const;   // what both ranges cover
+        bool operator==(const TextRange&) const = default;
+    };
+
+    // How far apart the tab stops of a paragraph stand, in spaces of the font it starts in - so in
+    // a monospace font a tab reaches the next multiple of this many columns.
+    export constexpr float k_tabStopSpaces = 4.0f;
+}
+
+// =========================================================================
+// IMPLEMENTATIONS
+// =========================================================================
+
+namespace ClaFi
+{
+    void TextRange::reset()
+    {
+        start = k_maxSize;
+        length = 0;
+    }
+
+    // Unplaced where the two do not meet.
+    TextRange TextRange::overlap(const TextRange& other) const
+    {
+        const std::size_t from = std::max(start, other.start);
+        const std::size_t to = std::min(end(), other.end());
+        if (from >= to)
+            return {};
+        return { from, to - from };
+    }
 }

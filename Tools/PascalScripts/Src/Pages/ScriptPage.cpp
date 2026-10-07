@@ -15,6 +15,7 @@ import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 

@@ -5,6 +5,7 @@ import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.StepHistory;
+import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 

@@ -1,9 +1,9 @@
 export module ClaFi.Core.TextEngine.History;
 
 import ClaFi.Core.TextEngine.Text;
-import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.Core.System.StepHistory;
+import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 

@@ -18,7 +18,8 @@
 //   continues parsing, rather than treating it as a hard syntax error.
 export module ClaFi.Dom.Formats.ClaFi;
 
-import ClaFi.Dom;
+import ClaFi.Core.DomEngine_Document;
+import ClaFi.Core.DomEngine;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 

@@ -10,22 +10,6 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    export struct TextRange {
-    public:
-        std::size_t start{ k_maxSize };
-        std::size_t length{ 0 };
-    public:
-        void reset() {
-            start = k_maxSize;
-            length = 0;
-        }
-        // use last() only if the length is not 0;
-        std::size_t last() const { return start + length - 1; }
-        constexpr std::size_t end() const { return start + length; }
-        [[nodiscard]] TextRange overlap(const TextRange& other) const; // what both ranges cover
-        bool operator==(const TextRange&) const = default;
-    };
-
     export struct CaretHit
     {
         std::size_t pos{ 0 };
@@ -109,10 +93,6 @@ namespace ClaFi
             { GenericFamily::sansSerif, 12.0f, FontWeight::Normal, FontStyle::Normal },  // SubBody
             { GenericFamily::monospace, 14.0f, FontWeight::Normal, FontStyle::Normal },  // Code
         } };
-
-    // How far apart the tab stops of a paragraph stand, in spaces of the font it starts in - so in
-    // a monospace font a tab reaches the next multiple of this many columns.
-    export constexpr float k_tabStopSpaces = 4.0f;
 
     // What a script run comes to, as fractions of the run it stands on. A level multiplies the
     // size and moves the baseline by its share of the size that level was entered at, so a script
@@ -283,19 +263,5 @@ namespace ClaFi
         Moving
     };
 #endif
-
-
-    //-------------------------------------------------------------------------
-
-
-    // Unplaced where the two do not meet.
-    TextRange TextRange::overlap(const TextRange& other) const
-    {
-        const std::size_t from = std::max(start, other.start);
-        const std::size_t to = std::min(end(), other.end());
-        if (from >= to)
-            return {};
-        return { from, to - from };
-    }
 
 }
