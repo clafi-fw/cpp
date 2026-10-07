@@ -564,4 +564,25 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         VERBATIM)
     add_custom_target(PascalScripts_Language DEPENDS "${pascalscripts_language}")
     add_dependencies(PascalScripts PascalScripts_Language)
+
+    # SEEDOCS, the scanner that reads the design surface out of Source/ into Tools/SeeDocs/Surface.cfg
+    # and holds the tree to the declaration routine. It draws on the Dom, the Syntax lexer and the
+    # text file reader, and through them on the platform layer every module above UiTypes stands
+    # on, so it is linked like the applications are.
+    set(seedocs_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/Src")
+    add_executable(SeeDocs
+        "${seedocs_dir}/SeeDocs_Linux.cpp"
+        "${seedocs_dir}/SeeDocs_App.Checks.cpp"
+        "${seedocs_dir}/SeeDocs_App.Database.cpp"
+        "${seedocs_dir}/SeeDocs_App.Main.cpp"
+        "${seedocs_dir}/SeeDocs_App.Scanner.cpp"
+        "${seedocs_dir}/SeeDocs_App.Surface.cpp")
+    target_sources(SeeDocs PRIVATE FILE_SET CXX_MODULES FILES
+        "${seedocs_dir}/SeeDocs_App.Checks.cppm"
+        "${seedocs_dir}/SeeDocs_App.Database.cppm"
+        "${seedocs_dir}/SeeDocs_App.Main.cppm"
+        "${seedocs_dir}/SeeDocs_App.Scanner.cppm"
+        "${seedocs_dir}/SeeDocs_App.Surface.cppm")
+    target_link_libraries(SeeDocs PRIVATE ClaFi)
+    target_compile_options(SeeDocs PRIVATE ${clafi_compile_options})
 endif()
