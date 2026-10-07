@@ -571,18 +571,35 @@ namespace SeeDocs_App
             }
         }
 
-        // Whether a type names another among its bases - as the base, or as an argument of one.
+        // Whether a type names another among its bases - as the base, or as the argument a mixin
+        // base hands on: one whose template's own bases name the parameter standing in that place.
         [[nodiscard]] bool derivesDirectly(const Surface& surface, const Type& type,
             const Type& base)
         {
             for (const std::wstring& spelled : type.bases)
             {
-                if (surface.resolve(spelled, type.nameSpace) == &base)
+                const std::wstring resolvedSpelling =
+                    surface.resolvedBase(spelled, type.nameSpace);
+                const Type* direct = surface.resolve(resolvedSpelling, type.nameSpace);
+                if (direct == &base)
                     return true;
-                for (const std::wstring& argument : argumentsOf(spelled))
+                if (!direct)
+                    continue;
+                const Names parameters = templateParameterNames(direct->templateParameters);
+                const Names arguments = argumentsOf(resolvedSpelling);
+                for (const std::wstring& handedOn : direct->bases)
                 {
-                    if (surface.resolve(argument, type.nameSpace) == &base)
+                    const auto parameter =
+                        std::ranges::find(parameters, plainType(withoutArguments(handedOn)));
+                    if (parameter == parameters.end())
+                        continue;
+                    const std::size_t index =
+                        static_cast<std::size_t>(parameter - parameters.begin());
+                    if (index < arguments.size()
+                        && surface.resolve(arguments[index], type.nameSpace) == &base)
+                    {
                         return true;
+                    }
                 }
             }
             return false;
