@@ -16,21 +16,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    /// @brief A control that holds its OWN text layout instead of taking one from TextEngine's
-    /// cache. For a text that CHANGES.
-    ///
-    /// @note The cache is addressed by what a text SAYS, which is what lets a hundred buttons
-    /// saying one word share a single shaping. A text rewritten every frame - the value under a
-    /// slider's thumb, a frame rate, the size of a rectangle being dragged - therefore misses on
-    /// every paint, takes a fresh entry, and evicts the static layouts the rest of the form draws
-    /// from: a drag of a few seconds empties the cache and leaves every label on the form to be
-    /// shaped again. A host here shapes its own text in place instead - no hash, no comparison
-    /// against another control's words, nothing evicted, and nothing of its own in there to be
-    /// evicted from.
-    ///
-    /// @note USING IT IS THE DECLARATION. A control whose text changes often is one that derives
-    /// from this, and a control whose text is written once and then stands does not. There is no
-    /// property to state and nothing to keep in step.
+    /// A control that shapes its own text in place, for a text that changes. See Control-Foundation
     export template <IsControl HostClass>
     class WithTextLayout : public HostClass
     {

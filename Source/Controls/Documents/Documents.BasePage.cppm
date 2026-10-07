@@ -1,3 +1,5 @@
+module;
+#include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Documents.BasePage;
 
 import ClaFi.Documents.Folder;
@@ -74,7 +76,8 @@ namespace ClaFi::Documents
             UiElement::Page,
             std::forward<Args>(args)...
         },
-        m_folder{ *Props::get<DocumentsFolder*>(nullptr, args...) }
+        // The folder the page's document stands in, which outlives the page.
+        m_folder{ *REQUIRE_PROPERTY(DocumentsFolder*) }
     {
     }
 }

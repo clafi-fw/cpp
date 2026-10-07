@@ -123,11 +123,9 @@ namespace ClaFi
     template <typename C, typename R, typename A> struct EventParamOfImpl<R(C::*)(A&) const noexcept> { using type = std::remove_const_t<A>; };
     template <typename R, typename A>             struct EventParamOfImpl<R(*)(A&)>                   { using type = std::remove_const_t<A>; };
 
-    // Only the primary is exported. A partial specialization is not an
-    // exportable declaration, and it does not need to be: it is reachable from
-    // this module wherever the primary is used.
+    // The event a handler's one parameter names, off a function pointer. See Events#eventparamof
     export template <typename F, typename = void>
-        struct EventParamOf : EventParamOfImpl<std::decay_t<F>> {};          // function pointer
+        struct EventParamOf : EventParamOfImpl<std::decay_t<F>> {};
     template <typename F>
     struct EventParamOf<F, std::void_t<decltype(&std::decay_t<F>::operator())>>
         : EventParamOfImpl<decltype(&std::decay_t<F>::operator())> {};       // lambda or functor
@@ -142,9 +140,7 @@ namespace ClaFi
     concept NamesAnEvent = requires { typename EventParamOf<F>::type; }
                         && IsEvent<typename EventParamOf<F>::type>;
 
-    // A tag base rather than a template-id match, so that a caller can keep a
-    // thin named subclass for compatibility and still have it recognised as a
-    // handler by the routing below.
+    // A tag base, so a thin named subclass is still taken for a handler. See Events#oneventtag
     export struct OnEventTag {};
 
     export template <typename T>
@@ -311,19 +307,7 @@ namespace ClaFi
     // Handler properties
     // =========================================================================
 
-    // Deduces the event from the handler's own parameter, so one property type
-    // connects any event on any emitter:
-    //
-    //     OnEvent{ [](ComboBoxChangeEvent& event) { ... } }
-    //     OnEvent{ [this](ChangeEvent& event) { ... } }
-    //     makeOnEvent(this, &Page::stateWanted)      // parameter read off the method
-    //
-    // One property type serves every event, so an emitter needs no named handler
-    // type per event it raises. The event is already written in the handler, and
-    // a name for it would only say the same thing twice.
-    //
-    // A generic `[](auto&)` handler names no event and is rejected. With OnEvent
-    // the parameter type is how you choose which event to connect to.
+    // A handler as a property, the event deduced from its one parameter. See Events#onevent
     export template <typename F>
         requires NamesAnEvent<F>
     struct OnEvent : public OnEventTag
@@ -341,16 +325,7 @@ namespace ClaFi
 
     export template <typename F> OnEvent(F) -> OnEvent<F>;
 
-    // Several handlers as one property, so an argument list does not repeat OnEvent per handler:
-    //
-    //     Button{ params, Events{
-    //         [](ClickEvent& event) { ... },
-    //         [](PaintIconEvent& event) { ... },
-    //     } }
-    //
-    // Each handler names its own event, so the list is heterogeneous and its order says nothing.
-    // An already wrapped handler is accepted alongside bare ones, for a call site that wants the
-    // event named: Events{ Button::OnClick{ handler }, [](PaintIconEvent& event) { ... } }.
+    // Several handlers as one property, each naming its own event. See Events#events
     export template <typename... Handlers>
         requires (sizeof...(Handlers) > 0 && (IsHandler<Handlers> && ...))
     struct Events : public OnEventTag

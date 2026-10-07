@@ -25,6 +25,7 @@ import ClaFi.Diagnostic.Log;
 
 namespace ClaFi::Controls::Grids
 {
+    // A grid of rows sectioned by shared columns, with the cell walk and the editing a user sees.
     export class Grid : public GridBase
     {
         friend RowBase;

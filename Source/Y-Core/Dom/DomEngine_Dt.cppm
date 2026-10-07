@@ -132,9 +132,7 @@ namespace ClaFi::Dom::Dt
     // Value
     // =====================================================================
 
-    // Value{ L"key", defaultValue, OnEvent{ ... }, OnEvent{ ... } }
-    //
-    // Any number of handlers, each naming its own event.
+    // A value under a key, with any number of handlers, each naming its own event. See Dom#value
     export template <typename T>
         struct Value : public Node
     {

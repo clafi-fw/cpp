@@ -83,6 +83,18 @@
 #define READ_PROPERTY(type, ...) \
     Props::get(type{ __VA_ARGS__ }, args...)
 
+// Reads a property the pack has to carry - a dependency with no default to fall back
+// on, such as the folder a list is built over. A pack that says nothing is a compile
+// error, so the line states the requirement and is where the scanner reads it:
+//
+//     // The folder the list shows, which outlives it.
+//     m_folder{ *REQUIRE_PROPERTY(DocumentsFolder*) }
+//
+// The pack is passed as it stands, the way READ_PROPERTY passes it, and the value is
+// copied out, so a struct carrying several things can be read once per thing.
+#define REQUIRE_PROPERTY(type) \
+    Props::require<type>(args...)
+
 
 // -------------------------------------------------------------------------
 // Property declaration

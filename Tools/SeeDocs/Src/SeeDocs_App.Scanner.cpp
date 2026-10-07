@@ -391,6 +391,23 @@ namespace SeeDocs_App
             constexpr std::wstring_view declareEvent = L"DECLARE_EVENT";
         }
 
+        // The name a property takes from its type: the type's own spelling stripped of
+        // qualifiers and what wraps it, so a BrowserTab* is the property BrowserTab.
+        [[nodiscard]] std::wstring propertyNameOf(const std::wstring_view type)
+        {
+            std::wstring bare{ type };
+            for (const std::wstring_view wrap : { L"const", L"*", L"&" })
+            {
+                std::size_t at = bare.find(wrap);
+                while (at != std::wstring::npos)
+                {
+                    bare.erase(at, wrap.size());
+                    at = bare.find(wrap);
+                }
+            }
+            return std::wstring{ bareName(trimmed(bare)) };
+        }
+
         // A macro of the routine, and what it declares.
         struct MacroForm
         {
@@ -407,7 +424,8 @@ namespace SeeDocs_App
             { L"BIND_PROPERTY_CALL", PropertyForm::BoundCall },
             { L"BIND_PROPERTY_VALUE", PropertyForm::BoundValue },
             { L"BIND_PROPERTY_ACTION", PropertyForm::BoundAction },
-            { L"READ_PROPERTY", PropertyForm::Read }
+            { L"READ_PROPERTY", PropertyForm::Read },
+            { L"REQUIRE_PROPERTY", PropertyForm::Required }
         });
 
         // The binds a constructor writes, by the name each starts with.
@@ -517,12 +535,12 @@ namespace SeeDocs_App
                 std::size_t end);
             void skipBody(Type* owner, Access, bool initializers);
             void skipBalanced(std::wstring_view open, std::wstring_view close);
-            void skipPast(std::wstring_view punctuator);
             void skipDeclaration();
+            void skipPast(std::wstring_view punctuator);
             [[nodiscard]] std::wstring readQualifiedName();
             [[nodiscard]] std::wstring textBetween(std::size_t first, std::size_t last) const;
             [[nodiscard]] Comment commentAt(std::size_t line, std::optional<std::size_t> fallback,
-                std::wstring_view name) const;
+                std::wstring_view name, bool aboveCounts = true) const;
             void gatherAbove(std::size_t line, Comment&) const;
         private:
             Surface& m_surface;
@@ -1064,8 +1082,10 @@ namespace SeeDocs_App
                 EnumMember member;
                 member.name = text(*token);
                 member.place = placeOf(*token);
+                // A member on the enum's own line has only the comment on that line; the one
+                // above is the enum's.
                 member.comment = commentAt(token->line, std::nullopt,
-                    name + std::wstring{ k_scope } + member.name);
+                    name + std::wstring{ k_scope } + member.name, token->line != keyword.line);
                 advance();
                 if (isPunctuator(peek(), L"="))
                 {
@@ -1193,7 +1213,8 @@ namespace SeeDocs_App
             m_surface.addType(std::move(type));
         }
 
-        // DECLARE_PROPERTY and its kind, BIND_PROPERTY_* and READ_PROPERTY, DECLARE_EVENT.
+        // DECLARE_PROPERTY and its kind, BIND_PROPERTY_*, READ_PROPERTY and REQUIRE_PROPERTY,
+        // DECLARE_EVENT.
         void FileReader::readMacro(const Token& name, Type* owner, const Access access)
         {
             const std::wstring_view word = text(name);
@@ -1283,6 +1304,17 @@ namespace SeeDocs_App
                 }
                 property.target = property.name;
             }
+            else if (*form == PropertyForm::Required)
+            {
+                if (arguments.empty())
+                {
+                    m_surface.addProblem({ true, place, L"REQUIRE_PROPERTY takes a type" });
+                    return;
+                }
+                property.type = arguments[0];
+                property.name = propertyNameOf(arguments[0]);
+                property.target = property.name;
+            }
             else
             {
                 if (arguments.empty())
@@ -1291,19 +1323,7 @@ namespace SeeDocs_App
                     return;
                 }
                 property.type = arguments[0];
-                // The property's name is its type's, the type's own spelling stripped of
-                // qualifiers and what wraps it.
-                std::wstring bare = arguments[0];
-                for (const std::wstring_view wrap : { L"const", L"*", L"&" })
-                {
-                    std::size_t at = bare.find(wrap);
-                    while (at != std::wstring::npos)
-                    {
-                        bare.erase(at, wrap.size());
-                        at = bare.find(wrap);
-                    }
-                }
-                property.name = std::wstring{ bareName(trimmed(bare)) };
+                property.name = propertyNameOf(arguments[0]);
                 if (arguments.size() > 1)
                 {
                     std::wstring_view target = arguments[1];
@@ -1835,14 +1855,16 @@ namespace SeeDocs_App
         }
 
         Comment FileReader::commentAt(const std::size_t line,
-            const std::optional<std::size_t> fallback, const std::wstring_view name) const
+            const std::optional<std::size_t> fallback, const std::wstring_view name,
+            const bool aboveCounts) const
         {
             Comment comment;
             if (const std::optional<std::wstring_view> trailing = m_text.trailingComment(line))
                 comment.trailing = std::wstring{ commentBody(*trailing) };
             comment.lineWidth = m_text.width(line);
-            gatherAbove(line, comment);
-            if (comment.above.empty() && fallback && *fallback != line)
+            if (aboveCounts)
+                gatherAbove(line, comment);
+            if (aboveCounts && comment.above.empty() && fallback && *fallback != line)
                 gatherAbove(*fallback, comment);
 
             std::wstring source;

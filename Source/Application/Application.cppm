@@ -117,10 +117,7 @@ namespace ClaFi
         PlatformType m_platform;
     };
 
-    // THE GPU BACKEND IS THE APPLICATION'S TO NAME, and naming none is an answer. The CPU backend
-    // is the core's own and every application has it, so Application<Win32Platform> draws on the
-    // CPU and offers nothing, while Application<Win32Platform, Direct2DBackend> carries both and
-    // starts on whichever the config holds. Nothing in the core depends on which. See Context
+    // The GPU backend is the application's to name, and naming none is an answer. See Application
     export template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend = void>
     class Application : private PlatformHolder<PlatformType>, public ApplicationBase
     {

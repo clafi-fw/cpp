@@ -104,8 +104,9 @@ namespace ClaFi
         bool operator==(Value other) const { return value == other; }
     };
 
-    // Frequency and MilliSeconds can be directly passed to WinApi's ::Beep, ::SetTimer, because bit-wise compatible with uint32_t
+    // A tone's pitch, bit-compatible with the uint32_t ::Beep takes.
     export struct Frequency : public NumericValueWrapper<std::uint32_t, Frequency> {};
+    // A span of time, bit-compatible with the uint32_t ::SetTimer takes.
     export struct MilliSeconds : public NumericValueWrapper<std::uint32_t, MilliSeconds> {};
 
 

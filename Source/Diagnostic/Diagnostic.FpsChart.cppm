@@ -1,3 +1,5 @@
+module;
+#include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Diagnostic.FpsChart;
 
 import ClaFi.Diagnostic.Benchmark;
@@ -131,10 +133,11 @@ namespace ClaFi::Diagnostic
     FpsChart::FpsChart(const CreateParams& params, const FpsBenchmark& benchmark, Args&&... args)
         :
         Control{ params, std::forward<Args>(args)... },
-        m_benchmark{ benchmark },
-        m_fieldColor{ Props::find<ChartFieldColor>(std::forward<Args>(args)...) },
-        m_seriesColor{ Props::find<ChartSeriesColor>(std::forward<Args>(args)...) }
+        m_benchmark{ benchmark }
     {
+        // The field's colour where a caller states it; the theme's otherwise.
+        BIND_PROPERTY_MEMBER(ChartFieldColor, m_fieldColor);
+        BIND_PROPERTY_MEMBER(ChartSeriesColor, m_seriesColor); // the curve's colour, the same way
     }
 
     void FpsChart::setColors(Color field, Color series)

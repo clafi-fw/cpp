@@ -459,7 +459,7 @@ namespace ClaFi::Browser
     BrowserPage::BrowserPage(const CreateParams& params, Args&&... args)
         :
         Panel{ params, std::forward<Args>(args)... },
-        m_tab{ *Props::get<BrowserTab*>(nullptr, std::forward<Args>(args)...) },
+        m_tab{ *REQUIRE_PROPERTY(BrowserTab*) }, // the tab the page is shown in, which owns it
         m_browserControl{m_tab.browserControl() },
         // saving the original pageData, to be able
         // to select it in a folder after level up.

@@ -16,12 +16,7 @@ namespace ClaFi::Transfer
     export class Format
     {
     public:
-        // WHICH VOCABULARY NAMES IT - the framework's own closed set, or anything else. Both
-        // kinds have names; only the standard set has one this layer can state, every platform
-        // spelling the others for itself.
-        //
-        // Declared in the same order as the identity alternatives below, which is what lets
-        // kind() read off the index.
+        // Which vocabulary names it - the framework's own set, or any other. See Transfer#kind
         enum class Kind
         {
             Standard,

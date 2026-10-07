@@ -44,8 +44,7 @@ namespace ClaFi
     };
     export constexpr std::size_t k_cornersNum = 4u;
 
-    // A radius per corner, in Corner order: top left, top right, bottom right, bottom left. A
-    // corner is round while its radius is above zero.
+    // A radius per corner, in Corner order; a corner is round while its radius is above zero.
     export struct CornerRadii
     {
         float topLeft{};

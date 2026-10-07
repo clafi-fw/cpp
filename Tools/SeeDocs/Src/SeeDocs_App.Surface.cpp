@@ -41,7 +41,9 @@ namespace SeeDocs_App
             { L"FloatRect", L"float4" },
             { L"IntRect", L"int4" },
             { L"Color", L"color" },
-            { L"Rgb", L"color" }
+            { L"Rgb", L"color" },
+            // A callback is wired, not typed: a designer offers it the way it offers an event.
+            { L"std::function", L"handler" }
         });
 
         constexpr std::wstring_view k_unknownKind = L"unknown";
@@ -222,53 +224,6 @@ namespace SeeDocs_App
         return nullptr;
     }
 
-    // A qualified spelling is matched by its tail; a bare one through the namespaces enclosing
-    // the caller, and then among every type of that name, the one declared nearest the caller.
-    const Type* Surface::lookUp(std::wstring_view bare, const std::wstring_view nameSpace) const
-    {
-        if (bare.starts_with(k_scope))
-            bare.remove_prefix(k_scope.size());
-        if (bare.empty())
-            return nullptr;
-
-        if (bare.find(k_scope) == std::wstring_view::npos)
-        {
-            std::wstring_view prefix = nameSpace;
-            while (true)
-            {
-                const std::wstring qualified = prefix.empty()
-                    ? std::wstring{ bare }
-                    : std::wstring{ prefix } + std::wstring{ k_scope } + std::wstring{ bare };
-                if (const Type* type = typeNamed(qualified))
-                    return type;
-                if (prefix.empty())
-                    break;
-                prefix = enclosing(prefix);
-            }
-        }
-
-        const auto found = m_byBareName.find(std::wstring{ bareName(bare) });
-        if (found == m_byBareName.end())
-            return nullptr;
-
-        const Type* nearest = nullptr;
-        std::size_t nearestShare = 0;
-        for (const std::size_t index : found->second)
-        {
-            const Type& type = m_types[index];
-            const std::wstring tail = std::wstring{ k_scope } + std::wstring{ bare };
-            if (type.qualifiedName != bare && !type.qualifiedName.ends_with(tail))
-                continue;
-            const std::size_t share = sharedPrefix(type.nameSpace, nameSpace);
-            if (!nearest || share > nearestShare)
-            {
-                nearest = &type;
-                nearestShare = share;
-            }
-        }
-        return nearest;
-    }
-
     // The chain is walked by spelling: an alias stands for its target, and a base that is one of
     // a template's parameters stands for the argument the spelling passed in that place.
     bool Surface::reachesControl(const Type& type) const
@@ -331,14 +286,6 @@ namespace SeeDocs_App
     {
         optional = false;
         std::wstring spelled = std::wstring{ plainType(type) };
-        if (withoutArguments(spelled) == k_optionalType)
-        {
-            const Names arguments = argumentsOf(spelled);
-            if (arguments.empty())
-                return std::wstring{ k_unknownKind };
-            optional = true;
-            spelled = std::wstring{ plainType(arguments.front()) };
-        }
         // A pointer to member is the kind of what it points at: the class it reaches into says
         // where the value lives, not what the value is.
         if (spelled.find(L"::*") != std::wstring::npos)
@@ -346,6 +293,15 @@ namespace SeeDocs_App
 
         for (std::size_t depth = 0; depth != k_aliasDepth; ++depth)
         {
+            // An optional reached through an alias is seen through the same way.
+            if (withoutArguments(spelled) == k_optionalType)
+            {
+                const Names arguments = argumentsOf(spelled);
+                if (arguments.empty())
+                    return std::wstring{ k_unknownKind };
+                optional = true;
+                spelled = std::wstring{ plainType(arguments.front()) };
+            }
             const std::wstring_view head = withoutArguments(spelled);
             if (const std::optional<std::wstring_view> known = knownKindOf(head))
                 return std::wstring{ *known };
@@ -416,7 +372,14 @@ namespace SeeDocs_App
             const auto found = byTarget.find(key);
             if (!declaresStorage(property.form) && found != byTarget.end())
             {
-                merged[found->second].accepts.push_back(property.type);
+                // A second read of the same type is the same property read again, not a
+                // further spelling it accepts.
+                Property& first = merged[found->second];
+                const bool known = first.type == property.type
+                    || std::find(first.accepts.begin(), first.accepts.end(), property.type)
+                        != first.accepts.end();
+                if (!known)
+                    first.accepts.push_back(property.type);
                 continue;
             }
             byTarget[key] = merged.size();
@@ -433,6 +396,53 @@ namespace SeeDocs_App
             for (Property& property : type.properties)
                 property.valueKind = valueKindOf(property.type, type.nameSpace, property.optional);
         }
+    }
+
+    // A qualified spelling is matched by its tail; a bare one through the namespaces enclosing
+    // the caller, and then among every type of that name, the one declared nearest the caller.
+    const Type* Surface::lookUp(std::wstring_view bare, const std::wstring_view nameSpace) const
+    {
+        if (bare.starts_with(k_scope))
+            bare.remove_prefix(k_scope.size());
+        if (bare.empty())
+            return nullptr;
+
+        if (bare.find(k_scope) == std::wstring_view::npos)
+        {
+            std::wstring_view prefix = nameSpace;
+            while (true)
+            {
+                const std::wstring qualified = prefix.empty()
+                    ? std::wstring{ bare }
+                    : std::wstring{ prefix } + std::wstring{ k_scope } + std::wstring{ bare };
+                if (const Type* type = typeNamed(qualified))
+                    return type;
+                if (prefix.empty())
+                    break;
+                prefix = enclosing(prefix);
+            }
+        }
+
+        const auto found = m_byBareName.find(std::wstring{ bareName(bare) });
+        if (found == m_byBareName.end())
+            return nullptr;
+
+        const Type* nearest = nullptr;
+        std::size_t nearestShare = 0;
+        for (const std::size_t index : found->second)
+        {
+            const Type& type = m_types[index];
+            const std::wstring tail = std::wstring{ k_scope } + std::wstring{ bare };
+            if (type.qualifiedName != bare && !type.qualifiedName.ends_with(tail))
+                continue;
+            const std::size_t share = sharedPrefix(type.nameSpace, nameSpace);
+            if (!nearest || share > nearestShare)
+            {
+                nearest = &type;
+                nearestShare = share;
+            }
+        }
+        return nearest;
     }
 
     std::wstring_view bareName(const std::wstring_view qualified)

@@ -52,7 +52,8 @@ namespace SeeDocs_App
         BoundCall,     // BIND_PROPERTY_CALL
         BoundValue,    // BIND_PROPERTY_VALUE
         BoundAction,   // BIND_PROPERTY_ACTION
-        Read           // READ_PROPERTY
+        Read,          // READ_PROPERTY
+        Required       // REQUIRE_PROPERTY - the pack has to carry it, so there is no default
     };
 
     // Whether a form declares storage of its own, which the constructor then has to initialise.

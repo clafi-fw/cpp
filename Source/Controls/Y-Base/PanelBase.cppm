@@ -108,12 +108,7 @@ namespace ClaFi::Controls
     };
 
 
-    // Names the type of a host's body slot and builds that body from its own props bag.
-    // The body stays a distinct child - the host positions, clips and hides it independently -
-    // so this puts a static type over the slot rather than folding the two into one control.
-    // That is what separates it from Form<ControlClass>, where the content is the whole of the
-    // client area and the form is not itself a node in the control tree.
-    // Each props bag routes by type, so a bag must not carry the same prop type twice.
+    // A static type over a host's body slot, built from its own props bag. See Controls-Base
     export template <IsControl HostClass, IsControl BodyType>
         class WithBody : public HostClass
     {

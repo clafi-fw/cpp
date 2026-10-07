@@ -15,9 +15,9 @@ The tree is the folder holding `Source/`; the working directory when left out. T
 Every `.cppm` and then every `.cpp` under `Source/` is lexed with the framework's own C++ lexer
 (`ClaFi.Core.Syntax`) and read declaration by declaration over the tokens. Nothing is expanded
 and nothing is compiled: a macro of the declaration routine - `DECLARE_PROPERTY`, `DECLARE_EVENT`,
-`BIND_PROPERTY_*`, `READ_PROPERTY` - is read as the declaration it stands for, and a function
-body is skipped, read only for the binds a constructor writes (`INIT_PROPERTY`, `BIND_MEMBER` and
-its kind) and for a `Props::get` written by hand.
+`BIND_PROPERTY_*`, `READ_PROPERTY`, `REQUIRE_PROPERTY` - is read as the declaration it stands
+for, and a function body is skipped, read only for the binds a constructor writes
+(`INIT_PROPERTY`, `BIND_MEMBER` and its kind) and for a `Props::get` written by hand.
 
 What is harvested: every exported type - class, struct, union, enum, alias, concept - with its
 public and protected members (properties, events, functions, data members, enum members), every
@@ -63,18 +63,21 @@ The two files are meant to become one.
 `Control` marks a type whose base chain reaches `Control` or `RichControl`, template arguments
 walked as bases, which is what makes it a toolbox entry; `Category` is its folder under
 `Source/`. A property's `Form` says how its line was written (`declared`, `writable`,
-`reference`, `storage`, `member`, `call`, `value`, `action`, `read`) and `ValueKind` what a
-designer shows the value as: `bool`, `int`, `float`, `text`, `float2`, `int2`, `float4`,
-`int4`, `color`, `enum`, `number`, `object`, or `unknown`. A `std::optional` of a kind is that
-kind with `Optional` set. Several bindings landing on one target are one property, the further
-types under `Accepts`. An event's `Name` is its struct, whose payload is that struct's own
-`Fields` entry.
+`reference`, `storage`, `member`, `call`, `value`, `action`, `read`, or `required` - a
+`REQUIRE_PROPERTY`, which the pack has to carry and which therefore has no `Default`) and
+`ValueKind` what a designer shows the value as: `bool`, `int`, `float`, `text`, `float2`,
+`int2`, `float4`, `int4`, `color`, `enum`, `number`, `object`, `handler` (a `std::function`,
+wired the way an event is) or `unknown`. A `std::optional` of a kind is that kind with
+`Optional` set. Several bindings landing on one target are one property, the further types
+under `Accepts`. An event's `Name` is its struct, whose payload is that struct's own `Fields`
+entry.
 
 ## The checks
 
 - a property with no `INIT_PROPERTY`; a `..._STORAGE` property without its getter and a
   `WRITABLE` one whose setter is not there, the base chain searched as well
-- a `Props::get` written by hand rather than through `READ_PROPERTY`
+- a `Props::get` or `Props::find` written by hand rather than through `READ_PROPERTY` or
+  `REQUIRE_PROPERTY`
 - a comment of more than one line, one in both places at once, or none on a declaration of the
   design surface - a control, its properties and events, an exported enum
 - a comment above a declaration it would fit on, and one riding a line past 100 columns

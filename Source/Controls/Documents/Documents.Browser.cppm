@@ -1,3 +1,5 @@
+module;
+#include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Documents.Browser;
 
 import ClaFi.Documents.Folder;
@@ -86,7 +88,8 @@ namespace ClaFi::Documents
     DocumentsBrowserBase::DocumentsBrowserBase(const CreateParams& params, Args&&... args)
         :
         BrowserControl{ params, std::forward<Args>(args)... },
-        m_folder{ *Props::get<DocumentsFolder*>(nullptr, args...) }
+        // The folder the browser shows, which outlives it.
+        m_folder{ *REQUIRE_PROPERTY(DocumentsFolder*) }
     {
     }
 

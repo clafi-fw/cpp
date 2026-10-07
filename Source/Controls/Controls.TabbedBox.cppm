@@ -150,10 +150,11 @@ namespace ClaFi::Controls
         PanelBase{ params, std::forward<Args>(args)..., Spacing{0.f, 0.f} },
         INIT_PROPERTY(tabsOrientation),
         INIT_PROPERTY(tabLineThickness),
-        INIT_PROPERTY(tabViewMode),
-        m_stripPadding{ Props::find<StripPadding>(args...) },
-        m_stripSpacing{ Props::find<StripSpacing>(args...) }
+        INIT_PROPERTY(tabViewMode)
     {
+        // The strip's own padding, where a caller states it; the mode's otherwise.
+        BIND_PROPERTY_MEMBER(StripPadding, m_stripPadding);
+        BIND_PROPERTY_MEMBER(StripSpacing, m_stripSpacing); // the strip's own spacing, the same way
         m_strip.setOverlayHost(*this);
     }
 

@@ -38,13 +38,7 @@ namespace ClaFi::Dt
     // Nodes
     // =====================================================================
 
-    // One node hierarchy per build context. A DSL that builds a single kind of
-    // thing has one context. Dom's is the parent section a node applies itself
-    // to. A DSL that builds several kinds has one context per kind.
-    //
-    // The context type keeps the hierarchies apart. A Grid RowNode will not bind
-    // where a CellNode is expected, and the pack routing below tells them apart
-    // by it.
+    // One node hierarchy per build context, the context type keeping them apart. See Dt#nodebase
     export template <typename Context>
         struct NodeBase
     {
@@ -61,9 +55,7 @@ namespace ClaFi::Dt
     export template <typename T, typename Context>
     concept IsNode = std::is_base_of_v<NodeBase<Context>, std::decay_t<T>>;
 
-    // References let a node declared once, as a const member or a namespace
-    // constant, be reused by several parents without copying. The referent has
-    // to outlive the apply.
+    // A node declared once and reused by several parents without copying. See Dt#reference
     export template <typename Context>
         struct Reference : public NodeBase<Context>
     {
@@ -119,24 +111,7 @@ namespace ClaFi::Dt
     {
     };
 
-    // A PART OF A CONTAINER, as opposed to a child sitting inside it:
-    //
-    //     Expander{ Header{ Text{ ... } }, Rows{ ... } }
-    //     Grid{ Columns{ ... }, Header{}, Rows{ ... } }
-    //
-    // A part is deliberately not a node of any hierarchy. If it were a node of the
-    // one its container's children belong to, a container could not tell its part
-    // apart from its first child - they would arrive in the same vector. So a part
-    // keeps its argument pack and the enclosing container routes it, which is also
-    // why this module needs to know nothing about what any particular part holds.
-    //
-    // The consequence worth knowing: a part only means anything to the container
-    // that directly encloses it. One nested a level deeper, inside a Rows{} for
-    // instance, is not a child of anything that looks for it. Containers that could
-    // receive one by mistake reject it rather than dropping it.
-    //
-    // Header is the part this module names. A DSL names one of its own by deriving
-    // from Part, the way Grids names a group's Span.
+    // A part of a container, as opposed to a child sitting inside it. See Dt#part
     export template <typename... Args>
         struct Part : public PartBase
     {
@@ -170,9 +145,7 @@ namespace ClaFi::Dt
     export template <template <typename...> typename Named, typename Func, typename... Args>
     bool withPart(Func&& func, Args&&... args);
 
-    // A container's own header. What a header accepts is the container's business. A
-    // grid's header takes nothing - the columns already say what belongs in it. An
-    // expander's header is a single text control, so it takes text and rejects cells.
+    // A container's own header, accepting what that container says it accepts. See Dt#header
     export template <typename... Args>
         struct Header : public Part<Args...>
     {
@@ -181,9 +154,7 @@ namespace ClaFi::Dt
 
     export template <typename... Args> Header(Args&&...) -> Header<Args...>;
 
-    // Init<T>{ lambda } - runs against the object right after it is created, for
-    // the setters that have no constructor property (Slider::setMaxPosition and
-    // friends). Pass it anywhere in the argument list.
+    // A lambda run against the object right after it is created. See Dt#init
     export template <typename Target>
         struct Init
     {
@@ -204,8 +175,7 @@ namespace ClaFi::Dt
     export template <typename T, typename Target>
     concept IsInit = std::is_same_v<std::decay_t<T>, Init<Target>>;
 
-    // Everything a pack says about an object that is not a constructor argument:
-    // the events to connect, and the initialiser to run.
+    // Everything a pack says about an object beyond its constructor arguments. See Dt#postcreate
     export template <typename Target>
         struct PostCreate
     {

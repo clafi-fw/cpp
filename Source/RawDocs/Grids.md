@@ -326,3 +326,10 @@ The text is const: the value in it is what the user typed, and this asks whether
 cell's source will have it. A handler that will not calls refuse() and says why - the
 editor is still up, so the user is told and gets to correct it rather than losing the
 edit to a write that went nowhere.
+
+## CellWith
+
+    CellWith<ComboBox>{ tag, ...ctor args..., OnEvent{ ... }, Init<ComboBox>{ ... } }
+
+Adds a live control to the cell through RowContainer::addControl. The arguments are copied into
+the node, so anything expensive or shared is wrapped in std::ref.

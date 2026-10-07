@@ -12,6 +12,7 @@ namespace ClaFi::Graphics::Cpu
         dynamicColor
     };
 
+    // Which way a painted function's axes run across the pixels.
     export enum AxisDirection {
         xRightYUp,
         xRightYDown,

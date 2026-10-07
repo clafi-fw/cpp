@@ -589,3 +589,28 @@ A StepHistory of whole copies: each step holds the state it left, its name and w
 and the history holds the state before the oldest step, where undo bottoms out. Right for a subject
 small enough to copy per step and put on by one sync. A held run keeps one step - the first
 step's name and place, and the latest state - until a settled step closes it.
+
+## WithTextLayout
+
+A control that holds its own text layout instead of taking one from TextEngine's cache, for a
+text that changes.
+
+The cache is addressed by what a text says, which is what lets a hundred buttons saying one word
+share a single shaping. A text rewritten every frame - the value under a slider's thumb, a frame
+rate, the size of a rectangle being dragged - therefore misses on every paint, takes a fresh
+entry, and evicts the static layouts the rest of the form draws from: a drag of a few seconds
+empties the cache and leaves every label on the form to be shaped again. A host here shapes its
+own text in place instead - no hash, no comparison against another control's words, nothing
+evicted, and nothing of its own in there to be evicted from.
+
+Using it is the declaration. A control whose text changes often is one that derives from this,
+and a control whose text is written once and then stands does not. There is no property to state
+and nothing to keep in step.
+
+## Form
+
+The root control is a base rather than a member, so a form is called like the control it hosts -
+`form.createTopBar<DialogTitle>()` instead of `form.content().createTopBar<DialogTitle>()`.
+Bases initialize in declaration order, so FormBase is complete - window, canvas, context - before
+CreateParams is formed from it. Nothing about the window moves into Control, so the same class
+stays usable as a nested child.

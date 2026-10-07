@@ -43,17 +43,7 @@ namespace ClaFi
         T m_initialValue;
     };
 
-    // construct() below skips default construction rather than running it, so an element lands in
-    // whatever the last user of that allocation left there. Skipping the zeroing IS the point -
-    // Color has a default constructor that clears all four channels, and a bitmap's worth of
-    // that is what this exists to avoid - so the line is not whether the type initializes
-    // itself. It is that an element must be safe to destroy and to overwrite having never been
-    // constructed, which is what trivially copyable states: a trivial destructor, and copy and
-    // assignment that read no invariant. A string, a vector or a unique_ptr would be destroyed
-    // through a garbage pointer.
-    //
-    // The caller still owes the other half: every element the buffer reports must be written
-    // before it is read.
+    // An allocator whose construct() skips default construction. See UI-Types#noinitallocator
     export template <typename T>
         requires std::is_trivially_copyable_v<T>
     struct NoInitAllocator

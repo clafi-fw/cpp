@@ -1,3 +1,5 @@
+module;
+#include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Documents.List;
 
 import ClaFi.Documents.Folder;
@@ -163,8 +165,9 @@ namespace ClaFi::Documents
             HorizontalAlign::Fill,
             std::forward<Args>(args)...
         },
-        m_folder{ *Props::find<DocumentTileData>(args...)->folder },
-        m_path{ Props::find<DocumentTileData>(args...)->path }
+        // The folder the file stands in, which draws the mark and outlives the tile.
+        m_folder{ *REQUIRE_PROPERTY(DocumentTileData).folder },
+        m_path{ REQUIRE_PROPERTY(DocumentTileData).path } // the file the tile stands for
     {
         setPadding(k_documentTilePadding);
     }
@@ -186,7 +189,8 @@ namespace ClaFi::Documents
             PlaceHolderText{
                 InkGrade::Subtle,
                 L"No ",
-                Props::get<DocumentsFolder*>(nullptr, args...)->kind().nounPlural
+                // What the folder calls its documents, for the text an empty list shows.
+                REQUIRE_PROPERTY(DocumentsFolder*)->kind().nounPlural
             },
             // What a list of documents is for is picking one, so a stated selection mode is what
             // makes it more than that. Said ahead of the caller's own props, which are read after
@@ -195,9 +199,12 @@ namespace ClaFi::Documents
             DragMode::EasySelect,
             std::forward<Args>(args)...
         },
-        m_folder{ *Props::get<DocumentsFolder*>(nullptr, args...) },
-        m_editDocument{ Props::get<DocumentEditHandler>({}, args...) },
-        m_tileMenu{ Props::get<DocumentMenuHandler>({}, args...) }
+        // The folder the list shows, which outlives it.
+        m_folder{ *REQUIRE_PROPERTY(DocumentsFolder*) },
+        // The host's answer to a name typed over a tile, where it wants one.
+        m_editDocument{ READ_PROPERTY(DocumentEditHandler, nullptr) },
+        // The host's answer to a tile raising its menu, where it wants one.
+        m_tileMenu{ READ_PROPERTY(DocumentMenuHandler, nullptr) }
     {
         m_folder.listeners().insert(this);
         rebuild();

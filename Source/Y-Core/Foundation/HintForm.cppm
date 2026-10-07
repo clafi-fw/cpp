@@ -45,6 +45,7 @@ namespace ClaFi
         mutable TextFormat m_format{}; // as the control last answered - written by getText
     };
 
+    // The window a hint is shown in, owned by the window of the form the hint belongs to.
     export class HintForm : public Form<HintLabel>
     {
         friend Hint;

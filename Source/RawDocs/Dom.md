@@ -27,3 +27,15 @@ Section{ L"key", ...children..., OnEvent{ ... } }
 A Section with no key is a grouping in the source only. Its children land
 in the enclosing section and its handlers connect to it, so a helper can
 return a bundle of nodes without adding a level to the document.
+
+## Value
+
+    Value{ L"key", defaultValue, OnEvent{ ... }, OnEvent{ ... } }
+
+Any number of handlers, each naming its own event.
+
+## Iterators
+
+A Sequence's iterators are plain random-access iterators over the existing child nodes -
+dereferencing calls operator[], the same zero-copy path. Nothing here ever constructs or clones
+an item value; a range-for over a Sequence<Section> visits the live child Sections directly.

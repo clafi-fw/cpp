@@ -23,6 +23,7 @@ namespace ClaFi::Controls
         explicit SysMenuButton(const CreateParams&, Args&&...);
     };
 
+    // The title bar's button that minimizes the window.
     export class MinimizeButton : public SysMenuButton
     {
     public:
@@ -32,6 +33,7 @@ namespace ClaFi::Controls
         void nestedClick(ClickEvent&) override;
     };
 
+    // The title bar's button that maximizes the window, and restores it.
     export class MaximizeButton : public SysMenuButton
     {
     public:
@@ -42,6 +44,7 @@ namespace ClaFi::Controls
         void nestedClick(ClickEvent&) override;
     };
 
+    // The title bar's button that closes the window.
     export class CloseButton : public SysMenuButton
     {
     public:

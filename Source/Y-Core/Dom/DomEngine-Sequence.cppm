@@ -80,10 +80,7 @@ namespace ClaFi::Dom
     public:
         using ChildNodeType = dom_node_t<ItemValueT>;
 
-        // Plain random-access iterators over the existing child nodes —
-        // dereferencing calls operator[] above, the same zero-copy path.
-        // Nothing here ever constructs or clones an ItemValueT; a range-for
-        // over a Sequence<Section> visits the live child Sections directly.
+        // Random-access iterators over the live child nodes, cloning nothing. See Dom#iterators
         class const_iterator
         {
         public:

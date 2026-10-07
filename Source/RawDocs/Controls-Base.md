@@ -126,3 +126,12 @@ An item carrying both a mark and a shortcut key writes the mark first and the ke
 end. Only one flex space may open a line - two would split the slack between them and strand
 both in the middle - so the key takes a plain space of the same width when the mark has already
 opened it.
+
+## WithBody
+
+Names the type of a host's body slot and builds that body from its own props bag. The body stays
+a distinct child - the host positions, clips and hides it independently - so this puts a static
+type over the slot rather than folding the two into one control. That is what separates it from
+Form<ControlClass>, where the content is the whole of the client area and the form is not itself
+a node in the control tree. Each props bag routes by type, so a bag must not carry the same prop
+type twice.

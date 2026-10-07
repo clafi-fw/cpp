@@ -1,3 +1,5 @@
+module;
+#include "../Y-Core/System/EventBindings.h"
 export module ClaFi.App.ThemesList;
 
 import ClaFi.App.Themes;
@@ -153,8 +155,10 @@ namespace ClaFi
     ThemeTile::ThemeTile(const CreateParams& params, Args&&... args)
         :
         DocumentTile{ params, std::forward<Args>(args)... },
-        m_linkedTheme{ *Props::find<ThemeTileData>(args...)->theme },
-        m_userTheme{ Props::find<ThemeTileData>(args...)->userTheme }
+        // The theme the tile stands for, which outlives it.
+        m_linkedTheme{ *REQUIRE_PROPERTY(ThemeTileData).theme },
+        // The file that theme came from, and nullptr for a built-in.
+        m_userTheme{ REQUIRE_PROPERTY(ThemeTileData).userTheme }
     {
     }
 
@@ -178,8 +182,10 @@ namespace ClaFi
         // The application's own manager: a themes list is built over nothing else, whatever
         // folder prop a host hands its tiles.
         m_themes{ appThemes() },
-        m_editTheme{ Props::get<DocumentEditHandler>({}, args...) },
-        m_tileMenu{ Props::get<DocumentMenuHandler>({}, args...) }
+        // The host's answer to a name typed over a tile, where it wants one.
+        m_editTheme{ READ_PROPERTY(DocumentEditHandler, nullptr) },
+        // The host's answer to a tile raising its menu, where it wants one.
+        m_tileMenu{ READ_PROPERTY(DocumentMenuHandler, nullptr) }
     {
         m_themes.listeners().insert(this);
 

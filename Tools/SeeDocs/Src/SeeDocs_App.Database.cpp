@@ -558,6 +558,8 @@ namespace SeeDocs_App
                 return L"action";
             case PropertyForm::Read:
                 return L"read";
+            case PropertyForm::Required:
+                return L"required";
         }
         return {};
     }

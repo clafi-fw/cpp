@@ -296,34 +296,7 @@ namespace ClaFi::Controls
         inline static bool s_editorOnScreen{ false };
     };
 
-    /// @brief Gives a control's OWN TEXT an in-place editor, and the gestures that open one.
-    ///
-    ///     class ThemeButton : public WithInPlaceEdit<Button> { ... };
-    ///     tile.onAcceptEdit([](AcceptEditEvent& event) { ... });
-    ///
-    /// @note All the host supplies is somewhere for the value to go. The geometry is read off
-    /// the host, because a control's text is laid out inside its own bounds: the rect that says
-    /// where the text is says how wide it wraps as well, so the editor covers it and wraps the
-    /// same way without being told either.
-    ///
-    /// @note The gestures are F2, and A CLICK ON THE TEXT OF A CONTROL THE USER IS ALREADY ON.
-    /// The click that picks a control never edits it, or a control could never be picked
-    /// without editing it, and neither does a click on which a control above refuses the editor -
-    /// see Control::mayDropPopupImplicitly. The trailing click of a double click does not edit
-    /// either, unless the editor was refused on the first one: the second is then an ordinary
-    /// click.
-    ///
-    /// @note The host also answers StdActions::rename, so a menu item or a toolbar button
-    /// presenting that command renames it with nothing written by the application.
-    ///
-    /// @note A host whose editorMode answers ReadOnly gets a READER instead: the same box
-    /// over the same text, selected whole and refusing every change, which is how a caption is
-    /// copied out of a control that only shows it. A reader needs no sink and claims no rename.
-    ///
-    /// @note A host that answers editorSuggestions gets a list under the box of the values whose
-    /// names begin with what is typed - a combo box answers its items - and F4 or Alt+Down lists
-    /// them all. Picking one, with Return or a click, puts its name in the box and offers it in
-    /// the same press.
+    /// A control's own text given an in-place editor, and the gestures that open one. See Controls
     export template <IsControl HostClass>
     class WithInPlaceEdit : public HostClass
     {

@@ -49,6 +49,24 @@ namespace ClaFi::Props
     template <typename T, typename... Args>
         concept contains_type = (std::is_same_v<T, std::decay_t<Args>> || ...);
 
+    // The property the pack has to carry - a dependency with no default, such as the folder a
+    // list is built over. A pack that carries none does not compile: the requirement is settled
+    // where the control is built, not where the missing pointer is read. Copies out of the pack
+    // like get, so a pack can be read more than once.
+    export template <typename T, typename... Args>
+        inline auto require(Args&&... args) -> T
+    {
+        static_assert(contains_type<T, Args...>,
+            "the pack carries no property of the required type");
+        std::optional<T> result;
+        auto extract = [&](auto&& arg) {
+            if constexpr (std::is_same_v<T, std::decay_t<decltype(arg)>>)
+                result = arg;
+            };
+        (extract(std::forward<Args>(args)), ...);
+        return *result;
+    }
+
     template <typename T, typename... Args, typename Func>
     inline void ifMissing(Func&& func, Args&&... args)
     {

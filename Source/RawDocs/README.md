@@ -20,5 +20,5 @@ exist, and a reference to a section the note does not carry.
 
 `Controls`, `Controls-Base`, `Grids`, `Browser`, `Item-Containers` and `Selection-Model` for the
 controls; `Control-Foundation`, `Context`, `Graphics-Types`, `TextEngine-Types`, `Syntax`,
-`Transfer`, `AppTheme`, `Dom`, `UI-Types` for the core; `Platform`, `Icons`, `Application`,
+`Transfer`, `AppTheme`, `Dom`, `Dt`, `Events`, `UI-Types` for the core; `Platform`, `Icons`, `Application`,
 `Diagnostic`, `StdActions` for the rest.

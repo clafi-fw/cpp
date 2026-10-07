@@ -960,3 +960,32 @@ left evenly.
 A lane is only as long as its stack was granted, so one in a stack that wraps, or in a stack
 nothing stretched, has nothing to take - and the size it was given is the gap that is left there.
 See `Control::fillsLane`.
+
+## WithInPlaceEdit
+
+Gives a control's own text an in-place editor, and the gestures that open one:
+
+    class ThemeButton : public WithInPlaceEdit<Button> { ... };
+    tile.onAcceptEdit([](AcceptEditEvent& event) { ... });
+
+All the host supplies is somewhere for the value to go. The geometry is read off the host,
+because a control's text is laid out inside its own bounds: the rect that says where the text is
+says how wide it wraps as well, so the editor covers it and wraps the same way without being told
+either.
+
+The gestures are F2, and a click on the text of a control the user is already on. The click that
+picks a control never edits it, or a control could never be picked without editing it, and
+neither does a click on which a control above refuses the editor - see
+Control::mayDropPopupImplicitly. The trailing click of a double click does not edit either,
+unless the editor was refused on the first one: the second is then an ordinary click.
+
+The host also answers StdActions::rename, so a menu item or a toolbar button presenting that
+command renames it with nothing written by the application.
+
+A host whose editorMode answers ReadOnly gets a reader instead: the same box over the same text,
+selected whole and refusing every change, which is how a caption is copied out of a control that
+only shows it. A reader needs no sink and claims no rename.
+
+A host that answers editorSuggestions gets a list under the box of the values whose names begin
+with what is typed - a combo box answers its items - and F4 or Alt+Down lists them all. Picking
+one, with Return or a click, puts its name in the box and offers it in the same press.

@@ -159,3 +159,10 @@ owner, and a package another application's copy replaced has already been releas
 Wayland destroys the standing source and clears the display's change handler, which named
 this object. The display it does that on is the platform's, reached by casting the name the
 clipboard holds the platform by to the Wayland layer's IDisplayAccess - see Platform.
+
+## Format::Kind
+
+Which vocabulary names a format: the framework's own closed set, or anything else. Both kinds
+have names; only the standard set has one this layer can state, every platform spelling the
+others for itself. The members stand in the same order as the identity alternatives, which is
+what lets kind() read off the index.
