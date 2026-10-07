@@ -16,7 +16,7 @@ namespace ClaFi::Controls::Grids
     void HighlightChannel::forgetRow(AnimationController* animator, const Control* value)
     {
         for (CellHighlight& cell : m_ring)
-            if (cell.row == m_row)
+            if (cell.row == value)
             {
                 if (animator)
                     animator->stop(&cell);
