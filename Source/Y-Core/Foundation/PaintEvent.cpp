@@ -29,7 +29,9 @@ namespace ClaFi
     // the distance the header has to be carried before the shadow is at full strength, so one
     // number says how deep it is and how long it takes to arrive.
     static constexpr float k_heldShadowReach = 8.0f;
-    // The shadow's opacity at full strength. Its colour is the theme's, off the shadow channel.
+    // The shadow's opacity at full strength. Its colour is the muted ink of the control holding
+    // the header - dark on a light surface, light on a dark one, where a black shadow is lost
+    // and a backlight is what sets the header apart.
     static constexpr float k_heldShadowOpacity = 0.28f;
 
     // A channel takes the hue it follows as far as nothing has named one of its own.
@@ -486,7 +488,7 @@ namespace ClaFi
 
     // The shadow first and the backdrop over it: a shadow is measured from the shape's edge and
     // reaches inward as much as out, and the backdrop is what covers the half that falls inside.
-    // Both are this control's, the one holding the header: its surface and its shadow channel.
+    // Both are this control's, the one holding the header: its surface and its muted ink.
     void PaintEvent::paintHeldBackdrop(const RoundedRectangleParts& silhouette, float travel)
     {
         const float reach = scaleF(k_heldShadowReach);
@@ -494,7 +496,7 @@ namespace ClaFi
         {
             const float strength = std::min(travel / reach, 1.0f);
             const Graphics::ShadowParams shadow = {
-                .color = m_shadowHsl.toColor().withOpacity(k_heldShadowOpacity * strength),
+                .color = textRgb(InkGrade::Muted).withOpacity(k_heldShadowOpacity * strength),
                 .blur = reach,
                 .falloff = Graphics::GlowFalloff::Smooth
             };
