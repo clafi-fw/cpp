@@ -3,6 +3,8 @@ module;
 
 module ClaFi.Core.TextEngine.Layout;
 
+import ClaFi.Diagnostic.Log;
+import ClaFi.Diagnostic.Options;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.BakedText;
@@ -1419,6 +1421,21 @@ namespace ClaFi
         m_shapedWidth = maxW;
         m_shapedHeight = currentY;
         m_builtBoundsX = breakAt;
+        // A wrapping text broken at its box in the paint phase is one the calculate pass measured
+        // and the paint could not find - unless it carries flex space, which shapes differently
+        // in the two phases, or is broken at a stated width, which an over-text hint is.
+        if constexpr (Diagnostic::Options::logTextLayout())
+        {
+            if (m_eventPhase == EventPhase::Paint && m_wrap && breakAt != k_maxFloat
+                && m_breakWidth <= 0.0f && !m_text->hasFlexSpace())
+            {
+                diagnosticLog(std::format(
+                    L"shaped at paint \"{}\"  built {:.4f}  shaped {:.4f} x {:.4f}  lines {}"
+                    L"  scale {:.3f}",
+                    fadeLogStem(), breakAt, maxW, currentY, m_lines.size(),
+                    static_cast<float>(m_scaleFactor)));
+            }
+        }
         // Placed by ensurePlacement, which looks at every paragraph once after a shaping.
         m_placedWidth = -1.0f;
         m_layoutValid = true;
@@ -1428,6 +1445,18 @@ namespace ClaFi
     // What the shaping comes to inside the box it was given: the line the text is cut off at, the
     // lines that fade, and the size the whole of it came to. Read off the lines rather than shaped
     // from, so a box of another height costs this walk and no glyph.
+    // What a log line names its text by. See Diagnostic::Options::logTextLayout
+    std::wstring_view TextLayout::fadeLogStem() const
+    {
+        constexpr std::size_t k_stemLength = 24;
+        return std::wstring_view{ m_text->plainText() }.substr(0, k_stemLength);
+    }
+
+    std::wstring_view TextLayout::phaseLogName() const
+    {
+        return m_eventPhase == EventPhase::Paint ? L"paint" : L"calculate";
+    }
+
     void TextLayout::ensureVerticalFit()
     {
         if (m_verticalValid)
@@ -1485,6 +1514,18 @@ namespace ClaFi
                             m_globalCollapseBaseline = absoluteBaseline;
                         }
                         m_globalBaselinesToFade.push_back(m_globalCollapseBaseline);
+                        if constexpr (Diagnostic::Options::logTextLayout())
+                        {
+                            diagnosticLog(std::format(
+                                L"fade height \"{}\"  bottom {:.4f} > box {:.4f}  by {:.4f}"
+                                L"  line {:.4f} x {:.4f}  box {:.4f} x {:.4f}"
+                                L"  shaped {:.4f} x {:.4f}  built {:.1f} in {}  scale {:.3f}",
+                                fadeLogStem(), absoluteBottom, constraintsY,
+                                absoluteBottom - constraintsY, line.width, line.height,
+                                m_bounds.x, m_bounds.y, m_shapedWidth, m_shapedHeight,
+                                m_builtBoundsX, phaseLogName(),
+                                static_cast<float>(m_scaleFactor)));
+                        }
                     }
                     else
                     {
@@ -1493,6 +1534,17 @@ namespace ClaFi
                         if (line.isTrimmed || line.width > availableW + k_fitTolerance)
                         {
                             m_globalBaselinesToFade.push_back(absoluteBaseline);
+                            if constexpr (Diagnostic::Options::logTextLayout())
+                            {
+                                diagnosticLog(std::format(
+                                    L"fade width \"{}\"  trimmed {}  width {:.4f} > room {:.4f}"
+                                    L"  by {:.4f}  left {:.4f}  box {:.4f} x {:.4f}"
+                                    L"  shaped {:.4f} x {:.4f}  built {:.1f} in {}  scale {:.3f}",
+                                    fadeLogStem(), line.isTrimmed, line.width, availableW,
+                                    line.width - availableW, p.bounds.left, m_bounds.x,
+                                    m_bounds.y, m_shapedWidth, m_shapedHeight, m_builtBoundsX,
+                                    phaseLogName(), static_cast<float>(m_scaleFactor)));
+                            }
                         }
                     }
                 }

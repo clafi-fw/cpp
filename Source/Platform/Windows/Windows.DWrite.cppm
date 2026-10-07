@@ -28,6 +28,11 @@ namespace ClaFi::PlatformImplementation::Windows
 {
     using Microsoft::WRL::ComPtr;
 
+    // A line wider than the width it is broken at by less than this is not broken there - the
+    // width a paint asks for is a measured one read back out of a rect, a ULP short, and
+    // DirectWrite compares outright. The HarfBuzz breaker carries the same number.
+    constexpr float k_fitEpsilon = 0.01f;
+
     // Concrete COM Implementation of our run effect [CP]
     class DWriteRunEffect : public IdWriteRunEffect
     {
@@ -491,7 +496,7 @@ namespace ClaFi::PlatformImplementation::Windows
             params.text.data(),
             static_cast<UINT32>(params.text.length()),
             baseFormat.Get(),
-            params.availableWidth,
+            params.availableWidth + k_fitEpsilon,
             999999.0f,
             &m_layout
         ));
@@ -595,7 +600,7 @@ namespace ClaFi::PlatformImplementation::Windows
     void DWriteLayout::setMaxWidth(float availableWidth)
     {
         m_availableWidth = availableWidth;
-        checkHr(m_layout->SetMaxWidth(availableWidth));
+        checkHr(m_layout->SetMaxWidth(availableWidth + k_fitEpsilon));
         alignLines();
 
         // The box the lines are placed in is the box a justified line is stretched to, so what the

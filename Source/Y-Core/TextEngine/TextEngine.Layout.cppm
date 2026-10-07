@@ -307,6 +307,8 @@ namespace ClaFi
         // Where those lines stand in the box: the collapse, the fades, and the size the text came
         // to. Runs on its own when only the height has moved.
         void ensureVerticalFit();
+        [[nodiscard]] std::wstring_view fadeLogStem() const; // the text a log line names
+        [[nodiscard]] std::wstring_view phaseLogName() const; // the phase a log line names
         // Places every paragraph in the width placementWidth answers. Breaks nothing again.
         void ensurePlacement();
         // Tells a justified paragraph the width its lines are stretched to.

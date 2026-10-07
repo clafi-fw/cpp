@@ -17,7 +17,7 @@ namespace ClaFi::Diagnostic::Options
     export constexpr bool enabled{ false };
 #else
     /// @brief The global diagnostic switch: turns everything off
-    export constexpr bool enabled{ false };
+    export constexpr bool enabled{ true };
 #endif
 
     // Each option as stated here, read through the function of the same name below.
@@ -29,6 +29,7 @@ namespace ClaFi::Diagnostic::Options
         constexpr bool logScrollIntoView{ false };
         constexpr bool logFormPlacement{ false };
         constexpr bool highlightTextAreas{ false };
+        constexpr bool logTextLayout{ true };
     }
 
     /// @brief How a failed platform API call is handled - see ApiErrors. Anything but Ignore
@@ -83,5 +84,17 @@ namespace ClaFi::Diagnostic::Options
     export [[nodiscard]] constexpr bool highlightTextAreas()
     {
         return enabled && Stated::highlightTextAreas;
+    }
+
+    /// @brief Two things a text layout does that a paint should not have to go to the Output
+    /// page. A wrapping text SHAPED IN THE PAINT PHASE at a finite width: the calculate pass
+    /// measured it, and the paint could not find that layout. A line the fit test FADES: the
+    /// test that failed with both sides of it - the line's bottom against the box's height, or
+    /// its width against the room the box leaves it - and the box, the shaped size and the
+    /// width the lines were broken at. A text faded in a box of its own measured size shows
+    /// which side moved, and by how much.
+    export [[nodiscard]] constexpr bool logTextLayout()
+    {
+        return enabled && Stated::logTextLayout;
     }
 }
