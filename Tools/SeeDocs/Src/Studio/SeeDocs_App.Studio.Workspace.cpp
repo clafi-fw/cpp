@@ -211,7 +211,8 @@ namespace SeeDocs_App
         m_surface = std::move(surface);
         m_notes.emplace(project.notesFolder());
         m_project = std::move(project);
-        m_view.bind(*m_surface, *m_notes);
+        if (!m_view.bind(*m_surface, *m_notes))
+            showEmptyProject();
         remember(*m_project);
         writeTitles();
         return true;
@@ -302,6 +303,18 @@ namespace SeeDocs_App
         m_surface.reset();
         m_notes.reset();
         writeTitles();
+    }
+
+    // The project is open all the same, named in the titles and remembered; only its page is words.
+    void Workspace::showEmptyProject()
+    {
+        Text text;
+        text << TextStyleId::Title << m_project->name << PopTextStyle{};
+        text << k_endLine << k_endLine;
+        text << L"There is nothing to document: no source in the folder exports a type."
+            << k_endLine << L"The folder read is:";
+        writeFolder(text, m_project->folder);
+        m_view.showText(text);
     }
 
     void Workspace::writeTitles()

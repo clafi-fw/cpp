@@ -34,8 +34,9 @@ namespace SeeDocs_App
         explicit SurfaceView(const CreateParams&, Args&&...);
     public:
         // Builds the tree over the surface, in place of whatever stood there, and picks its first
-        // chapter, open. Both are held by reference for as long as they are shown.
-        void bind(const Surface&, Notes&);
+        // chapter, open. Both are held by reference for as long as they are shown. False where the
+        // surface lists nothing: the tree stands empty and the page is the caller's to fill.
+        [[nodiscard]] bool bind(const Surface&, Notes&);
         // Shows the page of the type or module named and picks it in the tree, on the next tick -
         // the request may come from the page about to go. False for a name the surface does not
         // carry.

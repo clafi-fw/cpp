@@ -22,7 +22,7 @@ namespace SeeDocs_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    void SurfaceView::bind(const Surface& surface, Notes& notes)
+    bool SurfaceView::bind(const Surface& surface, Notes& notes)
     {
         clearTree();
         m_surface = &surface;
@@ -30,10 +30,11 @@ namespace SeeDocs_App
         m_contents = contentsOf(surface);
         buildTree();
         if (m_entries.empty())
-            return;
+            return false;
         ExpanderHeader& first = m_entries.front().node->header();
         first.setExpanded(true);
         m_tree.setCurrentItem(first);
+        return true;
     }
 
     bool SurfaceView::showNamed(const std::wstring_view name)

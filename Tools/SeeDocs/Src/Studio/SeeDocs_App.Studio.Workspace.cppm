@@ -68,6 +68,8 @@ namespace SeeDocs_App
         void storeRecent(const Names&);
         // Shows the studio's own words in place of a project, the reason first where there is one.
         void showNoProject(const Text& reason);
+        // Shows the studio's own words for the project open, there being nothing to list in it.
+        void showEmptyProject();
         void writeTitles();
     private:
         ApplicationBase& m_application;
