@@ -140,14 +140,14 @@ namespace SeeDocs_App
     }
 
     // A row leads with the mark of its kind. A control's row is its name alone; any other
-    // type's says what kind it is.
+    // type's says what kind it is, at the row's far end.
     Text SurfaceView::rowText(const Type& type)
     {
         Text text{ rowIcon(rowIconOf(type)), Space{ k_iconGap }, type.name };
         if (!type.isControl)
         {
-            text << L"  " << TextStyleId::SubBody << InkGrade::Muted << kindWord(type.kind)
-                << PopColor{} << PopTextStyle{};
+            text << FlexSpace{ k_kindGap } << TextStyleId::SubBody << InkGrade::Muted
+                << kindWord(type.kind) << PopColor{} << PopTextStyle{};
         }
         return text;
     }

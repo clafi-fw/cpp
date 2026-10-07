@@ -62,6 +62,7 @@ namespace SeeDocs_App
         static constexpr float k_treeWidth = 300.0f;
         static constexpr float k_pagePadding = 24.0f;
         static constexpr float k_iconGap = 5.0f; // between a row's icon and its text
+        static constexpr float k_kindGap = 12.0f; // the least room before a row's kind word
         static constexpr std::size_t k_root = std::numeric_limits<std::size_t>::max();
 
         const Surface* m_surface{ nullptr };
