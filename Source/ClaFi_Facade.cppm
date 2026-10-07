@@ -59,6 +59,7 @@ export import ClaFi.Icons.SelectAllIcon;
 export import ClaFi.Icons.UndoIcon;
 export import ClaFi.Icons.RedoIcon;
 export import ClaFi.Icons.OpenInExplorerIcon;
+export import ClaFi.Icons.FolderIcon;
 export import ClaFi.Icons.SunIcon;
 export import ClaFi.Icons.MoonIcon;
 export import ClaFi.Icons.HueIcon;

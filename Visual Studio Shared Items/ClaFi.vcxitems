@@ -405,6 +405,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\ErrorIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\ExpanderMark.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\Eye.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\FolderIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\GaugeIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\GearIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\Gears.cppm" />

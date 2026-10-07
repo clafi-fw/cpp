@@ -1,5 +1,6 @@
 export module ClaFi.Icons.OpenInExplorerIcon;
 
+import ClaFi.Icons.FolderIcon;
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
@@ -20,9 +21,6 @@ namespace ClaFi::Icons::OpenInExplorerIcon
     //-------------------------------------------------------------------------
 
 
-    // How far back each of the folder's corners is cut, as a fraction of the icon.
-    constexpr float k_cornerRadius = 0.09f;
-
     // The folder is what is being opened, so it carries the framework's yellow. The arrow is the
     // opening of it, and takes the accent, which is the colour every other mark that means the
     // user is acting on something is drawn in.
@@ -42,22 +40,9 @@ namespace ClaFi::Icons::OpenInExplorerIcon
         Canvas& canvas = event.canvas();
         PixelPath path;
 
-        // The folder: a tab across the top left, a slant down to the body, and the body. Its right
-        // edge stops short of the box because the arrow crosses that corner, and a folder taking
-        // the full width would leave the arrow nowhere to leave from.
-        //
-        // The tab stands a sixth of the icon proud of the body and the slant is long enough to be
-        // read as one: a shallower step reads as a nick in the top edge rather than as a tab, and
-        // it is the first thing to close up as the icon shrinks.
-        const std::array<FloatPoint, 6ull> folder{
-            FloatPoint{ 0.0f, size * 0.08f },
-            FloatPoint{ size * 0.36f, size * 0.08f },
-            FloatPoint{ size * 0.48f, size * 0.24f },
-            FloatPoint{ size * 0.90f, size * 0.24f },
-            FloatPoint{ size * 0.90f, size * 0.95f },
-            FloatPoint{ 0.0f, size * 0.95f }
-        };
-        path.addRoundedPolygon(folder, size * k_cornerRadius);
+        // The folder's right edge stops short of the box because the arrow crosses that corner,
+        // and a folder taking the full width would leave the arrow nowhere to leave from.
+        FolderIcon::addOutline(path, { 0.0f, size * 0.08f, size * 0.90f, size * 0.95f });
 
         canvas.drawPath(
             path,

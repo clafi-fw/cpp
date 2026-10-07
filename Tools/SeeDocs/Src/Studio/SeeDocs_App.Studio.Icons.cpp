@@ -2,6 +2,7 @@ module SeeDocs_App.Studio.Icons;
 
 import SeeDocs_App.Surface;
 
+import ClaFi.Icons.FolderIcon;
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
@@ -85,13 +86,7 @@ namespace SeeDocs_App
         void paintChapter(const Drawing& drawing)
         {
             PixelPath folder;
-            folder.moveTo(1.5f, 3.5f);
-            folder.lineTo(5.3f, 3.5f);
-            folder.lineTo(6.8f, 5.0f);
-            folder.lineTo(12.5f, 5.0f);
-            folder.lineTo(12.5f, 11.5f);
-            folder.lineTo(1.5f, 11.5f);
-            folder.close();
+            Icons::FolderIcon::addOutline(folder, { 1.5f, 3.5f, 12.5f, 11.5f });
             drawing.stroke(folder, drawing.inks.body);
         }
 

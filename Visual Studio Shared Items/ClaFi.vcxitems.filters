@@ -463,6 +463,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\Eye.cppm">
       <Filter>Icons</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\FolderIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\GaugeIcon.cppm">
       <Filter>Icons</Filter>
     </ClCompile>
