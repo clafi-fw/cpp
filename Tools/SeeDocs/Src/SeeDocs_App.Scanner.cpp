@@ -18,6 +18,7 @@ namespace SeeDocs_App
     {
         constexpr std::wstring_view k_interfaceExtension = L".cppm";
         constexpr std::wstring_view k_implementationExtension = L".cpp";
+        constexpr wchar_t k_hiddenPrefix = L'.';   // a folder so named is not read
         constexpr std::wstring_view k_scope = L"::";
         constexpr std::wstring_view k_lineComment = L"//";
         constexpr std::wstring_view k_brief = L"@brief ";
@@ -1904,23 +1905,33 @@ namespace SeeDocs_App
         }
     }
 
+    // A folder whose name starts with a dot is left out with everything under it - .seedocs, .git,
+    // .vs - which is what the recursion has to be told before the step that would enter it.
     Surface scanTree(const std::filesystem::path& root)
     {
         Surface surface;
-        const std::filesystem::path source = root / k_sourceFolder;
         std::vector<std::filesystem::path> interfaces;
         std::vector<std::filesystem::path> implementations;
         std::error_code error;
-        for (const std::filesystem::directory_entry& entry
-            : std::filesystem::recursive_directory_iterator{ source, error })
+        std::filesystem::recursive_directory_iterator walk{ root, error };
+        const std::filesystem::recursive_directory_iterator end{};
+        while (walk != end)
         {
-            if (!entry.is_regular_file())
-                continue;
-            const std::wstring extension = entry.path().extension().wstring();
-            if (extension == k_interfaceExtension)
-                interfaces.push_back(entry.path());
-            else if (extension == k_implementationExtension)
-                implementations.push_back(entry.path());
+            const std::filesystem::directory_entry& entry = *walk;
+            if (entry.is_directory())
+            {
+                if (entry.path().filename().wstring().starts_with(k_hiddenPrefix))
+                    walk.disable_recursion_pending();
+            }
+            else if (entry.is_regular_file())
+            {
+                const std::wstring extension = entry.path().extension().wstring();
+                if (extension == k_interfaceExtension)
+                    interfaces.push_back(entry.path());
+                else if (extension == k_implementationExtension)
+                    implementations.push_back(entry.path());
+            }
+            ++walk;
         }
         std::ranges::sort(interfaces);
         std::ranges::sort(implementations);
@@ -1942,7 +1953,7 @@ namespace SeeDocs_App
         record.path = file;
         record.relative = posixRelative(file, root);
         const std::size_t index = surface.addFile(std::move(record));
-        std::wstring category = posixRelative(file.parent_path(), root / k_sourceFolder);
+        std::wstring category = posixRelative(file.parent_path(), root);
         if (category == L".")
             category.clear();
         const SourceText source{ *text };

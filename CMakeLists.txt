@@ -481,31 +481,39 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     target_link_libraries(WhatsClip PRIVATE WhatsClip_Lib)
     target_compile_options(WhatsClip PRIVATE ${clafi_compile_options})
 
-    # SEEDOCS STUDIO, the window over the scanner's database: the surface as a tree, and the page
-    # of whatever is picked, as the documentation it is to become. It shares the Surface, Database,
-    # Notes and Pages modules with the SeeDocs scanner at the end of this file, and reads the
-    # Tools/SeeDocs/Surface.cfg that scanner writes.
+    # SEEDOCS STUDIO, the window over a project's database: the surface as a tree, and the page
+    # of whatever is picked, as the documentation it is to become. It shares the Surface, Scanner,
+    # Database, Project, Notes and Pages modules with the SeeDocs scanner at the end of this file,
+    # and scans a tree itself where its project has no database yet.
     set(seedocs_studio_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/Src")
     add_executable(SeeDocsStudio
         "${seedocs_studio_dir}/Studio/SeeDocsStudio_Wayland.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Icons.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Main.cpp"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.OpenPage.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.PageText.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.PageView.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.SurfaceView.cpp"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Workspace.cpp"
         "${seedocs_studio_dir}/SeeDocs_App.Database.cpp"
         "${seedocs_studio_dir}/SeeDocs_App.Notes.cpp"
         "${seedocs_studio_dir}/SeeDocs_App.Pages.cpp"
+        "${seedocs_studio_dir}/SeeDocs_App.Project.cpp"
+        "${seedocs_studio_dir}/SeeDocs_App.Scanner.cpp"
         "${seedocs_studio_dir}/SeeDocs_App.Surface.cpp")
     target_sources(SeeDocsStudio PRIVATE FILE_SET CXX_MODULES FILES
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Icons.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Main.cppm"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.OpenPage.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.PageText.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.PageView.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.SurfaceView.cppm"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Workspace.cppm"
         "${seedocs_studio_dir}/SeeDocs_App.Database.cppm"
         "${seedocs_studio_dir}/SeeDocs_App.Notes.cppm"
         "${seedocs_studio_dir}/SeeDocs_App.Pages.cppm"
+        "${seedocs_studio_dir}/SeeDocs_App.Project.cppm"
+        "${seedocs_studio_dir}/SeeDocs_App.Scanner.cppm"
         "${seedocs_studio_dir}/SeeDocs_App.Surface.cppm")
     target_link_libraries(SeeDocsStudio PRIVATE ClaFi)
     target_compile_options(SeeDocsStudio PRIVATE ${clafi_compile_options})
@@ -595,10 +603,10 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     add_dependencies(PascalScripts PascalScripts_Language)
 endif()
 
-# SEEDOCS, the scanner that reads the design surface out of Source/ into Tools/SeeDocs/Surface.cfg
-# and holds the tree to the declaration routine. It draws on the Dom, the Syntax lexer and the
-# text file reader alone, none of which reaches the platform layer, so it is built with or
-# without one and a `check` runs wherever the tree is checked out.
+# SEEDOCS, the scanner that reads the design surface out of a tree of sources into the tree's own
+# .seedocs/Surface.cfg and holds the tree to the declaration routine. It draws on the Dom, the
+# Syntax lexer and the text file reader alone, none of which reaches the platform layer, so it is
+# built with or without one and a `check` runs wherever the tree is checked out.
 set(seedocs_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/Src")
 add_executable(SeeDocs
     "${seedocs_dir}/SeeDocs_Linux.cpp"
@@ -606,6 +614,7 @@ add_executable(SeeDocs
     "${seedocs_dir}/SeeDocs_App.Database.cpp"
     "${seedocs_dir}/SeeDocs_App.Main.cpp"
     "${seedocs_dir}/SeeDocs_App.Notes.cpp"
+    "${seedocs_dir}/SeeDocs_App.Project.cpp"
     "${seedocs_dir}/SeeDocs_App.Scanner.cpp"
     "${seedocs_dir}/SeeDocs_App.Surface.cpp")
 target_sources(SeeDocs PRIVATE FILE_SET CXX_MODULES FILES
@@ -613,6 +622,7 @@ target_sources(SeeDocs PRIVATE FILE_SET CXX_MODULES FILES
     "${seedocs_dir}/SeeDocs_App.Database.cppm"
     "${seedocs_dir}/SeeDocs_App.Main.cppm"
     "${seedocs_dir}/SeeDocs_App.Notes.cppm"
+    "${seedocs_dir}/SeeDocs_App.Project.cppm"
     "${seedocs_dir}/SeeDocs_App.Scanner.cppm"
     "${seedocs_dir}/SeeDocs_App.Surface.cppm")
 target_link_libraries(SeeDocs PRIVATE ClaFi)

@@ -24,6 +24,7 @@ namespace SeeDocs_App
 
     void SurfaceView::bind(const Surface& surface, Notes& notes)
     {
+        clearTree();
         m_surface = &surface;
         m_notes = &notes;
         m_contents = contentsOf(surface);
@@ -47,7 +48,26 @@ namespace SeeDocs_App
 
     void SurfaceView::showText(const Text& text)
     {
+        clearTree();
+        m_surface = nullptr;
+        m_notes = nullptr;
+        m_contents.clear();
         m_page.showText(text);
+    }
+
+    // The current item is let go before any row is deleted, so the pick never names a dead row;
+    // a chapter's node takes its modules and their types down with it.
+    void SurfaceView::clearTree()
+    {
+        m_pending = k_root;
+        m_tree.setCurrentItem(nullptr);
+        for (const Entry& entry : m_entries)
+        {
+            if (entry.parent == k_root)
+                entry.node->deleteSelf();
+        }
+        m_entries.clear();
+        m_entryByName.clear();
     }
 
     void SurfaceView::showPending()

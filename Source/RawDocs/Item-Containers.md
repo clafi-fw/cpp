@@ -386,4 +386,6 @@ A `TabViewMode::ToolButton` strip joins nothing. The layout lays its padding out
 and no item keeps a gap from a line.
 
 A `TabbedBox` builds its strip with a padding and a spacing of its own for each mode.
-`StripPadding` and `StripSpacing` stand in place of them.
+`StripPadding` and `StripSpacing` stand in place of them, put on the strip by the box's
+constructor body: the strip is a reference member, built by its initializer before any prop
+can be bound, so the stated values go on after it stands rather than into its making.

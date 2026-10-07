@@ -116,6 +116,8 @@
     <ClCompile Include="Src\SeeDocs_App.Main.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Notes.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Notes.cppm" />
+    <ClCompile Include="Src\SeeDocs_App.Project.cpp" />
+    <ClCompile Include="Src\SeeDocs_App.Project.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Scanner.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Scanner.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cpp" />
@@ -129,4 +131,4 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-</Project>
+</Project>

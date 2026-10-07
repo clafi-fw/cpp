@@ -10,7 +10,7 @@ namespace SeeDocs_App
 {
     namespace
     {
-        // The folders under Source in the order a reader meets them; any other follows by name.
+        // The tree's folders in the order a reader meets them; any other follows by name.
         constexpr auto k_chapterOrder = std::to_array<std::wstring_view>({
             L"Controls",
             L"Controls/Y-Base",
@@ -42,7 +42,6 @@ namespace SeeDocs_App
 
         // The prefix a folder carries to sort last on disk, which a reader is not shown.
         constexpr std::wstring_view k_sortPrefix = L"Y-";
-        constexpr std::wstring_view k_sourceRoot = L"Source/";
         constexpr std::wstring_view k_noHint = L"no hint";
         constexpr std::wstring_view k_matchedByName =
             L"matched by name - the comment carries no See";
@@ -950,9 +949,7 @@ namespace SeeDocs_App
 
     std::wstring categoryOf(const std::wstring_view relativeFile)
     {
-        std::wstring_view path = relativeFile;
-        if (path.starts_with(k_sourceRoot))
-            path.remove_prefix(k_sourceRoot.size());
+        const std::wstring_view path = relativeFile;
         const std::size_t slash = path.rfind(L'/');
         if (slash == std::wstring_view::npos)
             return {};
@@ -963,7 +960,7 @@ namespace SeeDocs_App
     {
         Page page;
         page.title = chapter.name;
-        addFact(page, L"folder", { code(chapter.category), muted(L" under Source") });
+        addFact(page, L"folder", { code(chapter.category) });
 
         std::size_t controls = 0;
         std::size_t types = 0;

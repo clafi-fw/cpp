@@ -118,6 +118,20 @@ namespace ClaFi
         // page is the one likely to want the room, and it is not the page the menu opens on.
         pageControl().setPageSizing(PageSizing::WidestPage);
 
+        // THE STRIP READS TOP DOWN: an application's own pages, the commands, and at the foot the
+        // framework's two pages. The application is named where the eye goes first, one click
+        // reaches any of its pages, and a page is free to be a list where the Settings page is a
+        // column of small answers.
+        for (const AppPage& page : appPages())
+        {
+            OptionsPage& appPage = pageControl().add<OptionsPage>();
+            page.build(appPage);
+            // THE DOT STANDS IN FOR AN ICON THE PAGE DOES NOT STATE. A tab with an empty slot
+            // starts its caption where the others start their icon, so the strip reads as two
+            // columns that do not line up.
+            addPageTab(page.caption, appPage, Icons::DotMark::paint);
+        }
+
         if constexpr (Diagnostic::Options::enabled)
         {
             strip().add<ToolButton>(
@@ -149,23 +163,9 @@ namespace ClaFi
         strip().add<FlexSpacer>();
         // strip().add<Divider>(Thickness::Heavy, Padding{ 8.0f, 4.0f });
 
-        // The pages first, the commands under them. The strip takes a button beside its tabs
-        // the way a title bar's does.
+        // The strip takes a button beside its tabs the way a title bar's does.
         addPageTab(L"Information", pageControl().add<InformationPage>(), Icons::InformationIcon::paint);
         addPageTab(k_settingsPageCaption, pageControl().add<SettingsPage>(), Icons::GearIcon::paint);
-
-        // AN APPLICATION'S OWN PAGES STAND BESIDE SETTINGS, in the strip that is already there.
-        // One click reaches any of them, the application is named where the eye goes first, and
-        // a page is free to be a list where the Settings page is a column of small answers.
-        for (const AppPage& page : appPages())
-        {
-            OptionsPage& appPage = pageControl().add<OptionsPage>();
-            page.build(appPage);
-            // THE DOT STANDS IN FOR AN ICON THE PAGE DOES NOT STATE. A tab with an empty slot
-            // starts its caption where the others start their icon, so the strip reads as two
-            // columns that do not line up.
-            addPageTab(page.caption, appPage, Icons::DotMark::paint);
-        }
 
         openStoredPage();
     }

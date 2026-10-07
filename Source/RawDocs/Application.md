@@ -67,11 +67,11 @@ removes the folder and everything under it. Under `Share` no application name re
 ## AppMenu
 
 The application menu, under the AppButton of every application: a popup of the menu role holding
-a TabbedBox, its pages down the left column and its commands under them. Information and Settings
-stand at the foot of the strip, Information above, and an application's own pages follow them -
-see connectAppPage. Show diagnostic stands only where Diagnostic::Options::showForm is on; Exit
-names the application, spelled as its name is spelled, and closes the form the menu stands on,
-through its root form.
+a TabbedBox, its pages and commands down the left column. The strip reads top down: an
+application's own pages first - see connectAppPage - then the commands, and at the foot the
+framework's two pages, Information above Settings. Show diagnostic stands only where
+Diagnostic::Options::showForm is on; Exit names the application, spelled as its name is
+spelled, and closes the form the menu stands on, through its root form.
 
 THE MENU KEEPS THE WINDOW IT WAS PLACED IN. It is `AutoFit::No`: a window placed again around
 its pages would move under the pointer, a section opened or closed on the Settings page taking
@@ -333,11 +333,11 @@ back:
 
 ## connectAppPage
 
-Adds a page of the application's own beside Settings, by caption, once per application - and more
-than once for more than one page, in the order asked. An application's pages join the strip the
-menu already has rather than a second tab control inside Settings: one click reaches any of them,
-the application is named where the eye goes first, and a page is free to be a list where the
-Settings page is a column of small answers.
+Adds a page of the application's own at the top of the strip, by caption, once per
+application - and more than once for more than one page, in the order asked. An application's
+pages join the strip the menu already has rather than a second tab control inside Settings: one
+click reaches any of them, the application is named where the eye goes first, and a page is free
+to be a list where the Settings page is a column of small answers.
 
 Nothing calls it for an application, and one that never does gets Settings alone.
 

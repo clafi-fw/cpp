@@ -442,6 +442,9 @@ namespace ClaFi
             const std::wstring_view params = {});
         static void shellExecute(const IForm& form, const std::wstring_view file,
             const std::wstring_view params = {}) { shellExecute(&form, file, params); }
+        // The desktop's folder dialog over the form; nothing where none was picked. See Context
+        [[nodiscard]] static std::optional<std::filesystem::path> pickFolder(const IForm*,
+            std::wstring_view title, const std::filesystem::path& startFolder);
         //
         static std::wstring appDataPath();
         // The user's own documents folder, with a trailing separator - empty where there is none.

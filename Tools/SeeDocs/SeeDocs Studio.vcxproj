@@ -120,18 +120,26 @@
     <ClCompile Include="Src\SeeDocs_App.Notes.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Pages.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Pages.cppm" />
+    <ClCompile Include="Src\SeeDocs_App.Project.cpp" />
+    <ClCompile Include="Src\SeeDocs_App.Project.cppm" />
+    <ClCompile Include="Src\SeeDocs_App.Scanner.cpp" />
+    <ClCompile Include="Src\SeeDocs_App.Scanner.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Icons.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Icons.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Main.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Main.cppm" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.OpenPage.cpp" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.OpenPage.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageText.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageText.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageView.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageView.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.SurfaceView.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.SurfaceView.cppm" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Workspace.cpp" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Workspace.cppm" />
     <ClCompile Include="Src\Studio\SeeDocsStudio_Win32.cpp" />
   </ItemGroup>
   <ItemGroup>

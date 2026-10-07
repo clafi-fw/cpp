@@ -210,6 +210,20 @@ later than that arrives as a SystemColorModeEvent.
 Where the platform announces a change of what the desktop asks for - SystemColorModeEvent. One
 dispatcher for the process, standing before the first window is made and after the last is gone.
 
+## Platform::pickFolder
+
+THE DIALOG IS THE DESKTOP'S OWN, not the framework's: where a folder is asked for, the user
+expects the places, the drives and the shortcuts the desktop keeps, and nothing drawn here could
+stand in for them. The call runs the dialog to its close and answers the folder picked, or
+nothing where the dialog was cancelled or the platform has none to show. It is opened over the
+form given, so the form's window stands disabled under it the way it would under any of the
+desktop's own dialogs, and it is opened from a toplevel - a popup closes when the dialog takes
+the focus, so whoever asks from a menu closes the menu first.
+
+Windows answers with the common item dialog in its folder mode, on the OLE apartment the window
+opened. Wayland answers nothing yet; the XDG portal's FileChooser is the dialog there, and its
+asynchronous Response is still to be waited on.
+
 ## ScopedWaitCursor
 
 Shows the wait shape while alive and puts back the shape the platform was showing when it was

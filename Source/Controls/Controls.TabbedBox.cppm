@@ -83,10 +83,6 @@ namespace ClaFi::Controls
         // Tab::prepareGeometry measures its silhouette from.
         [[nodiscard]] float tabLineX() const;
         void paintPageRun(PaintEvent&);
-        // The stated StripPadding, or the mode's own where none is.
-        [[nodiscard]] Padding stripPadding(Padding modeDefault) const;
-        // The stated StripSpacing, or the mode's own where none is.
-        [[nodiscard]] Spacing stripSpacing(Spacing modeDefault) const;
         template <typename... Args>
         TabStripBase& createTabStrip(Args&&... args);
     private:
@@ -95,10 +91,6 @@ namespace ClaFi::Controls
         static constexpr RectSides k_runSides{ true, false, true, false };
     private:
         PageSurface m_pageSurface{};
-        // The strip's padding where stated - declared before m_strip, which is built with it.
-        std::optional<StripPadding> m_stripPadding;
-        // The strip's spacing where stated - declared before m_strip, which is built with it.
-        std::optional<StripSpacing> m_stripSpacing;
         // The box the strip is the body of, where there is one. Declared before m_strip, which is
         // what createTabStrip builds it for.
         ScrollBox* m_stripBox{ nullptr };
@@ -152,10 +144,11 @@ namespace ClaFi::Controls
         INIT_PROPERTY(tabLineThickness),
         INIT_PROPERTY(tabViewMode)
     {
-        // The strip's own padding, where a caller states it; the mode's otherwise.
-        BIND_PROPERTY_MEMBER(StripPadding, m_stripPadding);
-        BIND_PROPERTY_MEMBER(StripSpacing, m_stripSpacing); // the strip's own spacing, the same way
+        // The strip stands before the body runs, built on its mode's padding and spacing by the
+        // member initializer, so a stated one is put on it here rather than read ahead of it.
         m_strip.setOverlayHost(*this);
+        BIND_PROPERTY_CALL(StripPadding, m_strip.setPadding);   // the strip's own padding
+        BIND_PROPERTY_CALL(StripSpacing, m_strip.setSpacing);   // the strip's own spacing
     }
 
     void TabbedBox::alignContent(AlignEvent& alignEvent, ScaledPosition scaledPosition,
@@ -287,39 +280,26 @@ namespace ClaFi::Controls
         canvas.drawPartialRoundedRectangle(run, m_pageSurface.stroke, m_pageSurface.strokeWidth);
     }
 
-    Padding TabbedBox::stripPadding(Padding modeDefault) const
-    {
-        if (m_stripPadding)
-            return Padding{ *m_stripPadding };
-        return modeDefault;
-    }
-
-    Spacing TabbedBox::stripSpacing(Spacing modeDefault) const
-    {
-        if (m_stripSpacing)
-            return Spacing{ *m_stripSpacing };
-        return modeDefault;
-    }
-
     template <typename ... Args>
     TabStripBase& TabbedBox::createTabStrip(Args&&... args)
     {
         // Tool buttons stand a tool bar's distance in from every edge and from each other. Tabs
-        // leave room along the strip for the line to run on past the first and the last.
+        // leave room along the strip for the line to run on past the first and the last. A
+        // StripPadding or StripSpacing the caller states goes on afterwards - see the constructor.
         const bool toolButtons = m_tabViewMode == TabViewMode::ToolButton;
-        const Spacing spacing = stripSpacing(toolButtons ? Spacing{ 4.0f } : Spacing{ 0.0f });
+        const Spacing spacing = toolButtons ? Spacing{ 4.0f } : Spacing{ 0.0f };
         switch (m_tabsOrientation)
         {
         case TabsOrientation::HorizontalTop:
             return createTopBar<TabStrip2>(
-                stripPadding(toolButtons ? Padding{ 4.0f } : Padding{ 12.0f, 0.0f }),
+                toolButtons ? Padding{ 4.0f } : Padding{ 12.0f, 0.0f },
                 spacing,
                 HorizontalAlign::Left,
                 std::forward<Args>(args)...
             );
         case TabsOrientation::HorizontalBottom:
             return createBottomBar<TabStrip2>(
-                stripPadding(toolButtons ? Padding{ 4.0f } : Padding{ 12.0f, 0.0f }),
+                toolButtons ? Padding{ 4.0f } : Padding{ 12.0f, 0.0f },
                 spacing,
                 HorizontalAlign::Right,
                 std::forward<Args>(args)...
@@ -334,7 +314,7 @@ namespace ClaFi::Controls
             };
             m_stripBox = &scrollBox;
             return scrollBox.createBody<TabStrip2>(
-                stripPadding(toolButtons ? Padding{ 4.0f } : Padding{ 0.0f, 12.0f }),
+                toolButtons ? Padding{ 4.0f } : Padding{ 0.0f, 12.0f },
                 spacing,
                 std::forward<Args>(args)...
             );

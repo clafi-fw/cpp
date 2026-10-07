@@ -31,8 +31,8 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, wchar_t* commandLine, int
     Win32Application app{
         Win32Platform::Params{ hInstance },
         SeeDocs_App::studioParams(),
-        Dom::Dt::Section{}
+        SeeDocs_App::createStudioConfigSchema()
     };
 
-    return SeeDocs_App::runStudio(app, SeeDocs_App::findTree(treeArgument(commandLine)));
+    return SeeDocs_App::runStudio(app, treeArgument(commandLine));
 }

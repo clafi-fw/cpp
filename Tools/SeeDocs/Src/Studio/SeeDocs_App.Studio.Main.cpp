@@ -1,9 +1,10 @@
 module SeeDocs_App.Studio.Main;
 
+import SeeDocs_App.Studio.OpenPage;
 import SeeDocs_App.Studio.SurfaceView;
-import SeeDocs_App.Database;
-import SeeDocs_App.Notes;
-import SeeDocs_App.Surface;
+import SeeDocs_App.Studio.Workspace;
+
+import ClaFi.App.Settings;
 
 import ClaFi.Controls.AppButton;
 import ClaFi.Controls.DialogTitle;
@@ -15,8 +16,8 @@ import ClaFi.App.Application;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.AppContext;
-import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Props;
@@ -33,32 +34,11 @@ namespace SeeDocs_App
     {
         constexpr std::wstring_view k_appName = L"SeeDocs Studio";
         constexpr std::wstring_view k_publisher = L"ClaFi Framework";
-        constexpr std::wstring_view k_databasePath = L"Tools/SeeDocs/Surface.cfg";
+        constexpr std::wstring_view k_openPageCaption = L"Open";
         constexpr float k_minWidth = 820.0f;
         constexpr float k_minHeight = 520.0f;
         constexpr float k_preferredWidth = 1360.0f;
         constexpr float k_preferredHeight = 880.0f;
-
-        [[nodiscard]] bool holdsSource(const std::filesystem::path& folder)
-        {
-            std::error_code error;
-            return std::filesystem::is_directory(folder / k_sourceFolder, error);
-        }
-
-        // The nearest folder holding Source, from the one given upwards.
-        [[nodiscard]] std::filesystem::path treeAbove(std::filesystem::path folder)
-        {
-            while (!folder.empty())
-            {
-                if (holdsSource(folder))
-                    return folder;
-                const std::filesystem::path parent = folder.parent_path();
-                if (parent == folder)
-                    break;
-                folder = parent;
-            }
-            return {};
-        }
 
         // The window: the surface view in the body, the title bar put on by runStudio.
         class MainForm : public WithBody<Panel, SurfaceView>
@@ -86,24 +66,6 @@ namespace SeeDocs_App
             }
         {
         }
-
-        // What the page shows where there is no database to show.
-        [[nodiscard]] Text noDatabaseText(const std::filesystem::path& tree,
-            const std::filesystem::path& database)
-        {
-            Text text;
-            text << TextStyleId::Title << k_appName << PopTextStyle{} << k_endLine << k_endLine;
-            if (tree.empty())
-            {
-                text << L"No folder holding Source stands at or above the working directory. "
-                    L"Start the studio with the tree's folder as its argument." << k_endLine;
-                return text;
-            }
-            text << L"No database at " << TextStyleId::Code << database.wstring()
-                << PopTextStyle{} << L". Run " << TextStyleId::Code << L"seedocs scan"
-                << PopTextStyle{} << L" over the tree first." << k_endLine;
-            return text;
-        }
     }
 
     AppParams studioParams()
@@ -118,33 +80,13 @@ namespace SeeDocs_App
         };
     }
 
-    std::filesystem::path findTree(const std::filesystem::path& stated)
+    Dom::Dt::Section createStudioConfigSchema()
     {
-        std::error_code error;
-        if (!stated.empty())
-        {
-            const std::filesystem::path absolute = std::filesystem::absolute(stated, error);
-            return holdsSource(absolute) ? absolute : std::filesystem::path{};
-        }
-        const std::filesystem::path fromWorkingDirectory =
-            treeAbove(std::filesystem::current_path(error));
-        if (!fromWorkingDirectory.empty())
-            return fromWorkingDirectory;
-        const std::wstring executableDirectory = Platform::executableDirectory();
-        if (executableDirectory.empty())
-            return {};
-        return treeAbove(std::filesystem::path{ executableDirectory });
+        return Workspace::createConfigSchema();
     }
 
-    int runStudio(ApplicationBase& application, const std::filesystem::path& tree)
+    int runStudio(ApplicationBase& application, const std::filesystem::path& stated)
     {
-        const std::filesystem::path database = tree / k_databasePath;
-        std::optional<Surface> surface;
-        if (!tree.empty())
-            surface = readDatabase(database);
-        // Declared before the form, which holds it by reference for as long as it runs.
-        Notes notes{ tree / k_sourceFolder / k_notesFolder };
-
         const std::unique_ptr<Form<MainForm>> form = application.createDialog<MainForm>();
         form->setConfigName(AppContext::k_mainFormName);
 
@@ -156,15 +98,18 @@ namespace SeeDocs_App
             Padding{ 0.0f },
             Spacing{ 4.0f }
         );
-        title.createLeftBar<AppButton>(
+        AppButton& appButton = title.createLeftBar<AppButton>(
             VerticalAlign::Center,
             AppButton::OnPaintIcon{ Icons::SideBar::paintPanelIcon }
         );
 
-        if (surface)
-            form->body().bind(*surface, notes);
-        else
-            form->body().showText(noDatabaseText(tree, database));
+        // A question the workspace asks drops under the app button, and the page it fills stands
+        // in the menu that button opens.
+        Workspace workspace{ application, *form, title, appButton, form->body() };
+        connectAppPage(k_openPageCaption, [&workspace](OptionsPage& page) {
+            buildOpenPage(page, workspace);
+        });
+        workspace.start(stated);
 
         return form->execute();
     }

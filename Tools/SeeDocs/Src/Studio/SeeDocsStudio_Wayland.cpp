@@ -23,12 +23,12 @@ int main(int argc, char** argv)
     WaylandApplication app{
         WaylandPlatform::Params{},
         SeeDocs_App::studioParams(),
-        Dom::Dt::Section{}
+        SeeDocs_App::createStudioConfigSchema()
     };
 
     std::filesystem::path stated;
     if (argc > 1)
         stated = std::filesystem::path{ fromUtf8(argv[1]) };
 
-    return SeeDocs_App::runStudio(app, SeeDocs_App::findTree(stated));
+    return SeeDocs_App::runStudio(app, stated);
 }

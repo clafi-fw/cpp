@@ -28,6 +28,18 @@
     <ClCompile Include="Src\SeeDocs_App.Pages.cppm">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.Project.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.Project.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.Scanner.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.Scanner.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Surface.cpp">
       <Filter>Src</Filter>
     </ClCompile>
@@ -44,6 +56,12 @@
       <Filter>Src\Studio</Filter>
     </ClCompile>
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Main.cppm">
+      <Filter>Src\Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.OpenPage.cpp">
+      <Filter>Src\Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.OpenPage.cppm">
       <Filter>Src\Studio</Filter>
     </ClCompile>
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageText.cpp">
@@ -64,6 +82,12 @@
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.SurfaceView.cppm">
       <Filter>Src\Studio</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Workspace.cpp">
+      <Filter>Src\Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Workspace.cppm">
+      <Filter>Src\Studio</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Studio\SeeDocsStudio_Win32.cpp">
       <Filter>Src\Studio</Filter>
     </ClCompile>
@@ -73,4 +97,4 @@
       <Filter>Src\Studio</Filter>
     </None>
   </ItemGroup>
-</Project>
+</Project>

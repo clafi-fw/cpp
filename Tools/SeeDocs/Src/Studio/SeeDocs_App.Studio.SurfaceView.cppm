@@ -33,13 +33,14 @@ namespace SeeDocs_App
         template<typename... Args>
         explicit SurfaceView(const CreateParams&, Args&&...);
     public:
-        // Builds the tree over the surface, once, and picks its first chapter, open.
+        // Builds the tree over the surface, in place of whatever stood there, and picks its first
+        // chapter, open. Both are held by reference for as long as they are shown.
         void bind(const Surface&, Notes&);
         // Shows the page of the type or module named and picks it in the tree, on the next tick -
         // the request may come from the page about to go. False for a name the surface does not
         // carry.
         bool showNamed(std::wstring_view name);
-        // Shows words of the studio's own in place of a page.
+        // Shows words of the studio's own in place of a page, the tree emptied.
         void showText(const Text&);
     private:
         // A row of the tree and what it opens: a chapter, a module of one, or a type of that.
@@ -55,6 +56,7 @@ namespace SeeDocs_App
         using Entries = std::vector<Entry>;
         using EntryIndexes = std::unordered_map<std::wstring, std::size_t>;
     private:
+        void clearTree();
         void buildTree();
         void show(std::size_t index);
         void showPending();

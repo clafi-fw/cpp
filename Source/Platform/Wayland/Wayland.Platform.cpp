@@ -343,6 +343,14 @@ namespace ClaFi
         ::waitpid(outer, &status, 0);
     }
 
+    // TODO: the XDG portal's FileChooser, OpenFile with directory set, is what answers here - an
+    // asynchronous Response on the session bus, parented through an exported toplevel handle.
+    std::optional<std::filesystem::path> Platform::pickFolder(const IForm*, const std::wstring_view,
+        const std::filesystem::path&)
+    {
+        return std::nullopt;
+    }
+
     std::wstring Platform::appDataPath()
     {
         if (const char* configHome = std::getenv("XDG_CONFIG_HOME"))

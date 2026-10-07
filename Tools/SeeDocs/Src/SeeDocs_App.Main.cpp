@@ -2,6 +2,7 @@ module SeeDocs_App.Main;
 
 import SeeDocs_App.Checks;
 import SeeDocs_App.Database;
+import SeeDocs_App.Project;
 import SeeDocs_App.Scanner;
 import SeeDocs_App.Surface;
 
@@ -18,7 +19,6 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_scanCommand = L"scan";
         constexpr std::wstring_view k_checkCommand = L"check";
         constexpr std::wstring_view k_outOption = L"--out";
-        constexpr std::wstring_view k_defaultOutput = L"Tools/SeeDocs/Surface.cfg";
         constexpr int k_ok = 0;
         constexpr int k_failed = 1;
         constexpr int k_misused = 2;
@@ -26,10 +26,11 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_usage =
             L"SeeDocs - reads the ClaFi design surface out of the tree.\n"
             L"\n"
-            L"    seedocs scan [tree] [--out file]    writes Tools/SeeDocs/Surface.cfg\n"
+            L"    seedocs scan [tree] [--out file]    writes the tree's .seedocs/Surface.cfg\n"
             L"    seedocs check [tree]                reports deviations, exit code 1 on errors\n"
             L"\n"
-            L"The tree is the folder holding Source; the working directory when left out.\n";
+            L"The tree is the folder of sources, read as it stands; the working directory when\n"
+            L"left out.\n";
 
         // The process's text goes out as UTF-8, whichever platform the console belongs to.
         void print(const std::wstring_view text)
@@ -39,7 +40,7 @@ namespace SeeDocs_App
             std::cout.flush();
         }
 
-        // What the arguments after the command say.
+        // What the arguments after the command say. An empty output is the tree's own database.
         struct Options
         {
             std::filesystem::path tree;
@@ -71,16 +72,9 @@ namespace SeeDocs_App
             // Absolute, so a bare file name has a folder the writer can make sure of.
             std::error_code error;
             options.tree = std::filesystem::absolute(options.tree, error);
-            if (options.output.empty())
-                options.output = options.tree / k_defaultOutput;
-            options.output = std::filesystem::absolute(options.output, error);
+            if (!options.output.empty())
+                options.output = std::filesystem::absolute(options.output, error);
             return options;
-        }
-
-        [[nodiscard]] bool treeFits(const std::filesystem::path& tree)
-        {
-            std::error_code error;
-            return std::filesystem::is_directory(tree / k_sourceFolder, error);
         }
 
         [[nodiscard]] std::size_t classCount(const Surface& surface)
@@ -95,14 +89,29 @@ namespace SeeDocs_App
             return count;
         }
 
+        // A scan into the tree's own database makes the tree a project: the command names the
+        // tree, which is the consent the studio asks for in a dialog.
         [[nodiscard]] int scan(const Options& options)
         {
+            std::filesystem::path output = options.output;
+            if (output.empty())
+            {
+                std::optional<Project> project = readProject(options.tree);
+                if (!project)
+                    project = createProject(options.tree);
+                if (!project)
+                {
+                    print(L"Cannot make " + dataFolderOf(options.tree).wstring() + L"\n");
+                    return k_failed;
+                }
+                output = project->databasePath();
+            }
             const Surface surface = scanTree(options.tree);
-            writeDatabase(surface, options.output);
+            writeDatabase(surface, output);
             print(std::to_wstring(classCount(surface)) + L" classes, "
                 + std::to_wstring(surface.types().size()) + L" types, "
                 + std::to_wstring(surface.functions().size()) + L" functions -> "
-                + options.output.wstring() + L"\n");
+                + output.wstring() + L"\n");
             return k_ok;
         }
 
@@ -132,9 +141,10 @@ namespace SeeDocs_App
             print(k_usage);
             return k_misused;
         }
-        if (!treeFits(options.tree))
+        std::error_code error;
+        if (!std::filesystem::is_directory(options.tree, error))
         {
-            print(L"No Source folder under " + options.tree.wstring() + L"\n");
+            print(L"No such folder: " + options.tree.wstring() + L"\n");
             return k_misused;
         }
         if (command == k_scanCommand)

@@ -1,27 +1,37 @@
 # SeeDocs
 
 The tools that read the framework's design surface out of its source and put it to use. Two
-programs so far: the scanner, which reads every module under `Source/`, writes what it finds into
-one database and holds the tree to the declaration routine; and the studio, a window over that
-database showing the surface as the documentation it is to become.
+programs so far: the scanner, which reads every module under a tree of sources, writes what it
+finds into one database and holds the tree to the declaration routine; and the studio, a window
+over that database showing the surface as the documentation it is to become.
 
-    seedocs scan [tree] [--out file]    writes the database, Tools/SeeDocs/Surface.cfg by default
+    seedocs scan [tree] [--out file]    writes the database, the tree's .seedocs/Surface.cfg by default
     seedocs check [tree]                reports deviations, exit code 1 if any are errors
-    seedocs-studio [tree]               opens the studio over the tree's database and notes
+    seedocs-studio [tree]               opens the studio over the tree as a project
 
-The tree is the folder holding `Source/`; for the scanner the working directory when left out,
-for the studio the nearest folder holding one at or above the working directory, else above the
-executable. The report reads `file:line: level: text`, one line per finding, in file and line
-order.
+The tree is the folder of sources, read as it stands - for the framework, its `Source/` folder;
+nothing is appended to the path given. For the scanner it is the working directory when left out.
+The report reads `file:line: level: text`, one line per finding, in file and line order.
+
+## Projects
+
+A project is a tree with a `.seedocs` folder in it. Everything SeeDocs makes of the tree is kept
+there - the database the scanner writes and `Project.cfg`, the project's properties, which is its
+name so far, taken from the folder's own - so the tree itself is left as it was found. A scan into
+the tree's own database makes the folder; the studio makes it with the user's consent, asked in a
+dialog, and scans the tree at once so the project opens with its database in place. A `--out`
+file written anywhere else makes no project.
 
 ## How it reads
 
-Every `.cppm` and then every `.cpp` under `Source/` is lexed with the framework's own C++ lexer
-(`ClaFi.Core.Syntax`) and read declaration by declaration over the tokens. Nothing is expanded
-and nothing is compiled: a macro of the declaration routine - `DECLARE_PROPERTY`, `DECLARE_EVENT`,
-`BIND_PROPERTY_*`, `READ_PROPERTY`, `REQUIRE_PROPERTY` - is read as the declaration it stands
-for, and a function body is skipped, read only for the binds a constructor writes
-(`INIT_PROPERTY`, `BIND_MEMBER` and its kind) and for a `Props::get` written by hand.
+Every `.cppm` and then every `.cpp` under the tree is lexed with the framework's own C++ lexer
+(`ClaFi.Core.Syntax`) and read declaration by declaration over the tokens; a folder whose name
+starts with a dot - `.seedocs`, `.git`, `.vs` - is skipped with everything under it. Nothing is
+expanded and nothing is compiled: a macro of the declaration routine - `DECLARE_PROPERTY`,
+`DECLARE_EVENT`, `BIND_PROPERTY_*`, `READ_PROPERTY`, `REQUIRE_PROPERTY` - is read as the
+declaration it stands for, and a function body is skipped, read only for the binds a
+constructor writes (`INIT_PROPERTY`, `BIND_MEMBER` and its kind) and for a `Props::get` written
+by hand.
 
 What is harvested: every exported type - class, struct, union, enum, alias, concept - with its
 public and protected members (properties, events, functions, data members, enum members), every
@@ -66,8 +76,8 @@ The two files are meant to become one.
     Constants = [ =[ Name, Namespace, Type, Value, Constant, Module, File, Line, Hint, Note ] ]
 
 `Control` marks a type whose base chain reaches `Control` or `RichControl`, template arguments
-walked as bases, which is what makes it a toolbox entry; `Category` is its folder under
-`Source/`. `Bases` are written as a reader can follow them: an alias the database does not
+walked as bases, which is what makes it a toolbox entry; `Category` is its folder under the
+tree. `Bases` are written as a reader can follow them: an alias the database does not
 carry - a private `using ComboBoxBaseClass = WithInPlaceEdit<DropdownControlBase>` - is replaced
 by what it names. A property's `Form` says how its line was written (`declared`, `writable`,
 `reference`, `storage`, `member`, `call`, `value`, `action`, `read`, or `required` - a
@@ -81,8 +91,16 @@ entry.
 
 ## The studio
 
-`SeeDocs Studio` opens `Surface.cfg` and the notes under `Source/RawDocs` and shows them as
-pages: down the left a tree of chapters - the folders under `Source/`, a reader's names for them
+`SeeDocs Studio` opens a project - the tree named on its command line, else the project it was
+last left on - and shows the project's database and the notes under its `RawDocs` as pages. The
+application menu's Open page is where projects are opened: a Browse button asks for a folder in
+the desktop's own dialog, and the projects opened before stand under it, most recent first, one
+click each. A folder with no `.seedocs` becomes a project there, once the user has agreed to the
+folder; the project's name heads the window title. Which project is open and which were opened
+before are kept with the application's settings, so they are remembered once settings are kept on
+the computer.
+
+The pages: down the left a tree of chapters - the tree's folders, a reader's names for them
 - each holding its modules and each module the types it exports, controls first; on the right the
 page of whatever is picked. A page is a column of controls: its title with its hint under it,
 a grid of facts - namespace, module, source, what it derives from - and then a section per
@@ -114,7 +132,7 @@ and blocks of prose - out of the surface and the notes; the studio builds contro
 - a comment above a declaration it would fit on, and one riding a line past 100 columns
 - an event whose three spellings disagree, or whose struct is not found
 - a property whose type is neither an enum, a known value kind, nor a declared type
-- a `See` reference to a note that does not exist under `Source/RawDocs`, or to a heading the
+- a `See` reference to a note that does not exist under the tree's `RawDocs`, or to a heading the
   note does not have - on every line of a comment
 - a class declaring properties or events whose base chain reaches neither Control nor a type
   the scanner can read
@@ -124,8 +142,8 @@ and blocks of prose - out of the surface and the notes; the studio builds contro
 ## Building
 
 `SeeDocs.sln` builds both programs with Visual Studio against the shared items: `SeeDocs` the
-scanner and `SeeDocs Studio` the studio, which share the Surface, Database, Notes and Pages
-modules under `Src/`, the studio's own standing under `Src/Studio/`. The CMake target
+scanner and `SeeDocs Studio` the studio, which share the Surface, Scanner, Database, Project,
+Notes and Pages modules under `Src/`, the studio's own standing under `Src/Studio/`. The CMake target
 `SeeDocsStudio` builds the studio on Wayland beside the other applications. The CMake target
 `SeeDocs` builds the scanner on Linux with or without a platform layer - the Dom, the Syntax lexer and the text
 file reader reach no further down than `UiTypes` - so a `check` runs wherever the tree is
@@ -134,4 +152,4 @@ checked out:
     cmake -S . -B build -G Ninja -DCLAFI_PLATFORM=none \
           -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_BUILD_TYPE=Release
     cmake --build build --target SeeDocs
-    ./build/SeeDocs check .
+    ./build/SeeDocs check Source

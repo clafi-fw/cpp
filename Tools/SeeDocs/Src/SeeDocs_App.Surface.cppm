@@ -322,7 +322,6 @@ namespace SeeDocs_App
     // optional # and anchor, and nothing after. The anchor defaults to the name's own slug.
     export [[nodiscard]] std::optional<Reference> cutReference(std::wstring& text,
         std::wstring_view name);
-    // What the surface is read from under a tree's root.
-    export constexpr std::wstring_view k_sourceFolder = L"Source";
+    // The folder under a tree's root that holds the notes the comments refer to.
     export constexpr std::wstring_view k_notesFolder = L"RawDocs";
 }
