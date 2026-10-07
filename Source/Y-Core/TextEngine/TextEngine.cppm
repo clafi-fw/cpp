@@ -51,6 +51,11 @@ namespace ClaFi
         // this text in costs the lookup and no shaping.
         [[nodiscard]] bool isTextTrimmed(const FormContext&, const Text&, MaxSize,
             bool wrap = true, const TextFormat* = nullptr);
+        // The link under a point of this text laid out in a box of that size, the point measured
+        // from the box's top left. Keyed the way drawText keys it, so the layout a paint drew the
+        // text from answers. The hit's view into the text holds while the layout stays cached.
+        [[nodiscard]] std::optional<LinkHit> linkAt(const FormContext&, const Text&, MaxSize,
+            FloatPoint, bool wrap = true, const TextFormat* = nullptr);
         // Positions in a text, and no layout between them and the answer. A caret is measured on a
         // TextLayout instead, by whoever holds one: an edited text is a different text on every
         // key, so a caret query routed through the cache below stores a copy of it per press and
@@ -202,6 +207,16 @@ namespace ClaFi
         // whatever is asked for here, so both entry points share the entry.
         return select(text, format, maxDimensions, formContext.scaleFactor(), false, wrap,
             EventPhase::Paint).isTrimmed();
+    }
+
+    std::optional<LinkHit> TextEngine::linkAt(const FormContext& formContext, const Text& text,
+        MaxSize maxDimensions, FloatPoint point, bool wrap, const TextFormat* format)
+    {
+        if (text.plainText().empty())
+            return std::nullopt;
+        // The paint's phase, as isTextTrimmed asks: the link is where the words are on screen.
+        return select(text, format, maxDimensions, formContext.scaleFactor(), false, wrap,
+            EventPhase::Paint).linkAt(point);
     }
 
     void TextEngine::invalidateLayouts()

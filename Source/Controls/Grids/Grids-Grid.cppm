@@ -49,6 +49,7 @@ namespace ClaFi::Controls::Grids
         virtual void getCellText(GetCellTextEvent&);
         virtual void acceptCellText(AcceptCellTextEvent&);
         virtual void getCellHint(GetCellHintEvent&);
+        virtual void cellLinkClick(CellLinkClickEvent&);
         virtual void getHeaderCellText(const Cell&, Text&);
         //
         void calculateChildren(FormBase&) override;
@@ -101,6 +102,11 @@ namespace ClaFi::Controls::Grids
     }
 
     void Grid::getCellHint(GetCellHintEvent& event)
+    {
+        emitEvent(event);
+    }
+
+    void Grid::cellLinkClick(CellLinkClickEvent& event)
     {
         emitEvent(event);
     }

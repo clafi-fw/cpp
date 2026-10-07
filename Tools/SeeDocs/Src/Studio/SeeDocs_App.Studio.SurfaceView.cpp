@@ -1,19 +1,18 @@
 module SeeDocs_App.Studio.SurfaceView;
 
 import SeeDocs_App.Studio.Icons;
-import SeeDocs_App.Studio.PageText;
-import SeeDocs_App.Database;
+import SeeDocs_App.Studio.PageView;
 import SeeDocs_App.Notes;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
-import ClaFi.Controls.TextBox;
 import ClaFi.Controls.TreeView;
 import ClaFi.Controls.Base.ExpanderBase;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -41,7 +40,21 @@ namespace SeeDocs_App
         const auto found = m_entryByName.find(std::wstring{ name });
         if (found == m_entryByName.end())
             return false;
-        const std::size_t index = found->second;
+        m_pending = found->second;
+        m_showTimer.start(MilliSeconds{ 0u });
+        return true;
+    }
+
+    void SurfaceView::showText(const Text& text)
+    {
+        m_page.showText(text);
+    }
+
+    void SurfaceView::showPending()
+    {
+        const std::size_t index = std::exchange(m_pending, k_root);
+        if (index == k_root)
+            return;
         const Entry& entry = m_entries[index];
 
         // Opened from the chapter down, so the row stands in the tree before it is picked. A
@@ -62,18 +75,6 @@ namespace SeeDocs_App
         {
             m_tree.setCurrentItem(row);
         }
-        return true;
-    }
-
-    void SurfaceView::showText(const Text& text)
-    {
-        TextBox& body = m_page.body();
-        body.text() = text;
-        body.setCaretPos(0);
-        // The page is what the box measures, so a new one is a new size for the scroll box
-        // around it.
-        body.invalidateFormAlign();
-        m_page.scrollToBegin();
     }
 
     void SurfaceView::buildTree()
@@ -118,17 +119,14 @@ namespace SeeDocs_App
     void SurfaceView::show(const std::size_t index)
     {
         const Entry& entry = m_entries[index];
+        Page page;
         if (entry.type)
-            showPage(typePage(*m_surface, *m_notes, *entry.type));
+            page = typePage(*m_surface, *m_notes, *entry.type);
         else if (entry.module)
-            showPage(modulePage(*m_surface, *m_notes, *entry.chapter, *entry.module));
+            page = modulePage(*m_surface, *m_notes, *entry.chapter, *entry.module);
         else
-            showPage(chapterPage(*m_surface, *m_notes, *entry.chapter));
-    }
-
-    void SurfaceView::showPage(const Page& page)
-    {
-        showText(textOf(page));
+            page = chapterPage(*m_surface, *m_notes, *entry.chapter);
+        m_page.show(std::move(page));
     }
 
     // The row an entry is picked by: an item's is the item, a node's is its header.
@@ -139,16 +137,11 @@ namespace SeeDocs_App
         return entry.node->header();
     }
 
-    // A row leads with the mark of its kind. A control's row is its name alone; any other
-    // type's says what kind it is, at the row's far end.
+    // A row leads with the mark of its kind and ends with its kind word.
     Text SurfaceView::rowText(const Type& type)
     {
         Text text{ rowIcon(rowIconOf(type)), Space{ k_iconGap }, type.name };
-        if (!type.isControl)
-        {
-            text << FlexSpace{ k_kindGap } << TextStyleId::SubBody << InkGrade::Muted
-                << kindWord(type.kind) << PopColor{} << PopTextStyle{};
-        }
+        writeRowKind(text, type);
         return text;
     }
 }

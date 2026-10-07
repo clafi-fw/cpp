@@ -128,6 +128,8 @@
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Main.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageText.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageText.cppm" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageView.cpp" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageView.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.SurfaceView.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.SurfaceView.cppm" />
     <ClCompile Include="Src\Studio\SeeDocsStudio_Win32.cpp" />

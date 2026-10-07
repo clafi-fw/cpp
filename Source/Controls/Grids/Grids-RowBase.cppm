@@ -69,8 +69,12 @@ namespace ClaFi::Controls::Grids
         DECLARE_EVENT(AcceptCellTextEvent, OnAcceptCellText, onAcceptCellText)
         // The hint for one cell, asked while the pointer rests on it. See Grids
         DECLARE_EVENT(GetCellHintEvent, OnGetCellHint, onGetCellHint)
+        // A link in one cell's text was clicked. See Grids
+        DECLARE_EVENT(CellLinkClickEvent, OnCellLinkClick, onCellLinkClick)
     public:
         std::vector<float>& calculatedHeight() { return m_calculatedHeight; }
+        // The hand while the pointer stands on a link in a cell's text.
+        [[nodiscard]] CursorShape cursor() const override;
     protected:
         using CellVisitor = std::function<void(const RowCell&)>;
         using LaneVisitor = std::function<void(const RowCell&, const FloatRect& lane)>;
@@ -104,6 +108,8 @@ namespace ClaFi::Controls::Grids
         // The hint for one cell, asked of this row's listeners and then of the grid - the pair
         // getCellText asks. Raised by nestedGetHint for the cell under the pointer.
         virtual void getCellHint(GetCellHintEvent&);
+        // A link clicked in one cell, told to this row's listeners and then to the grid.
+        virtual void cellLinkClick(CellLinkClickEvent&);
         // The other end of getCellText: an in-place edit of this cell is being committed, and
         // this is the text it was left with. It goes to whatever answers getCellText, so a row
         // reading a cell out of a record writes it back to the field it read.
@@ -136,6 +142,8 @@ namespace ClaFi::Controls::Grids
         void hoverLeave() override;
         void nestedControlFocusing(FocusEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
+        // A pointer click on a link in a cell's text follows the link and goes no further up.
+        void nestedClick(ClickEvent&) override;
         //
         Column* columnAt(PointInForm) const;
         Column* columnAt(PointInControl) const;
@@ -189,8 +197,17 @@ namespace ClaFi::Controls::Grids
         // block that box came to, which is what the column's vertical anchor places inside it.
         [[nodiscard]] bool isCellTextTrimmed(const FormContext&, const Column&, const Text&,
             MaxSize bounds, CalculatedDimensions& drawn);
+        // Where this row's cell in that column is, in form space; empty for a column this row
+        // holds no cell in.
+        [[nodiscard]] FloatRect cellRectInForm(const Column&) const;
+        // The box the cell's text is drawn in - the steps paintOneCell and paintCell take.
+        [[nodiscard]] FloatRect cellTextBounds(const Column&, const FloatRect& cellRect) const;
+        // The target of the link under the point in this row's cell in that column; nothing
+        // where no link stands there.
+        [[nodiscard]] std::optional<std::wstring> linkAt(const Column&, PointInForm);
     private:
         std::vector<float> m_calculatedHeight;
+        bool m_pointsAtLink{}; // the pointer stands on a link in a cell's text
     };
 
     export template<typename T>

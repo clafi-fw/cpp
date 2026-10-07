@@ -6,6 +6,7 @@ import ClaFi.Core.System.Events;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine;
+import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
 namespace ClaFi::Controls::Grids
@@ -72,6 +73,16 @@ namespace ClaFi::Controls::Grids
         GetHintEvent& m_hint;
     };
 
+    // A link in one cell's text was clicked. It goes to the row, then to the grid. See Grids
+    export class CellLinkClickEvent : public CellEventBase
+    {
+    public:
+        CellLinkClickEvent(const RowBase&, const Column&, std::wstring target, InputStamp);
+    public:
+        const std::wstring target; // what the link was written with
+        const InputStamp stamp;    // the click the link answers
+    };
+
     // Stored cell callbacks, not construction properties. A handler passed when a grid or a
     // row is built is an OnEvent and connects itself; these are the ones a cell spec holds on
     // to and moves around, so they need a concrete default-constructible type.
@@ -123,6 +134,17 @@ namespace ClaFi::Controls::Grids
         :
         CellEventBase{ row, column },
         m_hint{ hint }
+    {
+    }
+
+    // CellLinkClickEvent
+
+    CellLinkClickEvent::CellLinkClickEvent(const RowBase& row, const Column& column,
+        std::wstring linkTarget, const InputStamp inputStamp)
+        :
+        CellEventBase{ row, column },
+        target{ std::move(linkTarget) },
+        stamp{ inputStamp }
     {
     }
 

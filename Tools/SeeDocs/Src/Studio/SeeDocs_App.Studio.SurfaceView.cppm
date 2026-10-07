@@ -1,12 +1,12 @@
 export module SeeDocs_App.Studio.SurfaceView;
 
+import SeeDocs_App.Studio.PageView;
 import SeeDocs_App.Notes;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.TextBox;
 import ClaFi.Controls.TreeView;
 import ClaFi.Controls.Base.StackBase;
 
@@ -14,6 +14,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Props;
+import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
@@ -34,8 +35,9 @@ namespace SeeDocs_App
     public:
         // Builds the tree over the surface, once, and picks its first chapter, open.
         void bind(const Surface&, Notes&);
-        // Shows the page of the type or module named and picks it in the tree. False for a name
-        // the surface does not carry.
+        // Shows the page of the type or module named and picks it in the tree, on the next tick -
+        // the request may come from the page about to go. False for a name the surface does not
+        // carry.
         bool showNamed(std::wstring_view name);
         // Shows words of the studio's own in place of a page.
         void showText(const Text&);
@@ -55,14 +57,12 @@ namespace SeeDocs_App
     private:
         void buildTree();
         void show(std::size_t index);
-        void showPage(const Page&);
+        void showPending();
         [[nodiscard]] static Control& rowOf(const Entry&);
         [[nodiscard]] static Text rowText(const Type&);
     private:
         static constexpr float k_treeWidth = 300.0f;
-        static constexpr float k_pagePadding = 24.0f;
         static constexpr float k_iconGap = 5.0f; // between a row's icon and its text
-        static constexpr float k_kindGap = 12.0f; // the least room before a row's kind word
         static constexpr std::size_t k_root = std::numeric_limits<std::size_t>::max();
 
         const Surface* m_surface{ nullptr };
@@ -70,6 +70,8 @@ namespace SeeDocs_App
         ContentsChapters m_contents{};
         Entries m_entries{};
         EntryIndexes m_entryByName{};   // types by qualified name, modules by name
+        std::size_t m_pending{ k_root }; // the entry showNamed is to show
+        UiTimer m_showTimer{};
 
         TreeView& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,
@@ -80,16 +82,7 @@ namespace SeeDocs_App
             Padding{ 4.0f }
         ) };
 
-        ScrollBoxWith<TextBox>& m_page{ createBody<ScrollBoxWith<TextBox>>(
-            HostProps{
-                ScrollBars::Both,
-                UiElement::Page
-            },
-            BodyProps{
-                ReadOnly::Yes,
-                Padding{ k_pagePadding }
-            }
-        ) };
+        PageView& m_page{ createBody<PageView>() };
     };
 
 
@@ -105,8 +98,11 @@ namespace SeeDocs_App
             if (const Control* item = m_tree.currentItem())
                 show(item->tag<std::size_t>());
         });
-        m_page.body().onLinkClick([this](LinkClickEvent& event) {
-            showNamed(event.target);
+        m_page.onOpenName([this](OpenNameEvent& event) {
+            showNamed(event.name);
+        });
+        m_showTimer.onTick([this](TimerEvent&) {
+            showPending();
         });
     }
 }

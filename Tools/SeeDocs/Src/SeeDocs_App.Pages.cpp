@@ -52,18 +52,32 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_bulletMark = L"- ";
         constexpr std::wstring_view k_boldMark = L"**";
         constexpr wchar_t k_codeMark = L'`';
+        constexpr std::wstring_view k_scope = L"::";
+        constexpr std::wstring_view k_separator = L" \u00B7 ";
+        constexpr std::wstring_view k_sourceJoin = L" \u203A ";
+        constexpr std::size_t k_maxTreeDepth = 16;   // what a base chain is followed to
 
-        // The groups whose tables share their columns on one page.
-        namespace Groups
+        // The columns of each table a page carries.
+        namespace Columns
         {
-            constexpr std::size_t properties = 1;
-            constexpr std::size_t events = 2;
-            constexpr std::size_t methods = 3;
-            constexpr std::size_t fields = 4;
-            constexpr std::size_t members = 5;
-            constexpr std::size_t overview = 6;
-            constexpr std::size_t functions = 7;
-            constexpr std::size_t constants = 8;
+            const TableColumns types = {
+                { L"Name" }, { L"Kind" }, { L"Hint", true }
+            };
+            const TableColumns properties = {
+                { L"Name" }, { L"Type" }, { L"Default" }, { L"Hint", true }
+            };
+            const TableColumns events = {
+                { L"Event" }, { L"Type" }, { L"Hint", true }
+            };
+            const TableColumns functions = {
+                { L"Signature" }, { L"Hint", true }
+            };
+            const TableColumns fields = {
+                { L"Name" }, { L"Type" }, { L"Value" }, { L"Hint", true }
+            };
+            const TableColumns members = {
+                { L"Name" }, { L"Value" }, { L"Hint", true }
+            };
         }
 
         [[nodiscard]] std::wstring lowered(const std::wstring_view text)
@@ -101,6 +115,12 @@ namespace SeeDocs_App
             return key(left) < key(right);
         }
 
+        // Whether a type stands inside another - a part of it rather than a type of its own.
+        [[nodiscard]] bool isNested(const Type& type)
+        {
+            return type.name.find(k_scope) != std::wstring::npos;
+        }
+
         [[nodiscard]] bool hasControl(const ContentsModule& module)
         {
             return std::ranges::any_of(module.types, [](const Type* type) {
@@ -111,6 +131,11 @@ namespace SeeDocs_App
         [[nodiscard]] std::wstring fileLineOf(const Surface& surface, const Place& place)
         {
             return surface.files()[place.file].relative + L":" + std::to_wstring(place.line);
+        }
+
+        [[nodiscard]] std::wstring countOf(const std::size_t value, const std::wstring_view noun)
+        {
+            return std::to_wstring(value) + L" " + std::wstring{ noun } + (value == 1 ? L"" : L"s");
         }
 
         // Runs
@@ -162,44 +187,23 @@ namespace SeeDocs_App
             return code(type.name, type.qualifiedName);
         }
 
-        // Blocks
-
-        Block& addBlock(Page& page, const BlockKind kind, const std::size_t level = 0)
+        // A value cell: the initializer as written, after an equals sign; nothing where none.
+        [[nodiscard]] Runs valueCell(const std::wstring& value)
         {
-            page.blocks.push_back({ .kind = kind, .level = level });
-            return page.blocks.back();
+            if (value.empty())
+                return {};
+            return { muted(L"= " + value) };
         }
 
-        void addTitle(Page& page, std::wstring text)
+        // The kind a type reads as in a table - a control before anything else it is.
+        [[nodiscard]] Runs kindCell(const Type& type)
         {
-            page.title = text;
-            addBlock(page, BlockKind::Title).runs = { plain(std::move(text)) };
+            if (type.isControl)
+                return { muted(std::wstring{ k_controlWord }) };
+            return { muted(std::wstring{ kindWord(type.kind) }) };
         }
 
-        void addLead(Page& page, const Comment& comment)
-        {
-            addBlock(page, BlockKind::Lead).runs = hintRuns(comment);
-        }
-
-        void addMeta(Page& page, Runs runs)
-        {
-            addBlock(page, BlockKind::Meta).runs = std::move(runs);
-        }
-
-        void addHeading(Page& page, std::wstring text)
-        {
-            addBlock(page, BlockKind::Heading).runs = { plain(std::move(text)) };
-        }
-
-        void addSubHeading(Page& page, Runs runs)
-        {
-            addBlock(page, BlockKind::SubHeading).runs = std::move(runs);
-        }
-
-        void addParagraph(Page& page, Runs runs, const std::size_t level = 0)
-        {
-            addBlock(page, BlockKind::Paragraph, level).runs = std::move(runs);
-        }
+        // Prose
 
         // The words of a note line: backticks set a run in code, a pair of ** sets one bold.
         [[nodiscard]] Runs inlineRuns(const std::wstring& text)
@@ -255,12 +259,18 @@ namespace SeeDocs_App
 
         // The lines of a section as blocks: paragraphs between blank lines, a heading inside the
         // section as a subheading, four-space lines as code, dashed lines as bullets.
-        void addNoteLines(Page& page, const Lines& lines, const std::size_t level)
+        [[nodiscard]] Blocks blocksOf(const Lines& lines)
         {
+            Blocks blocks;
             std::wstring paragraph;
             const auto flush = [&]() {
                 if (!paragraph.empty())
-                    addParagraph(page, inlineRuns(std::exchange(paragraph, {})), level);
+                {
+                    blocks.push_back({
+                        .kind = BlockKind::Paragraph,
+                        .runs = inlineRuns(std::exchange(paragraph, {}))
+                    });
+                }
             };
             std::size_t i = 0;
             while (i < lines.size())
@@ -276,15 +286,17 @@ namespace SeeDocs_App
                 if (const std::size_t heading = headingLevel(line); heading != 0)
                 {
                     flush();
-                    Block& block = addBlock(page, BlockKind::SubHeading, level);
-                    block.runs = inlineRuns(std::wstring{ trimmed(words.substr(heading)) });
+                    blocks.push_back({
+                        .kind = BlockKind::SubHeading,
+                        .runs = inlineRuns(std::wstring{ trimmed(words.substr(heading)) })
+                    });
                     ++i;
                     continue;
                 }
                 if (isCodeLine(line) && paragraph.empty())
                 {
                     flush();
-                    Block& block = addBlock(page, BlockKind::Code, level);
+                    Block block{ .kind = BlockKind::Code };
                     while (i < lines.size())
                     {
                         const bool blank = trimmed(lines[i]).empty();
@@ -296,12 +308,13 @@ namespace SeeDocs_App
                             : lines[i].substr(k_codeFence.size()));
                         ++i;
                     }
+                    blocks.push_back(std::move(block));
                     continue;
                 }
                 if (isBulletLine(line))
                 {
                     flush();
-                    Block& block = addBlock(page, BlockKind::Bullets, level);
+                    Block block{ .kind = BlockKind::Bullets };
                     std::wstring item;
                     while (i < lines.size())
                     {
@@ -323,6 +336,7 @@ namespace SeeDocs_App
                     }
                     if (!item.empty())
                         block.items.push_back(inlineRuns(item));
+                    blocks.push_back(std::move(block));
                     continue;
                 }
                 if (!paragraph.empty())
@@ -331,6 +345,7 @@ namespace SeeDocs_App
                 ++i;
             }
             flush();
+            return blocks;
         }
 
         // The section a declaration's words come from, and the note it stands in.
@@ -415,122 +430,224 @@ namespace SeeDocs_App
             return { .note = hit->note, .section = hit->section, .byName = true };
         }
 
-        void addNote(Page& page, const FoundNote& found, const std::size_t level)
+        // A found section as the words a page shows, named by where they come from.
+        [[nodiscard]] std::optional<Excerpt> excerptOf(const FoundNote& found)
         {
             if (!found.section)
-                return;
-            Block& source = addBlock(page, BlockKind::Source, level);
-            source.runs.push_back(muted(found.note->stem + std::wstring{ k_noteExtension }
-                + L" \u203A " + found.section->heading));
+                return std::nullopt;
+            Excerpt excerpt;
+            excerpt.source.push_back(muted(found.note->stem + std::wstring{ k_noteExtension }
+                + std::wstring{ k_sourceJoin } + found.section->heading));
             if (found.byName)
-                source.runs.push_back(missing(L"  " + std::wstring{ k_matchedByName }));
-            addNoteLines(page, found.section->lines, level);
+                excerpt.source.push_back(missing(L"  " + std::wstring{ k_matchedByName }));
+            excerpt.blocks = blocksOf(found.section->lines);
+            return excerpt;
         }
 
-        // Rows and entries of one group, which share their columns. A row joins the table the
-        // page ends with when that is one of the group; anything written between two rows - a
-        // note, a subheading - starts a new table. An entry is a block of its own.
-        class TableWriter
+        // The note a member's comment references, under its row.
+        [[nodiscard]] std::optional<Excerpt> memberExcerpt(Notes& notes,
+            const Comment& comment, const std::wstring_view name, const std::wstring_view category)
         {
-        public:
-            TableWriter(Page&, std::size_t group);
-            void row(Cells);
-            void entry(Cells term, Runs hint);
-            void note(Notes&, const Comment&, std::wstring_view name, std::wstring_view category);
-        private:
-            Page& m_page;
-            std::size_t m_group;
-        };
-
-        TableWriter::TableWriter(Page& page, const std::size_t group)
-            :
-            m_page{ page },
-            m_group{ group }
-        {
+            return excerptOf(noteFor(notes, comment, name, category, false));
         }
 
-        void TableWriter::row(Cells cells)
-        {
-            Blocks& blocks = m_page.blocks;
-            const bool open = !blocks.empty()
-                && blocks.back().kind == BlockKind::Table
-                && blocks.back().group == m_group
-                && blocks.back().level == 0;
-            if (!open)
-                addBlock(m_page, BlockKind::Table).group = m_group;
-            blocks.back().rows.push_back(std::move(cells));
-        }
+        // Sections
 
-        void TableWriter::entry(Cells term, Runs hint)
+        Section& addSection(Page& page, const SectionKind kind, Runs heading,
+            std::wstring count = {})
         {
-            Block& block = addBlock(m_page, BlockKind::Entry);
-            block.group = m_group;
-            block.rows.push_back(std::move(term));
-            block.runs = std::move(hint);
-        }
-
-        void TableWriter::note(Notes& notes, const Comment& comment, const std::wstring_view name,
-            const std::wstring_view category)
-        {
-            addNote(m_page, noteFor(notes, comment, name, category, false), 1);
-        }
-
-        // A value cell: the initializer as written, after an equals sign; nothing where none.
-        [[nodiscard]] Runs valueCell(const std::wstring& value)
-        {
-            if (value.empty())
-                return {};
-            return { muted(L"= " + value) };
-        }
-
-        // The sections of a type page
-
-        void addTypeHead(Page& page, const Surface& surface, Notes& notes, const Type& type)
-        {
-            addTitle(page, type.name);
-            Runs kind = { muted(std::wstring{ kindWord(type.kind) }) };
-            if (type.isControl)
-                kind.push_back(muted(L" \u00B7 " + std::wstring{ k_controlWord }));
-            if (!type.templateParameters.empty())
-                kind.push_back(muted(L" \u00B7 template <" + type.templateParameters + L">"));
-            addMeta(page, std::move(kind));
-            addLead(page, type.comment);
-            addMeta(page, {
-                muted(L"namespace "),
-                code(type.nameSpace),
-                muted(L" \u00B7 module "),
-                code(type.module),
-                muted(L" \u00B7 "),
-                code(fileLineOf(surface, type.place))
+            page.sections.push_back({
+                .kind = kind,
+                .heading = std::move(heading),
+                .count = std::move(count)
             });
+            return page.sections.back();
+        }
+
+        // A table of rows under one heading or none, counted in the section's heading.
+        Section& addTableSection(Page& page, std::wstring heading, const TableColumns& columns,
+            TableGroups groups)
+        {
+            std::size_t rows = 0;
+            for (const TableGroup& group : groups)
+                rows += group.rows.size();
+            Section& section = addSection(page, SectionKind::Table, { plain(std::move(heading)) },
+                std::to_wstring(rows));
+            section.table.columns = columns;
+            section.table.groups = std::move(groups);
+            return section;
+        }
+
+        void addFact(Page& page, std::wstring label, Runs value)
+        {
+            page.facts.push_back({ .label = std::move(label), .value = std::move(value) });
+        }
+
+        // The head of a type page
+
+        void addTypeHead(Page& page, const Surface& surface, const Type& type)
+        {
+            page.title = type.name;
+            page.badges.push_back(muted(std::wstring{ kindWord(type.kind) }));
+            if (type.isControl)
+            {
+                page.badges.push_back(muted(std::wstring{ k_separator }
+                    + std::wstring{ k_controlWord }));
+            }
+            if (!type.templateParameters.empty())
+            {
+                page.badges.push_back(muted(std::wstring{ k_separator } + L"template <"
+                    + type.templateParameters + L">"));
+            }
+            page.lead = hintRuns(type.comment);
+            addFact(page, L"namespace", { code(type.nameSpace) });
+            addFact(page, L"module", { code(type.module, type.module) });
+            addFact(page, L"source", { code(fileLineOf(surface, type.place)) });
             if (!type.bases.empty())
             {
-                Runs runs = { muted(L"derives from ") };
-                for (std::size_t i = 0; i != type.bases.size(); ++i)
+                Runs bases;
+                for (const std::wstring& base : type.bases)
                 {
-                    if (i != 0)
-                        runs.push_back(muted(L", "));
-                    runs.push_back(typeRun(surface, type.bases[i], type.nameSpace));
+                    if (!bases.empty())
+                        bases.push_back(muted(L", "));
+                    bases.push_back(typeRun(surface, base, type.nameSpace));
                 }
-                addMeta(page, std::move(runs));
+                addFact(page, L"derives from", std::move(bases));
             }
             if (!type.target.empty())
             {
                 const bool alias = type.kind == TypeKind::Alias;
-                addMeta(page, {
-                    muted(alias ? L"stands for " : L"requires "),
-                    alias ? typeRun(surface, type.target, type.nameSpace) : code(type.target)
-                });
+                addFact(page, alias ? L"stands for" : L"requires",
+                    { alias ? typeRun(surface, type.target, type.nameSpace) : code(type.target) });
             }
-            addNote(page, noteFor(notes, type.comment, type.name, type.category, true), 0);
         }
+
+        // The inheritance tree
+
+        // Under a type's branch, its bases: a base that is one of the type's template parameters
+        // stands for the argument the spelling gave it, which is how a mixin hands its host on.
+        void addBases(Branches& branches, const Surface& surface, const Type& type,
+            const std::wstring_view spelled, const std::wstring_view nameSpace, std::size_t depth);
+
+        // A base as a branch: its spelling with a private alias replaced, the type its head
+        // names, and that type's own bases under it. A nested base is a part of some type, not
+        // a type of its own, and is left out.
+        void addBase(Branches& branches, const Surface& surface, const std::wstring_view spelled,
+            const std::wstring_view nameSpace, const std::size_t depth)
+        {
+            const std::wstring resolvedSpelling = surface.resolvedBase(spelled, nameSpace);
+            const Type* type = surface.resolve(resolvedSpelling, nameSpace);
+            if (type && isNested(*type))
+                return;
+            Branch branch{
+                .text = { code(resolvedSpelling) },
+                .type = type && type->isPublic() ? type : nullptr
+            };
+            if (type && depth < k_maxTreeDepth)
+                addBases(branch.children, surface, *type, resolvedSpelling, nameSpace, depth + 1);
+            branches.push_back(std::move(branch));
+        }
+
+        void addBases(Branches& branches, const Surface& surface, const Type& type,
+            const std::wstring_view spelled, const std::wstring_view nameSpace,
+            const std::size_t depth)
+        {
+            const Names parameters = templateParameterNames(type.templateParameters);
+            const Names arguments = argumentsOf(spelled);
+            for (const std::wstring& base : type.bases)
+            {
+                const std::wstring_view head = plainType(withoutArguments(base));
+                const auto parameter = std::ranges::find(parameters, head);
+                if (parameter == parameters.end())
+                {
+                    addBase(branches, surface, base, type.nameSpace, depth);
+                    continue;
+                }
+                const std::size_t index = static_cast<std::size_t>(parameter - parameters.begin());
+                if (index < arguments.size())
+                    addBase(branches, surface, arguments[index], nameSpace, depth);
+                else
+                    branches.push_back({ .text = { code(base) } });
+            }
+        }
+
+        // Whether a type names another among its bases - as the base, or as an argument of one.
+        [[nodiscard]] bool derivesDirectly(const Surface& surface, const Type& type,
+            const Type& base)
+        {
+            for (const std::wstring& spelled : type.bases)
+            {
+                if (surface.resolve(spelled, type.nameSpace) == &base)
+                    return true;
+                for (const std::wstring& argument : argumentsOf(spelled))
+                {
+                    if (surface.resolve(argument, type.nameSpace) == &base)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        void addDerived(Branches& branches, const Surface& surface, const Type& base,
+            const std::size_t depth)
+        {
+            TypeList derived;
+            for (const Type& type : surface.types())
+            {
+                if (type.isPublic() && !isNested(type) && &type != &base
+                    && derivesDirectly(surface, type, base))
+                {
+                    derived.push_back(&type);
+                }
+            }
+            std::ranges::sort(derived, [](const Type* left, const Type* right) {
+                return readsBefore(*left, *right);
+            });
+            for (const Type* type : derived)
+            {
+                Branch branch{ .text = { code(type->name) }, .type = type };
+                if (depth < k_maxTreeDepth)
+                    addDerived(branch.children, surface, *type, depth + 1);
+                branches.push_back(std::move(branch));
+            }
+        }
+
+        void addInheritance(Page& page, const Surface& surface, const Type& type)
+        {
+            if (type.kind != TypeKind::Class && type.kind != TypeKind::Struct)
+                return;
+            Branch bases{ .text = { muted(L"Bases") } };
+            addBases(bases.children, surface, type, type.name, type.nameSpace, 0);
+            Branch derived{ .text = { muted(L"Derived types") } };
+            addDerived(derived.children, surface, type, 0);
+            if (bases.children.empty() && derived.children.empty())
+                return;
+            Section& section = addSection(page, SectionKind::Tree, { plain(L"Inheritance") });
+            if (!bases.children.empty())
+                section.branches.push_back(std::move(bases));
+            if (!derived.children.empty())
+                section.branches.push_back(std::move(derived));
+        }
+
+        // The type's own note, where its comment references one or a section is named after it.
+
+        void addTypeNote(Page& page, Notes& notes, const Type& type)
+        {
+            std::optional<Excerpt> excerpt =
+                excerptOf(noteFor(notes, type.comment, type.name, type.category, true));
+            if (!excerpt.has_value())
+                return;
+            Section& section = addSection(page, SectionKind::Note, excerpt->source);
+            section.excerpt = std::move(*excerpt);
+        }
+
+        // The member tables of a type page
 
         void addProperties(Page& page, const Surface& surface, Notes& notes, const Type& type)
         {
             if (type.properties.empty())
                 return;
-            addHeading(page, L"Properties");
-            TableWriter table{ page, Groups::properties };
+            TableGroup group;
             for (const Property& property : type.properties)
             {
                 Runs value = valueCell(property.defaultValue);
@@ -542,18 +659,22 @@ namespace SeeDocs_App
                     spelled.push_back(muted(L" | "));
                     spelled.push_back(typeRun(surface, accepted, type.nameSpace));
                 }
-                table.entry({ { code(property.name) }, std::move(spelled), std::move(value) },
-                    hintRuns(property.comment));
-                table.note(notes, property.comment, property.name, type.category);
+                group.rows.push_back({
+                    .cells = { { code(property.name) }, std::move(spelled), std::move(value),
+                        hintRuns(property.comment) },
+                    .excerpt = memberExcerpt(notes, property.comment, property.name, type.category)
+                });
             }
+            TableGroups groups;
+            groups.push_back(std::move(group));
+            addTableSection(page, L"Properties", Columns::properties, std::move(groups));
         }
 
         void addEvents(Page& page, const Surface& surface, Notes& notes, const Type& type)
         {
             if (type.events.empty())
                 return;
-            addHeading(page, L"Events");
-            TableWriter table{ page, Groups::events };
+            TableGroup group;
             for (const Event& event : type.events)
             {
                 Runs hint = hintRuns(event.comment);
@@ -569,139 +690,172 @@ namespace SeeDocs_App
                     }
                     hint.push_back(muted(std::move(carries)));
                 }
-                table.entry(
-                    { { code(event.alias) }, { typeRun(surface, event.type, type.nameSpace) } },
-                    std::move(hint));
-                table.note(notes, event.comment, event.type, type.category);
+                group.rows.push_back({
+                    .cells = { { code(event.alias) },
+                        { typeRun(surface, event.type, type.nameSpace) }, std::move(hint) },
+                    .excerpt = memberExcerpt(notes, event.comment, event.type, type.category)
+                });
             }
+            TableGroups groups;
+            groups.push_back(std::move(group));
+            addTableSection(page, L"Events", Columns::events, std::move(groups));
         }
 
+        // Public methods first, the protected ones under a heading of their own.
         void addMethods(Page& page, Notes& notes, const Type& type)
         {
             if (type.functions.empty())
                 return;
-            addHeading(page, L"Methods");
-            TableWriter table{ page, Groups::methods };
+            TableGroups groups;
             for (const Access access : { Access::Public, Access::Protected })
             {
-                bool any = false;
+                TableGroup group;
+                if (access == Access::Protected)
+                {
+                    group.label = { plain(L"Protected"),
+                        muted(L" - what a derived class reaches") };
+                }
                 for (const Function& function : type.functions)
                 {
                     if (function.access != access)
                         continue;
-                    if (!any && access == Access::Protected)
-                    {
-                        addSubHeading(page, { plain(L"Protected"),
-                            muted(L" - what a derived class reaches") });
-                    }
-                    any = true;
-                    table.entry({ { code(function.signature) } }, hintRuns(function.comment));
-                    table.note(notes, function.comment, function.name, type.category);
+                    group.rows.push_back({
+                        .cells = { { code(function.signature) }, hintRuns(function.comment) },
+                        .excerpt = memberExcerpt(notes, function.comment, function.name,
+                            type.category)
+                    });
                 }
+                if (!group.rows.empty())
+                    groups.push_back(std::move(group));
             }
+            addTableSection(page, L"Methods", Columns::functions, std::move(groups));
         }
 
         void addFields(Page& page, const Surface& surface, Notes& notes, const Type& type)
         {
             if (type.fields.empty())
                 return;
-            addHeading(page, L"Fields");
-            TableWriter table{ page, Groups::fields };
+            TableGroup group;
             for (const Field& field : type.fields)
             {
-                table.entry(
-                    { { code(field.name) }, { typeRun(surface, field.type, type.nameSpace) },
-                        valueCell(field.value) },
-                    hintRuns(field.comment));
-                table.note(notes, field.comment, field.name, type.category);
+                group.rows.push_back({
+                    .cells = { { code(field.name) },
+                        { typeRun(surface, field.type, type.nameSpace) }, valueCell(field.value),
+                        hintRuns(field.comment) },
+                    .excerpt = memberExcerpt(notes, field.comment, field.name, type.category)
+                });
             }
+            TableGroups groups;
+            groups.push_back(std::move(group));
+            addTableSection(page, L"Fields", Columns::fields, std::move(groups));
         }
 
         void addMembers(Page& page, Notes& notes, const Type& type)
         {
             if (type.members.empty())
                 return;
-            addHeading(page, L"Members");
-            TableWriter table{ page, Groups::members };
+            TableGroup group;
             for (const EnumMember& member : type.members)
             {
-                table.entry({ { code(member.name) }, valueCell(member.value) },
-                    hintRuns(member.comment));
-                table.note(notes, member.comment, member.name, type.category);
+                group.rows.push_back({
+                    .cells = { { code(member.name) }, valueCell(member.value),
+                        hintRuns(member.comment) },
+                    .excerpt = memberExcerpt(notes, member.comment, member.name, type.category)
+                });
             }
+            TableGroups groups;
+            groups.push_back(std::move(group));
+            addTableSection(page, L"Members", Columns::members, std::move(groups));
+        }
+
+        // The tables of types, functions and constants
+
+        [[nodiscard]] TableRows typeRows(const TypeList& types)
+        {
+            TableRows rows;
+            for (const Type* type : types)
+            {
+                rows.push_back({
+                    .cells = { { nameRun(*type) }, kindCell(*type), hintRuns(type->comment) },
+                    .type = type
+                });
+            }
+            return rows;
+        }
+
+        // The types as a table: a reader tells a name, a kind and a hint apart unnamed.
+        Section& addTypesSection(Page& page, std::wstring heading, TableGroups groups)
+        {
+            Section& section = addTableSection(page, std::move(heading), Columns::types,
+                std::move(groups));
+            section.table.header = false;
+            return section;
         }
 
         void addSiblings(Page& page, const Surface& surface, const Type& type)
         {
-            Runs runs;
+            TypeList siblings;
             for (const Type& other : surface.types())
             {
-                if (&other == &type || other.module != type.module || !other.isPublic())
-                    continue;
-                if (!runs.empty())
-                    runs.push_back(muted(L", "));
-                runs.push_back(nameRun(other));
+                if (&other != &type && other.module == type.module && other.isPublic())
+                    siblings.push_back(&other);
             }
-            if (runs.empty())
+            if (siblings.empty())
                 return;
-            addHeading(page, L"Also in this module");
-            addParagraph(page, std::move(runs));
+            std::ranges::sort(siblings, [](const Type* left, const Type* right) {
+                return readsBefore(*left, *right);
+            });
+            TableGroups groups;
+            groups.push_back({ .rows = typeRows(siblings) });
+            addTypesSection(page, L"Also in this module", std::move(groups));
         }
 
-        // The sections of a module page and a chapter page
-
-        void addTypeRows(TableWriter& table, const TypeList& types)
-        {
-            for (const Type* type : types)
-            {
-                const Runs kind = type->isControl
-                    ? Runs{ plain(std::wstring{ k_controlWord }) }
-                    : Runs{ muted(std::wstring{ kindWord(type->kind) }) };
-                table.row({ { nameRun(*type) }, kind, hintRuns(type->comment) });
-            }
-        }
-
-        void addFunctionRows(Page& page, const Surface& surface,
+        void addFunctions(Page& page, const Surface& surface,
             const std::function<bool(const FreeFunction&)>& takes)
         {
-            std::optional<TableWriter> table;
+            TableGroup group;
             for (const FreeFunction& free : surface.functions())
             {
-                if (!free.exported || !takes(free))
-                    continue;
-                if (!table)
+                if (free.exported && takes(free))
                 {
-                    addHeading(page, L"Functions");
-                    table.emplace(page, Groups::functions);
+                    group.rows.push_back({ .cells = { { code(free.function.signature) },
+                        hintRuns(free.function.comment) } });
                 }
-                table->entry({ { code(free.function.signature) } },
-                    hintRuns(free.function.comment));
             }
+            if (group.rows.empty())
+                return;
+            TableGroups groups;
+            groups.push_back(std::move(group));
+            addTableSection(page, L"Functions", Columns::functions, std::move(groups));
         }
 
-        void addConstantRows(Page& page, const Surface& surface,
+        void addConstants(Page& page, const Surface& surface,
             const std::function<bool(const Variable&)>& takes)
         {
-            std::optional<TableWriter> table;
+            TableGroup group;
             for (const Variable& variable : surface.variables())
             {
-                if (!variable.exported || !takes(variable))
-                    continue;
-                if (!table)
+                if (variable.exported && takes(variable))
                 {
-                    addHeading(page, L"Constants");
-                    table.emplace(page, Groups::constants);
+                    group.rows.push_back({ .cells = { { code(variable.field.name) },
+                        { typeRun(surface, variable.field.type, variable.nameSpace) },
+                        valueCell(variable.field.value), hintRuns(variable.field.comment) } });
                 }
-                table->entry({ { code(variable.field.name) },
-                    { typeRun(surface, variable.field.type, variable.nameSpace) },
-                    valueCell(variable.field.value) }, hintRuns(variable.field.comment));
             }
+            if (group.rows.empty())
+                return;
+            TableGroups groups;
+            groups.push_back(std::move(group));
+            addTableSection(page, L"Constants", Columns::fields, std::move(groups));
         }
+    }
 
-        [[nodiscard]] std::wstring countOf(const std::size_t value, const std::wstring_view noun)
-        {
-            return std::to_wstring(value) + L" " + std::wstring{ noun } + (value == 1 ? L"" : L"s");
-        }
+    std::size_t Table::rowCount() const
+    {
+        std::size_t count = 0;
+        for (const TableGroup& group : groups)
+            count += group.rows.size();
+        return count;
     }
 
     ContentsChapters contentsOf(const Surface& surface)
@@ -791,8 +945,8 @@ namespace SeeDocs_App
     Page chapterPage(const Surface& surface, Notes&, const ContentsChapter& chapter)
     {
         Page page;
-        addTitle(page, chapter.name);
-        addMeta(page, { code(chapter.category), muted(L" under Source") });
+        page.title = chapter.name;
+        addFact(page, L"folder", { code(chapter.category), muted(L" under Source") });
 
         std::size_t controls = 0;
         std::size_t types = 0;
@@ -810,30 +964,36 @@ namespace SeeDocs_App
         }
         Runs figures = {
             plain(countOf(controls, L"control")),
-            muted(L" \u00B7 "),
+            muted(std::wstring{ k_separator }),
             plain(countOf(types, L"type")),
-            muted(L" \u00B7 "),
+            muted(std::wstring{ k_separator }),
             plain(countOf(chapter.modules.size(), L"module"))
         };
         if (withoutHint != 0)
         {
-            figures.push_back(muted(L" \u00B7 "));
+            figures.push_back(muted(std::wstring{ k_separator }));
             figures.push_back(missing(countOf(withoutHint, L"type") + L" without a hint"));
         }
-        addMeta(page, std::move(figures));
+        addFact(page, L"holds", std::move(figures));
 
+        TableGroups groups;
         for (const ContentsModule& module : chapter.modules)
         {
-            addSubHeading(page, { { .text = module.shortName, .link = module.name },
-                muted(L"  " + module.name) });
-            TableWriter table{ page, Groups::overview };
-            addTypeRows(table, module.types);
+            groups.push_back({
+                .label = { { .text = module.shortName, .link = module.name } },
+                .hint = { plain(module.name) },
+                .rows = typeRows(module.types)
+            });
         }
-        addFunctionRows(page, surface, [&](const FreeFunction& free) {
+        Section& section = addTypesSection(page, L"Types", std::move(groups));
+        section.table.groupColumn = L"Module";
+        section.count = std::to_wstring(types) + L" in "
+            + countOf(chapter.modules.size(), L"module");
+        addFunctions(page, surface, [&](const FreeFunction& free) {
             return categoryOf(surface.files()[free.function.place.file].relative)
                 == chapter.category;
         });
-        addConstantRows(page, surface, [&](const Variable& variable) {
+        addConstants(page, surface, [&](const Variable& variable) {
             return categoryOf(surface.files()[variable.field.place.file].relative)
                 == chapter.category;
         });
@@ -844,19 +1004,19 @@ namespace SeeDocs_App
         const ContentsModule& module)
     {
         Page page;
-        addTitle(page, module.shortName);
-        addMeta(page, { muted(L"module "), code(module.name), muted(L" \u00B7 "),
-            plain(chapter.name) });
+        page.title = module.shortName;
+        addFact(page, L"module", { code(module.name) });
+        addFact(page, L"chapter", { plain(chapter.name) });
         if (!module.types.empty())
         {
-            addHeading(page, L"Types");
-            TableWriter table{ page, Groups::overview };
-            addTypeRows(table, module.types);
+            TableGroups groups;
+            groups.push_back({ .rows = typeRows(module.types) });
+            addTypesSection(page, L"Types", std::move(groups));
         }
-        addFunctionRows(page, surface, [&](const FreeFunction& free) {
+        addFunctions(page, surface, [&](const FreeFunction& free) {
             return free.module == module.name;
         });
-        addConstantRows(page, surface, [&](const Variable& variable) {
+        addConstants(page, surface, [&](const Variable& variable) {
             return variable.module == module.name;
         });
         return page;
@@ -865,7 +1025,9 @@ namespace SeeDocs_App
     Page typePage(const Surface& surface, Notes& notes, const Type& type)
     {
         Page page;
-        addTypeHead(page, surface, notes, type);
+        addTypeHead(page, surface, type);
+        addInheritance(page, surface, type);
+        addTypeNote(page, notes, type);
         addProperties(page, surface, notes, type);
         addEvents(page, surface, notes, type);
         addMethods(page, notes, type);

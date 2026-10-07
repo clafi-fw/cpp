@@ -1,11 +1,13 @@
 module SeeDocs_App.Studio.Icons;
 
+import SeeDocs_App.Database;
 import SeeDocs_App.Surface;
 
 import ClaFi.Icons.FolderIcon;
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
+import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
 
@@ -23,6 +25,7 @@ namespace SeeDocs_App
         constexpr float k_rowIconSize = 14.0f;
         constexpr float k_stroke = 1.1f;
         constexpr float k_softFill = 0.35f; // a face tinted rather than filled
+        constexpr float k_kindGap = 12.0f;  // the least room before a row's kind word
 
         // Strong ink holds the body, the accent marks the part that names the kind.
         struct Inks
@@ -296,5 +299,13 @@ namespace SeeDocs_App
         return InTextIcon{ k_rowIconSize, [icon](PaintIconEvent& event) {
             paintRowIcon(event, icon);
         } };
+    }
+
+    void writeRowKind(Text& text, const Type& type)
+    {
+        if (type.isControl)
+            return;
+        text << FlexSpace{ k_kindGap } << TextStyleId::SubBody << InkGrade::Muted
+            << kindWord(type.kind) << PopColor{} << PopTextStyle{};
     }
 }

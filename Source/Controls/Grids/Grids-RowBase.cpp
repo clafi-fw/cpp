@@ -18,6 +18,7 @@ import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.Fit;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.Context.FormContext;
 
 import ClaFi.StdLib;
@@ -37,6 +38,18 @@ namespace ClaFi::Controls::Grids
             layout.setText(text);
             layout.setWrap(true);
             layout.setBoundsAndScale(bounds, formContext.scaleFactor());
+        }
+
+        // Whether a link is written anywhere in the text, so that a cell without one costs the
+        // pointer no layout lookup.
+        [[nodiscard]] bool hasLink(const Text& text)
+        {
+            for (const auto& marker : text.markers())
+            {
+                if (std::holds_alternative<PushLink>(marker.second))
+                    return true;
+            }
+            return false;
         }
 
         // Scratch buffer for the per-row cell flags, kept here rather than in RowBase so that
@@ -226,6 +239,18 @@ namespace ClaFi::Controls::Grids
         {
             m_descriptor.m_owner.getCellHint(event);
         }
+    }
+
+    void RowBase::cellLinkClick(CellLinkClickEvent& event)
+    {
+        emitEvent(event);
+        if (!event.propagationStopped())
+            m_descriptor.m_owner.cellLinkClick(event);
+    }
+
+    CursorShape RowBase::cursor() const
+    {
+        return m_pointsAtLink ? CursorShape::Hand : LaneBase::cursor();
     }
 
     std::wstring RowBase::acceptCellText(const Column& column, const Text& text)
@@ -433,15 +458,10 @@ namespace ClaFi::Controls::Grids
         if (!hoveredColumn)
             return;
 
-        // Where the cell is now. The origin is the row's own place in the form, which is the
-        // space a placement rect is stated in and the same one the paint walks the cells in.
-        FloatRect cellRect;
-        traverseCells(boundsInForm().topLeft(), [&](const RowCell& cell){
-            if (&cell.column == hoveredColumn)
-                cellRect = cell.rect;
-        });
-        // A column with no cell in this row - one whose sub-columns carry the content - is not
-        // the cell under the pointer, which columnAt named off a rect.
+        // Where the cell is now, in the space a placement rect is stated in. A column with no
+        // cell in this row - one whose sub-columns carry the content - is not the cell under the
+        // pointer, which columnAt named off a rect.
+        const FloatRect cellRect = cellRectInForm(*hoveredColumn);
         if (cellRect.empty())
             return;
 
@@ -454,14 +474,9 @@ namespace ClaFi::Controls::Grids
         if (!event.text.empty())
             return;
 
-        // The box the cell's text is drawn in: the cell inside its lines, then the padding and
-        // the lead - the steps paintOneCell and paintCell take to reach it.
-        // The fit and the placement are both stated over it, so the hint stands on the words it
-        // repeats and appears exactly when they are cut.
-        const ScaledCellMetrics& cellMetrics = m_descriptor.scaledCellMetrics();
-        FloatRect textBounds = m_descriptor.cellInnerRect(cellRect);
-        textBounds.inflate(-cellMetrics.padding.toFloat());
-        textBounds.left += cellLead(*hoveredColumn).x;
+        // The fit and the placement are both stated over the box the text is drawn in, so the
+        // hint stands on the words it repeats and appears exactly when they are cut.
+        const FloatRect textBounds = cellTextBounds(*hoveredColumn, cellRect);
         if (textBounds.empty())
             return;
 
@@ -526,11 +541,13 @@ namespace ClaFi::Controls::Grids
     {
         Column* columnToHover = columnAt(event.posOnControl);
         setHoveredColumn(columnToHover);
+        m_pointsAtLink = columnToHover && linkAt(*columnToHover, event.posOnForm).has_value();
     }
 
     void RowBase::hoverLeave()
     {
         LaneBase::hoverLeave();
+        m_pointsAtLink = false;
         // A move names the cell it lands on, so the hover follows the pointer for as long as
         // the pointer stays on the grid. Leaving it is the one way out that no move reports,
         // and the cell has to be given up here or it stays lit with the pointer elsewhere.
@@ -569,6 +586,28 @@ namespace ClaFi::Controls::Grids
         selectColumnUnderMouse();
         Control::nestedPressDown(event);
         m_descriptor.endCellSelection();
+    }
+
+    // Only a pointer click lands on a link - one a key made has no point to land on. The press
+    // has already picked the cell, and the click is the link's alone.
+    void RowBase::nestedClick(ClickEvent& event)
+    {
+        if (event.control == this && Input::mouse().active())
+        {
+            const PointInForm clickPos = event.clickPos();
+            if (const Column* column = columnAt(clickPos))
+            {
+                if (std::optional<std::wstring> target = linkAt(*column, clickPos))
+                {
+                    event.stopPropagation();
+                    CellLinkClickEvent linkEvent{ *this, *column, std::move(*target),
+                        event.stamp };
+                    cellLinkClick(linkEvent);
+                    return;
+                }
+            }
+        }
+        LaneBase::nestedClick(event);
     }
 
     Column* RowBase::columnAt(PointInForm mousePosition) const
@@ -857,6 +896,70 @@ namespace ClaFi::Controls::Grids
         shapeAlone(layout, formContext, text, format, bounds, EventPhase::Paint);
         drawn = layout.calculatedDimensions();
         return layout.isTrimmed();
+    }
+
+    // The origin is the row's own place in the form, which is the space the paint walks the
+    // cells in.
+    FloatRect RowBase::cellRectInForm(const Column& column) const
+    {
+        FloatRect cellRect;
+        traverseCells(boundsInForm().topLeft(), [&](const RowCell& cell) {
+            if (&cell.column == &column)
+                cellRect = cell.rect;
+        });
+        return cellRect;
+    }
+
+    // The cell inside its lines, then the padding and the lead.
+    FloatRect RowBase::cellTextBounds(const Column& column, const FloatRect& cellRect) const
+    {
+        const ScaledCellMetrics& cellMetrics = m_descriptor.scaledCellMetrics();
+        FloatRect textBounds = m_descriptor.cellInnerRect(cellRect);
+        textBounds.inflate(-cellMetrics.padding.toFloat());
+        textBounds.left += cellLead(column).x;
+        return textBounds;
+    }
+
+    // Asked the way the cell is drawn - a moving column's cell off a layout of its own, any
+    // other through the cache - and the point measured from where the column's vertical anchor
+    // put the block, as paintCell puts it.
+    std::optional<std::wstring> RowBase::linkAt(const Column& column, const PointInForm point)
+    {
+        const FloatRect cellRect = cellRectInForm(column);
+        if (cellRect.empty())
+            return std::nullopt;
+        const FloatRect textBounds = cellTextBounds(column, cellRect);
+        if (textBounds.empty())
+            return std::nullopt;
+        Text cellText;
+        doGetCellText(column, cellText);
+        if (!hasLink(cellText))
+            return std::nullopt;
+
+        const FormContext& formContext = this->formContext();
+        const TextFormat& format = cellTextFormat(column);
+        const MaxSize bounds = textBounds.dimensions();
+        const TextAnchor anchor = { column.verticalTextAnchor(), HorizontalTextAnchor::None };
+        std::optional<LinkHit> hit;
+        if (column.movingText() == MovingText::No)
+        {
+            const CalculatedDimensions drawn = textEngine().calculateText(formContext, cellText,
+                bounds, false, true, &format);
+            const FloatPoint origin = anchoredOrigin(textBounds, drawn, anchor);
+            hit = textEngine().linkAt(formContext, cellText, bounds, point - origin, true,
+                &format);
+        }
+        else
+        {
+            TextLayout layout;
+            shapeAlone(layout, formContext, cellText, format, bounds, EventPhase::Paint);
+            const FloatPoint origin = anchoredOrigin(textBounds, layout.calculatedDimensions(),
+                anchor);
+            hit = layout.linkAt(point - origin);
+        }
+        if (!hit.has_value())
+            return std::nullopt;
+        return std::wstring{ hit->link.value };
     }
 
 }

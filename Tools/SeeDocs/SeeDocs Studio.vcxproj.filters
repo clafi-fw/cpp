@@ -52,6 +52,12 @@
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageText.cppm">
       <Filter>Src\Studio</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageView.cpp">
+      <Filter>Src\Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageView.cppm">
+      <Filter>Src\Studio</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.SurfaceView.cpp">
       <Filter>Src\Studio</Filter>
     </ClCompile>

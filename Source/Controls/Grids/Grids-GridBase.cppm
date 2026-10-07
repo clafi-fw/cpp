@@ -46,6 +46,8 @@ namespace ClaFi::Controls::Grids
         DECLARE_EVENT(AcceptCellTextEvent, OnAcceptCellText, onAcceptCellText)
         // The hint for one cell, asked while the pointer rests on it. See Grids
         DECLARE_EVENT(GetCellHintEvent, OnGetCellHint, onGetCellHint)
+        // A link in one cell's text was clicked, and no row listener took it. See Grids
+        DECLARE_EVENT(CellLinkClickEvent, OnCellLinkClick, onCellLinkClick)
         // Raised when the new-item row asks for an item. See Grids
         DECLARE_EVENT(NewItemEvent, OnNewItem, onNewItem)
     public:

@@ -84,18 +84,24 @@ entry.
 `SeeDocs Studio` opens `Surface.cfg` and the notes under `Source/RawDocs` and shows them as
 pages: down the left a tree of chapters - the folders under `Source/`, a reader's names for them
 - each holding its modules and each module the types it exports, controls first; on the right the
-page of whatever is picked. Opening a chapter or a module shows its overview, a table of its
-types with their hints; picking a type shows its page - its hint as the lead, where it is
-declared and what it derives from, the note its comment references, then its properties, events,
-methods, fields or members, each with its hint and the note its own comment references under
-its line. A type whose comment references nothing takes the section named exactly after it from
-a note of its own folder, marked as matched by name. Where the surface states no hint the page
-says so, in place of the words, so what the documentation still lacks is read off the preview.
+page of whatever is picked. A page is a column of controls: its title with its hint under it,
+a grid of facts - namespace, module, source, what it derives from - and then a section per
+expander. A chapter's or a module's page holds a grid of its types with their kinds and hints,
+the chapter's grouped by module under held headers. A type's page holds its inheritance as a
+tree - its bases followed up, a mixin's through the argument it was given, and the types derived
+from it followed down - the note its comment references as prose, and a grid per member kind:
+properties, events, methods with the protected ones under a header of their own, fields or
+members, each with its hint. A member whose comment references a note carries a mark in a column
+of its own, and the note stands as a footnote under the grid; the mark leads to it. A type whose
+comment references nothing takes the section named exactly after it from a note of its own
+folder, marked as matched by name. Where the surface states no hint the page says so, in place of
+the words, so what the documentation still lacks is read off the preview.
 
-A type's name on a page is a link to its page; the tree follows. The pages are built by
-`SeeDocs_App.Pages` as blocks - title, lead, headings, paragraphs, code, bullets, tables - out of
-the surface and the notes, and the studio renders those blocks as a Text; a generator renders the
-same blocks as files.
+A type's name on a page is a link to its page, in a grid cell as in prose, and a row of the
+inheritance tree opens the type it names; the tree on the left follows. The pages are built by
+`SeeDocs_App.Pages` - facts, sections, tables of rows with their footnotes, branches of a tree,
+and blocks of prose - out of the surface and the notes; the studio builds controls from them
+(`SeeDocs_App.Studio.PageView`) and a generator renders the same pages as files.
 
 ## The checks
 

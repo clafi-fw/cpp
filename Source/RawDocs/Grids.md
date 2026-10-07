@@ -118,6 +118,19 @@ which is the hint's own buffer. The hint event underneath is reachable for its
 placement and anchor: the anchor arrives set to the cell's rect, and the placement to
 the pointer. A cell nobody wrote for falls back to repeating the words its column cut.
 
+## CellLinkClickEvent
+
+A link in one cell's text was clicked. A cell's text carries links the way any Text does -
+PushLink round the words - and a pointer click on one of them raises this on the row, then on
+the grid, the pair GetCellTextEvent goes to. It carries the target the link was written with
+and the click's stamp. The click is the link's alone: the press before it has already picked
+the cell, and the click goes no further up, so the grid's own click pass sees nothing.
+
+The link is found the way the cell is drawn: through the engine's layout cache for an ordinary
+column, off a layout of its own for a MovingText one, the point measured from where the
+column's vertical anchor put the block. The hand shows while the pointer stands on a link. A
+click a key made lands on nothing - it has no point.
+
 ## Column
 
 Column{ Tag{ ColumnTag::Hue }, Text{ L"Hue" }, Column{ ... }, Column{ ... } }
