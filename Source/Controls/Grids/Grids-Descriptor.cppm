@@ -67,6 +67,7 @@ namespace ClaFi::Controls::Grids
         // The controller is the grid's to name - null while the grid stands in no form, where
         // nothing of these cells can be running.
         void forgetRow(AnimationController*, const Control*);
+        void stopAll(AnimationController*); // every fade this channel has running
         const Column* column() const { return m_column; }
         bool setCell(Control* row, const Column*);
         [[nodiscard]] float cellFactor(const Control& row, const Column&) const;
@@ -107,6 +108,7 @@ namespace ClaFi::Controls::Grids
     public:
         GridDescriptor(Grid& owner, ViewMode, GridLines);
         GridDescriptor(GridDescriptor& other) = delete;
+        ~GridDescriptor(); // stops the cell fades
     public:
         Grid& owner() { return m_owner; }
         const Grid& owner() const { return m_owner; }

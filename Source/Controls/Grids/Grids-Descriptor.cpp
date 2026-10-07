@@ -26,6 +26,14 @@ namespace ClaFi::Controls::Grids
             m_row = nullptr;
     }
 
+    void HighlightChannel::stopAll(AnimationController* animator)
+    {
+        if (!animator)
+            return;
+        for (CellHighlight& cell : m_ring)
+            animator->stop(&cell);
+    }
+
     bool HighlightChannel::setCell(Control* row, const Column* column)
     {
         if (row == m_row && column == m_column)
@@ -72,6 +80,15 @@ namespace ClaFi::Controls::Grids
     {
         m_scaledCellMetrics.border = m_scaledCellMetrics.scaler().scaledStrokeWidth(m_designCellMetrics.border);
         m_scaledCellMetrics.radius = m_scaledCellMetrics.scaler().scaleF(m_designCellMetrics.radius);
+    }
+
+    // The fades run under the cells of the two rings, not under a control, so Control's teardown
+    // does not reach them; they are stopped here, while the grid can still name its controller.
+    GridDescriptor::~GridDescriptor()
+    {
+        AnimationController* animator = m_owner.animator();
+        m_hoverChannel.stopAll(animator);
+        m_selectChannel.stopAll(animator);
     }
 
     void GridDescriptor::setGridLines(GridLines value)
