@@ -152,6 +152,26 @@ A type whose comment references nothing takes the section named exactly after it
 its own folder, marked as matched by name in that hint. Where the surface states no hint the page says so, in
 place of the words, so what the documentation still lacks is read off the preview.
 
+Hints and footnotes are edited where they stand. A hint cell opens its editor with F2, Enter or a
+double click, on the comment's own words - its types unlinked, a missing hint empty; the hint
+under a page's title and the one under each declaration of a method page open with F2 or Edit hint
+on their menu. Enter writes the words into the comment the hint is read from, the `See` it ends
+with kept: on the declaration's line while the whole line fits 100 columns, lined up with the
+comments of the lines of code round it, and above it otherwise - always above a class, a struct or
+an enum. A method's row writes the overload whose words it shows, and an override that shows its
+base's words writes the base's comment. A footnote opens its markdown in its place with F2 or Edit
+footnote on its menu: each paragraph and each bullet on one line, the headings inside it and its
+code as written. Ctrl+S or Save writes it into its note - a paragraph or a bullet that reads as it
+did keeps its lines, any other is broken at 100 columns again - and Escape or Cancel leaves it. The
+row of a property, an event, a field or a member with no footnote offers Add footnote on its menu:
+the footnote goes after the type's own section in its note, or at the end of the chapter's note,
+headed by the member's name, and the comment gains the `See` that reaches it. Every write reads its
+file again first and refuses, saying why, where the file no longer holds what the page was built
+from - a file changed in an editor since the scan is scanned again before it is edited here. A file
+keeps its byte order mark and each line its own line end. The words are written by
+`SeeDocs_App.Edits`, the database follows every write, and the page shown takes the new words where
+it stands; a footnote added builds the page again at the new footnote.
+
 A type's name on a page is a link to its page, in a grid cell as in prose: a type named in a
 hint, in a note's prose or code, or in a signature - bare or qualified, as `Control` or
 `Grids::Row` - links wherever the surface has a page for it. A right click on a link, or the menu
@@ -185,7 +205,8 @@ per tab, and a generator renders the same pages as files.
 
 `SeeDocs.sln` builds both programs with Visual Studio against the shared items: `SeeDocs` the
 scanner and `SeeDocs Studio` the studio, which share the Surface, Scanner, Database, Project,
-Notes and Pages modules under `Src/`, the studio's own standing under `Src/Studio/`. The CMake target
+Notes and Pages modules under `Src/`, the studio's own standing under `Src/Studio/` and the Edits
+module beside the shared ones. The CMake target
 `SeeDocsStudio` builds the studio on Wayland beside the other applications. The CMake target
 `SeeDocs` builds the scanner on Linux with or without a platform layer - the Dom, the Syntax lexer and the text
 file reader reach no further down than `UiTypes` - so a `check` runs wherever the tree is

@@ -1,10 +1,14 @@
 module SeeDocs_App.Studio.Browser;
 
+import SeeDocs_App.Studio.Editing;
 import SeeDocs_App.Studio.Icons;
 import SeeDocs_App.Studio.PageView;
 import SeeDocs_App.Studio.SurfaceTree;
+import SeeDocs_App.Database;
+import SeeDocs_App.Edits;
 import SeeDocs_App.Notes;
 import SeeDocs_App.Pages;
+import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
 
 import ClaFi.Browser.Consts;
@@ -17,6 +21,7 @@ import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
+import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Url;
 
@@ -31,6 +36,10 @@ namespace SeeDocs_App
     namespace
     {
         constexpr float k_wordsIndent = 12.0f;   // of a path quoted in the studio's words
+        constexpr std::wstring_view k_noteExtension = L".md";
+        constexpr std::wstring_view k_sourceJoin = L" \u203A ";
+        constexpr std::wstring_view k_separator = L" \u00B7 ";
+        constexpr std::wstring_view k_noProject = L"No project is open.";
 
         // The names down a path, home's empty one left out: the chapter's first.
         [[nodiscard]] std::vector<std::wstring_view> segmentsOf(const PageData& data)
@@ -101,12 +110,14 @@ namespace SeeDocs_App
         return depth > resolved;
     }
 
-    bool SurfaceBrowser::bind(const Surface& surface, Notes& notes,
-        const std::wstring_view projectName, const OpenTabs openTabs)
+    bool SurfaceBrowser::bind(Surface& surface, Notes& notes, const Project& project,
+        const OpenTabs openTabs)
     {
         m_surface = &surface;
         m_notes = &notes;
-        m_projectName = std::wstring{ projectName };
+        m_projectName = project.name;
+        m_sources = project.folder;
+        m_database = project.databasePath();
         m_words = {};
         m_contents = contentsOf(surface);
         m_targets.clear();
@@ -156,6 +167,8 @@ namespace SeeDocs_App
         m_surface = nullptr;
         m_notes = nullptr;
         m_projectName.clear();
+        m_sources.clear();
+        m_database.clear();
         m_words = words;
         m_contents.clear();
         m_targets.clear();
@@ -182,6 +195,90 @@ namespace SeeDocs_App
             return std::nullopt;
         const Target& named = owner->second;
         return Url{ pathOf(named.chapter, named.module, named.type, link->member) };
+    }
+
+    std::wstring SurfaceBrowser::writeHint(const CommentSite& site, const std::wstring_view hint)
+    {
+        if (!m_surface)
+            return std::wstring{ k_noProject };
+        const Refusal refusal = SeeDocs_App::writeHint(*m_surface, m_sources, site, hint);
+        if (!refusal.empty())
+            return refusal;
+        writeDatabase(*m_surface, m_database);
+        refreshPages(std::nullopt);
+        return {};
+    }
+
+    // The editor's bar names the note and the section, and how many comments reach it - or that
+    // none does, the section being the type's by its name.
+    FootnoteDraft SurfaceBrowser::draftFootnote(const Reference& reference)
+    {
+        FootnoteDraft draft;
+        draft.reference = reference;
+        const NoteSection* section = m_notes
+            ? m_notes->section(reference.note, reference.anchor)
+            : nullptr;
+        if (!m_surface || !section)
+        {
+            draft.refusal = reference.note + std::wstring{ k_noteExtension }
+                + L" no longer holds this section.";
+            return draft;
+        }
+        draft.text = flowedText(section->lines);
+        draft.place = reference.note + std::wstring{ k_noteExtension }
+            + std::wstring{ k_sourceJoin } + section->heading;
+        const std::size_t uses = referencesTo(*m_surface, reference);
+        draft.place += k_separator;
+        if (uses == 0)
+            draft.place += L"matched by name";
+        else if (uses == 1)
+            draft.place += L"reached from 1 declaration";
+        else
+            draft.place += L"reached from " + std::to_wstring(uses) + L" declarations";
+        return draft;
+    }
+
+    FootnoteDraft SurfaceBrowser::draftFootnote(const CommentSite& site, const FootnoteHome& home)
+    {
+        FootnoteDraft draft;
+        draft.site = site;
+        if (!m_notes)
+        {
+            draft.refusal = std::wstring{ k_noProject };
+            return draft;
+        }
+        std::optional<NewFootnote> placed = placeFootnote(*m_notes, site, home.note, home.after,
+            home.owner, draft.refusal);
+        if (!placed)
+            return draft;
+        draft.reference = placed->reference;
+        draft.place = placed->reference.note + std::wstring{ k_noteExtension }
+            + std::wstring{ k_sourceJoin } + placed->heading + std::wstring{ k_separator }
+            + L"new, with a See in the comment";
+        draft.placed = std::move(placed);
+        return draft;
+    }
+
+    std::wstring SurfaceBrowser::writeFootnote(const FootnoteDraft& draft,
+        const std::wstring_view text)
+    {
+        if (!m_surface || !m_notes)
+            return std::wstring{ k_noProject };
+        if (draft.placed && draft.site)
+        {
+            const Refusal refusal = addFootnote(*m_surface, *m_notes, m_sources, *draft.site,
+                *draft.placed, text);
+            if (!refusal.empty())
+                return refusal;
+            writeDatabase(*m_surface, m_database);
+            refreshPages(draft.placed->reference);
+            return {};
+        }
+        const Refusal refusal = SeeDocs_App::writeFootnote(*m_notes, draft.reference, text);
+        if (!refusal.empty())
+            return refusal;
+        refreshPages(std::nullopt);
+        return {};
     }
 
     // Said for every page as it is built, which is before anything asks for its list: a page
@@ -246,6 +343,7 @@ namespace SeeDocs_App
         if (!page)
         {
             page = &tab.createPage<SurfacePage>();
+            page->view().setWriter(*this);
             fill(*page, target, data);
             tab.setPage(page);
             // The page is what the icon comes from once there is one, and the tab last asked
@@ -402,6 +500,26 @@ namespace SeeDocs_App
         return RowIcon::Chapter;
     }
 
+    std::optional<Page> SurfaceBrowser::pageOf(const Target& target) const
+    {
+        if (!m_surface || target.isGone())
+            return std::nullopt;
+        if (target.isHome())
+            return contentsPage(m_contents, m_projectName);
+        if (target.isFolder() && !target.chapter)
+        {
+            return contentsPage(chaptersUnder(m_contents, target.folder),
+                folderNameOf(target.folder));
+        }
+        if (target.isFolder())
+            return chapterPage(*m_surface, *m_notes, m_contents, *target.chapter);
+        if (!target.type)
+            return modulePage(*m_surface, *m_notes, *target.chapter, *target.module);
+        if (target.method.empty())
+            return typePage(*m_surface, *m_notes, *target.type);
+        return methodPage(*m_surface, *m_notes, *target.type, target.method);
+    }
+
     void SurfaceBrowser::fill(SurfacePage& page, const Target& target, const PageData& data) const
     {
         PageView& view = page.view();
@@ -415,19 +533,8 @@ namespace SeeDocs_App
             view.showText(goneWords(data));
             return;
         }
-        if (target.isHome())
-            view.show(contentsPage(m_contents, m_projectName));
-        else if (target.isFolder() && !target.chapter)
-            view.show(contentsPage(chaptersUnder(m_contents, target.folder),
-                folderNameOf(target.folder)));
-        else if (target.isFolder())
-            view.show(chapterPage(*m_surface, *m_notes, m_contents, *target.chapter));
-        else if (!target.type)
-            view.show(modulePage(*m_surface, *m_notes, *target.chapter, *target.module));
-        else if (target.method.empty())
-            view.show(typePage(*m_surface, *m_notes, *target.type));
-        else
-            view.show(methodPage(*m_surface, *m_notes, *target.type, target.method));
+        if (std::optional<Page> built = pageOf(target))
+            view.show(std::move(*built));
     }
 
     // The page datas standing are the ones restored from the settings and the ones walked since;
@@ -459,6 +566,58 @@ namespace SeeDocs_App
         }
         if (selected)
             goTo(*selected->pageData(), selected->anchor(), *selected);
+    }
+
+    // THE EDIT THAT ASKED STANDS ON THE SELECTED TAB'S PAGE, so that page takes the new words in
+    // place - nothing under the edit is deleted - and is built again only once the edit has
+    // unwound, where the words changed what the page is made of: a footnote added. Any other
+    // tab's page goes, and is built when its tab is selected.
+    void SurfaceBrowser::refreshPages(std::optional<Reference> show)
+    {
+        for (BrowserTab& tab : tabs())
+        {
+            SurfacePage* page = static_cast<SurfacePage*>(tab.page());
+            if (!page)
+                continue;
+            if (!tab.selected())
+            {
+                page->deleteSelf();
+                tab.setPage(nullptr);
+                continue;
+            }
+            std::optional<Page> built = pageOf(resolve(page->pageData()));
+            if (built && page->view().refresh(std::move(*built)))
+                continue;
+            m_rebuildFootnote = std::move(show);
+            m_rebuildTimer.start(MilliSeconds{ 0u });
+        }
+    }
+
+    // A footnote waiting to be shown is reached the way a click on its mark reaches it, once the
+    // page stands again.
+    void SurfaceBrowser::rebuildCurrentPage()
+    {
+        const std::optional<Reference> show = std::exchange(m_rebuildFootnote, std::nullopt);
+        BrowserTab* tab = nullptr;
+        for (BrowserTab& each : tabs())
+        {
+            if (each.selected())
+                tab = &each;
+        }
+        if (!tab || !tab->pageData())
+            return;
+        if (tab->page())
+        {
+            tab->page()->deleteSelf();
+            tab->setPage(nullptr);
+        }
+        goTo(*tab->pageData(), tab->anchor(), *tab);
+        const SurfacePage* page = static_cast<const SurfacePage*>(tab->page());
+        if (!show || !page)
+            return;
+        const std::wstring anchor = page->view().anchorOf(*show);
+        if (!anchor.empty())
+            goTo(Url{ tab->pageData()->path(), anchor }, HistoryEntry::Replace);
     }
 
     Text SurfaceBrowser::goneWords(const PageData& data) const

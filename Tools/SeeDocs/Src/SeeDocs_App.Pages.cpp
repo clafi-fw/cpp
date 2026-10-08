@@ -74,25 +74,25 @@ namespace SeeDocs_App
         namespace Columns
         {
             const TableColumns types = {
-                { L"Name" }, { L"Kind" }, { L"Hint", true }
+                { L"Name" }, { L"Kind" }, { L"Hint", true, true }
             };
             const TableColumns properties = {
-                { L"Name" }, { L"Type" }, { L"Default" }, { L"Hint", true }
+                { L"Name" }, { L"Type" }, { L"Default" }, { L"Hint", true, true }
             };
             const TableColumns events = {
-                { L"Event" }, { L"Type" }, { L"Hint", true }
+                { L"Event" }, { L"Type" }, { L"Hint", true, true }
             };
             const TableColumns methods = {
-                { L"Name" }, { L"Hint", true }
+                { L"Name" }, { L"Hint", true, true }
             };
             const TableColumns functions = {
-                { L"Signature" }, { L"Hint", true }
+                { L"Signature" }, { L"Hint", true, true }
             };
             const TableColumns fields = {
-                { L"Name" }, { L"Type" }, { L"Value" }, { L"Hint", true }
+                { L"Name" }, { L"Type" }, { L"Value" }, { L"Hint", true, true }
             };
             const TableColumns members = {
-                { L"Name" }, { L"Value" }, { L"Hint", true }
+                { L"Name" }, { L"Value" }, { L"Hint", true, true }
             };
             const TableColumns chapters = {
                 { L"Chapter", true }, { L"Modules" }, { L"Types" }, { L"Controls" }
@@ -182,6 +182,31 @@ namespace SeeDocs_App
         [[nodiscard]] Run missing(std::wstring text)
         {
             return { .text = std::move(text), .style = RunStyle::Missing };
+        }
+
+        // Where a declaration's comment is written, for a page that lets its words be edited.
+        [[nodiscard]] CommentSite siteOf(const Comment& comment, const Place& place,
+            std::wstring name, const bool opensScope = false)
+        {
+            return {
+                .comment = &comment,
+                .place = place,
+                .name = std::move(name),
+                .opensScope = opensScope
+            };
+        }
+
+        [[nodiscard]] CommentSite siteOf(const Type& type)
+        {
+            return siteOf(type.comment, type.place, type.name, type.opensScope());
+        }
+
+        // A member on its enum's own line has no comment above it - the one there is the enum's.
+        [[nodiscard]] CommentSite memberSite(const Type& type, const EnumMember& member)
+        {
+            CommentSite site = siteOf(member.comment, member.place, member.name);
+            site.readsAbove = member.place.line != type.place.line;
+            return site;
         }
 
         // The type a name spelled in a namespace links to - one the surface has a page for.
@@ -598,6 +623,8 @@ namespace SeeDocs_App
             if (!found.section)
                 return std::nullopt;
             Excerpt excerpt;
+            excerpt.from = { .note = found.note->stem, .anchor = found.section->anchor };
+            excerpt.byName = found.byName;
             excerpt.source = found.note->stem + std::wstring{ k_noteExtension }
                 + std::wstring{ k_sourceJoin } + found.section->heading;
             if (found.byName)
@@ -663,6 +690,7 @@ namespace SeeDocs_App
                     + type.templateParameters + L">"));
             }
             page.lead = hintRuns(surface, type.comment, type.nameSpace);
+            page.leadSite = siteOf(type);
             addFact(page, L"namespace", { code(type.nameSpace) });
             addFact(page, L"module", { code(type.module, type.module) });
             addFact(page, L"source", { code(fileLineOf(surface, type.place)) });
@@ -1057,6 +1085,59 @@ namespace SeeDocs_App
             section.excerpt = std::move(*excerpt);
         }
 
+        // The note a chapter's footnotes go into: the one named after the most of its folders,
+        // the shortest name first among as many; empty where no note is named after any.
+        [[nodiscard]] std::wstring chapterNote(Notes& notes, const std::wstring_view category)
+        {
+            const std::vector<std::wstring_view> folders = foldersOf(category);
+            std::wstring best;
+            std::size_t bestCount = 0;
+            for (const std::wstring& stem : notes.stems())
+            {
+                const std::size_t count = static_cast<std::size_t>(std::ranges::count_if(folders,
+                    [&stem](const std::wstring_view folder) {
+                        return stem.find(folder) != std::wstring::npos;
+                    }));
+                const bool better = count > bestCount
+                    || (count == bestCount && count != 0 && stem.size() < best.size());
+                if (better)
+                {
+                    best = stem;
+                    bestCount = count;
+                }
+            }
+            return best;
+        }
+
+        // Where a footnote written new on a chapter's or a module's page goes: the chapter's note.
+        [[nodiscard]] std::optional<FootnoteHome> chapterFootnoteHome(Notes& notes,
+            const std::wstring_view category)
+        {
+            std::wstring note = chapterNote(notes, category);
+            if (note.empty())
+                return std::nullopt;
+            return FootnoteHome{ .note = std::move(note) };
+        }
+
+        // Where a footnote written new for a member of the type goes: after the type's own
+        // section where it has one, at the end of its chapter's note otherwise.
+        [[nodiscard]] std::optional<FootnoteHome> typeFootnoteHome(Notes& notes, const Type& type)
+        {
+            const FoundNote found = noteFor(notes, type.comment, type.name, type.category, true);
+            if (found.section)
+            {
+                return FootnoteHome{
+                    .note = found.note->stem,
+                    .after = found.section->anchor,
+                    .owner = type.name
+                };
+            }
+            std::optional<FootnoteHome> home = chapterFootnoteHome(notes, type.category);
+            if (home)
+                home->owner = type.name;
+            return home;
+        }
+
         // The member tables of a type page
 
         // A type's own properties, one row each.
@@ -1078,7 +1159,9 @@ namespace SeeDocs_App
                 rows.push_back({
                     .cells = { { code(property.name) }, std::move(spelled), std::move(value),
                         hintRuns(surface, property.comment, type.nameSpace) },
-                    .excerpt = memberExcerpt(surface, notes, property.comment, property.name, type)
+                    .excerpt = memberExcerpt(surface, notes, property.comment, property.name,
+                        type),
+                    .site = siteOf(property.comment, property.place, property.name)
                 });
             }
             return rows;
@@ -1106,7 +1189,8 @@ namespace SeeDocs_App
                 rows.push_back({
                     .cells = { { code(event.alias) },
                         { typeRun(surface, event.type, type.nameSpace) }, std::move(hint) },
-                    .excerpt = memberExcerpt(surface, notes, event.comment, event.type, type)
+                    .excerpt = memberExcerpt(surface, notes, event.comment, event.type, type),
+                    .site = siteOf(event.comment, event.place, event.type)
                 });
             }
             return rows;
@@ -1141,13 +1225,14 @@ namespace SeeDocs_App
             });
         }
 
-        // The comment a function without one takes: the comment on the function of the same shape
-        // in the nearest base above that carries one - an override's virtual.
-        [[nodiscard]] const Comment& commentOf(const Function& function,
+        // The function whose comment a function without one shows: the function of the same
+        // shape in the nearest base above that carries one - an override's virtual. The function
+        // itself where it has one, or where nothing above does.
+        [[nodiscard]] const Function& commentHolder(const Function& function,
             const std::span<const ReachedBase> above)
         {
             if (!function.comment.text.empty())
-                return function.comment;
+                return function;
             const std::wstring key = shapeKey(function);
             for (const ReachedBase& base : above)
             {
@@ -1156,11 +1241,16 @@ namespace SeeDocs_App
                     if (candidate.name == function.name && !candidate.comment.text.empty()
                         && shapeKey(candidate) == key)
                     {
-                        return candidate.comment;
+                        return candidate;
                     }
                 }
             }
-            return function.comment;
+            return function;
+        }
+
+        [[nodiscard]] CommentSite siteOf(const Function& function)
+        {
+            return siteOf(function.comment, function.place, function.name);
         }
 
         // Whether a method stands in the table: a property's accessor never, the type's own
@@ -1254,7 +1344,8 @@ namespace SeeDocs_App
                     continue;
                 if (shownAccess(function, reached) != access)
                     continue;
-                const Comment& comment = commentOf(function, above);
+                const Function& holder = commentHolder(function, above);
+                const Comment& comment = holder.comment;
                 Runs signature = signatureRuns(surface, owner, function, k_hintJoin);
                 const auto known = rowByName.find(function.name);
                 if (known == rowByName.end())
@@ -1266,7 +1357,8 @@ namespace SeeDocs_App
                     group.rows.push_back({
                         .cells = { { code(function.name, memberLink(owner, function.name)) },
                             hintRuns(surface, comment, owner.nameSpace) },
-                        .hint = std::move(signature)
+                        .hint = std::move(signature),
+                        .site = siteOf(holder)
                     });
                     continue;
                 }
@@ -1277,6 +1369,7 @@ namespace SeeDocs_App
                 if (!known->second.commented && !comment.text.empty())
                 {
                     row.cells[1] = hintRuns(surface, comment, owner.nameSpace);
+                    row.site = siteOf(holder);
                     known->second.commented = true;
                 }
             }
@@ -1333,10 +1426,12 @@ namespace SeeDocs_App
                 + std::wstring{ k_separator } + std::to_wstring(inherited) + L" inherited";
         }
 
-        // A member table over the type and its bases, its hint telling the own rows apart.
+        // A member table over the type and its bases, its hint telling the own rows apart; its
+        // rows take footnotes as asked. Nothing where neither the type nor a base has a member.
         template<typename GroupOf>
         void addMemberSection(Page& page, std::wstring heading, const TableColumns& columns,
-            const Type& type, const ReachedBases& bases, const GroupOf& groupOf)
+            const Type& type, const ReachedBases& bases, const GroupOf& groupOf,
+            const bool takesFootnotes)
         {
             MemberGroups groups = ownAndInherited(type, bases, groupOf);
             if (groups.groups.empty())
@@ -1344,6 +1439,7 @@ namespace SeeDocs_App
             Section& section = addTableSection(page, std::move(heading), columns,
                 std::move(groups.groups));
             section.hint = memberCount(groups.own, section.table.rowCount() - groups.own);
+            section.table.takesFootnotes = takesFootnotes;
         }
 
         void addProperties(Page& page, const Surface& surface, Notes& notes, const Type& type,
@@ -1352,7 +1448,7 @@ namespace SeeDocs_App
             addMemberSection(page, L"Properties", Columns::properties, type, bases,
                 [&](const Type& owner, const ReachedBase*) {
                     return TableGroup{ .rows = propertyRows(surface, notes, owner) };
-                });
+                }, true);
         }
 
         void addEvents(Page& page, const Surface& surface, Notes& notes, const Type& type,
@@ -1361,7 +1457,7 @@ namespace SeeDocs_App
             addMemberSection(page, L"Events", Columns::events, type, bases,
                 [&](const Type& owner, const ReachedBase*) {
                     return TableGroup{ .rows = eventRows(surface, notes, owner) };
-                });
+                }, true);
         }
 
         // The methods as two tables, the public ones and the protected ones, each over the type
@@ -1374,7 +1470,7 @@ namespace SeeDocs_App
                     [&](const Type& owner, const ReachedBase* reached) {
                         return methodGroup(surface, owner, reached, basesAbove(bases, reached),
                             access);
-                    });
+                    }, false);
             };
             add(k_publicMethods, Access::Public);
             add(k_protectedMethods, Access::Protected);
@@ -1413,11 +1509,13 @@ namespace SeeDocs_App
         void addSignature(Page& page, const Surface& surface, Notes& notes, const Type& owner,
             const Function& function, const ReachedBases& bases)
         {
-            const Comment& comment = commentOf(function, basesAbove(bases, nullptr));
+            const Function& holder = commentHolder(function, basesAbove(bases, nullptr));
+            const Comment& comment = holder.comment;
             Signature signature{
                 .code = signatureRuns(surface, owner, function, k_signatureJoin),
                 .lead = hintRuns(surface, comment, owner.nameSpace),
-                .excerpt = memberExcerpt(surface, notes, comment, function.name, owner)
+                .excerpt = memberExcerpt(surface, notes, comment, function.name, owner),
+                .site = siteOf(holder)
             };
             accessSection(page, function.access).signatures.push_back(std::move(signature));
         }
@@ -1433,12 +1531,15 @@ namespace SeeDocs_App
                     .cells = { { code(field.name) },
                         { typeRun(surface, field.type, type.nameSpace) }, valueCell(field.value),
                         hintRuns(surface, field.comment, type.nameSpace) },
-                    .excerpt = memberExcerpt(surface, notes, field.comment, field.name, type)
+                    .excerpt = memberExcerpt(surface, notes, field.comment, field.name, type),
+                    .site = siteOf(field.comment, field.place, field.name)
                 });
             }
             TableGroups groups;
             groups.push_back(std::move(group));
-            addTableSection(page, L"Fields", Columns::fields, std::move(groups));
+            Section& section = addTableSection(page, L"Fields", Columns::fields,
+                std::move(groups));
+            section.table.takesFootnotes = true;
         }
 
         void addMembers(Page& page, const Surface& surface, Notes& notes, const Type& type)
@@ -1451,12 +1552,15 @@ namespace SeeDocs_App
                 group.rows.push_back({
                     .cells = { { code(member.name) }, valueCell(member.value),
                         hintRuns(surface, member.comment, type.nameSpace) },
-                    .excerpt = memberExcerpt(surface, notes, member.comment, member.name, type)
+                    .excerpt = memberExcerpt(surface, notes, member.comment, member.name, type),
+                    .site = memberSite(type, member)
                 });
             }
             TableGroups groups;
             groups.push_back(std::move(group));
-            addTableSection(page, L"Members", Columns::members, std::move(groups));
+            Section& section = addTableSection(page, L"Members", Columns::members,
+                std::move(groups));
+            section.table.takesFootnotes = true;
         }
 
         // The types with a property or an event of this type
@@ -1537,7 +1641,8 @@ namespace SeeDocs_App
                 rows.push_back({
                     .cells = { { nameRun(*type) }, kindCell(*type),
                         hintRuns(surface, type->comment, type->nameSpace) },
-                    .type = type
+                    .type = type,
+                    .site = siteOf(*type)
                 });
             }
             return rows;
@@ -1612,8 +1717,11 @@ namespace SeeDocs_App
             {
                 if (free.exported && takes(free))
                 {
-                    group.rows.push_back({ .cells = { { code(free.function.signature) },
-                        hintRuns(surface, free.function.comment, free.nameSpace) } });
+                    group.rows.push_back({
+                        .cells = { { code(free.function.signature) },
+                            hintRuns(surface, free.function.comment, free.nameSpace) },
+                        .site = siteOf(free.function)
+                    });
                 }
             }
             if (group.rows.empty())
@@ -1631,10 +1739,14 @@ namespace SeeDocs_App
             {
                 if (variable.exported && takes(variable))
                 {
-                    group.rows.push_back({ .cells = { { code(variable.field.name) },
-                        { typeRun(surface, variable.field.type, variable.nameSpace) },
-                        valueCell(variable.field.value),
-                        hintRuns(surface, variable.field.comment, variable.nameSpace) } });
+                    const Field& field = variable.field;
+                    group.rows.push_back({
+                        .cells = { { code(field.name) },
+                            { typeRun(surface, field.type, variable.nameSpace) },
+                            valueCell(field.value),
+                            hintRuns(surface, field.comment, variable.nameSpace) },
+                        .site = siteOf(field.comment, field.place, field.name)
+                    });
                 }
             }
             if (group.rows.empty())
@@ -1806,11 +1918,12 @@ namespace SeeDocs_App
         return page;
     }
 
-    Page chapterPage(const Surface& surface, Notes&, const ContentsChapters& chapters,
+    Page chapterPage(const Surface& surface, Notes& notes, const ContentsChapters& chapters,
         const ContentsChapter& chapter)
     {
         Page page;
         page.title = chapter.name;
+        page.footnoteHome = chapterFootnoteHome(notes, chapter.category);
         addFact(page, L"folder", { code(chapter.category) });
 
         std::size_t controls = 0;
@@ -1866,11 +1979,12 @@ namespace SeeDocs_App
         return page;
     }
 
-    Page modulePage(const Surface& surface, Notes&, const ContentsChapter& chapter,
+    Page modulePage(const Surface& surface, Notes& notes, const ContentsChapter& chapter,
         const ContentsModule& module)
     {
         Page page;
         page.title = module.shortName;
+        page.footnoteHome = chapterFootnoteHome(notes, chapter.category);
         addFact(page, L"module", { code(module.name) });
         addFact(page, L"chapter", { { .text = chapter.name, .link = chapter.name } });
         if (!module.types.empty())
@@ -1911,6 +2025,7 @@ namespace SeeDocs_App
                 + countOf(overloads.size(), k_overloadNoun)));
         }
         addFact(page, L"module", { code(type.module, type.module) });
+        page.footnoteHome = typeFootnoteHome(notes, type);
         const BaseWalk walk = baseWalkOf(surface, type);
         for (const Function* function : overloads)
             addSignature(page, surface, notes, type, *function, walk.reached);
@@ -1950,6 +2065,7 @@ namespace SeeDocs_App
     {
         Page page;
         addTypeHead(page, surface, type);
+        page.footnoteHome = typeFootnoteHome(notes, type);
         const ReachedBases bases = addTypeBases(page, surface, type);
         addDerivedTypes(page, surface, type);
         addProperties(page, surface, notes, type, bases);

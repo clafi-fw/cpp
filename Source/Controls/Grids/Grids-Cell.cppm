@@ -41,6 +41,14 @@ namespace ClaFi::Controls::Grids
         Text& m_text;
     };
 
+    // The value an in-place editor opens on for one cell, where it is not what the cell shows.
+    export class GetCellEditorTextEvent : public CellEventBase
+    {
+    public:
+        using CellEventBase::CellEventBase;
+        std::optional<Text> text{};   // left empty, the editor opens on what the cell shows
+    };
+
     // The text an in-place edit was left with, on its way back to the cell's source. See Grids
     export class AcceptCellTextEvent : public CellEventBase
     {

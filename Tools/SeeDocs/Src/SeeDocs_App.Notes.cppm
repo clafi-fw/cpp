@@ -59,6 +59,9 @@ namespace SeeDocs_App
         [[nodiscard]] const Stems& stems();
         // Every section of every note whose anchor is the one named, in the folder's order.
         [[nodiscard]] NoteHits sectionsNamed(std::wstring_view anchor);
+        // Lets go of what was read of the note, so the next ask reads the file again. What was
+        // handed out of it before goes with it.
+        void forget(std::wstring_view stem);
     private:
         [[nodiscard]] static Note read(std::wstring_view stem, const std::wstring& text);
     private:

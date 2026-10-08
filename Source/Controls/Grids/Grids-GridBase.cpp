@@ -349,8 +349,15 @@ namespace ClaFi::Controls::Grids
         textRect.inflate(-m_descriptor.scaledCellMetrics().padding.toFloat());
         textRect.left += row->cellLead(*column).x;
 
+        // A cell may show more than its value - a mark, words beside it - so a source that
+        // states the value apart is asked first.
+        GetCellEditorTextEvent editorText{ *row, *column };
+        row->getCellEditorText(editorText);
         Text text;
-        row->doGetCellText(*column, text);
+        if (editorText.text.has_value())
+            text = std::move(*editorText.text);
+        else
+            row->doGetCellText(*column, text);
 
         // None, deliberately: paintCell lays a cell's text out across that same rect, and what
         // moves it to the other end of the column is the alignment in the column's format. The

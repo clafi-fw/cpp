@@ -16,6 +16,12 @@
     <ClCompile Include="Src\SeeDocs_App.Database.cppm">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.Edits.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.Edits.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Notes.cpp">
       <Filter>Src</Filter>
     </ClCompile>
@@ -50,6 +56,12 @@
       <Filter>Src\Studio</Filter>
     </ClCompile>
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Browser.cppm">
+      <Filter>Src\Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Editing.cpp">
+      <Filter>Src\Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Editing.cppm">
       <Filter>Src\Studio</Filter>
     </ClCompile>
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Icons.cpp">

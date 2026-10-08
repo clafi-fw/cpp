@@ -211,7 +211,7 @@ namespace SeeDocs_App
         m_surface = std::move(surface);
         m_notes.emplace(project.footnotesFolder());
         m_project = std::move(project);
-        if (!m_browser.bind(*m_surface, *m_notes, m_project->name, openTabs))
+        if (!m_browser.bind(*m_surface, *m_notes, *m_project, openTabs))
             showEmptyProject();
         remember(*m_project);
         writeTitle();

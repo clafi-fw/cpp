@@ -57,6 +57,8 @@ namespace SeeDocs_App
     export struct Excerpt
     {
         std::wstring source;   // the note's file and heading, and the mark of a match by name
+        Reference from;        // the note and the section the words are read from
+        bool byName{ false };  // the section is named after the declaration, no See reaching it
         Blocks blocks;
     };
 
@@ -74,18 +76,21 @@ namespace SeeDocs_App
     {
         std::wstring name;
         bool fills{ false };
+        bool hint{ false };   // the rows' hints stand in it
     };
 
     export using TableColumns = std::vector<TableColumn>;
 
     // A row of a table: its cells, the type it stands for where it does, what the first cell's
-    // hint shows where it has one, and the note the declaration's comment references.
+    // hint shows where it has one, the note the declaration's comment references, and the
+    // comment the row's hint is read from.
     export struct TableRow
     {
         Cells cells;
         const Type* type{ nullptr };
         Runs hint;   // a method's signature, set as code
         std::optional<Excerpt> excerpt;
+        std::optional<CommentSite> site;
     };
 
     export using TableRows = std::vector<TableRow>;
@@ -108,6 +113,7 @@ namespace SeeDocs_App
         TableColumns columns;
         std::wstring groupColumn;   // where a group's label stands beside its rows; empty for above
         bool header{ true };        // whether the columns are named over the rows
+        bool takesFootnotes{ false };   // a row may be given a footnote, set under the table
         TableGroups groups;
         [[nodiscard]] std::size_t rowCount() const;   // at every level
     };
@@ -129,6 +135,7 @@ namespace SeeDocs_App
         Runs code;         // code runs, a type the surface has a page for linked
         Runs lead;         // the hint
         std::optional<Excerpt> excerpt;   // where the comment references a note
+        std::optional<CommentSite> site;  // the comment the hint is read from
     };
 
     export using Signatures = std::vector<Signature>;
@@ -160,6 +167,15 @@ namespace SeeDocs_App
     // The ways up from a type through its bases to the roots, a line each.
     export using Chains = std::vector<Runs>;
 
+    // Where a footnote written new for a declaration on a page goes: a note, the section it
+    // follows, and the name a heading that would repeat another's takes in front.
+    export struct FootnoteHome
+    {
+        std::wstring note;
+        std::wstring after;   // an anchor; empty for the note's end
+        std::wstring owner;   // the type the page is about; empty on a chapter's or a module's
+    };
+
     export struct Page
     {
         Runs scope;     // before the title, in its style - a method's type and ::
@@ -167,8 +183,10 @@ namespace SeeDocs_App
         Runs badges;    // what the title is - the kind, control, template
         Chains bases;   // under the title, the C++ way: a colon before each base
         Runs lead;      // the hint
+        std::optional<CommentSite> leadSite;   // the comment the lead is read from
         Facts facts;
         Sections sections;
+        std::optional<FootnoteHome> footnoteHome;   // none where no note takes one
     };
 
     export using TypeList = std::vector<const Type*>;

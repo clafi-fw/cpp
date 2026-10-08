@@ -64,7 +64,7 @@ namespace ClaFi
         Hint
     };
 
-    // The platform, as a service standing below the context sees it: a name. See UI-Types
+    // The platform, as a service standing below the context sees it See UI-Types
     export class IPlatformServices
     {
     public:

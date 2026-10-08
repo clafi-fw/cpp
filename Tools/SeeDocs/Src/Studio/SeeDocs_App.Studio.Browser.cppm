@@ -1,10 +1,12 @@
 export module SeeDocs_App.Studio.Browser;
 
+import SeeDocs_App.Studio.Editing;
 import SeeDocs_App.Studio.Icons;
 import SeeDocs_App.Studio.PageView;
 import SeeDocs_App.Studio.SurfaceTree;
 import SeeDocs_App.Notes;
 import SeeDocs_App.Pages;
+import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
 
 import ClaFi.Browser.Control;
@@ -20,6 +22,7 @@ import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Props;
+import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Url;
 import ClaFi.Core.System.Utils;
@@ -63,23 +66,33 @@ namespace SeeDocs_App
 
     // The browser over the surface: the tree down the left, a page per url on the right -
     // /folder/.../module/type/method, the folders as the tree stands on disk - and the studio's
-    // words where there is no surface.
-    export class SurfaceBrowser : public BrowserControl
+    // words where there is no surface. The words its pages edit are written through it.
+    export class SurfaceBrowser : public BrowserControl, public IPageWriter
     {
     public:
         template<typename... Args>
         explicit SurfaceBrowser(const CreateParams&, Args&&...);
     public:
-        // Shows the surface: the tree over it, the home page named after the project. Both are
-        // held by reference for as long as they are shown. False where the surface lists nothing:
-        // the tree stands empty, and the home page shows the words given since.
-        [[nodiscard]] bool bind(const Surface&, Notes&, std::wstring_view projectName, OpenTabs);
+        // Shows the project's surface: the tree over it, the home page named after the project.
+        // The surface and the notes are held by reference for as long as they are shown, and
+        // what the pages edit is written into them, the project's tree and its database. False
+        // where the surface lists nothing: the tree stands empty, and the home page shows the
+        // words given since.
+        [[nodiscard]] bool bind(Surface&, Notes&, const Project&, OpenTabs);
         // Shows words of the studio's own on the home page in place of a surface, the tree
         // emptied. Every tab goes, and one opens on home.
         void showWords(const Text&);
         // The url of what a link names - a type, a module, a chapter or a member - or nothing
         // where the surface does not carry it.
         [[nodiscard]] std::optional<Url> urlOf(std::wstring_view target) const;
+        // The words written where they are read from, the database written after them, and every
+        // page standing given them - see refreshPages.
+        [[nodiscard]] std::wstring writeHint(const CommentSite&, std::wstring_view hint) override;
+        [[nodiscard]] FootnoteDraft draftFootnote(const Reference&) override;
+        [[nodiscard]] FootnoteDraft draftFootnote(const CommentSite&,
+            const FootnoteHome&) override;
+        [[nodiscard]] std::wstring writeFootnote(const FootnoteDraft&,
+            std::wstring_view text) override;
     protected:
         void initPageData(PageData&) override;
         void fetchSubItems(PageData&) override;
@@ -120,6 +133,9 @@ namespace SeeDocs_App
         [[nodiscard]] std::vector<std::wstring> foldersUnder(std::wstring_view folder) const;
         [[nodiscard]] std::wstring titleOf(const PageData&, const Target&) const;
         [[nodiscard]] static std::optional<RowIcon> iconOf(const Target&);
+        // The page a target names, built over the surface; nothing where it names words - there
+        // being no surface, or the surface not carrying it.
+        [[nodiscard]] std::optional<Page> pageOf(const Target&) const;
         // Fills a page with what the target names: the words while there is no surface, the
         // contents on home, and the words of a page the surface does not carry.
         void fill(SurfacePage&, const Target&, const PageData&) const;
@@ -128,14 +144,23 @@ namespace SeeDocs_App
         void refreshPageData(PageData&);
         // Drops every tab's page and shows the selected tab's again, over the surface shown.
         void rebuildPages();
+        // Gives every page standing the words as the files now hold them, the footnote named
+        // shown once its page is built again.
+        void refreshPages(std::optional<Reference> show);
+        // Builds the selected tab's page again, then shows the footnote waiting to be shown.
+        void rebuildCurrentPage();
         [[nodiscard]] Text goneWords(const PageData&) const;
         [[nodiscard]] static bool hasMethod(const Type&, std::wstring_view name);
     private:
         static constexpr float k_treeWidth = 300.0f;
         static constexpr IconSize k_pageIconSize{ 16.0f };
 
-        const Surface* m_surface{ nullptr };
+        Surface* m_surface{ nullptr };
         Notes* m_notes{ nullptr };
+        std::filesystem::path m_sources{};    // the tree the surface's files are named from
+        std::filesystem::path m_database{};
+        UiTimer m_rebuildTimer{};
+        std::optional<Reference> m_rebuildFootnote{};   // to show once the page stands again
         ContentsChapters m_contents{};
         Targets m_targets{};
         Folders m_folders{};
@@ -185,6 +210,9 @@ namespace SeeDocs_App
         BrowserControl{ params, std::forward<Args>(args)... }
     {
         appButton().onPaintIcon(Icons::SideBar::paintPanelIcon);
+        m_rebuildTimer.onTick([this](TimerEvent&) {
+            rebuildCurrentPage();
+        });
         // The tree stands apart from the page a move takes down, so the move needs no wait.
         m_tree.onPick([this](TreePickEvent& event) {
             goTo(Url{ pathOf(&event.chapter, event.module, event.type) });

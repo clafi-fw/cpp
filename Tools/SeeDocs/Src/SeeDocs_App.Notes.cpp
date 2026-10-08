@@ -135,6 +135,12 @@ namespace SeeDocs_App
         return result;
     }
 
+    void Notes::forget(const std::wstring_view stem)
+    {
+        m_read.erase(std::wstring{ stem });
+        m_stems.reset();
+    }
+
     // Every heading opens a section; a section's lines run to the next heading that is not
     // nested under it, so a ## section carries its ### subsections, heading lines included.
     Note Notes::read(const std::wstring_view stem, const std::wstring& text)

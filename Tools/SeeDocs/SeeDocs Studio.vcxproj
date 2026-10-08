@@ -116,6 +116,8 @@
   <ItemGroup>
     <ClCompile Include="Src\SeeDocs_App.Database.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Database.cppm" />
+    <ClCompile Include="Src\SeeDocs_App.Edits.cpp" />
+    <ClCompile Include="Src\SeeDocs_App.Edits.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Notes.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Notes.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Pages.cpp" />
@@ -128,6 +130,8 @@
     <ClCompile Include="Src\SeeDocs_App.Surface.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Browser.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Browser.cppm" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Editing.cpp" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Editing.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Icons.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Icons.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Main.cpp" />

@@ -65,6 +65,8 @@ namespace ClaFi::Controls::Grids
         DECLARE_EVENT(CellContentEvent, OnCellContent, onCellContent)
         // The text one cell is about to be written with.
         DECLARE_EVENT(GetCellTextEvent, OnGetCellText, onGetCellText)
+        // The value an in-place editor opens on for one cell, where it is not what the cell shows.
+        DECLARE_EVENT(GetCellEditorTextEvent, OnGetCellEditorText, onGetCellEditorText)
         // The text an in-place edit was left with, on its way back to the cell's source. See Grids
         DECLARE_EVENT(AcceptCellTextEvent, OnAcceptCellText, onAcceptCellText)
         // The hint for one cell, asked while the pointer rests on it. See Grids
@@ -112,6 +114,8 @@ namespace ClaFi::Controls::Grids
         // The hint for one cell, asked of this row's listeners and then of the grid - the pair
         // getCellText asks. Raised by nestedGetHint for the cell under the pointer.
         virtual void getCellHint(GetCellHintEvent&);
+        // What an editor opens on for one cell, asked of this row's listeners and then of the grid.
+        virtual void getCellEditorText(GetCellEditorTextEvent&);
         // A link clicked in one cell, told to this row's listeners and then to the grid.
         virtual void cellLinkClick(CellLinkClickEvent&);
         // The menu for a link in one cell, asked of this row's listeners and then of the grid.

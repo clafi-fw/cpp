@@ -241,6 +241,15 @@ namespace ClaFi::Controls::Grids
         }
     }
 
+    void RowBase::getCellEditorText(GetCellEditorTextEvent& event)
+    {
+        emitEvent(event);
+        if (!event.propagationStopped())
+        {
+            m_descriptor.m_owner.getCellEditorText(event);
+        }
+    }
+
     void RowBase::cellLinkClick(CellLinkClickEvent& event)
     {
         emitEvent(event);

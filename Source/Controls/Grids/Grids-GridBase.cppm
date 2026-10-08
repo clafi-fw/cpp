@@ -42,6 +42,8 @@ namespace ClaFi::Controls::Grids
         DECLARE_EVENT(CellContentEvent, OnCellContent, onCellContent)
         // The text one cell is about to be written with.
         DECLARE_EVENT(GetCellTextEvent, OnGetCellText, onGetCellText)
+        // The value an in-place editor opens on for one cell, where it is not what the cell shows.
+        DECLARE_EVENT(GetCellEditorTextEvent, OnGetCellEditorText, onGetCellEditorText)
         // The text an in-place edit was left with, on its way back to the cell's source. See Grids
         DECLARE_EVENT(AcceptCellTextEvent, OnAcceptCellText, onAcceptCellText)
         // The hint for one cell, asked while the pointer rests on it. See Grids

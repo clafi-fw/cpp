@@ -1,5 +1,6 @@
 module SeeDocs_App.Studio.PageView;
 
+import SeeDocs_App.Studio.Editing;
 import SeeDocs_App.Studio.Icons;
 import SeeDocs_App.Studio.PageText;
 import SeeDocs_App.Pages;
@@ -9,6 +10,7 @@ import ClaFi.Browser.Actions;
 
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Grids;
+import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Menu;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
@@ -23,6 +25,7 @@ import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
+import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -31,6 +34,142 @@ namespace SeeDocs_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
+
+    namespace
+    {
+        // Whether a page built again can take the controls of the one shown: the same sections,
+        // the same rows in the same groups, and a footnote and a hint's comment where there were.
+
+        [[nodiscard]] bool sameShape(const Branches& left, const Branches& right)
+        {
+            if (left.size() != right.size())
+                return false;
+            for (std::size_t i = 0; i != left.size(); ++i)
+            {
+                if (left[i].type != right[i].type)
+                    return false;
+                if (!sameShape(left[i].children, right[i].children))
+                    return false;
+            }
+            return true;
+        }
+
+        [[nodiscard]] bool sameShape(const TableRow& left, const TableRow& right)
+        {
+            return left.cells.size() == right.cells.size()
+                && left.type == right.type
+                && left.hint.empty() == right.hint.empty()
+                && left.excerpt.has_value() == right.excerpt.has_value()
+                && left.site.has_value() == right.site.has_value();
+        }
+
+        [[nodiscard]] bool sameShape(const TableGroup& left, const TableGroup& right)
+        {
+            const bool counts = left.rows.size() == right.rows.size()
+                && left.groups.size() == right.groups.size()
+                && left.label.empty() == right.label.empty();
+            if (!counts)
+                return false;
+            for (std::size_t i = 0; i != left.rows.size(); ++i)
+            {
+                if (!sameShape(left.rows[i], right.rows[i]))
+                    return false;
+            }
+            for (std::size_t i = 0; i != left.groups.size(); ++i)
+            {
+                if (!sameShape(left.groups[i], right.groups[i]))
+                    return false;
+            }
+            return true;
+        }
+
+        [[nodiscard]] bool sameShape(const Section& left, const Section& right)
+        {
+            const Table& leftTable = left.table;
+            const Table& rightTable = right.table;
+            const bool counts = left.kind == right.kind
+                && leftTable.columns.size() == rightTable.columns.size()
+                && leftTable.groupColumn == rightTable.groupColumn
+                && leftTable.header == rightTable.header
+                && leftTable.groups.size() == rightTable.groups.size()
+                && left.signatures.size() == right.signatures.size();
+            if (!counts || !sameShape(left.branches, right.branches))
+                return false;
+            for (std::size_t i = 0; i != leftTable.groups.size(); ++i)
+            {
+                if (!sameShape(leftTable.groups[i], rightTable.groups[i]))
+                    return false;
+            }
+            for (std::size_t i = 0; i != left.signatures.size(); ++i)
+            {
+                const Signature& leftSignature = left.signatures[i];
+                const Signature& rightSignature = right.signatures[i];
+                if (leftSignature.excerpt.has_value() != rightSignature.excerpt.has_value())
+                    return false;
+                if (leftSignature.site.has_value() != rightSignature.site.has_value())
+                    return false;
+            }
+            return true;
+        }
+
+        [[nodiscard]] bool sameShape(const Page& left, const Page& right)
+        {
+            const bool counts = left.lead.empty() == right.lead.empty()
+                && left.leadSite.has_value() == right.leadSite.has_value()
+                && left.facts.size() == right.facts.size()
+                && left.sections.size() == right.sections.size();
+            if (!counts)
+                return false;
+            for (std::size_t i = 0; i != left.sections.size(); ++i)
+            {
+                if (!sameShape(left.sections[i], right.sections[i]))
+                    return false;
+            }
+            return true;
+        }
+
+        // A page of the same shape moved into the one shown object by object, so a control
+        // holding a reference into the page shown reads the new words through it.
+
+        void moveWords(TableGroup& to, TableGroup& from)
+        {
+            to.label = std::move(from.label);
+            to.hint = std::move(from.hint);
+            for (std::size_t i = 0; i != to.rows.size(); ++i)
+                to.rows[i] = std::move(from.rows[i]);
+            for (std::size_t i = 0; i != to.groups.size(); ++i)
+                moveWords(to.groups[i], from.groups[i]);
+        }
+
+        void moveWords(Section& to, Section& from)
+        {
+            to.heading = std::move(from.heading);
+            to.hint = std::move(from.hint);
+            to.excerpt = std::move(from.excerpt);
+            to.branches = std::move(from.branches);
+            to.treeOpen = from.treeOpen;
+            to.table.columns = std::move(from.table.columns);
+            for (std::size_t i = 0; i != to.table.groups.size(); ++i)
+                moveWords(to.table.groups[i], from.table.groups[i]);
+            for (std::size_t i = 0; i != to.signatures.size(); ++i)
+                to.signatures[i] = std::move(from.signatures[i]);
+        }
+
+        void moveWords(Page& to, Page& from)
+        {
+            to.scope = std::move(from.scope);
+            to.title = std::move(from.title);
+            to.badges = std::move(from.badges);
+            to.bases = std::move(from.bases);
+            to.lead = std::move(from.lead);
+            to.leadSite = std::move(from.leadSite);
+            for (std::size_t i = 0; i != to.facts.size(); ++i)
+                to.facts[i] = std::move(from.facts[i]);
+            for (std::size_t i = 0; i != to.sections.size(); ++i)
+                moveWords(to.sections[i], from.sections[i]);
+            to.footnoteHome = std::move(from.footnoteHome);
+        }
+    }
 
     // PageLinkEvent
 
@@ -42,6 +181,11 @@ namespace SeeDocs_App
     }
 
     // PageView
+
+    void PageView::setWriter(IPageWriter& writer)
+    {
+        m_writer = &writer;
+    }
 
     void PageView::show(Page page)
     {
@@ -61,7 +205,7 @@ namespace SeeDocs_App
             switch (section.kind)
             {
                 case SectionKind::Note:
-                    addProse(expander, section.excerpt);
+                    addProse(expander, section);
                     break;
                 case SectionKind::Tree:
                     addTree(expander, section.branches, section.treeOpen);
@@ -73,8 +217,21 @@ namespace SeeDocs_App
                     break;
             }
         }
+        render();
         invalidateFormAlign();
         m_pageBox.scrollToBegin();
+    }
+
+    // Nothing is deleted and nothing scrolls: every control stands where it stood, reading the
+    // page it holds a reference into, and the boxes are written again.
+    bool PageView::refresh(Page page)
+    {
+        if (!sameShape(m_page, page))
+            return false;
+        moveWords(m_page, page);
+        render();
+        invalidateFormAlign();
+        return true;
     }
 
     void PageView::showText(const Text& text)
@@ -90,16 +247,28 @@ namespace SeeDocs_App
         m_pageBox.scrollToBegin();
     }
 
-    // The footnote the anchor names stands in one of the boxes; each is asked until one has it.
+    // The footnote the anchor names stands in one of the slots; each is asked until one has it.
     void PageView::showAnchor(const std::wstring_view anchor)
     {
         if (anchor.empty())
             return;
-        for (TextBox* box : m_footnoteBoxes)
+        for (const PageFootnote& footnote : m_footnotes)
         {
-            if (box->goToAnchor(anchor))
+            if (footnote.slot->shown().goToAnchor(anchor))
                 return;
         }
+    }
+
+    std::wstring PageView::anchorOf(const Reference& reference) const
+    {
+        for (const PageFootnote& footnote : m_footnotes)
+        {
+            const Reference& from = footnote.excerpt->from;
+            const bool reaches = from.note == reference.note && from.anchor == reference.anchor;
+            if (reaches && !footnote.anchor.empty())
+                return footnote.anchor;
+        }
+        return {};
     }
 
     void PageView::clear()
@@ -107,45 +276,53 @@ namespace SeeDocs_App
         for (Control* part : m_parts)
             part->deleteSelf();
         m_parts.clear();
-        m_footnoteBoxes.clear();
+        m_renders.clear();
+        m_footnotes.clear();
+        m_newFootnotes.clear();
         m_footnoteCount = 0;
+        m_pending = {};
     }
 
     // The title with its scope before it and what it is beside it, and the ways up through its
     // bases under it, in the bar that stays.
     void PageView::addHead()
     {
-        Text head;
-        head << TextStyleId::Title;
-        writeRuns(head, m_page.scope);
-        head << m_page.title << PopTextStyle{};
-        if (!m_page.badges.empty())
-        {
-            head << L"   " << TextStyleId::SubBody;
-            writeRuns(head, m_page.badges);
-            head << PopTextStyle{};
-        }
-        for (const Runs& chain : m_page.bases)
-        {
-            head << k_endLine << ParaIndent{ k_basesIndent };
-            writeRuns(head, chain);
-        }
-        m_head.text() = head;
         m_head.setVisible(true);
+        m_renders.push_back([this]() {
+            Text head;
+            head << TextStyleId::Title;
+            writeRuns(head, m_page.scope);
+            head << m_page.title << PopTextStyle{};
+            if (!m_page.badges.empty())
+            {
+                head << L"   " << TextStyleId::SubBody;
+                writeRuns(head, m_page.badges);
+                head << PopTextStyle{};
+            }
+            for (const Runs& chain : m_page.bases)
+            {
+                head << k_endLine << ParaIndent{ k_basesIndent };
+                writeRuns(head, chain);
+            }
+            m_head.text() = head;
+        });
     }
 
     void PageView::addLead()
     {
         if (m_page.lead.empty())
             return;
-        Text lead;
-        lead << TextStyleId::SubTitle;
-        writeRuns(lead, m_page.lead);
-        lead << PopTextStyle{};
         TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes);
-        box.text() = lead;
         connectLinks(box);
+        connectHintBox(box, m_page.leadSite, &m_leadFormat);
         m_parts.push_back(&box);
+        m_renders.push_back([this, &box]() {
+            Text lead;
+            lead << TextStyleId::SubTitle;
+            writeRuns(lead, m_page.lead);
+            lead << PopTextStyle{};
+            box.text() = lead;
+        });
     }
 
     // The facts as a grid of two columns, the label muted.
@@ -195,11 +372,14 @@ namespace SeeDocs_App
         return expander;
     }
 
-    void PageView::addProse(Expander& expander, const Excerpt& excerpt)
+    void PageView::addProse(Expander& expander, const Section& section)
     {
-        TextBox& box = expander.createBody<TextBox>(ReadOnly::Yes, Padding{ k_prosePadding });
-        box.text() = textOf(excerpt.blocks);
-        connectLinks(box);
+        Stack& body = expander.createBody<Stack>(
+            Orientation::Vertical,
+            Padding{ 0.0f },
+            Spacing{ 0.0f }
+        );
+        addFootnoteSlot(body, { .excerpt = &section.excerpt }, Padding{ k_prosePadding });
     }
 
     void PageView::addTree(Expander& expander, const Branches& branches, const bool nodesOpen)
@@ -232,7 +412,7 @@ namespace SeeDocs_App
 
     // The grid: the group column where the table names one, its own columns with a mark column
     // after the first where any row has a footnote, a header where the table asks for one, and
-    // the footnotes under it in a box of their own.
+    // under it a slot per footnote. The hints are typed over where the page writes its words back.
     void PageView::addTable(Expander& expander, const Table& table)
     {
         Stack& body = expander.createBody<Stack>(
@@ -248,66 +428,87 @@ namespace SeeDocs_App
         if (!table.groupColumn.empty())
             grid.columns().add(Tag{ k_groupColumn }, Text{ table.groupColumn });
         const bool footnoted = hasFootnotes(table);
+        const bool editable = m_writer && std::ranges::any_of(table.groups, hasSites);
+        TagValue hintColumn = k_noColumn;
         for (std::size_t i = 0; i != table.columns.size(); ++i)
         {
             const TableColumn& column = table.columns[i];
-            grid.columns().add(
-                Tag{ i },
-                Text{ column.name },
-                column.fills ? Grids::ColumnWidthMode::Fill : Grids::ColumnWidthMode::FitContent
-            );
+            const Grids::ColumnWidthMode width = column.fills
+                ? Grids::ColumnWidthMode::Fill
+                : Grids::ColumnWidthMode::FitContent;
+            if (column.hint && editable)
+            {
+                hintColumn = i;
+                grid.columns().add(Tag{ i }, Text{ column.name }, width, EditorMode::Editable);
+            }
+            else
+            {
+                grid.columns().add(Tag{ i }, Text{ column.name }, width);
+            }
             if (i == 0 && footnoted)
                 grid.columns().add(Tag{ k_markColumn }, Text{});
         }
         if (table.header)
             grid.addHeader();
 
-        Footnotes footnotes;
+        PageFootnotes footnotes;
         for (const TableGroup& group : table.groups)
-            addTableRows(grid, table, group, footnotes);
-        if (footnotes.count != 0)
-        {
-            TextBox& box = body.add<TextBox>(ReadOnly::Yes, Padding{ k_prosePadding });
-            box.text() = footnotes.text;
-            connectLinks(box);
-            m_footnoteBoxes.push_back(&box);
-        }
+            addTableRows(grid, table, group, body, hintColumn, footnotes);
+        const Padding footnotePadding{ k_prosePadding, k_footnotePadding };
+        for (PageFootnote& footnote : footnotes)
+            addFootnoteSlot(body, std::move(footnote), footnotePadding);
         connectLinks(grid);
     }
 
     // The access label as code at the margin and, set in under it, each declaration in its inks
-    // with its links, the hint under it, and after a gap the note the comment references; an
-    // empty line between declarations. No expander: the page is the declarations.
+    // with its links, the hint under it, and the note the comment references after that. No
+    // expander: the page is the declarations.
     void PageView::addSignatures(const Section& section)
     {
-        Text text;
-        text << ParaIndent{ 0.0f };
-        writeSignature(text, section.heading, false);
-        text << k_endLine << ParaIndent{ k_signatureIndent };
+        Stack& block = m_pageBox.body().add<Stack>(
+            Orientation::Vertical,
+            Padding{ 0.0f },
+            Spacing{ k_signatureGap }
+        );
+        TextBox& label = block.add<TextBox>(ReadOnly::Yes, Padding{ 0.0f });
+        m_renders.push_back([&label, &section]() {
+            Text text;
+            writeSignature(text, section.heading, false);
+            label.text() = text;
+        });
+        const Padding indent{ k_signatureIndent, 0.0f };
         for (const Signature& signature : section.signatures)
         {
-            text << PushFontSize{ k_signatureGap } << k_endLine << PopFontSize{};
-            writeSignature(text, signature.code, true);
-            text << k_endLine;
-            writeRuns(text, signature.lead);
-            text << k_endLine;
+            Stack& entry = block.add<Stack>(
+                Orientation::Vertical,
+                Padding{ 0.0f },
+                Spacing{ 0.0f }
+            );
+            TextBox& code = entry.add<TextBox>(ReadOnly::Yes, indent);
+            connectLinks(code);
+            TextBox& lead = entry.add<TextBox>(ReadOnly::Yes, indent);
+            connectLinks(lead);
+            connectHintBox(lead, signature.site, nullptr);
+            m_renders.push_back([&code, &lead, &signature]() {
+                Text text;
+                writeSignature(text, signature.code, true);
+                code.text() = text;
+                lead.text() = textOf(signature.lead);
+            });
             if (signature.excerpt.has_value())
             {
-                text << PushFontSize{ k_signatureGap } << k_endLine << PopFontSize{};
-                writeBlocks(text, signature.excerpt->blocks, k_signatureIndent);
+                addFootnoteSlot(entry, { .excerpt = &*signature.excerpt },
+                    Padding{ k_signatureIndent, k_signatureGap });
             }
         }
-        TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes);
-        box.text() = text;
-        connectLinks(box);
-        m_parts.push_back(&box);
+        m_parts.push_back(&block);
     }
 
     // A labelled group stands beside its label in the group column, folding under it, or under
     // a held expander row of the label where the table has no such column; the groups it holds
     // follow its rows inside it, each under a header of its own.
     void PageView::addTableRows(Grids::GridBase& grid, const Table& table,
-        const TableGroup& group, Footnotes& footnotes)
+        const TableGroup& group, Stack& body, const TagValue hintColumn, PageFootnotes& footnotes)
     {
         const bool beside = !table.groupColumn.empty();
         Grids::GridBase* target = &grid;
@@ -342,9 +543,8 @@ namespace SeeDocs_App
             std::optional<std::wstring> anchor;
             if (row.excerpt.has_value())
             {
-                ++footnotes.count;
                 anchor = footnoteAnchor(++m_footnoteCount);
-                writeFootnote(footnotes.text, *anchor, k_mark, row.cells.front(), *row.excerpt);
+                footnotes.push_back({ .excerpt = &*row.excerpt, .anchor = *anchor, .row = &row });
             }
             Grids::Row& gridRow = target->addRow();
             if (beside)
@@ -378,9 +578,215 @@ namespace SeeDocs_App
                     event.text() << rowIcon(rowIconOf(*row.type)) << Space{ k_iconGap };
                 writeRuns(event.text(), row.cells[column]);
             });
+            if (row.site.has_value() && m_writer)
+            {
+                if (hintColumn != k_noColumn)
+                    connectHintCell(gridRow, row, hintColumn);
+                if (table.takesFootnotes)
+                    connectRowMenu(gridRow, row, body);
+            }
         }
         for (const TableGroup& nested : group.groups)
-            addTableRows(*target, table, nested, footnotes);
+            addTableRows(*target, table, nested, body, hintColumn, footnotes);
+    }
+
+    // THE CELL SHOWS MORE THAN THE COMMENT HOLDS - its types linked, a missing hint marked, an
+    // event's payload named after it - so the editor opens on the comment's own words.
+    void PageView::connectHintCell(Grids::Row& gridRow, const TableRow& row,
+        const TagValue hintColumn)
+    {
+        gridRow.onGetCellEditorText([&row, hintColumn](Grids::GetCellEditorTextEvent& event) {
+            if (event.column().tag().value == hintColumn && row.site.has_value())
+                event.text = Text{ row.site->comment->text };
+        });
+        gridRow.onAcceptCellText([this, &row, hintColumn](Grids::AcceptCellTextEvent& event) {
+            if (event.column().tag().value != hintColumn)
+                return;
+            // A copy: the write refreshes the page, which moves new words into the row.
+            const CommentSite site = *row.site;
+            const std::wstring refusal = m_writer->writeHint(site, event.text().plainText());
+            if (!refusal.empty())
+                event.refuse(refusal);
+        });
+    }
+
+    // The row is the subject of its menu, so the commands are claimed and answered here; each
+    // edit waits for the menu to close over the row.
+    void PageView::connectRowMenu(Grids::Row& gridRow, const TableRow& row, Stack& body)
+    {
+        gridRow.onGetActionState([this, &row](GetActionStateEvent& event) {
+            const bool written = footnoteOf(row) != nullptr;
+            if (&event.action == &Actions::editFootnote && written)
+                event.claim({});
+            else if (&event.action == &Actions::addFootnote && !written)
+                event.claim({ .enabled = canAddFootnote(row) });
+        });
+        gridRow.onActionClick([this, &row, &body](ActionClickEvent& event) {
+            if (&event.action == &Actions::editFootnote)
+            {
+                const PageFootnote* footnote = footnoteOf(row);
+                if (!footnote)
+                    return;
+                const std::size_t index = static_cast<std::size_t>(footnote - m_footnotes.data());
+                later([this, index]() {
+                    editFootnote(m_footnotes[index]);
+                });
+            }
+            else if (&event.action == &Actions::addFootnote)
+            {
+                later([this, &row, &body]() {
+                    addFootnote(row, body);
+                });
+            }
+        });
+        gridRow.onContextPopup([this, &row, &gridRow](ContextPopupEvent& event) {
+            Menu menu{ gridRow };
+            menu.add(footnoteOf(row) ? Actions::editFootnote : Actions::addFootnote);
+            event.stopPropagation();
+            menu.execute();
+        });
+    }
+
+    void PageView::connectHintBox(TextBox& box, const std::optional<CommentSite>& site,
+        const TextFormat* format)
+    {
+        box.onGetActionState([this, &site](GetActionStateEvent& event) {
+            if (&event.action == &Actions::editHint && site.has_value())
+                event.claim({ .enabled = m_writer != nullptr });
+        });
+        box.onActionClick([this, &box, &site, format](ActionClickEvent& event) {
+            if (&event.action != &Actions::editHint || !site.has_value())
+                return;
+            later([this, &box, target = *site, format]() {
+                editHint(box, target, format);
+            });
+        });
+        box.onEditContextPopup([&site](EditContextPopupEvent& event) {
+            if (!site.has_value())
+                return;
+            event.actions.push_back(nullptr);
+            event.actions.push_back(&Actions::editHint);
+        });
+    }
+
+    // Every slot claims Edit footnote for the words it shows, and offers it on the box's menu
+    // beside the box's own commands.
+    FootnoteSlot& PageView::addFootnoteSlot(Stack& holder, PageFootnote footnote,
+        const Padding padding)
+    {
+        FootnoteSlot& slot = holder.add<FootnoteSlot>(padding);
+        footnote.slot = &slot;
+        const std::size_t index = m_footnotes.size();
+        m_footnotes.push_back(std::move(footnote));
+        TextBox& shown = slot.shown();
+        connectLinks(shown);
+        shown.onGetActionState([this](GetActionStateEvent& event) {
+            if (&event.action == &Actions::editFootnote)
+                event.claim({ .enabled = m_writer != nullptr });
+        });
+        shown.onActionClick([this, index](ActionClickEvent& event) {
+            if (&event.action != &Actions::editFootnote)
+                return;
+            later([this, index]() {
+                editFootnote(m_footnotes[index]);
+            });
+        });
+        shown.onEditContextPopup([](EditContextPopupEvent& event) {
+            event.actions.push_back(nullptr);
+            event.actions.push_back(&Actions::editFootnote);
+        });
+        m_renders.push_back([this, index]() {
+            const PageFootnote& entry = m_footnotes[index];
+            Text text;
+            if (entry.row)
+                writeFootnote(text, entry.anchor, k_mark, entry.row->cells.front(), *entry.excerpt);
+            else
+                writeBlocks(text, entry.excerpt->blocks);
+            entry.slot->shown().text() = text;
+        });
+        return slot;
+    }
+
+    // The editor stands over the hint where the box draws it - inside the box's padding, laid
+    // out over the format the box sets the words in - and opens on the comment's own words.
+    void PageView::editHint(TextBox& box, const CommentSite& site, const TextFormat* format)
+    {
+        if (!m_writer || !site.comment || InPlaceEdit::isRunning())
+            return;
+        FloatRect textRect = box.boundsInForm();
+        const ScaledPadding padding = box.scaledPadding();
+        textRect.inflate(-padding.x, -padding.y);
+        const EditTarget target{
+            .control = box,
+            .textRect = textRect,
+            .textAnchor = HorizontalTextAnchor::Left,
+            .maxTextSize = { textRect.width(), 0.0f },
+            .textFormat = format
+        };
+        InPlaceEdit::run(target, Text{ site.comment->text }, [this, site](AcceptEditEvent& event) {
+            const std::wstring refusal = m_writer->writeHint(site, event.text.plainText());
+            if (!refusal.empty())
+                event.refuse(refusal);
+        });
+    }
+
+    void PageView::editFootnote(const PageFootnote& footnote)
+    {
+        if (!m_writer || footnote.slot->editing())
+            return;
+        footnote.slot->edit(*m_writer, m_writer->draftFootnote(footnote.excerpt->from));
+    }
+
+    // A FOOTNOTE NOT WRITTEN YET STANDS UNDER THE TABLE only while its editor does: written, the
+    // page is built again with it; left, its slot goes.
+    void PageView::addFootnote(const TableRow& row, Stack& body)
+    {
+        if (!canAddFootnote(row))
+            return;
+        FootnoteSlot* slot = nullptr;
+        if (const auto found = m_newFootnotes.find(&row); found != m_newFootnotes.end())
+        {
+            slot = found->second;
+        }
+        else
+        {
+            slot = &body.add<FootnoteSlot>(Padding{ k_prosePadding, k_footnotePadding });
+            connectLinks(slot->shown());
+            m_newFootnotes.emplace(&row, slot);
+        }
+        if (slot->editing())
+            return;
+        slot->setVisible(true);
+        slot->edit(*m_writer, m_writer->draftFootnote(*row.site, *m_page.footnoteHome));
+    }
+
+    auto PageView::footnoteOf(const TableRow& row) const -> const PageFootnote*
+    {
+        for (const PageFootnote& footnote : m_footnotes)
+        {
+            if (footnote.row == &row)
+                return &footnote;
+        }
+        return nullptr;
+    }
+
+    // A comment whose See reaches no section is a reference to mend by hand, not one to add to.
+    bool PageView::canAddFootnote(const TableRow& row) const
+    {
+        return m_writer && row.site.has_value() && !row.site->comment->reference
+            && m_page.footnoteHome.has_value();
+    }
+
+    void PageView::later(std::function<void()> edit)
+    {
+        m_pending = std::move(edit);
+        m_later.start(MilliSeconds{ 0u });
+    }
+
+    void PageView::render()
+    {
+        for (const Render& each : m_renders)
+            each();
     }
 
     // A LINK IS ANSWERED BY WHOEVER SHOWS THE PAGE, a footnote's as much as a page's: a footnote
@@ -444,6 +850,16 @@ namespace SeeDocs_App
         });
         return inRows || std::ranges::any_of(group.groups, [](const TableGroup& nested) {
             return hasFootnotes(nested);
+        });
+    }
+
+    bool PageView::hasSites(const TableGroup& group)
+    {
+        const bool inRows = std::ranges::any_of(group.rows, [](const TableRow& row) {
+            return row.site.has_value();
+        });
+        return inRows || std::ranges::any_of(group.groups, [](const TableGroup& nested) {
+            return hasSites(nested);
         });
     }
 

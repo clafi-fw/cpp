@@ -140,6 +140,44 @@ namespace SeeDocs_App
                 ++shared;
             return shared;
         }
+
+        // Every declaration's place and comment, a type's own ahead of its members', until the
+        // visitor answers true. The containers are the surface's, const or not alike.
+        template<typename Types, typename Functions, typename Variables, typename Visit>
+        void visitDeclarations(Types& types, Functions& functions, Variables& variables,
+            const Visit& visit)
+        {
+            const auto visitAll = [&](auto& records) {
+                for (auto& record : records)
+                {
+                    if (visit(record.place, record.comment))
+                        return true;
+                }
+                return false;
+            };
+            for (auto& type : types)
+            {
+                const bool stopped = visit(type.place, type.comment)
+                    || visitAll(type.properties)
+                    || visitAll(type.events)
+                    || visitAll(type.functions)
+                    || visitAll(type.usings)
+                    || visitAll(type.fields)
+                    || visitAll(type.members);
+                if (stopped)
+                    return;
+            }
+            for (auto& free : functions)
+            {
+                if (visit(free.function.place, free.function.comment))
+                    return;
+            }
+            for (auto& variable : variables)
+            {
+                if (visit(variable.field.place, variable.field.comment))
+                    return;
+            }
+        }
     }
 
     bool Type::opensScope() const
@@ -411,6 +449,53 @@ namespace SeeDocs_App
             for (Property& property : type.properties)
                 property.valueKind = valueKindOf(property.type, type.nameSpace, property.optional);
         }
+    }
+
+    void Surface::forEachComment(const std::function<void(const Comment&)>& visit) const
+    {
+        const auto each = [&](const Place&, const Comment& comment) {
+            visit(comment);
+            return false;
+        };
+        visitDeclarations(m_types, m_functions, m_variables, each);
+    }
+
+    Comment* Surface::writableComment(const Comment& comment)
+    {
+        Comment* found = nullptr;
+        const auto match = [&](Place&, Comment& candidate) {
+            if (&candidate == &comment)
+                found = &candidate;
+            return found != nullptr;
+        };
+        visitDeclarations(m_types, m_functions, m_variables, match);
+        return found;
+    }
+
+    void Surface::shiftLines(const std::size_t file, const std::size_t fromLine,
+        const std::ptrdiff_t count)
+    {
+        const auto shift = [&](std::size_t& line) {
+            if (line >= fromLine)
+                line = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(line) + count);
+        };
+        const auto shiftPlace = [&](Place& place) {
+            if (place.file == file)
+                shift(place.line);
+        };
+        const auto move = [&](Place& place, Comment& comment) {
+            if (place.file == file && comment.aboveLine != 0)
+                shift(comment.aboveLine);
+            shiftPlace(place);
+            return false;
+        };
+        visitDeclarations(m_types, m_functions, m_variables, move);
+        for (Binding& binding : m_bindings)
+            shiftPlace(binding.place);
+        for (Place& place : m_propsReads)
+            shiftPlace(place);
+        for (Problem& problem : m_problems)
+            shiftPlace(problem.place);
     }
 
     // A qualified spelling is matched by its tail; a bare one through the namespaces enclosing

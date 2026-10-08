@@ -34,6 +34,17 @@ namespace SeeDocs_App
         [[nodiscard]] bool empty() const { return above.empty() && !trailing; }
     };
 
+    // A declaration's comment as the surface holds it, and where the declaration stands - what a
+    // writer needs to put other words in the comment's place.
+    export struct CommentSite
+    {
+        const Comment* comment{ nullptr };
+        Place place;
+        std::wstring name;          // what a See with no anchor reaches the slug of
+        bool opensScope{ false };   // a class, a struct or an enum, whose comment stands above
+        bool readsAbove{ true };    // false for an enum member on its enum's line, which has none
+    };
+
     export enum class Access
     {
         Public,
@@ -299,6 +310,13 @@ namespace SeeDocs_App
         [[nodiscard]] Properties mergedProperties(const Type&) const;
         // Fills in what the scan leaves to the whole: control marks and value kinds.
         void resolveAll();
+        // Every declaration's comment, in the order the surface holds them.
+        void forEachComment(const std::function<void(const Comment&)>&) const;
+        // The comment the surface holds at that address, to be written; null where it holds none.
+        [[nodiscard]] Comment* writableComment(const Comment&);
+        // Moves every place in the file from the line on by the count, lines having been put in
+        // or taken out there.
+        void shiftLines(std::size_t file, std::size_t fromLine, std::ptrdiff_t count);
     private:
         [[nodiscard]] const Type* lookUp(std::wstring_view bare, std::wstring_view nameSpace) const;
     private:

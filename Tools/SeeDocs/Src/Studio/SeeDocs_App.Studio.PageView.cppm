@@ -1,5 +1,6 @@
 export module SeeDocs_App.Studio.PageView;
 
+import SeeDocs_App.Studio.Editing;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
@@ -14,8 +15,10 @@ import ClaFi.Controls.TreeView;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
+import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -41,8 +44,8 @@ namespace SeeDocs_App
 
     // A page as controls: its title and bases in a bar that stays, and under it, scrolling, its
     // lead, its facts and an expander per section holding the section's prose, tree or grid - or
-    // a method page's declarations under their access labels, as code. See the README beside the
-    // project.
+    // a method page's declarations under their access labels, as code. Its hints and footnotes
+    // are edited where they stand. See the README beside the project.
     export class PageView : public Panel
     {
     public:
@@ -52,29 +55,43 @@ namespace SeeDocs_App
         // Connects a handler raised when a link on the page is clicked.
         template<typename F>
         EventConnection onPageLink(F&& callback);
+        // What the page writes edited words back through. A page with none shows them only.
+        void setWriter(IPageWriter&);
         // Builds the page's controls, the page kept for as long as they stand.
         void show(Page);
+        // Takes the page built again over the surface as it now reads. Where it has the shape of
+        // the page shown - the same sections, rows and footnotes - its words go into the controls
+        // standing, which keep their place; false where it has not, and nothing changes.
+        [[nodiscard]] bool refresh(Page);
         // Shows words of the studio's own in place of a page.
         void showText(const Text&);
         // Scrolls to the footnote the anchor names. An empty anchor names the page itself, and
         // the page stays where it stands for it.
         void showAnchor(std::wstring_view anchor);
+        // The anchor of the footnote that section's words stand in; empty where none on the page.
+        [[nodiscard]] std::wstring anchorOf(const Reference&) const;
         // The link a menu is up for, as the text states it; empty while no link menu is up.
         [[nodiscard]] std::wstring_view menuLink() const { return m_menuLink; }
     private:
-        // Where a table's footnotes go: the box under its grid, once there is one.
-        struct Footnotes
+        // A footnote standing on the page: its slot, the words it shows, the anchor a link reaches
+        // it by - none for the type's own note - and the row it belongs to where it is a member's.
+        struct PageFootnote
         {
-            Text text;
-            std::size_t count{ 0 };   // this table's
+            FootnoteSlot* slot{ nullptr };
+            const Excerpt* excerpt{ nullptr };
+            std::wstring anchor{};
+            const TableRow* row{ nullptr };
         };
+        // Writes one box's words out of the page again.
+        using Render = std::function<void()>;
+        using PageFootnotes = std::vector<PageFootnote>;
     private:
         void clear();
         void addHead();
         void addLead();
         void addFacts();
         [[nodiscard]] Expander& addSection(const Section&);
-        void addProse(Expander&, const Excerpt&);
+        void addProse(Expander&, const Section&);
         void addTree(Expander&, const Branches&, bool nodesOpen);
         void addTable(Expander&, const Table&);
         void addSignatures(const Section&);
@@ -84,7 +101,25 @@ namespace SeeDocs_App
         void addTreeRows(Holder&, const Branches&, bool nodesOpen);
         [[nodiscard]] Text treeRowText(const Branch&) const;
         [[nodiscard]] HeaderText treeHeaderText(const Branch&) const;
-        void addTableRows(Grids::GridBase&, const Table&, const TableGroup&, Footnotes&);
+        void addTableRows(Grids::GridBase&, const Table&, const TableGroup&, Stack& body,
+            TagValue hintColumn, PageFootnotes&);
+        // The row's hint cell opens on the comment's words and writes them back.
+        void connectHintCell(Grids::Row&, const TableRow&, TagValue hintColumn);
+        // The row's menu edits its footnote, or adds one where it has none.
+        void connectRowMenu(Grids::Row&, const TableRow&, Stack& body);
+        // A box holding a hint of its own: F2 or its menu opens an editor over the words, laid
+        // out over the format the box sets them in.
+        void connectHintBox(TextBox&, const std::optional<CommentSite>&, const TextFormat*);
+        FootnoteSlot& addFootnoteSlot(Stack& holder, PageFootnote, Padding);
+        void editHint(TextBox&, const CommentSite&, const TextFormat*);
+        void editFootnote(const PageFootnote&);
+        void addFootnote(const TableRow&, Stack& body);
+        [[nodiscard]] const PageFootnote* footnoteOf(const TableRow&) const;
+        [[nodiscard]] bool canAddFootnote(const TableRow&) const;
+        // Runs the edit once the command that asked for it has unwound: a menu is still closing
+        // over the control the edit takes the place of.
+        void later(std::function<void()>);
+        void render();
         void connectLinks(Grids::Grid&);
         void connectLinks(TextBox&);
         void open(std::wstring target);
@@ -92,6 +127,7 @@ namespace SeeDocs_App
         void showLinkMenu(Control& owner, std::wstring target, ContextPopupEvent&);
         [[nodiscard]] static bool hasFootnotes(const Table&);
         [[nodiscard]] static bool hasFootnotes(const TableGroup&);
+        [[nodiscard]] static bool hasSites(const TableGroup&);
         [[nodiscard]] static std::wstring footnoteAnchor(std::size_t index);
     private:
         static constexpr float k_pagePadding = 24.0f;
@@ -100,7 +136,8 @@ namespace SeeDocs_App
         static constexpr float k_sectionSpacing = 18.0f;  // between the parts down the page
         static constexpr float k_headerSpacing = 6.0f;    // between a section's header and body
         static constexpr float k_prosePadding = 12.0f;
-        static constexpr float k_signatureGap = 6.0f;      // between declarations, as an empty line
+        static constexpr float k_footnotePadding = 3.0f;   // above and below a member's footnote
+        static constexpr float k_signatureGap = 6.0f;      // between declarations
         static constexpr float k_signatureIndent = 18.0f;  // of the declarations under their label
         static constexpr float k_treePadding = 4.0f;
         static constexpr float k_kindGap = 12.0f;   // the least room before a tree row's kind word
@@ -109,13 +146,21 @@ namespace SeeDocs_App
         static constexpr TagValue k_factValue = 1;
         static constexpr TagValue k_markColumn = std::numeric_limits<TagValue>::max();
         static constexpr TagValue k_groupColumn = k_markColumn - 1;
+        static constexpr TagValue k_noColumn = k_markColumn - 2;
         static constexpr std::wstring_view k_mark = L"*";
 
         Page m_page{};
+        IPageWriter* m_writer{ nullptr };
         std::vector<Control*> m_parts{};   // what the page stands as under the title, in order
-        std::vector<TextBox*> m_footnoteBoxes{};   // one under every table with footnotes
+        std::vector<Render> m_renders{};   // every box the page writes its words into
+        PageFootnotes m_footnotes{};
+        // A footnote not written yet, by the row it is for, while its editor stands.
+        std::map<const TableRow*, FootnoteSlot*> m_newFootnotes{};
         std::size_t m_footnoteCount{ 0 };   // numbered through the page, so an anchor names one
         std::wstring m_menuLink{};   // the link the menu that is up is about
+        std::function<void()> m_pending{};
+        UiTimer m_later{};
+        TextFormat m_leadFormat{ TextStyleId::SubTitle };
 
         TextBox& m_head{ createTopBar<TextBox>(
             ReadOnly::Yes,
@@ -143,7 +188,13 @@ namespace SeeDocs_App
         :
         Panel{ params, UiElement::Page, std::forward<Args>(args)... }
     {
+        Actions::registerAll();
         connectLinks(m_head);
+        m_later.onTick([this](TimerEvent&) {
+            const std::function<void()> pending = std::exchange(m_pending, {});
+            if (pending)
+                pending();
+        });
     }
 
     template<typename F>
