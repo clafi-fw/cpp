@@ -109,9 +109,9 @@ a caller filling a section in needs; addSection is for a page that shows or hide
 one, since a section draws itself and one whose options are all hidden is a card with nothing in
 it.
 
-The look is `ExpanderViewMode::Section`, which is what tells a page's own groups from the groups
-a control INSIDE one carries - ThemesList holds two of its own and they wear the divider look, so
-the two levels read apart rather than stacking four rules of the same weight down the page.
+The look is `ExpanderViewMode::Divider` with the caption in the heading style: a section reads
+as a labeled line with its chevron at the end, and draws no surface of its own under the options,
+so a page of sections is headings and lines down one column rather than a stack of cards.
 
 Every section states `VerticalAlign::Top`, for the reason ThemesList states it: a wrapping panel
 deeper in measures one lane and wraps into as many as it needs once the width arrives, and every
@@ -146,7 +146,7 @@ window the menu stands on rather than the menu; and
 Keep settings on this PC. THE SECTION GOES, NOT THE CHECK, where
 the platform has no keep-above a client may ask for - see IPlatformWindow::canSetAlwaysOnTop. A
 check that could be turned on and would not hold says something untrue about the window, and hiding
-only the check would leave a Main Window card holding nothing.
+only the check would leave a Main Window heading over nothing.
 
 ENABLE GPU ACCELERATION IS WRITTEN, NOT ACTED ON, the way the colour mode is: the check writes
 AppContext::gpuAcceleration, and the node's change is what states the backend and tells every

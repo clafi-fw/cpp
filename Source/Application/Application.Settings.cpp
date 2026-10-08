@@ -88,7 +88,7 @@ namespace ClaFi
     // it names - is the one above, and the two are different questions: a row reads as one thing
     // by standing close, and two rows read as two by standing apart.
     constexpr float k_rowSpacing{ 6.0f };
-    // The room a section holds its options in, inside the surface it draws.
+    // The room a section holds its options in, under its heading.
     constexpr Padding k_groupPadding{ 12.0f };
 
     // THE WIDEST THE THEMES MAY MAKE THE PAGE, whatever the list asks for. The backstage is
@@ -223,8 +223,8 @@ namespace ClaFi
 
     // A GROUP IS A SECTION THAT CAN BE PUT AWAY. The caption heads the column its options stand
     // in and that column is its body, so the two are one control and collapsing the caption takes
-    // the options with it. A section draws itself, which is what tells it from the groups a page
-    // holds INSIDE one - see ThemesList, whose own two wear the divider look.
+    // the options with it. It wears the divider look with the caption in the heading style - a
+    // labeled line with the chevron at its end, and no surface of its own under the options.
     //
     // VerticalAlign::Top IS WHAT LETS A SECTION GROW, the same as it is there: a wrapping panel
     // deeper in measures one lane and wraps into as many as it needs once the width arrives, and
@@ -234,8 +234,8 @@ namespace ClaFi
         return add<Section>(
             HostProps{
                 VerticalAlign::Top,
-                ExpanderViewMode::Section,
-                HeaderText{ InkGrade::Strong, caption }
+                ExpanderViewMode::Divider,
+                HeaderText{ TextStyleId::Heading, caption }
             },
             BodyProps{
                 Orientation::Vertical,
@@ -452,8 +452,8 @@ namespace ClaFi
         // THE SECTION GOES, NOT THE CHECK. Hidden where the platform has no keep-above a client
         // may ask for - see IPlatformWindow::canSetAlwaysOnTop - and a check that could be turned
         // on and would not hold says something untrue about the window. The section is what draws
-        // the caption and the surface under it, so hiding the one answer inside it would leave an
-        // Main Window card holding nothing.
+        // the caption and its line, so hiding the one answer inside it would leave a Main Window
+        // heading over nothing.
         if (!form().rootForm().canSetAlwaysOnTop())
             m_windowSection.setVisible(false);
 
@@ -475,7 +475,7 @@ namespace ClaFi
         });
         // THE SECTION GOES, NOT THE CHECK, the same as the window's above: an application that
         // named no GPU backend has nothing to turn on, and the section is what draws the caption
-        // and the surface the check stands on.
+        // and its line.
         if (!appContext().gpuAvailable())
             m_graphicsSection.setVisible(false);
 

@@ -169,6 +169,7 @@ namespace SeeDocs_App
             VerticalAlign::Top,
             ExpanderViewMode::Divider,
             Padding{ 0.0f },
+            Spacing{ k_headerSpacing },
             std::move(header)
         );
         m_parts.push_back(&expander);

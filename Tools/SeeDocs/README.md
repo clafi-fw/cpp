@@ -108,9 +108,10 @@ carries the ways up through its bases under it, written the C++ way - a colon be
 a mixin's host through the argument it was given, a second line where the bases fork. A
 chapter's or a module's page holds a grid of its types with their kinds and hints, the chapter's
 grouped by module under held headers. A type's page holds the types derived from it as a tree,
-the note its comment references as prose, and a grid per member kind:
-properties, events, methods with the protected ones under a header of their own, fields or
-members, each with its hint. A member whose comment references a note carries a mark in a column
+the note its comment references as prose, and a grid per member kind: properties and events,
+the type's own under an Own expander and each base's under a Derived from expander of its own,
+up the whole chain of bases; methods with the protected ones under a header of their own; fields
+or members; each with its hint. A member whose comment references a note carries a mark in a column
 of its own, and the note stands as a footnote under the grid; the mark leads to it. A type whose
 comment references nothing takes the section named exactly after it from a note of its own
 folder, marked as matched by name. Where the surface states no hint the page says so, in place of

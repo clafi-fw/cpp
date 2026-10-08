@@ -82,7 +82,8 @@ namespace SeeDocs_App
         static constexpr float k_pagePadding = 24.0f;
         static constexpr float k_headPadding = 12.0f;   // above and below the title
         static constexpr float k_basesIndent = 24.0f;   // of the lines of bases under the title
-        static constexpr float k_sectionSpacing = 12.0f;
+        static constexpr float k_sectionSpacing = 18.0f;  // between the parts down the page
+        static constexpr float k_headerSpacing = 6.0f;    // between a section's header and body
         static constexpr float k_prosePadding = 12.0f;
         static constexpr float k_treePadding = 4.0f;
         static constexpr float k_kindGap = 12.0f;   // the least room before a tree row's kind word

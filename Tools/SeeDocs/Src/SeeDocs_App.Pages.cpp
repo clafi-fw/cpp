@@ -54,6 +54,8 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_scope = L"::";
         constexpr std::wstring_view k_separator = L" \u00B7 ";
         constexpr std::wstring_view k_baseJoin = L": ";
+        constexpr std::wstring_view k_ownLabel = L"Own";
+        constexpr std::wstring_view k_derivedFrom = L"Derived from ";
         constexpr std::wstring_view k_sourceJoin = L" \u203A ";
         constexpr std::size_t k_maxTreeDepth = 16;   // what a base chain is followed to
 
@@ -513,9 +515,27 @@ namespace SeeDocs_App
 
         // The ways up through the bases
 
+        // A base of the surface the ways up reach, as the chain spells it.
+        struct ReachedBase
+        {
+            std::wstring spelling;
+            const Type* type{ nullptr };
+        };
+
+        using ReachedBases = std::vector<ReachedBase>;
+
+        // The walk up through a type's bases: the lines it writes, the way so far, and every base
+        // it reaches, once each, in the order the lines name them.
+        struct BaseWalk
+        {
+            Chains chains;
+            Runs chain;
+            ReachedBases reached;
+        };
+
         // Along a type's bases: a base that is one of the type's template parameters stands for
         // the argument the spelling gave it, which is how a mixin hands its host on.
-        void addBaseChains(Chains& chains, Runs& chain, const Surface& surface, const Type& type,
+        void addBaseChains(BaseWalk& walk, const Surface& surface, const Type& type,
             std::wstring_view spelled, std::wstring_view nameSpace, std::size_t depth);
 
         // A base put on the way: a colon, then its spelling, linked where the surface has its page.
@@ -528,31 +548,39 @@ namespace SeeDocs_App
                 chain.push_back(code(std::move(spelling)));
         }
 
+        // A base met on the way, recorded the first time with the spelling it was met by.
+        void reachBase(ReachedBases& reached, const std::wstring& spelling, const Type& type)
+        {
+            const bool met = std::ranges::any_of(reached, [&type](const ReachedBase& base) {
+                return base.type == &type;
+            });
+            if (!met)
+                reached.push_back({ .spelling = spelling, .type = &type });
+        }
+
         // A base on the way: its spelling with a private alias replaced, the type its head names,
         // and that type's own bases after it; a way that ends here is a line. A nested base is a
         // part of some type, not a type of its own, and is left out.
-        void addBaseChain(Chains& chains, Runs& chain, const Surface& surface,
-            const std::wstring_view spelled, const std::wstring_view nameSpace,
-            const std::size_t depth)
+        void addBaseChain(BaseWalk& walk, const Surface& surface, const std::wstring_view spelled,
+            const std::wstring_view nameSpace, const std::size_t depth)
         {
             const std::wstring resolvedSpelling = surface.resolvedBase(spelled, nameSpace);
             const Type* type = surface.resolve(resolvedSpelling, nameSpace);
             if (type && isNested(*type))
                 return;
-            const std::size_t length = chain.size();
-            const std::size_t count = chains.size();
-            joinBase(chain, resolvedSpelling, type);
+            const std::size_t length = walk.chain.size();
+            const std::size_t count = walk.chains.size();
+            joinBase(walk.chain, resolvedSpelling, type);
+            if (type)
+                reachBase(walk.reached, resolvedSpelling, *type);
             if (type && depth < k_maxTreeDepth)
-            {
-                addBaseChains(chains, chain, surface, *type, resolvedSpelling, nameSpace,
-                    depth + 1);
-            }
-            if (chains.size() == count)
-                chains.push_back(chain);
-            chain.resize(length);
+                addBaseChains(walk, surface, *type, resolvedSpelling, nameSpace, depth + 1);
+            if (walk.chains.size() == count)
+                walk.chains.push_back(walk.chain);
+            walk.chain.resize(length);
         }
 
-        void addBaseChains(Chains& chains, Runs& chain, const Surface& surface, const Type& type,
+        void addBaseChains(BaseWalk& walk, const Surface& surface, const Type& type,
             const std::wstring_view spelled, const std::wstring_view nameSpace,
             const std::size_t depth)
         {
@@ -564,28 +592,32 @@ namespace SeeDocs_App
                 const auto parameter = std::ranges::find(parameters, head);
                 if (parameter == parameters.end())
                 {
-                    addBaseChain(chains, chain, surface, base, type.nameSpace, depth);
+                    addBaseChain(walk, surface, base, type.nameSpace, depth);
                     continue;
                 }
                 const std::size_t index = static_cast<std::size_t>(parameter - parameters.begin());
                 if (index < arguments.size())
                 {
-                    addBaseChain(chains, chain, surface, arguments[index], nameSpace, depth);
+                    addBaseChain(walk, surface, arguments[index], nameSpace, depth);
                     continue;
                 }
-                const std::size_t length = chain.size();
-                joinBase(chain, base, nullptr);
-                chains.push_back(chain);
-                chain.resize(length);
+                const std::size_t length = walk.chain.size();
+                joinBase(walk.chain, base, nullptr);
+                walk.chains.push_back(walk.chain);
+                walk.chain.resize(length);
             }
         }
 
-        void addTypeBases(Page& page, const Surface& surface, const Type& type)
+        // The lines under the title; answers the bases they reach, whose members the tables carry.
+        [[nodiscard]] ReachedBases addTypeBases(Page& page, const Surface& surface,
+            const Type& type)
         {
             if (type.kind != TypeKind::Class && type.kind != TypeKind::Struct)
-                return;
-            Runs chain;
-            addBaseChains(page.bases, chain, surface, type, type.name, type.nameSpace, 0);
+                return {};
+            BaseWalk walk;
+            addBaseChains(walk, surface, type, type.name, type.nameSpace, 0);
+            page.bases = std::move(walk.chains);
+            return std::move(walk.reached);
         }
 
         // The derived types
@@ -674,11 +706,11 @@ namespace SeeDocs_App
 
         // The member tables of a type page
 
-        void addProperties(Page& page, const Surface& surface, Notes& notes, const Type& type)
+        // A type's own properties, one row each.
+        [[nodiscard]] TableRows propertyRows(const Surface& surface, Notes& notes,
+            const Type& type)
         {
-            if (type.properties.empty())
-                return;
-            TableGroup group;
+            TableRows rows;
             for (const Property& property : type.properties)
             {
                 Runs value = valueCell(property.defaultValue);
@@ -690,22 +722,19 @@ namespace SeeDocs_App
                     spelled.push_back(muted(L" | "));
                     spelled.push_back(typeRun(surface, accepted, type.nameSpace));
                 }
-                group.rows.push_back({
+                rows.push_back({
                     .cells = { { code(property.name) }, std::move(spelled), std::move(value),
                         hintRuns(property.comment) },
                     .excerpt = memberExcerpt(notes, property.comment, property.name, type.category)
                 });
             }
-            TableGroups groups;
-            groups.push_back(std::move(group));
-            addTableSection(page, L"Properties", Columns::properties, std::move(groups));
+            return rows;
         }
 
-        void addEvents(Page& page, const Surface& surface, Notes& notes, const Type& type)
+        // A type's own events, one row each; the hint names what the event carries.
+        [[nodiscard]] TableRows eventRows(const Surface& surface, Notes& notes, const Type& type)
         {
-            if (type.events.empty())
-                return;
-            TableGroup group;
+            TableRows rows;
             for (const Event& event : type.events)
             {
                 Runs hint = hintRuns(event.comment);
@@ -721,15 +750,78 @@ namespace SeeDocs_App
                     }
                     hint.push_back(muted(std::move(carries)));
                 }
-                group.rows.push_back({
+                rows.push_back({
                     .cells = { { code(event.alias) },
                         { typeRun(surface, event.type, type.nameSpace) }, std::move(hint) },
                     .excerpt = memberExcerpt(notes, event.comment, event.type, type.category)
                 });
             }
+            return rows;
+        }
+
+        // The type's own rows under Own, then each base's under Derived from it, up the whole
+        // chain; a base with none is left out, and own rows with nothing inherited go unlabelled.
+        template<typename RowsOf>
+        [[nodiscard]] TableGroups ownAndInherited(const Type& type, const ReachedBases& bases,
+            const RowsOf& rowsOf)
+        {
             TableGroups groups;
-            groups.push_back(std::move(group));
-            addTableSection(page, L"Events", Columns::events, std::move(groups));
+            TableRows own = rowsOf(type);
+            const bool hasOwn = !own.empty();
+            if (hasOwn)
+                groups.push_back({ .rows = std::move(own) });
+            for (const ReachedBase& base : bases)
+            {
+                TableRows rows = rowsOf(*base.type);
+                if (rows.empty())
+                    continue;
+                groups.push_back({
+                    .label = { plain(std::wstring{ k_derivedFrom }), code(base.spelling) },
+                    .rows = std::move(rows)
+                });
+            }
+            if (hasOwn && groups.size() > 1)
+                groups.front().label = { plain(std::wstring{ k_ownLabel }) };
+            return groups;
+        }
+
+        // What stands after a member table's heading: the own rows and the inherited ones apart.
+        [[nodiscard]] std::wstring memberCount(const std::size_t own, const std::size_t inherited)
+        {
+            if (inherited == 0)
+                return std::to_wstring(own);
+            if (own == 0)
+                return std::to_wstring(inherited) + L" inherited";
+            return std::to_wstring(own) + L" own" + std::wstring{ k_separator }
+                + std::to_wstring(inherited) + L" inherited";
+        }
+
+        void addProperties(Page& page, const Surface& surface, Notes& notes, const Type& type,
+            const ReachedBases& bases)
+        {
+            TableGroups groups = ownAndInherited(type, bases, [&](const Type& owner) {
+                return propertyRows(surface, notes, owner);
+            });
+            if (groups.empty())
+                return;
+            Section& section = addTableSection(page, L"Properties", Columns::properties,
+                std::move(groups));
+            const std::size_t own = type.properties.size();
+            section.count = memberCount(own, section.table.rowCount() - own);
+        }
+
+        void addEvents(Page& page, const Surface& surface, Notes& notes, const Type& type,
+            const ReachedBases& bases)
+        {
+            TableGroups groups = ownAndInherited(type, bases, [&](const Type& owner) {
+                return eventRows(surface, notes, owner);
+            });
+            if (groups.empty())
+                return;
+            Section& section = addTableSection(page, L"Events", Columns::events,
+                std::move(groups));
+            const std::size_t own = type.events.size();
+            section.count = memberCount(own, section.table.rowCount() - own);
         }
 
         // Public methods first, the protected ones under a heading of their own.
@@ -1055,11 +1147,11 @@ namespace SeeDocs_App
     {
         Page page;
         addTypeHead(page, surface, type);
-        addTypeBases(page, surface, type);
+        const ReachedBases bases = addTypeBases(page, surface, type);
         addDerivedTypes(page, surface, type);
         addTypeNote(page, notes, type);
-        addProperties(page, surface, notes, type);
-        addEvents(page, surface, notes, type);
+        addProperties(page, surface, notes, type, bases);
+        addEvents(page, surface, notes, type, bases);
         addMethods(page, notes, type);
         addFields(page, surface, notes, type);
         addMembers(page, notes, type);
