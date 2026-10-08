@@ -69,6 +69,7 @@ The two files are meant to become one.
             Events = [ =[ Name, Alias, Method, Access, Line, Hint, Note ] ]
             Methods = [ =[ Name, Kind (function, constructor, destructor), Signature, Type,
                            Template, Static, Virtual, Deleted, Access, Line, Hint, Note ] ]
+            Usings = [ =[ Name, Base, Access, Line, Hint, Note ] ]
             Fields = [ =[ Name, Type, Value, Static, Constant, Access, Line, Hint, Note ] ]
             Members = [ =[ Name, Value, Line, Hint, Note ] ]
         ]
@@ -80,7 +81,8 @@ The two files are meant to become one.
 walked as bases, which is what makes it a toolbox entry; `Category` is its folder under the
 tree. `Bases` are written as a reader can follow them: an alias the database does not
 carry - a private `using ComboBoxBaseClass = WithInPlaceEdit<DropdownControlBase>` - is replaced
-by what it names. A property's `Form` says how its line was written (`declared`, `writable`,
+by what it names, and a base that is one of the type's own template parameters - a mixin's
+`Base` - stays as spelled. A property's `Form` says how its line was written (`declared`, `writable`,
 `reference`, `storage`, `member`, `call`, `value`, `action`, `read`, or `required` - a
 `REQUIRE_PROPERTY`, which the pack has to carry and which therefore has no `Default`) and
 `ValueKind` what a designer shows the value as: `bool`, `int`, `float`, `text`, `float2`,
@@ -88,7 +90,9 @@ by what it names. A property's `Form` says how its line was written (`declared`,
 wired the way an event is) or `unknown`. A `std::optional` of a kind is that kind with
 `Optional` set. Several bindings landing on one target are one property, the further types
 under `Accepts`. An event's `Name` is its struct, whose payload is that struct's own `Fields`
-entry.
+entry. A `Usings` entry is a using-declaration naming a base's member, `Base` as spelled before
+the last `::`: `Base::Base` makes the base's constructors the type's own, any other name
+republishes that member under the entry's `Access`.
 
 ## The studio
 
@@ -109,23 +113,39 @@ carries the ways up through its bases under it, written the C++ way - a colon be
 a mixin's host through the argument it was given, a second line where the bases fork. A
 chapter's or a module's page holds a grid of its types with their kinds and hints, the chapter's
 grouped by module under held headers. A type's page holds the types derived from it as a tree,
-the note its comment references as prose, and a grid per member kind: properties, events and
-methods, the type's own under an Own expander and each base's under a From expander of its own,
-up the whole chain of bases, the protected methods under a header of their own inside each;
-fields or members; each with its hint. After them, the types with a property of this type and
+the note its comment references as prose, and a grid per member kind: properties, events,
+public methods and protected methods, the type's own under an Own expander and each base's under
+a From expander of its own, up the whole chain of bases; fields or members; each with its hint.
+A base's methods grid holds what reaches the type: its
+constructors only where the type takes them with `using Base::Base`, never its destructor, no
+method whose name a type below declares again - C++'s own hiding, by name, which a
+`using Base::name` undoes - and a republished method under the access that using-declaration
+gives it. A property's getter and setter stand in no methods grid, since the property's row
+says it; a method with no comment of its own - an override, as a rule - takes the hint and the
+footnote of the method of the same name and parameter count in the nearest base that has one.
+A method's row carries its name alone, one row per name, with every overload's signature as
+the name's hint, a line each; the name is a
+link to the method's page, titled `Type::name` with the type linked, which holds every overload
+of the name under its access label written the C++ way - `public:` - the declaration as code,
+coloured as the framework's code boxes colour C++, the hint under it, and the note the comment
+references after that.
+After them, the types with a property of this type and
 the types with an event of it, two trees, each type with the types derived from it under it,
-closed; then the types beside it in its module. A member
+closed; then the types beside it in its module. A property, an event, a field or a member
 whose comment references a note carries a mark in a column of its own, and the note stands as a
 footnote under the grid; the mark leads to it.
 A type whose comment references nothing takes the section named exactly after it from a note of
 its own folder, marked as matched by name. Where the surface states no hint the page says so, in
 place of the words, so what the documentation still lacks is read off the preview.
 
-A type's name on a page is a link to its page, in a grid cell as in prose, and a row of the
-derived types opens the type it names; the tree on the left follows. The pages are built by
+A type's name on a page is a link to its page, in a grid cell as in prose: a type named in a
+hint, in a note's prose or code, or in a signature - bare or qualified, as `Control` or
+`Grids::Row` - links wherever the surface has a page for it. A row of the
+derived types opens the type it names; the tree on the left follows, and a method's page picks
+the method's type there. The pages are built by
 `SeeDocs_App.Pages` - facts, sections, tables of rows with their footnotes, branches of a tree,
-and blocks of prose - out of the surface and the notes; the studio builds controls from them
-(`SeeDocs_App.Studio.PageView`) and a generator renders the same pages as files.
+signatures and blocks of prose - out of the surface and the notes; the studio builds controls
+from them (`SeeDocs_App.Studio.PageView`) and a generator renders the same pages as files.
 
 ## The checks
 

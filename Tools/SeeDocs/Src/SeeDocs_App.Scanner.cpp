@@ -362,6 +362,7 @@ namespace SeeDocs_App
             constexpr std::wstring_view typedefWord = L"typedef";
             constexpr std::wstring_view staticAssert = L"static_assert";
             constexpr std::wstring_view usingWord = L"using";
+            constexpr std::wstring_view typenameWord = L"typename";
             constexpr std::wstring_view conceptWord = L"concept";
             constexpr std::wstring_view classWord = L"class";
             constexpr std::wstring_view structWord = L"struct";
@@ -527,6 +528,7 @@ namespace SeeDocs_App
             void readType(TypeKind, const Prefix&);
             void readEnum(const Prefix&);
             void readUsing(const Prefix&);
+            void readUsingDeclaration(const Token& keyword);
             void readConcept(const Prefix&);
             void readMacro(const Token& name, Type* owner, Access);
             void readDeclarator(const Prefix&);
@@ -1116,8 +1118,8 @@ namespace SeeDocs_App
             m_surface.addType(std::move(type));
         }
 
-        // using X = ...; is an alias and is read; a using-declaration and a using-directive are
-        // passed over.
+        // using X = ...; is an alias and is read; using Base::name; is a using-declaration and is
+        // read inside a type; a using-directive is passed over.
         void FileReader::readUsing(const Prefix& prefix)
         {
             const Token& keyword = *peek();
@@ -1130,7 +1132,7 @@ namespace SeeDocs_App
             const Token* nameToken = peek();
             if (!nameToken || nameToken->type != TokenType::Name || !isPunctuator(peek(1), L"="))
             {
-                skipPast(L";");
+                readUsingDeclaration(keyword);
                 return;
             }
             advance();
@@ -1168,6 +1170,38 @@ namespace SeeDocs_App
             if (isPunctuator(peek(), L";"))
                 advance();
             m_surface.addType(std::move(type));
+        }
+
+        // Inside a type, using Base::Base takes the base's constructors and using Base::name
+        // republishes a member under the label the line stands in; at namespace scope it is
+        // passed over.
+        void FileReader::readUsingDeclaration(const Token& keyword)
+        {
+            const TokenList& tokens = m_text.tokens();
+            Scope* scope = typeScope();
+            std::size_t first = m_at;
+            if (isName(peek(), Words::typenameWord))
+                ++first;
+            std::size_t last = m_at;
+            while (peek() && !isPunctuator(peek(), L";"))
+            {
+                last = m_at;
+                advance();
+            }
+            if (isPunctuator(peek(), L";"))
+                advance();
+            if (!scope || last < first + 2 || tokens[last].type != TokenType::Name
+                || !isPunctuator(&tokens[last - 1], L"::"))
+            {
+                return;
+            }
+            Using declaration;
+            declaration.base = textBetween(first, last - 2);
+            declaration.name = std::wstring{ text(tokens[last]) };
+            declaration.access = scope->access;
+            declaration.place = placeOf(keyword);
+            declaration.comment = commentAt(keyword.line, std::nullopt, declaration.name);
+            scope->type->usings.push_back(std::move(declaration));
         }
 
         void FileReader::readConcept(const Prefix& prefix)

@@ -49,6 +49,11 @@ namespace SeeDocs_App
         addFacts();
         for (const Section& section : m_page.sections)
         {
+            if (section.kind == SectionKind::Signature)
+            {
+                addSignatures(section);
+                continue;
+            }
             Expander& expander = addSection(section);
             switch (section.kind)
             {
@@ -60,6 +65,8 @@ namespace SeeDocs_App
                     break;
                 case SectionKind::Table:
                     addTable(expander, section.table);
+                    break;
+                case SectionKind::Signature:
                     break;
             }
         }
@@ -87,20 +94,14 @@ namespace SeeDocs_App
         m_parts.clear();
     }
 
-    // A link in the head names a base to open.
-    void PageView::connectHeadLinks()
-    {
-        m_head.onLinkClick([this](LinkClickEvent& event) {
-            open(event.target);
-        });
-    }
-
-    // The title with what it is beside it and the ways up through its bases under it, in the bar
-    // that stays.
+    // The title with its scope before it and what it is beside it, and the ways up through its
+    // bases under it, in the bar that stays.
     void PageView::addHead()
     {
         Text head;
-        head << TextStyleId::Title << m_page.title << PopTextStyle{};
+        head << TextStyleId::Title;
+        writeRuns(head, m_page.scope);
+        head << m_page.title << PopTextStyle{};
         if (!m_page.badges.empty())
         {
             head << L"   " << TextStyleId::SubBody;
@@ -126,6 +127,7 @@ namespace SeeDocs_App
         lead << PopTextStyle{};
         TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes);
         box.text() = lead;
+        connectLinks(box);
         m_parts.push_back(&box);
     }
 
@@ -180,6 +182,7 @@ namespace SeeDocs_App
     {
         TextBox& box = expander.createBody<TextBox>(ReadOnly::Yes, Padding{ k_prosePadding });
         box.text() = textOf(excerpt.blocks);
+        connectLinks(box);
     }
 
     void PageView::addTree(Expander& expander, const Branches& branches, const bool nodesOpen)
@@ -250,8 +253,40 @@ namespace SeeDocs_App
         {
             box = &body.add<TextBox>(ReadOnly::Yes, Padding{ k_prosePadding });
             box->text() = footnotes.text;
+            connectLinks(*box);
         }
         connectLinks(grid, box);
+    }
+
+    // The access label as code at the margin and, set in under it, each declaration in its inks
+    // with its links, the hint under it, and after a gap the note the comment references, headed
+    // by where it comes from; an empty line between declarations. No expander: the page is the
+    // declarations.
+    void PageView::addSignatures(const Section& section)
+    {
+        Text text;
+        text << ParaIndent{ 0.0f };
+        writeSignature(text, section.heading, false);
+        text << k_endLine << ParaIndent{ k_signatureIndent };
+        for (const Signature& signature : section.signatures)
+        {
+            text << PushFontSize{ k_signatureGap } << k_endLine << PopFontSize{};
+            writeSignature(text, signature.code, true);
+            text << k_endLine;
+            writeRuns(text, signature.lead);
+            text << k_endLine;
+            if (!signature.excerpt.source.empty())
+            {
+                text << PushFontSize{ k_signatureGap } << k_endLine << PopFontSize{};
+                writeRuns(text, signature.excerpt.source);
+                text << k_endLine;
+                writeBlocks(text, signature.excerpt.blocks, k_signatureIndent);
+            }
+        }
+        TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes);
+        box.text() = text;
+        connectLinks(box);
+        m_parts.push_back(&box);
     }
 
     // A labelled group stands beside its label in the group column, folding under it, or under
@@ -304,6 +339,13 @@ namespace SeeDocs_App
                     event.stopPropagation();
                 });
             }
+            if (!row.hint.empty())
+            {
+                gridRow.onGetCellHint([&row](Grids::GetCellHintEvent& event) {
+                    if (event.column().tag().value == 0)
+                        writeSignature(event.text(), row.hint, false);
+                });
+            }
             gridRow.onGetCellText([&row, anchor](Grids::GetCellTextEvent& event) {
                 const TagValue column = event.column().tag().value;
                 if (column == k_markColumn)
@@ -337,6 +379,14 @@ namespace SeeDocs_App
             }
             if (footnotes)
                 footnotes->goToAnchor(event.target.substr(k_anchorPrefix.size()));
+        });
+    }
+
+    // A link in a box names a page to open.
+    void PageView::connectLinks(TextBox& box)
+    {
+        box.onLinkClick([this](LinkClickEvent& event) {
+            open(event.target);
         });
     }
 

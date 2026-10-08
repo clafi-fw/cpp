@@ -460,6 +460,11 @@ namespace SeeDocs_App
         return nearest;
     }
 
+    bool inheritsConstructors(const Using& declaration)
+    {
+        return declaration.name == bareName(withoutArguments(declaration.base));
+    }
+
     std::wstring_view bareName(const std::wstring_view qualified)
     {
         int depth = 0;
@@ -618,5 +623,12 @@ namespace SeeDocs_App
             names.emplace_back(name);
         }
         return names;
+    }
+
+    bool isTemplateParameter(const Type& type, const std::wstring_view spelled)
+    {
+        const Names parameters = templateParameterNames(type.templateParameters);
+        return std::ranges::find(parameters, plainType(withoutArguments(spelled)))
+            != parameters.end();
     }
 }

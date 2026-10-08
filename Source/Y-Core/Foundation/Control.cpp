@@ -1117,6 +1117,21 @@ namespace ClaFi
         return {};
     }
 
+    float Control::heldStackStrip() const
+    {
+        float result = 0.0f;
+        // The same walk scrollContentInset makes, stopping where it stops.
+        for (Control* control = const_cast<Control*>(this); control->m_parent; control = control->m_parent)
+        {
+            Control* holder = control->m_parent;
+            if (holder->heldHeader() != control)
+                result += holder->heldHeaderStrip();
+            if (holder->controlIsOnScrollBox(*control))
+                break;
+        }
+        return result;
+    }
+
     ControlMetrics Control::designMetrics() const
     {
         ControlMetrics metrics;

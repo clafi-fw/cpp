@@ -39,10 +39,20 @@ namespace SeeDocs_App
 
     bool SurfaceView::showNamed(const std::wstring_view name)
     {
-        const auto found = m_entryByName.find(std::wstring{ name });
+        std::wstring member;
+        auto found = m_entryByName.find(std::wstring{ name });
         if (found == m_entryByName.end())
-            return false;
+        {
+            const std::optional<MemberLink> link = readMemberLink(name);
+            if (!link.has_value())
+                return false;
+            found = m_entryByName.find(std::wstring{ link->type });
+            if (found == m_entryByName.end() || !hasMethod(m_entries[found->second], link->member))
+                return false;
+            member = std::wstring{ link->member };
+        }
         m_pending = found->second;
+        m_member = std::move(member);
         m_showTimer.start(MilliSeconds{ 0u });
         return true;
     }
@@ -61,6 +71,7 @@ namespace SeeDocs_App
     void SurfaceView::clearTree()
     {
         m_pending = k_root;
+        m_member.clear();
         m_tree.setCurrentItem(nullptr);
         for (const Entry& entry : m_entries)
         {
@@ -137,11 +148,15 @@ namespace SeeDocs_App
         }
     }
 
+    // The method a member link named is shown in place of its type's page, once.
     void SurfaceView::show(const std::size_t index)
     {
         const Entry& entry = m_entries[index];
+        const std::wstring member = std::exchange(m_member, {});
         Page page;
-        if (entry.type)
+        if (entry.type && !member.empty())
+            page = methodPage(*m_surface, *m_notes, *entry.type, member);
+        else if (entry.type)
             page = typePage(*m_surface, *m_notes, *entry.type);
         else if (entry.module)
             page = modulePage(*m_surface, *m_notes, *entry.chapter, *entry.module);
@@ -164,5 +179,14 @@ namespace SeeDocs_App
         Text text{ rowIcon(rowIconOf(type)), Space{ k_iconGap }, type.name };
         writeRowKind(text, type);
         return text;
+    }
+
+    bool SurfaceView::hasMethod(const Entry& entry, const std::wstring_view name)
+    {
+        if (!entry.type)
+            return false;
+        return std::ranges::any_of(entry.type->functions, [name](const Function& function) {
+            return function.name == name;
+        });
     }
 }

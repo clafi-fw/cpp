@@ -904,6 +904,10 @@ namespace ClaFi
         // reads is still on its way to where the press before it sent it, and measuring from
         // the view alone asks a second time for ground the previous press already claimed.
         [[nodiscard]] FloatPoint viewTravelRemaining() const;
+        // What the headers held over this control take off the top of the view it is scrolled
+        // in: the strip of every holder between it and the scrolled body, stacked - see
+        // heldHeaderStrip. A holder's own header stands in that strip rather than under it.
+        [[nodiscard]] float heldStackStrip() const;
         // How the box scrolling this control carries it. See Controls#scrollmetrics
         [[nodiscard]] virtual ScrollMetrics scrollMetrics() const { return {}; }
         //

@@ -152,7 +152,7 @@ namespace ClaFi::Controls::Grids
         // the rect was measured from.
         struct FieldStop
         {
-            RowBase* row{};
+            RowBase* row{}; // for a control stop, the row the control stands in
             Column* column{};
             Control* control{};
             FloatPoint origin{};
@@ -220,12 +220,15 @@ namespace ClaFi::Controls::Grids
         void focusStop(const FieldStop&);
         // The least scroll that shows the stop.
         void scrollStopIntoView(const FieldStop&);
-        // A page-tall rect, which can only be shown by putting its leading edge against the
-        // viewport's.
-        void scrollPageIntoView(const FloatRect& pageInForm);
+        // Scrolls until the view stands where `viewInForm` says, a viewport-tall rect. Asked for
+        // by the stop's row, so every header held over that row is cleared on the way up.
+        void scrollViewToStop(const FieldStop&, const FloatRect& viewInForm);
+        // Whether `within` - the viewport, where it stands or where a press will leave it - shows
+        // the stop whole: inside it, and under every header held over the stop's row. A stop half
+        // on screen or behind a header is not one the eye has read.
+        [[nodiscard]] static bool showsWhole(const FloatRect& within, const FieldStop&);
         // The stop furthest along the key's direction among those the line runs through and
-        // `within` shows whole. A stop half on screen is not one the eye has read, so it neither
-        // ends the page being left nor begins the one arriving.
+        // `within` shows whole - see showsWhole.
         [[nodiscard]] std::size_t lastWholeInBand(const FieldStops&, const FloatRect& within,
             const OrientedRect& line, KeyCode) const;
         // The first or last row of this grid that paints a cell, in the order the eye reads

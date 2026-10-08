@@ -5,9 +5,9 @@ import SeeDocs_App.Surface;
 
 import ClaFi.StdLib;
 
-// THE DOCUMENTATION AS PAGES: what a chapter, a module or a type says, built out of the surface
-// and the notes, and rendered by whoever shows it - the studio as controls, a generator as a
-// file. See the README beside the project.
+// THE DOCUMENTATION AS PAGES: what a chapter, a module, a type or a method says, built out of the
+// surface and the notes, and rendered by whoever shows it - the studio as controls, a generator
+// as a file. See the README beside the project.
 namespace SeeDocs_App
 {
     // How a run of a page's words is set.
@@ -25,7 +25,8 @@ namespace SeeDocs_App
     {
         std::wstring text;
         RunStyle style{ RunStyle::Plain };
-        std::wstring link;   // a type's qualified name or a module's name, empty for none
+        // A type's qualified name, a module's name or a member link (memberLink); empty for none.
+        std::wstring link;
     };
 
     export using Runs = std::vector<Run>;
@@ -45,7 +46,7 @@ namespace SeeDocs_App
     {
         BlockKind kind{ BlockKind::Paragraph };
         Runs runs;                  // Paragraph, SubHeading
-        Lines lines;                // Code
+        std::vector<Runs> lines;    // Code
         std::vector<Runs> items;    // Bullets
     };
 
@@ -76,12 +77,13 @@ namespace SeeDocs_App
 
     export using TableColumns = std::vector<TableColumn>;
 
-    // A row of a table: its cells, the type it stands for where it does, and the note the
-    // declaration's comment references.
+    // A row of a table: its cells, the type it stands for where it does, what the first cell's
+    // hint shows where it has one, and the note the declaration's comment references.
     export struct TableRow
     {
         Cells cells;
         const Type* type{ nullptr };
+        Runs hint;   // a method's signature, set as code
         std::optional<Excerpt> excerpt;
     };
 
@@ -120,14 +122,26 @@ namespace SeeDocs_App
 
     export using Branches = std::vector<Branch>;
 
+    // A declaration on a method page: the code, its hint under it, and its note after that.
+    export struct Signature
+    {
+        Runs code;         // code runs, a type the surface has a page for linked
+        Runs lead;         // the hint
+        Excerpt excerpt;   // where the comment references a note
+    };
+
+    export using Signatures = std::vector<Signature>;
+
     export enum class SectionKind
     {
         Note,
         Tree,
-        Table
+        Table,
+        Signature   // declarations under an access label written the C++ way - public:
     };
 
-    // One section of a page: its heading, and the note, tree or table it holds as the kind says.
+    // One section of a page: its heading, and the note, tree, table or signatures it holds as
+    // the kind says.
     export struct Section
     {
         SectionKind kind{ SectionKind::Table };
@@ -135,8 +149,9 @@ namespace SeeDocs_App
         std::wstring count;   // what stands after the heading, muted; empty for nothing
         Excerpt excerpt;
         Branches branches;
-        bool treeOpen{ true };   // whether the tree's nodes start open
+        bool treeOpen{ false };   // whether the tree's nodes start open
         Table table;
+        Signatures signatures;
     };
 
     export using Sections = std::vector<Section>;
@@ -146,6 +161,7 @@ namespace SeeDocs_App
 
     export struct Page
     {
+        Runs scope;     // before the title, in its style - a method's type and ::
         std::wstring title;
         Runs badges;    // what the title is - the kind, control, template
         Chains bases;   // under the title, the C++ way: a colon before each base
@@ -189,4 +205,20 @@ namespace SeeDocs_App
     export [[nodiscard]] Page modulePage(const Surface&, Notes&, const ContentsChapter&,
         const ContentsModule&);
     export [[nodiscard]] Page typePage(const Surface&, Notes&, const Type&);
+    // The page of every method of the type with that name, a signature each.
+    export [[nodiscard]] Page methodPage(const Surface&, Notes&, const Type&,
+        std::wstring_view name);
+
+    // The link to a member's page: the type's qualified name, ::, the member's name.
+    export [[nodiscard]] std::wstring memberLink(const Type&, std::wstring_view member);
+
+    // The two names a member link is made of, each a view into the link.
+    export struct MemberLink
+    {
+        std::wstring_view type;
+        std::wstring_view member;
+    };
+
+    // A link cut at its last ::; nothing for one holding none.
+    export [[nodiscard]] std::optional<MemberLink> readMemberLink(std::wstring_view link);
 }

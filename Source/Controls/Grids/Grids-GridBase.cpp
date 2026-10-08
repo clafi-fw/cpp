@@ -565,20 +565,16 @@ namespace ClaFi::Controls::Grids
             return false;
 
         // The page is the grid's own visible span, so what the user sees is what one press
-        // crosses. The field is collected a page deep to match: the window otherwise reaches
-        // only a fixed margin past the viewport, and a stop beyond that is one no press can
-        // score, so the key would come to rest just under the edge of the screen however far it
-        // asked to go.
-        // The part of the grid's visible span the eye can actually read: the header stands over
-        // the top of it, and a stop behind the header has been read no more than one off screen
-        // has. That holds for both of the answers this rect gives - how far one press travels,
-        // and which stop the selection is measured from when it has been scrolled out of sight.
+        // crosses - read where the view comes to rest, since a press can arrive while the one
+        // before it is still carrying the view. The field is collected a page deep to match: the
+        // window otherwise reaches only a fixed margin past the viewport, and a stop beyond that
+        // is one no press can score, so the key would come to rest just under the edge of the
+        // screen however far it asked to go.
         FloatRect viewport = visibleRectInForm();
-        viewport.top += heldHeaderStrip();
-        const float pageExtent = viewport.height();
+        viewport.offset(viewTravelRemaining());
 
         FieldStops stops;
-        const std::size_t sourceIndex = collectField(stops, pageExtent);
+        const std::size_t sourceIndex = collectField(stops, viewport.height());
         if (sourceIndex == k_maxSize)
             return false;
 
@@ -591,12 +587,11 @@ namespace ClaFi::Controls::Grids
         // Where the page being left behind ends. That is the selection: a press moves the
         // selection by a page, so the page it crosses starts where the selection stands, whether
         // the selection sits against the edge of the screen or in the middle of it. Scrolling can
-        // carry the selection out of the viewport, and a page measured from there names a band
-        // nothing reaches, so the last stop the viewport shows WHOLE stands in for it - a stop
-        // half on screen is not one the eye has read.
-        const AxisSpan viewportSpan = { viewport.top, viewport.bottom };
+        // carry the selection out of the viewport or behind a held header, and a page measured
+        // from there names a band nothing reaches, so the last stop the viewport shows whole
+        // stands in for it.
         std::size_t lastSeenIndex = sourceIndex;
-        if (!viewportSpan.covers({ sourceRect.top, sourceRect.bottom }))
+        if (!showsWhole(viewport, stops[sourceIndex]))
         {
             const std::size_t seenIndex = lastWholeInBand(stops, viewport, line, key);
             if (seenIndex != k_maxSize)
@@ -622,26 +617,30 @@ namespace ClaFi::Controls::Grids
             return true;
         }
 
-        // The page that stop opens, laid against the edge the press travelled from.
-        const FloatRect& nextRect = stops[nextIndex].rect;
-        FloatRect page = viewport;
-        page.top = forward ? nextRect.top : nextRect.bottom - pageExtent;
-        page.bottom = page.top + pageExtent;
+        // The view the press arrives at, a viewport's height from that stop. Going down, the
+        // stop's row stands at the top, under every header held over it and the margin the box
+        // keeps clear of its client edge; going up, it ends at the bottom edge.
+        const FieldStop& next = stops[nextIndex];
+        FloatRect arriving = viewport;
+        arriving.top = forward
+            ? next.rect.top - next.row->heldStackStrip() - scaler().scaled8
+            : next.rect.bottom - viewport.height();
+        arriving.bottom = arriving.top + viewport.height();
 
-        // The selection lands at the FAR edge of that page rather than at its start: the press
+        // The selection lands at the FAR edge of that view rather than at its start: the press
         // moves the view by a page and leaves the selection against the edge it travelled to,
         // which is where the next press measures its own page from.
-        std::size_t bestIndex = lastWholeInBand(stops, page, line, key);
+        std::size_t bestIndex = lastWholeInBand(stops, arriving, line, key);
         if (bestIndex == k_maxSize)
             bestIndex = nextIndex;
 
         // Everything read out of the field is written back before anything scrolls: a stop rect,
-        // the grid origin it is measured against and the page all come from one snapshot, and a
+        // the grid origin it is measured against and the view all come from one snapshot, and a
         // scroll moves all three.
         rememberCellLine(stops[bestIndex].rect, band.y, false);
-        scrollPageIntoView(page);
-        // The page is already on screen, so this settles the focus without moving the view: the
-        // stop it lands on is one the page shows whole.
+        scrollViewToStop(next, arriving);
+        // The view is on its way, so this settles the focus without moving it: the stop it lands
+        // on is one that view shows whole.
         focusStop(stops[bestIndex]);
         return true;
     }
@@ -693,7 +692,13 @@ namespace ClaFi::Controls::Grids
             {
                 if (stop.control == sourceStop)
                     result = stops.size();
-                stops.push_back({ .control = stop.control, .rect = stop.rect, .lane = stop.rect });
+                stops.push_back({
+                    .row = &row,
+                    .control = stop.control,
+                    .origin = rowOrigin,
+                    .rect = stop.rect,
+                    .lane = stop.rect,
+                });
             }
         });
         return result;
@@ -791,35 +796,37 @@ namespace ClaFi::Controls::Grids
         stop.row->scrollCellIntoView(cellRect);
     }
 
-    void GridBase::scrollPageIntoView(const FloatRect& pageInForm)
+    // What the row asks for starts under the whole stack and the margin the box keeps clear of
+    // its client edge, and each holder on the way up puts its own strip back. The box is handed
+    // the view less that margin - taller than its client area, which it can only show by putting
+    // the leading edge against its own.
+    void GridBase::scrollViewToStop(const FieldStop& stop, const FloatRect& viewInForm)
     {
-        // A rect as tall as the viewport can only be shown by putting its leading edge against
-        // the viewport's, which is what makes the page the press asked for the page displayed.
-        FloatRect pageInGrid = pageInForm;
-        pageInGrid.offset(-boundsInForm().topLeft());
-        // Asked for by hand rather than through scrollChildIntoView, which a grid scrolling
-        // itself does not pass through. The page is a strip shorter than the view for the same
-        // reason - see moveCellByPage - so the two together still name a viewport's worth, and
-        // the leading edge the scroll puts against the view's own is the header's bottom.
-        pageInGrid.top -= heldHeaderStrip();
-        scrollIntoView(pageInGrid);
+        FloatRect rect = viewInForm;
+        rect.top += stop.row->heldStackStrip() + scaler().scaled8;
+        rect.offset(-stop.origin);
+        stop.row->scrollIntoView(rect);
+    }
+
+    bool GridBase::showsWhole(const FloatRect& within, const FieldStop& stop)
+    {
+        const AxisSpan shown = { within.top + stop.row->heldStackStrip(), within.bottom };
+        return shown.covers({ stop.rect.top, stop.rect.bottom });
     }
 
     std::size_t GridBase::lastWholeInBand(const FieldStops& stops, const FloatRect& within,
         const OrientedRect& line, KeyCode key) const
     {
-        const AxisSpan withinSpan = { within.top, within.bottom };
         std::size_t result = k_maxSize;
         float bestReach = -k_maxFloat;
         for (std::size_t i = 0; i != stops.size(); ++i)
         {
-            const FloatRect& rect = stops[i].rect;
-            if (!withinSpan.covers({ rect.top, rect.bottom }))
+            if (!showsWhole(within, stops[i]))
                 continue;
             const OrientedRect lane = OrientedRect::orient(stops[i].lane, key);
             if (lane.secondary.distanceTo(line.secondary.start) != 0.0f)
                 continue;
-            const OrientedRect candidate = OrientedRect::orient(rect, key);
+            const OrientedRect candidate = OrientedRect::orient(stops[i].rect, key);
             if (candidate.primary.end <= bestReach)
                 continue;
             bestReach = candidate.primary.end;

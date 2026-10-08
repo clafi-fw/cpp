@@ -37,12 +37,14 @@ namespace SeeDocs_App
             constexpr std::wstring_view exportedImports = L"ExportedImports";
             constexpr std::wstring_view templateParameters = L"Template";
             constexpr std::wstring_view bases = L"Bases";
+            constexpr std::wstring_view base = L"Base";
             constexpr std::wstring_view target = L"Target";
             constexpr std::wstring_view control = L"Control";
             constexpr std::wstring_view category = L"Category";
             constexpr std::wstring_view properties = L"Properties";
             constexpr std::wstring_view events = L"Events";
             constexpr std::wstring_view methods = L"Methods";
+            constexpr std::wstring_view usings = L"Usings";
             constexpr std::wstring_view fields = L"Fields";
             constexpr std::wstring_view members = L"Members";
             constexpr std::wstring_view type = L"Type";
@@ -127,6 +129,15 @@ namespace SeeDocs_App
             };
         }
 
+        [[nodiscard]] Dom::Dt::Section usingLayout()
+        {
+            using namespace Dom::Dt;
+            return {
+                memberEntry(),
+                Value{ Keys::base, std::wstring{} }
+            };
+        }
+
         [[nodiscard]] Dom::Dt::Section fieldLayout()
         {
             using namespace Dom::Dt;
@@ -174,6 +185,7 @@ namespace SeeDocs_App
                 Sequence{ Keys::properties, propertyLayout() },
                 Sequence{ Keys::events, eventLayout() },
                 Sequence{ Keys::methods, functionLayout() },
+                Sequence{ Keys::usings, usingLayout() },
                 Sequence{ Keys::fields, fieldLayout() },
                 Sequence{ Keys::members, enumMemberLayout() }
             };
@@ -269,7 +281,11 @@ namespace SeeDocs_App
             setText(section, Keys::templateParameters, type.templateParameters);
             Names bases;
             for (const std::wstring& base : type.bases)
-                bases.push_back(surface.resolvedBase(base, type.nameSpace));
+            {
+                bases.push_back(isTemplateParameter(type, base)
+                    ? base
+                    : surface.resolvedBase(base, type.nameSpace));
+            }
             setList(section, Keys::bases, bases);
             setText(section, Keys::target, type.target);
             setFlag(section, Keys::control, type.isControl);
@@ -311,6 +327,17 @@ namespace SeeDocs_App
                 if (function.access == Access::Private)
                     continue;
                 setFunction(methods.add(), function);
+            }
+
+            Sections& usings = (section / Keys::usings).as<Sections>();
+            for (const Using& declaration : type.usings)
+            {
+                if (declaration.access == Access::Private)
+                    continue;
+                Dom::Section& entry = usings.add();
+                setPlaced(entry, declaration.name, declaration.place, declaration.comment);
+                setText(entry, Keys::access, accessWord(declaration.access));
+                setText(entry, Keys::base, declaration.base);
             }
 
             Sections& fields = (section / Keys::fields).as<Sections>();
@@ -547,6 +574,16 @@ namespace SeeDocs_App
                 }
                 for (const Dom::Section& item : (entry / Keys::methods).as<Sections>())
                     type.functions.push_back(functionOf(item, file, true));
+                for (const Dom::Section& item : (entry / Keys::usings).as<Sections>())
+                {
+                    type.usings.push_back({
+                        .base = textOf(item, Keys::base),
+                        .name = textOf(item, Keys::name),
+                        .access = accessIn(item),
+                        .place = placeOf(item, file),
+                        .comment = commentOf(item)
+                    });
+                }
                 for (const Dom::Section& item : (entry / Keys::fields).as<Sections>())
                     type.fields.push_back(fieldOf(item, file, true));
                 for (const Dom::Section& item : (entry / Keys::members).as<Sections>())

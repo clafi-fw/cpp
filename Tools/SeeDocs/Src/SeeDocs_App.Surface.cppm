@@ -104,6 +104,16 @@ namespace SeeDocs_App
         Comment comment;
     };
 
+    // A using-declaration naming a base's member: its constructors, or one republished.
+    export struct Using
+    {
+        std::wstring base;   // as spelled before the last ::
+        std::wstring name;
+        Access access{ Access::Public };
+        Place place;
+        Comment comment;
+    };
+
     export enum class FunctionKind
     {
         Function,
@@ -163,6 +173,7 @@ namespace SeeDocs_App
         std::vector<Property> properties;
         std::vector<Event> events;
         std::vector<Function> functions;
+        std::vector<Using> usings;
         std::vector<Field> fields;
         std::vector<EnumMember> members;
         Place place;
@@ -231,6 +242,7 @@ namespace SeeDocs_App
     export using Properties = std::vector<Property>;
     export using Events = std::vector<Event>;
     export using Functions = std::vector<Function>;
+    export using Usings = std::vector<Using>;
     export using Fields = std::vector<Field>;
     export using EnumMembers = std::vector<EnumMember>;
     export using Types = std::vector<Type>;
@@ -302,6 +314,8 @@ namespace SeeDocs_App
         std::unordered_map<std::wstring, std::vector<std::size_t>> m_byBareName;
     };
 
+    // Whether a using-declaration names the base's constructors - using Base::Base.
+    export [[nodiscard]] bool inheritsConstructors(const Using&);
     // The last component of a qualified name.
     export [[nodiscard]] std::wstring_view bareName(std::wstring_view qualified);
     // A spelled type without its template arguments - the name before the first bracket.
@@ -312,6 +326,8 @@ namespace SeeDocs_App
     export [[nodiscard]] std::wstring_view plainType(std::wstring_view spelled);
     // The names a template head declares - T of typename T, N of std::size_t N.
     export [[nodiscard]] Names templateParameterNames(std::wstring_view parameters);
+    // Whether a base spelled inside a type is one of the type's own template parameters.
+    export [[nodiscard]] bool isTemplateParameter(const Type&, std::wstring_view spelled);
     // The text cut at its top-level commas, each piece trimmed - a macro's or template's arguments.
     export [[nodiscard]] Names splitArguments(std::wstring_view text);
     // The text with its blanks trimmed off both ends.

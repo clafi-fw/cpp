@@ -37,9 +37,9 @@ namespace SeeDocs_App
         // chapter, open. Both are held by reference for as long as they are shown. False where the
         // surface lists nothing: the tree stands empty and the page is the caller's to fill.
         [[nodiscard]] bool bind(const Surface&, Notes&);
-        // Shows the page of the type or module named and picks it in the tree, on the next tick -
-        // the request may come from the page about to go. False for a name the surface does not
-        // carry.
+        // Shows the page of the type or module named, or of the method a member link names,
+        // and picks the type or module in the tree, on the next tick - the request may come from
+        // the page about to go. False for a name the surface does not carry.
         bool showNamed(std::wstring_view name);
         // Shows words of the studio's own in place of a page, the tree emptied.
         void showText(const Text&);
@@ -63,6 +63,7 @@ namespace SeeDocs_App
         void showPending();
         [[nodiscard]] static Control& rowOf(const Entry&);
         [[nodiscard]] static Text rowText(const Type&);
+        [[nodiscard]] static bool hasMethod(const Entry&, std::wstring_view name);
     private:
         static constexpr float k_treeWidth = 300.0f;
         static constexpr float k_iconGap = 5.0f; // between a row's icon and its text
@@ -74,6 +75,7 @@ namespace SeeDocs_App
         Entries m_entries{};
         EntryIndexes m_entryByName{};   // types by qualified name, modules by name
         std::size_t m_pending{ k_root }; // the entry showNamed is to show
+        std::wstring m_member{};         // the method of its type to show; empty for the type
         UiTimer m_showTimer{};
 
         TreeView& m_tree{ createLeftBar<ScrollBox>(
