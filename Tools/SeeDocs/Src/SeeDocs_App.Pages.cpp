@@ -55,7 +55,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_separator = L" \u00B7 ";
         constexpr std::wstring_view k_baseJoin = L": ";
         constexpr std::wstring_view k_ownLabel = L"Own";
-        constexpr std::wstring_view k_derivedFrom = L"Derived from ";
+        constexpr std::wstring_view k_fromLabel = L"From ";
         constexpr std::wstring_view k_sourceJoin = L" \u203A ";
         constexpr std::size_t k_maxTreeDepth = 16;   // what a base chain is followed to
 
@@ -470,13 +470,10 @@ namespace SeeDocs_App
         Section& addTableSection(Page& page, std::wstring heading, const TableColumns& columns,
             TableGroups groups)
         {
-            std::size_t rows = 0;
-            for (const TableGroup& group : groups)
-                rows += group.rows.size();
-            Section& section = addSection(page, SectionKind::Table, { plain(std::move(heading)) },
-                std::to_wstring(rows));
+            Section& section = addSection(page, SectionKind::Table, { plain(std::move(heading)) });
             section.table.columns = columns;
             section.table.groups = std::move(groups);
+            section.count = std::to_wstring(section.table.rowCount());
             return section;
         }
 
@@ -759,26 +756,51 @@ namespace SeeDocs_App
             return rows;
         }
 
-        // The type's own rows under Own, then each base's under Derived from it, up the whole
-        // chain; a base with none is left out, and own rows with nothing inherited go unlabelled.
-        template<typename RowsOf>
+        // A type's own methods: the public ones as the group's rows, the protected ones under a
+        // heading of their own.
+        [[nodiscard]] TableGroup methodGroup(Notes& notes, const Type& type)
+        {
+            TableGroup group;
+            TableGroup protectedGroup{
+                .label = { plain(L"Protected"), muted(L" - what a derived class reaches") }
+            };
+            for (const Function& function : type.functions)
+            {
+                TableGroup& target = function.access == Access::Protected ? protectedGroup : group;
+                target.rows.push_back({
+                    .cells = { { code(function.signature) }, hintRuns(function.comment) },
+                    .excerpt = memberExcerpt(notes, function.comment, function.name,
+                        type.category)
+                });
+            }
+            if (!protectedGroup.rows.empty())
+                group.groups.push_back(std::move(protectedGroup));
+            return group;
+        }
+
+        [[nodiscard]] bool isEmpty(const TableGroup& group)
+        {
+            return group.rows.empty() && group.groups.empty();
+        }
+
+        // The type's own group under Own, then each base's under From it, up the whole chain; a
+        // base with nothing is left out, and the own group with nothing inherited goes unlabelled.
+        template<typename GroupOf>
         [[nodiscard]] TableGroups ownAndInherited(const Type& type, const ReachedBases& bases,
-            const RowsOf& rowsOf)
+            const GroupOf& groupOf)
         {
             TableGroups groups;
-            TableRows own = rowsOf(type);
-            const bool hasOwn = !own.empty();
+            TableGroup own = groupOf(type);
+            const bool hasOwn = !isEmpty(own);
             if (hasOwn)
-                groups.push_back({ .rows = std::move(own) });
+                groups.push_back(std::move(own));
             for (const ReachedBase& base : bases)
             {
-                TableRows rows = rowsOf(*base.type);
-                if (rows.empty())
+                TableGroup group = groupOf(*base.type);
+                if (isEmpty(group))
                     continue;
-                groups.push_back({
-                    .label = { plain(std::wstring{ k_derivedFrom }), code(base.spelling) },
-                    .rows = std::move(rows)
-                });
+                group.label = { plain(std::wstring{ k_fromLabel }), code(base.spelling) };
+                groups.push_back(std::move(group));
             }
             if (hasOwn && groups.size() > 1)
                 groups.front().label = { plain(std::wstring{ k_ownLabel }) };
@@ -796,62 +818,44 @@ namespace SeeDocs_App
                 + std::to_wstring(inherited) + L" inherited";
         }
 
+        // A member table over the type and its bases, its count telling the own rows apart.
+        template<typename GroupOf>
+        void addMemberSection(Page& page, std::wstring heading, const TableColumns& columns,
+            const Type& type, const ReachedBases& bases, const std::size_t own,
+            const GroupOf& groupOf)
+        {
+            TableGroups groups = ownAndInherited(type, bases, groupOf);
+            if (groups.empty())
+                return;
+            Section& section = addTableSection(page, std::move(heading), columns,
+                std::move(groups));
+            section.count = memberCount(own, section.table.rowCount() - own);
+        }
+
         void addProperties(Page& page, const Surface& surface, Notes& notes, const Type& type,
             const ReachedBases& bases)
         {
-            TableGroups groups = ownAndInherited(type, bases, [&](const Type& owner) {
-                return propertyRows(surface, notes, owner);
-            });
-            if (groups.empty())
-                return;
-            Section& section = addTableSection(page, L"Properties", Columns::properties,
-                std::move(groups));
-            const std::size_t own = type.properties.size();
-            section.count = memberCount(own, section.table.rowCount() - own);
+            addMemberSection(page, L"Properties", Columns::properties, type, bases,
+                type.properties.size(), [&](const Type& owner) {
+                    return TableGroup{ .rows = propertyRows(surface, notes, owner) };
+                });
         }
 
         void addEvents(Page& page, const Surface& surface, Notes& notes, const Type& type,
             const ReachedBases& bases)
         {
-            TableGroups groups = ownAndInherited(type, bases, [&](const Type& owner) {
-                return eventRows(surface, notes, owner);
-            });
-            if (groups.empty())
-                return;
-            Section& section = addTableSection(page, L"Events", Columns::events,
-                std::move(groups));
-            const std::size_t own = type.events.size();
-            section.count = memberCount(own, section.table.rowCount() - own);
+            addMemberSection(page, L"Events", Columns::events, type, bases, type.events.size(),
+                [&](const Type& owner) {
+                    return TableGroup{ .rows = eventRows(surface, notes, owner) };
+                });
         }
 
-        // Public methods first, the protected ones under a heading of their own.
-        void addMethods(Page& page, Notes& notes, const Type& type)
+        void addMethods(Page& page, Notes& notes, const Type& type, const ReachedBases& bases)
         {
-            if (type.functions.empty())
-                return;
-            TableGroups groups;
-            for (const Access access : { Access::Public, Access::Protected })
-            {
-                TableGroup group;
-                if (access == Access::Protected)
-                {
-                    group.label = { plain(L"Protected"),
-                        muted(L" - what a derived class reaches") };
-                }
-                for (const Function& function : type.functions)
-                {
-                    if (function.access != access)
-                        continue;
-                    group.rows.push_back({
-                        .cells = { { code(function.signature) }, hintRuns(function.comment) },
-                        .excerpt = memberExcerpt(notes, function.comment, function.name,
-                            type.category)
-                    });
-                }
-                if (!group.rows.empty())
-                    groups.push_back(std::move(group));
-            }
-            addTableSection(page, L"Methods", Columns::functions, std::move(groups));
+            addMemberSection(page, L"Methods", Columns::functions, type, bases,
+                type.functions.size(), [&](const Type& owner) {
+                    return methodGroup(notes, owner);
+                });
         }
 
         void addFields(Page& page, const Surface& surface, Notes& notes, const Type& type)
@@ -973,11 +977,19 @@ namespace SeeDocs_App
         }
     }
 
+    std::size_t TableGroup::rowCount() const
+    {
+        std::size_t count = rows.size();
+        for (const TableGroup& group : groups)
+            count += group.rowCount();
+        return count;
+    }
+
     std::size_t Table::rowCount() const
     {
         std::size_t count = 0;
         for (const TableGroup& group : groups)
-            count += group.rows.size();
+            count += group.rowCount();
         return count;
     }
 
@@ -1152,7 +1164,7 @@ namespace SeeDocs_App
         addTypeNote(page, notes, type);
         addProperties(page, surface, notes, type, bases);
         addEvents(page, surface, notes, type, bases);
-        addMethods(page, notes, type);
+        addMethods(page, notes, type, bases);
         addFields(page, surface, notes, type);
         addMembers(page, notes, type);
         addSiblings(page, surface, type);

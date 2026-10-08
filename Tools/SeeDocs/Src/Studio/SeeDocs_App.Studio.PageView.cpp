@@ -255,7 +255,8 @@ namespace SeeDocs_App
     }
 
     // A labelled group stands beside its label in the group column, folding under it, or under
-    // a held expander row of the label where the table has no such column.
+    // a held expander row of the label where the table has no such column; the groups it holds
+    // follow its rows inside it, each under a header of its own.
     void PageView::addTableRows(Grids::GridBase& grid, const Table& table,
         const TableGroup& group, Footnotes& footnotes)
     {
@@ -321,6 +322,8 @@ namespace SeeDocs_App
                 writeRuns(event.text(), row.cells[column]);
             });
         }
+        for (const TableGroup& nested : group.groups)
+            addTableRows(*target, table, nested, footnotes);
     }
 
     // A link to a footnote goes to its anchor in the box under the grid; any other names a page.
@@ -345,15 +348,19 @@ namespace SeeDocs_App
 
     bool PageView::hasFootnotes(const Table& table)
     {
-        for (const TableGroup& group : table.groups)
-        {
-            for (const TableRow& row : group.rows)
-            {
-                if (row.excerpt.has_value())
-                    return true;
-            }
-        }
-        return false;
+        return std::ranges::any_of(table.groups, [](const TableGroup& group) {
+            return hasFootnotes(group);
+        });
+    }
+
+    bool PageView::hasFootnotes(const TableGroup& group)
+    {
+        const bool inRows = std::ranges::any_of(group.rows, [](const TableRow& row) {
+            return row.excerpt.has_value();
+        });
+        return inRows || std::ranges::any_of(group.groups, [](const TableGroup& nested) {
+            return hasFootnotes(nested);
+        });
     }
 
     std::wstring PageView::footnoteAnchor(const std::size_t index)

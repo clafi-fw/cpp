@@ -94,6 +94,8 @@ namespace SeeDocs_App
         Runs label;
         Runs hint;   // the label in full, where the label is short for it
         TableRows rows;
+        std::vector<TableGroup> groups;   // under the rows, each headed by its own label
+        [[nodiscard]] std::size_t rowCount() const;   // the rows under it at every level
     };
 
     export using TableGroups = std::vector<TableGroup>;
@@ -104,7 +106,7 @@ namespace SeeDocs_App
         std::wstring groupColumn;   // where a group's label stands beside its rows; empty for above
         bool header{ true };        // whether the columns are named over the rows
         TableGroups groups;
-        [[nodiscard]] std::size_t rowCount() const;
+        [[nodiscard]] std::size_t rowCount() const;   // at every level
     };
 
     // A branch of a tree: its words, the type it names where the surface has one, and what
