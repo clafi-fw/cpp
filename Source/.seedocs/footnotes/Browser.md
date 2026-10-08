@@ -84,6 +84,15 @@ it again as goTo builds any path. A rename rewrites the entries at or under the 
 every tab - reading the file of a tab not shown in this run, whose history names paths too.
 The stacks are kept in the tab's own file, and read from it the first time the tab is selected.
 
+## resetToHome
+
+Closes every tab, frees every page under home and opens one tab on the home page.
+For a browser whose whole tree has been replaced - another project opened over the same window -
+so that nothing a tab stood on is there any more. Each tab goes with its settings, its history
+with them; home is built again as initialize built it, so a browser whose home has a list to give
+is asked for it afresh. The pages under home are freed after the tabs, since a tab holds its page
+data by pointer. The one tab opened is selected, so the home page shows at once.
+
 ## BrowserSettings
 
 Where the browser's settings are kept, and when each part reaches the disk. The application config

@@ -258,6 +258,8 @@ namespace ClaFi::Browser
         void storeSelectedTab(const BrowserTab*) const;
         void storeTabSettings(const BrowserTab&) const;
         void deleteTabSettings(BrowserTab&);
+        // Closes every tab, frees every page under home and opens one tab on home. See Browser
+        void resetToHome();
         // Whether this tab may leave the page it is on. Asked before anything moves, so a browser
         // holding work that is not saved can put the question to the user and answer no.
         //

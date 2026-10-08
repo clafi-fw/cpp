@@ -488,12 +488,13 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     set(seedocs_studio_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/Src")
     add_executable(SeeDocsStudio
         "${seedocs_studio_dir}/Studio/SeeDocsStudio_Wayland.cpp"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Browser.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Icons.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Main.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.OpenPage.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.PageText.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.PageView.cpp"
-        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.SurfaceView.cpp"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.SurfaceTree.cpp"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Workspace.cpp"
         "${seedocs_studio_dir}/SeeDocs_App.Database.cpp"
         "${seedocs_studio_dir}/SeeDocs_App.Notes.cpp"
@@ -502,12 +503,13 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_studio_dir}/SeeDocs_App.Scanner.cpp"
         "${seedocs_studio_dir}/SeeDocs_App.Surface.cpp")
     target_sources(SeeDocsStudio PRIVATE FILE_SET CXX_MODULES FILES
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Browser.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Icons.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Main.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.OpenPage.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.PageText.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.PageView.cppm"
-        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.SurfaceView.cppm"
+        "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.SurfaceTree.cppm"
         "${seedocs_studio_dir}/Studio/SeeDocs_App.Studio.Workspace.cppm"
         "${seedocs_studio_dir}/SeeDocs_App.Database.cppm"
         "${seedocs_studio_dir}/SeeDocs_App.Notes.cppm"

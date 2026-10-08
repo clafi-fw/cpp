@@ -948,6 +948,30 @@ namespace ClaFi::Browser
     {
     }
 
+    // NOTHING A TAB STOOD ON IS THERE AFTERWARDS, and that is what lets the pages go: a tab holds
+    // its page data by pointer, so the tabs go first and the sub-items of home after them. The
+    // selection is let go of ahead of the tabs, so no tab is selected as its neighbour goes down.
+    void BrowserControl::resetToHome()
+    {
+        m_tabs.setCurrentItem(nullptr);
+        std::vector<BrowserTab*> standing;
+        for (BrowserTab& tab : tabs())
+            standing.push_back(&tab);
+        for (BrowserTab* tab : standing)
+        {
+            deleteTabSettings(*tab);
+            tab->deleteSelf();
+        }
+
+        // Home is built again as initialize built it, so a browser whose home has a list to give
+        // is asked for it afresh.
+        m_homePageData.items.clear();
+        m_homePageData.fetchState = FetchState::Unfetched;
+        m_homePageData.title.clear();
+        initPageData(m_homePageData);
+        addTab();
+    }
+
     void BrowserControl::pagePathChanged()
     {
         m_breadCrumbBar.createItems(m_selectedPageData);

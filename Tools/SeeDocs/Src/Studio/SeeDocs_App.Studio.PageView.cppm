@@ -25,14 +25,18 @@ namespace SeeDocs_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // A link on the page named a type, a module or a member to open. The surface has an Event
-    // of its own.
-    export class OpenNameEvent : public ::ClaFi::Event
+    // What a link to an anchor of the page opens with, ahead of the anchor's name.
+    export constexpr std::wstring_view k_anchorPrefix = L"#";
+
+    // A link on the page was clicked. The surface has an Event of its own.
+    export class PageLinkEvent : public ::ClaFi::Event
     {
     public:
-        explicit OpenNameEvent(std::wstring name);
+        explicit PageLinkEvent(std::wstring target);
     public:
-        const std::wstring name;   // a type's qualified name, a module's name or a member link
+        // A type's qualified name, a module's or a chapter's name, a member link, or # and an
+        // anchor of the page.
+        const std::wstring target;
     };
 
     // A page as controls: its title and bases in a bar that stays, and under it, scrolling, its
@@ -45,19 +49,22 @@ namespace SeeDocs_App
         template<typename... Args>
         explicit PageView(const CreateParams&, Args&&...);
     public:
-        // Connects a handler raised when a link on the page names a page to open.
+        // Connects a handler raised when a link on the page is clicked.
         template<typename F>
-        EventConnection onOpenName(F&& callback);
+        EventConnection onPageLink(F&& callback);
         // Builds the page's controls, the page kept for as long as they stand.
         void show(Page);
         // Shows words of the studio's own in place of a page.
         void showText(const Text&);
+        // Scrolls to the footnote the anchor names. An empty anchor names the page itself, and
+        // the page stays where it stands for it.
+        void showAnchor(std::wstring_view anchor);
     private:
-        // Where a row's words go: the footnotes box under the grid, once there is one.
+        // Where a table's footnotes go: the box under its grid, once there is one.
         struct Footnotes
         {
             Text text;
-            std::size_t count{ 0 };
+            std::size_t count{ 0 };   // this table's
         };
     private:
         void clear();
@@ -76,9 +83,9 @@ namespace SeeDocs_App
         [[nodiscard]] Text treeRowText(const Branch&) const;
         [[nodiscard]] HeaderText treeHeaderText(const Branch&) const;
         void addTableRows(Grids::GridBase&, const Table&, const TableGroup&, Footnotes&);
-        void connectLinks(Grids::Grid&, TextBox* footnotes);
+        void connectLinks(Grids::Grid&);
         void connectLinks(TextBox&);
-        void open(std::wstring name);
+        void open(std::wstring target);
         [[nodiscard]] static bool hasFootnotes(const Table&);
         [[nodiscard]] static bool hasFootnotes(const TableGroup&);
         [[nodiscard]] static std::wstring footnoteAnchor(std::size_t index);
@@ -99,10 +106,11 @@ namespace SeeDocs_App
         static constexpr TagValue k_markColumn = std::numeric_limits<TagValue>::max();
         static constexpr TagValue k_groupColumn = k_markColumn - 1;
         static constexpr std::wstring_view k_mark = L"*";
-        static constexpr std::wstring_view k_anchorPrefix = L"#";
 
         Page m_page{};
         std::vector<Control*> m_parts{};   // what the page stands as under the title, in order
+        std::vector<TextBox*> m_footnoteBoxes{};   // one under every table with footnotes
+        std::size_t m_footnoteCount{ 0 };   // numbered through the page, so an anchor names one
 
         TextBox& m_head{ createTopBar<TextBox>(
             ReadOnly::Yes,
@@ -134,9 +142,9 @@ namespace SeeDocs_App
     }
 
     template<typename F>
-    EventConnection PageView::onOpenName(F&& callback)
+    EventConnection PageView::onPageLink(F&& callback)
     {
-        return connectEvent<OpenNameEvent>(std::forward<F>(callback));
+        return connectEvent<PageLinkEvent>(std::forward<F>(callback));
     }
 
     template<typename Holder>

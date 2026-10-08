@@ -1,6 +1,6 @@
 export module SeeDocs_App.Studio.Workspace;
 
-import SeeDocs_App.Studio.SurfaceView;
+import SeeDocs_App.Studio.Browser;
 import SeeDocs_App.Notes;
 import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
@@ -19,16 +19,15 @@ namespace SeeDocs_App
     using namespace ::ClaFi;
 
     // THE PROJECT THE STUDIO HAS OPEN, and everything that follows from it: the surface read out
-    // of its database, the notes of its tree, the two titles that name it, and the record of it
-    // in the application's config - the project to start on next time, and the list of those
+    // of its database, the notes of its tree, the window title that names it, and the record of
+    // it in the application's config - the project to start on next time, and the list of those
     // opened before. One per studio window, standing for as long as the window does.
     export class Workspace
     {
     public:
         using Folders = std::vector<std::filesystem::path>;
     public:
-        Workspace(ApplicationBase&, FormBase& form, RichControl& title, Control& asker,
-            SurfaceView& view);
+        Workspace(ApplicationBase&, FormBase& form, SurfaceBrowser&);
         Workspace(const Workspace&) = delete;
         Workspace& operator=(const Workspace&) = delete;
     public:
@@ -37,7 +36,8 @@ namespace SeeDocs_App
         // The projects opened before, most recent first, the one open left out.
         [[nodiscard]] Folders recentFolders() const;
         // Opens the project the studio starts on: the folder stated, else the project last left
-        // open; nothing where there is neither.
+        // open; nothing where there is neither. The browser's tabs were restored for the project
+        // last left open, so they stand only where that is the one opened.
         void start(const std::filesystem::path& stated);
         // Opens the project in the folder, making one there where the user agrees to it. False
         // where nothing was opened, the user having been told why.
@@ -57,7 +57,7 @@ namespace SeeDocs_App
     private:
         // Shows the project, its database scanned first where it has none. False where it could
         // not be, the reason written out and the project open left as it was.
-        [[nodiscard]] bool openProject(Project, Text& reason);
+        [[nodiscard]] bool openProject(Project, Text& reason, OpenTabs);
         [[nodiscard]] bool confirmMaking(const std::filesystem::path& folder);
         void refuse(std::wstring_view title, const Text& message);
         // Writes the tree's database, so that the project has one to open.
@@ -70,14 +70,13 @@ namespace SeeDocs_App
         void showNoProject(const Text& reason);
         // Shows the studio's own words for the project open, there being nothing to list in it.
         void showEmptyProject();
-        void writeTitles();
+        void writeTitle();
     private:
         ApplicationBase& m_application;
         FormBase& m_form;
-        RichControl& m_title;
-        // What a question or a refusal is dropped under.
+        SurfaceBrowser& m_browser;
+        // What a question or a refusal is dropped under: the browser's app button.
         Control& m_asker;
-        SurfaceView& m_view;
         std::optional<Project> m_project{};
         std::optional<Surface> m_surface{};
         std::optional<Notes> m_notes{};

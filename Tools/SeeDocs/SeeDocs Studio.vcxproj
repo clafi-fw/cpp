@@ -126,6 +126,8 @@
     <ClCompile Include="Src\SeeDocs_App.Scanner.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cppm" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Browser.cpp" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Browser.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Icons.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Icons.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Main.cpp" />
@@ -136,8 +138,8 @@
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageText.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageView.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.PageView.cppm" />
-    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.SurfaceView.cpp" />
-    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.SurfaceView.cppm" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.SurfaceTree.cpp" />
+    <ClCompile Include="Src\Studio\SeeDocs_App.Studio.SurfaceTree.cppm" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Workspace.cpp" />
     <ClCompile Include="Src\Studio\SeeDocs_App.Studio.Workspace.cppm" />
     <ClCompile Include="Src\Studio\SeeDocsStudio_Win32.cpp" />

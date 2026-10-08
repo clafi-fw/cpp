@@ -105,9 +105,20 @@ folder; the project's name heads the window title. Which project is open and whi
 before are kept with the application's settings, so they are remembered once settings are kept on
 the computer.
 
+The studio is a browser of the framework's own kind: tabs across the top, under them the crumbs of
+the page shown with a list dropping from each, and Back, Forward and Up beside them. Every page has
+a url - `/chapter/module/type/method` - so a tab goes back and forward through the pages it has
+visited (Alt+Left and Alt+Right, the side buttons of the mouse, or a right click on either button
+for the list), a type's crumb lists its methods, and Up climbs the path. A home page opens the
+project: its chapters, with what each holds. Where a tab stands, the tabs open and each one's
+history are kept with the settings, so a run starts where the last one left off. Opening another
+project closes every tab and opens one on the new project's home; a url the project's database no
+longer carries - a type gone since the tree was scanned - shows a page saying so.
+
 The pages: down the left a tree of chapters - the tree's folders, a reader's names for them
 - each holding its modules and each module the types it exports, controls first; on the right the
-page of whatever is picked. A page is a column of controls: its title with its hint under it,
+page of whatever is clicked, and the tree follows wherever a tab goes. A page is a column of
+controls: its title with its hint under it,
 a grid of facts - namespace, module, source - and then a section per expander. A type's title
 carries the ways up through its bases under it, written the C++ way - a colon before each base,
 a mixin's host through the argument it was given, a second line where the bases fork. A
@@ -133,7 +144,7 @@ After them, the types with a property of this type and
 the types with an event of it, two trees, each type with the types derived from it under it,
 closed; then the types beside it in its module. A property, an event, a field or a member
 whose comment references a note carries a mark in a column of its own, and the note stands as a
-footnote under the grid; the mark leads to it.
+footnote under the grid; the mark leads to it, as an anchor of the page's url.
 A type whose comment references nothing takes the section named exactly after it from a note of
 its own folder, marked as matched by name. Where the surface states no hint the page says so, in
 place of the words, so what the documentation still lacks is read off the preview.
@@ -141,11 +152,12 @@ place of the words, so what the documentation still lacks is read off the previe
 A type's name on a page is a link to its page, in a grid cell as in prose: a type named in a
 hint, in a note's prose or code, or in a signature - bare or qualified, as `Control` or
 `Grids::Row` - links wherever the surface has a page for it. A row of the
-derived types opens the type it names; the tree on the left follows, and a method's page picks
-the method's type there. The pages are built by
+derived types opens the type it names; a method's page picks the method's type in the tree.
+The pages are built by
 `SeeDocs_App.Pages` - facts, sections, tables of rows with their footnotes, branches of a tree,
 signatures and blocks of prose - out of the surface and the notes; the studio builds controls
-from them (`SeeDocs_App.Studio.PageView`) and a generator renders the same pages as files.
+from them (`SeeDocs_App.Studio.PageView`), the browser (`SeeDocs_App.Studio.Browser`) shows one
+per tab, and a generator renders the same pages as files.
 
 ## The checks
 

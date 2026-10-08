@@ -1,6 +1,5 @@
 import SeeDocs_App.Studio.Main;
 
-import ClaFi.App.Application;
 import ClaFi.Platform.Windows;
 
 import ClaFi.StdLib;
@@ -28,11 +27,7 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, wchar_t* commandLine, int
 {
     using namespace ClaFi;
 
-    Win32Application app{
-        Win32Platform::Params{ hInstance },
-        SeeDocs_App::studioParams(),
-        SeeDocs_App::createStudioConfigSchema()
-    };
+    SeeDocs_App::StudioApplication<Win32Platform, Direct2DBackend> app{ { hInstance } };
 
-    return SeeDocs_App::runStudio(app, treeArgument(commandLine));
+    return app.run(treeArgument(commandLine));
 }

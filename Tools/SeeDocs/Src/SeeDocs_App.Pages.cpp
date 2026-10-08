@@ -93,6 +93,9 @@ namespace SeeDocs_App
             const TableColumns members = {
                 { L"Name" }, { L"Value" }, { L"Hint", true }
             };
+            const TableColumns chapters = {
+                { L"Chapter", true }, { L"Modules" }, { L"Types" }, { L"Controls" }
+            };
         }
 
         [[nodiscard]] std::wstring lowered(const std::wstring_view text)
@@ -1546,6 +1549,40 @@ namespace SeeDocs_App
             return section;
         }
 
+        // A row per chapter - its name linked, its modules, types and controls counted - and
+        // nothing where there are none.
+        void addChaptersSection(Page& page, const ContentsChapters& chapters)
+        {
+            if (chapters.empty())
+                return;
+            TableRows rows;
+            for (const ContentsChapter& chapter : chapters)
+            {
+                std::size_t controls = 0;
+                std::size_t types = 0;
+                for (const ContentsModule& module : chapter.modules)
+                {
+                    for (const Type* type : module.types)
+                    {
+                        ++types;
+                        if (type->isControl)
+                            ++controls;
+                    }
+                }
+                rows.push_back({
+                    .cells = {
+                        { { .text = chapter.name, .link = chapter.name } },
+                        { plain(std::to_wstring(chapter.modules.size())) },
+                        { plain(std::to_wstring(types)) },
+                        { plain(std::to_wstring(controls)) }
+                    }
+                });
+            }
+            TableGroups groups;
+            groups.push_back({ .rows = std::move(rows) });
+            addTableSection(page, L"Chapters", Columns::chapters, std::move(groups));
+        }
+
         void addSiblings(Page& page, const Surface& surface, const Type& type)
         {
             TypeList siblings;
@@ -1703,7 +1740,71 @@ namespace SeeDocs_App
         return std::wstring{ path.substr(0, slash) };
     }
 
-    Page chapterPage(const Surface& surface, Notes&, const ContentsChapter& chapter)
+    std::wstring folderNameOf(const std::wstring_view category)
+    {
+        const std::size_t slash = category.rfind(L'/');
+        std::wstring_view folder = category;
+        if (slash != std::wstring_view::npos)
+            folder = category.substr(slash + 1);
+        if (folder.starts_with(k_sortPrefix))
+            folder.remove_prefix(k_sortPrefix.size());
+        return std::wstring{ folder };
+    }
+
+    ContentsChapters chaptersUnder(const ContentsChapters& chapters,
+        const std::wstring_view category)
+    {
+        ContentsChapters result;
+        for (const ContentsChapter& chapter : chapters)
+        {
+            const bool under = category.empty()
+                ? !chapter.category.empty()
+                : chapter.category.starts_with(category)
+                    && chapter.category.size() > category.size()
+                    && chapter.category[category.size()] == L'/';
+            if (under)
+                result.push_back(chapter);
+        }
+        return result;
+    }
+
+    // One row per chapter: its name linked, and its figures - modules, types, controls.
+    Page contentsPage(const ContentsChapters& chapters, const std::wstring_view title)
+    {
+        Page page;
+        page.title = std::wstring{ title };
+
+        std::size_t controls = 0;
+        std::size_t types = 0;
+        std::size_t modules = 0;
+        for (const ContentsChapter& chapter : chapters)
+        {
+            for (const ContentsModule& module : chapter.modules)
+            {
+                for (const Type* type : module.types)
+                {
+                    ++types;
+                    if (type->isControl)
+                        ++controls;
+                }
+            }
+            modules += chapter.modules.size();
+        }
+        addFact(page, L"holds", {
+            plain(countOf(controls, L"control")),
+            muted(std::wstring{ k_separator }),
+            plain(countOf(types, L"type")),
+            muted(std::wstring{ k_separator }),
+            plain(countOf(modules, L"module")),
+            muted(std::wstring{ k_separator }),
+            plain(countOf(chapters.size(), L"chapter"))
+        });
+        addChaptersSection(page, chapters);
+        return page;
+    }
+
+    Page chapterPage(const Surface& surface, Notes&, const ContentsChapters& chapters,
+        const ContentsChapter& chapter)
     {
         Page page;
         page.title = chapter.name;
@@ -1736,6 +1837,7 @@ namespace SeeDocs_App
             figures.push_back(missing(countOf(withoutHint, L"type") + L" without a hint"));
         }
         addFact(page, L"holds", std::move(figures));
+        addChaptersSection(page, chaptersUnder(chapters, chapter.category));
 
         TableGroups groups;
         for (const ContentsModule& module : chapter.modules)
@@ -1767,7 +1869,7 @@ namespace SeeDocs_App
         Page page;
         page.title = module.shortName;
         addFact(page, L"module", { code(module.name) });
-        addFact(page, L"chapter", { plain(chapter.name) });
+        addFact(page, L"chapter", { { .text = chapter.name, .link = chapter.name } });
         if (!module.types.empty())
         {
             TableGroups groups;
@@ -1810,6 +1912,19 @@ namespace SeeDocs_App
         for (const Function* function : overloads)
             addSignature(page, surface, notes, type, *function, walk.reached);
         return page;
+    }
+
+    std::vector<std::wstring_view> methodNames(const Type& type)
+    {
+        std::vector<std::wstring_view> result;
+        for (const Function& function : type.functions)
+        {
+            if (isAccessor(type, function))
+                continue;
+            if (std::ranges::find(result, function.name) == result.end())
+                result.push_back(function.name);
+        }
+        return result;
     }
 
     std::wstring memberLink(const Type& type, const std::wstring_view member)

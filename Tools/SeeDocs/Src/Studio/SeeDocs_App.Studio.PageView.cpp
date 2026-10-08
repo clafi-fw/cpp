@@ -29,12 +29,12 @@ namespace SeeDocs_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // OpenNameEvent
+    // PageLinkEvent
 
-    OpenNameEvent::OpenNameEvent(std::wstring linkName)
+    PageLinkEvent::PageLinkEvent(std::wstring linkTarget)
         :
         ::ClaFi::Event{},
-        name{ std::move(linkName) }
+        target{ std::move(linkTarget) }
     {
     }
 
@@ -87,11 +87,25 @@ namespace SeeDocs_App
         m_pageBox.scrollToBegin();
     }
 
+    // The footnote the anchor names stands in one of the boxes; each is asked until one has it.
+    void PageView::showAnchor(const std::wstring_view anchor)
+    {
+        if (anchor.empty())
+            return;
+        for (TextBox* box : m_footnoteBoxes)
+        {
+            if (box->goToAnchor(anchor))
+                return;
+        }
+    }
+
     void PageView::clear()
     {
         for (Control* part : m_parts)
             part->deleteSelf();
         m_parts.clear();
+        m_footnoteBoxes.clear();
+        m_footnoteCount = 0;
     }
 
     // The title with its scope before it and what it is beside it, and the ways up through its
@@ -153,7 +167,7 @@ namespace SeeDocs_App
                     writeRuns(event.text(), fact.value);
             });
         }
-        connectLinks(grid, nullptr);
+        connectLinks(grid);
         m_parts.push_back(&grid);
     }
 
@@ -248,14 +262,14 @@ namespace SeeDocs_App
         Footnotes footnotes;
         for (const TableGroup& group : table.groups)
             addTableRows(grid, table, group, footnotes);
-        TextBox* box = nullptr;
         if (footnotes.count != 0)
         {
-            box = &body.add<TextBox>(ReadOnly::Yes, Padding{ k_prosePadding });
-            box->text() = footnotes.text;
-            connectLinks(*box);
+            TextBox& box = body.add<TextBox>(ReadOnly::Yes, Padding{ k_prosePadding });
+            box.text() = footnotes.text;
+            connectLinks(box);
+            m_footnoteBoxes.push_back(&box);
         }
-        connectLinks(grid, box);
+        connectLinks(grid);
     }
 
     // The access label as code at the margin and, set in under it, each declaration in its inks
@@ -328,7 +342,8 @@ namespace SeeDocs_App
             std::optional<std::wstring> anchor;
             if (row.excerpt.has_value())
             {
-                anchor = footnoteAnchor(++footnotes.count);
+                ++footnotes.count;
+                anchor = footnoteAnchor(++m_footnoteCount);
                 writeFootnote(footnotes.text, *anchor, k_mark, row.cells.front(), *row.excerpt);
             }
             Grids::Row& gridRow = target->addRow();
@@ -368,21 +383,15 @@ namespace SeeDocs_App
             addTableRows(*target, table, nested, footnotes);
     }
 
-    // A link to a footnote goes to its anchor in the box under the grid; any other names a page.
-    void PageView::connectLinks(Grids::Grid& grid, TextBox* footnotes)
+    // A LINK IS ANSWERED BY WHOEVER SHOWS THE PAGE, a footnote's as much as a page's: a footnote
+    // is an anchor of the page, and where a tab stands is the browser's to record. See Browser
+    void PageView::connectLinks(Grids::Grid& grid)
     {
-        grid.onCellLinkClick([this, footnotes](Grids::CellLinkClickEvent& event) {
-            if (!event.target.starts_with(k_anchorPrefix))
-            {
-                open(event.target);
-                return;
-            }
-            if (footnotes)
-                footnotes->goToAnchor(event.target.substr(k_anchorPrefix.size()));
+        grid.onCellLinkClick([this](Grids::CellLinkClickEvent& event) {
+            open(event.target);
         });
     }
 
-    // A link in a box names a page to open.
     void PageView::connectLinks(TextBox& box)
     {
         box.onLinkClick([this](LinkClickEvent& event) {
@@ -390,9 +399,9 @@ namespace SeeDocs_App
         });
     }
 
-    void PageView::open(std::wstring name)
+    void PageView::open(std::wstring target)
     {
-        OpenNameEvent event{ std::move(name) };
+        PageLinkEvent event{ std::move(target) };
         emitEvent(event);
     }
 

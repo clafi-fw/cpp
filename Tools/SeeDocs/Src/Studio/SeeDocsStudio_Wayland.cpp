@@ -1,6 +1,5 @@
 import SeeDocs_App.Studio.Main;
 
-import ClaFi.App.Application;
 import ClaFi.Platform.Wayland;
 
 import ClaFi.Core.System.Utils;
@@ -20,15 +19,12 @@ int main(int argc, char** argv)
 {
     using namespace ClaFi;
 
-    WaylandApplication app{
-        WaylandPlatform::Params{},
-        SeeDocs_App::studioParams(),
-        SeeDocs_App::createStudioConfigSchema()
-    };
+    // No GPU backend is named, because this platform has none.
+    SeeDocs_App::StudioApplication<WaylandPlatform> app{ WaylandPlatform::Params{} };
 
     std::filesystem::path stated;
     if (argc > 1)
         stated = std::filesystem::path{ fromUtf8(argv[1]) };
 
-    return SeeDocs_App::runStudio(app, stated);
+    return app.run(stated);
 }

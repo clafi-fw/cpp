@@ -229,46 +229,46 @@ namespace SeeDocs_App
             check.lineTo(8.8f, 5.4f);
             drawing.stroke(check, drawing.inks.accent);
         }
+    }
 
-        void paintRowIcon(PaintIconEvent& event, const RowIcon icon)
+    void paintRowIcon(PaintIconEvent& event, const RowIcon icon)
+    {
+        const FloatRect& rect = event.iconRect();
+        const float scale = std::min(rect.width(), rect.height()) / k_grid;
+        const Drawing drawing = {
+            event.canvas(),
+            inksOf(event),
+            Matrix3x2::translation(rect.topLeft()) * Matrix3x2::scale(scale)
+        };
+        switch (icon)
         {
-            const FloatRect& rect = event.iconRect();
-            const float scale = std::min(rect.width(), rect.height()) / k_grid;
-            const Drawing drawing = {
-                event.canvas(),
-                inksOf(event),
-                Matrix3x2::translation(rect.topLeft()) * Matrix3x2::scale(scale)
-            };
-            switch (icon)
-            {
-                case RowIcon::Chapter:
-                    paintChapter(drawing);
-                    break;
-                case RowIcon::Module:
-                    paintModule(drawing);
-                    break;
-                case RowIcon::Control:
-                    paintControl(drawing);
-                    break;
-                case RowIcon::Class:
-                    paintClass(drawing);
-                    break;
-                case RowIcon::Struct:
-                    paintStruct(drawing);
-                    break;
-                case RowIcon::Union:
-                    paintUnion(drawing);
-                    break;
-                case RowIcon::Enum:
-                    paintEnum(drawing);
-                    break;
-                case RowIcon::Alias:
-                    paintAlias(drawing);
-                    break;
-                case RowIcon::Concept:
-                    paintConcept(drawing);
-                    break;
-            }
+            case RowIcon::Chapter:
+                paintChapter(drawing);
+                break;
+            case RowIcon::Module:
+                paintModule(drawing);
+                break;
+            case RowIcon::Control:
+                paintControl(drawing);
+                break;
+            case RowIcon::Class:
+                paintClass(drawing);
+                break;
+            case RowIcon::Struct:
+                paintStruct(drawing);
+                break;
+            case RowIcon::Union:
+                paintUnion(drawing);
+                break;
+            case RowIcon::Enum:
+                paintEnum(drawing);
+                break;
+            case RowIcon::Alias:
+                paintAlias(drawing);
+                break;
+            case RowIcon::Concept:
+                paintConcept(drawing);
+                break;
         }
     }
 

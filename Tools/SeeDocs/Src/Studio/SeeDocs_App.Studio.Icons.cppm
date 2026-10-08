@@ -2,6 +2,7 @@ export module SeeDocs_App.Studio.Icons;
 
 import SeeDocs_App.Surface;
 
+import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
@@ -29,6 +30,8 @@ namespace SeeDocs_App
     export [[nodiscard]] RowIcon rowIconOf(const Type&);
     // The icon a row kind is marked with, sized for a tree row, for the head of the row's text.
     export [[nodiscard]] InTextIcon rowIcon(RowIcon);
+    // Draws a row kind's mark into the icon rect of the event - a crumb's or a tab's slot.
+    export void paintRowIcon(PaintIconEvent&, RowIcon);
     // What a tree row of a type ends with: its kind word at the row's far end; nothing for a
     // control, whose icon says what it is.
     export void writeRowKind(Text&, const Type&);

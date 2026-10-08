@@ -25,7 +25,8 @@ namespace SeeDocs_App
     {
         std::wstring text;
         RunStyle style{ RunStyle::Plain };
-        // A type's qualified name, a module's name or a member link (memberLink); empty for none.
+        // A type's qualified name, a module's name, a chapter's name or a member link
+        // (memberLink); empty for none.
         std::wstring link;
     };
 
@@ -198,16 +199,29 @@ namespace SeeDocs_App
     // What a reader calls a folder under Source and a module.
     export [[nodiscard]] std::wstring chapterNameOf(std::wstring_view category);
     export [[nodiscard]] std::wstring moduleShortNameOf(std::wstring_view module);
+    // What a reader calls the last folder of a category - the folder's own name.
+    export [[nodiscard]] std::wstring folderNameOf(std::wstring_view category);
+    // The chapters whose folders stand under this one, in reading order; every chapter for the
+    // root.
+    export [[nodiscard]] ContentsChapters chaptersUnder(const ContentsChapters&,
+        std::wstring_view category);
     // The folder under Source a file of the surface stands in.
     export [[nodiscard]] std::wstring categoryOf(std::wstring_view relativeFile);
 
-    export [[nodiscard]] Page chapterPage(const Surface&, Notes&, const ContentsChapter&);
+    // The page of a folder: the chapters under it, each linked, with what every one holds.
+    export [[nodiscard]] Page contentsPage(const ContentsChapters&, std::wstring_view title);
+    // A chapter's page: the chapters under its folder where there are any, then its types by module.
+    export [[nodiscard]] Page chapterPage(const Surface&, Notes&, const ContentsChapters&,
+        const ContentsChapter&);
     export [[nodiscard]] Page modulePage(const Surface&, Notes&, const ContentsChapter&,
         const ContentsModule&);
     export [[nodiscard]] Page typePage(const Surface&, Notes&, const Type&);
     // The page of every method of the type with that name, a signature each.
     export [[nodiscard]] Page methodPage(const Surface&, Notes&, const Type&,
         std::wstring_view name);
+    // The names the type's own methods stand under, one per name in declaration order: its
+    // constructors and destructor in, a property's getter and setter out.
+    export [[nodiscard]] std::vector<std::wstring_view> methodNames(const Type&);
 
     // The link to a member's page: the type's qualified name, ::, the member's name.
     export [[nodiscard]] std::wstring memberLink(const Type&, std::wstring_view member);

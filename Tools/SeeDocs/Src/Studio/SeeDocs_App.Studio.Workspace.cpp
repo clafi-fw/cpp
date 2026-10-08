@@ -1,12 +1,13 @@
 module SeeDocs_App.Studio.Workspace;
 
-import SeeDocs_App.Studio.SurfaceView;
+import SeeDocs_App.Studio.Browser;
 import SeeDocs_App.Database;
 import SeeDocs_App.Notes;
 import SeeDocs_App.Project;
 import SeeDocs_App.Scanner;
 import SeeDocs_App.Surface;
 
+import ClaFi.Controls.AppButton;
 import ClaFi.Controls.MessageDialog;
 
 import ClaFi.App.Application;
@@ -62,14 +63,12 @@ namespace SeeDocs_App
 
     // Workspace
 
-    Workspace::Workspace(ApplicationBase& application, FormBase& form, RichControl& title,
-        Control& asker, SurfaceView& view)
+    Workspace::Workspace(ApplicationBase& application, FormBase& form, SurfaceBrowser& browser)
         :
         m_application{ application },
         m_form{ form },
-        m_title{ title },
-        m_asker{ asker },
-        m_view{ view }
+        m_browser{ browser },
+        m_asker{ browser.appButton() }
     {
         m_startTimer.onTick([this](TimerEvent&) {
             openFolder(std::exchange(m_statedToMake, {}));
@@ -99,6 +98,8 @@ namespace SeeDocs_App
     void Workspace::start(const std::filesystem::path& stated)
     {
         Text reason;
+        const std::wstring stored =
+            (m_application.config() / k_projectNodeName).get<std::wstring>();
         if (!stated.empty())
         {
             const std::filesystem::path folder = cleanFolder(stated);
@@ -110,18 +111,17 @@ namespace SeeDocs_App
                 showNoProject(reason);
                 return;
             }
-            if (!openProject(std::move(*project), reason))
+            const OpenTabs tabs = folder.wstring() == stored ? OpenTabs::Keep : OpenTabs::Close;
+            if (!openProject(std::move(*project), reason, tabs))
                 showNoProject(reason);
             return;
         }
 
-        const std::wstring stored =
-            (m_application.config() / k_projectNodeName).get<std::wstring>();
         if (!stored.empty())
         {
             if (std::optional<Project> project = readProject(stored))
             {
-                if (!openProject(std::move(*project), reason))
+                if (!openProject(std::move(*project), reason, OpenTabs::Keep))
                     showNoProject(reason);
                 return;
             }
@@ -161,7 +161,7 @@ namespace SeeDocs_App
         }
 
         Text reason;
-        if (openProject(std::move(*project), reason))
+        if (openProject(std::move(*project), reason, OpenTabs::Close))
             return true;
         refuse(L"Cannot open the project", reason);
         return false;
@@ -192,7 +192,7 @@ namespace SeeDocs_App
     // THE DATABASE IS READ BEFORE ANYTHING IS LET GO OF, so a project that cannot be opened leaves
     // the one open as it was. A project with no database is scanned first; what is shown is
     // always what was read back from the file, one path for a fresh scan and an old one alike.
-    bool Workspace::openProject(Project project, Text& reason)
+    bool Workspace::openProject(Project project, Text& reason, const OpenTabs openTabs)
     {
         ScopedWaitCursor wait{};
         std::optional<Surface> surface = readDatabase(project.databasePath());
@@ -211,10 +211,10 @@ namespace SeeDocs_App
         m_surface = std::move(surface);
         m_notes.emplace(project.footnotesFolder());
         m_project = std::move(project);
-        if (!m_view.bind(*m_surface, *m_notes))
+        if (!m_browser.bind(*m_surface, *m_notes, m_project->name, openTabs))
             showEmptyProject();
         remember(*m_project);
-        writeTitles();
+        writeTitle();
         return true;
     }
 
@@ -287,7 +287,7 @@ namespace SeeDocs_App
             node.add().set(name);
     }
 
-    // The view lets go of the surface and the notes before they are dropped.
+    // The browser lets go of the surface and the notes before they are dropped.
     void Workspace::showNoProject(const Text& reason)
     {
         Text text;
@@ -297,12 +297,12 @@ namespace SeeDocs_App
             text << reason << k_endLine << k_endLine;
         text << L"No project is open. The Open page of the application menu opens one - "
             L"the folder of the sources to document." << k_endLine;
-        m_view.showText(text);
+        m_browser.showWords(text);
 
         m_project.reset();
         m_surface.reset();
         m_notes.reset();
-        writeTitles();
+        writeTitle();
     }
 
     // The project is open all the same, named in the titles and remembered; only its page is words.
@@ -314,22 +314,16 @@ namespace SeeDocs_App
         text << L"There is nothing to document: no source in the folder exports a type."
             << k_endLine << L"The folder read is:";
         writeFolder(text, m_project->folder);
-        m_view.showText(text);
+        m_browser.showWords(text);
     }
 
-    void Workspace::writeTitles()
+    // The browser's own bar carries the application's name; the project's goes to the window.
+    void Workspace::writeTitle()
     {
-        const Text& appName = m_application.name();
-        Text title;
-        std::wstring windowTitle;
+        std::wstring title;
         if (m_project)
-        {
-            title << m_project->name << k_titleSeparator;
-            windowTitle.append(m_project->name).append(k_titleSeparator);
-        }
-        title << appName;
-        windowTitle.append(appName.plainText());
-        m_title.text() = title;
-        m_form.setWindowTitle(windowTitle);
+            title.append(m_project->name).append(k_titleSeparator);
+        title.append(m_application.name().plainText());
+        m_form.setWindowTitle(title);
     }
 }
