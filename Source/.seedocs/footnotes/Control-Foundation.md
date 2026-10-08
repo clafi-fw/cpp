@@ -387,7 +387,7 @@ the first rather than queueing behind it.
 
 WHAT A CONTROL HAS TO SAY EVERY TIME IT IS ASKED belongs in its nestedGetHint, not
 here. A message is what is said once, at the moment it becomes true. A control that must
-go on saying it answers for itself as well - see EditBox and the value it has refused.
+go on saying it answers for itself as well - see PromptBox and the value it has refused.
 
 ## GetShortcutEvent
 

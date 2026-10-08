@@ -38,7 +38,7 @@ namespace ClaFi::Controls
     /// @brief What a dialog's text stands in: a text box inside a scroll box. One line of text or
     /// fifty, the window comes out the same width, and past a height the text scrolls instead of
     /// taking the screen.
-    export using MessageBoxBody = ScrollBoxWith<EditBox>;
+    export using MessageBoxBody = ScrollBoxWith<PromptBox>;
 
     using MessageBoxForm = Form<PanelBase>;
 
@@ -53,8 +53,8 @@ namespace ClaFi::Controls
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"MessageBox"; }
     protected:
         // The text box itself - what a dialog reaches for to say anything about the text in it.
-        [[nodiscard]] EditBox& box() { return m_box.body(); }
-        [[nodiscard]] const EditBox& box() const { return m_box.body(); }
+        [[nodiscard]] PromptBox& box() { return m_box.body(); }
+        [[nodiscard]] const PromptBox& box() const { return m_box.body(); }
         // The scroll box around it, which is what a dialog reaches for to say anything about the
         // field rather than about the text: a message stands on the middle's own surface, an
         // answer is drawn as something to write in.

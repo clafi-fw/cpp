@@ -61,6 +61,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_sourceJoin = L" \u203A ";
         constexpr std::wstring_view k_publicMethods = L"Public methods";
         constexpr std::wstring_view k_protectedMethods = L"Protected methods";
+        constexpr std::wstring_view k_typeNoteHeading = L"Details";
         constexpr std::wstring_view k_templateWord = L"template";
         constexpr std::wstring_view k_methodWord = L"method";
         constexpr std::wstring_view k_accessMark = L":";
@@ -597,10 +598,13 @@ namespace SeeDocs_App
             if (!found.section)
                 return std::nullopt;
             Excerpt excerpt;
-            excerpt.source.push_back(muted(found.note->stem + std::wstring{ k_noteExtension }
-                + std::wstring{ k_sourceJoin } + found.section->heading));
+            excerpt.source = found.note->stem + std::wstring{ k_noteExtension }
+                + std::wstring{ k_sourceJoin } + found.section->heading;
             if (found.byName)
-                excerpt.source.push_back(missing(L"  " + std::wstring{ k_matchedByName }));
+            {
+                excerpt.source += k_separator;
+                excerpt.source += k_matchedByName;
+            }
             excerpt.blocks = blocksOf(found.section->lines, surface, nameSpace);
             return excerpt;
         }
@@ -1048,7 +1052,8 @@ namespace SeeDocs_App
                 type.nameSpace);
             if (!excerpt.has_value())
                 return;
-            Section& section = addSection(page, SectionKind::Note, excerpt->source);
+            Section& section = addSection(page, SectionKind::Note,
+                { plain(std::wstring{ k_typeNoteHeading }) }, excerpt->source);
             section.excerpt = std::move(*excerpt);
         }
 
@@ -1411,12 +1416,9 @@ namespace SeeDocs_App
             const Comment& comment = commentOf(function, basesAbove(bases, nullptr));
             Signature signature{
                 .code = signatureRuns(surface, owner, function, k_signatureJoin),
-                .lead = hintRuns(surface, comment, owner.nameSpace)
+                .lead = hintRuns(surface, comment, owner.nameSpace),
+                .excerpt = memberExcerpt(surface, notes, comment, function.name, owner)
             };
-            std::optional<Excerpt> excerpt =
-                memberExcerpt(surface, notes, comment, function.name, owner);
-            if (excerpt.has_value())
-                signature.excerpt = std::move(*excerpt);
             accessSection(page, function.access).signatures.push_back(std::move(signature));
         }
 

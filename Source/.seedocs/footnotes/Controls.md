@@ -151,7 +151,7 @@ control again here would only be a pointer nobody is left to clear. `askedBy` is
 other thing entirely: it lives INSIDE the editor and is there for as long as the sink
 runs, which is what makes it something a sink may hang a window on.
 
-## EditBox
+## PromptBox
 
 A text box that can refuse the value typed into it and say why.
 
@@ -529,7 +529,7 @@ the caret is written with ` = ` after it, and its values are listed right after;
 taken right after the sign or a comma is written a blank off it. So `//#Doc` becomes
 `//#DocTypes = `, and a Return on Smeta `//#DocTypes = Smeta`.
 The character a taking press queued - Return's line break, Ctrl+Space's space - does not
-reach the text: the press settles it and the character reads it, as EditBox does for a
+reach the text: the press settles it and the character reads it, as PromptBox does for a
 Return the form takes. Up and Down walk the rows and stay at either end; Page Up and Page
 Down walk them a view at a time, less the row left current, the step any items view pages
 by, and stay at either end too.

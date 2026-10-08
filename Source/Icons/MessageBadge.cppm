@@ -24,31 +24,18 @@ namespace ClaFi::Icons::MessageBadge
     public:
         // A point of the glyph, named as a fraction of the badge and answered in form coordinates.
         [[nodiscard]] FloatPoint at(float x, float y) const;
-        // A dot of the glyph - the point under an exclamation mark, the tittle of an i - drawn
-        // wider than the strokes around it, so that it reads as a mark of its own rather than as
-        // the end of one.
+        // A dot's radius, wider than a stroke - an exclamation mark's point, the tittle of an i.
         [[nodiscard]] float dotRadius() const;
     public:
-        FloatRect box{};
-        // Proportional to the badge rather than the Thin stroke the other icons draw with. The
-        // fill is what carries a badge's shape, so a thin line laid over it thins away to a thread
-        // as the badge grows. Never below that Thin stroke.
-        float strokeWidth{ 1.0f };
-        // The surface the badge stands on, so the glyph reads as cut through the fill. That is an
-        // ink at elevation 0, which lies flush with the surface and carries the same disabled fade
-        // the fill does.
-        Color color{};
+        FloatRect box{}; // the badge's square - the largest the icon rect holds, centred in it
+        float strokeWidth{ 1.0f }; // grows with the badge, never thinner than the Thin stroke
+        Color color{}; // the surface under the badge, so the glyph reads as cut through the fill
     };
 
     // The disc four of the five stand on, filling the icon rect.
     export GlyphSlot paintDisc(PaintIconEvent&, Ink);
 
-    // The triangle a warning stands on, filling the icon rect. A triangle is what says warning
-    // where a theme's hues are not the ones a reader expects, which is why the shape carries the
-    // meaning rather than the colour alone.
-    //
-    // Its corners are rounded: a fill carries its corners at full strength, and a sharp apex at
-    // sixteen pixels is one aliased spike.
+    // The triangle a warning stands on, filling the icon rect, its corners rounded.
     export GlyphSlot paintTriangle(PaintIconEvent&, Ink);
 
 

@@ -276,9 +276,8 @@ namespace SeeDocs_App
     }
 
     // The access label as code at the margin and, set in under it, each declaration in its inks
-    // with its links, the hint under it, and after a gap the note the comment references, headed
-    // by where it comes from; an empty line between declarations. No expander: the page is the
-    // declarations.
+    // with its links, the hint under it, and after a gap the note the comment references; an
+    // empty line between declarations. No expander: the page is the declarations.
     void PageView::addSignatures(const Section& section)
     {
         Text text;
@@ -292,12 +291,10 @@ namespace SeeDocs_App
             text << k_endLine;
             writeRuns(text, signature.lead);
             text << k_endLine;
-            if (!signature.excerpt.source.empty())
+            if (signature.excerpt.has_value())
             {
                 text << PushFontSize{ k_signatureGap } << k_endLine << PopFontSize{};
-                writeRuns(text, signature.excerpt.source);
-                text << k_endLine;
-                writeBlocks(text, signature.excerpt.blocks, k_signatureIndent);
+                writeBlocks(text, signature.excerpt->blocks, k_signatureIndent);
             }
         }
         TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes);

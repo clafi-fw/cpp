@@ -2037,11 +2037,20 @@ namespace ClaFi
         m_layoutInProgress = false;
         stateSizeRange();
         contentMoved(m_content);
+        // A SCROLL IS MEASURED AGAINST A LAYOUT THAT STANDS. A pass measuring what to ask a window
+        // for lays the content out at its own size, and a pass a control has put back in question
+        // is laid out again before the frame goes out; in either, a row that wraps once the
+        // viewport is known still stands on one line, and a scroll answered there lands short of
+        // it. The requests stand for the pass that follows.
+        //
         // Taken whole before the first scroll rather than one by one: scrolling moves controls
         // and can ask for another alignment, and a request left standing would be answered again
         // by the pass it caused.
-        for (Control* scrollTarget : std::exchange(m_scrollIntoViewOnAlign, {}))
-            scrollTarget->scrollIntoView();
+        if (!initPlacementMode && m_layoutPass.valid())
+        {
+            for (Control* scrollTarget : std::exchange(m_scrollIntoViewOnAlign, {}))
+                scrollTarget->scrollIntoView();
+        }
         // A CONTROL LAID OUT AT A WIDTH THE PASS DID NOT MEASURE IT AGAINST. Put back in question
         // here, where the alignment has already been marked valid - a request raised inside the
         // pass is wiped by the line above the align. The window is not invalidated with it: the

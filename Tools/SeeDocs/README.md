@@ -142,13 +142,14 @@ coloured as the framework's code boxes colour C++, the hint under it, and the no
 references after that.
 After them, the types with a property of this type and
 the types with an event of it, two trees, each type with the types derived from it under it,
-closed; then, as the page's footnote, the note the type's comment references as prose; then
+closed; then, as the page's footnote headed Details, the note the type's comment references as
+prose, its file and section in the heading's hint; then
 the types beside it in its module. A property, an event, a field or a member
 whose comment references a note carries a mark in a column of its own, and the note stands as a
 footnote under the grid; the mark leads to it, as an anchor of the page's url. A section's
 heading says what the section is; how many elements it holds is the heading's hint.
 A type whose comment references nothing takes the section named exactly after it from a note of
-its own folder, marked as matched by name. Where the surface states no hint the page says so, in
+its own folder, marked as matched by name in that hint. Where the surface states no hint the page says so, in
 place of the words, so what the documentation still lacks is read off the preview.
 
 A type's name on a page is a link to its page, in a grid cell as in prose: a type named in a

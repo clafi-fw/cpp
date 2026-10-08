@@ -19,9 +19,9 @@ ends meet without blending - that step is what the icon is showing.
 
 ## GlyphSlot
 
-Where a glyph goes and what it is drawn with, handed back by whichever container was
-painted. The box is the badge's own square, so a glyph is written as fractions of the whole
-badge and one set of numbers reads the same under the disc and under the triangle.
+Each container painter - paintDisc, paintTriangle - hands one back once its fill is drawn. Its
+box is the badge's own square rather than the shape's, so one set of fractions places a glyph
+the same under the disc and under the triangle.
 
 ## Halo
 

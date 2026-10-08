@@ -94,7 +94,7 @@ namespace ClaFi::Controls
     };
 
     // A text box that can refuse the value typed into it and say why. See Controls
-    export class EditBox : public TextBox
+    export class PromptBox : public TextBox
     {
     public:
         using TextBox::TextBox;
@@ -171,7 +171,7 @@ namespace ClaFi::Controls
     // The root of an in-place edit form: a frame with one text box in it. The box holds a COPY
     // of the text being edited - the control underneath keeps showing its own until the sink
     // takes the new one, and keeps it unchanged when nothing does.
-    class InPlaceEditRoot : public WithBody<Panel, EditBox>
+    class InPlaceEditRoot : public WithBody<Panel, PromptBox>
     {
     public:
         explicit InPlaceEditRoot(const CreateParams&);
@@ -207,7 +207,7 @@ namespace ClaFi::Controls
         void adjustNestedControlVisualState(const Control&, VisualState&) const override;
         void nestedKeyDown(KeyDownEvent&) override;
     private:
-        using Base = WithBody<Panel, EditBox>;
+        using Base = WithBody<Panel, PromptBox>;
     private:
         // Ends the edit with the text taken, or keeps the window up with the reason over it.
         void acceptText();

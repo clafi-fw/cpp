@@ -19,7 +19,7 @@ namespace SeeDocs_App
     export void writeBlocks(Text&, const Blocks&, float indent = 0.0f);
     export [[nodiscard]] Text textOf(const Blocks&);
     // A footnote: the mark and the name it belongs to, the two standing on the anchor a link
-    // reaches the footnote by, then the source and the prose.
+    // reaches the footnote by, then the prose.
     export void writeFootnote(Text&, std::wstring_view anchor, std::wstring_view mark,
         const Runs& name, const Excerpt&);
     // A declaration as code, every token in the ink the C++ lexer gives it; a linked run as a

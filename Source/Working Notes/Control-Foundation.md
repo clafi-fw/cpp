@@ -42,6 +42,14 @@ FormBase::wnd_beforePaint IS WHAT ANSWERS IT, and it answers a bounded number of
 `k_maxAlignPasses`. Past that the frame goes out on what the last pass produced and the next frame
 carries on, so a request that cannot converge costs frames rather than the application.
 
+A DEFERRED SCROLL WAITS FOR A LAYOUT THAT STANDS. `scrollIntoViewOnAlign` requests are answered
+only by a pass that lays the content into the window and that no control put back in question;
+a measuring pass and an invalidated pass leave them for the pass that follows. Both lay a
+wrapping row out on one line - the remembered widths are not read while measuring, and the
+first real pass is the one that records them - so a scroll answered there is measured against
+rows standing higher than they will. SeeDocs Studio's tree opened on its remembered page a few
+rows short of it for exactly this (2026-10-08).
+
 ## Action
 
 Connecting only inserts into the dispatcher this control has already contributed, so the derived

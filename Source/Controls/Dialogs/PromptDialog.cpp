@@ -72,7 +72,7 @@ namespace ClaFi::Controls
         // this root sees every Return in the dialog before the answer the user is standing on
         // does: claimed unconditionally, Return on Cancel would commit the text.
         //
-        // The box hands a plain Return up rather than breaking the line - see EditBox::charPress
+        // The box hands a plain Return up rather than breaking the line - see PromptBox::charPress
         // - and keeps Shift+Return for itself.
         if (event.key == Keys::Return && !event.modifiers.shift && box().isFocused())
         {

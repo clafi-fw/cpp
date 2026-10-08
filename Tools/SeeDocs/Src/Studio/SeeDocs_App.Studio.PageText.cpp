@@ -164,9 +164,7 @@ namespace SeeDocs_App
         text << ParaIndent{ 0.0f } << PushAnchor{ std::wstring{ anchor } } << InkGrade::Muted
             << mark << PopColor{} << L" ";
         writeRuns(text, name);
-        text << PopAnchor{} << L"  ";
-        writeRuns(text, excerpt.source);
-        text << k_endLine;
+        text << PopAnchor{} << k_endLine;
         writeBlocks(text, excerpt.blocks);
         text << PushFontSize{ k_footnoteGap } << k_endLine << PopFontSize{};
     }

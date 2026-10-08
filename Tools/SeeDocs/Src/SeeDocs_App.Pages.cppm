@@ -56,7 +56,7 @@ namespace SeeDocs_App
     // The words a note gives a declaration: where they come from, and the prose.
     export struct Excerpt
     {
-        Runs source;   // the note's file and heading, and the mark of a match by name
+        std::wstring source;   // the note's file and heading, and the mark of a match by name
         Blocks blocks;
     };
 
@@ -128,7 +128,7 @@ namespace SeeDocs_App
     {
         Runs code;         // code runs, a type the surface has a page for linked
         Runs lead;         // the hint
-        Excerpt excerpt;   // where the comment references a note
+        std::optional<Excerpt> excerpt;   // where the comment references a note
     };
 
     export using Signatures = std::vector<Signature>;

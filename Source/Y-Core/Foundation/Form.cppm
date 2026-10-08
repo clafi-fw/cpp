@@ -236,8 +236,10 @@ namespace ClaFi
         // Brings a control into view once the alignment it is waiting for has run. A control
         // that has just been shown, or one whose host has just grown, still measures as it did
         // before, so a scroll asked for now would ask for a rect that no longer applies. Every
-        // request made before the pass is answered by it, in the order made: a view that picks
-        // an item in a list and then shows the page for it asks twice, and both are answered.
+        // request made before the pass is answered by the first pass whose layout stands - one
+        // laying the content into the window, that no control put back in question - in the
+        // order made: a view that picks an item in a list and then shows the page for it asks
+        // twice, and both are answered.
         // Laying the form out on the spot instead is what this exists to avoid - a view holding
         // a million items is aligned once per frame, not once per change.
         void scrollIntoViewOnAlign(Control&);

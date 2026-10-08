@@ -47,19 +47,19 @@ namespace ClaFi::Controls
         m_refused = true;
     }
 
-    // EditBox
+    // PromptBox
 
-    FloatPoint EditBox::textOriginInForm() const
+    FloatPoint PromptBox::textOriginInForm() const
     {
         return textBounds(formContext(), boundsInForm()).topLeft();
     }
 
-    void EditBox::setRefusal(std::wstring_view value)
+    void PromptBox::setRefusal(std::wstring_view value)
     {
         m_refusal = value;
     }
 
-    void EditBox::showRefusal()
+    void PromptBox::showRefusal()
     {
         if (m_refusal.empty())
             return;
@@ -70,7 +70,7 @@ namespace ClaFi::Controls
         ContextMessage::show(*this, Text{ m_refusal });
     }
 
-    void EditBox::nestedGetHint(GetHintEvent& event)
+    void PromptBox::nestedGetHint(GetHintEvent& event)
     {
         if (m_refusal.empty())
         {
@@ -85,7 +85,7 @@ namespace ClaFi::Controls
         event.anchorRect = boundsInForm();
     }
 
-    void EditBox::nestedKeyDown(KeyDownEvent& event)
+    void PromptBox::nestedKeyDown(KeyDownEvent& event)
     {
         // Any press at all answers a refusal - reading it is what makes it stale, and the user
         // is now doing something about it. This runs before the root sees the key, so a Return
@@ -105,7 +105,7 @@ namespace ClaFi::Controls
         TextBox::nestedKeyDown(event);
     }
 
-    void EditBox::nestedPressDown(PressDownEvent& event)
+    void PromptBox::nestedPressDown(PressDownEvent& event)
     {
         // Clicking into the box to correct the value answers the refusal as much as typing
         // does. The hint window is hidden by the form's own mouse handling; what has to go
@@ -114,7 +114,7 @@ namespace ClaFi::Controls
         TextBox::nestedPressDown(event);
     }
 
-    void EditBox::charPress(CharPressEvent& event)
+    void PromptBox::charPress(CharPressEvent& event)
     {
         // The press that opened this box's window has its character queued behind it, and the
         // window's own loop delivers it here. It is not the box's: a Space that opened an editor
@@ -130,7 +130,7 @@ namespace ClaFi::Controls
         TextBox::charPress(event);
     }
 
-    void EditBox::clearRefusal()
+    void PromptBox::clearRefusal()
     {
         if (m_refusal.empty())
             return;
@@ -289,7 +289,7 @@ namespace ClaFi::Controls
     {
         m_accept = std::move(accept);
 
-        EditBox& box = body();
+        PromptBox& box = body();
         box.setHorizontalTextAnchor(target.textAnchor);
         box.setTextFormat(target.textFormat ? *target.textFormat : TextFormat{});
         box.setReadOnly(target.readOnly);
@@ -418,7 +418,7 @@ namespace ClaFi::Controls
 
     void InPlaceEditRoot::takeSuggestion(const std::size_t itemIndex)
     {
-        EditBox& box = body();
+        PromptBox& box = body();
         box.selectAll();
         box.replaceSelectedText(typedName((*m_suggestions)[itemIndex]));
         // Down before the offer, and after the edit that would have asked for it again: the
@@ -465,7 +465,7 @@ namespace ClaFi::Controls
         case Keys::Return:
             {
                 // Shift+Return is the box's - it breaks the line and the edit goes on. The box
-                // has already read the modifier off this same press; see EditBox::charPress.
+                // has already read the modifier off this same press; see PromptBox::charPress.
                 if (event.modifiers.shift)
                     break;
 
@@ -510,7 +510,7 @@ namespace ClaFi::Controls
             {
                 // The keys that drop a combo box's list drop this one whole, the filter lifted;
                 // the arrows walk it while it is up. The box leaves them to the root - see
-                // EditBox::nestedKeyDown.
+                // PromptBox::nestedKeyDown.
                 const bool drops = event.key == Keys::F4
                     || (event.key == Keys::Down && event.modifiers.alt);
                 if (drops)
@@ -598,7 +598,7 @@ namespace ClaFi::Controls
         // At least as wide as the box, and under it - both read now rather than once, since
         // the box grows with what is typed. In design units, which a popup shares with its
         // parent.
-        const EditBox& box = body();
+        const PromptBox& box = body();
         m_list->setMinWidth(box.width() / scaler().factor());
         m_list->setPlacement(FormPlacement::Bottom, box.boundsInForm());
         if (!suggestionsShown())
