@@ -969,8 +969,13 @@ namespace ClaFi
         virtual TraversalOrder traversalOrder() const { return {}; }
         virtual bool isLeaf() const { return true; }
         ControlSpan::iterator firstChildInViewport(const FloatRect&);
-        [[nodiscard]] bool isViewportEnd(int vRight, int vBottom) const;
-        [[nodiscard]] bool isViewportEnd(float vRight, float vBottom) const;
+        // Whether this child and every child after it lie past the viewport, read on the axis the
+        // container orders its children on - the one firstChildInViewport partitioned. The order
+        // is the container's and is asked once per range, not once per child. A wrapping
+        // container's lanes restart at the leading edge of the other axis, so a child past the
+        // viewport there says nothing about the children after it, and a container with no order
+        // has no end to find.
+        [[nodiscard]] bool isViewportEnd(const TraversalOrder&, const FloatRect& viewport) const;
         //
         static TextEngine& textEngine() { return s_textEngine; }
     protected:
@@ -1067,6 +1072,14 @@ namespace ClaFi
         // content past the window's edge is exactly what puts the header there - measuring first
         // and scrolling second would answer for the view being left rather than the one arriving.
         [[nodiscard]] float heldHeaderStrip() const;
+        // The control a held header's entry goes on - the body of the box scrolling this one, so
+        // that every header held over one body is listed by one host and every shadow lands on
+        // one clip; the box itself where this control is that body, and the parent where no box
+        // scrolls it. One host keeps the stack in order by itself: a holder paints its children
+        // before its own header, so a nested header is painted before the one it slides under,
+        // and registers its header before anything is built inside it, so the hit test meets the
+        // outer header first.
+        [[nodiscard]] Control* heldHeaderHost();
 
         // TODO: are both of these needed?
         virtual void paintChildSurface(PaintEvent& event);

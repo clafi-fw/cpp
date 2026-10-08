@@ -2263,11 +2263,12 @@ namespace ClaFi
             }
 
             const ControlSpan::iterator rangeBegin = currentControl.firstChildInViewport(clipRect);
+            const TraversalOrder order = currentControl.traversalOrder();
             for (ControlSpan::iterator it = rangeBegin; it != children.end(); ++it)
             {
                 if (Control& item = **it; item.visible())
                 {
-                    if (item.isViewportEnd(clipRect.right, clipRect.bottom))
+                    if (item.isViewportEnd(order, clipRect))
                         break;
                     if (SearchControlResult result = controlAt(item, pt, clipRect))
                         return result;

@@ -147,7 +147,7 @@ namespace SeeDocs_App
     {
         SectionKind kind{ SectionKind::Table };
         Runs heading;
-        std::wstring count;   // what stands after the heading, muted; empty for nothing
+        std::wstring hint;   // the heading's hint: what the section holds, counted; empty for none
         Excerpt excerpt;
         Branches branches;
         bool treeOpen{ false };   // whether the tree's nodes start open

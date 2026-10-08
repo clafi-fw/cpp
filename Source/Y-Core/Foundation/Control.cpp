@@ -1294,21 +1294,13 @@ namespace ClaFi
         ) };
     }
 
-    bool Control::isViewportEnd(int vRight, int vBottom) const
+    bool Control::isViewportEnd(const TraversalOrder& order, const FloatRect& viewport) const
     {
-        // detecting the end of the range
-        return (m_topLeft.y > vBottom || m_topLeft.x > vRight);
-    }
-
-    bool Control::isViewportEnd(float vRight, float vBottom) const
-    {
-        // detecting the end of the range
-        // TODO: this stops the scan on both axes at once, which only holds for a
-        // container whose children are sorted on both - no container is. For a wrapping
-        // layout the cross-axis half is wrong, because the next lane restarts at the
-        // leading edge. Left as it stands until it can be changed without putting a
-        // virtual call, or a null parent check, into this loop.
-        return (m_topLeft.y > vBottom || m_topLeft.x > vRight);
+        if (order.x)
+            return m_topLeft.x > viewport.right;
+        if (order.y)
+            return m_topLeft.y > viewport.bottom;
+        return false;
     }
 
     // ControlBase
@@ -1434,6 +1426,16 @@ namespace ClaFi
                 break;
         }
         return scrollContentInset().y + header->height();
+    }
+
+    Control* Control::heldHeaderHost()
+    {
+        for (Control* control = this; control->m_parent; control = control->m_parent)
+        {
+            if (control->m_parent->controlIsOnScrollBox(*control))
+                return control == this ? control->m_parent : control;
+        }
+        return m_parent;
     }
 
     void Control::paintChildSurface(PaintEvent& event)

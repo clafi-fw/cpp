@@ -174,15 +174,13 @@ namespace SeeDocs_App
         m_parts.push_back(&grid);
     }
 
-    // An expander headed by a labelled divider - the section's heading and count as the label -
-    // holding its body without room round it.
+    // An expander headed by a labelled divider - the section's heading as the label, its count in
+    // the label's hint - holding its body without room round it.
     Expander& PageView::addSection(const Section& section)
     {
         HeaderText header;
         header << TextStyleId::Heading;
         writeRuns(header, section.heading);
-        if (!section.count.empty())
-            header << L"  " << InkGrade::Muted << section.count << PopColor{};
         header << PopTextStyle{};
         Expander& expander = m_pageBox.body().add<Expander>(
             VerticalAlign::Top,
@@ -191,6 +189,8 @@ namespace SeeDocs_App
             Spacing{ k_headerSpacing },
             std::move(header)
         );
+        if (!section.hint.empty())
+            expander.header().hintText() << section.hint;
         m_parts.push_back(&expander);
         return expander;
     }

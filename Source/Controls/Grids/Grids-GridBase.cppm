@@ -127,8 +127,8 @@ namespace ClaFi::Controls::Grids
         // for every other child.
         [[nodiscard]] FloatPoint overlayChildOffset(const Control&) const override;
         // The header is an overlay control, so the standard pass leaves it alone and the overlay
-        // pass reaches it here - the pass belonging to m_headerHost, which is normally the grid's
-        // parent. The header has to be named rather than found: the ordered child range is
+        // pass reaches it here - the pass belonging to m_headerHost, which is normally the box's
+        // body or the box. The header has to be named rather than found: the ordered child range is
         // entered by the laid-out leading edge, and the view has scrolled past the header's
         // whenever the header is being held. What goes under a held header is drawn here for the
         // same reason it cannot be drawn by the header - see PaintEvent::paintHeldBackdrop.
@@ -255,9 +255,10 @@ namespace ClaFi::Controls::Grids
         GridDescriptor& m_descriptor;
         // The header row, once one has been added.
         GridHeader* m_header{};
-        // The container holding the overlay entry that names the header - the grid's parent where
-        // that parent can hold one, and the grid itself where it cannot. It is what bounds what
-        // the header draws, and it names the pass the header is painted in. See addHeader.
+        // The container holding the overlay entry that names the header - the host
+        // Control::heldHeaderHost names where it can hold one, and the grid itself where it
+        // cannot. It is what bounds what the header draws, and it names the pass the header is
+        // painted in. See addHeader.
         Control* m_headerHost{};
         RowNewItem* m_newItemRow{}; // null until addNewItemRow
         Control* m_rowAdded{}; // the last row added, which requestNewItem selects

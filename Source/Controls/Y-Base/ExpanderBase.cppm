@@ -90,8 +90,7 @@ namespace ClaFi::Controls
         void setLead(float value);
         ExpanderButton& button() { return m_button; }
         const ExpanderButton& button() const { return m_button; }
-        // The shape a held header is laid on: its rect with the corners it turns while open - the
-        // pair at the top, since the pair at the bottom is squared while the body is showing. See
+        // The shape a held header is laid on: its rect with the corners it paints. See
         // PaintEvent::paintHeldBackdrop.
         [[nodiscard]] RoundedRectangleParts silhouette(const PaintEvent& hostEvent, const FloatRect& headerRect) const;
     protected:
@@ -113,6 +112,7 @@ namespace ClaFi::Controls
         void createDividerLine();
         void paintButton(PaintIconEvent&) const;
         void scrollSectionIntoView() const;
+        [[nodiscard]] bool squaresBottomCorners() const;
     private:
         bool m_expanded{ true };
         float m_expandedFactor{ 1.0f };
@@ -125,12 +125,12 @@ namespace ClaFi::Controls
 
     // A CONTAINER THAT HOLDS ITS EXPANDER HEADER AGAINST THE TOP OF THE VIEW while the body it
     // heads is scrolled under it, the way a grid holds its header row - see Control::heldHeader.
-    // The header is an overlay control whose entry goes to the control this one stands in, as the
-    // grid's does: what the header draws around itself then lands on that control rather than
-    // stopping at this one's edge, and a header nested in another's body is painted in a pass that
-    // runs inside the outer header's standard pass - under the outer header, which is what a
-    // nested header being pushed away slides beneath. A parent with no overlay list leaves this
-    // control hosting the entry itself.
+    // The header is an overlay control whose entry goes to the host Control::heldHeaderHost names,
+    // as the grid's does: what the header draws around itself then lands on the body it is held
+    // over rather than stopping at this one's edge, and a header nested in another's body is
+    // painted in the same pass before the outer header, which is what a nested header being pushed
+    // away slides beneath. A host with no overlay list leaves this control hosting the entry
+    // itself.
     //
     // The header is painted here by name after the other children and skipped in every pass but
     // its own - the TabStripBase shape - so nothing below chains to the base for it.
@@ -231,15 +231,14 @@ namespace ClaFi::Controls
     RoundedRectangleParts ExpanderHeader::silhouette(const PaintEvent& hostEvent, const FloatRect& headerRect) const
     {
         const float radius = hostEvent.scaleF(designMetrics().radius);
-        return { .bounds = headerRect, .radii = { radius, radius, 0.0f, 0.0f } };
+        const float bottomRadius = squaresBottomCorners() ? 0.0f : radius;
+        return { .bounds = headerRect, .radii = { radius, radius, bottomRadius, bottomRadius } };
     }
 
-    // A section's header sits on its open body, so the corners between the two are squared. A
-    // tree row's surface is its own and keeps all four.
     void ExpanderHeader::adjustPaint(AdjustPaintEvent& event)
     {
         PanelBase::adjustPaint(event);
-        if (m_expanded && m_viewMode == ExpanderViewMode::Section)
+        if (squaresBottomCorners())
         {
             event.setCornerRadius(Corner::BottomRight, 0.0f);
             event.setCornerRadius(Corner::BottomLeft, 0.0f);
@@ -372,13 +371,20 @@ namespace ClaFi::Controls
             host->scrollIntoViewOnAlign();
     }
 
+    // A section's header sits on its open body, so the corners between the two are squared. A
+    // tree row's surface is its own and keeps all four.
+    bool ExpanderHeader::squaresBottomCorners() const
+    {
+        return m_expanded && m_viewMode == ExpanderViewMode::Section;
+    }
+
     // WithHeldHeader
 
     template<IsControl Base>
     void WithHeldHeader<Base>::holdHeader(ExpanderHeader& header)
     {
         m_heldHeader = &header;
-        m_headerHost = this->parent();
+        m_headerHost = this->heldHeaderHost();
         if (m_headerHost && m_headerHost->addOverlayControl(header, ClippingMode::Standard))
             return;
         m_headerHost = this->addOverlayControl(header, ClippingMode::Standard) ? this : nullptr;

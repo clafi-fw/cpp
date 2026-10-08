@@ -31,6 +31,7 @@ namespace ClaFi::Controls::Grids
         const FloatPoint contentOrigin = rows.front()->parentContentOrigin();
         FloatRect window = windowInForm;
         window.offset(-contentOrigin);
+        const TraversalOrder order = traversalOrder();
         for (ControlSpan::iterator it = firstChildInViewport(window); it != rows.end(); ++it)
         {
             Control& child = **it;
@@ -39,7 +40,7 @@ namespace ClaFi::Controls::Grids
             // would hide every row after it.
             if (!child.visible())
                 continue;
-            if (child.isViewportEnd(window.right, window.bottom))
+            if (child.isViewportEnd(order, window))
                 break;
             if (!child.enabled(true))
                 continue;
@@ -68,17 +69,17 @@ namespace ClaFi::Controls::Grids
     GridHeader& GridBase::addHeader()
     {
         m_header = &add<GridHeader>(*this);
-        // The entry goes to the control the grid stands in, not to the grid. The pass an entry
-        // opens runs inside its host's clip, and what a held header draws around itself - its
-        // shadow - falls on whatever the grid stands on rather than stopping at the grid's edge,
-        // which is exactly the grid's own width. A parent with no overlay list leaves the grid
+        // The entry goes to the host Control::heldHeaderHost names, not to the grid. The pass an
+        // entry opens runs inside its host's clip, and what a held header draws around itself -
+        // its shadow - falls on what the grid stands on rather than stopping at the grid's edge,
+        // which is exactly the grid's own width. A host with no overlay list leaves the grid
         // hosting the entry itself, which costs the shadow the room outside the grid and nothing
         // else.
         //
         // Standard clipping either way: the header is clipped to where it is DRAWN rather than to
         // where it was laid out, because the traversal has already moved its bounds by
         // overlayChildOffset.
-        m_headerHost = parent();
+        m_headerHost = heldHeaderHost();
         if (!m_headerHost || !m_headerHost->addOverlayControl(*m_header, ClippingMode::Standard))
         {
             m_headerHost = this;
@@ -172,7 +173,7 @@ namespace ClaFi::Controls::Grids
         if (!m_header || !m_header->visible())
             return;
         // The pass belonging to whichever container holds the header's entry, which is normally
-        // the grid's parent rather than the grid - see addHeader.
+        // the box's body or the box rather than the grid - see addHeader.
         if (!event.overlayStage() || event.overlayHost() != m_headerHost)
             return;
 

@@ -616,24 +616,24 @@ namespace SeeDocs_App
         // Sections
 
         Section& addSection(Page& page, const SectionKind kind, Runs heading,
-            std::wstring count = {})
+            std::wstring hint = {})
         {
             page.sections.push_back({
                 .kind = kind,
                 .heading = std::move(heading),
-                .count = std::move(count)
+                .hint = std::move(hint)
             });
             return page.sections.back();
         }
 
-        // A table of rows under one heading or none, counted in the section's heading.
+        // A table of rows under one heading or none, counted in the heading's hint.
         Section& addTableSection(Page& page, std::wstring heading, const TableColumns& columns,
             TableGroups groups)
         {
             Section& section = addSection(page, SectionKind::Table, { plain(std::move(heading)) });
             section.table.columns = columns;
             section.table.groups = std::move(groups);
-            section.count = std::to_wstring(section.table.rowCount());
+            section.hint = countOf(section.table.rowCount(), L"element");
             return section;
         }
 
@@ -1041,7 +1041,6 @@ namespace SeeDocs_App
         }
 
         // The type's own note, where its comment references one or a section is named after it.
-
         void addTypeNote(Page& page, const Surface& surface, Notes& notes, const Type& type)
         {
             std::optional<Excerpt> excerpt = excerptOf(
@@ -1316,18 +1315,20 @@ namespace SeeDocs_App
             return result;
         }
 
-        // What stands after a member table's heading: the own rows and the inherited ones apart.
+        // What a member table's heading says of its rows: how many, and the own and the inherited
+        // apart where it holds both.
         [[nodiscard]] std::wstring memberCount(const std::size_t own, const std::size_t inherited)
         {
+            const std::wstring elements = countOf(own + inherited, L"element");
             if (inherited == 0)
-                return std::to_wstring(own);
+                return elements;
             if (own == 0)
-                return std::to_wstring(inherited) + L" inherited";
-            return std::to_wstring(own) + L" own" + std::wstring{ k_separator }
-                + std::to_wstring(inherited) + L" inherited";
+                return elements + std::wstring{ k_separator } + L"all inherited";
+            return elements + std::wstring{ k_separator } + std::to_wstring(own) + L" own"
+                + std::wstring{ k_separator } + std::to_wstring(inherited) + L" inherited";
         }
 
-        // A member table over the type and its bases, its count telling the own rows apart.
+        // A member table over the type and its bases, its hint telling the own rows apart.
         template<typename GroupOf>
         void addMemberSection(Page& page, std::wstring heading, const TableColumns& columns,
             const Type& type, const ReachedBases& bases, const GroupOf& groupOf)
@@ -1337,7 +1338,7 @@ namespace SeeDocs_App
                 return;
             Section& section = addTableSection(page, std::move(heading), columns,
                 std::move(groups.groups));
-            section.count = memberCount(groups.own, section.table.rowCount() - groups.own);
+            section.hint = memberCount(groups.own, section.table.rowCount() - groups.own);
         }
 
         void addProperties(Page& page, const Surface& surface, Notes& notes, const Type& type,
@@ -1850,7 +1851,7 @@ namespace SeeDocs_App
         }
         Section& section = addTypesSection(page, L"Types", std::move(groups));
         section.table.groupColumn = L"Module";
-        section.count = std::to_wstring(types) + L" in "
+        section.hint = countOf(types, L"element") + L" in "
             + countOf(chapter.modules.size(), L"module");
         addFunctions(page, surface, [&](const FreeFunction& free) {
             return categoryOf(surface.files()[free.function.place.file].relative)
@@ -1949,7 +1950,6 @@ namespace SeeDocs_App
         addTypeHead(page, surface, type);
         const ReachedBases bases = addTypeBases(page, surface, type);
         addDerivedTypes(page, surface, type);
-        addTypeNote(page, surface, notes, type);
         addProperties(page, surface, notes, type, bases);
         addEvents(page, surface, notes, type, bases);
         addMethods(page, surface, type, bases);
@@ -1957,6 +1957,9 @@ namespace SeeDocs_App
         addMembers(page, surface, notes, type);
         addPropertyOf(page, surface, type);
         addEventOf(page, surface, type);
+        // The note is a footnote: it stands at the foot of what is the type's own, before the
+        // types beside it.
+        addTypeNote(page, surface, notes, type);
         addSiblings(page, surface, type);
         return page;
     }

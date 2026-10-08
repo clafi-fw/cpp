@@ -145,12 +145,13 @@ namespace ClaFi
             localViewPort.inflate(lookAhead);
 
         ControlSpan::iterator it = clipped ? m_control.firstChildInViewport(localViewPort) : begin;
+        const TraversalOrder order = m_control.traversalOrder();
         for (; it != end; ++it)
         {
             Control& child = **it;
             if (child.visible())
             {
-                if (clipped && child.isViewportEnd(localViewPort.right, localViewPort.bottom))
+                if (clipped && child.isViewportEnd(order, localViewPort))
                     break;
                 TraversalContext childContext{ *this, child };
                 childContext.traverse();
