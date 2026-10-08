@@ -628,7 +628,6 @@ namespace ClaFi
         float tabStart;
         float tabEnd;
         float tabProtrusion;
-        float shownProtrusion{ k_maxFloat }; // how far from the line the screen shows the tab
         float cornerRadius;
         float lineWidth;
         float indicatorHeight;

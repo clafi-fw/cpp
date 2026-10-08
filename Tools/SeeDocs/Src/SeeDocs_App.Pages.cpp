@@ -895,6 +895,75 @@ namespace SeeDocs_App
             addTableSection(page, L"Members", Columns::members, std::move(groups));
         }
 
+        // The types with a property or an event of this type
+
+        // Whether a property's type, or one it accepts, is the type.
+        [[nodiscard]] bool isPropertyOf(const Surface& surface, const Type& owner,
+            const Property& property, const Type& type)
+        {
+            if (surface.resolve(property.type, owner.nameSpace) == &type)
+                return true;
+            return std::ranges::any_of(property.accepts, [&](const std::wstring& accepted) {
+                return surface.resolve(accepted, owner.nameSpace) == &type;
+            });
+        }
+
+        [[nodiscard]] bool hasPropertyOf(const Surface& surface, const Type& owner,
+            const Type& type)
+        {
+            return std::ranges::any_of(owner.properties, [&](const Property& property) {
+                return isPropertyOf(surface, owner, property, type);
+            });
+        }
+
+        [[nodiscard]] bool hasEventOf(const Surface& surface, const Type& owner, const Type& type)
+        {
+            return std::ranges::any_of(owner.events, [&](const Event& event) {
+                return surface.resolve(event.type, owner.nameSpace) == &type;
+            });
+        }
+
+        // A tree of the types that have the type as a member of some kind, each with the types
+        // derived from it under it, since they have the member too; the nodes start closed.
+        template<typename Has>
+        void addOwnersTree(Page& page, const Surface& surface, std::wstring heading,
+            const Has& has)
+        {
+            TypeList owners;
+            for (const Type& owner : surface.types())
+            {
+                if (owner.isPublic() && has(owner))
+                    owners.push_back(&owner);
+            }
+            if (owners.empty())
+                return;
+            std::ranges::sort(owners, [](const Type* left, const Type* right) {
+                return readsBefore(*left, *right);
+            });
+            Section& section = addSection(page, SectionKind::Tree, { plain(std::move(heading)) });
+            section.treeOpen = false;
+            for (const Type* owner : owners)
+            {
+                Branch branch{ .text = { code(owner->name) }, .type = owner };
+                addDerived(branch.children, surface, *owner, 0);
+                section.branches.push_back(std::move(branch));
+            }
+        }
+
+        void addPropertyOf(Page& page, const Surface& surface, const Type& type)
+        {
+            addOwnersTree(page, surface, L"Property of", [&](const Type& owner) {
+                return hasPropertyOf(surface, owner, type);
+            });
+        }
+
+        void addEventOf(Page& page, const Surface& surface, const Type& type)
+        {
+            addOwnersTree(page, surface, L"Event of", [&](const Type& owner) {
+                return hasEventOf(surface, owner, type);
+            });
+        }
+
         // The tables of types, functions and constants
 
         [[nodiscard]] TableRows typeRows(const TypeList& types)
@@ -1167,6 +1236,8 @@ namespace SeeDocs_App
         addMethods(page, notes, type, bases);
         addFields(page, surface, notes, type);
         addMembers(page, notes, type);
+        addPropertyOf(page, surface, type);
+        addEventOf(page, surface, type);
         addSiblings(page, surface, type);
         return page;
     }

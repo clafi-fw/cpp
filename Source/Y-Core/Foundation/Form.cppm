@@ -221,12 +221,10 @@ namespace ClaFi
         [[nodiscard]] float windowFocusedFactor() const;
         // THE FRAME THE WINDOW IS WEARING - what the platform applies, not what the root states.
         [[nodiscard]] const WindowFrame& frame() const { return m_frame; }
-        // Where the window stands inside its surface: the surface less the frame's margins, in
-        // surface coordinates. The root is laid out into it, or into as much of it as the content
-        // asked for - see contentExtent.
+        // Where the window stands inside its surface: the surface less the frame's margins and
+        // its overhang, in surface coordinates - what the screen shows. The root is laid out into
+        // it, or into as much of it as the content asked for - see contentExtent.
         [[nodiscard]] FloatRect geometry() const;
-        // The part of the geometry the screen shows - the geometry less the frame's overhang.
-        [[nodiscard]] FloatRect shownGeometry() const;
         // What kind of window this is. It says nothing about the root control, which answers for
         // itself with Control::interactivity().
         [[nodiscard]] WindowRole windowRole() const { return m_windowRole; }

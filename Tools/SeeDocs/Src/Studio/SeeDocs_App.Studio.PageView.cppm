@@ -65,12 +65,12 @@ namespace SeeDocs_App
         void addFacts();
         [[nodiscard]] Expander& addSection(const Section&);
         void addProse(Expander&, const Excerpt&);
-        void addTree(Expander&, const Branches&);
+        void addTree(Expander&, const Branches&, bool nodesOpen);
         void addTable(Expander&, const Table&);
         // Under the tree or a node of it: a branch with nothing under it is an item, any other
-        // a node, open; a click on either opens the type the branch names.
+        // a node, open or closed as asked; a click on either opens the type the branch names.
         template<typename Holder>
-        void addTreeRows(Holder&, const Branches&);
+        void addTreeRows(Holder&, const Branches&, bool nodesOpen);
         [[nodiscard]] Text treeRowText(const Branch&) const;
         [[nodiscard]] HeaderText treeHeaderText(const Branch&) const;
         void addTableRows(Grids::GridBase&, const Table&, const TableGroup&, Footnotes&);
@@ -135,7 +135,7 @@ namespace SeeDocs_App
     }
 
     template<typename Holder>
-    void PageView::addTreeRows(Holder& holder, const Branches& branches)
+    void PageView::addTreeRows(Holder& holder, const Branches& branches, const bool nodesOpen)
     {
         for (const Branch& branch : branches)
         {
@@ -150,8 +150,8 @@ namespace SeeDocs_App
                 continue;
             }
             Controls::TreeNode& node = holder.addNode(treeHeaderText(branch));
-            addTreeRows(node, branch.children);
-            node.header().setExpanded(true);
+            addTreeRows(node, branch.children, nodesOpen);
+            node.header().setExpanded(nodesOpen);
             node.header().onClick([this, type](ClickEvent&) {
                 if (type)
                     open(type->qualifiedName);

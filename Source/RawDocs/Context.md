@@ -135,12 +135,12 @@ its content.
 
 THE OVERHANG IS THE PLATFORM'S ALONE - the design states none. Win32 sizes a maximized window
 to the work area plus its resize borders, and the window takes the whole of it as its client
-area, so the edges of the geometry lie past the screen or under the taskbar. The overhang says
-by how much on each side, and FormBase::shownGeometry is the geometry less it. A control whose
-mark sits at the window's edge reads it to keep the mark where the screen shows it - a tab's
-indicator stands on the first row the screen shows. Wayland states a maximized window's size
-exactly and reports none; what the overhang does for the pointer there, the search does - see
-Edge reach in Control-Foundation.
+area, so the surface's edges lie past the screen or under the taskbar. The overhang says by how
+much on each side, and the form takes it off the surface the way it takes the margins off:
+FormBase::geometry is what the screen shows, and the root is laid out into it, so a scroll bar
+or a close button at the window's edge stands whole on the screen. Wayland states a maximized
+window's size exactly and reports none. On both, a pointer pushed against the screen's edge
+meets the control standing there through the search - see Edge reach in Control-Foundation.
 
 ## WindowPlacement
 

@@ -56,7 +56,7 @@ namespace SeeDocs_App
                     addProse(expander, section.excerpt);
                     break;
                 case SectionKind::Tree:
-                    addTree(expander, section.branches);
+                    addTree(expander, section.branches, section.treeOpen);
                     break;
                 case SectionKind::Table:
                     addTable(expander, section.table);
@@ -182,13 +182,13 @@ namespace SeeDocs_App
         box.text() = textOf(excerpt.blocks);
     }
 
-    void PageView::addTree(Expander& expander, const Branches& branches)
+    void PageView::addTree(Expander& expander, const Branches& branches, const bool nodesOpen)
     {
         TreeView& tree = expander.createBody<TreeView>(
             Padding{ k_treePadding },
             HorizontalAlign::Left
         );
-        addTreeRows(tree, branches);
+        addTreeRows(tree, branches, nodesOpen);
     }
 
     // A row leads with the mark of the type's kind where it names one, and ends with its kind word.

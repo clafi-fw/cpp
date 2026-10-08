@@ -135,6 +135,7 @@ namespace SeeDocs_App
         std::wstring count;   // what stands after the heading, muted; empty for nothing
         Excerpt excerpt;
         Branches branches;
+        bool treeOpen{ true };   // whether the tree's nodes start open
         Table table;
     };
 

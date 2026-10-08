@@ -274,16 +274,6 @@ namespace ClaFi
         return FloatRect::fromDimensions(frameOrigin(), m_placed.size);
     }
 
-    FloatRect FormBase::shownGeometry() const
-    {
-        FloatRect result = geometry();
-        result.left += static_cast<float>(m_frame.overhang.left);
-        result.top += static_cast<float>(m_frame.overhang.top);
-        result.right -= static_cast<float>(m_frame.overhang.right);
-        result.bottom -= static_cast<float>(m_frame.overhang.bottom);
-        return result;
-    }
-
     void FormBase::invalidateAlign()
     {
         m_aligned = false;
@@ -1304,9 +1294,10 @@ namespace ClaFi
 
     void FormBase::wnd_resize(IntSize surface, const WindowFrame& frame)
     {
-        const IntSize margins = frame.margins.total();
+        // The overhang is taken off like the margins: the content is laid out on the screen.
+        const IntSize taken = frame.margins.total() + frame.overhang.total();
         const ScaledDimensions placed =
-            IntSize{ surface.x - margins.x, surface.y - margins.y }.toFloat();
+            IntSize{ surface.x - taken.x, surface.y - taken.y }.toFloat();
 
         // A RESIZE THAT MOVED NOTHING IS NOT A RESIZE. A window's position is stated whether or
         // not it has changed - see Window::place - and the message stating it arrives here all
@@ -1789,8 +1780,8 @@ namespace ClaFi
     ScaledPosition FormBase::frameOrigin() const
     {
         return {
-            static_cast<float>(m_frame.margins.left),
-            static_cast<float>(m_frame.margins.top)
+            static_cast<float>(m_frame.margins.left + m_frame.overhang.left),
+            static_cast<float>(m_frame.margins.top + m_frame.overhang.top)
         };
     }
 

@@ -111,8 +111,11 @@ grouped by module under held headers. A type's page holds the types derived from
 the note its comment references as prose, and a grid per member kind: properties, events and
 methods, the type's own under an Own expander and each base's under a From expander of its own,
 up the whole chain of bases, the protected methods under a header of their own inside each;
-fields or members; each with its hint. A member whose comment references a note carries a mark
-in a column of its own, and the note stands as a footnote under the grid; the mark leads to it.
+fields or members; each with its hint. After them, the types with a property of this type and
+the types with an event of it, two trees, each type with the types derived from it under it,
+closed; then the types beside it in its module. A member
+whose comment references a note carries a mark in a column of its own, and the note stands as a
+footnote under the grid; the mark leads to it.
 A type whose comment references nothing takes the section named exactly after it from a note of
 its own folder, marked as matched by name. Where the surface states no hint the page says so, in
 place of the words, so what the documentation still lacks is read off the preview.

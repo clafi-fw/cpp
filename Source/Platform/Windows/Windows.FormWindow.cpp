@@ -252,11 +252,11 @@ namespace ClaFi
             break;
 
         // THE WHOLE WINDOW IS THE CLIENT AREA: the frame is the framework's own, drawn in the
-        // surface. Maximized included, on purpose: the system sizes a maximized window to the
-        // work area plus its resize borders, so the client hangs off the monitor by that much,
-        // and a control at the window's edge reaches past the screen's. A pointer driven into a
-        // corner or against an edge is then inside the control standing there - the close button,
-        // a scroll bar's thumb - rather than a few pixels short of it.
+        // surface. Maximized included: the system sizes a maximized window to the work area plus
+        // its resize borders, so the client hangs off the monitor by that much. The form is told
+        // by how much - WindowFrame::overhang - and lays its content out on the part the screen
+        // shows; a pointer driven into a corner or against an edge meets the control standing
+        // there through the form's edge reach. See Context and Control-Foundation.
         case WM_NCCALCSIZE:
             msg.result = 0;
             msg.handled = true;
