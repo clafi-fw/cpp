@@ -382,7 +382,7 @@ namespace ClaFi::Controls
         // Only one flex space may open the line: a second would split the slack and strand both
         // of the things on the right in the middle. The mark ButtonBase writes for a command that
         // opens a window has already taken it, and the key then stands at the very end.
-        if (opensWindow() == OpensWindow::No)
+        if (endIcon() == EndIcon::None)
             event.text << FlexSpace{ k_keyGap };
         else
             event.text << Space{ k_keyGap };

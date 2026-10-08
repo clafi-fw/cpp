@@ -18,7 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 SOURCE = ROOT / "Source"
-NOTES = ROOT / "Source" / "RawDocs"
+NOTES = ROOT / "Source" / ".seedocs" / "footnotes"
 MAX_COLUMNS = 100
 
 # Which note carries the prose a file's declarations shed. One per subsystem, so a reader

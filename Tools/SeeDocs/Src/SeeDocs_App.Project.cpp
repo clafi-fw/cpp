@@ -1,7 +1,5 @@
 module SeeDocs_App.Project;
 
-import SeeDocs_App.Surface;
-
 import ClaFi.Dom.Formats.ClaFi;
 
 import ClaFi.Core.DomEngine;
@@ -52,14 +50,19 @@ namespace SeeDocs_App
         return dataFolder() / k_databaseFileName;
     }
 
-    std::filesystem::path Project::notesFolder() const
+    std::filesystem::path Project::footnotesFolder() const
     {
-        return folder / k_notesFolder;
+        return footnotesFolderOf(folder);
     }
 
     std::filesystem::path dataFolderOf(const std::filesystem::path& folder)
     {
         return folder / k_projectDataFolder;
+    }
+
+    std::filesystem::path footnotesFolderOf(const std::filesystem::path& folder)
+    {
+        return dataFolderOf(folder) / k_footnotesFolder;
     }
 
     bool holdsProject(const std::filesystem::path& folder)

@@ -93,12 +93,12 @@ namespace ClaFi::Controls
         invalidateFormAlign();
     }
 
-    void ButtonBase::setOpensWindow(OpensWindow value)
+    void ButtonBase::setEndIcon(EndIcon value)
     {
-        if (value == m_opensWindow)
+        if (value == m_endIcon)
             return;
 
-        m_opensWindow = value;
+        m_endIcon = value;
         invalidateFormAlign();
     }
 
@@ -335,13 +335,13 @@ namespace ClaFi::Controls
     {
         RichControl::getText(event);
 
-        if (m_opensWindow == OpensWindow::No)
+        if (m_endIcon == EndIcon::None)
             return;
 
-        const InTextIcon mark{ k_openWindowMark, [](PaintIconEvent& iconEvent) {
+        const InTextIcon mark{ k_endIconSize, [](PaintIconEvent& iconEvent) {
             Icons::DialogIcon::paint(iconEvent);
         } };
-        event.text << FlexSpace{ k_openWindowMarkGap } << mark;
+        event.text << FlexSpace{ k_endIconGap } << mark;
     }
 
     void ButtonBase::nestedGetHint(GetHintEvent& event)

@@ -1,0 +1,425 @@
+# Context
+
+The words that no longer fit above a declaration.
+
+## FrameMargins
+
+A LENGTH ON EACH EDGE OF A WINDOW, in real pixels. WindowFrame carries two: the margins,
+which are the room a surface keeps around the window it shows - the shadow is drawn in them
+and the pointer falls through them - and the overhang, which is the part of the window the
+system places past the screen.
+
+## PlacedWindow
+
+What the placement did. THE POSITION IS NOT IN IT and cannot be: a client is not always
+told where its own window was put, and nothing above the platform layer reads it. The one
+thing read back about where a window stands is IPlatformWindow::standsAbove - whether the
+last placement stood it above its anchor, a Top placement held or a Bottom one flipped for
+want of room - which is what lets a second window on the same anchor take the other side; a
+window placed on no anchor answers false, and a platform whose compositor decides the side
+answers the one it asked for.
+
+## ThemeSwitchEvent
+
+The colours every window is painted from have moved. Carried once for a set taken outright,
+and once per frame for the length of a crossing - `kind()` says which.
+
+## ThemeSwitchKind
+
+Which of the two a theme switch is, and so when a window paints it.
+
+A TAKEN set is raised inside `AppContext::takeTheme`: an edit to the set worn, or a set with
+nothing to cross. That is inside whatever took it - a page being built, a view state being
+restored - so a window invalidates and waits for the scheduled paint. A frame made on the spot
+would show that work half done.
+
+A CROSSING FRAME is stated by the animation controller, and a window paints it on the spot.
+Every frame of a crossing is one someone is meant to see, and a scheduled paint waits behind the
+pointer's own messages - see FormBase::themeSwitched.
+
+## BackendSwitchEvent
+
+The application has changed which backend its windows draw through, raised on
+`AppContext::events()`. It carries nothing: every window of an application is on the one kind,
+and `AppContext::createBackend` is what answers with it.
+
+## InputSwitchEvent
+
+The input controllers' factors have moved, raised on `AppContext::events()` at every step of
+either fade. It carries nothing: `Input::mouse()` and `Input::keyboard()` answer with the
+factors.
+
+EVERY WINDOW REPAINTS WHOLE. A rule reading `RuleInput::Keyboard` or `RuleInput::Mouse` can stand
+on any control of any window, and nothing knows which controls do - the reason a form repaints
+whole for its own focus. So a switch between the devices repaints every visible window for the
+length of the fade, whatever the theme reads.
+
+## ScaleSwitchEvent
+
+The size the application is drawn at has moved, raised on `AppContext::events()`. It carries
+nothing: there is one percent for the process, and `AppContext::scalePercent` is what answers
+with it.
+
+A FORM MAY ASK TO HOLD STILL. FormBase::holdScale puts a form on a scaler of its own carrying the
+scale it is drawn at, and nothing above it moves it until FormBase::followScale puts it back under
+the form it stands on. A form with nobody under it has nothing to follow and keeps its own either
+way.
+
+The backstage holds itself for the length of a drag on the scale slider, because a control that
+steers the size of the form it stands in is steering its own geometry - ScaleSlider is where the
+whole of that is. The hold covers the gesture and no longer, so the menu takes the size it has
+named as soon as the pointer lets go.
+
+## ZAnimationSwitchEvent
+
+The Z animation amount has moved, raised on `AppContext::events()`. It carries nothing:
+`AppContext::zAnimationAmount` is what answers with it.
+
+EVERY WINDOW REPAINTS WHOLE. The amount scales how far below full size a control rests, so every
+control that takes the Z animation changes size at rest. Nothing is laid out again - the press
+scale is a paint transform.
+
+Compiled only where CLAFI_TEXT_MOVING is 1 - see AppContext::zAnimation.
+
+## SystemColorModeEvent
+
+The desktop has changed the mode it asks applications to be drawn in, raised on
+`Platform::events()`. It carries nothing: it says ask again, and `Platform::systemColorMode` is
+what answers. One change raises one event, however many of the application's windows the platform
+heard it through.
+
+## KeyDownEvent::isRepeat
+
+The key was already down and the system is repeating it. The key acts on every
+repeat - that is what makes a held arrow travel - but a key still down is not a new
+reach for the keyboard.
+
+## PaintIconEvent
+
+Lives here rather than beside PaintEvent because an icon is painted from two places that
+cannot see each other: a control's paint, in Foundation, and a text run, in TextEngine.
+Foundation imports TextEngine, so TextEngine can never name anything Foundation owns - and
+FormContext is the subsystem both of them already share.
+
+## KeyDownEvent::stamp
+
+What the display server called this press, for a request the key is about to justify.
+Empty on a key nobody pressed - a shortcut the framework raised for itself.
+
+## WindowFrame
+
+THE FRAME A WINDOW WEARS, in real pixels: the margins its shadow needs, how far it hangs past
+the screen, and the radius of its corners. A form states the DESIGN from its root's
+properties - see IPlatformWindow::setFrame; the platform answers with what it APPLIES - see
+IForm::wnd_resize. A maximized, fullscreen or docked window applies neither margins nor
+corners, a snapped or tiled one keeps the margins and applies no corners, and a platform that
+cannot composite a frame rounds no corners. The border is the root's own and is painted with
+its content.
+
+THE OVERHANG IS THE PLATFORM'S ALONE - the design states none. Win32 sizes a maximized window
+to the work area plus its resize borders, and the window takes the whole of it as its client
+area, so the surface's edges lie past the screen or under the taskbar. The overhang says by how
+much on each side, and the form takes it off the surface the way it takes the margins off:
+FormBase::geometry is what the screen shows, and the root is laid out into it, so a scroll bar
+or a close button at the window's edge stands whole on the screen. Wayland states a maximized
+window's size exactly and reports none. On both, a pointer pushed against the screen's edge
+meets the control standing there through the search - see Edge reach in Control-Foundation.
+
+## WindowPlacement
+
+WHAT A WINDOW ASKS TO BE PLACED BY. Everything in it is the FORM's own knowledge: what it
+stands on, stated in the coordinates of the window it stands in, and what its content
+measured. NOTHING IN IT IS A SCREEN COORDINATE - where a window ends up is the platform's
+answer, and there are platforms that never tell a client what that answer was.
+
+## Platform
+
+WHAT AN APPLICATION IS BUILT AGAINST. The statics every platform answers - the cursor, the
+key names, the data path - are defined per platform in an implementation unit of this module
+under Platform/, one platform per build. createWindow is virtual and answered by the
+platform built for the display server, Win32Platform or WaylandPlatform, which is what holds
+what a window is made from. The clipboard is that platform's member, named to this base at
+construction, and reached from a form's context as FormContext::clipboard; what the
+clipboard itself holds the platform by is IPlatformServices, a name declared below this
+module - see UI-Types.
+
+## Platform::createFormsConfigSchema
+
+THE SHAPE IS THE PLATFORM'S. A config's Forms section holds one section per form named here,
+and what stands in it is whatever this platform can put a window back from - which is not the
+same thing on every platform, and is nobody else's business. Win32 keeps the window's ordinary
+geometry in screen pixels and whether it stood maximized: the client owns the rectangle there.
+Wayland keeps the ordinary size in surface pixels and the maximized state per form, and one
+value for all of them - the id of the session the compositor remembers the windows under, since
+where a window was is the compositor's to keep and the client is never told.
+
+## Platform::restoreFormPlacement
+
+Called once per form, before its first placement, with the whole Forms section: the platform
+finds the form's own section by name and reads whatever else it keeps there. It hands the
+platform window what it needs and places nothing itself - the first placement does, reading
+what was handed over. ON WAYLAND THE ORDER IS THE PROTOCOL'S: a toplevel is named to its session
+before the first commit of its surface, and that commit is made by the placement that creates
+the toplevel, so the name has to be on the window before the form is placed for the first time.
+
+## Platform::storeFormPlacement
+
+Called while the window is still up - on hide, and a close hides first - which is the only time
+its placement can be read. Written into the config and nowhere else: the file is the
+application's to save, and it saves only into a folder the user has allowed.
+
+## Platform::addFormToSession
+
+The other half of the rule above, for the run in which the user allows storing. A window made
+before that was never named to a session - none was asked for - and it is too late to restore
+it, the surface having been committed long since. It is added to one instead: the compositor
+keeps the state of every toplevel a session holds, from the moment it is given it, so a window
+added while it is still up leaves its place behind for the next launch. Where the platform
+tells the window manager nothing - Win32 - there is nothing to do.
+
+## Platform::systemColorMode
+
+The mode the desktop asks applications to be drawn in. Windows answers from the app mode of its
+personalisation settings; Wayland answers from the XDG desktop portal's colour scheme, read over
+the session bus - see Platform. A desktop stating no preference is answered Light: GNOME's
+default look states none, and so does a session without a portal, and both show a light desktop.
+
+THE FIRST ASK WAITS FOR THE ANSWER. On Wayland it connects to the bus and gives the portal up to
+a second, so the first window opens in the desktop's mode rather than crossing to it; an answer
+later than that arrives as a SystemColorModeEvent.
+
+## Platform::events
+
+Where the platform announces a change of what the desktop asks for - SystemColorModeEvent. One
+dispatcher for the process, standing before the first window is made and after the last is gone.
+
+## Platform::pickFolder
+
+THE DIALOG IS THE DESKTOP'S OWN, not the framework's: where a folder is asked for, the user
+expects the places, the drives and the shortcuts the desktop keeps, and nothing drawn here could
+stand in for them. The call runs the dialog to its close and answers the folder picked, or
+nothing where the dialog was cancelled or the platform has none to show. It is opened over the
+form given, so the form's window stands disabled under it the way it would under any of the
+desktop's own dialogs, and it is opened from a toplevel - a popup closes when the dialog takes
+the focus, so whoever asks from a menu closes the menu first.
+
+## ScopedWaitCursor
+
+Shows the wait shape while alive and puts back the shape the platform was showing when it was
+made - a sizing arrow the system set included - so scopes nest and a drag keeps its arrow. What
+it puts back is `Platform::cursor`, read as it is built.
+
+## AppContext::animator
+
+THE APPLICATION'S ANIMATIONS - every control's state fades, every glide, a hint's alpha and the
+theme crossing - stepped by one UiTimer, owned by the context that owns everything they run in. A
+control reaches it through its form - see Control::animate - and the crossing code here uses the
+member.
+
+## AppContext::createBackend
+
+THE ONE PLACE A FORM ASKS FOR A BACKEND, and the answer is the kind the application is on at
+that moment - so a window opened after a switch matches the windows that swapped, and no two
+windows can disagree.
+
+The CPU backend is the core's own type and is always there. The GPU backend is the application's
+to name - see Application - and arrives as a factory; `gpuAvailable` is that factory being there
+at all, which on a platform with no GPU backend it never is.
+
+## AppContext::gpuAcceleration
+
+WHERE THE USER'S ANSWER IS KEPT: a `Dom::Value<bool>` under GpuAcceleration, true by default.
+Writing it is the whole of a switch - the node's own change reaches the context, which states the
+kind and raises BackendSwitchEvent - which is the path a colour mode takes to the theme.
+
+THE NODE IS IN THE SCHEMA ONLY WHERE A GPU BACKEND IS. An application that named none keeps no
+answer to a question it cannot ask, so the node is null there and `gpuAvailable` is that same
+answer. `usingGpu` is what is worn now, taken from the node while the context is built, so a
+stored answer is what the first window stands on rather than something switched to once it is up.
+
+## AppContext::scale
+
+WHERE THE USER'S ANSWER IS KEPT: a `Dom::Value<int>` under Scale in the Appearance section, the
+percent of the design everything is drawn at, 100 by default. Writing it is the whole of a
+change - the node's own change reaches the context, which states the percent and raises
+ScaleSwitchEvent - which is the path the backend answer takes to the windows.
+
+THE PERCENT IS BROUGHT INSIDE THE BAND, between `k_minScalePercent` and `k_maxScalePercent`. The
+config is text the user is free to edit, and a window drawn at a factor outside the band is one
+nothing on it can be reached in. The node keeps whatever it was written with; `scalePercent` is
+the answer that was taken, and it is what every window reads.
+
+`scalePercent` is taken from the node while the context is built, so a stored size is what the
+first window opens at rather than one it is moved to once it is up - FormBase::initialize is
+where a form reads it, so a window opened later matches the windows already up.
+
+## AppContext::zAnimation
+
+WHERE THE USER'S ANSWER IS KEPT: a `Dom::Value<float>` under ZAnimation, the share of the theme's
+Z animation every control takes - 0 none, 1 the depth the theme states, 0.5 by default. Writing
+it is the whole of a change - the node's own change reaches the context, which states the amount
+and raises ZAnimationSwitchEvent.
+
+The amount multiplies `ControlMetrics::zDepthFactor` where a paint reads it, so the resting depth
+and the held depth scale together and flush stays flush. It is brought inside 0 to 1 and taken
+from the node while the context is built, the way the scale percent is.
+
+THE AMOUNT IS AN OPTION ONLY WHERE CLAFI_TEXT_MOVING IS 1. At 0 the node, the amount and
+ZAnimationSwitchEvent are left out of the build, and every control takes the depth the theme
+states, as an amount of 1 would. A ZAnimation key in a config written where the node stood is
+discarded as an unrecognised key when the config is read.
+
+## AppContext::configFolderExists
+
+NOTHING IS STORED UNTIL THE USER ALLOWS IT, and the config folder is that answer: an
+application creates it when the user agrees, and reads its config back on every later start
+because the folder is there. The flag and the folder cannot disagree - the flag is read off the
+folder at start and set when the folder is made. A window's placement follows the same rule
+twice over. The config is not loaded without the folder, so there is nothing to restore; and on
+Wayland no session is asked of the compositor without it, because a session id that may not be
+written down would leave the compositor keeping records for nobody.
+
+## AppContext::ensureConfigFolder
+
+THE ONE PLACE A CONFIG FOLDER IS MADE. Making it is the user allowing storing at all - see
+configFolderExists - so the question that leads here names the folder, and what appears on
+the disk is what was read in the question. An application with nowhere to put one - no
+appDataPath - has no folder to offer and makes none.
+
+## AppContext::deleteConfigFolder
+
+The folder and everything under it, because the folder is what the user was asked about: a
+permission withdrawn is not withdrawn from one file. The publisher folder above it goes with
+it once it is empty - an application that has stopped storing leaves nothing behind - while
+one still holding another application's settings, or the `Share` folder the publisher's
+applications keep their themes in, is not empty and stays.
+
+THE APPLICATION DATA ROOT IS THE FLOOR. Where a publisher is unnamed the folder above the
+config folder IS that root, shared with every other publisher, and its being empty says
+nothing about who may still want it. Every step is taken through the error_code overloads and
+stops at the first refusal, so a folder held open by something else leaves the rest standing
+rather than throwing out of a click.
+
+The config document is untouched and goes on answering in memory; it simply has nowhere to be
+written, which is what configFolderExists already says everywhere it is read.
+
+## AppContext::k_mainFormName
+
+THE NAME AN APPLICATION'S MAIN WINDOW IS KEPT UNDER, stated once because two places have to
+agree on it: ApplicationBase names it in the Forms schema, and every application hands the
+same name to FormBase::setConfigName before its first show. A window whose config name is not
+in the schema has nowhere to be written, and the two spellings drifting apart is exactly the
+failure that costs nothing to make impossible.
+
+## AppContext::restoreFormPlacement
+
+Given to the window before its first placement, and only while the config folder exists - see
+configFolderExists. A form asks for it through its config name - see FormBase::setConfigName -
+so the platform's own half is reached with the Forms section and the name, and knows nothing
+about how the application decided.
+
+## AppContext::storeFormPlacement
+
+Written into the config whether or not the folder exists: the config reaches the disk only
+through an application that saves it, and the folder decides there. So an application that
+saves at its first exit - the Themes app does - has the placement in the file from its first
+run, and restores it from its second.
+
+The session is the one thing here that is not written but asked for, and it is asked for while
+the folder exists and the window is still up - see Platform::addFormToSession. Ticking Keep
+settings on this PC therefore needs no restart: the run it was ticked in leaves both halves
+behind, the config's own and the compositor's, and the next launch puts the window back.
+
+## IPlatformWindow::showWindowMenu
+
+THE SYSTEM'S OWN MENU FOR THIS WINDOW - Maximize, Minimize, Move, Close and whatever else the
+desktop puts there - which a window drawing its own title bar has to ask for, since the system never
+sees a title to raise it from. The form asks on a right click over the title zone that no control
+claimed; the point is where the menu opens, and the stamp is the press that asked, which is what a
+display server weighs the request against. What the menu does is the system's: a command chosen from
+it arrives as a WM_SYSCOMMAND on Win32 and as configures on Wayland, so a window closed from it is
+closed through wnd_closeRequested like any other.
+
+## AppContext::updateCheck
+
+The application's update check, built from AppParams::updates and the version. It asks nothing
+until start is called - the Information page calls it when its button is pressed - so an
+application makes no request the user did not make. It lives as long as the context, which is
+what lets an answer outlive the page that asked for it.
+
+The last answer is kept in the config, under UpdateCheck, so the next run starts from it - see
+AppContext::connectUpdateCheck.
+
+## AppContext::connectUpdateCheck
+
+Hands the check its section of the config. The section stands only where the check is available, the
+way the GPU node stands only where a GPU backend does, so an application with no repository keeps
+nothing about updates.
+
+Like everything else in the config, the answer reaches the disk only where the user allowed
+storing - see AppContext::configFolderExists.
+
+## UpdateSource
+
+Where an application's releases are published: a GitHub repository, written owner/name, and the
+text each release's tag carries ahead of its version. ClaFi's own applications are released from
+clafi-fw/cpp under tags such as WhatsClip-v0.1.2, so WhatsClip states WhatsClip-v. Both parts are
+put into addresses as written, so neither may hold a character an address would need escaped. An
+application that names no repository has no update check.
+
+## UpdateCheckEvent
+
+Raised on every move of the state, on the UI thread: Checking when start sends the question, then
+one of Latest, Newer and Failed. A stored answer read back from the config raises it as well, as
+Latest or Newer. An answer that moves nothing - the state, the newer version and the time all as
+they were - raises nothing. A handler must not call start - start replaces the fetch whose done
+event the handler may be running inside.
+
+## UpdateCheck
+
+Asks GitHub whether a release newer than the running one is published.
+
+The question is one GET of api.github.com/repos/<repository>/git/matching-refs/tags/<tagPrefix>,
+which lists every tag that starts with the prefix - one application's tags rather than the
+repository's whole release list, about four hundred bytes each. A tag stands for a published
+release because the release recipe creates the two in one step.
+
+Each tag's version is read as major.minor.patch and compared number by number; a tag that does
+not read that way is skipped. The newest above the running version makes the state Newer, and its
+page is github.com/<repository>/releases/tag/<tagPrefix><version>. None above it makes the state
+Latest, so a version bumped and not yet released counts as the latest too.
+
+Failed is every way there is no answer to read: no connection, a redirect, a status other than
+200, or a body that is not a JSON array. GitHub allows sixty unauthenticated requests an hour from
+one address, and a request past them is answered 403.
+
+The check is available where the version reads as major.minor.patch and a repository is named.
+start does nothing while a question is out.
+
+answeredAt is when the last answer arrived, to the second, in this run or an earlier one. A
+failure leaves it where it is, so after Failed it still says when an answer last arrived. It is
+none until the first answer.
+
+## UpdateCheck::createConfigSchema
+
+The section an answer is kept in, for the application's config schema: AnsweredAt and
+NewestVersion, both text. AnsweredAt is UTC to the second, written as 2026-10-04T09:20:34Z.
+NewestVersion is the newest published version as its tag spells it after the prefix, kept
+whether or not it was newer than the version running then, and empty where no tag was
+published. AppContext puts the section in the config under UpdateCheck.
+
+## UpdateCheck::keepIn
+
+Takes a section built from createConfigSchema. The check reads the answer the section holds,
+and writes every later answer into it.
+
+A value that does not read - a time not spelled the way the check writes it, a date that does
+not exist - is no answer, and the state stays Unchecked. The config is text the user is free to
+edit.
+
+## UpdateCheck::takeAnswer
+
+The state an answer makes. The newest version is compared against the version running now, not
+the one that ran when the answer arrived: an update installed since then reads as Latest, and a
+version running ahead of every tag counts as the latest too. Nothing is raised where the answer
+moves nothing.

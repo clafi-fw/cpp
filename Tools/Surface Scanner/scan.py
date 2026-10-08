@@ -1,6 +1,6 @@
 """Harvests the ClaFi design surface out of the source and checks the declaration routine.
 
-The notes a comment refers to live in Source/RawDocs.
+The notes a comment refers to live in Source/.seedocs/footnotes.
 Reads lines. Does not parse C++, does not expand macros, does not follow templates.
 
     python scan.py            writes surface.json
@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 SOURCE = ROOT / "Source"
-NOTES = ROOT / "Source" / "RawDocs"
+NOTES = ROOT / "Source" / ".seedocs" / "footnotes"
 MAX_COLUMNS = 100
 
 RE_MODULE = re.compile(r"^\s*export\s+module\s+([\w.:]+)\s*;")

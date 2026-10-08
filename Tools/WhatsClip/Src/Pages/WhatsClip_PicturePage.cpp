@@ -253,7 +253,7 @@ namespace ClaFi::Tools::WhatsClip
         MenuItem& edit = menu.add(L"Edit color", [this](Control& item) {
             openEditor(item);
         });
-        edit.setOpensWindow(OpensWindow::Yes);
+        edit.setEndIcon(EndIcon::OpensWindow);
         if (!body().selectedColor())
         {
             edit.onGetState([](GetStateEvent& stateEvent) {

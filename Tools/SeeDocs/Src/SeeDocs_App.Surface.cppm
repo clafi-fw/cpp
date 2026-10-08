@@ -14,7 +14,7 @@ namespace SeeDocs_App
         std::size_t line{ 0 };
     };
 
-    // A comment's reference to a note under RawDocs - the stem of the note, and a heading in it.
+    // A comment's reference to a footnote - the stem of the note, and a heading in it.
     export struct Reference
     {
         std::wstring note;
@@ -322,6 +322,4 @@ namespace SeeDocs_App
     // optional # and anchor, and nothing after. The anchor defaults to the name's own slug.
     export [[nodiscard]] std::optional<Reference> cutReference(std::wstring& text,
         std::wstring_view name);
-    // The folder under a tree's root that holds the notes the comments refer to.
-    export constexpr std::wstring_view k_notesFolder = L"RawDocs";
 }

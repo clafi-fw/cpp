@@ -17,7 +17,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 DATA = HERE / "surface.json"
 OUT = HERE / "Controls-Reference.html"
-NOTES = "../../Source/RawDocs"
+NOTES = "../../Source/.seedocs/footnotes"
 
 
 NOCOMMENT = '<span class="missing">no comment</span>'

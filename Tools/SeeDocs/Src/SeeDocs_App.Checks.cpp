@@ -26,7 +26,7 @@ namespace SeeDocs_App
         class Checker
         {
         public:
-            Checker(const Surface&, const std::filesystem::path& root);
+            Checker(const Surface&, const std::filesystem::path& footnotes);
             [[nodiscard]] Report run();
         private:
             void checkComments();
@@ -45,10 +45,10 @@ namespace SeeDocs_App
             std::vector<std::pair<std::wstring, Place>> m_missing;   // comments not written
         };
 
-        Checker::Checker(const Surface& surface, const std::filesystem::path& root)
+        Checker::Checker(const Surface& surface, const std::filesystem::path& footnotes)
             :
             m_surface{ surface },
-            m_notes{ root / k_notesFolder }
+            m_notes{ footnotes }
         {
         }
 
@@ -396,9 +396,9 @@ namespace SeeDocs_App
         });
     }
 
-    Report checkSurface(const Surface& surface, const std::filesystem::path& root)
+    Report checkSurface(const Surface& surface, const std::filesystem::path& footnotes)
     {
-        Checker checker{ surface, root };
+        Checker checker{ surface, footnotes };
         return checker.run();
     }
 

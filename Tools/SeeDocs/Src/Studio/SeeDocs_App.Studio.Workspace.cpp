@@ -209,7 +209,7 @@ namespace SeeDocs_App
         }
 
         m_surface = std::move(surface);
-        m_notes.emplace(project.notesFolder());
+        m_notes.emplace(project.footnotesFolder());
         m_project = std::move(project);
         if (!m_view.bind(*m_surface, *m_notes))
             showEmptyProject();

@@ -62,9 +62,9 @@ namespace SeeDocs_App
             // when the dialog takes the focus - see Platform::pickFolder.
             group.add<Button>(
                 L"Browse",
-                OpensWindow::Yes,
+                EndIcon::OpensWindow,
                 HorizontalAlign::Left,
-                HintText{ L"Opens a folder holding Source as a project" },
+                HintText{ L"Opens a folder as a project" },
                 Button::OnClick{ [&workspace](ClickEvent& event) {
                     event.closeForm();
                     workspace.browse();

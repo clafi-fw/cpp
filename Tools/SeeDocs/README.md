@@ -15,9 +15,10 @@ The report reads `file:line: level: text`, one line per finding, in file and lin
 
 ## Projects
 
-A project is a tree with a `.seedocs` folder in it. Everything SeeDocs makes of the tree is kept
-there - the database the scanner writes and `Project.cfg`, the project's properties, which is its
-name so far, taken from the folder's own - so the tree itself is left as it was found. A scan into
+A project is a tree with a `.seedocs` folder in it. Everything SeeDocs keeps of the tree stands
+there - the database the scanner writes, `Project.cfg`, the project's properties, which is its
+name so far, taken from the folder's own, and `footnotes`, the notes a comment's `See` reaches,
+written by the tree's authors - so the tree itself is left as it was found. A scan into
 the tree's own database makes the folder; the studio makes it with the user's consent, asked in a
 dialog, and scans the tree at once so the project opens with its database in place. A `--out`
 file written anywhere else makes no project.
@@ -92,7 +93,7 @@ entry.
 ## The studio
 
 `SeeDocs Studio` opens a project - the tree named on its command line, else the project it was
-last left on - and shows the project's database and the notes under its `RawDocs` as pages. The
+last left on - and shows the project's database and its footnotes as pages. The
 application menu's Open page is where projects are opened: a Browse button asks for a folder in
 the desktop's own dialog, and the projects opened before stand under it, most recent first, one
 click each. A folder with no `.seedocs` becomes a project there, once the user has agreed to the
@@ -137,8 +138,8 @@ and blocks of prose - out of the surface and the notes; the studio builds contro
 - a comment above a declaration it would fit on, and one riding a line past 100 columns
 - an event whose three spellings disagree, or whose struct is not found
 - a property whose type is neither an enum, a known value kind, nor a declared type
-- a `See` reference to a note that does not exist under the tree's `RawDocs`, or to a heading the
-  note does not have - on every line of a comment
+- a `See` reference to a footnote that does not exist under the tree's `.seedocs/footnotes`, or
+  to a heading the note does not have - on every line of a comment
 - a class declaring properties or events whose base chain reaches neither Control nor a type
   the scanner can read
 - a value type declared under `Controls/Base`, where it reaches an application only through an

@@ -33,8 +33,8 @@ namespace ClaFi::Controls
         DECLARE_WRITABLE_PROPERTY(IconSize, iconSize, setIconSize, 16.0f)
         // How the button lays its icon out against its text.
         DECLARE_WRITABLE_PROPERTY(ButtonViewMode, viewMode, setViewMode, ButtonViewMode::TextLabel)
-        // Whether the command opens a window of its own. See Controls-Base
-        DECLARE_WRITABLE_PROPERTY(OpensWindow, opensWindow, setOpensWindow, OpensWindow::No)
+        // The icon at the end of the line. See Controls-Base
+        DECLARE_WRITABLE_PROPERTY(EndIcon, endIcon, setEndIcon, EndIcon::None)
     public:
         std::wstring_view diagnosticText() const override { return  L"ButtonBase"; }
         void setIndicatorVisibility(const IndicatorVisibility value);
@@ -43,7 +43,7 @@ namespace ClaFi::Controls
         void setIndicatorPlacement(const IndicatorPlacement value);
         void setIconSize(IconSize);
         void setViewMode(ButtonViewMode);
-        void setOpensWindow(OpensWindow);
+        void setEndIcon(EndIcon);
     protected:
 
         ControlSpan controls() override;
@@ -90,10 +90,10 @@ namespace ClaFi::Controls
     private:
         
         // Both of them depend on text size - making them const is wrong:
-        // How large the mark that says the command opens a window is drawn, in design units.
-        static constexpr float k_openWindowMark = 18.0f;
-        // The least room left between the caption and that mark.
-        static constexpr float k_openWindowMarkGap = 8.0f;
+        // How large the end icon is drawn, in design units.
+        static constexpr float k_endIconSize = 18.0f;
+        // The least room left between the caption and the end icon.
+        static constexpr float k_endIconGap = 8.0f;
         
         static constexpr std::size_t k_maxChildren = 2;
         using ChildArray = std::array<ControlPtr, k_maxChildren>;
@@ -125,7 +125,7 @@ namespace ClaFi::Controls
         INIT_PROPERTY(indicatorPlacement),
         INIT_PROPERTY(iconSize),
         INIT_PROPERTY(viewMode),
-        INIT_PROPERTY(opensWindow)
+        INIT_PROPERTY(endIcon)
     {
         applyIndicatorVisibility();
     }

@@ -118,7 +118,7 @@ namespace SeeDocs_App
         [[nodiscard]] int check(const Options& options)
         {
             const Surface surface = scanTree(options.tree);
-            const Report report = checkSurface(surface, options.tree);
+            const Report report = checkSurface(surface, footnotesFolderOf(options.tree));
             print(formatReport(report, surface));
             print(L"\n" + std::to_wstring(classCount(surface)) + L" classes, "
                 + std::to_wstring(report.errorCount()) + L" errors, "

@@ -707,11 +707,11 @@ namespace ClaFi
         return value == ButtonViewMode::TopLeftIcon || value == ButtonViewMode::TopCenterIcon;
     }
 
-    // Whether the command a button stands for opens a window of its own. See Controls-Base
-    export enum class OpensWindow
+    // The icon a button carries at the end of its line. See Controls-Base
+    export enum class EndIcon
     {
-        No,
-        Yes
+        None,
+        OpensWindow
     };
 
     // Where the dropdown mark points with the popup closed and with it open. See UI-Types

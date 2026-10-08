@@ -137,7 +137,7 @@ namespace ClaFi
             strip().add<ToolButton>(
                 Text{ TextStyleId::SubHeading, L"Show diagnostic" },
                 k_itemPadding,
-                OpensWindow::Yes,
+                EndIcon::OpensWindow,
                 ButtonViewMode::LeftIcon,
                 k_iconSize,
                 k_textAnchor,

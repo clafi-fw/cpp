@@ -2,7 +2,7 @@ export module SeeDocs_App.Notes;
 
 import ClaFi.StdLib;
 
-// THE NOTES UNDER RAWDOCS, each read on the first ask and cut into its sections. A section is a
+// THE FOOTNOTES, each read on the first ask and cut into its sections. A section is a
 // heading and the lines under it, up to the next heading of its own level or a higher one, and a
 // reference reaches it by the slug of its heading. See the README beside the project.
 namespace SeeDocs_App

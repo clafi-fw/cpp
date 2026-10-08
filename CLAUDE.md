@@ -10,13 +10,16 @@ style directive. Read it before writing or editing any C++ in this tree.
 
 The declaration routine is how a control, its properties and its events are declared so that a
 line scanner can harvest them. A comment on a harvested
-declaration is one line, and the words that do not fit go into a note under `Source/RawDocs`,
-referenced from the line. `python "Tools/Surface Scanner/scan.py" --check` reports every departure.
+declaration is one line, and the words that do not fit go into the subsystem's footnote under
+`Source/.seedocs/footnotes`, referenced from the line; what only an author of the framework needs
+- why, how inside, what happened - goes into the working note of the same name under
+`Source/Working Notes`. `python "Tools/Surface Scanner/scan.py" --check` reports every departure.
 
 ## Layout
 
-Library code is under `Source/`, with the notes the code refers to beside it in
-`Source/RawDocs/`; the manuals are under `docs/`. `Showcase/`
+Library code is under `Source/`, with the footnotes the code refers to in
+`Source/.seedocs/footnotes/` and the authors' working notes in `Source/Working Notes/`; the
+manuals are under `docs/`. `Showcase/`
 and `Tools/` are applications that import the library, not part of it.
 
 ## Two builds, and they are not equivalent
@@ -70,6 +73,8 @@ Subsystem manuals are self-contained HTML in `docs/`, published as GitHub Pages 
 https://clafi-fw.github.io/cpp/ - lower-case file names, one per subsystem (`dom.html`,
 `events.html`, `textengine.html`), listed in `index.html`.
 
-`Source/RawDocs/` holds the prose that would not fit above a declaration, one note
-per subsystem, referenced from the code by `See <note-stem>`. It is the raw material the end-user
-documentation will be built out of, and nothing in it is shipped in that form.
+`Source/.seedocs/footnotes/` holds the prose that would not fit above a declaration, one note
+per subsystem, referenced from the code by `See <note-stem>` and read by SeeDocs into the
+generated documentation: what a thing is and does, for whoever builds on the framework.
+`Source/Working Notes/` holds the authors' side under the same names - why, how inside, what
+happened - and SeeDocs never reads it.

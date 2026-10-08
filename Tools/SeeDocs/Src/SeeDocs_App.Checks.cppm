@@ -6,7 +6,7 @@ import ClaFi.StdLib;
 
 // THE DECLARATION ROUTINE, held to. Every rule the routine states is read off the surface: the
 // one-line comment and where it sits, the binds a property needs, the three spellings of an
-// event, the references into RawDocs. See the README beside the project.
+// event, the references into the footnotes. See the README beside the project.
 namespace SeeDocs_App
 {
     export enum class Level
@@ -38,8 +38,9 @@ namespace SeeDocs_App
         Entries m_entries;
     };
 
-    // Runs every rule over the surface, reading the notes under the tree for the references.
-    export [[nodiscard]] Report checkSurface(const Surface&, const std::filesystem::path& root);
+    // Runs every rule over the surface, reading the footnotes in that folder for the references.
+    export [[nodiscard]] Report checkSurface(const Surface&,
+        const std::filesystem::path& footnotes);
 
     // The report as lines of `file:line: level: text`, one per entry.
     export [[nodiscard]] std::wstring formatReport(const Report&, const Surface&);
