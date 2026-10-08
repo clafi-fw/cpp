@@ -134,14 +134,16 @@ namespace ClaFi::Controls
 
     // The application has first refusal, and a handler that stops the event has replaced the
     // menu outright. Stopped here before the menu runs, so nothing above raises a second menu
-    // behind this one.
+    // behind this one. The menu stands on the row it was asked for - the one under the pointer,
+    // or the current row from the keyboard - rather than on the tree, whose bounds run past the
+    // window the moment it scrolls.
     void TreeView::nestedContextPopup(ContextPopupEvent& event)
     {
         StackView::nestedContextPopup(event);
         if (event.propagationStopped() || m_nodes.empty())
             return;
         event.stopPropagation();
-        Menu menu{ *this };
+        Menu menu{ *event.control };
         menu.add(m_expandAll);
         menu.add(m_collapseAll);
         menu.add(m_collapseOthers);
@@ -217,22 +219,19 @@ namespace ClaFi::Controls
         });
     }
 
-    // The nodes are listed with every node after the one holding it, so the first closed node
-    // over the row is the outermost one.
+    // A bulk collapse closes the nodes outer first, so the row ends on the outermost header over
+    // it; a single node closing leaves it on that node's own.
+    void TreeView::rowsFolded(TreeNode& node)
+    {
+        const Control* row = currentItem();
+        if (row && node.rows().containsNested(row))
+            setCurrentItem(node.header());
+    }
+
     void TreeView::showCurrentRow()
     {
-        Control* row = currentItem();
-        if (!row)
-            return;
-        for (TreeNode* node : m_nodes)
-        {
-            if (!node->header().expanded() && node->rows().containsNested(row))
-            {
-                node->header().scrollIntoViewOnAlign();
-                return;
-            }
-        }
-        row->scrollIntoViewOnAlign();
+        if (Control* row = currentItem())
+            row->scrollIntoViewOnAlign();
     }
 
 }

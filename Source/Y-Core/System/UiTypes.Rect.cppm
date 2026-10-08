@@ -187,6 +187,8 @@ namespace ClaFi
         bool contains(T x, T y) const;
         bool contains(const Point<T> pt) const { return contains(pt.x, pt.y); }
         void clampTo(Rect<T> boundary);
+        // Cuts the rect to the boundary; one wholly outside collapses onto its nearest edge
+        void clipTo(const Rect<T>& boundary);
         Point<T> closestPoint(Point<T> value) const;
         Point<T> corner(Corner);
     };
@@ -565,6 +567,17 @@ namespace ClaFi
 
         clampAxis(left, right, boundary.left, boundary.right);
         clampAxis(top, bottom, boundary.top, boundary.bottom);
+    }
+
+    // Each edge on its own, which is the intersection while the two overlap and a rect of no
+    // area on the boundary's edge once they do not - never the inverted rect intersectWith leaves.
+    template<ArithmeticType T>
+    void Rect<T>::clipTo(const Rect<T>& boundary)
+    {
+        left = std::clamp(left, boundary.left, boundary.right);
+        right = std::clamp(right, boundary.left, boundary.right);
+        top = std::clamp(top, boundary.top, boundary.bottom);
+        bottom = std::clamp(bottom, boundary.top, boundary.bottom);
     }
 
     template<ArithmeticType T>

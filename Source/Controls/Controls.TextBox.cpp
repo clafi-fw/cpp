@@ -140,6 +140,16 @@ namespace ClaFi::Controls
     {
     }
 
+    LinkContextPopupEvent::LinkContextPopupEvent(TextBox& box, std::wstring target,
+        const TextRange range, ContextPopupEvent& popup)
+        :
+        EventOf<TextBox>{ box },
+        target{ std::move(target) },
+        range{ range },
+        popup{ popup }
+    {
+    }
+
     TextRange TextBox::selection() const
     {
         // An unplaced caret stands past the text, and a whole-text selection runs past it.
@@ -450,6 +460,23 @@ namespace ClaFi::Controls
         // there would collapse the range before the menu is even up.
         if (!mousePosInSelection())
             setCaretPosFromMouse();
+
+        // A LINK UNDER THE POINTER IS WHAT THE MENU IS ABOUT, ahead of the box: the box's menu is
+        // its edit commands, and none of them is about where the link goes. The target is copied
+        // out before anyone is told, as a click's is. A handler that has shown the link's menu
+        // stops the request, and the box raises nothing over it; one that has not leaves the
+        // box to answer as for a click anywhere else in it.
+        if (event.mousePos)
+        {
+            if (const std::optional<LinkHit> hit = linkAt(*event.mousePos))
+            {
+                LinkContextPopupEvent linkEvent{ *this, std::wstring{ hit->link.value },
+                    hit->link.range, event };
+                emitEvent(linkEvent);
+                if (event.propagationStopped())
+                    return;
+            }
+        }
 
         // The application gets first refusal, and a handler that stops the event has replaced
         // the menu outright.

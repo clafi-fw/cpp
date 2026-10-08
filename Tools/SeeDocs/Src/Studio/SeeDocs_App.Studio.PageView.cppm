@@ -59,6 +59,8 @@ namespace SeeDocs_App
         // Scrolls to the footnote the anchor names. An empty anchor names the page itself, and
         // the page stays where it stands for it.
         void showAnchor(std::wstring_view anchor);
+        // The link a menu is up for, as the text states it; empty while no link menu is up.
+        [[nodiscard]] std::wstring_view menuLink() const { return m_menuLink; }
     private:
         // Where a table's footnotes go: the box under its grid, once there is one.
         struct Footnotes
@@ -86,6 +88,8 @@ namespace SeeDocs_App
         void connectLinks(Grids::Grid&);
         void connectLinks(TextBox&);
         void open(std::wstring target);
+        // Runs the menu for a link - Open and Open in new tab - on the control it was asked on.
+        void showLinkMenu(Control& owner, std::wstring target, ContextPopupEvent&);
         [[nodiscard]] static bool hasFootnotes(const Table&);
         [[nodiscard]] static bool hasFootnotes(const TableGroup&);
         [[nodiscard]] static std::wstring footnoteAnchor(std::size_t index);
@@ -111,6 +115,7 @@ namespace SeeDocs_App
         std::vector<Control*> m_parts{};   // what the page stands as under the title, in order
         std::vector<TextBox*> m_footnoteBoxes{};   // one under every table with footnotes
         std::size_t m_footnoteCount{ 0 };   // numbered through the page, so an anchor names one
+        std::wstring m_menuLink{};   // the link the menu that is up is about
 
         TextBox& m_head{ createTopBar<TextBox>(
             ReadOnly::Yes,

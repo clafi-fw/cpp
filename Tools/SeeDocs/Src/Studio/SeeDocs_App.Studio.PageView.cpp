@@ -5,8 +5,11 @@ import SeeDocs_App.Studio.PageText;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
+import ClaFi.Browser.Actions;
+
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Grids;
+import ClaFi.Controls.Menu;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
@@ -390,6 +393,10 @@ namespace SeeDocs_App
         grid.onCellLinkClick([this](Grids::CellLinkClickEvent& event) {
             open(event.target);
         });
+        // The row, which is where the request was raised.
+        grid.onCellLinkContextPopup([this](Grids::CellLinkContextPopupEvent& event) {
+            showLinkMenu(*event.popup.control, event.target, event.popup);
+        });
     }
 
     void PageView::connectLinks(TextBox& box)
@@ -397,12 +404,33 @@ namespace SeeDocs_App
         box.onLinkClick([this](LinkClickEvent& event) {
             open(event.target);
         });
+        box.onLinkContextPopup([this](LinkContextPopupEvent& event) {
+            showLinkMenu(event.sender(), event.target, event.popup);
+        });
     }
 
     void PageView::open(std::wstring target)
     {
         PageLinkEvent event{ std::move(target) };
         emitEvent(event);
+    }
+
+    // THE MENU NAMES TWO COMMANDS AND SETTLES NEITHER: Open and Open in new tab are the browser's,
+    // answered against the path this page names - the link the menu is up for, held for exactly
+    // that long, so a target the surface does not carry arrives greyed. An anchor of the page is
+    // a move on the page standing, and no menu is made for one. Stopped before the menu runs, so
+    // nothing above raises a second menu behind it. See Browser
+    void PageView::showLinkMenu(Control& owner, std::wstring target, ContextPopupEvent& event)
+    {
+        if (target.starts_with(k_anchorPrefix))
+            return;
+        m_menuLink = std::move(target);
+        Menu menu{ owner };
+        menu.add(Browser::Actions::open);
+        menu.add(Browser::Actions::openInNewTab);
+        event.stopPropagation();
+        menu.execute();
+        m_menuLink.clear();
     }
 
     bool PageView::hasFootnotes(const Table& table)

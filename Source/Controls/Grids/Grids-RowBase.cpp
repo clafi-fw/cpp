@@ -248,9 +248,28 @@ namespace ClaFi::Controls::Grids
             m_descriptor.m_owner.cellLinkClick(event);
     }
 
+    void RowBase::cellLinkContextPopup(CellLinkContextPopupEvent& event)
+    {
+        emitEvent(event);
+        if (!event.popup.propagationStopped())
+            m_descriptor.m_owner.cellLinkContextPopup(event);
+    }
+
     CursorShape RowBase::cursor() const
     {
         return m_pointsAtLink ? CursorShape::Hand : LaneBase::cursor();
+    }
+
+    FloatRect RowBase::contextMenuAnchor() const
+    {
+        const Column* column = m_descriptor.selectedColumn();
+        if (column && m_descriptor.selectedRow() == this)
+        {
+            const FloatRect cellRect = cellRectInForm(*column);
+            if (!cellRect.empty())
+                return cellRect;
+        }
+        return LaneBase::contextMenuAnchor();
     }
 
     std::wstring RowBase::acceptCellText(const Column& column, const Text& text)
@@ -610,6 +629,26 @@ namespace ClaFi::Controls::Grids
         LaneBase::nestedClick(event);
     }
 
+    // A LINK IS WHAT THE MENU IS ABOUT where one stands under the pointer or, from the keyboard,
+    // in the selected cell. Only the row the request was raised on answers - it passes through
+    // every row on the way up. A handler that has shown the link's menu stops the request; one
+    // that has not leaves it to go on up as from anywhere else on the row.
+    void RowBase::nestedContextPopup(ContextPopupEvent& event)
+    {
+        if (event.control == this)
+        {
+            if (std::optional<MenuLink> link = menuLink(event))
+            {
+                CellLinkContextPopupEvent linkEvent{ *this, *link->column, std::move(link->target),
+                    event };
+                cellLinkContextPopup(linkEvent);
+                if (event.propagationStopped())
+                    return;
+            }
+        }
+        LaneBase::nestedContextPopup(event);
+    }
+
     Column* RowBase::columnAt(PointInForm mousePosition) const
     {
         return columnAt(mousePosition, boundsInForm().topLeft());
@@ -960,6 +999,33 @@ namespace ClaFi::Controls::Grids
         if (!hit.has_value())
             return std::nullopt;
         return std::wstring{ hit->link.value };
+    }
+
+    // The keyboard names a cell and no point in it, so the cell's first link stands for the cell.
+    std::optional<RowBase::MenuLink> RowBase::menuLink(const ContextPopupEvent& event)
+    {
+        if (event.mousePos)
+        {
+            const PointInForm point = *event.mousePos;
+            const Column* column = columnAt(point);
+            if (!column)
+                return std::nullopt;
+            std::optional<std::wstring> target = linkAt(*column, point);
+            if (!target.has_value())
+                return std::nullopt;
+            return MenuLink{ column, std::move(*target) };
+        }
+        const Column* column = m_descriptor.selectedColumn();
+        if (!column || m_descriptor.selectedRow() != this)
+            return std::nullopt;
+        Text cellText;
+        doGetCellText(*column, cellText);
+        for (const Text::Marker& marker : cellText.markers())
+        {
+            if (const PushLink* link = std::get_if<PushLink>(&marker.second))
+                return MenuLink{ column, link->target };
+        }
+        return std::nullopt;
     }
 
 }

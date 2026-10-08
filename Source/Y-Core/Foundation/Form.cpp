@@ -322,10 +322,22 @@ namespace ClaFi
         // editor changes the clipboard - is the case that showed it.
         //
         // The whole subtree is asked, since hiding a container hides what is in it without any
-        // of it being told. The same way down as a deletion: the target is cleared, nothing is
-        // offered, and the focus goes to nobody - a hidden control cannot take it back.
-        if (m_activePopup && control.containsNested(m_activePopup->m_popupTarget))
-            dropActivePopup();
+        // of it being told. The same way down as a deletion: the target is cleared and nothing is
+        // offered. The focus a closing popup hands back to its target cannot go to a hidden
+        // control, so it goes to the nearest one over it that can take it - the tree a folded row
+        // stands in, the strip a hidden tab stands in - rather than to nobody, which left the
+        // keyboard with nowhere to go until the next click.
+        if (!m_activePopup || !control.containsNested(m_activePopup->m_popupTarget))
+            return;
+        dropActivePopup();
+        for (Control* over = control.parent(); over; over = over->parent())
+        {
+            if (over->canTakeFocus())
+            {
+                over->setFocus();
+                return;
+            }
+        }
     }
 
     void FormBase::invalidateControl(const Control* control) const
@@ -2072,6 +2084,23 @@ namespace ClaFi
                 pt.offset(0.0f, static_cast<float>(cursorInfo.size.y - cursorInfo.hotSpot.y));
             }
             return FloatRect::fromDimensions(pt, {});
+        }
+        // A MENU THE KEYBOARD RAISED STANDS ON THE PART OF ITS TARGET THAT IS ON SCREEN. The rect
+        // is the target's own statement and reaches wherever the target does - a scrolled tree's
+        // bounds run past the window - and a placement weighing the room under an edge that is
+        // off the screen drops the menu above it, clamped to the screen's top. Clipped into what
+        // the viewports over the target leave open; a target scrolled clear of them puts the rect
+        // on the edge it left by, which is as near the control as a menu can stand.
+        if (m_placement == FormPlacement::ContextMenu)
+        {
+            if (const Control* target = placementTarget())
+            {
+                FloatRect rect = m_placementRect;
+                const FloatRect window = target->windowInForm();
+                if (!window.empty())
+                    rect.clipTo(window);
+                return rect;
+            }
         }
         return m_placementRect;
     }

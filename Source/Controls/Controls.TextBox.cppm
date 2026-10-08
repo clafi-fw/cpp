@@ -81,6 +81,15 @@ namespace ClaFi::Controls
         GetHintEvent& hint;         // the hint itself: its text, placement and anchor
     };
 
+    // The menu for a link under the pointer is being asked for. See Controls
+    export struct LinkContextPopupEvent : public EventOf<TextBox>
+    {
+        LinkContextPopupEvent(TextBox&, std::wstring target, TextRange range, ContextPopupEvent&);
+        const std::wstring target;   // what the link names, as the text states it
+        const TextRange range;       // the text the link covers
+        ContextPopupEvent& popup;    // the request; a handler that has shown a menu stops it
+    };
+
     // A label the user can type into.
     export class TextBox : public WithTextLayout<Label>, public IEditHistory
     {
@@ -101,6 +110,8 @@ namespace ClaFi::Controls
         DECLARE_EVENT(LinkClickEvent, OnLinkClick, onLinkClick)
         // The hint of the link under the pointer is being asked for. See Controls#link-hints
         DECLARE_EVENT(GetLinkHintEvent, OnGetLinkHint, onGetLinkHint)
+        // The menu for a link under the pointer is being asked for. See Controls
+        DECLARE_EVENT(LinkContextPopupEvent, OnLinkContextPopup, onLinkContextPopup)
     public:
         // setCaretPosFromMouse Is calling from nestedPressDown, nestedContextPopup
         // and on popping in in-place edit form

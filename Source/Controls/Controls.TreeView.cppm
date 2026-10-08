@@ -89,7 +89,7 @@ namespace ClaFi::Controls
         TreeNode& addNode(Args&&...);
         // Opens every node.
         void expandAll();
-        // Closes every node.
+        // Closes every node; a current row folded away moves to the outermost header over it.
         void collapseAll();
         // Closes every node but the current row's own and the ones it stands under.
         void collapseOthers();
@@ -111,8 +111,9 @@ namespace ClaFi::Controls
         [[nodiscard]] bool holdsCurrentRow(const TreeNode&) const;
         [[nodiscard]] bool hasNode(bool expanded) const;
         [[nodiscard]] bool hasOtherNodeOpen() const;
-        // Brings the current row back after the nodes have moved - or, where it is folded away,
-        // the header of the outermost closed node over it.
+        // The node has closed; a current row folded away under it moves to its header.
+        void rowsFolded(TreeNode&);
+        // Brings the current row back after the nodes have moved.
         void showCurrentRow();
     private:
         Nodes m_nodes{}; // every node of the tree, each after the one holding it
@@ -159,6 +160,11 @@ namespace ClaFi::Controls
         m_rows{ createBody<Stack>(Orientation::Vertical) }
     {
         layOutHeader(params.themeMetrics().button);
+        // Closing over the current row folds it away, and the header is where it went.
+        header().connectEvent<ToggleExpandedEvent>([this](ToggleExpandedEvent& event) {
+            if (!event.expanded())
+                m_tree.rowsFolded(*this);
+        });
     }
 
     template<typename... Args>

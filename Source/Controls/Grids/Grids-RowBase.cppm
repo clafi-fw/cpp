@@ -71,10 +71,14 @@ namespace ClaFi::Controls::Grids
         DECLARE_EVENT(GetCellHintEvent, OnGetCellHint, onGetCellHint)
         // A link in one cell's text was clicked. See Grids
         DECLARE_EVENT(CellLinkClickEvent, OnCellLinkClick, onCellLinkClick)
+        // The menu for a link in one cell's text is being asked for. See Grids
+        DECLARE_EVENT(CellLinkContextPopupEvent, OnCellLinkContextPopup, onCellLinkContextPopup)
     public:
         std::vector<float>& calculatedHeight() { return m_calculatedHeight; }
         // The hand while the pointer stands on a link in a cell's text.
         [[nodiscard]] CursorShape cursor() const override;
+        // The selected cell while this row holds it, so a menu the keyboard raised drops under it.
+        [[nodiscard]] FloatRect contextMenuAnchor() const override;
     protected:
         using CellVisitor = std::function<void(const RowCell&)>;
         using LaneVisitor = std::function<void(const RowCell&, const FloatRect& lane)>;
@@ -110,6 +114,8 @@ namespace ClaFi::Controls::Grids
         virtual void getCellHint(GetCellHintEvent&);
         // A link clicked in one cell, told to this row's listeners and then to the grid.
         virtual void cellLinkClick(CellLinkClickEvent&);
+        // The menu for a link in one cell, asked of this row's listeners and then of the grid.
+        virtual void cellLinkContextPopup(CellLinkContextPopupEvent&);
         // The other end of getCellText: an in-place edit of this cell is being committed, and
         // this is the text it was left with. It goes to whatever answers getCellText, so a row
         // reading a cell out of a record writes it back to the field it read.
@@ -144,6 +150,8 @@ namespace ClaFi::Controls::Grids
         void nestedPressDown(PressDownEvent&) override;
         // A pointer click on a link in a cell's text follows the link and goes no further up.
         void nestedClick(ClickEvent&) override;
+        // A link under the pointer, or in the selected cell from the keyboard, takes the menu.
+        void nestedContextPopup(ContextPopupEvent&) override;
         //
         Column* columnAt(PointInForm) const;
         Column* columnAt(PointInControl) const;
@@ -173,6 +181,13 @@ namespace ClaFi::Controls::Grids
         // common. Every other row answers nullptr, an expander too - its header is a panel.
         virtual RowBase* spanRow() { return nullptr; }
 
+    private:
+        // The link a menu is about, and the column of the cell it stands in.
+        struct MenuLink
+        {
+            const Column* column;
+            std::wstring target;
+        };
     private:
         Column* columnAt(ScaledPosition mousePosition, ScaledPosition topLeft) const;
         // The column whose lane holds the point: a press on a blank names the cell it stands for.
@@ -205,6 +220,9 @@ namespace ClaFi::Controls::Grids
         // The target of the link under the point in this row's cell in that column; nothing
         // where no link stands there.
         [[nodiscard]] std::optional<std::wstring> linkAt(const Column&, PointInForm);
+        // The link under the pointer, or - from the keyboard - the first in the selected cell's
+        // text while this row holds the cell. Nothing where neither stands on a link.
+        [[nodiscard]] std::optional<MenuLink> menuLink(const ContextPopupEvent&);
     private:
         std::vector<float> m_calculatedHeight;
         bool m_pointsAtLink{}; // the pointer stands on a link in a cell's text

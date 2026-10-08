@@ -61,6 +61,17 @@ namespace SeeDocs_App
         return static_cast<SurfaceBrowser&>(tab().browserControl());
     }
 
+    // The link a menu is up for on the page, as the path of the surface it names - so Open and
+    // Open in new tab are about that link, and greyed for one the surface does not carry.
+    std::wstring SurfacePage::pathToOpen()
+    {
+        const std::wstring_view target = m_view.menuLink();
+        if (target.empty())
+            return {};
+        const std::optional<Url> url = browser().urlOf(target);
+        return url.has_value() ? url->path() : std::wstring{};
+    }
+
     // An anchor is a move on the page standing, so nothing goes down and the move runs at once;
     // it replaces, so a walk through the footnotes leaves no trail. A page named is a move that
     // takes this page down with it, and waits for the click to unwind. See Browser

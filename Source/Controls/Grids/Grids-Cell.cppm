@@ -83,6 +83,17 @@ namespace ClaFi::Controls::Grids
         const InputStamp stamp;    // the click the link answers
     };
 
+    // The menu for a link in one cell's text is being asked for; the row, then the grid. See Grids
+    export class CellLinkContextPopupEvent : public CellEventBase
+    {
+    public:
+        CellLinkContextPopupEvent(const RowBase&, const Column&, std::wstring target,
+            ContextPopupEvent&);
+    public:
+        const std::wstring target;   // what the link was written with
+        ContextPopupEvent& popup;    // the request; a handler that has shown a menu stops it
+    };
+
     // Stored cell callbacks, not construction properties. A handler passed when a grid or a
     // row is built is an OnEvent and connects itself; these are the ones a cell spec holds on
     // to and moves around, so they need a concrete default-constructible type.
@@ -145,6 +156,17 @@ namespace ClaFi::Controls::Grids
         CellEventBase{ row, column },
         target{ std::move(linkTarget) },
         stamp{ inputStamp }
+    {
+    }
+
+    // CellLinkContextPopupEvent
+
+    CellLinkContextPopupEvent::CellLinkContextPopupEvent(const RowBase& row, const Column& column,
+        std::wstring linkTarget, ContextPopupEvent& popup)
+        :
+        CellEventBase{ row, column },
+        target{ std::move(linkTarget) },
+        popup{ popup }
     {
     }
 

@@ -49,6 +49,8 @@ namespace SeeDocs_App
         explicit SurfacePage(const CreateParams&, Args&&...);
     public:
         [[nodiscard]] PageView& view() const { return m_view; }
+    protected:
+        std::wstring pathToOpen() override;
     private:
         // The browser the page is shown in. Structure rather than state, so const stops here.
         [[nodiscard]] SurfaceBrowser& browser() const;

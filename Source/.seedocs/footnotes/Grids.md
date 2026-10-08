@@ -124,6 +124,16 @@ column, off a layout of its own for a MovingText one, the point measured from wh
 column's vertical anchor put the block. The hand shows while the pointer stands on a link. A
 click a key made lands on nothing - it has no point.
 
+## CellLinkContextPopupEvent
+
+The menu for a link in one cell's text is being asked for. A right click on a link raises it on
+the row, then on the grid, the pair CellLinkClickEvent goes to. A menu the keyboard raised on the
+row holding the selected cell takes the first link in that cell's text, since a key names a cell
+and no point in it; that menu drops under the selected cell rather than under the row. It carries
+the target the link was written with and the request itself. A handler that shows a menu stops
+the request - the grid is asked only while none has - and the request goes no further up. Where
+no handler does, it goes on up as from a click anywhere else on the row.
+
 ## Column
 
 Column{ Tag{ ColumnTag::Hue }, Text{ L"Hue" }, Column{ ... }, Column{ ... } }

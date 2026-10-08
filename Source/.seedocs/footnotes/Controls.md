@@ -242,6 +242,16 @@ once more for this than the hint shapes it.
 In a box the user types into, a muted line follows saying Ctrl+click follows the link: a plain
 click there places the caret, and nothing else on screen says the link can be followed at all.
 
+## LinkContextPopupEvent
+
+The menu for a link under the pointer is being asked for. A right click on a link in the box's
+text raises this ahead of the box's own menu - the edit commands, none of which is about where
+the link goes - with the target as the text states it, the range the link covers, and the
+request itself. A handler that shows a menu stops the request, and the box raises nothing over
+it. Where no handler does, the box answers as for a click anywhere else in it: the application's
+first refusal, then the edit menu. A menu the keyboard raised stands at the caret and names no
+link, so none is asked about.
+
 ## Anchors
 
 TextBox::goToAnchor selects the text the anchor holds and brings its line to the top of the

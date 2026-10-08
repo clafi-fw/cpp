@@ -257,7 +257,8 @@ namespace ClaFi
         // nothing more - see ScrollBox::clientScrolled.
         void contentMoved(const Control&) const;
         // A control has been hidden, and a popup standing on it or on anything inside it goes
-        // down with it, the way forgetControl takes one down with a deleted control.
+        // down with it, the way forgetControl takes one down with a deleted control; the focus
+        // goes to the nearest control over the hidden one that can take it.
         void controlHidden(const Control&);
         void invalidateControl(const Control*) const;
         void invalidateRect(const FloatRect& value) const { m_window->invalidateRect(value); }

@@ -48,6 +48,8 @@ namespace ClaFi::Controls::Grids
         DECLARE_EVENT(GetCellHintEvent, OnGetCellHint, onGetCellHint)
         // A link in one cell's text was clicked, and no row listener took it. See Grids
         DECLARE_EVENT(CellLinkClickEvent, OnCellLinkClick, onCellLinkClick)
+        // The menu for a link in one cell is asked for, and no row listener showed one. See Grids
+        DECLARE_EVENT(CellLinkContextPopupEvent, OnCellLinkContextPopup, onCellLinkContextPopup)
         // Raised when the new-item row asks for an item. See Grids
         DECLARE_EVENT(NewItemEvent, OnNewItem, onNewItem)
     public:
