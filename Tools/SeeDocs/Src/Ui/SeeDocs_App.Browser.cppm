@@ -1,9 +1,9 @@
-export module SeeDocs_App.Studio.Browser;
+export module SeeDocs_App.Browser;
 
-import SeeDocs_App.Studio.Editing;
-import SeeDocs_App.Studio.Icons;
-import SeeDocs_App.Studio.PageView;
-import SeeDocs_App.Studio.SurfaceTree;
+import SeeDocs_App.Editing;
+import SeeDocs_App.Icons;
+import SeeDocs_App.PageView;
+import SeeDocs_App.SurfaceTree;
 import SeeDocs_App.Notes;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Project;
@@ -65,7 +65,7 @@ namespace SeeDocs_App
     };
 
     // The browser over the surface: the tree down the left, a page per url on the right -
-    // /folder/.../module/type/method, the folders as the tree stands on disk - and the studio's
+    // /folder/.../module/type/method, the folders as the tree stands on disk - and SeeDocs'
     // words where there is no surface. The words its pages edit are written through it.
     export class SurfaceBrowser : public BrowserControl, public IPageWriter
     {
@@ -79,9 +79,11 @@ namespace SeeDocs_App
         // where the surface lists nothing: the tree stands empty, and the home page shows the
         // words given since.
         [[nodiscard]] bool bind(Surface&, Notes&, const Project&, OpenTabs);
-        // Shows words of the studio's own on the home page in place of a surface, the tree
+        // Shows SeeDocs' own words on the home page in place of a surface, the tree
         // emptied. Every tab goes, and one opens on home.
         void showWords(const Text&);
+        // Calls the project shown by the name: home's title, and the words on a page that say it.
+        void setProjectName(std::wstring_view name);
         // The url of what a link names - a type, a module, a chapter or a member - or nothing
         // where the surface does not carry it.
         [[nodiscard]] std::optional<Url> urlOf(std::wstring_view target) const;
@@ -104,8 +106,8 @@ namespace SeeDocs_App
     private:
         // What a path names, read off its segments: the folders down from the root as far as
         // they go - home for none - then a module of the chapter the last folder is, a type of
-        // that, and a method of the type. A segment nothing answers for makes the path one the
-        // surface does not carry.
+        // that or a function or a constant of the module, and a method of the type. A segment
+        // nothing answers for makes the path one the surface does not carry.
         struct Target
         {
             std::wstring folder{};              // the category the folder segments spell
@@ -113,6 +115,7 @@ namespace SeeDocs_App
             const ContentsChapter* chapter{ nullptr };   // the folder's own chapter, where it is one
             const ContentsModule* module{ nullptr };
             const Type* type{ nullptr };
+            std::wstring_view exportName{};     // a function or a constant of the module
             std::wstring_view method{};
             std::size_t depth{ 0 };   // segments of the path
             [[nodiscard]] bool isHome() const { return depth == 0; }
@@ -126,9 +129,10 @@ namespace SeeDocs_App
         using Folders = std::unordered_map<std::wstring, const ContentsChapter*>;
     private:
         [[nodiscard]] Target resolve(const PageData&) const;
-        // The path of the nearest thing named, down to the method where one is given.
-        [[nodiscard]] static std::wstring pathOf(const ContentsChapter*, const ContentsModule*,
-            const Type*, std::wstring_view method = {});
+        // The path of the nearest thing named, down to the member where one is given - a method
+        // of the type, or a function or a constant of the module where there is no type.
+        [[nodiscard]] static std::wstring pathOf(std::wstring_view folder, const ContentsModule*,
+            const Type*, std::wstring_view member = {});
         // The folders directly under this one, in reading order.
         [[nodiscard]] std::vector<std::wstring> foldersUnder(std::wstring_view folder) const;
         [[nodiscard]] std::wstring titleOf(const PageData&, const Target&) const;
@@ -151,6 +155,8 @@ namespace SeeDocs_App
         void rebuildCurrentPage();
         [[nodiscard]] Text goneWords(const PageData&) const;
         [[nodiscard]] static bool hasMethod(const Type&, std::wstring_view name);
+        // Whether the module exports a function or a constant of the name.
+        [[nodiscard]] static bool exports(const ContentsModule&, std::wstring_view name);
     private:
         static constexpr float k_treeWidth = 300.0f;
         static constexpr IconSize k_pageIconSize{ 16.0f };
@@ -215,7 +221,7 @@ namespace SeeDocs_App
         });
         // The tree stands apart from the page a move takes down, so the move needs no wait.
         m_tree.onPick([this](TreePickEvent& event) {
-            goTo(Url{ pathOf(&event.chapter, event.module, event.type) });
+            goTo(Url{ pathOf(event.folder, event.module, event.type) });
         });
     }
 }

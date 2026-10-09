@@ -1,4 +1,4 @@
-export module SeeDocs_App.Studio.Icons;
+export module SeeDocs_App.Icons;
 
 import SeeDocs_App.Surface;
 

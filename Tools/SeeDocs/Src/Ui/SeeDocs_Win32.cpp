@@ -1,4 +1,4 @@
-import SeeDocs_App.Studio.Main;
+import SeeDocs_App.Main;
 
 import ClaFi.Platform.Windows;
 
@@ -6,7 +6,7 @@ import ClaFi.StdLib;
 
 // THE WHOLE OF WHAT THIS PROJECT KNOWS ABOUT WINDOWS: the entry point the operating system calls,
 // the instance handle and the command line it hands over, and the two types the application is
-// built out of. The studio itself is in SeeDocs_App.Studio.Main and names none of them.
+// built out of. SeeDocs itself is in SeeDocs_App.Main and names none of them.
 namespace
 {
     // The command line as the tree's folder: the one argument, its quotes taken off.
@@ -27,7 +27,7 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, wchar_t* commandLine, int
 {
     using namespace ClaFi;
 
-    SeeDocs_App::StudioApplication<Win32Platform, Direct2DBackend> app{ { hInstance } };
+    SeeDocs_App::SeeDocsApplication<Win32Platform, Direct2DBackend> app{ { hInstance } };
 
     return app.run(treeArgument(commandLine));
 }

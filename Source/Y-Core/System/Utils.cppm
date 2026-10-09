@@ -165,6 +165,9 @@ namespace ClaFi
     export void trimRight(std::wstring_view& s);
     export void trim(std::wstring& s);
     export void trim(std::wstring_view& s);
+    // How long ago a moment was, in words - just now, 5 minutes ago, 3 days ago.
+    export [[nodiscard]] std::wstring ageSpelling(std::chrono::sys_seconds moment,
+        std::chrono::sys_seconds now);
 
     // The one translation between the framework's text and a byte stream. wchar_t is UTF-16 on
     // Windows and UTF-32 on Linux, and both spellings arrive here as the same UTF-8, so a file

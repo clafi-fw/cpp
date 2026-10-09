@@ -24,6 +24,7 @@ namespace SeeDocs_App
             constexpr std::wstring_view types = L"Types";
             constexpr std::wstring_view functions = L"Functions";
             constexpr std::wstring_view constants = L"Constants";
+            constexpr std::wstring_view scanned = L"Scanned";
             constexpr std::wstring_view name = L"Name";
             constexpr std::wstring_view nameSpace = L"Namespace";
             constexpr std::wstring_view kind = L"Kind";
@@ -63,6 +64,7 @@ namespace SeeDocs_App
             constexpr std::wstring_view isDeleted = L"Deleted";
             constexpr std::wstring_view isConstant = L"Constant";
             constexpr std::wstring_view value = L"Value";
+            constexpr std::wstring_view declaration = L"Declaration";
         }
 
         using Sections = Dom::Sequence<Dom::Section>;
@@ -224,6 +226,23 @@ namespace SeeDocs_App
             Strings& list = (section / key).as<Strings>();
             for (const std::wstring& name : names)
                 list.add().set(name);
+        }
+
+        // A stamp as the database writes it, UTC to the second - 2026-10-09T03:12:45Z.
+        [[nodiscard]] std::wstring stampText(const ScanStamp& stamp)
+        {
+            if (!stamp)
+                return {};
+            const std::chrono::sys_days day = std::chrono::floor<std::chrono::days>(*stamp);
+            const std::chrono::year_month_day date{ day };
+            const std::chrono::hh_mm_ss<std::chrono::seconds> time{ *stamp - day };
+            return std::format(L"{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
+                static_cast<int>(date.year()),
+                static_cast<unsigned>(date.month()),
+                static_cast<unsigned>(date.day()),
+                time.hours().count(),
+                time.minutes().count(),
+                time.seconds().count());
         }
 
         [[nodiscard]] std::wstring noteText(const Comment& comment)
@@ -468,6 +487,41 @@ namespace SeeDocs_App
             return names;
         }
 
+        // The stamp a text spells; nothing for a text the database would not write.
+        [[nodiscard]] ScanStamp stampOf(const std::wstring_view text)
+        {
+            constexpr std::wstring_view k_shape = L"0000-00-00T00:00:00Z";
+            if (text.size() != k_shape.size())
+                return std::nullopt;
+            for (std::size_t i = 0; i != k_shape.size(); ++i)
+            {
+                const bool digitWanted = k_shape[i] == L'0';
+                const bool digitFound = text[i] >= L'0' && text[i] <= L'9';
+                if (digitWanted != digitFound)
+                    return std::nullopt;
+                if (!digitWanted && text[i] != k_shape[i])
+                    return std::nullopt;
+            }
+            auto numberAt = [text](const std::size_t offset, const std::size_t count) {
+                int number = 0;
+                for (std::size_t i = offset; i != offset + count; ++i)
+                    number = number * 10 + static_cast<int>(text[i] - L'0');
+                return number;
+            };
+            const std::chrono::year_month_day date{
+                std::chrono::year{ numberAt(0, 4) },
+                std::chrono::month{ static_cast<unsigned>(numberAt(5, 2)) },
+                std::chrono::day{ static_cast<unsigned>(numberAt(8, 2)) }
+            };
+            const int hours = numberAt(11, 2);
+            const int minutes = numberAt(14, 2);
+            const int seconds = numberAt(17, 2);
+            if (!date.ok() || hours > 23 || minutes > 59 || seconds > 59)
+                return std::nullopt;
+            return std::chrono::sys_days{ date } + std::chrono::hours{ hours }
+                + std::chrono::minutes{ minutes } + std::chrono::seconds{ seconds };
+        }
+
         [[nodiscard]] std::wstring qualifiedNameOf(const std::wstring& nameSpace,
             const std::wstring& name)
         {
@@ -625,6 +679,7 @@ namespace SeeDocs_App
                 };
                 const std::size_t file = fileOf(textOf(entry, Keys::file), variable.module);
                 variable.field = fieldOf(entry, file, false);
+                variable.declaration = textOf(entry, Keys::declaration);
                 m_surface.addVariable(std::move(variable));
             }
         }
@@ -712,6 +767,7 @@ namespace SeeDocs_App
     {
         using namespace Dom::Dt;
         return {
+            Value{ Keys::scanned, std::wstring{} },
             Sequence{ Keys::modules, moduleLayout() },
             Sequence{ Keys::types, typeLayout() },
             Sequence
@@ -736,7 +792,8 @@ namespace SeeDocs_App
                     scopedEntry(),
                     Value{ Keys::type, std::wstring{} },
                     Value{ Keys::value, std::wstring{} },
-                    Value{ Keys::isConstant, false }
+                    Value{ Keys::isConstant, false },
+                    Value{ Keys::declaration, std::wstring{} }
                 }
             }
         };
@@ -757,6 +814,8 @@ namespace SeeDocs_App
             databaseLayout(),
             Dom::WriteDefaults::Yes
         };
+
+        (document / Keys::scanned).set(stampText(surface.scanned()));
 
         Sections& modules = (document / Keys::modules).as<Sections>();
         for (const Module& module : surface.modules())
@@ -790,6 +849,7 @@ namespace SeeDocs_App
             setText(entry, Keys::type, variable.field.type);
             setText(entry, Keys::value, variable.field.value);
             setFlag(entry, Keys::isConstant, variable.field.isConstant);
+            setText(entry, Keys::declaration, variable.declaration);
         }
 
         document.format().saveSectionToFile(*compacted(document, layout), path);
@@ -807,6 +867,7 @@ namespace SeeDocs_App
             return std::nullopt;
 
         Surface surface;
+        surface.setScanned(stampOf((document / Keys::scanned).get<std::wstring>()));
         Reader reader{ surface };
         reader.readModules(document / Keys::modules);
         reader.readTypes(document / Keys::types);

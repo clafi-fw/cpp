@@ -214,10 +214,8 @@ namespace ClaFi
         std::vector<EventConnection*> m_connections;
     };
 
+    // Event support for any type, as a base or through multiple inheritance.
     export class EventComponent
-        // - must not inherit from anything.
-        // - can be used as a base class,
-        // - can be used for injecting events support through multi-inheritance
     {
     public:
         inline EventDispatcher& events() noexcept { return m_events; };

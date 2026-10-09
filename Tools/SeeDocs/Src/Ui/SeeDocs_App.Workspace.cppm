@@ -1,6 +1,6 @@
-export module SeeDocs_App.Studio.Workspace;
+export module SeeDocs_App.Workspace;
 
-import SeeDocs_App.Studio.Browser;
+import SeeDocs_App.Browser;
 import SeeDocs_App.Notes;
 import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
@@ -18,10 +18,10 @@ namespace SeeDocs_App
 {
     using namespace ::ClaFi;
 
-    // THE PROJECT THE STUDIO HAS OPEN, and everything that follows from it: the surface read out
+    // THE PROJECT SEEDOCS HAS OPEN, and everything that follows from it: the surface read out
     // of its database, the notes of its tree, the window title that names it, and the record of
     // it in the application's config - the project to start on next time, and the list of those
-    // opened before. One per studio window, standing for as long as the window does.
+    // opened before. One per window, standing for as long as the window does.
     export class Workspace
     {
     public:
@@ -35,7 +35,7 @@ namespace SeeDocs_App
         [[nodiscard]] const Project* project() const;
         // The projects opened before, most recent first, the one open left out.
         [[nodiscard]] Folders recentFolders() const;
-        // Opens the project the studio starts on: the folder stated, else the project last left
+        // Opens the project SeeDocs starts on: the folder stated, else the project last left
         // open; nothing where there is neither. The browser's tabs were restored for the project
         // last left open, so they stand only where that is the one opened.
         void start(const std::filesystem::path& stated);
@@ -44,13 +44,18 @@ namespace SeeDocs_App
         bool openFolder(const std::filesystem::path& folder);
         // Asks for a folder in the desktop's own dialog and opens it.
         void browse();
+        [[nodiscard]] ScanStamp scanned() const;   // when the open project was last scanned
+        // Names the open project, the folder's name for an empty one; answers the name it goes by.
+        [[nodiscard]] std::wstring rename(std::wstring_view name);
+        // Scans the open project's tree again and shows what was read back, the tabs standing.
+        void rescan();
     public:
         // What the config keeps the open project's folder under.
         static constexpr std::wstring_view k_projectNodeName = L"Project";
         // What the config keeps the folders opened before under, most recent first.
         static constexpr std::wstring_view k_recentNodeName = L"RecentProjects";
         static constexpr std::size_t k_recentLimit = 10;
-        // What the studio keeps of its own, beside the framework's schema.
+        // What SeeDocs keeps of its own, beside the framework's schema.
         [[nodiscard]] static Dom::Dt::Section createConfigSchema();
     private:
         using Names = std::vector<std::wstring>;
@@ -66,9 +71,9 @@ namespace SeeDocs_App
         void forget(const std::filesystem::path& folder);
         [[nodiscard]] Names storedRecent() const;
         void storeRecent(const Names&);
-        // Shows the studio's own words in place of a project, the reason first where there is one.
+        // Shows SeeDocs' own words in place of a project, the reason first where there is one.
         void showNoProject(const Text& reason);
-        // Shows the studio's own words for the project open, there being nothing to list in it.
+        // Shows SeeDocs' own words for the project open, there being nothing to list in it.
         void showEmptyProject();
         void writeTitle();
     private:

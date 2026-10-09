@@ -47,7 +47,7 @@ only by a pass that lays the content into the window and that no control put bac
 a measuring pass and an invalidated pass leave them for the pass that follows. Both lay a
 wrapping row out on one line - the remembered widths are not read while measuring, and the
 first real pass is the one that records them - so a scroll answered there is measured against
-rows standing higher than they will. SeeDocs Studio's tree opened on its remembered page a few
+rows standing higher than they will. SeeDocs' tree opened on its remembered page a few
 rows short of it for exactly this (2026-10-08).
 
 ## Action

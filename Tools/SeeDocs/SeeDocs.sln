@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.1.11312.151
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SeeDocs", "SeeDocs.vcxproj", "{7C1E4A2D-5B8F-4E36-9A71-3D2C6F0B8E15}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SeeDocsCli", "SeeDocsCli.vcxproj", "{7C1E4A2D-5B8F-4E36-9A71-3D2C6F0B8E15}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SeeDocs Studio", "SeeDocs Studio.vcxproj", "{9E3B7F41-2C6D-4A58-B1F0-6D7E2C5A9B13}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SeeDocs", "SeeDocs.vcxproj", "{9E3B7F41-2C6D-4A58-B1F0-6D7E2C5A9B13}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClaFi", "..\..\Visual Studio Shared Items\ClaFi.vcxitems", "{78FE27B6-0279-4412-8B4B-A8D197604250}"
 EndProject

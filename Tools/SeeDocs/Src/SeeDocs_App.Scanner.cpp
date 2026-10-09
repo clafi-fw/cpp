@@ -100,6 +100,9 @@ namespace SeeDocs_App
             // The text from one token to another, both included, comments cut out and lines joined
             // with one blank.
             [[nodiscard]] std::wstring slice(const Token& from, const Token& to) const;
+            // The text from one token to another, both included, as written: its lines and
+            // comments kept, each line after the first set back by the first one's indent.
+            [[nodiscard]] std::wstring written(const Token& from, const Token& to) const;
         private:
             void tokenizeLine(std::size_t index, Syntax::LineState&, Syntax::StateStrings&,
                 bool& directiveContinues);
@@ -216,6 +219,33 @@ namespace SeeDocs_App
                 folded += current;
             }
             return folded;
+        }
+
+        std::wstring SourceText::written(const Token& from, const Token& to) const
+        {
+            const std::wstring_view first = m_lines[from.line];
+            std::size_t indent = 0;
+            while (indent < first.size() && isBlank(first[indent]))
+                ++indent;
+            std::wstring result;
+            for (std::size_t line = from.line; line <= to.line; ++line)
+            {
+                std::wstring_view piece = m_lines[line];
+                if (line == to.line)
+                    piece = piece.substr(0, to.end());
+                if (line == from.line)
+                    piece.remove_prefix(from.start);
+                else
+                {
+                    std::size_t blanks = 0;
+                    while (blanks < indent && blanks < piece.size() && isBlank(piece[blanks]))
+                        ++blanks;
+                    piece.remove_prefix(blanks);
+                    result += L'\n';
+                }
+                result += rightTrimmed(piece);
+            }
+            return result;
         }
 
         void SourceText::tokenizeLine(const std::size_t index, Syntax::LineState& state,
@@ -918,6 +948,8 @@ namespace SeeDocs_App
                 name += L"<" + textBetween(open + 1, m_at - 2) + L">";
             }
             if (isName(peek(), Words::finalWord))
+                advance();
+            while (peek() && peek()->type == TokenType::Comment)
                 advance();
 
             if (name.empty())
@@ -1697,6 +1729,7 @@ namespace SeeDocs_App
                 field.value = textBetween(first, m_at - 1);
             }
             skipPast(L";");
+            const Token& last = tokens[m_at - 1];
 
             Scope* scope = typeScope();
             if (scope)
@@ -1711,6 +1744,7 @@ namespace SeeDocs_App
                 Variable variable;
                 variable.nameSpace = currentNamespace();
                 variable.module = m_module ? m_module->name : std::wstring{};
+                variable.declaration = m_text.written(start, last);
                 variable.exported = true;
                 variable.field = std::move(field);
                 m_surface.addVariable(std::move(variable));
@@ -1974,6 +2008,8 @@ namespace SeeDocs_App
         for (const std::filesystem::path& file : implementations)
             scanFile(surface, root, file);
         surface.resolveAll();
+        surface.setScanned(std::chrono::floor<std::chrono::seconds>(
+            std::chrono::system_clock::now()));
         return surface;
     }
 

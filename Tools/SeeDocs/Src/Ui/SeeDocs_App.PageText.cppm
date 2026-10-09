@@ -1,4 +1,4 @@
-export module SeeDocs_App.Studio.PageText;
+export module SeeDocs_App.PageText;
 
 import SeeDocs_App.Pages;
 
@@ -6,7 +6,7 @@ import ClaFi.Core.TextEngine.Text;
 
 import ClaFi.StdLib;
 
-// A PAGE'S WORDS AS THE TEXT THE STUDIO SHOWS: the engine's named styles for the runs and the
+// A PAGE'S WORDS AS THE TEXT SEEDOCS SHOWS: the engine's named styles for the runs and the
 // prose, and a link carrying the name the page gave it.
 namespace SeeDocs_App
 {

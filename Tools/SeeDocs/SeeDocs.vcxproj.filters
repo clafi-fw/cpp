@@ -5,30 +5,33 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="Src\Ui">
+      <UniqueIdentifier>{B2D4F6A8-1C3E-4F5A-9B7D-2E4C6A8F0B1D}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Src\SeeDocs_App.Checks.cpp">
-      <Filter>Src</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\SeeDocs_App.Checks.cppm">
-      <Filter>Src</Filter>
-    </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Database.cpp">
       <Filter>Src</Filter>
     </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Database.cppm">
       <Filter>Src</Filter>
     </ClCompile>
-    <ClCompile Include="Src\SeeDocs_App.Main.cpp">
+    <ClCompile Include="Src\SeeDocs_App.Edits.cpp">
       <Filter>Src</Filter>
     </ClCompile>
-    <ClCompile Include="Src\SeeDocs_App.Main.cppm">
+    <ClCompile Include="Src\SeeDocs_App.Edits.cppm">
       <Filter>Src</Filter>
     </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Notes.cpp">
       <Filter>Src</Filter>
     </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Notes.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.Pages.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.Pages.cppm">
       <Filter>Src</Filter>
     </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Project.cpp">
@@ -49,14 +52,67 @@
     <ClCompile Include="Src\SeeDocs_App.Surface.cppm">
       <Filter>Src</Filter>
     </ClCompile>
-    <ClCompile Include="Src\SeeDocs_Win32.cpp">
-      <Filter>Src</Filter>
+    <ClCompile Include="Src\Ui\SeeDocs_App.Browser.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.Browser.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.Editing.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.Editing.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.Icons.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.Icons.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.Main.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.Main.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.OpenPage.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.OpenPage.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.PageText.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.PageText.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.PageView.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.PageView.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.SurfaceTree.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.SurfaceTree.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.Workspace.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.Workspace.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_Win32.cpp">
+      <Filter>Src\Ui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Src\SeeDocs_Linux.cpp">
-      <Filter>Src</Filter>
+    <None Include="Src\Ui\SeeDocs_Wayland.cpp">
+      <Filter>Src\Ui</Filter>
     </None>
-    <None Include="README.md" />
   </ItemGroup>
 </Project>

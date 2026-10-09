@@ -209,6 +209,7 @@ namespace SeeDocs_App
         Field field;
         std::wstring nameSpace;
         std::wstring module;
+        std::wstring declaration;   // as written up to the semicolon, lines and comments kept
         bool exported{ false };
     };
 
@@ -265,6 +266,8 @@ namespace SeeDocs_App
     export using Places = std::vector<Place>;
     export using Problems = std::vector<Problem>;
     export using Names = std::vector<std::wstring>;
+    // When a tree was read, to the second; nothing for a surface no scan stamped.
+    export using ScanStamp = std::optional<std::chrono::sys_seconds>;
 
     // The tree as the scanner read it. Types are looked up by qualified name.
     export class Surface
@@ -280,6 +283,9 @@ namespace SeeDocs_App
         // Where Props::get is written by hand rather than through READ_PROPERTY.
         [[nodiscard]] const Places& propsReads() const { return m_propsReads; }
         [[nodiscard]] const Problems& problems() const { return m_problems; }
+        // When the scan that read the tree ran - carried through edits, which read nothing.
+        [[nodiscard]] const ScanStamp& scanned() const { return m_scanned; }
+        void setScanned(const ScanStamp& value) { m_scanned = value; }
 
         std::size_t addFile(SourceFile);
         void addModule(Module);
@@ -328,6 +334,7 @@ namespace SeeDocs_App
         Bindings m_bindings;
         Places m_propsReads;
         Problems m_problems;
+        ScanStamp m_scanned{};
         std::unordered_map<std::wstring, std::size_t> m_byQualifiedName;
         std::unordered_map<std::wstring, std::vector<std::size_t>> m_byBareName;
     };

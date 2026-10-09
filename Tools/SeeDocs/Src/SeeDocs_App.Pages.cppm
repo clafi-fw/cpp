@@ -6,7 +6,7 @@ import SeeDocs_App.Surface;
 import ClaFi.StdLib;
 
 // THE DOCUMENTATION AS PAGES: what a chapter, a module, a type or a method says, built out of the
-// surface and the notes, and rendered by whoever shows it - the studio as controls, a generator
+// surface and the notes, and rendered by whoever shows it - SeeDocs as controls, a generator
 // as a file. See the README beside the project.
 namespace SeeDocs_App
 {
@@ -25,8 +25,8 @@ namespace SeeDocs_App
     {
         std::wstring text;
         RunStyle style{ RunStyle::Plain };
-        // A type's qualified name, a module's name, a chapter's name or a member link
-        // (memberLink); empty for none.
+        // A type's qualified name, a module's name, a chapter's name, or a link to a type's
+        // member or to a module's function or constant (memberLink, exportLink); empty for none.
         std::wstring link;
     };
 
@@ -132,11 +132,11 @@ namespace SeeDocs_App
 
     export using Branches = std::vector<Branch>;
 
-    // A declaration on a method page: the code, its hint under it, and its note after that.
+    // A declaration on a method's, a function's or a constant's page: its code, hint and note.
     export struct Signature
     {
         Runs code;         // code runs, a type the surface has a page for linked
-        Runs lead;         // the hint
+        Runs lead;         // the hint; none where it stands under the page's title
         std::optional<Excerpt> excerpt;   // where the comment references a note
         std::optional<CommentSite> site;  // the comment the hint is read from
     };
@@ -148,7 +148,7 @@ namespace SeeDocs_App
         Note,
         Tree,
         Table,
-        Signature   // declarations under an access label written the C++ way - public:
+        Signature   // declarations, under an access label the C++ way - public: - where one applies
     };
 
     // One section of a page: its heading, and the note, tree, table or signatures it holds as
@@ -184,7 +184,9 @@ namespace SeeDocs_App
         Runs scope;     // before the title, in its style - a method's type and ::
         std::wstring title;
         Runs badges;    // what the title is - the kind, control, template
-        Chains bases;   // under the title, the C++ way: a colon before each base
+        // Under the title, the C++ way: a colon before each base or an enum's underlying type, an
+        // equals sign before what an alias stands for.
+        std::vector<Runs> titleLines;
         Runs lead;      // the hint
         std::optional<CommentSite> leadSite;   // the comment the lead is read from
         Facts facts;
@@ -193,18 +195,22 @@ namespace SeeDocs_App
     };
 
     export using TypeList = std::vector<const Type*>;
+    export using FunctionList = std::vector<const FreeFunction*>;
+    export using VariableList = std::vector<const Variable*>;
 
-    // One module of a chapter: the types it exports, controls first.
+    // One module of a chapter: its types, controls first, its functions and constants as declared.
     export struct ContentsModule
     {
         std::wstring name;        // the module's full name
         std::wstring shortName;   // what a reader sees
         TypeList types;
+        FunctionList functions;
+        VariableList constants;
     };
 
     export using ContentsModules = std::vector<ContentsModule>;
 
-    // One chapter: a folder under Source, and the modules whose types stand in it.
+    // One chapter: a folder under Source, and the modules whose exports stand in it.
     export struct ContentsChapter
     {
         std::wstring category;
@@ -214,7 +220,7 @@ namespace SeeDocs_App
 
     export using ContentsChapters = std::vector<ContentsChapter>;
 
-    // The table of contents: the public types by chapter and module, in reading order.
+    // The table of contents: what the tree exports, by chapter and module, in reading order.
     export [[nodiscard]] ContentsChapters contentsOf(const Surface&);
 
     // What a reader calls a folder under Source and a module.
@@ -231,11 +237,15 @@ namespace SeeDocs_App
 
     // The page of a folder: the chapters under it, each linked, with what every one holds.
     export [[nodiscard]] Page contentsPage(const ContentsChapters&, std::wstring_view title);
-    // A chapter's page: the chapters under its folder where there are any, then its types by module.
+    // A chapter's page: the chapters under its folder, then what its modules export, by module.
     export [[nodiscard]] Page chapterPage(const Surface&, Notes&, const ContentsChapters&,
         const ContentsChapter&);
     export [[nodiscard]] Page modulePage(const Surface&, Notes&, const ContentsChapter&,
         const ContentsModule&);
+    // The page of a function the module exports, every overload of the name on it, or of a
+    // constant it exports, the declaration as written.
+    export [[nodiscard]] Page exportPage(const Surface&, Notes&, const ContentsChapter&,
+        const ContentsModule&, std::wstring_view name);
     export [[nodiscard]] Page typePage(const Surface&, Notes&, const Type&);
     // The page of every method of the type with that name, a signature each.
     export [[nodiscard]] Page methodPage(const Surface&, Notes&, const Type&,
@@ -244,13 +254,19 @@ namespace SeeDocs_App
     // constructors and destructor in, a property's getter and setter out.
     export [[nodiscard]] std::vector<std::wstring_view> methodNames(const Type&);
 
+    // The names a module's page lists after its types: its functions, one per name, then its
+    // constants, each in the order declared.
+    export [[nodiscard]] std::vector<std::wstring_view> exportNames(const ContentsModule&);
+
     // The link to a member's page: the type's qualified name, ::, the member's name.
     export [[nodiscard]] std::wstring memberLink(const Type&, std::wstring_view member);
+    // The link to a function's or a constant's page: the module's name, ::, the export's name.
+    export [[nodiscard]] std::wstring exportLink(const ContentsModule&, std::wstring_view name);
 
     // The two names a member link is made of, each a view into the link.
     export struct MemberLink
     {
-        std::wstring_view type;
+        std::wstring_view type;     // a type's qualified name, or a module's name
         std::wstring_view member;
     };
 

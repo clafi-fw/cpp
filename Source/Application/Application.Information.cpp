@@ -29,11 +29,6 @@ namespace ClaFi
         [[nodiscard]] Text titleText(const AppContext&);
         // What the check found, and under it how long ago, or where the newer release is.
         [[nodiscard]] Text statusText(const UpdateCheck&, std::chrono::sys_seconds now);
-        // How long ago a moment was, the way the line under the status says it.
-        [[nodiscard]] std::wstring ageSpelling(std::chrono::sys_seconds moment,
-            std::chrono::sys_seconds now);
-        // A count of a unit, plural where it is not one, and how long ago.
-        [[nodiscard]] std::wstring countAgo(std::int64_t count, std::wstring_view unit);
         // The rest of the page - publisher, site, description, framework.
         [[nodiscard]] Text aboutText(const AppContext&);
         // Appends a plain paragraph, every web address in it made a link.
@@ -129,7 +124,7 @@ namespace ClaFi
         m_checkButton->invalidateState();
     }
 
-    // titleText, statusText, ageSpelling, countAgo, aboutText
+    // titleText, statusText, aboutText
 
     namespace
     {
@@ -190,31 +185,6 @@ namespace ClaFi
                 text << PopTextStyle{};
             }
             return text;
-        }
-
-        // A moment ahead of now - the clock was set back since - reads as just now.
-        std::wstring ageSpelling(const std::chrono::sys_seconds moment,
-            const std::chrono::sys_seconds now)
-        {
-            const std::chrono::minutes minutes =
-                std::chrono::floor<std::chrono::minutes>(now - moment);
-            if (minutes < std::chrono::minutes{ 1 })
-                return L"just now";
-            if (minutes < std::chrono::hours{ 1 })
-                return countAgo(minutes.count(), L"minute");
-            const std::chrono::hours hours = std::chrono::floor<std::chrono::hours>(minutes);
-            if (hours < std::chrono::days{ 1 })
-                return countAgo(hours.count(), L"hour");
-            return countAgo(std::chrono::floor<std::chrono::days>(hours).count(), L"day");
-        }
-
-        std::wstring countAgo(const std::int64_t count, const std::wstring_view unit)
-        {
-            std::wstring spelling = std::format(L"{} {}", count, unit);
-            if (count != 1)
-                spelling += L's';
-            spelling += L" ago";
-            return spelling;
         }
 
         Text aboutText(const AppContext& context)

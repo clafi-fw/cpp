@@ -1,4 +1,4 @@
-module SeeDocs_App.Studio.Icons;
+module SeeDocs_App.Icons;
 
 import SeeDocs_App.Database;
 import SeeDocs_App.Surface;
@@ -294,11 +294,14 @@ namespace SeeDocs_App
         return RowIcon::Class;
     }
 
+    // THE KIND IS THE ICON'S TAG: the layout cache tells icons apart by size and tag alone, so
+    // a chapter's row and a module's row of one name would otherwise be drawn from one layout.
     InTextIcon rowIcon(const RowIcon icon)
     {
-        return InTextIcon{ k_rowIconSize, [icon](PaintIconEvent& event) {
+        const PaintIconFunc paint = [icon](PaintIconEvent& event) {
             paintRowIcon(event, icon);
-        } };
+        };
+        return InTextIcon{ k_rowIconSize, paint, Tag{ icon } };
     }
 
     void writeRowKind(Text& text, const Type& type)

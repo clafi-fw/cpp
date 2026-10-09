@@ -1,4 +1,4 @@
-module SeeDocs_App.Studio.Editing;
+module SeeDocs_App.Editing;
 
 import SeeDocs_App.Edits;
 import SeeDocs_App.Pages;
@@ -55,31 +55,29 @@ namespace SeeDocs_App
         }
     }
 
-    // HintBox
+    // WordsBox
 
-    void HintBox::connectSite(IPageWriter& writer, const CommentSite& site)
-    {
-        m_writer = &writer;
-        m_site = &site;
-        setReadOnly(ReadOnly::No);
-    }
-
-    void HintBox::showHint(const Text& words)
+    void WordsBox::showWords(const Text& words)
     {
         m_shown = words;
         text() = words;
     }
 
+    bool WordsBox::edited() const
+    {
+        return text().plainText() != m_shown.plainText();
+    }
+
     // A popup opened on the box - its edit menu, a link's menu - takes the focus while the edit
     // goes on.
-    void HintBox::focusChanged()
+    void WordsBox::focusChanged()
     {
         PromptBox::focusChanged();
         if (!isFocused() && !isDroppedDown())
             write();
     }
 
-    void HintBox::nestedKeyDown(KeyDownEvent& event)
+    void WordsBox::nestedKeyDown(KeyDownEvent& event)
     {
         PromptBox::nestedKeyDown(event);
         if (event.handled || readOnly() == ReadOnly::Yes)
@@ -96,27 +94,17 @@ namespace SeeDocs_App
         }
     }
 
-    void HintBox::charPress(CharPressEvent& event)
+    void WordsBox::charPress(CharPressEvent& event)
     {
         if (event.character() == Keys::Return)
             return;
         PromptBox::charPress(event);
     }
 
-    bool HintBox::edited() const
+    // A REFUSED WRITE KEEPS THE WORDS TYPED, the reason shown under the box.
+    void WordsBox::write()
     {
-        return text().plainText() != m_shown.plainText();
-    }
-
-    // A REFUSED WRITE KEEPS THE WORDS TYPED, the reason shown under the box. Words taken come
-    // back through the page, which is refreshed in place or built again.
-    void HintBox::write()
-    {
-        if (!m_writer || !m_site)
-            return;
-        // A copy: the write refreshes the page, which moves a new site into the one this reads.
-        const CommentSite site = *m_site;
-        const std::wstring refusal = m_writer->writeHint(site, text().plainText());
+        const std::wstring refusal = writeWords(text().plainText());
         if (refusal.empty())
             return;
         setRefusal(refusal);
@@ -124,9 +112,28 @@ namespace SeeDocs_App
     }
 
     // An edit of the box's own, so Ctrl+Z brings the words typed back.
-    void HintBox::putBack()
+    void WordsBox::putBack()
     {
         applyEdit({ 0, text().plainText().size() }, m_shown, EditKind::Replace);
+    }
+
+    // HintBox
+
+    void HintBox::connectSite(IPageWriter& writer, const CommentSite& site)
+    {
+        m_writer = &writer;
+        m_site = &site;
+        setReadOnly(ReadOnly::No);
+    }
+
+    // Words taken come back through the page, which is refreshed in place or built again.
+    std::wstring HintBox::writeWords(const std::wstring_view words)
+    {
+        if (!m_writer || !m_site)
+            return {};
+        // A copy: the write refreshes the page, which moves a new site into the one this reads.
+        const CommentSite site = *m_site;
+        return m_writer->writeHint(site, words);
     }
 
     // FootnoteSlot

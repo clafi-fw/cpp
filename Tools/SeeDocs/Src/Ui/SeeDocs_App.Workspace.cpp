@@ -1,6 +1,6 @@
-module SeeDocs_App.Studio.Workspace;
+module SeeDocs_App.Workspace;
 
-import SeeDocs_App.Studio.Browser;
+import SeeDocs_App.Browser;
 import SeeDocs_App.Database;
 import SeeDocs_App.Notes;
 import SeeDocs_App.Project;
@@ -94,7 +94,7 @@ namespace SeeDocs_App
 
     // A project that stands already opens before the window is up, so the first frame shows it.
     // A folder that is not one yet is opened once the window is up, since making one asks. Nothing
-    // is guessed from where the studio stands: the tree is the user's to name.
+    // is guessed from where SeeDocs stands: the tree is the user's to name.
     void Workspace::start(const std::filesystem::path& stated)
     {
         Text reason;
@@ -179,6 +179,44 @@ namespace SeeDocs_App
             Platform::pickFolder(&m_form, L"Open a project", start);
         if (picked)
             openFolder(*picked);
+    }
+
+    ScanStamp Workspace::scanned() const
+    {
+        if (!m_surface)
+            return std::nullopt;
+        return m_surface->scanned();
+    }
+
+    // WHAT IS SHOWN IS WHAT WAS READ BACK, so a name the file did not take does not stand. The
+    // name the project already goes by is no edit: an empty name kept in the file is what lets
+    // the project follow its folder's name, and writing that name out would end it.
+    std::wstring Workspace::rename(const std::wstring_view name)
+    {
+        if (!m_project)
+            return {};
+        const std::wstring stated{ trimmed(name) };
+        if (stated == m_project->name)
+            return m_project->name;
+        writeProject(Project{ .folder = m_project->folder, .name = stated });
+        if (const std::optional<Project> read = readProject(m_project->folder))
+            m_project->name = read->name;
+        m_browser.setProjectName(m_project->name);
+        writeTitle();
+        return m_project->name;
+    }
+
+    // The database is read back before anything is let go of - see openProject - so a scan that
+    // could not be written leaves the project as it was last read.
+    void Workspace::rescan()
+    {
+        if (!m_project)
+            return;
+        ScopedWaitCursor wait{};
+        scan(*m_project);
+        Text reason;
+        if (!openProject(*m_project, reason, OpenTabs::Keep))
+            refuse(L"Cannot rescan the project", reason);
     }
 
     Dom::Dt::Section Workspace::createConfigSchema()

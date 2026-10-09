@@ -1,4 +1,4 @@
-module SeeDocs_App.Studio.PageText;
+module SeeDocs_App.PageText;
 
 import SeeDocs_App.Pages;
 
@@ -21,37 +21,46 @@ namespace SeeDocs_App
         // Design units, as every measure a Text states is.
         constexpr float k_codeIndent = 18.0f;
         constexpr float k_bulletIndent = 18.0f;
-        constexpr float k_footnoteGap = 6.0f;   // the room under a footnote, as an empty line
         constexpr std::wstring_view k_bullet = L"• ";
 
-        void writeBlock(Text& text, const Block& block, const float indent)
+        // Starts a line under what the text holds already, so the prose ends with no line end.
+        void openLine(Text& text, bool& opened, const float indent)
+        {
+            if (opened)
+                text << k_endLine;
+            opened = true;
+            text << ParaIndent{ indent };
+        }
+
+        void writeBlock(Text& text, const Block& block, const float indent, bool& opened)
         {
             switch (block.kind)
             {
                 case BlockKind::Paragraph:
-                    text << ParaIndent{ indent };
+                    openLine(text, opened, indent);
                     writeRuns(text, block.runs);
-                    text << k_endLine;
                     break;
                 case BlockKind::SubHeading:
-                    text << ParaIndent{ indent } << TextStyleId::Section;
+                    openLine(text, opened, indent);
+                    text << TextStyleId::Section;
                     writeRuns(text, block.runs);
-                    text << PopTextStyle{} << k_endLine;
+                    text << PopTextStyle{};
                     break;
                 case BlockKind::Code:
                     for (const Runs& line : block.lines)
                     {
-                        text << ParaIndent{ indent + k_codeIndent } << TextStyleId::Code;
+                        openLine(text, opened, indent + k_codeIndent);
+                        text << TextStyleId::Code;
                         writeRuns(text, line);
-                        text << PopTextStyle{} << k_endLine;
+                        text << PopTextStyle{};
                     }
                     break;
                 case BlockKind::Bullets:
                     for (const Runs& item : block.items)
                     {
-                        text << ParaIndent{ indent + k_bulletIndent } << k_bullet;
+                        openLine(text, opened, indent + k_bulletIndent);
+                        text << k_bullet;
                         writeRuns(text, item);
-                        text << k_endLine;
                     }
                     break;
             }
@@ -147,8 +156,9 @@ namespace SeeDocs_App
 
     void writeBlocks(Text& text, const Blocks& blocks, const float indent)
     {
+        bool opened = !text.empty();
         for (const Block& block : blocks)
-            writeBlock(text, block, indent);
+            writeBlock(text, block, indent, opened);
     }
 
     Text textOf(const Blocks& blocks)
@@ -161,12 +171,11 @@ namespace SeeDocs_App
     void writeFootnote(Text& text, const std::wstring_view anchor, const std::wstring_view mark,
         const Runs& name, const Excerpt& excerpt)
     {
-        text << ParaIndent{ 0.0f } << PushAnchor{ std::wstring{ anchor } } << InkGrade::Muted
+        text << ParaIndent{ 0.0f } << PushAnchor{ std::wstring{ anchor } } << InkColor::Spot
             << mark << PopColor{} << L" ";
         writeRuns(text, name);
-        text << PopAnchor{} << k_endLine;
+        text << PopAnchor{};
         writeBlocks(text, excerpt.blocks);
-        text << PushFontSize{ k_footnoteGap } << k_endLine << PopFontSize{};
     }
 
     // The runs are the one declaration cut round its links, and the tokens are lexed over the

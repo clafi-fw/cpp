@@ -1,4 +1,4 @@
-export module SeeDocs_App.Studio.Editing;
+export module SeeDocs_App.Editing;
 
 import SeeDocs_App.Edits;
 import SeeDocs_App.Pages;
@@ -18,8 +18,8 @@ import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
 // A PAGE'S WORDS EDITED WHERE THEY STAND: the commands that start an edit, what a page writes the
-// words back through, a hint typed into the box that shows it, and a footnote's markdown typed in
-// the footnote's place. See the README beside the project.
+// words back through, words typed into the box that shows them - a hint, the project's name - and
+// a footnote's markdown typed in the footnote's place. See the README beside the project.
 namespace SeeDocs_App
 {
     using namespace ::ClaFi;
@@ -65,28 +65,41 @@ namespace SeeDocs_App
             std::wstring_view text) = 0;
     };
 
-    // A hint typed into where it stands: Return or leaving the box writes it, Escape puts it back.
-    export class HintBox : public PromptBox
+    // One line typed into where it stands: Return or leaving writes it, Escape puts it back.
+    export class WordsBox : public PromptBox
     {
     public:
         template<typename... Args>
-        explicit HintBox(const CreateParams&, Args&&...);
+        explicit WordsBox(const CreateParams&, Args&&...);
     public:
-        // Takes edits into the comment the site names, read where it stands at each write.
-        void connectSite(IPageWriter&, const CommentSite&);
-        void showHint(const Text&);   // the page's words for the hint, which Escape puts back
+        void showWords(const Text&);   // what the box shows until edited, and Escape puts back
     protected:
+        // Writes the words typed where they belong; the reason where they were refused.
+        [[nodiscard]] virtual std::wstring writeWords(std::wstring_view words) = 0;
+        [[nodiscard]] bool edited() const;
         void focusChanged() override;   // leaving writes, but not for a popup opened on the box
         void nestedKeyDown(KeyDownEvent&) override;
-        void charPress(CharPressEvent&) override;   // a hint is one line, and Return writes it
+        void charPress(CharPressEvent&) override;   // one line, and Return writes it
     private:
-        [[nodiscard]] bool edited() const;
         void write();
         void putBack();
     private:
+        Text m_shown{};
+    };
+
+    // A hint typed into where it stands, written into the comment it was read from.
+    export class HintBox : public WordsBox
+    {
+    public:
+        using WordsBox::WordsBox;
+    public:
+        // Takes edits into the comment the site names, read where it stands at each write.
+        void connectSite(IPageWriter&, const CommentSite&);
+    protected:
+        [[nodiscard]] std::wstring writeWords(std::wstring_view words) override;
+    private:
         IPageWriter* m_writer{ nullptr };
         const CommentSite* m_site{ nullptr };
-        Text m_shown{};   // what the page last showed
     };
 
     // One footnote on a page: its words as the page shows them, and while it is edited, its
@@ -129,7 +142,7 @@ namespace SeeDocs_App
 
 
     template<typename... Args>
-    HintBox::HintBox(const CreateParams& params, Args&&... args)
+    WordsBox::WordsBox(const CreateParams& params, Args&&... args)
         :
         PromptBox{ params, std::forward<Args>(args)... }
     {

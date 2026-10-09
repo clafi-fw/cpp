@@ -1,8 +1,8 @@
-module SeeDocs_App.Studio.PageView;
+module SeeDocs_App.PageView;
 
-import SeeDocs_App.Studio.Editing;
-import SeeDocs_App.Studio.Icons;
-import SeeDocs_App.Studio.PageText;
+import SeeDocs_App.Editing;
+import SeeDocs_App.Icons;
+import SeeDocs_App.PageText;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
@@ -103,6 +103,8 @@ namespace SeeDocs_App
             {
                 const Signature& leftSignature = left.signatures[i];
                 const Signature& rightSignature = right.signatures[i];
+                if (leftSignature.lead.empty() != rightSignature.lead.empty())
+                    return false;
                 if (leftSignature.excerpt.has_value() != rightSignature.excerpt.has_value())
                     return false;
                 if (leftSignature.site.has_value() != rightSignature.site.has_value())
@@ -159,7 +161,7 @@ namespace SeeDocs_App
             to.scope = std::move(from.scope);
             to.title = std::move(from.title);
             to.badges = std::move(from.badges);
-            to.bases = std::move(from.bases);
+            to.titleLines = std::move(from.titleLines);
             to.lead = std::move(from.lead);
             to.leadSite = std::move(from.leadSite);
             for (std::size_t i = 0; i != to.facts.size(); ++i)
@@ -317,10 +319,10 @@ namespace SeeDocs_App
                 writeRuns(head, m_page.badges);
                 head << PopTextStyle{};
             }
-            for (const Runs& chain : m_page.bases)
+            for (const Runs& line : m_page.titleLines)
             {
                 head << k_endLine << ParaIndent{ k_basesIndent };
-                writeRuns(head, chain);
+                writeRuns(head, line);
             }
             m_head.text() = head;
         });
@@ -339,7 +341,7 @@ namespace SeeDocs_App
         connectHintBox(box, m_page.leadSite);
         m_parts.push_back(&box);
         m_renders.push_back([this, &box]() {
-            box.showHint(hintWords(m_page.lead));
+            box.showWords(hintWords(m_page.lead));
         });
     }
 
@@ -428,9 +430,9 @@ namespace SeeDocs_App
         return header;
     }
 
-    // The grid: the group column where the table names one, its own columns with a mark column
-    // after the first where any row has a footnote, a header where the table asks for one, and
-    // under it a slot per footnote. The hints are typed over where the page writes its words back.
+    // The grid: the group column where the table names one, its own columns and the marks where
+    // any row has a footnote, a header where the table asks for one, and under it a slot per
+    // footnote. The hints are typed over where the page writes its words back.
     void PageView::addTable(Expander& expander, const Table& table)
     {
         Stack& body = expander.createBody<Stack>(
@@ -443,10 +445,16 @@ namespace SeeDocs_App
             UiElement::Section,
             Grids::GridLines::Horizontal
         );
+        Stack& notes = body.add<Stack>(
+            Orientation::Vertical,
+            Padding{ 0.0f },
+            Spacing{ k_footnoteGap }
+        );
         if (!table.groupColumn.empty())
             grid.columns().add(Tag{ k_groupColumn }, Text{ table.groupColumn });
         const bool footnoted = hasFootnotes(table);
         const bool editable = m_writer && std::ranges::any_of(table.groups, hasSites);
+        Grids::ColumnCollection* into = &grid.columns();
         TagValue hintColumn = k_noColumn;
         for (std::size_t i = 0; i != table.columns.size(); ++i)
         {
@@ -455,28 +463,39 @@ namespace SeeDocs_App
                 ? Grids::ColumnWidthMode::Fill
                 : Grids::ColumnWidthMode::FitContent;
             const Grids::MaxLines maxLines{ column.maxLines };
+            Grids::ShowInHeader named = Grids::ShowInHeader::Yes;
+            // The last column's name stands over its cells and the marks.
+            if (footnoted && i + 1 == table.columns.size())
+            {
+                Grids::Column& parent = into->add(Tag{ k_markParentColumn }, Text{ column.name },
+                    width);
+                into = &parent.createSubColumns();
+                named = Grids::ShowInHeader::No;
+            }
+            EditorMode editor = EditorMode::ReadOnly;
             if (column.hint && editable)
             {
                 hintColumn = i;
-                grid.columns().add(Tag{ i }, Text{ column.name }, width, maxLines,
-                    EditorMode::Editable);
+                editor = EditorMode::Editable;
             }
-            else
-            {
-                grid.columns().add(Tag{ i }, Text{ column.name }, width, maxLines);
-            }
-            if (i == 0 && footnoted)
-                grid.columns().add(Tag{ k_markColumn }, Text{});
+            into->add(Tag{ i }, Text{ column.name }, width, maxLines, named, editor);
         }
+        if (footnoted)
+            into->add(Tag{ k_markColumn }, Grids::ShowInHeader::No);
+        // A row fills neither the group column nor the parent over the marks.
+        grid.onCellContent([](Grids::CellContentEvent& event) {
+            const TagValue column = event.column().tag().value;
+            event.hasContent = column != k_groupColumn && column != k_markParentColumn;
+        });
         if (table.header)
             grid.addHeader();
 
         PageFootnotes footnotes;
         for (const TableGroup& group : table.groups)
-            addTableRows(grid, table, group, body, hintColumn, footnotes);
+            addTableRows(grid, table, group, notes, hintColumn, footnotes);
         const Padding footnotePadding{ k_prosePadding, k_footnotePadding };
         for (PageFootnote& footnote : footnotes)
-            addFootnoteSlot(body, std::move(footnote), footnotePadding);
+            addFootnoteSlot(notes, std::move(footnote), footnotePadding);
         connectLinks(grid);
     }
 
@@ -490,35 +509,44 @@ namespace SeeDocs_App
             Padding{ 0.0f },
             Spacing{ k_signatureGap }
         );
-        TextBox& label = block.add<TextBox>(ReadOnly::Yes, Padding{ 0.0f });
-        m_renders.push_back([&label, &section]() {
-            Text text;
-            writeSignature(text, section.heading, false);
-            label.text() = text;
-        });
-        const Padding indent{ k_signatureIndent, 0.0f };
+        const bool labelled = !section.heading.empty();
+        if (labelled)
+        {
+            TextBox& label = block.add<TextBox>(ReadOnly::Yes, Padding{ 0.0f });
+            m_renders.push_back([&label, &section]() {
+                Text text;
+                writeSignature(text, section.heading, false);
+                label.text() = text;
+            });
+        }
+        const float indentWidth = labelled ? k_signatureIndent : 0.0f;
+        const Padding indent{ indentWidth, 0.0f };
         for (const Signature& signature : section.signatures)
         {
             Stack& entry = block.add<Stack>(
                 Orientation::Vertical,
                 Padding{ 0.0f },
-                Spacing{ 0.0f }
+                Spacing{ k_leadGap }
             );
             TextBox& code = entry.add<TextBox>(ReadOnly::Yes, indent);
             connectLinks(code);
-            HintBox& lead = entry.add<HintBox>(ReadOnly::Yes, noHintText(), indent);
-            connectLinks(lead);
-            connectHintBox(lead, signature.site);
-            m_renders.push_back([&code, &lead, &signature]() {
+            m_renders.push_back([&code, &signature]() {
                 Text text;
                 writeSignature(text, signature.code, true);
                 code.text() = text;
-                lead.showHint(hintWords(signature.lead));
             });
+            if (!signature.lead.empty())
+            {
+                HintBox& lead = entry.add<HintBox>(ReadOnly::Yes, noHintText(), indent);
+                connectLinks(lead);
+                connectHintBox(lead, signature.site);
+                m_renders.push_back([&lead, &signature]() {
+                    lead.showWords(hintWords(signature.lead));
+                });
+            }
             if (signature.excerpt.has_value())
             {
-                addFootnoteSlot(entry, { .excerpt = &*signature.excerpt },
-                    Padding{ k_signatureIndent, k_signatureGap });
+                addFootnoteSlot(entry, { .excerpt = &*signature.excerpt }, indent);
             }
         }
         m_parts.push_back(&block);
@@ -528,7 +556,7 @@ namespace SeeDocs_App
     // a held expander row of the label where the table has no such column; the groups it holds
     // follow its rows inside it, each under a header of its own.
     void PageView::addTableRows(Grids::GridBase& grid, const Table& table,
-        const TableGroup& group, Stack& body, const TagValue hintColumn, PageFootnotes& footnotes)
+        const TableGroup& group, Stack& notes, const TagValue hintColumn, PageFootnotes& footnotes)
     {
         const bool beside = !table.groupColumn.empty();
         Grids::GridBase* target = &grid;
@@ -567,13 +595,6 @@ namespace SeeDocs_App
                 footnotes.push_back({ .excerpt = &*row.excerpt, .anchor = *anchor, .row = &row });
             }
             Grids::Row& gridRow = target->addRow();
-            if (beside)
-            {
-                gridRow.onCellContent([](Grids::CellContentEvent& event) {
-                    event.hasContent = event.column().tag().value != k_groupColumn;
-                    event.stopPropagation();
-                });
-            }
             if (!row.hint.empty())
             {
                 gridRow.onGetCellHint([&row](Grids::GetCellHintEvent& event) {
@@ -588,7 +609,7 @@ namespace SeeDocs_App
                     if (anchor.has_value())
                     {
                         event.text() << PushLink{ std::wstring{ k_anchorPrefix } + *anchor }
-                            << k_mark << PopLink{};
+                            << InkColor::Spot << k_mark << PopColor{} << PopLink{};
                     }
                     return;
                 }
@@ -603,11 +624,11 @@ namespace SeeDocs_App
                 if (hintColumn != k_noColumn)
                     connectHintCell(gridRow, row, hintColumn);
                 if (table.takesFootnotes)
-                    connectRowMenu(gridRow, row, body);
+                    connectRowMenu(gridRow, row, notes);
             }
         }
         for (const TableGroup& nested : group.groups)
-            addTableRows(*target, table, nested, body, hintColumn, footnotes);
+            addTableRows(*target, table, nested, notes, hintColumn, footnotes);
     }
 
     // THE CELL SHOWS MORE THAN THE COMMENT HOLDS - its types linked, a missing hint marked, an
@@ -632,7 +653,7 @@ namespace SeeDocs_App
 
     // The row is the subject of its menu, so the commands are claimed and answered here; each
     // edit waits for the menu to close over the row.
-    void PageView::connectRowMenu(Grids::Row& gridRow, const TableRow& row, Stack& body)
+    void PageView::connectRowMenu(Grids::Row& gridRow, const TableRow& row, Stack& notes)
     {
         gridRow.onGetActionState([this, &row](GetActionStateEvent& event) {
             const bool written = footnoteOf(row) != nullptr;
@@ -641,7 +662,7 @@ namespace SeeDocs_App
             else if (&event.action == &Actions::addFootnote && !written)
                 event.claim({ .enabled = canAddFootnote(row) });
         });
-        gridRow.onActionClick([this, &row, &body](ActionClickEvent& event) {
+        gridRow.onActionClick([this, &row, &notes](ActionClickEvent& event) {
             if (&event.action == &Actions::editFootnote)
             {
                 const PageFootnote* footnote = footnoteOf(row);
@@ -654,8 +675,8 @@ namespace SeeDocs_App
             }
             else if (&event.action == &Actions::addFootnote)
             {
-                later([this, &row, &body]() {
-                    addFootnote(row, body);
+                later([this, &row, &notes]() {
+                    addFootnote(row, notes);
                 });
             }
         });
@@ -720,7 +741,7 @@ namespace SeeDocs_App
 
     // A FOOTNOTE NOT WRITTEN YET STANDS UNDER THE TABLE only while its editor does: written, the
     // page is built again with it; left, its slot goes.
-    void PageView::addFootnote(const TableRow& row, Stack& body)
+    void PageView::addFootnote(const TableRow& row, Stack& notes)
     {
         if (!canAddFootnote(row))
             return;
@@ -731,7 +752,7 @@ namespace SeeDocs_App
         }
         else
         {
-            slot = &body.add<FootnoteSlot>(Padding{ k_prosePadding, k_footnotePadding });
+            slot = &notes.add<FootnoteSlot>(Padding{ k_prosePadding, k_footnotePadding });
             connectLinks(slot->shown());
             m_newFootnotes.emplace(&row, slot);
         }

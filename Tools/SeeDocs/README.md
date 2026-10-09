@@ -1,16 +1,16 @@
 # SeeDocs
 
-The tools that read the framework's design surface out of its source and put it to use. Two
-programs so far: the scanner, which reads every module under a tree of sources, writes what it
-finds into one database and holds the tree to the declaration routine; and the studio, a window
-over that database showing the surface as the documentation it is to become.
+The tools that read the framework's design surface out of its source and put it to use. Two programs
+so far: SeeDocsCli, the scanner, which reads every module under a tree of sources, writes what it
+finds into one database and holds the tree to the declaration routine; and SeeDocs, a window over
+that database showing the surface as the documentation it is to become.
 
-    seedocs scan [tree] [--out file]    writes the database, the tree's .seedocs/Surface.cfg by default
-    seedocs check [tree]                reports deviations, exit code 1 if any are errors
-    seedocs-studio [tree]               opens the studio over the tree as a project
+    SeeDocsCli scan [tree] [--out file]   writes the database, the tree's .seedocs/Surface.cfg by default
+    SeeDocsCli check [tree]               reports deviations, exit code 1 if any are errors
+    SeeDocs [tree]                        opens the tree as a project
 
 The tree is the folder of sources, read as it stands - for the framework, its `Source/` folder;
-nothing is appended to the path given. For the scanner it is the working directory when left out.
+nothing is appended to the path given. For SeeDocsCli it is the working directory when left out.
 The report reads `file:line: level: text`, one line per finding, in file and line order.
 
 ## Projects
@@ -19,7 +19,7 @@ A project is a tree with a `.seedocs` folder in it. Everything SeeDocs keeps of 
 there - the database the scanner writes, `Project.cfg`, the project's properties, which is its
 name so far, taken from the folder's own, and `footnotes`, the notes a comment's `See` reaches,
 written by the tree's authors - so the tree itself is left as it was found. A scan into
-the tree's own database makes the folder; the studio makes it with the user's consent, asked in a
+the tree's own database makes the folder; SeeDocs makes it with the user's consent, asked in a
 dialog, and scans the tree at once so the project opens with its database in place. A `--out`
 file written anywhere else makes no project.
 
@@ -57,6 +57,7 @@ Where an entry says the same thing a `Language.cfg` completion entry says, it us
 `Name`, `Kind`, `Signature`, `Hint`, `Type`, and a class's `Methods` and `Properties` as two lists.
 The two files are meant to become one.
 
+    Scanned = 2026-10-09T03:12:45Z
     Modules = [
         =[ Name, File, Interface, Imports = [...], ExportedImports = [...] ]
     ]
@@ -75,7 +76,12 @@ The two files are meant to become one.
         ]
     ]
     Functions = [ =[ Name, Namespace, Kind, Signature, Type, Template, Module, File, Line, Hint, Note ] ]
-    Constants = [ =[ Name, Namespace, Type, Value, Constant, Module, File, Line, Hint, Note ] ]
+    Constants = [ =[ Name, Namespace, Type, Value, Constant, Declaration, Module, File, Line, Hint,
+                     Note ] ]
+
+`Scanned` is when the scan that wrote the file ran, in UTC to the second. A hint or a footnote
+written from SeeDocs keeps it, since such an edit reads nothing of the tree beyond what it
+changes.
 
 `Control` marks a type whose base chain reaches `Control` or `RichControl`, template arguments
 walked as bases, which is what makes it a toolbox entry; `Category` is its folder under the
@@ -92,20 +98,26 @@ wired the way an event is) or `unknown`. A `std::optional` of a kind is that kin
 under `Accepts`. An event's `Name` is its struct, whose payload is that struct's own `Fields`
 entry. A `Usings` entry is a using-declaration naming a base's member, `Base` as spelled before
 the last `::`: `Base::Base` makes the base's constructors the type's own, any other name
-republishes that member under the entry's `Access`.
+republishes that member under the entry's `Access`. A constant's `Value` is its initializer
+folded onto one line, comments taken out; its `Declaration` is the whole declaration as written,
+from its first specifier to the semicolon, lines, indents and comments kept, each line after the
+first set back by the first one's indent.
 
-## The studio
+## The window
 
-`SeeDocs Studio` opens a project - the tree named on its command line, else the project it was
+`SeeDocs` opens a project - the tree named on its command line, else the project it was
 last left on - and shows the project's database and its footnotes as pages. The
 application menu's Open page is where projects are opened: a Browse button asks for a folder in
 the desktop's own dialog, and the projects opened before stand under it, most recent first, one
-click each. A folder with no `.seedocs` becomes a project there, once the user has agreed to the
-folder; the project's name heads the window title. Which project is open and which were opened
-before are kept with the application's settings, so they are remembered once settings are kept on
-the computer.
+click each. The project open heads the page: its name in a box that renames it - Return or leaving
+the box keeps the name, Escape puts it back, and an emptied box gives the project its folder's
+name - then its folder, and how long ago it was scanned, with a Rescan button that reads the tree
+again while the menu stays open. A folder with no `.seedocs` becomes a project there, once the
+user has agreed to the folder; the project's name heads the window title. Which project is open
+and which were opened before are kept with the application's settings, so they are remembered
+once settings are kept on the computer.
 
-The studio is a browser of the framework's own kind: tabs across the top, under them the crumbs of
+SeeDocs is a browser of the framework's own kind: tabs across the top, under them the crumbs of
 the page shown with a list dropping from each, and Back, Forward and Up beside them. Every page has
 a url - `/chapter/module/type/method` - so a tab goes back and forward through the pages it has
 visited (Alt+Left and Alt+Right, the side buttons of the mouse, or a right click on either button
@@ -116,15 +128,26 @@ project closes every tab and opens one on the new project's home; a url the proj
 longer carries - a type gone since the tree was scanned - shows a page saying so.
 
 The pages: down the left a tree of chapters - the tree's folders, a reader's names for them
-- each holding its modules and each module the types it exports, controls first; on the right the
+- each holding its modules and each module the types it exports, controls first; a module that
+exports functions or constants and no type is a row with nothing under it. On the right the
 page of whatever is clicked, and the tree follows wherever a tab goes. A page is a column of
-controls: its title with its hint under it,
+controls: its title, what the page is after it - a chapter, a module, a function, a constant,
+a type's kind - and its hint under it,
 a grid of facts - namespace, module, source - and then a section per expander. A type's title
 carries the ways up through its bases under it, written the C++ way - a colon before each base,
-a mixin's host through the argument it was given, a second line where the bases fork. A
-chapter's or a module's page holds a grid of its types with their kinds and hints, the chapter's
-grouped by module under held headers. A type's page holds the types derived from it as a tree
-and a grid per member kind: properties, events,
+a mixin's host through the argument it was given, a second line where the bases fork; an
+alias's line is what it stands for after an equals sign, an enum's its underlying type after a
+colon. A chapter's or a module's page holds a grid of its types with their kinds and hints, then its
+functions and its constants; on a chapter's page each grid stands by module, the module's name
+beside its rows and linked to its page. A function's row carries its name alone, one row per
+name, every overload's signature in the name's hint; the name links to the function's page,
+which carries the hint under its title - the first commented overload's, as the row does - and
+holds every overload of the name, coloured, with its note and, where it differs, its own hint. A
+constant's name links to the constant's page, which carries the hint under its title and holds
+its declaration as written, coloured and whole, with its note; the grid's value cell shows the
+first lines of the folded initializer. A module's page lists its types, its functions and its
+constants in its crumb, and their pages stand under its url. A type's page holds the types
+derived from it as a tree and a grid per member kind: properties, events,
 public methods and protected methods, the type's own under an Own expander and each base's under
 a From expander of its own, up the whole chain of bases; fields or members; each with its hint.
 A base's methods grid holds what reaches the type: its
@@ -136,10 +159,11 @@ says it; a method with no comment of its own - an override, as a rule - takes th
 footnote of the method of the same name and parameter count in the nearest base that has one.
 A method's row carries its name alone, one row per name, with every overload's signature as
 the name's hint, a line each; the name is a
-link to the method's page, titled `Type::name` with the type linked, which holds every overload
-of the name under its access label written the C++ way - `public:` - the declaration as code,
-coloured as the framework's code boxes colour C++, the hint under it, and the note the comment
-references after that.
+link to the method's page, titled `Type::name` with the type linked. It is built as a function's
+page is, the type and the access labels being what a method adds: the hint under the title - the
+first commented overload's - then every overload of the name under its access label written the
+C++ way - `public:` - the declaration as code, coloured as the framework's code boxes colour C++,
+its own hint where the title's is another overload's, and the note the comment references.
 After them, the types with a property of this type and
 the types with an event of it, two trees, each type with the types derived from it under it,
 closed; then, as the page's footnote headed Details, the note the type's comment references as
@@ -180,9 +204,8 @@ key on a grid cell holding one, offers Open and Open in new tab. A row of the
 derived types opens the type it names; a method's page picks the method's type in the tree.
 The pages are built by
 `SeeDocs_App.Pages` - facts, sections, tables of rows with their footnotes, branches of a tree,
-signatures and blocks of prose - out of the surface and the notes; the studio builds controls
-from them (`SeeDocs_App.Studio.PageView`), the browser (`SeeDocs_App.Studio.Browser`) shows one
-per tab, and a generator renders the same pages as files.
+signatures and blocks of prose - out of the surface and the notes; SeeDocs builds controls
+from them (`SeeDocs_App.PageView`), the browser (`SeeDocs_App.Browser`) shows one per tab, and a generator renders the same pages as files.
 
 ## The checks
 
@@ -204,16 +227,15 @@ per tab, and a generator renders the same pages as files.
 
 ## Building
 
-`SeeDocs.sln` builds both programs with Visual Studio against the shared items: `SeeDocs` the
-scanner and `SeeDocs Studio` the studio, which share the Surface, Scanner, Database, Project,
-Notes and Pages modules under `Src/`, the studio's own standing under `Src/Studio/` and the Edits
-module beside the shared ones. The CMake target
-`SeeDocsStudio` builds the studio on Wayland beside the other applications. The CMake target
-`SeeDocs` builds the scanner on Linux with or without a platform layer - the Dom, the Syntax lexer and the text
-file reader reach no further down than `UiTypes` - so a `check` runs wherever the tree is
-checked out:
+`SeeDocs.sln` builds both programs with Visual Studio against the shared items: `SeeDocs` the window
+and `SeeDocsCli` the scanner, which share the Surface, Scanner, Database, Project, Notes and Pages
+modules under `Src/`, the window's own standing under `Src/Ui/` and the Edits module beside the
+shared ones. The CMake target `SeeDocs` builds the window on Wayland beside the other applications.
+The CMake target `SeeDocsCli` builds the scanner on Linux with or without a platform layer - the
+Dom, the Syntax lexer and the text file reader reach no further down than `UiTypes` - so a `check`
+runs wherever the tree is checked out:
 
     cmake -S . -B build -G Ninja -DCLAFI_PLATFORM=none \
           -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_BUILD_TYPE=Release
-    cmake --build build --target SeeDocs
-    ./build/SeeDocs check Source
+    cmake --build build --target SeeDocsCli
+    ./build/SeeDocsCli check Source

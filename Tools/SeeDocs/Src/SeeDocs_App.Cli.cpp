@@ -1,4 +1,4 @@
-module SeeDocs_App.Main;
+module SeeDocs_App.Cli;
 
 import SeeDocs_App.Checks;
 import SeeDocs_App.Database;
@@ -24,10 +24,10 @@ namespace SeeDocs_App
         constexpr int k_misused = 2;
 
         constexpr std::wstring_view k_usage =
-            L"SeeDocs - reads the ClaFi design surface out of the tree.\n"
+            L"SeeDocsCli - reads the ClaFi design surface out of the tree.\n"
             L"\n"
-            L"    seedocs scan [tree] [--out file]    writes the tree's .seedocs/Surface.cfg\n"
-            L"    seedocs check [tree]                reports deviations, exit code 1 on errors\n"
+            L"    SeeDocsCli scan [tree] [--out file]   writes the tree's .seedocs/Surface.cfg\n"
+            L"    SeeDocsCli check [tree]               reports deviations, exit code 1 on errors\n"
             L"\n"
             L"The tree is the folder of sources, read as it stands; the working directory when\n"
             L"left out.\n";
@@ -90,7 +90,7 @@ namespace SeeDocs_App
         }
 
         // A scan into the tree's own database makes the tree a project: the command names the
-        // tree, which is the consent the studio asks for in a dialog.
+        // tree, which is the consent SeeDocs asks for in a dialog.
         [[nodiscard]] int scan(const Options& options)
         {
             std::filesystem::path output = options.output;

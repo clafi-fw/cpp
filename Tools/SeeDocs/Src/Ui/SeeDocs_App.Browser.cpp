@@ -1,9 +1,9 @@
-module SeeDocs_App.Studio.Browser;
+module SeeDocs_App.Browser;
 
-import SeeDocs_App.Studio.Editing;
-import SeeDocs_App.Studio.Icons;
-import SeeDocs_App.Studio.PageView;
-import SeeDocs_App.Studio.SurfaceTree;
+import SeeDocs_App.Editing;
+import SeeDocs_App.Icons;
+import SeeDocs_App.PageView;
+import SeeDocs_App.SurfaceTree;
 import SeeDocs_App.Database;
 import SeeDocs_App.Edits;
 import SeeDocs_App.Notes;
@@ -35,7 +35,7 @@ namespace SeeDocs_App
 
     namespace
     {
-        constexpr float k_wordsIndent = 12.0f;   // of a path quoted in the studio's words
+        constexpr float k_wordsIndent = 12.0f;   // of a path quoted in SeeDocs' words
         constexpr std::wstring_view k_noteExtension = L".md";
         constexpr std::wstring_view k_sourceJoin = L" \u203A ";
         constexpr std::wstring_view k_separator = L" \u00B7 ";
@@ -103,7 +103,7 @@ namespace SeeDocs_App
         std::size_t resolved = folderDepth;
         if (module)
             ++resolved;
-        if (type)
+        if (type || !exportName.empty())
             ++resolved;
         if (!method.empty())
             ++resolved;
@@ -177,24 +177,51 @@ namespace SeeDocs_App
         resetToHome();
     }
 
+    // The name titles home - its crumb, its tab, its line in a list - and is said on the home page
+    // and on a page the surface does not carry, which refreshPages builds again.
+    void SurfaceBrowser::setProjectName(const std::wstring_view name)
+    {
+        m_projectName = name;
+        PageData& home = homePageData();
+        home.title = titleOf(home, resolve(home));
+        BrowserTab* selected = nullptr;
+        for (BrowserTab& tab : tabs())
+        {
+            if (tab.selected())
+                selected = &tab;
+            if (tab.pageData() != &home)
+                continue;
+            storeTabSettings(tab);
+            tab.invalidate();
+        }
+        refreshPages(std::nullopt);
+        // Sent to the url it stands on, the selected tab builds its crumbs again.
+        if (selected && selected->pageData())
+            goTo(*selected->pageData(), selected->anchor(), *selected);
+    }
+
     std::optional<Url> SurfaceBrowser::urlOf(const std::wstring_view target) const
     {
         const Targets::const_iterator found = m_targets.find(std::wstring{ target });
         if (found != m_targets.end())
         {
             const Target& named = found->second;
-            return Url{ pathOf(named.chapter, named.module, named.type) };
+            return Url{ pathOf(named.chapter->category, named.module, named.type) };
         }
 
         const std::optional<MemberLink> link = readMemberLink(target);
         if (!link.has_value())
             return std::nullopt;
         const Targets::const_iterator owner = m_targets.find(std::wstring{ link->type });
-        if (owner == m_targets.end() || !owner->second.type
-            || !hasMethod(*owner->second.type, link->member))
+        if (owner == m_targets.end() || !owner->second.module)
             return std::nullopt;
         const Target& named = owner->second;
-        return Url{ pathOf(named.chapter, named.module, named.type, link->member) };
+        const bool reached = named.type
+            ? hasMethod(*named.type, link->member)
+            : exports(*named.module, link->member);
+        if (!reached)
+            return std::nullopt;
+        return Url{ pathOf(named.chapter->category, named.module, named.type, link->member) };
     }
 
     std::wstring SurfaceBrowser::writeHint(const CommentSite& site, const std::wstring_view hint)
@@ -285,14 +312,14 @@ namespace SeeDocs_App
     }
 
     // Said for every page as it is built, which is before anything asks for its list: a page
-    // with a list carries a strip from the start. A folder holds folders or modules by
-    // construction; a type holds methods where it has any.
+    // with a list carries a strip from the start. A folder holds folders or modules and a module
+    // what it exports, by construction; a type holds methods where it has any.
     void SurfaceBrowser::initPageData(PageData& data)
     {
         const Target target = resolve(data);
         data.title = titleOf(data, target);
         const bool hasList = target.isHome()
-            || (!target.isGone() && target.method.empty()
+            || (!target.isGone() && target.method.empty() && target.exportName.empty()
                 && (!target.type || !methodNames(*target.type).empty()));
         if (hasList)
             data.fetchState = FetchState::HasChildren;
@@ -319,6 +346,8 @@ namespace SeeDocs_App
         {
             for (const Type* type : target.module->types)
                 addSubItem(data, type->qualifiedName);
+            for (const std::wstring_view name : exportNames(*target.module))
+                addSubItem(data, name);
         }
         else if (target.method.empty())
         {
@@ -355,9 +384,9 @@ namespace SeeDocs_App
             page->show();
         }
         if (target.isGone())
-            m_tree.follow(nullptr, nullptr, nullptr);
+            m_tree.follow({}, nullptr, nullptr);
         else
-            m_tree.follow(target.chapter, target.module, target.type);
+            m_tree.follow(target.folder, target.module, target.type);
     }
 
     IconSize SurfaceBrowser::pageIconSize(PageData& data)
@@ -418,7 +447,11 @@ namespace SeeDocs_App
         found = m_targets.find(std::wstring{ segments[next] });
         if (found == m_targets.end() || !found->second.type
             || found->second.module != result.module)
+        {
+            if (exports(*result.module, segments[next]))
+                result.exportName = segments[next];
             return result;
+        }
         result.type = found->second.type;
         if (++next == segments.size())
             return result;
@@ -428,23 +461,20 @@ namespace SeeDocs_App
         return result;
     }
 
-    // A chapter's folders are its category, which spells them with the path's own separator.
-    std::wstring SurfaceBrowser::pathOf(const ContentsChapter* chapter,
-        const ContentsModule* module, const Type* type, const std::wstring_view method)
+    // A folder's category spells its folders with the path's own separator.
+    std::wstring SurfaceBrowser::pathOf(const std::wstring_view folder,
+        const ContentsModule* module, const Type* type, const std::wstring_view member)
     {
         std::wstring result;
-        if (!chapter)
-            return result;
-        if (!chapter->category.empty())
-            result.append(1, ConfigNames::pathSeparator).append(chapter->category);
+        if (!folder.empty())
+            result.append(1, ConfigNames::pathSeparator).append(folder);
         if (!module)
             return result;
         result.append(1, ConfigNames::pathSeparator).append(module->name);
-        if (!type)
-            return result;
-        result.append(1, ConfigNames::pathSeparator).append(type->qualifiedName);
-        if (!method.empty())
-            result.append(1, ConfigNames::pathSeparator).append(method);
+        if (type)
+            result.append(1, ConfigNames::pathSeparator).append(type->qualifiedName);
+        if (!member.empty())
+            result.append(1, ConfigNames::pathSeparator).append(member);
         return result;
     }
 
@@ -494,8 +524,11 @@ namespace SeeDocs_App
 
     std::optional<RowIcon> SurfaceBrowser::iconOf(const Target& target)
     {
-        if (target.isGone() || target.isHome() || !target.method.empty())
+        if (target.isGone() || target.isHome() || !target.method.empty()
+            || !target.exportName.empty())
+        {
             return std::nullopt;
+        }
         if (target.type)
             return rowIconOf(*target.type);
         if (target.module)
@@ -516,6 +549,11 @@ namespace SeeDocs_App
         }
         if (target.isFolder())
             return chapterPage(*m_surface, *m_notes, m_contents, *target.chapter);
+        if (!target.exportName.empty())
+        {
+            return exportPage(*m_surface, *m_notes, *target.chapter, *target.module,
+                target.exportName);
+        }
         if (!target.type)
             return modulePage(*m_surface, *m_notes, *target.chapter, *target.module);
         if (target.method.empty())
@@ -643,5 +681,18 @@ namespace SeeDocs_App
         return std::ranges::any_of(type.functions, [name](const Function& function) {
             return function.name == name;
         });
+    }
+
+    bool SurfaceBrowser::exports(const ContentsModule& module, const std::wstring_view name)
+    {
+        const bool isFunction = std::ranges::any_of(module.functions,
+            [name](const FreeFunction* free) {
+                return free->function.name == name;
+            });
+        const bool isConstant = std::ranges::any_of(module.constants,
+            [name](const Variable* variable) {
+                return variable->field.name == name;
+            });
+        return isFunction || isConstant;
     }
 }

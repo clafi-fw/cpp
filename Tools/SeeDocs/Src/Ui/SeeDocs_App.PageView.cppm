@@ -1,6 +1,6 @@
-export module SeeDocs_App.Studio.PageView;
+export module SeeDocs_App.PageView;
 
-import SeeDocs_App.Studio.Editing;
+import SeeDocs_App.Editing;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
@@ -62,7 +62,7 @@ namespace SeeDocs_App
         // the page shown - the same sections, rows and footnotes - its words go into the controls
         // standing, which keep their place; false where it has not, and nothing changes.
         [[nodiscard]] bool refresh(Page);
-        // Shows words of the studio's own in place of a page.
+        // Shows SeeDocs' own words in place of a page.
         void showText(const Text&);
         // Scrolls to the footnote the anchor names. An empty anchor names the page itself, and
         // the page stays where it stands for it.
@@ -100,17 +100,17 @@ namespace SeeDocs_App
         void addTreeRows(Holder&, const Branches&, bool nodesOpen);
         [[nodiscard]] Text treeRowText(const Branch&) const;
         [[nodiscard]] HeaderText treeHeaderText(const Branch&) const;
-        void addTableRows(Grids::GridBase&, const Table&, const TableGroup&, Stack& body,
+        void addTableRows(Grids::GridBase&, const Table&, const TableGroup&, Stack& notes,
             TagValue hintColumn, PageFootnotes&);
         // The row's hint cell opens on the comment's words and writes them back.
         void connectHintCell(Grids::Row&, const TableRow&, TagValue hintColumn);
         // The row's menu edits its footnote, or adds one where it has none.
-        void connectRowMenu(Grids::Row&, const TableRow&, Stack& body);
+        void connectRowMenu(Grids::Row&, const TableRow&, Stack& notes);
         // The box takes edits where the page has a writer and the hint a comment to write into.
         void connectHintBox(HintBox&, const std::optional<CommentSite>&);
         FootnoteSlot& addFootnoteSlot(Stack& holder, PageFootnote, Padding);
         void editFootnote(const PageFootnote&);
-        void addFootnote(const TableRow&, Stack& body);
+        void addFootnote(const TableRow&, Stack& notes);
         [[nodiscard]] const PageFootnote* footnoteOf(const TableRow&) const;
         [[nodiscard]] bool canAddFootnote(const TableRow&) const;
         // Runs the edit once the command that asked for it has unwound: a menu is still closing
@@ -134,7 +134,9 @@ namespace SeeDocs_App
         static constexpr float k_headerSpacing = 6.0f;    // between a section's header and body
         static constexpr float k_prosePadding = 12.0f;
         static constexpr float k_footnotePadding = 3.0f;   // above and below a member's footnote
-        static constexpr float k_signatureGap = 6.0f;      // between declarations
+        static constexpr float k_footnoteGap = 6.0f;       // between a table's footnotes
+        static constexpr float k_signatureGap = 12.0f;     // between declarations
+        static constexpr float k_leadGap = 6.0f;           // between a declaration's parts
         static constexpr float k_signatureIndent = 18.0f;  // of the declarations under their label
         static constexpr float k_treePadding = 4.0f;
         static constexpr float k_kindGap = 12.0f;   // the least room before a tree row's kind word
@@ -144,6 +146,7 @@ namespace SeeDocs_App
         static constexpr TagValue k_markColumn = std::numeric_limits<TagValue>::max();
         static constexpr TagValue k_groupColumn = k_markColumn - 1;
         static constexpr TagValue k_noColumn = k_markColumn - 2;
+        static constexpr TagValue k_markParentColumn = k_markColumn - 3;
         static constexpr std::wstring_view k_mark = L"*";
 
         Page m_page{};

@@ -1,8 +1,8 @@
-module SeeDocs_App.Studio.Main;
+module SeeDocs_App.Main;
 
-import SeeDocs_App.Studio.Browser;
-import SeeDocs_App.Studio.OpenPage;
-import SeeDocs_App.Studio.Workspace;
+import SeeDocs_App.Browser;
+import SeeDocs_App.OpenPage;
+import SeeDocs_App.Workspace;
 
 import ClaFi.App.Settings;
 
@@ -21,12 +21,12 @@ namespace SeeDocs_App
 
     namespace
     {
-        constexpr std::wstring_view k_appName = L"SeeDocs Studio";
+        constexpr std::wstring_view k_appName = L"SeeDocs";
         constexpr std::wstring_view k_publisher = L"ClaFi Framework";
         constexpr std::wstring_view k_openPageCaption = L"Open";
     }
 
-    AppParams studioParams()
+    AppParams seeDocsParams()
     {
         return {
             .name = Text{ k_appName },
@@ -55,7 +55,7 @@ namespace SeeDocs_App
 
     // A question the workspace asks drops under the browser's app button, and the page it fills
     // stands in the menu that button opens.
-    int runStudio(ApplicationBase& application, Form<SurfaceBrowser>& form,
+    int runSeeDocs(ApplicationBase& application, Form<SurfaceBrowser>& form,
         const std::filesystem::path& stated)
     {
         Workspace workspace{ application, form, form.content() };

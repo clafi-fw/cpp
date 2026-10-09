@@ -13,7 +13,8 @@ line scanner can harvest them. A comment on a harvested
 declaration is one line, and the words that do not fit go into the subsystem's footnote under
 `Source/.seedocs/footnotes`, referenced from the line; what only an author of the framework needs
 - why, how inside, what happened - goes into the working note of the same name under
-`Source/Working Notes`. `python "Tools/Surface Scanner/scan.py" --check` reports every departure.
+`Source/Working Notes`. `SeeDocsCli check Source`, built from `Tools/SeeDocs`, reports every
+departure.
 
 ## Layout
 

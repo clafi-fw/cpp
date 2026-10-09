@@ -109,6 +109,32 @@ namespace ClaFi
         trimRight(s);
     }
 
+    // A count of a unit, plural where it is not one, and how long ago.
+    static std::wstring countAgo(const std::int64_t count, const std::wstring_view unit)
+    {
+        std::wstring spelling = std::format(L"{} {}", count, unit);
+        if (count != 1)
+            spelling += L's';
+        spelling += L" ago";
+        return spelling;
+    }
+
+    // A moment ahead of now - the clock was set back since - reads as just now.
+    std::wstring ageSpelling(const std::chrono::sys_seconds moment,
+        const std::chrono::sys_seconds now)
+    {
+        const std::chrono::minutes minutes =
+            std::chrono::floor<std::chrono::minutes>(now - moment);
+        if (minutes < std::chrono::minutes{ 1 })
+            return L"just now";
+        if (minutes < std::chrono::hours{ 1 })
+            return countAgo(minutes.count(), L"minute");
+        const std::chrono::hours hours = std::chrono::floor<std::chrono::hours>(minutes);
+        if (hours < std::chrono::days{ 1 })
+            return countAgo(hours.count(), L"hour");
+        return countAgo(std::chrono::floor<std::chrono::days>(hours).count(), L"day");
+    }
+
     //-------------------------------------------------------------------------
     // UTF-8
 
