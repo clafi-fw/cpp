@@ -18,6 +18,8 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_scope = L"::";
         // How many aliases a type is followed through before it is given up as circular.
         constexpr std::size_t k_aliasDepth = 8;
+        // How many times a tree's symbols are gathered before they are taken as settled.
+        constexpr std::size_t k_symbolPasses = 8;
 
         // The words no declaration may be named, which the language reserves. The directives -
         // virtual, read, message - are names anywhere they are not directives.
@@ -67,12 +69,12 @@ namespace SeeDocs_App
             L"constructor", L"destructor", L"function", L"operator", L"procedure"
         });
 
-        // The symbols the compiler defines building for Windows, which a conditional may read
-        // as defined.
+        // The symbols the newest compiler - Delphi 13, VER370 - defines building for Windows,
+        // which a conditional may read as defined.
         constexpr auto k_compilerSymbols = std::to_array<std::wstring_view>({
             L"assembler", L"conditionalexpressions", L"cpu32bits", L"cpu386", L"cpu64bits",
             L"cpux64", L"cpux86", L"dcc", L"mswindows", L"nativecode", L"underscoreimportname",
-            L"unicode", L"win32", L"win64"
+            L"unicode", L"ver370", L"win32", L"win64"
         });
 
         using Words = std::span<const std::wstring_view>;
@@ -332,6 +334,113 @@ namespace SeeDocs_App
             return condition;
         }
 
+        // Whether a text says $DEFINE anywhere, which spares lexing one that does not.
+        [[nodiscard]] bool mentionsDefine(const std::wstring_view text)
+        {
+            constexpr std::wstring_view word = L"define";
+            std::size_t at = text.find(L'$');
+            while (at != std::wstring_view::npos)
+            {
+                if (sameWord(text.substr(at + 1, word.size()), word))
+                    return true;
+                at = text.find(L'$', at + 1);
+            }
+            return false;
+        }
+
+        // The branches a text's conditionals leave read - {$IFDEF X}, {$IF ...}, {$IFOPT ...},
+        // {$ELSEIF ...}, {$ELSE}, {$ENDIF}, {$IFEND} - by the symbols defined. A conditional
+        // that cannot hold is taken as one on a plain 0 is.
+        class Conditionals
+        {
+        public:
+            explicit Conditionals(const PascalSymbols&);
+            // Any other directive steers nothing.
+            void take(const Directive&);
+            [[nodiscard]] bool reading() const { return m_branches.reading(); }
+        private:
+            // Whether a conditional can be read true: it tests no symbol nothing defines.
+            [[nodiscard]] bool mayHold(std::wstring_view word, std::wstring_view condition) const;
+        private:
+            const PascalSymbols& m_symbols;
+            Branches m_branches;
+        };
+
+        Conditionals::Conditionals(const PascalSymbols& symbols)
+            :
+            m_symbols{ symbols }
+        {
+        }
+
+        void Conditionals::take(const Directive& directive)
+        {
+            std::wstring_view word = directive.word;
+            if (word == L"ifopt")
+                word = L"if";
+            else if (word == L"elseif")
+                word = L"elif";
+            else if (word == L"ifend")
+                word = L"endif";
+            if (mayHold(word, directive.rest))
+                m_branches.take(word, directive.rest);
+            else
+                m_branches.take(word == L"elif" ? L"elif" : L"if", L"0");
+        }
+
+        bool Conditionals::mayHold(const std::wstring_view word,
+            const std::wstring_view condition) const
+        {
+            std::wstring_view symbol;
+            if (word == L"ifdef")
+                symbol = leadingName(condition);
+            else if (word == L"if" || word == L"elif")
+                symbol = definedTest(condition);
+            if (symbol.empty())
+                return true;
+            const std::wstring lower = lowered(symbol);
+            return m_symbols.contains(lower) || isListed(k_compilerSymbols, lower);
+        }
+
+        // Adds what a text defines in the branches it leaves read, a conditional reading by
+        // the symbols seen so far: those gathered before and those the text defines above it.
+        void gatherFrom(const std::wstring_view text, PascalSymbols& seen, PascalSymbols& found)
+        {
+            Conditionals conditionals{ seen };
+            Syntax::LineState state{};
+            Syntax::StateStrings strings;
+            Syntax::Tokens lexed;
+            std::size_t start = 0;
+            while (start < text.size())
+            {
+                std::size_t end = text.find(L'\n', start);
+                if (end == std::wstring_view::npos)
+                    end = text.size();
+                const std::wstring_view line = text.substr(start, end - start);
+                lexed.clear();
+                state = Syntax::lexLine(Syntax::Languages::pascal, line, state, strings, &lexed);
+                for (const Syntax::Token& token : lexed)
+                {
+                    if (token.kind != Syntax::TokenKind::Directive)
+                        continue;
+                    const std::optional<Directive> directive =
+                        directiveOf(line.substr(token.range.start, token.range.length));
+                    if (!directive)
+                        continue;
+                    if (directive->word != L"define")
+                    {
+                        conditionals.take(*directive);
+                        continue;
+                    }
+                    const std::wstring_view symbol = leadingName(directive->rest);
+                    if (symbol.empty() || !conditionals.reading())
+                        continue;
+                    seen.insert(lowered(symbol));
+                    found.insert(lowered(symbol));
+                }
+                start = end + 1;
+            }
+        }
+
         // A declaration under the word of the section it stands in: on one line with it, or
         // where it runs over several, set in under it as the unit sets it.
         [[nodiscard]] std::wstring inSection(const std::wstring_view section,
@@ -357,7 +466,7 @@ namespace SeeDocs_App
         }
 
         // A unit as lines and tokens, lexed with the framework's Pascal lexer. A token in a
-        // branch left out is never taken - see Branches - so a directive inside a line steers
+        // branch left out is never taken - see Conditionals - so a directive inside a line steers
         // the reading as one on a line of its own does.
         class UnitText
         {
@@ -378,8 +487,6 @@ namespace SeeDocs_App
         private:
             void lexLine(std::size_t index, Syntax::LineState&, Syntax::StateStrings&);
             void takeDirective(const Token&);
-            // Whether a conditional can be read true: it tests no symbol nothing defines.
-            [[nodiscard]] bool mayHold(std::wstring_view word, std::wstring_view condition) const;
             void takeGap(std::size_t line, std::size_t from, std::size_t to);
             void push(TokenType, std::size_t line, std::size_t start, std::size_t end);
             void followComment(std::size_t firstToken);
@@ -389,14 +496,13 @@ namespace SeeDocs_App
             TokenList m_tokens;
             std::vector<LineKind> m_kinds;
             std::vector<std::size_t> m_firstTokens;
-            const PascalSymbols& m_symbols;
-            Branches m_branches;
+            Conditionals m_conditionals;
             std::wstring_view m_closer;   // closes the comment a line ended inside; empty for none
         };
 
         UnitText::UnitText(const std::wstring_view text, const PascalSymbols& symbols)
             :
-            m_symbols{ symbols }
+            m_conditionals{ symbols }
         {
             std::size_t start = 0;
             while (start <= text.size())
@@ -527,14 +633,14 @@ namespace SeeDocs_App
                 const std::size_t end = token.range.start + token.range.length;
                 if (token.kind == Syntax::TokenKind::Directive)
                 {
-                    if (m_branches.reading())
+                    if (m_conditionals.reading())
                         takeGap(index, cursor, start);
                     push(TokenType::Directive, index, start, end);
                     takeDirective(m_tokens.back());
                     cursor = end;
                     continue;
                 }
-                if (!m_branches.reading())
+                if (!m_conditionals.reading())
                 {
                     cursor = end;
                     continue;
@@ -571,43 +677,16 @@ namespace SeeDocs_App
                         break;
                 }
             }
-            if (m_branches.reading())
+            if (m_conditionals.reading())
                 takeGap(index, cursor, line.size());
         }
 
-        // {$IFDEF X}, {$IF ...}, {$IFOPT ...}, {$ELSEIF ...}, {$ELSE}, {$ENDIF}, {$IFEND}, in
-        // braces or in (*$ *); any other directive steers nothing. A conditional that cannot
-        // hold is read as one on a plain 0 is.
+        // In braces or in (*$ *).
         void UnitText::takeDirective(const Token& token)
         {
-            std::optional<Directive> directive = directiveOf(text(token));
-            if (!directive)
-                return;
-            std::wstring& word = directive->word;
-            if (word == L"ifopt")
-                word = L"if";
-            else if (word == L"elseif")
-                word = L"elif";
-            else if (word == L"ifend")
-                word = L"endif";
-            if (mayHold(word, directive->rest))
-                m_branches.take(word, directive->rest);
-            else
-                m_branches.take(word == L"elif" ? L"elif" : L"if", L"0");
-        }
-
-        bool UnitText::mayHold(const std::wstring_view word,
-            const std::wstring_view condition) const
-        {
-            std::wstring_view symbol;
-            if (word == L"ifdef")
-                symbol = leadingName(condition);
-            else if (word == L"if" || word == L"elif")
-                symbol = definedTest(condition);
-            if (symbol.empty())
-                return true;
-            const std::wstring lower = lowered(symbol);
-            return m_symbols.contains(lower) || isListed(k_compilerSymbols, lower);
+            const std::optional<Directive> directive = directiveOf(text(token));
+            if (directive)
+                m_conditionals.take(*directive);
         }
 
         // What the lexer leaves between its tokens, as names, numbers and single marks. An
@@ -867,25 +946,26 @@ namespace SeeDocs_App
                 comment.above.emplace_back(commentWords(m_text.line(i)));
         }
 
-        // unit A.B.C; interface - the unit's name is its module's, and with :: for its dots,
-        // the namespace its declarations are named in.
+        // unit A.B.C platform; interface - the unit's name is its module's, and with :: for its
+        // dots, the namespace its declarations are named in. A name of the unit is any word, a
+        // directive's included - Acme.Platform.Utils - and what follows it to the semicolon is
+        // what the unit says of itself.
         bool UnitReader::readHeader()
         {
             if (!isWord(peek(), L"unit"))
                 return false;
             advance();
             std::wstring name;
-            while (const Token* token = peek())
+            while (peek() && peek()->type == TokenType::Name)
             {
-                if (isMark(token, L";"))
+                name += text(*peek());
+                advance();
+                if (!isMark(peek(), L"."))
                     break;
-                if (token->type == TokenType::Name && !isListed(k_hintDirectives, text(*token)))
-                    name += text(*token);
-                else if (isMark(token, L"."))
-                    name += L'.';
+                name += L'.';
                 advance();
             }
-            advance();
+            skipToSemicolon();
             if (name.empty() || !isWord(peek(), L"interface"))
                 return false;
             advance();
@@ -1860,34 +1940,29 @@ namespace SeeDocs_App
         }
     }
 
-    void gatherPascalSymbols(const std::wstring_view text, PascalSymbols& symbols)
+    // Each pass gathers afresh, by what the one before found, so a symbol gathered from a
+    // branch that a later pass leaves out is dropped; the passes end when one finds what the
+    // one before did.
+    PascalSymbols pascalSymbolsOf(const std::span<const std::wstring_view> texts)
     {
-        Syntax::LineState state{};
-        Syntax::StateStrings strings;
-        Syntax::Tokens lexed;
-        std::size_t start = 0;
-        while (start < text.size())
+        std::vector<std::wstring_view> defining;
+        for (const std::wstring_view text : texts)
         {
-            std::size_t end = text.find(L'\n', start);
-            if (end == std::wstring_view::npos)
-                end = text.size();
-            const std::wstring_view line = text.substr(start, end - start);
-            lexed.clear();
-            state = Syntax::lexLine(Syntax::Languages::pascal, line, state, strings, &lexed);
-            for (const Syntax::Token& token : lexed)
-            {
-                if (token.kind != Syntax::TokenKind::Directive)
-                    continue;
-                const std::optional<Directive> directive =
-                    directiveOf(line.substr(token.range.start, token.range.length));
-                if (!directive || directive->word != L"define")
-                    continue;
-                const std::wstring_view symbol = leadingName(directive->rest);
-                if (!symbol.empty())
-                    symbols.insert(lowered(symbol));
-            }
-            start = end + 1;
+            if (mentionsDefine(text))
+                defining.push_back(text);
         }
+        PascalSymbols known;
+        for (std::size_t pass = 0; pass != k_symbolPasses; ++pass)
+        {
+            PascalSymbols seen = known;
+            PascalSymbols found;
+            for (const std::wstring_view text : defining)
+                gatherFrom(text, seen, found);
+            if (found == known)
+                break;
+            known = std::move(found);
+        }
+        return known;
     }
 
     void readPascalUnit(Surface& surface, const std::size_t file, const std::wstring_view text,

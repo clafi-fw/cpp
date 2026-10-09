@@ -2288,7 +2288,8 @@ namespace SeeDocs_App
 
     // A module stands in the folder of every file it exports from - a type's category, the
     // folder of a function's or a constant's file - so one exporting only functions has a row. A
-    // header is named by its path, and a reader sees its file's name.
+    // header is named by its path, and a reader sees its file's name; a Delphi unit is seen by its
+    // whole name, every part of which tells it from the others.
     ContentsChapters contentsOf(const Surface& surface)
     {
         using ModulesByName = std::map<std::wstring, ContentsModule>;
@@ -2333,9 +2334,12 @@ namespace SeeDocs_App
                 });
                 contents.name = name;
                 contents.header = headers.contains(name);
-                contents.shortName = contents.header
-                    ? name.substr(name.rfind(L'/') + 1)
-                    : moduleShortNameOf(name);
+                if (contents.header)
+                    contents.shortName = name.substr(name.rfind(L'/') + 1);
+                else if (surface.languageOf(name) == SourceLanguage::Pascal)
+                    contents.shortName = name;
+                else
+                    contents.shortName = moduleShortNameOf(name);
                 chapter.modules.push_back(std::move(contents));
             }
             std::ranges::sort(chapter.modules,

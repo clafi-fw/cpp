@@ -563,7 +563,21 @@
             <p>This chapter provides C++ examples for implementing key features. The snippets demonstrate the line-oriented design.</p>
 
             <h3>10.1 Implementing the Bookend Rule</h3>
-            <pre><code><span class="c">// Decoder following the Bookend Rule</span>
+            <pre><code><span class="c">// Outer whitespace removed, as from every key and value before it is read</span>
+<span class="k">std::wstring_view</span> trimmed(<span class="k">std::wstring_view</span> source)
+{
+    <span class="k">while</span> (!source.empty() && std::iswspace(source.front()))
+    {
+        source.remove_prefix(<span class="m">1</span>);
+    }
+    <span class="k">while</span> (!source.empty() && std::iswspace(source.back()))
+    {
+        source.remove_suffix(<span class="m">1</span>);
+    }
+    <span class="k">return</span> source;
+}
+
+<span class="c">// Decoder following the Bookend Rule, over a trimmed value</span>
 <span class="k">std::wstring_view</span> decodeValue(<span class="k">std::wstring_view</span> source)
 {
     <span class="k">if</span> (source.size() > <span class="m">1</span> && source.front() == L<span class="s">'"'</span> && source.back() == L<span class="s">'"'</span>)
@@ -621,7 +635,8 @@
                 <span class="k">if</span> (lastValueNode)
                 {
                     <span class="k">bool</span> addNewline = (line.front() == L<span class="s">'|'</span>);
-                    lastValueNode->appendValue(line.substr(<span class="m">1</span>), addNewline);
+                    <span class="k">std::wstring_view</span> chunk = trimmed(<span class="k">std::wstring_view</span>{ line }.substr(<span class="m">1</span>));
+                    lastValueNode->appendValue(decodeValue(chunk), addNewline);
                 }
                 <span class="k">break</span>;
             }
@@ -631,8 +646,9 @@
                 size_t eqPos = line.find(L<span class="s">'='</span>);
                 <span class="k">if</span> (eqPos != std::wstring::npos)
                 {
-                    std::wstring_view key = line.substr(<span class="m">0</span>, eqPos);
-                    std::wstring_view value = line.substr(eqPos + <span class="m">1</span>);
+                    <span class="k">std::wstring_view</span> whole = line;
+                    <span class="k">std::wstring_view</span> key = trimmed(whole.substr(<span class="m">0</span>, eqPos));
+                    <span class="k">std::wstring_view</span> value = trimmed(whole.substr(eqPos + <span class="m">1</span>));
 
                     <span class="k">if</span> (key.empty())
                     {
@@ -648,8 +664,8 @@
                     }
                     <span class="k">else</span>
                     {
-                        <span class="c">// Key=Value assignment</span>
-                        <span class="k">if</span> (!value.empty() && value.front() == L<span class="s">'['</span>)
+                        <span class="c">// Key=Value assignment - only a bare [ opens a section, a quoted one is a value</span>
+                        <span class="k">if</span> (value == L<span class="s">"["</span>)
                         {
                             currentScope = &amp;currentScope->addNamedSection(key);
                         }

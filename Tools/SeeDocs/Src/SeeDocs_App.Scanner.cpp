@@ -2827,19 +2827,20 @@ namespace SeeDocs_App
             std::vector<std::optional<std::wstring>> texts;
             texts.reserve(files.size());
             Macros macros;
-            PascalSymbols symbols;
             for (const TreeFile& file : files)
             {
                 texts.push_back(Documents::readTextFile(file.path));
-                if (!texts.back())
+                if (!texts.back() || isPascal(file))
                     continue;
-                if (isPascal(file))
-                {
-                    gatherPascalSymbols(*texts.back(), symbols);
-                    continue;
-                }
                 const SourceText gathered{ *texts.back(), Preprocess::Gather, &macros };
             }
+            std::vector<std::wstring_view> pascalTexts;
+            for (std::size_t i = 0; i != files.size(); ++i)
+            {
+                if (texts[i] && isPascal(files[i]))
+                    pascalTexts.emplace_back(*texts[i]);
+            }
+            const PascalSymbols symbols = pascalSymbolsOf(pascalTexts);
             for (std::size_t i = 0; i != files.size(); ++i)
             {
                 if (!texts[i] || files[i].role == FileRole::PascalInclude)

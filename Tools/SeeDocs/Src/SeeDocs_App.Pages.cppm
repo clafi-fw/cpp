@@ -204,7 +204,7 @@ namespace SeeDocs_App
     export struct ContentsModule
     {
         std::wstring name;        // the module's full name, a header's path
-        std::wstring shortName;   // what a reader sees
+        std::wstring shortName;   // what a reader sees: the last part, a unit's whole name
         bool header{ false };
         TypeList types;
         FunctionList functions;

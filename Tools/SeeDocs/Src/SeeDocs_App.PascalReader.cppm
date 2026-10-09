@@ -15,8 +15,10 @@ namespace SeeDocs_App
     // branch. See README
     export using PascalSymbols = std::set<std::wstring>;
 
-    // Adds the symbols a unit or an include file defines - {$DEFINE X}.
-    export void gatherPascalSymbols(std::wstring_view text, PascalSymbols&);
+    // The symbols the units and include files of a tree define - {$DEFINE X} in a branch that
+    // reads. A conditional reads by what any of them defines, so the gathering goes over them
+    // until the symbols settle.
+    export [[nodiscard]] PascalSymbols pascalSymbolsOf(std::span<const std::wstring_view> texts);
 
     // Reads one unit into the surface, the file being the surface's own already.
     export void readPascalUnit(Surface&, std::size_t file, std::wstring_view text,

@@ -101,10 +101,11 @@ None of the routine applies: no property, event or control is read, and nothing 
 
 A unit is read through its interface section - what it publishes - over the framework's own
 Pascal lexer, as a module interface is read over the C++ one. The unit is a module named as the
-unit is, its `uses` its imports, and its name with `::` for each dot is the namespace its
-declarations are named in, as C++Builder names them: `VirtualTrees.Header` is
-`VirtualTrees::Header`. Everything the interface declares is public, a class member under the
-access its section gives it - `strict` adding nothing to a page, `automated` reading as public.
+unit is and shown by its whole name, every part of which tells it from the others; its `uses` are
+its imports, and its name with `::` for each dot is the namespace its declarations are named in,
+as C++Builder names them: `VirtualTrees.Header` is `VirtualTrees::Header`. Everything the
+interface declares is public, a class member under the access its section gives it - `strict`
+adding nothing to a page, `automated` reading as public.
 
 - A class, a record, an object, an interface and a dispinterface are types with their members -
   a record is a struct, an interface a kind of its own - an enumeration is an enum, and any other
@@ -126,8 +127,10 @@ access its section gives it - `strict` adding nothing to a page, `automated` rea
 - A conditional on a symbol neither the tree nor the compiler defines is read false -
   `{$IFDEF FPC}`, `{$IF Defined(VT_FMX)}` - and its `{$ELSE}` read; any other reads its first
   branch, as a C++ conditional does. The tree's symbols are those its units and its include files
-  define with `{$DEFINE}`, an `.inc` being read for nothing else; the compiler's are those it
-  defines building for Windows. An `{$I}` includes nothing.
+  define with `{$DEFINE}` in a branch so read, an `.inc` being read for nothing else - a
+  Lazarus-only `{$DEFINE}` under `{$IFDEF FPC}` defines nothing. The compiler's are those the
+  newest one, Delphi 13, defines building for Windows, `VER370`, `MSWINDOWS`, `WIN32` and
+  `WIN64` among them. An `{$I}` includes nothing.
 - A comment is a doc comment however it is written - `//`, `///`, `{ }`, `(* *)` - the comment
   above coming first, as in C++. The hint is an XML doc comment's `<summary>` where it has one,
   else the first sentence of the first paragraph, a line opening with a tag ending a paragraph as

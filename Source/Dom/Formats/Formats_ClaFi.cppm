@@ -122,6 +122,8 @@ namespace ClaFi::Dom::FileFormat
 
                 std::wstring_view val = std::wstring_view{ line.data() + eqPos + 1, line.size() - eqPos - 1 };
                 trim(val);
+                // Only a bare [ opens a composite - a quoted one is a value.
+                const bool opensComposite = val == L"[";
 
                 DomNodeBase* parent = stack.back();
                 DomNodeBase* targetChild = nullptr;
@@ -134,7 +136,7 @@ namespace ClaFi::Dom::FileFormat
                 {
                     const bool parentIsSequence = (parent->type() == DomNodeType::Sequence);
 
-                    if (val == L"[")
+                    if (opensComposite)
                     {
                         if (key.empty() && parentIsSequence)
                         {
@@ -194,7 +196,7 @@ namespace ClaFi::Dom::FileFormat
                     }
                 }
 
-                if (val == L"[")
+                if (opensComposite)
                 {
                     if (targetChild)
                     {
