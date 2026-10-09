@@ -372,6 +372,9 @@ namespace SeeDocs_App
             [[nodiscard]] std::size_t width(std::size_t line) const;
             // The comment ending a line of code, or nothing.
             [[nodiscard]] std::optional<std::wstring_view> trailingComment(std::size_t line) const;
+            // How many comment-only lines under a line carry its trailing comment on: those that
+            // open in the column the trailing comment opens in.
+            [[nodiscard]] std::size_t continuationsOf(std::size_t line) const;
             // The text from one token to another, both included, comments cut out and lines joined
             // with one blank.
             [[nodiscard]] std::wstring slice(const Token& from, const Token& to) const;
@@ -389,6 +392,7 @@ namespace SeeDocs_App
             void takeGap(std::size_t line, std::size_t from, std::size_t to);
             void push(TokenType, std::size_t line, std::size_t start, std::size_t end);
             void classifyLine(std::size_t firstToken, bool insideComment);
+            [[nodiscard]] const Token* trailingToken(std::size_t line) const;
         private:
             std::vector<std::wstring> m_lines;
             TokenList m_tokens;
@@ -450,22 +454,25 @@ namespace SeeDocs_App
 
         std::optional<std::wstring_view> SourceText::trailingComment(const std::size_t line) const
         {
-            if (m_kinds[line] != LineKind::Code)
-                return std::nullopt;
-            const std::size_t first = m_firstTokens[line];
-            std::size_t last = first;
-            while (last != m_tokens.size() && m_tokens[last].line == line)
-                ++last;
-            if (last == first)
-                return std::nullopt;
-            const Token& tail = m_tokens[last - 1];
-            if (tail.type != TokenType::Comment || last - 1 == first)
-                return std::nullopt;
-            const std::wstring_view comment = text(tail);
-            const bool block = preprocessed() && comment.starts_with(k_blockComment);
-            if (!comment.starts_with(k_lineComment) && !block)
-                return std::nullopt;
-            return comment;
+            if (const Token* tail = trailingToken(line))
+                return text(*tail);
+            return std::nullopt;
+        }
+
+        std::size_t SourceText::continuationsOf(const std::size_t line) const
+        {
+            const Token* tail = trailingToken(line);
+            if (!tail)
+                return 0;
+            const std::size_t column = columnOf(m_lines[line], tail->start);
+            std::size_t count = 0;
+            for (std::size_t next = line + 1; next < m_lines.size(); ++next)
+            {
+                if (m_kinds[next] != LineKind::CommentOnly || indentOf(m_lines[next]) != column)
+                    break;
+                ++count;
+            }
+            return count;
         }
 
         std::wstring SourceText::slice(const Token& from, const Token& to) const
@@ -809,6 +816,26 @@ namespace SeeDocs_App
             m_kinds.push_back(commentsOnly && counts ? LineKind::CommentOnly : LineKind::Code);
         }
 
+        const Token* SourceText::trailingToken(const std::size_t line) const
+        {
+            if (m_kinds[line] != LineKind::Code)
+                return nullptr;
+            const std::size_t first = m_firstTokens[line];
+            std::size_t last = first;
+            while (last != m_tokens.size() && m_tokens[last].line == line)
+                ++last;
+            if (last == first)
+                return nullptr;
+            const Token& tail = m_tokens[last - 1];
+            if (tail.type != TokenType::Comment || last - 1 == first)
+                return nullptr;
+            const std::wstring_view comment = text(tail);
+            const bool block = preprocessed() && comment.starts_with(k_blockComment);
+            if (!comment.starts_with(k_lineComment) && !block)
+                return nullptr;
+            return &tail;
+        }
+
         // The words the reader takes as declaration keywords, and the macros of the routine.
         namespace Words
         {
@@ -1043,6 +1070,8 @@ namespace SeeDocs_App
             [[nodiscard]] Comment commentAt(std::size_t line, std::optional<std::size_t> fallback,
                 std::wstring_view name, bool aboveCounts = true) const;
             void gatherAbove(std::size_t line, Comment&) const;
+            // A limited read's trailing comment on the line, with the lines that carry it on.
+            [[nodiscard]] Names trailingLines(std::size_t line, const std::wstring& trailing) const;
         private:
             Surface& m_surface;
             std::size_t m_file;
@@ -2631,9 +2660,9 @@ namespace SeeDocs_App
             Comment comment;
             if (const std::optional<std::wstring_view> trailing = m_text.trailingComment(line))
             {
-                comment.trailing = std::wstring{
-                    m_limited ? docCommentBody(*trailing) : commentBody(*trailing)
-                };
+                comment.trailing = m_limited
+                    ? withoutSeparators(docCommentBody(*trailing))
+                    : std::wstring{ commentBody(*trailing) };
             }
             comment.lineWidth = m_text.width(line);
             if (aboveCounts)
@@ -2643,14 +2672,16 @@ namespace SeeDocs_App
 
             // A limited read's comments are not the routine's: the hint is the brief of the doc
             // comment above, or of the one on the line where there is none above - a comment on a
-            // line is as often a tool's directive as words - and a See in it is words.
+            // line is as often a tool's directive as words - and a See in it is words. A hint that
+            // only names the declaration is a label, which tells a reader nothing.
             if (m_limited)
             {
-                const bool onLine = comment.above.empty() && comment.trailing;
-                const std::span<const std::wstring> lines = onLine
-                    ? std::span<const std::wstring>{ &*comment.trailing, 1 }
-                    : std::span<const std::wstring>{ comment.above };
-                comment.text = briefOf(lines);
+                if (comment.above.empty() && comment.trailing)
+                    comment.text = briefOf(trailingLines(line, *comment.trailing));
+                else
+                    comment.text = briefOf(comment.above);
+                if (comment.text == bareName(name))
+                    comment.text.clear();
                 return comment;
             }
 
@@ -2664,11 +2695,15 @@ namespace SeeDocs_App
             return comment;
         }
 
+        // In a limited read, the lines carrying on the trailing comment of the line above them
+        // are that line's, not the comment of the declaration under them.
         void FileReader::gatherAbove(const std::size_t line, Comment& comment) const
         {
             std::size_t first = line;
             while (first != 0 && m_text.kindOf(first - 1) == LineKind::CommentOnly)
                 --first;
+            if (m_limited && first != 0 && first != line)
+                first = std::min(line, first + m_text.continuationsOf(first - 1));
             if (first == line)
                 return;
             comment.aboveLine = first + 1;
@@ -2679,11 +2714,21 @@ namespace SeeDocs_App
                 // A block opening under other lines - //! over /** - is a paragraph of its own.
                 if (m_limited && !comment.above.empty() && written.starts_with(k_blockComment))
                     comment.above.emplace_back();
-                const std::wstring_view body =
-                    m_limited ? docCommentBody(written) : commentBody(written);
+                const std::wstring body = m_limited
+                    ? withoutSeparators(docCommentBody(written))
+                    : std::wstring{ commentBody(written) };
                 if (!body.starts_with(k_todo))
-                    comment.above.emplace_back(body);
+                    comment.above.push_back(body);
             }
+        }
+
+        Names FileReader::trailingLines(const std::size_t line, const std::wstring& trailing) const
+        {
+            Names lines{ trailing };
+            const std::size_t continued = m_text.continuationsOf(line);
+            for (std::size_t i = line + 1; i <= line + continued; ++i)
+                lines.push_back(withoutSeparators(docCommentBody(m_text.line(i))));
+            return lines;
         }
 
         [[nodiscard]] std::wstring posixRelative(const std::filesystem::path& file,
@@ -2865,6 +2910,7 @@ namespace SeeDocs_App
     Surface scanTree(const std::filesystem::path& root, const ScanMode mode)
     {
         Surface surface;
+        surface.setMode(mode);
         const TreeFiles files = filesOf(root, mode);
         if (mode == ScanMode::Limited)
         {

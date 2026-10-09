@@ -28,6 +28,7 @@ namespace SeeDocs_App
             constexpr std::wstring_view functions = L"Functions";
             constexpr std::wstring_view constants = L"Constants";
             constexpr std::wstring_view scanned = L"Scanned";
+            constexpr std::wstring_view limited = L"Limited";
             constexpr std::wstring_view name = L"Name";
             constexpr std::wstring_view nameSpace = L"Namespace";
             constexpr std::wstring_view kind = L"Kind";
@@ -782,6 +783,7 @@ namespace SeeDocs_App
         using namespace Dom::Dt;
         return {
             Value{ Keys::scanned, std::wstring{} },
+            Value{ Keys::limited, false },
             Sequence{ Keys::modules, moduleLayout() },
             Sequence{ Keys::types, typeLayout() },
             Sequence
@@ -830,6 +832,7 @@ namespace SeeDocs_App
         };
 
         (document / Keys::scanned).set(stampText(surface.scanned()));
+        (document / Keys::limited).set(surface.mode() == ScanMode::Limited);
 
         Sections& modules = (document / Keys::modules).as<Sections>();
         for (const Module& module : surface.modules())
@@ -882,6 +885,8 @@ namespace SeeDocs_App
 
         Surface surface;
         surface.setScanned(stampOf((document / Keys::scanned).get<std::wstring>()));
+        const bool limited = (document / Keys::limited).get<bool>();
+        surface.setMode(limited ? ScanMode::Limited : ScanMode::Full);
         Reader reader{ surface };
         reader.readModules(document / Keys::modules);
         reader.readTypes(document / Keys::types);

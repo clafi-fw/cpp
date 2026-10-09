@@ -6,6 +6,15 @@ namespace SeeDocs_App
 {
     namespace
     {
+        constexpr std::size_t k_tabColumns = 4;
+        constexpr std::size_t k_separatorRun = 3;   // the marks in a row a separator takes
+        constexpr std::wstring_view k_separatorMarks = L"-=*~#_+";
+
+        [[nodiscard]] bool isBlankChar(const wchar_t value)
+        {
+            return value == L' ' || value == L'\t';
+        }
+
         // A doc comment line that opens with a command rather than words.
         [[nodiscard]] bool opensWithCommand(const std::wstring_view line)
         {
@@ -104,5 +113,64 @@ namespace SeeDocs_App
             paragraph += lines[at];
         }
         return brief != lines.end() ? paragraph : firstSentence(paragraph);
+    }
+
+    std::size_t columnOf(const std::wstring_view line, const std::size_t index)
+    {
+        std::size_t column = 0;
+        const std::size_t end = std::min(index, line.size());
+        for (std::size_t i = 0; i != end; ++i)
+        {
+            if (line[i] == L'\t')
+                column += k_tabColumns - column % k_tabColumns;
+            else
+                ++column;
+        }
+        return column;
+    }
+
+    std::size_t indentOf(const std::wstring_view line)
+    {
+        std::size_t first = 0;
+        while (first < line.size() && isBlankChar(line[first]))
+            ++first;
+        return columnOf(line, first);
+    }
+
+    // The blanks around a separator fold into one, which stands only between words.
+    std::wstring withoutSeparators(const std::wstring_view words)
+    {
+        std::wstring result;
+        bool cut = false;
+        std::size_t i = 0;
+        while (i < words.size())
+        {
+            const wchar_t current = words[i];
+            std::size_t end = i + 1;
+            while (end < words.size() && words[end] == current)
+                ++end;
+            const bool separator = end - i >= k_separatorRun
+                && k_separatorMarks.find(current) != std::wstring_view::npos;
+            if (separator)
+            {
+                cut = true;
+            }
+            else if (!cut || !isBlankChar(current))
+            {
+                if (cut)
+                {
+                    while (!result.empty() && isBlankChar(result.back()))
+                        result.pop_back();
+                    if (!result.empty())
+                        result += L' ';
+                    cut = false;
+                }
+                result.append(words.substr(i, end - i));
+            }
+            i = end;
+        }
+        while (!result.empty() && isBlankChar(result.back()))
+            result.pop_back();
+        return result;
     }
 }

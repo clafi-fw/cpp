@@ -367,13 +367,16 @@ namespace SeeDocs_App
             return linked;
         }
 
-        // The hint as it reads in a namespace, the types it names linked.
+        // The hint as it reads in a namespace, the types it names linked. A tree read in limited
+        // mode owes no hint, so one it does not give is nothing rather than missing.
         [[nodiscard]] Runs hintRuns(const Surface& surface, const Comment& comment,
             const std::wstring_view nameSpace)
         {
-            if (comment.text.empty())
-                return { missing(std::wstring{ k_noHint }) };
-            return linkNames(surface, { plain(comment.text) }, nameSpace);
+            if (!comment.text.empty())
+                return linkNames(surface, { plain(comment.text) }, nameSpace);
+            if (surface.mode() == ScanMode::Limited)
+                return {};
+            return { missing(std::wstring{ k_noHint }) };
         }
 
         // A spelled type, linked to its page where the surface has one.
@@ -2483,7 +2486,7 @@ namespace SeeDocs_App
             muted(std::wstring{ k_separator }),
             plain(countOf(chapter.modules.size(), L"module"))
         };
-        if (withoutHint != 0)
+        if (withoutHint != 0 && surface.mode() == ScanMode::Full)
         {
             figures.push_back(muted(std::wstring{ k_separator }));
             figures.push_back(missing(countOf(withoutHint, L"type") + L" without a hint"));

@@ -318,6 +318,7 @@ namespace SeeDocs_App
         [[nodiscard]] const Types& types() const { return m_types; }
         [[nodiscard]] Types& types() { return m_types; }
         [[nodiscard]] const FreeFunctions& functions() const { return m_functions; }
+        [[nodiscard]] FreeFunctions& functions() { return m_functions; }
         [[nodiscard]] const Variables& variables() const { return m_variables; }
         [[nodiscard]] const Bindings& bindings() const { return m_bindings; }
         // Where Props::get is written by hand rather than through READ_PROPERTY.
@@ -326,6 +327,9 @@ namespace SeeDocs_App
         // When the scan that read the tree ran - carried through edits, which read nothing.
         [[nodiscard]] const ScanStamp& scanned() const { return m_scanned; }
         void setScanned(const ScanStamp& value) { m_scanned = value; }
+        // How the tree was read - a tree read in limited mode owes no hints.
+        [[nodiscard]] ScanMode mode() const { return m_mode; }
+        void setMode(const ScanMode value) { m_mode = value; }
 
         std::size_t addFile(SourceFile);
         void addModule(Module);
@@ -397,6 +401,7 @@ namespace SeeDocs_App
         Republications m_republications;
         EnclosedIncludes m_enclosedIncludes;
         ScanStamp m_scanned{};
+        ScanMode m_mode{ ScanMode::Full };
         std::unordered_map<std::wstring, std::size_t> m_byQualifiedName;
         std::unordered_map<std::wstring, std::vector<std::size_t>> m_byBareName;
         std::unordered_map<std::wstring, SourceLanguage> m_languageByModule;

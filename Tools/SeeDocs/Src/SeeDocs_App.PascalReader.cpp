@@ -279,6 +279,82 @@ namespace SeeDocs_App
             return briefOf(words);
         }
 
+        // The text cut at a separator standing outside brackets and quotes, each piece trimmed.
+        [[nodiscard]] std::vector<std::wstring_view> piecesOf(const std::wstring_view text,
+            const wchar_t separator)
+        {
+            std::vector<std::wstring_view> pieces;
+            int depth = 0;
+            bool quoted = false;
+            std::size_t start = 0;
+            for (std::size_t i = 0; i != text.size(); ++i)
+            {
+                const wchar_t current = text[i];
+                if (current == L'\'')
+                    quoted = !quoted;
+                else if (quoted)
+                    continue;
+                else if (current == L'(' || current == L'[' || current == L'<')
+                    ++depth;
+                else if (current == L')' || current == L']' || current == L'>')
+                    --depth;
+                else if (current == separator && depth <= 0)
+                {
+                    pieces.push_back(trimmed(text.substr(start, i - start)));
+                    start = i + 1;
+                }
+            }
+            pieces.push_back(trimmed(text.substr(start)));
+            return pieces;
+        }
+
+        // A parameter list the way overloads are told apart by it: per parameter, how it is
+        // passed and its type, in lower case with no blanks - the names and defaults left out.
+        [[nodiscard]] Names parameterShape(const std::wstring_view parameters)
+        {
+            constexpr auto passings = std::to_array<std::wstring_view>({
+                L"const", L"constref", L"out", L"var"
+            });
+            Names shape;
+            for (std::wstring_view group : piecesOf(parameters, L';'))
+            {
+                while (group.starts_with(L'['))
+                {
+                    const std::size_t close = group.find(L']');
+                    if (close == std::wstring_view::npos)
+                        break;
+                    group = trimmed(group.substr(close + 1));
+                }
+                if (group.empty())
+                    continue;
+                std::size_t wordEnd = 0;
+                while (wordEnd < group.size() && isNameChar(group[wordEnd]))
+                    ++wordEnd;
+                std::wstring passing;
+                if (wordEnd < group.size() && isBlank(group[wordEnd])
+                    && isListed(passings, group.substr(0, wordEnd)))
+                {
+                    passing = lowered(group.substr(0, wordEnd));
+                    group = trimmed(group.substr(wordEnd));
+                }
+                const std::vector<std::wstring_view> typed = piecesOf(group, L':');
+                std::wstring type;
+                if (typed.size() > 1)
+                {
+                    const std::wstring_view spelled = piecesOf(typed[1], L'=').front();
+                    for (const wchar_t current : spelled)
+                    {
+                        if (!isBlank(current))
+                            type += static_cast<wchar_t>(std::towlower(current));
+                    }
+                }
+                const std::size_t count = piecesOf(typed.front(), L',').size();
+                for (std::size_t i = 0; i != count; ++i)
+                    shape.push_back(passing + L':' + type);
+            }
+            return shape;
+        }
+
         // A directive's word in lower case, and what follows it.
         struct Directive
         {
@@ -478,6 +554,9 @@ namespace SeeDocs_App
             [[nodiscard]] std::wstring_view line(std::size_t index) const;
             // The comment ending a line of code, or nothing.
             [[nodiscard]] std::optional<std::wstring_view> trailingComment(std::size_t line) const;
+            // How many comment-only lines under a line carry its trailing comment on: those that
+            // open in the column the trailing comment opens in.
+            [[nodiscard]] std::size_t continuationsOf(std::size_t line) const;
             // The text from one token to another, both included, its comments and directives cut
             // out and its blanks folded.
             [[nodiscard]] std::wstring slice(const Token& from, const Token& to) const;
@@ -491,6 +570,7 @@ namespace SeeDocs_App
             void push(TokenType, std::size_t line, std::size_t start, std::size_t end);
             void followComment(std::size_t firstToken);
             void classifyLine(std::size_t firstToken, bool insideComment);
+            [[nodiscard]] const Token* trailingToken(std::size_t line) const;
         private:
             std::vector<std::wstring> m_lines;
             TokenList m_tokens;
@@ -546,15 +626,25 @@ namespace SeeDocs_App
 
         std::optional<std::wstring_view> UnitText::trailingComment(const std::size_t line) const
         {
-            if (m_kinds[line] != LineKind::Code)
-                return std::nullopt;
-            std::size_t last = m_firstTokens[line];
-            while (last != m_tokens.size() && m_tokens[last].line == line)
-                ++last;
-            const Token& tail = m_tokens[last - 1];
-            if (tail.type != TokenType::Comment)
-                return std::nullopt;
-            return text(tail);
+            if (const Token* tail = trailingToken(line))
+                return text(*tail);
+            return std::nullopt;
+        }
+
+        std::size_t UnitText::continuationsOf(const std::size_t line) const
+        {
+            const Token* tail = trailingToken(line);
+            if (!tail)
+                return 0;
+            const std::size_t column = columnOf(m_lines[line], tail->start);
+            std::size_t count = 0;
+            for (std::size_t next = line + 1; next < m_lines.size(); ++next)
+            {
+                if (m_kinds[next] != LineKind::CommentOnly || indentOf(m_lines[next]) != column)
+                    break;
+                ++count;
+            }
+            return count;
         }
 
         std::wstring UnitText::slice(const Token& from, const Token& to) const
@@ -774,9 +864,23 @@ namespace SeeDocs_App
             m_kinds.push_back(commentsOnly ? LineKind::CommentOnly : LineKind::Code);
         }
 
+        const Token* UnitText::trailingToken(const std::size_t line) const
+        {
+            if (m_kinds[line] != LineKind::Code)
+                return nullptr;
+            std::size_t last = m_firstTokens[line];
+            while (last != m_tokens.size() && m_tokens[last].line == line)
+                ++last;
+            const Token& tail = m_tokens[last - 1];
+            if (tail.type != TokenType::Comment)
+                return nullptr;
+            return &tail;
+        }
+
         // Reads a unit's interface section into the surface. The interface is what the unit
         // publishes, so every declaration it holds is exported; a class member is the access
-        // its section gives it, one before any section public.
+        // its section gives it, one before any section public. The implementation section gives
+        // the hints the routines' headers there carry.
         class UnitReader
         {
         public:
@@ -797,8 +901,10 @@ namespace SeeDocs_App
             [[nodiscard]] bool opensFields() const;
             [[nodiscard]] const Token& code(std::size_t index) const;
             [[nodiscard]] Place placeOf(const Token&) const;
-            [[nodiscard]] Comment commentAt(std::size_t line);
+            [[nodiscard]] Comment commentAt(std::size_t line, std::wstring_view name);
             void gatherAbove(std::size_t line, Comment&) const;
+            // The trailing comment on the line, with the lines that carry it on.
+            [[nodiscard]] Names trailingLines(std::size_t line, const std::wstring& trailing) const;
 
             [[nodiscard]] bool readHeader();
             void readInterface();
@@ -812,6 +918,16 @@ namespace SeeDocs_App
             void readVariables(std::wstring_view section, Type* owner, Access, bool isStatic);
             void readRoutine(Type* owner, Access, bool isClass);
             void readProperty(Type& owner, Access);
+            void readImplementation();
+            // Whether the routine word here opens a routine's header, rather than typing a field,
+            // a parameter or a procedural type.
+            [[nodiscard]] bool opensHeader() const;
+            void readRoutineBody();
+            // The hint of the comment lines standing between two lines.
+            [[nodiscard]] std::wstring hintBetween(std::size_t afterLine,
+                std::size_t beforeLine) const;
+            [[nodiscard]] Function* declarationOf(const Names& qualified,
+                std::wstring_view parameters);
             void skipAttributes();
             void skipHintDirectives();
             void skipToSemicolon();
@@ -833,6 +949,8 @@ namespace SeeDocs_App
             std::wstring m_nameSpace;
             std::optional<Module> m_module;
             std::optional<std::size_t> m_attributeLine;   // where what follows has attributes from
+            std::size_t m_typesBegin{ 0 };       // the first of the surface's types the unit adds
+            std::size_t m_functionsBegin{ 0 };   // the first of the surface's functions it adds
         };
 
         UnitReader::UnitReader(Surface& surface, const std::size_t file, const UnitText& text,
@@ -841,7 +959,9 @@ namespace SeeDocs_App
             m_surface{ surface },
             m_file{ file },
             m_text{ text },
-            m_category{ std::move(category) }
+            m_category{ std::move(category) },
+            m_typesBegin{ surface.types().size() },
+            m_functionsBegin{ surface.functions().size() }
         {
             const TokenList& tokens = m_text.tokens();
             for (std::size_t i = 0; i != tokens.size(); ++i)
@@ -857,6 +977,8 @@ namespace SeeDocs_App
             if (!readHeader())
                 return;
             readInterface();
+            if (isWord(peek(), L"implementation"))
+                readImplementation();
             m_surface.addModule(std::move(*m_module));
         }
 
@@ -916,34 +1038,49 @@ namespace SeeDocs_App
         }
 
         // The comment above comes before the one on the line, as a limited read takes them; the
-        // attributes a declaration is written under stand between it and the comment above.
-        Comment UnitReader::commentAt(std::size_t line)
+        // attributes a declaration is written under stand between it and the comment above. A
+        // hint that only names the declaration is a label - { TName } - which tells nothing.
+        Comment UnitReader::commentAt(std::size_t line, const std::wstring_view name)
         {
             if (m_attributeLine)
                 line = std::min(line, *m_attributeLine);
             m_attributeLine.reset();
             Comment comment;
             if (const std::optional<std::wstring_view> trailing = m_text.trailingComment(line))
-                comment.trailing = std::wstring{ commentWords(*trailing) };
+                comment.trailing = withoutSeparators(commentWords(*trailing));
             gatherAbove(line, comment);
-            const bool onLine = comment.above.empty() && comment.trailing;
-            const std::span<const std::wstring> lines = onLine
-                ? std::span<const std::wstring>{ &*comment.trailing, 1 }
-                : std::span<const std::wstring>{ comment.above };
-            comment.text = pascalBrief(lines);
+            if (comment.above.empty() && comment.trailing)
+                comment.text = pascalBrief(trailingLines(line, *comment.trailing));
+            else
+                comment.text = pascalBrief(comment.above);
+            if (sameWord(comment.text, name))
+                comment.text.clear();
             return comment;
         }
 
+        // The lines carrying on the trailing comment of the line above them are that line's, not
+        // the comment of the declaration under them.
         void UnitReader::gatherAbove(const std::size_t line, Comment& comment) const
         {
             std::size_t first = line;
             while (first != 0 && m_text.kindOf(first - 1) == LineKind::CommentOnly)
                 --first;
+            if (first != 0 && first != line)
+                first = std::min(line, first + m_text.continuationsOf(first - 1));
             if (first == line)
                 return;
             comment.aboveLine = first + 1;
             for (std::size_t i = first; i != line; ++i)
-                comment.above.emplace_back(commentWords(m_text.line(i)));
+                comment.above.push_back(withoutSeparators(commentWords(m_text.line(i))));
+        }
+
+        Names UnitReader::trailingLines(const std::size_t line, const std::wstring& trailing) const
+        {
+            Names lines{ trailing };
+            const std::size_t continued = m_text.continuationsOf(line);
+            for (std::size_t i = line + 1; i <= line + continued; ++i)
+                lines.push_back(withoutSeparators(commentWords(m_text.line(i))));
+            return lines;
         }
 
         // unit A.B.C platform; interface - the unit's name is its module's, and with :: for its
@@ -1082,7 +1219,7 @@ namespace SeeDocs_App
         void UnitReader::readTypeDeclaration(const Type* outer, const Access access)
         {
             const Token& nameToken = *peek();
-            Comment comment = commentAt(nameToken.line);
+            Comment comment = commentAt(nameToken.line, text(nameToken));
             advance();
             Type type = newType(nameToken, outer, access);
             type.comment = std::move(comment);
@@ -1343,7 +1480,7 @@ namespace SeeDocs_App
                 member.name = std::wstring{ text(*token) };
                 member.place = placeOf(*token);
                 if (token->line != lastLine)
-                    member.comment = commentAt(token->line);
+                    member.comment = commentAt(token->line, member.name);
                 lastLine = token->line;
                 advance();
                 if (isMark(peek(), L"="))
@@ -1392,7 +1529,7 @@ namespace SeeDocs_App
                 Field field;
                 field.name = std::wstring{ text(*nameToken) };
                 field.place = placeOf(*nameToken);
-                field.comment = commentAt(nameToken->line);
+                field.comment = commentAt(nameToken->line, field.name);
                 field.isConstant = true;
                 field.isStatic = owner != nullptr;
                 field.access = access;
@@ -1489,7 +1626,7 @@ namespace SeeDocs_App
                     field.isStatic = isStatic;
                     field.access = access;
                     field.place = placeOf(*nameToken);
-                    field.comment = commentAt(nameToken->line);
+                    field.comment = commentAt(nameToken->line, field.name);
                     if (owner)
                     {
                         owner->fields.push_back(std::move(field));
@@ -1572,7 +1709,7 @@ namespace SeeDocs_App
             function.isStatic = isClass;
             function.access = access;
             function.place = placeOf(start);
-            function.comment = commentAt(start.line);
+            function.comment = commentAt(start.line, function.name);
             if (owner)
             {
                 owner->functions.push_back(std::move(function));
@@ -1602,7 +1739,7 @@ namespace SeeDocs_App
             property.name = std::wstring{ text(*nameToken) };
             property.access = access;
             property.place = placeOf(start);
-            property.comment = commentAt(start.line);
+            property.comment = commentAt(start.line, property.name);
             advance();
             if (isMark(peek(), L"["))
                 skipBalanced(L"[", L"]");
@@ -1645,6 +1782,144 @@ namespace SeeDocs_App
                 advance();
             }
             owner.properties.push_back(std::move(property));
+        }
+
+        // A ROUTINE'S COMMENT MAY STAND UNDER ITS HEADER in the implementation section, between
+        // the header and what the routine opens with - var, const, begin. It gives the hint of
+        // the routine the interface declares, where the interface gives that one none.
+        void UnitReader::readImplementation()
+        {
+            advance();
+            while (const Token* token = peek())
+            {
+                if (isWord(token, L"initialization") || isWord(token, L"finalization"))
+                    return;
+                if (opensHeader())
+                    readRoutineBody();
+                else
+                    advance();
+            }
+        }
+
+        bool UnitReader::opensHeader() const
+        {
+            if (m_at == 0 || !isListedWord(peek(), k_routineWords) || !isDeclaredName(peek(1)))
+                return false;
+            const Token* before = &code(m_at - 1);
+            const bool types = isMark(before, L":") || isMark(before, L"=")
+                || isMark(before, L"(") || isMark(before, L",") || isWord(before, L"of")
+                || isWord(before, L"to");
+            return !types;
+        }
+
+        // procedure TOuter.TInner.Name<T>(Parameters): Result; directives; - a forward or an
+        // external routine has no body, and what follows its header is not its own.
+        void UnitReader::readRoutineBody()
+        {
+            advance();
+            Names qualified;
+            while (isDeclaredName(peek()))
+            {
+                qualified.emplace_back(text(*peek()));
+                advance();
+                if (isMark(peek(), L"<"))
+                    skipBalanced(L"<", L">");
+                if (!isMark(peek(), L"."))
+                    break;
+                advance();
+            }
+            std::wstring parameters;
+            if (isMark(peek(), L"("))
+            {
+                const std::size_t open = m_at;
+                skipBalanced(L"(", L")");
+                if (m_at - open > 2)
+                    parameters = textBetween(open + 1, m_at - 2);
+            }
+            skipToSemicolon();
+            bool hasBody = true;
+            while (isListedWord(peek(), k_routineDirectives) && !isMark(peek(1), L":")
+                && !isMark(peek(1), L","))
+            {
+                if (isWord(peek(), L"forward") || isWord(peek(), L"external"))
+                    hasBody = false;
+                skipToSemicolon();
+            }
+            if (!hasBody || !peek())
+                return;
+            const std::wstring hint = hintBetween(code(m_at - 1).line, peek()->line);
+            if (hint.empty())
+                return;
+            Function* function = declarationOf(qualified, parameters);
+            if (function && function->comment.text.empty())
+                function->comment.text = hint;
+        }
+
+        // A blank line or a directive between the comment lines parts their paragraphs.
+        std::wstring UnitReader::hintBetween(const std::size_t afterLine,
+            const std::size_t beforeLine) const
+        {
+            Names lines;
+            for (std::size_t i = afterLine + 1; i < beforeLine; ++i)
+            {
+                if (m_text.kindOf(i) == LineKind::CommentOnly)
+                    lines.push_back(withoutSeparators(commentWords(m_text.line(i))));
+                else
+                    lines.emplace_back();
+            }
+            return pascalBrief(lines);
+        }
+
+        // The routine of the interface a header of the implementation defines: by its name, the
+        // types it is a member of, and where the name is overloaded, the parameters, all read in
+        // any case.
+        Function* UnitReader::declarationOf(const Names& qualified,
+            const std::wstring_view parameters)
+        {
+            if (qualified.empty())
+                return nullptr;
+            const std::wstring_view name = qualified.back();
+            std::vector<Function*> candidates;
+            if (qualified.size() == 1)
+            {
+                FreeFunctions& functions = m_surface.functions();
+                for (std::size_t i = m_functionsBegin; i < functions.size(); ++i)
+                {
+                    if (sameWord(functions[i].function.name, name))
+                        candidates.push_back(&functions[i].function);
+                }
+            }
+            else
+            {
+                std::wstring owner;
+                for (std::size_t i = 0; i + 1 < qualified.size(); ++i)
+                {
+                    if (i != 0)
+                        owner += k_scope;
+                    owner += qualified[i];
+                }
+                Types& types = m_surface.types();
+                for (std::size_t i = m_typesBegin; i < types.size(); ++i)
+                {
+                    if (!sameWord(types[i].name, owner))
+                        continue;
+                    for (Function& function : types[i].functions)
+                    {
+                        if (sameWord(function.name, name))
+                            candidates.push_back(&function);
+                    }
+                    break;
+                }
+            }
+            if (candidates.size() == 1)
+                return candidates.front();
+            const Names shape = parameterShape(parameters);
+            for (Function* candidate : candidates)
+            {
+                if (parameterShape(candidate->parameters) == shape)
+                    return candidate;
+            }
+            return nullptr;
         }
 
         void UnitReader::skipAttributes()

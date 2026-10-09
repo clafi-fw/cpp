@@ -32,4 +32,13 @@ namespace SeeDocs_App
     // @brief opens, or else the first sentence of the first paragraph of words. A paragraph ends
     // at a blank line and at a command - @param, \sa, @{.
     export [[nodiscard]] std::wstring briefOf(std::span<const std::wstring> lines);
+
+    // The column a character of a line stands in, a tab reaching the next multiple of four.
+    export [[nodiscard]] std::size_t columnOf(std::wstring_view line, std::size_t index);
+    // The column the first character of a line that is no blank stands in.
+    export [[nodiscard]] std::size_t indentOf(std::wstring_view line);
+
+    // A comment line's words with its separators taken out: a run of three or more of one mark
+    // - ---, ===, ***, ~~~, ###, ___, +++ - draws a line and says nothing.
+    export [[nodiscard]] std::wstring withoutSeparators(std::wstring_view words);
 }

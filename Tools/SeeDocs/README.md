@@ -94,6 +94,10 @@ as the Delphi rules after them make of it.
   is as often a tool's directive as words. The hint is the `@brief` or `\brief` paragraph, or
   else the first sentence of the first paragraph of words; a block opening under other comment
   lines starts a paragraph. A `See` in a comment is words.
+- A comment on a line goes on in the comment lines under it that open in its column, and those
+  lines are its own, not the comment above the declaration under them. A separator - a run of
+  three or more of one mark, `---`, `===`, `***`, `~~~`, `###`, `___`, `+++` - says nothing, and
+  a hint that only names its declaration - a label, `// ----- logger -----` - is none.
 
 None of the routine applies: no property, event or control is read, and nothing is checked.
 
@@ -132,9 +136,16 @@ adding nothing to a page, `automated` reading as public.
   newest one, Delphi 13, defines building for Windows, `VER370`, `MSWINDOWS`, `WIN32` and
   `WIN64` among them. An `{$I}` includes nothing.
 - A comment is a doc comment however it is written - `//`, `///`, `{ }`, `(* *)` - the comment
-  above coming first, as in C++. The hint is an XML doc comment's `<summary>` where it has one,
-  else the first sentence of the first paragraph, a line opening with a tag ending a paragraph as
-  a command does; `<see cref="X"/>` and `@link(X)` read as their `X`.
+  above coming first, as in C++, and read by the same rules of continued lines, separators and
+  labels. The hint is an XML doc comment's `<summary>` where it has one, else the first sentence
+  of the first paragraph, a line opening with a tag ending a paragraph as a command does;
+  `<see cref="X"/>` and `@link(X)` read as their `X`.
+- A routine the interface gives no comment takes the hint of the comment standing under its
+  header in the implementation section, between the header and the `var`, `const` or `begin` the
+  routine opens with. The header is matched to the routine by its name and the types it is a
+  member of - `TOuter.TInner.Name` - read in any case, and where the name is overloaded, by how
+  each parameter is passed and its type. A `forward` or an `external` routine has no body, and
+  the lines under its header are not its own.
 
 ## The database
 
@@ -149,6 +160,7 @@ Where an entry says the same thing a `Language.cfg` completion entry says, it us
 The two files are meant to become one.
 
     Scanned = 2026-10-09T03:12:45Z
+    Limited = true
     Modules = [
         =[ Name, File, Interface, Header, Language, Imports = [...], ExportedImports = [...] ]
     ]
@@ -171,7 +183,8 @@ The two files are meant to become one.
     Constants = [ =[ Name, Namespace, Type, Value, Constant, Declaration, Module, File, Line, Hint,
                      Note ] ]
 
-`Scanned` is when the scan that wrote the file ran, in UTC to the second. A hint or a footnote
+`Scanned` is when the scan that wrote the file ran, in UTC to the second, and `Limited` that it
+read the tree in limited mode. A hint or a footnote
 written from SeeDocs keeps it, since such an edit reads nothing of the tree beyond what it
 changes. `Header` marks a module that is a header, as a limited read takes one; its `Name` is
 its path under the tree. `Language` is `pascal` for a Delphi unit, whose code a page reads and
@@ -273,7 +286,8 @@ footnote under the grid; the mark leads to it, as an anchor of the page's url. A
 heading says what the section is; how many elements it holds is the heading's hint.
 A type whose comment references nothing takes the section named exactly after it from a note of
 its own folder, marked as matched by name in that hint. Where the surface states no hint the page says so, in
-place of the words, so what the documentation still lacks is read off the preview.
+place of the words, so what the documentation still lacks is read off the preview. A tree read in
+limited mode owes no hints, and its pages leave a missing one empty.
 
 A Delphi type's page is spelled as a C++ type's is - its title, its bases after colons, the
 access labels written `public:` - and its code is Delphi's own: a routine's signature and a
