@@ -687,49 +687,6 @@ namespace SeeDocs_App
             return page.sections.back();
         }
 
-        // Whether a row of the groups, at any depth, writes into the column.
-        [[nodiscard]] bool fillsColumn(const TableGroups& groups, const std::size_t column)
-        {
-            for (const TableGroup& group : groups)
-            {
-                for (const TableRow& row : group.rows)
-                {
-                    if (column < row.cells.size() && !row.cells[column].empty())
-                        return true;
-                }
-                if (fillsColumn(group.groups, column))
-                    return true;
-            }
-            return false;
-        }
-
-        void dropColumn(TableGroups& groups, const std::size_t column)
-        {
-            for (TableGroup& group : groups)
-            {
-                for (TableRow& row : group.rows)
-                {
-                    if (column < row.cells.size())
-                        row.cells.erase(row.cells.begin() + static_cast<std::ptrdiff_t>(column));
-                }
-                dropColumn(group.groups, column);
-            }
-        }
-
-        // A column no row writes into is left out of the table.
-        void dropEmptyColumns(Table& table)
-        {
-            if (table.rowCount() == 0)
-                return;
-            for (std::size_t i = table.columns.size(); i-- != 0;)
-            {
-                if (fillsColumn(table.groups, i))
-                    continue;
-                table.columns.erase(table.columns.begin() + static_cast<std::ptrdiff_t>(i));
-                dropColumn(table.groups, i);
-            }
-        }
-
         // A table of rows under one heading or none, counted in the heading's hint.
         Section& addTableSection(Page& page, std::wstring heading, const ColumnSet& columnSet,
             TableGroups groups)
@@ -738,7 +695,6 @@ namespace SeeDocs_App
             section.table.columns = columnSet.columns;
             section.table.header = columnSet.header;
             section.table.groups = std::move(groups);
-            dropEmptyColumns(section.table);
             section.hint = countOf(section.table.rowCount(), L"element");
             return section;
         }
