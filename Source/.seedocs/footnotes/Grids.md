@@ -103,6 +103,13 @@ into a layout of their own for the one paint or measurement and discarded with i
 the cache never sees them. Per column, because a column is what says where a cell's text
 comes from.
 
+## MaxLines
+
+How many lines a cell of a column shows at most; zero shows every line. A cell the limit cuts is
+as tall as its first lines and fades the last of them, and its row takes that height. The cell's
+hint repeats its lines past the cut, up to Hint::k_maxLines, and the in-place reader shows the
+whole value.
+
 ## GetCellHintEvent
 
 The hint for one cell, asked while the pointer rests on it. It goes to the pair

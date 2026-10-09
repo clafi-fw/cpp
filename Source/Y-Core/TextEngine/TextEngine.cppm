@@ -44,6 +44,9 @@ namespace ClaFi
         CalculatedDimensions calculateText(const FormContext&, const Text&,
             MaxSize = { k_maxFloat, k_maxFloat }, bool editable = false, bool wrap = true,
             const TextFormat* = nullptr);
+        // The height of a text's first count lines in a box that wide, or the whole text's.
+        [[nodiscard]] float linesHeight(const FormContext&, const Text&, MaxSize,
+            std::size_t count, bool wrap = true, const TextFormat* = nullptr);
         // Whether a box of that size cuts this text. calculatedDimensions is clamped to the box
         // it was measured against, so a measurement cannot answer this and the fit is asked for
         // outright - which is what a hint standing in for words a control has cut has to know
@@ -203,6 +206,13 @@ namespace ClaFi
     {
         return select(text, format, maxDimensions, formContext.scaleFactor(), editable, wrap,
             EventPhase::Calculate).calculatedDimensions();
+    }
+
+    float TextEngine::linesHeight(const FormContext& formContext, const Text& text,
+        MaxSize maxDimensions, std::size_t count, bool wrap, const TextFormat* format)
+    {
+        return select(text, format, maxDimensions, formContext.scaleFactor(), false, wrap,
+            EventPhase::Calculate).linesHeight(count);
     }
 
     bool TextEngine::isTextTrimmed(const FormContext& formContext, const Text& text,

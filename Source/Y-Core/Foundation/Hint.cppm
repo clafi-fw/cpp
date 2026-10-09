@@ -27,6 +27,8 @@ namespace ClaFi
     public:
         // The widest line a hint breaks at, in design units. See Control-Foundation#hint
         static constexpr float k_lineWidth{ 480.0f };
+        // The most lines a hint shows, its last faded when cut. See Control-Foundation#hint
+        static constexpr std::size_t k_maxLines{ 20 };
     public:
         // Puts this form's hint up about one of this form's controls, without the wait.
         void showRightNow(Control&);

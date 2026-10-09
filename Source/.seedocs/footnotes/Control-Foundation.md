@@ -312,7 +312,8 @@ is nothing to follow, and the hint stands where it was put.
 
 A HINT BREAKS ITS LINES AT k_lineWidth, 480 design units, and its window is sized to the widest line
 it came to - a short hint stays as short as its words. The one exception is a hint standing over
-text: it repeats the lines the control broke, at the width the control broke them.
+text: it repeats the lines the control broke, at the width the control broke them. Either way a
+hint shows k_maxLines lines at most, 20, and fades the last of them when the text runs on.
 
 ## Score
 

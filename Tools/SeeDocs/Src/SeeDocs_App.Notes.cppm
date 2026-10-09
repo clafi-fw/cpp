@@ -2,9 +2,9 @@ export module SeeDocs_App.Notes;
 
 import ClaFi.StdLib;
 
-// THE FOOTNOTES, each read on the first ask and cut into its sections. A section is a
-// heading and the lines under it, up to the next heading of its own level or a higher one, and a
-// reference reaches it by the slug of its heading. See the README beside the project.
+// THE FOOTNOTES, each read on the first ask and cut into its sections. A section is a heading under
+// the note's # title and the lines under it, up to the next heading of its own level or a higher
+// one, and a reference reaches it by the slug of its heading. See the README beside the project.
 namespace SeeDocs_App
 {
     export using Lines = std::vector<std::wstring>;
@@ -39,6 +39,8 @@ namespace SeeDocs_App
 
     // How many marks a heading line opens with; none for a line that is no heading.
     export [[nodiscard]] std::size_t headingLevel(std::wstring_view line);
+    // The level of a heading that opens a section; none for the note's title or a plain line.
+    export [[nodiscard]] std::size_t sectionLevel(std::wstring_view line);
 
     // The folder of notes. A note is read once, on the first ask for it.
     export class Notes

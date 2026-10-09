@@ -1111,6 +1111,31 @@ namespace ClaFi
         return lines.empty() ? last.bounds.height() : lines.back().height;
     }
 
+    // Each bottom is worked out the way ensureVerticalFit works it out, so a box this tall holds
+    // the last line counted and fades it when another follows.
+    float TextLayout::linesHeight(const std::size_t count)
+    {
+        if (!isTextStated())
+            return 0.0f;
+        ensureShaping();
+        std::size_t counted = 0;
+        float bottom = 0.0f;
+        for (const ParagraphLayoutState& paragraph : m_paragraphs)
+        {
+            float lineY = 0.0f;
+            for (const NativeLineMetrics& line : linesOf(paragraph))
+            {
+                if (counted == count)
+                    return bottom;
+                const float top = paragraph.bounds.top + lineY;
+                bottom = std::min(top + line.height, paragraph.bounds.bottom);
+                lineY += line.height;
+                ++counted;
+            }
+        }
+        return m_shapedHeight;
+    }
+
     bool TextLayout::isTrimmed()
     {
         ensureLayout();

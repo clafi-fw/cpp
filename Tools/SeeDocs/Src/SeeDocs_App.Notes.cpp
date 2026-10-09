@@ -15,6 +15,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_noteExtension = L".md";
         constexpr std::wstring_view k_readMeStem = L"README";
         constexpr wchar_t k_headingMark = L'#';
+        constexpr std::size_t k_titleLevel = 1;
 
         [[nodiscard]] Lines splitLines(const std::wstring& text)
         {
@@ -52,6 +53,12 @@ namespace SeeDocs_App
             ++level;
         const bool heading = level != 0 && (level == line.size() || line[level] == L' ');
         return heading ? level : 0;
+    }
+
+    std::size_t sectionLevel(const std::wstring_view line)
+    {
+        const std::size_t level = headingLevel(line);
+        return level > k_titleLevel ? level : 0;
     }
 
     Notes::Notes(std::filesystem::path folder)
@@ -141,15 +148,16 @@ namespace SeeDocs_App
         m_stems.reset();
     }
 
-    // Every heading opens a section; a section's lines run to the next heading that is not
-    // nested under it, so a ## section carries its ### subsections, heading lines included.
+    // Every heading under the title opens a section; a section's lines run to the next heading
+    // that is not nested under it, so a ## section carries its ### subsections, heading lines
+    // included. The title opens none, as it would carry the whole note.
     Note Notes::read(const std::wstring_view stem, const std::wstring& text)
     {
         Note note{ .stem = std::wstring{ stem } };
         const Lines lines = splitLines(text);
         for (std::size_t i = 0; i != lines.size(); ++i)
         {
-            const std::size_t level = headingLevel(lines[i]);
+            const std::size_t level = sectionLevel(lines[i]);
             if (level == 0)
                 continue;
             NoteSection section{

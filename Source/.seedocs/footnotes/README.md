@@ -13,6 +13,8 @@ it is done inside and what happened on the way is in the working note of the sam
 A section heading IS the name of the declaration it explains, so a comment writes `See Grids` and
 reaches `## RowCell` without spelling an anchor. A section about something the code does not name
 takes a heading of its own, and the comment spells the anchor: `See Control-Foundation#control-text`.
+The `#` title at the top names the note and opens no section, so a declaration named like the note
+takes the `##` section of its name, and one with no such section takes nothing from it.
 
 `seedocs check` reports a reference to a note that does not exist, and a reference to a section
 the note does not carry.

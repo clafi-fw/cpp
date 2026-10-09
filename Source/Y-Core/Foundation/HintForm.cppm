@@ -14,6 +14,7 @@ import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.System.Animation;
+import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -34,7 +35,7 @@ namespace ClaFi
         void getText(GetTextEvent&) const override;
         [[nodiscard]] const TextFormat* textFormat() const override;
         [[nodiscard]] float lineBreakWidth() const override { return m_breakWidth; }
-        // Asked no wider than Hint::k_lineWidth, unless it repeats lines broken elsewhere.
+        // Held to Hint::k_maxLines, and to k_lineWidth unless it repeats lines broken elsewhere.
         CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
         ScaledDimensions calculateContent(AlignEvent& event) override { return FormControlBase::calculateContent(event); }
     private:
@@ -148,6 +149,9 @@ namespace ClaFi
         // the edge. The window is then sized to the widest line, so a short hint stays short.
         if (m_breakWidth == 0.0f)
             asked.x = std::min(asked.x, Hint::k_lineWidth * event.scaleFactor());
+        TextLayout& layout = syncedLayout(event.formContext(),
+            FloatRect::fromDimensions({ 0.0f, 0.0f }, asked), text);
+        asked.y = std::min(asked.y, layout.linesHeight(Hint::k_maxLines));
         return WithTextLayout<FormControlBase>::measureText(event, asked, text);
     }
 

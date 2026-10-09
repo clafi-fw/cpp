@@ -247,6 +247,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Traversal.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\PaintEvent.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\PaintEvent.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Fit.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Fit.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\EditHistory.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\ContextMessage.cpp" />

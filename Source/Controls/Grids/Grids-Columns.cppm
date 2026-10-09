@@ -40,6 +40,12 @@ namespace ClaFi::Controls::Grids
         float value;
     };
 
+    // How many lines a cell shows at most, and every line at zero. See Grids#maxlines
+    export struct MaxLines
+    {
+        std::size_t value;
+    };
+
     // Whether the column's name is written in the grid's header.
     export enum class ShowInHeader
     {
@@ -118,6 +124,8 @@ namespace ClaFi::Controls::Grids
         DECLARE_PROPERTY(VerticalTextAnchor, verticalTextAnchor, VerticalTextAnchor::Top)
         // Whether the column's cells say something different from one paint to the next.
         DECLARE_PROPERTY(MovingText, movingText, MovingText::No)
+        // How many lines each of the column's cells shows at most.
+        DECLARE_PROPERTY(MaxLines, maxLines, 0)
         DECLARE_PROPERTY(Tag, tag, Tag{}) // whatever the caller hangs on the column
     public:
         Column* parent() const { return m_parent; }
@@ -260,6 +268,7 @@ namespace ClaFi::Controls::Grids
         INIT_PROPERTY(textAlign),
         INIT_PROPERTY(verticalTextAnchor),
         INIT_PROPERTY(movingText),
+        INIT_PROPERTY(maxLines),
         // How wide the column is, or its share of the slack under Fill.
         m_designWidth{ READ_PROPERTY(ColumnWidth, 0.0f).value },
         INIT_PROPERTY(tag)

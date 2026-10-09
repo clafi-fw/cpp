@@ -68,6 +68,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_signatureJoin = L"\n";   // after the template head
         constexpr std::wstring_view k_hintJoin = L" ";         // the same on a hint's one line
         constexpr std::size_t k_maxTreeDepth = 16;   // what a base chain is followed to
+        constexpr std::size_t k_valueLines = 3;      // a value cell's height, in lines
 
         // The columns of each table a page carries.
         namespace Columns
@@ -76,7 +77,8 @@ namespace SeeDocs_App
                 { L"Name" }, { L"Kind" }, { L"Hint", true, true }
             };
             const TableColumns properties = {
-                { L"Name" }, { L"Type" }, { L"Default" }, { L"Hint", true, true }
+                { L"Name" }, { L"Type" }, { .name = L"Default", .maxLines = k_valueLines },
+                { L"Hint", true, true }
             };
             const TableColumns events = {
                 { L"Event" }, { L"Type" }, { L"Hint", true, true }
@@ -88,10 +90,12 @@ namespace SeeDocs_App
                 { L"Signature" }, { L"Hint", true, true }
             };
             const TableColumns fields = {
-                { L"Name" }, { L"Type" }, { L"Value" }, { L"Hint", true, true }
+                { L"Name" }, { L"Type" }, { .name = L"Value", .maxLines = k_valueLines },
+                { L"Hint", true, true }
             };
             const TableColumns members = {
-                { L"Name" }, { L"Value" }, { L"Hint", true, true }
+                { L"Name" }, { .name = L"Value", .maxLines = k_valueLines },
+                { L"Hint", true, true }
             };
             const TableColumns chapters = {
                 { L"Chapter", true }, { L"Modules" }, { L"Types" }, { L"Controls" }

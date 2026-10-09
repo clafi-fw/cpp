@@ -96,15 +96,25 @@ namespace ClaFi::Controls::Grids
         doGetCellText(column, cellText);
         const TextFormat& format = cellTextFormat(column);
         MaxSize maxSize = { static_cast<float>(contentBoundsW), k_maxFloat };
+        const std::size_t maxLines = column.maxLines().value;
         if (column.movingText() == MovingText::Yes)
         {
             TextLayout layout;
             shapeAlone(layout, cellMetrics.formContext(), cellText, format, maxSize,
                 EventPhase::Calculate);
-            return layout.calculatedDimensions();
+            ScaledDimensions result = layout.calculatedDimensions();
+            if (maxLines != 0)
+                result.y = std::min(result.y, layout.linesHeight(maxLines));
+            return result;
         }
         ScaledDimensions result = textEngine().calculateText(cellMetrics.formContext(), cellText,
             maxSize, false, true, &format);
+        if (maxLines != 0)
+        {
+            const float linesHeight = textEngine().linesHeight(cellMetrics.formContext(), cellText,
+                maxSize, maxLines, true, &format);
+            result.y = std::min(result.y, linesHeight);
+        }
         return result;
     }
 

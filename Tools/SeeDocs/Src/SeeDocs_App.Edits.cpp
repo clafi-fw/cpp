@@ -886,7 +886,7 @@ namespace SeeDocs_App
             for (std::size_t i = 0; i != file.lines.size(); ++i)
             {
                 const std::wstring_view text = file.lines[i].text;
-                const std::size_t level = headingLevel(text);
+                const std::size_t level = sectionLevel(text);
                 if (level == 0 || slug(trimmed(text.substr(level))) != anchor)
                     continue;
                 const std::size_t closing = endLevel == 0 ? level : std::min(level, endLevel);

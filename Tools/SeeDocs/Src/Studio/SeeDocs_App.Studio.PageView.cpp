@@ -454,14 +454,16 @@ namespace SeeDocs_App
             const Grids::ColumnWidthMode width = column.fills
                 ? Grids::ColumnWidthMode::Fill
                 : Grids::ColumnWidthMode::FitContent;
+            const Grids::MaxLines maxLines{ column.maxLines };
             if (column.hint && editable)
             {
                 hintColumn = i;
-                grid.columns().add(Tag{ i }, Text{ column.name }, width, EditorMode::Editable);
+                grid.columns().add(Tag{ i }, Text{ column.name }, width, maxLines,
+                    EditorMode::Editable);
             }
             else
             {
-                grid.columns().add(Tag{ i }, Text{ column.name }, width);
+                grid.columns().add(Tag{ i }, Text{ column.name }, width, maxLines);
             }
             if (i == 0 && footnoted)
                 grid.columns().add(Tag{ k_markColumn }, Text{});

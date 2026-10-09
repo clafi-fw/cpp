@@ -79,6 +79,7 @@ namespace SeeDocs_App
         std::wstring name;
         bool fills{ false };
         bool hint{ false };   // the rows' hints stand in it
+        std::size_t maxLines{ 0 };   // the most lines a cell shows, every line at zero
     };
 
     export using TableColumns = std::vector<TableColumn>;
