@@ -33,6 +33,8 @@ namespace SeeDocs_App
     export using Runs = std::vector<Run>;
     export using Cells = std::vector<Runs>;
 
+    export constexpr std::wstring_view k_noHint = L"no hint";   // a missing hint, as a page says it
+
     // The prose of a note, as its lines read.
     export enum class BlockKind
     {

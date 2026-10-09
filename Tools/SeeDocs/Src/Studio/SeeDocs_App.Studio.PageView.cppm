@@ -15,7 +15,6 @@ import ClaFi.Controls.TreeView;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
-import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.Timer;
@@ -107,11 +106,9 @@ namespace SeeDocs_App
         void connectHintCell(Grids::Row&, const TableRow&, TagValue hintColumn);
         // The row's menu edits its footnote, or adds one where it has none.
         void connectRowMenu(Grids::Row&, const TableRow&, Stack& body);
-        // A box holding a hint of its own: F2 or its menu opens an editor over the words, laid
-        // out over the format the box sets them in.
-        void connectHintBox(TextBox&, const std::optional<CommentSite>&, const TextFormat*);
+        // The box takes edits where the page has a writer and the hint a comment to write into.
+        void connectHintBox(HintBox&, const std::optional<CommentSite>&);
         FootnoteSlot& addFootnoteSlot(Stack& holder, PageFootnote, Padding);
-        void editHint(TextBox&, const CommentSite&, const TextFormat*);
         void editFootnote(const PageFootnote&);
         void addFootnote(const TableRow&, Stack& body);
         [[nodiscard]] const PageFootnote* footnoteOf(const TableRow&) const;
@@ -160,7 +157,6 @@ namespace SeeDocs_App
         std::wstring m_menuLink{};   // the link the menu that is up is about
         std::function<void()> m_pending{};
         UiTimer m_later{};
-        TextFormat m_leadFormat{ TextStyleId::SubTitle };
 
         TextBox& m_head{ createTopBar<TextBox>(
             ReadOnly::Yes,

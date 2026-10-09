@@ -5,6 +5,7 @@ import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
 import ClaFi.Controls.Button;
+import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Spacer;
 import ClaFi.Controls.Stack;
@@ -12,6 +13,7 @@ import ClaFi.Controls.TextBox;
 
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.History;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
@@ -33,11 +35,6 @@ namespace SeeDocs_App
 
     namespace Actions
     {
-        Action editHint{
-            Text{ L"Edit hint" },
-            Shortcut{ Keys::F2 }
-        };
-        // F2 as well: a box holds a hint or a footnote, never both, so one of the two claims it.
         Action editFootnote{
             Text{ L"Edit footnote" },
             Shortcut{ Keys::F2 }
@@ -53,10 +50,83 @@ namespace SeeDocs_App
                 return;
             registered = true;
             AppActions& actions = AppActions::get();
-            actions.add(editHint);
             actions.add(editFootnote);
             actions.add(addFootnote);
         }
+    }
+
+    // HintBox
+
+    void HintBox::connectSite(IPageWriter& writer, const CommentSite& site)
+    {
+        m_writer = &writer;
+        m_site = &site;
+        setReadOnly(ReadOnly::No);
+    }
+
+    void HintBox::showHint(const Text& words)
+    {
+        m_shown = words;
+        text() = words;
+    }
+
+    // A popup opened on the box - its edit menu, a link's menu - takes the focus while the edit
+    // goes on.
+    void HintBox::focusChanged()
+    {
+        PromptBox::focusChanged();
+        if (!isFocused() && !isDroppedDown())
+            write();
+    }
+
+    void HintBox::nestedKeyDown(KeyDownEvent& event)
+    {
+        PromptBox::nestedKeyDown(event);
+        if (event.handled || readOnly() == ReadOnly::Yes)
+            return;
+        if (event.key == Keys::Return)
+        {
+            event.handled = true;
+            write();
+        }
+        else if (event.key == Keys::Escape && edited())
+        {
+            event.handled = true;
+            putBack();
+        }
+    }
+
+    void HintBox::charPress(CharPressEvent& event)
+    {
+        if (event.character() == Keys::Return)
+            return;
+        PromptBox::charPress(event);
+    }
+
+    bool HintBox::edited() const
+    {
+        return text().plainText() != m_shown.plainText();
+    }
+
+    // A REFUSED WRITE KEEPS THE WORDS TYPED, the reason shown under the box. Words taken come
+    // back through the page, which is refreshed in place or built again.
+    void HintBox::write()
+    {
+        if (!m_writer || !m_site)
+            return;
+        // A copy: the write refreshes the page, which moves a new site into the one this reads.
+        const CommentSite site = *m_site;
+        const std::wstring refusal = m_writer->writeHint(site, text().plainText());
+        if (refusal.empty())
+            return;
+        setRefusal(refusal);
+        showRefusal();
+    }
+
+    // An edit of the box's own, so Ctrl+Z brings the words typed back.
+    void HintBox::putBack()
+    {
+        applyEdit({ 0, text().plainText().size() }, m_shown, EditKind::Replace);
     }
 
     // FootnoteSlot

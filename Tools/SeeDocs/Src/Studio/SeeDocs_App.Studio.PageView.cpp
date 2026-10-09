@@ -10,7 +10,6 @@ import ClaFi.Browser.Actions;
 
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Grids;
-import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Menu;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
@@ -169,6 +168,25 @@ namespace SeeDocs_App
                 moveWords(to.sections[i], from.sections[i]);
             to.footnoteHome = std::move(from.footnoteHome);
         }
+
+        // A hint the comment does not state is the box's placeholder, so typing starts on an
+        // empty box.
+        [[nodiscard]] PlaceHolderText noHintText()
+        {
+            PlaceHolderText text;
+            const Run missing{ .text = std::wstring{ k_noHint }, .style = RunStyle::Missing };
+            writeRuns(text, { missing });
+            return text;
+        }
+
+        // The words a hint box holds: none for a missing hint, which the placeholder shows.
+        [[nodiscard]] Text hintWords(const Runs& runs)
+        {
+            const bool missing = runs.size() == 1 && runs.front().style == RunStyle::Missing;
+            if (missing)
+                return {};
+            return textOf(runs);
+        }
     }
 
     // PageLinkEvent
@@ -312,16 +330,16 @@ namespace SeeDocs_App
     {
         if (m_page.lead.empty())
             return;
-        TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes);
+        HintBox& box = m_pageBox.body().add<HintBox>(
+            ReadOnly::Yes,
+            TextFormat{ TextStyleId::SubTitle },
+            noHintText()
+        );
         connectLinks(box);
-        connectHintBox(box, m_page.leadSite, &m_leadFormat);
+        connectHintBox(box, m_page.leadSite);
         m_parts.push_back(&box);
         m_renders.push_back([this, &box]() {
-            Text lead;
-            lead << TextStyleId::SubTitle;
-            writeRuns(lead, m_page.lead);
-            lead << PopTextStyle{};
-            box.text() = lead;
+            box.showHint(hintWords(m_page.lead));
         });
     }
 
@@ -486,14 +504,14 @@ namespace SeeDocs_App
             );
             TextBox& code = entry.add<TextBox>(ReadOnly::Yes, indent);
             connectLinks(code);
-            TextBox& lead = entry.add<TextBox>(ReadOnly::Yes, indent);
+            HintBox& lead = entry.add<HintBox>(ReadOnly::Yes, noHintText(), indent);
             connectLinks(lead);
-            connectHintBox(lead, signature.site, nullptr);
+            connectHintBox(lead, signature.site);
             m_renders.push_back([&code, &lead, &signature]() {
                 Text text;
                 writeSignature(text, signature.code, true);
                 code.text() = text;
-                lead.text() = textOf(signature.lead);
+                lead.showHint(hintWords(signature.lead));
             });
             if (signature.excerpt.has_value())
             {
@@ -647,26 +665,10 @@ namespace SeeDocs_App
         });
     }
 
-    void PageView::connectHintBox(TextBox& box, const std::optional<CommentSite>& site,
-        const TextFormat* format)
+    void PageView::connectHintBox(HintBox& box, const std::optional<CommentSite>& site)
     {
-        box.onGetActionState([this, &site](GetActionStateEvent& event) {
-            if (&event.action == &Actions::editHint && site.has_value())
-                event.claim({ .enabled = m_writer != nullptr });
-        });
-        box.onActionClick([this, &box, &site, format](ActionClickEvent& event) {
-            if (&event.action != &Actions::editHint || !site.has_value())
-                return;
-            later([this, &box, target = *site, format]() {
-                editHint(box, target, format);
-            });
-        });
-        box.onEditContextPopup([&site](EditContextPopupEvent& event) {
-            if (!site.has_value())
-                return;
-            event.actions.push_back(nullptr);
-            event.actions.push_back(&Actions::editHint);
-        });
+        if (m_writer && site.has_value())
+            box.connectSite(*m_writer, *site);
     }
 
     // Every slot claims Edit footnote for the words it shows, and offers it on the box's menu
@@ -705,29 +707,6 @@ namespace SeeDocs_App
             entry.slot->shown().text() = text;
         });
         return slot;
-    }
-
-    // The editor stands over the hint where the box draws it - inside the box's padding, laid
-    // out over the format the box sets the words in - and opens on the comment's own words.
-    void PageView::editHint(TextBox& box, const CommentSite& site, const TextFormat* format)
-    {
-        if (!m_writer || !site.comment || InPlaceEdit::isRunning())
-            return;
-        FloatRect textRect = box.boundsInForm();
-        const ScaledPadding padding = box.scaledPadding();
-        textRect.inflate(-padding.x, -padding.y);
-        const EditTarget target{
-            .control = box,
-            .textRect = textRect,
-            .textAnchor = HorizontalTextAnchor::Left,
-            .maxTextSize = { textRect.width(), 0.0f },
-            .textFormat = format
-        };
-        InPlaceEdit::run(target, Text{ site.comment->text }, [this, site](AcceptEditEvent& event) {
-            const std::wstring refusal = m_writer->writeHint(site, event.text.plainText());
-            if (!refusal.empty())
-                event.refuse(refusal);
-        });
     }
 
     void PageView::editFootnote(const PageFootnote& footnote)

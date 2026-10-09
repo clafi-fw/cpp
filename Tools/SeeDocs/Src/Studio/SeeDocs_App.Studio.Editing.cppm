@@ -4,6 +4,7 @@ import SeeDocs_App.Edits;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
+import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
@@ -17,8 +18,8 @@ import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
 // A PAGE'S WORDS EDITED WHERE THEY STAND: the commands that start an edit, what a page writes the
-// words back through, and a footnote's markdown typed in the footnote's place. See the README
-// beside the project.
+// words back through, a hint typed into the box that shows it, and a footnote's markdown typed in
+// the footnote's place. See the README beside the project.
 namespace SeeDocs_App
 {
     using namespace ::ClaFi;
@@ -28,7 +29,6 @@ namespace SeeDocs_App
     // so nothing here touches the platform, the theme or the text engine.
     namespace Actions
     {
-        export extern Action editHint;   // F2 on a hint standing in a box of its own
         export extern Action editFootnote;
         export extern Action addFootnote;
         // Puts them in the application's scope, once, which is where F2 is looked up.
@@ -63,6 +63,30 @@ namespace SeeDocs_App
         // Writes the words into the draft's note; the reason where they were refused.
         [[nodiscard]] virtual std::wstring writeFootnote(const FootnoteDraft&,
             std::wstring_view text) = 0;
+    };
+
+    // A hint typed into where it stands: Return or leaving the box writes it, Escape puts it back.
+    export class HintBox : public PromptBox
+    {
+    public:
+        template<typename... Args>
+        explicit HintBox(const CreateParams&, Args&&...);
+    public:
+        // Takes edits into the comment the site names, read where it stands at each write.
+        void connectSite(IPageWriter&, const CommentSite&);
+        void showHint(const Text&);   // the page's words for the hint, which Escape puts back
+    protected:
+        void focusChanged() override;   // leaving writes, but not for a popup opened on the box
+        void nestedKeyDown(KeyDownEvent&) override;
+        void charPress(CharPressEvent&) override;   // a hint is one line, and Return writes it
+    private:
+        [[nodiscard]] bool edited() const;
+        void write();
+        void putBack();
+    private:
+        IPageWriter* m_writer{ nullptr };
+        const CommentSite* m_site{ nullptr };
+        Text m_shown{};   // what the page last showed
     };
 
     // One footnote on a page: its words as the page shows them, and while it is edited, its
@@ -103,6 +127,13 @@ namespace SeeDocs_App
 
     //-------------------------------------------------------------------------
 
+
+    template<typename... Args>
+    HintBox::HintBox(const CreateParams& params, Args&&... args)
+        :
+        PromptBox{ params, std::forward<Args>(args)... }
+    {
+    }
 
     template<typename... Args>
     FootnoteSlot::FootnoteSlot(const CreateParams& params, Args&&... args)

@@ -42,7 +42,6 @@ namespace SeeDocs_App
 
         // The prefix a folder carries to sort last on disk, which a reader is not shown.
         constexpr std::wstring_view k_sortPrefix = L"Y-";
-        constexpr std::wstring_view k_noHint = L"no hint";
         constexpr std::wstring_view k_matchedByName =
             L"matched by name - the comment carries no See";
         constexpr std::wstring_view k_controlWord = L"control";
