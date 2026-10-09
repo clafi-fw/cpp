@@ -1097,11 +1097,18 @@ namespace SeeDocs_App
 
         // The derived types
 
-        // Whether a type names another among its bases - as the base, or as the argument a mixin
-        // base hands on: one whose template's own bases name the parameter standing in that place.
-        [[nodiscard]] bool derivesDirectly(const Surface& surface, const Type& type,
-            const Type& base)
+        // The public types standing directly on each base, not nested in another, in reading order.
+        using DerivedIndex = std::unordered_map<const Type*, TypeList>;
+
+        // The types a type names among its bases - each base, and the argument a mixin base hands
+        // on: one whose template's own bases name the parameter standing in that place.
+        [[nodiscard]] TypeList directBasesOf(const Surface& surface, const Type& type)
         {
+            TypeList bases;
+            const auto add = [&bases](const Type* base) {
+                if (base && std::ranges::find(bases, base) == bases.end())
+                    bases.push_back(base);
+            };
             for (const std::wstring& spelled : type.bases)
             {
                 if (isTemplateParameter(type, spelled))
@@ -1109,10 +1116,9 @@ namespace SeeDocs_App
                 const std::wstring resolvedSpelling =
                     surface.resolvedBase(spelled, type.nameSpace);
                 const Type* direct = surface.resolve(resolvedSpelling, type.nameSpace);
-                if (direct == &base)
-                    return true;
                 if (!direct)
                     continue;
+                add(direct);
                 const Names parameters = templateParameterNames(direct->templateParameters);
                 const Names arguments = argumentsOf(resolvedSpelling);
                 for (const std::wstring& handedOn : direct->bases)
@@ -1123,54 +1129,62 @@ namespace SeeDocs_App
                         continue;
                     const std::size_t index =
                         static_cast<std::size_t>(parameter - parameters.begin());
-                    if (index < arguments.size()
-                        && surface.resolve(arguments[index], type.nameSpace) == &base)
-                    {
-                        return true;
-                    }
+                    if (index < arguments.size())
+                        add(surface.resolve(arguments[index], type.nameSpace));
                 }
             }
-            return false;
+            return bases;
+        }
+
+        [[nodiscard]] DerivedIndex derivedIndexOf(const Surface& surface)
+        {
+            DerivedIndex index;
+            for (const Type& type : surface.types())
+            {
+                if (!type.isPublic() || isNested(type))
+                    continue;
+                for (const Type* base : directBasesOf(surface, type))
+                    index[base].push_back(&type);
+            }
+            for (TypeList& derived : index | std::views::values)
+            {
+                std::ranges::sort(derived, [](const Type* left, const Type* right) {
+                    return readsBefore(*left, *right);
+                });
+            }
+            return index;
         }
 
         // The types derived from a base, each with its own under it; a type the tree has come
         // down through already - a ring of names - stands under it no more.
-        void addDerived(Branches& branches, const Surface& surface, const Type& base,
+        void addDerived(Branches& branches, const DerivedIndex& index, const Type& base,
             TypeList& way)
         {
-            TypeList derived;
-            for (const Type& type : surface.types())
+            const auto derived = index.find(&base);
+            if (derived == index.end())
+                return;
+            for (const Type* type : derived->second)
             {
-                const bool onWay = std::ranges::find(way, &type) != way.end();
-                if (type.isPublic() && !isNested(type) && !onWay
-                    && derivesDirectly(surface, type, base))
-                {
-                    derived.push_back(&type);
-                }
-            }
-            std::ranges::sort(derived, [](const Type* left, const Type* right) {
-                return readsBefore(*left, *right);
-            });
-            for (const Type* type : derived)
-            {
+                if (std::ranges::find(way, type) != way.end())
+                    continue;
                 Branch branch{ .text = { code(type->name) }, .type = type };
                 if (way.size() <= k_maxTreeDepth)
                 {
                     way.push_back(type);
-                    addDerived(branch.children, surface, *type, way);
+                    addDerived(branch.children, index, *type, way);
                     way.pop_back();
                 }
                 branches.push_back(std::move(branch));
             }
         }
 
-        void addDerivedTypes(Page& page, const Surface& surface, const Type& type)
+        void addDerivedTypes(Page& page, const DerivedIndex& index, const Type& type)
         {
             if (!derives(type))
                 return;
             Branches derived;
             TypeList way = { &type };
-            addDerived(derived, surface, type, way);
+            addDerived(derived, index, type, way);
             if (derived.empty())
                 return;
             Section& section = addSection(page, SectionKind::Tree, { plain(L"Derived types") });
@@ -1872,8 +1886,8 @@ namespace SeeDocs_App
         // A tree of the types that have the type as a member of some kind, each with the types
         // derived from it under it, since they have the member too; the nodes start closed.
         template<typename Has>
-        void addOwnersTree(Page& page, const Surface& surface, std::wstring heading,
-            const Has& has)
+        void addOwnersTree(Page& page, const Surface& surface, const DerivedIndex& index,
+            std::wstring heading, const Has& has)
         {
             TypeList owners;
             for (const Type& owner : surface.types())
@@ -1891,21 +1905,23 @@ namespace SeeDocs_App
             {
                 Branch branch{ .text = { code(owner->name) }, .type = owner };
                 TypeList way = { owner };
-                addDerived(branch.children, surface, *owner, way);
+                addDerived(branch.children, index, *owner, way);
                 section.branches.push_back(std::move(branch));
             }
         }
 
-        void addPropertyOf(Page& page, const Surface& surface, const Type& type)
+        void addPropertyOf(Page& page, const Surface& surface, const DerivedIndex& index,
+            const Type& type)
         {
-            addOwnersTree(page, surface, L"Property of", [&](const Type& owner) {
+            addOwnersTree(page, surface, index, L"Property of", [&](const Type& owner) {
                 return hasPropertyOf(surface, owner, type);
             });
         }
 
-        void addEventOf(Page& page, const Surface& surface, const Type& type)
+        void addEventOf(Page& page, const Surface& surface, const DerivedIndex& index,
+            const Type& type)
         {
-            addOwnersTree(page, surface, L"Event of", [&](const Type& owner) {
+            addOwnersTree(page, surface, index, L"Event of", [&](const Type& owner) {
                 return hasEventOf(surface, owner, type);
             });
         }
@@ -2598,14 +2614,15 @@ namespace SeeDocs_App
         addTypeHead(page, surface, type);
         page.footnoteHome = typeFootnoteHome(notes, type);
         const ReachedBases bases = addTypeBases(page, surface, type);
-        addDerivedTypes(page, surface, type);
+        const DerivedIndex derived = derivedIndexOf(surface);
+        addDerivedTypes(page, derived, type);
         addProperties(page, surface, notes, type, bases);
         addEvents(page, surface, notes, type, bases);
         addMethods(page, surface, type, bases);
         addFields(page, surface, notes, type);
         addMembers(page, surface, notes, type);
-        addPropertyOf(page, surface, type);
-        addEventOf(page, surface, type);
+        addPropertyOf(page, surface, derived, type);
+        addEventOf(page, surface, derived, type);
         // The note is a footnote: it stands at the foot of what is the type's own, before the
         // types beside it.
         addTypeNote(page, surface, notes, type);

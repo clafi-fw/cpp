@@ -132,6 +132,15 @@ namespace SeeDocs_App
         // A page of the same shape moved into the one shown object by object, so a control
         // holding a reference into the page shown reads the new words through it.
 
+        void moveWords(Branches& to, Branches& from)
+        {
+            for (std::size_t i = 0; i != to.size(); ++i)
+            {
+                to[i].text = std::move(from[i].text);
+                moveWords(to[i].children, from[i].children);
+            }
+        }
+
         void moveWords(TableGroup& to, TableGroup& from)
         {
             to.label = std::move(from.label);
@@ -147,7 +156,7 @@ namespace SeeDocs_App
             to.heading = std::move(from.heading);
             to.hint = std::move(from.hint);
             to.excerpt = std::move(from.excerpt);
-            to.branches = std::move(from.branches);
+            moveWords(to.branches, from.branches);
             to.treeOpen = from.treeOpen;
             to.table.columns = std::move(from.table.columns);
             for (std::size_t i = 0; i != to.table.groups.size(); ++i)

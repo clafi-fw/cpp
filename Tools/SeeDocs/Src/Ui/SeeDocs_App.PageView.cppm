@@ -95,7 +95,7 @@ namespace SeeDocs_App
         void addTable(Expander&, const Table&);
         void addSignatures(const Section&);
         // Under the tree or a node of it: a branch with nothing under it is an item, any other
-        // a node, open or closed as asked; a click on either opens the type the branch names.
+        // a node whose rows are built as it opens; a click on either opens the type it names.
         template<typename Holder>
         void addTreeRows(Holder&, const Branches&, bool nodesOpen);
         [[nodiscard]] Text treeRowText(const Branch&) const;
@@ -218,11 +218,18 @@ namespace SeeDocs_App
                 continue;
             }
             Controls::TreeNode& node = holder.addNode(treeHeaderText(branch));
-            addTreeRows(node, branch.children, nodesOpen);
-            node.header().setExpanded(nodesOpen);
             node.header().onClick([this, type](ClickEvent&) {
                 if (type)
                     open(type->qualifiedName);
+            });
+            if (nodesOpen)
+            {
+                addTreeRows(node, branch.children, true);
+                continue;
+            }
+            node.header().setExpanded(false);
+            node.onFetchRows([this, &branch](FetchRowsEvent& event) {
+                addTreeRows(event.node, branch.children, false);
             });
         }
     }

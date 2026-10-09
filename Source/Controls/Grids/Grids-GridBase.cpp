@@ -225,6 +225,12 @@ namespace ClaFi::Controls::Grids
 
     void GridBase::nestedKeyDown(KeyDownEvent& event)
     {
+        // Held with Alt, a key carries on to the shortcut scopes - Alt+Left is a browser's Back.
+        if (event.modifiers.alt)
+        {
+            StackView::nestedKeyDown(event);
+            return;
+        }
         switch (event.key)
         {
         case Keys::Left:

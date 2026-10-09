@@ -102,10 +102,11 @@ namespace ClaFi::Controls
 
     // TreeView
 
+    // By index: a node opening may fetch nodes, and they join the end of the list.
     void TreeView::expandAll()
     {
-        for (TreeNode* node : m_nodes)
-            node->header().setExpanded(true);
+        for (std::size_t i = 0; i != m_nodes.size(); ++i)
+            m_nodes[i]->header().setExpanded(true);
         showCurrentRow();
     }
 

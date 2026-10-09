@@ -1,3 +1,5 @@
+module;
+#include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Controls.TreeView;
 
 import ClaFi.Controls.Button;
@@ -8,6 +10,7 @@ import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Scaler;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -26,6 +29,15 @@ namespace ClaFi::Controls
     }
 
     export class TreeView;
+    export class TreeNode;
+
+    // A node is opening with no rows under it, and asks for them.
+    export class FetchRowsEvent : public Event
+    {
+    public:
+        explicit FetchRowsEvent(TreeNode& node) : node{ node } {}
+        TreeNode& node;
+    };
 
     // A row of a tree a pick can land on, its text past the mark slot every level keeps clear.
     export class TreeItem : public ToolButton
@@ -49,6 +61,9 @@ namespace ClaFi::Controls
     public:
         template<typename... Args>
         explicit TreeNode(const CreateParams&, TreeView& tree, std::size_t level, Args&&...);
+    public:
+        // The node is opening with no rows under it, and asks for them.
+        DECLARE_EVENT(FetchRowsEvent, OnFetchRows, onFetchRows)
     public:
         // The rows under the header.
         [[nodiscard]] Stack& rows() { return m_rows; }
@@ -87,7 +102,7 @@ namespace ClaFi::Controls
         // Adds a branch at the top level.
         template<typename... Args>
         TreeNode& addNode(Args&&...);
-        // Opens every node.
+        // Opens every node, and every node a node fetches as it opens.
         void expandAll();
         // Closes every node; a current row folded away moves to the outermost header over it.
         void collapseAll();
@@ -160,10 +175,13 @@ namespace ClaFi::Controls
         m_rows{ createBody<Stack>(Orientation::Vertical) }
     {
         layOutHeader(params.themeMetrics().button);
-        // Closing over the current row folds it away, and the header is where it went.
+        // Closing over the current row folds it away, and the header is where it went. Opening
+        // with no rows asks for them.
         header().connectEvent<ToggleExpandedEvent>([this](ToggleExpandedEvent& event) {
             if (!event.expanded())
                 m_tree.rowsFolded(*this);
+            else if (m_rows.controls().empty())
+                emitEvent<FetchRowsEvent>(*this);
         });
     }
 

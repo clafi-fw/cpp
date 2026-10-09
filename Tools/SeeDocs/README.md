@@ -323,6 +323,7 @@ hint, in a note's prose or code, or in a signature - bare or qualified, as `Cont
 `Grids::Row` - links wherever the surface has a page for it. A right click on a link, or the menu
 key on a grid cell holding one, offers Open and Open in new tab. A row of the
 derived types opens the type it names; a method's page picks the method's type in the tree.
+A page's trees start closed, and a node's rows are built the first time it opens.
 The pages are built by
 `SeeDocs_App.Pages` - facts, sections, tables of rows with their footnotes, branches of a tree,
 signatures and blocks of prose - out of the surface and the notes; SeeDocs builds controls

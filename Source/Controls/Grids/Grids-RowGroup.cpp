@@ -115,9 +115,9 @@ namespace ClaFi::Controls::Grids
     {
         const bool opens = event.key == Keys::Right && !m_expanded;
         const bool closes = event.key == Keys::Left && m_expanded;
-        // Every other press moves the selection as the grid moves it: Right from an open group's
-        // mark steps into its rows, which is where a tree node's Right goes too.
-        if (m_mark && (opens || closes)
+        // Every other press, Alt held included, goes where the grid sends it: Right from an open
+        // group's mark steps into its rows, which is where a tree node's Right goes too.
+        if (m_mark && (opens || closes) && !event.modifiers.alt
             && descriptor().selectedRow() == this
             && descriptor().selectedColumn() == markColumn())
         {

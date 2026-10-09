@@ -198,11 +198,17 @@ namespace ClaFi::Controls
         const float travel = floatOffset().y;
         m_expanded = value;
         float newValue = value ? 1.0f : 0.0f;
-        animate(AnimationSlots::expander, m_expandedFactor, newValue,
-            [this](AnimateParams& params) {
-                m_expandedFactor = params.value;
-                invalidateChevron();
-            });
+        // A mark nobody has seen has nothing to turn from.
+        if (isPainted() && visible())
+        {
+            animate(AnimationSlots::expander, m_expandedFactor, newValue,
+                [this](AnimateParams& params) {
+                    m_expandedFactor = params.value;
+                    invalidateChevron();
+                });
+        }
+        else
+            m_expandedFactor = newValue;
         ToggleExpandedEvent event{ m_expanded };
         emitEvent(event);
         if (m_expanded)
