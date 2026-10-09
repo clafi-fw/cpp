@@ -886,12 +886,20 @@ namespace SeeDocs_App
 
         using ReachedBases = std::vector<ReachedBase>;
 
-        // The walk up through a type's bases: the lines it writes, the way so far, and every base
-        // it reaches, once each, in the order the lines name them.
+        // A type on the way up, as the chain spelled it.
+        struct WayStep
+        {
+            const Type* type{ nullptr };
+            std::wstring spelling;
+        };
+
+        // The walk up through a type's bases: the lines it writes, the way so far as words and as
+        // types, and every base it reaches, once each, in the order the lines name them.
         struct BaseWalk
         {
             Chains chains;
             Runs chain;
+            std::vector<WayStep> way;
             ReachedBases reached;
         };
 
@@ -1028,9 +1036,22 @@ namespace SeeDocs_App
                 reached.push_back(std::move(base));
         }
 
+        // Whether a type stands on the way already: a ring, which no compiler accepts but a
+        // reading by names can make of two units declaring alike. A template met again under
+        // another spelling is a mixin applied twice, and no ring.
+        [[nodiscard]] bool closesRing(const BaseWalk& walk, const Type& type,
+            const std::wstring_view spelling)
+        {
+            return std::ranges::any_of(walk.way, [&](const WayStep& step) {
+                return step.type == &type
+                    && (type.templateParameters.empty() || step.spelling == spelling);
+            });
+        }
+
         // A base on the way: its spelling with a private alias replaced, the type its head names,
-        // and that type's own bases after it; a way that ends here is a line. A nested base is a
-        // part of some type, not a type of its own, and is left out.
+        // and that type's own bases after it; a way that ends here is a line, and so is one that
+        // meets a type it has come through. A nested base is a part of some type, not a type of
+        // its own, and is left out.
         void addBaseChain(BaseWalk& walk, const Surface& surface, const BaseReading& reading,
             const std::size_t depth, const Flow& flow)
         {
@@ -1042,7 +1063,7 @@ namespace SeeDocs_App
             const std::size_t length = walk.chain.size();
             const std::size_t count = walk.chains.size();
             joinBase(walk.chain, resolvedSpelling, type);
-            if (type)
+            if (type && !closesRing(walk, *type, resolvedSpelling))
             {
                 ReachedBase base = reachedBase(resolvedSpelling, *type, flow);
                 Flow into = flow;
@@ -1052,8 +1073,10 @@ namespace SeeDocs_App
                 reachBase(walk.reached, std::move(base));
                 if (depth < k_maxTreeDepth)
                 {
+                    walk.way.push_back({ .type = type, .spelling = resolvedSpelling });
                     addBaseChains(walk, surface, *type, resolvedSpelling, reading.nameSpace,
                         depth + 1, into);
+                    walk.way.pop_back();
                 }
             }
             if (walk.chains.size() == count)
@@ -1096,6 +1119,7 @@ namespace SeeDocs_App
             BaseWalk walk;
             if (!derives(type))
                 return walk;
+            walk.way.push_back({ .type = &type, .spelling = type.name });
             addBaseChains(walk, surface, type, type.name, type.nameSpace, 0,
                 Flow{ .constructors = true });
             return walk;
@@ -1150,13 +1174,16 @@ namespace SeeDocs_App
             return false;
         }
 
+        // The types derived from a base, each with its own under it; a type the tree has come
+        // down through already - a ring of names - stands under it no more.
         void addDerived(Branches& branches, const Surface& surface, const Type& base,
-            const std::size_t depth)
+            TypeList& way)
         {
             TypeList derived;
             for (const Type& type : surface.types())
             {
-                if (type.isPublic() && !isNested(type) && &type != &base
+                const bool onWay = std::ranges::find(way, &type) != way.end();
+                if (type.isPublic() && !isNested(type) && !onWay
                     && derivesDirectly(surface, type, base))
                 {
                     derived.push_back(&type);
@@ -1168,8 +1195,12 @@ namespace SeeDocs_App
             for (const Type* type : derived)
             {
                 Branch branch{ .text = { code(type->name) }, .type = type };
-                if (depth < k_maxTreeDepth)
-                    addDerived(branch.children, surface, *type, depth + 1);
+                if (way.size() <= k_maxTreeDepth)
+                {
+                    way.push_back(type);
+                    addDerived(branch.children, surface, *type, way);
+                    way.pop_back();
+                }
                 branches.push_back(std::move(branch));
             }
         }
@@ -1179,7 +1210,8 @@ namespace SeeDocs_App
             if (!derives(type))
                 return;
             Branches derived;
-            addDerived(derived, surface, type, 0);
+            TypeList way = { &type };
+            addDerived(derived, surface, type, way);
             if (derived.empty())
                 return;
             Section& section = addSection(page, SectionKind::Tree, { plain(L"Derived types") });
@@ -1899,7 +1931,8 @@ namespace SeeDocs_App
             for (const Type* owner : owners)
             {
                 Branch branch{ .text = { code(owner->name) }, .type = owner };
-                addDerived(branch.children, surface, *owner, 0);
+                TypeList way = { owner };
+                addDerived(branch.children, surface, *owner, way);
                 section.branches.push_back(std::move(branch));
             }
         }

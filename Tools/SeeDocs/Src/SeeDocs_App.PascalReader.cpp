@@ -714,6 +714,8 @@ namespace SeeDocs_App
             [[nodiscard]] bool isDeclaredName(const Token*) const;
             // Whether the token so far ahead opens a routine, rather than naming a field.
             [[nodiscard]] bool opensRoutine(std::size_t ahead) const;
+            // Whether a field list starts here - a name, then a comma or a colon.
+            [[nodiscard]] bool opensFields() const;
             [[nodiscard]] const Token& code(std::size_t index) const;
             [[nodiscard]] Place placeOf(const Token&) const;
             [[nodiscard]] Comment commentAt(std::size_t line);
@@ -817,6 +819,11 @@ namespace SeeDocs_App
             const Token* next = peek(ahead + 1);
             return isListedWord(peek(ahead), k_routineWords) && !isMark(next, L":")
                 && !isMark(next, L",");
+        }
+
+        bool UnitReader::opensFields() const
+        {
+            return isDeclaredName(peek()) && (isMark(peek(1), L",") || isMark(peek(1), L":"));
         }
 
         const Token& UnitReader::code(const std::size_t index) const
@@ -1134,7 +1141,9 @@ namespace SeeDocs_App
             m_surface.addType(std::move(type));
         }
 
-        // The members up to the structure's end, each under the access its section gives it.
+        // The members up to the structure's end, each under the access its section gives it. A
+        // word that opens none of them - a directive the reader does not know - is passed over to
+        // its semicolon, so every turn of the walk moves it on.
         void UnitReader::readMembers(Type& type)
         {
             Access access = Access::Public;
@@ -1224,7 +1233,7 @@ namespace SeeDocs_App
                     skipVariantPart();
                     return;
                 }
-                if (isDeclaredName(token))
+                if (opensFields())
                 {
                     readVariables({}, &type, access, false);
                     continue;
@@ -1352,7 +1361,7 @@ namespace SeeDocs_App
             {
                 if (isMark(peek(), L"["))
                     skipAttributes();
-                if (!isDeclaredName(peek()) || !(isMark(peek(1), L",") || isMark(peek(1), L":")))
+                if (!opensFields())
                     return;
                 const std::size_t declarationAt = m_at;
                 std::vector<const Token*> names;
