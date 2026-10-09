@@ -920,13 +920,18 @@ namespace SeeDocs_App
     Refusal writeHint(Surface& surface, const std::filesystem::path& tree, const CommentSite& site,
         const std::wstring_view hint)
     {
-        const std::wstring words{ trimmed(hint) };
         // Words left as they were are no edit, whatever they hold.
-        if (site.comment && words == site.comment->text)
+        if (!changesHint(site, hint))
             return {};
+        const std::wstring words{ trimmed(hint) };
         if (Refusal refusal = checkHint(words, site.name); !refusal.empty())
             return refusal;
         return writeComment(surface, tree, site, words, std::nullopt);
+    }
+
+    bool changesHint(const CommentSite& site, const std::wstring_view hint)
+    {
+        return !site.comment || trimmed(hint) != site.comment->text;
     }
 
     std::wstring flowedText(const Lines& lines)

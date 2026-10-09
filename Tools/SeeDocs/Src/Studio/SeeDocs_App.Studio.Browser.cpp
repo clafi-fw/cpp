@@ -199,6 +199,9 @@ namespace SeeDocs_App
 
     std::wstring SurfaceBrowser::writeHint(const CommentSite& site, const std::wstring_view hint)
     {
+        // Unchanged words are no edit, so the database and the page stay as they are.
+        if (!changesHint(site, hint))
+            return {};
         if (!m_surface)
             return std::wstring{ k_noProject };
         const Refusal refusal = SeeDocs_App::writeHint(*m_surface, m_sources, site, hint);

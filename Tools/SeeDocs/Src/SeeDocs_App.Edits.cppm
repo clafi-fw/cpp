@@ -32,6 +32,8 @@ namespace SeeDocs_App
     // the surface's files are named from.
     export [[nodiscard]] Refusal writeHint(Surface&, const std::filesystem::path& tree,
         const CommentSite&, std::wstring_view hint);
+    // Whether the words differ from the comment's own, as writeHint compares them.
+    export [[nodiscard]] bool changesHint(const CommentSite&, std::wstring_view hint);
 
     // A section's lines as an editor shows them: each paragraph and each bullet on one line,
     // headings and code as written.
