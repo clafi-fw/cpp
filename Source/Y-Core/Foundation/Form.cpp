@@ -1433,6 +1433,11 @@ namespace ClaFi
 
         if (visible())
         {
+            // A form holds one popup, and the registration below is the only way back to it - so
+            // the one it holds goes down first, the way a click outside takes it.
+            if (popupTargetForm && popupTargetForm->m_activePopup != this)
+                popupTargetForm->closeActivePopup();
+
             updatePlacement();
 
             m_window->show();

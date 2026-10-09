@@ -543,11 +543,12 @@ namespace ClaFi
     export struct MaxSize : public CustomFloatPoint { using CustomFloatPoint::CustomFloatPoint; };
     export struct FixedSize : public CustomFloatPoint { using CustomFloatPoint::CustomFloatPoint; };
     export struct ContentSize : public CustomFloatPoint { using CustomFloatPoint::CustomFloatPoint; };
+    
     // How heavy a stroke is, from no stroke up. Each grade's design width is strokeWidth's answer.
     export enum class Thickness
     {
-        None,
-        Hairline,
+        None,       // No stroke at all
+        Hairline,   // 1 pixel width at scales up to 294%
         Thin,
         Regular,
         Bold,
@@ -595,8 +596,6 @@ namespace ClaFi
 
     export struct OverlayEntry
     {
-        // we use control only to compare with an actual control pointer,
-        // received in the traverse event, so there's no need for a real type here
         const void* control;
         ClippingMode clippingMode{ ClippingMode::Standard };
     };
@@ -782,7 +781,7 @@ namespace ClaFi
         float maxPos() const { return (std::max)(max - page, 0.0f); }
     };
 
-    // Whether the control reads as a slider or as a scroll bar.
+    // Whether the control looks as a slider or as a scroll bar.
     export enum class SliderViewMode
     {
         Slider,
