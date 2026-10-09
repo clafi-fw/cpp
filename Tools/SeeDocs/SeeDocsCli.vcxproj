@@ -116,8 +116,12 @@
     <ClCompile Include="Src\SeeDocs_App.Database.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Notes.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Notes.cppm" />
+    <ClCompile Include="Src\SeeDocs_App.PascalReader.cpp" />
+    <ClCompile Include="Src\SeeDocs_App.PascalReader.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Project.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Project.cppm" />
+    <ClCompile Include="Src\SeeDocs_App.Reading.cpp" />
+    <ClCompile Include="Src\SeeDocs_App.Reading.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Scanner.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Scanner.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cpp" />

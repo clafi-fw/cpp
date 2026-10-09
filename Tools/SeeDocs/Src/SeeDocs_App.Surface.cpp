@@ -124,6 +124,52 @@ namespace SeeDocs_App
             return nameSpace.substr(0, cut);
         }
 
+        // Whether a namespace is that one or stands inside it.
+        [[nodiscard]] bool isWithin(const std::wstring_view nameSpace,
+            const std::wstring_view outer)
+        {
+            if (!nameSpace.starts_with(outer))
+                return false;
+            const std::wstring_view rest = nameSpace.substr(outer.size());
+            return rest.empty() || rest.starts_with(k_scope);
+        }
+
+        // Where a declaration's default stands: the first = at the top level that is no
+        // comparison.
+        [[nodiscard]] std::size_t defaultOf(const std::wstring_view parameter)
+        {
+            int depth = 0;
+            for (std::size_t i = 0; i != parameter.size(); ++i)
+            {
+                const wchar_t current = parameter[i];
+                if (current == L'<' || current == L'(' || current == L'[' || current == L'{')
+                    ++depth;
+                if (current == L'>' || current == L')' || current == L']' || current == L'}')
+                    --depth;
+                if (current != L'=' || depth != 0)
+                    continue;
+                const bool joined = (i + 1 < parameter.size() && parameter[i + 1] == L'=')
+                    || (i > 0 && std::wstring_view{ L"=!<>" }.find(parameter[i - 1])
+                        != std::wstring_view::npos);
+                if (!joined)
+                    return i;
+            }
+            return std::wstring_view::npos;
+        }
+
+        // A parameter list as a declaration and its definition both spell it: defaults off.
+        [[nodiscard]] std::wstring withoutDefaults(const std::wstring_view parameters)
+        {
+            std::wstring result;
+            for (const std::wstring& parameter : splitArguments(parameters))
+            {
+                if (!result.empty())
+                    result += L", ";
+                result += trimmed(std::wstring_view{ parameter }.substr(0, defaultOf(parameter)));
+            }
+            return result;
+        }
+
         // How many leading components two namespaces share.
         [[nodiscard]] std::size_t sharedPrefix(const std::wstring_view left,
             const std::wstring_view right)
@@ -183,7 +229,7 @@ namespace SeeDocs_App
     bool Type::opensScope() const
     {
         return kind == TypeKind::Class || kind == TypeKind::Struct || kind == TypeKind::Union
-            || kind == TypeKind::Enum;
+            || kind == TypeKind::Enum || kind == TypeKind::Interface;
     }
 
     std::size_t Surface::addFile(SourceFile file)
@@ -194,6 +240,8 @@ namespace SeeDocs_App
 
     void Surface::addModule(Module module)
     {
+        if (module.language != SourceLanguage::Cpp)
+            m_languageByModule[module.name] = module.language;
         m_modules.push_back(std::move(module));
     }
 
@@ -230,6 +278,16 @@ namespace SeeDocs_App
         m_problems.push_back(std::move(problem));
     }
 
+    void Surface::addRepublication(Republication republication)
+    {
+        m_republications.push_back(std::move(republication));
+    }
+
+    void Surface::addEnclosedInclude(EnclosedInclude include)
+    {
+        m_enclosedIncludes.push_back(std::move(include));
+    }
+
     const Type* Surface::typeNamed(const std::wstring_view qualifiedName) const
     {
         const auto found = m_byQualifiedName.find(std::wstring{ qualifiedName });
@@ -260,6 +318,18 @@ namespace SeeDocs_App
             from = type->nameSpace;
         }
         return nullptr;
+    }
+
+    const Type* Surface::named(const std::wstring_view spelled,
+        const std::wstring_view nameSpace) const
+    {
+        return lookUp(plainType(withoutArguments(spelled)), nameSpace);
+    }
+
+    SourceLanguage Surface::languageOf(const std::wstring_view module) const
+    {
+        const auto found = m_languageByModule.find(std::wstring{ module });
+        return found == m_languageByModule.end() ? SourceLanguage::Cpp : found->second;
     }
 
     std::wstring Surface::resolvedBase(const std::wstring_view spelled,
@@ -451,6 +521,122 @@ namespace SeeDocs_App
         }
     }
 
+    // AN INCLUDE PUTS THE HEADER'S TEXT WHERE IT STANDS, so a header written to be included from
+    // inside a namespace declares into that one, and its own namespaces stand inside it - as do
+    // the headers it includes in turn. The first include reaching a header decides.
+    void Surface::encloseIncludes()
+    {
+        std::set<std::size_t> enclosed;
+        std::deque<EnclosedInclude> pending;
+        for (const EnclosedInclude& include : m_enclosedIncludes)
+        {
+            if (!include.nameSpace.empty())
+                pending.push_back(include);
+        }
+        while (!pending.empty())
+        {
+            const EnclosedInclude include = std::move(pending.front());
+            pending.pop_front();
+            const std::optional<std::size_t> file = fileIncluded(include);
+            if (!file || !enclosed.insert(*file).second)
+                continue;
+            const auto within = [&include](const std::wstring& nameSpace) {
+                if (nameSpace.empty())
+                    return include.nameSpace;
+                return include.nameSpace + std::wstring{ k_scope } + nameSpace;
+            };
+            for (std::size_t i = 0; i != m_types.size(); ++i)
+            {
+                if (m_types[i].place.file == *file)
+                    rekeyType(i, within(m_types[i].nameSpace));
+            }
+            for (FreeFunction& free : m_functions)
+            {
+                if (free.function.place.file == *file)
+                    free.nameSpace = within(free.nameSpace);
+            }
+            for (Variable& variable : m_variables)
+            {
+                if (variable.field.place.file == *file)
+                    variable.nameSpace = within(variable.nameSpace);
+            }
+            for (Republication& republication : m_republications)
+            {
+                if (republication.file == *file)
+                    republication.nameSpace = within(republication.nameSpace);
+            }
+            for (const EnclosedInclude& inner : m_enclosedIncludes)
+            {
+                if (inner.file != *file)
+                    continue;
+                EnclosedInclude enclosedInner = inner;
+                enclosedInner.nameSpace = within(inner.nameSpace);
+                pending.push_back(std::move(enclosedInner));
+            }
+        }
+    }
+
+    // THE NAMESPACE A HEADER RE-PUBLISHES FROM IS ITS LIBRARY'S IMPLEMENTATION: what the library
+    // means to be used it names again where a reader is to find it, and the rest of that
+    // namespace, and of every namespace inside it, is how it is made.
+    void Surface::republish()
+    {
+        std::set<std::wstring> implementation;
+        for (const Republication& republication : m_republications)
+        {
+            if (const std::optional<std::wstring> from = moveRepublished(republication))
+                implementation.insert(*from);
+        }
+        if (implementation.empty())
+            return;
+
+        const auto hidden = [&implementation](const std::wstring_view nameSpace) {
+            return std::ranges::any_of(implementation, [nameSpace](const std::wstring& outer) {
+                return isWithin(nameSpace, outer);
+            });
+        };
+        for (Type& type : m_types)
+        {
+            if (hidden(type.nameSpace))
+                type.exported = false;
+        }
+        std::erase_if(m_functions, [&hidden](const FreeFunction& free) {
+            return hidden(free.nameSpace);
+        });
+        std::erase_if(m_variables, [&hidden](const Variable& variable) {
+            return hidden(variable.nameSpace);
+        });
+    }
+
+    // A definition following its declaration states the function again: the same namespace,
+    // name, template head and parameters, defaults aside.
+    void Surface::dropRedeclarations()
+    {
+        std::unordered_map<std::wstring, std::size_t> keptAt;
+        FreeFunctions kept;
+        for (FreeFunction& free : m_functions)
+        {
+            const Function& function = free.function;
+            const std::wstring key = free.nameSpace + std::wstring{ k_scope } + function.name
+                + L'<' + withoutDefaults(function.templateParameters) + L">("
+                + withoutDefaults(function.parameters) + L')';
+            const auto found = keptAt.find(key);
+            if (found == keptAt.end())
+            {
+                keptAt.emplace(key, kept.size());
+                kept.push_back(std::move(free));
+                continue;
+            }
+            FreeFunction& first = kept[found->second];
+            const bool firstCommented = !first.function.comment.text.empty();
+            const bool commented = !function.comment.text.empty();
+            const bool declares = first.function.hasBody && !function.hasBody;
+            if ((commented && !firstCommented) || (commented == firstCommented && declares))
+                first = std::move(free);
+        }
+        m_functions = std::move(kept);
+    }
+
     void Surface::forEachComment(const std::function<void(const Comment&)>& visit) const
     {
         const auto each = [&](const Place&, const Comment& comment) {
@@ -543,6 +729,117 @@ namespace SeeDocs_App
             }
         }
         return nearest;
+    }
+
+    // Looked up as C++ looks a using-declaration's name up: in the namespace it stands in, then
+    // in each one enclosing it. A type moves with the types nested in it and its specializations,
+    // a function with every overload of its name.
+    std::optional<std::wstring> Surface::moveRepublished(const Republication& republication)
+    {
+        std::wstring_view named = republication.named;
+        std::wstring_view prefix = republication.nameSpace;
+        if (named.starts_with(k_scope))
+        {
+            named.remove_prefix(k_scope.size());
+            prefix = {};
+        }
+        const std::wstring_view bare = bareName(named);
+        if (bare.size() == named.size())
+            return std::nullopt;
+
+        const std::wstring nested = std::wstring{ bare } + std::wstring{ k_scope };
+        const std::wstring specialized = std::wstring{ bare } + L'<';
+        while (true)
+        {
+            const std::wstring qualified = prefix.empty()
+                ? std::wstring{ named }
+                : std::wstring{ prefix } + std::wstring{ k_scope } + std::wstring{ named };
+            const std::wstring from{ enclosing(qualified) };
+
+            std::vector<std::size_t> types;
+            for (std::size_t i = 0; i != m_types.size(); ++i)
+            {
+                const Type& type = m_types[i];
+                const bool reached = type.name == bare || type.name.starts_with(nested)
+                    || type.name.starts_with(specialized);
+                if (type.nameSpace == from && reached)
+                    types.push_back(i);
+            }
+            const auto functionThere = [&from, bare](const FreeFunction& free) {
+                return free.nameSpace == from && free.function.name == bare;
+            };
+            const auto variableThere = [&from, bare](const Variable& variable) {
+                return variable.nameSpace == from && variable.field.name == bare;
+            };
+            const bool reachesFunction = std::ranges::any_of(m_functions, functionThere);
+            const bool reachesVariable = std::ranges::any_of(m_variables, variableThere);
+
+            if (!types.empty() || reachesFunction || reachesVariable)
+            {
+                if (from == republication.nameSpace)
+                    return std::nullopt;
+                for (const std::size_t index : types)
+                    rekeyType(index, republication.nameSpace);
+                for (FreeFunction& free : m_functions)
+                {
+                    if (functionThere(free))
+                        free.nameSpace = republication.nameSpace;
+                }
+                for (Variable& variable : m_variables)
+                {
+                    if (variableThere(variable))
+                        variable.nameSpace = republication.nameSpace;
+                }
+                return from;
+            }
+            if (prefix.empty())
+                return std::nullopt;
+            prefix = enclosing(prefix);
+        }
+    }
+
+    void Surface::rekeyType(const std::size_t index, std::wstring nameSpace)
+    {
+        Type& type = m_types[index];
+        const auto found = m_byQualifiedName.find(type.qualifiedName);
+        if (found != m_byQualifiedName.end() && found->second == index)
+            m_byQualifiedName.erase(found);
+        type.nameSpace = std::move(nameSpace);
+        type.qualifiedName = type.nameSpace.empty()
+            ? type.name
+            : type.nameSpace + std::wstring{ k_scope } + type.name;
+        m_byQualifiedName[type.qualifiedName] = index;
+    }
+
+    // Beside the file the include stands in, under the tree's root, or - the build saying where
+    // else headers are looked for - the one file whose path ends with the name.
+    std::optional<std::size_t> Surface::fileIncluded(const EnclosedInclude& include) const
+    {
+        const std::filesystem::path from =
+            std::filesystem::path{ m_files[include.file].relative }.parent_path();
+        const std::wstring beside = (from / include.included).lexically_normal().generic_wstring();
+        const std::wstring ending = L'/' + include.included;
+        std::optional<std::size_t> underRoot;
+        std::optional<std::size_t> endingIn;
+        std::size_t endings = 0;
+        for (std::size_t i = 0; i != m_files.size(); ++i)
+        {
+            const std::wstring& relative = m_files[i].relative;
+            if (relative == beside)
+                return i;
+            if (relative == include.included)
+                underRoot = i;
+            if (relative.ends_with(ending))
+            {
+                endingIn = i;
+                ++endings;
+            }
+        }
+        if (underRoot)
+            return underRoot;
+        if (endings == 1)
+            return endingIn;
+        return std::nullopt;
     }
 
     bool inheritsConstructors(const Using& declaration)

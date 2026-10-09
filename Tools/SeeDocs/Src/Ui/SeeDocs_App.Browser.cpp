@@ -51,6 +51,13 @@ namespace SeeDocs_App
             return result;
         }
 
+        // The segment a module stands under in a path: its name, or a header's file name - a
+        // header being named by its path, whose folders are segments of their own.
+        [[nodiscard]] std::wstring_view segmentOf(const ContentsModule& module)
+        {
+            return module.header ? module.shortName : module.name;
+        }
+
         // A folder's category with one more folder under it; the root's is the folder alone.
         [[nodiscard]] std::wstring joinFolder(const std::wstring_view folder,
             const std::wstring_view name)
@@ -116,6 +123,7 @@ namespace SeeDocs_App
         m_surface = &surface;
         m_notes = &notes;
         m_projectName = project.name;
+        m_writes = project.mode == ScanMode::Full;
         m_sources = project.folder;
         m_database = project.databasePath();
         m_words = {};
@@ -167,6 +175,7 @@ namespace SeeDocs_App
         m_surface = nullptr;
         m_notes = nullptr;
         m_projectName.clear();
+        m_writes = false;
         m_sources.clear();
         m_database.clear();
         m_words = words;
@@ -339,7 +348,7 @@ namespace SeeDocs_App
             if (target.chapter)
             {
                 for (const ContentsModule& module : target.chapter->modules)
-                    addSubItem(data, module.name);
+                    addSubItem(data, segmentOf(module));
             }
         }
         else if (!target.type)
@@ -375,7 +384,8 @@ namespace SeeDocs_App
         if (!page)
         {
             page = &tab.createPage<SurfacePage>();
-            page->view().setWriter(*this);
+            if (m_writes)
+                page->view().setWriter(*this);
             fill(*page, target, data);
             tab.setPage(page);
             // The page is what the icon comes from once there is one, and the tab last asked
@@ -436,7 +446,10 @@ namespace SeeDocs_App
         if (next == segments.size() || !result.chapter)
             return result;
 
-        Targets::const_iterator found = m_targets.find(std::wstring{ segments[next] });
+        // A header's segment is its file name, and the folders before it make its name.
+        Targets::const_iterator found = m_targets.find(joinFolder(result.folder, segments[next]));
+        if (found == m_targets.end() || !found->second.module || !found->second.module->header)
+            found = m_targets.find(std::wstring{ segments[next] });
         if (found == m_targets.end() || !found->second.module || found->second.type
             || found->second.chapter != result.chapter)
             return result;
@@ -470,7 +483,7 @@ namespace SeeDocs_App
             result.append(1, ConfigNames::pathSeparator).append(folder);
         if (!module)
             return result;
-        result.append(1, ConfigNames::pathSeparator).append(module->name);
+        result.append(1, ConfigNames::pathSeparator).append(segmentOf(*module));
         if (type)
             result.append(1, ConfigNames::pathSeparator).append(type->qualifiedName);
         if (!member.empty())
@@ -541,7 +554,7 @@ namespace SeeDocs_App
         if (!m_surface || target.isGone())
             return std::nullopt;
         if (target.isHome())
-            return contentsPage(m_contents, m_projectName);
+            return homePage(*m_surface, *m_notes, m_contents, m_projectName);
         if (target.isFolder() && !target.chapter)
         {
             return contentsPage(chaptersUnder(m_contents, target.folder),

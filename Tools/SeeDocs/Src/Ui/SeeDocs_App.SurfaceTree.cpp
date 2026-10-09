@@ -35,12 +35,16 @@ namespace SeeDocs_App
 
     // A ROW IS PICKED BY A CLICK, NOT BY BECOMING CURRENT: the arrow keys walk the rows without
     // opening a page for each one passed, and Enter opens the row they stop on. Every folder is
-    // made before any module, so a folder's subfolders stand above its modules.
+    // made before any module, so a folder's subfolders stand above its modules - the tree's
+    // own folder is home, and its modules stand at the top level under its folders.
     void SurfaceTree::build(const ContentsChapters& contents)
     {
         clear();
         for (const ContentsChapter& chapter : contents)
-            addFolder(chapter.category);
+        {
+            if (!chapter.category.empty())
+                addFolder(chapter.category);
+        }
         for (const ContentsChapter& chapter : contents)
             addModules(chapter);
         collapseAll();
@@ -70,15 +74,16 @@ namespace SeeDocs_App
 
     void SurfaceTree::addModules(const ContentsChapter& chapter)
     {
-        const std::size_t folderIndex = m_folderOf.at(chapter.category);
-        TreeNode& folderNode = *m_entries[folderIndex].node;
+        const bool atRoot = chapter.category.empty();
+        const std::size_t folderIndex = atRoot ? k_root : m_folderOf.at(chapter.category);
+        TreeNode* folderNode = atRoot ? nullptr : m_entries[folderIndex].node;
         for (const ContentsModule& module : chapter.modules)
         {
             const std::size_t moduleIndex = m_entries.size();
             if (module.types.empty())
             {
-                TreeItem& item = folderNode.addItem(
-                    Text{ rowIcon(RowIcon::Module), Space{ k_iconGap }, module.shortName });
+                const Text text{ rowIcon(RowIcon::Module), Space{ k_iconGap }, module.shortName };
+                TreeItem& item = folderNode ? folderNode->addItem(text) : addItem(text);
                 item.onClick([this, moduleIndex](ClickEvent&) {
                     pick(moduleIndex);
                 });
@@ -91,8 +96,12 @@ namespace SeeDocs_App
                 m_entryOf[&module] = moduleIndex;
                 continue;
             }
-            TreeNode& moduleNode = folderNode.addNode(
-                HeaderText{ rowIcon(RowIcon::Module), Space{ k_iconGap }, module.shortName });
+            const HeaderText header{
+                rowIcon(RowIcon::Module),
+                Space{ k_iconGap },
+                module.shortName
+            };
+            TreeNode& moduleNode = folderNode ? folderNode->addNode(header) : addNode(header);
             moduleNode.header().onClick([this, moduleIndex](ClickEvent&) {
                 pick(moduleIndex);
             });
@@ -129,8 +138,12 @@ namespace SeeDocs_App
         setCurrentItem(nullptr);
         for (const Entry& entry : m_entries)
         {
-            if (entry.parent == k_root)
+            if (entry.parent != k_root)
+                continue;
+            if (entry.node)
                 entry.node->deleteSelf();
+            else
+                entry.item->deleteSelf();
         }
         m_entries.clear();
         m_entryOf.clear();

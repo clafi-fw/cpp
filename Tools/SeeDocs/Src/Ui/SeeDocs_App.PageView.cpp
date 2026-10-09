@@ -515,7 +515,7 @@ namespace SeeDocs_App
             TextBox& label = block.add<TextBox>(ReadOnly::Yes, Padding{ 0.0f });
             m_renders.push_back([&label, &section]() {
                 Text text;
-                writeSignature(text, section.heading, false);
+                writeSignature(text, section.heading, false, SourceLanguage::Cpp);
                 label.text() = text;
             });
         }
@@ -532,7 +532,7 @@ namespace SeeDocs_App
             connectLinks(code);
             m_renders.push_back([&code, &signature]() {
                 Text text;
-                writeSignature(text, signature.code, true);
+                writeSignature(text, signature.code, true, signature.language);
                 code.text() = text;
             });
             if (!signature.lead.empty())
@@ -599,7 +599,7 @@ namespace SeeDocs_App
             {
                 gridRow.onGetCellHint([&row](Grids::GetCellHintEvent& event) {
                     if (event.column().tag().value == 0)
-                        writeSignature(event.text(), row.hint, false);
+                        writeSignature(event.text(), row.hint, false, row.language);
                 });
             }
             gridRow.onGetCellText([&row, anchor](Grids::GetCellTextEvent& event) {

@@ -1,5 +1,7 @@
 module SeeDocs_App.Scanner;
 
+import SeeDocs_App.PascalReader;
+import SeeDocs_App.Reading;
 import SeeDocs_App.Surface;
 
 import ClaFi.Documents.TextFile;
@@ -18,9 +20,22 @@ namespace SeeDocs_App
     {
         constexpr std::wstring_view k_interfaceExtension = L".cppm";
         constexpr std::wstring_view k_implementationExtension = L".cpp";
+        // What a limited read takes for a module interface and for a header, in lower case.
+        constexpr auto k_moduleExtensions = std::to_array<std::wstring_view>({
+            L".cppm", L".ixx", L".mpp", L".cxxm", L".ccm", L".c++m"
+        });
+        constexpr auto k_headerExtensions = std::to_array<std::wstring_view>({
+            L".h", L".hh", L".hpp", L".hxx", L".h++", L".inl", L".ipp", L".tpp", L".tcc"
+        });
+        constexpr auto k_pascalExtensions = std::to_array<std::wstring_view>({
+            L".pas", L".pp"
+        });
+        constexpr std::wstring_view k_pascalInclude = L".inc";   // read for its symbols only
         constexpr wchar_t k_hiddenPrefix = L'.';   // a folder so named is not read
         constexpr std::wstring_view k_scope = L"::";
         constexpr std::wstring_view k_lineComment = L"//";
+        constexpr std::wstring_view k_blockComment = L"/*";
+        constexpr std::wstring_view k_blockCommentEnd = L"*/";
         constexpr std::wstring_view k_brief = L"@brief ";
         constexpr std::wstring_view k_todo = L"TODO";
         constexpr std::wstring_view k_textMacro = L"DERIVED_TEXT_CLASS";
@@ -79,13 +94,273 @@ namespace SeeDocs_App
             return text;
         }
 
+        // A stretch of a line, from its first character to past its last.
+        struct Run
+        {
+            std::size_t start{ 0 };
+            std::size_t end{ 0 };
+        };
+
+        using Runs = std::vector<Run>;
+
+        // The string and character literals of a macro's body, which its expansion leaves alone.
+        [[nodiscard]] Runs literalRuns(const std::wstring_view text)
+        {
+            Runs runs;
+            std::size_t i = 0;
+            while (i < text.size())
+            {
+                const wchar_t quote = text[i];
+                if (quote != L'"' && quote != L'\'')
+                {
+                    ++i;
+                    continue;
+                }
+                std::size_t end = i + 1;
+                while (end < text.size() && text[end] != quote)
+                    end += text[end] == L'\\' ? 2 : 1;
+                end = std::min(end + 1, text.size());
+                runs.push_back({ i, end });
+                i = end;
+            }
+            return runs;
+        }
+
+        // A directive's text with its comments taken out: a // to the end, a /* */ where it stands.
+        [[nodiscard]] std::wstring withoutComments(const std::wstring_view text)
+        {
+            std::wstring result;
+            std::size_t i = 0;
+            while (i < text.size())
+            {
+                const std::wstring_view rest = text.substr(i);
+                if (rest.starts_with(k_lineComment))
+                    break;
+                if (rest.starts_with(k_blockComment))
+                {
+                    const std::size_t close = rest.find(k_blockCommentEnd, k_blockComment.size());
+                    if (close == std::wstring_view::npos)
+                        break;
+                    result += L' ';
+                    i += close + k_blockCommentEnd.size();
+                    continue;
+                }
+                result += text[i];
+                ++i;
+            }
+            return result;
+        }
+
+        // A directive's word and what follows it: if and its condition, define and its macro.
+        struct Directive
+        {
+            std::wstring_view word;
+            std::wstring_view rest;
+        };
+
+        [[nodiscard]] Directive directiveOf(const std::wstring_view text)
+        {
+            std::wstring_view rest = trimmed(text);
+            if (rest.starts_with(L'#'))
+                rest = trimmed(rest.substr(1));
+            std::size_t end = 0;
+            while (end < rest.size() && isNameChar(rest[end]))
+                ++end;
+            return { rest.substr(0, end), trimmed(rest.substr(end)) };
+        }
+
+        // A macro the tree defines.
+        struct Macro
+        {
+            std::wstring body;             // comments taken out, its lines joined
+            Runs literals;                 // in the body
+            bool takesArguments{ false };
+        };
+
+        using MacroTable = std::unordered_map<std::wstring, Macro>;
+        using ActiveMacros = std::vector<std::wstring_view>;
+
+        // THE TREE'S OWN MACROS, expanded where their names stand in a limited read's code. An
+        // object-like macro is replaced by its body, expanded in turn; a function-like one is
+        // dropped with its arguments, since what it makes of them takes a preprocessor to know.
+        // The first definition met in a branch that is read stands, and a name defined only in
+        // branches that are not read takes the first of those. The compilers' own spellings of an
+        // attribute and a pragma - __declspec(...), __attribute__((...)), _Pragma(...),
+        // __pragma(...) - are dropped the same way.
+        class Macros
+        {
+        public:
+            Macros();
+            void define(std::wstring_view directive, bool read);
+            // The line with its code expanded, the kept runs - its comments and literals - left
+            // as they stand. A dropped call's arguments may run on into the lines after it, and
+            // the depth carries that from one line to the next.
+            [[nodiscard]] std::wstring expanded(std::wstring_view line, std::span<const Run> kept,
+                int& dropDepth) const;
+        private:
+            [[nodiscard]] const Macro* find(std::wstring_view name) const;
+            void expandInto(std::wstring& result, std::wstring_view text,
+                std::span<const Run> kept, int& dropDepth, ActiveMacros& active) const;
+        private:
+            MacroTable m_read;
+            MacroTable m_unread;
+        };
+
+        Macros::Macros()
+        {
+            for (const std::wstring_view name : { L"__declspec", L"__attribute__", L"_Pragma",
+                L"__pragma" })
+            {
+                m_read.emplace(std::wstring{ name }, Macro{ .takesArguments = true });
+            }
+        }
+
+        void Macros::define(const std::wstring_view directive, const bool read)
+        {
+            const Directive parsed = directiveOf(directive);
+            std::size_t end = 0;
+            while (end < parsed.rest.size() && isNameChar(parsed.rest[end]))
+                ++end;
+            if (end == 0 || !isNameStart(parsed.rest.front()))
+                return;
+
+            Macro macro;
+            std::wstring_view body = parsed.rest.substr(end);
+            if (body.starts_with(L'('))
+            {
+                macro.takesArguments = true;
+                const std::size_t close = body.find(L')');
+                body = close == std::wstring_view::npos
+                    ? std::wstring_view{}
+                    : body.substr(close + 1);
+            }
+            macro.body = trimmed(body);
+            macro.literals = literalRuns(macro.body);
+            MacroTable& table = read ? m_read : m_unread;
+            table.try_emplace(std::wstring{ parsed.rest.substr(0, end) }, std::move(macro));
+        }
+
+        std::wstring Macros::expanded(const std::wstring_view line, const std::span<const Run> kept,
+            int& dropDepth) const
+        {
+            std::wstring result;
+            ActiveMacros active;
+            expandInto(result, line, kept, dropDepth, active);
+            return result;
+        }
+
+        const Macro* Macros::find(const std::wstring_view name) const
+        {
+            const std::wstring key{ name };
+            if (const auto read = m_read.find(key); read != m_read.end())
+                return &read->second;
+            if (const auto unread = m_unread.find(key); unread != m_unread.end())
+                return &unread->second;
+            return nullptr;
+        }
+
+        // A name being expanded is not expanded again inside itself, as C++ has it.
+        void Macros::expandInto(std::wstring& result, const std::wstring_view text,
+            const std::span<const Run> kept, int& dropDepth, ActiveMacros& active) const
+        {
+            std::size_t keptAt = 0;
+            std::size_t i = 0;
+            while (i < text.size())
+            {
+                while (keptAt < kept.size() && kept[keptAt].end <= i)
+                    ++keptAt;
+                if (keptAt < kept.size() && kept[keptAt].start <= i)
+                {
+                    if (dropDepth == 0)
+                        result += text.substr(i, kept[keptAt].end - i);
+                    i = kept[keptAt].end;
+                    continue;
+                }
+                const wchar_t current = text[i];
+                if (dropDepth > 0)
+                {
+                    if (current == L'(')
+                        ++dropDepth;
+                    else if (current == L')')
+                        --dropDepth;
+                    ++i;
+                    continue;
+                }
+                if (!isNameChar(current))
+                {
+                    result += current;
+                    ++i;
+                    continue;
+                }
+
+                std::size_t end = i + 1;
+                while (end < text.size() && isNameChar(text[end]))
+                    ++end;
+                const std::wstring_view word = text.substr(i, end - i);
+                const Macro* macro = isNameStart(current) ? find(word) : nullptr;
+                if (!macro || std::ranges::find(active, word) != active.end())
+                {
+                    result += word;
+                    i = end;
+                    continue;
+                }
+                if (macro->takesArguments)
+                {
+                    std::size_t open = end;
+                    while (open < text.size() && isBlank(text[open]))
+                        ++open;
+                    if (open == text.size() || text[open] != L'(')
+                    {
+                        result += word;
+                        i = end;
+                        continue;
+                    }
+                    dropDepth = 1;
+                    i = open + 1;
+                    continue;
+                }
+                active.push_back(word);
+                int bodyDepth = 0;
+                result += L' ';
+                expandInto(result, macro->body, macro->literals, bodyDepth, active);
+                result += L' ';
+                active.pop_back();
+                i = end;
+            }
+        }
+
+        // An include in a branch read: its line, and what it names, as spelled between the brackets
+        // or the quotes.
+        struct Include
+        {
+            std::size_t line{ 0 };
+            std::wstring name;
+        };
+
+        using Includes = std::vector<Include>;
+
+        // How a file is lexed: as written, or as a limited read takes it - its conditionals read
+        // down their first branch, and the tree's macros gathered from it or expanded in it.
+        enum class Preprocess
+        {
+            None,
+            Gather,
+            Expand
+        };
+
         // A file as lines and tokens, lexed line by line with the framework's C++ lexer and cut
         // once more where that lexer, built for colouring, leaves a plain name without a token.
+        // Preprocessed, a line in a branch left out stands blank, and a line of code holds its
+        // macros expanded; the lines keep their count, so every place is the file's own.
         class SourceText
         {
         public:
-            explicit SourceText(std::wstring_view text);
+            explicit SourceText(std::wstring_view text, Preprocess = Preprocess::None,
+                Macros* macros = nullptr);
             [[nodiscard]] const TokenList& tokens() const { return m_tokens; }
+            [[nodiscard]] bool preprocessed() const { return m_preprocess != Preprocess::None; }
+            // What the branches read include.
+            [[nodiscard]] const Includes& includes() const { return m_includes; }
             [[nodiscard]] std::wstring_view text(const Token&) const;
             [[nodiscard]] std::size_t lineCount() const { return m_lines.size(); }
             [[nodiscard]] LineKind kindOf(const std::size_t line) const { return m_kinds[line]; }
@@ -106,17 +381,33 @@ namespace SeeDocs_App
         private:
             void tokenizeLine(std::size_t index, Syntax::LineState&, Syntax::StateStrings&,
                 bool& directiveContinues);
+            void preprocessLine(std::size_t index, Syntax::LineState&, Syntax::StateStrings&);
+            void readDirective(std::size_t index);
+            void expandLine(std::size_t index, const Syntax::LineState&,
+                const Syntax::StateStrings&);
+            void followBlockComment(std::size_t index);
             void takeGap(std::size_t line, std::size_t from, std::size_t to);
             void push(TokenType, std::size_t line, std::size_t start, std::size_t end);
-            void classifyLine(std::size_t firstToken);
+            void classifyLine(std::size_t firstToken, bool insideComment);
         private:
             std::vector<std::wstring> m_lines;
             TokenList m_tokens;
             std::vector<LineKind> m_kinds;
             std::vector<std::size_t> m_firstTokens;   // per line, the index of its first token
+            Preprocess m_preprocess{ Preprocess::None };
+            Macros* m_macros{ nullptr };
+            Branches m_branches;
+            Includes m_includes;
+            bool m_blockOpen{ false };            // the line ended inside a /* */ comment
+            bool m_directiveContinues{ false };   // the line ended a directive with a backslash
+            int m_dropDepth{ 0 };                 // brackets a dropped macro call still holds open
         };
 
-        SourceText::SourceText(const std::wstring_view text)
+        SourceText::SourceText(const std::wstring_view text, const Preprocess preprocess,
+            Macros* macros)
+            :
+            m_preprocess{ preprocess },
+            m_macros{ macros }
         {
             std::size_t start = 0;
             while (start <= text.size())
@@ -138,8 +429,12 @@ namespace SeeDocs_App
             {
                 const std::size_t firstToken = m_tokens.size();
                 m_firstTokens.push_back(firstToken);
-                tokenizeLine(i, state, strings, directiveContinues);
-                classifyLine(firstToken);
+                const bool insideComment = m_blockOpen;
+                if (preprocessed())
+                    preprocessLine(i, state, strings);
+                else
+                    tokenizeLine(i, state, strings, directiveContinues);
+                classifyLine(firstToken, insideComment);
             }
         }
 
@@ -167,7 +462,8 @@ namespace SeeDocs_App
             if (tail.type != TokenType::Comment || last - 1 == first)
                 return std::nullopt;
             const std::wstring_view comment = text(tail);
-            if (!comment.starts_with(k_lineComment))
+            const bool block = preprocessed() && comment.starts_with(k_blockComment);
+            if (!comment.starts_with(k_lineComment) && !block)
                 return std::nullopt;
             return comment;
         }
@@ -182,14 +478,17 @@ namespace SeeDocs_App
                 const std::size_t end = line == to.line ? to.end() : whole.size();
                 std::wstring piece;
                 std::size_t at = start;
-                // Only the comments standing inside the range are cut; the tokens of a line are
-                // in order, so the first past the range ends the walk.
+                // Only the comments standing inside the range are cut, and preprocessed, the
+                // directives; the tokens of a line are in order, so the first past the range ends
+                // the walk.
                 for (std::size_t i = m_firstTokens[line]; i != m_tokens.size(); ++i)
                 {
                     const Token& token = m_tokens[i];
                     if (token.line != line || token.start >= end)
                         break;
-                    if (token.type != TokenType::Comment || token.end() <= at)
+                    const bool cut = token.type == TokenType::Comment
+                        || (preprocessed() && token.type == TokenType::Directive);
+                    if (!cut || token.end() <= at)
                         continue;
                     piece += whole.substr(at, token.start - at);
                     at = std::min(token.end(), end);
@@ -313,6 +612,133 @@ namespace SeeDocs_App
             takeGap(index, cursor, line.size());
         }
 
+        // A directive is a token covering its lines, as the plain lexing has it; a line in a
+        // branch left out is blanked before it is lexed, so nothing of it reaches the reader.
+        void SourceText::preprocessLine(const std::size_t index, Syntax::LineState& state,
+            Syntax::StateStrings& strings)
+        {
+            std::wstring& line = m_lines[index];
+            const std::wstring_view ending = rightTrimmed(line);
+            const bool continues = !ending.empty() && ending.back() == L'\\';
+            if (m_directiveContinues)
+            {
+                push(TokenType::Directive, index, 0, line.size());
+                m_directiveContinues = continues;
+                return;
+            }
+            if (!m_blockOpen && trimmed(line).starts_with(L'#'))
+            {
+                readDirective(index);
+                push(TokenType::Directive, index, line.find_first_not_of(L" \t"), line.size());
+                m_directiveContinues = continues;
+                return;
+            }
+            if (!m_branches.reading())
+            {
+                line.clear();
+                return;
+            }
+            if (m_preprocess == Preprocess::Expand && m_macros)
+                expandLine(index, state, strings);
+            bool directiveContinues = false;
+            tokenizeLine(index, state, strings, directiveContinues);
+            followBlockComment(index);
+        }
+
+        // The directive's lines joined, its comments out: a conditional steers the branches, a
+        // define is gathered, and an include in a branch read is one of the file's includes.
+        void SourceText::readDirective(const std::size_t index)
+        {
+            std::wstring joined;
+            for (std::size_t i = index; i != m_lines.size(); ++i)
+            {
+                const std::wstring_view piece = rightTrimmed(m_lines[i]);
+                if (!piece.ends_with(L'\\'))
+                {
+                    joined += piece;
+                    break;
+                }
+                joined += piece.substr(0, piece.size() - 1);
+                joined += L' ';
+            }
+            const std::wstring clean = withoutComments(joined);
+            const Directive directive = directiveOf(clean);
+            if (directive.word == L"define")
+            {
+                if (m_preprocess == Preprocess::Gather && m_macros)
+                    m_macros->define(clean, m_branches.reading());
+                return;
+            }
+            if (directive.word == L"include")
+            {
+                const std::wstring_view named = directive.rest;
+                const bool quoted = named.starts_with(L'"') || named.starts_with(L'<');
+                const std::size_t close = named.find_first_of(L"\">", 1);
+                if (m_branches.reading() && quoted && close != std::wstring_view::npos)
+                {
+                    m_includes.push_back({
+                        .line = index,
+                        .name = std::wstring{ named.substr(1, close - 1) }
+                    });
+                }
+                return;
+            }
+            m_branches.take(directive.word, directive.rest);
+        }
+
+        // The line is lexed once to find what expansion leaves alone - comments and literals -
+        // from a copy of the state, since the line is lexed again as it stands afterwards.
+        void SourceText::expandLine(const std::size_t index, const Syntax::LineState& state,
+            const Syntax::StateStrings& strings)
+        {
+            std::wstring& line = m_lines[index];
+            Syntax::StateStrings scratch = strings;
+            Syntax::Tokens lexed;
+            std::ignore = Syntax::lexLine(Syntax::Languages::cpp, line, state, scratch, &lexed);
+            Runs kept;
+            for (const Syntax::Token& token : lexed)
+            {
+                const std::size_t start = token.range.start;
+                const std::size_t end = token.range.start + token.range.length;
+                switch (token.kind)
+                {
+                    case Syntax::TokenKind::Comment:
+                    case Syntax::TokenKind::String:
+                    case Syntax::TokenKind::Escape:
+                        kept.push_back({ start, end });
+                        break;
+                    case Syntax::TokenKind::Directive:
+                        kept.push_back({ start, line.size() });
+                        break;
+                    default:
+                        break;
+                }
+            }
+            line = m_macros->expanded(line, kept, m_dropDepth);
+        }
+
+        // Whether the line ends inside a /* */ comment: a line read from inside one opens with
+        // the comment's own run.
+        void SourceText::followBlockComment(const std::size_t index)
+        {
+            bool open = m_blockOpen;
+            for (std::size_t i = m_firstTokens[index]; i != m_tokens.size(); ++i)
+            {
+                const Token& token = m_tokens[i];
+                if (token.type != TokenType::Comment)
+                    continue;
+                const std::wstring_view comment = text(token);
+                const bool continued = open && i == m_firstTokens[index];
+                if (!continued && !comment.starts_with(k_blockComment))
+                    continue;
+                const std::size_t shortest = continued
+                    ? k_blockCommentEnd.size()
+                    : k_blockComment.size() + k_blockCommentEnd.size();
+                open = comment.size() < shortest || !comment.ends_with(k_blockCommentEnd);
+            }
+            m_blockOpen = open;
+        }
+
         // The characters between two tokens of the lexer's: names, numbers and single characters,
         // with :: kept whole since it joins the names on either side of it.
         void SourceText::takeGap(const std::size_t line, std::size_t from, const std::size_t to)
@@ -362,11 +788,14 @@ namespace SeeDocs_App
                 m_tokens.push_back({ type, line, start, end - start });
         }
 
-        void SourceText::classifyLine(const std::size_t firstToken)
+        // Preprocessed, a /* */ comment is a comment line as // is, and so is a blank line inside
+        // one, so a doc comment's paragraphs gather as one comment.
+        void SourceText::classifyLine(const std::size_t firstToken, const bool insideComment)
         {
             if (firstToken == m_tokens.size())
             {
-                m_kinds.push_back(LineKind::Blank);
+                const bool commentLine = preprocessed() && insideComment;
+                m_kinds.push_back(commentLine ? LineKind::CommentOnly : LineKind::Blank);
                 return;
             }
             bool commentsOnly = true;
@@ -376,7 +805,8 @@ namespace SeeDocs_App
                     commentsOnly = false;
             }
             const bool lineComment = text(m_tokens[firstToken]).starts_with(k_lineComment);
-            m_kinds.push_back(commentsOnly && lineComment ? LineKind::CommentOnly : LineKind::Code);
+            const bool counts = lineComment || preprocessed();
+            m_kinds.push_back(commentsOnly && counts ? LineKind::CommentOnly : LineKind::Code);
         }
 
         // The words the reader takes as declaration keywords, and the macros of the routine.
@@ -502,6 +932,33 @@ namespace SeeDocs_App
             return comment;
         }
 
+        // A doc comment's words, whichever way it is written - ///, //!, /** */, /*! */, the *
+        // leading a line inside a block, the < turning one to the member before it.
+        [[nodiscard]] std::wstring_view docCommentBody(std::wstring_view comment)
+        {
+            comment = trimmed(comment);
+            if (comment.ends_with(k_blockCommentEnd))
+            {
+                comment.remove_suffix(k_blockCommentEnd.size());
+                while (comment.ends_with(L'*'))
+                    comment.remove_suffix(1);
+            }
+            while (comment.starts_with(L'/') || comment.starts_with(L'*'))
+                comment.remove_prefix(1);
+            if (comment.starts_with(L'!'))
+                comment.remove_prefix(1);
+            if (comment.starts_with(L'<'))
+                comment.remove_prefix(1);
+            return trimmed(comment);
+        }
+
+        // Name(...) -> Name<...>: a function with no return type ahead of its name and one after.
+        [[nodiscard]] bool isDeductionGuide(const Function& function)
+        {
+            return function.returnType.empty()
+                && function.signature.find(L"->") != std::wstring::npos;
+        }
+
         // What a declaration gathers ahead of its keyword: export, a template head, attributes.
         struct Prefix
         {
@@ -527,11 +984,14 @@ namespace SeeDocs_App
             Access access{ Access::Public };
         };
 
-        // Reads one file's tokens into the surface.
+        // Reads one file's tokens into the surface. A limited read takes none of the routine's
+        // macros; in a header it takes what stands at namespace scope for exported, the header
+        // for a module, and a using-declaration there for a re-publication.
         class FileReader
         {
         public:
-            FileReader(Surface&, std::size_t file, const SourceText&, std::wstring category);
+            FileReader(Surface&, std::size_t file, const SourceText&, std::wstring category,
+                ScanMode, bool header);
             void read();
         private:
             [[nodiscard]] const Token* peek(std::size_t ahead = 0) const;
@@ -551,14 +1011,17 @@ namespace SeeDocs_App
             void readDeclarations();
             void readModuleLine(bool exported);
             void readImport(bool exported);
-            void readNamespace(bool exported);
-            void readExportBlock();
+            void readNamespace(bool exported, bool inlined);
+            [[nodiscard]] std::wstring readNamespaceName();
+            void readBlock(bool exported);
+            void noteInclude(const Token& directive);
             void readTemplateHead(const Token& keyword, Prefix&);
             void skipRequiresClause();
             void readType(TypeKind, const Prefix&);
             void readEnum(const Prefix&);
             void readUsing(const Prefix&);
             void readUsingDeclaration(const Token& keyword);
+            void readTypedef(const Prefix&);
             void readConcept(const Prefix&);
             void readMacro(const Token& name, Type* owner, Access);
             void readDeclarator(const Prefix&);
@@ -568,6 +1031,11 @@ namespace SeeDocs_App
                 std::size_t end);
             void skipBody(Type* owner, Access, bool initializers);
             void skipBalanced(std::wstring_view open, std::wstring_view close);
+            void skipAngles();
+            // Whether the token at the index has the punctuator written right after it, or
+            // right before it, with no blank between.
+            [[nodiscard]] bool touches(std::size_t at, wchar_t next) const;
+            [[nodiscard]] bool touchedBy(std::size_t at, wchar_t previous) const;
             void skipDeclaration();
             void skipPast(std::wstring_view punctuator);
             [[nodiscard]] std::wstring readQualifiedName();
@@ -580,23 +1048,39 @@ namespace SeeDocs_App
             std::size_t m_file;
             const SourceText& m_text;
             std::wstring m_category;
+            bool m_limited{ false };
+            bool m_header{ false };
             std::size_t m_at{ 0 };
             std::vector<Scope> m_scopes;
             std::optional<Module> m_module;
         };
 
         FileReader::FileReader(Surface& surface, const std::size_t file, const SourceText& text,
-            std::wstring category)
+            std::wstring category, const ScanMode mode, const bool header)
             :
             m_surface{ surface },
             m_file{ file },
             m_text{ text },
-            m_category{ std::move(category) }
+            m_category{ std::move(category) },
+            m_limited{ mode == ScanMode::Limited },
+            m_header{ header }
         {
         }
 
         void FileReader::read()
         {
+            if (m_header)
+            {
+                Module module{
+                    .name = m_surface.files()[m_file].relative,
+                    .file = m_file,
+                    .isInterface = true,
+                    .isHeader = true
+                };
+                for (const Include& include : m_text.includes())
+                    module.imports.push_back({ .name = include.name, .exported = false });
+                m_module = std::move(module);
+            }
             readDeclarations();
             // A stray closing brace ends a read early; whatever follows is read on its own.
             while (peek())
@@ -641,16 +1125,17 @@ namespace SeeDocs_App
             return {};
         }
 
+        // A header exports what it declares anywhere but in an anonymous namespace.
         bool FileReader::scopeExported() const
         {
             for (auto scope = m_scopes.rbegin(); scope != m_scopes.rend(); ++scope)
             {
                 if (scope->anonymous)
                     return false;
-                if (scope->kind == Scope::Kind::Namespace)
+                if (scope->kind == Scope::Kind::Namespace && !m_header)
                     return scope->exported;
             }
-            return false;
+            return m_header;
         }
 
         Scope* FileReader::typeScope()
@@ -677,7 +1162,11 @@ namespace SeeDocs_App
                 switch (token->type)
                 {
                     case TokenType::Comment:
+                        advance();
+                        continue;
                     case TokenType::Directive:
+                        if (m_header)
+                            noteInclude(*token);
                         advance();
                         continue;
                     case TokenType::Attribute:
@@ -713,7 +1202,7 @@ namespace SeeDocs_App
                 {
                     advance();
                     if (isPunctuator(peek(), L"{"))
-                        readExportBlock();
+                        readBlock(true);
                     else if (isName(peek(), Words::module))
                         readModuleLine(true);
                     else if (isName(peek(), Words::import))
@@ -731,7 +1220,19 @@ namespace SeeDocs_App
                 else if (word == Words::import)
                     readImport(false);
                 else if (word == Words::nameSpace)
-                    readNamespace(prefix.exported);
+                    readNamespace(prefix.exported, false);
+                else if (word == Words::inlineWord && isName(peek(1), Words::nameSpace))
+                {
+                    advance();
+                    readNamespace(prefix.exported, true);
+                }
+                else if (word == Words::externWord && peek(1)
+                    && peek(1)->type == TokenType::Literal && isPunctuator(peek(2), L"{"))
+                {
+                    advance();
+                    advance();
+                    readBlock(prefix.exported || scopeExported());
+                }
                 else if (word == Words::templateWord)
                 {
                     advance();
@@ -744,6 +1245,8 @@ namespace SeeDocs_App
                     skipRequiresClause();
                     continue;
                 }
+                else if (word == Words::typedefWord && m_limited)
+                    readTypedef(prefix);
                 else if (word == Words::friendWord || word == Words::typedefWord
                     || word == Words::staticAssert)
                 {
@@ -775,7 +1278,7 @@ namespace SeeDocs_App
                     advance();
                     advance();
                 }
-                else if (propertyMacro(word) || word == Words::declareEvent)
+                else if (!m_limited && (propertyMacro(word) || word == Words::declareEvent))
                 {
                     Scope* scope = typeScope();
                     readMacro(*token, scope ? scope->type.get() : nullptr,
@@ -832,26 +1335,40 @@ namespace SeeDocs_App
             m_module->imports.push_back({ .name = name, .exported = exported });
         }
 
-        void FileReader::readNamespace(const bool exported)
+        // An inline namespace adds nothing to a name - the namespace enclosing it is where its
+        // declarations are named from - whatever name it has, a dropped macro call's included.
+        void FileReader::readNamespace(const bool exported, const bool inlined)
         {
             advance();
             Scope scope;
             scope.kind = Scope::Kind::Namespace;
-            if (isPunctuator(peek(), L"{"))
+            if (inlined)
+            {
+                while (peek() && !isPunctuator(peek(), L"{") && !isPunctuator(peek(), L";"))
+                    advance();
+                scope.name = currentNamespace();
+                scope.exported = exported || scopeExported();
+            }
+            else if (isPunctuator(peek(), L"{"))
             {
                 scope.name = currentNamespace();
                 scope.anonymous = true;
             }
             else
             {
-                const std::wstring name = readQualifiedName();
+                const std::wstring name = readNamespaceName();
                 if (isPunctuator(peek(), L"="))
                 {
                     skipPast(L";");
                     return;
                 }
                 const std::wstring enclosing = currentNamespace();
-                scope.name = enclosing.empty() ? name : enclosing + std::wstring{ k_scope } + name;
+                if (name.empty())
+                    scope.name = enclosing;
+                else if (enclosing.empty())
+                    scope.name = name;
+                else
+                    scope.name = enclosing + std::wstring{ k_scope } + name;
                 scope.exported = exported || scopeExported();
             }
             if (!isPunctuator(peek(), L"{"))
@@ -867,14 +1384,63 @@ namespace SeeDocs_App
                 advance();
         }
 
-        // export { ... } - a namespace scope in all but name, exporting what it holds.
-        void FileReader::readExportBlock()
+        // An include standing outside any type - see Surface::encloseIncludes.
+        void FileReader::noteInclude(const Token& directive)
+        {
+            if (typeScope())
+                return;
+            const std::wstring nameSpace = currentNamespace();
+            for (const Include& include : m_text.includes())
+            {
+                if (include.line != directive.line)
+                    continue;
+                m_surface.addEnclosedInclude({
+                    .file = m_file,
+                    .included = include.name,
+                    .nameSpace = nameSpace
+                });
+            }
+        }
+
+        // a::b::c, where a component written inline - a::inline b - adds nothing.
+        std::wstring FileReader::readNamespaceName()
+        {
+            std::wstring name;
+            while (const Token* token = peek())
+            {
+                if (isName(token, Words::inlineWord))
+                {
+                    advance();
+                    if (peek() && peek()->type == TokenType::Name)
+                        advance();
+                }
+                else if (token->type == TokenType::Name)
+                {
+                    if (!name.empty())
+                        name += k_scope;
+                    name += text(*token);
+                    advance();
+                }
+                else
+                {
+                    break;
+                }
+                if (!isPunctuator(peek(), L"::"))
+                    break;
+                advance();
+            }
+            return name;
+        }
+
+        // export { ... } and extern "C" { ... } - a namespace scope in all but name, adding nothing
+        // to the names it holds.
+        void FileReader::readBlock(const bool exported)
         {
             advance();
             Scope scope;
             scope.kind = Scope::Kind::Namespace;
             scope.name = currentNamespace();
-            scope.exported = true;
+            scope.exported = exported;
             m_scopes.push_back(std::move(scope));
             readDeclarations();
             m_scopes.pop_back();
@@ -887,7 +1453,7 @@ namespace SeeDocs_App
             if (!isPunctuator(peek(), L"<"))
                 return;
             const std::size_t open = m_at;
-            skipBalanced(L"<", L">");
+            skipAngles();
             if (m_at - open > 2)
                 prefix.templateParameters = textBetween(open + 1, m_at - 2);
             prefix.templateLine = keyword.line;
@@ -916,7 +1482,7 @@ namespace SeeDocs_App
                         advance();
                     }
                     if (isPunctuator(peek(), L"<"))
-                        skipBalanced(L"<", L">");
+                        skipAngles();
                 }
                 const bool joinsAnd = isPunctuator(peek(), L"&") && isPunctuator(peek(1), L"&");
                 const bool joinsOr = isPunctuator(peek(), L"|") && isPunctuator(peek(1), L"|");
@@ -944,8 +1510,14 @@ namespace SeeDocs_App
             if (!name.empty() && isPunctuator(peek(), L"<"))
             {
                 const std::size_t open = m_at;
-                skipBalanced(L"<", L">");
+                skipAngles();
                 name += L"<" + textBetween(open + 1, m_at - 2) + L">";
+            }
+            // template<...> class Outer<...>::Inner { ... } defines a class declared in Outer.
+            if (isPunctuator(peek(), L"::"))
+            {
+                skipPast(L";");
+                return;
             }
             if (isName(peek(), Words::finalWord))
                 advance();
@@ -1000,7 +1572,7 @@ namespace SeeDocs_App
                     }
                     if (isPunctuator(token, L"<"))
                     {
-                        skipBalanced(L"<", L">");
+                        skipAngles();
                         last = m_at - 1;
                         continue;
                     }
@@ -1205,8 +1777,9 @@ namespace SeeDocs_App
         }
 
         // Inside a type, using Base::Base takes the base's constructors and using Base::name
-        // republishes a member under the label the line stands in; at namespace scope it is
-        // passed over.
+        // republishes a member under the label the line stands in. At a header's namespace scope
+        // it re-publishes a declaration into the namespace - see Surface::republish - and at a
+        // module's it is passed over.
         void FileReader::readUsingDeclaration(const Token& keyword)
         {
             const TokenList& tokens = m_text.tokens();
@@ -1222,11 +1795,19 @@ namespace SeeDocs_App
             }
             if (isPunctuator(peek(), L";"))
                 advance();
-            if (!scope || last < first + 2 || tokens[last].type != TokenType::Name
-                || !isPunctuator(&tokens[last - 1], L"::"))
+            const bool qualified = last >= first + 2 && tokens[last].type == TokenType::Name
+                && isPunctuator(&tokens[last - 1], L"::");
+            if (!scope && qualified && m_header && scopeExported())
             {
+                m_surface.addRepublication({
+                    .file = m_file,
+                    .nameSpace = currentNamespace(),
+                    .named = textBetween(first, last)
+                });
                 return;
             }
+            if (!scope || !qualified)
+                return;
             Using declaration;
             declaration.base = textBetween(first, last - 2);
             declaration.name = std::wstring{ text(tokens[last]) };
@@ -1234,6 +1815,58 @@ namespace SeeDocs_App
             declaration.place = placeOf(keyword);
             declaration.comment = commentAt(keyword.line, std::nullopt, declaration.name);
             scope->type->usings.push_back(std::move(declaration));
+        }
+
+        // typedef X Y; as the alias using Y = X; states. A typedef naming a function's type, an
+        // array's or a type it defines on the spot is passed over.
+        void FileReader::readTypedef(const Prefix& prefix)
+        {
+            const TokenList& tokens = m_text.tokens();
+            const Token& keyword = *peek();
+            advance();
+            const std::size_t first = m_at;
+            std::size_t last = m_at;
+            bool plain = true;
+            while (const Token* token = peek())
+            {
+                if (isPunctuator(token, L";"))
+                    break;
+                if (isPunctuator(token, L"(") || isPunctuator(token, L"[")
+                    || isPunctuator(token, L"{"))
+                {
+                    plain = false;
+                    break;
+                }
+                last = m_at;
+                advance();
+            }
+            if (!plain)
+            {
+                skipPast(L";");
+                return;
+            }
+            if (isPunctuator(peek(), L";"))
+                advance();
+            if (last <= first || tokens[last].type != TokenType::Name)
+                return;
+
+            Scope* outer = typeScope();
+            Type type;
+            const std::wstring name{ text(tokens[last]) };
+            type.name = outer ? outer->type->name + std::wstring{ k_scope } + name : name;
+            type.nameSpace = currentNamespace();
+            type.qualifiedName = type.nameSpace.empty()
+                ? type.name
+                : type.nameSpace + std::wstring{ k_scope } + type.name;
+            type.kind = TypeKind::Alias;
+            type.module = m_module ? m_module->name : std::wstring{};
+            type.target = textBetween(first, last - 1);
+            type.exported = outer ? outer->type->exported : (prefix.exported || scopeExported());
+            type.access = outer ? outer->access : Access::Public;
+            type.category = m_category;
+            type.place = placeOf(keyword);
+            type.comment = commentAt(keyword.line, prefix.templateLine, name);
+            m_surface.addType(std::move(type));
         }
 
         void FileReader::readConcept(const Prefix& prefix)
@@ -1578,6 +2211,8 @@ namespace SeeDocs_App
             // The parameters, then the tail up to the body, the initializer list or the end.
             m_at = parenAt;
             skipBalanced(L"(", L")");
+            if (m_at - parenAt > 2)
+                function.parameters = textBetween(parenAt + 1, m_at - 2);
             int depth = 0;
             std::size_t signatureEnd = m_at - 1;
             bool opensBody = false;
@@ -1620,6 +2255,7 @@ namespace SeeDocs_App
                 if (depth <= 0 && (isPunctuator(token, L"{") || isPunctuator(token, L":")))
                 {
                     opensBody = true;
+                    function.hasBody = true;
                     break;
                 }
                 signatureEnd = m_at;
@@ -1649,7 +2285,8 @@ namespace SeeDocs_App
                     function.comment = commentAt(start.line, prefix.templateLine, function.name);
                     scope->type->functions.push_back(std::move(function));
                 }
-                else if (prefix.exported || scopeExported())
+                else if ((prefix.exported || scopeExported())
+                    && !(m_limited && isDeductionGuide(function)))
                 {
                     function.comment = commentAt(start.line, prefix.templateLine, function.name);
                     FreeFunction free;
@@ -1668,6 +2305,13 @@ namespace SeeDocs_App
             const std::size_t nameAt, const std::size_t end)
         {
             const TokenList& tokens = m_text.tokens();
+            // A qualified name defines a variable declared elsewhere - a class's static member.
+            if (nameAt > m_at && isPunctuator(&tokens[nameAt - 1], L"::"))
+            {
+                m_at = end;
+                skipPast(L";");
+                return;
+            }
             Field field;
             field.name = std::wstring{ text(tokens[nameAt]) };
             field.place = placeOf(start);
@@ -1788,7 +2432,7 @@ namespace SeeDocs_App
                     advance();
                     return;
                 }
-                else if (token->type == TokenType::Name)
+                else if (token->type == TokenType::Name && !m_limited)
                 {
                     const std::wstring_view word = text(*token);
                     if (propertyMacro(word))
@@ -1843,6 +2487,63 @@ namespace SeeDocs_App
                 }
                 advance();
             }
+        }
+
+        // From the < at the current token to past its >. An angle inside brackets is an operator,
+        // as C++ has it, and so is one written into <=, <<, >= or ->.
+        void FileReader::skipAngles()
+        {
+            int depth = 0;
+            int brackets = 0;
+            while (const Token* token = peek())
+            {
+                if (isPunctuator(token, L"(") || isPunctuator(token, L"["))
+                {
+                    ++brackets;
+                }
+                else if (isPunctuator(token, L")") || isPunctuator(token, L"]"))
+                {
+                    --brackets;
+                }
+                else if (brackets == 0 && isPunctuator(token, L"<"))
+                {
+                    if (touches(m_at, L'<'))
+                        advance();
+                    else if (!touches(m_at, L'='))
+                        ++depth;
+                }
+                else if (brackets == 0 && isPunctuator(token, L">"))
+                {
+                    const bool closes = !touchedBy(m_at, L'-') && !touches(m_at, L'=');
+                    if (closes && --depth <= 0)
+                    {
+                        advance();
+                        return;
+                    }
+                }
+                advance();
+            }
+        }
+
+        bool FileReader::touches(const std::size_t at, const wchar_t next) const
+        {
+            const TokenList& tokens = m_text.tokens();
+            if (at + 1 >= tokens.size())
+                return false;
+            const Token& after = tokens[at + 1];
+            return after.type == TokenType::Punctuator && after.line == tokens[at].line
+                && after.start == tokens[at].end() && text(after) == std::wstring_view{ &next, 1 };
+        }
+
+        bool FileReader::touchedBy(const std::size_t at, const wchar_t previous) const
+        {
+            const TokenList& tokens = m_text.tokens();
+            if (at == 0)
+                return false;
+            const Token& before = tokens[at - 1];
+            return before.type == TokenType::Punctuator && before.line == tokens[at].line
+                && before.end() == tokens[at].start
+                && text(before) == std::wstring_view{ &previous, 1 };
         }
 
         // To past the end of a declaration: its terminator, or the body it opens.
@@ -1929,12 +2630,29 @@ namespace SeeDocs_App
         {
             Comment comment;
             if (const std::optional<std::wstring_view> trailing = m_text.trailingComment(line))
-                comment.trailing = std::wstring{ commentBody(*trailing) };
+            {
+                comment.trailing = std::wstring{
+                    m_limited ? docCommentBody(*trailing) : commentBody(*trailing)
+                };
+            }
             comment.lineWidth = m_text.width(line);
             if (aboveCounts)
                 gatherAbove(line, comment);
             if (aboveCounts && comment.above.empty() && fallback && *fallback != line)
                 gatherAbove(*fallback, comment);
+
+            // A limited read's comments are not the routine's: the hint is the brief of the doc
+            // comment above, or of the one on the line where there is none above - a comment on a
+            // line is as often a tool's directive as words - and a See in it is words.
+            if (m_limited)
+            {
+                const bool onLine = comment.above.empty() && comment.trailing;
+                const std::span<const std::wstring> lines = onLine
+                    ? std::span<const std::wstring>{ &*comment.trailing, 1 }
+                    : std::span<const std::wstring>{ comment.above };
+                comment.text = briefOf(lines);
+                return comment;
+            }
 
             std::wstring source;
             if (comment.trailing)
@@ -1957,7 +2675,12 @@ namespace SeeDocs_App
             for (std::size_t i = first; i != line; ++i)
             {
                 comment.aboveWidth = std::max(comment.aboveWidth, m_text.width(i));
-                const std::wstring_view body = commentBody(trimmed(m_text.line(i)));
+                const std::wstring_view written = trimmed(m_text.line(i));
+                // A block opening under other lines - //! over /** - is a paragraph of its own.
+                if (m_limited && !comment.above.empty() && written.starts_with(k_blockComment))
+                    comment.above.emplace_back();
+                const std::wstring_view body =
+                    m_limited ? docCommentBody(written) : commentBody(written);
                 if (!body.starts_with(k_todo))
                     comment.above.emplace_back(body);
             }
@@ -1971,42 +2694,186 @@ namespace SeeDocs_App
             std::wstring text = (error ? file : relative).generic_wstring();
             return text;
         }
+
+        // What a file of the tree is to a read.
+        enum class FileRole
+        {
+            Module,
+            Header,
+            PascalUnit,
+            PascalInclude
+        };
+
+        struct TreeFile
+        {
+            std::filesystem::path path;
+            FileRole role{ FileRole::Module };
+        };
+
+        using TreeFiles = std::vector<TreeFile>;
+
+        [[nodiscard]] bool listedExtension(const std::span<const std::wstring_view> extensions,
+            const std::filesystem::path& file)
+        {
+            std::wstring extension = file.extension().wstring();
+            for (wchar_t& current : extension)
+                current = static_cast<wchar_t>(std::towlower(current));
+            return isListed(extensions, extension);
+        }
+
+        // What a read takes, in reading order: a full read every module interface and then every
+        // implementation unit, a limited one every module interface, every header, every Delphi
+        // unit and then every Delphi include file.
+        [[nodiscard]] TreeFiles filesOf(const std::filesystem::path& root, const ScanMode mode)
+        {
+            std::vector<std::filesystem::path> first;
+            std::vector<std::filesystem::path> second;
+            std::vector<std::filesystem::path> units;
+            std::vector<std::filesystem::path> includes;
+            std::error_code error;
+            std::filesystem::recursive_directory_iterator walk{ root, error };
+            const std::filesystem::recursive_directory_iterator end{};
+            while (walk != end)
+            {
+                const std::filesystem::directory_entry& entry = *walk;
+                if (entry.is_directory())
+                {
+                    if (entry.path().filename().wstring().starts_with(k_hiddenPrefix))
+                        walk.disable_recursion_pending();
+                }
+                else if (entry.is_regular_file() && mode == ScanMode::Full)
+                {
+                    const std::wstring extension = entry.path().extension().wstring();
+                    if (extension == k_interfaceExtension)
+                        first.push_back(entry.path());
+                    else if (extension == k_implementationExtension)
+                        second.push_back(entry.path());
+                }
+                else if (entry.is_regular_file())
+                {
+                    if (listedExtension(k_moduleExtensions, entry.path()))
+                        first.push_back(entry.path());
+                    else if (listedExtension(k_headerExtensions, entry.path()))
+                        second.push_back(entry.path());
+                    else if (listedExtension(k_pascalExtensions, entry.path()))
+                        units.push_back(entry.path());
+                    else if (listedExtension({ &k_pascalInclude, 1 }, entry.path()))
+                        includes.push_back(entry.path());
+                }
+                ++walk;
+            }
+            std::ranges::sort(first);
+            std::ranges::sort(second);
+            std::ranges::sort(units);
+            std::ranges::sort(includes);
+            const FileRole secondRole = mode == ScanMode::Limited
+                ? FileRole::Header
+                : FileRole::Module;
+            TreeFiles files;
+            for (std::filesystem::path& path : first)
+                files.push_back({ .path = std::move(path), .role = FileRole::Module });
+            for (std::filesystem::path& path : second)
+                files.push_back({ .path = std::move(path), .role = secondRole });
+            for (std::filesystem::path& path : units)
+                files.push_back({ .path = std::move(path), .role = FileRole::PascalUnit });
+            for (std::filesystem::path& path : includes)
+                files.push_back({ .path = std::move(path), .role = FileRole::PascalInclude });
+            return files;
+        }
+
+        // The file's record in the surface, and the category it stands in: the directory under
+        // the tree's root.
+        [[nodiscard]] std::size_t addSourceFile(Surface& surface, const std::filesystem::path& root,
+            const std::filesystem::path& path, std::wstring& category)
+        {
+            SourceFile record;
+            record.path = path;
+            record.relative = posixRelative(path, root);
+            category = posixRelative(path.parent_path(), root);
+            if (category == L".")
+                category.clear();
+            return surface.addFile(std::move(record));
+        }
+
+        void readSource(Surface& surface, const std::filesystem::path& root,
+            const TreeFile& file, const SourceText& source, const ScanMode mode)
+        {
+            std::wstring category;
+            const std::size_t index = addSourceFile(surface, root, file.path, category);
+            const bool header = file.role == FileRole::Header;
+            FileReader reader{ surface, index, source, category, mode, header };
+            reader.read();
+        }
+
+        void readUnit(Surface& surface, const std::filesystem::path& root, const TreeFile& file,
+            const std::wstring_view text, const PascalSymbols& symbols)
+        {
+            std::wstring category;
+            const std::size_t index = addSourceFile(surface, root, file.path, category);
+            readPascalUnit(surface, index, text, category, symbols);
+        }
+
+        [[nodiscard]] bool isPascal(const TreeFile& file)
+        {
+            return file.role == FileRole::PascalUnit || file.role == FileRole::PascalInclude;
+        }
+
+        // EVERY FILE IS GATHERED FROM BEFORE ANY IS READ, a macro being used far from the header
+        // that defines it and a Delphi symbol far from the unit testing it; each is read from
+        // disk once, for both passes. A Delphi include file is gathered from only.
+        void readLimited(Surface& surface, const std::filesystem::path& root,
+            const TreeFiles& files)
+        {
+            std::vector<std::optional<std::wstring>> texts;
+            texts.reserve(files.size());
+            Macros macros;
+            PascalSymbols symbols;
+            for (const TreeFile& file : files)
+            {
+                texts.push_back(Documents::readTextFile(file.path));
+                if (!texts.back())
+                    continue;
+                if (isPascal(file))
+                {
+                    gatherPascalSymbols(*texts.back(), symbols);
+                    continue;
+                }
+                const SourceText gathered{ *texts.back(), Preprocess::Gather, &macros };
+            }
+            for (std::size_t i = 0; i != files.size(); ++i)
+            {
+                if (!texts[i] || files[i].role == FileRole::PascalInclude)
+                    continue;
+                if (files[i].role == FileRole::PascalUnit)
+                {
+                    readUnit(surface, root, files[i], *texts[i], symbols);
+                    continue;
+                }
+                const SourceText source{ *texts[i], Preprocess::Expand, &macros };
+                readSource(surface, root, files[i], source, ScanMode::Limited);
+            }
+            surface.encloseIncludes();
+            surface.republish();
+            surface.dropRedeclarations();
+            settlePascal(surface);
+        }
     }
 
     // A folder whose name starts with a dot is left out with everything under it - .seedocs, .git,
     // .vs - which is what the recursion has to be told before the step that would enter it.
-    Surface scanTree(const std::filesystem::path& root)
+    Surface scanTree(const std::filesystem::path& root, const ScanMode mode)
     {
         Surface surface;
-        std::vector<std::filesystem::path> interfaces;
-        std::vector<std::filesystem::path> implementations;
-        std::error_code error;
-        std::filesystem::recursive_directory_iterator walk{ root, error };
-        const std::filesystem::recursive_directory_iterator end{};
-        while (walk != end)
+        const TreeFiles files = filesOf(root, mode);
+        if (mode == ScanMode::Limited)
         {
-            const std::filesystem::directory_entry& entry = *walk;
-            if (entry.is_directory())
-            {
-                if (entry.path().filename().wstring().starts_with(k_hiddenPrefix))
-                    walk.disable_recursion_pending();
-            }
-            else if (entry.is_regular_file())
-            {
-                const std::wstring extension = entry.path().extension().wstring();
-                if (extension == k_interfaceExtension)
-                    interfaces.push_back(entry.path());
-                else if (extension == k_implementationExtension)
-                    implementations.push_back(entry.path());
-            }
-            ++walk;
+            readLimited(surface, root, files);
         }
-        std::ranges::sort(interfaces);
-        std::ranges::sort(implementations);
-        for (const std::filesystem::path& file : interfaces)
-            scanFile(surface, root, file);
-        for (const std::filesystem::path& file : implementations)
-            scanFile(surface, root, file);
+        else
+        {
+            for (const TreeFile& file : files)
+                scanFile(surface, root, file.path);
+        }
         surface.resolveAll();
         surface.setScanned(std::chrono::floor<std::chrono::seconds>(
             std::chrono::system_clock::now()));
@@ -2019,16 +2886,9 @@ namespace SeeDocs_App
         const std::optional<std::wstring> text = Documents::readTextFile(file);
         if (!text)
             return false;
-        SourceFile record;
-        record.path = file;
-        record.relative = posixRelative(file, root);
-        const std::size_t index = surface.addFile(std::move(record));
-        std::wstring category = posixRelative(file.parent_path(), root);
-        if (category == L".")
-            category.clear();
         const SourceText source{ *text };
-        FileReader reader{ surface, index, source, category };
-        reader.read();
+        readSource(surface, root, { .path = file, .role = FileRole::Module }, source,
+            ScanMode::Full);
         return true;
     }
 }

@@ -289,6 +289,7 @@ namespace SeeDocs_App
             case TypeKind::Concept:
                 return RowIcon::Concept;
             case TypeKind::Class:
+            case TypeKind::Interface:
                 break;
         }
         return RowIcon::Class;

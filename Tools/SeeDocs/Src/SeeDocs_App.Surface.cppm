@@ -7,6 +7,20 @@ import ClaFi.StdLib;
 // read it.
 namespace SeeDocs_App
 {
+    // How a tree is read. See README
+    export enum class ScanMode
+    {
+        Full,      // the tree is written to the declaration routine, and SeeDocs writes into it
+        Limited    // anyone's C++ or Delphi, headers included, read and never written into
+    };
+
+    // The language a module is written in, which its code on a page is read and coloured as.
+    export enum class SourceLanguage
+    {
+        Cpp,
+        Pascal
+    };
+
     // Where a declaration stands: a file of the surface, and a line in it, counted from one.
     export struct Place
     {
@@ -49,7 +63,8 @@ namespace SeeDocs_App
     {
         Public,
         Protected,
-        Private
+        Private,
+        Published   // Delphi's public that a designer edits
     };
 
     // How a property line is written, which decides what the class owes it.
@@ -139,10 +154,12 @@ namespace SeeDocs_App
         FunctionKind kind{ FunctionKind::Function };
         std::wstring signature;            // as spelled, export and the template head taken off
         std::wstring returnType;
+        std::wstring parameters;           // between the brackets, as spelled
         std::wstring templateParameters;   // what stands between the template head's brackets
         bool isStatic{ false };
         bool isVirtual{ false };
         bool isDeleted{ false };
+        bool hasBody{ false };
         Access access{ Access::Public };
         Place place;
         Comment comment;
@@ -163,7 +180,8 @@ namespace SeeDocs_App
         Union,
         Enum,
         Alias,
-        Concept
+        Concept,
+        Interface   // a Delphi interface
     };
 
     // A type the tree declares - a class with its members, an enum with its members, an alias.
@@ -219,12 +237,15 @@ namespace SeeDocs_App
         bool exported{ false };
     };
 
-    // A module unit: an interface or an implementation, with what it imports.
+    // A module unit: an interface or an implementation, with what it imports. A limited read
+    // takes a header for one, named by its path under the tree, its includes for its imports.
     export struct Module
     {
         std::wstring name;
         std::size_t file{ 0 };
         bool isInterface{ false };
+        bool isHeader{ false };
+        SourceLanguage language{ SourceLanguage::Cpp };
         std::vector<Import> imports;
     };
 
@@ -241,6 +262,23 @@ namespace SeeDocs_App
     {
         std::wstring name;
         Place place;
+    };
+
+    // A using-declaration at a header's namespace scope, naming a declaration into its namespace.
+    export struct Republication
+    {
+        std::size_t file{ 0 };
+        std::wstring nameSpace;   // where the using-declaration stands
+        std::wstring named;       // as spelled after using
+    };
+
+    // An include standing in a header, and the namespace around it, which the header it names
+    // declares into.
+    export struct EnclosedInclude
+    {
+        std::size_t file{ 0 };    // where the include stands
+        std::wstring included;    // as spelled between the brackets or the quotes
+        std::wstring nameSpace;
     };
 
     // A declaration the scanner could not read as the routine asks, reported with the checks.
@@ -263,6 +301,8 @@ namespace SeeDocs_App
     export using Modules = std::vector<Module>;
     export using SourceFiles = std::vector<SourceFile>;
     export using Bindings = std::vector<Binding>;
+    export using Republications = std::vector<Republication>;
+    export using EnclosedIncludes = std::vector<EnclosedInclude>;
     export using Places = std::vector<Place>;
     export using Problems = std::vector<Problem>;
     export using Names = std::vector<std::wstring>;
@@ -295,6 +335,8 @@ namespace SeeDocs_App
         void addBinding(Binding);
         void addPropsRead(Place);
         void addProblem(Problem);
+        void addRepublication(Republication);
+        void addEnclosedInclude(EnclosedInclude);
 
         [[nodiscard]] const Type* typeNamed(std::wstring_view qualifiedName) const;
         [[nodiscard]] Type* typeNamed(std::wstring_view qualifiedName);
@@ -302,6 +344,11 @@ namespace SeeDocs_App
         // enclosing namespace's, or the one type of that bare name anywhere. Aliases are followed.
         [[nodiscard]] const Type* resolve(std::wstring_view spelled,
             std::wstring_view nameSpace) const;
+        // The type a name spelled inside a namespace names, an alias as itself.
+        [[nodiscard]] const Type* named(std::wstring_view spelled,
+            std::wstring_view nameSpace) const;
+        // The language the module is written in; C++ for a module the surface does not hold.
+        [[nodiscard]] SourceLanguage languageOf(std::wstring_view module) const;
         // A base's spelling with an alias the database does not carry replaced by what it names,
         // followed until the spelling names a type the database does carry.
         [[nodiscard]] std::wstring resolvedBase(std::wstring_view spelled,
@@ -316,6 +363,13 @@ namespace SeeDocs_App
         [[nodiscard]] Properties mergedProperties(const Type&) const;
         // Fills in what the scan leaves to the whole: control marks and value kinds.
         void resolveAll();
+        // Puts what a header declares into the namespace it is included from inside. See README
+        void encloseIncludes();
+        // Moves what headers re-publish into the namespace that re-publishes it. See README
+        void republish();
+        // Keeps one entry of a free function declared again with the same parameters: the
+        // commented one, and between two alike, the declaration a definition follows.
+        void dropRedeclarations();
         // Every declaration's comment, in the order the surface holds them.
         void forEachComment(const std::function<void(const Comment&)>&) const;
         // The comment the surface holds at that address, to be written; null where it holds none.
@@ -325,6 +379,12 @@ namespace SeeDocs_App
         void shiftLines(std::size_t file, std::size_t fromLine, std::ptrdiff_t count);
     private:
         [[nodiscard]] const Type* lookUp(std::wstring_view bare, std::wstring_view nameSpace) const;
+        // Answers the namespace the declaration a re-publication names stands in, and moves the
+        // declaration into the re-publication's own; nothing where the surface holds none.
+        std::optional<std::wstring> moveRepublished(const Republication&);
+        void rekeyType(std::size_t index, std::wstring nameSpace);
+        // The file an include names; nothing where the tree holds none, or several it may be.
+        [[nodiscard]] std::optional<std::size_t> fileIncluded(const EnclosedInclude&) const;
     private:
         SourceFiles m_files;
         Modules m_modules;
@@ -334,9 +394,12 @@ namespace SeeDocs_App
         Bindings m_bindings;
         Places m_propsReads;
         Problems m_problems;
+        Republications m_republications;
+        EnclosedIncludes m_enclosedIncludes;
         ScanStamp m_scanned{};
         std::unordered_map<std::wstring, std::size_t> m_byQualifiedName;
         std::unordered_map<std::wstring, std::vector<std::size_t>> m_byBareName;
+        std::unordered_map<std::wstring, SourceLanguage> m_languageByModule;
     };
 
     // Whether a using-declaration names the base's constructors - using Base::Base.

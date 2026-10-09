@@ -30,7 +30,8 @@ namespace SeeDocs_App
             L"    SeeDocsCli check [tree]               reports deviations, exit code 1 on errors\n"
             L"\n"
             L"The tree is the folder of sources, read as it stands; the working directory when\n"
-            L"left out.\n";
+            L"left out. A project set to limited mode - Limited = true in .seedocs/Project.cfg -\n"
+            L"is read as anyone's C++, headers included, and is not checked.\n";
 
         // The process's text goes out as UTF-8, whichever platform the console belongs to.
         void print(const std::wstring_view text)
@@ -91,6 +92,13 @@ namespace SeeDocs_App
 
         // A scan into the tree's own database makes the tree a project: the command names the
         // tree, which is the consent SeeDocs asks for in a dialog.
+        // The tree is read as its project says; a tree that is no project is read in full.
+        [[nodiscard]] ScanMode modeOf(const std::filesystem::path& tree)
+        {
+            const std::optional<Project> project = readProject(tree);
+            return project ? project->mode : ScanMode::Full;
+        }
+
         [[nodiscard]] int scan(const Options& options)
         {
             std::filesystem::path output = options.output;
@@ -98,7 +106,7 @@ namespace SeeDocs_App
             {
                 std::optional<Project> project = readProject(options.tree);
                 if (!project)
-                    project = createProject(options.tree);
+                    project = createProject(options.tree, ScanMode::Full);
                 if (!project)
                 {
                     print(L"Cannot make " + dataFolderOf(options.tree).wstring() + L"\n");
@@ -106,7 +114,7 @@ namespace SeeDocs_App
                 }
                 output = project->databasePath();
             }
-            const Surface surface = scanTree(options.tree);
+            const Surface surface = scanTree(options.tree, modeOf(options.tree));
             writeDatabase(surface, output);
             print(std::to_wstring(classCount(surface)) + L" classes, "
                 + std::to_wstring(surface.types().size()) + L" types, "
@@ -115,9 +123,15 @@ namespace SeeDocs_App
             return k_ok;
         }
 
+        // Limited mode holds a tree to nothing: what the checks ask is the routine's.
         [[nodiscard]] int check(const Options& options)
         {
-            const Surface surface = scanTree(options.tree);
+            if (modeOf(options.tree) == ScanMode::Limited)
+            {
+                print(options.tree.wstring() + L" is read in limited mode, which checks nothing\n");
+                return k_ok;
+            }
+            const Surface surface = scanTree(options.tree, ScanMode::Full);
             const Report report = checkSurface(surface, footnotesFolderOf(options.tree));
             print(formatReport(report, surface));
             print(L"\n" + std::to_wstring(classCount(surface)) + L" classes, "

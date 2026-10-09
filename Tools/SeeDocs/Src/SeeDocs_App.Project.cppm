@@ -1,5 +1,7 @@
 export module SeeDocs_App.Project;
 
+import SeeDocs_App.Surface;
+
 import ClaFi.StdLib;
 
 // A PROJECT IS A TREE WITH A DATA FOLDER IN IT. The tree is the folder of sources, read by the
@@ -17,11 +19,12 @@ namespace SeeDocs_App
     // The footnotes' folder, under the data folder; the notes a comment's See reaches.
     export constexpr std::wstring_view k_footnotesFolder = L"footnotes";
 
-    // A project: the tree it stands on and what it is called.
+    // A project: the tree it stands on, what it is called, and how the tree is read.
     export struct Project
     {
         std::filesystem::path folder;
         std::wstring name;
+        ScanMode mode{ ScanMode::Full };
 
         [[nodiscard]] std::filesystem::path dataFolder() const;
         [[nodiscard]] std::filesystem::path databasePath() const;
@@ -39,7 +42,8 @@ namespace SeeDocs_App
     export [[nodiscard]] std::optional<Project> readProject(const std::filesystem::path& folder);
     // Makes the data folder and the properties in it, the project named after the folder.
     // Nothing where the folder could not be made.
-    export [[nodiscard]] std::optional<Project> createProject(const std::filesystem::path& folder);
+    export [[nodiscard]] std::optional<Project> createProject(const std::filesystem::path& folder,
+        ScanMode);
     // Writes the project's properties into its data folder.
     export void writeProject(const Project&);
 }

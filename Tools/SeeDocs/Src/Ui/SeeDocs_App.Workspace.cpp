@@ -147,9 +147,10 @@ namespace SeeDocs_App
         std::optional<Project> project = readProject(folder);
         if (!project)
         {
-            if (!confirmMaking(folder))
+            const std::optional<ScanMode> mode = confirmMaking(folder);
+            if (!mode)
                 return false;
-            project = createProject(folder);
+            project = createProject(folder, *mode);
             if (!project)
             {
                 Text message;
@@ -198,7 +199,11 @@ namespace SeeDocs_App
         const std::wstring stated{ trimmed(name) };
         if (stated == m_project->name)
             return m_project->name;
-        writeProject(Project{ .folder = m_project->folder, .name = stated });
+        writeProject(Project{
+            .folder = m_project->folder,
+            .name = stated,
+            .mode = m_project->mode
+        });
         if (const std::optional<Project> read = readProject(m_project->folder))
             m_project->name = read->name;
         m_browser.setProjectName(m_project->name);
@@ -217,6 +222,18 @@ namespace SeeDocs_App
         Text reason;
         if (!openProject(*m_project, reason, OpenTabs::Keep))
             refuse(L"Cannot rescan the project", reason);
+    }
+
+    // Written before the scan, so a scan that fails leaves the project set as asked all the same.
+    void Workspace::setMode(const ScanMode mode)
+    {
+        if (!m_project || m_project->mode == mode)
+            return;
+        m_project->mode = mode;
+        writeProject(*m_project);
+        if (const std::optional<Project> read = readProject(m_project->folder))
+            m_project->mode = read->mode;
+        rescan();
     }
 
     Dom::Dt::Section Workspace::createConfigSchema()
@@ -256,19 +273,29 @@ namespace SeeDocs_App
         return true;
     }
 
-    // Asked before the folder is made, because the folder is what is being agreed to.
-    bool Workspace::confirmMaking(const std::filesystem::path& folder)
+    // Asked before the folder is made, because the folder is what is being agreed to. Yes and
+    // No both agree to it, and answer how the tree is read.
+    std::optional<ScanMode> Workspace::confirmMaking(const std::filesystem::path& folder)
     {
         Text message;
         message << m_application.name();
         message << L" will make a folder in the tree, for its database and its properties:";
         writeFolder(message, dataFolderOf(folder));
         message << k_endLine << k_endLine << L"The tree is scanned into it at once.";
+        message << k_endLine << k_endLine << L"Is the tree a third-party library? It is then read "
+            L"in limited mode - its headers too, with nothing written into them and nothing "
+            L"checked.";
 
         MessageDialog dialog{ m_asker, L"New project", message, MessageIcon::Question };
-        dialog.add(DialogAnswer::Ok);
+        dialog.add(DialogAnswer::Yes);
+        dialog.add(DialogAnswer::No);
         dialog.add(DialogAnswer::Cancel);
-        return dialog.execute() == DialogAnswer::Ok;
+        const OptionalDialogAnswer answer = dialog.execute();
+        if (answer == DialogAnswer::Yes)
+            return ScanMode::Limited;
+        if (answer == DialogAnswer::No)
+            return ScanMode::Full;
+        return std::nullopt;
     }
 
     void Workspace::refuse(const std::wstring_view title, const Text& message)
@@ -280,7 +307,7 @@ namespace SeeDocs_App
 
     void Workspace::scan(const Project& project)
     {
-        writeDatabase(scanTree(project.folder), project.databasePath());
+        writeDatabase(scanTree(project.folder, project.mode), project.databasePath());
     }
 
     void Workspace::remember(const Project& project)
@@ -349,8 +376,18 @@ namespace SeeDocs_App
         Text text;
         text << TextStyleId::Title << m_project->name << PopTextStyle{};
         text << k_endLine << k_endLine;
-        text << L"There is nothing to document: no source in the folder exports a type."
-            << k_endLine << L"The folder read is:";
+        if (m_project->mode == ScanMode::Full)
+        {
+            text << L"There is nothing to document: no source in the folder exports a type. "
+                L"A third-party library is read in limited mode, which the Open page of the "
+                L"application menu sets." << k_endLine;
+        }
+        else
+        {
+            text << L"There is nothing to document: no source in the folder declares a type."
+                << k_endLine;
+        }
+        text << L"The folder read is:";
         writeFolder(text, m_project->folder);
         m_browser.showWords(text);
     }

@@ -46,6 +46,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_moduleColumn = L"Module";
         constexpr std::wstring_view k_chapterWord = L"chapter";
         constexpr std::wstring_view k_moduleWord = L"module";
+        constexpr std::wstring_view k_headerWord = L"header";
         constexpr std::wstring_view k_functionWord = L"function";
         constexpr std::wstring_view k_constantWord = L"constant";
         constexpr std::wstring_view k_variableWord = L"variable";
@@ -137,17 +138,19 @@ namespace SeeDocs_App
             {
                 case TypeKind::Class:
                     return 0;
+                case TypeKind::Interface:
+                    return 1;
                 case TypeKind::Struct:
                 case TypeKind::Union:
-                    return 1;
-                case TypeKind::Enum:
                     return 2;
-                case TypeKind::Alias:
+                case TypeKind::Enum:
                     return 3;
-                case TypeKind::Concept:
+                case TypeKind::Alias:
                     return 4;
+                case TypeKind::Concept:
+                    return 5;
             }
-            return 5;
+            return 6;
         }
 
         [[nodiscard]] bool readsBefore(const Type& left, const Type& right)
@@ -742,6 +745,18 @@ namespace SeeDocs_App
             page.facts.push_back({ .label = std::move(label), .value = std::move(value) });
         }
 
+        // What a reader calls the unit a declaration stands in: a header, which a limited read
+        // takes for a module, or a module.
+        [[nodiscard]] std::wstring moduleWordOf(const Surface& surface,
+            const std::wstring_view name)
+        {
+            const auto isThisHeader = [name](const Module& module) {
+                return module.isHeader && module.name == name;
+            };
+            const bool header = std::ranges::any_of(surface.modules(), isThisHeader);
+            return std::wstring{ header ? k_headerWord : k_moduleWord };
+        }
+
         // The head of a type page
 
         void addTypeHead(Page& page, const Surface& surface, const Type& type)
@@ -761,7 +776,7 @@ namespace SeeDocs_App
             page.lead = hintRuns(surface, type.comment, type.nameSpace);
             page.leadSite = siteOf(type);
             addFact(page, L"namespace", { code(type.nameSpace) });
-            addFact(page, L"module", { code(type.module, type.module) });
+            addFact(page, moduleWordOf(surface, type.module), { code(type.module, type.module) });
             addFact(page, L"source", { code(fileLineOf(surface, type.place)) });
             if (type.target.empty())
                 return;
@@ -791,9 +806,17 @@ namespace SeeDocs_App
             bool isConst{ false };
         };
 
-        [[nodiscard]] Shape shapeOf(const Function& function)
+        // A Delphi routine's parameters are counted by the language's own reading, a group of
+        // names before one type being several; no routine of it is const.
+        [[nodiscard]] Shape shapeOf(const Function& function, const SourceLanguage language)
         {
             const std::wstring_view signature = function.signature;
+            if (language == SourceLanguage::Pascal)
+            {
+                const Syntax::SignatureParameters parameters =
+                    Syntax::Languages::pascal.parameters(signature);
+                return { .parameters = parameters.names.size() };
+            }
             std::size_t open = signature.find(function.name + L"(");
             if (open == std::wstring_view::npos)
                 open = signature.find(L'(');
@@ -824,9 +847,9 @@ namespace SeeDocs_App
         }
 
         // The name, the parameter count and the constness as one key - an overload's identity.
-        [[nodiscard]] std::wstring shapeKey(const Function& function)
+        [[nodiscard]] std::wstring shapeKey(const Function& function, const SourceLanguage language)
         {
-            const Shape shape = shapeOf(function);
+            const Shape shape = shapeOf(function, language);
             return function.name + L'/' + std::to_wstring(shape.parameters)
                 + (shape.isConst ? L"c" : L"");
         }
@@ -913,16 +936,21 @@ namespace SeeDocs_App
 
         // What a type hands its bases: its method names over what reached it, its
         // using-declarations after those of the types below, the constructors as they reached it.
+        // A Delphi constructor is inherited as a method is, and hides as one does.
         [[nodiscard]] Flow flowFrom(const Surface& surface, const Type& type,
             const std::wstring_view spelled, const std::wstring_view nameSpace, const Flow& into)
         {
+            const SourceLanguage language = surface.languageOf(type.module);
+            const bool constructorsHide = language == SourceLanguage::Pascal;
             Flow flow = into;
             for (const Function& function : type.functions)
             {
-                if (function.kind != FunctionKind::Function)
+                const bool hides = function.kind == FunctionKind::Function
+                    || (constructorsHide && function.kind == FunctionKind::Constructor);
+                if (!hides)
                     continue;
                 flow.hidden.insert(function.name);
-                flow.shapes.insert(shapeKey(function));
+                flow.shapes.insert(shapeKey(function, language));
             }
             for (const Using& declaration : type.usings)
             {
@@ -1054,11 +1082,19 @@ namespace SeeDocs_App
             }
         }
 
+        // Whether a type is of a kind that has bases and derived types: a class, a struct, an
+        // interface.
+        [[nodiscard]] bool derives(const Type& type)
+        {
+            return type.kind == TypeKind::Class || type.kind == TypeKind::Struct
+                || type.kind == TypeKind::Interface;
+        }
+
         // The ways up from a type; a type with no bases of its own kind has none.
         [[nodiscard]] BaseWalk baseWalkOf(const Surface& surface, const Type& type)
         {
             BaseWalk walk;
-            if (type.kind != TypeKind::Class && type.kind != TypeKind::Struct)
+            if (!derives(type))
                 return walk;
             addBaseChains(walk, surface, type, type.name, type.nameSpace, 0,
                 Flow{ .constructors = true });
@@ -1140,7 +1176,7 @@ namespace SeeDocs_App
 
         void addDerivedTypes(Page& page, const Surface& surface, const Type& type)
         {
-            if (type.kind != TypeKind::Class && type.kind != TypeKind::Struct)
+            if (!derives(type))
                 return;
             Branches derived;
             addDerived(derived, surface, type, 0);
@@ -1218,13 +1254,33 @@ namespace SeeDocs_App
 
         // The member tables of a type page
 
-        // A type's own properties, one row each.
+        // Which of a type's properties or events a table takes: those of one access where it asks
+        // for one, and none whose name a type below declares again.
+        struct MemberFilter
+        {
+            std::optional<Access> access;
+            const NameSet* hidden{ nullptr };
+        };
+
+        // Whether the filter takes a member of that access and name, the name read as Delphi
+        // reads one: in any case.
+        [[nodiscard]] bool takes(const MemberFilter& filter, const Access access,
+            const std::wstring& name)
+        {
+            if (filter.access && access != *filter.access)
+                return false;
+            return !filter.hidden || !filter.hidden->contains(lowered(name));
+        }
+
+        // A type's own properties, one row each, those the filter takes.
         [[nodiscard]] TableRows propertyRows(const Surface& surface, Notes& notes,
-            const Type& type)
+            const Type& type, const MemberFilter& filter)
         {
             TableRows rows;
             for (const Property& property : type.properties)
             {
+                if (!takes(filter, property.access, property.name))
+                    continue;
                 Runs value = valueCell(property.defaultValue);
                 if (property.form == PropertyForm::Required)
                     value = { muted(L"required") };
@@ -1245,12 +1301,16 @@ namespace SeeDocs_App
             return rows;
         }
 
-        // A type's own events, one row each; the hint names what the event carries.
-        [[nodiscard]] TableRows eventRows(const Surface& surface, Notes& notes, const Type& type)
+        // A type's own events, one row each, those the filter takes; the hint names what the
+        // event carries.
+        [[nodiscard]] TableRows eventRows(const Surface& surface, Notes& notes, const Type& type,
+            const MemberFilter& filter)
         {
             TableRows rows;
             for (const Event& event : type.events)
             {
+                if (!takes(filter, event.access, event.alias))
+                    continue;
                 Runs hint = hintRuns(surface, event.comment, type.nameSpace);
                 if (const Type* payload = surface.resolve(event.type, type.nameSpace);
                     payload && !payload->fields.empty())
@@ -1307,17 +1367,17 @@ namespace SeeDocs_App
         // shape in the nearest base above that carries one - an override's virtual. The function
         // itself where it has one, or where nothing above does.
         [[nodiscard]] const Function& commentHolder(const Function& function,
-            const std::span<const ReachedBase> above)
+            const std::span<const ReachedBase> above, const SourceLanguage language)
         {
             if (!function.comment.text.empty())
                 return function;
-            const std::wstring key = shapeKey(function);
+            const std::wstring key = shapeKey(function, language);
             for (const ReachedBase& base : above)
             {
                 for (const Function& candidate : base.type->functions)
                 {
                     if (candidate.name == function.name && !candidate.comment.text.empty()
-                        && shapeKey(candidate) == key)
+                        && shapeKey(candidate, language) == key)
                     {
                         return candidate;
                     }
@@ -1334,9 +1394,9 @@ namespace SeeDocs_App
         // Whether a method stands in the table: a property's accessor never, the type's own
         // otherwise; a base's when it reaches the type - a constructor taken with using, a
         // function no type below declares again by name or by shape, nothing deleted, and no
-        // destructor.
+        // destructor. A Delphi constructor reaches as a function does.
         [[nodiscard]] bool reachesTable(const Type& owner, const Function& function,
-            const ReachedBase* reached)
+            const ReachedBase* reached, const SourceLanguage language)
         {
             if (isAccessor(owner, function))
                 return false;
@@ -1344,6 +1404,13 @@ namespace SeeDocs_App
                 return true;
             if (function.isDeleted)
                 return false;
+            const bool inherited = language == SourceLanguage::Pascal
+                && function.kind == FunctionKind::Constructor;
+            if (inherited)
+            {
+                return !reached->hidden.contains(function.name)
+                    && !reached->shapes.contains(shapeKey(function, language));
+            }
             switch (function.kind)
             {
                 case FunctionKind::Constructor:
@@ -1352,7 +1419,7 @@ namespace SeeDocs_App
                     return false;
                 case FunctionKind::Function:
                     return !reached->hidden.contains(function.name)
-                        && !reached->shapes.contains(shapeKey(function));
+                        && !reached->shapes.contains(shapeKey(function, language));
             }
             return false;
         }
@@ -1370,7 +1437,8 @@ namespace SeeDocs_App
         }
 
         // The access a method stands under on a type's page: its own, or the one a
-        // using-declaration below republished it with.
+        // using-declaration below republished it with. A Delphi method published is public, a
+        // designer's business being the properties.
         [[nodiscard]] Access shownAccess(const Function& function, const ReachedBase* reached)
         {
             if (reached)
@@ -1379,16 +1447,18 @@ namespace SeeDocs_App
                 if (republished != reached->republished.end())
                     return republished->second;
             }
+            if (function.access == Access::Published)
+                return Access::Public;
             return function.access;
         }
 
         // A function as spelled: the template head where it has one, then the signature, joined
-        // as asked.
+        // as asked. A Delphi routine spells its generic parameters after its name.
         [[nodiscard]] std::wstring spelledSignature(const Function& function,
-            const std::wstring_view join)
+            const std::wstring_view join, const SourceLanguage language)
         {
             std::wstring spelled;
-            if (!function.templateParameters.empty())
+            if (!function.templateParameters.empty() && language == SourceLanguage::Cpp)
             {
                 spelled = std::wstring{ k_templateWord } + L"<" + function.templateParameters
                     + L">" + std::wstring{ join };
@@ -1405,8 +1475,9 @@ namespace SeeDocs_App
             Names leftOut = templateParameterNames(owner.templateParameters);
             for (std::wstring& name : templateParameterNames(function.templateParameters))
                 leftOut.push_back(std::move(name));
-            return linkNames(surface, { code(spelledSignature(function, join)) }, owner.nameSpace,
-                leftOut);
+            const std::wstring spelled =
+                spelledSignature(function, join, surface.languageOf(owner.module));
+            return linkNames(surface, { code(spelled) }, owner.nameSpace, leftOut);
         }
 
         // A free function as code, linked as a method's is.
@@ -1414,7 +1485,9 @@ namespace SeeDocs_App
             const std::wstring_view join)
         {
             const Function& function = free.function;
-            return linkNames(surface, { code(spelledSignature(function, join)) }, free.nameSpace,
+            const std::wstring spelled =
+                spelledSignature(function, join, surface.languageOf(free.module));
+            return linkNames(surface, { code(spelled) }, free.nameSpace,
                 templateParameterNames(function.templateParameters));
         }
 
@@ -1432,15 +1505,16 @@ namespace SeeDocs_App
             const ReachedBase* reached, const std::span<const ReachedBase> above,
             const Access access)
         {
+            const SourceLanguage language = surface.languageOf(owner.module);
             TableGroup group;
             std::map<std::wstring, NameRow> rowByName;
             for (const Function& function : owner.functions)
             {
-                if (!reachesTable(owner, function, reached))
+                if (!reachesTable(owner, function, reached, language))
                     continue;
                 if (shownAccess(function, reached) != access)
                     continue;
-                const Function& holder = commentHolder(function, above);
+                const Function& holder = commentHolder(function, above, language);
                 const Comment& comment = holder.comment;
                 Runs signature = signatureRuns(surface, owner, function, k_hintJoin);
                 const auto known = rowByName.find(function.name);
@@ -1454,6 +1528,7 @@ namespace SeeDocs_App
                         .cells = { { code(function.name, memberLink(owner, function.name)) },
                             hintRuns(surface, comment, owner.nameSpace) },
                         .hint = std::move(signature),
+                        .language = language,
                         .site = siteOf(holder)
                     });
                     continue;
@@ -1538,22 +1613,95 @@ namespace SeeDocs_App
             section.table.takesFootnotes = takesFootnotes;
         }
 
+        // The names of the properties and the events a type declares, in lower case.
+        [[nodiscard]] NameSet memberNamesOf(const Type& type)
+        {
+            NameSet names;
+            for (const Property& property : type.properties)
+                names.insert(lowered(property.name));
+            for (const Event& event : type.events)
+                names.insert(lowered(event.alias));
+            return names;
+        }
+
+        // DELPHI DECLARES A PROPERTY AGAIN TO PUBLISH IT, and the base's declaration is then the
+        // type's no longer: for each base reached, the names the type and the bases met before
+        // it declare.
+        [[nodiscard]] std::vector<NameSet> namesBelow(const Type& type, const ReachedBases& bases)
+        {
+            std::vector<NameSet> below;
+            NameSet declared = memberNamesOf(type);
+            for (const ReachedBase& base : bases)
+            {
+                below.push_back(declared);
+                declared.merge(memberNamesOf(*base.type));
+            }
+            return below;
+        }
+
+        // The accesses a Delphi type's properties and events are parted by, as its declaration
+        // parts them, and the word each table's heading opens with.
+        struct AccessSection
+        {
+            Access access{ Access::Public };
+            std::wstring_view word;
+        };
+
+        constexpr auto k_accessSections = std::to_array<AccessSection>({
+            { Access::Published, L"Published" },
+            { Access::Public, L"Public" },
+            { Access::Protected, L"Protected" }
+        });
+
+        // A member table over the type and its bases; a Delphi type's a table per access, a
+        // base's member that a type below declares again left out.
+        template<typename RowsOf>
+        void addPartedSections(Page& page, const Surface& surface, const std::wstring_view heading,
+            const ColumnSet& columnSet, const Type& type, const ReachedBases& bases,
+            const RowsOf& rowsOf)
+        {
+            if (surface.languageOf(type.module) != SourceLanguage::Pascal)
+            {
+                addMemberSection(page, std::wstring{ heading }, columnSet, type, bases,
+                    [&](const Type& owner, const ReachedBase*) {
+                        return TableGroup{ .rows = rowsOf(owner, MemberFilter{}) };
+                    }, true);
+                return;
+            }
+            const std::vector<NameSet> below = namesBelow(type, bases);
+            for (const AccessSection& section : k_accessSections)
+            {
+                std::wstring parted = std::wstring{ section.word } + L' ' + lowered(heading);
+                addMemberSection(page, std::move(parted), columnSet, type, bases,
+                    [&](const Type& owner, const ReachedBase* reached) {
+                        MemberFilter filter{ .access = section.access };
+                        if (reached)
+                        {
+                            const std::size_t index =
+                                static_cast<std::size_t>(reached - bases.data());
+                            filter.hidden = &below[index];
+                        }
+                        return TableGroup{ .rows = rowsOf(owner, filter) };
+                    }, true);
+            }
+        }
+
         void addProperties(Page& page, const Surface& surface, Notes& notes, const Type& type,
             const ReachedBases& bases)
         {
-            addMemberSection(page, L"Properties", Columns::properties, type, bases,
-                [&](const Type& owner, const ReachedBase*) {
-                    return TableGroup{ .rows = propertyRows(surface, notes, owner) };
-                }, true);
+            addPartedSections(page, surface, L"Properties", Columns::properties, type, bases,
+                [&](const Type& owner, const MemberFilter& filter) {
+                    return propertyRows(surface, notes, owner, filter);
+                });
         }
 
         void addEvents(Page& page, const Surface& surface, Notes& notes, const Type& type,
             const ReachedBases& bases)
         {
-            addMemberSection(page, L"Events", Columns::events, type, bases,
-                [&](const Type& owner, const ReachedBase*) {
-                    return TableGroup{ .rows = eventRows(surface, notes, owner) };
-                }, true);
+            addPartedSections(page, surface, L"Events", Columns::events, type, bases,
+                [&](const Type& owner, const MemberFilter& filter) {
+                    return eventRows(surface, notes, owner, filter);
+                });
         }
 
         // The methods as two tables, the public ones and the protected ones, each over the type
@@ -1590,6 +1738,7 @@ namespace SeeDocs_App
             std::wstring_view nameSpace;         // where its words are read
             std::wstring_view category;          // where a note named after it is looked for
             std::optional<Access> access;        // none for a free function
+            SourceLanguage language{ SourceLanguage::Cpp };
         };
 
         using Overloads = std::vector<Overload>;
@@ -1646,6 +1795,7 @@ namespace SeeDocs_App
                     overload.category, false);
                 Signature signature{
                     .code = std::move(overload.code),
+                    .language = overload.language,
                     .excerpt = excerptOf(found, surface, overload.nameSpace)
                 };
                 if (&overload != &leading)
@@ -1859,6 +2009,7 @@ namespace SeeDocs_App
                         .cells = { { code(function.name, exportLink(module, function.name)) },
                             hintRuns(surface, function.comment, free->nameSpace) },
                         .hint = std::move(signature),
+                        .language = surface.languageOf(free->module),
                         .site = siteOf(function)
                     });
                     continue;
@@ -1932,6 +2083,63 @@ namespace SeeDocs_App
             section.hint += L" in " + countOf(modules, L"module");
         }
 
+        // A chapter's tables: its modules' types, functions and constants, each module's beside
+        // its name.
+        void addModuleTables(Page& page, const Surface& surface, const ContentsChapter& chapter)
+        {
+            TableGroups typeGroups;
+            TableGroups functionGroups;
+            TableGroups constantGroups;
+            for (const ContentsModule& module : chapter.modules)
+            {
+                addModuleGroup(typeGroups, module, typeRows(surface, module.types));
+                addModuleGroup(functionGroups, module, functionRows(surface, module));
+                addModuleGroup(constantGroups, module, constantRows(surface, module));
+            }
+            addByModule(page, L"Types", Columns::types, std::move(typeGroups));
+            addByModule(page, L"Functions", Columns::functions, std::move(functionGroups));
+            addByModule(page, L"Constants", Columns::fields, std::move(constantGroups));
+        }
+
+        // What the chapters hold between them, counted: controls, types, modules, and the
+        // chapters themselves where any is a folder under the root - the root's own modules are
+        // no chapter of it.
+        void addHoldings(Page& page, const ContentsChapters& chapters)
+        {
+            std::size_t controls = 0;
+            std::size_t types = 0;
+            std::size_t modules = 0;
+            std::size_t folders = 0;
+            for (const ContentsChapter& chapter : chapters)
+            {
+                for (const ContentsModule& module : chapter.modules)
+                {
+                    for (const Type* type : module.types)
+                    {
+                        ++types;
+                        if (type->isControl)
+                            ++controls;
+                    }
+                }
+                modules += chapter.modules.size();
+                if (!chapter.category.empty())
+                    ++folders;
+            }
+            Runs figures = {
+                plain(countOf(controls, L"control")),
+                muted(std::wstring{ k_separator }),
+                plain(countOf(types, L"type")),
+                muted(std::wstring{ k_separator }),
+                plain(countOf(modules, L"module"))
+            };
+            if (folders != 0)
+            {
+                figures.push_back(muted(std::wstring{ k_separator }));
+                figures.push_back(plain(countOf(folders, L"chapter")));
+            }
+            addFact(page, L"holds", std::move(figures));
+        }
+
         // The pages of a module's functions and constants
 
         // Whether a token's words stand as written in linked code: a comment's and a literal's.
@@ -1941,11 +2149,20 @@ namespace SeeDocs_App
                 || kind == Syntax::TokenKind::Escape;
         }
 
+        // The lexer a declaration of the language is read with.
+        [[nodiscard]] const Syntax::Language& lexerOf(const SourceLanguage language)
+        {
+            if (language == SourceLanguage::Pascal)
+                return Syntax::Languages::pascal;
+            return Syntax::Languages::cpp;
+        }
+
         // A declaration as written, as code: the names it spells linked as a signature's are, the
         // words of its comments and its literals left as they stand.
         [[nodiscard]] Runs declarationRuns(const Surface& surface, const std::wstring_view written,
-            const std::wstring_view nameSpace)
+            const std::wstring_view nameSpace, const SourceLanguage language)
         {
+            const Syntax::Language& lexer = lexerOf(language);
             Runs result;
             std::wstring pending;
             const auto linkPending = [&]() {
@@ -1966,7 +2183,7 @@ namespace SeeDocs_App
                     : newline;
                 const std::wstring_view line = written.substr(lineStart, lineEnd - lineStart);
                 tokens.clear();
-                state = Syntax::lexLine(Syntax::Languages::cpp, line, state, strings, &tokens);
+                state = Syntax::lexLine(lexer, line, state, strings, &tokens);
                 std::size_t at = 0;
                 for (const Syntax::Token& token : tokens)
                 {
@@ -1992,7 +2209,8 @@ namespace SeeDocs_App
             const ContentsModule& module)
         {
             addFact(page, L"namespace", { code(std::wstring{ nameSpace }) });
-            addFact(page, L"module", { code(module.name, module.name) });
+            addFact(page, std::wstring{ module.header ? k_headerWord : k_moduleWord },
+                { code(module.name, module.name) });
         }
 
         // A constant's page: what it is after the title, its hint under it, where it is
@@ -2008,9 +2226,12 @@ namespace SeeDocs_App
             page.leadSite = siteOf(field.comment, field.place, field.name);
             addExportFacts(page, variable.nameSpace, module);
             const FoundNote found = noteFor(notes, field.comment, field.name, category, false);
+            const SourceLanguage language = surface.languageOf(variable.module);
             Section& section = addSection(page, SectionKind::Signature, {});
             section.signatures.push_back({
-                .code = declarationRuns(surface, variable.declaration, variable.nameSpace),
+                .code = declarationRuns(surface, variable.declaration, variable.nameSpace,
+                    language),
+                .language = language,
                 .excerpt = excerptOf(found, surface, variable.nameSpace)
             });
         }
@@ -2033,11 +2254,18 @@ namespace SeeDocs_App
     }
 
     // A module stands in the folder of every file it exports from - a type's category, the
-    // folder of a function's or a constant's file - so one exporting only functions has a row.
+    // folder of a function's or a constant's file - so one exporting only functions has a row. A
+    // header is named by its path, and a reader sees its file's name.
     ContentsChapters contentsOf(const Surface& surface)
     {
         using ModulesByName = std::map<std::wstring, ContentsModule>;
         std::map<std::wstring, ModulesByName> byCategory;
+        std::set<std::wstring_view> headers;
+        for (const Module& module : surface.modules())
+        {
+            if (module.isHeader)
+                headers.insert(module.name);
+        }
         const auto categoryAt = [&surface](const Place& place) {
             return categoryOf(surface.files()[place.file].relative);
         };
@@ -2071,7 +2299,10 @@ namespace SeeDocs_App
                     return readsBefore(*left, *right);
                 });
                 contents.name = name;
-                contents.shortName = moduleShortNameOf(name);
+                contents.header = headers.contains(name);
+                contents.shortName = contents.header
+                    ? name.substr(name.rfind(L'/') + 1)
+                    : moduleShortNameOf(name);
                 chapter.modules.push_back(std::move(contents));
             }
             std::ranges::sort(chapter.modules,
@@ -2161,33 +2392,27 @@ namespace SeeDocs_App
     {
         Page page;
         page.title = std::wstring{ title };
-
-        std::size_t controls = 0;
-        std::size_t types = 0;
-        std::size_t modules = 0;
-        for (const ContentsChapter& chapter : chapters)
-        {
-            for (const ContentsModule& module : chapter.modules)
-            {
-                for (const Type* type : module.types)
-                {
-                    ++types;
-                    if (type->isControl)
-                        ++controls;
-                }
-            }
-            modules += chapter.modules.size();
-        }
-        addFact(page, L"holds", {
-            plain(countOf(controls, L"control")),
-            muted(std::wstring{ k_separator }),
-            plain(countOf(types, L"type")),
-            muted(std::wstring{ k_separator }),
-            plain(countOf(modules, L"module")),
-            muted(std::wstring{ k_separator }),
-            plain(countOf(chapters.size(), L"chapter"))
-        });
+        addHoldings(page, chapters);
         addChaptersSection(page, chapters);
+        return page;
+    }
+
+    // MODULES STANDING IN THE TREE'S OWN FOLDER ARE THE ROOT'S, which is home: the chapter they
+    // make has no folder to be named after, and home carries what they export.
+    Page homePage(const Surface& surface, Notes& notes, const ContentsChapters& chapters,
+        const std::wstring_view title)
+    {
+        const auto root = std::ranges::find_if(chapters, [](const ContentsChapter& chapter) {
+            return chapter.category.empty();
+        });
+        if (root == chapters.end())
+            return contentsPage(chapters, title);
+        Page page;
+        page.title = std::wstring{ title };
+        page.footnoteHome = chapterFootnoteHome(notes, root->category);
+        addHoldings(page, chapters);
+        addChaptersSection(page, chaptersUnder(chapters, root->category));
+        addModuleTables(page, surface, *root);
         return page;
     }
 
@@ -2228,19 +2453,7 @@ namespace SeeDocs_App
         }
         addFact(page, L"holds", std::move(figures));
         addChaptersSection(page, chaptersUnder(chapters, chapter.category));
-
-        TableGroups typeGroups;
-        TableGroups functionGroups;
-        TableGroups constantGroups;
-        for (const ContentsModule& module : chapter.modules)
-        {
-            addModuleGroup(typeGroups, module, typeRows(surface, module.types));
-            addModuleGroup(functionGroups, module, functionRows(surface, module));
-            addModuleGroup(constantGroups, module, constantRows(surface, module));
-        }
-        addByModule(page, L"Types", Columns::types, std::move(typeGroups));
-        addByModule(page, L"Functions", Columns::functions, std::move(functionGroups));
-        addByModule(page, L"Constants", Columns::fields, std::move(constantGroups));
+        addModuleTables(page, surface, chapter);
         return page;
     }
 
@@ -2248,11 +2461,13 @@ namespace SeeDocs_App
         const ContentsModule& module)
     {
         Page page;
+        const std::wstring word{ module.header ? k_headerWord : k_moduleWord };
         page.title = module.shortName;
-        page.badges.push_back(muted(std::wstring{ k_moduleWord }));
+        page.badges.push_back(muted(word));
         page.footnoteHome = chapterFootnoteHome(notes, chapter.category);
-        addFact(page, L"module", { code(module.name) });
-        addFact(page, L"chapter", { { .text = chapter.name, .link = chapter.name } });
+        addFact(page, word, { code(module.name) });
+        if (!chapter.category.empty())
+            addFact(page, L"chapter", { { .text = chapter.name, .link = chapter.name } });
         if (!module.types.empty())
         {
             TableGroups groups;
@@ -2279,7 +2494,8 @@ namespace SeeDocs_App
                 .code = signatureRuns(surface, *free, k_signatureJoin),
                 .holder = &free->function,
                 .nameSpace = free->nameSpace,
-                .category = chapter.category
+                .category = chapter.category,
+                .language = surface.languageOf(free->module)
             });
         }
         if (!overloads.empty())
@@ -2306,11 +2522,12 @@ namespace SeeDocs_App
         page.scope = { { .text = type.name, .link = type.qualifiedName },
             plain(std::wstring{ k_scope }) };
         page.title = std::wstring{ name };
-        addFact(page, L"module", { code(type.module, type.module) });
+        addFact(page, moduleWordOf(surface, type.module), { code(type.module, type.module) });
         page.footnoteHome = typeFootnoteHome(notes, type);
         // An override with no comment of its own speaks with its base's, as its row does.
         const BaseWalk walk = baseWalkOf(surface, type);
         const std::span<const ReachedBase> above = basesAbove(walk.reached, nullptr);
+        const SourceLanguage language = surface.languageOf(type.module);
         FunctionKind kind = FunctionKind::Function;
         Overloads overloads;
         for (const Function& function : type.functions)
@@ -2321,10 +2538,11 @@ namespace SeeDocs_App
                 kind = function.kind;
             overloads.push_back({
                 .code = signatureRuns(surface, type, function, k_signatureJoin),
-                .holder = &commentHolder(function, above),
+                .holder = &commentHolder(function, above, language),
                 .nameSpace = type.nameSpace,
                 .category = type.category,
-                .access = function.access
+                .access = function.access,
+                .language = language
             });
         }
         addOverloads(page, surface, notes, methodKindWord(kind), std::move(overloads));

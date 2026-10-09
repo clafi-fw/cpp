@@ -75,9 +75,9 @@ namespace SeeDocs_App
     public:
         // Shows the project's surface: the tree over it, the home page named after the project.
         // The surface and the notes are held by reference for as long as they are shown, and
-        // what the pages edit is written into them, the project's tree and its database. False
-        // where the surface lists nothing: the tree stands empty, and the home page shows the
-        // words given since.
+        // what the pages edit is written into them, the project's tree and its database - a
+        // project read in limited mode takes no edits. False where the surface lists nothing:
+        // the tree stands empty, and the home page shows the words given since.
         [[nodiscard]] bool bind(Surface&, Notes&, const Project&, OpenTabs);
         // Shows SeeDocs' own words on the home page in place of a surface, the tree
         // emptied. Every tab goes, and one opens on home.
@@ -171,6 +171,7 @@ namespace SeeDocs_App
         Targets m_targets{};
         Folders m_folders{};
         std::wstring m_projectName{};
+        bool m_writes{ false };   // the pages edit the tree - never one read in limited mode
         Text m_words{};   // what every page shows while there is no surface
 
         SurfaceTree& m_tree{ createLeftBar<ScrollBox>(

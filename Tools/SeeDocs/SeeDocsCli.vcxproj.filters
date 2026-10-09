@@ -31,10 +31,22 @@
     <ClCompile Include="Src\SeeDocs_App.Notes.cppm">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.PascalReader.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.PascalReader.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Project.cpp">
       <Filter>Src</Filter>
     </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Project.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.Reading.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.Reading.cppm">
       <Filter>Src</Filter>
     </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Scanner.cpp">

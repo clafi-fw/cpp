@@ -1,5 +1,7 @@
 module SeeDocs_App.Project;
 
+import SeeDocs_App.Surface;
+
 import ClaFi.Dom.Formats.ClaFi;
 
 import ClaFi.Core.DomEngine;
@@ -19,13 +21,17 @@ namespace SeeDocs_App
         namespace Keys
         {
             constexpr std::wstring_view name = L"Name";
+            constexpr std::wstring_view limited = L"Limited";
         }
 
         using ProjectDocument = Dom::Document<Dom::FileFormat::ClaFi>;
 
         [[nodiscard]] Dom::Dt::Section projectLayout()
         {
-            return Dom::Dt::Section{ Dom::Dt::Value{ Keys::name, std::wstring{} } };
+            return Dom::Dt::Section{
+                Dom::Dt::Value{ Keys::name, std::wstring{} },
+                Dom::Dt::Value{ Keys::limited, false }
+            };
         }
 
         // The folder's own name, with a trailing separator looked past.
@@ -90,18 +96,20 @@ namespace SeeDocs_App
             const std::wstring stated = (document / Keys::name).get<std::wstring>();
             if (!stated.empty())
                 project.name = stated;
+            if ((document / Keys::limited).get<bool>())
+                project.mode = ScanMode::Limited;
         }
         return project;
     }
 
-    std::optional<Project> createProject(const std::filesystem::path& folder)
+    std::optional<Project> createProject(const std::filesystem::path& folder, const ScanMode mode)
     {
         std::error_code error;
         std::filesystem::create_directories(dataFolderOf(folder), error);
         if (error)
             return std::nullopt;
 
-        Project project{ .folder = folder, .name = folderName(folder) };
+        Project project{ .folder = folder, .name = folderName(folder), .mode = mode };
         writeProject(project);
         return project;
     }
@@ -115,6 +123,7 @@ namespace SeeDocs_App
             Dom::WriteDefaults::Yes
         };
         (document / Keys::name).set(project.name);
+        (document / Keys::limited).set(project.mode == ScanMode::Limited);
         document.save();
     }
 }

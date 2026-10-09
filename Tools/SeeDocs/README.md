@@ -13,15 +13,27 @@ The tree is the folder of sources, read as it stands - for the framework, its `S
 nothing is appended to the path given. For SeeDocsCli it is the working directory when left out.
 The report reads `file:line: level: text`, one line per finding, in file and line order.
 
+A tree is read in full or in limited mode. In full, it is a tree written to the declaration
+routine: its modules are read, its macros of the routine harvested, its comments held to the
+routine's rules, and SeeDocs writes the hints and footnotes edited in it back into the sources.
+Limited mode is for anyone else's C++ or Delphi - a third-party library - and reads what such a
+tree declares without asking anything of it: headers and units as well as modules, nothing
+written into the sources, nothing checked.
+
 ## Projects
 
 A project is a tree with a `.seedocs` folder in it. Everything SeeDocs keeps of the tree stands
-there - the database the scanner writes, `Project.cfg`, the project's properties, which is its
-name so far, taken from the folder's own, and `footnotes`, the notes a comment's `See` reaches,
-written by the tree's authors - so the tree itself is left as it was found. A scan into
-the tree's own database makes the folder; SeeDocs makes it with the user's consent, asked in a
+there - the database the scanner writes, `Project.cfg`, the project's properties - its name,
+taken from the folder's own, and how its tree is read - and `footnotes`, the notes a comment's
+`See` reaches, written by the tree's authors - so the tree itself is left as it was found. A scan
+into the tree's own database makes the folder; SeeDocs makes it with the user's consent, asked in a
 dialog, and scans the tree at once so the project opens with its database in place. A `--out`
 file written anywhere else makes no project.
+
+How the tree is read is a property of the project, `Limited` in `Project.cfg`. The dialog that
+makes a project asks whether the tree is a third-party library, and the Open page switches it
+afterwards. SeeDocsCli reads a project as its property says, and a tree that is no project, or
+one it makes, in full.
 
 ## How it reads
 
@@ -45,6 +57,82 @@ class template's may sit between the `template` line and the `class` line, or ab
 `template` line. The comment's first line is what the database carries, with a trailing
 `See <note>#<anchor>` reference cut off into the entry's `Note`.
 
+### Limited mode
+
+A limited read takes every module interface - `.cppm`, `.ixx`, `.mpp`, `.cxxm`, `.ccm` - every
+header - `.h`, `.hh`, `.hpp`, `.hxx`, `.h++`, `.inl`, `.ipp`, `.tpp`, `.tcc` - and every Delphi
+unit - `.pas`, `.pp` - and no implementation file. The tree's macros are gathered from all of its
+C++ before any file is read, and every file is then read as the rules below make of it; a unit
+as the Delphi rules after them make of it.
+
+- A header stands as a module of its own, named by its path under the tree - its include
+  spelling - and shown by its file name; its includes are its imports. A module interface is
+  read as in full.
+- What a header declares at namespace scope is public, as an export is in a module: everything
+  but what stands in an anonymous namespace.
+- Of a conditional, the first branch is read and the rest left out; a branch whose condition is a
+  plain `0` gives way to the next. A library declares the same things in every branch as a rule,
+  and one branch keeps the braces the branches open balanced.
+- An object-like macro the tree defines is expanded where its name stands in code, its body
+  expanded in turn; a function-like one is dropped with its arguments, since what it makes of
+  them takes a preprocessor to know. The first definition met in a branch read stands, and a name
+  defined only in branches left out takes the first of those. `__declspec(...)`,
+  `__attribute__((...))`, `_Pragma(...)` and `__pragma(...)` are dropped the same way.
+- An inline namespace adds nothing to a name, and neither does `extern "C"`: `fmt::v12::format`
+  is `fmt::format`.
+- A header included from inside a namespace declares into it, as an include puts the header's
+  text where it stands; a header it includes in turn goes with it.
+- A using-declaration at a header's namespace scope re-publishes what it names: the declaration
+  stands in the using-declaration's namespace, and the namespace it was declared in is the
+  library's implementation, shown nowhere - it and every namespace inside it. A declaration
+  re-published into the namespace it stands in moves nowhere.
+- A function declared again with the same parameters - a declaration and the definition after
+  it - is one entry, the commented one. A deduction guide is no function. `typedef X Y;` is an
+  alias as `using Y = X;` is.
+- A comment is a doc comment however it is written - `//`, `///`, `//!`, `/** */`, `/*! */`, a
+  trailing `///<` - and the comment above a declaration comes before the one on its line, which
+  is as often a tool's directive as words. The hint is the `@brief` or `\brief` paragraph, or
+  else the first sentence of the first paragraph of words; a block opening under other comment
+  lines starts a paragraph. A `See` in a comment is words.
+
+None of the routine applies: no property, event or control is read, and nothing is checked.
+
+#### Delphi units
+
+A unit is read through its interface section - what it publishes - over the framework's own
+Pascal lexer, as a module interface is read over the C++ one. The unit is a module named as the
+unit is, its `uses` its imports, and its name with `::` for each dot is the namespace its
+declarations are named in, as C++Builder names them: `VirtualTrees.Header` is
+`VirtualTrees::Header`. Everything the interface declares is public, a class member under the
+access its section gives it - `strict` adding nothing to a page, `automated` reading as public.
+
+- A class, a record, an object, an interface and a dispinterface are types with their members -
+  a record is a struct, an interface a kind of its own - an enumeration is an enum, and any other
+  type is an alias of what follows its equals sign, a method type's calling convention kept. A
+  forward declaration is none; a helper is a class or a struct whose line says what it helps; a
+  generic's parameters are its template's. A type nested in a class is `Outer::Inner`.
+- A routine's signature is its declaration as written, from its first word - `class` where it
+  has one - to the semicolon of its last directive; `virtual`, `dynamic`, `override` and
+  `abstract` make it virtual, `class` static. A unit's constants and variables keep their
+  declarations as written, under the word of the section they stand in.
+- A property is read with its type, its `read` as where the value lands, its `write` as its
+  setter, and its `default`. A property declared again with no type - Delphi's way of publishing
+  a base's - takes the type, the default and the hint of the nearest base in the tree declaring
+  it; one whose base stands outside the tree keeps its type unstated.
+- A property of a method type - `procedure ... of object`, `function ... of object`,
+  `reference to` - is an event, as the Object Inspector parts them. Where the tree declares no
+  such type - the RTL's `TNotifyEvent` - the property is an event when it is named as Delphi
+  names one, `On` and a capital.
+- A conditional on a symbol neither the tree nor the compiler defines is read false -
+  `{$IFDEF FPC}`, `{$IF Defined(VT_FMX)}` - and its `{$ELSE}` read; any other reads its first
+  branch, as a C++ conditional does. The tree's symbols are those its units and its include files
+  define with `{$DEFINE}`, an `.inc` being read for nothing else; the compiler's are those it
+  defines building for Windows. An `{$I}` includes nothing.
+- A comment is a doc comment however it is written - `//`, `///`, `{ }`, `(* *)` - the comment
+  above coming first, as in C++. The hint is an XML doc comment's `<summary>` where it has one,
+  else the first sentence of the first paragraph, a line opening with a tag ending a paragraph as
+  a command does; `<see cref="X"/>` and `@link(X)` read as their `X`.
+
 ## The database
 
 `Surface.cfg` is a document in the framework's own configuration format, written through the
@@ -59,11 +147,12 @@ The two files are meant to become one.
 
     Scanned = 2026-10-09T03:12:45Z
     Modules = [
-        =[ Name, File, Interface, Imports = [...], ExportedImports = [...] ]
+        =[ Name, File, Interface, Header, Language, Imports = [...], ExportedImports = [...] ]
     ]
     Types = [
         =[
-            Name, Namespace, Kind (class, struct, union, enum, type, concept), Module, File, Line,
+            Name, Namespace, Kind (class, struct, union, enum, type, concept, interface), Module,
+            File, Line,
             Hint, Note, Template, Bases = [...], Target, Control, Category,
             Properties = [ =[ Name, Type, Accepts = [...], Default, Setter, Target, Form,
                               ValueKind, Optional, Access, Line, Hint, Note ] ]
@@ -81,7 +170,10 @@ The two files are meant to become one.
 
 `Scanned` is when the scan that wrote the file ran, in UTC to the second. A hint or a footnote
 written from SeeDocs keeps it, since such an edit reads nothing of the tree beyond what it
-changes.
+changes. `Header` marks a module that is a header, as a limited read takes one; its `Name` is
+its path under the tree. `Language` is `pascal` for a Delphi unit, whose code a page reads and
+colours as Pascal, and a C++ module states none; a Delphi interface's `Kind` is `interface`, and
+a Delphi member's `Access` may be `published`.
 
 `Control` marks a type whose base chain reaches `Control` or `RichControl`, template arguments
 walked as bases, which is what makes it a toolbox entry; `Category` is its folder under the
@@ -112,8 +204,10 @@ the desktop's own dialog, and the projects opened before stand under it, most re
 click each. The project open heads the page: its name in a box that renames it - Return or leaving
 the box keeps the name, Escape puts it back, and an emptied box gives the project its folder's
 name - then its folder, and how long ago it was scanned, with a Rescan button that reads the tree
-again while the menu stays open. A folder with no `.seedocs` becomes a project there, once the
-user has agreed to the folder; the project's name heads the window title. Which project is open
+again while the menu stays open, and the Limited mode box, which reads it again in the mode it
+is switched to. A folder with no `.seedocs` becomes a project there, once the user has agreed to
+the folder and said whether it is a third-party library; the project's name heads the window
+title. Which project is open
 and which were opened before are kept with the application's settings, so they are remembered
 once settings are kept on the computer.
 
@@ -122,7 +216,9 @@ the page shown with a list dropping from each, and Back, Forward and Up beside t
 a url - `/chapter/module/type/method` - so a tab goes back and forward through the pages it has
 visited (Alt+Left and Alt+Right, the side buttons of the mouse, or a right click on either button
 for the list), a type's crumb lists its methods, and Up climbs the path. A home page opens the
-project: its chapters, with what each holds. Where a tab stands, the tabs open and each one's
+project: its chapters, with what each holds. Modules standing in the tree's own folder are home's:
+they stand at the top of the tree under its chapters, and the home page carries what they export,
+by module, as a chapter's page does. Where a tab stands, the tabs open and each one's
 history are kept with the settings, so a run starts where the last one left off. Opening another
 project closes every tab and opens one on the new project's home; a url the project's database no
 longer carries - a type gone since the tree was scanned - shows a page saying so.
@@ -176,7 +272,15 @@ A type whose comment references nothing takes the section named exactly after it
 its own folder, marked as matched by name in that hint. Where the surface states no hint the page says so, in
 place of the words, so what the documentation still lacks is read off the preview.
 
-Hints and footnotes are edited where they stand. A hint cell opens its editor with F2, Enter or a
+A Delphi type's page is spelled as a C++ type's is - its title, its bases after colons, the
+access labels written `public:` - and its code is Delphi's own: a routine's signature and a
+constant's or a variable's declaration stand as written, coloured as Pascal. Its properties and
+its events stand in a grid per access - published, public, protected - and a base's member that
+a type below declares again is the type's own, counted once. A constructor reaches the type from
+its bases as a method does, and a type below declaring the name hides it as it hides a method.
+
+Hints and footnotes are edited where they stand, in a project read in full - a project in limited
+mode shows them and writes nothing. A hint cell opens its editor with F2, Enter or a
 double click, on the comment's own words - its types unlinked, a missing hint empty. The hint under
 a page's title and the one under each declaration of a method page are typed into where they stand,
 a missing one an empty box: Ctrl+click follows a link there, and Escape puts back the words the page
@@ -209,6 +313,8 @@ from them (`SeeDocs_App.PageView`), the browser (`SeeDocs_App.Browser`) shows on
 
 ## The checks
 
+`check` holds a tree read in full to the routine, and a project in limited mode to nothing:
+
 - a property with no `INIT_PROPERTY`; a `..._STORAGE` property without its getter and a
   `WRITABLE` one whose setter is not there, the base chain searched as well
 - a `Props::get` or `Props::find` written by hand rather than through `READ_PROPERTY` or
@@ -228,12 +334,12 @@ from them (`SeeDocs_App.PageView`), the browser (`SeeDocs_App.Browser`) shows on
 ## Building
 
 `SeeDocs.sln` builds both programs with Visual Studio against the shared items: `SeeDocs` the window
-and `SeeDocsCli` the scanner, which share the Surface, Scanner, Database, Project, Notes and Pages
-modules under `Src/`, the window's own standing under `Src/Ui/` and the Edits module beside the
-shared ones. The CMake target `SeeDocs` builds the window on Wayland beside the other applications.
-The CMake target `SeeDocsCli` builds the scanner on Linux with or without a platform layer - the
-Dom, the Syntax lexer and the text file reader reach no further down than `UiTypes` - so a `check`
-runs wherever the tree is checked out:
+and `SeeDocsCli` the scanner, which share the Surface, Reading, Scanner, PascalReader, Database,
+Project, Notes and Pages modules under `Src/`, the window's own standing under `Src/Ui/` and the
+Edits module beside the shared ones. The CMake target `SeeDocs` builds the window on Wayland beside
+the other applications. The CMake target `SeeDocsCli` builds the scanner on Linux with or without a
+platform layer - the Dom, the Syntax lexer and the text file reader reach no further down than
+`UiTypes` - so a `check` runs wherever the tree is checked out:
 
     cmake -S . -B build -G Ninja -DCLAFI_PLATFORM=none \
           -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_BUILD_TYPE=Release

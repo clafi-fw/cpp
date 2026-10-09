@@ -1,6 +1,7 @@
 module SeeDocs_App.PageText;
 
 import SeeDocs_App.Pages;
+import SeeDocs_App.Surface;
 
 import ClaFi.Core.Syntax.Languages;
 import ClaFi.Core.Syntax.Lexer;
@@ -76,10 +77,14 @@ namespace SeeDocs_App
 
         using InkedRanges = std::vector<InkedRange>;
 
-        // The declaration lexed as C++, a line at a time, the tokens drawn in an ink of their
-        // own in the order they stand; a kind drawn in the text's ink is left out.
-        [[nodiscard]] InkedRanges inkedTokens(const std::wstring& source)
+        // The declaration lexed in its language, a line at a time, the tokens drawn in an ink of
+        // their own in the order they stand; a kind drawn in the text's ink is left out.
+        [[nodiscard]] InkedRanges inkedTokens(const std::wstring& source,
+            const SourceLanguage language)
         {
+            const Syntax::Language& lexer = language == SourceLanguage::Pascal
+                ? Syntax::Languages::pascal
+                : Syntax::Languages::cpp;
             const Syntax::Inks inks = Syntax::defaultInks();
             const Ink textInk{};
             InkedRanges ranges;
@@ -96,7 +101,7 @@ namespace SeeDocs_App
                 const std::wstring_view line =
                     std::wstring_view{ source }.substr(lineStart, lineEnd - lineStart);
                 tokens.clear();
-                state = Syntax::lexLine(Syntax::Languages::cpp, line, state, strings, &tokens);
+                state = Syntax::lexLine(lexer, line, state, strings, &tokens);
                 for (const Syntax::Token& token : tokens)
                 {
                     const Ink& ink = inks[token.kind];
@@ -181,12 +186,13 @@ namespace SeeDocs_App
     // The runs are the one declaration cut round its links, and the tokens are lexed over the
     // whole of it, so a token is clipped to the run it is written in and one reaching past the
     // run's end goes on in the next.
-    void writeSignature(Text& text, const Runs& runs, const bool links)
+    void writeSignature(Text& text, const Runs& runs, const bool links,
+        const SourceLanguage language)
     {
         std::wstring source;
         for (const Run& run : runs)
             source += run.text;
-        const InkedRanges inked = inkedTokens(source);
+        const InkedRanges inked = inkedTokens(source, language);
         text << TextStyleId::Code;
         std::size_t at = 0;     // where the run starts in the source
         std::size_t next = 0;   // the first inked token not yet written out

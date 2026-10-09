@@ -500,8 +500,10 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_dir}/SeeDocs_App.Database.cpp"
         "${seedocs_dir}/SeeDocs_App.Edits.cpp"
         "${seedocs_dir}/SeeDocs_App.Notes.cpp"
+        "${seedocs_dir}/SeeDocs_App.PascalReader.cpp"
         "${seedocs_dir}/SeeDocs_App.Pages.cpp"
         "${seedocs_dir}/SeeDocs_App.Project.cpp"
+        "${seedocs_dir}/SeeDocs_App.Reading.cpp"
         "${seedocs_dir}/SeeDocs_App.Scanner.cpp"
         "${seedocs_dir}/SeeDocs_App.Surface.cpp")
     target_sources(SeeDocs PRIVATE FILE_SET CXX_MODULES FILES
@@ -517,8 +519,10 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_dir}/SeeDocs_App.Database.cppm"
         "${seedocs_dir}/SeeDocs_App.Edits.cppm"
         "${seedocs_dir}/SeeDocs_App.Notes.cppm"
+        "${seedocs_dir}/SeeDocs_App.PascalReader.cppm"
         "${seedocs_dir}/SeeDocs_App.Pages.cppm"
         "${seedocs_dir}/SeeDocs_App.Project.cppm"
+        "${seedocs_dir}/SeeDocs_App.Reading.cppm"
         "${seedocs_dir}/SeeDocs_App.Scanner.cppm"
         "${seedocs_dir}/SeeDocs_App.Surface.cppm")
     target_link_libraries(SeeDocs PRIVATE ClaFi)
@@ -620,7 +624,9 @@ add_executable(SeeDocsCli
     "${seedocs_cli_dir}/SeeDocs_App.Cli.cpp"
     "${seedocs_cli_dir}/SeeDocs_App.Database.cpp"
     "${seedocs_cli_dir}/SeeDocs_App.Notes.cpp"
+    "${seedocs_cli_dir}/SeeDocs_App.PascalReader.cpp"
     "${seedocs_cli_dir}/SeeDocs_App.Project.cpp"
+    "${seedocs_cli_dir}/SeeDocs_App.Reading.cpp"
     "${seedocs_cli_dir}/SeeDocs_App.Scanner.cpp"
     "${seedocs_cli_dir}/SeeDocs_App.Surface.cpp")
 target_sources(SeeDocsCli PRIVATE FILE_SET CXX_MODULES FILES
@@ -628,7 +634,9 @@ target_sources(SeeDocsCli PRIVATE FILE_SET CXX_MODULES FILES
     "${seedocs_cli_dir}/SeeDocs_App.Cli.cppm"
     "${seedocs_cli_dir}/SeeDocs_App.Database.cppm"
     "${seedocs_cli_dir}/SeeDocs_App.Notes.cppm"
+    "${seedocs_cli_dir}/SeeDocs_App.PascalReader.cppm"
     "${seedocs_cli_dir}/SeeDocs_App.Project.cppm"
+    "${seedocs_cli_dir}/SeeDocs_App.Reading.cppm"
     "${seedocs_cli_dir}/SeeDocs_App.Scanner.cppm"
     "${seedocs_cli_dir}/SeeDocs_App.Surface.cppm")
 target_link_libraries(SeeDocsCli PRIVATE ClaFi)

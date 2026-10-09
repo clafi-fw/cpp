@@ -18,6 +18,9 @@ namespace SeeDocs_App
 
     namespace
     {
+        // What a module's Language key says of a Delphi unit; a C++ module states none.
+        constexpr std::wstring_view k_pascalWord = L"pascal";
+
         namespace Keys
         {
             constexpr std::wstring_view modules = L"Modules";
@@ -34,6 +37,8 @@ namespace SeeDocs_App
             constexpr std::wstring_view hint = L"Hint";
             constexpr std::wstring_view note = L"Note";
             constexpr std::wstring_view interface = L"Interface";
+            constexpr std::wstring_view header = L"Header";
+            constexpr std::wstring_view language = L"Language";
             constexpr std::wstring_view imports = L"Imports";
             constexpr std::wstring_view exportedImports = L"ExportedImports";
             constexpr std::wstring_view templateParameters = L"Template";
@@ -200,6 +205,8 @@ namespace SeeDocs_App
                 Value{ Keys::name, std::wstring{} },
                 Value{ Keys::file, std::wstring{} },
                 Value{ Keys::interface, false },
+                Value{ Keys::header, false },
+                Value{ Keys::language, std::wstring{} },
                 Sequence{ Keys::imports, std::wstring{} },
                 Sequence{ Keys::exportedImports, std::wstring{} }
             };
@@ -381,6 +388,9 @@ namespace SeeDocs_App
             setText(section, Keys::name, module.name);
             setText(section, Keys::file, surface.files()[module.file].relative);
             setFlag(section, Keys::interface, module.isInterface);
+            setFlag(section, Keys::header, module.isHeader);
+            if (module.language == SourceLanguage::Pascal)
+                setText(section, Keys::language, k_pascalWord);
             Names imports;
             Names exported;
             for (const Import& import : module.imports)
@@ -566,7 +576,11 @@ namespace SeeDocs_App
             {
                 Module module{
                     .name = textOf(entry, Keys::name),
-                    .isInterface = flagOf(entry, Keys::interface)
+                    .isInterface = flagOf(entry, Keys::interface),
+                    .isHeader = flagOf(entry, Keys::header),
+                    .language = textOf(entry, Keys::language) == k_pascalWord
+                        ? SourceLanguage::Pascal
+                        : SourceLanguage::Cpp
                 };
                 module.file = fileOf(textOf(entry, Keys::file), module.name);
                 for (const std::wstring& name : listOf(entry, Keys::imports))
@@ -892,6 +906,8 @@ namespace SeeDocs_App
                 return L"type";
             case TypeKind::Concept:
                 return L"concept";
+            case TypeKind::Interface:
+                return L"interface";
         }
         return {};
     }
@@ -948,6 +964,8 @@ namespace SeeDocs_App
                 return L"protected";
             case Access::Private:
                 return L"private";
+            case Access::Published:
+                return L"published";
         }
         return {};
     }
@@ -955,7 +973,7 @@ namespace SeeDocs_App
     std::optional<TypeKind> typeKindOf(const std::wstring_view word)
     {
         for (const TypeKind kind : { TypeKind::Class, TypeKind::Struct, TypeKind::Union,
-            TypeKind::Enum, TypeKind::Alias, TypeKind::Concept })
+            TypeKind::Enum, TypeKind::Alias, TypeKind::Concept, TypeKind::Interface })
         {
             if (kindWord(kind) == word)
                 return kind;
@@ -989,7 +1007,8 @@ namespace SeeDocs_App
 
     std::optional<Access> accessOf(const std::wstring_view word)
     {
-        for (const Access access : { Access::Public, Access::Protected, Access::Private })
+        for (const Access access : { Access::Public, Access::Protected, Access::Private,
+            Access::Published })
         {
             if (accessWord(access) == word)
                 return access;

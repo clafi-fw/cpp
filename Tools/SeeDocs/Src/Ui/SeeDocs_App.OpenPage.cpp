@@ -9,6 +9,7 @@ import SeeDocs_App.Surface;
 import ClaFi.App.Settings;
 
 import ClaFi.Controls.Button;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Spacer;
@@ -70,7 +71,8 @@ namespace SeeDocs_App
         }
 
         // The open project: its name to rename it by, its folder, when it was scanned with the
-        // button that scans it again, and under a line, the button that opens another.
+        // button that scans it again, how its tree is read, and under a line, the button that
+        // opens another.
         void addProjectGroup(OptionsPage& page, Workspace& workspace)
         {
             Stack& group = page.addGroup(L"Project");
@@ -106,6 +108,29 @@ namespace SeeDocs_App
                         workspace.rescan();
                         scanLine.text() = scanText(workspace);
                         scanLine.invalidateFormAlign();
+                    } }
+                );
+                // THE MENU STAYS OPEN, as for Rescan: the switch reads the tree again, and the
+                // scan line says so. The box stands where a label's text stands, as on the
+                // Settings page.
+                group.add<CheckBox>(
+                    L"Limited mode",
+                    HintText{ L"Reads a third-party library - its headers too, with nothing "
+                        L"written into it and nothing checked" },
+                    Padding{ 0.0f, group.themeMetrics().listItem.padding.y },
+                    CheckBox::OnGetState{ [&workspace](GetStateEvent& event) {
+                        const Project* project = workspace.project();
+                        event.state.selected = project && project->mode == ScanMode::Limited;
+                    } },
+                    CheckBox::OnClick{ [&workspace, &scanLine](ClickEvent& event) {
+                        const Project* project = workspace.project();
+                        if (!project)
+                            return;
+                        const bool limited = project->mode == ScanMode::Limited;
+                        workspace.setMode(limited ? ScanMode::Full : ScanMode::Limited);
+                        scanLine.text() = scanText(workspace);
+                        scanLine.invalidateFormAlign();
+                        event.control->invalidateState();
                     } }
                 );
                 group.add<Divider>();

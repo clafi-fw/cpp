@@ -92,6 +92,7 @@ namespace SeeDocs_App
         Cells cells;
         const Type* type{ nullptr };
         Runs hint;   // a method's signature, set as code
+        SourceLanguage language{ SourceLanguage::Cpp };   // what the hint's code is written in
         std::optional<Excerpt> excerpt;
         std::optional<CommentSite> site;
     };
@@ -136,6 +137,7 @@ namespace SeeDocs_App
     export struct Signature
     {
         Runs code;         // code runs, a type the surface has a page for linked
+        SourceLanguage language{ SourceLanguage::Cpp };   // what the code is written in
         Runs lead;         // the hint; none where it stands under the page's title
         std::optional<Excerpt> excerpt;   // where the comment references a note
         std::optional<CommentSite> site;  // the comment the hint is read from
@@ -201,8 +203,9 @@ namespace SeeDocs_App
     // One module of a chapter: its types, controls first, its functions and constants as declared.
     export struct ContentsModule
     {
-        std::wstring name;        // the module's full name
+        std::wstring name;        // the module's full name, a header's path
         std::wstring shortName;   // what a reader sees
+        bool header{ false };
         TypeList types;
         FunctionList functions;
         VariableList constants;
@@ -237,6 +240,10 @@ namespace SeeDocs_App
 
     // The page of a folder: the chapters under it, each linked, with what every one holds.
     export [[nodiscard]] Page contentsPage(const ContentsChapters&, std::wstring_view title);
+    // The page of the tree's root: the chapters under it as a folder's page has them, then what
+    // the modules standing in the root itself export, by module.
+    export [[nodiscard]] Page homePage(const Surface&, Notes&, const ContentsChapters&,
+        std::wstring_view title);
     // A chapter's page: the chapters under its folder, then what its modules export, by module.
     export [[nodiscard]] Page chapterPage(const Surface&, Notes&, const ContentsChapters&,
         const ContentsChapter&);

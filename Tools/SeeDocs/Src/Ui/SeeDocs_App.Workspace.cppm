@@ -49,6 +49,8 @@ namespace SeeDocs_App
         [[nodiscard]] std::wstring rename(std::wstring_view name);
         // Scans the open project's tree again and shows what was read back, the tabs standing.
         void rescan();
+        // Sets how the open project's tree is read, and scans it again so read.
+        void setMode(ScanMode);
     public:
         // What the config keeps the open project's folder under.
         static constexpr std::wstring_view k_projectNodeName = L"Project";
@@ -63,7 +65,9 @@ namespace SeeDocs_App
         // Shows the project, its database scanned first where it has none. False where it could
         // not be, the reason written out and the project open left as it was.
         [[nodiscard]] bool openProject(Project, Text& reason, OpenTabs);
-        [[nodiscard]] bool confirmMaking(const std::filesystem::path& folder);
+        // Asks to make a project in the folder, and how its tree is to be read; nothing where
+        // the user declines.
+        [[nodiscard]] std::optional<ScanMode> confirmMaking(const std::filesystem::path& folder);
         void refuse(std::wstring_view title, const Text& message);
         // Writes the tree's database, so that the project has one to open.
         void scan(const Project&);

@@ -1,6 +1,7 @@
 export module SeeDocs_App.PageText;
 
 import SeeDocs_App.Pages;
+import SeeDocs_App.Surface;
 
 import ClaFi.Core.TextEngine.Text;
 
@@ -22,7 +23,7 @@ namespace SeeDocs_App
     // reaches the footnote by, then the prose.
     export void writeFootnote(Text&, std::wstring_view anchor, std::wstring_view mark,
         const Runs& name, const Excerpt&);
-    // A declaration as code, every token in the ink the C++ lexer gives it; a linked run as a
-    // link where links are asked for, and in its token's ink where they are not - a hint.
-    export void writeSignature(Text&, const Runs&, bool links);
+    // A declaration as code, every token in the ink its language's lexer gives it; a linked run
+    // as a link where links are asked for, and in its token's ink where they are not - a hint.
+    export void writeSignature(Text&, const Runs&, bool links, SourceLanguage);
 }
