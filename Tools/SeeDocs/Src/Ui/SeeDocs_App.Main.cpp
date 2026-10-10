@@ -1,6 +1,7 @@
 module SeeDocs_App.Main;
 
 import SeeDocs_App.Browser;
+import SeeDocs_App.Icons;
 import SeeDocs_App.OpenPage;
 import SeeDocs_App.ProjectOptions;
 import SeeDocs_App.Workspace;
@@ -64,10 +65,10 @@ namespace SeeDocs_App
         const std::filesystem::path& stated)
     {
         Workspace workspace{ application, form, form.content() };
-        connectAppPage(k_openPageCaption, [&workspace](OptionsPage& page) {
+        connectAppPage(k_openPageCaption, paintOpenIcon, [&workspace](OptionsPage& page) {
             buildOpenPage(page, workspace);
         });
-        connectAppCommand(k_newProjectCaption, EndIcon::OpensWindow,
+        connectAppCommand(k_newProjectCaption, paintNewProjectIcon, EndIcon::OpensWindow,
             [&workspace](const InputStamp stamp) {
                 workspace.createNew({}, stamp);
             });

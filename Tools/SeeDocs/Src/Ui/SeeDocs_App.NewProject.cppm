@@ -53,6 +53,8 @@ namespace SeeDocs_App
     private:
         // The box one line is typed into, in the field that gives it a surface of its own.
         [[nodiscard]] static PromptBox& addBox(Panel& field, PlaceHolderText);
+        // A question's caption and its answer, one group of the column.
+        [[nodiscard]] static Stack& addGroup(Stack& column);
         [[nodiscard]] std::wstring typedName() const;
         void browse();
         void writeFolder();
@@ -65,7 +67,8 @@ namespace SeeDocs_App
         static constexpr float k_barPaddingX = 12.0f;
         static constexpr float k_barPaddingY = 8.0f;
         static constexpr float k_contentPadding = 12.0f;
-        static constexpr float k_rowSpacing = 6.0f;
+        static constexpr float k_rowSpacing = 6.0f;      // between a caption and its answer
+        static constexpr float k_groupSpacing = 16.0f;   // between one question and the next
         static constexpr float k_cellSpacing = 8.0f;
         static constexpr float k_answerSpacing = 8.0f;
         static constexpr float k_columnWidth = 460.0f;
@@ -74,13 +77,16 @@ namespace SeeDocs_App
         DialogTitle& m_title;
         Panel& m_content;
         Stack& m_column;
+        Stack& m_nameGroup;
         Label& m_nameCaption;
         Panel& m_nameField;
         PromptBox& m_name;
+        Stack& m_locationGroup;
         Label& m_locationCaption;
         Panel& m_locationRow;     // the field, and Browse at its end
         Panel& m_locationField;
         PromptBox& m_location;
+        Stack& m_folderGroup;   // the folder, and a reason it cannot be made there
         Label& m_folderCaption;
         Label& m_folder;
         Label& m_refusal;

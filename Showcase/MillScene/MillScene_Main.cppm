@@ -22,6 +22,8 @@ import ClaFi.Controls.Label;
 import ClaFi.Controls.Slider;
 import ClaFi.Controls.Button;
 
+import ClaFi.Icons.DotMark;
+
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.TextEngine.Fmt;
 
@@ -184,7 +186,7 @@ namespace MillScene_App
         restoreSceneTheme();
 
 
-        connectAppPage(L"Scene", [this](OptionsPage& page) {
+        connectAppPage(L"Scene", Icons::DotMark::paint, [this](OptionsPage& page) {
             buildScenePage(page);
             });
         applySceneColors();

@@ -27,6 +27,13 @@ namespace SeeDocs_App
         constexpr float k_softFill = 0.35f; // a face tinted rather than filled
         constexpr float k_kindGap = 12.0f;  // the least room before a row's kind word
 
+        // THE MENU'S ICONS ARE DRAWN ON A GRID OF THEIR OWN, the size the menu shows them at, and
+        // in the theme's Thin stroke rather than the rows' one, which is how the framework's own
+        // menu icons beside them are drawn.
+        constexpr float k_menuGrid = 32.0f;
+        constexpr float k_flapFill = 0.2f;   // the open folder's flap, tinted rather than filled
+        constexpr float k_haloWidth = 3.2f;  // the band cleared around the spark, in strokes
+
         // Strong ink holds the body, the accent marks the part that names the kind.
         struct Inks
         {
@@ -84,6 +91,68 @@ namespace SeeDocs_App
         {
             path.moveTo(from);
             path.lineTo(to);
+        }
+
+        // A menu icon's grid in its rect, and the Thin stroke in grid units: the transform scales
+        // the stroke with the shape.
+        struct MenuDrawing
+        {
+            Canvas& canvas;
+            Matrix3x2 transform{};
+            float stroke{};
+        };
+
+        [[nodiscard]] MenuDrawing menuDrawing(PaintIconEvent& event)
+        {
+            const FloatRect& rect = event.iconRect();
+            const float size = std::min(rect.width(), rect.height());
+            const float scale = size / k_menuGrid;
+            return {
+                event.canvas(),
+                Matrix3x2::translation(rect.center() - FloatPoint{ size * 0.5f })
+                    * Matrix3x2::scale(scale),
+                event.scaledStrokeWidth(Thickness::Thin) / scale
+            };
+        }
+
+        // THE BACK OF AN OPEN FOLDER, open where the flap stands in front of it: up the left
+        // side, over the tab, and down the right side as far as the flap's top.
+        void addFolderBack(PixelPath& path)
+        {
+            const float left = 2.0f;
+            const float top = 5.5f;
+            const float right = 27.0f;
+            const float bottom = 26.0f;
+            const float width = right - left;
+            const float body = top + (bottom - top) * 0.18f;
+            const float radius = width * 0.10f;
+            const float flapTop = 13.0f;
+            path.moveTo(left, bottom - radius);
+            path.lineTo(left, top + radius);
+            path.quadTo({ left, top }, { left + radius, top });
+            path.lineTo(left + width * 0.40f - radius * 0.6f, top);
+            path.lineTo(left + width * 0.53f, body);
+            path.lineTo(right - radius, body);
+            path.quadTo({ right, body }, { right, body + radius });
+            path.lineTo(right, flapTop);
+        }
+
+        // A four-pointed star, its long points up, down and to the sides.
+        void addSpark(PixelPath& path, const FloatPoint center, const float outer,
+            const float inner)
+        {
+            std::array<FloatPoint, 8ull> points{};
+            for (std::size_t index = 0; index < points.size(); ++index)
+            {
+                const float angle = (-90.0f + 45.0f * static_cast<float>(index))
+                    * std::numbers::pi_v<float> / 180.0f;
+                const float radius = index % 2ull == 0ull ? outer : inner;
+                points[index] = center + FloatPoint{ std::cos(angle), std::sin(angle) } * radius;
+            }
+            path.moveTo(points[0ull]);
+            for (std::size_t index = 1; index < points.size(); ++index)
+                path.lineTo(points[index]);
+            path.close();
         }
 
         void paintChapter(const Drawing& drawing)
@@ -311,5 +380,52 @@ namespace SeeDocs_App
             return;
         text << FlexSpace{ k_kindGap } << TextStyleId::SubBody << InkGrade::Muted
             << kindWord(type.kind) << PopColor{} << PopTextStyle{};
+    }
+
+    void paintOpenIcon(PaintIconEvent& event)
+    {
+        const MenuDrawing drawing = menuDrawing(event);
+        PixelPath back;
+        addFolderBack(back);
+        drawing.canvas.drawPath(back,
+            { PathDrawLayer::stroke(event.textRgb(InkGrade::Strong), drawing.stroke) },
+            &drawing.transform);
+
+        const std::array<FloatPoint, 4ull> corners{
+            FloatPoint{ 7.2f, 13.0f },
+            FloatPoint{ 30.6f, 13.0f },
+            FloatPoint{ 26.0f, 26.0f },
+            FloatPoint{ 2.0f, 26.0f }
+        };
+        PixelPath flap;
+        flap.addRoundedPolygon(corners, 1.6f);
+        const Color accent = event.accentRgb(InkGrade::Strongest);
+        drawing.canvas.drawPath(flap,
+            {
+                PathDrawLayer::fill(accent.withOpacity(k_flapFill)),
+                PathDrawLayer::stroke(accent, drawing.stroke)
+            },
+            &drawing.transform);
+    }
+
+    // The spark crosses the folder's corner, so a band in the surface's colour is cleared round
+    // it first, the way the framework's Open in Explorer arrow crosses its folder.
+    void paintNewProjectIcon(PaintIconEvent& event)
+    {
+        const MenuDrawing drawing = menuDrawing(event);
+        PixelPath folder;
+        Icons::FolderIcon::addOutline(folder, { 2.0f, 7.5f, 26.5f, 27.5f });
+        drawing.canvas.drawPath(folder,
+            { PathDrawLayer::stroke(event.textRgb(InkGrade::Strong), drawing.stroke) },
+            &drawing.transform);
+
+        PixelPath spark;
+        addSpark(spark, { 24.5f, 8.0f }, 7.0f, 2.1f);
+        drawing.canvas.drawPath(spark,
+            {
+                PathDrawLayer::stroke(event.surfaceRgb(), drawing.stroke * k_haloWidth),
+                PathDrawLayer::fill(event.accentRgb(InkGrade::Strongest))
+            },
+            &drawing.transform);
     }
 }

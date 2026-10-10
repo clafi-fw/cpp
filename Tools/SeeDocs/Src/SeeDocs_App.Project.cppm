@@ -53,8 +53,9 @@ namespace SeeDocs_App
     // Reads the project the folder stands for, as projectFolderOf finds it; nothing where it
     // stands for none.
     export [[nodiscard]] std::optional<Project> readProject(const std::filesystem::path& folder);
-    // Makes the folder and the properties in it, the project reading no sources yet. Nothing
-    // where the folder could not be made.
+    // Makes the folder and the properties in it, the project reading no sources yet and set to
+    // read them as any C++ and Delphi, every recognizable comment a hint. Nothing where the
+    // folder could not be made.
     export [[nodiscard]] std::optional<Project> createProject(const std::filesystem::path& folder,
         std::wstring_view name);
     // Writes the project's properties into its folder.

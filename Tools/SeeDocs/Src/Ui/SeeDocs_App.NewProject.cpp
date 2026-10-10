@@ -69,28 +69,33 @@ namespace SeeDocs_App
         ) },
         m_column{ m_content.createBody<Stack>(
             Orientation::Vertical,
-            Spacing{ k_rowSpacing },
+            Spacing{ k_groupSpacing },
             MinSize{ k_columnWidth, 0.0f }
         ) },
-        m_nameCaption{ m_column.add<Label>(Text{ L"Project name" }) },
+        m_nameGroup{ addGroup(m_column) },
+        m_nameCaption{ m_nameGroup.add<Label>(Text{ L"Project name" }) },
         // A field is drawn as an answer is: a surface of its own, at a button's radius.
-        m_nameField{ m_column.add<Panel>(
+        m_nameField{ m_nameGroup.add<Panel>(
             UiElement::Section,
             Radius{ owner.themeMetrics().button.radius },
             owner.themeMetrics().button.padding
         ) },
         m_name{ addBox(m_nameField, PlaceHolderText{ L"The name the project goes by" }) },
-        m_locationCaption{ m_column.add<Label>(Text{ L"Where to store the project?" }) },
-        m_locationRow{ m_column.add<Panel>(Spacing{ k_cellSpacing }) },
+        m_locationGroup{ addGroup(m_column) },
+        m_locationCaption{ m_locationGroup.add<Label>(Text{ L"Where to store the project?" }) },
+        m_locationRow{ m_locationGroup.add<Panel>(Spacing{ k_cellSpacing }) },
         m_locationField{ m_locationRow.createBody<Panel>(
             UiElement::Section,
             Radius{ owner.themeMetrics().button.radius },
             owner.themeMetrics().button.padding
         ) },
         m_location{ addBox(m_locationField, PlaceHolderText{ L"A folder on this computer" }) },
-        m_folderCaption{ m_column.add<Label>(Text{ L"The project files will be created in" }) },
-        m_folder{ m_column.add<Label>(WordWrap::Yes, MaxSize{ k_columnWidth, k_maxFloat }) },
-        m_refusal{ m_column.add<Label>(WordWrap::Yes, MaxSize{ k_columnWidth, k_maxFloat }) },
+        m_folderGroup{ addGroup(m_column) },
+        m_folderCaption{ m_folderGroup.add<Label>(
+            Text{ L"The project files will be created in" }
+        ) },
+        m_folder{ m_folderGroup.add<Label>(WordWrap::Yes, MaxSize{ k_columnWidth, k_maxFloat }) },
+        m_refusal{ m_folderGroup.add<Label>(WordWrap::Yes, MaxSize{ k_columnWidth, k_maxFloat }) },
         m_answerBar{ createBottomBar<Panel>(
             UiElement::ToolBar,
             Radius{ 0.0f },
@@ -199,6 +204,11 @@ namespace SeeDocs_App
             VerticalTextAnchor::Center,
             std::move(placeHolder)
         );
+    }
+
+    Stack& NewProjectDialog::addGroup(Stack& column)
+    {
+        return column.add<Stack>(Orientation::Vertical, Spacing{ k_rowSpacing }, Padding{ 0.0f });
     }
 
     std::wstring NewProjectDialog::typedName() const

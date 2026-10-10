@@ -16,6 +16,7 @@ import ClaFi.Controls.Stack;
 import ClaFi.Controls.Divider;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -136,6 +137,7 @@ namespace ClaFi
     export struct AppPage
     {
         std::wstring caption;
+        PaintIconFunc paintIcon;
         AppPageBuilder build;
     };
 
@@ -143,7 +145,8 @@ namespace ClaFi
     export [[nodiscard]] const std::vector<AppPage>& appPages();
 
     // Adds a page of the application's own beside Settings, once per application. See Application
-    export void connectAppPage(std::wstring_view caption, AppPageBuilder);
+    export void connectAppPage(std::wstring_view caption, PaintIconFunc paintIcon,
+        AppPageBuilder);
 
 
     //-------------------------------------------------------------------------

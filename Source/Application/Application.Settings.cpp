@@ -201,9 +201,11 @@ namespace ClaFi
         return mutableAppPages();
     }
 
-    void connectAppPage(const std::wstring_view caption, AppPageBuilder build)
+    void connectAppPage(const std::wstring_view caption, PaintIconFunc paintIcon,
+        AppPageBuilder build)
     {
-        mutableAppPages().push_back(AppPage{ std::wstring{ caption }, std::move(build) });
+        mutableAppPages().push_back(
+            AppPage{ std::wstring{ caption }, std::move(paintIcon), std::move(build) });
     }
 
     // OptionsPage

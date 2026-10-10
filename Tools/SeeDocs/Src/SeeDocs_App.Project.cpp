@@ -232,7 +232,12 @@ namespace SeeDocs_App
         if (error)
             return std::nullopt;
 
-        Project project{ .folder = folder, .name = std::wstring{ name } };
+        Project project{
+            .folder = folder,
+            .name = std::wstring{ name },
+            .mode = ScanMode::Limited,
+            .hints = HintRules::Loose
+        };
         writeProject(project);
         return readProject(folder);
     }

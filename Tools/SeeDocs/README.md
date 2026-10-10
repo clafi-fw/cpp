@@ -40,11 +40,13 @@ folders, and are read as they stand.
 `Name` is what the project goes by; empty, it goes by its folder's name. `Sources` are the folders
 it reads, each with the folders under it or without them; a path is written relative to the
 project's folder while the two share a folder under the root of their volume, so that they move
-together and a project kept in a repository names no place outside it, and as it stands
-otherwise. Folders of one name under two sources are one chapter, and a file two sources reach
-is read once, as the first of them found it. `Limited` reads the sources as any C++ and Delphi
-rather than as ClaFi modules, `LooseHints` takes every recognizable comment's hint rather than
-the strict rules' - see Hints - and `EditHints` writes a hint edited on a page into its source.
+together and a project kept in a repository names no place outside it, and as it stands otherwise.
+Folders of one name under two sources are one chapter, and a file two sources reach is read once, as
+the first of them found it. `Limited` reads the sources as any C++ and Delphi rather than as ClaFi
+modules, `LooseHints` takes every recognizable comment's hint rather than the strict rules' - see
+Hints - and `EditHints` writes a hint edited on a page into its source. A project the window makes
+is written `Limited` and `LooseHints`; one stating neither reads its sources as ClaFi modules by the
+strict rules.
 
 A project made inside a tree, in the tree's `.seedocs` folder, is a project all the same, and a
 tree that has one stands for it: `SeeDocsCli check Source` checks the project in
@@ -262,12 +264,13 @@ name, Escape puts it back, and an emptied box gives the project its folder's nam
 how long ago it was scanned with a Rescan button that reads the sources again, and Close project,
 which closes the project and every tab on it. Under Sources stand the folders it reads, each with
 Include subfolders and Remove, and Add folder after them; under Scan options, whether the sources
-are read as ClaFi modules or as any C++ and Delphi, and whether hints follow the strict ClaFi rules
-or come from every recognizable comment; under Edit hints, whether a hint edited on a page is not
-written at all or written directly into the source, with no undo. Every change reads the sources
-again, but the last, which builds the pages again. The page stays where it stands while the sources
-are read again. Its url is the project's with `/.project` after it: the scanner passes over names
-that start with a dot, so no chapter can take it.
+are read as any C++ and Delphi or as ClaFi modules, and whether hints come from every recognizable
+comment or follow the strict ClaFi rules - a new project starts on the first of each; under Edit
+hints, whether a hint edited on a page is not written at all or written directly into the source,
+with no undo. Every change reads the sources again, but the last, which builds the pages again. The
+page stays where it stands while the sources are read again. Its url is the project's with
+`/.project` after it: the scanner passes over names that start with a dot, so no chapter can take
+it.
 
 SeeDocs is a browser of the framework's own kind: tabs across the top, under them the crumbs of
 the page shown with a list dropping from each, and Back, Forward and Up beside them. Every page has

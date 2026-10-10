@@ -261,15 +261,17 @@ What an application puts on a page of its own, run against that page as the menu
 handed an OptionsPage and calls addGroup for each caption it wants, filling the column that comes
 back:
 
-    connectAppPage(L"Scene", [](OptionsPage& page){
+    connectAppPage(L"Scene", Icons::DotMark::paint, [](OptionsPage& page){
         Stack& picked = page.addGroup(L"Picked Window");
         picked.add<CheckBox>(L"Highlight corners");
     });
 
 ## connectAppPage
 
-Adds a page of the application's own at the top of the strip, by caption, once per application - and
-more than once for more than one page, in the order asked.
+Adds a page of the application's own at the top of the strip, by caption and icon, once per
+application - and more than once for more than one page, in the order asked. The icon is drawn at
+the size the framework's own pages wear theirs; `Icons::DotMark::paint` holds the slot for a page
+with no picture of its own, so its caption still lines up with the others.
 
 Nothing calls it for an application, and one that never does gets Settings alone.
 
@@ -283,17 +285,18 @@ the click that asked.
 ## connectAppCommand
 
 Adds a command of the application's own to the strip, under its pages and above Show diagnostic
-and Exit, by caption, once per application - and more than once for more than one command, in the
-order asked. It wears the dot an application's page wears, and the end mark it states:
-`EndIcon::OpensWindow` for a command that opens a window.
+and Exit, by caption and icon, once per application - and more than once for more than one command,
+in the order asked. It wears the end mark it states as well: `EndIcon::OpensWindow` for a command
+that opens a window.
 
 THE MENU IS DOWN BEFORE THE COMMAND RUNS, as it is for the framework's own. The click closes the
 menu, and the handler runs once the menu's loop has returned, so a window the command opens never
 stands over a menu going down under it.
 
-    connectAppCommand(L"New project", EndIcon::OpensWindow, [&workspace](InputStamp stamp){
-        workspace.createNew({}, stamp);
-    });
+    connectAppCommand(L"New project", paintNewProjectIcon, EndIcon::OpensWindow,
+        [&workspace](InputStamp stamp){
+            workspace.createNew({}, stamp);
+        });
 
 ## UiElement
 

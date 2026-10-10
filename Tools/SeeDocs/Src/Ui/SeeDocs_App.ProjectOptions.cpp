@@ -38,6 +38,7 @@ namespace SeeDocs_App
         constexpr float k_rowSpacing = 10.0f;    // between a row's label and its buttons
         constexpr float k_listSpacing = 2.0f;    // between the rows of the sources
         constexpr float k_noteWidth = 520.0f;    // the widest a note under a group runs
+        constexpr float k_choiceIndent = 20.0f;  // a set of choices in from its caption
 
         // What a choice's state is read from, and what a click on it does.
         using Chosen = std::function<bool()>;
@@ -88,16 +89,18 @@ namespace SeeDocs_App
             return Text{ L"Last scan: " + ageSpelling(*scanned, now) };
         }
 
-        // A caption over a set of choices, in the group's own column.
-        void addCaption(Stack& group, const std::wstring_view caption)
-        {
-            group.add<Label>(Text{ caption });
-        }
-
         // The column a set of choices stands in, whose answers redraw each other.
         [[nodiscard]] Stack& addChoiceSet(Stack& group)
         {
             return group.add<Stack>(Orientation::Vertical, Padding{ 0.0f });
+        }
+
+        // A caption in the group's own column, and under it the set of choices it names, set in
+        // from it.
+        [[nodiscard]] Stack& addChoiceSet(Stack& group, const std::wstring_view caption)
+        {
+            group.add<Label>(Text{ caption });
+            return group.add<Stack>(Orientation::Vertical, Padding{ k_choiceIndent, 0.0f });
         }
 
         // One answer of a set, chosen while chosen() says so and greyed while enabled() says
@@ -210,8 +213,16 @@ namespace SeeDocs_App
         const std::shared_ptr<Stack*> editSet = std::make_shared<Stack*>(nullptr);
 
         Stack& scan = page.addGroup(L"Scan options");
-        addCaption(scan, L"Read sources as");
-        Stack& readAs = addChoiceSet(scan);
+        Stack& readAs = addChoiceSet(scan, L"Read sources as");
+        addChoice(readAs, L"Any C++ and Delphi",
+            L"Anyone's C++ - headers too - and Delphi units, with nothing checked",
+            [&project]() {
+                return project.project.mode == ScanMode::Limited;
+            },
+            [&workspace, &project, rescanned]() {
+                workspace.setMode(project, ScanMode::Limited);
+                rescanned();
+            });
         addChoice(readAs, L"ClaFi modules",
             L"Module interfaces and their implementation units, written to the declaration "
                 L"routine and checked against it",
@@ -222,22 +233,21 @@ namespace SeeDocs_App
                 workspace.setMode(project, ScanMode::Full);
                 rescanned();
             });
-        addChoice(readAs, L"Any C++ and Delphi",
-            L"Anyone's C++ - headers too - and Delphi units, with nothing checked",
-            [&project]() {
-                return project.project.mode == ScanMode::Limited;
-            },
-            [&workspace, &project, rescanned]() {
-                workspace.setMode(project, ScanMode::Limited);
-                rescanned();
-            });
-        addCaption(scan, L"Hints format");
-        Stack& hints = addChoiceSet(scan);
+        Stack& hints = addChoiceSet(scan, L"Hints format");
         const Choose hintsChanged = [rescanned, editSet]() {
             rescanned();
             if (*editSet)
                 (*editSet)->invalidateChildrenStates();
         };
+        addChoice(hints, L"Every recognizable comment",
+            L"A hint is the brief of whatever comment a declaration carries; none is owed",
+            [&project]() {
+                return project.project.hints == HintRules::Loose;
+            },
+            [&workspace, &project, hintsChanged]() {
+                workspace.setHints(project, HintRules::Loose);
+                hintsChanged();
+            });
         addChoice(hints, L"Strict ClaFi rules",
             L"A hint is the comment on its declaration's line, else the first line above it; "
                 L"a declaration with none is marked",
@@ -246,15 +256,6 @@ namespace SeeDocs_App
             },
             [&workspace, &project, hintsChanged]() {
                 workspace.setHints(project, HintRules::Strict);
-                hintsChanged();
-            });
-        addChoice(hints, L"Every recognizable comment",
-            L"A hint is the brief of whatever comment a declaration carries; none is owed",
-            [&project]() {
-                return project.project.hints == HintRules::Loose;
-            },
-            [&workspace, &project, hintsChanged]() {
-                workspace.setHints(project, HintRules::Loose);
                 hintsChanged();
             });
 

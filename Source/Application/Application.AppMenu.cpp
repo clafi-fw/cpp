@@ -19,7 +19,6 @@ import ClaFi.Icons.GaugeIcon;
 import ClaFi.Icons.DoorIcon;
 import ClaFi.Icons.GearIcon;
 import ClaFi.Icons.InformationIcon;
-import ClaFi.Icons.DotMark;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
@@ -46,6 +45,7 @@ namespace ClaFi
     struct AppCommand
     {
         std::wstring caption;
+        PaintIconFunc paintIcon;
         EndIcon endIcon{ EndIcon::None };
         AppCommandHandler run;
     };
@@ -84,10 +84,11 @@ namespace ClaFi
         return commands;
     }
 
-    void connectAppCommand(const std::wstring_view caption, const EndIcon endIcon,
-        AppCommandHandler run)
+    void connectAppCommand(const std::wstring_view caption, PaintIconFunc paintIcon,
+        const EndIcon endIcon, AppCommandHandler run)
     {
-        appCommands().push_back(AppCommand{ std::wstring{ caption }, endIcon, std::move(run) });
+        appCommands().push_back(
+            AppCommand{ std::wstring{ caption }, std::move(paintIcon), endIcon, std::move(run) });
     }
 
     // THE MENU IS RUN TO ITS CLOSE, AND WHAT IT ANSWERED IS CARRIED OUT AFTER. Exit closes the
@@ -154,13 +155,10 @@ namespace ClaFi
         {
             OptionsPage& appPage = pageControl().add<OptionsPage>();
             page.build(appPage);
-            // THE DOT STANDS IN FOR AN ICON THE PAGE DOES NOT STATE. A tab with an empty slot
-            // starts its caption where the others start their icon, so the strip reads as two
-            // columns that do not line up.
-            addPageTab(page.caption, appPage, Icons::DotMark::paint);
+            addPageTab(page.caption, appPage, page.paintIcon);
         }
 
-        // The application's own commands lead the framework's, under the dot its pages wear.
+        // The application's own commands lead the framework's.
         for (std::size_t index = 0; index < appCommands().size(); ++index)
         {
             const AppCommand& command = appCommands()[index];
@@ -171,7 +169,7 @@ namespace ClaFi
                 ButtonViewMode::LeftIcon,
                 k_iconSize,
                 k_textAnchor,
-                ToolButton::OnPaintIcon{ Icons::DotMark::paint },
+                ToolButton::OnPaintIcon{ command.paintIcon },
                 ToolButton::OnClick{ [this, index](ClickEvent& event) {
                     m_appCommand = index;
                     closeWith(AppMenuCommand::Application, event);

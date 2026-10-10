@@ -35,4 +35,8 @@ namespace SeeDocs_App
     // What a tree row of a type ends with: its kind word at the row's far end; nothing for a
     // control, whose icon says what it is.
     export void writeRowKind(Text&, const Type&);
+    // The application menu's Open page: an open folder, its front flap in the accent.
+    export void paintOpenIcon(PaintIconEvent&);
+    // The application menu's New project command: a folder with a spark at its corner.
+    export void paintNewProjectIcon(PaintIconEvent&);
 }

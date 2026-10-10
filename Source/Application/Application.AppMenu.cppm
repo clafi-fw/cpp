@@ -73,5 +73,6 @@ namespace ClaFi
     export void connectAppMenu();
 
     // Adds a command of the application's own below its pages. See Application
-    export void connectAppCommand(std::wstring_view caption, EndIcon, AppCommandHandler);
+    export void connectAppCommand(std::wstring_view caption, PaintIconFunc paintIcon, EndIcon,
+        AppCommandHandler);
 }
