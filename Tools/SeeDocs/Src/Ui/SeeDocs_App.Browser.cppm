@@ -9,18 +9,24 @@ import SeeDocs_App.Pages;
 import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
 
+import ClaFi.App.Settings;
+
 import ClaFi.Browser.Control;
 import ClaFi.Browser.PageData;
 
 import ClaFi.Controls.AppButton;
+import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
+import ClaFi.Controls.Tree;
 import ClaFi.Icons.SideBar;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
@@ -35,11 +41,31 @@ namespace SeeDocs_App
     using namespace ::ClaFi::Controls;
     using namespace ::ClaFi::Browser;
 
-    // What becomes of the open tabs when another surface is shown.
-    export enum class OpenTabs
+    // A project open in the window: what it is, the surface read out of its database, and the
+    // notes its comments reach. The workspace owns it, and the browser shows it.
+    export struct OpenProject
     {
-        Keep,    // the tabs stand, their pages built again over the surface shown
-        Close    // every tab goes, and one opens on the home page
+        OpenProject(Project, Surface);
+        Project project;
+        Surface surface;
+        Notes notes;   // the project's footnotes folder
+    };
+
+    // Whether showing a project opens a tab on it.
+    export enum class HomeTab
+    {
+        Open,      // a new tab on the project's home, selected
+        Options,   // a new tab on the project's options page, selected
+        None       // the tabs stand as they are, a restored one reaching the project by its url
+    };
+
+    // The tab shown stands in another project, or in none. The surface has an Event of its own.
+    export class ProjectShownEvent : public ::ClaFi::Event
+    {
+    public:
+        explicit ProjectShownEvent(const OpenProject*);
+    public:
+        const OpenProject* project;   // null where the tab stands in no project
     };
 
     export class SurfaceBrowser;
@@ -64,62 +90,95 @@ namespace SeeDocs_App
         PageView& m_view{ createBody<PageView>() };
     };
 
-    // The browser over the surface: the tree down the left, a page per url on the right -
-    // /folder/.../module/type/method, the folders as the tree stands on disk - and SeeDocs'
-    // words where there is no surface. The words its pages edit are written through it.
-    export class SurfaceBrowser : public BrowserControl, public IPageWriter
+    // A project's options as a page of the browser, filled by the application.
+    export class ProjectPage : public BrowserPage
+    {
+    public:
+        template<typename... Args>
+        explicit ProjectPage(const CreateParams&, Args&&...);
+    public:
+        [[nodiscard]] OptionsPage& options() { return m_optionsBox.body(); }
+    private:
+        ScrollBoxWith<OptionsPage>& m_optionsBox{ createBody<ScrollBoxWith<OptionsPage>>(
+            HostProps{
+                ScrollBars::Vertical
+            },
+            BodyProps<>{}
+        ) };
+    };
+
+    // What a project's options page is filled with.
+    export using ProjectPageBuilder = std::function<void(OptionsPage&, OpenProject&)>;
+
+    // The browser over the open projects: down the left the tab's own tree, a node per project,
+    // and a page per url on the right - /project/folder/.../module/type/method, the folders as
+    // the sources stand on disk, and the root listing the projects - with SeeDocs' words while
+    // none is open. What a project's pages edit is written through the browser into that project.
+    // A tab's tree is made the first time the tab is shown, and the nodes it has open are kept
+    // with the tab.
+    export class SurfaceBrowser : public BrowserControl
     {
     public:
         template<typename... Args>
         explicit SurfaceBrowser(const CreateParams&, Args&&...);
     public:
-        // Shows the project's surface: the tree over it, the home page named after the project.
-        // The surface and the notes are held by reference for as long as they are shown, and
-        // what the pages edit is written into them, the project's tree and its database - a
-        // project read in limited mode takes no edits. False where the surface lists nothing:
-        // the tree stands empty, and the home page shows the words given since.
-        [[nodiscard]] bool bind(Surface&, Notes&, const Project&, OpenTabs);
-        // Shows SeeDocs' own words on the home page in place of a surface, the tree
-        // emptied. Every tab goes, and one opens on home.
-        void showWords(const Text&);
-        // Calls the project shown by the name: home's title, and the words on a page that say it.
-        void setProjectName(std::wstring_view name);
-        // The url of what a link names - a type, a module, a chapter or a member - or nothing
-        // where the surface does not carry it.
-        [[nodiscard]] std::optional<Url> urlOf(std::wstring_view target) const;
-        // The words written where they are read from, the database written after them, and every
-        // page standing given them - see refreshPages.
-        [[nodiscard]] std::wstring writeHint(const CommentSite&, std::wstring_view hint) override;
-        [[nodiscard]] FootnoteDraft draftFootnote(const Reference&) override;
-        [[nodiscard]] FootnoteDraft draftFootnote(const CommentSite&,
-            const FootnoteHome&) override;
-        [[nodiscard]] std::wstring writeFootnote(const FootnoteDraft&,
-            std::wstring_view text) override;
+        // Connects a handler raised when the tab shown stands in another project than before.
+        template<typename F>
+        EventConnection onProjectShown(F&& callback);
+        // Shows a project opened: a node of its own at the end of the tree, and its pages under a
+        // segment of its name. The project is held by reference until it is removed, and what its
+        // pages edit is written into it - its tree and its database - unless it is read in
+        // limited mode.
+        void addProject(OpenProject&, HomeTab);
+        void openHome(const OpenProject&);   // a new tab on the project's home
+        // Shows the project again over its surface as it now reads, the tabs standing.
+        void rebindProject(OpenProject&);
+        // Calls the project by its name as it now reads: its node, its segment with every url
+        // under it, and the words on a page that say it.
+        void renameProject(OpenProject&);
+        // Takes the project out, its node and every tab standing in it. A tab is left, on the root
+        // where no other stands.
+        void removeProject(OpenProject&);
+        void showWords(const Text&);   // what the root shows while no project is open
+        // What a project's options page is filled with, each time one is built.
+        void connectProjectPage(ProjectPageBuilder);
+        // The url of what a link on the page names - a type, a module, a chapter or a member of
+        // the page's own project, or a path of the browser - or nothing where it names none.
+        [[nodiscard]] std::optional<Url> urlOf(std::wstring_view target,
+            const PageData& from) const;
+        // What a tab's own file keeps of its tree: the nodes open, by project.
+        [[nodiscard]] static Dom::Dt::Section createTabConfigSchema();
     protected:
         void initPageData(PageData&) override;
         void fetchSubItems(PageData&) override;
         void showPage(BrowserTab&) override;
+        void saveViewState(BrowserTab&) override;   // the tab is closing: its tree goes
         IconSize pageIconSize(PageData&) override;
         void paintPageIcon(PageData&, PaintIconEvent&) override;
         IconSize tabIconSize(BrowserTab&) override;
         void paintTabIcon(BrowserTab&, PaintIconEvent&) override;
     private:
-        // What a path names, read off its segments: the folders down from the root as far as
-        // they go - home for none - then a module of the chapter the last folder is, a type of
+        struct ShownProject;
+        // What a path names, read off its segments: the root for none, else a project by its
+        // segment, and in it its options page, or the folders down from its root as far as they
+        // go - its home for none - then a module of the chapter the last folder is, a type of
         // that or a function or a constant of the module, and a method of the type. A segment
-        // nothing answers for makes the path one the surface does not carry.
+        // nothing answers for makes the path one no project open carries.
         struct Target
         {
+            ShownProject* project{ nullptr };   // null for the root, and for no project open
             std::wstring folder{};              // the category the folder segments spell
-            std::size_t folderDepth{ 0 };       // how many segments are folders
+            std::size_t folderDepth{ 0 };       // how many segments past the project's are folders
             const ContentsChapter* chapter{ nullptr };   // the folder's own chapter, where it is one
             const ContentsModule* module{ nullptr };
             const Type* type{ nullptr };
             std::wstring_view exportName{};     // a function or a constant of the module
             std::wstring_view method{};
             std::size_t depth{ 0 };   // segments of the path
-            [[nodiscard]] bool isHome() const { return depth == 0; }
-            [[nodiscard]] bool isFolder() const { return depth == folderDepth; }
+            bool projectOptions{ false };   // the project's options page
+            [[nodiscard]] bool isRoot() const { return depth == 0; }
+            [[nodiscard]] bool isHome() const { return project && depth == 1; }
+            [[nodiscard]] bool isFolder() const { return project && depth == folderDepth + 1; }
             [[nodiscard]] bool isGone() const;
         };
         // The chapter, module and type a link's spelling names, keyed by that spelling.
@@ -127,33 +186,95 @@ namespace SeeDocs_App
         // Every folder on the way to a chapter, keyed by its category, with the chapter the
         // folder is - null for one that only holds other folders.
         using Folders = std::unordered_map<std::wstring, const ContentsChapter*>;
+        // A project shown: what the workspace opened, the segment its urls start with, and what
+        // its surface lists, read for the trees and the paths. Its pages' edits go through it.
+        struct ShownProject : public IPageWriter
+        {
+            ShownProject(SurfaceBrowser&, OpenProject&, ProjectId);
+            SurfaceBrowser& browser;
+            OpenProject& open;
+            ProjectId id;
+            std::wstring segment{};
+            ContentsChapters contents{};
+            ContentsTree contentsTree{};   // over the contents, which every tab's tree reads
+            Targets targets{};
+            Folders folders{};
+            // Reads the contents, the targets and the folders off the surface as it now reads.
+            void read();
+            // A hint read by the strict rules from C++, where the project edits hints directly.
+            [[nodiscard]] bool writesHint(const CommentSite&) const override;
+            [[nodiscard]] std::wstring writeHint(const CommentSite&,
+                std::wstring_view hint) override;
+            [[nodiscard]] FootnoteDraft draftFootnote(const Reference&) override;
+            [[nodiscard]] FootnoteDraft draftFootnote(const CommentSite&,
+                const FootnoteHome&) override;
+            [[nodiscard]] std::wstring writeFootnote(const FootnoteDraft&,
+                std::wstring_view text) override;
+        };
+        // Held by pointer: a page writes through its project, and the tree's picks name it.
+        using Projects = std::vector<std::unique_ptr<ShownProject>>;
+        // A tab's tree, in the box that scrolls it.
+        struct TabTree
+        {
+            const BrowserTab* tab{ nullptr };
+            ScrollBox* box{ nullptr };
+            SurfaceTree* tree{ nullptr };
+        };
+        using TabTrees = std::vector<TabTree>;
     private:
         [[nodiscard]] Target resolve(const PageData&) const;
-        // The path of the nearest thing named, down to the member where one is given - a method
-        // of the type, or a function or a constant of the module where there is no type.
-        [[nodiscard]] static std::wstring pathOf(std::wstring_view folder, const ContentsModule*,
-            const Type*, std::wstring_view member = {});
+        [[nodiscard]] ShownProject* projectOf(std::wstring_view segment) const;
+        [[nodiscard]] ShownProject* projectOf(ProjectId) const;
+        [[nodiscard]] ShownProject* projectOf(const OpenProject&) const;
+        // The segment a project's urls start with: its name, a slash in it written as a hyphen,
+        // and a number after it where another project open goes by the same.
+        [[nodiscard]] std::wstring segmentFor(std::wstring_view name,
+            const ShownProject* self) const;
+        void openPicked(const TreePickEvent&);
+        // The tab's tree, made with a node per project where the tab has none yet.
+        [[nodiscard]] TabTree& treeOf(const BrowserTab&);
+        // Adds the project's node to the tab's tree, open as the tab last left it.
+        void addToTree(const TabTree&, const ShownProject&);
+        // Writes the project's nodes open in the tab's tree into the tab's file.
+        void storeTreeState(const TabTree&, ProjectId);
+        [[nodiscard]] static std::wstring homePath(const ShownProject&);
+        [[nodiscard]] static std::wstring optionsPath(const ShownProject&);
+        // The path of the nearest thing named in the project, down to the member where one is
+        // given - a method of the type, or a function or a constant of the module where there is
+        // no type.
+        [[nodiscard]] static std::wstring pathOf(const ShownProject&, std::wstring_view folder,
+            const ContentsModule*, const Type*, std::wstring_view member = {});
         // The folders directly under this one, in reading order.
-        [[nodiscard]] std::vector<std::wstring> foldersUnder(std::wstring_view folder) const;
+        [[nodiscard]] static std::vector<std::wstring> foldersUnder(const ShownProject&,
+            std::wstring_view folder);
         [[nodiscard]] std::wstring titleOf(const PageData&, const Target&) const;
         [[nodiscard]] static std::optional<RowIcon> iconOf(const Target&);
-        // The page a target names, built over the surface; nothing where it names words - there
-        // being no surface, or the surface not carrying it.
+        // The page a target names, built over its project's surface; nothing where it names
+        // words - no project open, a surface that lists nothing, a path no project carries - or
+        // the options page.
         [[nodiscard]] std::optional<Page> pageOf(const Target&) const;
-        // Fills a page with what the target names: the words while there is no surface, the
-        // contents on home, and the words of a page the surface does not carry.
+        [[nodiscard]] Page projectsPage() const;   // the root's, while a project is open
+        // Fills a page with what the target names: the projects or SeeDocs' words on the root,
+        // the words of a page no project carries or of a surface that lists nothing, and else the
+        // page the surface gives.
         void fill(SurfacePage&, const Target&, const PageData&) const;
         // Puts the title and the list of this page data and every one under it right for the
-        // surface shown.
+        // projects shown.
         void refreshPageData(PageData&);
-        // Drops every tab's page and shows the selected tab's again, over the surface shown.
-        void rebuildPages();
-        // Gives every page standing the words as the files now hold them, the footnote named
-        // shown once its page is built again.
-        void refreshPages(std::optional<Reference> show);
+        // Whether a change to the project reaches the page: one in the project, or the root,
+        // which lists the projects. Null reaches the root alone.
+        [[nodiscard]] static bool reaches(const Target&, const ShownProject*);
+        // Drops every page the project reaches but the one kept, and shows the selected tab's
+        // again.
+        void rebuildPages(const ShownProject*, const BrowserPage* keep);
+        // Gives every page the project reaches the words as the files now hold them, the
+        // footnote named shown once its page is built again.
+        void refreshPages(const ShownProject&, std::optional<Reference> show);
         // Builds the selected tab's page again, then shows the footnote waiting to be shown.
         void rebuildCurrentPage();
         [[nodiscard]] Text goneWords(const PageData&) const;
+        // A project whose surface lists nothing is open all the same; only its pages are words.
+        [[nodiscard]] static Text emptyWords(const ShownProject&);
         [[nodiscard]] static bool hasMethod(const Type&, std::wstring_view name);
         // Whether the module exports a function or a constant of the name.
         [[nodiscard]] static bool exports(const ContentsModule&, std::wstring_view name);
@@ -161,26 +282,19 @@ namespace SeeDocs_App
         static constexpr float k_treeWidth = 300.0f;
         static constexpr IconSize k_pageIconSize{ 16.0f };
 
-        Surface* m_surface{ nullptr };
-        Notes* m_notes{ nullptr };
-        std::filesystem::path m_sources{};    // the tree the surface's files are named from
-        std::filesystem::path m_database{};
+        Projects m_projects{};
+        ProjectId m_nextId{ 0 };
+        const OpenProject* m_shownProject{ nullptr };   // the selected tab's, as last told
         UiTimer m_rebuildTimer{};
         std::optional<Reference> m_rebuildFootnote{};   // to show once the page stands again
-        ContentsChapters m_contents{};
-        Targets m_targets{};
-        Folders m_folders{};
-        std::wstring m_projectName{};
-        bool m_writes{ false };   // the pages edit the tree - never one read in limited mode
-        Text m_words{};   // what every page shows while there is no surface
+        Text m_words{};   // what the root shows while no project is open
+        ProjectPageBuilder m_projectPageBuilder{};
 
-        SurfaceTree& m_tree{ createLeftBar<ScrollBox>(
-            ScrollBars::Vertical,
-            UiElement::Section,
+        TabTrees m_tabTrees{};
+        // The tabs' trees, the selected tab's shown.
+        PageControl& m_trees{ createLeftBar<PageControl>(
             MinSize{ k_treeWidth, 0.0f },
             MaxSize{ k_treeWidth, k_maxFloat }
-        ).createBody<SurfaceTree>(
-            Padding{ 4.0f }
         ) };
     };
 
@@ -209,6 +323,21 @@ namespace SeeDocs_App
         });
     }
 
+    // ProjectPage
+
+    template<typename... Args>
+    ProjectPage::ProjectPage(const CreateParams& params, Args&&... args)
+        :
+        BrowserPage{
+            params,
+            Padding{ 0.0f },
+            Spacing{ 0.0f },
+            UiElement::Page,
+            std::forward<Args>(args)...
+        }
+    {
+    }
+
     // SurfaceBrowser
 
     template<typename... Args>
@@ -220,9 +349,11 @@ namespace SeeDocs_App
         m_rebuildTimer.onTick([this](TimerEvent&) {
             rebuildCurrentPage();
         });
-        // The tree stands apart from the page a move takes down, so the move needs no wait.
-        m_tree.onPick([this](TreePickEvent& event) {
-            goTo(Url{ pathOf(event.folder, event.module, event.type) });
-        });
+    }
+
+    template<typename F>
+    EventConnection SurfaceBrowser::onProjectShown(F&& callback)
+    {
+        return connectEvent<ProjectShownEvent>(std::forward<F>(callback));
     }
 }

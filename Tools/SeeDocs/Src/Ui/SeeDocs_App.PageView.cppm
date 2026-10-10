@@ -124,7 +124,9 @@ namespace SeeDocs_App
         void showLinkMenu(Control& owner, std::wstring target, ContextPopupEvent&);
         [[nodiscard]] static bool hasFootnotes(const Table&);
         [[nodiscard]] static bool hasFootnotes(const TableGroup&);
-        [[nodiscard]] static bool hasSites(const TableGroup&);
+        // Whether a row of the group has a hint the writer writes.
+        [[nodiscard]] bool writesHints(const TableGroup&) const;
+        [[nodiscard]] bool writesHint(const std::optional<CommentSite>&) const;
         [[nodiscard]] static std::wstring footnoteAnchor(std::size_t index);
     private:
         static constexpr float k_pagePadding = 24.0f;

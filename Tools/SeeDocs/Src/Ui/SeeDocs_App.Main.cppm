@@ -48,10 +48,10 @@ namespace SeeDocs_App
     [[nodiscard]] Dom::Dt::Section rootConfigBlueprint();
     // Nothing a tab's entry keeps beyond what the browser puts there.
     [[nodiscard]] Dom::Dt::Section tabEntryBlueprint();
-    // Nothing a tab's page keeps of its own.
+    // What a tab's own file keeps of its tree.
     [[nodiscard]] Dom::Dt::Section tabConfigBlueprint();
-    // Runs SeeDocs in the browser's form: the workspace over it, the Open page connected and
-    // the project started. Answers what the form answered.
+    // Runs SeeDocs in the browser's form: the workspace over it, the Open page and the projects'
+    // options pages connected, and the project started. Answers what the form answered.
     [[nodiscard]] int runSeeDocs(ApplicationBase&, Form<SurfaceBrowser>&,
         const std::filesystem::path& stated);
 

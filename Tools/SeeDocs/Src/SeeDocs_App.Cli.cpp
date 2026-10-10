@@ -24,14 +24,15 @@ namespace SeeDocs_App
         constexpr int k_misused = 2;
 
         constexpr std::wstring_view k_usage =
-            L"SeeDocsCli - reads the ClaFi design surface out of the tree.\n"
+            L"SeeDocsCli - reads the design surface out of a project's sources.\n"
             L"\n"
-            L"    SeeDocsCli scan [tree] [--out file]   writes the tree's .seedocs/Surface.cfg\n"
-            L"    SeeDocsCli check [tree]               reports deviations, exit code 1 on errors\n"
+            L"    SeeDocsCli scan [folder] [--out file] writes the project's Surface.cfg\n"
+            L"    SeeDocsCli check [folder]             reports deviations, exit code 1 on errors\n"
             L"\n"
-            L"The tree is the folder of sources, read as it stands; the working directory when\n"
-            L"left out. A project set to limited mode - Limited = true in .seedocs/Project.cfg -\n"
-            L"is read as anyone's C++, headers included, and is not checked.\n";
+            L"The folder is a project's own, or a tree with a .seedocs project in it; the working\n"
+            L"directory when left out. A project reads the folders of sources its Project.cfg\n"
+            L"names, as it says; one reading any C++ and Delphi - Limited = true - is not\n"
+            L"checked. A scan with --out takes any other folder too, read as ClaFi modules.\n";
 
         // The process's text goes out as UTF-8, whichever platform the console belongs to.
         void print(const std::wstring_view text)
@@ -41,10 +42,10 @@ namespace SeeDocs_App
             std::cout.flush();
         }
 
-        // What the arguments after the command say. An empty output is the tree's own database.
+        // What the arguments after the command say. An empty output is the project's database.
         struct Options
         {
-            std::filesystem::path tree;
+            std::filesystem::path folder;
             std::filesystem::path output;
             bool valid{ true };
         };
@@ -65,14 +66,14 @@ namespace SeeDocs_App
                     options.output = arguments[i + 1];
                     ++i;
                 }
-                else if (options.tree.empty())
-                    options.tree = argument;
+                else if (options.folder.empty())
+                    options.folder = argument;
                 else
                     options.valid = false;
             }
             // Absolute, so a bare file name has a folder the writer can make sure of.
             std::error_code error;
-            options.tree = std::filesystem::absolute(options.tree, error);
+            options.folder = std::filesystem::absolute(options.folder, error).lexically_normal();
             if (!options.output.empty())
                 options.output = std::filesystem::absolute(options.output, error);
             return options;
@@ -90,31 +91,28 @@ namespace SeeDocs_App
             return count;
         }
 
-        // A scan into the tree's own database makes the tree a project: the command names the
-        // tree, which is the consent SeeDocs asks for in a dialog.
-        // The tree is read as its project says; a tree that is no project is read in full.
-        [[nodiscard]] ScanMode modeOf(const std::filesystem::path& tree)
+        // The project the folder stands for; for a folder that stands for none, one reading it
+        // as ClaFi modules, with no folder of its own.
+        [[nodiscard]] Project projectOf(const std::filesystem::path& folder)
         {
-            const std::optional<Project> project = readProject(tree);
-            return project ? project->mode : ScanMode::Full;
+            if (std::optional<Project> project = readProject(folder))
+                return std::move(*project);
+            return Project{ .sources = { { .path = folder } } };
         }
 
         [[nodiscard]] int scan(const Options& options)
         {
+            const Project project = projectOf(options.folder);
             std::filesystem::path output = options.output;
-            if (output.empty())
+            if (output.empty() && project.folder.empty())
             {
-                std::optional<Project> project = readProject(options.tree);
-                if (!project)
-                    project = createProject(options.tree, ScanMode::Full);
-                if (!project)
-                {
-                    print(L"Cannot make " + dataFolderOf(options.tree).wstring() + L"\n");
-                    return k_failed;
-                }
-                output = project->databasePath();
+                print(L"No project stands for " + options.folder.wstring()
+                    + L" - name a project's folder, or the file to write with --out\n");
+                return k_misused;
             }
-            const Surface surface = scanTree(options.tree, modeOf(options.tree));
+            if (output.empty())
+                output = project.databasePath();
+            const Surface surface = scanSources(project.sources, project.mode, project.hints);
             writeDatabase(surface, output);
             print(std::to_wstring(classCount(surface)) + L" classes, "
                 + std::to_wstring(surface.types().size()) + L" types, "
@@ -123,16 +121,23 @@ namespace SeeDocs_App
             return k_ok;
         }
 
-        // Limited mode holds a tree to nothing: what the checks ask is the routine's.
+        // A project reading any C++ is held to nothing: what the checks ask is the routine's. The
+        // footnotes the references reach are a project's, so a folder that is none is refused.
         [[nodiscard]] int check(const Options& options)
         {
-            if (modeOf(options.tree) == ScanMode::Limited)
+            const Project project = projectOf(options.folder);
+            if (project.folder.empty())
             {
-                print(options.tree.wstring() + L" is read in limited mode, which checks nothing\n");
+                print(L"No project stands for " + options.folder.wstring() + L"\n");
+                return k_misused;
+            }
+            if (project.mode == ScanMode::Limited)
+            {
+                print(project.name + L" reads any C++ and Delphi, which checks nothing\n");
                 return k_ok;
             }
-            const Surface surface = scanTree(options.tree, ScanMode::Full);
-            const Report report = checkSurface(surface, footnotesFolderOf(options.tree));
+            const Surface surface = scanSources(project.sources, ScanMode::Full, project.hints);
+            const Report report = checkSurface(surface, project.footnotesFolder());
             print(formatReport(report, surface));
             print(L"\n" + std::to_wstring(classCount(surface)) + L" classes, "
                 + std::to_wstring(report.errorCount()) + L" errors, "
@@ -156,9 +161,9 @@ namespace SeeDocs_App
             return k_misused;
         }
         std::error_code error;
-        if (!std::filesystem::is_directory(options.tree, error))
+        if (!std::filesystem::is_directory(options.folder, error))
         {
-            print(L"No such folder: " + options.tree.wstring() + L"\n");
+            print(L"No such folder: " + options.folder.wstring() + L"\n");
             return k_misused;
         }
         if (command == k_scanCommand)

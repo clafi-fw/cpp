@@ -140,12 +140,16 @@
     <ClCompile Include="Src\Ui\SeeDocs_App.Icons.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Main.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Main.cppm" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.NewProject.cpp" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.NewProject.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.OpenPage.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.OpenPage.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.PageText.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.PageText.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.PageView.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.PageView.cppm" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.ProjectOptions.cpp" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.ProjectOptions.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.SurfaceTree.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.SurfaceTree.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Workspace.cpp" />

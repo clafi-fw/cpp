@@ -6,7 +6,7 @@ import ClaFi.App.Settings;
 
 namespace SeeDocs_App
 {
-    // Fills the application menu's Open page: the project open, renamed and scanned again there, a
-    // Browse button for another, and the projects opened before. Built afresh as the menu opens.
+    // Fills the application menu's Open page: Browse, and the projects opened before, each
+    // opening a project in a new tab. Built afresh as the menu opens.
     export void buildOpenPage(ClaFi::OptionsPage&, Workspace&);
 }

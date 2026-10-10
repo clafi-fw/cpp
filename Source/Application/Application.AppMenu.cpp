@@ -42,6 +42,17 @@ namespace ClaFi
 
     static void openAppMenu(ActionClickEvent&);
 
+    // A command an application asked for, as it stated it.
+    struct AppCommand
+    {
+        std::wstring caption;
+        EndIcon endIcon{ EndIcon::None };
+        AppCommandHandler run;
+    };
+
+    // The commands applications have asked for, in the order they asked.
+    static std::vector<AppCommand>& appCommands();
+
     constexpr Padding k_itemPadding{ 24.0f, 12.0f };
     // Twice what a button draws its icon at. The strip's items are the backstage's own headings,
     // and an icon at the toolbar's size reads as a bullet beside one.
@@ -65,6 +76,20 @@ namespace ClaFi
         });
     }
 
+    // connectAppCommand
+
+    std::vector<AppCommand>& appCommands()
+    {
+        static std::vector<AppCommand> commands{};
+        return commands;
+    }
+
+    void connectAppCommand(const std::wstring_view caption, const EndIcon endIcon,
+        AppCommandHandler run)
+    {
+        appCommands().push_back(AppCommand{ std::wstring{ caption }, endIcon, std::move(run) });
+    }
+
     // THE MENU IS RUN TO ITS CLOSE, AND WHAT IT ANSWERED IS CARRIED OUT AFTER. Exit closes the
     // window the menu stands on, and doing that from inside the menu's own loop would take the
     // loop down under the click that asked.
@@ -83,6 +108,9 @@ namespace ClaFi
 
         switch (menu.command())
         {
+        case AppMenuCommand::Application:
+            appCommands()[menu.appCommand()].run(menu.commandStamp());
+            break;
         case AppMenuCommand::ShowDiagnostic:
             showDiagnosticWindow(menu.commandStamp());
             break;
@@ -130,6 +158,25 @@ namespace ClaFi
             // starts its caption where the others start their icon, so the strip reads as two
             // columns that do not line up.
             addPageTab(page.caption, appPage, Icons::DotMark::paint);
+        }
+
+        // The application's own commands lead the framework's, under the dot its pages wear.
+        for (std::size_t index = 0; index < appCommands().size(); ++index)
+        {
+            const AppCommand& command = appCommands()[index];
+            strip().add<ToolButton>(
+                Text{ TextStyleId::SubHeading, command.caption },
+                k_itemPadding,
+                command.endIcon,
+                ButtonViewMode::LeftIcon,
+                k_iconSize,
+                k_textAnchor,
+                ToolButton::OnPaintIcon{ Icons::DotMark::paint },
+                ToolButton::OnClick{ [this, index](ClickEvent& event) {
+                    m_appCommand = index;
+                    closeWith(AppMenuCommand::Application, event);
+                } }
+            );
         }
 
         if constexpr (Diagnostic::Options::enabled)

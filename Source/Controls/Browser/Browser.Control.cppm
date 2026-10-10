@@ -260,6 +260,9 @@ namespace ClaFi::Browser
         void deleteTabSettings(BrowserTab&);
         // Closes every tab, frees every page under home and opens one tab on home. See Browser
         void resetToHome();
+        // Gives a page itself a new name - what it stands for is renamePage's business - and puts
+        // the tree right: every tab and history entry at or under it follows to the new path.
+        void renamePageData(PageData&, std::wstring_view newName);
         // Whether this tab may leave the page it is on. Asked before anything moves, so a browser
         // holding work that is not saved can put the question to the user and answer no.
         //

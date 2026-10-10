@@ -37,6 +37,13 @@ namespace SeeDocs_App
 
     export using NoteHits = std::vector<NoteHit>;
 
+    // The note the footnotes of declarations at the root of the sources go into.
+    export constexpr std::wstring_view k_rootNote = L"Home";
+
+    // The heading a footnote found by name is written under: the declaration's name, after its
+    // owner's for a member - Button onClick - so that one heading reaches one declaration.
+    export [[nodiscard]] std::wstring footnoteHeading(std::wstring_view owner,
+        std::wstring_view name);
     // How many marks a heading line opens with; none for a line that is no heading.
     export [[nodiscard]] std::size_t headingLevel(std::wstring_view line);
     // The level of a heading that opens a section; none for the note's title or a plain line.
@@ -64,6 +71,7 @@ namespace SeeDocs_App
         // Lets go of what was read of the note, so the next ask reads the file again. What was
         // handed out of it before goes with it.
         void forget(std::wstring_view stem);
+        void forgetAll();   // every note, the same way
     private:
         [[nodiscard]] static Note read(std::wstring_view stem, const std::wstring& text);
     private:

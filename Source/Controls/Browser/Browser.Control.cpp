@@ -848,7 +848,11 @@ namespace ClaFi::Browser
         // and the editor is left to whatever the refusal said.
         if (newName.empty())
             return;
+        renamePageData(pageData, newName);
+    }
 
+    void BrowserControl::renamePageData(PageData& pageData, const std::wstring_view newName)
+    {
         const std::wstring oldPath = pageData.path();
         pageData.rename(newName);
         // The title went with the name, and this is where a title is worked out - the same hook

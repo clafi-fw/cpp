@@ -11,12 +11,22 @@ import SeeDocs_App.Pages;
 import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
 
+import ClaFi.App.Settings;
+
 import ClaFi.Browser.Consts;
 import ClaFi.Browser.Control;
 import ClaFi.Browser.PageData;
 
+import ClaFi.Controls.PageControl;
+import ClaFi.Controls.ScrollBox;
+import ClaFi.Controls.Tree;
+
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.DomEngine;
+import ClaFi.Core.DomEngine_Dt;
+// The std::wstring serializer, which is what makes the tab's nodes readable as strings.
+import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -37,11 +47,29 @@ namespace SeeDocs_App
     {
         constexpr float k_wordsIndent = 12.0f;   // of a path quoted in SeeDocs' words
         constexpr std::wstring_view k_noteExtension = L".md";
-        constexpr std::wstring_view k_sourceJoin = L" \u203A ";
-        constexpr std::wstring_view k_separator = L" \u00B7 ";
-        constexpr std::wstring_view k_noProject = L"No project is open.";
+        constexpr std::wstring_view k_sourceJoin = L" › ";
+        constexpr std::wstring_view k_separator = L" · ";
+        // The options page's segment, under its project's. The scanner reads no folder whose name
+        // starts with a dot, and no module or header is named so, so no page of a surface can
+        // take it.
+        constexpr std::wstring_view k_optionsSegment = L".project";
+        constexpr std::wstring_view k_unnamedSegment = L"Project";   // for a name that gives none
+        // What a tab's file keeps its tree's open nodes under, an entry per project.
+        constexpr std::wstring_view k_treeNodeName = L"Tree";
 
-        // The names down a path, home's empty one left out: the chapter's first.
+        namespace TreeKeys
+        {
+            constexpr std::wstring_view project = L"Project";   // the project's folder
+            constexpr std::wstring_view home = L"Home";         // its own node open
+            constexpr std::wstring_view folders = L"Folders";   // by category
+            constexpr std::wstring_view modules = L"Modules";   // by name
+        }
+
+        using TreeEntries = Dom::Sequence<Dom::Section>;
+        using NodeNames = Dom::Sequence<std::wstring>;
+        constexpr wchar_t k_segmentSlash = L'-';   // a slash in a project's name, in its segment
+
+        // The names down a path, the root's empty one left out: the project's first.
         [[nodiscard]] std::vector<std::wstring_view> segmentsOf(const PageData& data)
         {
             std::vector<std::wstring_view> result;
@@ -68,6 +96,33 @@ namespace SeeDocs_App
             result.append(1, ConfigNames::pathSeparator).append(name);
             return result;
         }
+
+        // A path as a paragraph of its own, in spot ink, the way SeeDocs' words quote one.
+        void writePath(Text& text, const std::wstring_view path)
+        {
+            text << k_endLine << ParaIndent{ k_wordsIndent };
+            text << PushThemeColor{ InkWell::spotInk() } << path << PopColor{};
+            text << ParaIndent{ 0.0f } << k_endLine;
+        }
+    }
+
+    // OpenProject
+
+    OpenProject::OpenProject(Project opened, Surface read)
+        :
+        project{ std::move(opened) },
+        surface{ std::move(read) },
+        notes{ project.footnotesFolder() }
+    {
+    }
+
+    // ProjectShownEvent
+
+    ProjectShownEvent::ProjectShownEvent(const OpenProject* shown)
+        :
+        ::ClaFi::Event{},
+        project{ shown }
+    {
     }
 
     // SurfacePage
@@ -77,14 +132,14 @@ namespace SeeDocs_App
         return static_cast<SurfaceBrowser&>(tab().browserControl());
     }
 
-    // The link a menu is up for on the page, as the path of the surface it names - so Open and
-    // Open in new tab are about that link, and greyed for one the surface does not carry.
+    // The link a menu is up for on the page, as the path it names - so Open and Open in new tab
+    // are about that link, and greyed for one no project open carries.
     std::wstring SurfacePage::pathToOpen()
     {
         const std::wstring_view target = m_view.menuLink();
         if (target.empty())
             return {};
-        const std::optional<Url> url = browser().urlOf(target);
+        const std::optional<Url> url = browser().urlOf(target, pageData());
         return url.has_value() ? url->path() : std::wstring{};
     }
 
@@ -99,15 +154,19 @@ namespace SeeDocs_App
             browser().goTo(url, HistoryEntry::Replace);
             return;
         }
-        if (const std::optional<Url> url = browser().urlOf(target))
+        if (const std::optional<Url> url = browser().urlOf(target, pageData()))
             browser().goToLater(*url);
     }
 
-    // SurfaceBrowser
+    // SurfaceBrowser::Target
 
     bool SurfaceBrowser::Target::isGone() const
     {
         std::size_t resolved = folderDepth;
+        if (project)
+            ++resolved;
+        if (projectOptions)
+            ++resolved;
         if (module)
             ++resolved;
         if (type || !exportName.empty())
@@ -117,22 +176,26 @@ namespace SeeDocs_App
         return depth > resolved;
     }
 
-    bool SurfaceBrowser::bind(Surface& surface, Notes& notes, const Project& project,
-        const OpenTabs openTabs)
+    // SurfaceBrowser::ShownProject
+
+    SurfaceBrowser::ShownProject::ShownProject(SurfaceBrowser& shownBy, OpenProject& opened,
+        const ProjectId given)
+        :
+        browser{ shownBy },
+        open{ opened },
+        id{ given }
     {
-        m_surface = &surface;
-        m_notes = &notes;
-        m_projectName = project.name;
-        m_writes = project.mode == ScanMode::Full;
-        m_sources = project.folder;
-        m_database = project.databasePath();
-        m_words = {};
-        m_contents = contentsOf(surface);
-        m_targets.clear();
-        m_folders.clear();
-        for (const ContentsChapter& chapter : m_contents)
+    }
+
+    void SurfaceBrowser::ShownProject::read()
+    {
+        contents = contentsOf(open.surface);
+        contentsTree = ContentsTree{ contents };
+        targets.clear();
+        folders.clear();
+        for (const ContentsChapter& chapter : contents)
         {
-            m_targets[chapter.name] = { .chapter = &chapter };
+            targets[chapter.name] = { .chapter = &chapter };
             // Every folder on the way to the chapter's is a folder, whether or not a chapter
             // of its own; the chapter's own folder is this chapter.
             std::wstring folder;
@@ -141,16 +204,16 @@ namespace SeeDocs_App
             {
                 const std::size_t slash = rest.find(ConfigNames::pathSeparator);
                 folder = joinFolder(folder, rest.substr(0, slash));
-                m_folders.try_emplace(folder, nullptr);
+                folders.try_emplace(folder, nullptr);
                 rest = slash == std::wstring_view::npos ? std::wstring_view{} : rest.substr(slash + 1);
             }
-            m_folders[chapter.category] = &chapter;
+            folders[chapter.category] = &chapter;
             for (const ContentsModule& module : chapter.modules)
             {
-                m_targets[module.name] = { .chapter = &chapter, .module = &module };
+                targets[module.name] = { .chapter = &chapter, .module = &module };
                 for (const Type* type : module.types)
                 {
-                    m_targets[type->qualifiedName] = {
+                    targets[type->qualifiedName] = {
                         .chapter = &chapter,
                         .module = &module,
                         .type = type
@@ -158,106 +221,46 @@ namespace SeeDocs_App
                 }
             }
         }
-        m_tree.build(m_contents);
-
-        if (openTabs == OpenTabs::Close)
-            resetToHome();
-        else
-        {
-            refreshPageData(homePageData());
-            rebuildPages();
-        }
-        return !m_contents.empty();
     }
 
-    void SurfaceBrowser::showWords(const Text& words)
+    // The writer puts words where a strict read takes them from, in a C++ comment; a surface read
+    // otherwise than the project now asks is written into by nothing until it is scanned again.
+    bool SurfaceBrowser::ShownProject::writesHint(const CommentSite& site) const
     {
-        m_surface = nullptr;
-        m_notes = nullptr;
-        m_projectName.clear();
-        m_writes = false;
-        m_sources.clear();
-        m_database.clear();
-        m_words = words;
-        m_contents.clear();
-        m_targets.clear();
-        m_folders.clear();
-        m_tree.clear();
-        resetToHome();
+        const Surface& surface = open.surface;
+        if (!open.project.writesHints() || surface.hintRules() != HintRules::Strict)
+            return false;
+        if (site.place.file >= surface.files().size())
+            return false;
+        const std::wstring& module = surface.files()[site.place.file].module;
+        return surface.languageOf(module) == SourceLanguage::Cpp;
     }
 
-    // The name titles home - its crumb, its tab, its line in a list - and is said on the home page
-    // and on a page the surface does not carry, which refreshPages builds again.
-    void SurfaceBrowser::setProjectName(const std::wstring_view name)
-    {
-        m_projectName = name;
-        PageData& home = homePageData();
-        home.title = titleOf(home, resolve(home));
-        BrowserTab* selected = nullptr;
-        for (BrowserTab& tab : tabs())
-        {
-            if (tab.selected())
-                selected = &tab;
-            if (tab.pageData() != &home)
-                continue;
-            storeTabSettings(tab);
-            tab.invalidate();
-        }
-        refreshPages(std::nullopt);
-        // Sent to the url it stands on, the selected tab builds its crumbs again.
-        if (selected && selected->pageData())
-            goTo(*selected->pageData(), selected->anchor(), *selected);
-    }
-
-    std::optional<Url> SurfaceBrowser::urlOf(const std::wstring_view target) const
-    {
-        const Targets::const_iterator found = m_targets.find(std::wstring{ target });
-        if (found != m_targets.end())
-        {
-            const Target& named = found->second;
-            return Url{ pathOf(named.chapter->category, named.module, named.type) };
-        }
-
-        const std::optional<MemberLink> link = readMemberLink(target);
-        if (!link.has_value())
-            return std::nullopt;
-        const Targets::const_iterator owner = m_targets.find(std::wstring{ link->type });
-        if (owner == m_targets.end() || !owner->second.module)
-            return std::nullopt;
-        const Target& named = owner->second;
-        const bool reached = named.type
-            ? hasMethod(*named.type, link->member)
-            : exports(*named.module, link->member);
-        if (!reached)
-            return std::nullopt;
-        return Url{ pathOf(named.chapter->category, named.module, named.type, link->member) };
-    }
-
-    std::wstring SurfaceBrowser::writeHint(const CommentSite& site, const std::wstring_view hint)
+    std::wstring SurfaceBrowser::ShownProject::writeHint(const CommentSite& site,
+        const std::wstring_view hint)
     {
         // Unchanged words are no edit, so the database and the page stay as they are.
         if (!changesHint(site, hint))
             return {};
-        if (!m_surface)
-            return std::wstring{ k_noProject };
-        const Refusal refusal = SeeDocs_App::writeHint(*m_surface, m_sources, site, hint);
+        if (!writesHint(site))
+            return L"The project does not write hints into its sources.";
+        const Refusal refusal = SeeDocs_App::writeHint(open.surface, open.project.sourceRoots(),
+            site, hint);
         if (!refusal.empty())
             return refusal;
-        writeDatabase(*m_surface, m_database);
-        refreshPages(std::nullopt);
+        writeDatabase(open.surface, open.project.databasePath());
+        browser.refreshPages(*this, std::nullopt);
         return {};
     }
 
     // The editor's bar names the note and the section, and how many comments reach it - or that
     // none does, the section being the type's by its name.
-    FootnoteDraft SurfaceBrowser::draftFootnote(const Reference& reference)
+    FootnoteDraft SurfaceBrowser::ShownProject::draftFootnote(const Reference& reference)
     {
         FootnoteDraft draft;
         draft.reference = reference;
-        const NoteSection* section = m_notes
-            ? m_notes->section(reference.note, reference.anchor)
-            : nullptr;
-        if (!m_surface || !section)
+        const NoteSection* section = open.notes.section(reference.note, reference.anchor);
+        if (!section)
         {
             draft.refusal = reference.note + std::wstring{ k_noteExtension }
                 + L" no longer holds this section.";
@@ -266,7 +269,7 @@ namespace SeeDocs_App
         draft.text = flowedText(section->lines);
         draft.place = reference.note + std::wstring{ k_noteExtension }
             + std::wstring{ k_sourceJoin } + section->heading;
-        const std::size_t uses = referencesTo(*m_surface, reference);
+        const std::size_t uses = referencesTo(open.surface, reference);
         draft.place += k_separator;
         if (uses == 0)
             draft.place += L"matched by name";
@@ -277,73 +280,258 @@ namespace SeeDocs_App
         return draft;
     }
 
-    FootnoteDraft SurfaceBrowser::draftFootnote(const CommentSite& site, const FootnoteHome& home)
+    FootnoteDraft SurfaceBrowser::ShownProject::draftFootnote(const CommentSite& site,
+        const FootnoteHome& home)
     {
         FootnoteDraft draft;
-        draft.site = site;
-        if (!m_notes)
-        {
-            draft.refusal = std::wstring{ k_noProject };
-            return draft;
-        }
-        std::optional<NewFootnote> placed = placeFootnote(*m_notes, site, home.note, home.after,
+        std::optional<NewFootnote> placed = placeFootnote(open.notes, site, home.note, home.after,
             home.owner, draft.refusal);
         if (!placed)
             return draft;
         draft.reference = placed->reference;
         draft.place = placed->reference.note + std::wstring{ k_noteExtension }
             + std::wstring{ k_sourceJoin } + placed->heading + std::wstring{ k_separator }
-            + L"new, with a See in the comment";
+            + L"new, matched by name";
         draft.placed = std::move(placed);
         return draft;
     }
 
-    std::wstring SurfaceBrowser::writeFootnote(const FootnoteDraft& draft,
+    std::wstring SurfaceBrowser::ShownProject::writeFootnote(const FootnoteDraft& draft,
         const std::wstring_view text)
     {
-        if (!m_surface || !m_notes)
-            return std::wstring{ k_noProject };
-        if (draft.placed && draft.site)
+        if (draft.placed)
         {
-            const Refusal refusal = addFootnote(*m_surface, *m_notes, m_sources, *draft.site,
-                *draft.placed, text);
+            const Refusal refusal = addFootnote(open.notes, *draft.placed, text);
             if (!refusal.empty())
                 return refusal;
-            writeDatabase(*m_surface, m_database);
-            refreshPages(draft.placed->reference);
+            browser.refreshPages(*this, draft.placed->reference);
             return {};
         }
-        const Refusal refusal = SeeDocs_App::writeFootnote(*m_notes, draft.reference, text);
+        const Refusal refusal = SeeDocs_App::writeFootnote(open.notes, draft.reference, text);
         if (!refusal.empty())
             return refusal;
-        refreshPages(std::nullopt);
+        browser.refreshPages(*this, std::nullopt);
         return {};
     }
 
+    // SurfaceBrowser
+
+    // The pages a project reaches go, whatever was built on its paths while it was not open.
+    void SurfaceBrowser::addProject(OpenProject& open, const HomeTab homeTab)
+    {
+        const ProjectId id = m_nextId;
+        ++m_nextId;
+        std::unique_ptr<ShownProject> made = std::make_unique<ShownProject>(*this, open, id);
+        ShownProject& shown = *made;
+        shown.segment = segmentFor(open.project.name, nullptr);
+        shown.read();
+        m_projects.push_back(std::move(made));
+        for (const TabTree& entry : m_tabTrees)
+            addToTree(entry, shown);
+        refreshPageData(homePageData());
+        rebuildPages(&shown, nullptr);
+        if (homeTab == HomeTab::Open)
+            openHome(open);
+        else if (homeTab == HomeTab::Options)
+            addTab(Url{ optionsPath(shown) });
+    }
+
+    void SurfaceBrowser::openHome(const OpenProject& open)
+    {
+        if (const ShownProject* shown = projectOf(open))
+            addTab(Url{ homePath(*shown) });
+    }
+
+    // THE SELECTED TAB'S OPTIONS PAGE STANDS, where it is this project's: its own buttons are
+    // what read the sources again, and it shows no surface. Each tree's open nodes are asked for
+    // before the contents they were made over go.
+    void SurfaceBrowser::rebindProject(OpenProject& open)
+    {
+        ShownProject* shown = projectOf(open);
+        if (!shown)
+            return;
+        std::vector<OpenRows> opened;
+        for (const TabTree& entry : m_tabTrees)
+            opened.push_back(entry.tree->openRows(shown->id));
+        shown->read();
+        for (std::size_t i = 0; i != m_tabTrees.size(); ++i)
+            m_tabTrees[i].tree->rebuildProject(shown->id, shown->contentsTree, opened[i]);
+        refreshPageData(homePageData());
+        const BrowserPage* keep = nullptr;
+        for (BrowserTab& tab : tabs())
+        {
+            if (!tab.selected() || !tab.page())
+                continue;
+            const BrowserPage& page = static_cast<const BrowserPage&>(*tab.page());
+            const Target target = resolve(page.pageData());
+            if (target.project == shown && target.projectOptions)
+                keep = &page;
+        }
+        rebuildPages(shown, keep);
+    }
+
+    // The segment follows the name, and the browser takes every tab and history entry under it to
+    // the new path - see BrowserControl::renamePageData - so the pages standing keep their place.
+    void SurfaceBrowser::renameProject(OpenProject& open)
+    {
+        ShownProject* shown = projectOf(open);
+        if (!shown)
+            return;
+        const std::wstring segment = segmentFor(open.project.name, shown);
+        if (segment != shown->segment)
+        {
+            PageData* page = homePageData().findSubItem(shown->segment);
+            shown->segment = segment;
+            if (page)
+                renamePageData(*page, segment);
+        }
+        for (const TabTree& entry : m_tabTrees)
+            entry.tree->renameProject(shown->id, open.project.name);
+        refreshPageData(homePageData());
+        BrowserTab* selected = nullptr;
+        for (BrowserTab& tab : tabs())
+        {
+            if (tab.selected())
+                selected = &tab;
+            if (!tab.pageData())
+                continue;
+            const Target target = resolve(*tab.pageData());
+            if (target.project != shown || !target.isHome())
+                continue;
+            // A tab on the project's home is captioned with its name.
+            storeTabSettings(tab);
+            tab.invalidate();
+        }
+        refreshPages(*shown, std::nullopt);
+        // Sent to the url it stands on, the selected tab builds its crumbs again.
+        if (selected && selected->pageData())
+            goTo(*selected->pageData(), selected->anchor(), *selected);
+    }
+
+    // NO TAB CLOSES WHILE IT IS SHOWN: the selected one gives way first, to a tab standing
+    // elsewhere or to a new one on the root, and only then do the project's tabs go.
+    void SurfaceBrowser::removeProject(OpenProject& open)
+    {
+        const Projects::iterator found = std::ranges::find_if(m_projects,
+            [&open](const std::unique_ptr<ShownProject>& shown) {
+                return &shown->open == &open;
+            });
+        if (found == m_projects.end())
+            return;
+        const ShownProject* removed = found->get();
+        std::vector<BrowserTab*> closing;
+        BrowserTab* survivor = nullptr;
+        bool selectedCloses = false;
+        for (BrowserTab& tab : tabs())
+        {
+            if (!tab.pageData() || resolve(*tab.pageData()).project != removed)
+            {
+                if (!survivor)
+                    survivor = &tab;
+                continue;
+            }
+            closing.push_back(&tab);
+            if (tab.selected())
+                selectedCloses = true;
+        }
+        if (selectedCloses && survivor)
+            survivor->select();
+        else if (selectedCloses)
+            addTab();
+        for (BrowserTab* tab : closing)
+        {
+            deleteTabSettings(*tab);
+            tab->deleteSelf();
+        }
+        for (const TabTree& entry : m_tabTrees)
+            entry.tree->removeProject(removed->id);
+        m_projects.erase(found);
+        refreshPageData(homePageData());
+        rebuildPages(nullptr, nullptr);
+    }
+
+    void SurfaceBrowser::showWords(const Text& words)
+    {
+        m_words = words;
+        rebuildPages(nullptr, nullptr);
+    }
+
+    void SurfaceBrowser::connectProjectPage(ProjectPageBuilder builder)
+    {
+        m_projectPageBuilder = std::move(builder);
+    }
+
+    // A target starting with the path separator is a path already - the root's links to the
+    // projects are; anything else is looked up in the page's own project.
+    std::optional<Url> SurfaceBrowser::urlOf(const std::wstring_view target,
+        const PageData& from) const
+    {
+        if (target.starts_with(ConfigNames::pathSeparator))
+            return Url{ target };
+        const ShownProject* project = resolve(from).project;
+        if (!project)
+            return std::nullopt;
+
+        const Targets::const_iterator found = project->targets.find(std::wstring{ target });
+        if (found != project->targets.end())
+        {
+            const Target& named = found->second;
+            return Url{ pathOf(*project, named.chapter->category, named.module, named.type) };
+        }
+
+        const std::optional<MemberLink> link = readMemberLink(target);
+        if (!link.has_value())
+            return std::nullopt;
+        const Targets::const_iterator owner = project->targets.find(std::wstring{ link->type });
+        if (owner == project->targets.end() || !owner->second.module)
+            return std::nullopt;
+        const Target& named = owner->second;
+        const bool reached = named.type
+            ? hasMethod(*named.type, link->member)
+            : exports(*named.module, link->member);
+        if (!reached)
+            return std::nullopt;
+        return Url{ pathOf(*project, named.chapter->category, named.module, named.type,
+            link->member) };
+    }
+
     // Said for every page as it is built, which is before anything asks for its list: a page
-    // with a list carries a strip from the start. A folder holds folders or modules and a module
-    // what it exports, by construction; a type holds methods where it has any.
+    // with a list carries a strip from the start. The root holds the projects, a folder holds
+    // folders or modules and a module what it exports, by construction; a type holds methods
+    // where it has any.
     void SurfaceBrowser::initPageData(PageData& data)
     {
         const Target target = resolve(data);
         data.title = titleOf(data, target);
-        const bool hasList = target.isHome()
-            || (!target.isGone() && target.method.empty() && target.exportName.empty()
+        const bool hasList = target.isRoot()
+            || (target.project && !target.isGone() && !target.projectOptions
+                && target.method.empty() && target.exportName.empty()
                 && (!target.type || !methodNames(*target.type).empty()));
         if (hasList)
             data.fetchState = FetchState::HasChildren;
     }
 
-    // The set under a page stands while the surface does, so the page is marked Fetched; another
-    // surface puts the mark back - see refreshPageData.
+    // The set under a page stands while the projects do, so the page is marked Fetched; a change
+    // to them puts the mark back - see refreshPageData. A home's list starts as its node in the
+    // tree does, with the project's options page.
     void SurfaceBrowser::fetchSubItems(PageData& data)
     {
         const Target target = resolve(data);
-        if (target.isGone())
+        if (target.isRoot())
+        {
+            for (const std::unique_ptr<ShownProject>& shown : m_projects)
+                addSubItem(data, shown->segment);
+            data.fetchState = FetchState::Fetched;
             return;
+        }
+        if (target.isGone() || target.projectOptions)
+            return;
+        const ShownProject& project = *target.project;
         if (target.isFolder())
         {
-            for (const std::wstring& name : foldersUnder(target.folder))
+            if (target.isHome())
+                addSubItem(data, k_optionsSegment);
+            for (const std::wstring& name : foldersUnder(project, target.folder))
                 addSubItem(data, name);
             if (target.chapter)
             {
@@ -367,14 +555,15 @@ namespace SeeDocs_App
     }
 
     // A PAGE IS BUILT FOR ONE PAGE DATA, so a tab that has moved to another needs a new page even
-    // where the kind of page is the same. The tree follows the tab wherever it has gone.
+    // where the kind of page is the same. The tab's tree is shown and follows the tab wherever it
+    // has gone, and the project it stands in is told when it is another than before.
     void SurfaceBrowser::showPage(BrowserTab& tab)
     {
         PageData& data = *tab.pageData();
         const Target target = resolve(data);
         data.title = titleOf(data, target);
 
-        SurfacePage* page = static_cast<SurfacePage*>(tab.page());
+        BrowserPage* page = static_cast<BrowserPage*>(tab.page());
         if (page && &page->pageData() != &data)
         {
             page->deleteSelf();
@@ -383,20 +572,61 @@ namespace SeeDocs_App
         }
         if (!page)
         {
-            page = &tab.createPage<SurfacePage>();
-            if (m_writes)
-                page->view().setWriter(*this);
-            fill(*page, target, data);
+            if (target.projectOptions)
+            {
+                ProjectPage& projectPage = tab.createPage<ProjectPage>();
+                if (m_projectPageBuilder)
+                    m_projectPageBuilder(projectPage.options(), target.project->open);
+                page = &projectPage;
+            }
+            else
+            {
+                SurfacePage& surfacePage = tab.createPage<SurfacePage>();
+                if (target.project)
+                    surfacePage.view().setWriter(*target.project);
+                fill(surfacePage, target, data);
+                page = &surfacePage;
+            }
             tab.setPage(page);
             // The page is what the icon comes from once there is one, and the tab last asked
             // before it existed.
             tab.updateIconMode();
             page->show();
         }
-        if (target.isGone())
-            m_tree.follow({}, nullptr, nullptr);
+
+        TabTree& tabTree = treeOf(tab);
+        m_trees.setCurrentItem(tabTree.box);
+        SurfaceTree& tree = *tabTree.tree;
+        if (!target.project || target.isGone())
+            tree.setCurrentItem(nullptr);
+        else if (target.projectOptions)
+            tree.followOptions(target.project->id);
+        else if (target.isHome())
+            tree.followHome(target.project->id);
         else
-            m_tree.follow(target.folder, target.module, target.type);
+            tree.follow(target.project->id, target.folder, target.module, target.type);
+
+        const OpenProject* shown = target.project ? &target.project->open : nullptr;
+        if (shown != m_shownProject)
+        {
+            m_shownProject = shown;
+            ProjectShownEvent event{ shown };
+            emitEvent(event);
+        }
+    }
+
+    // ASKED AS A TAB'S PAGE GOES WITH THE TAB, which is the one time it is: the nodes the tree has
+    // open were written into the tab's file as they opened, and the file goes too.
+    void SurfaceBrowser::saveViewState(BrowserTab& tab)
+    {
+        const TabTrees::iterator found = std::ranges::find_if(m_tabTrees,
+            [&tab](const TabTree& entry) {
+                return entry.tab == &tab;
+            });
+        if (found == m_tabTrees.end())
+            return;
+        found->box->deleteSelf();
+        m_tabTrees.erase(found);
     }
 
     IconSize SurfaceBrowser::pageIconSize(PageData& data)
@@ -423,42 +653,56 @@ namespace SeeDocs_App
             paintPageIcon(*tab.pageData(), event);
     }
 
-    // The folders are taken as far as the segments spell folders the surface has, and what
-    // follows is looked up by its spelling and held to the one above it, so a module's name
-    // under the wrong folder resolves to nothing, as a path the surface does not carry does.
+    // The project is taken by its segment, the folders as far as the segments after it spell
+    // folders its surface has, and what follows is looked up by its spelling and held to the one
+    // above it, so a module's name under the wrong folder resolves to nothing, as a path no
+    // project carries does.
     SurfaceBrowser::Target SurfaceBrowser::resolve(const PageData& data) const
     {
         const std::vector<std::wstring_view> segments = segmentsOf(data);
         Target result{ .depth = segments.size() };
-        std::size_t next = 0;
+        if (segments.empty())
+            return result;
+        ShownProject* project = projectOf(segments.front());
+        if (!project)
+            return result;
+        result.project = project;
+        if (segments.size() == 2 && segments[1] == k_optionsSegment)
+        {
+            result.projectOptions = true;
+            return result;
+        }
+
+        std::size_t next = 1;
         while (next < segments.size())
         {
             const std::wstring candidate = joinFolder(result.folder, segments[next]);
-            if (!m_folders.contains(candidate))
+            if (!project->folders.contains(candidate))
                 break;
             result.folder = candidate;
             ++next;
         }
-        result.folderDepth = next;
-        const Folders::const_iterator folder = m_folders.find(result.folder);
-        if (folder != m_folders.end())
+        result.folderDepth = next - 1;
+        const Folders::const_iterator folder = project->folders.find(result.folder);
+        if (folder != project->folders.end())
             result.chapter = folder->second;
         if (next == segments.size() || !result.chapter)
             return result;
 
         // A header's segment is its file name, and the folders before it make its name.
-        Targets::const_iterator found = m_targets.find(joinFolder(result.folder, segments[next]));
-        if (found == m_targets.end() || !found->second.module || !found->second.module->header)
-            found = m_targets.find(std::wstring{ segments[next] });
-        if (found == m_targets.end() || !found->second.module || found->second.type
+        const Targets& targets = project->targets;
+        Targets::const_iterator found = targets.find(joinFolder(result.folder, segments[next]));
+        if (found == targets.end() || !found->second.module || !found->second.module->header)
+            found = targets.find(std::wstring{ segments[next] });
+        if (found == targets.end() || !found->second.module || found->second.type
             || found->second.chapter != result.chapter)
             return result;
         result.module = found->second.module;
         if (++next == segments.size())
             return result;
 
-        found = m_targets.find(std::wstring{ segments[next] });
-        if (found == m_targets.end() || !found->second.type
+        found = targets.find(std::wstring{ segments[next] });
+        if (found == targets.end() || !found->second.type
             || found->second.module != result.module)
         {
             if (exports(*result.module, segments[next]))
@@ -474,11 +718,189 @@ namespace SeeDocs_App
         return result;
     }
 
-    // A folder's category spells its folders with the path's own separator.
-    std::wstring SurfaceBrowser::pathOf(const std::wstring_view folder,
-        const ContentsModule* module, const Type* type, const std::wstring_view member)
+    SurfaceBrowser::ShownProject* SurfaceBrowser::projectOf(const std::wstring_view segment) const
+    {
+        for (const std::unique_ptr<ShownProject>& shown : m_projects)
+        {
+            if (shown->segment == segment)
+                return shown.get();
+        }
+        return nullptr;
+    }
+
+    SurfaceBrowser::ShownProject* SurfaceBrowser::projectOf(const ProjectId id) const
+    {
+        for (const std::unique_ptr<ShownProject>& shown : m_projects)
+        {
+            if (shown->id == id)
+                return shown.get();
+        }
+        return nullptr;
+    }
+
+    SurfaceBrowser::ShownProject* SurfaceBrowser::projectOf(const OpenProject& open) const
+    {
+        for (const std::unique_ptr<ShownProject>& shown : m_projects)
+        {
+            if (&shown->open == &open)
+                return shown.get();
+        }
+        return nullptr;
+    }
+
+    // A slash would split the segment in two. A project whose own segment is asked for again
+    // keeps it where its name still gives it, so a project is never renumbered against itself.
+    std::wstring SurfaceBrowser::segmentFor(const std::wstring_view name,
+        const ShownProject* self) const
+    {
+        std::wstring base{ name };
+        std::ranges::replace(base, ConfigNames::pathSeparator, k_segmentSlash);
+        if (base.empty())
+            base = k_unnamedSegment;
+        std::wstring result = base;
+        for (std::size_t number = 2; ; ++number)
+        {
+            const bool taken = std::ranges::any_of(m_projects,
+                [self, &result](const std::unique_ptr<ShownProject>& shown) {
+                    return shown.get() != self && shown->segment == result;
+                });
+            if (!taken)
+                return result;
+            result = base + L" " + std::to_wstring(number);
+        }
+    }
+
+    void SurfaceBrowser::openPicked(const TreePickEvent& event)
+    {
+        const ShownProject* project = projectOf(event.project);
+        if (!project)
+            return;
+        switch (event.kind)
+        {
+            case RowKind::Home:
+                goTo(Url{ homePath(*project) });
+                return;
+            case RowKind::Options:
+                goTo(Url{ optionsPath(*project) });
+                return;
+            case RowKind::Contents:
+                goTo(Url{ pathOf(*project, event.folder, event.module, event.type) });
+                return;
+        }
+    }
+
+    // The tree stands apart from the page a pick's move takes down, so the move needs no wait.
+    SurfaceBrowser::TabTree& SurfaceBrowser::treeOf(const BrowserTab& tab)
+    {
+        for (TabTree& entry : m_tabTrees)
+        {
+            if (entry.tab == &tab)
+                return entry;
+        }
+        ScrollBox& box = m_trees.add<ScrollBox>(
+            ScrollBars::Vertical,
+            UiElement::Section
+        );
+        SurfaceTree& tree = box.createBody<SurfaceTree>(Padding{ 4.0f });
+        m_tabTrees.push_back({ .tab = &tab, .box = &box, .tree = &tree });
+        const std::size_t index = m_tabTrees.size() - 1;
+        tree.onPick([this](TreePickEvent& event) {
+            openPicked(event);
+        });
+        const BrowserTab* owner = &tab;
+        tree.onToggle([this, owner](TreeToggleEvent& event) {
+            for (const TabTree& entry : m_tabTrees)
+            {
+                if (entry.tab == owner)
+                    storeTreeState(entry, event.project);
+            }
+        });
+        for (const std::unique_ptr<ShownProject>& shown : m_projects)
+            addToTree(m_tabTrees[index], *shown);
+        return m_tabTrees[index];
+    }
+
+    // A project the tab's file says nothing of comes in closed.
+    void SurfaceBrowser::addToTree(const TabTree& entry, const ShownProject& shown)
+    {
+        entry.tree->addProject(shown.id, shown.open.project.name, shown.contentsTree);
+        const Dom::Section& config = settings().tabConfig(entry.tab->id());
+        const TreeEntries& states = (config / k_treeNodeName).as<TreeEntries>();
+        const std::wstring folder = shown.open.project.folder.wstring();
+        for (const Dom::Section& state : states)
+        {
+            if ((state / TreeKeys::project).get<std::wstring>() != folder)
+                continue;
+            OpenRows open{ .home = (state / TreeKeys::home).get<bool>() };
+            for (const std::wstring& name : (state / TreeKeys::folders).as<NodeNames>().get())
+                open.folders.push_back(name);
+            for (const std::wstring& name : (state / TreeKeys::modules).as<NodeNames>().get())
+                open.modules.push_back(name);
+            entry.tree->restoreRows(shown.id, open);
+            return;
+        }
+    }
+
+    // Kept by the project's folder, which a rename leaves where it was, so a project opened again
+    // comes back as the tab left it.
+    void SurfaceBrowser::storeTreeState(const TabTree& entry, const ProjectId id)
+    {
+        const ShownProject* shown = projectOf(id);
+        if (!shown)
+            return;
+        const OpenRows open = entry.tree->openRows(id);
+        const std::wstring folder = shown->open.project.folder.wstring();
+        Dom::Section& config = settings().tabConfig(entry.tab->id());
+        TreeEntries& states = (config / k_treeNodeName).as<TreeEntries>();
+        Dom::Section* found = states.childWhere(TreeKeys::project, folder);
+        Dom::Section& state = found ? *found : states.add();
+        (state / TreeKeys::project).set(folder);
+        (state / TreeKeys::home).set(open.home);
+        NodeNames& folders = (state / TreeKeys::folders).as<NodeNames>();
+        folders.clear();
+        for (const std::wstring& name : open.folders)
+            folders.add().set(name);
+        NodeNames& modules = (state / TreeKeys::modules).as<NodeNames>();
+        modules.clear();
+        for (const std::wstring& name : open.modules)
+            modules.add().set(name);
+    }
+
+    Dom::Dt::Section SurfaceBrowser::createTabConfigSchema()
+    {
+        return Dom::Dt::Section{
+            Dom::Dt::Sequence{
+                k_treeNodeName,
+                Dom::Dt::Section{
+                    Dom::Dt::Value{ TreeKeys::project, std::wstring{} },
+                    Dom::Dt::Value{ TreeKeys::home, false },
+                    Dom::Dt::Sequence{ TreeKeys::folders, std::wstring{} },
+                    Dom::Dt::Sequence{ TreeKeys::modules, std::wstring{} }
+                }
+            }
+        };
+    }
+
+    std::wstring SurfaceBrowser::homePath(const ShownProject& project)
     {
         std::wstring result;
+        result.append(1, ConfigNames::pathSeparator).append(project.segment);
+        return result;
+    }
+
+    std::wstring SurfaceBrowser::optionsPath(const ShownProject& project)
+    {
+        std::wstring result = homePath(project);
+        result.append(1, ConfigNames::pathSeparator).append(k_optionsSegment);
+        return result;
+    }
+
+    // A folder's category spells its folders with the path's own separator.
+    std::wstring SurfaceBrowser::pathOf(const ShownProject& project,
+        const std::wstring_view folder, const ContentsModule* module, const Type* type,
+        const std::wstring_view member)
+    {
+        std::wstring result = homePath(project);
         if (!folder.empty())
             result.append(1, ConfigNames::pathSeparator).append(folder);
         if (!module)
@@ -493,10 +915,11 @@ namespace SeeDocs_App
 
     // The folders directly under one are read off every chapter's category, in the order the
     // chapters read, each once.
-    std::vector<std::wstring> SurfaceBrowser::foldersUnder(const std::wstring_view folder) const
+    std::vector<std::wstring> SurfaceBrowser::foldersUnder(const ShownProject& project,
+        const std::wstring_view folder)
     {
         std::vector<std::wstring> result;
-        for (const ContentsChapter& chapter : m_contents)
+        for (const ContentsChapter& chapter : project.contents)
         {
             std::wstring_view rest = chapter.category;
             if (!folder.empty())
@@ -516,29 +939,32 @@ namespace SeeDocs_App
         return result;
     }
 
-    // A page the surface does not carry is titled off its own segment still, so a crumb or a
-    // history line names what was there.
+    // A page no project carries is titled off its own segment still, so a crumb or a history
+    // line names what was there.
     std::wstring SurfaceBrowser::titleOf(const PageData& data, const Target& target) const
     {
-        if (target.isHome())
-        {
-            if (m_surface)
-                return m_projectName;
+        if (target.isRoot())
             return appContext().appName().plainText();
-        }
-        if (target.depth <= target.folderDepth)
+        if (!target.project)
+            return data.name;
+        if (target.isHome())
+            return target.project->open.project.name;
+        if (target.projectOptions)
+            return std::wstring{ k_optionsTitle };
+        const std::size_t folders = target.folderDepth + 1;
+        if (target.depth <= folders)
             return folderNameOf(data.name);
-        if (target.module && target.depth == target.folderDepth + 1)
+        if (target.module && target.depth == folders + 1)
             return target.module->shortName;
-        if (target.type && target.depth == target.folderDepth + 2)
+        if (target.type && target.depth == folders + 2)
             return target.type->name;
         return data.name;
     }
 
     std::optional<RowIcon> SurfaceBrowser::iconOf(const Target& target)
     {
-        if (target.isGone() || target.isHome() || !target.method.empty()
-            || !target.exportName.empty())
+        if (!target.project || target.isGone() || target.isHome() || target.projectOptions
+            || !target.method.empty() || !target.exportName.empty())
         {
             return std::nullopt;
         }
@@ -551,35 +977,78 @@ namespace SeeDocs_App
 
     std::optional<Page> SurfaceBrowser::pageOf(const Target& target) const
     {
-        if (!m_surface || target.isGone())
+        if (target.isRoot())
+        {
+            if (m_projects.empty())
+                return std::nullopt;
+            return projectsPage();
+        }
+        if (target.isGone() || target.projectOptions || target.project->contents.empty())
             return std::nullopt;
+        const ShownProject& project = *target.project;
+        OpenProject& open = project.open;
         if (target.isHome())
-            return homePage(*m_surface, *m_notes, m_contents, m_projectName);
+            return homePage(open.surface, open.notes, project.contents, open.project.name);
         if (target.isFolder() && !target.chapter)
         {
-            return contentsPage(chaptersUnder(m_contents, target.folder),
+            return contentsPage(chaptersUnder(project.contents, target.folder),
                 folderNameOf(target.folder));
         }
         if (target.isFolder())
-            return chapterPage(*m_surface, *m_notes, m_contents, *target.chapter);
+            return chapterPage(open.surface, open.notes, project.contents, *target.chapter);
         if (!target.exportName.empty())
         {
-            return exportPage(*m_surface, *m_notes, *target.chapter, *target.module,
+            return exportPage(open.surface, open.notes, *target.chapter, *target.module,
                 target.exportName);
         }
         if (!target.type)
-            return modulePage(*m_surface, *m_notes, *target.chapter, *target.module);
+            return modulePage(open.surface, open.notes, *target.chapter, *target.module);
         if (target.method.empty())
-            return typePage(*m_surface, *m_notes, *target.type);
-        return methodPage(*m_surface, *m_notes, *target.type, target.method);
+            return typePage(open.surface, open.notes, *target.type);
+        return methodPage(open.surface, open.notes, *target.type, target.method);
+    }
+
+    // Each project links to its home by path, beside the folder it reads.
+    Page SurfaceBrowser::projectsPage() const
+    {
+        TableGroup projects;
+        for (const std::unique_ptr<ShownProject>& shown : m_projects)
+        {
+            TableRow row;
+            row.cells.push_back({
+                Run{ .text = shown->open.project.name, .link = homePath(*shown) }
+            });
+            row.cells.push_back({
+                Run{ .text = shown->open.project.folder.wstring(), .style = RunStyle::Muted }
+            });
+            projects.rows.push_back(std::move(row));
+        }
+        const std::size_t count = projects.rows.size();
+        Section section;
+        section.kind = SectionKind::Table;
+        section.heading = { Run{ .text = L"Open projects" } };
+        section.hint = std::to_wstring(count) + (count == 1 ? L" element" : L" elements");
+        section.table.columns = {
+            TableColumn{ .name = L"Project" },
+            TableColumn{ .name = L"Folder", .fills = true }
+        };
+        section.table.groups.push_back(std::move(projects));
+
+        Page page;
+        page.title = appContext().appName().plainText();
+        page.sections.push_back(std::move(section));
+        return page;
     }
 
     void SurfaceBrowser::fill(SurfacePage& page, const Target& target, const PageData& data) const
     {
         PageView& view = page.view();
-        if (!m_surface)
+        if (target.isRoot())
         {
-            view.showText(m_words);
+            if (m_projects.empty())
+                view.showText(m_words);
+            else
+                view.show(projectsPage());
             return;
         }
         if (target.isGone())
@@ -587,13 +1056,18 @@ namespace SeeDocs_App
             view.showText(goneWords(data));
             return;
         }
+        if (target.project->contents.empty())
+        {
+            view.showText(emptyWords(*target.project));
+            return;
+        }
         if (std::optional<Page> built = pageOf(target))
             view.show(std::move(*built));
     }
 
     // The page datas standing are the ones restored from the settings and the ones walked since;
-    // their titles were worked out against whatever surface stood then, and their lists are the
-    // old surface's.
+    // their titles were worked out against whatever projects stood then, and their lists are
+    // those projects'.
     void SurfaceBrowser::refreshPageData(PageData& data)
     {
         data.title.clear();
@@ -603,44 +1077,60 @@ namespace SeeDocs_App
             refreshPageData(*item);
     }
 
-    // The selected tab is sent to the url it stands on, which builds its page; any other tab's
-    // page is built when the tab is selected.
-    void SurfaceBrowser::rebuildPages()
+    bool SurfaceBrowser::reaches(const Target& target, const ShownProject* project)
+    {
+        return target.isRoot() || (project && target.project == project);
+    }
+
+    // The selected tab is sent to the url it stands on, which builds its page again where it
+    // went; any other tab's page is built when the tab is selected.
+    //
+    // A PAGE A PROJECT REACHES WAS BUILT SINCE THE PROJECT WAS ADDED - adding one drops every page
+    // on its paths - so the target a standing page resolves to says which kind of page it is.
+    void SurfaceBrowser::rebuildPages(const ShownProject* project, const BrowserPage* keep)
     {
         BrowserTab* selected = nullptr;
         for (BrowserTab& tab : tabs())
         {
-            if (tab.page())
-            {
-                tab.page()->deleteSelf();
-                tab.setPage(nullptr);
-            }
             if (tab.selected())
                 selected = &tab;
+            const BrowserPage* page = static_cast<const BrowserPage*>(tab.page());
+            if (!page || page == keep || !reaches(resolve(page->pageData()), project))
+                continue;
+            tab.page()->deleteSelf();
+            tab.setPage(nullptr);
         }
-        if (selected)
+        if (selected && selected->pageData())
             goTo(*selected->pageData(), selected->anchor(), *selected);
     }
 
     // THE EDIT THAT ASKED STANDS ON THE SELECTED TAB'S PAGE, so that page takes the new words in
     // place - nothing under the edit is deleted - and is built again only once the edit has
     // unwound, where the words changed what the page is made of: a footnote added. Any other
-    // tab's page goes, and is built when its tab is selected.
-    void SurfaceBrowser::refreshPages(std::optional<Reference> show)
+    // tab's page the project reaches goes, and is built when its tab is selected. An options
+    // page takes no words from the files, and stands as it is.
+    void SurfaceBrowser::refreshPages(const ShownProject& project,
+        std::optional<Reference> show)
     {
         for (BrowserTab& tab : tabs())
         {
-            SurfacePage* page = static_cast<SurfacePage*>(tab.page());
-            if (!page)
+            BrowserPage* standing = static_cast<BrowserPage*>(tab.page());
+            if (!standing)
+                continue;
+            const Target target = resolve(standing->pageData());
+            if (!reaches(target, &project))
                 continue;
             if (!tab.selected())
             {
-                page->deleteSelf();
+                standing->deleteSelf();
                 tab.setPage(nullptr);
                 continue;
             }
-            std::optional<Page> built = pageOf(resolve(page->pageData()));
-            if (built && page->view().refresh(std::move(*built)))
+            if (target.projectOptions)
+                continue;
+            SurfacePage& page = static_cast<SurfacePage&>(*standing);
+            std::optional<Page> built = pageOf(target);
+            if (built && page.view().refresh(std::move(*built)))
                 continue;
             m_rebuildFootnote = std::move(show);
             m_rebuildTimer.start(MilliSeconds{ 0u });
@@ -666,24 +1156,59 @@ namespace SeeDocs_App
             tab->setPage(nullptr);
         }
         goTo(*tab->pageData(), tab->anchor(), *tab);
-        const SurfacePage* page = static_cast<const SurfacePage*>(tab->page());
-        if (!show || !page)
+        if (!show || !tab->page() || resolve(*tab->pageData()).projectOptions)
             return;
-        const std::wstring anchor = page->view().anchorOf(*show);
+        const SurfacePage& page = static_cast<const SurfacePage&>(*tab->page());
+        const std::wstring anchor = page.view().anchorOf(*show);
         if (!anchor.empty())
             goTo(Url{ tab->pageData()->path(), anchor }, HistoryEntry::Replace);
     }
 
     Text SurfaceBrowser::goneWords(const PageData& data) const
     {
+        const ShownProject* project = resolve(data).project;
         Text text;
         text << TextStyleId::Title << L"No such page" << PopTextStyle{};
         text << k_endLine << k_endLine;
-        text << m_projectName << L" has no page at this path:";
-        text << k_endLine << ParaIndent{ k_wordsIndent };
-        text << PushThemeColor{ InkWell::spotInk() } << data.path() << PopColor{};
-        text << ParaIndent{ 0.0f } << k_endLine << k_endLine;
-        text << L"The tree may have been scanned again since the page was last open.";
+        if (project)
+            text << project->open.project.name << L" has no page at this path:";
+        else
+            text << L"No project open has a page at this path:";
+        writePath(text, data.path());
+        text << k_endLine;
+        if (project)
+            text << L"The tree may have been scanned again since the page was last open.";
+        else
+            text << L"The project may have been closed or renamed since the page was last open.";
+        return text;
+    }
+
+    Text SurfaceBrowser::emptyWords(const ShownProject& shown)
+    {
+        const Project& project = shown.open.project;
+        Text text;
+        text << TextStyleId::Title << project.name << PopTextStyle{};
+        text << k_endLine << k_endLine;
+        if (project.sources.empty())
+        {
+            text << L"There is nothing to document yet: the project reads no folder of sources. "
+                L"Its options page adds them." << k_endLine;
+            return text;
+        }
+        if (project.mode == ScanMode::Full)
+        {
+            text << L"There is nothing to document: no source in its folders exports a type. "
+                L"A third-party library is read as any C++ and Delphi, which the project's "
+                L"options page sets." << k_endLine;
+        }
+        else
+        {
+            text << L"There is nothing to document: no source in its folders declares a type."
+                << k_endLine;
+        }
+        text << (project.sources.size() == 1 ? L"The folder read is:" : L"The folders read are:");
+        for (const SourceFolder& source : project.sources)
+            writePath(text, source.path.wstring());
         return text;
     }
 

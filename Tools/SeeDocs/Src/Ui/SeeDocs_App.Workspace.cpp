@@ -1,8 +1,8 @@
 module SeeDocs_App.Workspace;
 
 import SeeDocs_App.Browser;
+import SeeDocs_App.NewProject;
 import SeeDocs_App.Database;
-import SeeDocs_App.Notes;
 import SeeDocs_App.Project;
 import SeeDocs_App.Scanner;
 import SeeDocs_App.Surface;
@@ -21,6 +21,7 @@ import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
@@ -34,7 +35,7 @@ namespace SeeDocs_App
 
     namespace
     {
-        using RecentNode = Dom::Sequence<std::wstring>;
+        using FoldersNode = Dom::Sequence<std::wstring>;
 
         constexpr std::wstring_view k_titleSeparator = L" - ";
 
@@ -73,61 +74,71 @@ namespace SeeDocs_App
         m_startTimer.onTick([this](TimerEvent&) {
             openFolder(std::exchange(m_statedToMake, {}));
         });
-    }
-
-    const Project* Workspace::project() const
-    {
-        return m_project ? &*m_project : nullptr;
+        m_closeTimer.onTick([this](TimerEvent&) {
+            if (OpenProject* closing = std::exchange(m_closing, nullptr))
+                close(*closing);
+        });
+        m_madeTimer.onTick([this](TimerEvent&) {
+            std::optional<Project> made = std::exchange(m_made, std::nullopt);
+            Text reason;
+            if (made && !openProject(std::move(*made), reason, HomeTab::Options))
+                refuse(L"Cannot open the project", reason);
+        });
+        // The window title names the project the tab shown stands in.
+        m_projectShown = m_browser.onProjectShown([this](ProjectShownEvent& event) {
+            m_shown = event.project;
+            writeTitle();
+        });
     }
 
     Workspace::Folders Workspace::recentFolders() const
     {
         Folders result;
-        const std::wstring open = m_project ? m_project->folder.wstring() : std::wstring{};
         for (const std::wstring& name : storedRecent())
         {
-            if (name != open)
+            if (!openFor(name))
                 result.emplace_back(name);
         }
         return result;
     }
 
-    // A project that stands already opens before the window is up, so the first frame shows it.
-    // A folder that is not one yet is opened once the window is up, since making one asks. Nothing
-    // is guessed from where SeeDocs stands: the tree is the user's to name.
+    // Projects that stand already open before the window is up, so the first frame shows them. A
+    // folder that stands for no project is offered one once the window is up, since the offer
+    // asks. A project left open that cannot be opened now is left out of those open, and its
+    // reason is said on the root while nothing else is. Nothing is guessed from where SeeDocs
+    // stands: the project is the user's to name.
     void Workspace::start(const std::filesystem::path& stated)
     {
-        Text reason;
-        const std::wstring stored =
-            (m_application.config() / k_projectNodeName).get<std::wstring>();
+        Text reasons;
+        for (const std::wstring& name : storedOpen())
+        {
+            std::optional<Project> project = readProject(name);
+            if (!project || openFor(project->folder))
+                continue;
+            Text reason;
+            if (!openProject(std::move(*project), reason, HomeTab::None))
+                reasons << reason << k_endLine << k_endLine;
+        }
+
         if (!stated.empty())
         {
             const std::filesystem::path folder = cleanFolder(stated);
             std::optional<Project> project = readProject(folder);
+            Text reason;
             if (!project)
             {
                 m_statedToMake = folder;
                 m_startTimer.start(MilliSeconds{ 0u });
-                showNoProject(reason);
-                return;
             }
-            const OpenTabs tabs = folder.wstring() == stored ? OpenTabs::Keep : OpenTabs::Close;
-            if (!openProject(std::move(*project), reason, tabs))
-                showNoProject(reason);
-            return;
-        }
-
-        if (!stored.empty())
-        {
-            if (std::optional<Project> project = readProject(stored))
+            else if (!openFor(project->folder)
+                && !openProject(std::move(*project), reason, HomeTab::Open))
             {
-                if (!openProject(std::move(*project), reason, OpenTabs::Keep))
-                    showNoProject(reason);
-                return;
+                reasons << reason << k_endLine << k_endLine;
             }
         }
 
-        showNoProject(reason);
+        storeOpen();
+        m_browser.showWords(noProjectWords(reasons));
     }
 
     bool Workspace::openFolder(const std::filesystem::path& stated)
@@ -144,25 +155,23 @@ namespace SeeDocs_App
             return false;
         }
 
+        if (OpenProject* open = openFor(folder))
+        {
+            m_browser.openHome(*open);
+            remember(open->project);
+            return true;
+        }
+
         std::optional<Project> project = readProject(folder);
         if (!project)
         {
-            const std::optional<ScanMode> mode = confirmMaking(folder);
-            if (!mode)
-                return false;
-            project = createProject(folder, *mode);
-            if (!project)
-            {
-                Text message;
-                message << L"The folder could not be made:";
-                writeFolder(message, dataFolderOf(folder));
-                refuse(L"Cannot make the project", message);
-                return false;
-            }
+            if (confirmMaking(folder))
+                createNew(folder);
+            return false;
         }
 
         Text reason;
-        if (openProject(std::move(*project), reason, OpenTabs::Close))
+        if (openProject(std::move(*project), reason, HomeTab::Open))
             return true;
         refuse(L"Cannot open the project", reason);
         return false;
@@ -171,8 +180,8 @@ namespace SeeDocs_App
     void Workspace::browse()
     {
         std::filesystem::path start;
-        if (m_project)
-            start = m_project->folder;
+        if (m_shown)
+            start = m_shown->project.folder;
         else
             start = std::filesystem::path{ Platform::documentsPath() };
 
@@ -182,75 +191,191 @@ namespace SeeDocs_App
             openFolder(*picked);
     }
 
-    ScanStamp Workspace::scanned() const
+    // THE PROJECT IS MADE WHILE THE DIALOG STANDS, so a folder that cannot be made is said there,
+    // with the name and the place still on screen; it opens once the dialog is down, on a timer,
+    // since the click that made it is the dialog's and the dialog closes after it. A source given
+    // is written in before it opens, so that its first scan reads it. A source asked for while a
+    // dialog stands is a new question, and the dialog standing makes way for it. Where a project
+    // is stored is kept whichever way the dialog closes.
+    void Workspace::createNew(const std::filesystem::path& source, const InputStamp stamp)
     {
-        if (!m_surface)
-            return std::nullopt;
-        return m_surface->scanned();
+        if (m_newProject && m_newProject->visible() && source.empty())
+        {
+            m_newProject->showOrActivate(stamp);
+            return;
+        }
+        if (m_newProject && m_newProject->visible())
+            m_newProject->close();
+
+        const std::wstring name = source.empty()
+            ? std::wstring{}
+            : cleanFolder(source).filename().wstring();
+        m_newProject = std::make_unique<NewProjectDialog>(
+            m_form,
+            storedLocation(),
+            name,
+            [this, source](const std::filesystem::path& folder, const std::wstring_view stated) {
+                std::optional<Project> made = createProject(folder, stated);
+                if (!made)
+                    return std::wstring{ L"The folder could not be made." };
+                if (!source.empty())
+                {
+                    made->sources.push_back({ .path = cleanFolder(source) });
+                    writeProject(*made);
+                    if (std::optional<Project> read = readProject(made->folder))
+                        made = std::move(read);
+                }
+                m_made = std::move(made);
+                m_madeTimer.start(MilliSeconds{ 0u });
+                return std::wstring{};
+            }
+        );
+        NewProjectDialog& dialog = *m_newProject;
+        dialog.onClose([this, &dialog](FormCloseEvent&) {
+            storeLocation(dialog.location());
+        });
+        dialog.showOrActivate(stamp);
+    }
+
+    ScanStamp Workspace::scanned(const OpenProject& open)
+    {
+        return open.surface.scanned();
     }
 
     // WHAT IS SHOWN IS WHAT WAS READ BACK, so a name the file did not take does not stand. The
     // name the project already goes by is no edit: an empty name kept in the file is what lets
     // the project follow its folder's name, and writing that name out would end it.
-    std::wstring Workspace::rename(const std::wstring_view name)
+    std::wstring Workspace::rename(OpenProject& open, const std::wstring_view name)
     {
-        if (!m_project)
-            return {};
         const std::wstring stated{ trimmed(name) };
-        if (stated == m_project->name)
-            return m_project->name;
-        writeProject(Project{
-            .folder = m_project->folder,
-            .name = stated,
-            .mode = m_project->mode
-        });
-        if (const std::optional<Project> read = readProject(m_project->folder))
-            m_project->name = read->name;
-        m_browser.setProjectName(m_project->name);
+        if (stated == open.project.name)
+            return open.project.name;
+        Project renamed = open.project;
+        renamed.name = stated;
+        writeProject(renamed);
+        if (const std::optional<Project> read = readProject(open.project.folder))
+            open.project.name = read->name;
+        m_browser.renameProject(open);
         writeTitle();
-        return m_project->name;
+        return open.project.name;
     }
 
-    // The database is read back before anything is let go of - see openProject - so a scan that
-    // could not be written leaves the project as it was last read.
-    void Workspace::rescan()
+    // THE DATABASE IS READ BACK BEFORE ANYTHING IS LET GO OF, so a scan that could not be written
+    // leaves the project as it was last read.
+    void Workspace::rescan(OpenProject& open)
     {
-        if (!m_project)
-            return;
         ScopedWaitCursor wait{};
-        scan(*m_project);
-        Text reason;
-        if (!openProject(*m_project, reason, OpenTabs::Keep))
+        scan(open.project);
+        std::optional<Surface> surface = readDatabase(open.project.databasePath());
+        if (!surface)
+        {
+            Text reason;
+            reason << L"The database could not be written to";
+            writeFolder(reason, open.project.databasePath());
             refuse(L"Cannot rescan the project", reason);
+            return;
+        }
+        open.surface = std::move(*surface);
+        open.notes.forgetAll();
+        m_browser.rebindProject(open);
     }
 
-    // Written before the scan, so a scan that fails leaves the project set as asked all the same.
-    void Workspace::setMode(const ScanMode mode)
+    // A folder the project reads already is not added again.
+    bool Workspace::addSource(OpenProject& open)
     {
-        if (!m_project || m_project->mode == mode)
+        std::filesystem::path start = open.project.folder;
+        if (!open.project.sources.empty())
+            start = open.project.sources.back().path;
+        const std::optional<std::filesystem::path> picked =
+            Platform::pickFolder(&m_form, L"Add a folder of sources", start);
+        if (!picked)
+            return false;
+        const std::filesystem::path source = cleanFolder(*picked);
+        const bool known = std::ranges::any_of(open.project.sources,
+            [&source](const SourceFolder& folder) {
+                return folder.path == source;
+            });
+        if (known)
+            return false;
+        change(open, [&source](Project& project) {
+            project.sources.push_back({ .path = source });
+        }, Reread::Sources);
+        return true;
+    }
+
+    void Workspace::removeSource(OpenProject& open, const std::filesystem::path& source)
+    {
+        change(open, [&source](Project& project) {
+            std::erase_if(project.sources, [&source](const SourceFolder& folder) {
+                return folder.path == source;
+            });
+        }, Reread::Sources);
+    }
+
+    void Workspace::setSubfolders(OpenProject& open, const std::filesystem::path& source,
+        const bool subfolders)
+    {
+        change(open, [&source, subfolders](Project& project) {
+            for (SourceFolder& folder : project.sources)
+            {
+                if (folder.path == source)
+                    folder.subfolders = subfolders;
+            }
+        }, Reread::Sources);
+    }
+
+    void Workspace::setMode(OpenProject& open, const ScanMode mode)
+    {
+        if (open.project.mode == mode)
             return;
-        m_project->mode = mode;
-        writeProject(*m_project);
-        if (const std::optional<Project> read = readProject(m_project->folder))
-            m_project->mode = read->mode;
-        rescan();
+        change(open, [mode](Project& project) {
+            project.mode = mode;
+        }, Reread::Sources);
+    }
+
+    void Workspace::setHints(OpenProject& open, const HintRules hints)
+    {
+        if (open.project.hints == hints)
+            return;
+        change(open, [hints](Project& project) {
+            project.hints = hints;
+        }, Reread::Sources);
+    }
+
+    void Workspace::setEdits(OpenProject& open, const HintEdits edits)
+    {
+        if (open.project.edits == edits)
+            return;
+        change(open, [edits](Project& project) {
+            project.edits = edits;
+        }, Reread::Pages);
+    }
+
+    void Workspace::closeLater(OpenProject& open)
+    {
+        m_closing = &open;
+        m_closeTimer.start(MilliSeconds{ 0u });
     }
 
     Dom::Dt::Section Workspace::createConfigSchema()
     {
         return Dom::Dt::Section{
-            Dom::Dt::Value{ k_projectNodeName, std::wstring{} },
-            Dom::Dt::Sequence{ k_recentNodeName, std::wstring{} }
+            Dom::Dt::Sequence{ k_openNodeName, std::wstring{} },
+            Dom::Dt::Sequence{ k_recentNodeName, std::wstring{} },
+            Dom::Dt::Value{ k_locationNodeName, std::wstring{} }
         };
     }
 
-    // THE DATABASE IS READ BEFORE ANYTHING IS LET GO OF, so a project that cannot be opened leaves
-    // the one open as it was. A project with no database is scanned first; what is shown is
-    // always what was read back from the file, one path for a fresh scan and an old one alike.
-    bool Workspace::openProject(Project project, Text& reason, const OpenTabs openTabs)
+    // THE DATABASE IS READ BEFORE ANYTHING IS SHOWN, so a project that cannot be opened leaves the
+    // window as it was. A project with no database is scanned first, and so is one whose
+    // database was read otherwise than the project now asks; what is shown is always what was
+    // read back from the file, one path for a fresh scan and an old one alike.
+    bool Workspace::openProject(Project project, Text& reason, const HomeTab homeTab)
     {
         ScopedWaitCursor wait{};
         std::optional<Surface> surface = readDatabase(project.databasePath());
+        if (surface && (surface->mode() != project.mode || surface->hintRules() != project.hints))
+            surface.reset();
         if (!surface)
         {
             scan(project);
@@ -263,39 +388,50 @@ namespace SeeDocs_App
             return false;
         }
 
-        m_surface = std::move(surface);
-        m_notes.emplace(project.footnotesFolder());
-        m_project = std::move(project);
-        if (!m_browser.bind(*m_surface, *m_notes, *m_project, openTabs))
-            showEmptyProject();
-        remember(*m_project);
-        writeTitle();
+        m_projects.push_back(std::make_unique<OpenProject>(std::move(project),
+            std::move(*surface)));
+        OpenProject& open = *m_projects.back();
+        remember(open.project);
+        m_browser.addProject(open, homeTab);
         return true;
     }
 
-    // Asked before the folder is made, because the folder is what is being agreed to. Yes and
-    // No both agree to it, and answer how the tree is read.
-    std::optional<ScanMode> Workspace::confirmMaking(const std::filesystem::path& folder)
+    OpenProject* Workspace::openFor(const std::filesystem::path& folder) const
+    {
+        const std::optional<std::filesystem::path> own = projectFolderOf(folder);
+        if (!own)
+            return nullptr;
+        for (const std::unique_ptr<OpenProject>& open : m_projects)
+        {
+            if (open->project.folder == *own)
+                return open.get();
+        }
+        return nullptr;
+    }
+
+    // The browser lets go of the project before it is dropped.
+    void Workspace::close(OpenProject& open)
+    {
+        m_browser.removeProject(open);
+        std::erase_if(m_projects, [&open](const std::unique_ptr<OpenProject>& project) {
+            return project.get() == &open;
+        });
+        storeOpen();
+    }
+
+    bool Workspace::confirmMaking(const std::filesystem::path& folder)
     {
         Text message;
-        message << m_application.name();
-        message << L" will make a folder in the tree, for its database and its properties:";
-        writeFolder(message, dataFolderOf(folder));
-        message << k_endLine << k_endLine << L"The tree is scanned into it at once.";
-        message << k_endLine << k_endLine << L"Is the tree a third-party library? It is then read "
-            L"in limited mode - its headers too, with nothing written into them and nothing "
-            L"checked.";
+        message << L"No project is stored in this folder:";
+        writeFolder(message, folder);
+        message << k_endLine << k_endLine << L"Make a new project that reads it? The project is "
+            L"stored in a folder of its own, wherever you choose, and the sources are left as "
+            L"they are.";
 
         MessageDialog dialog{ m_asker, L"New project", message, MessageIcon::Question };
         dialog.add(DialogAnswer::Yes);
         dialog.add(DialogAnswer::No);
-        dialog.add(DialogAnswer::Cancel);
-        const OptionalDialogAnswer answer = dialog.execute();
-        if (answer == DialogAnswer::Yes)
-            return ScanMode::Limited;
-        if (answer == DialogAnswer::No)
-            return ScanMode::Full;
-        return std::nullopt;
+        return dialog.execute() == DialogAnswer::Yes;
     }
 
     void Workspace::refuse(const std::wstring_view title, const Text& message)
@@ -305,40 +441,55 @@ namespace SeeDocs_App
         dialog.execute();
     }
 
-    void Workspace::scan(const Project& project)
+    // WRITTEN BEFORE ANYTHING IS READ AGAIN, so a scan that fails leaves the project set as asked
+    // all the same; what stands afterwards is what was read back.
+    void Workspace::change(OpenProject& open, const std::function<void(Project&)>& edit,
+        const Reread reread)
     {
-        writeDatabase(scanTree(project.folder, project.mode), project.databasePath());
+        Project changed = open.project;
+        edit(changed);
+        writeProject(changed);
+        if (std::optional<Project> read = readProject(open.project.folder))
+            open.project = std::move(*read);
+        if (reread == Reread::Sources)
+            rescan(open);
+        else
+            m_browser.rebindProject(open);
     }
 
+    void Workspace::scan(const Project& project)
+    {
+        writeDatabase(scanSources(project.sources, project.mode, project.hints),
+            project.databasePath());
+    }
+
+    // An entry naming the same project another way - a tree, where its project folder is kept
+    // now - goes with the old one.
     void Workspace::remember(const Project& project)
     {
         const std::wstring folder = project.folder.wstring();
-        (m_application.config() / k_projectNodeName).set(folder);
-
         Names recent = storedRecent();
-        std::erase(recent, folder);
+        std::erase_if(recent, [&project](const std::wstring& name) {
+            return projectFolderOf(name) == project.folder;
+        });
         recent.insert(recent.begin(), folder);
         if (recent.size() > k_recentLimit)
             recent.resize(k_recentLimit);
         storeRecent(recent);
+        storeOpen();
     }
 
     void Workspace::forget(const std::filesystem::path& folder)
     {
-        const std::wstring name = folder.wstring();
-        Dom::DomNodeBase& open = m_application.config() / k_projectNodeName;
-        if (open.get<std::wstring>() == name)
-            open.set(std::wstring{});
-
         Names recent = storedRecent();
-        if (std::erase(recent, name) > 0)
+        if (std::erase(recent, folder.wstring()) > 0)
             storeRecent(recent);
     }
 
     Workspace::Names Workspace::storedRecent() const
     {
         Names result;
-        const RecentNode& node = (m_application.config() / k_recentNodeName).as<RecentNode>();
+        const FoldersNode& node = (m_application.config() / k_recentNodeName).as<FoldersNode>();
         for (const std::wstring& name : node.get())
             result.push_back(name);
         return result;
@@ -346,58 +497,66 @@ namespace SeeDocs_App
 
     void Workspace::storeRecent(const Names& names)
     {
-        RecentNode& node = (m_application.config() / k_recentNodeName).as<RecentNode>();
+        FoldersNode& node = (m_application.config() / k_recentNodeName).as<FoldersNode>();
         node.clear();
         for (const std::wstring& name : names)
             node.add().set(name);
     }
 
-    // The browser lets go of the surface and the notes before they are dropped.
-    void Workspace::showNoProject(const Text& reason)
+    Workspace::Names Workspace::storedOpen() const
+    {
+        Names result;
+        const FoldersNode& node = (m_application.config() / k_openNodeName).as<FoldersNode>();
+        for (const std::wstring& name : node.get())
+            result.push_back(name);
+        return result;
+    }
+
+    void Workspace::storeOpen()
+    {
+        FoldersNode& node = (m_application.config() / k_openNodeName).as<FoldersNode>();
+        node.clear();
+        for (const std::unique_ptr<OpenProject>& open : m_projects)
+            node.add().set(open->project.folder.wstring());
+    }
+
+    std::filesystem::path Workspace::storedLocation() const
+    {
+        const std::wstring stored =
+            (m_application.config() / k_locationNodeName).get<std::wstring>();
+        if (!stored.empty())
+            return std::filesystem::path{ stored };
+        const std::wstring documents = Platform::documentsPath();
+        if (documents.empty())
+            return {};
+        return cleanFolder(std::filesystem::path{ documents } / k_defaultLocation);
+    }
+
+    void Workspace::storeLocation(const std::filesystem::path& location)
+    {
+        if (!location.empty())
+            (m_application.config() / k_locationNodeName).set(location.wstring());
+    }
+
+    Text Workspace::noProjectWords(const Text& reasons) const
     {
         Text text;
         text << TextStyleId::Title << m_application.name() << PopTextStyle{};
         text << k_endLine << k_endLine;
-        if (!reason.empty())
-            text << reason << k_endLine << k_endLine;
-        text << L"No project is open. The Open page of the application menu opens one - "
-            L"the folder of the sources to document." << k_endLine;
-        m_browser.showWords(text);
-
-        m_project.reset();
-        m_surface.reset();
-        m_notes.reset();
-        writeTitle();
+        if (!reasons.empty())
+            text << reasons;
+        text << L"No project is open. The Open page of the application menu opens one, or "
+            L"makes a new one - a folder of its own, reading the folders of sources it is "
+            L"given." << k_endLine;
+        return text;
     }
 
-    // The project is open all the same, named in the titles and remembered; only its page is words.
-    void Workspace::showEmptyProject()
-    {
-        Text text;
-        text << TextStyleId::Title << m_project->name << PopTextStyle{};
-        text << k_endLine << k_endLine;
-        if (m_project->mode == ScanMode::Full)
-        {
-            text << L"There is nothing to document: no source in the folder exports a type. "
-                L"A third-party library is read in limited mode, which the Open page of the "
-                L"application menu sets." << k_endLine;
-        }
-        else
-        {
-            text << L"There is nothing to document: no source in the folder declares a type."
-                << k_endLine;
-        }
-        text << L"The folder read is:";
-        writeFolder(text, m_project->folder);
-        m_browser.showWords(text);
-    }
-
-    // The browser's own bar carries the application's name; the project's goes to the window.
+    // The browser's own bar carries the application's name; the project shown goes to the window.
     void Workspace::writeTitle()
     {
         std::wstring title;
-        if (m_project)
-            title.append(m_project->name).append(k_titleSeparator);
+        if (m_shown)
+            title.append(m_shown->project.name).append(k_titleSeparator);
         title.append(m_application.name().plainText());
         m_form.setWindowTitle(title);
     }

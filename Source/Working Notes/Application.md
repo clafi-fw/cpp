@@ -40,7 +40,8 @@ removes the folder and everything under it. Under `Share` no application name re
 THE MENU IS RUN TO ITS CLOSE, AND WHAT IT ANSWERED IS CARRIED OUT AFTER. A command pressed inside
 the menu takes note of itself and closes the menu; openAppMenu reads the answer once execute has
 returned and acts on it. Exit closes the window the menu stands on, and doing that from inside the
-menu's own loop would take the loop down under the click that asked.
+menu's own loop would take the loop down under the click that asked. An application's own command
+is carried out the same way, by its place in the order the commands were connected in.
 
 ## OptionsPage
 

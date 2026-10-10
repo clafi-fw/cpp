@@ -11,7 +11,7 @@ namespace SeeDocs_App
 
     // Runs the command the arguments name and answers the process's exit code.
     //
-    //     SeeDocsCli scan [tree] [--out file]    writes the database
-    //     SeeDocsCli check [tree]                reports deviations, exit code 1 if any are errors
+    //     SeeDocsCli scan [folder] [--out file]   writes the database
+    //     SeeDocsCli check [folder]               reports deviations, exit code 1 if any are errors
     export [[nodiscard]] int run(const Arguments&);
 }

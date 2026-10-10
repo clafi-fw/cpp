@@ -811,12 +811,13 @@ namespace SeeDocs_App
         m_byQualifiedName[type.qualifiedName] = index;
     }
 
-    // Beside the file the include stands in, under the tree's root, or - the build saying where
-    // else headers are looked for - the one file whose path ends with the name.
+    // Beside the file the include stands in, under the root of any folder read, or - the build
+    // saying where else headers are looked for - the one file whose path ends with the name.
     std::optional<std::size_t> Surface::fileIncluded(const EnclosedInclude& include) const
     {
+        const SourceFile& including = m_files[include.file];
         const std::filesystem::path from =
-            std::filesystem::path{ m_files[include.file].relative }.parent_path();
+            std::filesystem::path{ including.relative }.parent_path();
         const std::wstring beside = (from / include.included).lexically_normal().generic_wstring();
         const std::wstring ending = L'/' + include.included;
         std::optional<std::size_t> underRoot;
@@ -825,9 +826,9 @@ namespace SeeDocs_App
         for (std::size_t i = 0; i != m_files.size(); ++i)
         {
             const std::wstring& relative = m_files[i].relative;
-            if (relative == beside)
+            if (relative == beside && m_files[i].root == including.root)
                 return i;
-            if (relative == include.included)
+            if (relative == include.included && !underRoot)
                 underRoot = i;
             if (relative.ends_with(ending))
             {

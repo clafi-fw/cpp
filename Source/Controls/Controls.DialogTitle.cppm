@@ -1,3 +1,5 @@
+module;
+#include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Controls.DialogTitle;
 
 import ClaFi.Controls.Panel;
@@ -8,6 +10,7 @@ import ClaFi.Icons.XMark;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.Foundation;
 
@@ -52,6 +55,13 @@ namespace ClaFi::Controls
     protected:
         void paintIcon(PaintIconEvent&) override;
         void nestedClick(ClickEvent&) override;
+    };
+
+    // Which buttons a title bar carries beside the window's name.
+    export enum class TitleButtons
+    {
+        All,     // minimize, maximize and close
+        Close    // close alone, for a window its content sizes
     };
 
     // The bar across the top of a window: its name, and the buttons that size it.
@@ -183,6 +193,10 @@ namespace ClaFi::Controls
             std::forward<Args>(args)...
         }
     {
+        if (READ_PROPERTY(TitleButtons, TitleButtons::All) == TitleButtons::All)
+            return;
+        m_minimizeButton.setVisible(false);
+        m_maximizeButton.setVisible(false);
     }
 
     void DialogTitle::adjustPaint(AdjustPaintEvent& event)

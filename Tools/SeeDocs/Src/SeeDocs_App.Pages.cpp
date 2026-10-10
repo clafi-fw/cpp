@@ -23,6 +23,7 @@ namespace SeeDocs_App
             L"matched by name - the comment carries no See";
         constexpr std::wstring_view k_controlWord = L"control";
         constexpr std::wstring_view k_noteExtension = L".md";
+        constexpr wchar_t k_noteJoin = L'-';   // between the folders a note made new is named after
         constexpr std::wstring_view k_codeFence = L"    ";
         constexpr std::wstring_view k_bulletMark = L"- ";
         constexpr std::wstring_view k_boldMark = L"**";
@@ -367,14 +368,14 @@ namespace SeeDocs_App
             return linked;
         }
 
-        // The hint as it reads in a namespace, the types it names linked. A tree read in limited
-        // mode owes no hint, so one it does not give is nothing rather than missing.
+        // The hint as it reads in a namespace, the types it names linked. A tree read by loose
+        // rules owes no hint, so one it does not give is nothing rather than missing.
         [[nodiscard]] Runs hintRuns(const Surface& surface, const Comment& comment,
             const std::wstring_view nameSpace)
         {
             if (!comment.text.empty())
                 return linkNames(surface, { plain(comment.text) }, nameSpace);
-            if (surface.mode() == ScanMode::Limited)
+            if (surface.hintRules() == HintRules::Loose)
                 return {};
             return { missing(std::wstring{ k_noHint }) };
         }
@@ -591,8 +592,11 @@ namespace SeeDocs_App
 
         // Whether a note is one of the category's own: named after one of its folders, as
         // Controls-Base is after Controls/Y-Base and Control-Foundation after Y-Core/Foundation.
+        // The root's own is the one named for it.
         [[nodiscard]] bool noteBelongs(const Note& note, const std::wstring_view category)
         {
+            if (category.empty())
+                return note.stem == k_rootNote;
             for (const std::wstring_view folder : foldersOf(category))
             {
                 if (note.stem.find(folder) != std::wstring::npos)
@@ -601,15 +605,15 @@ namespace SeeDocs_App
             return false;
         }
 
-        // The section named after a declaration: a heading spelling its name, in a note of its
-        // own category - the one named exactly after a folder ahead of any other.
-        [[nodiscard]] const NoteHit* namedHit(const NoteHits& hits, const std::wstring_view name,
+        // The section named after a declaration: a heading spelling it, in a note of its own
+        // category - the one named exactly after a folder ahead of any other.
+        [[nodiscard]] const NoteHit* namedHit(const NoteHits& hits, const std::wstring_view heading,
             const std::wstring_view category)
         {
             const NoteHit* found = nullptr;
             for (const NoteHit& hit : hits)
             {
-                if (hit.section->heading != name || !noteBelongs(*hit.note, category))
+                if (hit.section->heading != heading || !noteBelongs(*hit.note, category))
                     continue;
                 const std::vector<std::wstring_view> folders = foldersOf(category);
                 if (std::ranges::find(folders, hit.note->stem) != folders.end())
@@ -620,10 +624,11 @@ namespace SeeDocs_App
             return found;
         }
 
-        // The section the comment references; failing a reference, where asked, the section
-        // named after the declaration.
+        // The section the comment references; failing a reference, the section headed as given,
+        // the way footnoteHeading spells it - none for no heading.
         [[nodiscard]] FoundNote noteFor(Notes& notes, const Comment& comment,
-            const std::wstring_view name, const std::wstring_view category, const bool byName)
+            const std::wstring_view name, const std::wstring_view category,
+            const std::wstring_view heading)
         {
             if (comment.reference)
             {
@@ -636,10 +641,10 @@ namespace SeeDocs_App
                     .section = notes.section(reference.note, anchor)
                 };
             }
-            if (!byName)
+            if (heading.empty())
                 return {};
-            const NoteHits hits = notes.sectionsNamed(slug(name));
-            const NoteHit* hit = namedHit(hits, name, category);
+            const NoteHits hits = notes.sectionsNamed(slug(heading));
+            const NoteHit* hit = namedHit(hits, heading, category);
             if (!hit)
                 return {};
             return { .note = hit->note, .section = hit->section, .byName = true };
@@ -666,11 +671,13 @@ namespace SeeDocs_App
             return excerpt;
         }
 
-        // The note a member's comment references, under its row or on its page.
+        // The note a member's comment references, or the one named after it in its owner's
+        // category, under its row or on its page.
         [[nodiscard]] std::optional<Excerpt> memberExcerpt(const Surface& surface, Notes& notes,
             const Comment& comment, const std::wstring_view name, const Type& owner)
         {
-            return excerptOf(noteFor(notes, comment, name, owner.category, false), surface,
+            const std::wstring heading = footnoteHeading(owner.name, name);
+            return excerptOf(noteFor(notes, comment, name, owner.category, heading), surface,
                 owner.nameSpace);
         }
 
@@ -1195,7 +1202,7 @@ namespace SeeDocs_App
         void addTypeNote(Page& page, const Surface& surface, Notes& notes, const Type& type)
         {
             std::optional<Excerpt> excerpt = excerptOf(
-                noteFor(notes, type.comment, type.name, type.category, true), surface,
+                noteFor(notes, type.comment, type.name, type.category, type.name), surface,
                 type.nameSpace);
             if (!excerpt.has_value())
                 return;
@@ -1205,9 +1212,12 @@ namespace SeeDocs_App
         }
 
         // The note a chapter's footnotes go into: the one named after the most of its folders,
-        // the shortest name first among as many; empty where no note is named after any.
+        // the shortest name first among as many; where no note is named after any, one to be
+        // made, named after them all - Controls-Base for Controls/Y-Base. The root's is its own.
         [[nodiscard]] std::wstring chapterNote(Notes& notes, const std::wstring_view category)
         {
+            if (category.empty())
+                return std::wstring{ k_rootNote };
             const std::vector<std::wstring_view> folders = foldersOf(category);
             std::wstring best;
             std::size_t bestCount = 0;
@@ -1225,6 +1235,14 @@ namespace SeeDocs_App
                     bestCount = count;
                 }
             }
+            if (!best.empty())
+                return best;
+            for (const std::wstring_view folder : folders)
+            {
+                if (!best.empty())
+                    best.append(1, k_noteJoin);
+                best.append(folder);
+            }
             return best;
         }
 
@@ -1232,17 +1250,15 @@ namespace SeeDocs_App
         [[nodiscard]] std::optional<FootnoteHome> chapterFootnoteHome(Notes& notes,
             const std::wstring_view category)
         {
-            std::wstring note = chapterNote(notes, category);
-            if (note.empty())
-                return std::nullopt;
-            return FootnoteHome{ .note = std::move(note) };
+            return FootnoteHome{ .note = chapterNote(notes, category) };
         }
 
         // Where a footnote written new for a member of the type goes: after the type's own
         // section where it has one, at the end of its chapter's note otherwise.
         [[nodiscard]] std::optional<FootnoteHome> typeFootnoteHome(Notes& notes, const Type& type)
         {
-            const FoundNote found = noteFor(notes, type.comment, type.name, type.category, true);
+            const FoundNote found = noteFor(notes, type.comment, type.name, type.category,
+                type.name);
             if (found.section)
             {
                 return FootnoteHome{
@@ -1742,6 +1758,7 @@ namespace SeeDocs_App
             const Function* holder{ nullptr };   // whose comment speaks for it: its own or a base's
             std::wstring_view nameSpace;         // where its words are read
             std::wstring_view category;          // where a note named after it is looked for
+            std::wstring heading;                // what that note's section is headed
             std::optional<Access> access;        // none for a free function
             SourceLanguage language{ SourceLanguage::Cpp };
         };
@@ -1793,11 +1810,15 @@ namespace SeeDocs_App
                 : *commented;
             page.lead = hintRuns(surface, leading.holder->comment, leading.nameSpace);
             page.leadSite = siteOf(*leading.holder);
+            // The section named after the name is the name's, and stands under the leading one.
             for (Overload& overload : overloads)
             {
                 const Function& holder = *overload.holder;
+                const std::wstring_view heading = &overload == &leading
+                    ? std::wstring_view{ overload.heading }
+                    : std::wstring_view{};
                 const FoundNote found = noteFor(notes, holder.comment, holder.name,
-                    overload.category, false);
+                    overload.category, heading);
                 Signature signature{
                     .code = std::move(overload.code),
                     .language = overload.language,
@@ -2233,7 +2254,8 @@ namespace SeeDocs_App
             page.lead = hintRuns(surface, field.comment, variable.nameSpace);
             page.leadSite = siteOf(field.comment, field.place, field.name);
             addExportFacts(page, variable.nameSpace, module);
-            const FoundNote found = noteFor(notes, field.comment, field.name, category, false);
+            const FoundNote found = noteFor(notes, field.comment, field.name, category,
+                field.name);
             const SourceLanguage language = surface.languageOf(variable.module);
             Section& section = addSection(page, SectionKind::Signature, {});
             section.signatures.push_back({
@@ -2371,6 +2393,108 @@ namespace SeeDocs_App
         return std::wstring{ path.substr(0, slash) };
     }
 
+    // ContentsTree
+
+    // Every folder is made before any module, so a folder's subfolders stand above its modules -
+    // the root's modules stand under its folders.
+    ContentsTree::ContentsTree(const ContentsChapters& chapters)
+    {
+        for (const ContentsChapter& chapter : chapters)
+        {
+            if (!chapter.category.empty())
+                addFolder(chapter.category);
+        }
+        for (const ContentsChapter& chapter : chapters)
+        {
+            const std::optional<std::size_t> folder = chapter.category.empty()
+                ? std::nullopt
+                : folderRow(chapter.category);
+            for (const ContentsModule& module : chapter.modules)
+            {
+                const std::size_t moduleIndex = addRow({
+                    .kind = ContentsRowKind::Module,
+                    .folder = chapter.category,
+                    .module = &module,
+                    .parent = folder
+                });
+                m_named.emplace(&module, moduleIndex);
+                m_modules.emplace(module.name, moduleIndex);
+                for (const Type* type : module.types)
+                {
+                    const std::size_t typeIndex = addRow({
+                        .kind = ContentsRowKind::Type,
+                        .folder = chapter.category,
+                        .module = &module,
+                        .type = type,
+                        .parent = moduleIndex
+                    });
+                    m_named.emplace(type, typeIndex);
+                }
+            }
+        }
+    }
+
+    std::optional<std::size_t> ContentsTree::rowOf(const std::wstring_view folder,
+        const ContentsModule* module, const Type* type) const
+    {
+        const void* named = type;
+        if (!named)
+            named = module;
+        if (named)
+        {
+            const auto found = m_named.find(named);
+            if (found == m_named.end())
+                return std::nullopt;
+            return found->second;
+        }
+        if (folder.empty())
+            return std::nullopt;
+        return folderRow(folder);
+    }
+
+    std::optional<std::size_t> ContentsTree::folderRow(const std::wstring_view category) const
+    {
+        const auto found = m_folders.find(std::wstring{ category });
+        if (found == m_folders.end())
+            return std::nullopt;
+        return found->second;
+    }
+
+    std::optional<std::size_t> ContentsTree::moduleRow(const std::wstring_view name) const
+    {
+        const auto found = m_modules.find(name);
+        if (found == m_modules.end())
+            return std::nullopt;
+        return found->second;
+    }
+
+    std::size_t ContentsTree::addFolder(const std::wstring_view category)
+    {
+        if (const std::optional<std::size_t> found = folderRow(category))
+            return *found;
+        const std::size_t slash = category.rfind(k_folderSeparator);
+        const std::optional<std::size_t> parent = slash == std::wstring_view::npos
+            ? std::nullopt
+            : std::optional<std::size_t>{ addFolder(category.substr(0, slash)) };
+        const auto added = m_folders.emplace(std::wstring{ category }, m_rows.size()).first;
+        return addRow({
+            .kind = ContentsRowKind::Folder,
+            .folder = added->first,
+            .parent = parent
+        });
+    }
+
+    std::size_t ContentsTree::addRow(ContentsRow row)
+    {
+        const std::size_t index = m_rows.size();
+        if (row.parent)
+            m_rows[*row.parent].children.push_back(index);
+        else
+            m_top.push_back(index);
+        m_rows.push_back(std::move(row));
+        return index;
+    }
+
     std::wstring folderNameOf(const std::wstring_view category)
     {
         const std::size_t slash = category.rfind(L'/');
@@ -2458,7 +2582,7 @@ namespace SeeDocs_App
             muted(std::wstring{ k_separator }),
             plain(countOf(chapter.modules.size(), L"module"))
         };
-        if (withoutHint != 0 && surface.mode() == ScanMode::Full)
+        if (withoutHint != 0 && surface.hintRules() == HintRules::Strict)
         {
             figures.push_back(muted(std::wstring{ k_separator }));
             figures.push_back(missing(countOf(withoutHint, L"type") + L" without a hint"));
@@ -2507,6 +2631,7 @@ namespace SeeDocs_App
                 .holder = &free->function,
                 .nameSpace = free->nameSpace,
                 .category = chapter.category,
+                .heading = std::wstring{ name },
                 .language = surface.languageOf(free->module)
             });
         }
@@ -2553,6 +2678,7 @@ namespace SeeDocs_App
                 .holder = &commentHolder(function, above, language),
                 .nameSpace = type.nameSpace,
                 .category = type.category,
+                .heading = footnoteHeading(type.name, name),
                 .access = function.access,
                 .language = language
             });

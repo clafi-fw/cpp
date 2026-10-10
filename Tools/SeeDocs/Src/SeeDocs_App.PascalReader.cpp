@@ -16,6 +16,7 @@ namespace SeeDocs_App
     namespace
     {
         constexpr std::wstring_view k_scope = L"::";
+        constexpr std::wstring_view k_todo = L"TODO";
         // How many aliases a type is followed through before it is given up as circular.
         constexpr std::size_t k_aliasDepth = 8;
         // How many times a tree's symbols are gathered before they are taken as settled.
@@ -884,7 +885,8 @@ namespace SeeDocs_App
         class UnitReader
         {
         public:
-            UnitReader(Surface&, std::size_t file, const UnitText&, std::wstring category);
+            UnitReader(Surface&, std::size_t file, const UnitText&, std::wstring category,
+                HintRules);
             void read();
         private:
             [[nodiscard]] const Token* peek(std::size_t ahead = 0) const;
@@ -903,7 +905,7 @@ namespace SeeDocs_App
             [[nodiscard]] Place placeOf(const Token&) const;
             [[nodiscard]] Comment commentAt(std::size_t line, std::wstring_view name);
             void gatherAbove(std::size_t line, Comment&) const;
-            // The trailing comment on the line, with the lines that carry it on.
+            // A loose read's trailing comment on the line, with the lines that carry it on.
             [[nodiscard]] Names trailingLines(std::size_t line, const std::wstring& trailing) const;
 
             [[nodiscard]] bool readHeader();
@@ -944,6 +946,7 @@ namespace SeeDocs_App
             std::size_t m_file;
             const UnitText& m_text;
             std::wstring m_category;
+            bool m_looseHints{ false };
             std::vector<std::size_t> m_code;   // the code tokens, comments and directives left out
             std::size_t m_at{ 0 };
             std::wstring m_nameSpace;
@@ -954,12 +957,13 @@ namespace SeeDocs_App
         };
 
         UnitReader::UnitReader(Surface& surface, const std::size_t file, const UnitText& text,
-            std::wstring category)
+            std::wstring category, const HintRules rules)
             :
             m_surface{ surface },
             m_file{ file },
             m_text{ text },
             m_category{ std::move(category) },
+            m_looseHints{ rules == HintRules::Loose },
             m_typesBegin{ surface.types().size() },
             m_functionsBegin{ surface.functions().size() }
         {
@@ -1037,9 +1041,10 @@ namespace SeeDocs_App
             return { m_file, token.line + 1 };
         }
 
-        // The comment above comes before the one on the line, as a limited read takes them; the
-        // attributes a declaration is written under stand between it and the comment above. A
-        // hint that only names the declaration is a label - { TName } - which tells nothing.
+        // By loose rules the comment above comes before the one on the line, and a hint that only
+        // names the declaration is a label - { TName } - which tells nothing; by strict rules the
+        // one on the line comes first, and its See reaches a footnote. The attributes a
+        // declaration is written under stand between it and the comment above.
         Comment UnitReader::commentAt(std::size_t line, const std::wstring_view name)
         {
             if (m_attributeLine)
@@ -1047,8 +1052,23 @@ namespace SeeDocs_App
             m_attributeLine.reset();
             Comment comment;
             if (const std::optional<std::wstring_view> trailing = m_text.trailingComment(line))
-                comment.trailing = withoutSeparators(commentWords(*trailing));
+            {
+                comment.trailing = m_looseHints
+                    ? withoutSeparators(commentWords(*trailing))
+                    : std::wstring{ commentWords(*trailing) };
+            }
             gatherAbove(line, comment);
+            if (!m_looseHints)
+            {
+                std::wstring source;
+                if (comment.trailing)
+                    source = *comment.trailing;
+                else if (!comment.above.empty())
+                    source = comment.above.front();
+                comment.reference = cutReference(source, name);
+                comment.text = std::move(source);
+                return comment;
+            }
             if (comment.above.empty() && comment.trailing)
                 comment.text = pascalBrief(trailingLines(line, *comment.trailing));
             else
@@ -1058,20 +1078,27 @@ namespace SeeDocs_App
             return comment;
         }
 
-        // The lines carrying on the trailing comment of the line above them are that line's, not
-        // the comment of the declaration under them.
+        // By loose rules, the lines carrying on the trailing comment of the line above them are
+        // that line's, not the comment of the declaration under them. By strict rules a TODO is
+        // no words of the declaration's.
         void UnitReader::gatherAbove(const std::size_t line, Comment& comment) const
         {
             std::size_t first = line;
             while (first != 0 && m_text.kindOf(first - 1) == LineKind::CommentOnly)
                 --first;
-            if (first != 0 && first != line)
+            if (m_looseHints && first != 0 && first != line)
                 first = std::min(line, first + m_text.continuationsOf(first - 1));
             if (first == line)
                 return;
             comment.aboveLine = first + 1;
             for (std::size_t i = first; i != line; ++i)
-                comment.above.push_back(withoutSeparators(commentWords(m_text.line(i))));
+            {
+                const std::wstring_view words = commentWords(m_text.line(i));
+                if (m_looseHints)
+                    comment.above.push_back(withoutSeparators(words));
+                else if (!words.starts_with(k_todo))
+                    comment.above.emplace_back(words);
+            }
         }
 
         Names UnitReader::trailingLines(const std::size_t line, const std::wstring& trailing) const
@@ -1845,7 +1872,8 @@ namespace SeeDocs_App
                     hasBody = false;
                 skipToSemicolon();
             }
-            if (!hasBody || !peek())
+            // A hint under the header is a loose read's: the strict rules read the declaration's.
+            if (!hasBody || !peek() || !m_looseHints)
                 return;
             const std::wstring hint = hintBetween(code(m_at - 1).line, peek()->line);
             if (hint.empty())
@@ -2241,10 +2269,10 @@ namespace SeeDocs_App
     }
 
     void readPascalUnit(Surface& surface, const std::size_t file, const std::wstring_view text,
-        const std::wstring& category, const PascalSymbols& symbols)
+        const std::wstring& category, const PascalSymbols& symbols, const HintRules rules)
     {
         const UnitText unit{ text, symbols };
-        UnitReader reader{ surface, file, unit, category };
+        UnitReader reader{ surface, file, unit, category, rules };
         reader.read();
     }
 

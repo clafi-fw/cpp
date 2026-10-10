@@ -292,6 +292,10 @@ namespace ClaFi
         // It is the same range a placement gives way inside, and on a platform that states a
         // window's range to the system rather than enforcing it itself - xdg_toplevel's
         // set_min_size and set_max_size - this call is that one.
+        //
+        // A RANGE OF ONE SIZE IS A WINDOW THE USER DOES NOT SIZE, which is what a form its
+        // content sizes states. A dialog given one offers no edge to drag and no maximize, and
+        // gets both back with a range the user can move in.
         virtual void setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize) = 0;
         // THE FRAME THE FORM WANTS, from its theme and scale. The platform keeps it and answers
         // with the frame it applies on every resize; a platform that cannot composite a frame

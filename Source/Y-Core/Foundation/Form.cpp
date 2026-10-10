@@ -2125,8 +2125,18 @@ namespace ClaFi
         // it was given - the same range the placement gives way inside. A window is held up by
         // the MinSizes set inside it and by nothing else, so one that states none is held only by
         // whatever default the system keeps for a window nothing was stated for.
-        const ScaledDimensions minSize = m_content.calculatedMinSize();
-        const ScaledDimensions maxSize = scaler().scale(m_content.maxSize());
+        //
+        // A FORM ITS CONTENT SIZES LEAVES THE USER NOTHING TO DRAG. It is placed again around
+        // whatever the content comes to, so an edge pulled out would only spring back. Its range
+        // is the one size the content asked for, and a platform answers a range of one size with
+        // a window that has no edge to take hold of and no maximize. See UI-Types#autofit
+        const bool contentSized = m_autoFit == AutoFit::Yes;
+        const ScaledDimensions minSize = contentSized
+            ? m_calculatedSize
+            : m_content.calculatedMinSize();
+        const ScaledDimensions maxSize = contentSized
+            ? m_calculatedSize
+            : scaler().scale(m_content.maxSize());
         if (minSize == m_statedMinSize && maxSize == m_statedMaxSize)
             return;
         m_statedMinSize = minSize;

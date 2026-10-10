@@ -10,8 +10,15 @@ namespace SeeDocs_App
     // How a tree is read. See README
     export enum class ScanMode
     {
-        Full,      // the tree is written to the declaration routine, and SeeDocs writes into it
-        Limited    // anyone's C++ or Delphi, headers included, read and never written into
+        Full,      // ClaFi modules, written to the declaration routine and checked against it
+        Limited    // anyone's C++ or Delphi, headers included, nothing checked
+    };
+
+    // Which comment gives a declaration its hint. See README
+    export enum class HintRules
+    {
+        Strict,   // the ClaFi rules: the comment on its line, else the first line above it
+        Loose     // every recognizable comment: the brief of a doc comment, its lines run on
     };
 
     // The language a module is written in, which its code on a page is read and coloured as.
@@ -252,8 +259,16 @@ namespace SeeDocs_App
     export struct SourceFile
     {
         std::filesystem::path path;
-        std::wstring relative;   // to the tree's root, with forward slashes
+        std::wstring relative;   // to its root, with forward slashes
         std::wstring module;
+        std::size_t root{ 0 };   // the folder of the sources it was read from, by its index
+    };
+
+    // A folder of sources a surface is read from, and whether the folders under it are read too.
+    export struct SourceFolder
+    {
+        std::filesystem::path path;
+        bool subfolders{ true };
     };
 
     // A bind written in a constructor - INIT_PROPERTY, BIND_MEMBER and its kind - by the name it
@@ -300,6 +315,9 @@ namespace SeeDocs_App
     export using Variables = std::vector<Variable>;
     export using Modules = std::vector<Module>;
     export using SourceFiles = std::vector<SourceFile>;
+    export using SourceFolders = std::vector<SourceFolder>;
+    // The folders a surface's files are named from, in the order its roots count them.
+    export using SourceRoots = std::vector<std::filesystem::path>;
     export using Bindings = std::vector<Binding>;
     export using Republications = std::vector<Republication>;
     export using EnclosedIncludes = std::vector<EnclosedInclude>;
@@ -327,9 +345,11 @@ namespace SeeDocs_App
         // When the scan that read the tree ran - carried through edits, which read nothing.
         [[nodiscard]] const ScanStamp& scanned() const { return m_scanned; }
         void setScanned(const ScanStamp& value) { m_scanned = value; }
-        // How the tree was read - a tree read in limited mode owes no hints.
-        [[nodiscard]] ScanMode mode() const { return m_mode; }
+        [[nodiscard]] ScanMode mode() const { return m_mode; }   // how the tree was read
         void setMode(const ScanMode value) { m_mode = value; }
+        // How its comments gave the hints - a tree read by loose rules owes none.
+        [[nodiscard]] HintRules hintRules() const { return m_hintRules; }
+        void setHintRules(const HintRules value) { m_hintRules = value; }
 
         std::size_t addFile(SourceFile);
         void addModule(Module);
@@ -402,6 +422,7 @@ namespace SeeDocs_App
         EnclosedIncludes m_enclosedIncludes;
         ScanStamp m_scanned{};
         ScanMode m_mode{ ScanMode::Full };
+        HintRules m_hintRules{ HintRules::Strict };
         std::unordered_map<std::wstring, std::size_t> m_byQualifiedName;
         std::unordered_map<std::wstring, std::vector<std::size_t>> m_byBareName;
         std::unordered_map<std::wstring, SourceLanguage> m_languageByModule;

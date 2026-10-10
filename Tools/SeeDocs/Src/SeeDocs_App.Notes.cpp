@@ -46,6 +46,14 @@ namespace SeeDocs_App
         }
     }
 
+    // A name the owner's own is the owner's: a type's footnote is headed by the type alone.
+    std::wstring footnoteHeading(const std::wstring_view owner, const std::wstring_view name)
+    {
+        if (owner.empty() || owner == name)
+            return std::wstring{ name };
+        return std::wstring{ owner } + L" " + std::wstring{ name };
+    }
+
     std::size_t headingLevel(const std::wstring_view line)
     {
         std::size_t level = 0;
@@ -145,6 +153,12 @@ namespace SeeDocs_App
     void Notes::forget(const std::wstring_view stem)
     {
         m_read.erase(std::wstring{ stem });
+        m_stems.reset();
+    }
+
+    void Notes::forgetAll()
+    {
+        m_read.clear();
         m_stems.reset();
     }
 

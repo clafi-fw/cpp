@@ -75,31 +75,17 @@ namespace ClaFi
         const FrameMargins ringBefore = ring();
         const WindowFrame before = appliedFrame();
         Window::setFrame(value);
-        const FrameMargins band = ring();
-        if (band == ringBefore && appliedFrame() == before)
+        if (ring() == ringBefore && appliedFrame() == before)
             return;
-        // A WINDOW NOT SHOWN ONLY KEEPS THE DESIGN, and applies it on the show. The first design
-        // arrives from the form's own constructor, before the form has its content, and a window
-        // is placed before it is shown - the placement reads the ring, and the resize it sends
-        // tells the form the frame.
-        if (!::IsWindowVisible(handle()))
-        {
-            m_frameStale = true;
-            return;
-        }
+        restateFrame(ringBefore);
+    }
 
-        // A RING THAT GREW OR SHRANK MOVES THE WINDOW RECT and leaves the geometry where it was.
-        if (band != ringBefore)
-        {
-            IntRect rect = bounds();
-            rect.left += ringBefore.left - band.left;
-            rect.top += ringBefore.top - band.top;
-            rect.right += band.right - ringBefore.right;
-            rect.bottom += band.bottom - ringBefore.bottom;
-            ::SetWindowPos(handle(), nullptr, rect.left, rect.top, rect.width(), rect.height(),
-                SWP_NOZORDER | SWP_NOACTIVATE);
-        }
-        reframe();
+    void FormWindow::setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize)
+    {
+        const FrameMargins ringBefore = ring();
+        Window::setSizeRange(minSize, maxSize);
+        if (ring() != ringBefore)
+            restateFrame(ringBefore);
     }
 
     // THE WINDOW KEEPS ITS OWN DIRTY RECT AND RAISES ITS OWN PAINT. It has no redirection surface,
@@ -145,7 +131,8 @@ namespace ClaFi
     LRESULT FormWindow::getBorderSizingHitTest(IntPoint mp)
     {
         LRESULT result = HTCLIENT;
-        if (WindowRole::Dialog == role() || WindowRole::Menu == role())
+        // A dialog its content sizes has no edges to take: they belong to the controls there.
+        if (userSized() || WindowRole::Menu == role())
         {
             const int inside = ::GetSystemMetrics(SM_CXFRAME) * 2;
             const int corner = inside * 4;
@@ -736,6 +723,33 @@ namespace ClaFi
     IntRect FormWindow::clientArea() const
     {
         return IntRect::fromDimensions(surfaceOrigin(), WindowBase::clientRect().dimensions());
+    }
+
+    // A WINDOW NOT SHOWN ONLY KEEPS THE FRAME, and applies it on the show. The first design
+    // arrives from the form's own constructor, before the form has its content, and a window is
+    // placed before it is shown - the placement reads the ring, and the resize it sends tells the
+    // form the frame.
+    void FormWindow::restateFrame(const FrameMargins& ringBefore)
+    {
+        if (!::IsWindowVisible(handle()))
+        {
+            m_frameStale = true;
+            return;
+        }
+
+        // A RING THAT GREW OR SHRANK MOVES THE WINDOW RECT and leaves the geometry where it was.
+        const FrameMargins band = ring();
+        if (band != ringBefore)
+        {
+            IntRect rect = bounds();
+            rect.left += ringBefore.left - band.left;
+            rect.top += ringBefore.top - band.top;
+            rect.right += band.right - ringBefore.right;
+            rect.bottom += band.bottom - ringBefore.bottom;
+            ::SetWindowPos(handle(), nullptr, rect.left, rect.top, rect.width(), rect.height(),
+                SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+        reframe();
     }
 
     void FormWindow::reframe()

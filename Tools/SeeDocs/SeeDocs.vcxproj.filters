@@ -88,6 +88,12 @@
     <ClCompile Include="Src\Ui\SeeDocs_App.Main.cppm">
       <Filter>Src\Ui</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.NewProject.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.NewProject.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Ui\SeeDocs_App.OpenPage.cpp">
       <Filter>Src\Ui</Filter>
     </ClCompile>
@@ -104,6 +110,12 @@
       <Filter>Src\Ui</Filter>
     </ClCompile>
     <ClCompile Include="Src\Ui\SeeDocs_App.PageView.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.ProjectOptions.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.ProjectOptions.cppm">
       <Filter>Src\Ui</Filter>
     </ClCompile>
     <ClCompile Include="Src\Ui\SeeDocs_App.SurfaceTree.cpp">

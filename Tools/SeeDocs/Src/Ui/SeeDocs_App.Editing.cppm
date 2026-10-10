@@ -43,7 +43,6 @@ namespace SeeDocs_App
         std::wstring place;                  // the note and the section, as the editor's bar says
         Reference reference;
         std::optional<NewFootnote> placed;   // a footnote not written yet: where it goes
-        std::optional<CommentSite> site;     // and the declaration whose See is to reach it
         std::wstring refusal;                // why it cannot be edited; empty where it can
     };
 
@@ -52,6 +51,8 @@ namespace SeeDocs_App
     {
     public:
         virtual ~IPageWriter() = default;
+        // Whether a hint edited where it stands is written into the comment the site names.
+        [[nodiscard]] virtual bool writesHint(const CommentSite&) const = 0;
         // Writes the hint into the comment the site names; the reason where it was refused.
         [[nodiscard]] virtual std::wstring writeHint(const CommentSite&,
             std::wstring_view hint) = 0;

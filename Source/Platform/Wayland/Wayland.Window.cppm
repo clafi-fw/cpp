@@ -53,6 +53,12 @@ namespace ClaFi::PlatformImplementation::Wayland
         // placement, since a surface takes one role and keeps it. Nothing above this layer knows
         // the difference; the placement kind is the whole of what the form said.
         [[nodiscard]] bool isLayerRole() const { return m_layerSurface != nullptr; }
+        // WHETHER THE USER SIZES THIS WINDOW: a dialog whose range is more than one size. One a
+        // form's content sizes states its range as that one size - see setSizeRange.
+        [[nodiscard]] bool userSized() const
+        {
+            return m_role == WindowRole::Dialog && m_pendingMinSize != m_pendingMaxSize;
+        }
         [[nodiscard]] wl_surface* surface() const { return m_surface; }
         // A WINDOW IS COMPOSITED OVER WHAT IT STANDS ON when something of it is not a filled
         // rectangle: a popup fades and rounds its corners, and a toplevel whose frame has a corner
@@ -699,8 +705,14 @@ namespace ClaFi::PlatformImplementation::Wayland
     {
         // KEPT FOR THE TOPLEVEL STILL TO BE MADE - see createToplevel, which states it then. A
         // layer surface has no range: the compositor sizes it between its anchors.
+        const bool userSizedBefore = userSized();
         m_pendingMinSize = minSize;
         m_pendingMaxSize = maxSize;
+        // A RANGE OF ONE SIZE TAKES THE EDGES AWAY: the input region stops reaching into the
+        // shadow for a grab, and the compositor, told a floor and a ceiling that agree, offers
+        // neither a resize nor a maximize of its own.
+        if (userSized() != userSizedBefore)
+            stateGeometry();
         if (!m_toplevel)
             return;
 
@@ -921,6 +933,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         m_toplevel = ::xdg_surface_get_toplevel(m_xdgSurface);
         ::xdg_toplevel_add_listener(m_toplevel, &k_toplevelListener, this);
         ::xdg_toplevel_set_app_id(m_toplevel, manager.appId());
+        // A DIALOG RAISED FROM ANOTHER WINDOW STANDS ABOVE IT, as an owned window does on Win32.
+        if (m_parent && m_parent->m_toplevel)
+            ::xdg_toplevel_set_parent(m_toplevel, m_parent->m_toplevel);
 
         // THE FRAME IS THE FRAMEWORK'S OWN, and a compositor that would otherwise add one has to
         // be told. Where the global is absent - Mutter does not advertise it - nobody was going
@@ -1146,7 +1161,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         {
             IntRect input = geometry;
             // A layer surface is not sized by the user, so there is no grab to reach for.
-            if (m_role == WindowRole::Dialog && !isLayerRole())
+            if (userSized() && !isLayerRole())
             {
                 input.inflate(k_resizeGrab);
                 input.intersectWith({ 0, 0, m_surfaceSize.x, m_surfaceSize.y });

@@ -18,20 +18,20 @@ namespace SeeDocs_App
     // Why words were not written, in a sentence the user reads; empty where they were.
     export using Refusal = std::wstring;
 
-    // Where a footnote not written yet goes, and what reaches it.
+    // Where a footnote not written yet goes, and the section it will be.
     export struct NewFootnote
     {
-        Reference reference;   // the note and the anchor the comment's See names
+        Reference reference;   // the note, and the anchor its heading gives
         std::wstring after;    // the anchor of the section it follows; empty for the note's end
         std::wstring heading;
     };
 
     // Writes the hint into the comment the site names, the See it ends with kept: on the
     // declaration's line while the whole line fits, above it otherwise, and always above a type
-    // that opens a scope. An empty hint with no See takes the comment out. The tree is the folder
-    // the surface's files are named from.
-    export [[nodiscard]] Refusal writeHint(Surface&, const std::filesystem::path& tree,
-        const CommentSite&, std::wstring_view hint);
+    // that opens a scope. An empty hint with no See takes the comment out. A file is found under
+    // the root its record names.
+    export [[nodiscard]] Refusal writeHint(Surface&, const SourceRoots&, const CommentSite&,
+        std::wstring_view hint);
     // Whether the words differ from the comment's own, as writeHint compares them.
     export [[nodiscard]] bool changesHint(const CommentSite&, std::wstring_view hint);
 
@@ -45,13 +45,12 @@ namespace SeeDocs_App
     export [[nodiscard]] Refusal writeFootnote(Notes&, const Reference&, std::wstring_view flowed);
 
     // Where a footnote for the declaration goes in the note: after the section named, or at the
-    // note's end where none is, headed by the declaration's name - or by the owner's and the
-    // declaration's where the note already reaches the name. Nothing where the note cannot take
-    // one, and the refusal says why.
+    // note's end where none is, headed as footnoteHeading names it after the declaration and its
+    // owner, so that a page finds it by that name. Nothing where the note cannot take one, and
+    // the refusal says why.
     export [[nodiscard]] std::optional<NewFootnote> placeFootnote(Notes&, const CommentSite&,
         std::wstring_view note, std::wstring_view after, std::wstring_view owner, Refusal&);
-    // Writes the new section, then the See that reaches it at the end of the declaration's
-    // comment. Nothing is written where the comment could not take the See.
-    export [[nodiscard]] Refusal addFootnote(Surface&, Notes&, const std::filesystem::path& tree,
-        const CommentSite&, const NewFootnote&, std::wstring_view flowed);
+    // Writes the new section into its note, making the note where there is none yet. The source
+    // is left as it is: the section reaches the declaration by its heading.
+    export [[nodiscard]] Refusal addFootnote(Notes&, const NewFootnote&, std::wstring_view flowed);
 }

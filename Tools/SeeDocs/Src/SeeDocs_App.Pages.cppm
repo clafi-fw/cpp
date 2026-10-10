@@ -226,6 +226,64 @@ namespace SeeDocs_App
     // The table of contents: what the tree exports, by chapter and module, in reading order.
     export [[nodiscard]] ContentsChapters contentsOf(const Surface&);
 
+    // What a row of the contents tree names.
+    export enum class ContentsRowKind
+    {
+        Folder,
+        Module,
+        Type
+    };
+
+    // A row of the contents tree: what it names, the row it stands under, and the rows under it.
+    export struct ContentsRow
+    {
+        ContentsRowKind kind{ ContentsRowKind::Folder };
+        std::wstring_view folder;   // the category of the folder it stands in; a folder's own
+        const ContentsModule* module{ nullptr };
+        const Type* type{ nullptr };
+        std::optional<std::size_t> parent{};   // none for a row at the top
+        std::vector<std::size_t> children{};   // in reading order
+    };
+
+    export using ContentsRows = std::vector<ContentsRow>;
+    export using RowIndexes = std::vector<std::size_t>;
+
+    // THE CONTENTS AS A TREE: the folders, each holding the folders under it before its modules,
+    // and each module the types it exports. Made once over the contents it views, which stand
+    // for as long as it does, and read by every view of them.
+    export class ContentsTree
+    {
+    public:
+        ContentsTree() = default;
+        explicit ContentsTree(const ContentsChapters&);
+        ContentsTree(const ContentsTree&) = delete;
+        ContentsTree& operator=(const ContentsTree&) = delete;
+        ContentsTree(ContentsTree&&) = default;
+        ContentsTree& operator=(ContentsTree&&) = default;
+    public:
+        [[nodiscard]] const ContentsRows& rows() const { return m_rows; }
+        [[nodiscard]] const RowIndexes& top() const { return m_top; }   // the rows at the root
+        [[nodiscard]] bool empty() const { return m_rows.empty(); }
+        // The row of the nearest one named: the type, else the module, else the folder - the
+        // root's empty folder names none.
+        [[nodiscard]] std::optional<std::size_t> rowOf(std::wstring_view folder,
+            const ContentsModule*, const Type*) const;
+        [[nodiscard]] std::optional<std::size_t> folderRow(std::wstring_view category) const;
+        [[nodiscard]] std::optional<std::size_t> moduleRow(std::wstring_view name) const;
+    private:
+        // The folder's row, made with every folder above it that is not there yet.
+        std::size_t addFolder(std::wstring_view category);
+        std::size_t addRow(ContentsRow);
+    private:
+        static constexpr wchar_t k_folderSeparator = L'/';   // between a category's folders
+
+        ContentsRows m_rows{};
+        RowIndexes m_top{};
+        std::unordered_map<std::wstring, std::size_t> m_folders{};   // its keys are what rows view
+        std::unordered_map<const void*, std::size_t> m_named{};      // a module's or a type's
+        std::unordered_map<std::wstring_view, std::size_t> m_modules{};   // by the module's name
+    };
+
     // What a reader calls a folder under Source and a module.
     export [[nodiscard]] std::wstring chapterNameOf(std::wstring_view category);
     export [[nodiscard]] std::wstring moduleShortNameOf(std::wstring_view module);

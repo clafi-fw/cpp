@@ -4,46 +4,59 @@ import SeeDocs_App.Surface;
 
 import ClaFi.StdLib;
 
-// A PROJECT IS A TREE WITH A DATA FOLDER IN IT. The tree is the folder of sources, read by the
-// scanner as it stands - nothing is appended to the path the user chose; the data folder is where
-// everything SeeDocs keeps of the tree stands - the database the scanner writes, the project's own
-// properties, and the footnotes the comments refer to - so that the tree itself is left as it was
-// found. The folder is made once, with the user's consent, and a tree that has one is a project
-// from then on.
+// A PROJECT IS A FOLDER OF ITS OWN. Its properties, the database the scanner writes and the
+// footnotes the pages show stand in it; the sources it documents stand wherever they are - any
+// number of folders, each read as it stands. A project made inside a tree, in the tree's .seedocs
+// folder, is a project all the same, the tree being its one folder of sources. See README
 namespace SeeDocs_App
 {
-    // The data folder's name, under the project's own folder.
-    export constexpr std::wstring_view k_projectDataFolder = L".seedocs";
     export constexpr std::wstring_view k_projectFileName = L"Project.cfg";
     export constexpr std::wstring_view k_databaseFileName = L"Surface.cfg";
-    // The footnotes' folder, under the data folder; the notes a comment's See reaches.
+    // The footnotes' folder, under the project's own.
     export constexpr std::wstring_view k_footnotesFolder = L"footnotes";
+    // The folder a project made inside a tree stands in, under the tree.
+    export constexpr std::wstring_view k_treeProjectFolder = L".seedocs";
 
-    // A project: the tree it stands on, what it is called, and how the tree is read.
+    // What becomes of a hint edited on a page. See README
+    export enum class HintEdits
+    {
+        None,     // the sources are only read
+        Direct    // it is written into its source file at once, with no undo
+    };
+
+    // A project: its folder, what it is called, the folders it reads and how it reads them.
     export struct Project
     {
         std::filesystem::path folder;
         std::wstring name;
+        SourceFolders sources;   // absolute, in the order their roots count them
         ScanMode mode{ ScanMode::Full };
+        HintRules hints{ HintRules::Strict };
+        HintEdits edits{ HintEdits::None };
 
-        [[nodiscard]] std::filesystem::path dataFolder() const;
         [[nodiscard]] std::filesystem::path databasePath() const;
         [[nodiscard]] std::filesystem::path footnotesFolder() const;
+        [[nodiscard]] SourceRoots sourceRoots() const;   // the sources' folders, a root each
+        // The name it goes by where it states none: its folder's, or a tree's project's, the
+        // tree's.
+        [[nodiscard]] std::wstring folderName() const;
+        // Whether a hint edited on a page is written: hints edited directly, read by the strict
+        // rules - the comment a hint is written into is the one a strict read takes it from.
+        [[nodiscard]] bool writesHints() const;
     };
 
-    // The data folder a project in that folder keeps, whether or not one stands there yet.
-    export [[nodiscard]] std::filesystem::path dataFolderOf(const std::filesystem::path& folder);
-    // The footnotes a project in that folder reads, whether or not any stand there yet.
-    export [[nodiscard]] std::filesystem::path footnotesFolderOf(
+    // The project's own folder for a folder named: the folder itself where it holds a project's
+    // properties or is a tree's project folder, and the tree's project folder for a tree that has
+    // one. Nothing where it stands for no project.
+    export [[nodiscard]] std::optional<std::filesystem::path> projectFolderOf(
         const std::filesystem::path& folder);
-    // Whether the folder carries a project's data folder.
-    export [[nodiscard]] bool holdsProject(const std::filesystem::path& folder);
-    // Reads the project kept in the folder; nothing where it holds none.
+    // Reads the project the folder stands for, as projectFolderOf finds it; nothing where it
+    // stands for none.
     export [[nodiscard]] std::optional<Project> readProject(const std::filesystem::path& folder);
-    // Makes the data folder and the properties in it, the project named after the folder.
-    // Nothing where the folder could not be made.
+    // Makes the folder and the properties in it, the project reading no sources yet. Nothing
+    // where the folder could not be made.
     export [[nodiscard]] std::optional<Project> createProject(const std::filesystem::path& folder,
-        ScanMode);
-    // Writes the project's properties into its data folder.
+        std::wstring_view name);
+    // Writes the project's properties into its folder.
     export void writeProject(const Project&);
 }

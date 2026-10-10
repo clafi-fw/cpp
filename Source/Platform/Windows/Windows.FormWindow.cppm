@@ -24,6 +24,8 @@ namespace ClaFi::PlatformImplementation::Windows
         void show() override;
         void update() override;
         void setFrame(const WindowFrame&) override;
+        // A dialog the user stops sizing loses its ring, and gets it back with a range to size in.
+        void setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize) override;
         void invalidateRect(const IntRect*) override;
         ColorByte alpha() override;
         void setAlpha(ColorByte) override;
@@ -51,6 +53,10 @@ namespace ClaFi::PlatformImplementation::Windows
         [[nodiscard]] FloatPoint toSurface(FloatPoint clientPoint) const;
         // The client area as a rect in the form's surface.
         [[nodiscard]] IntRect clientArea() const;
+        // THE FRAME CHANGED UNDER THE WINDOW - a new design, or a ring come or gone. A window not
+        // shown keeps it for the show; a shown one moves its rect by what the ring did, so the
+        // geometry stays where it is, and tells the form.
+        void restateFrame(const FrameMargins& ringBefore);
         // THE DESIGN CHANGED UNDER A WINDOW OF THE SAME SIZE - a theme switch, a scale. The ring
         // moves the window rect so the geometry stays where it is; anything else is a resize the
         // form is told of directly.

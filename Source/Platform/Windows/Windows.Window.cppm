@@ -137,13 +137,15 @@ namespace ClaFi::PlatformImplementation::Windows
         void setTitle(const std::wstring_view value) override { setText(value); }
         void update() override { ::UpdateWindow(handle()); }
         void setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize) override;
+        // Whether the user sizes this window: a dialog whose range is more than one size.
+        [[nodiscard]] bool userSized() const { return m_Role == WindowRole::Dialog && m_userSized; }
         void setFrame(const WindowFrame& value) override { m_frameDesign = value; }
         [[nodiscard]] const WindowFrame& frameDesign() const { return m_frameDesign; }
         // THE FRAME THIS WINDOW APPLIES, in real pixels: the design, less the corners when
         // snapped; when maximized, only how far the window hangs past the work area.
         [[nodiscard]] WindowFrame appliedFrame() const;
         // HOW FAR THE WINDOW RECT REACHES PAST THE GEOMETRY on each side: k_resizeGrab scaled,
-        // held within the margins, only on a window the user may size, and none while snapped.
+        // held within the margins, only on a window the user sizes, and none while snapped.
         [[nodiscard]] FrameMargins ring() const;
         // WHERE THE WINDOW RECT'S TOP LEFT STANDS IN THE FORM'S SURFACE. The surface is the
         // geometry and its margins; the window is the geometry and its ring; the two share the
@@ -196,6 +198,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // stated, and the system's own default stands.
         IntPoint m_minTrackSize{};
         IntPoint m_maxTrackSize{};
+        bool m_userSized{ true };   // the range last stated is more than one size
         WindowFrame m_frameDesign{};
         float m_scaleFactor{ Platform::globalScaleFactor() };
         // The rect last asked for, which is the only record of where a window that has never
@@ -569,6 +572,22 @@ namespace ClaFi::PlatformImplementation::Windows
             maxSize.x >= k_maxFloat ? 0 : static_cast<int>(maxSize.x),
             maxSize.y >= k_maxFloat ? 0 : static_cast<int>(maxSize.y)
         };
+
+        // A RANGE OF ONE SIZE IS A DIALOG THE USER DOES NOT SIZE. It wears neither the sizing
+        // frame nor the maximize box, which takes its edges, the maximize its caption and its
+        // window menu offer, and the system's snapping; its ring goes with them - see ring.
+        const bool rangeOpen = minSize != maxSize;
+        if (m_Role != WindowRole::Dialog || rangeOpen == m_userSized)
+            return;
+        m_userSized = rangeOpen;
+        constexpr DWORD k_sizingStyles = WS_SIZEBOX | WS_MAXIMIZEBOX;
+        const DWORD style = ::GetWindowLongW(handle(), GWL_STYLE);
+        const DWORD stated = rangeOpen ? style | k_sizingStyles : style & ~k_sizingStyles;
+        ::SetWindowLongW(handle(), GWL_STYLE, static_cast<LONG>(stated));
+        // The system reads the styles again on a frame change. The frame is the framework's own,
+        // so the change moves and sizes nothing.
+        ::SetWindowPos(handle(), nullptr, 0, 0, 0, 0,
+            SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
     // THE PART OF A WINDOW PAST ITS MONITOR'S WORK AREA. A maximized window is sized to the work
@@ -651,7 +670,7 @@ namespace ClaFi::PlatformImplementation::Windows
 
     FrameMargins Window::ringWithin(const FrameMargins& margins) const
     {
-        if (m_Role != WindowRole::Dialog)
+        if (!userSized())
             return {};
         const int grab = static_cast<int>(std::lround(k_resizeGrab * m_scaleFactor));
         return {
@@ -660,6 +679,21 @@ namespace ClaFi::PlatformImplementation::Windows
             std::min(margins.right, grab),
             std::min(margins.bottom, grab)
         };
+    }
+
+    // NEVER LARGER THAN THE ROOM IT MAY STAND IN. clampTo MOVES a rect inside its boundary and
+    // leaves an oversized one oversized - deliberately, since something covering a whole screen is
+    // meant to - so a size the work area cannot hold is cut here first. A window wider or taller
+    // than the work area has its title bar off the top and its edges out of reach, which no size a
+    // form asks for is worth.
+    static FloatRect heldWithin(FloatRect rect, const FloatRect& screenArea)
+    {
+        if (rect.width() > screenArea.width())
+            rect.right = rect.left + screenArea.width();
+        if (rect.height() > screenArea.height())
+            rect.bottom = rect.top + screenArea.height();
+        rect.clampTo(screenArea);
+        return rect;
     }
 
     // WHERE A WINDOW GOES INSIDE THE RECTANGLE IT MAY STAND IN. The room above the anchor
@@ -765,17 +799,7 @@ namespace ClaFi::PlatformImplementation::Windows
             break;
         }
         }
-        // NEVER LARGER THAN THE ROOM IT MAY STAND IN. clampTo MOVES a rect inside its boundary
-        // and leaves an oversized one oversized - deliberately, since something covering a whole
-        // screen is meant to - so a size the work area cannot hold is cut here first. A window
-        // wider or taller than the work area has its title bar off the top and its edges out of
-        // reach, which no size a form asks for is worth.
-        if (result.width() > screenArea.width())
-            result.right = result.left + screenArea.width();
-        if (result.height() > screenArea.height())
-            result.bottom = result.top + screenArea.height();
-        result.clampTo(screenArea);
-        return result;
+        return heldWithin(result, screenArea);
     }
 
     PlacedWindow Window::place(const WindowPlacement& placement)
@@ -804,15 +828,23 @@ namespace ClaFi::PlatformImplementation::Windows
 
         // The monitor it lands on is the one the anchor stands on. A toplevel stands on
         // nothing, so it takes the monitor of the window that raised it, and the primary one
-        // when nothing raised it - or the monitor its remembered geometry stands on.
+        // when nothing raised it - or the monitor its remembered geometry stands on, or the one
+        // it stands on itself.
         const bool onAnchor = placement.placement != FormPlacement::Default
             && placement.placement != FormPlacement::ScreenRight;
         const bool remembered = m_normalPlacement && placement.placement == FormPlacement::Default;
+        // A SHOWN TOPLEVEL PLACED AGAIN STANDS WHERE IT STANDS. A form its content sizes is
+        // placed again whenever what is in it changes size, and put back in the middle of the
+        // screen each time it would walk away from wherever the user moved it.
+        const bool standing = !remembered && placement.placement == FormPlacement::Default
+            && ::IsWindowVisible(handle()) && !::IsZoomed(handle()) && !::IsIconic(handle());
         ::HMONITOR hMon{};
         if (remembered)
             hMon = ::MonitorFromRect(
                 reinterpret_cast<const ::RECT*>(&m_normalPlacement->geometry),
                 MONITOR_DEFAULTTONEAREST);
+        else if (standing)
+            hMon = ::MonitorFromWindow(handle(), MONITOR_DEFAULTTONEAREST);
         else if (onAnchor)
         {
             const FloatPoint centre = anchor.center();
@@ -837,12 +869,27 @@ namespace ClaFi::PlatformImplementation::Windows
         // What is placed is the geometry; the window rect reaches past it by the ring. A
         // remembered geometry stands where it was, held up to the floor the content states now;
         // a placement that would leave it wholly off screen is moved on by SetWindowPlacement.
+        // A standing window keeps its top left and takes the new size, held inside the work area.
         FloatRect result{};
         if (remembered)
         {
             result = m_normalPlacement->geometry.toFloat();
             result.right = std::max(result.right, result.left + placement.minSize.x);
             result.bottom = std::max(result.bottom, result.top + placement.minSize.y);
+        }
+        else if (standing)
+        {
+            const IntRect current = bounds();
+            const FrameMargins currentBand = ring();
+            const FloatPoint topLeft{
+                static_cast<float>(current.left + currentBand.left),
+                static_cast<float>(current.top + currentBand.top)
+            };
+            const FloatRect screenArea{
+                reinterpret_cast<IntRect&>(monInfo.rcWork).toFloat(),
+                -placement.screenMargin
+            };
+            result = heldWithin(FloatRect::fromDimensions(topLeft, placement.size), screenArea);
         }
         else
             result = placeWithin(

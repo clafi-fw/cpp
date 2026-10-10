@@ -462,7 +462,9 @@ namespace SeeDocs_App
         if (!table.groupColumn.empty())
             grid.columns().add(Tag{ k_groupColumn }, Text{ table.groupColumn });
         const bool footnoted = hasFootnotes(table);
-        const bool editable = m_writer && std::ranges::any_of(table.groups, hasSites);
+        const bool editable = std::ranges::any_of(table.groups, [this](const TableGroup& group) {
+            return writesHints(group);
+        });
         Grids::ColumnCollection* into = &grid.columns();
         TagValue hintColumn = k_noColumn;
         for (std::size_t i = 0; i != table.columns.size(); ++i)
@@ -630,7 +632,7 @@ namespace SeeDocs_App
             });
             if (row.site.has_value() && m_writer)
             {
-                if (hintColumn != k_noColumn)
+                if (hintColumn != k_noColumn && writesHint(row.site))
                     connectHintCell(gridRow, row, hintColumn);
                 if (table.takesFootnotes)
                     connectRowMenu(gridRow, row, notes);
@@ -699,7 +701,7 @@ namespace SeeDocs_App
 
     void PageView::connectHintBox(HintBox& box, const std::optional<CommentSite>& site)
     {
-        if (m_writer && site.has_value())
+        if (writesHint(site))
             box.connectSite(*m_writer, *site);
     }
 
@@ -864,14 +866,19 @@ namespace SeeDocs_App
         });
     }
 
-    bool PageView::hasSites(const TableGroup& group)
+    bool PageView::writesHints(const TableGroup& group) const
     {
-        const bool inRows = std::ranges::any_of(group.rows, [](const TableRow& row) {
-            return row.site.has_value();
+        const bool inRows = std::ranges::any_of(group.rows, [this](const TableRow& row) {
+            return writesHint(row.site);
         });
-        return inRows || std::ranges::any_of(group.groups, [](const TableGroup& nested) {
-            return hasSites(nested);
+        return inRows || std::ranges::any_of(group.groups, [this](const TableGroup& nested) {
+            return writesHints(nested);
         });
+    }
+
+    bool PageView::writesHint(const std::optional<CommentSite>& site) const
+    {
+        return m_writer && site.has_value() && m_writer->writesHint(*site);
     }
 
     std::wstring PageView::footnoteAnchor(const std::size_t index)

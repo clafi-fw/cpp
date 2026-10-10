@@ -351,11 +351,12 @@ namespace SeeDocs_App
         // A file as lines and tokens, lexed line by line with the framework's C++ lexer and cut
         // once more where that lexer, built for colouring, leaves a plain name without a token.
         // Preprocessed, a line in a branch left out stands blank, and a line of code holds its
-        // macros expanded; the lines keep their count, so every place is the file's own.
+        // macros expanded; the lines keep their count, so every place is the file's own. Which
+        // lines are comment lines is the hint rules': // alone by strict ones, /* */ too by loose.
         class SourceText
         {
         public:
-            explicit SourceText(std::wstring_view text, Preprocess = Preprocess::None,
+            SourceText(std::wstring_view text, HintRules, Preprocess = Preprocess::None,
                 Macros* macros = nullptr);
             [[nodiscard]] const TokenList& tokens() const { return m_tokens; }
             [[nodiscard]] bool preprocessed() const { return m_preprocess != Preprocess::None; }
@@ -399,6 +400,7 @@ namespace SeeDocs_App
             std::vector<LineKind> m_kinds;
             std::vector<std::size_t> m_firstTokens;   // per line, the index of its first token
             Preprocess m_preprocess{ Preprocess::None };
+            bool m_blockComments{ false };   // a /* */ comment stands as a comment line
             Macros* m_macros{ nullptr };
             Branches m_branches;
             Includes m_includes;
@@ -407,10 +409,11 @@ namespace SeeDocs_App
             int m_dropDepth{ 0 };                 // brackets a dropped macro call still holds open
         };
 
-        SourceText::SourceText(const std::wstring_view text, const Preprocess preprocess,
-            Macros* macros)
+        SourceText::SourceText(const std::wstring_view text, const HintRules rules,
+            const Preprocess preprocess, Macros* macros)
             :
             m_preprocess{ preprocess },
+            m_blockComments{ rules == HintRules::Loose },
             m_macros{ macros }
         {
             std::size_t start = 0;
@@ -435,9 +438,14 @@ namespace SeeDocs_App
                 m_firstTokens.push_back(firstToken);
                 const bool insideComment = m_blockOpen;
                 if (preprocessed())
+                {
                     preprocessLine(i, state, strings);
+                }
                 else
+                {
                     tokenizeLine(i, state, strings, directiveContinues);
+                    followBlockComment(i);
+                }
                 classifyLine(firstToken, insideComment);
             }
         }
@@ -795,13 +803,13 @@ namespace SeeDocs_App
                 m_tokens.push_back({ type, line, start, end - start });
         }
 
-        // Preprocessed, a /* */ comment is a comment line as // is, and so is a blank line inside
+        // By loose rules a /* */ comment is a comment line as // is, and so is a blank line inside
         // one, so a doc comment's paragraphs gather as one comment.
         void SourceText::classifyLine(const std::size_t firstToken, const bool insideComment)
         {
             if (firstToken == m_tokens.size())
             {
-                const bool commentLine = preprocessed() && insideComment;
+                const bool commentLine = m_blockComments && insideComment;
                 m_kinds.push_back(commentLine ? LineKind::CommentOnly : LineKind::Blank);
                 return;
             }
@@ -812,7 +820,7 @@ namespace SeeDocs_App
                     commentsOnly = false;
             }
             const bool lineComment = text(m_tokens[firstToken]).starts_with(k_lineComment);
-            const bool counts = lineComment || preprocessed();
+            const bool counts = lineComment || m_blockComments;
             m_kinds.push_back(commentsOnly && counts ? LineKind::CommentOnly : LineKind::Code);
         }
 
@@ -830,7 +838,7 @@ namespace SeeDocs_App
             if (tail.type != TokenType::Comment || last - 1 == first)
                 return nullptr;
             const std::wstring_view comment = text(tail);
-            const bool block = preprocessed() && comment.starts_with(k_blockComment);
+            const bool block = m_blockComments && comment.starts_with(k_blockComment);
             if (!comment.starts_with(k_lineComment) && !block)
                 return nullptr;
             return &tail;
@@ -1018,7 +1026,7 @@ namespace SeeDocs_App
         {
         public:
             FileReader(Surface&, std::size_t file, const SourceText&, std::wstring category,
-                ScanMode, bool header);
+                ScanMode, HintRules, bool header);
             void read();
         private:
             [[nodiscard]] const Token* peek(std::size_t ahead = 0) const;
@@ -1070,7 +1078,7 @@ namespace SeeDocs_App
             [[nodiscard]] Comment commentAt(std::size_t line, std::optional<std::size_t> fallback,
                 std::wstring_view name, bool aboveCounts = true) const;
             void gatherAbove(std::size_t line, Comment&) const;
-            // A limited read's trailing comment on the line, with the lines that carry it on.
+            // A loose read's trailing comment on the line, with the lines that carry it on.
             [[nodiscard]] Names trailingLines(std::size_t line, const std::wstring& trailing) const;
         private:
             Surface& m_surface;
@@ -1078,6 +1086,7 @@ namespace SeeDocs_App
             const SourceText& m_text;
             std::wstring m_category;
             bool m_limited{ false };
+            bool m_looseHints{ false };
             bool m_header{ false };
             std::size_t m_at{ 0 };
             std::vector<Scope> m_scopes;
@@ -1085,13 +1094,14 @@ namespace SeeDocs_App
         };
 
         FileReader::FileReader(Surface& surface, const std::size_t file, const SourceText& text,
-            std::wstring category, const ScanMode mode, const bool header)
+            std::wstring category, const ScanMode mode, const HintRules rules, const bool header)
             :
             m_surface{ surface },
             m_file{ file },
             m_text{ text },
             m_category{ std::move(category) },
             m_limited{ mode == ScanMode::Limited },
+            m_looseHints{ rules == HintRules::Loose },
             m_header{ header }
         {
         }
@@ -2660,7 +2670,7 @@ namespace SeeDocs_App
             Comment comment;
             if (const std::optional<std::wstring_view> trailing = m_text.trailingComment(line))
             {
-                comment.trailing = m_limited
+                comment.trailing = m_looseHints
                     ? withoutSeparators(docCommentBody(*trailing))
                     : std::wstring{ commentBody(*trailing) };
             }
@@ -2670,11 +2680,11 @@ namespace SeeDocs_App
             if (aboveCounts && comment.above.empty() && fallback && *fallback != line)
                 gatherAbove(*fallback, comment);
 
-            // A limited read's comments are not the routine's: the hint is the brief of the doc
-            // comment above, or of the one on the line where there is none above - a comment on a
-            // line is as often a tool's directive as words - and a See in it is words. A hint that
-            // only names the declaration is a label, which tells a reader nothing.
-            if (m_limited)
+            // Loose rules are not the routine's: the hint is the brief of the doc comment above, or
+            // of the one on the line where there is none above - a comment on a line is as often a
+            // tool's directive as words - and a See in it is words. A hint that only names the
+            // declaration is a label, which tells a reader nothing.
+            if (m_looseHints)
             {
                 if (comment.above.empty() && comment.trailing)
                     comment.text = briefOf(trailingLines(line, *comment.trailing));
@@ -2695,14 +2705,14 @@ namespace SeeDocs_App
             return comment;
         }
 
-        // In a limited read, the lines carrying on the trailing comment of the line above them
-        // are that line's, not the comment of the declaration under them.
+        // By loose rules, the lines carrying on the trailing comment of the line above them are
+        // that line's, not the comment of the declaration under them.
         void FileReader::gatherAbove(const std::size_t line, Comment& comment) const
         {
             std::size_t first = line;
             while (first != 0 && m_text.kindOf(first - 1) == LineKind::CommentOnly)
                 --first;
-            if (m_limited && first != 0 && first != line)
+            if (m_looseHints && first != 0 && first != line)
                 first = std::min(line, first + m_text.continuationsOf(first - 1));
             if (first == line)
                 return;
@@ -2712,9 +2722,9 @@ namespace SeeDocs_App
                 comment.aboveWidth = std::max(comment.aboveWidth, m_text.width(i));
                 const std::wstring_view written = trimmed(m_text.line(i));
                 // A block opening under other lines - //! over /** - is a paragraph of its own.
-                if (m_limited && !comment.above.empty() && written.starts_with(k_blockComment))
+                if (m_looseHints && !comment.above.empty() && written.starts_with(k_blockComment))
                     comment.above.emplace_back();
-                const std::wstring body = m_limited
+                const std::wstring body = m_looseHints
                     ? withoutSeparators(docCommentBody(written))
                     : std::wstring{ commentBody(written) };
                 if (!body.starts_with(k_todo))
@@ -2753,6 +2763,7 @@ namespace SeeDocs_App
         {
             std::filesystem::path path;
             FileRole role{ FileRole::Module };
+            std::size_t root{ 0 };   // the folder of sources it was found in, by its index
         };
 
         using TreeFiles = std::vector<TreeFile>;
@@ -2766,96 +2777,187 @@ namespace SeeDocs_App
             return isListed(extensions, extension);
         }
 
-        // What a read takes, in reading order: a full read every module interface and then every
-        // implementation unit, a limited one every module interface, every header, every Delphi
-        // unit and then every Delphi include file.
-        [[nodiscard]] TreeFiles filesOf(const std::filesystem::path& root, const ScanMode mode)
+        // The files a read takes, as one folder of sources gives them, sorted into lists by role.
+        class FileGathering
         {
-            std::vector<std::filesystem::path> first;
-            std::vector<std::filesystem::path> second;
-            std::vector<std::filesystem::path> units;
-            std::vector<std::filesystem::path> includes;
+        public:
+            explicit FileGathering(ScanMode);
+            // Takes the folder's files, and with its subfolders, theirs; a file taken from a
+            // folder before is not taken again.
+            void take(const SourceFolder&, std::size_t root);
+            [[nodiscard]] TreeFiles files();
+        private:
+            void takeFile(const std::filesystem::path&, std::size_t root);
+            [[nodiscard]] static bool readsBefore(const TreeFile&, const TreeFile&);
+        private:
+            ScanMode m_mode;
+            TreeFiles m_first{};
+            TreeFiles m_second{};
+            TreeFiles m_units{};
+            TreeFiles m_includes{};
+            std::set<std::filesystem::path> m_taken{};
+        };
+
+        FileGathering::FileGathering(const ScanMode mode)
+            :
+            m_mode{ mode }
+        {
+        }
+
+        // A folder whose name starts with a dot is left out with everything under it - .seedocs,
+        // .git, .vs - which is what the recursion has to be told before the step that would
+        // enter it.
+        void FileGathering::take(const SourceFolder& folder, const std::size_t root)
+        {
             std::error_code error;
-            std::filesystem::recursive_directory_iterator walk{ root, error };
+            if (!folder.subfolders)
+            {
+                for (const std::filesystem::directory_entry& entry :
+                    std::filesystem::directory_iterator{ folder.path, error })
+                {
+                    if (entry.is_regular_file(error))
+                        takeFile(entry.path(), root);
+                }
+                return;
+            }
+            std::filesystem::recursive_directory_iterator walk{
+                folder.path,
+                std::filesystem::directory_options::skip_permission_denied,
+                error
+            };
             const std::filesystem::recursive_directory_iterator end{};
             while (walk != end)
             {
                 const std::filesystem::directory_entry& entry = *walk;
-                if (entry.is_directory())
+                if (entry.is_directory(error))
                 {
                     if (entry.path().filename().wstring().starts_with(k_hiddenPrefix))
                         walk.disable_recursion_pending();
                 }
-                else if (entry.is_regular_file() && mode == ScanMode::Full)
+                else if (entry.is_regular_file(error))
                 {
-                    const std::wstring extension = entry.path().extension().wstring();
-                    if (extension == k_interfaceExtension)
-                        first.push_back(entry.path());
-                    else if (extension == k_implementationExtension)
-                        second.push_back(entry.path());
+                    takeFile(entry.path(), root);
                 }
-                else if (entry.is_regular_file())
-                {
-                    if (listedExtension(k_moduleExtensions, entry.path()))
-                        first.push_back(entry.path());
-                    else if (listedExtension(k_headerExtensions, entry.path()))
-                        second.push_back(entry.path());
-                    else if (listedExtension(k_pascalExtensions, entry.path()))
-                        units.push_back(entry.path());
-                    else if (listedExtension({ &k_pascalInclude, 1 }, entry.path()))
-                        includes.push_back(entry.path());
-                }
-                ++walk;
+                walk.increment(error);
+                if (error)
+                    break;
             }
-            std::ranges::sort(first);
-            std::ranges::sort(second);
-            std::ranges::sort(units);
-            std::ranges::sort(includes);
-            const FileRole secondRole = mode == ScanMode::Limited
-                ? FileRole::Header
-                : FileRole::Module;
-            TreeFiles files;
-            for (std::filesystem::path& path : first)
-                files.push_back({ .path = std::move(path), .role = FileRole::Module });
-            for (std::filesystem::path& path : second)
-                files.push_back({ .path = std::move(path), .role = secondRole });
-            for (std::filesystem::path& path : units)
-                files.push_back({ .path = std::move(path), .role = FileRole::PascalUnit });
-            for (std::filesystem::path& path : includes)
-                files.push_back({ .path = std::move(path), .role = FileRole::PascalInclude });
-            return files;
+        }
+
+        void FileGathering::takeFile(const std::filesystem::path& path, const std::size_t root)
+        {
+            TreeFiles* list = nullptr;
+            FileRole role = FileRole::Module;
+            if (m_mode == ScanMode::Full)
+            {
+                const std::wstring extension = path.extension().wstring();
+                if (extension == k_interfaceExtension)
+                    list = &m_first;
+                else if (extension == k_implementationExtension)
+                    list = &m_second;
+            }
+            else if (listedExtension(k_moduleExtensions, path))
+            {
+                list = &m_first;
+            }
+            else if (listedExtension(k_headerExtensions, path))
+            {
+                list = &m_second;
+                role = FileRole::Header;
+            }
+            else if (listedExtension(k_pascalExtensions, path))
+            {
+                list = &m_units;
+                role = FileRole::PascalUnit;
+            }
+            else if (listedExtension({ &k_pascalInclude, 1 }, path))
+            {
+                list = &m_includes;
+                role = FileRole::PascalInclude;
+            }
+            if (!list || !m_taken.insert(path.lexically_normal()).second)
+                return;
+            list->push_back({ .path = path, .role = role, .root = root });
+        }
+
+        // What a read takes, in reading order: a full read every module interface and then every
+        // implementation unit, a limited one every module interface, every header, every Delphi
+        // unit and then every Delphi include file - each by its folder's place, then by path.
+        TreeFiles FileGathering::files()
+        {
+            TreeFiles result;
+            for (TreeFiles* list : { &m_first, &m_second, &m_units, &m_includes })
+            {
+                std::ranges::sort(*list, readsBefore);
+                result.insert(result.end(), std::make_move_iterator(list->begin()),
+                    std::make_move_iterator(list->end()));
+                list->clear();
+            }
+            m_taken.clear();
+            return result;
+        }
+
+        bool FileGathering::readsBefore(const TreeFile& left, const TreeFile& right)
+        {
+            if (left.root != right.root)
+                return left.root < right.root;
+            return left.path < right.path;
+        }
+
+        [[nodiscard]] TreeFiles filesOf(const SourceFolders& folders, const ScanMode mode)
+        {
+            FileGathering gathering{ mode };
+            for (std::size_t root = 0; root != folders.size(); ++root)
+                gathering.take(folders[root], root);
+            return gathering.files();
         }
 
         // The file's record in the surface, and the category it stands in: the directory under
-        // the tree's root.
-        [[nodiscard]] std::size_t addSourceFile(Surface& surface, const std::filesystem::path& root,
-            const std::filesystem::path& path, std::wstring& category)
+        // its folder's root - so that folders of one name under two roots are one chapter.
+        [[nodiscard]] std::size_t addSourceFile(Surface& surface, const SourceFolders& folders,
+            const TreeFile& file, std::wstring& category)
         {
+            const std::filesystem::path& root = folders[file.root].path;
             SourceFile record;
-            record.path = path;
-            record.relative = posixRelative(path, root);
-            category = posixRelative(path.parent_path(), root);
+            record.path = file.path;
+            record.relative = posixRelative(file.path, root);
+            record.root = file.root;
+            category = posixRelative(file.path.parent_path(), root);
             if (category == L".")
                 category.clear();
             return surface.addFile(std::move(record));
         }
 
-        void readSource(Surface& surface, const std::filesystem::path& root,
-            const TreeFile& file, const SourceText& source, const ScanMode mode)
+        void readSource(Surface& surface, const SourceFolders& folders, const TreeFile& file,
+            const SourceText& source, const ScanMode mode, const HintRules rules)
         {
             std::wstring category;
-            const std::size_t index = addSourceFile(surface, root, file.path, category);
+            const std::size_t index = addSourceFile(surface, folders, file, category);
             const bool header = file.role == FileRole::Header;
-            FileReader reader{ surface, index, source, category, mode, header };
+            FileReader reader{ surface, index, source, category, mode, rules, header };
             reader.read();
         }
 
-        void readUnit(Surface& surface, const std::filesystem::path& root, const TreeFile& file,
-            const std::wstring_view text, const PascalSymbols& symbols)
+        void readUnit(Surface& surface, const SourceFolders& folders, const TreeFile& file,
+            const std::wstring_view text, const PascalSymbols& symbols, const HintRules rules)
         {
             std::wstring category;
-            const std::size_t index = addSourceFile(surface, root, file.path, category);
-            readPascalUnit(surface, index, text, category, symbols);
+            const std::size_t index = addSourceFile(surface, folders, file, category);
+            readPascalUnit(surface, index, text, category, symbols, rules);
+        }
+
+        // A file that cannot be read is left out.
+        void readFull(Surface& surface, const SourceFolders& folders, const TreeFiles& files,
+            const HintRules rules)
+        {
+            for (const TreeFile& file : files)
+            {
+                const std::optional<std::wstring> text = Documents::readTextFile(file.path);
+                if (!text)
+                    continue;
+                const SourceText source{ *text, rules };
+                readSource(surface, folders, file, source, ScanMode::Full, rules);
+            }
         }
 
         [[nodiscard]] bool isPascal(const TreeFile& file)
@@ -2866,8 +2968,8 @@ namespace SeeDocs_App
         // EVERY FILE IS GATHERED FROM BEFORE ANY IS READ, a macro being used far from the header
         // that defines it and a Delphi symbol far from the unit testing it; each is read from
         // disk once, for both passes. A Delphi include file is gathered from only.
-        void readLimited(Surface& surface, const std::filesystem::path& root,
-            const TreeFiles& files)
+        void readLimited(Surface& surface, const SourceFolders& folders, const TreeFiles& files,
+            const HintRules rules)
         {
             std::vector<std::optional<std::wstring>> texts;
             texts.reserve(files.size());
@@ -2877,7 +2979,7 @@ namespace SeeDocs_App
                 texts.push_back(Documents::readTextFile(file.path));
                 if (!texts.back() || isPascal(file))
                     continue;
-                const SourceText gathered{ *texts.back(), Preprocess::Gather, &macros };
+                const SourceText gathered{ *texts.back(), rules, Preprocess::Gather, &macros };
             }
             std::vector<std::wstring_view> pascalTexts;
             for (std::size_t i = 0; i != files.size(); ++i)
@@ -2892,11 +2994,11 @@ namespace SeeDocs_App
                     continue;
                 if (files[i].role == FileRole::PascalUnit)
                 {
-                    readUnit(surface, root, files[i], *texts[i], symbols);
+                    readUnit(surface, folders, files[i], *texts[i], symbols, rules);
                     continue;
                 }
-                const SourceText source{ *texts[i], Preprocess::Expand, &macros };
-                readSource(surface, root, files[i], source, ScanMode::Limited);
+                const SourceText source{ *texts[i], rules, Preprocess::Expand, &macros };
+                readSource(surface, folders, files[i], source, ScanMode::Limited, rules);
             }
             surface.encloseIncludes();
             surface.republish();
@@ -2905,37 +3007,19 @@ namespace SeeDocs_App
         }
     }
 
-    // A folder whose name starts with a dot is left out with everything under it - .seedocs, .git,
-    // .vs - which is what the recursion has to be told before the step that would enter it.
-    Surface scanTree(const std::filesystem::path& root, const ScanMode mode)
+    Surface scanSources(const SourceFolders& folders, const ScanMode mode, const HintRules rules)
     {
         Surface surface;
         surface.setMode(mode);
-        const TreeFiles files = filesOf(root, mode);
+        surface.setHintRules(rules);
+        const TreeFiles files = filesOf(folders, mode);
         if (mode == ScanMode::Limited)
-        {
-            readLimited(surface, root, files);
-        }
+            readLimited(surface, folders, files, rules);
         else
-        {
-            for (const TreeFile& file : files)
-                scanFile(surface, root, file.path);
-        }
+            readFull(surface, folders, files, rules);
         surface.resolveAll();
         surface.setScanned(std::chrono::floor<std::chrono::seconds>(
             std::chrono::system_clock::now()));
         return surface;
-    }
-
-    bool scanFile(Surface& surface, const std::filesystem::path& root,
-        const std::filesystem::path& file)
-    {
-        const std::optional<std::wstring> text = Documents::readTextFile(file);
-        if (!text)
-            return false;
-        const SourceText source{ *text };
-        readSource(surface, root, { .path = file, .role = FileRole::Module }, source,
-            ScanMode::Full);
-        return true;
     }
 }

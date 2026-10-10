@@ -40,8 +40,9 @@ the publisher reads its user themes from. The path ends with the separator, as
 
 The application menu, under the AppButton of every application: a popup of the menu role holding
 a TabbedBox, its pages and commands down the left column. The strip reads top down: an
-application's own pages first - see connectAppPage - then the commands, and at the foot the
-framework's two pages, Information above Settings. Show diagnostic stands only where
+application's own pages first - see connectAppPage - then the commands, the application's own
+ahead of the framework's - see connectAppCommand - and at the foot the framework's two pages,
+Information above Settings. Show diagnostic stands only where
 Diagnostic::Options::showForm is on; Exit names the application, spelled as its name is
 spelled, and closes the form the menu stands on, through its root form.
 
@@ -271,6 +272,28 @@ Adds a page of the application's own at the top of the strip, by caption, once p
 more than once for more than one page, in the order asked.
 
 Nothing calls it for an application, and one that never does gets Settings alone.
+
+## AppCommandHandler
+
+What a command of the application's own does, run once the menu it was chosen from has closed
+and handed the input that chose it. A window the command raises is raised there; one already up
+is brought forward on that input, since raising a window is what a display server weighs against
+the click that asked.
+
+## connectAppCommand
+
+Adds a command of the application's own to the strip, under its pages and above Show diagnostic
+and Exit, by caption, once per application - and more than once for more than one command, in the
+order asked. It wears the dot an application's page wears, and the end mark it states:
+`EndIcon::OpensWindow` for a command that opens a window.
+
+THE MENU IS DOWN BEFORE THE COMMAND RUNS, as it is for the framework's own. The click closes the
+menu, and the handler runs once the menu's loop has returned, so a window the command opens never
+stands over a menu going down under it.
+
+    connectAppCommand(L"New project", EndIcon::OpensWindow, [&workspace](InputStamp stamp){
+        workspace.createNew({}, stamp);
+    });
 
 ## UiElement
 

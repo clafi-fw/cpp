@@ -28,6 +28,7 @@ namespace SeeDocs_App
         constexpr std::size_t k_nameReach = 3;      // the lines a declaration's name is looked on
         constexpr std::size_t k_prefixReach = 4;    // the lines a template head is looked up over
         constexpr std::size_t k_footnoteLevel = 2;  // the level a new footnote's heading takes
+        constexpr wchar_t k_noteJoin = L'-';        // between the words of a note's stem
 
         // Files
 
@@ -543,7 +544,7 @@ namespace SeeDocs_App
         }
 
         [[nodiscard]] std::optional<SiteInFile> readSite(const Surface& surface,
-            const std::filesystem::path& tree, const CommentSite& site, Refusal& refusal)
+            const SourceRoots& roots, const CommentSite& site, Refusal& refusal)
         {
             if (!site.comment || site.place.file >= surface.files().size())
             {
@@ -551,7 +552,13 @@ namespace SeeDocs_App
                 return std::nullopt;
             }
             const SourceFile& source = surface.files()[site.place.file];
-            const std::filesystem::path path = tree / source.path;
+            if (source.root >= roots.size())
+            {
+                refusal = L"The project no longer reads the folder " + source.relative
+                    + L" was read from, so nothing was written to it.";
+                return std::nullopt;
+            }
+            const std::filesystem::path path = roots[source.root] / source.path;
             std::optional<FileLines> file = readLines(path);
             if (!file)
             {
@@ -588,12 +595,12 @@ namespace SeeDocs_App
 
         // Writes the words into the comment, ending with the See named - or the one it has - and
         // brings the record and the places under it in line with the file.
-        [[nodiscard]] Refusal writeComment(Surface& surface, const std::filesystem::path& tree,
+        [[nodiscard]] Refusal writeComment(Surface& surface, const SourceRoots& roots,
             const CommentSite& site, const std::wstring& words,
             const std::optional<Reference>& reference)
         {
             Refusal refusal;
-            std::optional<SiteInFile> read = readSite(surface, tree, site, refusal);
+            std::optional<SiteInFile> read = readSite(surface, roots, site, refusal);
             if (!read)
                 return refusal;
             Comment* record = surface.writableComment(*site.comment);
@@ -915,9 +922,28 @@ namespace SeeDocs_App
         {
             return std::wstring{ note } + std::wstring{ k_noteExtension };
         }
+
+        // A note's lines before any section: its title and the blank under it.
+        [[nodiscard]] FileLines newNote(Notes& notes, const std::wstring_view note)
+        {
+            bool carriageReturn = false;
+            if (!notes.stems().empty())
+            {
+                const std::optional<FileLines> first = readLines(notePath(notes,
+                    notes.stems().front()));
+                carriageReturn = first && !first->lines.empty()
+                    && first->lines.front().carriageReturn;
+            }
+            std::wstring title{ note };
+            std::ranges::replace(title, k_noteJoin, L' ');
+            FileLines file;
+            file.lines.push_back({ .text = L"# " + title, .carriageReturn = carriageReturn });
+            file.lines.push_back({ .text = {}, .carriageReturn = carriageReturn });
+            return file;
+        }
     }
 
-    Refusal writeHint(Surface& surface, const std::filesystem::path& tree, const CommentSite& site,
+    Refusal writeHint(Surface& surface, const SourceRoots& roots, const CommentSite& site,
         const std::wstring_view hint)
     {
         // Words left as they were are no edit, whatever they hold.
@@ -926,7 +952,7 @@ namespace SeeDocs_App
         const std::wstring words{ trimmed(hint) };
         if (Refusal refusal = checkHint(words, site.name); !refusal.empty())
             return refusal;
-        return writeComment(surface, tree, site, words, std::nullopt);
+        return writeComment(surface, roots, site, words, std::nullopt);
     }
 
     bool changesHint(const CommentSite& site, const std::wstring_view hint)
@@ -1021,58 +1047,55 @@ namespace SeeDocs_App
         return {};
     }
 
+    // A NOTE NOT MADE YET TAKES A FOOTNOTE ALL THE SAME, made when the footnote is written.
     std::optional<NewFootnote> placeFootnote(Notes& notes, const CommentSite& site,
         const std::wstring_view note, const std::wstring_view after,
         const std::wstring_view owner, Refusal& refusal)
     {
         if (note.empty())
         {
-            refusal = L"No note under .seedocs/footnotes belongs to this chapter. Make one, then "
-                L"add the footnote.";
+            refusal = L"No note takes the footnotes of this chapter.";
             return std::nullopt;
         }
-        if (!notes.exists(note))
-        {
-            refusal = noteFileName(note) + L" is not among the footnotes.";
-            return std::nullopt;
-        }
-        const std::wstring_view name = bareName(site.name);
-        std::wstring heading{ name };
-        std::wstring anchor = slug(heading);
-        if (notes.reaches(note, anchor) && !owner.empty())
-        {
-            heading = std::wstring{ owner } + L" " + std::wstring{ name };
-            anchor = slug(heading);
-        }
+        const std::wstring heading = footnoteHeading(owner, bareName(site.name));
+        const std::wstring anchor = slug(heading);
         if (notes.reaches(note, anchor))
         {
             refusal = noteFileName(note) + L" already holds a section reached as #" + anchor + L".";
             return std::nullopt;
         }
         return NewFootnote{
-            .reference = { .note = std::wstring{ note }, .anchor = std::move(anchor) },
+            .reference = { .note = std::wstring{ note }, .anchor = anchor },
             .after = std::wstring{ after },
-            .heading = std::move(heading)
+            .heading = heading
         };
     }
 
-    // THE COMMENT IS READ BEFORE THE NOTE IS WRITTEN, so a source file that changed since the
-    // scan leaves no section behind that nothing reaches.
-    Refusal addFootnote(Surface& surface, Notes& notes, const std::filesystem::path& tree,
-        const CommentSite& site, const NewFootnote& placed, const std::wstring_view flowed)
+    // A NOTE MADE NEW opens with its title - its stem, a blank for each hyphen - and ends its
+    // lines the way the folder's first note does.
+    Refusal addFootnote(Notes& notes, const NewFootnote& placed, const std::wstring_view flowed)
     {
         const Lines body = bodyLines(flowed, {});
         if (Refusal refusal = checkBody(body, k_footnoteLevel); !refusal.empty())
             return refusal;
-        Refusal refusal;
-        if (!readSite(surface, tree, site, refusal))
-            return refusal;
 
         const std::wstring fileName = noteFileName(placed.reference.note);
         const std::filesystem::path path = notePath(notes, placed.reference.note);
-        std::optional<FileLines> file = readLines(path);
-        if (!file)
-            return fileName + L" cannot be read.";
+        std::optional<FileLines> file;
+        std::error_code error;
+        if (std::filesystem::exists(path, error))
+        {
+            file = readLines(path);
+            if (!file)
+                return fileName + L" cannot be read.";
+        }
+        else
+        {
+            std::filesystem::create_directories(notes.folder(), error);
+            if (error)
+                return L"The folder of footnotes cannot be made.";
+            file = newNote(notes, placed.reference.note);
+        }
         // After the section named, past whatever it holds, and never inside the section of a
         // level above that holds it.
         std::size_t at = file->lines.size();
@@ -1099,11 +1122,6 @@ namespace SeeDocs_App
         if (!writeLines(path, *file))
             return fileName + L" cannot be written.";
         notes.forget(placed.reference.note);
-
-        refusal = writeComment(surface, tree, site, site.comment->text, placed.reference);
-        if (!refusal.empty())
-            return L"The footnote stands in " + fileName + L", and the comment did not take the "
-                L"See that reaches it: " + refusal;
         return {};
     }
 }

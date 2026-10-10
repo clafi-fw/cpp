@@ -29,11 +29,13 @@ namespace SeeDocs_App
             constexpr std::wstring_view constants = L"Constants";
             constexpr std::wstring_view scanned = L"Scanned";
             constexpr std::wstring_view limited = L"Limited";
+            constexpr std::wstring_view looseHints = L"LooseHints";
             constexpr std::wstring_view name = L"Name";
             constexpr std::wstring_view nameSpace = L"Namespace";
             constexpr std::wstring_view kind = L"Kind";
             constexpr std::wstring_view module = L"Module";
             constexpr std::wstring_view file = L"File";
+            constexpr std::wstring_view root = L"Root";
             constexpr std::wstring_view line = L"Line";
             constexpr std::wstring_view hint = L"Hint";
             constexpr std::wstring_view note = L"Note";
@@ -174,7 +176,8 @@ namespace SeeDocs_App
             return {
                 Value{ Keys::nameSpace, std::wstring{} },
                 Value{ Keys::module, std::wstring{} },
-                Value{ Keys::file, std::wstring{} }
+                Value{ Keys::file, std::wstring{} },
+                Value{ Keys::root, std::size_t{ 0 } }
             };
         }
 
@@ -205,6 +208,7 @@ namespace SeeDocs_App
             return {
                 Value{ Keys::name, std::wstring{} },
                 Value{ Keys::file, std::wstring{} },
+                Value{ Keys::root, std::size_t{ 0 } },
                 Value{ Keys::interface, false },
                 Value{ Keys::header, false },
                 Value{ Keys::language, std::wstring{} },
@@ -234,6 +238,13 @@ namespace SeeDocs_App
             Strings& list = (section / key).as<Strings>();
             for (const std::wstring& name : names)
                 list.add().set(name);
+        }
+
+        // A file as an entry names it: its path under its root, and the root.
+        void setFile(Dom::Section& section, const SourceFile& file)
+        {
+            setText(section, Keys::file, file.relative);
+            setNumber(section, Keys::root, file.root);
         }
 
         // A stamp as the database writes it, UTC to the second - 2026-10-09T03:12:45Z.
@@ -274,7 +285,7 @@ namespace SeeDocs_App
         {
             setText(section, Keys::nameSpace, nameSpace);
             setText(section, Keys::module, module);
-            setText(section, Keys::file, surface.files()[place.file].relative);
+            setFile(section, surface.files()[place.file]);
         }
 
         void setFunction(Dom::Section& section, const Function& function)
@@ -387,7 +398,7 @@ namespace SeeDocs_App
         void writeModule(Dom::Section& section, const Surface& surface, const Module& module)
         {
             setText(section, Keys::name, module.name);
-            setText(section, Keys::file, surface.files()[module.file].relative);
+            setFile(section, surface.files()[module.file]);
             setFlag(section, Keys::interface, module.isInterface);
             setFlag(section, Keys::header, module.isHeader);
             if (module.language == SourceLanguage::Pascal)
@@ -551,7 +562,8 @@ namespace SeeDocs_App
             void readFunctions(const Dom::DomNodeBase& list);
             void readConstants(const Dom::DomNodeBase& list);
         private:
-            [[nodiscard]] std::size_t fileOf(const std::wstring& relative, const std::wstring& module);
+            // The file the entry names, by its path and its root.
+            [[nodiscard]] std::size_t fileOf(const Dom::Section& entry, const std::wstring& module);
             [[nodiscard]] static Place placeOf(const Dom::Section& entry, std::size_t file);
             [[nodiscard]] static Comment commentOf(const Dom::Section& entry);
             [[nodiscard]] static Access accessIn(const Dom::Section& entry);
@@ -562,7 +574,8 @@ namespace SeeDocs_App
                 bool member);
         private:
             Surface& m_surface;
-            std::map<std::wstring, std::size_t> m_files;   // a file's index by its relative path
+            // A file's index by its root and its path under it.
+            std::map<std::pair<std::size_t, std::wstring>, std::size_t> m_files;
         };
 
         Reader::Reader(Surface& surface)
@@ -583,7 +596,7 @@ namespace SeeDocs_App
                         ? SourceLanguage::Pascal
                         : SourceLanguage::Cpp
                 };
-                module.file = fileOf(textOf(entry, Keys::file), module.name);
+                module.file = fileOf(entry, module.name);
                 for (const std::wstring& name : listOf(entry, Keys::imports))
                     module.imports.push_back({ .name = name, .exported = false });
                 for (const std::wstring& name : listOf(entry, Keys::exportedImports))
@@ -609,7 +622,7 @@ namespace SeeDocs_App
                     .category = textOf(entry, Keys::category)
                 };
                 type.qualifiedName = qualifiedNameOf(type.nameSpace, type.name);
-                const std::size_t file = fileOf(textOf(entry, Keys::file), type.module);
+                const std::size_t file = fileOf(entry, type.module);
                 type.place = placeOf(entry, file);
                 type.comment = commentOf(entry);
 
@@ -677,7 +690,7 @@ namespace SeeDocs_App
                     .module = textOf(entry, Keys::module),
                     .exported = true
                 };
-                const std::size_t file = fileOf(textOf(entry, Keys::file), free.module);
+                const std::size_t file = fileOf(entry, free.module);
                 free.function = functionOf(entry, file, false);
                 m_surface.addFunction(std::move(free));
             }
@@ -692,24 +705,27 @@ namespace SeeDocs_App
                     .module = textOf(entry, Keys::module),
                     .exported = true
                 };
-                const std::size_t file = fileOf(textOf(entry, Keys::file), variable.module);
+                const std::size_t file = fileOf(entry, variable.module);
                 variable.field = fieldOf(entry, file, false);
                 variable.declaration = textOf(entry, Keys::declaration);
                 m_surface.addVariable(std::move(variable));
             }
         }
 
-        std::size_t Reader::fileOf(const std::wstring& relative, const std::wstring& module)
+        std::size_t Reader::fileOf(const Dom::Section& entry, const std::wstring& module)
         {
-            const auto found = m_files.find(relative);
+            const std::wstring relative = textOf(entry, Keys::file);
+            const std::size_t root = numberOf(entry, Keys::root);
+            const auto found = m_files.find({ root, relative });
             if (found != m_files.end())
                 return found->second;
             const std::size_t index = m_surface.addFile({
                 .path = std::filesystem::path{ relative },
                 .relative = relative,
-                .module = module
+                .module = module,
+                .root = root
             });
-            m_files[relative] = index;
+            m_files[{ root, relative }] = index;
             return index;
         }
 
@@ -784,6 +800,7 @@ namespace SeeDocs_App
         return {
             Value{ Keys::scanned, std::wstring{} },
             Value{ Keys::limited, false },
+            Value{ Keys::looseHints, false },
             Sequence{ Keys::modules, moduleLayout() },
             Sequence{ Keys::types, typeLayout() },
             Sequence
@@ -833,6 +850,7 @@ namespace SeeDocs_App
 
         (document / Keys::scanned).set(stampText(surface.scanned()));
         (document / Keys::limited).set(surface.mode() == ScanMode::Limited);
+        (document / Keys::looseHints).set(surface.hintRules() == HintRules::Loose);
 
         Sections& modules = (document / Keys::modules).as<Sections>();
         for (const Module& module : surface.modules())
@@ -887,6 +905,8 @@ namespace SeeDocs_App
         surface.setScanned(stampOf((document / Keys::scanned).get<std::wstring>()));
         const bool limited = (document / Keys::limited).get<bool>();
         surface.setMode(limited ? ScanMode::Limited : ScanMode::Full);
+        const bool loose = (document / Keys::looseHints).get<bool>();
+        surface.setHintRules(loose ? HintRules::Loose : HintRules::Strict);
         Reader reader{ surface };
         reader.readModules(document / Keys::modules);
         reader.readTypes(document / Keys::types);

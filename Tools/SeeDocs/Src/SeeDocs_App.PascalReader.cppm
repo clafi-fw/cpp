@@ -6,9 +6,9 @@ import ClaFi.StdLib;
 
 // THE DELPHI READER. A unit's interface section is what the unit publishes, read declaration by
 // declaration over the framework's own Pascal lexer: its types with their members, its routines,
-// constants and variables. Its implementation section gives a routine the hint written under its
-// header. A unit is a module, and its name is the namespace its declarations are named in,
-// written the C++ way. See README
+// constants and variables. By loose rules its implementation section gives a routine the hint
+// written under its header. A unit is a module, and its name is the namespace its declarations
+// are named in, written the C++ way. See README
 namespace SeeDocs_App
 {
     // The conditional symbols a tree defines for itself, in lower case. A conditional on a
@@ -21,9 +21,10 @@ namespace SeeDocs_App
     // until the symbols settle.
     export [[nodiscard]] PascalSymbols pascalSymbolsOf(std::span<const std::wstring_view> texts);
 
-    // Reads one unit into the surface, the file being the surface's own already.
+    // Reads one unit into the surface, the file being the surface's own already, its hints by
+    // the rules given.
     export void readPascalUnit(Surface&, std::size_t file, std::wstring_view text,
-        const std::wstring& category, const PascalSymbols&);
+        const std::wstring& category, const PascalSymbols&, HintRules);
 
     // Settles what the units say of each other once all are read: a property declared again
     // with no type takes the one it redeclares, and a property of a method type is an event.

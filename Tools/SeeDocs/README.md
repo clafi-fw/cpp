@@ -1,45 +1,63 @@
 # SeeDocs
 
 The tools that read the framework's design surface out of its source and put it to use. Two programs
-so far: SeeDocsCli, the scanner, which reads every module under a tree of sources, writes what it
-finds into one database and holds the tree to the declaration routine; and SeeDocs, a window over
-that database showing the surface as the documentation it is to become.
+so far: SeeDocsCli, the scanner, which reads every module in a project's folders of sources, writes
+what it finds into one database and holds the sources to the declaration routine; and SeeDocs, a
+window over that database showing the surface as the documentation it is to become.
 
-    SeeDocsCli scan [tree] [--out file]   writes the database, the tree's .seedocs/Surface.cfg by default
-    SeeDocsCli check [tree]               reports deviations, exit code 1 if any are errors
-    SeeDocs [tree]                        opens the tree as a project
+    SeeDocsCli scan [folder] [--out file]  writes the database, the project's Surface.cfg by default
+    SeeDocsCli check [folder]              reports deviations, exit code 1 if any are errors
+    SeeDocs [folder]                       opens the project the folder stands for
 
-The tree is the folder of sources, read as it stands - for the framework, its `Source/` folder;
-nothing is appended to the path given. For SeeDocsCli it is the working directory when left out.
-The report reads `file:line: level: text`, one line per finding, in file and line order.
+The folder is a project's own, or a tree with a `.seedocs` project in it - for the framework, its
+`Source/` folder; for SeeDocsCli it is the working directory when left out. A scan with `--out`
+takes any folder, read as the one folder of sources of a project of ClaFi modules. The report
+reads `file:line: level: text`, one line per finding, in file and line order.
 
-A tree is read in full or in limited mode. In full, it is a tree written to the declaration
-routine: its modules are read, its macros of the routine harvested, its comments held to the
-routine's rules, and SeeDocs writes the hints and footnotes edited in it back into the sources.
-Limited mode is for anyone else's C++ or Delphi - a third-party library - and reads what such a
-tree declares without asking anything of it: headers and units as well as modules, nothing
-written into the sources, nothing checked.
+The sources are read as ClaFi modules or as any C++ and Delphi. As ClaFi modules, they are written
+to the declaration routine: their modules are read, their macros of the routine harvested, and
+the checks hold them to the routine. Any C++ and Delphi is for anyone else's code - a third-party
+library - and reads what it declares without asking anything of it: headers and units as well as
+modules, nothing checked. How a comment gives a declaration its hint is a choice of its own, and
+so is whether a hint edited in SeeDocs is written back into the sources.
 
 ## Projects
 
-A project is a tree with a `.seedocs` folder in it. Everything SeeDocs keeps of the tree stands
-there - the database the scanner writes, `Project.cfg`, the project's properties - its name,
-taken from the folder's own, and how its tree is read - and `footnotes`, the notes a comment's
-`See` reaches, written by the tree's authors - so the tree itself is left as it was found. A scan
-into the tree's own database makes the folder; SeeDocs makes it with the user's consent, asked in a
-dialog, and scans the tree at once so the project opens with its database in place. A `--out`
-file written anywhere else makes no project.
+A project is a folder of its own, stored wherever the user chooses - SeeDocs offers
+`Documents/Code Documentations`. Everything SeeDocs keeps of a project stands in it: `Project.cfg`,
+the project's properties; `Surface.cfg`, the database the scanner writes; and `footnotes`, the
+notes the pages show beside the hints. The sources stand wherever they are, in any number of
+folders, and are read as they stand.
 
-How the tree is read is a property of the project, `Limited` in `Project.cfg`. The dialog that
-makes a project asks whether the tree is a third-party library, and the Open page switches it
-afterwards. SeeDocsCli reads a project as its property says, and a tree that is no project, or
-one it makes, in full.
+    Name = ClaFi
+    Sources = [
+        =[ Path = ../ClaFi/Source, Subfolders = true ]
+    ]
+    Limited = false
+    LooseHints = false
+    EditHints = true
+
+`Name` is what the project goes by; empty, it goes by its folder's name. `Sources` are the folders
+it reads, each with the folders under it or without them; a path is written relative to the
+project's folder while the two share a folder under the root of their volume, so that they move
+together and a project kept in a repository names no place outside it, and as it stands
+otherwise. Folders of one name under two sources are one chapter, and a file two sources reach
+is read once, as the first of them found it. `Limited` reads the sources as any C++ and Delphi
+rather than as ClaFi modules, `LooseHints` takes every recognizable comment's hint rather than
+the strict rules' - see Hints - and `EditHints` writes a hint edited on a page into its source.
+
+A project made inside a tree, in the tree's `.seedocs` folder, is a project all the same, and a
+tree that has one stands for it: `SeeDocsCli check Source` checks the project in
+`Source/.seedocs`. Such a project naming no sources reads its tree, with the folders under it,
+which is what one made before projects named their sources read; one stating nothing of its
+hints either reads them as its read did - loosely and read only for any C++ and Delphi, strictly
+and written for ClaFi modules. The next change of its options writes that into its properties.
 
 ## How it reads
 
-Every `.cppm` and then every `.cpp` under the tree is lexed with the framework's own C++ lexer
-(`ClaFi.Core.Syntax`) and read declaration by declaration over the tokens; a folder whose name
-starts with a dot - `.seedocs`, `.git`, `.vs` - is skipped with everything under it. Nothing is
+Every `.cppm` and then every `.cpp` in the folders of sources is lexed with the framework's own C++
+lexer (`ClaFi.Core.Syntax`) and read declaration by declaration over the tokens; a folder whose
+name starts with a dot - `.seedocs`, `.git`, `.vs` - is skipped with everything under it. Nothing is
 expanded and nothing is compiled: a macro of the declaration routine - `DECLARE_PROPERTY`,
 `DECLARE_EVENT`, `BIND_PROPERTY_*`, `READ_PROPERTY`, `REQUIRE_PROPERTY` - is read as the
 declaration it stands for, and a function body is skipped, read only for the binds a
@@ -52,22 +70,37 @@ exported free function and constant, and every module with its imports. A nested
 of its own, named `Outer::Inner`. Types are keyed by qualified name, so `Grids::Grid` and
 `Grids::Dt::Grid` are two entries.
 
-A declaration's comment is the `//` line touching it from above, or the one on its own line; a
-class template's may sit between the `template` line and the `class` line, or above the
-`template` line. The comment's first line is what the database carries, with a trailing
-`See <note>#<anchor>` reference cut off into the entry's `Note`.
+### Hints
 
-### Limited mode
+A declaration's hint is read by one of two sets of rules, whichever way the sources are read.
 
-A limited read takes every module interface - `.cppm`, `.ixx`, `.mpp`, `.cxxm`, `.ccm` - every
-header - `.h`, `.hh`, `.hpp`, `.hxx`, `.h++`, `.inl`, `.ipp`, `.tpp`, `.tcc` - and every Delphi
-unit - `.pas`, `.pp` - and no implementation file. The tree's macros are gathered from all of its
-C++ before any file is read, and every file is then read as the rules below make of it; a unit
-as the Delphi rules after them make of it.
+By the strict ClaFi rules, a declaration's comment is the `//` line on its own line, or else the
+one touching it from above; a class template's may sit between the `template` line and the
+`class` line, or above the `template` line. The comment's first line is the hint the database
+carries, with a trailing `See <note>#<anchor>` reference cut off into the entry's `Note`. A
+declaration with no comment owes one, and its pages say so.
 
-- A header stands as a module of its own, named by its path under the tree - its include
+By every recognizable comment, a comment is a doc comment however it is written - `//`, `///`,
+`//!`, `/** */`, `/*! */`, a trailing `///<` - and the comment above a declaration comes before
+the one on its line, which is as often a tool's directive as words. The hint is the `@brief` or
+`\brief` paragraph, or else the first sentence of the first paragraph of words; a block opening
+under other comment lines starts a paragraph. A `See` in a comment is words. A comment on a line
+goes on in the comment lines under it that open in its column, and those lines are its own, not
+the comment above the declaration under them. A separator - a run of three or more of one mark,
+`---`, `===`, `***`, `~~~`, `###`, `___`, `+++` - says nothing, and a hint that only names its
+declaration - a label, `// ----- logger -----` - is none. No hint is owed.
+
+### Any C++ and Delphi
+
+A read of any C++ and Delphi takes every module interface - `.cppm`, `.ixx`, `.mpp`, `.cxxm`, `.ccm`
+- every header - `.h`, `.hh`, `.hpp`, `.hxx`, `.h++`, `.inl`, `.ipp`, `.tpp`, `.tcc` - and every
+Delphi unit - `.pas`, `.pp` - and no implementation file. The sources' macros are gathered from all
+of their C++ before any file is read, and every file is then read as the rules below make of it; a
+unit as the Delphi rules after them make of it.
+
+- A header stands as a module of its own, named by its path under its folder - its include
   spelling - and shown by its file name; its includes are its imports. A module interface is
-  read as in full.
+  read as a ClaFi module is.
 - What a header declares at namespace scope is public, as an export is in a module: everything
   but what stands in an anonymous namespace.
 - Of a conditional, the first branch is read and the rest left out; a branch whose condition is a
@@ -89,16 +122,6 @@ as the Delphi rules after them make of it.
 - A function declared again with the same parameters - a declaration and the definition after
   it - is one entry, the commented one. A deduction guide is no function. `typedef X Y;` is an
   alias as `using Y = X;` is.
-- A comment is a doc comment however it is written - `//`, `///`, `//!`, `/** */`, `/*! */`, a
-  trailing `///<` - and the comment above a declaration comes before the one on its line, which
-  is as often a tool's directive as words. The hint is the `@brief` or `\brief` paragraph, or
-  else the first sentence of the first paragraph of words; a block opening under other comment
-  lines starts a paragraph. A `See` in a comment is words.
-- A comment on a line goes on in the comment lines under it that open in its column, and those
-  lines are its own, not the comment above the declaration under them. A separator - a run of
-  three or more of one mark, `---`, `===`, `***`, `~~~`, `###`, `___`, `+++` - says nothing, and
-  a hint that only names its declaration - a label, `// ----- logger -----` - is none.
-
 None of the routine applies: no property, event or control is read, and nothing is checked.
 
 #### Delphi units
@@ -135,17 +158,18 @@ adding nothing to a page, `automated` reading as public.
   Lazarus-only `{$DEFINE}` under `{$IFDEF FPC}` defines nothing. The compiler's are those the
   newest one, Delphi 13, defines building for Windows, `VER370`, `MSWINDOWS`, `WIN32` and
   `WIN64` among them. An `{$I}` includes nothing.
-- A comment is a doc comment however it is written - `//`, `///`, `{ }`, `(* *)` - the comment
-  above coming first, as in C++, and read by the same rules of continued lines, separators and
-  labels. The hint is an XML doc comment's `<summary>` where it has one, else the first sentence
-  of the first paragraph, a line opening with a tag ending a paragraph as a command does;
-  `<see cref="X"/>` and `@link(X)` read as their `X`.
-- A routine the interface gives no comment takes the hint of the comment standing under its
-  header in the implementation section, between the header and the `var`, `const` or `begin` the
-  routine opens with. The header is matched to the routine by its name and the types it is a
-  member of - `TOuter.TInner.Name` - read in any case, and where the name is overloaded, by how
-  each parameter is passed and its type. A `forward` or an `external` routine has no body, and
-  the lines under its header are not its own.
+- A comment is any of `//`, `///`, `{ }`, `(* *)`. By the strict rules a unit's hints are read as
+  a C++ file's are. By every recognizable comment the comment above comes first, as in C++, read
+  by the same rules of continued lines, separators and labels; the hint is an XML doc comment's
+  `<summary>` where it has one, else the first sentence of the first paragraph, a line opening
+  with a tag ending a paragraph as a command does; `<see cref="X"/>` and `@link(X)` read as
+  their `X`.
+- By every recognizable comment, a routine the interface gives no comment takes the hint of the
+  comment standing under its header in the implementation section, between the header and the `var`,
+  `const` or `begin` the routine opens with. The header is matched to the routine by its name and
+  the types it is a member of - `TOuter.TInner.Name` - read in any case, and where the name is
+  overloaded, by how each parameter is passed and its type. A `forward` or an `external` routine has
+  no body, and the lines under its header are not its own.
 
 ## The database
 
@@ -161,13 +185,14 @@ The two files are meant to become one.
 
     Scanned = 2026-10-09T03:12:45Z
     Limited = true
+    LooseHints = true
     Modules = [
-        =[ Name, File, Interface, Header, Language, Imports = [...], ExportedImports = [...] ]
+        =[ Name, File, Root, Interface, Header, Language, Imports = [...], ExportedImports = [...] ]
     ]
     Types = [
         =[
             Name, Namespace, Kind (class, struct, union, enum, type, concept, interface), Module,
-            File, Line,
+            File, Root, Line,
             Hint, Note, Template, Bases = [...], Target, Control, Category,
             Properties = [ =[ Name, Type, Accepts = [...], Default, Setter, Target, Form,
                               ValueKind, Optional, Access, Line, Hint, Note ] ]
@@ -179,21 +204,23 @@ The two files are meant to become one.
             Members = [ =[ Name, Value, Line, Hint, Note ] ]
         ]
     ]
-    Functions = [ =[ Name, Namespace, Kind, Signature, Type, Template, Module, File, Line, Hint, Note ] ]
-    Constants = [ =[ Name, Namespace, Type, Value, Constant, Declaration, Module, File, Line, Hint,
-                     Note ] ]
+    Functions = [ =[ Name, Namespace, Kind, Signature, Type, Template, Module, File, Root, Line,
+                     Hint, Note ] ]
+    Constants = [ =[ Name, Namespace, Type, Value, Constant, Declaration, Module, File, Root, Line,
+                     Hint, Note ] ]
 
-`Scanned` is when the scan that wrote the file ran, in UTC to the second, and `Limited` that it
-read the tree in limited mode. A hint or a footnote
-written from SeeDocs keeps it, since such an edit reads nothing of the tree beyond what it
-changes. `Header` marks a module that is a header, as a limited read takes one; its `Name` is
-its path under the tree. `Language` is `pascal` for a Delphi unit, whose code a page reads and
-colours as Pascal, and a C++ module states none; a Delphi interface's `Kind` is `interface`, and
-a Delphi member's `Access` may be `published`.
+`Scanned` is when the scan that wrote the file ran, in UTC to the second; `Limited` that it read the
+sources as any C++ and Delphi, and `LooseHints` that it took every recognizable comment's hint. A
+hint written from SeeDocs keeps them, since such an edit reads nothing of the sources beyond what it
+changes. A `File` is the path under its folder of sources, and `Root` that folder, counted from zero
+in the order the project names them. `Header` marks a module that is a header, as a read of any C++
+takes one; its `Name` is its path under its folder of sources. `Language` is `pascal` for a Delphi
+unit, whose code a page reads and colours as Pascal, and a C++ module states none; a Delphi
+interface's `Kind` is `interface`, and a Delphi member's `Access` may be `published`.
 
 `Control` marks a type whose base chain reaches `Control` or `RichControl`, template arguments
-walked as bases, which is what makes it a toolbox entry; `Category` is its folder under the
-tree. `Bases` are written as a reader can follow them: an alias the database does not
+walked as bases, which is what makes it a toolbox entry; `Category` is its folder under its
+folder of sources. `Bases` are written as a reader can follow them: an alias the database does not
 carry - a private `using ComboBoxBaseClass = WithInPlaceEdit<DropdownControlBase>` - is replaced
 by what it names, and a base that is one of the type's own template parameters - a mixin's
 `Base` - stays as spelled. A property's `Form` says how its line was written (`declared`, `writable`,
@@ -213,36 +240,58 @@ first set back by the first one's indent.
 
 ## The window
 
-`SeeDocs` opens a project - the tree named on its command line, else the project it was
-last left on - and shows the project's database and its footnotes as pages. The
-application menu's Open page is where projects are opened: a Browse button asks for a folder in
-the desktop's own dialog, and the projects opened before stand under it, most recent first, one
-click each. The project open heads the page: its name in a box that renames it - Return or leaving
-the box keeps the name, Escape puts it back, and an emptied box gives the project its folder's
-name - then its folder, and how long ago it was scanned, with a Rescan button that reads the tree
-again while the menu stays open, and the Limited mode box, which reads it again in the mode it
-is switched to. A folder with no `.seedocs` becomes a project there, once the user has agreed to
-the folder and said whether it is a third-party library; the project's name heads the window
-title. Which project is open
-and which were opened before are kept with the application's settings, so they are remembered
-once settings are kept on the computer.
+`SeeDocs` opens projects, as many at once as are asked for - the ones left open last time, and the
+one the folder named on its command line stands for - and shows each one's database and its
+footnotes as pages. The application menu makes them and opens them. Its New project command opens a
+window of its own over the main one, which is moved by its title and stays up until it is answered:
+it asks for the project's name and where to store it, showing the folder the two make, and Create
+makes the folder and opens the project on its options page, while Cancel, Escape or the title's
+close button lets it go; asked for again while it stands, it comes forward as it was left. The
+menu's Open page holds Browse, which asks for a project's folder, or a tree that keeps one, in the
+desktop's own dialog, and the projects opened before, most recent first, one click each. A project
+opens in a new tab on its home, and one open already gets a new tab on its home too. A folder that
+stands for no project is offered one that reads it, made through New project with the folder as its
+first source. The window title names the project the tab shown stands in. Which projects are open
+and which were opened before are kept with the application's settings, so they are remembered once
+settings are kept on the computer.
+
+Each open project is a node of the tree, named after the project, and the node opens its home. Under
+it stand its Project options row and a line that parts the row from the project's chapters. The
+options page holds the project's name in a box that renames it - Return or leaving the box keeps the
+name, Escape puts it back, and an emptied box gives the project its folder's name - then its folder,
+how long ago it was scanned with a Rescan button that reads the sources again, and Close project,
+which closes the project and every tab on it. Under Sources stand the folders it reads, each with
+Include subfolders and Remove, and Add folder after them; under Scan options, whether the sources
+are read as ClaFi modules or as any C++ and Delphi, and whether hints follow the strict ClaFi rules
+or come from every recognizable comment; under Edit hints, whether a hint edited on a page is not
+written at all or written directly into the source, with no undo. Every change reads the sources
+again, but the last, which builds the pages again. The page stays where it stands while the sources
+are read again. Its url is the project's with `/.project` after it: the scanner passes over names
+that start with a dot, so no chapter can take it.
 
 SeeDocs is a browser of the framework's own kind: tabs across the top, under them the crumbs of
 the page shown with a list dropping from each, and Back, Forward and Up beside them. Every page has
-a url - `/chapter/module/type/method` - so a tab goes back and forward through the pages it has
-visited (Alt+Left and Alt+Right, the side buttons of the mouse, or a right click on either button
-for the list), a type's crumb lists its methods, and Up climbs the path. A home page opens the
-project: its chapters, with what each holds. Modules standing in the tree's own folder are home's:
-they stand at the top of the tree under its chapters, and the home page carries what they export,
-by module, as a chapter's page does. Where a tab stands, the tabs open and each one's
-history are kept with the settings, so a run starts where the last one left off. Opening another
-project closes every tab and opens one on the new project's home; a url the project's database no
-longer carries - a type gone since the tree was scanned - shows a page saying so.
+a url - `/project/chapter/module/type/method`, the project named by its name - so a tab goes back
+and forward through the pages it has visited (Alt+Left and Alt+Right, the side buttons of the
+mouse, or a right click on either button for the list), a type's crumb lists its methods, and Up
+climbs the path. The root, `/`, lists the projects open. A home page opens each project: its
+chapters, with what each holds. Modules standing in a source folder's own folder are home's: they
+stand in the project's node under its chapters, and the home page carries what they export, by
+module, as a chapter's page does. Renaming a project takes every url under it along, in the tabs and
+in their histories alike, and a second project open under a name already taken goes by that name
+with a number after it. Where a tab stands, the tabs open and each one's history are kept with the
+settings, so a run starts where the last one left off. A url no project open carries - a
+project closed, or a type gone since the sources were scanned - shows a page saying so.
 
-The pages: down the left a tree of chapters - the tree's folders, a reader's names for them
+The pages: down the left, under each project's node, a tree of chapters - the sources' folders, a
+reader's names for them
 - each holding its modules and each module the types it exports, controls first; a module that
 exports functions or constants and no type is a row with nothing under it. On the right the
-page of whatever is clicked, and the tree follows wherever a tab goes. A page is a column of
+page of whatever is clicked. Each tab has a tree of its own, which follows wherever the tab goes:
+the nodes it has open and how far it is scrolled are the tab's, and the nodes open are kept with
+the tab, by project, so a restored tab - or a project opened again - comes back as it was left.
+A node's rows are made the first time it opens, out of the project's contents, which are read
+once and shared by every tab's tree. A page is a column of
 controls: its title, what the page is after it - a chapter, a module, a function, a constant,
 a type's kind - and its hint under it,
 a grid of facts - namespace, module, source - and then a section per expander. A type's title
@@ -284,10 +333,13 @@ the types beside it in its module. A property, an event, a field or a member
 whose comment references a note carries a mark in a column of its own, and the note stands as a
 footnote under the grid; the mark leads to it, as an anchor of the page's url. A section's
 heading says what the section is; how many elements it holds is the heading's hint.
-A type whose comment references nothing takes the section named exactly after it from a note of
-its own folder, marked as matched by name in that hint. Where the surface states no hint the page says so, in
-place of the words, so what the documentation still lacks is read off the preview. A tree read in
-limited mode owes no hints, and its pages leave a missing one empty.
+A declaration whose comment references nothing takes the section named after it from a note of
+its own folder, marked as matched by name in that hint: a type's, a function's or a constant's
+heading is its name, a member's its type's name and its own - `Button onClick` - and a method's
+page shows its section under the first commented overload. Where the surface states no hint
+the page says so, in place of the words, so what the documentation still lacks is read off the
+preview. Hints read from every recognizable comment owe nothing, and their pages leave a missing
+one empty.
 
 A Delphi type's page is spelled as a C++ type's is - its title, its bases after colons, the
 access labels written `public:` - and its code is Delphi's own: a routine's signature and a
@@ -296,8 +348,9 @@ its events stand in a grid per access - published, public, protected - and a bas
 a type below declares again is the type's own, counted once. A constructor reaches the type from
 its bases as a method does, and a type below declaring the name hides it as it hides a method.
 
-Hints and footnotes are edited where they stand, in a project read in full - a project in limited
-mode shows them and writes nothing. A hint cell opens its editor with F2, Enter or a
+Footnotes are edited where they stand in every project; hints only where the project writes them
+into the sources, follows the strict ClaFi rules - whose comment is the one the writer puts words
+in - and only in C++ sources. A hint cell opens its editor with F2, Enter or a
 double click, on the comment's own words - its types unlinked, a missing hint empty. The hint under
 a page's title and the one under each declaration of a method page are typed into where they stand,
 a missing one an empty box: Ctrl+click follows a link there, and Escape puts back the words the page
@@ -311,12 +364,16 @@ headings inside it and its code as written. Ctrl+S or Save writes it into its no
 a bullet that reads as it did keeps its lines, any other is broken at 100 columns again - and Escape
 or Cancel leaves it. The row of a property, an event, a field or a member with no footnote offers
 Add footnote on its menu: the footnote goes after the type's own section in its note, or at the end
-of the chapter's note, headed by the member's name, and the comment gains the `See` that reaches it.
-Every write reads its file again first and refuses, saying why, where the file no longer holds what
-the page was built from - a file changed in an editor since the scan is scanned again before it is
-edited here. A file keeps its byte order mark and each line its own line end. The words are written
-by `SeeDocs_App.Edits`, the database follows every write, and the page shown takes the new words
-where it stands; a footnote added builds the page again at the new footnote.
+of the chapter's note, headed by the type's name and the member's, and is found by that heading -
+the source is left as it is. A chapter's note is the one named after the most of its folders,
+or where none is, one made for it, named after them all - `Controls-Base` for `Controls/Y-Base` -
+and the root's is `Home`; the folder of footnotes and the note are made with the first footnote
+written into them. Every write reads its file again first and refuses, saying why, where the file
+no longer holds what the page was built from - a file changed in an editor since the scan is
+scanned again before it is edited here. A file keeps its byte order mark and each line its own
+line end. The words are written by `SeeDocs_App.Edits`, the database follows every hint written,
+and the page shown takes the new words where it stands; a footnote added builds the page again at
+the new footnote.
 
 A type's name on a page is a link to its page, in a grid cell as in prose: a type named in a
 hint, in a note's prose or code, or in a signature - bare or qualified, as `Control` or
@@ -331,7 +388,8 @@ from them (`SeeDocs_App.PageView`), the browser (`SeeDocs_App.Browser`) shows on
 
 ## The checks
 
-`check` holds a tree read in full to the routine, and a project in limited mode to nothing:
+`check` holds a project's sources read as ClaFi modules to the routine, and a project reading
+any C++ and Delphi to nothing:
 
 - a property with no `INIT_PROPERTY`; a `..._STORAGE` property without its getter and a
   `WRITABLE` one whose setter is not there, the base chain searched as well
@@ -342,8 +400,8 @@ from them (`SeeDocs_App.PageView`), the browser (`SeeDocs_App.Browser`) shows on
 - a comment above a declaration it would fit on, and one riding a line past 100 columns
 - an event whose three spellings disagree, or whose struct is not found
 - a property whose type is neither an enum, a known value kind, nor a declared type
-- a `See` reference to a footnote that does not exist under the tree's `.seedocs/footnotes`, or
-  to a heading the note does not have - on every line of a comment
+- a `See` reference to a footnote that does not exist in the project's `footnotes`, or to a
+  heading the note does not have - on every line of a comment
 - a class declaring properties or events whose base chain reaches neither Control nor a type
   the scanner can read
 - a value type declared under `Controls/Base`, where it reaches an application only through an

@@ -15,9 +15,13 @@ namespace ClaFi
     export enum class AppMenuCommand
     {
         None,
+        Application,   // one of the application's own, named by AppMenu::appCommand
         ShowDiagnostic,
         Exit
     };
+
+    // What an application's own command does, given the input that chose it. See Application
+    export using AppCommandHandler = std::function<void(InputStamp)>;
 
     // The application's menu: its pages down the left, its commands under them. See Application
     export class AppMenu : public Controls::TabbedBox
@@ -26,6 +30,8 @@ namespace ClaFi
         explicit AppMenu(const CreateParams&);
         std::wstring_view diagnosticText() const override { return L"AppMenu"; }
         [[nodiscard]] AppMenuCommand command() const { return m_command; }
+        // The application's command chosen, by the order it was connected in.
+        [[nodiscard]] std::size_t appCommand() const { return m_appCommand; }
         // The input that chose the command, which is what carrying it out is authorised by.
         [[nodiscard]] InputStamp commandStamp() const { return m_commandStamp; }
         // The page the menu was left on, which is the page the next one opens. See Application
@@ -53,6 +59,7 @@ namespace ClaFi
         static constexpr float k_height{ 400.0f };
     private:
         AppMenuCommand m_command{ AppMenuCommand::None };
+        std::size_t m_appCommand{ 0 };
         InputStamp m_commandStamp{};
         // Every caption here outlives the menu: a literal, or a page an application stated once.
         std::wstring_view m_pageCaption{ k_settingsPageCaption };
@@ -64,4 +71,7 @@ namespace ClaFi
 
     // Puts the menu under every AppButton, once per application. See Application
     export void connectAppMenu();
+
+    // Adds a command of the application's own below its pages. See Application
+    export void connectAppCommand(std::wstring_view caption, EndIcon, AppCommandHandler);
 }

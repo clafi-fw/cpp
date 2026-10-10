@@ -153,6 +153,12 @@ popup that grows with what is typed into it needs.
 
 The placement clamps to the monitor either way, and that clamp is the bound of last resort.
 
+A DIALOG ITS CONTENT SIZES IS NOT THE USER'S TO SIZE. The form states its range as the one size
+the content asked for, and the platform answers a range of one size with a window that offers no
+edge to drag and no maximize, from its caption, its window menu or the system's snapping; a
+DialogTitle over it is built with `TitleButtons::Close`, so the title offers neither. Placed
+again once it is up, it keeps where it stands, wherever the user moved it, and takes the new size.
+
 ## DropdownWidth
 
 Design width of a dropdown strip standing at the control's right, which is where every face

@@ -167,13 +167,14 @@ namespace ClaFi::PlatformImplementation::Wayland
         const int clicks = takeClickCount(pt, time);
 
         // A DOUBLE CLICK ON THE TITLE TOGGLES MAXIMIZED. On Win32 that is DefWindowProc's answer
-        // to WM_NCLBUTTONDBLCLK over HTCAPTION, and every dialog there carries WS_MAXIMIZEBOX;
-        // here the compositor never sees the title, the frame being the client's, so the window
-        // answers itself. The form is asked as for any press the system takes - see
-        // wnd_systemMouseDown - and the press reaches nothing else: it is the window's.
+        // to WM_NCLBUTTONDBLCLK over HTCAPTION, and every dialog the user sizes carries
+        // WS_MAXIMIZEBOX there; here the compositor never sees the title, the frame being the
+        // client's, so the window answers itself. The form is asked as for any press the system
+        // takes - see wnd_systemMouseDown - and the press reaches nothing else: it is the
+        // window's. A window its content sizes has no other size to toggle to.
         if (clicks == 2 && m_form.wnd_hitTest(pt.toFloat()) == HitTest::Title)
         {
-            if (m_form.wnd_systemMouseDown())
+            if (m_form.wnd_systemMouseDown() && userSized())
             {
                 if (isMaximized())
                     restore();
@@ -385,10 +386,11 @@ namespace ClaFi::PlatformImplementation::Wayland
     std::uint32_t FormWindow::borderResizeEdges(IntPoint pt)
     {
         // A layer surface is sized by the compositor between its anchors, and has no edge the
-        // user may take hold of. Nor has a maximized window: the compositor refuses to size it,
-        // so a press handed over from its edge would go nowhere, and the edge belongs to the
-        // controls standing there - see Edge reach in Control-Foundation.
-        if (role() != WindowRole::Dialog || isLayerRole() || isMaximized())
+        // user may take hold of. Nor has a window its content sizes, nor a maximized one: the
+        // compositor refuses to size it, so a press handed over from its edge would go nowhere,
+        // and the edge belongs to the controls standing there - see Edge reach in
+        // Control-Foundation.
+        if (!userSized() || isLayerRole() || isMaximized())
             return XDG_TOPLEVEL_RESIZE_EDGE_NONE;
 
         const IntSize size = m_buffers.size();
