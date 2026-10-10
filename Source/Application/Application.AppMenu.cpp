@@ -107,7 +107,7 @@ namespace ClaFi
             params.themeMetrics().secondaryWindowShadow,
             UiElement::Menu,
             TabsOrientation::VerticalLeft,
-            TabLineThickness{ Thickness::Bold },
+            // TabLineThickness{ Thickness::Bold },
             StripPadding{ 8.0f, 12.0f },
             StripSpacing{ 4.0f, 0.0f },
             MinSize{ k_width, k_height },
