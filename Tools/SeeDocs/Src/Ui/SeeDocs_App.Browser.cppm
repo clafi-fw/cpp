@@ -181,15 +181,15 @@ namespace SeeDocs_App
         struct ShownProject;
         // What a path names, read off its segments: the root for none, else a project by its
         // segment, and in it its options page, or the folders down from its root as far as they
-        // go - its home for none - then a module of the chapter the last folder is, a type of
+        // go - its home for none - then a module of the last folder, a type of
         // that or a function or a constant of the module, and a method of the type. A segment
         // nothing answers for makes the path one no project open carries.
         struct Target
         {
             ShownProject* project{ nullptr };   // null for the root, and for no project open
-            std::wstring folder{};              // the category the folder segments spell
+            std::wstring folder{};              // the path the folder segments spell
             std::size_t folderDepth{ 0 };       // how many segments past the project's are folders
-            const ContentsChapter* chapter{ nullptr };   // the folder's own chapter, where it is one
+            const ContentsFolder* contents{ nullptr };   // the folder's modules, where it has any
             const ContentsModule* module{ nullptr };
             const Type* type{ nullptr };
             std::wstring_view exportName{};     // a function or a constant of the module
@@ -201,12 +201,12 @@ namespace SeeDocs_App
             [[nodiscard]] bool isFolder() const { return project && depth == folderDepth + 1; }
             [[nodiscard]] bool isGone() const;
         };
-        // The folder, chapter, module and type a link's spelling names, keyed by that spelling -
-        // a folder by the name a chapter of it has, whether or not it is one.
+        // The folder, module and type a link's spelling names, keyed by that spelling - a
+        // folder by its path, whether or not it holds modules.
         using Targets = std::unordered_map<std::wstring, Target>;
-        // Every folder on the way to a chapter, keyed by its category, with the chapter the
-        // folder is - null for one that only holds other folders.
-        using Folders = std::unordered_map<std::wstring, const ContentsChapter*>;
+        // Every folder on the way to one with modules, keyed by its path, with the modules
+        // the folder holds - null for one that only holds other folders.
+        using Folders = std::unordered_map<std::wstring, const ContentsFolder*>;
         // A project shown: what the workspace opened, the segment its urls start with, and what
         // its surface lists, read for the trees and the paths. Its pages' edits go through it.
         struct ShownProject : public IPageWriter
@@ -216,7 +216,7 @@ namespace SeeDocs_App
             OpenProject& open;
             ProjectId id;
             std::wstring segment{};
-            ContentsChapters contents{};
+            ContentsFolders contents{};
             ContentsTree contentsTree{};   // over the contents, which every tab's tree reads
             Targets targets{};
             Folders folders{};
@@ -269,8 +269,8 @@ namespace SeeDocs_App
         // no type.
         [[nodiscard]] static std::wstring pathOf(const ShownProject&, std::wstring_view folder,
             const ContentsModule*, const Type*, std::wstring_view member = {});
-        // The folders directly under this one, in reading order.
-        [[nodiscard]] static std::vector<std::wstring> foldersUnder(const ShownProject&,
+        // The names of the folders directly under this one, in reading order.
+        [[nodiscard]] static std::vector<std::wstring> subfolderNames(const ShownProject&,
             std::wstring_view folder);
         [[nodiscard]] std::wstring titleOf(const PageData&, const Target&) const;
         [[nodiscard]] static std::optional<RowIcon> iconOf(const Target&);

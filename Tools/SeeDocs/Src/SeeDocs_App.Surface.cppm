@@ -205,7 +205,7 @@ namespace SeeDocs_App
         bool exported{ false };
         Access access{ Access::Public };    // a nested type's, under the label it stands in
         bool isControl{ false };            // the base chain reaches Control, resolved later
-        std::wstring category;              // the directory under Source
+        std::wstring folder;                // its file's folder as a path under the root
         std::vector<Property> properties;
         std::vector<Event> events;
         std::vector<Function> functions;

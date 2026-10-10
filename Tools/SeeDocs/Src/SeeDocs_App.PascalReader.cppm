@@ -24,7 +24,7 @@ namespace SeeDocs_App
     // Reads one unit into the surface, the file being the surface's own already, its hints by
     // the rules given.
     export void readPascalUnit(Surface&, std::size_t file, std::wstring_view text,
-        const std::wstring& category, const PascalSymbols&, HintRules);
+        const std::wstring& folder, const PascalSymbols&, HintRules);
 
     // Settles what the units say of each other once all are read: a property declared again
     // with no type takes the one it redeclares, and a property of a method type is an event.

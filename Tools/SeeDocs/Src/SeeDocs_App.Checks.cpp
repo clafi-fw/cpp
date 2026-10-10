@@ -13,7 +13,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_aliasPrefix = L"On";
         constexpr std::wstring_view k_memberPrefix = L"m_";
         constexpr std::wstring_view k_unknownKind = L"unknown";
-        constexpr std::wstring_view k_baseFolder = L"Controls/Base/";
+        constexpr std::wstring_view k_baseFolder = L"Controls/Y-Base/";
         // What a trailing comment costs beyond its words: the blank, the slashes, the blank.
         constexpr std::size_t k_trailingCost = 4;
 

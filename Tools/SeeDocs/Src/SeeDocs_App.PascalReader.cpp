@@ -885,7 +885,7 @@ namespace SeeDocs_App
         class UnitReader
         {
         public:
-            UnitReader(Surface&, std::size_t file, const UnitText&, std::wstring category,
+            UnitReader(Surface&, std::size_t file, const UnitText&, std::wstring folder,
                 HintRules);
             void read();
         private:
@@ -945,7 +945,7 @@ namespace SeeDocs_App
             Surface& m_surface;
             std::size_t m_file;
             const UnitText& m_text;
-            std::wstring m_category;
+            std::wstring m_folder;
             bool m_looseHints{ false };
             std::vector<std::size_t> m_code;   // the code tokens, comments and directives left out
             std::size_t m_at{ 0 };
@@ -957,12 +957,12 @@ namespace SeeDocs_App
         };
 
         UnitReader::UnitReader(Surface& surface, const std::size_t file, const UnitText& text,
-            std::wstring category, const HintRules rules)
+            std::wstring folder, const HintRules rules)
             :
             m_surface{ surface },
             m_file{ file },
             m_text{ text },
-            m_category{ std::move(category) },
+            m_folder{ std::move(folder) },
             m_looseHints{ rules == HintRules::Loose },
             m_typesBegin{ surface.types().size() },
             m_functionsBegin{ surface.functions().size() }
@@ -2139,7 +2139,7 @@ namespace SeeDocs_App
             type.module = m_module->name;
             type.exported = true;
             type.access = outer ? access : Access::Public;
-            type.category = m_category;
+            type.folder = m_folder;
             type.place = placeOf(name);
             return type;
         }
@@ -2269,10 +2269,10 @@ namespace SeeDocs_App
     }
 
     void readPascalUnit(Surface& surface, const std::size_t file, const std::wstring_view text,
-        const std::wstring& category, const PascalSymbols& symbols, const HintRules rules)
+        const std::wstring& folder, const PascalSymbols& symbols, const HintRules rules)
     {
         const UnitText unit{ text, symbols };
-        UnitReader reader{ surface, file, unit, category, rules };
+        UnitReader reader{ surface, file, unit, folder, rules };
         reader.read();
     }
 

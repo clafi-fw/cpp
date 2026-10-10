@@ -39,7 +39,7 @@ namespace SeeDocs_App
     public:
         ProjectId project;              // the project the row stands in
         RowKind kind;
-        std::wstring_view folder;       // the category of the folder the row stands in
+        std::wstring_view folder;       // the path of the folder the row stands in
         const ContentsModule* module;   // null for a folder's row
         const Type* type;               // null for a folder's or a module's row
     };
@@ -53,7 +53,7 @@ namespace SeeDocs_App
         ProjectId project;
     };
 
-    // The nodes of a project open in a tree: its own, its folders by category and its modules by
+    // The nodes of a project open in a tree: its own, its folders by path and its modules by
     // name.
     export struct OpenRows
     {
@@ -139,7 +139,7 @@ namespace SeeDocs_App
         [[nodiscard]] bool holdsCurrentRow(const ProjectRows&) const;
         [[nodiscard]] static Control& rowOf(const MadeRow&);
         [[nodiscard]] static HeaderText projectText(std::wstring_view name);
-        [[nodiscard]] static HeaderText folderText(std::wstring_view category);
+        [[nodiscard]] static HeaderText folderText(std::wstring_view folder);
         [[nodiscard]] static Text rowText(const Type&);
     private:
         static constexpr float k_iconGap = 5.0f;   // between a row's icon and its text

@@ -5,7 +5,7 @@ import SeeDocs_App.Surface;
 
 import ClaFi.StdLib;
 
-// THE DOCUMENTATION AS PAGES: what a chapter, a module, a type or a method says, built out of the
+// THE REFERENCE AS PAGES: what a folder, a module, a type or a method says, built out of the
 // surface and the notes, and rendered by whoever shows it - SeeDocs as controls, a generator
 // as a file. See the README beside the project.
 namespace SeeDocs_App
@@ -25,9 +25,8 @@ namespace SeeDocs_App
     {
         std::wstring text;
         RunStyle style{ RunStyle::Plain };
-        // A type's qualified name, a module's name, a folder's name as a chapter of it is named
-        // (chapterNameOf), or a link to a type's member or to a module's function or constant
-        // (memberLink, exportLink); empty for none.
+        // A type's qualified name, a module's name, a folder's path, or a link to a type's
+        // member or to a module's function or constant (memberLink, exportLink); empty for none.
         std::wstring link;
     };
 
@@ -191,7 +190,7 @@ namespace SeeDocs_App
     {
         std::wstring note;
         std::wstring after;   // an anchor; empty for the note's end
-        std::wstring owner;   // the type the page is about; empty on a chapter's or a module's
+        std::wstring owner;   // the type the page is about; empty on a folder's or a module's
     };
 
     // What a page is about, which is what its title is marked with.
@@ -199,7 +198,7 @@ namespace SeeDocs_App
     {
         Projects,   // the root, listing the projects open
         Project,    // a project's home
-        Folder,     // a folder of sources, a chapter or not
+        Folder,     // a folder of sources
         Module,     // a module or a header
         Type,
         Member      // a method, a function or a constant
@@ -228,7 +227,7 @@ namespace SeeDocs_App
     export using FunctionList = std::vector<const FreeFunction*>;
     export using VariableList = std::vector<const Variable*>;
 
-    // One module of a chapter: its types, controls first, its functions and constants as declared.
+    // One module of a folder: its types, controls first, its functions and constants as declared.
     export struct ContentsModule
     {
         std::wstring name;        // the module's full name, a header's path
@@ -241,18 +240,19 @@ namespace SeeDocs_App
 
     export using ContentsModules = std::vector<ContentsModule>;
 
-    // One chapter: a folder under Source, and the modules whose exports stand in it.
-    export struct ContentsChapter
+    // One folder with modules in it: its path under the root, folder by folder with a slash, and
+    // the modules whose exports stand in it. The root itself has the empty path.
+    export struct ContentsFolder
     {
-        std::wstring category;
-        std::wstring name;        // what a reader sees
+        std::wstring path;
+        std::wstring name;        // the folder's own name, as a reader sees it
         ContentsModules modules;
     };
 
-    export using ContentsChapters = std::vector<ContentsChapter>;
+    export using ContentsFolders = std::vector<ContentsFolder>;
 
-    // The table of contents: what the tree exports, by chapter and module, in reading order.
-    export [[nodiscard]] ContentsChapters contentsOf(const Surface&);
+    // The table of contents: what the tree exports, by folder and module, in reading order.
+    export [[nodiscard]] ContentsFolders contentsOf(const Surface&);
 
     // What a row of the contents tree names.
     export enum class ContentsRowKind
@@ -266,7 +266,7 @@ namespace SeeDocs_App
     export struct ContentsRow
     {
         ContentsRowKind kind{ ContentsRowKind::Folder };
-        std::wstring_view folder;   // the category of the folder it stands in; a folder's own
+        std::wstring_view folder;   // the path of the folder it stands in; a folder's own
         const ContentsModule* module{ nullptr };
         const Type* type{ nullptr };
         std::optional<std::size_t> parent{};   // none for a row at the top
@@ -283,7 +283,7 @@ namespace SeeDocs_App
     {
     public:
         ContentsTree() = default;
-        explicit ContentsTree(const ContentsChapters&);
+        explicit ContentsTree(const ContentsFolders&);
         ContentsTree(const ContentsTree&) = delete;
         ContentsTree& operator=(const ContentsTree&) = delete;
         ContentsTree(ContentsTree&&) = default;
@@ -296,14 +296,14 @@ namespace SeeDocs_App
         // root's empty folder names none.
         [[nodiscard]] std::optional<std::size_t> rowOf(std::wstring_view folder,
             const ContentsModule*, const Type*) const;
-        [[nodiscard]] std::optional<std::size_t> folderRow(std::wstring_view category) const;
+        [[nodiscard]] std::optional<std::size_t> folderRow(std::wstring_view path) const;
         [[nodiscard]] std::optional<std::size_t> moduleRow(std::wstring_view name) const;
     private:
         // The folder's row, made with every folder above it that is not there yet.
-        std::size_t addFolder(std::wstring_view category);
+        std::size_t addFolder(std::wstring_view path);
         std::size_t addRow(ContentsRow);
     private:
-        static constexpr wchar_t k_folderSeparator = L'/';   // between a category's folders
+        static constexpr wchar_t k_folderSeparator = L'/';   // between a path's folders
 
         ContentsRows m_rows{};
         RowIndexes m_top{};
@@ -312,34 +312,29 @@ namespace SeeDocs_App
         std::unordered_map<std::wstring_view, std::size_t> m_modules{};   // by the module's name
     };
 
-    // What a reader calls a folder under Source and a module.
-    export [[nodiscard]] std::wstring chapterNameOf(std::wstring_view category);
+    // What a reader calls a module.
     export [[nodiscard]] std::wstring moduleShortNameOf(std::wstring_view module);
-    // What a reader calls the last folder of a category - the folder's own name.
-    export [[nodiscard]] std::wstring folderNameOf(std::wstring_view category);
-    // The chapters whose folders stand under this one, in reading order; every chapter for the
-    // root.
-    export [[nodiscard]] ContentsChapters chaptersUnder(const ContentsChapters&,
-        std::wstring_view category);
-    // The folder under Source a file of the surface stands in.
-    export [[nodiscard]] std::wstring categoryOf(std::wstring_view relativeFile);
+    // The last folder of a path - the folder's own name; the root's is empty.
+    export [[nodiscard]] std::wstring folderNameOf(std::wstring_view path);
+    // The folders with modules standing under this path at any depth, in reading order; every
+    // one but the root's own for the root.
+    export [[nodiscard]] ContentsFolders foldersUnder(const ContentsFolders&,
+        std::wstring_view path);
+    // The folder a file of the surface stands in, as a path under the root.
+    export [[nodiscard]] std::wstring folderOf(std::wstring_view relativeFile);
 
-    // The page of a folder that is no chapter: the folders directly under it, each linked and
-    // counted with everything under it, as the tree lists them.
-    export [[nodiscard]] Page folderPage(const ContentsChapters&, std::wstring_view category);
-    // The page of the tree's root: the folders directly under it as a folder's page lists them,
-    // then what the modules standing in the root itself export, by module.
-    export [[nodiscard]] Page homePage(const Surface&, Notes&, const ContentsChapters&,
+    // A folder's page: what stands under it at every depth counted, the folders directly under
+    // it, each linked, as the tree lists them, then what its own modules export, by module.
+    export [[nodiscard]] Page folderPage(const Surface&, Notes&, const ContentsFolders&,
+        std::wstring_view path);
+    // The page of the tree's root: what a folder's page says of the root.
+    export [[nodiscard]] Page homePage(const Surface&, Notes&, const ContentsFolders&,
         std::wstring_view title);
-    // A chapter's page: the folders directly under its own, then what its modules export, by
-    // module.
-    export [[nodiscard]] Page chapterPage(const Surface&, Notes&, const ContentsChapters&,
-        const ContentsChapter&);
-    export [[nodiscard]] Page modulePage(const Surface&, Notes&, const ContentsChapter&,
+    export [[nodiscard]] Page modulePage(const Surface&, Notes&, const ContentsFolder&,
         const ContentsModule&);
     // The page of a function the module exports, every overload of the name on it, or of a
     // constant it exports, the declaration as written.
-    export [[nodiscard]] Page exportPage(const Surface&, Notes&, const ContentsChapter&,
+    export [[nodiscard]] Page exportPage(const Surface&, Notes&, const ContentsFolder&,
         const ContentsModule&, std::wstring_view name);
     export [[nodiscard]] Page typePage(const Surface&, Notes&, const Type&);
     // The page of every method of the type with that name, a signature each.

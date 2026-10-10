@@ -11,7 +11,7 @@ import ClaFi.StdLib;
 namespace SeeDocs_App
 {
     // Reads the folders as they stand, into one surface - the interfaces first, then the
-    // implementation units, or in a limited read the headers - a folder's files under the
-    // category of their place in it, so that a folder of one name under two of them is one.
+    // implementation units, or in a limited read the headers - a file under the folder of
+    // its place in its source, so that a folder of one name under two sources is one.
     export [[nodiscard]] Surface scanSources(const SourceFolders&, ScanMode, HintRules);
 }

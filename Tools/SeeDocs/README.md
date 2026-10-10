@@ -3,7 +3,8 @@
 The tools that read the framework's design surface out of its source and put it to use. Two programs
 so far: SeeDocsCli, the scanner, which reads every module in a project's folders of sources, writes
 what it finds into one database and holds the sources to the declaration routine; and SeeDocs, a
-window over that database showing the surface as the documentation it is to become.
+window over that database showing the surface as the reference it is to become - the part of the
+documentation that is generated; the rest is written.
 
     SeeDocsCli scan [folder] [--out file]  writes the database, the project's Surface.cfg by default
     SeeDocsCli check [folder]              reports deviations, exit code 1 if any are errors
@@ -41,7 +42,7 @@ folders, and are read as they stand.
 it reads, each with the folders under it or without them; a path is written relative to the
 project's folder while the two share a folder under the root of their volume, so that they move
 together and a project kept in a repository names no place outside it, and as it stands otherwise.
-Folders of one name under two sources are one chapter, and a file two sources reach is read once, as
+Folders of one name under two sources are one folder, and a file two sources reach is read once, as
 the first of them found it. `Limited` reads the sources as any C++ and Delphi rather than as ClaFi
 modules, `LooseHints` takes every recognizable comment's hint rather than the strict rules' - see
 Hints - and `EditHints` writes a hint edited on a page into its source. A project the window makes
@@ -193,7 +194,7 @@ The two files are meant to become one.
         =[
             Name, Namespace, Kind (class, struct, union, enum, type, concept, interface), Module,
             File, Root, Line,
-            Hint, Note, Template, Bases = [...], Target, Control, Category,
+            Hint, Note, Template, Bases = [...], Target, Control, Folder,
             Properties = [ =[ Name, Type, Accepts = [...], Default, Setter, Target, Form,
                               ValueKind, Optional, Access, Line, Hint, Note ] ]
             Events = [ =[ Name, Alias, Method, Access, Line, Hint, Note ] ]
@@ -219,7 +220,7 @@ unit, whose code a page reads and colours as Pascal, and a C++ module states non
 interface's `Kind` is `interface`, and a Delphi member's `Access` may be `published`.
 
 `Control` marks a type whose base chain reaches `Control` or `RichControl`, template arguments
-walked as bases, which is what makes it a toolbox entry; `Category` is its folder under its
+walked as bases, which is what makes it a toolbox entry; `Folder` is its folder under its
 folder of sources. `Bases` are written as a reader can follow them: an alias the database does not
 carry - a private `using ComboBoxBaseClass = WithInPlaceEdit<DropdownControlBase>` - is replaced
 by what it names, and a base that is one of the type's own template parameters - a mixin's
@@ -256,7 +257,7 @@ and which were opened before are kept with the application's settings, so they a
 settings are kept on the computer.
 
 Each open project is a node of the tree, named after the project, and the node opens its home. Under
-it stand its Project options row and a line that parts the row from the project's chapters. The
+it stand its Project options row and a line that parts the row from the project's folders. The
 options page is titled as every page is, and under the title holds the project's name in a box that
 renames it - Return or leaving the box keeps the name, Escape puts it back, and an emptied box gives
 the project its folder's name - then its folder, and how long ago it was scanned with a Rescan
@@ -272,46 +273,47 @@ starts on the first of each; under Edit hints, whether a hint edited on a page i
 or written directly into the source, with no undo. Every change reads the sources again, but the
 last, which builds the pages again. The page stays where it stands while the sources are read
 again. Its url is the project's with `/.project` after it: the scanner passes over names that start
-with a dot, so no chapter can take it.
+with a dot, so no folder can take it.
 
 SeeDocs is a browser of the framework's own kind: tabs across the top, under them the crumbs of
 the page shown with a list dropping from each, and Back, Forward and Up beside them. Every page has
-a url - `/project/chapter/module/type/method`, the project named by its name - so a tab goes back
+a url - `/project/folder/module/type/method`, the project named by its name - so a tab goes back
 and forward through the pages it has visited (Alt+Left and Alt+Right, the side buttons of the
 mouse, or a right click on either button for the list), a type's crumb lists its methods, and Up
 climbs the path. The root, `/`, lists the projects open, each with a Close button that closes the
 project and every tab on it. A home page opens each project: a link to its Project options page,
 then the folders under the root as the tree lists them, with what each holds at every depth; a
 Close project button ends the page. Modules standing in a source folder's own folder
-are home's: they stand in the project's node under its chapters, and the home page carries what
-they export, by module, as a chapter's page does. Renaming a project takes every url under it
+are home's: they stand in the project's node under its folders, and the home page carries what
+they export, by module, as a folder's page does. Renaming a project takes every url under it
 along, in the tabs and in their histories alike, and a second project open under a name already
 taken goes by that name with a number after it. Where a tab stands, the tabs open and each one's
 history are kept with the settings, so a run starts where the last one left off. A url no project
 open carries - a project closed, or a type gone since the sources were scanned - shows a page saying
 so.
 
-The pages: down the left, under each project's node, a tree of chapters - the sources' folders, a
-reader's names for them
-- each holding its modules and each module the types it exports, controls first; a module that
-exports functions or constants and no type is a row with nothing under it. On the right the
+The pages: down the left, under each project's node, a tree of the sources' folders, named as
+they stand on disk, each holding the folders under it and then its modules, and each module the
+types it exports, controls first; a module that exports functions or constants and no type is a
+row with nothing under it. On the right the
 page of whatever is clicked. Each tab has a tree of its own, which follows wherever the tab goes:
 the nodes it has open and how far it is scrolled are the tab's, and the nodes open are kept with
 the tab, by project, so a restored tab - or a project opened again - comes back as it was left.
 A node's rows are made the first time it opens, out of the project's contents, which are read
 once and shared by every tab's tree. A page is a column of
 controls: its title, marked with the mark its tree row wears, what the page is after it - a
-project, a chapter, a module, a function, a constant, a type's kind - and its hint under it,
+project, a folder, a module, a function, a constant, a type's kind - and its hint under it,
 a grid of facts - namespace, module, source - and then a section per expander. A type's title
 carries the ways up through its bases under it, written the C++ way - a colon before each base,
 a mixin's host through the argument it was given, a second line where the bases fork; an
 alias's line is what it stands for after an equals sign, an enum's its underlying type after a
-colon. A chapter's page leads with the folders directly under its own, as the tree lists them,
-each with what it holds at every depth; a folder that is no chapter has a page of those alone. A
-chapter's or a module's page holds a grid of its types with their kinds and hints, then its
-functions and its constants; on a chapter's page each grid stands by module, the module's name
-beside its rows and linked to its page. A function's row carries its name alone, one row per
-name, every overload's signature in the name's hint; the name links to the function's page,
+colon. A folder's page says what it holds at every depth, leads with the folders directly under
+its own, as the tree lists them, each with what it holds at every depth, and where the folder
+holds modules of its own goes on with a grid of their types with their kinds and hints, then
+their functions and their constants, each grid by module, the module's name beside its rows and
+linked to its page; a module's page holds the same grids of its own exports. A function's row
+carries its name alone, one row per name, every overload's signature in the name's hint; the
+name links to the function's page,
 which carries the hint under its title - the first commented overload's, as the row does - and
 holds every overload of the name, coloured, with its note and, where it differs, its own hint. A
 constant's name links to the constant's page, which carries the hint under its title and holds
@@ -343,8 +345,9 @@ the types beside it in its module. A property, an event, a field or a member
 whose comment references a note carries a mark in a column of its own, and the note stands as a
 footnote under the grid; the mark leads to it, as an anchor of the page's url. A section's
 heading says what the section is; how many elements it holds is the heading's hint.
-A declaration whose comment references nothing takes the section named after it from a note of
-its own folder, marked as matched by name in that hint: a type's, a function's or a constant's
+A declaration whose comment references nothing takes the section named after it from its
+folder's note - the one the folder's declarations cite the most, as a new footnote's home is
+chosen below - marked as matched by name in that hint: a type's, a function's or a constant's
 heading is its name, a member's its type's name and its own - `Button onClick` - and a method's
 page shows its section under the first commented overload. Where the surface states no hint
 the page says so, in place of the words, so what the documentation still lacks is read off the
@@ -359,31 +362,31 @@ a type below declares again is the type's own, counted once. A constructor reach
 its bases as a method does, and a type below declaring the name hides it as it hides a method.
 
 Footnotes are edited where they stand in every project; hints only where the project writes them
-into the sources, follows the strict ClaFi rules - whose comment is the one the writer puts words
-in - and only in C++ sources. A hint cell opens its editor with F2, Enter or a
-double click, on the comment's own words - its types unlinked, a missing hint empty. The hint under
-a page's title and the one under each declaration of a method page are typed into where they stand,
-a missing one an empty box: Ctrl+click follows a link there, and Escape puts back the words the page
-shows. Enter writes the words into the comment the hint is read from - leaving one of those boxes
-writes them too - the `See` it ends with kept: on the declaration's line while the whole line fits
-100 columns, lined up with the comments of the lines of code round it, and above it otherwise -
-always above a class, a struct or an enum. A method's row writes the overload whose words it shows,
-and an override that shows its base's words writes the base's comment. A footnote opens its markdown
-in its place with F2 or Edit footnote on its menu: each paragraph and each bullet on one line, the
-headings inside it and its code as written. Ctrl+S or Save writes it into its note - a paragraph or
-a bullet that reads as it did keeps its lines, any other is broken at 100 columns again - and Escape
-or Cancel leaves it. The row of a property, an event, a field or a member with no footnote offers
-Add footnote on its menu: the footnote goes after the type's own section in its note, or at the end
-of the chapter's note, headed by the type's name and the member's, and is found by that heading -
-the source is left as it is. A chapter's note is the one named after the most of its folders,
-or where none is, one made for it, named after them all - `Controls-Base` for `Controls/Y-Base` -
-and the root's is `Home`; the folder of footnotes and the note are made with the first footnote
-written into them. Every write reads its file again first and refuses, saying why, where the file
-no longer holds what the page was built from - a file changed in an editor since the scan is
-scanned again before it is edited here. A file keeps its byte order mark and each line its own
-line end. The words are written by `SeeDocs_App.Edits`, the database follows every hint written,
-and the page shown takes the new words where it stands; a footnote added builds the page again at
-the new footnote.
+into the sources, follows the strict ClaFi rules - whose comment is the one the writer puts words in
+- and only in C++ sources. A hint cell opens its editor with F2, Enter or a double click, on the
+comment's own words - its types unlinked, a missing hint empty. The hint under a page's title and
+the one under each declaration of a method page are typed into where they stand, a missing one an
+empty box: Ctrl+click follows a link there, and Escape puts back the words the page shows. Enter
+writes the words into the comment the hint is read from - leaving one of those boxes writes them too
+- the `See` it ends with kept: on the declaration's line while the whole line fits 100 columns,
+lined up with the comments of the lines of code round it, and above it otherwise - always above a
+class, a struct or an enum. A method's row writes the overload whose words it shows, and an override
+that shows its base's words writes the base's comment. A footnote opens its markdown in its place
+with F2 or Edit footnote on its menu: each paragraph and each bullet on one line, the headings
+inside it and its code as written. Ctrl+S or Save writes it into its note - a paragraph or a bullet
+that reads as it did keeps its lines, any other is broken at 100 columns again - and Escape or
+Cancel leaves it. The row of a property, an event, a field or a member with no footnote offers Add
+footnote on its menu: the footnote goes after the type's own section in its note, or at the end of
+the folder's note, headed by the type's name and the member's, and is found by that heading - the
+source is left as it is. A folder's note is the one its declarations cite the most, through the
+`See` of their comments, or where they cite none, one named after the folder's own name - `Y-Base`
+for `Controls/Y-Base` - and the root's is `Home`; the folder of footnotes and the note are made with
+the first footnote written into them. Every write reads its file again first and refuses, saying
+why, where the file no longer holds what the page was built from - a file changed in an editor since
+the scan is scanned again before it is edited here. A file keeps its byte order mark and each line
+its own line end. The words are written by `SeeDocs_App.Edits`, the database follows every hint
+written, and the page shown takes the new words where it stands; a footnote added builds the page
+again at the new footnote.
 
 A type's name on a page is a link to its page, in a grid cell as in prose: a type named in a
 hint, in a note's prose or code, or in a signature - bare or qualified, as `Control` or

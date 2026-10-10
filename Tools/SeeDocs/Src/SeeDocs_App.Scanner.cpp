@@ -1115,7 +1115,7 @@ namespace SeeDocs_App
         class FileReader
         {
         public:
-            FileReader(Surface&, std::size_t file, const SourceText&, std::wstring category,
+            FileReader(Surface&, std::size_t file, const SourceText&, std::wstring folder,
                 ScanMode, HintRules, bool header);
             void read();
         private:
@@ -1174,7 +1174,7 @@ namespace SeeDocs_App
             Surface& m_surface;
             std::size_t m_file;
             const SourceText& m_text;
-            std::wstring m_category;
+            std::wstring m_folder;
             bool m_limited{ false };
             bool m_looseHints{ false };
             bool m_header{ false };
@@ -1184,12 +1184,12 @@ namespace SeeDocs_App
         };
 
         FileReader::FileReader(Surface& surface, const std::size_t file, const SourceText& text,
-            std::wstring category, const ScanMode mode, const HintRules rules, const bool header)
+            std::wstring folder, const ScanMode mode, const HintRules rules, const bool header)
             :
             m_surface{ surface },
             m_file{ file },
             m_text{ text },
-            m_category{ std::move(category) },
+            m_folder{ std::move(folder) },
             m_limited{ mode == ScanMode::Limited },
             m_looseHints{ rules == HintRules::Loose },
             m_header{ header }
@@ -1678,7 +1678,7 @@ namespace SeeDocs_App
             type.templateParameters = prefix.templateParameters;
             type.exported = outer ? outer->type->exported : (prefix.exported || scopeExported());
             type.access = outer ? outer->access : Access::Public;
-            type.category = m_category;
+            type.folder = m_folder;
             type.place = placeOf(keyword);
             type.comment = commentAt(keyword.line, prefix.templateLine, name);
 
@@ -1801,7 +1801,7 @@ namespace SeeDocs_App
             type.target = base;
             type.exported = outer ? outer->type->exported : (prefix.exported || scopeExported());
             type.access = outer ? outer->access : Access::Public;
-            type.category = m_category;
+            type.folder = m_folder;
             type.place = placeOf(keyword);
             type.comment = commentAt(keyword.line, prefix.templateLine, name);
 
@@ -1897,7 +1897,7 @@ namespace SeeDocs_App
                 type.target = textBetween(first, m_at - 1);
             type.exported = outer ? outer->type->exported : (prefix.exported || scopeExported());
             type.access = outer ? outer->access : Access::Public;
-            type.category = m_category;
+            type.folder = m_folder;
             type.place = placeOf(keyword);
             type.comment = commentAt(keyword.line, prefix.templateLine, name);
             if (isPunctuator(peek(), L";"))
@@ -1992,7 +1992,7 @@ namespace SeeDocs_App
             type.target = textBetween(first, last - 1);
             type.exported = outer ? outer->type->exported : (prefix.exported || scopeExported());
             type.access = outer ? outer->access : Access::Public;
-            type.category = m_category;
+            type.folder = m_folder;
             type.place = placeOf(keyword);
             type.comment = commentAt(keyword.line, prefix.templateLine, name);
             m_surface.addType(std::move(type));
@@ -2034,7 +2034,7 @@ namespace SeeDocs_App
             if (m_at > first)
                 type.target = textBetween(first, m_at - 1);
             type.exported = prefix.exported || scopeExported();
-            type.category = m_category;
+            type.folder = m_folder;
             type.place = placeOf(keyword);
             type.comment = commentAt(keyword.line, prefix.templateLine, type.name);
             if (isPunctuator(peek(), L";"))
@@ -2994,50 +2994,50 @@ namespace SeeDocs_App
             return left.path < right.path;
         }
 
-        [[nodiscard]] TreeFiles filesOf(const SourceFolders& folders, const ScanMode mode)
+        [[nodiscard]] TreeFiles filesOf(const SourceFolders& sources, const ScanMode mode)
         {
             FileGathering gathering{ mode };
-            for (std::size_t root = 0; root != folders.size(); ++root)
-                gathering.take(folders[root], root);
+            for (std::size_t root = 0; root != sources.size(); ++root)
+                gathering.take(sources[root], root);
             return gathering.files();
         }
 
-        // The file's record in the surface, and the category it stands in: the directory under
-        // its folder's root - so that folders of one name under two roots are one chapter.
-        [[nodiscard]] std::size_t addSourceFile(Surface& surface, const SourceFolders& folders,
-            const TreeFile& file, std::wstring& category)
+        // The file's record in the surface, and the folder it stands in, as a path under its
+        // source's root - so that folders of one name under two sources are one.
+        [[nodiscard]] std::size_t addSourceFile(Surface& surface, const SourceFolders& sources,
+            const TreeFile& file, std::wstring& folder)
         {
-            const std::filesystem::path& root = folders[file.root].path;
+            const std::filesystem::path& root = sources[file.root].path;
             SourceFile record;
             record.path = file.path;
             record.relative = posixRelative(file.path, root);
             record.root = file.root;
-            category = posixRelative(file.path.parent_path(), root);
-            if (category == L".")
-                category.clear();
+            folder = posixRelative(file.path.parent_path(), root);
+            if (folder == L".")
+                folder.clear();
             return surface.addFile(std::move(record));
         }
 
-        void readSource(Surface& surface, const SourceFolders& folders, const TreeFile& file,
+        void readSource(Surface& surface, const SourceFolders& sources, const TreeFile& file,
             const SourceText& source, const ScanMode mode, const HintRules rules)
         {
-            std::wstring category;
-            const std::size_t index = addSourceFile(surface, folders, file, category);
+            std::wstring folder;
+            const std::size_t index = addSourceFile(surface, sources, file, folder);
             const bool header = file.role == FileRole::Header;
-            FileReader reader{ surface, index, source, category, mode, rules, header };
+            FileReader reader{ surface, index, source, folder, mode, rules, header };
             reader.read();
         }
 
-        void readUnit(Surface& surface, const SourceFolders& folders, const TreeFile& file,
+        void readUnit(Surface& surface, const SourceFolders& sources, const TreeFile& file,
             const std::wstring_view text, const PascalSymbols& symbols, const HintRules rules)
         {
-            std::wstring category;
-            const std::size_t index = addSourceFile(surface, folders, file, category);
-            readPascalUnit(surface, index, text, category, symbols, rules);
+            std::wstring folder;
+            const std::size_t index = addSourceFile(surface, sources, file, folder);
+            readPascalUnit(surface, index, text, folder, symbols, rules);
         }
 
         // A file that cannot be read is left out.
-        void readFull(Surface& surface, const SourceFolders& folders, const TreeFiles& files,
+        void readFull(Surface& surface, const SourceFolders& sources, const TreeFiles& files,
             const HintRules rules)
         {
             for (const TreeFile& file : files)
@@ -3046,7 +3046,7 @@ namespace SeeDocs_App
                 if (!text)
                     continue;
                 const SourceText source{ *text, rules };
-                readSource(surface, folders, file, source, ScanMode::Full, rules);
+                readSource(surface, sources, file, source, ScanMode::Full, rules);
             }
         }
 
@@ -3058,7 +3058,7 @@ namespace SeeDocs_App
         // EVERY FILE IS GATHERED FROM BEFORE ANY IS READ, a macro being used far from the header
         // that defines it and a Delphi symbol far from the unit testing it; each is read from
         // disk once, for both passes. A Delphi include file is gathered from only.
-        void readLimited(Surface& surface, const SourceFolders& folders, const TreeFiles& files,
+        void readLimited(Surface& surface, const SourceFolders& sources, const TreeFiles& files,
             const HintRules rules)
         {
             std::vector<std::optional<std::wstring>> texts;
@@ -3084,11 +3084,11 @@ namespace SeeDocs_App
                     continue;
                 if (files[i].role == FileRole::PascalUnit)
                 {
-                    readUnit(surface, folders, files[i], *texts[i], symbols, rules);
+                    readUnit(surface, sources, files[i], *texts[i], symbols, rules);
                     continue;
                 }
                 const SourceText source{ *texts[i], rules, Preprocess::Expand, &macros };
-                readSource(surface, folders, files[i], source, ScanMode::Limited, rules);
+                readSource(surface, sources, files[i], source, ScanMode::Limited, rules);
             }
             surface.encloseIncludes();
             surface.republish();
@@ -3097,16 +3097,16 @@ namespace SeeDocs_App
         }
     }
 
-    Surface scanSources(const SourceFolders& folders, const ScanMode mode, const HintRules rules)
+    Surface scanSources(const SourceFolders& sources, const ScanMode mode, const HintRules rules)
     {
         Surface surface;
         surface.setMode(mode);
         surface.setHintRules(rules);
-        const TreeFiles files = filesOf(folders, mode);
+        const TreeFiles files = filesOf(sources, mode);
         if (mode == ScanMode::Limited)
-            readLimited(surface, folders, files, rules);
+            readLimited(surface, sources, files, rules);
         else
-            readFull(surface, folders, files, rules);
+            readFull(surface, sources, files, rules);
         surface.resolveAll();
         surface.setScanned(std::chrono::floor<std::chrono::seconds>(
             std::chrono::system_clock::now()));

@@ -1054,7 +1054,7 @@ namespace SeeDocs_App
     {
         if (note.empty())
         {
-            refusal = L"No note takes the footnotes of this chapter.";
+            refusal = L"No note takes the footnotes of this folder.";
             return std::nullopt;
         }
         const std::wstring heading = footnoteHeading(owner, bareName(site.name));

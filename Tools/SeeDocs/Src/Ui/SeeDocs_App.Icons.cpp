@@ -185,13 +185,13 @@ namespace SeeDocs_App
             drawing.stroke(house, drawing.inks.body);
         }
 
-        // The box a chapter's folder fills, and a project's.
+        // The box a folder fills, and a project's.
         [[nodiscard]] FloatRect folderBox()
         {
             return { 1.5f, 3.5f, 12.5f, 11.5f };
         }
 
-        // The chapter's folder with its tab and the band under it lit: the root of the chapters.
+        // The folder with its tab and the band under it lit: the root of the folders.
         // The band follows the outline's tab and slant - see FolderIcon - with sharp corners,
         // which lie within the outline's rounded stroke.
         void paintProject(const Drawing& drawing)
@@ -239,7 +239,7 @@ namespace SeeDocs_App
             drawing.fill(dots, drawing.inks.accent);
         }
 
-        void paintChapter(const Drawing& drawing)
+        void paintFolder(const Drawing& drawing)
         {
             PixelPath folder;
             Icons::FolderIcon::addOutline(folder, folderBox());
@@ -404,8 +404,8 @@ namespace SeeDocs_App
             case RowIcon::Options:
                 paintOptions(drawing);
                 break;
-            case RowIcon::Chapter:
-                paintChapter(drawing);
+            case RowIcon::Folder:
+                paintFolder(drawing);
                 break;
             case RowIcon::Module:
                 paintModule(drawing);
@@ -458,7 +458,7 @@ namespace SeeDocs_App
     }
 
     // THE KIND IS THE ICON'S TAG: the layout cache tells icons apart by size and tag alone, so
-    // a chapter's row and a module's row of one name would otherwise be drawn from one layout.
+    // a folder's row and a module's row of one name would otherwise be drawn from one layout.
     InTextIcon rowIcon(const RowIcon icon)
     {
         const PaintIconFunc paint = [icon](PaintIconEvent& event) {

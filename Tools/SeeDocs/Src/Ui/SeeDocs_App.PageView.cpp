@@ -260,8 +260,8 @@ namespace SeeDocs_App
         text() = head;
     }
 
-    // A page wears the mark its tree row does - a folder's and a chapter's the folder, a header's
-    // the module's - and the root wears home's; a member's page has none, as its crumb has none.
+    // A page wears the mark its tree row does - a folder's the folder, a header's the module's -
+    // and the root wears home's; a member's page has none, as its crumb has none.
     std::optional<RowIcon> PageHead::iconOf(const Page& page)
     {
         switch (page.kind)
@@ -271,7 +271,7 @@ namespace SeeDocs_App
             case PageKind::Project:
                 return RowIcon::Project;
             case PageKind::Folder:
-                return RowIcon::Chapter;
+                return RowIcon::Folder;
             case PageKind::Module:
                 return RowIcon::Module;
             case PageKind::Type:

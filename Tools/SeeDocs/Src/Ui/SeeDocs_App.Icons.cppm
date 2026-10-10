@@ -19,7 +19,7 @@ namespace SeeDocs_App
         Home,      // the root, listing the projects
         Project,
         Options,   // the project's options page
-        Chapter,
+        Folder,
         Module,
         Control,
         Class,

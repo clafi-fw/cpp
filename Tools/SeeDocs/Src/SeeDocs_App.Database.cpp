@@ -49,7 +49,7 @@ namespace SeeDocs_App
             constexpr std::wstring_view base = L"Base";
             constexpr std::wstring_view target = L"Target";
             constexpr std::wstring_view control = L"Control";
-            constexpr std::wstring_view category = L"Category";
+            constexpr std::wstring_view folder = L"Folder";
             constexpr std::wstring_view properties = L"Properties";
             constexpr std::wstring_view events = L"Events";
             constexpr std::wstring_view methods = L"Methods";
@@ -192,7 +192,7 @@ namespace SeeDocs_App
                 Sequence{ Keys::bases, std::wstring{} },
                 Value{ Keys::target, std::wstring{} },
                 Value{ Keys::control, false },
-                Value{ Keys::category, std::wstring{} },
+                Value{ Keys::folder, std::wstring{} },
                 Sequence{ Keys::properties, propertyLayout() },
                 Sequence{ Keys::events, eventLayout() },
                 Sequence{ Keys::methods, functionLayout() },
@@ -327,7 +327,7 @@ namespace SeeDocs_App
             setList(section, Keys::bases, bases);
             setText(section, Keys::target, type.target);
             setFlag(section, Keys::control, type.isControl);
-            setText(section, Keys::category, type.category);
+            setText(section, Keys::folder, type.folder);
 
             Sections& properties = (section / Keys::properties).as<Sections>();
             for (const Property& property : surface.mergedProperties(type))
@@ -619,7 +619,7 @@ namespace SeeDocs_App
                     .target = textOf(entry, Keys::target),
                     .exported = true,
                     .isControl = flagOf(entry, Keys::control),
-                    .category = textOf(entry, Keys::category)
+                    .folder = textOf(entry, Keys::folder)
                 };
                 type.qualifiedName = qualifiedNameOf(type.nameSpace, type.name);
                 const std::size_t file = fileOf(entry, type.module);

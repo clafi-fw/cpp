@@ -381,9 +381,9 @@ namespace SeeDocs_App
         return HeaderText{ rowIcon(RowIcon::Project), Space{ k_iconGap }, name };
     }
 
-    HeaderText SurfaceTree::folderText(const std::wstring_view category)
+    HeaderText SurfaceTree::folderText(const std::wstring_view folder)
     {
-        return HeaderText{ rowIcon(RowIcon::Chapter), Space{ k_iconGap }, folderNameOf(category) };
+        return HeaderText{ rowIcon(RowIcon::Folder), Space{ k_iconGap }, folderNameOf(folder) };
     }
 
     // A row leads with the mark of its kind and ends with its kind word.

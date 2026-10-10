@@ -38,7 +38,7 @@ namespace SeeDocs_App
     public:
         explicit PageLinkEvent(std::wstring target);
     public:
-        // A type's qualified name, a module's or a chapter's name, a member link, or # and an
+        // A type's qualified name, a module's name, a folder's path, a member link, or # and an
         // anchor of the page.
         const std::wstring target;
     };

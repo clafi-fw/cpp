@@ -67,7 +67,7 @@ namespace SeeDocs_App
         {
             constexpr std::wstring_view project = L"Project";   // the project's folder
             constexpr std::wstring_view home = L"Home";         // its own node open
-            constexpr std::wstring_view folders = L"Folders";   // by category
+            constexpr std::wstring_view folders = L"Folders";   // by path
             constexpr std::wstring_view modules = L"Modules";   // by name
         }
 
@@ -92,7 +92,7 @@ namespace SeeDocs_App
             return module.header ? module.shortName : module.name;
         }
 
-        // A folder's category with one more folder under it; the root's is the folder alone.
+        // A folder's path with one more folder under it; the root's is the folder alone.
         [[nodiscard]] std::wstring joinFolder(const std::wstring_view folder,
             const std::wstring_view name)
         {
@@ -213,35 +213,34 @@ namespace SeeDocs_App
         contentsTree = ContentsTree{ contents };
         targets.clear();
         folders.clear();
-        for (const ContentsChapter& chapter : contents)
+        for (const ContentsFolder& folder : contents)
         {
-            targets[chapter.name] = { .folder = chapter.category, .chapter = &chapter };
-            // Every folder on the way to the chapter's is a folder, whether or not a chapter
-            // of its own, and a link names it as a chapter of it would be named; the chapter's
-            // own folder is this chapter.
-            std::wstring folder;
-            std::wstring_view rest = chapter.category;
+            targets[folder.path] = { .folder = folder.path, .contents = &folder };
+            // Every folder on the way to this one is a folder, whether or not it holds modules
+            // of its own, and a link names it by its path.
+            std::wstring way;
+            std::wstring_view rest = folder.path;
             while (!rest.empty())
             {
                 const std::size_t slash = rest.find(ConfigNames::pathSeparator);
-                folder = joinFolder(folder, rest.substr(0, slash));
-                folders.try_emplace(folder, nullptr);
-                targets.try_emplace(chapterNameOf(folder), Target{ .folder = folder });
+                way = joinFolder(way, rest.substr(0, slash));
+                folders.try_emplace(way, nullptr);
+                targets.try_emplace(way, Target{ .folder = way });
                 rest = slash == std::wstring_view::npos ? std::wstring_view{} : rest.substr(slash + 1);
             }
-            folders[chapter.category] = &chapter;
-            for (const ContentsModule& module : chapter.modules)
+            folders[folder.path] = &folder;
+            for (const ContentsModule& module : folder.modules)
             {
                 targets[module.name] = {
-                    .folder = chapter.category,
-                    .chapter = &chapter,
+                    .folder = folder.path,
+                    .contents = &folder,
                     .module = &module
                 };
                 for (const Type* type : module.types)
                 {
                     targets[type->qualifiedName] = {
-                        .folder = chapter.category,
-                        .chapter = &chapter,
+                        .folder = folder.path,
+                        .contents = &folder,
                         .module = &module,
                         .type = type
                     };
@@ -571,11 +570,11 @@ namespace SeeDocs_App
         {
             if (target.isHome())
                 addSubItem(data, k_optionsSegment);
-            for (const std::wstring& name : foldersUnder(project, target.folder))
+            for (const std::wstring& name : subfolderNames(project, target.folder))
                 addSubItem(data, name);
-            if (target.chapter)
+            if (target.contents)
             {
-                for (const ContentsModule& module : target.chapter->modules)
+                for (const ContentsModule& module : target.contents->modules)
                     addSubItem(data, segmentOf(module));
             }
         }
@@ -728,8 +727,8 @@ namespace SeeDocs_App
         result.folderDepth = next - 1;
         const Folders::const_iterator folder = project->folders.find(result.folder);
         if (folder != project->folders.end())
-            result.chapter = folder->second;
-        if (next == segments.size() || !result.chapter)
+            result.contents = folder->second;
+        if (next == segments.size() || !result.contents)
             return result;
 
         // A header's segment is its file name, and the folders before it make its name.
@@ -738,7 +737,7 @@ namespace SeeDocs_App
         if (found == targets.end() || !found->second.module || !found->second.module->header)
             found = targets.find(std::wstring{ segments[next] });
         if (found == targets.end() || !found->second.module || found->second.type
-            || found->second.chapter != result.chapter)
+            || found->second.contents != result.contents)
             return result;
         result.module = found->second.module;
         if (++next == segments.size())
@@ -956,7 +955,7 @@ namespace SeeDocs_App
         return result;
     }
 
-    // A folder's category spells its folders with the path's own separator.
+    // A folder's path spells its folders with the url's own separator.
     std::wstring SurfaceBrowser::pathOf(const ShownProject& project,
         const std::wstring_view folder, const ContentsModule* module, const Type* type,
         const std::wstring_view member)
@@ -974,15 +973,15 @@ namespace SeeDocs_App
         return result;
     }
 
-    // The folders directly under one are read off every chapter's category, in the order the
-    // chapters read, each once.
-    std::vector<std::wstring> SurfaceBrowser::foldersUnder(const ShownProject& project,
+    // The folders directly under one are read off the path of every folder with modules, in
+    // the order the folders read, each once.
+    std::vector<std::wstring> SurfaceBrowser::subfolderNames(const ShownProject& project,
         const std::wstring_view folder)
     {
         std::vector<std::wstring> result;
-        for (const ContentsChapter& chapter : project.contents)
+        for (const ContentsFolder& contents : project.contents)
         {
-            std::wstring_view rest = chapter.category;
+            std::wstring_view rest = contents.path;
             if (!folder.empty())
             {
                 const bool under = rest.starts_with(folder) && rest.size() > folder.size()
@@ -1039,7 +1038,7 @@ namespace SeeDocs_App
             return rowIconOf(*target.type);
         if (target.module)
             return RowIcon::Module;
-        return RowIcon::Chapter;
+        return RowIcon::Folder;
     }
 
     std::optional<Page> SurfaceBrowser::pageOf(const Target& target) const
@@ -1056,23 +1055,21 @@ namespace SeeDocs_App
         OpenProject& open = project.open;
         if (target.isHome())
             return homePageOf(project);
-        if (target.isFolder() && !target.chapter)
-            return folderPage(project.contents, target.folder);
         if (target.isFolder())
-            return chapterPage(open.surface, open.notes, project.contents, *target.chapter);
+            return folderPage(open.surface, open.notes, project.contents, target.folder);
         if (!target.exportName.empty())
         {
-            return exportPage(open.surface, open.notes, *target.chapter, *target.module,
+            return exportPage(open.surface, open.notes, *target.contents, *target.module,
                 target.exportName);
         }
         if (!target.type)
-            return modulePage(open.surface, open.notes, *target.chapter, *target.module);
+            return modulePage(open.surface, open.notes, *target.contents, *target.module);
         if (target.method.empty())
             return typePage(open.surface, open.notes, *target.type);
         return methodPage(open.surface, open.notes, *target.type, target.method);
     }
 
-    // The home links to the project's options page by path, ahead of its chapters.
+    // The home links to the project's options page by path, ahead of its folders.
     Page SurfaceBrowser::homePageOf(const ShownProject& project)
     {
         OpenProject& open = project.open;

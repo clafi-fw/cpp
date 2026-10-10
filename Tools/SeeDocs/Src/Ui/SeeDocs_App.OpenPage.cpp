@@ -71,7 +71,7 @@ namespace SeeDocs_App
             Stack& group = page.addGroup(L"Recent");
             for (const std::filesystem::path& folder : recent)
             {
-                Text row{ rowIcon(RowIcon::Chapter), Space{ k_iconGap }, nameOf(folder) };
+                Text row{ rowIcon(RowIcon::Folder), Space{ k_iconGap }, nameOf(folder) };
                 row << Space{ k_nameGap } << InkGrade::Muted << folder.wstring() << PopColor{};
                 group.add<ToolButton>(
                     row,
