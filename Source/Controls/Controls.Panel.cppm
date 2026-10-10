@@ -14,11 +14,16 @@ namespace ClaFi::Controls
         using PanelBase::createBody;
         using PanelBase::createRightBar;
         using PanelBase::createBottomBar;
+        using PanelBase::createSplitter;
         using PanelBase::topBar;
         using PanelBase::leftBar;
         using PanelBase::body;
         using PanelBase::bodyAs;
         using PanelBase::rightBar;
         using PanelBase::bottomBar;
+        using PanelBase::barExtent;
+        using PanelBase::setBarExtent;
+        using PanelBase::resetBarExtent;
+        using PanelBase::fitBarToContent;
     };
 }

@@ -128,13 +128,21 @@ namespace ClaFi::Controls
     // what a page survives being squeezed to - a button's text ellipsizes long before its page
     // runs out of room. What this control has to be is the measurement.
     //
-    // BOTH EXTENTS, so that turning to another page does not resize what holds this one. The menu
-    // is as big as the largest page it can show, whichever it happens to be showing.
+    // BOTH EXTENTS, under either sizing. Under WidestPage that is what keeps turning to another
+    // page from resizing what holds this one: the menu is as big as the largest page it can
+    // show, whichever it happens to be showing.
     ScaledDimensions PageControl::calculateContent(AlignEvent& event)
     {
         ScaledDimensions result = StackBase::calculateContent(event);
         if (m_pageSizing == PageSizing::CurrentPage)
+        {
+            if (const Control* page = currentItem(); page && page->visible())
+            {
+                result.x = std::max(result.x, page->dimensions().x);
+                result.y = std::max(result.y, page->dimensions().y);
+            }
             return result;
+        }
 
         for (const ControlPtr& page : controls())
         {

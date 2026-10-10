@@ -1162,6 +1162,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\MessageBoxBase.cppm">
       <Filter>Controls\Y-Base</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\PanelBase.cpp">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\PanelBase.cppm">
       <Filter>Controls\Y-Base</Filter>
     </ClCompile>

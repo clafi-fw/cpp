@@ -24,7 +24,9 @@ namespace ClaFi
         Arrow,
         IBeam,
         Hand,
-        Wait
+        Wait,
+        SizeWE,   // the double arrow of a width being dragged
+        SizeNS    // the double arrow of a height being dragged
     };
 
     // The cursor as the platform holds it, opaque above the platform layer. See UI-Types

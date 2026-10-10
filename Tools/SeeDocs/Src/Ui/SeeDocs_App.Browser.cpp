@@ -18,6 +18,7 @@ import ClaFi.Browser.Control;
 import ClaFi.Browser.PageData;
 
 import ClaFi.Controls.PageControl;
+import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Tree;
 
@@ -59,6 +60,8 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_closeHint = L"Closes the project and every tab on it";
         // What a tab's file keeps its tree's open nodes under, an entry per project.
         constexpr std::wstring_view k_treeNodeName = L"Tree";
+        // What a tab's file keeps the trees' bar's width under; zero is a bar never resized.
+        constexpr std::wstring_view k_treeWidthName = L"TreeWidth";
 
         namespace TreeKeys
         {
@@ -633,6 +636,7 @@ namespace SeeDocs_App
 
         TabTree& tabTree = treeOf(tab);
         m_trees.setCurrentItem(tabTree.box);
+        showTreeWidth(tab);
         SurfaceTree& tree = *tabTree.tree;
         if (!target.project || target.isGone())
             tree.setCurrentItem(nullptr);
@@ -903,9 +907,27 @@ namespace SeeDocs_App
             modules.add().set(name);
     }
 
+    void SurfaceBrowser::showTreeWidth(const BrowserTab& tab)
+    {
+        const float width = (settings().tabConfig(tab.id()) / k_treeWidthName).get<float>();
+        if (width > 0.0f)
+            setBarExtent(PanelSlot::Left, width);
+        else
+            resetBarExtent(PanelSlot::Left);
+    }
+
+    void SurfaceBrowser::storeTreeWidth(const float width)
+    {
+        const BrowserPage* page = currentPage();
+        if (!page)
+            return;
+        (settings().tabConfig(page->tabId()) / k_treeWidthName).set(width);
+    }
+
     Dom::Dt::Section SurfaceBrowser::createTabConfigSchema()
     {
         return Dom::Dt::Section{
+            Dom::Dt::Value{ k_treeWidthName, 0.0f },
             Dom::Dt::Sequence{
                 k_treeNodeName,
                 Dom::Dt::Section{

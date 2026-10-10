@@ -53,6 +53,36 @@ so that is the width it remembers once the bars are placed: the remembered text 
 carries - see Control-Foundation#remembered-text-width. `PanelBase::alignContent` states it in
 place of `Control::alignContent`, which would remember the whole content width.
 
+### createSplitter
+
+Puts a splitter between a bar and the body, and from then on the pointer sizes the bar: dragging
+the line moves the edge the bar and the body share, and a double click on it fits the bar to what
+its content measures. The bar is created first - a splitter stands beside a bar that is already in
+its slot, and the body has none.
+
+The bar keeps every metric it was built with. What a drag or a fit states is the bar's preference
+for the passes that follow - `MinSize` holds it up and `MaxSize` holds it down, as for any
+preference - and a drag is held between the bar's floor and the room the body has over its own. A
+`PreferredSize` on the bar is where the bar starts, and a fit sets it aside for the one pass that
+measures the content. `barExtent` reads what the bar stands at, in design units; `setBarExtent`
+states it, `resetBarExtent` clears it and `fitBarToContent` does what the double click does.
+`OnBarResize` is raised with what the bar comes to whenever the pointer resizes it, so an
+application that keeps the split writes the event's extent down and states it back with
+`setBarExtent`.
+
+The splitter stands in the gap the panel's spacing leaves between the bar and the body, and widens
+that gap only where the spacing is thinner than its line. The band the pointer takes it by is
+wider than the line and reaches over the bar and the body either side, which is why the splitter
+is an overlay of its panel: it is met before the two and drawn after them.
+
+## Splitter
+
+The line between a bar and the body that the pointer drags to resize the bar, made by
+`PanelBase::createSplitter` and by nothing else. It is a mouse target and nothing more: the focus
+never rests on it and no key moves it. The line is drawn in the Divider's colours, upright beside
+a left or right bar and across the panel beside a top or bottom one, and the pointer over it wears
+the resize arrow of that direction.
+
 ## SplitButtonBase
 
 A button carrying a second target: a part that is pressed on its own account and answers

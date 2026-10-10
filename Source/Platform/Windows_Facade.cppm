@@ -285,6 +285,12 @@ namespace ClaFi
         case CursorShape::Wait:
             cursorName = IDC_WAIT;
             break;
+        case CursorShape::SizeWE:
+            cursorName = IDC_SIZEWE;
+            break;
+        case CursorShape::SizeNS:
+            cursorName = IDC_SIZENS;
+            break;
         default:
             return;
         }

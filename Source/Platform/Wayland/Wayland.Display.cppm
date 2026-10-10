@@ -790,6 +790,12 @@ namespace ClaFi::PlatformImplementation::Wayland
         case CursorShape::Wait:
             shape = WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_WAIT;
             break;
+        case CursorShape::SizeWE:
+            shape = WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_EW_RESIZE;
+            break;
+        case CursorShape::SizeNS:
+            shape = WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_NS_RESIZE;
+            break;
         case CursorShape::Arrow:
             break;
         }

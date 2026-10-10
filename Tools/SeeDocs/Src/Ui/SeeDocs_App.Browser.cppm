@@ -258,6 +258,10 @@ namespace SeeDocs_App
         void addToTree(const TabTree&, const ShownProject&);
         // Writes the project's nodes open in the tab's tree into the tab's file.
         void storeTreeState(const TabTree&, ProjectId);
+        // Shows the trees' bar at the width the tab's file keeps, or where it starts without one.
+        void showTreeWidth(const BrowserTab&);
+        // Writes the trees' bar's width into the shown tab's file.
+        void storeTreeWidth(float width);
         [[nodiscard]] static std::wstring homePath(const ShownProject&);
         [[nodiscard]] static std::wstring optionsPath(const ShownProject&);
         // The path of the nearest thing named in the project, down to the member where one is
@@ -305,7 +309,8 @@ namespace SeeDocs_App
         // Whether the module exports a function or a constant of the name.
         [[nodiscard]] static bool exports(const ContentsModule&, std::wstring_view name);
     private:
-        static constexpr float k_treeWidth = 300.0f;
+        static constexpr float k_treeWidth = 300.0f;   // where the trees' bar starts
+        static constexpr float k_leastTreeWidth = 120.0f;   // the least the bar is dragged to
         static constexpr IconSize k_pageIconSize{ 16.0f };
 
         Projects m_projects{};
@@ -319,8 +324,8 @@ namespace SeeDocs_App
         TabTrees m_tabTrees{};
         // The tabs' trees, the selected tab's shown.
         PageControl& m_trees{ createLeftBar<PageControl>(
-            MinSize{ k_treeWidth, 0.0f },
-            MaxSize{ k_treeWidth, k_maxFloat }
+            PreferredSize{ k_treeWidth, 0.0f },
+            MinSize{ k_leastTreeWidth, 0.0f }
         ) };
     };
 
@@ -376,6 +381,10 @@ namespace SeeDocs_App
         BrowserControl{ params, std::forward<Args>(args)... }
     {
         appButton().onPaintIcon(Icons::SideBar::paintPanelIcon);
+        createSplitter(PanelSlot::Left);
+        onBarResize([this](BarResizeEvent& event) {
+            storeTreeWidth(event.extent);
+        });
         m_rebuildTimer.onTick([this](TimerEvent&) {
             rebuildCurrentPage();
         });
