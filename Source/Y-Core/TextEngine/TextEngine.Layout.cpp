@@ -1385,8 +1385,9 @@ namespace ClaFi
         // it.
         if (m_breakWidth > 0.0f)
             return true;
-        // A text that is not broken to its box is not shaped from a width at all.
-        if (!m_wrap)
+        // A text that is not broken to its box is not shaped from a width at all - unless it
+        // carries flex space, which the paint fills to the box.
+        if (!m_wrap && !(m_eventPhase == EventPhase::Paint && m_text->hasFlexSpace()))
             return true;
         if (boundsX == m_builtBoundsX)
             return true;
@@ -2122,34 +2123,11 @@ namespace ClaFi
             }
         }
 
-        // PROBE (flex glue) - remove once read
-        std::wstring probe{};
-        if (m_eventPhase == EventPhase::Paint && !buildParams.inlineObjects.empty())
-        {
-            std::wstring shown{ slice };
-            std::ranges::replace(shown, L'\uFFFC', L'|');
-            probe = std::format(L"FLEX '{}' box {:.4f} first", shown, availableWidth);
-            for (const NativeLineMetrics& line : built)
-                probe += std::format(L" {:.4f}", line.width);
-            probe += L" objects";
-            for (const auto& [at, object] : buildParams.inlineObjects)
-                probe += std::format(L" {:.4f}", object.width * m_scaleFactor);
-        }
-
         if (needsRebuild)
         {
             nativeLayout->build(buildParams);
             lines.resize(lineStart);
             nativeLayout->appendLineMetrics(lines);
-        }
-
-        // PROBE (flex glue) - remove once read
-        if (!probe.empty())
-        {
-            probe += L" rebuilt";
-            for (std::size_t line = lineStart; line != lines.size(); ++line)
-                probe += std::format(L" {:.4f}", lines[line].width);
-            Platform::debugOutput(probe);
         }
 
         // The size the paragraph came to, read BEFORE anything places its lines. Alignment says
