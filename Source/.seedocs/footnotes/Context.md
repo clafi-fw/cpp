@@ -199,9 +199,11 @@ THE DIALOG IS THE DESKTOP'S OWN, not the framework's: where a folder is asked fo
 expects the places, the drives and the shortcuts the desktop keeps, and nothing drawn here could
 stand in for them. The call runs the dialog to its close and answers the folder picked, or
 nothing where the dialog was cancelled or the platform has none to show. It is opened over the
-form given, so the form's window stands disabled under it the way it would under any of the
-desktop's own dialogs, and it is opened from a toplevel - a popup closes when the dialog takes
-the focus, so whoever asks from a menu closes the menu first.
+form given: on Windows the form's window stands disabled under it the way it would under any of
+the desktop's own dialogs; on Wayland it is the XDG portal's dialog, parented by the form's
+window and modal to it as far as the desktop makes it so, and a session with no portal or no
+chooser behind it answers nothing. It is opened from a toplevel - a popup closes when the dialog
+takes the focus, so whoever asks from a menu closes the menu first.
 
 ## ScopedWaitCursor
 

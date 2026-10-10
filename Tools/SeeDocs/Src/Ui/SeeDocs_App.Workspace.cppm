@@ -59,6 +59,9 @@ namespace SeeDocs_App
         // Adds a folder of sources picked in the desktop's own dialog, and scans the project
         // again; false where none was added.
         bool addSource(OpenProject&);
+        // Reads the folder in place of the source and scans again; the reason where it was refused.
+        [[nodiscard]] std::wstring replaceSource(OpenProject&, const std::filesystem::path& source,
+            const std::filesystem::path& folder);
         // Stops reading the folder of sources, and scans the project again.
         void removeSource(OpenProject&, const std::filesystem::path& source);
         // Whether the folders under the source are read too; scans the project again.

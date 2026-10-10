@@ -7,7 +7,7 @@ import ClaFi.StdLib;
 // A PROJECT IS A FOLDER OF ITS OWN. Its properties, the database the scanner writes and the
 // footnotes the pages show stand in it; the sources it documents stand wherever they are - any
 // number of folders, each read as it stands. A project made inside a tree, in the tree's .seedocs
-// folder, is a project all the same, the tree being its one folder of sources. See README
+// folder, is a project all the same, naming its tree as `..`. See README
 namespace SeeDocs_App
 {
     export constexpr std::wstring_view k_projectFileName = L"Project.cfg";
@@ -37,6 +37,11 @@ namespace SeeDocs_App
         [[nodiscard]] std::filesystem::path databasePath() const;
         [[nodiscard]] std::filesystem::path footnotesFolder() const;
         [[nodiscard]] SourceRoots sourceRoots() const;   // the sources' folders, a root each
+        // A source as the properties write it: relative while the two share a folder. See README
+        [[nodiscard]] std::filesystem::path writtenSource(
+            const std::filesystem::path& source) const;
+        // A source written or typed as the properties take it, read against the project's folder.
+        [[nodiscard]] std::filesystem::path readSource(const std::filesystem::path& written) const;
         // The name it goes by where it states none: its folder's, or a tree's project's, the
         // tree's.
         [[nodiscard]] std::wstring folderName() const;

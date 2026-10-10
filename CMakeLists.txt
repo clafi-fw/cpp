@@ -304,6 +304,12 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
     clafi_wayland_protocol(
         "${WAYLAND_PROTOCOLS_DIR}/staging/alpha-modifier/alpha-modifier-v1.xml"
         alpha-modifier-v1)
+    # A WINDOW NAMED TO ANOTHER CLIENT, which parents a dialog of its own by the handle - the
+    # portal's file chooser, see ExportedToplevel. Every wayland-protocols accepted above carries
+    # it.
+    clafi_wayland_protocol(
+        "${WAYLAND_PROTOCOLS_DIR}/unstable/xdg-foreign/xdg-foreign-unstable-v2.xml"
+        xdg-foreign-unstable-v2)
 
     # A WINDOW ON THE SCREEN'S EDGE. xdg-shell has no request that names an edge; the layer shell
     # states an anchor, a size and a reserved strip, and the compositor does the rest - see
@@ -367,8 +373,9 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
     target_include_directories(ClaFi PRIVATE ${CLAFI_PNG_INCLUDE_DIRS})
     target_link_libraries(ClaFi PUBLIC PkgConfig::CLAFI_PNG)
 
-    # THE DESKTOP'S SETTINGS, which the XDG portal serves over the session bus - the colour mode
-    # an application set to Auto follows. libdbus-1 is on every desktop; its headers are not.
+    # THE XDG PORTAL, served over the session bus: the desktop's settings - the colour mode an
+    # application set to Auto follows - and its file chooser. libdbus-1 is on every desktop; its
+    # headers are not.
     # Debian/Ubuntu libdbus-1-dev; Fedora dbus-devel.
     pkg_check_modules(CLAFI_DBUS REQUIRED IMPORTED_TARGET dbus-1)
     target_include_directories(ClaFi PRIVATE ${CLAFI_DBUS_INCLUDE_DIRS})

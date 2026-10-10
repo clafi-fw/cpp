@@ -60,6 +60,8 @@ namespace ClaFi::PlatformImplementation::Wayland
             return m_role == WindowRole::Dialog && m_pendingMinSize != m_pendingMaxSize;
         }
         [[nodiscard]] wl_surface* surface() const { return m_surface; }
+        // An xdg toplevel, which is what another client can parent a window of its own by.
+        [[nodiscard]] bool isToplevelRole() const { return m_toplevel != nullptr; }
         // A WINDOW IS COMPOSITED OVER WHAT IT STANDS ON when something of it is not a filled
         // rectangle: a popup fades and rounds its corners, and a toplevel whose frame has a corner
         // to round or a shadow to cast is the same case. Its frames then carry an alpha channel

@@ -139,6 +139,16 @@ namespace SeeDocs_App
         return roots;
     }
 
+    std::filesystem::path Project::writtenSource(const std::filesystem::path& source) const
+    {
+        return std::filesystem::path{ storedPath(source, folder) };
+    }
+
+    std::filesystem::path Project::readSource(const std::filesystem::path& written) const
+    {
+        return sourcePath(written.wstring(), folder);
+    }
+
     std::wstring Project::folderName() const
     {
         return nameOfFolder(folder);
@@ -163,13 +173,9 @@ namespace SeeDocs_App
         return std::nullopt;
     }
 
-    // A TREE'S PROJECT FOLDER THAT NAMES NO SOURCES READS ITS TREE, with the folders under it -
-    // which is what one made before projects named their sources read. One that states nothing
-    // of its hints either, as such a one does not, has the hints its read made of them: loose
-    // and only read for a third-party library, strict and written for a tree of the routine's.
-    // Nothing is written for it here; the next change of its properties writes them so. A folder
-    // with no properties in it, or with no name in them, is a project still, named after its
-    // folder.
+    // A PROJECT READS WHAT ITS PROPERTIES NAME and nothing besides: a tree's project names its
+    // tree as `..`, as any other source. A folder with no properties in it, or with no name in
+    // them, is a project still, named after its folder.
     std::optional<Project> readProject(const std::filesystem::path& named)
     {
         const std::optional<std::filesystem::path> found = projectFolderOf(named);
@@ -178,7 +184,6 @@ namespace SeeDocs_App
 
         const std::filesystem::path& folder = *found;
         Project project{ .folder = folder, .name = nameOfFolder(folder) };
-        bool hintsStated = false;
         ProjectDocument document{
             folder / k_projectFileName,
             Dom::AutoSave::No,
@@ -206,18 +211,6 @@ namespace SeeDocs_App
                 project.hints = HintRules::Loose;
             if ((document / Keys::editHints).get<bool>())
                 project.edits = HintEdits::Direct;
-            hintsStated = project.hints != HintRules::Strict || project.edits != HintEdits::None;
-        }
-
-        if (isTreeProject(folder) && project.sources.empty())
-        {
-            project.sources.push_back({ .path = folder.parent_path() });
-            if (!hintsStated)
-            {
-                const bool limited = project.mode == ScanMode::Limited;
-                project.hints = limited ? HintRules::Loose : HintRules::Strict;
-                project.edits = limited ? HintEdits::None : HintEdits::Direct;
-            }
         }
         return project;
     }

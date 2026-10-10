@@ -25,6 +25,9 @@
 #include <xdg-activation-v1-client-protocol.h>
 // A WINDOW'S OPACITY IS THE COMPOSITOR'S TO APPLY, as a multiplier on the surface.
 #include <alpha-modifier-v1-client-protocol.h>
+// ANOTHER CLIENT PARENTS A WINDOW OF ITS OWN BY A HANDLE - the portal's file chooser among them.
+// The compositor names a toplevel by one while the client keeps it exported.
+#include <xdg-foreign-unstable-v2-client-protocol.h>
 // THE LAYER SHELL NAMES AN ARGUMENT "namespace", which C accepts and C++ cannot, and the
 // generated header is C. It reads as namespace_ for the length of the include; nothing else
 // in that header spells the word outside a comment.

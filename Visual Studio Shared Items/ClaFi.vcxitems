@@ -293,6 +293,8 @@
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.WebFetch.cpp" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Appearance.cppm" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Appearance.cpp" />
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.FileChooser.cppm" />
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.FileChooser.cpp" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland_Facade.cppm" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland\Wayland.Display.cppm" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Wayland\Wayland.FormWindow.cppm" />

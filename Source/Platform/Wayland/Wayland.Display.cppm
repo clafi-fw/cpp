@@ -83,7 +83,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             std::string_view name;
             bool offered{ false };
         };
-        using OptionalGlobals = std::array<OptionalGlobal, 9>;
+        using OptionalGlobals = std::array<OptionalGlobal, 10>;
     public:
         // CONNECTS, OR THROWS. A client started outside a session has nothing to draw into, and
         // the error names what was looked for - the value of WAYLAND_DISPLAY.
@@ -168,6 +168,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         void awaitSessionId();
         // Asks the compositor to raise and focus a toplevel, on the input that asked. See Platform
         void activate(wl_surface* target, InputStamp);
+        // Null where the compositor names no toplevel to other clients. See Platform
+        [[nodiscard]] zxdg_exporter_v2* exporter() const { return m_exporter; }
         // The pixel formats wl_shm advertised. ARGB8888 and XRGB8888 are guaranteed by the
         // protocol; anything else is the compositor offering more.
         [[nodiscard]] const std::vector<std::uint32_t>& shmFormats() const { return m_shmFormats; }
@@ -380,6 +382,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         xdg_session_v1* m_session{ nullptr };
         std::string m_sessionId{};
         xdg_activation_v1* m_activation{ nullptr };
+        zxdg_exporter_v2* m_exporter{ nullptr };
         std::string m_appId{ "clafi" };
         wl_seat* m_seat{ nullptr };
         wl_data_device_manager* m_dataDeviceManager{ nullptr };
@@ -458,6 +461,23 @@ namespace ClaFi::PlatformImplementation::Wayland
         const int m_fd;
     };
 
+    // A TOPLEVEL NAMED TO OTHER CLIENTS, for as long as this stands. See Platform
+    export class ExportedToplevel
+    {
+    public:
+        ExportedToplevel(DisplayManager&, wl_surface* toplevel);
+        ~ExportedToplevel();
+        ExportedToplevel(const ExportedToplevel&) = delete;
+        ExportedToplevel& operator=(const ExportedToplevel&) = delete;
+    public:
+        [[nodiscard]] const std::string& handle() const { return m_handle; }   // empty for none
+    private:
+        static void onHandle(void* data, zxdg_exported_v2*, const char* handle);
+    private:
+        zxdg_exported_v2* m_exported{ nullptr };
+        std::string m_handle{};
+    };
+
     // WHAT STANDS BEHIND IPlatformServices ON WAYLAND: the display. See Platform
     export class IDisplayAccess : public IPlatformServices
     {
@@ -498,6 +518,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         constexpr std::uint32_t sessionManager = 1;
         // 1 is the whole protocol: a token asked for against an input event, and the raise.
         constexpr std::uint32_t activation = 1;
+        // 1 is the whole protocol: a toplevel exported, and the handle that names it.
+        constexpr std::uint32_t exporter = 1;
         // 5 is where wl_pointer.frame arrives, which groups the events of one hardware movement
         // so a diagonal scroll is one gesture rather than two. 4 is where wl_keyboard.repeat_info
         // arrives, without which a held key would repeat at a rate this client made up.
@@ -611,6 +633,8 @@ namespace ClaFi::PlatformImplementation::Wayland
             ::xdg_session_manager_v1_destroy(m_sessionManager);
         if (m_activation)
             ::xdg_activation_v1_destroy(m_activation);
+        if (m_exporter)
+            ::zxdg_exporter_v2_destroy(m_exporter);
         if (m_decorationManager)
             ::zxdg_decoration_manager_v1_destroy(m_decorationManager);
         if (m_windowManager)
@@ -967,10 +991,11 @@ namespace ClaFi::PlatformImplementation::Wayland
             static_cast<const void*>(m_cursorShapeManager),
             static_cast<const void*>(m_layerShell));
         std::fprintf(stderr,
-            "[wayland] data-control manager=%p  session manager=%p  activation=%p  app id=%s\n",
+            "[wayland] data-control manager=%p  session manager=%p  activation=%p  exporter=%p  "
+            "app id=%s\n",
             static_cast<const void*>(m_dataControlManager),
             static_cast<const void*>(m_sessionManager), static_cast<const void*>(m_activation),
-            m_appId.c_str());
+            static_cast<const void*>(m_exporter), m_appId.c_str());
 
         for (std::uint32_t format : m_shmFormats)
             std::fprintf(stderr, "[wayland] shm format 0x%08x%s\n", format,
@@ -992,7 +1017,8 @@ namespace ClaFi::PlatformImplementation::Wayland
             { ::zxdg_decoration_manager_v1_interface.name, m_decorationManager != nullptr },
             { ::zwlr_layer_shell_v1_interface.name, m_layerShell != nullptr },
             { ::xdg_session_manager_v1_interface.name, m_sessionManager != nullptr },
-            { ::xdg_activation_v1_interface.name, m_activation != nullptr }
+            { ::xdg_activation_v1_interface.name, m_activation != nullptr },
+            { ::zxdg_exporter_v2_interface.name, m_exporter != nullptr }
         } };
     }
 
@@ -1131,6 +1157,13 @@ namespace ClaFi::PlatformImplementation::Wayland
             m_activation = static_cast<xdg_activation_v1*>(
                 ::wl_registry_bind(registry, name, &::xdg_activation_v1_interface,
                     std::min(version, InterfaceVersion::activation)));
+            return;
+        }
+        if (interfaceName == ::zxdg_exporter_v2_interface.name)
+        {
+            m_exporter = static_cast<zxdg_exporter_v2*>(
+                ::wl_registry_bind(registry, name, &::zxdg_exporter_v2_interface,
+                    std::min(version, InterfaceVersion::exporter)));
             return;
         }
     }
@@ -1853,5 +1886,44 @@ namespace ClaFi::PlatformImplementation::Wayland
     PollSource::~PollSource()
     {
         m_display.removePollSource(m_fd);
+    }
+
+    // ExportedToplevel
+
+    // ON A QUEUE OF ITS OWN, as DisplayManager::activate waits for its token: this is asked from
+    // inside a click, and a plain roundtrip would dispatch whatever else has arrived into the
+    // middle of it. The compositor answers the export before the sync that ends the wait.
+    ExportedToplevel::ExportedToplevel(DisplayManager& display, wl_surface* toplevel)
+    {
+        if (!display.exporter() || !toplevel)
+            return;
+
+        static const zxdg_exported_v2_listener k_exportedListener = {
+            .handle = &ExportedToplevel::onHandle
+        };
+        wl_event_queue* queue = ::wl_display_create_queue(display.display());
+        m_exported = ::zxdg_exporter_v2_export_toplevel(display.exporter(), toplevel);
+        wl_proxy* proxy = reinterpret_cast<wl_proxy*>(m_exported);
+        ::wl_proxy_set_queue(proxy, queue);
+        ::zxdg_exported_v2_add_listener(m_exported, &k_exportedListener, this);
+        ::wl_display_roundtrip_queue(display.display(), queue);
+        ::wl_proxy_set_queue(proxy, nullptr);
+        ::wl_event_queue_destroy(queue);
+
+        if (traceEnabled())
+            std::fprintf(stderr, "[wayland] export  surface=%p handle=\"%s\"\n",
+                static_cast<void*>(toplevel), m_handle.c_str());
+    }
+
+    // The handle stops naming the toplevel here, and a dialog parented by it stands alone.
+    ExportedToplevel::~ExportedToplevel()
+    {
+        if (m_exported)
+            ::zxdg_exported_v2_destroy(m_exported);
+    }
+
+    void ExportedToplevel::onHandle(void* data, zxdg_exported_v2*, const char* handle)
+    {
+        static_cast<ExportedToplevel*>(data)->m_handle = handle;
     }
 }

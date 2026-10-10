@@ -155,6 +155,31 @@ for its id, and spent before the call returns, so nothing is left to cancel when
 closes. One pass is enough: the compositor answers commit before the sync that ends the wait.
 Without the global nothing is raised.
 
+## ExportedToplevel
+
+The handle is waited for on an event queue of its own, as DisplayManager::activate waits for its
+token: the export is asked from inside a click, and a plain roundtrip would dispatch whatever
+else has arrived into the middle of it. The proxy goes back to the default queue afterwards,
+since it outlives the wait. Exporting a surface that is no xdg toplevel is a protocol error,
+which is why Platform::pickFolder asks Window::isToplevelRole first.
+
+## FolderRequest
+
+THE ANSWER IS WATCHED FOR BEFORE IT IS ASKED FOR. The request path is the caller's unique name
+and the `handle_token` it chose, so the match rule for its Response is sent ahead of OpenFile on
+the same connection and the bus has it before the portal can answer. A portal older than the
+token answers OpenFile with a path of its own, and that one is watched as the reply arrives.
+
+The socket is read after every pass of the loop, not only when poll reports it readable: a bus
+that hangs up is reported whatever was asked for, and a source dispatched on POLLIN alone would
+wake every wait after it without ever reading the hang-up. The poll source therefore only wakes
+the loop.
+
+Measured 2026-10-10 against a stand-in portal on a private dbus-daemon: the options arrive as
+sent (`current_folder` as the path's bytes with its null), an escaped URI comes back decoded -
+spaces and Cyrillic included - and a cancelled dialog, no portal, a portal answering on a path
+of its own and a bus killed mid-wait each settle in one or two passes.
+
 ## WindowsManager::settingChanged
 
 WM_SETTINGCHANGE IS A BROADCAST, sent to every top-level window - a form, a menu, a hint - and to

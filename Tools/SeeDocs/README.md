@@ -50,10 +50,8 @@ strict rules.
 
 A project made inside a tree, in the tree's `.seedocs` folder, is a project all the same, and a
 tree that has one stands for it: `SeeDocsCli check Source` checks the project in
-`Source/.seedocs`. Such a project naming no sources reads its tree, with the folders under it,
-which is what one made before projects named their sources read; one stating nothing of its
-hints either reads them as its read did - loosely and read only for any C++ and Delphi, strictly
-and written for ClaFi modules. The next change of its options writes that into its properties.
+`Source/.seedocs`. Such a project names its tree among its sources as `..`, the way any project
+names a folder, and reads nothing it does not name: removing `..` leaves it reading none.
 
 ## How it reads
 
@@ -263,7 +261,11 @@ options page is titled as every page is, and under the title holds the project's
 renames it - Return or leaving the box keeps the name, Escape puts it back, and an emptied box gives
 the project its folder's name - then its folder, and how long ago it was scanned with a Rescan
 button that reads the sources again. Under Sources
-stand the folders it reads, each with Include subfolders and Remove, and Add folder after them;
+stand the folders it reads, each with Include subfolders and Remove, and Add folder after them.
+Each folder stands in a box, spelled as `Sources` writes it - `..` for a tree's own folder from its
+`.seedocs` - with the folder in full in its hint; a folder typed over it is read in its place, one
+typed relative read from the project's folder, and a folder that does not exist or is read already
+is refused with the reason under the box;
 under Scan options, whether the sources are read as any C++ and Delphi or as ClaFi modules, and
 whether hints come from every recognizable comment or follow the strict ClaFi rules - a new project
 starts on the first of each; under Edit hints, whether a hint edited on a page is not written at all

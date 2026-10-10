@@ -319,6 +319,14 @@ Only the compositor restacks toplevels. The client asks it for a token, naming t
 that wanted the raise - its serial and seat - and the surface asking, then hands the token back
 with the surface to raise.
 
+## ExportedToplevel
+
+A toplevel named to other clients by a handle, through xdg-foreign's exporter, for as long as the
+object stands. Another client parents a window of its own by the handle - the portal's file
+chooser is parented this way, as `wayland:` and the handle. The handle is empty where the
+compositor offers no exporter or the surface is no toplevel, and a dialog asked for with it then
+stands alone.
+
 ## NormalPlacement
 
 WHAT A CONFIG KEEPS OF A FORM ON WIN32, and the client keeps the rectangle: the geometry the
@@ -368,6 +376,15 @@ in the Wayland loop's poll beside the display, the timers and the directory watc
 arrives as a signal. 1 is Dark; 0, 2 and any value the portal adds later are Light. A session
 without a bus answers Light and is not asked again; a bus that hangs up leaves the last answer
 standing.
+
+## FolderRequest
+
+One folder asked of the desktop's file chooser: the XDG portal's FileChooser, OpenFile with
+`directory` and `modal` set and the start folder as `current_folder`, on a private connection to
+the session bus that stands until the request is settled. The answer is the first of the URIs
+the Response names, read as a path on this machine. A cancelled dialog, a session without a bus,
+a portal without a file chooser and a bus that hangs up all settle the request with no answer.
+Whoever waits polls `fd` and calls `dispatch` after every wake, until `settled`.
 
 ## WebFetch on Windows
 

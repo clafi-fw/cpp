@@ -11,10 +11,12 @@ import ClaFi.App.Settings;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Label;
+import ClaFi.Controls.Panel;
 import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.Spacer;
 import ClaFi.Controls.Stack;
 
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -34,7 +36,8 @@ namespace SeeDocs_App
         // path left to itself would stretch every row under it; past this it is trimmed, and the
         // hint over it shows the rest.
         constexpr float k_pathWidth = 440.0f;
-        constexpr float k_rowSpacing = 10.0f;    // between a row's label and its buttons
+        constexpr float k_rowSpacing = 10.0f;    // between the parts of a row
+        constexpr float k_fieldWidth = 440.0f;   // the narrowest a field stands
         constexpr float k_listSpacing = 2.0f;    // between the rows of the sources
         constexpr float k_noteWidth = 520.0f;    // the widest a note under a group runs
         constexpr float k_choiceIndent = 20.0f;  // a set of choices in from its caption
@@ -42,6 +45,14 @@ namespace SeeDocs_App
         // spaced as its rows are.
         constexpr Padding k_headPadding{ 12.0f, 0.0f };
         constexpr float k_headSpacing = 6.0f;
+        // A source box's hint: the folder it reads, and where a relative path starts from.
+        namespace SourceHint
+        {
+            constexpr std::wstring_view reads = L"Reads ";
+            constexpr std::wstring_view relative = L"A relative path starts from ";
+        }
+        constexpr std::wstring_view k_noSourceTyped =
+            L"A folder is needed here. Remove stops reading this one.";
 
         // What a choice's state is read from, and what a click on it does.
         using Chosen = std::function<bool()>;
@@ -57,6 +68,25 @@ namespace SeeDocs_App
         private:
             Workspace& m_workspace;
             OpenProject& m_project;
+        };
+
+        // A folder of sources as the properties write it, typed over to read another in its place.
+        class SourceBox : public WordsBox
+        {
+        public:
+            SourceBox(const CreateParams&, Workspace&, OpenProject&, std::filesystem::path source,
+                Choose changed);
+        public:
+            [[nodiscard]] const std::filesystem::path& source() const { return m_source; }
+        protected:
+            [[nodiscard]] std::wstring writeWords(std::wstring_view words) override;
+        private:
+            void showSource();
+        private:
+            Workspace& m_workspace;
+            OpenProject& m_project;
+            std::filesystem::path m_source;
+            Choose m_changed;   // after a change has been read back
         };
 
         // THE PROJECT'S FOLDERS OF SOURCES, a row each: the folder, whether the folders under it
@@ -152,7 +182,14 @@ namespace SeeDocs_App
             k_headPadding,
             Spacing{ k_headSpacing }
         );
-        NameBox& name = group.add<NameBox>(
+        Panel& nameField = group.add<Panel>(
+            UiElement::Section,
+            Radius{ group.themeMetrics().button.radius },
+            group.themeMetrics().button.padding,
+            MinSize{ k_fieldWidth, 0.0f }
+        );
+        nameField.setBorder(group.themeMetrics().button.border);
+        NameBox& name = nameField.createBody<NameBox>(
             workspace,
             project,
             PlaceHolderText{ project.project.folderName() }
@@ -288,13 +325,17 @@ namespace SeeDocs_App
 
     namespace
     {
-        // Emptied, the box shows the folder's name in its place - the name an empty one gives.
+        // Set as the new project dialog's boxes are. Emptied, it shows the folder's name in its
+        // place - the name an empty one gives.
         NameBox::NameBox(const CreateParams& params, Workspace& workspace, OpenProject& project,
             PlaceHolderText folderName)
             :
             WordsBox{
                 params,
-                TextFormat{ TextStyleId::SubHeading },
+                Interactivity::Focusable,
+                WordWrap::No,
+                Padding{ 0.0f },
+                VerticalTextAnchor::Center,
                 std::move(folderName),
                 HintText{ L"Renames the project - left empty, it takes the folder's name" }
             },
@@ -310,6 +351,66 @@ namespace SeeDocs_App
                 return {};
             showWords(Text{ m_workspace.rename(m_project, words) });
             return {};
+        }
+    }
+
+    // SourceBox
+
+    namespace
+    {
+        // Set as the new project dialog's boxes are, filling the field it stands in.
+        SourceBox::SourceBox(const CreateParams& params, Workspace& workspace, OpenProject& project,
+            std::filesystem::path source, Choose changed)
+            :
+            WordsBox{
+                params,
+                Interactivity::Focusable,
+                WordWrap::No,
+                Padding{ 0.0f },
+                VerticalTextAnchor::Center,
+                PlaceHolderText{ L"A folder on this computer" }
+            },
+            m_workspace{ workspace },
+            m_project{ project },
+            m_source{ std::move(source) },
+            m_changed{ std::move(changed) }
+        {
+            showSource();
+        }
+
+        // WHAT STANDS AFTERWARDS IS THE FOLDER TYPED, spelled as the properties write it - a
+        // tree's own folder from its project's is "..", however it was typed.
+        std::wstring SourceBox::writeWords(const std::wstring_view words)
+        {
+            if (!edited())
+                return {};
+            const std::wstring typed{ trimmed(words) };
+            if (typed.empty())
+                return std::wstring{ k_noSourceTyped };
+            const std::filesystem::path folder =
+                m_project.project.readSource(std::filesystem::path{ typed });
+            std::wstring refusal = m_workspace.replaceSource(m_project, m_source, folder);
+            if (!refusal.empty())
+                return refusal;
+            m_source = folder;
+            showSource();
+            m_changed();
+            return {};
+        }
+
+        // In the separators of the desktop it runs on; the hint spells out what a relative one
+        // stands for.
+        void SourceBox::showSource()
+        {
+            std::filesystem::path written = m_project.project.writtenSource(m_source);
+            written.make_preferred();
+            showWords(Text{ written.wstring() });
+            std::wstring hint{ SourceHint::reads };
+            hint.append(m_source.wstring());
+            hint.push_back(L'\n');
+            hint.append(SourceHint::relative);
+            hint.append(m_project.project.folder.wstring());
+            hintText() = HintText{ hint };
         }
     }
 
@@ -352,42 +453,49 @@ namespace SeeDocs_App
             invalidateFormAlign();
         }
 
-        // The row names its folder by path, which outlasts the list it was built from.
+        // THE ROW NAMES ITS FOLDER BY ITS BOX, which holds the path - a copy that outlasts the
+        // list it was built from, and that a folder typed over moves. The field is the new
+        // project dialog's, as the name's is: a surface of its own at a button's radius, taking
+        // the row's width but for the answers at its end.
         void SourceList::addRow(const SourceFolder& source)
         {
-            const std::filesystem::path path = source.path;
-            Stack& row = add<Stack>(
+            Panel& row = add<Panel>(Spacing{ k_rowSpacing });
+            Panel& field = row.createBody<Panel>(
+                UiElement::Section,
+                Radius{ themeMetrics().button.radius },
+                themeMetrics().button.padding,
+                MinSize{ k_fieldWidth, 0.0f }
+            );
+            field.setBorder(themeMetrics().button.border);
+            SourceBox& box = field.createBody<SourceBox>(m_workspace, m_project, source.path,
+                m_changed);
+            Stack& answers = row.createRightBar<Stack>(
                 Orientation::Horizontal,
-                Spacing{ k_rowSpacing }
-            );
-            row.add<Label>(
-                Text{ path.wstring() },
-                WordWrap::No,
                 VerticalAlign::Center,
-                MaxSize{ k_pathWidth, k_maxFloat },
-                HintText{ path.wstring() }
+                Spacing{ k_rowSpacing },
+                Padding{ 0.0f }
             );
-            row.add<FlexSpacer>();
-            row.add<CheckBox>(
+            answers.add<CheckBox>(
                 L"Include subfolders",
                 VerticalAlign::Center,
                 HintText{ L"Reads the folders under this one too" },
-                Padding{ 0.0f, row.themeMetrics().listItem.padding.y },
-                CheckBox::OnGetState{ [this, path](GetStateEvent& event) {
-                    event.state.selected = readsSubfolders(path);
+                Padding{ 0.0f, answers.themeMetrics().listItem.padding.y },
+                CheckBox::OnGetState{ [this, &box](GetStateEvent& event) {
+                    event.state.selected = readsSubfolders(box.source());
                 } },
-                CheckBox::OnClick{ [this, path](ClickEvent& event) {
-                    m_workspace.setSubfolders(m_project, path, !readsSubfolders(path));
+                CheckBox::OnClick{ [this, &box](ClickEvent& event) {
+                    m_workspace.setSubfolders(m_project, box.source(),
+                        !readsSubfolders(box.source()));
                     event.control->invalidateState();
                     m_changed();
                 } }
             );
-            row.add<Button>(
+            answers.add<Button>(
                 L"Remove",
                 VerticalAlign::Center,
                 HintText{ L"Stops reading this folder" },
-                Button::OnClick{ [this, path](ClickEvent&) {
-                    m_workspace.removeSource(m_project, path);
+                Button::OnClick{ [this, &box](ClickEvent&) {
+                    m_workspace.removeSource(m_project, box.source());
                     rebuild();
                     m_changed();
                 } }

@@ -1259,6 +1259,12 @@
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Appearance.cppm">
       <Filter>Platform\Linux</Filter>
     </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.FileChooser.cpp">
+      <Filter>Platform\Linux</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.FileChooser.cppm">
+      <Filter>Platform\Linux</Filter>
+    </None>
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.DirWatch.cpp">
       <Filter>Platform\Linux</Filter>
     </None>

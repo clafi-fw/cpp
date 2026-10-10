@@ -306,6 +306,32 @@ namespace SeeDocs_App
         return true;
     }
 
+    // THE FOLDER TAKES THE SOURCE'S PLACE in the order the roots count them, and keeps whether the
+    // folders under it are read. The same folder again is no change.
+    std::wstring Workspace::replaceSource(OpenProject& open, const std::filesystem::path& source,
+        const std::filesystem::path& folder)
+    {
+        if (folder == source)
+            return {};
+        std::error_code error;
+        if (!std::filesystem::is_directory(folder, error))
+            return L"There is no such folder.";
+        const bool known = std::ranges::any_of(open.project.sources,
+            [&folder](const SourceFolder& entry) {
+                return entry.path == folder;
+            });
+        if (known)
+            return L"The project reads this folder already.";
+        change(open, [&source, &folder](Project& project) {
+            for (SourceFolder& entry : project.sources)
+            {
+                if (entry.path == source)
+                    entry.path = folder;
+            }
+        }, Reread::Sources);
+        return {};
+    }
+
     void Workspace::removeSource(OpenProject& open, const std::filesystem::path& source)
     {
         change(open, [&source](Project& project) {

@@ -15,6 +15,7 @@ import ClaFi.Platform.Wayland.Window;
 import ClaFi.Platform.Wayland.Display;
 import ClaFi.Platform.Linux.Appearance;
 import ClaFi.Platform.Linux.Diagnostic;
+import ClaFi.Platform.Linux.FileChooser;
 
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
@@ -343,12 +344,44 @@ namespace ClaFi
         ::waitpid(outer, &status, 0);
     }
 
-    // TODO: the XDG portal's FileChooser, OpenFile with directory set, is what answers here - an
-    // asynchronous Response on the session bus, parented through an exported toplevel handle.
-    std::optional<std::filesystem::path> Platform::pickFolder(const IForm*, const std::wstring_view,
-        const std::filesystem::path&)
+    // THE PORTAL'S FILE CHOOSER, parented by the form's toplevel where the compositor exports one.
+    // The answer comes over the session bus whenever the dialog is closed, so the loop runs until
+    // it does, with the bus among what it sleeps on - the source only wakes it, and the request
+    // reads its own socket after every pass.
+    std::optional<std::filesystem::path> Platform::pickFolder(const IForm* form,
+        const std::wstring_view title, const std::filesystem::path& startFolder)
     {
-        return std::nullopt;
+        using PlatformImplementation::Linux::FolderRequest;
+        using PlatformImplementation::Wayland::ExportedToplevel;
+        using PlatformImplementation::Wayland::PollSource;
+        using PlatformImplementation::Wayland::Window;
+
+        constexpr std::string_view k_parentPrefix = "wayland:";
+
+        DisplayManager& display = standingDisplay();
+        std::optional<ExportedToplevel> exported;
+        if (form)
+        {
+            const auto& window = static_cast<const Window&>(form->wnd_window());
+            if (window.isToplevelRole())
+                exported.emplace(display, window.surface());
+        }
+        std::string parentWindow;
+        if (exported && !exported->handle().empty())
+            parentWindow = std::string{ k_parentPrefix } + exported->handle();
+
+        FolderRequest request{ parentWindow, toUtf8(title), startFolder };
+        if (request.settled())
+            return std::nullopt;
+        const PollSource bus{ display, request.fd(), []() {
+        } };
+        while (!request.settled() && !display.quitRequested())
+        {
+            display.dispatchPending();
+            display.waitForEvent();
+            request.dispatch();
+        }
+        return request.answer();
     }
 
     std::wstring Platform::appDataPath()

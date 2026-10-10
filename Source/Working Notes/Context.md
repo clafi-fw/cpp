@@ -26,8 +26,12 @@ it stands on moves, and the form underneath is standing still by then.
 ## Platform::pickFolder
 
 Windows answers with the common item dialog in its folder mode, on the OLE apartment the window
-opened. Wayland answers nothing yet; the XDG portal's FileChooser is the dialog there, and its
-asynchronous Response is still to be waited on.
+opened. Wayland asks the XDG portal's FileChooser - OpenFile with `directory` set - through
+Linux::FolderRequest, parented by the handle Wayland::ExportedToplevel takes for the form's
+toplevel, and runs the display's loop until the Response arrives, with the bus socket among what
+the loop sleeps on. The loop is the application's own, so the form paints and takes input
+meanwhile: what keeps a second click from asking again is the desktop's modality, where it has
+any.
 
 ## AppContext::animator
 
