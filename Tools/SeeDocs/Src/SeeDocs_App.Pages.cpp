@@ -45,6 +45,8 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_accessMark = L":";
         constexpr std::wstring_view k_overloadNoun = L"overload";
         constexpr std::wstring_view k_moduleColumn = L"Module";
+        constexpr std::wstring_view k_projectWord = L"project";
+        constexpr std::wstring_view k_folderWord = L"folder";
         constexpr std::wstring_view k_chapterWord = L"chapter";
         constexpr std::wstring_view k_moduleWord = L"module";
         constexpr std::wstring_view k_headerWord = L"header";
@@ -131,6 +133,17 @@ namespace SeeDocs_App
                 right.remove_prefix(std::min(right.size(), rightFolder.size() + 1));
             }
             return left.empty() && !right.empty();
+        }
+
+        // Whether a folder stands under a category, at any depth; the root's empty category has
+        // every folder under it.
+        [[nodiscard]] bool standsUnder(const std::wstring_view folder,
+            const std::wstring_view category)
+        {
+            if (category.empty())
+                return !folder.empty();
+            return folder.starts_with(category) && folder.size() > category.size()
+                && folder[category.size()] == L'/';
         }
 
         [[nodiscard]] std::size_t kindRank(const TypeKind kind)
@@ -1964,32 +1977,72 @@ namespace SeeDocs_App
             return rows;
         }
 
-        // A row per chapter - its name linked, its modules, types and controls counted - and
-        // nothing where there are none.
-        void addChaptersSection(Page& page, const ContentsChapters& chapters)
+        // A folder directly under another, with what stands under it at every depth counted.
+        struct ChildFolder
         {
-            if (chapters.empty())
-                return;
-            TableRows rows;
+            std::wstring category;
+            std::size_t modules{ 0 };
+            std::size_t types{ 0 };
+            std::size_t controls{ 0 };
+        };
+
+        // The folders directly under a category, in the order the chapters read, each once -
+        // whether or not a chapter of its own.
+        [[nodiscard]] std::vector<ChildFolder> childFolders(const ContentsChapters& chapters,
+            const std::wstring_view category)
+        {
+            std::vector<ChildFolder> result;
             for (const ContentsChapter& chapter : chapters)
             {
-                std::size_t controls = 0;
-                std::size_t types = 0;
+                if (!standsUnder(chapter.category, category))
+                    continue;
+                std::wstring_view rest = chapter.category;
+                if (!category.empty())
+                    rest.remove_prefix(category.size() + 1);
+                const std::wstring_view name = rest.substr(0, rest.find(L'/'));
+                std::wstring child{ category };
+                if (!child.empty())
+                    child += L'/';
+                child += name;
+                std::vector<ChildFolder>::iterator found = std::ranges::find(result, child,
+                    &ChildFolder::category);
+                if (found == result.end())
+                {
+                    result.push_back({ .category = std::move(child) });
+                    found = result.end() - 1;
+                }
+                found->modules += chapter.modules.size();
                 for (const ContentsModule& module : chapter.modules)
                 {
                     for (const Type* type : module.types)
                     {
-                        ++types;
+                        ++found->types;
                         if (type->isControl)
-                            ++controls;
+                            ++found->controls;
                     }
                 }
+            }
+            return result;
+        }
+
+        // A row per folder directly under the category - its own name linked as its chapter is
+        // named, its modules, types and controls counted - and nothing where there is none.
+        void addFolderSection(Page& page, const ContentsChapters& chapters,
+            const std::wstring_view category)
+        {
+            const std::vector<ChildFolder> children = childFolders(chapters, category);
+            if (children.empty())
+                return;
+            TableRows rows;
+            for (const ChildFolder& child : children)
+            {
                 rows.push_back({
                     .cells = {
-                        { { .text = chapter.name, .link = chapter.name } },
-                        { plain(std::to_wstring(chapter.modules.size())) },
-                        { plain(std::to_wstring(types)) },
-                        { plain(std::to_wstring(controls)) }
+                        { { .text = folderNameOf(child.category),
+                            .link = chapterNameOf(child.category) } },
+                        { plain(std::to_wstring(child.modules)) },
+                        { plain(std::to_wstring(child.types)) },
+                        { plain(std::to_wstring(child.controls)) }
                     }
                 });
             }
@@ -2512,24 +2565,21 @@ namespace SeeDocs_App
         ContentsChapters result;
         for (const ContentsChapter& chapter : chapters)
         {
-            const bool under = category.empty()
-                ? !chapter.category.empty()
-                : chapter.category.starts_with(category)
-                    && chapter.category.size() > category.size()
-                    && chapter.category[category.size()] == L'/';
-            if (under)
+            if (standsUnder(chapter.category, category))
                 result.push_back(chapter);
         }
         return result;
     }
 
-    // One row per chapter: its name linked, and its figures - modules, types, controls.
-    Page contentsPage(const ContentsChapters& chapters, const std::wstring_view title)
+    Page folderPage(const ContentsChapters& chapters, const std::wstring_view category)
     {
         Page page;
-        page.title = std::wstring{ title };
-        addHoldings(page, chapters);
-        addChaptersSection(page, chapters);
+        page.kind = PageKind::Folder;
+        page.title = folderNameOf(category);
+        page.badges.push_back(muted(std::wstring{ k_folderWord }));
+        addFact(page, L"folder", { code(std::wstring{ category }) });
+        addHoldings(page, chaptersUnder(chapters, category));
+        addFolderSection(page, chapters, category);
         return page;
     }
 
@@ -2538,16 +2588,18 @@ namespace SeeDocs_App
     Page homePage(const Surface& surface, Notes& notes, const ContentsChapters& chapters,
         const std::wstring_view title)
     {
+        Page page;
+        page.kind = PageKind::Project;
+        page.title = std::wstring{ title };
+        page.badges.push_back(muted(std::wstring{ k_projectWord }));
+        addHoldings(page, chapters);
+        addFolderSection(page, chapters, {});
         const auto root = std::ranges::find_if(chapters, [](const ContentsChapter& chapter) {
             return chapter.category.empty();
         });
         if (root == chapters.end())
-            return contentsPage(chapters, title);
-        Page page;
-        page.title = std::wstring{ title };
+            return page;
         page.footnoteHome = chapterFootnoteHome(notes, root->category);
-        addHoldings(page, chapters);
-        addChaptersSection(page, chaptersUnder(chapters, root->category));
         addModuleTables(page, surface, *root);
         return page;
     }
@@ -2556,6 +2608,7 @@ namespace SeeDocs_App
         const ContentsChapter& chapter)
     {
         Page page;
+        page.kind = PageKind::Folder;
         page.title = chapter.name;
         page.badges.push_back(muted(std::wstring{ k_chapterWord }));
         page.footnoteHome = chapterFootnoteHome(notes, chapter.category);
@@ -2588,7 +2641,7 @@ namespace SeeDocs_App
             figures.push_back(missing(countOf(withoutHint, L"type") + L" without a hint"));
         }
         addFact(page, L"holds", std::move(figures));
-        addChaptersSection(page, chaptersUnder(chapters, chapter.category));
+        addFolderSection(page, chapters, chapter.category);
         addModuleTables(page, surface, chapter);
         return page;
     }
@@ -2598,6 +2651,7 @@ namespace SeeDocs_App
     {
         Page page;
         const std::wstring word{ module.header ? k_headerWord : k_moduleWord };
+        page.kind = PageKind::Module;
         page.title = module.shortName;
         page.badges.push_back(muted(word));
         page.footnoteHome = chapterFootnoteHome(notes, chapter.category);
@@ -2656,6 +2710,7 @@ namespace SeeDocs_App
         const std::wstring_view name)
     {
         Page page;
+        page.type = &type;
         page.scope = { { .text = type.name, .link = type.qualifiedName },
             plain(std::wstring{ k_scope }) };
         page.title = std::wstring{ name };
@@ -2737,6 +2792,8 @@ namespace SeeDocs_App
     Page typePage(const Surface& surface, Notes& notes, const Type& type)
     {
         Page page;
+        page.kind = PageKind::Type;
+        page.type = &type;
         addTypeHead(page, surface, type);
         page.footnoteHome = typeFootnoteHome(notes, type);
         const ReachedBases bases = addTypeBases(page, surface, type);

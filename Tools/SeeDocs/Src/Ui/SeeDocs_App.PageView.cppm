@@ -1,9 +1,11 @@
 export module SeeDocs_App.PageView;
 
 import SeeDocs_App.Editing;
+import SeeDocs_App.Icons;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
+import ClaFi.Controls.Button;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Panel;
@@ -41,10 +43,42 @@ namespace SeeDocs_App
         const std::wstring target;
     };
 
-    // A page as controls: its title and bases in a bar that stays, and under it, scrolling, its
-    // lead, its facts and an expander per section holding the section's prose, tree or grid - or
-    // a method page's declarations under their access labels, as code. Its hints and footnotes
-    // are edited where they stand. See the README beside the project.
+    // A command's button on the page was clicked. The surface has an Event of its own.
+    export class PageCommandEvent : public ::ClaFi::Event
+    {
+    public:
+        explicit PageCommandEvent(std::wstring target);
+    public:
+        const std::wstring target;   // what the command is about, as the page was given it
+    };
+
+    constexpr float k_pagePadding = 24.0f;   // at the sides of a page's parts
+    constexpr float k_headPadding = 12.0f;   // above and below the title, and over the body
+
+    // The bar a page's title stands in, which stays while the page scrolls: the mark of what
+    // the page is, large, then the title with its scope before it and its badges after it, and
+    // the title's lines under it. Every page of the browser wears one, whatever it is made of.
+    export class PageHead : public TextBox
+    {
+    public:
+        template<typename... Args>
+        explicit PageHead(const CreateParams&, Args&&...);
+    public:
+        void write(const Page&);
+        void write(std::optional<RowIcon>, std::wstring_view title);
+    private:
+        [[nodiscard]] static std::optional<RowIcon> iconOf(const Page&);
+        static void writeIcon(Text&, std::optional<RowIcon>);
+    private:
+        static constexpr float k_iconGap = 8.0f;      // between the icon and the title
+        static constexpr float k_basesIndent = 24.0f;   // of the lines under the title
+    };
+
+    // A page as controls: its head, and under it, scrolling, its lead, its facts, its own links
+    // and an expander per section holding the section's prose, tree or grid - or a method page's
+    // declarations under their access labels, as code - and its commands as buttons under a line
+    // at the end. Its hints and footnotes are edited where they stand. See the README beside the
+    // project.
     export class PageView : public Panel
     {
     public:
@@ -54,6 +88,9 @@ namespace SeeDocs_App
         // Connects a handler raised when a link on the page is clicked.
         template<typename F>
         EventConnection onPageLink(F&& callback);
+        // Connects a handler raised when a command's button on the page is clicked.
+        template<typename F>
+        EventConnection onPageCommand(F&& callback);
         // What the page writes edited words back through. A page with none shows them only.
         void setWriter(IPageWriter&);
         // Builds the page's controls, the page kept for as long as they stand.
@@ -89,19 +126,24 @@ namespace SeeDocs_App
         void addHead();
         void addLead();
         void addFacts();
+        void addLinks();
         [[nodiscard]] Expander& addSection(const Section&);
         void addProse(Expander&, const Section&);
         void addTree(Expander&, const Branches&, bool nodesOpen);
         void addTable(Expander&, const Table&);
         void addSignatures(const Section&);
+        void addCommands();
         // Under the tree or a node of it: a branch with nothing under it is an item, any other
         // a node whose rows are built as it opens; a click on either opens the type it names.
         template<typename Holder>
         void addTreeRows(Holder&, const Branches&, bool nodesOpen);
         [[nodiscard]] Text treeRowText(const Branch&) const;
         [[nodiscard]] HeaderText treeHeaderText(const Branch&) const;
+        // The column at the end holding the rows' buttons; null where no row has a command.
         void addTableRows(Grids::GridBase&, const Table&, const TableGroup&, Stack& notes,
-            TagValue hintColumn, PageFootnotes&);
+            TagValue hintColumn, Grids::Column* commandColumn, PageFootnotes&);
+        // The button's caption and hint are written out of the command, and its click raises it.
+        void connectCommand(Button&, const Command&);
         // The row's hint cell opens on the comment's words and writes them back.
         void connectHintCell(Grids::Row&, const TableRow&, TagValue hintColumn);
         // The row's menu edits its footnote, or adds one where it has none.
@@ -120,18 +162,18 @@ namespace SeeDocs_App
         void connectLinks(Grids::Grid&);
         void connectLinks(TextBox&);
         void open(std::wstring target);
+        void ask(std::wstring target);   // raises the command the target is about
         // Runs the menu for a link - Open and Open in new tab - on the control it was asked on.
         void showLinkMenu(Control& owner, std::wstring target, ContextPopupEvent&);
         [[nodiscard]] static bool hasFootnotes(const Table&);
         [[nodiscard]] static bool hasFootnotes(const TableGroup&);
+        [[nodiscard]] static bool hasCommands(const Table&);
+        [[nodiscard]] static bool hasCommands(const TableGroup&);
         // Whether a row of the group has a hint the writer writes.
         [[nodiscard]] bool writesHints(const TableGroup&) const;
         [[nodiscard]] bool writesHint(const std::optional<CommentSite>&) const;
         [[nodiscard]] static std::wstring footnoteAnchor(std::size_t index);
     private:
-        static constexpr float k_pagePadding = 24.0f;
-        static constexpr float k_headPadding = 12.0f;   // above and below the title
-        static constexpr float k_basesIndent = 24.0f;   // of the lines of bases under the title
         static constexpr float k_sectionSpacing = 18.0f;  // between the parts down the page
         static constexpr float k_headerSpacing = 6.0f;    // between a section's header and body
         static constexpr float k_prosePadding = 12.0f;
@@ -143,12 +185,14 @@ namespace SeeDocs_App
         static constexpr float k_treePadding = 4.0f;
         static constexpr float k_kindGap = 12.0f;   // the least room before a tree row's kind word
         static constexpr float k_iconGap = 5.0f;    // between a tree row's icon and its text
+        static constexpr float k_commandGap = 10.0f;   // between the page's buttons
         static constexpr TagValue k_factLabel = 0;
         static constexpr TagValue k_factValue = 1;
         static constexpr TagValue k_markColumn = std::numeric_limits<TagValue>::max();
         static constexpr TagValue k_groupColumn = k_markColumn - 1;
         static constexpr TagValue k_noColumn = k_markColumn - 2;
         static constexpr TagValue k_markParentColumn = k_markColumn - 3;
+        static constexpr TagValue k_commandColumn = k_markColumn - 4;
         static constexpr std::wstring_view k_mark = L"*";
 
         Page m_page{};
@@ -163,10 +207,7 @@ namespace SeeDocs_App
         std::function<void()> m_pending{};
         UiTimer m_later{};
 
-        TextBox& m_head{ createTopBar<TextBox>(
-            ReadOnly::Yes,
-            Padding{ k_pagePadding, k_headPadding }
-        ) };
+        PageHead& m_head{ createTopBar<PageHead>() };
 
         ScrollBoxWith<Stack>& m_pageBox{ createBody<ScrollBoxWith<Stack>>(
             HostProps{
@@ -183,6 +224,22 @@ namespace SeeDocs_App
 
     //-------------------------------------------------------------------------
 
+
+    // PageHead
+
+    template<typename... Args>
+    PageHead::PageHead(const CreateParams& params, Args&&... args)
+        :
+        TextBox{
+            params,
+            ReadOnly::Yes,
+            Padding{ k_pagePadding, k_headPadding },
+            std::forward<Args>(args)...
+        }
+    {
+    }
+
+    // PageView
 
     template<typename... Args>
     PageView::PageView(const CreateParams& params, Args&&... args)
@@ -202,6 +259,12 @@ namespace SeeDocs_App
     EventConnection PageView::onPageLink(F&& callback)
     {
         return connectEvent<PageLinkEvent>(std::forward<F>(callback));
+    }
+
+    template<typename F>
+    EventConnection PageView::onPageCommand(F&& callback)
+    {
+        return connectEvent<PageCommandEvent>(std::forward<F>(callback));
     }
 
     template<typename Holder>

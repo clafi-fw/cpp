@@ -10,7 +10,6 @@ import ClaFi.App.Settings;
 
 import ClaFi.Controls.Button;
 import ClaFi.Controls.CheckBox;
-import ClaFi.Controls.Divider;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.Spacer;
@@ -39,6 +38,10 @@ namespace SeeDocs_App
         constexpr float k_listSpacing = 2.0f;    // between the rows of the sources
         constexpr float k_noteWidth = 520.0f;    // the widest a note under a group runs
         constexpr float k_choiceIndent = 20.0f;  // a set of choices in from its caption
+        // The project's own rows stand at the top as a group's body does: set in by as much, and
+        // spaced as its rows are.
+        constexpr Padding k_headPadding{ 12.0f, 0.0f };
+        constexpr float k_headSpacing = 6.0f;
 
         // What a choice's state is read from, and what a click on it does.
         using Chosen = std::function<bool()>;
@@ -140,11 +143,15 @@ namespace SeeDocs_App
 
     // THE PAGE STANDS THROUGH A SCAN OF ITS PROJECT. A scan shows the surface again, and the
     // browser keeps the selected tab's options page while it does - see SurfaceBrowser - so a
-    // button writes what came of it onto the page once the work is done. Closing is the one
-    // thing the page does not stand through, and the workspace waits for the click to unwind.
+    // button writes what came of it onto the page once the work is done. The project's own rows
+    // stand under the page's title with no group of their own; the groups follow.
     void buildProjectOptions(OptionsPage& page, Workspace& workspace, OpenProject& project)
     {
-        Stack& group = page.addGroup(L"Project");
+        Stack& group = page.add<Stack>(
+            Orientation::Vertical,
+            k_headPadding,
+            Spacing{ k_headSpacing }
+        );
         NameBox& name = group.add<NameBox>(
             workspace,
             project,
@@ -181,15 +188,6 @@ namespace SeeDocs_App
             Button::OnClick{ [&workspace, &project, rescanned](ClickEvent&) {
                 workspace.rescan(project);
                 rescanned();
-            } }
-        );
-        group.add<Divider>();
-        group.add<Button>(
-            L"Close project",
-            HorizontalAlign::Left,
-            HintText{ L"Closes the project and every tab on it" },
-            Button::OnClick{ [&workspace, &project](ClickEvent&) {
-                workspace.closeLater(project);
             } }
         );
 

@@ -68,6 +68,16 @@ namespace SeeDocs_App
         const OpenProject* project;   // null where the tab stands in no project
     };
 
+    // A page asked for a project to be closed - its own, or one the root lists. The browser
+    // shows the project until whoever owns it takes it out. The surface has an Event of its own.
+    export class CloseProjectEvent : public ::ClaFi::Event
+    {
+    public:
+        explicit CloseProjectEvent(OpenProject&);
+    public:
+        OpenProject& project;
+    };
+
     export class SurfaceBrowser;
 
     // One page of the browser: a PageView over what the tab's url names.
@@ -86,11 +96,13 @@ namespace SeeDocs_App
         // Takes the tab where a link on the page points: an anchor of the page stays on it,
         // anything else names a page of the surface.
         void followLink(std::wstring_view target);
+        void runCommand(std::wstring_view target);   // hands a command's click to the browser
     private:
         PageView& m_view{ createBody<PageView>() };
     };
 
-    // A project's options as a page of the browser, filled by the application.
+    // A project's options as a page of the browser: the head every page wears, and under it the
+    // options, filled by the application.
     export class ProjectPage : public BrowserPage
     {
     public:
@@ -99,6 +111,7 @@ namespace SeeDocs_App
     public:
         [[nodiscard]] OptionsPage& options() { return m_optionsBox.body(); }
     private:
+        PageHead& m_head{ createTopBar<PageHead>() };
         ScrollBoxWith<OptionsPage>& m_optionsBox{ createBody<ScrollBoxWith<OptionsPage>>(
             HostProps{
                 ScrollBars::Vertical
@@ -113,8 +126,9 @@ namespace SeeDocs_App
     // The browser over the open projects: down the left the tab's own tree, a node per project,
     // and a page per url on the right - /project/folder/.../module/type/method, the folders as
     // the sources stand on disk, and the root listing the projects - with SeeDocs' words while
-    // none is open. What a project's pages edit is written through the browser into that project.
-    // A tab's tree is made the first time the tab is shown, and the nodes it has open are kept
+    // none is open. What a project's pages edit is written through the browser into that project,
+    // and a project's closing, which its home and the root offer, is asked of whoever owns it. A
+    // tab's tree is made the first time the tab is shown, and the nodes it has open are kept
     // with the tab.
     export class SurfaceBrowser : public BrowserControl
     {
@@ -125,6 +139,9 @@ namespace SeeDocs_App
         // Connects a handler raised when the tab shown stands in another project than before.
         template<typename F>
         EventConnection onProjectShown(F&& callback);
+        // Connects a handler raised when a page asks for a project to be closed.
+        template<typename F>
+        EventConnection onCloseProject(F&& callback);
         // Shows a project opened: a node of its own at the end of the tree, and its pages under a
         // segment of its name. The project is held by reference until it is removed, and what its
         // pages edit is written into it - its tree and its database - unless it is read in
@@ -142,10 +159,13 @@ namespace SeeDocs_App
         void showWords(const Text&);   // what the root shows while no project is open
         // What a project's options page is filled with, each time one is built.
         void connectProjectPage(ProjectPageBuilder);
-        // The url of what a link on the page names - a type, a module, a chapter or a member of
+        // The url of what a link on the page names - a type, a module, a folder or a member of
         // the page's own project, or a path of the browser - or nothing where it names none.
         [[nodiscard]] std::optional<Url> urlOf(std::wstring_view target,
             const PageData& from) const;
+        // A page's command was clicked: the project whose home the target names is asked to be
+        // closed, the one command a page has.
+        void answerCommand(std::wstring_view target);
         // What a tab's own file keeps of its tree: the nodes open, by project.
         [[nodiscard]] static Dom::Dt::Section createTabConfigSchema();
     protected:
@@ -181,7 +201,8 @@ namespace SeeDocs_App
             [[nodiscard]] bool isFolder() const { return project && depth == folderDepth + 1; }
             [[nodiscard]] bool isGone() const;
         };
-        // The chapter, module and type a link's spelling names, keyed by that spelling.
+        // The folder, chapter, module and type a link's spelling names, keyed by that spelling -
+        // a folder by the name a chapter of it has, whether or not it is one.
         using Targets = std::unordered_map<std::wstring, Target>;
         // Every folder on the way to a chapter, keyed by its category, with the chapter the
         // folder is - null for one that only holds other folders.
@@ -253,14 +274,19 @@ namespace SeeDocs_App
         // words - no project open, a surface that lists nothing, a path no project carries - or
         // the options page.
         [[nodiscard]] std::optional<Page> pageOf(const Target&) const;
+        // The project's home: its options page leads the contents, and Close project ends the
+        // page.
+        [[nodiscard]] static Page homePageOf(const ShownProject&);
         [[nodiscard]] Page projectsPage() const;   // the root's, while a project is open
+        [[nodiscard]] static Command closeCommand(const ShownProject&, std::wstring text);
         // Fills a page with what the target names: the projects or SeeDocs' words on the root,
         // the words of a page no project carries or of a surface that lists nothing, and else the
         // page the surface gives.
         void fill(SurfacePage&, const Target&, const PageData&) const;
-        // Puts the title and the list of this page data and every one under it right for the
-        // projects shown.
-        void refreshPageData(PageData&);
+        // Puts the title and the list of every page data, and the icon of every tab, right for
+        // the projects shown.
+        void refreshPageTree();
+        void refreshPageData(PageData&);   // this one and every one under it
         // Whether a change to the project reaches the page: one in the project, or the root,
         // which lists the projects. Null reaches the root alone.
         [[nodiscard]] static bool reaches(const Target&, const ShownProject*);
@@ -318,6 +344,9 @@ namespace SeeDocs_App
         m_view.onPageLink([this](PageLinkEvent& event) {
             followLink(event.target);
         });
+        m_view.onPageCommand([this](PageCommandEvent& event) {
+            runCommand(event.target);
+        });
         onShowAnchor([this](ShowAnchorEvent& event) {
             m_view.showAnchor(event.url.anchor());
         });
@@ -336,6 +365,7 @@ namespace SeeDocs_App
             std::forward<Args>(args)...
         }
     {
+        m_head.write(RowIcon::Options, k_optionsTitle);
     }
 
     // SurfaceBrowser
@@ -355,5 +385,11 @@ namespace SeeDocs_App
     EventConnection SurfaceBrowser::onProjectShown(F&& callback)
     {
         return connectEvent<ProjectShownEvent>(std::forward<F>(callback));
+    }
+
+    template<typename F>
+    EventConnection SurfaceBrowser::onCloseProject(F&& callback)
+    {
+        return connectEvent<CloseProjectEvent>(std::forward<F>(callback));
     }
 }

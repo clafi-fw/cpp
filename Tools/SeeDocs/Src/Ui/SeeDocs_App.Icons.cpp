@@ -23,6 +23,7 @@ namespace SeeDocs_App
         // Every icon is drawn on this grid and scaled to the rect it is given, stroke and all.
         constexpr float k_grid = 14.0f;
         constexpr float k_rowIconSize = 14.0f;
+        constexpr float k_titleIconSize = 32.0f;   // beside a 28 pt title
         constexpr float k_stroke = 1.1f;
         constexpr float k_softFill = 0.35f; // a face tinted rather than filled
         constexpr float k_kindGap = 12.0f;  // the least room before a row's kind word
@@ -34,12 +35,14 @@ namespace SeeDocs_App
         constexpr float k_flapFill = 0.2f;   // the open folder's flap, tinted rather than filled
         constexpr float k_haloWidth = 3.2f;  // the band cleared around the spark, in strokes
 
-        // Strong ink holds the body, the accent marks the part that names the kind.
+        // Strong ink holds the body, the accent marks the part that names the kind, and the
+        // surface clears a band round a part that crosses another.
         struct Inks
         {
             Color body{};
             Color accent{};
             Color accentSoft{};
+            Color surface{};
         };
 
         // How one icon is drawn: the canvas, its inks and the grid's place in the control.
@@ -63,7 +66,12 @@ namespace SeeDocs_App
         [[nodiscard]] Inks inksOf(const PaintIconEvent& event)
         {
             const Color accent = event.accentRgb(InkGrade::Strongest);
-            return { event.textRgb(InkGrade::Strong), accent, accent.withOpacity(k_softFill) };
+            return {
+                event.textRgb(InkGrade::Strong),
+                accent,
+                accent.withOpacity(k_softFill),
+                event.surfaceRgb()
+            };
         }
 
         // PixelPath::drawCircle starts the path over, so a circle joining others is drawn by hand.
@@ -155,10 +163,86 @@ namespace SeeDocs_App
             path.close();
         }
 
+        // A house, its door in the accent.
+        void paintHome(const Drawing& drawing)
+        {
+            PixelPath door;
+            door.moveTo(5.8f, 12.0f);
+            door.lineTo(5.8f, 8.4f);
+            door.lineTo(8.2f, 8.4f);
+            door.lineTo(8.2f, 12.0f);
+            door.close();
+            drawing.fill(door, drawing.inks.accent);
+
+            PixelPath house;
+            house.moveTo(1.8f, 7.0f);
+            house.lineTo(7.0f, 2.2f);
+            house.lineTo(12.2f, 7.0f);
+            house.moveTo(3.0f, 6.0f);
+            house.lineTo(3.0f, 12.0f);
+            house.lineTo(11.0f, 12.0f);
+            house.lineTo(11.0f, 6.0f);
+            drawing.stroke(house, drawing.inks.body);
+        }
+
+        // The box a chapter's folder fills, and a project's.
+        [[nodiscard]] FloatRect folderBox()
+        {
+            return { 1.5f, 3.5f, 12.5f, 11.5f };
+        }
+
+        // The chapter's folder with its tab and the band under it lit: the root of the chapters.
+        // The band follows the outline's tab and slant - see FolderIcon - with sharp corners,
+        // which lie within the outline's rounded stroke.
+        void paintProject(const Drawing& drawing)
+        {
+            const FloatRect box = folderBox();
+            const float width = box.width();
+            const float bodyTop = box.top + box.height() * 0.18f;
+            const float bandBottom = 6.8f;
+            PixelPath band;
+            band.moveTo(box.left, box.top);
+            band.lineTo(box.left + width * 0.40f, box.top);
+            band.lineTo(box.left + width * 0.53f, bodyTop);
+            band.lineTo(box.right, bodyTop);
+            band.lineTo(box.right, bandBottom);
+            band.lineTo(box.left, bandBottom);
+            band.close();
+            drawing.fill(band, drawing.inks.accent);
+
+            PixelPath folder;
+            Icons::FolderIcon::addOutline(folder, box);
+            drawing.stroke(folder, drawing.inks.body);
+        }
+
+        // Three sliders, their knobs in the accent, each knob clearing the line it rides.
+        void paintOptions(const Drawing& drawing)
+        {
+            const std::array<FloatPoint, 3ull> knobs{
+                FloatPoint{ 9.2f, 3.5f },
+                FloatPoint{ 4.8f, 7.0f },
+                FloatPoint{ 7.8f, 10.5f }
+            };
+            PixelPath lines;
+            for (const FloatPoint& knob : knobs)
+                addLine(lines, { 2.0f, knob.y }, { 12.0f, knob.y });
+            drawing.stroke(lines, drawing.inks.body);
+
+            PixelPath halos;
+            PixelPath dots;
+            for (const FloatPoint& knob : knobs)
+            {
+                addCircle(halos, knob, 2.2f);
+                addCircle(dots, knob, 1.5f);
+            }
+            drawing.fill(halos, drawing.inks.surface);
+            drawing.fill(dots, drawing.inks.accent);
+        }
+
         void paintChapter(const Drawing& drawing)
         {
             PixelPath folder;
-            Icons::FolderIcon::addOutline(folder, { 1.5f, 3.5f, 12.5f, 11.5f });
+            Icons::FolderIcon::addOutline(folder, folderBox());
             drawing.stroke(folder, drawing.inks.body);
         }
 
@@ -311,6 +395,15 @@ namespace SeeDocs_App
         };
         switch (icon)
         {
+            case RowIcon::Home:
+                paintHome(drawing);
+                break;
+            case RowIcon::Project:
+                paintProject(drawing);
+                break;
+            case RowIcon::Options:
+                paintOptions(drawing);
+                break;
             case RowIcon::Chapter:
                 paintChapter(drawing);
                 break;
@@ -372,6 +465,14 @@ namespace SeeDocs_App
             paintRowIcon(event, icon);
         };
         return InTextIcon{ k_rowIconSize, paint, Tag{ icon } };
+    }
+
+    InTextIcon titleIcon(const RowIcon icon)
+    {
+        const PaintIconFunc paint = [icon](PaintIconEvent& event) {
+            paintRowIcon(event, icon);
+        };
+        return InTextIcon{ k_titleIconSize, paint, Tag{ icon } };
     }
 
     void writeRowKind(Text& text, const Type& type)

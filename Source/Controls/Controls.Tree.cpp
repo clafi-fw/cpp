@@ -23,6 +23,18 @@ namespace ClaFi::Controls
         return result;
     }
 
+    // The text is measured in the width the lead leaves, the box it is painted in; measured in
+    // the whole width, a wrapping text that fits that and not the box comes out a line short.
+    void TreeItem::alignContent(AlignEvent& event, ScaledPosition position,
+        ScaledDimensions& contentSize)
+    {
+        const float lead = textLead(event.scaler());
+        contentSize.x = std::max(0.0f, contentSize.x - lead);
+        position.x += lead;
+        ToolButton::alignContent(event, position, contentSize);
+        contentSize.x += lead;
+    }
+
     FloatRect TreeItem::iconRect(const PaintEvent& event) const
     {
         FloatRect result = ToolButton::iconRect(event);
@@ -87,6 +99,7 @@ namespace ClaFi::Controls
         strip.setSpacing(TreeRows::gap);
         strip.setMinSize(0.0f, buttonMetrics.minSize.y);
         strip.setLead(static_cast<float>(m_level) * TreeRows::step);
+        strip.setWordWrap(WordWrap::No);
         ExpanderButton& mark = strip.button();
         mark.setIconSize(IconSize{ TreeRows::markSize });
         // No padding across, so the mark never makes the row taller than its text does.

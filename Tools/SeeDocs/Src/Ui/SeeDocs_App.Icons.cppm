@@ -12,9 +12,13 @@ namespace SeeDocs_App
 {
     using namespace ::ClaFi;
 
-    // What a row of the surface tree stands for, which is what its icon draws.
+    // What a row of the surface tree stands for, which is what its icon draws - and the root
+    // of the browser, which has no row.
     export enum class RowIcon
     {
+        Home,      // the root, listing the projects
+        Project,
+        Options,   // the project's options page
         Chapter,
         Module,
         Control,
@@ -30,6 +34,8 @@ namespace SeeDocs_App
     export [[nodiscard]] RowIcon rowIconOf(const Type&);
     // The icon a row kind is marked with, sized for a tree row, for the head of the row's text.
     export [[nodiscard]] InTextIcon rowIcon(RowIcon);
+    // The same mark sized for a page's title, for the head of the title's text.
+    export [[nodiscard]] InTextIcon titleIcon(RowIcon);
     // Draws a row kind's mark into the icon rect of the event - a crumb's or a tab's slot.
     export void paintRowIcon(PaintIconEvent&, RowIcon);
     // What a tree row of a type ends with: its kind word at the row's far end; nothing for a

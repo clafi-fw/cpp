@@ -25,13 +25,25 @@ namespace SeeDocs_App
     {
         std::wstring text;
         RunStyle style{ RunStyle::Plain };
-        // A type's qualified name, a module's name, a chapter's name, or a link to a type's
-        // member or to a module's function or constant (memberLink, exportLink); empty for none.
+        // A type's qualified name, a module's name, a folder's name as a chapter of it is named
+        // (chapterNameOf), or a link to a type's member or to a module's function or constant
+        // (memberLink, exportLink); empty for none.
         std::wstring link;
     };
 
     export using Runs = std::vector<Run>;
     export using Cells = std::vector<Runs>;
+
+    // What a page offers whoever shows it - SeeDocs as a button, a generator not at all: the
+    // button's caption, its hint, and what it is about, which the shower spelled and reads back.
+    export struct Command
+    {
+        std::wstring text;
+        std::wstring hint;
+        std::wstring target;
+    };
+
+    export using Commands = std::vector<Command>;
 
     export constexpr std::wstring_view k_noHint = L"no hint";   // a missing hint, as a page says it
 
@@ -85,8 +97,8 @@ namespace SeeDocs_App
     export using TableColumns = std::vector<TableColumn>;
 
     // A row of a table: its cells, the type it stands for where it does, what the first cell's
-    // hint shows where it has one, the note the declaration's comment references, and the
-    // comment the row's hint is read from.
+    // hint shows where it has one, the note the declaration's comment references, the comment
+    // the row's hint is read from, and what the row offers at its end.
     export struct TableRow
     {
         Cells cells;
@@ -95,6 +107,7 @@ namespace SeeDocs_App
         SourceLanguage language{ SourceLanguage::Cpp };   // what the hint's code is written in
         std::optional<Excerpt> excerpt;
         std::optional<CommentSite> site;
+        std::optional<Command> command;
     };
 
     export using TableRows = std::vector<TableRow>;
@@ -181,8 +194,21 @@ namespace SeeDocs_App
         std::wstring owner;   // the type the page is about; empty on a chapter's or a module's
     };
 
+    // What a page is about, which is what its title is marked with.
+    export enum class PageKind
+    {
+        Projects,   // the root, listing the projects open
+        Project,    // a project's home
+        Folder,     // a folder of sources, a chapter or not
+        Module,     // a module or a header
+        Type,
+        Member      // a method, a function or a constant
+    };
+
     export struct Page
     {
+        PageKind kind{ PageKind::Member };
+        const Type* type{ nullptr };   // the type the page is about, or the method's
         Runs scope;     // before the title, in its style - a method's type and ::
         std::wstring title;
         Runs badges;    // what the title is - the kind, control, template
@@ -192,8 +218,10 @@ namespace SeeDocs_App
         Runs lead;      // the hint
         std::optional<CommentSite> leadSite;   // the comment the lead is read from
         Facts facts;
+        Runs links;     // a line under the facts, ahead of the sections - the page's own links
         Sections sections;
         std::optional<FootnoteHome> footnoteHome;   // none where no note takes one
+        Commands commands;   // at the page's end
     };
 
     export using TypeList = std::vector<const Type*>;
@@ -296,13 +324,15 @@ namespace SeeDocs_App
     // The folder under Source a file of the surface stands in.
     export [[nodiscard]] std::wstring categoryOf(std::wstring_view relativeFile);
 
-    // The page of a folder: the chapters under it, each linked, with what every one holds.
-    export [[nodiscard]] Page contentsPage(const ContentsChapters&, std::wstring_view title);
-    // The page of the tree's root: the chapters under it as a folder's page has them, then what
-    // the modules standing in the root itself export, by module.
+    // The page of a folder that is no chapter: the folders directly under it, each linked and
+    // counted with everything under it, as the tree lists them.
+    export [[nodiscard]] Page folderPage(const ContentsChapters&, std::wstring_view category);
+    // The page of the tree's root: the folders directly under it as a folder's page lists them,
+    // then what the modules standing in the root itself export, by module.
     export [[nodiscard]] Page homePage(const Surface&, Notes&, const ContentsChapters&,
         std::wstring_view title);
-    // A chapter's page: the chapters under its folder, then what its modules export, by module.
+    // A chapter's page: the folders directly under its own, then what its modules export, by
+    // module.
     export [[nodiscard]] Page chapterPage(const Surface&, Notes&, const ContentsChapters&,
         const ContentsChapter&);
     export [[nodiscard]] Page modulePage(const Surface&, Notes&, const ContentsChapter&,

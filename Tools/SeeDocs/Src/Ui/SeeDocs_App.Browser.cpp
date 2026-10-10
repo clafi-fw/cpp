@@ -54,6 +54,9 @@ namespace SeeDocs_App
         // take it.
         constexpr std::wstring_view k_optionsSegment = L".project";
         constexpr std::wstring_view k_unnamedSegment = L"Project";   // for a name that gives none
+        constexpr std::wstring_view k_closeProjectCaption = L"Close project";   // on a home
+        constexpr std::wstring_view k_closeCaption = L"Close";   // on a row of the root
+        constexpr std::wstring_view k_closeHint = L"Closes the project and every tab on it";
         // What a tab's file keeps its tree's open nodes under, an entry per project.
         constexpr std::wstring_view k_treeNodeName = L"Tree";
 
@@ -125,6 +128,15 @@ namespace SeeDocs_App
     {
     }
 
+    // CloseProjectEvent
+
+    CloseProjectEvent::CloseProjectEvent(OpenProject& closing)
+        :
+        ::ClaFi::Event{},
+        project{ closing }
+    {
+    }
+
     // SurfacePage
 
     SurfaceBrowser& SurfacePage::browser() const
@@ -156,6 +168,11 @@ namespace SeeDocs_App
         }
         if (const std::optional<Url> url = browser().urlOf(target, pageData()))
             browser().goToLater(*url);
+    }
+
+    void SurfacePage::runCommand(const std::wstring_view target)
+    {
+        browser().answerCommand(target);
     }
 
     // SurfaceBrowser::Target
@@ -195,9 +212,10 @@ namespace SeeDocs_App
         folders.clear();
         for (const ContentsChapter& chapter : contents)
         {
-            targets[chapter.name] = { .chapter = &chapter };
+            targets[chapter.name] = { .folder = chapter.category, .chapter = &chapter };
             // Every folder on the way to the chapter's is a folder, whether or not a chapter
-            // of its own; the chapter's own folder is this chapter.
+            // of its own, and a link names it as a chapter of it would be named; the chapter's
+            // own folder is this chapter.
             std::wstring folder;
             std::wstring_view rest = chapter.category;
             while (!rest.empty())
@@ -205,15 +223,21 @@ namespace SeeDocs_App
                 const std::size_t slash = rest.find(ConfigNames::pathSeparator);
                 folder = joinFolder(folder, rest.substr(0, slash));
                 folders.try_emplace(folder, nullptr);
+                targets.try_emplace(chapterNameOf(folder), Target{ .folder = folder });
                 rest = slash == std::wstring_view::npos ? std::wstring_view{} : rest.substr(slash + 1);
             }
             folders[chapter.category] = &chapter;
             for (const ContentsModule& module : chapter.modules)
             {
-                targets[module.name] = { .chapter = &chapter, .module = &module };
+                targets[module.name] = {
+                    .folder = chapter.category,
+                    .chapter = &chapter,
+                    .module = &module
+                };
                 for (const Type* type : module.types)
                 {
                     targets[type->qualifiedName] = {
+                        .folder = chapter.category,
                         .chapter = &chapter,
                         .module = &module,
                         .type = type
@@ -328,7 +352,7 @@ namespace SeeDocs_App
         m_projects.push_back(std::move(made));
         for (const TabTree& entry : m_tabTrees)
             addToTree(entry, shown);
-        refreshPageData(homePageData());
+        refreshPageTree();
         rebuildPages(&shown, nullptr);
         if (homeTab == HomeTab::Open)
             openHome(open);
@@ -356,7 +380,7 @@ namespace SeeDocs_App
         shown->read();
         for (std::size_t i = 0; i != m_tabTrees.size(); ++i)
             m_tabTrees[i].tree->rebuildProject(shown->id, shown->contentsTree, opened[i]);
-        refreshPageData(homePageData());
+        refreshPageTree();
         const BrowserPage* keep = nullptr;
         for (BrowserTab& tab : tabs())
         {
@@ -387,7 +411,7 @@ namespace SeeDocs_App
         }
         for (const TabTree& entry : m_tabTrees)
             entry.tree->renameProject(shown->id, open.project.name);
-        refreshPageData(homePageData());
+        refreshPageTree();
         BrowserTab* selected = nullptr;
         for (BrowserTab& tab : tabs())
         {
@@ -446,7 +470,7 @@ namespace SeeDocs_App
         for (const TabTree& entry : m_tabTrees)
             entry.tree->removeProject(removed->id);
         m_projects.erase(found);
-        refreshPageData(homePageData());
+        refreshPageTree();
         rebuildPages(nullptr, nullptr);
     }
 
@@ -476,7 +500,7 @@ namespace SeeDocs_App
         if (found != project->targets.end())
         {
             const Target& named = found->second;
-            return Url{ pathOf(*project, named.chapter->category, named.module, named.type) };
+            return Url{ pathOf(*project, named.folder, named.module, named.type) };
         }
 
         const std::optional<MemberLink> link = readMemberLink(target);
@@ -491,8 +515,21 @@ namespace SeeDocs_App
             : exports(*named.module, link->member);
         if (!reached)
             return std::nullopt;
-        return Url{ pathOf(*project, named.chapter->category, named.module, named.type,
-            link->member) };
+        return Url{ pathOf(*project, named.folder, named.module, named.type, link->member) };
+    }
+
+    // THE CLICK IS STILL UNWINDING ON THE PAGE THAT ASKED, and the answer may take that page down,
+    // so the owner is told and does the closing when it sees fit. The target is a home path, the
+    // project's segment after the separator - see closeCommand.
+    void SurfaceBrowser::answerCommand(const std::wstring_view target)
+    {
+        if (!target.starts_with(ConfigNames::pathSeparator))
+            return;
+        ShownProject* shown = projectOf(target.substr(1));
+        if (!shown)
+            return;
+        CloseProjectEvent event{ shown->open };
+        emitEvent(event);
     }
 
     // Said for every page as it is built, which is before anything asks for its list: a page
@@ -963,11 +1000,17 @@ namespace SeeDocs_App
 
     std::optional<RowIcon> SurfaceBrowser::iconOf(const Target& target)
     {
-        if (!target.project || target.isGone() || target.isHome() || target.projectOptions
-            || !target.method.empty() || !target.exportName.empty())
+        if (target.isRoot())
+            return RowIcon::Home;
+        if (!target.project || target.isGone() || !target.method.empty()
+            || !target.exportName.empty())
         {
             return std::nullopt;
         }
+        if (target.projectOptions)
+            return RowIcon::Options;
+        if (target.isHome())
+            return RowIcon::Project;
         if (target.type)
             return rowIconOf(*target.type);
         if (target.module)
@@ -988,12 +1031,9 @@ namespace SeeDocs_App
         const ShownProject& project = *target.project;
         OpenProject& open = project.open;
         if (target.isHome())
-            return homePage(open.surface, open.notes, project.contents, open.project.name);
+            return homePageOf(project);
         if (target.isFolder() && !target.chapter)
-        {
-            return contentsPage(chaptersUnder(project.contents, target.folder),
-                folderNameOf(target.folder));
-        }
+            return folderPage(project.contents, target.folder);
         if (target.isFolder())
             return chapterPage(open.surface, open.notes, project.contents, *target.chapter);
         if (!target.exportName.empty())
@@ -1008,7 +1048,19 @@ namespace SeeDocs_App
         return methodPage(open.surface, open.notes, *target.type, target.method);
     }
 
-    // Each project links to its home by path, beside the folder it reads.
+    // The home links to the project's options page by path, ahead of its chapters.
+    Page SurfaceBrowser::homePageOf(const ShownProject& project)
+    {
+        OpenProject& open = project.open;
+        Page page = homePage(open.surface, open.notes, project.contents, open.project.name);
+        page.links = {
+            Run{ .text = std::wstring{ k_optionsTitle }, .link = optionsPath(project) }
+        };
+        page.commands.push_back(closeCommand(project, std::wstring{ k_closeProjectCaption }));
+        return page;
+    }
+
+    // Each project links to its home by path, beside the folder it reads, and closes from its row.
     Page SurfaceBrowser::projectsPage() const
     {
         TableGroup projects;
@@ -1021,6 +1073,7 @@ namespace SeeDocs_App
             row.cells.push_back({
                 Run{ .text = shown->open.project.folder.wstring(), .style = RunStyle::Muted }
             });
+            row.command = closeCommand(*shown, std::wstring{ k_closeCaption });
             projects.rows.push_back(std::move(row));
         }
         const std::size_t count = projects.rows.size();
@@ -1035,9 +1088,20 @@ namespace SeeDocs_App
         section.table.groups.push_back(std::move(projects));
 
         Page page;
+        page.kind = PageKind::Projects;
         page.title = appContext().appName().plainText();
         page.sections.push_back(std::move(section));
         return page;
+    }
+
+    // The command is about the project's home path, which answerCommand reads the project off.
+    Command SurfaceBrowser::closeCommand(const ShownProject& project, std::wstring text)
+    {
+        return {
+            .text = std::move(text),
+            .hint = std::wstring{ k_closeHint },
+            .target = homePath(project)
+        };
     }
 
     void SurfaceBrowser::fill(SurfacePage& page, const Target& target, const PageData& data) const
@@ -1067,7 +1131,16 @@ namespace SeeDocs_App
 
     // The page datas standing are the ones restored from the settings and the ones walked since;
     // their titles were worked out against whatever projects stood then, and their lists are
-    // those projects'.
+    // those projects'. So were the tabs' icons, which a tab asks for again only when its page is
+    // shown; a tab standing on a restored page is asked here, so it wears its mark before it is
+    // selected.
+    void SurfaceBrowser::refreshPageTree()
+    {
+        refreshPageData(homePageData());
+        for (BrowserTab& tab : tabs())
+            tab.updateIconMode();
+    }
+
     void SurfaceBrowser::refreshPageData(PageData& data)
     {
         data.title.clear();

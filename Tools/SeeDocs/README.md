@@ -259,32 +259,35 @@ settings are kept on the computer.
 
 Each open project is a node of the tree, named after the project, and the node opens its home. Under
 it stand its Project options row and a line that parts the row from the project's chapters. The
-options page holds the project's name in a box that renames it - Return or leaving the box keeps the
-name, Escape puts it back, and an emptied box gives the project its folder's name - then its folder,
-how long ago it was scanned with a Rescan button that reads the sources again, and Close project,
-which closes the project and every tab on it. Under Sources stand the folders it reads, each with
-Include subfolders and Remove, and Add folder after them; under Scan options, whether the sources
-are read as any C++ and Delphi or as ClaFi modules, and whether hints come from every recognizable
-comment or follow the strict ClaFi rules - a new project starts on the first of each; under Edit
-hints, whether a hint edited on a page is not written at all or written directly into the source,
-with no undo. Every change reads the sources again, but the last, which builds the pages again. The
-page stays where it stands while the sources are read again. Its url is the project's with
-`/.project` after it: the scanner passes over names that start with a dot, so no chapter can take
-it.
+options page is titled as every page is, and under the title holds the project's name in a box that
+renames it - Return or leaving the box keeps the name, Escape puts it back, and an emptied box gives
+the project its folder's name - then its folder, and how long ago it was scanned with a Rescan
+button that reads the sources again. Under Sources
+stand the folders it reads, each with Include subfolders and Remove, and Add folder after them;
+under Scan options, whether the sources are read as any C++ and Delphi or as ClaFi modules, and
+whether hints come from every recognizable comment or follow the strict ClaFi rules - a new project
+starts on the first of each; under Edit hints, whether a hint edited on a page is not written at all
+or written directly into the source, with no undo. Every change reads the sources again, but the
+last, which builds the pages again. The page stays where it stands while the sources are read
+again. Its url is the project's with `/.project` after it: the scanner passes over names that start
+with a dot, so no chapter can take it.
 
 SeeDocs is a browser of the framework's own kind: tabs across the top, under them the crumbs of
 the page shown with a list dropping from each, and Back, Forward and Up beside them. Every page has
 a url - `/project/chapter/module/type/method`, the project named by its name - so a tab goes back
 and forward through the pages it has visited (Alt+Left and Alt+Right, the side buttons of the
 mouse, or a right click on either button for the list), a type's crumb lists its methods, and Up
-climbs the path. The root, `/`, lists the projects open. A home page opens each project: its
-chapters, with what each holds. Modules standing in a source folder's own folder are home's: they
-stand in the project's node under its chapters, and the home page carries what they export, by
-module, as a chapter's page does. Renaming a project takes every url under it along, in the tabs and
-in their histories alike, and a second project open under a name already taken goes by that name
-with a number after it. Where a tab stands, the tabs open and each one's history are kept with the
-settings, so a run starts where the last one left off. A url no project open carries - a
-project closed, or a type gone since the sources were scanned - shows a page saying so.
+climbs the path. The root, `/`, lists the projects open, each with a Close button that closes the
+project and every tab on it. A home page opens each project: a link to its Project options page,
+then the folders under the root as the tree lists them, with what each holds at every depth; a
+Close project button ends the page. Modules standing in a source folder's own folder
+are home's: they stand in the project's node under its chapters, and the home page carries what
+they export, by module, as a chapter's page does. Renaming a project takes every url under it
+along, in the tabs and in their histories alike, and a second project open under a name already
+taken goes by that name with a number after it. Where a tab stands, the tabs open and each one's
+history are kept with the settings, so a run starts where the last one left off. A url no project
+open carries - a project closed, or a type gone since the sources were scanned - shows a page saying
+so.
 
 The pages: down the left, under each project's node, a tree of chapters - the sources' folders, a
 reader's names for them
@@ -295,13 +298,15 @@ the nodes it has open and how far it is scrolled are the tab's, and the nodes op
 the tab, by project, so a restored tab - or a project opened again - comes back as it was left.
 A node's rows are made the first time it opens, out of the project's contents, which are read
 once and shared by every tab's tree. A page is a column of
-controls: its title, what the page is after it - a chapter, a module, a function, a constant,
-a type's kind - and its hint under it,
+controls: its title, marked with the mark its tree row wears, what the page is after it - a
+project, a chapter, a module, a function, a constant, a type's kind - and its hint under it,
 a grid of facts - namespace, module, source - and then a section per expander. A type's title
 carries the ways up through its bases under it, written the C++ way - a colon before each base,
 a mixin's host through the argument it was given, a second line where the bases fork; an
 alias's line is what it stands for after an equals sign, an enum's its underlying type after a
-colon. A chapter's or a module's page holds a grid of its types with their kinds and hints, then its
+colon. A chapter's page leads with the folders directly under its own, as the tree lists them,
+each with what it holds at every depth; a folder that is no chapter has a page of those alone. A
+chapter's or a module's page holds a grid of its types with their kinds and hints, then its
 functions and its constants; on a chapter's page each grid stands by module, the module's name
 beside its rows and linked to its page. A function's row carries its name alone, one row per
 name, every overload's signature in the name's hint; the name links to the function's page,

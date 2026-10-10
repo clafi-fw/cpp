@@ -89,6 +89,9 @@ namespace SeeDocs_App
             m_shown = event.project;
             writeTitle();
         });
+        m_closeAsked = m_browser.onCloseProject([this](CloseProjectEvent& event) {
+            closeLater(event.project);
+        });
     }
 
     Workspace::Folders Workspace::recentFolders() const

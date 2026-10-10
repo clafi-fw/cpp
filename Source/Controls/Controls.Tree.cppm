@@ -49,6 +49,7 @@ namespace ClaFi::Controls
         explicit TreeItem(const CreateParams&, std::size_t level, Args&&...);
     protected:
         ScaledDimensions calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         FloatRect iconRect(const PaintEvent&) const override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
     private:
@@ -174,6 +175,7 @@ namespace ClaFi::Controls
             HorizontalTextAnchor::Left,
             ShowSelectionOnSurface::Yes,
             Padding{ TreeRows::inset, params.themeMetrics().button.padding.y },
+            WordWrap::No, // a row is one line; before the caller's arguments, so a stated one wins
             std::forward<Args>(args)...
         },
         m_level{ level }

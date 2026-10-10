@@ -70,7 +70,7 @@ namespace SeeDocs_App
         // Whether a hint edited on a page is written into its source; the pages are built again.
         void setEdits(OpenProject&, HintEdits);
         // Closes the project and every tab on it once the click that asked has unwound - the
-        // page it was pressed on is one of those going.
+        // page it was pressed on may be one of those going. What the browser's pages ask for.
         void closeLater(OpenProject&);
     public:
         // What the config keeps the open projects' folders under, in the order they were opened.
@@ -135,6 +135,7 @@ namespace SeeDocs_App
         UiTimer m_startTimer{};
         UiTimer m_closeTimer{};
         ScopedEventConnection m_projectShown{};
+        ScopedEventConnection m_closeAsked{};
         // A project the new project dialog made, opened once the dialog is down.
         std::optional<Project> m_made{};
         UiTimer m_madeTimer{};

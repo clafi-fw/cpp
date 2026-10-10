@@ -55,7 +55,9 @@ namespace SeeDocs_App
         rows.id = id;
         rows.contents = &contents;
         rows.made.resize(contents.rows().size());
-        rows.node = &addNode(HeaderText{ name });
+        if (!m_projects.empty())
+            rows.above = &addDivider(Thickness::Heavy);
+        rows.node = &addNode(projectText(name));
         rows.node->header().setExpanded(false);
         rows.node->header().onClick([this, id](ClickEvent&) {
             pickRow(id, RowKind::Home);
@@ -83,12 +85,13 @@ namespace SeeDocs_App
         if (ProjectRows* rows = rowsOf(id))
         {
             ExpanderHeader& header = rows->node->header();
-            header.text() = Text{ name };
+            header.text() = projectText(name);
             header.invalidateFormAlign();
         }
     }
 
-    // The current row is let go before the node goes, so it never names a dead row.
+    // The current row is let go before the node goes, so it never names a dead row. The line
+    // over the node goes with it, and the project that is first afterwards loses its own.
     void SurfaceTree::removeProject(const ProjectId id)
     {
         const Projects::iterator found = std::ranges::find_if(m_projects,
@@ -99,8 +102,15 @@ namespace SeeDocs_App
             return;
         if (holdsCurrentRow(**found))
             setCurrentItem(nullptr);
+        if ((*found)->above)
+            (*found)->above->deleteSelf();
         (*found)->node->deleteSelf();
         m_projects.erase(found);
+        if (!m_projects.empty() && m_projects.front()->above)
+        {
+            m_projects.front()->above->deleteSelf();
+            m_projects.front()->above = nullptr;
+        }
     }
 
     // Opened from the row up, so the row stands in the tree before it is made current.
@@ -212,7 +222,8 @@ namespace SeeDocs_App
             return;
         TreeNode& node = *rows.node;
         const ProjectId id = rows.id;
-        rows.options = &node.addItem(Text{ k_optionsTitle });
+        rows.options = &node.addItem(
+            Text{ rowIcon(RowIcon::Options), Space{ k_iconGap }, k_optionsTitle });
         rows.options->onClick([this, id](ClickEvent&) {
             pickRow(id, RowKind::Options);
         });
@@ -363,6 +374,11 @@ namespace SeeDocs_App
         if (made.item)
             return *made.item;
         return made.node->header();
+    }
+
+    HeaderText SurfaceTree::projectText(const std::wstring_view name)
+    {
+        return HeaderText{ rowIcon(RowIcon::Project), Space{ k_iconGap }, name };
     }
 
     HeaderText SurfaceTree::folderText(const std::wstring_view category)

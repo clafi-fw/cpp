@@ -105,12 +105,13 @@ namespace SeeDocs_App
             bool filled{ false };        // a node's rows are made
         };
         using MadeRows = std::vector<MadeRow>;
-        // One project's rows: its node, its options row and the line under it, and a made row
-        // per row of its contents.
+        // One project's rows: the heavy line over its node where a project stands above it, the
+        // node, its options row and the line under it, and a made row per row of its contents.
         struct ProjectRows
         {
             ProjectId id{};
             const ContentsTree* contents{ nullptr };
+            TreeDivider* above{ nullptr };   // none for the first project
             TreeNode* node{ nullptr };
             TreeItem* options{ nullptr };   // made with the rows of the node
             TreeDivider* divider{ nullptr };
@@ -137,6 +138,7 @@ namespace SeeDocs_App
         void showRow(ProjectRows&, Control& row);
         [[nodiscard]] bool holdsCurrentRow(const ProjectRows&) const;
         [[nodiscard]] static Control& rowOf(const MadeRow&);
+        [[nodiscard]] static HeaderText projectText(std::wstring_view name);
         [[nodiscard]] static HeaderText folderText(std::wstring_view category);
         [[nodiscard]] static Text rowText(const Type&);
     private:

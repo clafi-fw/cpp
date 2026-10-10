@@ -8,6 +8,8 @@ import SeeDocs_App.Surface;
 
 import ClaFi.Browser.Actions;
 
+import ClaFi.Controls.Button;
+import ClaFi.Controls.Divider;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Menu;
@@ -59,7 +61,8 @@ namespace SeeDocs_App
                 && left.type == right.type
                 && left.hint.empty() == right.hint.empty()
                 && left.excerpt.has_value() == right.excerpt.has_value()
-                && left.site.has_value() == right.site.has_value();
+                && left.site.has_value() == right.site.has_value()
+                && left.command.has_value() == right.command.has_value();
         }
 
         [[nodiscard]] bool sameShape(const TableGroup& left, const TableGroup& right)
@@ -118,7 +121,9 @@ namespace SeeDocs_App
             const bool counts = left.lead.empty() == right.lead.empty()
                 && left.leadSite.has_value() == right.leadSite.has_value()
                 && left.facts.size() == right.facts.size()
-                && left.sections.size() == right.sections.size();
+                && left.links.empty() == right.links.empty()
+                && left.sections.size() == right.sections.size()
+                && left.commands.size() == right.commands.size();
             if (!counts)
                 return false;
             for (std::size_t i = 0; i != left.sections.size(); ++i)
@@ -167,6 +172,8 @@ namespace SeeDocs_App
 
         void moveWords(Page& to, Page& from)
         {
+            to.kind = from.kind;
+            to.type = from.type;
             to.scope = std::move(from.scope);
             to.title = std::move(from.title);
             to.badges = std::move(from.badges);
@@ -175,9 +182,12 @@ namespace SeeDocs_App
             to.leadSite = std::move(from.leadSite);
             for (std::size_t i = 0; i != to.facts.size(); ++i)
                 to.facts[i] = std::move(from.facts[i]);
+            to.links = std::move(from.links);
             for (std::size_t i = 0; i != to.sections.size(); ++i)
                 moveWords(to.sections[i], from.sections[i]);
             to.footnoteHome = std::move(from.footnoteHome);
+            for (std::size_t i = 0; i != to.commands.size(); ++i)
+                to.commands[i] = std::move(from.commands[i]);
         }
 
         // A hint the comment does not state is the box's placeholder, so typing starts on an
@@ -209,6 +219,77 @@ namespace SeeDocs_App
     {
     }
 
+    // PageCommandEvent
+
+    PageCommandEvent::PageCommandEvent(std::wstring commandTarget)
+        :
+        ::ClaFi::Event{},
+        target{ std::move(commandTarget) }
+    {
+    }
+
+    // PageHead
+
+    void PageHead::write(const Page& page)
+    {
+        Text head;
+        head << TextStyleId::Title;
+        writeIcon(head, iconOf(page));
+        writeRuns(head, page.scope);
+        head << page.title << PopTextStyle{};
+        if (!page.badges.empty())
+        {
+            head << L"   " << TextStyleId::SubBody;
+            writeRuns(head, page.badges);
+            head << PopTextStyle{};
+        }
+        for (const Runs& line : page.titleLines)
+        {
+            head << k_endLine << ParaIndent{ k_basesIndent };
+            writeRuns(head, line);
+        }
+        text() = head;
+    }
+
+    void PageHead::write(const std::optional<RowIcon> icon, const std::wstring_view title)
+    {
+        Text head;
+        head << TextStyleId::Title;
+        writeIcon(head, icon);
+        head << title << PopTextStyle{};
+        text() = head;
+    }
+
+    // A page wears the mark its tree row does - a folder's and a chapter's the folder, a header's
+    // the module's - and the root wears home's; a member's page has none, as its crumb has none.
+    std::optional<RowIcon> PageHead::iconOf(const Page& page)
+    {
+        switch (page.kind)
+        {
+            case PageKind::Projects:
+                return RowIcon::Home;
+            case PageKind::Project:
+                return RowIcon::Project;
+            case PageKind::Folder:
+                return RowIcon::Chapter;
+            case PageKind::Module:
+                return RowIcon::Module;
+            case PageKind::Type:
+                if (page.type)
+                    return rowIconOf(*page.type);
+                return std::nullopt;
+            case PageKind::Member:
+                break;
+        }
+        return std::nullopt;
+    }
+
+    void PageHead::writeIcon(Text& head, const std::optional<RowIcon> icon)
+    {
+        if (icon.has_value())
+            head << titleIcon(*icon) << Space{ k_iconGap };
+    }
+
     // PageView
 
     void PageView::setWriter(IPageWriter& writer)
@@ -223,6 +304,7 @@ namespace SeeDocs_App
         addHead();
         addLead();
         addFacts();
+        addLinks();
         for (const Section& section : m_page.sections)
         {
             if (section.kind == SectionKind::Signature)
@@ -246,6 +328,7 @@ namespace SeeDocs_App
                     break;
             }
         }
+        addCommands();
         render();
         invalidateFormAlign();
         m_pageBox.scrollToBegin();
@@ -312,28 +395,11 @@ namespace SeeDocs_App
         m_pending = {};
     }
 
-    // The title with its scope before it and what it is beside it, and the ways up through its
-    // bases under it, in the bar that stays.
     void PageView::addHead()
     {
         m_head.setVisible(true);
         m_renders.push_back([this]() {
-            Text head;
-            head << TextStyleId::Title;
-            writeRuns(head, m_page.scope);
-            head << m_page.title << PopTextStyle{};
-            if (!m_page.badges.empty())
-            {
-                head << L"   " << TextStyleId::SubBody;
-                writeRuns(head, m_page.badges);
-                head << PopTextStyle{};
-            }
-            for (const Runs& line : m_page.titleLines)
-            {
-                head << k_endLine << ParaIndent{ k_basesIndent };
-                writeRuns(head, line);
-            }
-            m_head.text() = head;
+            m_head.write(m_page);
         });
     }
 
@@ -378,6 +444,19 @@ namespace SeeDocs_App
         }
         connectLinks(grid);
         m_parts.push_back(&grid);
+    }
+
+    // The page's own links on a line of their own, ahead of the sections.
+    void PageView::addLinks()
+    {
+        if (m_page.links.empty())
+            return;
+        TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes, Padding{ 0.0f });
+        connectLinks(box);
+        m_parts.push_back(&box);
+        m_renders.push_back([this, &box]() {
+            box.text() = textOf(m_page.links);
+        });
     }
 
     // An expander headed by a labelled divider - the section's heading as the label, its count in
@@ -439,9 +518,10 @@ namespace SeeDocs_App
         return header;
     }
 
-    // The grid: the group column where the table names one, its own columns and the marks where
-    // any row has a footnote, a header where the table asks for one, and under it a slot per
-    // footnote. The hints are typed over where the page writes its words back.
+    // The grid: the group column where the table names one, its own columns, the marks where
+    // any row has a footnote and the buttons where any has a command, a header where the table
+    // asks for one, and under it a slot per footnote. The hints are typed over where the page
+    // writes its words back.
     void PageView::addTable(Expander& expander, const Table& table)
     {
         Stack& body = expander.createBody<Stack>(
@@ -493,6 +573,9 @@ namespace SeeDocs_App
         }
         if (footnoted)
             into->add(Tag{ k_markColumn }, Grids::ShowInHeader::No);
+        Grids::Column* commandColumn = nullptr;
+        if (hasCommands(table))
+            commandColumn = &grid.columns().add(Tag{ k_commandColumn }, Grids::ShowInHeader::No);
         // A row fills neither the group column nor the parent over the marks.
         grid.onCellContent([](Grids::CellContentEvent& event) {
             const TagValue column = event.column().tag().value;
@@ -503,7 +586,7 @@ namespace SeeDocs_App
 
         PageFootnotes footnotes;
         for (const TableGroup& group : table.groups)
-            addTableRows(grid, table, group, notes, hintColumn, footnotes);
+            addTableRows(grid, table, group, notes, hintColumn, commandColumn, footnotes);
         const Padding footnotePadding{ k_prosePadding, k_footnotePadding };
         for (PageFootnote& footnote : footnotes)
             addFootnoteSlot(notes, std::move(footnote), footnotePadding);
@@ -563,11 +646,30 @@ namespace SeeDocs_App
         m_parts.push_back(&block);
     }
 
+    // A line, and under it the page's commands as buttons in a row; nothing where it has none.
+    void PageView::addCommands()
+    {
+        if (m_page.commands.empty())
+            return;
+        Divider& line = m_pageBox.body().add<Divider>();
+        Stack& bar = m_pageBox.body().add<Stack>(
+            Orientation::Horizontal,
+            Padding{ 0.0f },
+            Spacing{ k_commandGap }
+        );
+        for (const Command& command : m_page.commands)
+            connectCommand(bar.add<Button>(), command);
+        m_parts.push_back(&line);
+        m_parts.push_back(&bar);
+    }
+
     // A labelled group stands beside its label in the group column, folding under it, or under
     // a held expander row of the label where the table has no such column; the groups it holds
-    // follow its rows inside it, each under a header of its own.
+    // follow its rows inside it, each under a header of its own. A row with a command is one
+    // that holds a control, its button, in the column at the end.
     void PageView::addTableRows(Grids::GridBase& grid, const Table& table,
-        const TableGroup& group, Stack& notes, const TagValue hintColumn, PageFootnotes& footnotes)
+        const TableGroup& group, Stack& notes, const TagValue hintColumn,
+        Grids::Column* commandColumn, PageFootnotes& footnotes)
     {
         const bool beside = !table.groupColumn.empty();
         Grids::GridBase* target = &grid;
@@ -605,7 +707,18 @@ namespace SeeDocs_App
                 anchor = footnoteAnchor(++m_footnoteCount);
                 footnotes.push_back({ .excerpt = &*row.excerpt, .anchor = *anchor, .row = &row });
             }
-            Grids::Row& gridRow = target->addRow();
+            Grids::Row* made = nullptr;
+            if (row.command.has_value() && commandColumn)
+            {
+                Grids::RowContainer& container = target->addControlRow();
+                connectCommand(container.addControl<Button>(*commandColumn), *row.command);
+                made = &container;
+            }
+            else
+            {
+                made = &target->addRow();
+            }
+            Grids::Row& gridRow = *made;
             if (!row.hint.empty())
             {
                 gridRow.onGetCellHint([&row](Grids::GetCellHintEvent& event) {
@@ -639,7 +752,18 @@ namespace SeeDocs_App
             }
         }
         for (const TableGroup& nested : group.groups)
-            addTableRows(*target, table, nested, notes, hintColumn, footnotes);
+            addTableRows(*target, table, nested, notes, hintColumn, commandColumn, footnotes);
+    }
+
+    void PageView::connectCommand(Button& button, const Command& command)
+    {
+        button.onClick([this, &command](ClickEvent&) {
+            ask(command.target);
+        });
+        m_renders.push_back([&button, &command]() {
+            button.text() = Text{ command.text };
+            button.hintText() = HintText{ command.hint };
+        });
     }
 
     // THE CELL SHOWS MORE THAN THE COMMENT HOLDS - its types linked, a missing hint marked, an
@@ -831,6 +955,14 @@ namespace SeeDocs_App
         emitEvent(event);
     }
 
+    // A COMMAND IS ANSWERED BY WHOEVER SHOWS THE PAGE, as a link is: what it is about was spelled
+    // by whoever built the page, and the page may be one of the things its answer takes down.
+    void PageView::ask(std::wstring target)
+    {
+        PageCommandEvent event{ std::move(target) };
+        emitEvent(event);
+    }
+
     // THE MENU NAMES TWO COMMANDS AND SETTLES NEITHER: Open and Open in new tab are the browser's,
     // answered against the path this page names - the link the menu is up for, held for exactly
     // that long, so a target the surface does not carry arrives greyed. An anchor of the page is
@@ -863,6 +995,23 @@ namespace SeeDocs_App
         });
         return inRows || std::ranges::any_of(group.groups, [](const TableGroup& nested) {
             return hasFootnotes(nested);
+        });
+    }
+
+    bool PageView::hasCommands(const Table& table)
+    {
+        return std::ranges::any_of(table.groups, [](const TableGroup& group) {
+            return hasCommands(group);
+        });
+    }
+
+    bool PageView::hasCommands(const TableGroup& group)
+    {
+        const bool inRows = std::ranges::any_of(group.rows, [](const TableRow& row) {
+            return row.command.has_value();
+        });
+        return inRows || std::ranges::any_of(group.groups, [](const TableGroup& nested) {
+            return hasCommands(nested);
         });
     }
 
