@@ -10,7 +10,7 @@ import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
-import ClaFi.Controls.TreeView;
+import ClaFi.Controls.Tree;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;

@@ -1,7 +1,8 @@
-module ClaFi.Controls.TreeView;
+module ClaFi.Controls.Tree;
 
 import ClaFi.Controls.Menu;
 import ClaFi.Controls.Button;
+import ClaFi.Controls.Divider;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.StackView;
 import ClaFi.Core.AppTheme_Metrics;
@@ -43,6 +44,28 @@ namespace ClaFi::Controls
             + scaler.scale(TreeRows::markSize)
             + scaler.scale(TreeRows::markPadding) * 2.0f
             + scaler.scale(TreeRows::gap);
+    }
+
+    // TreeDivider
+
+    // Counted in the width as a row's lead is, so the line never ends before it starts.
+    ScaledDimensions TreeDivider::calculateContent(AlignEvent& event)
+    {
+        ScaledDimensions result = Divider::calculateContent(event);
+        result.x += event.scale(lead());
+        return result;
+    }
+
+    // The lead is on the left alone: the line starts where the rows of its level do.
+    void TreeDivider::paintSurface(PaintEvent& event)
+    {
+        const Padding room = padding();
+        event.defaultPaintSurface({ room.x + lead(), room.y }, room);
+    }
+
+    float TreeDivider::lead() const
+    {
+        return static_cast<float>(m_level) * TreeRows::step;
     }
 
     // TreeNode
@@ -100,24 +123,24 @@ namespace ClaFi::Controls
         return false;
     }
 
-    // TreeView
+    // Tree
 
     // By index: a node opening may fetch nodes, and they join the end of the list.
-    void TreeView::expandAll()
+    void Tree::expandAll()
     {
         for (std::size_t i = 0; i != m_nodes.size(); ++i)
             m_nodes[i]->header().setExpanded(true);
         showCurrentRow();
     }
 
-    void TreeView::collapseAll()
+    void Tree::collapseAll()
     {
         for (TreeNode* node : m_nodes)
             node->header().setExpanded(false);
         showCurrentRow();
     }
 
-    void TreeView::collapseOthers()
+    void Tree::collapseOthers()
     {
         for (TreeNode* node : m_nodes)
         {
@@ -128,7 +151,7 @@ namespace ClaFi::Controls
     }
 
     // A node's mark opens the node rather than standing as a row, so it is no item.
-    bool TreeView::defaultCanFocusItem(Control& value)
+    bool Tree::defaultCanFocusItem(Control& value)
     {
         return StackView::defaultCanFocusItem(value) && isRow(value);
     }
@@ -138,7 +161,7 @@ namespace ClaFi::Controls
     // behind this one. The menu stands on the row it was asked for - the one under the pointer,
     // or the current row from the keyboard - rather than on the tree, whose bounds run past the
     // window the moment it scrolls.
-    void TreeView::nestedContextPopup(ContextPopupEvent& event)
+    void Tree::nestedContextPopup(ContextPopupEvent& event)
     {
         StackView::nestedContextPopup(event);
         if (event.propagationStopped() || m_nodes.empty())
@@ -151,7 +174,7 @@ namespace ClaFi::Controls
         menu.execute();
     }
 
-    void TreeView::nestedControlDeleted(Control* item)
+    void Tree::nestedControlDeleted(Control* item)
     {
         StackView::nestedControlDeleted(item);
         std::erase_if(m_nodes, [item](const TreeNode* node) {
@@ -161,7 +184,7 @@ namespace ClaFi::Controls
 
     // Claiming says this tree is what the command acts on; what it claims says whether there is
     // anything left for it to move.
-    void TreeView::connectActions()
+    void Tree::connectActions()
     {
         onGetActionState([this](GetActionStateEvent& event) {
             if (&event.action == &m_expandAll)
@@ -184,7 +207,7 @@ namespace ClaFi::Controls
     // A node's header stands in the node, outside its rows, and the node stands in the rows of
     // another or in the tree. What stands inside the header - its mark - has the header for a
     // parent, and a header is in no rows, which is what keeps it out.
-    bool TreeView::isRow(const Control& control) const
+    bool Tree::isRow(const Control& control) const
     {
         const Control* parent = control.parent();
         if (!parent)
@@ -198,7 +221,7 @@ namespace ClaFi::Controls
         return nodeInRows && !control.isHostedAsBody() && isRow(*parent);
     }
 
-    bool TreeView::holdsCurrentRow(const TreeNode& node) const
+    bool Tree::holdsCurrentRow(const TreeNode& node) const
     {
         const Control* row = currentItem();
         if (!row)
@@ -206,14 +229,14 @@ namespace ClaFi::Controls
         return row == &node.header() || node.rows().containsNested(row);
     }
 
-    bool TreeView::hasNode(const bool expanded) const
+    bool Tree::hasNode(const bool expanded) const
     {
         return std::ranges::any_of(m_nodes, [expanded](const TreeNode* node) {
             return node->header().expanded() == expanded;
         });
     }
 
-    bool TreeView::hasOtherNodeOpen() const
+    bool Tree::hasOtherNodeOpen() const
     {
         return std::ranges::any_of(m_nodes, [this](const TreeNode* node) {
             return node->header().expanded() && !holdsCurrentRow(*node);
@@ -222,14 +245,14 @@ namespace ClaFi::Controls
 
     // A bulk collapse closes the nodes outer first, so the row ends on the outermost header over
     // it; a single node closing leaves it on that node's own.
-    void TreeView::rowsFolded(TreeNode& node)
+    void Tree::rowsFolded(TreeNode& node)
     {
         const Control* row = currentItem();
         if (row && node.rows().containsNested(row))
             setCurrentItem(node.header());
     }
 
-    void TreeView::showCurrentRow()
+    void Tree::showCurrentRow()
     {
         if (Control* row = currentItem())
             row->scrollIntoViewOnAlign();

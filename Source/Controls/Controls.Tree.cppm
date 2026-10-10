@@ -1,8 +1,9 @@
 module;
 #include "../Y-Core/System/EventBindings.h"
-export module ClaFi.Controls.TreeView;
+export module ClaFi.Controls.Tree;
 
 import ClaFi.Controls.Button;
+import ClaFi.Controls.Divider;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
@@ -26,9 +27,10 @@ namespace ClaFi::Controls
         constexpr float markSlot = markSize + markPadding * 2.0f;
         constexpr float gap = 4.0f;         // between the mark slot and the text
         constexpr float step = markSlot;    // how far a level stands in from the one holding it
+        constexpr float dividerRoom = 4.0f; // above and below a divider's line
     }
 
-    export class TreeView;
+    export class Tree;
     export class TreeNode;
 
     // A node is opening with no rows under it, and asks for them.
@@ -55,12 +57,27 @@ namespace ClaFi::Controls
         std::size_t m_level;
     };
 
+    // A line between two groups of rows, standing in as far as the rows of its level do.
+    export class TreeDivider : public Divider
+    {
+    public:
+        template<typename... Args>
+        explicit TreeDivider(const CreateParams&, std::size_t level, Args&&...);
+    protected:
+        ScaledDimensions calculateContent(AlignEvent&) override;
+        void paintSurface(PaintEvent&) override;
+    private:
+        [[nodiscard]] float lead() const; // how far the line stands in past the padding
+    private:
+        std::size_t m_level;
+    };
+
     // A branch of a tree: a header that is a row of its own, and under it the rows its mark opens.
     export class TreeNode : public Expander
     {
     public:
         template<typename... Args>
-        explicit TreeNode(const CreateParams&, TreeView& tree, std::size_t level, Args&&...);
+        explicit TreeNode(const CreateParams&, Tree& tree, std::size_t level, Args&&...);
     public:
         // The node is opening with no rows under it, and asks for them.
         DECLARE_EVENT(FetchRowsEvent, OnFetchRows, onFetchRows)
@@ -74,6 +91,9 @@ namespace ClaFi::Controls
         // Adds a branch one level in.
         template<typename... Args>
         TreeNode& addNode(Args&&...);
+        // Adds a line between two groups of rows, one level in.
+        template<typename... Args>
+        TreeDivider& addDivider(Args&&...);
     protected:
         void nestedKeyDown(KeyDownEvent&) override;
     private:
@@ -82,26 +102,29 @@ namespace ClaFi::Controls
         // Takes a key that opens, closes or leaves this node; false leaves it to what holds it.
         [[nodiscard]] bool answerTreeKey(KeyCode);
     private:
-        TreeView& m_tree;
+        Tree& m_tree;
         std::size_t m_level;
         Stack& m_rows;
     };
 
     // Rows nested in branches, each level stepped in one mark slot; a node's header is a row too.
-    export class TreeView : public StackView
+    export class Tree : public StackView
     {
         friend TreeNode;
     public:
         template<typename... Args>
-        explicit TreeView(const CreateParams&, Args&&...);
+        explicit Tree(const CreateParams&, Args&&...);
     public:
-        std::wstring_view diagnosticText() const override { return L"TreeView"; }
+        std::wstring_view diagnosticText() const override { return L"Tree"; }
         // Adds a row a pick can land on, at the top level.
         template<typename... Args>
         TreeItem& addItem(Args&&...);
         // Adds a branch at the top level.
         template<typename... Args>
         TreeNode& addNode(Args&&...);
+        // Adds a line between two groups of rows, at the top level.
+        template<typename... Args>
+        TreeDivider& addDivider(Args&&...);
         // Opens every node, and every node a node fetches as it opens.
         void expandAll();
         // Closes every node; a current row folded away moves to the outermost header over it.
@@ -157,10 +180,24 @@ namespace ClaFi::Controls
     {
     }
 
+    // TreeDivider
+
+    template<typename... Args>
+    TreeDivider::TreeDivider(const CreateParams& params, const std::size_t level, Args&&... args)
+        :
+        Divider{
+            params,
+            Padding{ TreeRows::inset, TreeRows::dividerRoom },
+            std::forward<Args>(args)...
+        },
+        m_level{ level }
+    {
+    }
+
     // TreeNode
 
     template<typename... Args>
-    TreeNode::TreeNode(const CreateParams& params, TreeView& tree, const std::size_t level,
+    TreeNode::TreeNode(const CreateParams& params, Tree& tree, const std::size_t level,
         Args&&... args)
         :
         Expander{
@@ -197,10 +234,16 @@ namespace ClaFi::Controls
         return m_tree.createNode(m_rows, m_level + 1, std::forward<Args>(args)...);
     }
 
-    // TreeView
+    template<typename... Args>
+    TreeDivider& TreeNode::addDivider(Args&&... args)
+    {
+        return m_rows.add<TreeDivider>(m_level + 1, std::forward<Args>(args)...);
+    }
+
+    // Tree
 
     template<typename... Args>
-    TreeView::TreeView(const CreateParams& params, Args&&... args)
+    Tree::Tree(const CreateParams& params, Args&&... args)
         :
         StackView{ params, Orientation::Vertical, std::forward<Args>(args)... }
     {
@@ -208,19 +251,25 @@ namespace ClaFi::Controls
     }
 
     template<typename... Args>
-    TreeItem& TreeView::addItem(Args&&... args)
+    TreeItem& Tree::addItem(Args&&... args)
     {
         return add<TreeItem>(std::size_t{ 0 }, std::forward<Args>(args)...);
     }
 
     template<typename... Args>
-    TreeNode& TreeView::addNode(Args&&... args)
+    TreeNode& Tree::addNode(Args&&... args)
     {
         return createNode(*this, std::size_t{ 0 }, std::forward<Args>(args)...);
     }
 
     template<typename... Args>
-    TreeNode& TreeView::createNode(Stack& rows, const std::size_t level, Args&&... args)
+    TreeDivider& Tree::addDivider(Args&&... args)
+    {
+        return add<TreeDivider>(std::size_t{ 0 }, std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    TreeNode& Tree::createNode(Stack& rows, const std::size_t level, Args&&... args)
     {
         TreeNode& node = rows.add<TreeNode>(*this, level, std::forward<Args>(args)...);
         m_nodes.push_back(&node);

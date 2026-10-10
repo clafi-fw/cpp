@@ -3,7 +3,7 @@ export module SeeDocs_App.SurfaceTree;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
-import ClaFi.Controls.TreeView;
+import ClaFi.Controls.Tree;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
@@ -29,10 +29,10 @@ namespace SeeDocs_App
     };
 
     // The surface as a tree of folders, modules and types; a click on a row picks what it names.
-    export class SurfaceTree : public TreeView
+    export class SurfaceTree : public Tree
     {
     public:
-        using TreeView::TreeView;
+        using Tree::Tree;
     public:
         // Connects a handler raised when a row is clicked.
         template<typename F>

@@ -9,13 +9,12 @@ import ClaFi.Application.ThemesManager_Elements;
 
 import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.Button;
-import ClaFi.Controls.Divider;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
-import ClaFi.Controls.TreeView;
+import ClaFi.Controls.Tree;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.TextEngine.Text;
@@ -195,7 +194,7 @@ namespace Themes_App
         addItemEntry(addRootItem(), TreeEntry{ .shared = &k_anyElement });
         addItemEntry(addRootItem(), TreeEntry{ .shared = &k_anyWindow });
         // Sets the theme-wide pages apart, so they read as peers of the categories.
-        m_tree.add<Divider>(Thickness::Heavy, Padding{ 4.0f, 6.0f });
+        m_tree.addDivider(Thickness::Heavy, Padding{ 4.0f, 6.0f });
         for (const Category& category : k_categories)
         {
             // The header carries the name muted, set apart from the pages under it. It is a row

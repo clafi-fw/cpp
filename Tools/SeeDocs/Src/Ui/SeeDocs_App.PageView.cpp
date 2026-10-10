@@ -15,7 +15,7 @@ import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
-import ClaFi.Controls.TreeView;
+import ClaFi.Controls.Tree;
 import ClaFi.Controls.Base.ExpanderBase;
 
 import ClaFi.Core.AppTheme_Colors;
@@ -413,7 +413,7 @@ namespace SeeDocs_App
 
     void PageView::addTree(Expander& expander, const Branches& branches, const bool nodesOpen)
     {
-        TreeView& tree = expander.createBody<TreeView>(
+        Tree& tree = expander.createBody<Tree>(
             Padding{ k_treePadding },
             HorizontalAlign::Left
         );

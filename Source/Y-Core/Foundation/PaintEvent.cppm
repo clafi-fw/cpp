@@ -128,6 +128,9 @@ namespace ClaFi
         // The inset is stated here rather than left on the event for this call to find. It is a
         // design value and is scaled on the way in.
         void defaultPaintSurface(FloatPoint inset = {}, bool onlyStroke = false);
+        // The same, with the left and top edges inset apart from the right and bottom ones.
+        void defaultPaintSurface(FloatPoint topLeftInset, FloatPoint bottomRightInset,
+            bool onlyStroke = false);
         bool overlayStage() const { return m_overlayStage; }
         const Control* overlayHost() const { return m_overlayHost; }
         // Whether this is the stage that paints the control itself. The surface, the text and
@@ -170,6 +173,12 @@ namespace ClaFi
             CornerRadii radii{};
             RectSides sides{};
         };
+        // How far the surface stands in from the control's edges, in design units.
+        struct SurfaceInset
+        {
+            FloatPoint topLeft{};
+            FloatPoint bottomRight{};
+        };
     private:
         [[nodiscard]] float zAnimationFactor(VisualStateIndex) const;
         // The parent this control may take state from, which is not always the one above it.
@@ -204,7 +213,7 @@ namespace ClaFi
             float* namedHue) const;
         void inheritCornerRadii();
         void paint();
-        [[nodiscard]] SurfaceShape surfaceShape(FloatPoint inset);
+        [[nodiscard]] SurfaceShape surfaceShape(const SurfaceInset& inset);
         void paintFill(const SurfaceShape&);
         void paintStroke(const SurfaceShape&);
     private:
@@ -266,7 +275,7 @@ namespace ClaFi
         const Graphics::PixelPath* m_contentClip{};
         bool m_strokeOverContent{};
         bool m_strokeHeld{};
-        FloatPoint m_heldStrokeInset{};
+        SurfaceInset m_heldStrokeInset{};
         // Colors
         // The lightness every rule and every ink on this control is read at. Filled from the
         // parent event before the control adjusts its paint, so a control asking for it during

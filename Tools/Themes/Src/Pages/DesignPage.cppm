@@ -9,7 +9,7 @@ import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
-import ClaFi.Controls.TreeView;
+import ClaFi.Controls.Tree;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
@@ -135,10 +135,10 @@ namespace Themes_App
         TreeEntries m_entries{}; // an item's tag is its place here
         const ThemeRules m_defaultRules{ ThemeColors{}.rules }; // what each page's reset puts back
 
-        TreeView& m_tree{ createLeftBar<ScrollBox>(
+        Tree& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,
             UiElement::Section
-        ).createBody<TreeView>(
+        ).createBody<Tree>(
             Padding{ 4.0f }
         ) };
 

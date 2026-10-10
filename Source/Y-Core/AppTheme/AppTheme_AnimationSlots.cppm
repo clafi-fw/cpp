@@ -25,7 +25,7 @@ namespace ClaFi::AnimationSlots
     };
 
     export constexpr AnimationSlot focused{
-        .duration{.rise = 66ms, .fall = 440ms },
+        .duration{.rise = 77ms, .fall = 330ms },
         .easingFactor{},
         .tag = static_cast<AnimationTag>(VisualStateIndex::Focused)
     };

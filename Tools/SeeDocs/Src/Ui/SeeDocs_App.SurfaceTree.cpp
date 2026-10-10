@@ -4,7 +4,7 @@ import SeeDocs_App.Icons;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
-import ClaFi.Controls.TreeView;
+import ClaFi.Controls.Tree;
 import ClaFi.Controls.Base.ExpanderBase;
 
 import ClaFi.Core.Foundation;
