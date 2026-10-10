@@ -131,6 +131,10 @@ namespace ClaFi::Controls
     // BOTH EXTENTS, under either sizing. Under WidestPage that is what keeps turning to another
     // page from resizing what holds this one: the menu is as big as the largest page it can
     // show, whichever it happens to be showing.
+    //
+    // THE FLOOR IS THE PAGE'S FLOOR, by the same rule: what the page cannot be cut below, this
+    // control cannot be either - a scroll box's bars, a MinSize the page states. Under WidestPage
+    // it is the largest of them, since any of the pages may be the one showing.
     ScaledDimensions PageControl::calculateContent(AlignEvent& event)
     {
         ScaledDimensions result = StackBase::calculateContent(event);
@@ -140,6 +144,7 @@ namespace ClaFi::Controls
             {
                 result.x = std::max(result.x, page->dimensions().x);
                 result.y = std::max(result.y, page->dimensions().y);
+                event.calculatedMinSize = page->calculatedMinSize();
             }
             return result;
         }
@@ -148,6 +153,9 @@ namespace ClaFi::Controls
         {
             result.x = std::max(result.x, page->dimensions().x);
             result.y = std::max(result.y, page->dimensions().y);
+            const ScaledDimensions pageMin = page->calculatedMinSize();
+            event.calculatedMinSize.x = std::max(event.calculatedMinSize.x, pageMin.x);
+            event.calculatedMinSize.y = std::max(event.calculatedMinSize.y, pageMin.y);
         }
         return result;
     }

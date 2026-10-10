@@ -311,6 +311,7 @@ namespace SeeDocs_App
     private:
         static constexpr float k_treeWidth = 300.0f;   // where the trees' bar starts
         static constexpr float k_leastTreeWidth = 120.0f;   // the least the bar is dragged to
+        static constexpr float k_leastPageWidth = 240.0f;   // what a page keeps against the bar
         static constexpr IconSize k_pageIconSize{ 16.0f };
 
         Projects m_projects{};

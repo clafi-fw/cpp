@@ -614,14 +614,16 @@ namespace SeeDocs_App
         {
             if (target.projectOptions)
             {
-                ProjectPage& projectPage = tab.createPage<ProjectPage>();
+                ProjectPage& projectPage = tab.createPage<ProjectPage>(
+                    MinSize{ k_leastPageWidth, 0.0f });
                 if (m_projectPageBuilder)
                     m_projectPageBuilder(projectPage.options(), target.project->open);
                 page = &projectPage;
             }
             else
             {
-                SurfacePage& surfacePage = tab.createPage<SurfacePage>();
+                SurfacePage& surfacePage = tab.createPage<SurfacePage>(
+                    MinSize{ k_leastPageWidth, 0.0f });
                 if (target.project)
                     surfacePage.view().setWriter(*target.project);
                 fill(surfacePage, target, data);
