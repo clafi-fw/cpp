@@ -169,6 +169,17 @@ namespace SeeDocs_App
             return { rest.substr(0, end), trimmed(rest.substr(end)) };
         }
 
+        // The macro a define or an undef names, or nothing.
+        [[nodiscard]] std::wstring_view macroName(const std::wstring_view rest)
+        {
+            std::size_t end = 0;
+            while (end < rest.size() && isNameChar(rest[end]))
+                ++end;
+            if (end == 0 || !isNameStart(rest.front()))
+                return {};
+            return rest.substr(0, end);
+        }
+
         // A macro the tree defines.
         struct Macro
         {
@@ -180,30 +191,53 @@ namespace SeeDocs_App
         using MacroTable = std::unordered_map<std::wstring, Macro>;
         using ActiveMacros = std::vector<std::wstring_view>;
 
+        // An expanded line, and where each of its characters stands in the line as written.
+        struct Expansion
+        {
+            std::wstring text;
+            Runs origins;   // a character's own place, or the whole name of the macro that made it
+            void append(std::wstring_view piece, std::size_t at, std::optional<Run> origin);
+        };
+
+        // A piece found at a place in the text, or made by the macro whose name is the origin.
+        void Expansion::append(const std::wstring_view piece, const std::size_t at,
+            const std::optional<Run> origin)
+        {
+            text += piece;
+            for (std::size_t i = 0; i != piece.size(); ++i)
+                origins.push_back(origin.value_or(Run{ at + i, at + i + 1 }));
+        }
+
         // THE TREE'S OWN MACROS, expanded where their names stand in a limited read's code. An
         // object-like macro is replaced by its body, expanded in turn; a function-like one is
         // dropped with its arguments, since what it makes of them takes a preprocessor to know.
         // The first definition met in a branch that is read stands, and a name defined only in
-        // branches that are not read takes the first of those. The compilers' own spellings of an
-        // attribute and a pragma - __declspec(...), __attribute__((...)), _Pragma(...),
+        // branches that are not read takes the first of those. A file's definitions join the
+        // tree's when the file ends, less those it undefines again: a macro a file takes back is
+        // its own, like a word a header renames around one include. The compilers' own spellings
+        // of an attribute and a pragma - __declspec(...), __attribute__((...)), _Pragma(...),
         // __pragma(...) - are dropped the same way.
         class Macros
         {
         public:
             Macros();
             void define(std::wstring_view directive, bool read);
+            void undefine(std::wstring_view directive, bool read);
+            void endFile();   // the file's definitions join the tree's
             // The line with its code expanded, the kept runs - its comments and literals - left
             // as they stand. A dropped call's arguments may run on into the lines after it, and
             // the depth carries that from one line to the next.
-            [[nodiscard]] std::wstring expanded(std::wstring_view line, std::span<const Run> kept,
+            [[nodiscard]] Expansion expanded(std::wstring_view line, std::span<const Run> kept,
                 int& dropDepth) const;
         private:
             [[nodiscard]] const Macro* find(std::wstring_view name) const;
-            void expandInto(std::wstring& result, std::wstring_view text,
-                std::span<const Run> kept, int& dropDepth, ActiveMacros& active) const;
+            void expandInto(Expansion& result, std::wstring_view text, std::span<const Run> kept,
+                int& dropDepth, ActiveMacros& active, std::optional<Run> origin) const;
         private:
             MacroTable m_read;
             MacroTable m_unread;
+            MacroTable m_fileRead;     // of the file being gathered, until it ends
+            MacroTable m_fileUnread;   // of the file being gathered, until it ends
         };
 
         Macros::Macros()
@@ -217,15 +251,13 @@ namespace SeeDocs_App
 
         void Macros::define(const std::wstring_view directive, const bool read)
         {
-            const Directive parsed = directiveOf(directive);
-            std::size_t end = 0;
-            while (end < parsed.rest.size() && isNameChar(parsed.rest[end]))
-                ++end;
-            if (end == 0 || !isNameStart(parsed.rest.front()))
+            const std::wstring_view rest = directiveOf(directive).rest;
+            const std::wstring_view name = macroName(rest);
+            if (name.empty())
                 return;
 
             Macro macro;
-            std::wstring_view body = parsed.rest.substr(end);
+            std::wstring_view body = rest.substr(name.size());
             if (body.starts_with(L'('))
             {
                 macro.takesArguments = true;
@@ -236,16 +268,34 @@ namespace SeeDocs_App
             }
             macro.body = trimmed(body);
             macro.literals = literalRuns(macro.body);
-            MacroTable& table = read ? m_read : m_unread;
-            table.try_emplace(std::wstring{ parsed.rest.substr(0, end) }, std::move(macro));
+            MacroTable& table = read ? m_fileRead : m_fileUnread;
+            table.try_emplace(std::wstring{ name }, std::move(macro));
         }
 
-        std::wstring Macros::expanded(const std::wstring_view line, const std::span<const Run> kept,
+        // An undef in a branch that is read takes back the name's definitions in every branch.
+        void Macros::undefine(const std::wstring_view directive, const bool read)
+        {
+            const std::wstring name{ macroName(directiveOf(directive).rest) };
+            m_fileUnread.erase(name);
+            if (read)
+                m_fileRead.erase(name);
+        }
+
+        // A name the tree holds keeps its definition: merge moves only the names it lacks.
+        void Macros::endFile()
+        {
+            m_read.merge(m_fileRead);
+            m_unread.merge(m_fileUnread);
+            m_fileRead.clear();
+            m_fileUnread.clear();
+        }
+
+        Expansion Macros::expanded(const std::wstring_view line, const std::span<const Run> kept,
             int& dropDepth) const
         {
-            std::wstring result;
+            Expansion result;
             ActiveMacros active;
-            expandInto(result, line, kept, dropDepth, active);
+            expandInto(result, line, kept, dropDepth, active, std::nullopt);
             return result;
         }
 
@@ -260,8 +310,9 @@ namespace SeeDocs_App
         }
 
         // A name being expanded is not expanded again inside itself, as C++ has it.
-        void Macros::expandInto(std::wstring& result, const std::wstring_view text,
-            const std::span<const Run> kept, int& dropDepth, ActiveMacros& active) const
+        void Macros::expandInto(Expansion& result, const std::wstring_view text,
+            const std::span<const Run> kept, int& dropDepth, ActiveMacros& active,
+            const std::optional<Run> origin) const
         {
             std::size_t keptAt = 0;
             std::size_t i = 0;
@@ -272,7 +323,7 @@ namespace SeeDocs_App
                 if (keptAt < kept.size() && kept[keptAt].start <= i)
                 {
                     if (dropDepth == 0)
-                        result += text.substr(i, kept[keptAt].end - i);
+                        result.append(text.substr(i, kept[keptAt].end - i), i, origin);
                     i = kept[keptAt].end;
                     continue;
                 }
@@ -288,7 +339,7 @@ namespace SeeDocs_App
                 }
                 if (!isNameChar(current))
                 {
-                    result += current;
+                    result.append(text.substr(i, 1), i, origin);
                     ++i;
                     continue;
                 }
@@ -300,7 +351,7 @@ namespace SeeDocs_App
                 const Macro* macro = isNameStart(current) ? find(word) : nullptr;
                 if (!macro || std::ranges::find(active, word) != active.end())
                 {
-                    result += word;
+                    result.append(word, i, origin);
                     i = end;
                     continue;
                 }
@@ -311,7 +362,7 @@ namespace SeeDocs_App
                         ++open;
                     if (open == text.size() || text[open] != L'(')
                     {
-                        result += word;
+                        result.append(word, i, origin);
                         i = end;
                         continue;
                     }
@@ -319,11 +370,12 @@ namespace SeeDocs_App
                     i = open + 1;
                     continue;
                 }
+                const Run written = origin.value_or(Run{ i, end });
                 active.push_back(word);
                 int bodyDepth = 0;
-                result += L' ';
-                expandInto(result, macro->body, macro->literals, bodyDepth, active);
-                result += L' ';
+                result.append(L" ", i, written);
+                expandInto(result, macro->body, macro->literals, bodyDepth, active, written);
+                result.append(L" ", i, written);
                 active.pop_back();
                 i = end;
             }
@@ -338,6 +390,7 @@ namespace SeeDocs_App
         };
 
         using Includes = std::vector<Include>;
+        using Lines = std::vector<std::wstring>;
 
         // How a file is lexed: as written, or as a limited read takes it - its conditionals read
         // down their first branch, and the tree's macros gathered from it or expanded in it.
@@ -351,8 +404,9 @@ namespace SeeDocs_App
         // A file as lines and tokens, lexed line by line with the framework's C++ lexer and cut
         // once more where that lexer, built for colouring, leaves a plain name without a token.
         // Preprocessed, a line in a branch left out stands blank, and a line of code holds its
-        // macros expanded; the lines keep their count, so every place is the file's own. Which
-        // lines are comment lines is the hint rules': // alone by strict ones, /* */ too by loose.
+        // macros expanded; the lines keep their count, so every place is the file's own, and the
+        // lines as written stay beside them. Which lines are comment lines is the hint rules':
+        // // alone by strict ones, /* */ too by loose.
         class SourceText
         {
         public:
@@ -379,8 +433,8 @@ namespace SeeDocs_App
             // The text from one token to another, both included, comments cut out and lines joined
             // with one blank.
             [[nodiscard]] std::wstring slice(const Token& from, const Token& to) const;
-            // The text from one token to another, both included, as written: its lines and
-            // comments kept, each line after the first set back by the first one's indent.
+            // The text from one token to another, both included, as the file has it: its lines
+            // and comments kept, each line after the first set back by the first one's indent.
             [[nodiscard]] std::wstring written(const Token& from, const Token& to) const;
         private:
             void tokenizeLine(std::size_t index, Syntax::LineState&, Syntax::StateStrings&,
@@ -394,8 +448,13 @@ namespace SeeDocs_App
             void push(TokenType, std::size_t line, std::size_t start, std::size_t end);
             void classifyLine(std::size_t firstToken, bool insideComment);
             [[nodiscard]] const Token* trailingToken(std::size_t line) const;
+            [[nodiscard]] std::wstring_view writtenLine(std::size_t index) const;
+            // Where a character of a line as read stands in the line as written.
+            [[nodiscard]] Run writtenRun(std::size_t line, std::size_t column) const;
         private:
-            std::vector<std::wstring> m_lines;
+            Lines m_lines;
+            Lines m_writtenLines;          // preprocessed, the lines as the file has them
+            std::vector<Runs> m_origins;   // preprocessed, those of each line its macros changed
             TokenList m_tokens;
             std::vector<LineKind> m_kinds;
             std::vector<std::size_t> m_firstTokens;   // per line, the index of its first token
@@ -428,6 +487,11 @@ namespace SeeDocs_App
                 m_lines.emplace_back(text.substr(start, end - start));
                 start = end + 1;
             }
+            if (preprocessed())
+            {
+                m_writtenLines = m_lines;
+                m_origins.resize(m_lines.size());
+            }
 
             Syntax::LineState state{};
             Syntax::StateStrings strings;
@@ -448,6 +512,8 @@ namespace SeeDocs_App
                 }
                 classifyLine(firstToken, insideComment);
             }
+            if (m_preprocess == Preprocess::Gather && m_macros)
+                m_macros->endFile();
         }
 
         std::wstring_view SourceText::text(const Token& token) const
@@ -537,18 +603,20 @@ namespace SeeDocs_App
 
         std::wstring SourceText::written(const Token& from, const Token& to) const
         {
-            const std::wstring_view first = m_lines[from.line];
+            const std::wstring_view first = writtenLine(from.line);
             std::size_t indent = 0;
             while (indent < first.size() && isBlank(first[indent]))
                 ++indent;
+            const std::size_t start = writtenRun(from.line, from.start).start;
+            const std::size_t end = writtenRun(to.line, to.end() - 1).end;
             std::wstring result;
             for (std::size_t line = from.line; line <= to.line; ++line)
             {
-                std::wstring_view piece = m_lines[line];
+                std::wstring_view piece = writtenLine(line);
                 if (line == to.line)
-                    piece = piece.substr(0, to.end());
+                    piece = piece.substr(0, end);
                 if (line == from.line)
-                    piece.remove_prefix(from.start);
+                    piece.remove_prefix(start);
                 else
                 {
                     std::size_t blanks = 0;
@@ -661,7 +729,7 @@ namespace SeeDocs_App
         }
 
         // The directive's lines joined, its comments out: a conditional steers the branches, a
-        // define is gathered, and an include in a branch read is one of the file's includes.
+        // define or undef is gathered, and an include in a branch read is one of the includes.
         void SourceText::readDirective(const std::size_t index)
         {
             std::wstring joined;
@@ -682,6 +750,12 @@ namespace SeeDocs_App
             {
                 if (m_preprocess == Preprocess::Gather && m_macros)
                     m_macros->define(clean, m_branches.reading());
+                return;
+            }
+            if (directive.word == L"undef")
+            {
+                if (m_preprocess == Preprocess::Gather && m_macros)
+                    m_macros->undefine(clean, m_branches.reading());
                 return;
             }
             if (directive.word == L"include")
@@ -729,7 +803,11 @@ namespace SeeDocs_App
                         break;
                 }
             }
-            line = m_macros->expanded(line, kept, m_dropDepth);
+            Expansion expansion = m_macros->expanded(line, kept, m_dropDepth);
+            if (expansion.text == line)
+                return;
+            line = std::move(expansion.text);
+            m_origins[index] = std::move(expansion.origins);
         }
 
         // Whether the line ends inside a /* */ comment: a line read from inside one opens with
@@ -842,6 +920,18 @@ namespace SeeDocs_App
             if (!comment.starts_with(k_lineComment) && !block)
                 return nullptr;
             return &tail;
+        }
+
+        std::wstring_view SourceText::writtenLine(const std::size_t index) const
+        {
+            return m_writtenLines.empty() ? m_lines[index] : m_writtenLines[index];
+        }
+
+        Run SourceText::writtenRun(const std::size_t line, const std::size_t column) const
+        {
+            if (m_origins.empty() || m_origins[line].empty())
+                return { column, column + 1 };
+            return m_origins[line][column];
         }
 
         // The words the reader takes as declaration keywords, and the macros of the routine.
