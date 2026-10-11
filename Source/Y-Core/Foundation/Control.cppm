@@ -704,6 +704,7 @@ namespace ClaFi
         void update();
         void invalidate() const;
         void invalidateFormAlign();
+        void invalidateHint();   // its hint's words moved: a hint up about it is asked again
 
         virtual Interactivity interactivity() const { return Interactivity::None; }
         // **Whether this control takes what its lane has over.** A stack places its items at the

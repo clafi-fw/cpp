@@ -45,6 +45,8 @@ namespace ClaFi
         static void mouseTookOver();
         // The control is being destroyed and takes with it anything said about it.
         static void forgetControl(const Control*);
+        // The words the control's hint says have moved. See Control-Foundation#hint
+        static void controlHintChanged(Control&);
         // The user did something. A hint waits for them to stop, and this is them starting
         // again.
         static void handleUserInput();

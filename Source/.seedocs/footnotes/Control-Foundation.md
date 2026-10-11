@@ -306,6 +306,13 @@ already up is left standing while it is still the answer the control pointed at 
 its own, or that of a control it stands in: crossing children that have no hint of their own is
 not leaving the control that has one.
 
+**A hint up is asked again when its words move.** Its window is measured for the words it went up
+with and keeps them on screen while it stands, so a control that changes the words of its hint
+while the hint may be up - a hint spelling out what the text typed into it stands for - calls
+invalidateHint. A hint up about that control is asked again the way the hover asks it, from
+that control up, and new words are measured and placed afresh. A hint up about any other control
+is left as it stands.
+
 **At most one is in play.** Which form's hint that is follows the control pointed at.
 
 **A hint stands where its control comes to rest.** A control a glide is still carrying - a list

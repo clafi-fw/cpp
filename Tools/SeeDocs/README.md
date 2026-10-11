@@ -264,7 +264,8 @@ the project its folder's name - then its folder, and how long ago it was scanned
 button that reads the sources again. Under Sources
 stand the folders it reads, each with Include subfolders and Remove, and Add folder after them.
 Each folder stands in a box, spelled as `Sources` writes it - `..` for a tree's own folder from its
-`.seedocs` - with the folder in full in its hint; a folder typed over it is read in its place, one
+`.seedocs` - with the folder its text names in full in its hint, which follows what is typed; a
+folder typed over it is read in its place, one
 typed relative read from the project's folder, and a folder that does not exist or is read already
 is refused with the reason under the box;
 under Scan options, whether the sources are read as any C++ and Delphi or as ClaFi modules, and
@@ -274,6 +275,19 @@ or written directly into the source, with no undo. Every change reads the source
 last, which builds the pages again. The page stays where it stands while the sources are read
 again. Its url is the project's with `/.project` after it: the scanner passes over names that start
 with a dot, so no folder can take it.
+
+**A folder typed lists the folders under it.** A source's box, and the New project window's box for
+where to store the project, list as they are typed at their end the folders in the folder the text
+names up to its last separator whose names start with what follows it - case aside, by name, at most
+200, and those starting with a dot only once a dot is typed - each marked as the tree marks a
+folder, the letters typed in the accent. A source's box reads a path typed relative from the
+project's folder, while the New project window's lists only a path from a root; a server named
+alone, as `\\server\` is, lists nothing, its shares being looked up over the network. Down or
+Alt+Down drops the list over the text as it stands. Down, Up, Page Up and Page Down walk it, nothing
+current until Down, and Up from the first line goes back to the box. Return or a click on a line
+takes that folder into the box with a separator after it, and the folders under it are listed in
+turn; Return with no line current takes what is typed, as it does with no list. Escape takes the
+list down, as Tab and leaving the box do, and an edit further in than the text's end lists nothing.
 
 SeeDocs is a browser of the framework's own kind: tabs across the top, under them the crumbs of
 the page shown with a list dropping from each, Back, Forward and Up beside them, and a search box at

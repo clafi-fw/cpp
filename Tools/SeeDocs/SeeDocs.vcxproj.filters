@@ -88,6 +88,12 @@
     <ClCompile Include="Src\Ui\SeeDocs_App.Editing.cppm">
       <Filter>Src\Ui</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.FolderBox.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.FolderBox.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Ui\SeeDocs_App.Icons.cpp">
       <Filter>Src\Ui</Filter>
     </ClCompile>

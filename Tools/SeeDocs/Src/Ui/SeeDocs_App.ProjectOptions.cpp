@@ -2,6 +2,7 @@ module SeeDocs_App.ProjectOptions;
 
 import SeeDocs_App.Browser;
 import SeeDocs_App.Editing;
+import SeeDocs_App.FolderBox;
 import SeeDocs_App.Workspace;
 import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
@@ -71,7 +72,7 @@ namespace SeeDocs_App
         };
 
         // A folder of sources as the properties write it, typed over to read another in its place.
-        class SourceBox : public WordsBox
+        class SourceBox : public FolderBox<WordsBox>
         {
         public:
             SourceBox(const CreateParams&, Workspace&, OpenProject&, std::filesystem::path source,
@@ -80,8 +81,10 @@ namespace SeeDocs_App
             [[nodiscard]] const std::filesystem::path& source() const { return m_source; }
         protected:
             [[nodiscard]] std::wstring writeWords(std::wstring_view words) override;
+            void textEdited() override;
         private:
             void showSource();
+            void showHint();
         private:
             Workspace& m_workspace;
             OpenProject& m_project;
@@ -358,11 +361,12 @@ namespace SeeDocs_App
 
     namespace
     {
-        // Set as the new project dialog's boxes are, filling the field it stands in.
+        // Set as the new project dialog's boxes are, filling the field it stands in. A folder typed
+        // relative lists from the project's folder, which is where it is read from.
         SourceBox::SourceBox(const CreateParams& params, Workspace& workspace, OpenProject& project,
             std::filesystem::path source, Choose changed)
             :
-            WordsBox{
+            FolderBox<WordsBox>{
                 params,
                 Interactivity::Focusable,
                 WordWrap::No,
@@ -375,6 +379,7 @@ namespace SeeDocs_App
             m_source{ std::move(source) },
             m_changed{ std::move(changed) }
         {
+            setBaseFolder(m_project.project.folder);
             showSource();
         }
 
@@ -398,19 +403,39 @@ namespace SeeDocs_App
             return {};
         }
 
-        // In the separators of the desktop it runs on; the hint spells out what a relative one
-        // stands for.
+        void SourceBox::textEdited()
+        {
+            FolderBox<WordsBox>::textEdited();
+            showHint();
+        }
+
+        // In the separators of the desktop it runs on.
         void SourceBox::showSource()
         {
             std::filesystem::path written = m_project.project.writtenSource(m_source);
             written.make_preferred();
             showWords(Text{ written.wstring() });
-            std::wstring hint{ SourceHint::reads };
-            hint.append(m_source.wstring());
-            hint.push_back(L'\n');
+            showHint();
+        }
+
+        // **The hint spells out the folder the text names**, read as a write would read it, so it
+        // follows what is typed, and a hint up while typing is asked again at each edit.
+        void SourceBox::showHint()
+        {
+            const std::wstring typed{ trimmed(text().plainText()) };
+            std::wstring hint;
+            if (!typed.empty())
+            {
+                const std::filesystem::path folder =
+                    m_project.project.readSource(std::filesystem::path{ typed });
+                hint.append(SourceHint::reads);
+                hint.append(folder.wstring());
+                hint.push_back(L'\n');
+            }
             hint.append(SourceHint::relative);
             hint.append(m_project.project.folder.wstring());
             hintText() = HintText{ hint };
+            invalidateHint();
         }
     }
 

@@ -916,6 +916,11 @@ namespace ClaFi
         getForm()->invalidateAlign();
     }
 
+    void Control::invalidateHint()
+    {
+        Hint::controlHintChanged(*this);
+    }
+
     bool Control::respondsToPointer() const
     {
         switch (interactivity())

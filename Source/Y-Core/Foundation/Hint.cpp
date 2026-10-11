@@ -62,6 +62,15 @@ namespace ClaFi
             stopAndHide();
     }
 
+    // **Asked again in place**, as a hint is when the pointer crosses into another zone of its
+    // control: a new answer is measured and placed afresh, and no answer at all takes it down.
+    void Hint::controlHintChanged(Control& value)
+    {
+        if (control() != &value)
+            return;
+        s_current->showOrHide(&value);
+    }
+
     // **The hover has its say while the mouse drives.** The hover moves without the pointer moving:
     // a window put up under a still pointer is handed a move for it and the form beneath a leave
     // - see FormBase::wnd_mouseMove - and a hit-test after a scroll or an edit lands wherever the

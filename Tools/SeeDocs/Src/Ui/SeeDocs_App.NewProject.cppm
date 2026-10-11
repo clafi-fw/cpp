@@ -51,8 +51,6 @@ namespace SeeDocs_App
     protected:
         void nestedKeyDown(KeyDownEvent&) override;   // Return in a box creates
     private:
-        // The box one line is typed into, in the field that gives it a surface of its own.
-        [[nodiscard]] static PromptBox& addBox(Panel& field, PlaceHolderText);
         // A question's caption and its answer, one group of the column.
         [[nodiscard]] static Stack& addGroup(Stack& column);
         [[nodiscard]] std::wstring typedName() const;
