@@ -6,7 +6,9 @@ rasterizer), sharing everything above the platform layer.
 ## Code style
 
 The `cpp-code-style` skill (`.claude/skills/cpp-code-style/SKILL.md`) is the authoritative C++
-style directive. Read it before writing or editing any C++ in this tree.
+style directive. Read it before writing or editing any C++ in this tree. The `comments-and-docs`
+skill (`.claude/skills/comments-and-docs/SKILL.md`) governs every comment, footnote, working note
+and manual. Read it alongside the first, and before writing any documentation.
 
 The declaration routine is how a control, its properties and its events are declared so that a
 line scanner can harvest them. A comment on a harvested

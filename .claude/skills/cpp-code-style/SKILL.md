@@ -1,6 +1,6 @@
 ---
 name: "cpp-code-style"
-description: "Apply the ClaFi C++ (C++20) code style and formatting rules whenever writing, generating, editing, or refactoring C++ code - including modules, classes, functions, naming, bracing, whitespace, and comments."
+description: "Apply the ClaFi C++ (C++20) code style and formatting rules whenever writing, generating, editing, or refactoring C++ code - including modules, classes, functions, naming, bracing, and whitespace. Comments in that code follow the comments-and-docs skill."
 ---
 
 # C++ Code Style and Formatting
@@ -16,13 +16,7 @@ Apply every rule below when generating or refactoring C++ code. Follow the rules
 - Public API changes that were not explicitly requested.
 - Multiple implementation options with no clear winner.
 
-**[MUST] Post-Coding Manual Update:** When a finished piece of work has changed the public API, update the subsystem's manual before reporting the job done. The manual is part of the change, not a follow-up task.
-
-- WHEN: only once the coding job is over and the API is settled. Whoever asked for the work says so ("the coding job's well done, the API is established"), or the work reaches an equivalent close. Development is iterative, and the API moves back and forth across many turns. Those intermediate shapes are not documented, and that is correct - a manual written mid-iteration describes an API that stops existing on the next turn. Hold the manual until the shape stops moving, then write the settled result once.
-- WHAT COUNTS: anything a caller writes or has to know - a name, a spelling, an argument order, a rule about ordering or lifetime, a constraint that stopped holding. Measure it across the whole job: the API as it stood before the work began against the API as it stands now. Churn that cancels out is not a change, and neither is an internal refactor no call site can observe.
-- FIND IT: subsystem manuals live in `docs/` as self-contained HTML, lower-case file names without a suffix (`dom.html`, `events.html`, `textengine.html` and the rest, listed in `index.html` - a new manual gets a line there too). Match the existing one's structure and copy its inline stylesheet rather than restyling. The `.md` footnotes under `Source/.seedocs/footnotes/` and the working notes under `Source/Working Notes/` are raw material for manuals, not manuals.
-- REMOVE WHAT STOPPED BEING TRUE: if the change deleted a caveat, delete the warning about it. A manual that still warns about a fixed problem teaches a rule that no longer exists, and is worse than one that never mentioned it.
-- DO NOT NARRATE THE CHANGE: the manual describes the API as it is now. See section 7 - no "used to", no "was removed". The reader has never seen the previous version.
+**[MUST] Post-Coding Manual Update:** When a finished piece of work has changed the public API, update the subsystem's manual before reporting the job done. The `comments-and-docs` skill says when the API counts as settled, what counts as a change, and where the manual is.
 
 ## 2. Whitespace and File Encoding
 
@@ -263,39 +257,6 @@ Converting a tab-indented file is safe only after confirming no tab appears outs
 - **[MUST] Precondition Failures:** A violated precondition calls `unreachable(...)` with a message. Never guard the check with `#ifdef _DEBUG` while leaving the release build to dereference null or fall off the end.
 - **[MUST] Const Correctness:** A `const` member function must not hand out mutable access to what it owns. Where const is deliberately not propagated - because the thing reached is structure rather than state - say so in a comment, so the missing `const` reads as a decision.
 
-## 7. Linguistic and Documentation Style
+## 7. Comments and Documentation
 
-- **[MUST] No Comment by Default:** A comment earns its line only by carrying what the code cannot say for itself - an invariant, a trap, a constraint imposed from outside, a rejected alternative, a reason. Strike the comment and read what is left. If the code is as clear and nothing true became unrecoverable, leave it struck. A clearer name or a named local retires a comment for good.
-    - The public surface is the exception: a control, its properties and events, and the enums they take each carry one comment line. The designer tool and the manuals read it.
-- **[MUST] End-User Comments Only:** Avoid comments only relevant to the current prompt/history that do not serve the end user of the code (e.g., do NOT write comments like `// Added!`, `// new member`, or `// <--- Added!`).
-- **[MUST] Comment the Invariant, Not the Habit:** When a comment justifies why something is safe, state the property that actually makes it safe and what would break it. A justification that is merely true today misleads the next reader.
-- **[MUST] State the Current Fact, Not the Change:** A comment or manual says what is true now, never what it replaced. No "used to", "was removed", "is gone", "no longer", "previously". This is not a delete pass. A property dressed as history is restated as the property: `"this used to be handed boundsInForm(), so it was counted twice"` becomes `"it must not be handed boundsInForm(), which already carries that topLeft"`. A rejected alternative is kept, phrased hypothetically. A comparison against a state the reader never saw - "one dispatcher rather than two" - is the same defect in shorter form. State the count, not the delta.
-- **[MUST] Clarity Over Expressionism:** Avoid emotional, descriptive, or promotional adjectives. Strip words that add no technical value (such as completely, heavily, perfectly, incredibly, trivially).
-- **[MUST] No Exclamation Marks:** Do not use exclamation marks in comments, documentation, or explanations. Do not use runs of `!!!!!` as attention markers; write a `TODO:` with the actual question instead.
-- **[MUST] Simple Sentence Structure:** Keep sentences short and direct. Avoid complex nested sentences.
-- **[MUST] Dash Formatting:** Use spaced hyphens ( - ) instead of long dashes.
-
-### Comments on declarations
-
-- **[MUST] One Line, One Place:** A class, struct, enum, member, property or event carries one comment line at most. Two lines is a violation wherever they sit, and so is a comment both above a declaration and on it.
-- **[MUST] Placement:** The declaration decides where its comment goes.
-    - A declaration that opens a scope - a class, a struct, an enum - takes its comment on the line above. That comment covers everything inside.
-    - Every other declaration takes its comment on the declaration line while the whole line fits 100 columns, and on the line above when it does not.
-    - An above-line comment touches its declaration, with no blank line between them.
-    - A comment on the declaration line is a label: lower case, no full stop. A comment above a declaration is a sentence.
-- **[MUST] Longer Explanations Go to the Footnotes:** Where the mechanics need more than a line, the words go into the subsystem's footnote under `Source/.seedocs/footnotes/`, and the comment ends with a reference: the word `See`, the note's file stem, an optional `#` anchor, and nothing after it. A reference costs columns, so a comment carrying one usually sits above. A footnote is read into the documentation, so it says what a thing is and does and the rules a caller keeps; why it is so, how it is done inside and what happened go into the working note of the same name under `Source/Working Notes/`, which no tool reads.
-
-  GOOD EXAMPLE:
-  ```cpp
-  // What a drag that starts on an item does. See Selection-Model
-  export enum class DragMode
-  {
-      EasySelect,   // an item is one more place to start a selection rectangle from
-      EasyDrag      // an item is the selection's handle, and the drag carries what is selected
-  };
-
-  // Whether the view holds a selection on top of the current item.
-  DECLARE_PROPERTY(SelectionMode, selectionMode, SelectionMode::None)
-  ```
-
-- **[MUST] Run the Checker:** `python "Tools/Surface Scanner/scan.py" --check` reports every departure on the declarations it harvests - classes, properties, events, event payloads, enums and their members.
+Every comment in the code follows the `comments-and-docs` skill, and so does every footnote, working note and manual. Load it alongside this one whenever C++ is written - a comment is part of the code it sits in.
