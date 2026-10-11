@@ -355,6 +355,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Layout.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Mono.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Mono.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Searcher.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Searcher.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Tags.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Tags.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Text.cpp" />

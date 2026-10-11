@@ -326,6 +326,7 @@ namespace SeeDocs_App
     {
         clear();
         m_page = std::move(page);
+        m_searcher.setText(m_page.searched);
         addHead();
         addLead();
         addFacts();
@@ -376,6 +377,7 @@ namespace SeeDocs_App
         clear();
         m_head.clear();
         m_page = {};
+        m_searcher.setText({});
         m_head.setVisible(false);
         TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes);
         box.text() = text;

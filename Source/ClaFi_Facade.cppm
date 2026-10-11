@@ -95,6 +95,7 @@ export import ClaFi.Core.TextEngine;
 export import ClaFi.Core.TextEngine.Types;
 export import ClaFi.Core.TextEngine.Text;
 export import ClaFi.Core.TextEngine.History;
+export import ClaFi.Core.TextEngine.Searcher;
 
 // Syntax
 export import ClaFi.Core.Syntax.Types;

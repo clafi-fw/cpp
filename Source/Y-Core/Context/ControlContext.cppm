@@ -6,6 +6,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.StdLib;
 
 namespace ClaFi
@@ -72,6 +73,7 @@ namespace ClaFi
         // The inputs of the control drawing this, as its ink reads them. The band reads them.
         RuleInputLevels ruleInputLevels{};
         Color surface;
+        const Searcher* searcher{ nullptr };   // what every text drawn here asks for hits
     private:
         // A band's rules on one channel: each element's own list in turn, then Any element's.
         void applyBandRules(std::initializer_list<UiElement>, PaintChannel, Hsl& color,

@@ -161,8 +161,7 @@ namespace SeeDocs_App
             return {
                 .text = std::move(text),
                 .style = RunStyle::Plain,
-                .link = {},
-                .found = false
+                .link = {}
             };
         }
 
@@ -171,79 +170,8 @@ namespace SeeDocs_App
             return {
                 .text = std::move(text),
                 .style = RunStyle::Muted,
-                .link = {},
-                .found = false
+                .link = {}
             };
-        }
-
-        // A name as code and linked, the words it holds marked found where they stand in it.
-        [[nodiscard]] Runs nameRuns(const std::wstring& name, const std::wstring& link,
-            const std::optional<std::size_t> start, const std::size_t length)
-        {
-            const auto piece = [&link](std::wstring text, const bool found) {
-                return Run{
-                    .text = std::move(text),
-                    .style = RunStyle::Code,
-                    .link = link,
-                    .found = found
-                };
-            };
-            if (!start.has_value() || length == 0 || *start + length > name.size())
-                return { piece(name, false) };
-            Runs runs;
-            if (*start > 0)
-                runs.push_back(piece(name.substr(0, *start), false));
-            runs.push_back(piece(name.substr(*start, length), true));
-            if (*start + length < name.size())
-                runs.push_back(piece(name.substr(*start + length), false));
-            return runs;
-        }
-
-        // **The words may run across runs**: they are looked for in the runs' words together, and a
-        // run is cut where a place they stand in starts or ends, the pieces over it marked found.
-        void markFound(Runs& runs, const std::wstring_view query)
-        {
-            if (query.empty())
-                return;
-            std::wstring whole;
-            for (const Run& run : runs)
-                whole += folded(run.text);
-            std::vector<std::pair<std::size_t, std::size_t>> places;
-            for (std::size_t at = whole.find(query); at != std::wstring::npos;
-                at = whole.find(query, at + query.size()))
-            {
-                places.push_back({ at, at + query.size() });
-            }
-            if (places.empty())
-                return;
-
-            Runs result;
-            std::size_t offset = 0;
-            std::size_t place = 0;
-            for (const Run& run : runs)
-            {
-                const std::size_t end = offset + run.text.size();
-                std::size_t at = offset;
-                while (at < end)
-                {
-                    while (place < places.size() && places[place].second <= at)
-                        ++place;
-                    std::size_t cut = end;
-                    bool found = false;
-                    if (place < places.size())
-                    {
-                        found = places[place].first <= at;
-                        cut = std::min(end, found ? places[place].second : places[place].first);
-                    }
-                    Run piece = run;
-                    piece.text = run.text.substr(at - offset, cut - at);
-                    piece.found = piece.found || found;
-                    result.push_back(std::move(piece));
-                    at = cut;
-                }
-                offset = end;
-            }
-            runs = std::move(result);
         }
 
         void respell(Runs& runs, const std::size_t project, const LinkSpeller& spell)
@@ -431,15 +359,17 @@ namespace SeeDocs_App
             return { column(L"Name"), column(L"Hint", true) };
         }
 
-        // A name's first cell: a member's type before it, muted, and the name linked.
-        [[nodiscard]] Runs nameCell(const NamedEntry& entry, const std::optional<std::size_t> start,
-            const std::size_t length)
+        // A name's first cell: a member's type before it, muted, and the name as code, linked.
+        [[nodiscard]] Runs nameCell(const NamedEntry& entry)
         {
             Runs runs;
             if (entry.type && entry.kind != NameKind::Type)
                 runs.push_back(muted(entry.type->name + std::wstring{ k_scope }));
-            for (Run& run : nameRuns(entry.name, entry.link, start, length))
-                runs.push_back(std::move(run));
+            runs.push_back({
+                .text = entry.name,
+                .style = RunStyle::Code,
+                .link = entry.link
+            });
             return runs;
         }
 
@@ -454,7 +384,7 @@ namespace SeeDocs_App
         {
             const NamedEntry& entry = *hit.entry;
             TableRow row;
-            row.cells.push_back(nameCell(entry, hit.start, hit.length));
+            row.cells.push_back(nameCell(entry));
             switch (entry.kind)
             {
                 case NameKind::Type:
@@ -463,8 +393,7 @@ namespace SeeDocs_App
                     row.cells.push_back({ Run{
                         .text = entry.module->shortName,
                         .style = RunStyle::Plain,
-                        .link = entry.module->name,
-                        .found = false
+                        .link = entry.module->name
                     } });
                     row.cells.push_back(hintCell(surface, entry));
                     break;
@@ -479,8 +408,7 @@ namespace SeeDocs_App
                     row.cells.push_back({ Run{
                         .text = entry.module->shortName,
                         .style = RunStyle::Plain,
-                        .link = entry.module->name,
-                        .found = false
+                        .link = entry.module->name
                     } });
                     row.cells.push_back(hintCell(surface, entry));
                     break;
@@ -536,10 +464,8 @@ namespace SeeDocs_App
                 TableRow row;
                 if (entry.kind == NameKind::Type)
                     row.type = entry.type;
-                row.cells.push_back(nameCell(entry, std::nullopt, 0));
-                Runs hint = hintCell(*project.surface, entry);
-                markFound(hint, query);
-                row.cells.push_back(std::move(hint));
+                row.cells.push_back(nameCell(entry));
+                row.cells.push_back(hintCell(*project.surface, entry));
                 keep(section, index, std::move(row), spell);
             }
         }
@@ -565,15 +491,11 @@ namespace SeeDocs_App
                     Runs where = { muted(note->stem + std::wstring{ k_noteJoin }), Run{
                         .text = noteSection.heading,
                         .style = RunStyle::Plain,
-                        .link = project.index->ownerOf(note->stem, noteSection),
-                        .found = false
+                        .link = project.index->ownerOf(note->stem, noteSection)
                     } };
-                    markFound(where, query);
-                    Runs sentence = noteRunsOf(*project.surface, *words, {});
-                    markFound(sentence, query);
                     TableRow row;
                     row.cells.push_back(std::move(where));
-                    row.cells.push_back(std::move(sentence));
+                    row.cells.push_back(noteRunsOf(*project.surface, *words, {}));
                     keep(section, index, std::move(row), spell);
                 }
             }
@@ -1035,6 +957,11 @@ namespace SeeDocs_App
         Page page;
         page.kind = PageKind::Search;
         page.title = std::wstring{ typed };
+        // A word a part: a query cut at :: reads as its two parts, as a query cut at a space does.
+        const std::optional<QueryParts> parts = partsOf(typed);
+        page.searched = parts.has_value()
+            ? parts->owner + L' ' + parts->name
+            : std::wstring{ typed };
         page.badges = { muted(std::wstring{ k_searchWord }) };
         for (Gathered& section : sections)
             addGathered(page, section, projects);

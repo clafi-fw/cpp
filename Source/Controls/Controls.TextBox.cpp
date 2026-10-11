@@ -16,6 +16,7 @@ import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
 namespace ClaFi::Controls
@@ -45,28 +46,6 @@ namespace ClaFi::Controls
                 }
             }
             return false;
-        }
-
-        // The locale the environment names, or the classic one where this machine has no such
-        // locale installed.
-        [[nodiscard]] std::locale userLocale()
-        {
-            try
-            {
-                return std::locale{ "" };
-            }
-            catch (const std::runtime_error&)
-            {
-                return std::locale::classic();
-            }
-        }
-
-        // One unit for one, so a position in the folded text is that position in the text. The
-        // user's locale rather than std::towlower, which reads the C locale and folds A to Z alone.
-        void foldCase(std::wstring& value, const std::locale& locale)
-        {
-            std::use_facet<std::ctype<wchar_t>>(locale).tolower(value.data(),
-                value.data() + value.size());
         }
     }
 
@@ -751,11 +730,10 @@ namespace ClaFi::Controls
         if (m_searchText.empty())
             return;
 
-        const std::locale locale = userLocale();
         std::wstring pattern = m_searchText;
-        foldCase(pattern, locale);
+        foldCase(pattern);
         std::wstring folded = text().plainText();
-        foldCase(folded, locale);
+        foldCase(folded);
         // Ranges that do not overlap, in text order - the order the engine draws them in and
         // find walks.
         std::size_t pos = folded.find(pattern);

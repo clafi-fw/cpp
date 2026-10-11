@@ -9,6 +9,7 @@ import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.BakedText;
 import ClaFi.Core.TextEngine.Mono;
+import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
@@ -245,6 +246,32 @@ namespace ClaFi
                 localRanges.push_back(localRange);
             }
         }
+    }
+
+    // **A searcher's hits are drawn with an editor's**: the two are sorted together and run into
+    // one where they overlap, the order and the spacing the draw takes them in. See
+    // TextEngine-Types#searcher
+    static void addSearchHits(const Searcher& searcher, const std::wstring_view text,
+        std::vector<TextRange>& hits)
+    {
+        const std::size_t editorHits = hits.size();
+        searcher.addHits(text, hits);
+        if (hits.size() == editorHits)
+            return;
+        std::ranges::sort(hits, {}, &TextRange::start);
+        std::size_t kept = 0;
+        for (std::size_t i = 0; i != hits.size(); ++i)
+        {
+            if (kept != 0 && hits[kept - 1].end() > hits[i].start)
+            {
+                TextRange& last = hits[kept - 1];
+                last.length = std::max(last.end(), hits[i].end()) - last.start;
+                continue;
+            }
+            hits[kept] = hits[i];
+            ++kept;
+        }
+        hits.resize(kept);
     }
 
     // What a selected newline shows. A newline carries no width of its own, so a row the
@@ -909,6 +936,8 @@ namespace ClaFi
                 localSelection = getLocalRange(editProps->selRange, paragraph.textStart, paragraph.textStart + paragraph.textLength);
                 collectLocalRanges(editProps->hits, paragraph.textStart, paragraph.textStart + paragraph.textLength, buffers.hits);
             }
+            if (controlContext.searcher)
+                addSearchHits(*controlContext.searcher, paragraphText(paragraph), buffers.hits);
 
             // --- **Fixed**: Extend the right edge of the paragraph bounds to the container's right boundary ---
             FloatRect paraDrawBounds{

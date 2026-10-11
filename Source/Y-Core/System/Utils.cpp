@@ -109,6 +109,32 @@ namespace ClaFi
         trimRight(s);
     }
 
+    namespace
+    {
+        // The locale the environment names, or the classic one where this machine has no such
+        // locale installed.
+        [[nodiscard]] std::locale userLocale()
+        {
+            try
+            {
+                return std::locale{ "" };
+            }
+            catch (const std::runtime_error&)
+            {
+                return std::locale::classic();
+            }
+        }
+    }
+
+    // The user's locale rather than std::towlower, which reads the C locale and folds A to Z alone.
+    // Looked up once: a search in force folds every paragraph it draws.
+    void foldCase(std::wstring& text)
+    {
+        static const std::locale locale = userLocale();
+        static const std::ctype<wchar_t>& folding = std::use_facet<std::ctype<wchar_t>>(locale);
+        folding.tolower(text.data(), text.data() + text.size());
+    }
+
     // A count of a unit, plural where it is not one, and how long ago.
     static std::wstring countAgo(const std::int64_t count, const std::wstring_view unit)
     {

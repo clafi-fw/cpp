@@ -20,6 +20,7 @@ import ClaFi.Core.System.Props;
 import ClaFi.Core.System.Scaler;
 import ClaFi.Core.System.Utils;
 
+import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.TextEngine;
@@ -1256,6 +1257,8 @@ namespace ClaFi
         // which is the whole of what the framework needs to be the same for every control.
         virtual DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&);
         virtual const EditProps* editProps() const { return nullptr; }
+        // What every text painted inside the control asks for hits; none keeps its container's.
+        [[nodiscard]] virtual const Searcher* searcher() const { return nullptr; }
         // What the control's text is laid out over, or none. See Control-Foundation#text-format
         [[nodiscard]] virtual const TextFormat* textFormat() const { return nullptr; }
         //

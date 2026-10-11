@@ -994,6 +994,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Mono.cppm">
       <Filter>Y_Core\TextEngine</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Searcher.cpp">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Searcher.cppm">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Tags.cpp">
       <Filter>Y_Core\TextEngine</Filter>
     </ClCompile>

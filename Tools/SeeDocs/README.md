@@ -472,7 +472,8 @@ and its heading and linked to the declaration it belongs to - the one its headin
 first whose See reaches it - with the sentence the words stand in. Hints and footnotes are searched
 as they read, their code and bold marks taken out, and a section's words are its own, up to the
 first heading under it. A section lists its first 200 rows, and its heading's hint says how many
-there are. The words found are set bold.
+there are. Each word of the search stands on the found band an editor's own search paints with,
+wherever the page shows it, case aside - the two parts of a query of two being a word each.
 
 ## The checks
 

@@ -18,6 +18,7 @@ import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
+import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.System.Utils;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.InkWell;
@@ -100,6 +101,12 @@ namespace ClaFi
             m_zAnimationAmount = form->appContext().zAnimationAmount();
 #endif
         }
+
+        // **A searcher is handed down**: a control naming none keeps its container's.
+        if (const Searcher* own = control.searcher())
+            m_controlContext.searcher = own;
+        else if (m_parentEvent)
+            m_controlContext.searcher = m_parentEvent->m_controlContext.searcher;
 
         // Metrics
         {

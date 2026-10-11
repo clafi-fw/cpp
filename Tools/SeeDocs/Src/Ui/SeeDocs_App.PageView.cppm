@@ -17,6 +17,7 @@ import ClaFi.Controls.Tree;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
@@ -235,6 +236,7 @@ namespace SeeDocs_App
         std::wstring m_menuLink{};   // the link the menu that is up is about
         std::function<void()> m_pending{};
         UiTimer m_later{};
+        Searcher m_searcher{};   // the words of the page's search, which the page box bands
 
         PageHead& m_head{ createTopBar<PageHead>() };
 
@@ -278,6 +280,7 @@ namespace SeeDocs_App
     {
         Actions::registerAll();
         connectHead();
+        m_pageBox.setSearcher(&m_searcher);
         m_later.onTick([this](TimerEvent&) {
             const std::function<void()> pending = std::exchange(m_pending, {});
             if (pending)

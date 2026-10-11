@@ -28,7 +28,6 @@ namespace SeeDocs_App
         // A type's qualified name, a module's name, a folder's path, or a link to a type's
         // member or to a module's function or constant (memberLink, exportLink); empty for none.
         std::wstring link;
-        bool found{ false };   // words a search found, marked whatever the style
     };
 
     export using Runs = std::vector<Run>;
@@ -238,6 +237,7 @@ namespace SeeDocs_App
         Sections sections;
         std::optional<FootnoteHome> footnoteHome;   // none where no note takes one
         Commands commands;   // at the page's end
+        std::wstring searched;   // the words the page bands wherever it shows them
     };
 
     export using FunctionList = std::vector<const FreeFunction*>;
