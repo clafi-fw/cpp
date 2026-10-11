@@ -63,6 +63,8 @@ namespace ClaFi::Controls
         // Puts the current row's hint up beside the list, or takes the hint down.
         void showCurrentHint();
     protected:
+        // Measures the rows, then caps the list at twelve of them. See Controls#droplist
+        ScaledDimensions calculateContent(AlignEvent&) override;
         // Every row may be current: the owner moves it, and the base's answer would rule that out.
         bool defaultCanFocusItem(Control&) override;
         // The current row reads selected - the base says so only for a stack that follows the user.
@@ -80,6 +82,7 @@ namespace ClaFi::Controls
     // A list dropped under a control that keeps the focus. See Controls#droplist
     export class DropList
     {
+        friend DropListStack;
     public:
         // The target is the control the focus stays in; a pick holding keptBy leaves the list up.
         DropList(Control& target, DropListPickFunc, KeyModifiers keptBy = {});
@@ -103,10 +106,13 @@ namespace ClaFi::Controls
         void pick(const DropListPick&);
     private:
         void ensureForm();
+        // Caps the list at twelve rows of the height measured; true where the cap moved.
+        bool fitShownLines(float rowHeight);
     private:
         static constexpr float k_shownLines = 12.0f;   // what stands without a scroll bar
         static constexpr float k_padding = 4.0f;
         static constexpr float k_clearance = 2.0f;     // between the target and the list
+        static constexpr float k_capTolerance = 0.5f;  // a cap nearer than this stands
 
         Control& m_target;
         DropListPickFunc m_pick;

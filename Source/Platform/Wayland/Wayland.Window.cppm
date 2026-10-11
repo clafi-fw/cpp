@@ -297,9 +297,11 @@ namespace ClaFi::PlatformImplementation::Wayland
         // **The last placement this window was given**, which is the only one worth building a
         // positioner from - see onIdle.
         WindowPlacement m_placement{};
-        // Counts the reposition requests, so the event answering one names which. A popup here
-        // has a single placement in flight, so it is traced rather than matched.
+        // Counts the reposition requests, so the event answering one names which - see
+        // onPopupRepositioned.
         std::uint32_t m_repositionToken{ 0 };
+        bool m_repositionPending{ false };   // the last request is unanswered, so nothing paints
+        bool m_moveToCommit{ false };   // a request was answered, and its configure wants a commit
         zxdg_toplevel_decoration_v1* m_decoration{ nullptr };
         // **Present together or not at all.** With them the compositor states the real ratio and
         // the buffer is presented at the size it asked for; without them the scale is whatever
@@ -1066,6 +1068,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         m_dirtyRect = {};
         // The next one is placed and configured from nothing, exactly as the first was.
         m_configured = false;
+        m_repositionPending = false;
+        m_moveToCommit = false;
     }
 
     FrameMargins Window::surfaceMargins() const
@@ -1313,6 +1317,12 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (!m_configured || m_unmapped || !m_visible || m_dirtyRect.empty())
             return;
 
+        // **Nothing is painted while a move is unanswered.** The size it asked for is applied at
+        // the ask - see placePopup - and the place only by the commit after its configure, so a
+        // frame drawn in between stands the new size where the last answer put the old one.
+        if (m_repositionPending)
+            return;
+
         // **A frame is already owed.** Painting now would produce one the compositor has not asked
         // for and will not show, and would take the free buffer that the frame it **did** ask for
         // needs. The damage stands until the callback comes.
@@ -1463,6 +1473,7 @@ namespace ClaFi::PlatformImplementation::Wayland
                 xdg_positioner* positioner = buildPositioner(m_placement);
                 ::xdg_popup_reposition(m_popup, positioner, ++m_repositionToken);
                 ::xdg_positioner_destroy(positioner);
+                m_repositionPending = true;
 
                 if (traceEnabled())
                     std::fprintf(stderr, "[wayland] repos   %p %-7s asked token=%u\n",
@@ -1622,7 +1633,7 @@ namespace ClaFi::PlatformImplementation::Wayland
                 | XDG_POSITIONER_CONSTRAINT_ADJUSTMENT_SLIDE_Y);
             break;
 
-        case FormPlacement::BottomEnd:
+        case FormPlacement::BottomRight:
             // Grows downwards from the anchor's bottom right corner and leftwards from it, so the
             // two right edges stand level; the flip and the slide are a menu's.
             ::xdg_positioner_set_anchor(positioner, XDG_POSITIONER_ANCHOR_BOTTOM_RIGHT);
@@ -1750,8 +1761,15 @@ namespace ClaFi::PlatformImplementation::Wayland
             scaleChanged();
         if (focusWasChanged)
             focusChanged(m_activated);
-        if (firstConfigure || sizeChanged || frameChanged || focusWasChanged || scaleWasChanged)
+        // **A move takes effect at the commit after its acknowledgement**, and a reposition that
+        // kept the size leaves nothing above this line a reason to paint - so the popup would
+        // stand where the configure before this one put it. See onPopupRepositioned.
+        const bool moved = std::exchange(m_moveToCommit, false);
+        if (firstConfigure || sizeChanged || frameChanged || focusWasChanged || scaleWasChanged
+            || moved)
+        {
             invalidateRect(nullptr);
+        }
     }
 
     // **The scale a change of outputs implies.** A compositor that moves a window between screens
@@ -1957,14 +1975,18 @@ namespace ClaFi::PlatformImplementation::Wayland
         window.destroyPopupRole();
     }
 
-    // Which reposition this answers. One placement is ever in flight on a popup here, so the
-    // token is traced rather than matched against anything.
+    // **Where the popup now stands comes next**, in the configure that follows, and the commit
+    // after its acknowledgement is what moves it - see applyConfigure. Painting waits for the
+    // answer to the last request only: an earlier one answered is a place already passed.
     void Window::onPopupRepositioned(void* data, xdg_popup*, std::uint32_t token)
     {
-        if (!traceEnabled())
-            return;
+        Window& window = *static_cast<Window*>(data);
+        if (token == window.m_repositionToken)
+            window.m_repositionPending = false;
+        window.m_moveToCommit = true;
 
-        std::fprintf(stderr, "[wayland] repos   %p token=%u\n", data, token);
+        if (traceEnabled())
+            std::fprintf(stderr, "[wayland] repos   %p token=%u\n", data, token);
     }
 
     // **A layer surface's configure is the whole proposal in one event** - the size, and nothing
@@ -2013,7 +2035,8 @@ namespace ClaFi::PlatformImplementation::Wayland
             return;
 
         window.m_frameCallback = nullptr;
-        if (!window.m_dirtyRect.empty())
+        // A move unanswered holds the frame as onIdle does, and onIdle paints it once answered.
+        if (!window.m_dirtyRect.empty() && !window.m_repositionPending)
             window.paint();
     }
 

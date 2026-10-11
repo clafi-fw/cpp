@@ -310,7 +310,7 @@ takes the list down and raises Next as ever. Escape takes the list down and leav
 standing, and the next one empties the box. Once it has listed lines, Down drops the list again,
 raising Search so that its owner lists anew over the text as it stands. The list goes down with the
 focus, and with Tab before the focus moves on. listPlacement says where it drops: under the box from
-its left edge, or with BottomEnd from its right edge, for a box at a window's right end.
+its left edge, or with BottomRight from its right edge, for a box at a window's right end.
 listKeptBy names the modifiers that keep the list up across a pick: a line taken with them held
 raises Pick as ever, and the list stays with its current line, so the next can be taken from it -
 SeeDocs names Alt, which opens each line in a tab behind the one shown.
@@ -445,10 +445,10 @@ Tab - takes the list down before the focus moves, or the list going down would t
 
 **A line is a Text and a hint.** show states the lines, the one current or none, the anchor the list
 stands off - a rect in the target's form, the whole box where the target is its field - and the
-placement, Bottom, or BottomEnd from the anchor's right edge; no lines take the list down. The list
-is at least as wide as the anchor and as tall as twelve lines, and scrolls past that. A flex space
-in a line spans the list's width, so a word after one stands at the list's right edge. A line's hint
-stands beside the list while the line is current, as a CompletionList's does.
+placement, BottomLeft, or BottomRight from the anchor's right edge; no lines take the list down. The
+list is at least as wide as the anchor and as tall as twelve lines, and scrolls past that. A flex
+space in a line spans the list's width, so a word after one stands at the list's right edge. A
+line's hint stands beside the list while the line is current, as a CompletionList's does.
 
 **A pick is told once the list is down**: the owner's function is handed the line, the modifiers
 held with the key or the click, and the stamp of the input that took it, so whatever it opens or

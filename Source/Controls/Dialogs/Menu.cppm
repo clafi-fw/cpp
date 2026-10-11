@@ -135,9 +135,9 @@ namespace ClaFi::Controls
         int execute();
         /// Drops the menu under a control the way a dropdown list falls, and runs it. This is for
         /// a menu that belongs to a control's outline rather than to the point that was clicked.
-        /// Bottom hangs it from the control's left end, BottomEnd from its right end. Answers once
-        /// it has closed, and a menu with nothing to show does not open.
-        int executeUnder(const Control&, FormPlacement placement = FormPlacement::Bottom);
+        /// BottomLeft hangs it from the control's left end, BottomRight from its right end.
+        /// Answers once it has closed, and a menu with nothing to show does not open.
+        int executeUnder(const Control&, FormPlacement placement = FormPlacement::BottomLeft);
     private:
         // Nothing in it, and no placeholder to stand in for the nothing.
         [[nodiscard]] bool nothingToShow() const { return empty() && !m_showsPlaceHolder; }

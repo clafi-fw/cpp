@@ -64,8 +64,8 @@ namespace ClaFi::Controls
         template<typename... Args>
         explicit SearchBox(const CreateParams&, Args&&...);
     public:
-        // Where the box's list drops: under it from its left edge, or from its right (BottomEnd).
-        DECLARE_PROPERTY(FormPlacement, listPlacement, FormPlacement::Bottom)
+        // Where the box's list drops: under it from its left edge, or from its right (BottomRight).
+        DECLARE_PROPERTY(FormPlacement, listPlacement, FormPlacement::BottomLeft)
         // The modifiers that keep the list up across a pick - Alt, say. See Controls#search
         DECLARE_PROPERTY(KeyModifiers, listKeptBy, KeyModifiers{})
     public:

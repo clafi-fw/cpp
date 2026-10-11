@@ -201,7 +201,7 @@ namespace ClaFi::Browser
     void BrowserTab::nestedGetHint(GetHintEvent& event)
     {
         Tab::nestedGetHint(event);
-        event.placement = FormPlacement::Bottom;
+        event.placement = FormPlacement::BottomLeft;
     }
 
     void BrowserTab::getText(GetTextEvent& event) const

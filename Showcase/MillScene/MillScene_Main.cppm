@@ -464,7 +464,7 @@ MillSceneForm::WindowReadings MillSceneForm::windowReadings() const
 
 void MillSceneForm::writeMetricsHint(GetHintEvent& event)
 {
-    event.placement = FormPlacement::Bottom;
+    event.placement = FormPlacement::BottomLeft;
     auto paintBullet = [](PaintIconEvent& event) {
         float radius = event.scaleF(3.0f);
         event.canvas().fillCircle(event.iconRect().center(), radius, event.textRgb(InkGrade::Strongest));

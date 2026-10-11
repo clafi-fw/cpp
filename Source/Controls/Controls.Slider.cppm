@@ -451,7 +451,7 @@ namespace ClaFi::Controls
         if (axis() == ScrollAxis::Vertical)
             popup.setPlacement(FormPlacement::ContextMenu, contextMenuAnchor());
         else
-            popup.setPlacement(FormPlacement::Bottom, boundsInForm());
+            popup.setPlacement(FormPlacement::BottomLeft, boundsInForm());
         popup.execute();
     }
 

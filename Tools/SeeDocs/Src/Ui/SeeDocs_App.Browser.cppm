@@ -377,7 +377,7 @@ namespace SeeDocs_App
             MinSize{ k_searchWidth, 0.0f },
             MaxSize{ k_searchWidth, k_maxFloat },
             // The box stands at the window's right end, so its list drops from the right edge.
-            FormPlacement::BottomEnd,
+            FormPlacement::BottomRight,
             // A line taken with Alt opens in a tab behind, and the list stays for the next.
             KeyModifiers{ .alt = true }
         ) };

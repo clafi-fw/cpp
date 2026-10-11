@@ -101,7 +101,7 @@ namespace ClaFi
     {
         Form menu{ event.form.createPopup<AppMenu>(event.presenter) };
         // Under the button that opened it; a shortcut has none, so the menu takes the middle.
-        menu.setPlacement(event.presenter ? FormPlacement::Bottom : FormPlacement::Default);
+        menu.setPlacement(event.presenter ? FormPlacement::BottomLeft : FormPlacement::Default);
         menu.execute();
         menu.storePage();
         // **A theme tried on goes with the menu.** The theme picker wears a theme the pointer is

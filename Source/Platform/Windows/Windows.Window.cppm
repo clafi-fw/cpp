@@ -796,8 +796,8 @@ namespace ClaFi::PlatformImplementation::Windows
             }
 
             const float top = placeAbove ? aboveY - size.y : belowY;
-            // BottomEnd hangs the window from the anchor's right end, the two right edges level.
-            const float left = placement.placement == FormPlacement::BottomEnd
+            // BottomRight hangs the window from the anchor's right end, the two right edges level.
+            const float left = placement.placement == FormPlacement::BottomRight
                 ? anchor.right - size.x
                 : anchor.left;
             result = FloatRect::fromDimensions({ left, top }, size);

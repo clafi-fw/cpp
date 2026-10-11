@@ -230,7 +230,7 @@ namespace ClaFi::Controls
         if (const Control* owner = popupTarget())
         {
             setDropdownClearance(1.0f);
-            setPlacement(FormPlacement::Bottom, owner->boundsInForm());
+            setPlacement(FormPlacement::BottomLeft, owner->boundsInForm());
         }
         MessageBoxForm::execute();
     }

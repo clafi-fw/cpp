@@ -58,7 +58,7 @@ namespace ClaFi::Controls
             return 0ull;
         // Dropped the way a menu drops under a control - see Menu::executeUnder.
         setDropdownClearance(1.0f);
-        setPlacement(FormPlacement::Bottom, control.boundsInForm());
+        setPlacement(FormPlacement::BottomLeft, control.boundsInForm());
         setMinWidth(control.width() / scaler().factor());
         StepsMenuForm::execute();
         return m_taken;

@@ -175,7 +175,7 @@ namespace Themes_App
 
     void ColorHarmonyItem::nestedGetHint(GetHintEvent& event)
     {
-        event.placement = FormPlacement::Bottom;
+        event.placement = FormPlacement::BottomLeft;
         event.text << m_harmony.name();
     }
 
@@ -228,7 +228,7 @@ namespace Themes_App
 
         Form<DropDownPanel> menuForm{ form().createPopup<DropDownPanel>(&dropDownButton, *this) };
 
-        menuForm.setPlacement(FormPlacement::Bottom, boundsInForm());
+        menuForm.setPlacement(FormPlacement::BottomLeft, boundsInForm());
         menuForm.body()->setFocus();
         menuForm.execute();
     }

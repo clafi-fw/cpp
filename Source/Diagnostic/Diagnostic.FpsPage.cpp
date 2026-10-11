@@ -472,7 +472,7 @@ namespace ClaFi::Diagnostic
             return;
 
         const WindowRow row = event.row().tag().get<WindowRow>();
-        event.hint().placement = FormPlacement::Bottom;
+        event.hint().placement = FormPlacement::BottomLeft;
         event.text() << k_windowRowNotes[static_cast<std::size_t>(row)];
     }
 
@@ -481,7 +481,7 @@ namespace ClaFi::Diagnostic
     void FpsPage::writeReadingHint(GetCellHintEvent& event) const
     {
         const Reading reading = event.column().tag().get<Reading>();
-        event.hint().placement = FormPlacement::Bottom;
+        event.hint().placement = FormPlacement::BottomLeft;
         if (&event.row() == m_metricsGrid.header())
         {
             event.text() << k_headerNotes[static_cast<std::size_t>(reading)];
@@ -500,7 +500,7 @@ namespace ClaFi::Diagnostic
 
     void FpsPage::writeMethodHint(GetHintEvent& event)
     {
-        event.placement = FormPlacement::Bottom;
+        event.placement = FormPlacement::BottomLeft;
         event.text.clear();
         event.text << Fmt{
             L"[section]How the readings are taken\n[/section]"
@@ -514,7 +514,7 @@ namespace ClaFi::Diagnostic
 
     void FpsPage::writeChartHint(GetHintEvent& event)
     {
-        event.placement = FormPlacement::Bottom;
+        event.placement = FormPlacement::BottomLeft;
         event.text.clear();
         event.text << Fmt{
             L"[section]The last two seconds\n[/section]"

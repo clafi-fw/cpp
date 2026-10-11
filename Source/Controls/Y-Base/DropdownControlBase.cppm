@@ -203,7 +203,7 @@ namespace ClaFi::Controls
             std::forward<Args>(args)...
         );
         popup.setDropdownClearance(1.0f);
-        popup.setPlacement(FormPlacement::Bottom, boundsInForm());
+        popup.setPlacement(FormPlacement::BottomLeft, boundsInForm());
         // And at least as wide as it - a list narrower than the face it fell from reads as
         // belonging to something else. In design units, which a popup shares with its parent.
         popup.setMinWidth(width() / form.scaler().factor());

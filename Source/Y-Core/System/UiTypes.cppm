@@ -470,12 +470,12 @@ namespace ClaFi
         Default,
         ScreenRight,
         OverText,
-        Bottom,
+        BottomLeft,     // a combobox-style dropdown or a hint under the anchor
         Top,
         ContextMenu,
         Mouse,
-        Right,      // beside the anchor, off its right edge and level with its top
-        BottomEnd   // under the anchor, its right edge level with the anchor's
+        Right,          // beside the anchor, off its right edge and level with its top
+        BottomRight     // under the anchor, its right edge level with the anchor's
     };
     export using HintPlacement = FormPlacement;
 

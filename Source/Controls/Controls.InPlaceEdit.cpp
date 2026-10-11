@@ -81,7 +81,7 @@ namespace ClaFi::Controls
         // the box rather than at the pointer: it answers what was **typed**, and the user reaching
         // for Enter has left the pointer wherever it happened to be.
         event.text << m_refusal;
-        event.placement = FormPlacement::Bottom;
+        event.placement = FormPlacement::BottomLeft;
         event.anchorRect = boundsInForm();
     }
 
@@ -600,7 +600,7 @@ namespace ClaFi::Controls
         // parent.
         const PromptBox& box = body();
         m_list->setMinWidth(box.width() / scaler().factor());
-        m_list->setPlacement(FormPlacement::Bottom, box.boundsInForm());
+        m_list->setPlacement(FormPlacement::BottomLeft, box.boundsInForm());
         if (!suggestionsShown())
             m_list->show();
     }

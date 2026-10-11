@@ -1007,7 +1007,7 @@ namespace ClaFi::Controls
         // they complete. In the form's coordinates, which a popup's placement is stated in.
         FloatRect anchor = caretRectInForm(line.start + line.caret);
         anchor.left = caretRectInForm(line.start + wordStart).left;
-        m_completionList->setPlacement(FormPlacement::Bottom, anchor);
+        m_completionList->setPlacement(FormPlacement::BottomLeft, anchor);
         if (!completionShown())
         {
             // Opened at its first row: where the list was left is not on screen to glide from.
@@ -1219,7 +1219,7 @@ namespace ClaFi::Controls
         FloatRect anchor = caretRectInForm(caret);
         anchor.left = caretRectInForm(lines.start(call->line) + call->bracket).left;
         const bool listAbove = completionShown() && m_completionList->window().standsAbove();
-        m_parameterHint->setPlacement(listAbove ? FormPlacement::Bottom : FormPlacement::Top,
+        m_parameterHint->setPlacement(listAbove ? FormPlacement::BottomLeft : FormPlacement::Top,
             anchor);
         if (!parameterHintShown())
             m_parameterHint->show();

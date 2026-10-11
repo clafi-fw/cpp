@@ -43,7 +43,7 @@ namespace ClaFi
         event.text << s_text;
         // Under the whole control rather than at the pointer: the pointer is not what raised
         // this, and it may be anywhere, including nowhere near the control being spoken about.
-        event.placement = FormPlacement::Bottom;
+        event.placement = FormPlacement::BottomLeft;
         event.anchorRect = about.boundsInForm();
         return true;
     }

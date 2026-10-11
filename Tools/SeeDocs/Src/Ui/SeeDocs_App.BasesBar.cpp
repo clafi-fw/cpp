@@ -133,7 +133,7 @@ namespace SeeDocs_App
         }
         // The list hangs from the mark that drops it, ending where the mark does - a path crumb's
         // list mirrored.
-        menu.executeUnder(*secondaryPart(), FormPlacement::BottomEnd);
+        menu.executeUnder(*secondaryPart(), FormPlacement::BottomRight);
     }
 
     void BaseCrumb::adjustPaint(AdjustPaintEvent& event)

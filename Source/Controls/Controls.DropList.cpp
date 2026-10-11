@@ -109,6 +109,21 @@ namespace ClaFi::Controls
         invalidate();
     }
 
+    // **Measured, not assumed**: a row is as tall as its text and padding make it, which a tool
+    // button's least height says nothing of. A cap that moved asks for the pass again - the box
+    // above was measured against the one before. See AlignEvent::invalidatePass
+    ScaledDimensions DropListStack::calculateContent(AlignEvent& event)
+    {
+        const ScaledDimensions result = Stack::calculateContent(event);
+        const std::vector<Control*> shown = shownRows();
+        if (shown.empty())
+            return result;
+        const float rowHeight = shown.front()->dimensions().y / event.scaleFactor();
+        if (m_list.fitShownLines(rowHeight))
+            event.invalidatePass();
+        return result;
+    }
+
     std::optional<std::size_t> DropListStack::current() const
     {
         const Control* row = currentItem();
@@ -313,6 +328,19 @@ namespace ClaFi::Controls
             m_pick(picked);
     }
 
+    bool DropList::fitShownLines(const float rowHeight)
+    {
+        const DropListStack& stack = m_form->content().body();
+        const float rows = k_shownLines * rowHeight + (k_shownLines - 1.0f) * stack.spacing().y
+            + 2.0f * stack.padding().y;
+        const float height = rows + 2.0f * k_padding;
+        DropListBox& box = m_form->content();
+        if (std::abs(box.maxSize().y - height) < k_capTolerance)
+            return false;
+        box.setMaxSize(MaxSize{ k_maxFloat, height });
+        return true;
+    }
+
     void DropList::ensureForm()
     {
         if (m_form.has_value())
@@ -328,6 +356,7 @@ namespace ClaFi::Controls
                 UiElement::Section,
                 // A list taller than its room scrolls - see ComboBox::showDropdown.
                 ScrollBars::Auto,
+                // Twelve rows at a tool button's least height until the rows are measured.
                 MaxSize{
                     k_maxFloat,
                     k_shownLines * metrics.toolButton.minSize.y + 2.0f * k_padding
