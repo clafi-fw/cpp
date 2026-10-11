@@ -33,6 +33,23 @@ namespace ClaFi::Controls
     // What the owner of a list does with a line taken.
     export using DropListPickFunc = std::function<void(const DropListPick&)>;
 
+    // What Up does on a list's first line.
+    export enum class UpFromFirst
+    {
+        Stays,    // the first line stays current
+        Leaves    // no line is current, and the keys are the target's own again
+    };
+
+    // How a list stands and is walked, as its owner states it. See Controls#droplist
+    export struct DropListOptions
+    {
+        float shownLines{ 12.0f };   // the lines that stand before it scrolls; none caps it
+        float minWidth{ 0.0f };      // the least it is wide, the anchor's width aside
+        float clearance{ 2.0f };     // between the anchor and the list
+        KeyModifiers keptBy{};       // a pick holding all of these leaves the list up
+        UpFromFirst upFromFirst{ UpFromFirst::Stays };
+    };
+
     export class DropList;
 
     // One line of the list, reached by the pointer and never focused.
@@ -58,7 +75,7 @@ namespace ClaFi::Controls
         // Shows a row per line of the list, the one given current, and hides the rows past them.
         void showLines(std::optional<std::size_t> current);
         [[nodiscard]] std::optional<std::size_t> current() const;
-        void moveCurrent(ScrollDirection);         // a row on, staying at the ends
+        void moveCurrent(ScrollDirection);         // a row on, to the ends - see UpFromFirst
         void moveCurrentByPage(ScrollDirection);   // as many rows as the view holds
         // Puts the current row's hint up beside the list, or takes the hint down.
         void showCurrentHint();
@@ -84,13 +101,18 @@ namespace ClaFi::Controls
     {
         friend DropListStack;
     public:
-        // The target is the control the focus stays in; a pick holding keptBy leaves the list up.
-        DropList(Control& target, DropListPickFunc, KeyModifiers keptBy = {});
+        // The target is the control the focus stays in. See Controls#droplist
+        DropList(Control& target, DropListPickFunc, DropListOptions = {});
         DropList(const DropList&) = delete;
         DropList& operator=(const DropList&) = delete;
     public:
+        [[nodiscard]] const DropListOptions& options() const { return m_options; }
         [[nodiscard]] const DropListLines& lines() const { return m_lines; }
         [[nodiscard]] bool shown() const;
+        // Whether the list stands above its anchor, for want of room below it.
+        [[nodiscard]] bool standsAbove() const;
+        // Told after every pass that lays the list out, which may have moved it to the other side.
+        void setPlacedFunc(std::function<void()>);
         // The line the keys are on, while the list is up and one is.
         [[nodiscard]] std::optional<std::size_t> current();
         // Shows the lines off the anchor, a rect in the target's form. See Controls#droplist
@@ -106,17 +128,16 @@ namespace ClaFi::Controls
         void pick(const DropListPick&);
     private:
         void ensureForm();
-        // Caps the list at twelve rows of the height measured; true where the cap moved.
+        // Caps the list at its shown lines of the height measured; true where the cap moved.
         bool fitShownLines(float rowHeight);
     private:
-        static constexpr float k_shownLines = 12.0f;   // what stands without a scroll bar
         static constexpr float k_padding = 4.0f;
-        static constexpr float k_clearance = 2.0f;     // between the target and the list
         static constexpr float k_capTolerance = 0.5f;  // a cap nearer than this stands
 
         Control& m_target;
         DropListPickFunc m_pick;
-        KeyModifiers m_keptBy;
+        DropListOptions m_options;
+        std::function<void()> m_placed{};
         DropListLines m_lines{};
         std::optional<Form<DropListBox>> m_form{};
         ScopedEventConnection m_aligned{};

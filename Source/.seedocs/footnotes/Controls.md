@@ -403,12 +403,10 @@ The list under an in-place editor of the values whose names begin with what is t
 what a combo box shows over its editor: `WithInPlaceEdit::editorSuggestions` answers a
 TextItems, and the editor lists it.
 
-**The caret stays in the box.** The list is a window of its own standing on the box, and nothing in
-it can take the focus - its root, its stack and its rows are all MouseOnly, so the form's entry
-search finds nothing to land on, and a press on a row walks up to nobody. The rows are reached by
-the pointer, and by the keys the box hands on: Up and Down move the current row while the list is
-up, and the stack paints that row selected itself, since a stack whose current item is moved from
-outside is not one that follows the user.
+**The caret stays in the box.** The list is a DropList standing on the box - see DropList - so
+nothing in it can take the focus, and its rows are reached by the pointer and by the keys the box
+hands on: Up and Down move the current row while the list is up. It is as tall as the screen lets
+it, as a combo box's list is, and scrolls past that.
 
 **What is listed is what the sink would take.** A row is matched by typedName, and case aside by
 startsWithFolded - the two functions ComboBox::lookUpItem matches by - against the text as
@@ -418,12 +416,12 @@ list - list every item whatever is typed, the filter lifted until the next edit 
 A row shows the item's own text, or its placeholder muted while it has none, and never what a
 face adds.
 
-**Nothing is current until down.** Return with no row current offers what was typed, as it always
-does: a sink taking free text with hints must not have "new" turned into "newfile", and a
-combo box's own prefix rule already lands on the first match. Down from the box enters at the
-first row, Up from the first row goes back to the box, and Down from the last row stays. The
-box keeps what was typed while the rows are walked - nothing is written into it to restore on
-Escape.
+**Nothing is current until down** - UpFromFirst::Leaves. Return with no row current offers what was
+typed, as it always does: a sink taking free text with hints must not have "new" turned into
+"newfile", and a combo box's own prefix rule already lands on the first match. Down from the box
+enters at the first row, Up from the first row goes back to the box, and Down from the last row
+stays. The box keeps what was typed while the rows are walked - nothing is written into it to
+restore on Escape.
 
 **A pick is a pick.** Return on a current row, or a click on any row, puts its name in the box and
 offers it in the same press; a refusal then stands under the box as any refusal does, with
@@ -432,12 +430,12 @@ standing; the next Escape cancels it.
 
 ## DropList
 
-A list dropped under a control that keeps the focus - the one a SearchBox drops. **The caret stays
-in the control**: the list is a window of its own standing on it, and its root, its stack and its
-rows are all MouseOnly, so nothing in it can take the focus. The rows are reached by the pointer,
-and by the keys the control hands on: moveCurrent and moveCurrentByPage for the arrows and the
-page keys, pickCurrent for Enter. Each answers false while the list is down, which is how the
-control knows the key is still its own.
+A list dropped under a control that keeps the focus - the one a SearchBox, a CodeBox and an in-place
+editor drop. **The caret stays in the control**: the list is a window of its own standing on it, and
+its root, its stack and its rows are all MouseOnly, so nothing in it can take the focus. The rows
+are reached by the pointer, and by the keys the control hands on: moveCurrent and moveCurrentByPage
+for the arrows and the page keys, pickCurrent for Enter. Each answers false while the list is down,
+which is how the control knows the key is still its own.
 
 **The target is the control the focus is in**, the field rather than the box around it: a list
 going down hands the focus to its target, as every popup does. So a key that moves the focus on -
@@ -445,15 +443,31 @@ Tab - takes the list down before the focus moves, or the list going down would t
 
 **A line is a Text and a hint.** show states the lines, the one current or none, the anchor the list
 stands off - a rect in the target's form, the whole box where the target is its field - and the
-placement, BottomLeft, or BottomRight from the anchor's right edge; no lines take the list down. The
-list is at least as wide as the anchor and as tall as twelve lines, and scrolls past that. A flex
-space in a line spans the list's width, so a word after one stands at the list's right edge. A
-line's hint stands beside the list while the line is current, as a CompletionList's does.
+placement, BottomLeft, or BottomRight from the anchor's right edge; no lines take the list down. A
+flex space in a line spans the list's width, so a word after one stands at the list's right edge. A
+line's hint stands beside the list while the line is current: FormPlacement::Right on a rect
+spanning the list, so a hint the right has no room for stands off the list's left edge rather than
+over its rows.
+
+**What the owner states, it states once**, in the DropListOptions it builds the list with: the lines
+that stand before the list scrolls - twelve unless stated, and none caps it - the least width, the
+clearance off the anchor, the modifiers that keep it up across a pick, and what Up does on the first
+line. The list is at least as wide as the anchor and the least width, and as tall as its lines **as
+the rows measure**: the stack reads a row's height as it lays the rows out and caps the box at that
+many, asking the pass again where the cap moved - see AlignEvent::invalidatePass - so the first list
+of a run already stands at its height. UpFromFirst::Stays keeps the first line current, as a
+SearchBox's and a CodeBox's lists do; Leaves leaves no line current, the keys the target's own
+again, as an in-place editor's does.
+
+**Where it stands is the platform's to say.** standsAbove answers whether the list stood above its
+anchor for want of room below it, and the function setPlacedFunc gives is told after every pass that
+lays the list out, which may have moved it there - what a CodeBox puts its parameter hint on the
+free side by.
 
 **A pick is told once the list is down**: the owner's function is handed the line, the modifiers
 held with the key or the click, and the stamp of the input that took it, so whatever it opens or
 takes stands with the list out of the way. A pick holding every modifier the list is kept by - the
-modifiers given with the target - leaves it up instead, its current line where it was.
+options' keptBy - leaves it up instead, its current line where it was.
 
 ## SelectionMoveEvent
 
@@ -509,11 +523,11 @@ ScrollMetrics.
 
 ## CompletionList
 
-The list under the caret of the names the word being typed can complete to. It is what the
-in-place editor's SuggestionList is, made for source: a window of its own standing on the
-box, nothing in it able to take the focus, the rows reached by the pointer and by the keys
-the box hands on. **The caret stays in the box**, and every key reaches the box first - see
-SuggestionList for the forward chain and wnd_char.
+The list under the caret of the names the word being typed can complete to. Like the in-place
+editor's SuggestionList it is a DropList standing on the box - see DropList - nothing in it able to
+take the focus, the rows reached by the pointer and by the keys the box hands on. **The caret stays
+in the box**, and every key reaches the box first - see SuggestionList for the forward chain and
+wnd_char.
 
 **When it opens.** By itself on the first character of a name typed and on a typed dot, and
 narrowing with every character after; on demand on Ctrl+Space, which lists everything the
@@ -571,11 +585,11 @@ Return the form takes. Up and Down walk the rows and stay at either end; Page Up
 Down walk them a view at a time, less the row left current, the step any items view pages
 by, and stay at either end too.
 
-The list is at most ten rows tall, the tool button's height each, and scrolls past that;
-at least 180 units wide; hidden rather than destroyed when it closes, and opened again at
-its first row with no glide, since where it was left is not on screen to travel from; and
-placed under the caret's line with its left edge at the start of the name, so the rows stand
-under the letters they complete.
+The list is at most ten rows tall and scrolls past that; at least 180 units wide, since the caret it
+stands under gives it no width; hidden rather than destroyed when it closes, and opened again at its
+first row with no glide, since where it was left is not on screen to travel from; and placed under
+the caret's line with its left edge at the start of the name, so the rows stand under the letters
+they complete.
 
 ## ParameterHint
 

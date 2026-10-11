@@ -3,10 +3,8 @@ module;
 
 export module ClaFi.Controls.CodeBox;
 
+import ClaFi.Controls.DropList;
 import ClaFi.Controls.TextBox;
-import ClaFi.Controls.Button;
-import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.Stack;
 
 import ClaFi.Core.Syntax.Completion;
 import ClaFi.Core.Syntax.Indent;
@@ -29,7 +27,6 @@ import ClaFi.StdLib;
 namespace ClaFi::Controls
 {
     export class CodeBox;
-    class CompletionStack;
 
     // Whether the box asks which language each text it is handed is in. See Controls
     export enum class DetectLanguage
@@ -68,76 +65,22 @@ namespace ClaFi::Controls
         Title     // what a title block's line takes - its keys, or the values of the key it states
     };
 
-    // One row of the completion list: a name the box can complete to, its kind beside it.
-    class CompletionRow : public Button
+    // A name the completion list can show: what it completes to and where it is listed.
+    struct CompletionItem
     {
-    public:
-        CompletionRow(const CreateParams&, CompletionStack&, CompletionScope,
-            const Syntax::CompletionEntry* owner, std::wstring_view name, Syntax::CompletionKind,
-            const Syntax::CompletionEntry*, const Syntax::Declaration*);
-        [[nodiscard]] CompletionScope scope() const { return m_scope; }
-        [[nodiscard]] const Syntax::CompletionEntry* owner() const { return m_owner; }
-        [[nodiscard]] std::wstring_view name() const { return m_name; }
+        CompletionScope scope{ CompletionScope::Global };
+        const Syntax::CompletionEntry* owner{ nullptr };   // a member's class - null elsewhere
+        std::wstring name{};
+        Syntax::CompletionKind kind{};
+        const Syntax::CompletionEntry* entry{ nullptr };   // what the hint reads - none, a keyword
+        // The text's own declaration the item stands for - null for a name from elsewhere.
+        const Syntax::Declaration* declaration{ nullptr };
         // Whether the name is in force at that position of the text - everywhere, for a name
         // the text itself does not declare.
         [[nodiscard]] bool inForceAt(std::size_t pos) const;
-    protected:
-        void getText(GetTextEvent&) const override;
-        // The signature and the hint beside the list. See Controls#completionlist
-        void nestedGetHint(GetHintEvent&) override;
-        void nestedClick(ClickEvent&) override;
-    private:
-        CompletionStack& m_stack;
-        CompletionScope m_scope;
-        const Syntax::CompletionEntry* m_owner;   // the class a member is read off - null elsewhere
-        std::wstring m_name;
-        Syntax::CompletionKind m_kind;
-        const Syntax::CompletionEntry* m_entry;   // what the hint reads - null for a keyword
-        // The text's own declaration the row stands for - null for a name from elsewhere.
-        const Syntax::Declaration* m_declaration;
     };
 
-    // The rows, shown by scope and by what is typed. See Controls#completionlist
-    class CompletionStack : public Stack
-    {
-    public:
-        CompletionStack(const CreateParams&, CodeBox&);
-        [[nodiscard]] CodeBox& box() const { return m_box; }
-        // The name as typed so far - what a row marks in its own.
-        [[nodiscard]] std::wstring_view typed() const { return m_typed; }
-        // Builds the rows anew: the text's own declarations first, the nearest scope's ahead,
-        // then the list's names, the keywords and the title block's by scope - each run in name
-        // order under the language's case rule, a member once for every class stating it.
-        void rebuild(const Syntax::Language&, const Syntax::CompletionEntries*,
-            const Syntax::Declarations&, const Syntax::TitleBlock*);
-        // Shows the rows of the scope that begin with what is typed, are in force at the caret
-        // and not among the stated, each read off the nearest of those owners to state it - a
-        // Global row off none - the first shown current, and answers how many.
-        std::size_t filter(const Syntax::Language&, CompletionScope,
-            const Syntax::CompletionClasses& owners, std::wstring_view typed, std::size_t caret,
-            const Syntax::CompletionNames& stated);
-        // Moves the current row one shown row up or down, staying at either end.
-        void moveCurrent(ScrollDirection);
-        // Moves the current row a view less one row up or down, staying at either end.
-        void moveCurrentByPage(ScrollDirection);
-        [[nodiscard]] CompletionRow* currentRow() const;
-        // Puts the current row's hint up beside it, or takes the hint down with no row current.
-        void showCurrentHint();
-    protected:
-        // Every row may be current: the box moves it, and the base's answer would rule that out.
-        bool defaultCanFocusItem(Control&) override;
-        // The current row reads selected - the base says so only for a stack that follows the user.
-        void getControlState(GetStateEvent&) const override;
-    private:
-        [[nodiscard]] std::vector<CompletionRow*> shownRows() const;
-        void setCurrentRow(CompletionRow*);
-    private:
-        CodeBox& m_box;
-        std::wstring m_typed;
-    };
-
-    // The completion list as it is dropped: a box that scrolls, holding the rows.
-    using CompletionList = ScrollBoxWith<CompletionStack>;
+    using CompletionItems = std::vector<CompletionItem>;
 
     // The window a call's signature shows in, above the caret's line. See Controls#parameterhint
     class ParameterHint : public WithTextLayout<FormControlBase>
@@ -162,7 +105,6 @@ namespace ClaFi::Controls
     // A text box that colours its text as source in a language. See Controls
     export class CodeBox : public TextBox, private ColorOverlay
     {
-        friend CompletionRow;
     public:
         template<typename... Args>
         explicit CodeBox(const CreateParams&, Args&&...);
@@ -258,14 +200,26 @@ namespace ClaFi::Controls
         // Shows the rows the place takes under the name being written, or takes the list down.
         void listCompletion(CompletionScope, const Syntax::CompletionClasses& owners,
             const Syntax::CompletionNames& stated, const CaretLine&, std::size_t wordStart);
+        // Builds the items anew: the text's own declarations first, the nearest scope's ahead,
+        // then the list's names, the keywords and the title block's by scope - each run in name
+        // order under the language's case rule, a member once for every class stating it.
+        void buildCompletionItems(const Syntax::Language&);
+        // Lists the items of the scope that begin with what is typed, are in force at the caret
+        // and not among the stated, each read off the nearest of those owners to state it - a
+        // Global item off none. See Controls#completionlist
+        void filterCompletionItems(const Syntax::Language&, CompletionScope,
+            const Syntax::CompletionClasses& owners, std::wstring_view typed, std::size_t caret,
+            const Syntax::CompletionNames& stated);
+        // The item's line: the part typed in the accent, the kind muted at the end, the hint.
+        [[nodiscard]] static DropListLine completionLine(const CompletionItem&, std::size_t typed);
         // Reads the text's own declarations anew where the text has changed since the last
         // reading; the rows follow only where the declarations did.
         void readDeclarations();
         void hideCompletion();
         // Makes the list's window, on the first request.
         void ensureCompletionList();
-        // Puts the row's name in place of the name typed, in one edit, with the list down.
-        void takeCompletion(const CompletionRow&);
+        // Puts the item's name in place of the name typed, in one edit, with the list down.
+        void takeCompletion(const CompletionItem&);
         [[nodiscard]] bool parameterHintShown() const;
         // Asks for the hint to be brought up to the caret, once the input that asked has been
         // delivered. Opening shows the call the caret stands in; otherwise a hint up follows the
@@ -303,24 +257,24 @@ namespace ClaFi::Controls
         // A line down each block in view, the caret's a grade stronger. See Controls#indentguides
         void paintIndentGuides(PaintEvent&, TextLayout&, FloatPoint origin);
     private:
-        // The list's rows, as many as the theme's tool button makes tall; a longer list scrolls.
-        static constexpr float k_completionRows{ 10.0f };
-        static constexpr float k_completionPadding{ 4.0f };
+        static constexpr float k_completionRows{ 10.0f };   // a longer list scrolls
         static constexpr float k_completionMinWidth{ 180.0f };
         // The state every line starts in, kept beside the layout's shaping and on the same terms
         // - a memo of the box's own text, brought into step whenever the layout is.
         mutable Syntax::LineStates m_lines;
         // The tokens of the paragraph being drawn, grown once and reused for every paragraph after.
         mutable Syntax::Tokens m_tokens;
-        // The list, a window of its own on the box, shown and hidden as what is typed changes.
-        std::optional<Form<CompletionList>> m_completionList{};
+        // The list on the box, shown and hidden as what is typed changes. See Controls#droplist
+        std::optional<DropList> m_completionList{};
+        CompletionItems m_completionItems{};   // what the list can show, built when stale
+        std::vector<std::size_t> m_completionListed{};   // the item each line stands for
         // The list asked for on a key, answered once the input that asked has been delivered.
         UiTimer m_completionRequest{};
         bool m_completionOpening{ false };    // whether the request may put the list up
         bool m_completionExplicit{ false };   // whether the request lists with nothing typed
         // Whether a request found the layout unsettled and waits on the pass that settles it.
         bool m_completionWaitsOnAlign{ false };
-        // Whether the rows are to be built anew - the language, the list or the declarations
+        // Whether the items are to be built anew - the language, the list or the declarations
         // have changed.
         mutable bool m_completionRowsStale{ true };
         // The names the text declares for itself, as the language read them when the list last
@@ -350,7 +304,6 @@ namespace ClaFi::Controls
         ScopedEventConnection m_formAligned{};
         ScopedEventConnection m_formMoved{};
         ScopedEventConnection m_formFocusChanged{};
-        ScopedEventConnection m_listAligned{};
     };
 
 

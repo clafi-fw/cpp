@@ -1,9 +1,7 @@
 module ClaFi.Controls.CodeBox;
 
+import ClaFi.Controls.DropList;
 import ClaFi.Controls.TextBox;
-import ClaFi.Controls.Button;
-import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.Stack;
 
 import ClaFi.StdActions;
 
@@ -37,8 +35,6 @@ namespace ClaFi::Controls
     {
         // The least room between a row's name and the kind printed at the end of its line.
         constexpr float k_kindGap = 12.0f;
-        // How far the hint stands off the list's edge, in design units.
-        constexpr float k_hintGap = 6.0f;
 
         // What a row is made of before it is a control.
         struct RowSource
@@ -86,37 +82,32 @@ namespace ClaFi::Controls
                 && Syntax::completionNamesEqual(language, left.name, right.name);
         }
 
-        [[nodiscard]] CompletionRow& rowOf(const ControlPtr& control)
-        {
-            return static_cast<CompletionRow&>(*control);
-        }
-
-        // Where the run of rows starting at `at` ends. The member rows of one name stand
-        // together, ordered by name as they are, and every other row is a run of its own.
+        // Where the run of items starting at `at` ends. The member items of one name stand
+        // together, ordered by name as they are, and every other item is a run of its own.
         [[nodiscard]] std::size_t endOfRun(const Syntax::Language& language,
-            const ControlSpanC rows, const std::size_t at)
+            const CompletionItems& items, const std::size_t at)
         {
-            const CompletionRow& first = rowOf(rows[at]);
+            const CompletionItem& first = items[at];
             std::size_t end = at + 1;
-            if (first.scope() != CompletionScope::Member)
+            if (first.scope != CompletionScope::Member)
                 return end;
-            while (end != rows.size()
-                && rowOf(rows[end]).scope() == CompletionScope::Member
-                && Syntax::completionNamesEqual(language, rowOf(rows[end]).name(), first.name()))
+            while (end != items.size()
+                && items[end].scope == CompletionScope::Member
+                && Syntax::completionNamesEqual(language, items[end].name, first.name))
                 ++end;
             return end;
         }
 
-        // How far from the first of the owners the row's owner stands - none for a row read off
-        // another, and the first place for a row of the Global scope, which is read off none.
-        [[nodiscard]] std::optional<std::size_t> rankOf(const CompletionRow& row,
+        // How far from the first of the owners the item's owner stands - none for an item read
+        // off another, and the first place for an item of the Global scope, which is read off none.
+        [[nodiscard]] std::optional<std::size_t> rankOf(const CompletionItem& item,
             const Syntax::CompletionClasses& owners)
         {
-            if (row.scope() == CompletionScope::Global)
+            if (item.scope == CompletionScope::Global)
                 return std::size_t{ 0 };
             for (std::size_t rank = 0; rank != owners.size(); ++rank)
             {
-                if (owners[rank] == row.owner())
+                if (owners[rank] == item.owner)
                     return rank;
             }
             return std::nullopt;
@@ -138,329 +129,14 @@ namespace ClaFi::Controls
     {
     }
 
-    // CompletionRow
+    // CompletionItem
 
-    CompletionRow::CompletionRow(const CreateParams& params, CompletionStack& stack,
-        const CompletionScope scope, const Syntax::CompletionEntry* owner,
-        const std::wstring_view name, const Syntax::CompletionKind kind,
-        const Syntax::CompletionEntry* entry, const Syntax::Declaration* declaration)
-        :
-        Button{ params,
-            // The look of a dropdown's line: no surface at rest, and the current row on its own.
-            params.themeMetrics().toolButton,
-            UiElement::ToolButton,
-            ShowSelectionOnSurface::Yes,
-            HorizontalTextAnchor::Left,
-            // Every row is as wide as the list, which is what the kind at the end of the line is
-            // measured against.
-            HorizontalAlign::Fill,
-            // Reached by the pointer and never focused - the caret stays in the box.
-            Interactivity::MouseOnly
-        },
-        m_stack{ stack },
-        m_scope{ scope },
-        m_owner{ owner },
-        m_name{ name },
-        m_kind{ kind },
-        m_entry{ entry },
-        m_declaration{ declaration }
+    bool CompletionItem::inForceAt(const std::size_t pos) const
     {
-    }
-
-    bool CompletionRow::inForceAt(const std::size_t pos) const
-    {
-        if (!m_declaration)
+        if (!declaration)
             return true;
-        const TextRange& scope = m_declaration->scope;
-        return scope.start <= pos && pos <= scope.end();
-    }
-
-    void CompletionRow::getText(GetTextEvent& event) const
-    {
-        // The part typed so far in the accent, the rest in the text's own ink, and the kind muted
-        // at the end of the line - a flex space lands every kind on the list's right edge.
-        const std::size_t typed = m_stack.typed().size();
-        const std::wstring_view name = m_name;
-        if (typed)
-            event.text << InkWell::accentInk() << name.substr(0, typed) << PopColor{};
-        event.text << name.substr(typed);
-        event.text << FlexSpace{ k_kindGap } << InkWell::textInk(InkGrade::Muted)
-            << Syntax::completionKindName(m_kind) << PopColor{};
-    }
-
-    void CompletionRow::nestedGetHint(GetHintEvent& event)
-    {
-        // A keyword, or an entry that says no more than its name, shows no hint.
-        if (!m_entry)
-            return;
-        if (m_entry->signature.empty() && m_entry->hint.empty())
-            return;
-        const std::wstring& signature = m_entry->signature.empty()
-            ? m_entry->name
-            : m_entry->signature;
-
-        // Beside the list at this row's height, on a rect spanning it so either side stands clear
-        // of the rows. In the list form's coordinates, which the row's own bounds are in.
-        const FloatRect listBounds = form().content().boundsInForm();
-        const float gap = scaler().scale(k_hintGap);
-        const FloatRect row = boundsInForm();
-        event.anchorRect = { listBounds.left - gap, row.top, listBounds.right + gap, row.bottom };
-        event.placement = FormPlacement::Right;
-        event.text << TextStyleId::Code << signature << PopTextStyle{};
-        if (!m_entry->hint.empty())
-            event.text << L"\n" << InkGrade::Muted << m_entry->hint << PopColor{};
-    }
-
-    void CompletionRow::nestedClick(ClickEvent&)
-    {
-        m_stack.box().takeCompletion(*this);
-    }
-
-    // CompletionStack
-
-    CompletionStack::CompletionStack(const CreateParams& params, CodeBox& box)
-        :
-        Stack{ params,
-            Orientation::Vertical,
-            // **A scrolled body keeps the size it measured** - see ComboBoxDropdownStack.
-            WordWrap::No
-        },
-        m_box{ box }
-    {
-    }
-
-    void CompletionStack::rebuild(const Syntax::Language& language,
-        const Syntax::CompletionEntries* entries, const Syntax::Declarations& declarations,
-        const Syntax::TitleBlock* title)
-    {
-        setCurrentItem(nullptr);
-        clearControls();
-
-        std::vector<RowSource> sources;
-        for (const Syntax::Declaration& declaration : declarations)
-        {
-            sources.push_back({
-                CompletionScope::Global, nullptr, declaration.entry.name, declaration.entry.kind,
-                &declaration.entry, &declaration
-            });
-        }
-        for (const std::wstring_view keyword : language.keywords)
-        {
-            sources.push_back({
-                CompletionScope::Global, nullptr, keyword, Syntax::CompletionKind::Keyword,
-                nullptr, nullptr
-            });
-        }
-        if (entries)
-        {
-            for (const Syntax::CompletionEntry& entry : *entries)
-            {
-                sources.push_back({
-                    CompletionScope::Global, nullptr, entry.name, entry.kind, &entry, nullptr
-                });
-                // A member keeps its class, which is what a dot shows it by. The parent's members
-                // stand under the parent, so a class repeats none of them.
-                for (const Syntax::CompletionEntry& method : entry.methods)
-                {
-                    sources.push_back({
-                        CompletionScope::Member, &entry, method.name, method.kind, &method,
-                        nullptr
-                    });
-                }
-                for (const Syntax::CompletionEntry& property : entry.properties)
-                {
-                    sources.push_back({
-                        CompletionScope::Member, &entry, property.name, property.kind, &property,
-                        nullptr
-                    });
-                }
-            }
-        }
-        if (title)
-        {
-            // A value keeps its key, the way a member keeps its class.
-            for (const Syntax::TitleKey& key : title->keys)
-            {
-                sources.push_back({
-                    CompletionScope::Title, nullptr, key.entry.name, key.entry.kind, &key.entry,
-                    nullptr
-                });
-                for (const Syntax::CompletionEntry& value : key.values)
-                {
-                    sources.push_back({
-                        CompletionScope::Title, &key.entry, value.name, value.kind, &value, nullptr
-                    });
-                }
-            }
-        }
-
-        // Stable, so of an entry stated twice the first statement is the one kept.
-        std::ranges::stable_sort(sources, [&](const RowSource& left, const RowSource& right){
-            return listsBefore(language, left, right);
-        });
-        const auto duplicates = std::ranges::unique(sources,
-            [&](const RowSource& left, const RowSource& right){
-                return sameRow(language, left, right);
-            });
-        sources.erase(duplicates.begin(), duplicates.end());
-
-        for (const RowSource& source : sources)
-        {
-            add<CompletionRow>(*this, source.scope, source.owner, source.name, source.kind,
-                source.entry, source.declaration);
-        }
-    }
-
-    std::size_t CompletionStack::filter(const Syntax::Language& language,
-        const CompletionScope scope, const Syntax::CompletionClasses& owners,
-        const std::wstring_view typed, const std::size_t caret,
-        const Syntax::CompletionNames& stated)
-    {
-        m_typed = typed;
-        std::size_t shown = 0;
-        CompletionRow* first = nullptr;
-        const ControlSpanC rows = controls();
-        std::size_t at = 0;
-        while (at != rows.size())
-        {
-            // A run shows one row at most: the one read off the nearest owner.
-            const std::size_t end = endOfRun(language, rows, at);
-            CompletionRow* pick = nullptr;
-            std::size_t pickRank = 0;
-            for (std::size_t i = at; i != end; ++i)
-            {
-                CompletionRow& row = rowOf(rows[i]);
-                const std::optional<std::size_t> rank = rankOf(row, owners);
-                const bool eligible = row.scope() == scope
-                    && row.inForceAt(caret)
-                    && rank.has_value()
-                    && !isStated(language, stated, row.name());
-                if (eligible && (!pick || *rank < pickRank))
-                {
-                    pick = &row;
-                    pickRank = *rank;
-                }
-            }
-            const bool matches = pick && Syntax::completionMatches(language, pick->name(), typed);
-            for (std::size_t i = at; i != end; ++i)
-            {
-                CompletionRow& row = rowOf(rows[i]);
-                row.setVisible(matches && &row == pick);
-            }
-            if (matches)
-            {
-                ++shown;
-                if (!first)
-                    first = pick;
-            }
-            at = end;
-        }
-        setCurrentRow(first);
-        return shown;
-    }
-
-    void CompletionStack::moveCurrent(const ScrollDirection direction)
-    {
-        const std::vector<CompletionRow*> shown = shownRows();
-        if (shown.empty())
-            return;
-
-        const auto at = std::ranges::find(shown, currentRow());
-        if (at == shown.end())
-        {
-            setCurrentRow(shown.front());
-            return;
-        }
-        if (direction == ScrollDirection::ToEnd)
-        {
-            if (std::next(at) != shown.end())
-                setCurrentRow(*std::next(at));
-            return;
-        }
-        if (at != shown.begin())
-            setCurrentRow(*std::prev(at));
-    }
-
-    void CompletionStack::moveCurrentByPage(const ScrollDirection direction)
-    {
-        const std::vector<CompletionRow*> shown = shownRows();
-        if (shown.empty())
-            return;
-
-        const auto at = std::ranges::find(shown, currentRow());
-        if (at == shown.end())
-        {
-            setCurrentRow(shown.front());
-            return;
-        }
-
-        // The rows from the current one to the one it lands on fill the view at most, so the row
-        // left current is still in sight - the step FocusNavigator pages any items view by.
-        const float view = windowInForm().height();
-        const bool forward = direction == ScrollDirection::ToEnd;
-        std::size_t target = static_cast<std::size_t>(at - shown.begin());
-        float filled = shown[target]->boundsInForm().height();
-        while (forward ? target + 1 < shown.size() : target > 0)
-        {
-            const std::size_t next = forward ? target + 1 : target - 1;
-            filled += shown[next]->boundsInForm().height();
-            if (filled > view)
-                break;
-            target = next;
-        }
-        setCurrentRow(shown[target]);
-    }
-
-    CompletionRow* CompletionStack::currentRow() const
-    {
-        return static_cast<CompletionRow*>(currentItem());
-    }
-
-    void CompletionStack::showCurrentHint()
-    {
-        // A pass over a list that is down places nothing anyone can see.
-        if (!form().visible())
-            return;
-        if (CompletionRow* row = currentRow())
-            form().hint().showRightNow(*row);
-        else
-            Hint::stopAndHide();
-    }
-
-    bool CompletionStack::defaultCanFocusItem(Control& value)
-    {
-        return value.parent() == this;
-    }
-
-    void CompletionStack::getControlState(GetStateEvent& event) const
-    {
-        Stack::getControlState(event);
-        if (event.propagationStopped())
-            return;
-        event.state.selected = &event.control == currentItem();
-        event.stopPropagation();
-    }
-
-    std::vector<CompletionRow*> CompletionStack::shownRows() const
-    {
-        std::vector<CompletionRow*> shown;
-        for (const ControlPtr& control : controls())
-        {
-            if (control->visible())
-                shown.push_back(&rowOf(control));
-        }
-        return shown;
-    }
-
-    void CompletionStack::setCurrentRow(CompletionRow* row)
-    {
-        setCurrentItem(row);
-        if (!row)
-            return;
-        // Into view on the pass that follows, which is also the pass the hint is put up from -
-        // the hint is placed off the row's bounds, and those are the pass's to give.
-        row->scrollIntoViewOnAlign();
-        invalidateFormAlign();
+        const TextRange& range = declaration->scope;
+        return range.start <= pos && pos <= range.end();
     }
 
     // ParameterHint
@@ -703,11 +379,11 @@ namespace ClaFi::Controls
         case Keys::Tab:
             if (shown)
             {
-                if (const CompletionRow* row = m_completionList->content().body().currentRow())
+                if (const std::optional<std::size_t> line = m_completionList->current())
                 {
                     event.handled = true;
                     m_completionTakesChar = false;
-                    takeCompletion(*row);
+                    takeCompletion(m_completionItems[m_completionListed[*line]]);
                     return;
                 }
             }
@@ -755,7 +431,7 @@ namespace ClaFi::Controls
             if (shown && event.modifiers.empty())
             {
                 event.handled = true;
-                m_completionList->content().body().moveCurrent(
+                m_completionList->moveCurrent(
                     event.key == Keys::Up ? ScrollDirection::ToBegin : ScrollDirection::ToEnd);
                 return;
             }
@@ -766,7 +442,7 @@ namespace ClaFi::Controls
             if (shown && event.modifiers.empty())
             {
                 event.handled = true;
-                m_completionList->content().body().moveCurrentByPage(
+                m_completionList->moveCurrentByPage(
                     event.key == Keys::Prior ? ScrollDirection::ToBegin : ScrollDirection::ToEnd);
                 return;
             }
@@ -900,7 +576,7 @@ namespace ClaFi::Controls
     {
         // The window's own state rather than isDroppedDown, which any popup on the box answers -
         // the context menu among them.
-        return m_completionList.has_value() && m_completionList->visible();
+        return m_completionList.has_value() && m_completionList->shown();
     }
 
     void CodeBox::requestCompletion(const bool opening)
@@ -993,30 +669,172 @@ namespace ClaFi::Controls
     {
         const Syntax::Language& language = m_lines.language();
         ensureCompletionList();
-        CompletionStack& rows = m_completionList->content().body();
         if (std::exchange(m_completionRowsStale, false))
-            rows.rebuild(language, m_completion, m_declarations, m_titleBlock);
+            buildCompletionItems(language);
         const std::wstring_view typed = line.text.substr(wordStart, line.caret - wordStart);
-        if (rows.filter(language, scope, owners, typed, line.start + line.caret, stated) == 0)
+        filterCompletionItems(language, scope, owners, typed, line.start + line.caret, stated);
+        if (m_completionListed.empty())
         {
             hideCompletion();
             return;
         }
+        DropListLines lines;
+        lines.reserve(m_completionListed.size());
+        for (const std::size_t item : m_completionListed)
+            lines.push_back(completionLine(m_completionItems[item], typed.size()));
 
         // Under the caret's line, from where the name starts, so the rows stand under the letters
-        // they complete. In the form's coordinates, which a popup's placement is stated in.
+        // they complete, the first current - an exact match, where there is one. In the form's
+        // coordinates, which a popup's placement is stated in.
         FloatRect anchor = caretRectInForm(line.start + line.caret);
         anchor.left = caretRectInForm(line.start + wordStart).left;
-        m_completionList->setPlacement(FormPlacement::BottomLeft, anchor);
-        if (!completionShown())
-        {
-            // Opened at its first row: where the list was left is not on screen to glide from.
-            m_completionList->content().scrollToBegin();
-            m_completionList->show();
-        }
+        m_completionList->show(std::move(lines), 0, FormPlacement::BottomLeft, anchor);
         // The hint takes the side of the line the list has left - see updateParameterHint.
         if (parameterHintShown())
             requestParameterHint(false);
+    }
+
+    void CodeBox::buildCompletionItems(const Syntax::Language& language)
+    {
+        std::vector<RowSource> sources;
+        for (const Syntax::Declaration& declaration : m_declarations)
+        {
+            sources.push_back({
+                CompletionScope::Global, nullptr, declaration.entry.name, declaration.entry.kind,
+                &declaration.entry, &declaration
+            });
+        }
+        for (const std::wstring_view keyword : language.keywords)
+        {
+            sources.push_back({
+                CompletionScope::Global, nullptr, keyword, Syntax::CompletionKind::Keyword,
+                nullptr, nullptr
+            });
+        }
+        if (m_completion)
+        {
+            for (const Syntax::CompletionEntry& entry : *m_completion)
+            {
+                sources.push_back({
+                    CompletionScope::Global, nullptr, entry.name, entry.kind, &entry, nullptr
+                });
+                // A member keeps its class, which is what a dot shows it by. The parent's members
+                // stand under the parent, so a class repeats none of them.
+                for (const Syntax::CompletionEntry& method : entry.methods)
+                {
+                    sources.push_back({
+                        CompletionScope::Member, &entry, method.name, method.kind, &method,
+                        nullptr
+                    });
+                }
+                for (const Syntax::CompletionEntry& property : entry.properties)
+                {
+                    sources.push_back({
+                        CompletionScope::Member, &entry, property.name, property.kind, &property,
+                        nullptr
+                    });
+                }
+            }
+        }
+        if (m_titleBlock)
+        {
+            // A value keeps its key, the way a member keeps its class.
+            for (const Syntax::TitleKey& key : m_titleBlock->keys)
+            {
+                sources.push_back({
+                    CompletionScope::Title, nullptr, key.entry.name, key.entry.kind, &key.entry,
+                    nullptr
+                });
+                for (const Syntax::CompletionEntry& value : key.values)
+                {
+                    sources.push_back({
+                        CompletionScope::Title, &key.entry, value.name, value.kind, &value, nullptr
+                    });
+                }
+            }
+        }
+
+        // Stable, so of an entry stated twice the first statement is the one kept.
+        std::ranges::stable_sort(sources, [&](const RowSource& left, const RowSource& right){
+            return listsBefore(language, left, right);
+        });
+        const auto duplicates = std::ranges::unique(sources,
+            [&](const RowSource& left, const RowSource& right){
+                return sameRow(language, left, right);
+            });
+        sources.erase(duplicates.begin(), duplicates.end());
+
+        m_completionItems.clear();
+        m_completionItems.reserve(sources.size());
+        for (const RowSource& source : sources)
+        {
+            m_completionItems.push_back({
+                .scope = source.scope,
+                .owner = source.owner,
+                .name = std::wstring{ source.name },
+                .kind = source.kind,
+                .entry = source.entry,
+                .declaration = source.declaration
+            });
+        }
+    }
+
+    void CodeBox::filterCompletionItems(const Syntax::Language& language,
+        const CompletionScope scope, const Syntax::CompletionClasses& owners,
+        const std::wstring_view typed, const std::size_t caret,
+        const Syntax::CompletionNames& stated)
+    {
+        m_completionListed.clear();
+        const CompletionItems& items = m_completionItems;
+        std::size_t at = 0;
+        while (at != items.size())
+        {
+            // A run lists one item at most: the one read off the nearest owner.
+            const std::size_t end = endOfRun(language, items, at);
+            std::optional<std::size_t> pick{};
+            std::size_t pickRank = 0;
+            for (std::size_t i = at; i != end; ++i)
+            {
+                const CompletionItem& item = items[i];
+                const std::optional<std::size_t> rank = rankOf(item, owners);
+                const bool eligible = item.scope == scope
+                    && item.inForceAt(caret)
+                    && rank.has_value()
+                    && !isStated(language, stated, item.name);
+                if (eligible && (!pick.has_value() || *rank < pickRank))
+                {
+                    pick = i;
+                    pickRank = *rank;
+                }
+            }
+            if (pick.has_value() && Syntax::completionMatches(language, items[*pick].name, typed))
+                m_completionListed.push_back(*pick);
+            at = end;
+        }
+    }
+
+    // The part typed so far in the accent, the rest in the text's own ink, and the kind muted at
+    // the end of the line - a flex space lands every kind on the list's right edge. The hint is
+    // the signature in the code style and the sentence under it; a keyword, or an entry that says
+    // no more than its name, has none.
+    DropListLine CodeBox::completionLine(const CompletionItem& item, const std::size_t typed)
+    {
+        DropListLine line{};
+        const std::wstring_view name = item.name;
+        if (typed)
+            line.text << InkWell::accentInk() << name.substr(0, typed) << PopColor{};
+        line.text << name.substr(typed);
+        line.text << FlexSpace{ k_kindGap } << InkWell::textInk(InkGrade::Muted)
+            << Syntax::completionKindName(item.kind) << PopColor{};
+
+        const Syntax::CompletionEntry* entry = item.entry;
+        if (!entry || (entry->signature.empty() && entry->hint.empty()))
+            return line;
+        const std::wstring& signature = entry->signature.empty() ? entry->name : entry->signature;
+        line.hint << TextStyleId::Code << signature << PopTextStyle{};
+        if (!entry->hint.empty())
+            line.hint << L"\n" << InkGrade::Muted << entry->hint << PopColor{};
+        return line;
     }
 
     void CodeBox::readDeclarations()
@@ -1038,12 +856,11 @@ namespace ClaFi::Controls
         m_completionOpening = false;
         m_completionExplicit = false;
         m_completionWaitsOnAlign = false;
-        if (!completionShown())
-            return;
-        // The hint beside the current row goes with the list.
-        Hint::stopAndHide();
-        m_completionList->close();
-        // And the hint over the call comes back to its own side of the line.
+        // The hint beside the current row goes with the list - see DropList::hide.
+        if (m_completionList.has_value())
+            m_completionList->hide();
+        // And the hint over the call comes back to its own side of the line - asked even of a
+        // list already down, as one a click took a line from is. See DropList::pick
         if (parameterHintShown())
             requestParameterHint(false);
     }
@@ -1052,52 +869,27 @@ namespace ClaFi::Controls
     {
         if (m_completionList.has_value())
             return;
-        const ThemeMetrics& metrics = themeMetrics();
-        m_completionList.emplace(
-            appContext(),
-            WindowRole::Menu,
-            this,
-            HostProps{
-                metrics.secondaryWindow,
-                metrics.secondaryWindowShadow,
-                UiElement::Section,
-                // A list taller than its room scrolls - see ComboBox::showDropdown.
-                ScrollBars::Auto,
-                // Ten rows, and a bar past that.
-                MaxSize{
-                    k_maxFloat,
-                    k_completionRows * metrics.toolButton.minSize.y + 2.0f * k_completionPadding
-                },
-                Padding{ k_completionPadding },
-                // Nothing in the list takes the focus: the rows are reached by the pointer, and
-                // by the keys the box hands on.
-                Interactivity::MouseOnly
-            },
-            BodyProps{ *this }
-        );
-        // Sized by what is listed, which changes under it as the text does; and hidden rather
-        // than destroyed when nothing is listed, since the next character may list something
-        // again.
-        m_completionList->setAutoFit(AutoFit::Yes);
-        m_completionList->setCloseAction(CloseAction::Hide);
-        m_completionList->setDropdownClearance(2.0f);
-        m_completionList->setMinWidth(k_completionMinWidth);
-        // The hint is placed off the current row's bounds, which the pass that lays the rows out
-        // gives, so it is put up from that pass.
-        m_listAligned = m_completionList->onAligned([this](FormAlignedEvent&){
-            m_completionList->content().body().showCurrentHint();
-            // A pass that sized the list again may have moved it to the other side of the line.
+        // Ten rows and a bar past that, and a width of its own - the caret it stands under has
+        // none to give it.
+        m_completionList.emplace(*this, [this](const DropListPick& picked) {
+            takeCompletion(m_completionItems[m_completionListed[picked.line]]);
+        }, DropListOptions{
+            .shownLines = k_completionRows,
+            .minWidth = k_completionMinWidth
+        });
+        // A pass that sized the list again may have moved it to the other side of the line.
+        m_completionList->setPlacedFunc([this]() {
             if (parameterHintShown())
                 requestParameterHint(false);
         });
     }
 
-    void CodeBox::takeCompletion(const CompletionRow& row)
+    void CodeBox::takeCompletion(const CompletionItem& item)
     {
         const CaretLine line = caretLine();
-        const bool title = row.scope() == CompletionScope::Title;
+        const bool title = item.scope == CompletionScope::Title;
         std::size_t wordStart = 0;
-        std::wstring written{ row.name() };
+        std::wstring written{ item.name };
         bool valueFollows = false;
         if (title)
         {
@@ -1134,7 +926,7 @@ namespace ClaFi::Controls
         // One edit, undone as one: the name as typed goes, and the row's own spelling stands in
         // its place with the caret after it.
         Text what{};
-        what << L"Complete " << InkWell::accentInk() << row.name() << PopColor{};
+        what << L"Complete " << InkWell::accentInk() << item.name << PopColor{};
         m_takingCompletion = true;
         setSelection(line.start + wordStart, line.start + line.caret);
         applyEdit(ensureCaret(), Text{ written }, EditKind::Replace, what);
@@ -1218,7 +1010,7 @@ namespace ClaFi::Controls
         // that stands above the line, for want of room below it, leaves the hint the side below.
         FloatRect anchor = caretRectInForm(caret);
         anchor.left = caretRectInForm(lines.start(call->line) + call->bracket).left;
-        const bool listAbove = completionShown() && m_completionList->window().standsAbove();
+        const bool listAbove = m_completionList.has_value() && m_completionList->standsAbove();
         m_parameterHint->setPlacement(listAbove ? FormPlacement::BottomLeft : FormPlacement::Top,
             anchor);
         if (!parameterHintShown())

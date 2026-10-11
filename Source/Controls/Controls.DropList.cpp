@@ -136,15 +136,22 @@ namespace ClaFi::Controls
         return static_cast<std::size_t>(at - shown.begin());
     }
 
+    // **A list the keys can leave** enters at its first row from none, and Up on that row leaves
+    // it with none - the target's own text is what the keys stand on then. Any other stays at its
+    // ends, and enters from none at the end the key heads for. See UpFromFirst
     void DropListStack::moveCurrent(const ScrollDirection direction)
     {
         const std::vector<Control*> shown = shownRows();
         if (shown.empty())
             return;
+        const bool leaves = m_list.options().upFromFirst == UpFromFirst::Leaves;
         const auto at = std::ranges::find(shown, currentItem());
         if (at == shown.end())
         {
-            setCurrentRow(direction == ScrollDirection::ToEnd ? shown.front() : shown.back());
+            if (direction == ScrollDirection::ToEnd)
+                setCurrentRow(shown.front());
+            else if (!leaves)
+                setCurrentRow(shown.back());
             return;
         }
         if (direction == ScrollDirection::ToEnd)
@@ -155,6 +162,8 @@ namespace ClaFi::Controls
         }
         if (at != shown.begin())
             setCurrentRow(*std::prev(at));
+        else if (leaves)
+            setCurrentRow(nullptr);
     }
 
     void DropListStack::moveCurrentByPage(const ScrollDirection direction)
@@ -225,27 +234,37 @@ namespace ClaFi::Controls
     void DropListStack::setCurrentRow(Control* row)
     {
         setCurrentItem(row);
-        if (!row)
-            return;
-        // Into view on the pass that follows, which is also the pass the hint is put up from -
-        // the hint is placed off the row's bounds, and those are the pass's to give.
-        row->scrollIntoViewOnAlign();
+        // Into view on the pass that follows, which is also the pass the hint is put up from, or
+        // taken down from with no row - the hint is placed off the row's bounds, and those are
+        // the pass's to give.
+        if (row)
+            row->scrollIntoViewOnAlign();
         invalidateFormAlign();
     }
 
     // DropList
 
-    DropList::DropList(Control& target, DropListPickFunc pick, const KeyModifiers keptBy)
+    DropList::DropList(Control& target, DropListPickFunc pick, const DropListOptions options)
         :
         m_target{ target },
         m_pick{ std::move(pick) },
-        m_keptBy{ keptBy }
+        m_options{ options }
     {
     }
 
     bool DropList::shown() const
     {
         return m_form.has_value() && m_form->visible();
+    }
+
+    bool DropList::standsAbove() const
+    {
+        return shown() && m_form->window().standsAbove();
+    }
+
+    void DropList::setPlacedFunc(std::function<void()> placed)
+    {
+        m_placed = std::move(placed);
     }
 
     std::optional<std::size_t> DropList::current()
@@ -255,9 +274,9 @@ namespace ClaFi::Controls
         return m_form->content().body().current();
     }
 
-    // At least as wide as the anchor, and placed off it - both read now rather than once, since
-    // what the anchor stands for may have moved or grown since the list last stood. In design
-    // units, which a popup shares with its parent.
+    // At least as wide as the anchor and the least width stated, and placed off the anchor - both
+    // read now rather than once, since what the anchor stands for may have moved or grown since
+    // the list last stood. In design units, which a popup shares with its parent.
     void DropList::show(DropListLines lines, const std::optional<std::size_t> current,
         const FormPlacement placement, const FloatRect& anchor)
     {
@@ -274,7 +293,8 @@ namespace ClaFi::Controls
         ensureForm();
         m_lines = std::move(lines);
         m_form->content().body().showLines(current);
-        m_form->setMinWidth(anchor.width() / m_target.scaler().factor());
+        m_form->setMinWidth(std::max(anchor.width() / m_target.scaler().factor(),
+            m_options.minWidth));
         m_form->setPlacement(placement, anchor);
         if (shown())
             return;
@@ -322,7 +342,7 @@ namespace ClaFi::Controls
     // the modifiers the list is kept by leaves it standing, its current line where it was.
     void DropList::pick(const DropListPick& picked)
     {
-        if (!holdsAll(picked.modifiers, m_keptBy))
+        if (!holdsAll(picked.modifiers, m_options.keptBy))
             hide();
         if (m_pick)
             m_pick(picked);
@@ -330,8 +350,11 @@ namespace ClaFi::Controls
 
     bool DropList::fitShownLines(const float rowHeight)
     {
+        const float lines = m_options.shownLines;
+        if (lines <= 0.0f)
+            return false;
         const DropListStack& stack = m_form->content().body();
-        const float rows = k_shownLines * rowHeight + (k_shownLines - 1.0f) * stack.spacing().y
+        const float rows = lines * rowHeight + (lines - 1.0f) * stack.spacing().y
             + 2.0f * stack.padding().y;
         const float height = rows + 2.0f * k_padding;
         DropListBox& box = m_form->content();
@@ -346,6 +369,12 @@ namespace ClaFi::Controls
         if (m_form.has_value())
             return;
         const ThemeMetrics& metrics = m_target.themeMetrics();
+        // The shown lines at a tool button's least height until the rows are measured, and no
+        // cap where none is stated.
+        const float lines = m_options.shownLines;
+        const float height = lines > 0.0f
+            ? lines * metrics.toolButton.minSize.y + 2.0f * k_padding
+            : k_maxFloat;
         m_form.emplace(
             m_target.appContext(),
             WindowRole::Menu,
@@ -356,11 +385,7 @@ namespace ClaFi::Controls
                 UiElement::Section,
                 // A list taller than its room scrolls - see ComboBox::showDropdown.
                 ScrollBars::Auto,
-                // Twelve rows at a tool button's least height until the rows are measured.
-                MaxSize{
-                    k_maxFloat,
-                    k_shownLines * metrics.toolButton.minSize.y + 2.0f * k_padding
-                },
+                MaxSize{ k_maxFloat, height },
                 Padding{ k_padding },
                 // Nothing in the list takes the focus: the rows are reached by the pointer, and
                 // by the keys the target hands on.
@@ -372,11 +397,13 @@ namespace ClaFi::Controls
         // than destroyed when nothing is listed, since the next ask may list something again.
         m_form->setAutoFit(AutoFit::Yes);
         m_form->setCloseAction(CloseAction::Hide);
-        m_form->setDropdownClearance(k_clearance);
+        m_form->setDropdownClearance(m_options.clearance);
         // The hint is placed off the current row's bounds, which the pass that lays the rows out
-        // gives, so it is put up from that pass.
+        // gives, so it is put up from that pass - and the owner told where the list now stands.
         m_aligned = m_form->onAligned([this](FormAlignedEvent&){
             m_form->content().body().showCurrentHint();
+            if (m_placed)
+                m_placed();
         });
     }
 }

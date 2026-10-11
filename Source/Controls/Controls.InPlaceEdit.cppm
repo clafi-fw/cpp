@@ -1,10 +1,8 @@
 export module ClaFi.Controls.InPlaceEdit;
 
+import ClaFi.Controls.DropList;
 import ClaFi.Controls.TextItems;
 import ClaFi.Controls.TextBox;
-import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.Stack;
-import ClaFi.Controls.Button;
 import ClaFi.Controls.Panel;
 
 import ClaFi.StdActions;
@@ -128,46 +126,6 @@ namespace ClaFi::Controls
         std::wstring m_refusal{};
     };
 
-    class InPlaceEditRoot;
-
-    // One row of the suggestion list - an item, named as the sink would take it.
-    class SuggestionRow : public Button
-    {
-    public:
-        SuggestionRow(const CreateParams&, InPlaceEditRoot&, std::size_t itemIndex);
-        [[nodiscard]] std::size_t itemIndex() const { return m_itemIndex; }
-        // What the row is matched by - the item's typed name, settled once.
-        [[nodiscard]] const std::wstring& name() const { return m_name; }
-    protected:
-        void getText(GetTextEvent&) const override;
-        void nestedClick(ClickEvent&) override;
-    private:
-        InPlaceEditRoot& m_root;
-        std::size_t m_itemIndex;
-        std::wstring m_name;
-    };
-
-    // The rows the typed text names, and the row the keys are on. See Controls#suggestionlist
-    class SuggestionStack : public Stack
-    {
-    public:
-        SuggestionStack(const CreateParams&, InPlaceEditRoot&);
-        // Shows the rows the text names and hides the rest; answers how many, and none is current.
-        std::size_t filter(std::wstring_view typed);
-        // Moves the current row one shown row up or down. See Controls#suggestionlist
-        void moveCurrent(ScrollDirection);
-        // The item the current row stands for, while a row is current.
-        [[nodiscard]] ItemIndexValue currentItemIndex() const;
-    protected:
-        // Every row may be current: the box moves it, and the base's answer would rule that out.
-        bool defaultCanFocusItem(Control&) override;
-        // The current row reads selected - the base says so only for a stack that follows the user.
-        void getControlState(GetStateEvent&) const override;
-    };
-
-    // The suggestion list as it is dropped: a box that scrolls, holding the rows. See Controls
-    using SuggestionList = ScrollBoxWith<SuggestionStack>;
-
     // The root of an in-place edit form: a frame with one text box in it. The box holds a **copy**
     // of the text being edited - the control underneath keeps showing its own until the sink
     // takes the new one, and keeps it unchanged when nothing does.
@@ -198,10 +156,6 @@ namespace ClaFi::Controls
         // Puts the recorded reason on screen. Called by the endings that leave the editor
         // standing, and by no others.
         void showRefusal() { body().showRefusal(); }
-        // The values the editor completes from, or null. The rows read their items off it.
-        [[nodiscard]] const TextItems* suggestions() const { return m_suggestions; }
-        // Puts the item's name in the box and offers it - a pick is a pick, however it was made.
-        void takeSuggestion(std::size_t itemIndex);
     protected:
         [[nodiscard]] FloatPoint textOrigin() const override;
         void adjustNestedControlVisualState(const Control&, VisualState&) const override;
@@ -219,6 +173,8 @@ namespace ClaFi::Controls
         // Lists the items the text names, or takes the list down while none is.
         void showSuggestions(std::wstring_view typed);
         void hideSuggestions();
+        // Puts the item's name in the box and offers it - a pick is a pick, however it was made.
+        void takeSuggestion(std::size_t itemIndex);
     private:
         AcceptEditFunc m_accept{};
         // Cancelled until something says otherwise: an edit nobody took is an edit that did not
@@ -230,8 +186,11 @@ namespace ClaFi::Controls
         bool m_settled{ false };
         bool m_asked{ false };
         const TextItems* m_suggestions{ nullptr };
-        // The list, a window of its own on the box, shown and hidden as what is typed changes.
-        std::optional<Form<SuggestionList>> m_list{};
+        // What each item is matched by - its typed name, settled once. See Controls#suggestionlist
+        std::vector<std::wstring> m_suggestionNames{};
+        // The list on the box, shown and hidden as what is typed changes. See Controls#droplist
+        std::optional<DropList> m_list{};
+        std::vector<std::size_t> m_listed{};   // the item each line of the list stands for
         // The list asked for on an edit, answered once the input that made it has been delivered.
         UiTimer m_suggestionsRequest{};
         // Whether a request found the layout unsettled and waits on the pass that settles it.

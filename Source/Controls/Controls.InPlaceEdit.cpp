@@ -1,10 +1,8 @@
 module ClaFi.Controls.InPlaceEdit;
 
+import ClaFi.Controls.DropList;
 import ClaFi.Controls.TextItems;
 import ClaFi.Controls.TextBox;
-import ClaFi.Controls.ScrollBox;
-import ClaFi.Controls.Stack;
-import ClaFi.Controls.Button;
 import ClaFi.Controls.Panel;
 
 import ClaFi.Core.Foundation;
@@ -138,118 +136,6 @@ namespace ClaFi::Controls
         Hint::stopAndHide();
     }
 
-    // SuggestionRow
-
-    SuggestionRow::SuggestionRow(const CreateParams& params, InPlaceEditRoot& root,
-        const std::size_t itemIndex)
-        :
-        Button{ params,
-            // The look of a dropdown's line: no surface at rest, and the current row on its own.
-            params.themeMetrics().toolButton,
-            UiElement::ToolButton,
-            ShowSelectionOnSurface::Yes,
-            // Reached by the pointer and never focused - the caret stays in the box.
-            Interactivity::MouseOnly
-        },
-        m_root{ root },
-        m_itemIndex{ itemIndex },
-        m_name{ typedName((*root.suggestions())[itemIndex]) }
-    {
-    }
-
-    void SuggestionRow::getText(GetTextEvent& event) const
-    {
-        // The item's own text, or its placeholder muted while it has none - what a combo box
-        // face shows for it, without what a face adds.
-        const TextItem& item = (*m_root.suggestions())[m_itemIndex];
-        if (item.text().empty())
-            event.text << InkGrade::Muted << item.placeHolderText() << PopColor{};
-        else
-            event.text << item.text();
-    }
-
-    void SuggestionRow::nestedClick(ClickEvent&)
-    {
-        m_root.takeSuggestion(m_itemIndex);
-    }
-
-    // SuggestionStack
-
-    SuggestionStack::SuggestionStack(const CreateParams& params, InPlaceEditRoot& root)
-        :
-        Stack{ params,
-            Orientation::Vertical,
-            // **A scrolled body keeps the size it measured** - see ComboBoxDropdownStack.
-            WordWrap::No
-        }
-    {
-        const TextItems& items = *root.suggestions();
-        for (std::size_t i = 0; i != items.size(); ++i)
-            add<SuggestionRow>(root, i);
-    }
-
-    std::size_t SuggestionStack::filter(const std::wstring_view typed)
-    {
-        setCurrentItem(nullptr);
-        std::size_t shown = 0;
-        for (const ControlPtr& control : controls())
-        {
-            SuggestionRow& row = static_cast<SuggestionRow&>(*control);
-            const bool matches = startsWithFolded(row.name(), typed);
-            row.setVisible(matches);
-            if (matches)
-                ++shown;
-        }
-        return shown;
-    }
-
-    void SuggestionStack::moveCurrent(const ScrollDirection direction)
-    {
-        std::vector<Control*> shown{};
-        for (const ControlPtr& row : controls())
-        {
-            if (row->visible())
-                shown.push_back(row.get());
-        }
-        if (shown.empty())
-            return;
-
-        const Control* current = currentItem();
-        const auto at = std::ranges::find(shown, current);
-        if (direction == ScrollDirection::ToEnd)
-        {
-            if (at == shown.end())
-                setCurrentItem(shown.front());
-            else if (std::next(at) != shown.end())
-                setCurrentItem(*std::next(at));
-            return;
-        }
-        if (at == shown.end())
-            return;
-        setCurrentItem(at == shown.begin() ? nullptr : *std::prev(at));
-    }
-
-    ItemIndexValue SuggestionStack::currentItemIndex() const
-    {
-        if (const Control* current = currentItem())
-            return static_cast<const SuggestionRow*>(current)->itemIndex();
-        return {};
-    }
-
-    bool SuggestionStack::defaultCanFocusItem(Control& value)
-    {
-        return value.parent() == this;
-    }
-
-    void SuggestionStack::getControlState(GetStateEvent& event) const
-    {
-        Stack::getControlState(event);
-        if (event.propagationStopped())
-            return;
-        event.state.selected = &event.control == currentItem();
-        event.stopPropagation();
-    }
-
     // InPlaceEditRoot
 
     InPlaceEditRoot::InPlaceEditRoot(const CreateParams& params)
@@ -303,28 +189,18 @@ namespace ClaFi::Controls
         if (lists)
         {
             m_suggestions = target.suggestions;
-            m_list.emplace(
-                appContext(),
-                WindowRole::Menu,
-                &box,
-                HostProps{
-                    themeMetrics().secondaryWindow,
-                    themeMetrics().secondaryWindowShadow,
-                    UiElement::Section,
-                    // A list taller than its room scrolls - see ComboBox::showDropdown.
-                    ScrollBars::Auto,
-                    // Nothing in the list takes the focus: the rows are reached by the pointer,
-                    // and by the keys the box hands on.
-                    Interactivity::MouseOnly
-                },
-                BodyProps{ *this }
-            );
-            // Sized by what is listed, which changes under it as the text does; and hidden
-            // rather than destroyed when nothing is listed, since the next character may list
-            // something again.
-            m_list->setAutoFit(AutoFit::Yes);
-            m_list->setCloseAction(CloseAction::Hide);
-            m_list->setDropdownClearance(1.0f);
+            m_suggestionNames.clear();
+            for (const TextItem& item : *m_suggestions)
+                m_suggestionNames.push_back(typedName(item));
+            // As long as the screen lets it, as a combo box's list is, and walked from the box:
+            // nothing is current until Down, and Up from the first line goes back to the box.
+            m_list.emplace(box, [this](const DropListPick& picked) {
+                takeSuggestion(m_listed[picked.line]);
+            }, DropListOptions{
+                .shownLines = 0.0f,
+                .clearance = 1.0f,
+                .upFromFirst = UpFromFirst::Leaves
+            });
             m_textEdit = box.onTextEdit([this](TextEditEvent&){
                 m_suggestionsRequest.start(MilliSeconds{ 0u });
             });
@@ -474,12 +350,8 @@ namespace ClaFi::Controls
                 // list up and no row current, Return means what was typed, as it always does.
                 if (suggestionsShown())
                 {
-                    const ItemIndexValue picked = m_list->content().body().currentItemIndex();
-                    if (picked.has_value())
-                    {
-                        takeSuggestion(picked.value());
+                    if (m_list->pickCurrent(event.modifiers, event.stamp))
                         return;
-                    }
                     hideSuggestions();
                 }
                 acceptText();
@@ -524,7 +396,7 @@ namespace ClaFi::Controls
                 if (!suggestionsShown())
                     break;
                 event.handled = true;
-                m_list->content().body().moveCurrent(
+                m_list->moveCurrent(
                     event.key == Keys::Up ? ScrollDirection::ToBegin : ScrollDirection::ToEnd);
                 return;
             }
@@ -546,9 +418,7 @@ namespace ClaFi::Controls
 
     bool InPlaceEditRoot::suggestionsShown() const
     {
-        // The list registers on this form as the box's popup while it is up, and on nothing
-        // while it is down - the same fact a combo box face reads about its list.
-        return body().isDroppedDown();
+        return m_list.has_value() && m_list->shown();
     }
 
     void InPlaceEditRoot::updateSuggestions()
@@ -586,23 +456,33 @@ namespace ClaFi::Controls
         showSuggestions({});
     }
 
+    // A line shows the item's own text, or its placeholder muted while it has none - what a combo
+    // box face shows for it, without what a face adds. Under the box and at least as wide, both
+    // read now rather than once, since the box grows with what is typed; none current.
     void InPlaceEditRoot::showSuggestions(const std::wstring_view typed)
     {
-        SuggestionStack& rows = m_list->content().body();
-        if (rows.filter(typed) == 0)
+        m_listed.clear();
+        DropListLines lines;
+        for (std::size_t i = 0; i != m_suggestionNames.size(); ++i)
+        {
+            if (!startsWithFolded(m_suggestionNames[i], typed))
+                continue;
+            const TextItem& item = (*m_suggestions)[i];
+            Text text;
+            if (item.text().empty())
+                text << InkGrade::Muted << item.placeHolderText() << PopColor{};
+            else
+                text << item.text();
+            m_listed.push_back(i);
+            lines.push_back({ .text = std::move(text) });
+        }
+        if (lines.empty())
         {
             hideSuggestions();
             return;
         }
-
-        // At least as wide as the box, and under it - both read now rather than once, since
-        // the box grows with what is typed. In design units, which a popup shares with its
-        // parent.
-        const PromptBox& box = body();
-        m_list->setMinWidth(box.width() / scaler().factor());
-        m_list->setPlacement(FormPlacement::BottomLeft, box.boundsInForm());
-        if (!suggestionsShown())
-            m_list->show();
+        m_list->show(std::move(lines), std::nullopt, FormPlacement::BottomLeft,
+            body().boundsInForm());
     }
 
     void InPlaceEditRoot::hideSuggestions()
@@ -610,8 +490,8 @@ namespace ClaFi::Controls
         // A request still pending would put the list back up after the user took it down.
         m_suggestionsRequest.stop();
         m_suggestionsWaitOnAlign = false;
-        if (suggestionsShown())
-            m_list->close();
+        if (m_list.has_value())
+            m_list->hide();
     }
 
     // InPlaceEditForm

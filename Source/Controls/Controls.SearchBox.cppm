@@ -142,7 +142,7 @@ namespace ClaFi::Controls
         // The field keeps the focus, and the list going down hands it back there.
         m_list{ m_field, [this](const DropListPick& picked) {
             pick(picked);
-        }, m_listKeptBy }
+        }, DropListOptions{ .keptBy = m_listKeptBy } }
     {
         m_count.hide();
         m_field.onTextEdit([this](TextEditEvent&){
