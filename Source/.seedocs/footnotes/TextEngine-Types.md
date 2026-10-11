@@ -172,20 +172,24 @@ viewport pays for the paragraphs on screen. A CodeBox is the overlay the framewo
 
 **A searcher is the application's, and a container only points at it.** ContainerBase::setSearcher
 hands it every text painted inside the container - a grid's cells, a label, a text box read-only or
-not - and the paint asks it for the places each paragraph holds one of its words; they are drawn on
-the FoundText band. The paint hands the searcher down: a control naming none keeps its container's,
-so the innermost container naming one is the one in force, and naming none takes the bands down. The
-application keeps the searcher for as long as a container points at it.
+not - and the paint asks it for the places each paragraph holds one of its words, drawn on the
+FoundText band. The paint hands the searcher down: a control naming none keeps its container's, so
+the innermost container naming one is the one in force, and naming none takes the bands down. The
+application keeps the searcher for as long as a container points at it. A text box steps through the
+places it finds with the same searcher handed in - see Controls#search.
 
-**Its words are its text split at white space**, each folded in the user's locale once, as the text
-is given, so case is aside. A word is found wherever it stands, inside a longer word too, as a find
-over a page reads it. A paragraph is folded as it is painted, so text out of view costs nothing.
+**Its text is taken as SearchSplit says**: Words splits it at white space, a word at a time, which
+is a search over a page; Phrase takes it whole as typed, which is a find in an editor. Each word is
+folded in the user's locale once, as the text is given, so case is aside. A word is found wherever
+it stands, inside a longer word too, and places that overlap are one, so findIn answers them in text
+order and apart. A paragraph is folded as it is painted, into a buffer the searcher keeps, which
+grows only for a paragraph longer than any before; text out of view costs nothing.
 
 **The band is drawn, and the text stays as it was**: it is measured, copied and saved as it was. The
 searcher knows nothing of the containers it is handed to, so new words repaint nothing until whoever
-gave them invalidates what shows them, or hands the searcher again. An editor's own search -
-TextBox::setSearchText - is drawn with the searcher's, the two sets of places run into one where
-they overlap. A hint is a window of its own and asks no searcher.
+gave them invalidates what shows them, or hands the searcher again. A hint is a window of its own
+and asks no searcher. The buffer makes findIn a const call that writes, so a searcher is asked from
+one thread.
 
 ## Links
 

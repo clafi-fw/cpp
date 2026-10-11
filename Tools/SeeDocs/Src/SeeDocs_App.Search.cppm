@@ -4,6 +4,8 @@ import SeeDocs_App.Notes;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
+import ClaFi.Core.TextEngine.Searcher;
+
 import ClaFi.StdLib;
 
 // **What a search finds in a project**: the names its surface carries, ranked against what is
@@ -85,25 +87,17 @@ namespace SeeDocs_App
         [[nodiscard]] std::wstring ownerOf(std::wstring_view note,
             const NoteSection&) const;
     private:
-        // A name's spellings in lower case, the shown one first, and its owner's.
-        struct Folded
-        {
-            Names spellings;
-            std::wstring owner;
-        };
-        using FoldedNames = std::vector<Folded>;
-    private:
         void addFolders(const ContentsFolders&);
         void addModule(const Surface&, const ContentsFolder&, const ContentsModule&);
         void addType(const Surface&, const ContentsFolder&, const ContentsModule&, const Type&);
         void add(NamedEntry);
         void addOwner(const NamedEntry&);
         // The types named exactly so, and every type they stand on, as far as the surface reads.
-        [[nodiscard]] std::unordered_set<const Type*> typesUnder(std::wstring_view owner) const;
+        [[nodiscard]] std::unordered_set<const Type*> typesUnder(
+            const ClaFi::Searcher& owner) const;
     private:
         const Surface* m_surface{ nullptr };
         NamedEntries m_entries{};
-        FoldedNames m_folded{};   // one per entry, at its index
         SectionOwners m_cited{};   // by note and anchor, from the comments' See references
         SectionOwners m_named{};   // by the heading a footnote found by name is written under
     };

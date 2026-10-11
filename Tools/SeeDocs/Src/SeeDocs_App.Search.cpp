@@ -5,10 +5,15 @@ import SeeDocs_App.Notes;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
+import ClaFi.Core.TextEngine.Searcher;
+import ClaFi.Core.System.UiTypes;
+
 import ClaFi.StdLib;
 
 namespace SeeDocs_App
 {
+    using namespace ClaFi;
+
     namespace
     {
         constexpr std::wstring_view k_scope = L"::";
@@ -25,15 +30,6 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_headerWord = L"header";
         constexpr std::size_t k_sectionRows = 200;   // what a section of the page lists at most
         constexpr std::size_t k_maxBaseDepth = 16;   // what a base chain is followed to
-
-        [[nodiscard]] std::wstring folded(const std::wstring_view text)
-        {
-            std::wstring result;
-            result.reserve(text.size());
-            for (const wchar_t current : text)
-                result += static_cast<wchar_t>(std::towlower(current));
-            return result;
-        }
 
         // Where a word of a name starts: after _, :, . or /, at a capital after a lower-case
         // letter or a digit, and at the last capital of a run before a lower-case letter - the P
@@ -61,27 +57,30 @@ namespace SeeDocs_App
         {
             MatchRank rank{ MatchRank::Inside };
             std::size_t start{ 0 };
+            std::size_t length{ 0 };
         };
 
-        // The name as written and the same in lower case, which are of one length.
+        // The best of the places the searcher finds in the name, read into the caller's vector.
         [[nodiscard]] std::optional<Match> matchName(const std::wstring_view name,
-            const std::wstring_view foldedName, const std::wstring_view query)
+            const Searcher& searcher, std::vector<TextRange>& places)
         {
-            if (query.empty() || foldedName.size() < query.size())
+            searcher.findIn(name, places);
+            if (places.empty())
                 return std::nullopt;
-            if (foldedName == query)
-                return Match{ MatchRank::Exact, 0 };
-            if (foldedName.starts_with(query))
-                return Match{ MatchRank::Start, 0 };
-            for (std::size_t at = 1; at + query.size() <= foldedName.size(); ++at)
+            const TextRange& first = places.front();
+            if (first.start == 0)
             {
-                if (isWordStart(name, at) && foldedName.substr(at, query.size()) == query)
-                    return Match{ MatchRank::WordStart, at };
+                const MatchRank rank = first.length == name.size()
+                    ? MatchRank::Exact
+                    : MatchRank::Start;
+                return Match{ rank, 0, first.length };
             }
-            const std::size_t at = foldedName.find(query);
-            if (at == std::wstring_view::npos)
-                return std::nullopt;
-            return Match{ MatchRank::Inside, at };
+            for (const TextRange& place : places)
+            {
+                if (isWordStart(name, place.start))
+                    return Match{ MatchRank::WordStart, place.start, place.length };
+            }
+            return Match{ MatchRank::Inside, first.start, first.length };
         }
 
         // A query of two parts: the owner it names and the name, cut at its last ::, else at its
@@ -192,9 +191,9 @@ namespace SeeDocs_App
         };
 
         [[nodiscard]] std::optional<WrittenPlace> findRead(const std::wstring_view written,
-            const std::wstring_view query)
+            const Searcher& searcher)
         {
-            if (query.empty())
+            if (searcher.empty())
                 return std::nullopt;
             std::wstring read;
             std::vector<std::size_t> places;   // where each character read stands as written
@@ -207,14 +206,15 @@ namespace SeeDocs_App
                     i += k_boldMark.size() - 1;
                     continue;
                 }
-                read += static_cast<wchar_t>(std::towlower(written[i]));
+                read += written[i];
                 places.push_back(i);
             }
-            const std::size_t at = read.find(query);
-            if (at == std::wstring::npos)
+            std::vector<TextRange> found;
+            searcher.findIn(read, found);
+            if (found.empty())
                 return std::nullopt;
-            const std::size_t start = places[at];
-            const std::size_t end = places[at + query.size() - 1] + 1;
+            const std::size_t start = places[found.front().start];
+            const std::size_t end = places[found.front().end() - 1] + 1;
             return WrittenPlace{ start, end - start };
         }
 
@@ -278,12 +278,12 @@ namespace SeeDocs_App
         // The first sentence holding the words, or the first sentence of the section where only
         // its heading does; empty for a section with no words.
         [[nodiscard]] std::optional<std::wstring> wordsOf(const NoteSection& section,
-            const std::wstring_view query, const bool headingHolds)
+            const Searcher& searcher, const bool headingHolds)
         {
             const std::vector<std::wstring> paragraphs = paragraphsOf(section.lines);
             for (const std::wstring& paragraph : paragraphs)
             {
-                if (const std::optional<WrittenPlace> place = findRead(paragraph, query))
+                if (const std::optional<WrittenPlace> place = findRead(paragraph, searcher))
                     return sentenceAt(paragraph, place->start, place->length);
             }
             if (!headingHolds)
@@ -449,7 +449,7 @@ namespace SeeDocs_App
 
         // The declarations whose hints hold the words and whose names do not, in the tree's order.
         void gatherHints(Gathered& section, const SearchedProject& project,
-            const std::size_t index, const NameHits& hits, const std::wstring_view query,
+            const std::size_t index, const NameHits& hits, const Searcher& searcher,
             const LinkSpeller& spell)
         {
             std::unordered_set<const NamedEntry*> named;
@@ -459,7 +459,7 @@ namespace SeeDocs_App
             {
                 if (!entry.comment || named.contains(&entry))
                     continue;
-                if (!findRead(entry.comment->text, query))
+                if (!findRead(entry.comment->text, searcher))
                     continue;
                 TableRow row;
                 if (entry.kind == NameKind::Type)
@@ -473,7 +473,7 @@ namespace SeeDocs_App
         // The footnote sections holding the words, in the folder's order: where each stands, linked
         // to the declaration it belongs to, and the sentence the words stand in.
         void gatherFootnotes(Gathered& section, const SearchedProject& project,
-            const std::size_t index, const std::wstring_view query, const LinkSpeller& spell)
+            const std::size_t index, const Searcher& searcher, const LinkSpeller& spell)
         {
             Notes& notes = *project.notes;
             for (const std::wstring& stem : notes.stems())
@@ -483,8 +483,8 @@ namespace SeeDocs_App
                     continue;
                 for (const NoteSection& noteSection : note->sections)
                 {
-                    const bool headingHolds = findRead(noteSection.heading, query).has_value();
-                    const std::optional<std::wstring> words = wordsOf(noteSection, query,
+                    const bool headingHolds = findRead(noteSection.heading, searcher).has_value();
+                    const std::optional<std::wstring> words = wordsOf(noteSection, searcher,
                         headingHolds);
                     if (!words.has_value())
                         continue;
@@ -565,15 +565,23 @@ namespace SeeDocs_App
 
     NameHits SearchIndex::find(const std::wstring_view query, const std::size_t limit) const
     {
-        const std::wstring whole = folded(trimmed(query));
+        const std::wstring_view typed = trimmed(query);
+        Searcher whole;
+        whole.setText(typed, SearchSplit::Phrase);
         if (whole.empty())
             return {};
-        const std::optional<QueryParts> parts = partsOf(whole);
+        const std::optional<QueryParts> parts = partsOf(typed);
+        Searcher ownerPart;
+        Searcher namePart;
         // **A member a type's page lists is the type's to find**: one of a base the first part
         // names exactly stands after the type's own.
         std::unordered_set<const Type*> under;
         if (parts.has_value())
-            under = typesUnder(parts->owner);
+        {
+            ownerPart.setText(parts->owner, SearchSplit::Phrase);
+            namePart.setText(parts->name, SearchSplit::Phrase);
+            under = typesUnder(ownerPart);
+        }
 
         // A hit, how well its owner holds a two-part query's first part, and where it stands.
         struct Ranked
@@ -583,22 +591,22 @@ namespace SeeDocs_App
             std::size_t index{ 0 };
         };
 
+        std::vector<TextRange> places;
         std::vector<Ranked> ranked;
         for (std::size_t i = 0; i != m_entries.size(); ++i)
         {
             const NamedEntry& entry = m_entries[i];
-            const Folded& names = m_folded[i];
             std::optional<Match> best;
             std::size_t bestSpelling = 0;
-            std::wstring_view matched = whole;
+            const Searcher* matched = &whole;
             MatchRank ownerRank = MatchRank::Exact;
+            const std::size_t spellings = entry.spellings.size() + 1;   // the shown one first
             const auto spelledAt = [&entry](const std::size_t at) -> std::wstring_view {
                 return at == 0 ? std::wstring_view{ entry.name } : entry.spellings[at - 1];
             };
-            for (std::size_t at = 0; at != names.spellings.size(); ++at)
+            for (std::size_t at = 0; at != spellings; ++at)
             {
-                const std::optional<Match> match = matchName(spelledAt(at), names.spellings[at],
-                    whole);
+                const std::optional<Match> match = matchName(spelledAt(at), whole, places);
                 if (match && (!best || match->rank < best->rank))
                 {
                     best = match;
@@ -607,13 +615,13 @@ namespace SeeDocs_App
             }
             if (parts.has_value())
             {
-                std::optional<Match> owner = matchName(entry.owner, names.owner, parts->owner);
+                std::optional<Match> owner = matchName(entry.owner, ownerPart, places);
                 if (!owner && entry.kind != NameKind::Type && under.contains(entry.type))
-                    owner = Match{ MatchRank::Inside, 0 };
-                for (std::size_t at = 0; owner && at != names.spellings.size(); ++at)
+                    owner = Match{ MatchRank::Inside, 0, 0 };
+                for (std::size_t at = 0; owner && at != spellings; ++at)
                 {
-                    const std::optional<Match> match = matchName(spelledAt(at),
-                        names.spellings[at], parts->name);
+                    const std::optional<Match> match = matchName(spelledAt(at), namePart,
+                        places);
                     const bool better = match
                         && (!best || match->rank < best->rank
                             || (match->rank == best->rank && owner->rank < ownerRank));
@@ -621,7 +629,7 @@ namespace SeeDocs_App
                         continue;
                     best = match;
                     bestSpelling = at;
-                    matched = parts->name;
+                    matched = &namePart;
                     ownerRank = owner->rank;
                 }
             }
@@ -631,15 +639,15 @@ namespace SeeDocs_App
             NameHit hit{
                 .entry = &entry,
                 .rank = best->rank,
-                .start = {},
-                .length = matched.size()
+                .start = best->start,
+                .length = best->length
             };
-            if (bestSpelling == 0)
-                hit.start = best->start;
-            else if (const std::size_t at = names.spellings.front().find(matched);
-                at != std::wstring::npos)
+            if (bestSpelling != 0)
             {
-                hit.start = at;
+                matched->findIn(entry.name, places);
+                hit.start.reset();
+                if (!places.empty())
+                    hit.start = places.front().start;
             }
             ranked.push_back({ .hit = hit, .ownerRank = ownerRank, .index = i });
         }
@@ -882,13 +890,7 @@ namespace SeeDocs_App
 
     void SearchIndex::add(NamedEntry entry)
     {
-        Folded names;
-        names.spellings.push_back(folded(entry.name));
-        for (const std::wstring& spelling : entry.spellings)
-            names.spellings.push_back(folded(spelling));
-        names.owner = folded(entry.owner);
         addOwner(entry);
-        m_folded.push_back(std::move(names));
         m_entries.push_back(std::move(entry));
     }
 
@@ -915,13 +917,16 @@ namespace SeeDocs_App
         m_named.try_emplace(heading, entry.link);
     }
 
-    std::unordered_set<const Type*> SearchIndex::typesUnder(const std::wstring_view owner) const
+    std::unordered_set<const Type*> SearchIndex::typesUnder(const Searcher& owner) const
     {
         std::unordered_set<const Type*> result;
-        for (std::size_t i = 0; i != m_entries.size(); ++i)
+        std::vector<TextRange> places;
+        for (const NamedEntry& entry : m_entries)
         {
-            const NamedEntry& entry = m_entries[i];
-            if (entry.kind != NameKind::Type || m_folded[i].spellings.front() != owner)
+            if (entry.kind != NameKind::Type)
+                continue;
+            const std::optional<Match> match = matchName(entry.name, owner, places);
+            if (!match || match->rank != MatchRank::Exact)
                 continue;
             result.insert(entry.type);
             addBases(*m_surface, *entry.type, result, 0);
@@ -933,7 +938,8 @@ namespace SeeDocs_App
         const LinkSpeller& spell)
     {
         const std::wstring_view typed = trimmed(query);
-        const std::wstring words = folded(typed);
+        Searcher whole;
+        whole.setText(typed, SearchSplit::Phrase);
         const std::size_t count = projects.size();
 
         std::vector<Gathered> sections;
@@ -945,13 +951,13 @@ namespace SeeDocs_App
         Gathered hints = gathered(L"In hints", { column(L"Name"), column(L"Hint", true) }, count);
         Gathered footnotes = gathered(L"In footnotes",
             { column(L"Section"), column(L"Words", true) }, count);
-        for (std::size_t i = 0; i != count && !words.empty(); ++i)
+        for (std::size_t i = 0; i != count && !whole.empty(); ++i)
         {
             const SearchedProject& project = projects[i];
             const NameHits hits = project.index->find(typed);
             gatherNames(sections, project, i, hits, spell);
-            gatherHints(hints, project, i, hits, words, spell);
-            gatherFootnotes(footnotes, project, i, words, spell);
+            gatherHints(hints, project, i, hits, whole, spell);
+            gatherFootnotes(footnotes, project, i, whole, spell);
         }
 
         Page page;

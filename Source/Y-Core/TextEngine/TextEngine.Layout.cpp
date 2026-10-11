@@ -234,46 +234,6 @@ namespace ClaFi
         return { static_cast<std::size_t>(-1), 0 };
     }
 
-    static void collectLocalRanges(const std::vector<TextRange>& globalRanges, std::size_t pStart,
-        std::size_t pEnd, std::vector<TextRange>& localRanges)
-    {
-        localRanges.clear();
-        for (const auto& r : globalRanges)
-        {
-            TextRange localRange = getLocalRange(r, pStart, pEnd);
-            if (localRange.start != static_cast<std::size_t>(-1))
-            {
-                localRanges.push_back(localRange);
-            }
-        }
-    }
-
-    // **A searcher's hits are drawn with an editor's**: the two are sorted together and run into
-    // one where they overlap, the order and the spacing the draw takes them in. See
-    // TextEngine-Types#searcher
-    static void addSearchHits(const Searcher& searcher, const std::wstring_view text,
-        std::vector<TextRange>& hits)
-    {
-        const std::size_t editorHits = hits.size();
-        searcher.addHits(text, hits);
-        if (hits.size() == editorHits)
-            return;
-        std::ranges::sort(hits, {}, &TextRange::start);
-        std::size_t kept = 0;
-        for (std::size_t i = 0; i != hits.size(); ++i)
-        {
-            if (kept != 0 && hits[kept - 1].end() > hits[i].start)
-            {
-                TextRange& last = hits[kept - 1];
-                last.length = std::max(last.end(), hits[i].end()) - last.start;
-                continue;
-            }
-            hits[kept] = hits[i];
-            ++kept;
-        }
-        hits.resize(kept);
-    }
-
     // What a selected newline shows. A newline carries no width of its own, so a row the
     // selection runs through would end flush with its last glyph, and a row with no text would
     // show nothing at all. The share is of the row's own height, which holds the band in
@@ -930,14 +890,14 @@ namespace ClaFi
                 localCollapseBaseline = collapseBaseline - paragraph.bounds.top;
 
             TextRange localSelection{};
-            buffers.hits.clear();
             if (editProps)
-            {
                 localSelection = getLocalRange(editProps->selRange, paragraph.textStart, paragraph.textStart + paragraph.textLength);
-                collectLocalRanges(editProps->hits, paragraph.textStart, paragraph.textStart + paragraph.textLength, buffers.hits);
-            }
+            // The places the searcher in force finds, asked of the paragraph as it is drawn. See
+            // TextEngine-Types#searcher
             if (controlContext.searcher)
-                addSearchHits(*controlContext.searcher, paragraphText(paragraph), buffers.hits);
+                controlContext.searcher->findIn(paragraphText(paragraph), buffers.hits);
+            else
+                buffers.hits.clear();
 
             // --- **Fixed**: Extend the right edge of the paragraph bounds to the container's right boundary ---
             FloatRect paraDrawBounds{

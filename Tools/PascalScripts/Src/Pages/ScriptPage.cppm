@@ -17,6 +17,7 @@ import ClaFi.Core.Syntax.Completion;
 import ClaFi.Core.Syntax.Languages;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
@@ -55,6 +56,7 @@ namespace PascalScripts_App
         static constexpr float k_caretReadoutWidth = 104.0f;
         static constexpr float k_caretReadoutFontSize = 11.0f;
         static constexpr float k_searchWidth = 260.0f;
+        Searcher m_searcher{};   // what the search box holds, found in the script as typed
         // Both bars at all times: the corner the caret readout stands in shows only with both up.
         ScrollBox& m_scrollBox{ createBody<ScrollBox>(
             ScrollBars::Both
@@ -91,6 +93,7 @@ namespace PascalScripts_App
         :
         DocumentPage{ params, std::forward<Args>(args)... }
     {
+        m_scrollBox.setSearcher(&m_searcher);
         // The folder the browser hands every page is the application's own, which is what
         // knows the language; the cast states that.
         const ScriptsFolder& scripts = static_cast<const ScriptsFolder&>(folder());

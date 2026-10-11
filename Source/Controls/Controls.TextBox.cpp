@@ -13,10 +13,10 @@ import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.TextEngine;
 import ClaFi.Core.TextEngine.Layout;
+import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
-import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
 namespace ClaFi::Controls
@@ -46,6 +46,20 @@ namespace ClaFi::Controls
                 }
             }
             return false;
+        }
+
+        // The place the selection lies within, ends included, so a caret against either end of a
+        // place names it; a caret where two meet names the second.
+        [[nodiscard]] std::optional<std::size_t> placeOfSelection(
+            const std::vector<TextRange>& places, const TextRange& selection)
+        {
+            const std::size_t after = static_cast<std::size_t>(
+                std::ranges::upper_bound(places, selection.start, {}, &TextRange::start)
+                - places.begin());
+            // A whole-text selection and an unplaced caret both end at k_maxSize, past every place.
+            if (after == 0 || selection.end() > places[after - 1].end())
+                return std::nullopt;
+            return after - 1;
         }
     }
 
@@ -182,33 +196,22 @@ namespace ClaFi::Controls
         restorePlace(place);
     }
 
-    void TextBox::setSearchText(const std::wstring_view value)
+    // The text as it stands now, searched whole - the places are the searcher's to name, and
+    // nothing of them is kept here.
+    FoundPlaces TextBox::found(const Searcher& searcher) const
     {
-        if (value == m_searchText)
-            return;
-        m_searchText = value;
-        // Searched now rather than at the next paint: a caller asks what was found straight after.
-        m_foundStamp = {};
-        refreshFound();
-        invalidate();
+        std::vector<TextRange> places;
+        searcher.findIn(text().plainText(), places);
+        return {
+            .count = places.size(),
+            .selected = placeOfSelection(places, m_editProps.selRange)
+        };
     }
 
-    std::optional<std::size_t> TextBox::selectedFound() const
+    bool TextBox::find(const Searcher& searcher, const FindTarget target)
     {
-        const std::vector<TextRange>& found = m_editProps.hits;
-        const std::size_t after = static_cast<std::size_t>(
-            std::ranges::upper_bound(found, m_editProps.selRange.start, {}, &TextRange::start)
-            - found.begin());
-        // A whole-text selection and an unplaced caret both end at k_maxSize, past every range.
-        if (after == 0 || m_editProps.selRange.end() > found[after - 1].end())
-            return std::nullopt;
-        return after - 1;
-    }
-
-    bool TextBox::find(const FindTarget target)
-    {
-        refreshFound();
-        const std::vector<TextRange>& found = m_editProps.hits;
+        std::vector<TextRange> found;
+        searcher.findIn(text().plainText(), found);
         if (found.empty())
             return false;
 
@@ -231,13 +234,13 @@ namespace ClaFi::Controls
                 break;
             case FindTarget::Previous:
                 // Back from the range the count names, where the selection lies within one.
-                index = selectedFound().value_or(atOrAfter) + found.size() - 1;
+                index = placeOfSelection(found, m_editProps.selRange).value_or(atOrAfter)
+                    + found.size() - 1;
                 break;
         }
         // Past the last range is the first again, and before the first is the last.
         index %= found.size();
 
-        // A copy: the caret move below is announced, and a listener may search again.
         const TextRange range = found[index];
         m_editProps.targetX.reset();
         setSelection(range.start, range.end());
@@ -718,29 +721,5 @@ namespace ClaFi::Controls
         StdActions::selectAll.invalidateState();
         StdActions::undo.invalidateState();
         StdActions::redo.invalidateState();
-    }
-
-    void TextBox::refreshFound()
-    {
-        const TextStamp stamp = text().stamp();
-        if (stamp == m_foundStamp)
-            return;
-        m_foundStamp = stamp;
-        m_editProps.hits.clear();
-        if (m_searchText.empty())
-            return;
-
-        std::wstring pattern = m_searchText;
-        foldCase(pattern);
-        std::wstring folded = text().plainText();
-        foldCase(folded);
-        // Ranges that do not overlap, in text order - the order the engine draws them in and
-        // find walks.
-        std::size_t pos = folded.find(pattern);
-        while (pos != std::wstring::npos)
-        {
-            m_editProps.hits.push_back({ pos, pattern.size() });
-            pos = folded.find(pattern, pos + pattern.size());
-        }
     }
 }

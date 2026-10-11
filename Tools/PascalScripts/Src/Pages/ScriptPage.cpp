@@ -13,6 +13,7 @@ import ClaFi.Core.DomEngine;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Fmt;
+import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
@@ -61,16 +62,16 @@ namespace PascalScripts_App
             else if (&event.action == &StdActions::findNext
                 || &event.action == &StdActions::findPrevious)
             {
-                event.claim({ .enabled = m_box.foundCount() != 0 });
+                event.claim({ .enabled = m_box.found(m_searcher).count != 0 });
             }
         });
         onActionClick([this](ActionClickEvent& event) {
             if (&event.action == &StdActions::find)
                 startSearch();
             else if (&event.action == &StdActions::findNext)
-                m_box.find(FindTarget::Next);
+                m_box.find(m_searcher, FindTarget::Next);
             else if (&event.action == &StdActions::findPrevious)
-                m_box.find(FindTarget::Previous);
+                m_box.find(m_searcher, FindTarget::Previous);
         });
     }
 
@@ -94,17 +95,22 @@ namespace PascalScripts_App
         switch (request)
         {
             case SearchRequest::Search:
-                m_box.setSearchText(m_search.searchText());
-                m_box.find(FindTarget::AtSelection);
+                // The searcher knows nothing of the box, so the bands are repainted from here.
+                if (m_searcher.setText(m_search.searchText(), SearchSplit::Phrase))
+                    m_box.invalidate();
+                m_box.find(m_searcher, FindTarget::AtSelection);
                 break;
             case SearchRequest::Next:
-                m_box.find(FindTarget::Next);
+                m_box.find(m_searcher, FindTarget::Next);
                 break;
             case SearchRequest::Previous:
-                m_box.find(FindTarget::Previous);
+                m_box.find(m_searcher, FindTarget::Previous);
                 break;
             case SearchRequest::End:
                 m_box.setFocus();
+                break;
+            // The box shows no list, so nothing is picked from one.
+            case SearchRequest::Pick:
                 break;
         }
         writeSearchResult();
@@ -112,7 +118,8 @@ namespace PascalScripts_App
 
     void ScriptPage::writeSearchResult()
     {
-        m_search.setResult(m_box.selectedFound(), m_box.foundCount());
+        const FoundPlaces found = m_box.found(m_searcher);
+        m_search.setResult(found.selected, found.count);
         // A presenter keeps the answer it was last given until it is asked again.
         StdActions::findNext.invalidateState();
         StdActions::findPrevious.invalidateState();

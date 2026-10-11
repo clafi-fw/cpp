@@ -24,6 +24,7 @@ import ClaFi.Controls.Base.ExpanderBase;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
@@ -326,7 +327,7 @@ namespace SeeDocs_App
     {
         clear();
         m_page = std::move(page);
-        m_searcher.setText(m_page.searched);
+        m_searcher.setText(m_page.searched, SearchSplit::Words);
         addHead();
         addLead();
         addFacts();
@@ -377,7 +378,7 @@ namespace SeeDocs_App
         clear();
         m_head.clear();
         m_page = {};
-        m_searcher.setText({});
+        m_searcher.setText({}, SearchSplit::Words);
         m_head.setVisible(false);
         TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes);
         box.text() = text;

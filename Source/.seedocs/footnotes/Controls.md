@@ -271,26 +271,22 @@ writing the text leaves it standing, and a place is clamped to the text when it 
 
 ## Search
 
-A text box marks every range of its text a search text matches - plain text, with case ignored
-by the user's locale - and draws each on the Found Text band, under the glyphs and under the
-selection. setSearchText states what is searched for, and an empty text marks nothing. Ranges
-do not overlap.
+A text box steps through what a searcher finds in its text - see TextEngine-Types#searcher. The box
+searches nothing of its own: its owner holds the searcher, hands it to a container the box stands
+in, so the paint bands what it finds, and hands it to the box's own calls. found answers how many
+places the text holds and the one the selection is on. Each call searches the text whole as it
+stands, so an edit by any route is in the next answer, and nothing is kept between calls.
 
-**The marks follow the text**, whatever route changes it. An edit made through the box searches
-again before anything is announced, so foundCount and selectedFound are current when
-CaretMoveEvent and TextEditEvent are raised. A text a host writes is searched again when the box
-is next painted.
+find selects one found place and brings it into view, measured from where the selection starts.
+AtSelection takes the first place at or after it, which is what typing a search does: a match that
+still holds keeps its place as the search text grows, and one that stops holding gives way to the
+next. Next takes the first place after it. Previous takes the one before the place the selection
+lies within, and where it lies within none, the last place before it. All three wrap at the ends of
+the text, and answer false with nothing found.
 
-find selects one found range and brings it into view, measured from where the selection starts.
-AtSelection takes the first range at or after it, which is what typing a search does: a match
-that still holds keeps its place as the search text grows, and one that stops holding gives way
-to the next. Next takes the first range after it. Previous takes the one before the range the
-selection lies within, and where it lies within none, the last range before it. All three wrap
-at the ends of the text, and answer false with nothing found.
-
-selectedFound answers the found range the selection lies within, ends included, so a caret
-standing in a match or against either end of it names that match. A caret where two ranges meet
-names the second. Next and Previous step from that range, so the count and the steps agree.
+FoundPlaces::selected names the place the selection lies within, ends included, so a caret standing
+in a match or against either end of it names that match. A caret where two places meet names the
+second. Next and Previous step from that place, so the count and the steps agree.
 
 A SearchBox is where a search is typed: a one-line box on the Page element with a placeholder,
 and a count at its right end while it holds text - "2 of 7", "? of 7" while the selection lies

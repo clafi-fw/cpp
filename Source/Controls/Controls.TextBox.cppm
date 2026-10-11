@@ -12,6 +12,7 @@ import ClaFi.Core.Foundation.EditHistory;
 
 import ClaFi.Core.TextEngine.History;
 import ClaFi.Core.TextEngine.Layout;
+import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Fmt;
@@ -48,6 +49,13 @@ namespace ClaFi::Controls
         AtSelection,    // the first at or after it - what typing a search does
         Next,           // the first after it
         Previous        // the last before it
+    };
+
+    // How many places a searcher finds in a text box's text, and the one the selection is on.
+    export struct FoundPlaces
+    {
+        std::size_t count{ 0 };
+        std::optional<std::size_t> selected{};   // counted from zero; none off every place
     };
 
     export class TextBox;
@@ -168,14 +176,10 @@ namespace ClaFi::Controls
         [[nodiscard]] bool canGoBack() const { return !m_backPlaces.empty(); }
         [[nodiscard]] bool canGoForward() const { return !m_forwardPlaces.empty(); }
 
-        // Marks every range of the text it matches, case ignored. See Controls#search
-        void setSearchText(std::wstring_view);
-        [[nodiscard]] const std::wstring& searchText() const { return m_searchText; }
-        [[nodiscard]] std::size_t foundCount() const { return m_editProps.hits.size(); }
-        // The found range the selection lies within, ends included, counted from zero.
-        [[nodiscard]] std::optional<std::size_t> selectedFound() const;
-        // Selects a found range and brings it into view. See Controls#search
-        bool find(FindTarget);
+        // What the searcher finds in the text, and where the selection is. See Controls#search
+        [[nodiscard]] FoundPlaces found(const Searcher&) const;
+        // Selects a place the searcher finds and brings it into view. See Controls#search
+        bool find(const Searcher&, FindTarget);
         // A step down is the last line's height, read off the layout the measuring pass left.
         [[nodiscard]] ScrollMetrics scrollMetrics() const override;
     protected:
@@ -339,8 +343,6 @@ namespace ClaFi::Controls
         // arriving or leaving each move what the box answers, and both tails end in it.
         void invalidateEditActions();
         void rememberTargetX(const FloatRect& textBounds, std::size_t caretPos);
-        // Searches again where the text has changed, by any route, since it was last searched.
-        void refreshFound();
         // Makes the caret solid and starts its interval over. Every move of the caret and every
         // edit ends here: a caret left on its own schedule is dark for half the time, including
         // the moment the user has just put it somewhere and is looking for it.
@@ -358,9 +360,6 @@ namespace ClaFi::Controls
         Places m_backPlaces;
         Places m_forwardPlaces;
         PointedLink m_pointedLink;
-        std::wstring m_searchText{};
-        // The state of the text the found ranges were read from.
-        TextStamp m_foundStamp{};
         // Which half of the blink the caret stands in - see paintText for whether it is drawn.
         bool m_caretOn{ true };
         // The edit that produced a text the layout has not been told about yet, recorded by
@@ -563,8 +562,6 @@ namespace ClaFi::Controls
 
     void TextBox::paintText(PaintEvent& event)
     {
-        // A host writes the text without the box hearing of it, and the marks name the text drawn.
-        refreshFound();
         m_editProps.caretVisible = m_caretOn
             && visualState().focused
             && event.windowFocusedFactor() >= 1.0f;
@@ -945,8 +942,6 @@ namespace ClaFi::Controls
 
     void TextBox::textEdited()
     {
-        // First, so both events below are raised with the marks already on the edited text.
-        refreshFound();
         m_editProps.targetX.reset();
         // The link the pointer stood on was found in the text before the edit. The next move of
         // the pointer finds it again in this one.

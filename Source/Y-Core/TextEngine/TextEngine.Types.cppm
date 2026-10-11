@@ -39,7 +39,6 @@ namespace ClaFi
         bool caretOnLeft{};
         bool affinityTrailing{ caretOnLeft };
         std::optional<float> targetX{};
-        std::vector<TextRange> hits{};
         // Whether the caret is drawn on this pass. The engine only reads it: a blink is a clock,
         // and the focus is a question about the form, so both belong to the control that owns the
         // caret. The selection is unaffected - it stays visible whatever this says.
