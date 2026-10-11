@@ -135,8 +135,9 @@ namespace ClaFi::Controls
         int execute();
         /// Drops the menu under a control the way a dropdown list falls, and runs it. This is for
         /// a menu that belongs to a control's outline rather than to the point that was clicked.
-        /// Answers once it has closed, and a menu with nothing to show does not open.
-        int executeUnder(const Control&);
+        /// Bottom hangs it from the control's left end, BottomEnd from its right end. Answers once
+        /// it has closed, and a menu with nothing to show does not open.
+        int executeUnder(const Control&, FormPlacement placement = FormPlacement::Bottom);
     private:
         // Nothing in it, and no placeholder to stand in for the nothing.
         [[nodiscard]] bool nothingToShow() const { return empty() && !m_showsPlaceHolder; }
@@ -302,13 +303,13 @@ namespace ClaFi::Controls
         return BaseMenuForm::execute();
     }
 
-    int Menu::executeUnder(const Control& control)
+    int Menu::executeUnder(const Control& control, const FormPlacement placement)
     {
         if (nothingToShow())
             return 0;
         // The gap a dropped list leaves between itself and what it fell from.
         setDropdownClearance(1.0f);
-        setPlacement(FormPlacement::Bottom, control.boundsInForm());
+        setPlacement(placement, control.boundsInForm());
         // And at least as wide as it - a list narrower than the face it fell from reads as
         // belonging to something else. In design units, which a popup shares with its parent.
         setMinWidth(control.width() / scaler().factor());

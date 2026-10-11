@@ -1622,6 +1622,15 @@ namespace ClaFi::PlatformImplementation::Wayland
                 | XDG_POSITIONER_CONSTRAINT_ADJUSTMENT_SLIDE_Y);
             break;
 
+        case FormPlacement::BottomEnd:
+            // Grows downwards from the anchor's bottom right corner and leftwards from it, so the
+            // two right edges stand level; the flip and the slide are a menu's.
+            ::xdg_positioner_set_anchor(positioner, XDG_POSITIONER_ANCHOR_BOTTOM_RIGHT);
+            ::xdg_positioner_set_gravity(positioner, XDG_POSITIONER_GRAVITY_BOTTOM_LEFT);
+            ::xdg_positioner_set_offset(positioner, 0, toSurface(placement.clearance));
+            ::xdg_positioner_set_constraint_adjustment(positioner, k_menuConstraints);
+            break;
+
         default:
             // Bottom, ContextMenu and Mouse all grow downwards from the anchor's bottom edge. The
             // two pointer placements state an empty anchor and no clearance, so they hang off the

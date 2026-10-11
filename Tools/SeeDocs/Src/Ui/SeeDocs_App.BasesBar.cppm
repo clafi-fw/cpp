@@ -2,8 +2,8 @@ export module SeeDocs_App.BasesBar;
 
 import SeeDocs_App.Pages;
 
+import ClaFi.Controls.Base.Container;
 import ClaFi.Controls.Base.DropdownControlBase;
-import ClaFi.Controls.Stack;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Events;
@@ -62,7 +62,7 @@ namespace SeeDocs_App
     };
 
     // A class's bases as reversed crumbs, the ways up running right and parting where they fork.
-    export class BasesBar : public Stack
+    export class BasesBar : public ContainerBase
     {
         friend BaseCrumb;
     public:
@@ -78,11 +78,39 @@ namespace SeeDocs_App
         // Builds a crumb per base, the bases kept by whoever shows them while the crumbs stand.
         void setBases(const BaseNodes&);
         void clearBases();
+    protected:
+        ScaledDimensions calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        // A crumb's width is read off it and narrowed here, as a row reads its items' widths.
+        [[nodiscard]] bool isChildWidthGiven(const Control&) const override { return false; }
     private:
-        // A crumb per base along one way up, and a column of rows where the way parts.
-        void addRun(Stack& row, const BaseNodes&);
+        using BaseSpan = std::span<const BaseNode>;
+        // What a way up comes to from where it starts, the column it parts into included.
+        struct RunExtent
+        {
+            float width{ 0.0f };
+            float height{ 0.0f };
+        };
+    private:
+        // A crumb per base, each way walked down before the next - the order every walk keeps.
+        void addCrumbs(BaseSpan);
+        [[nodiscard]] RunExtent runExtent(BaseSpan, std::size_t& crumb, float cap) const;
+        // The crumbs of one way up side by side, level with the middle of the height given, and a
+        // column of rows where the way parts.
+        void placeRun(AlignEvent&, BaseSpan, std::size_t& crumb, float cap, ScaledPosition,
+            float height);
+        [[nodiscard]] float crumbWidth(std::size_t crumb, float cap) const;
+        // The widest a crumb may stay for the bar to come to no more than the width.
+        [[nodiscard]] float capFor(float width, float leastCrumb) const;
         void choose(std::wstring target);
         void askMenu(Control& crumb, std::wstring target, ContextPopupEvent&);
+    private:
+        static constexpr float k_leastCrumb = 48.0f;   // what a narrowed crumb keeps of itself
+        static constexpr int k_capSteps = 24;          // halvings of the range the cap is found in
+
+        BaseSpan m_bases{};
+        std::vector<BaseCrumb*> m_crumbs{};   // in the order addCrumbs made them
+        std::vector<float> m_fullWidths{};    // what each crumb measured
     };
 
 
@@ -94,11 +122,9 @@ namespace SeeDocs_App
     template<typename... Args>
     BasesBar::BasesBar(const CreateParams& params, Args&&... args)
         :
-        Stack{
+        ContainerBase{
             params,
-            Orientation::Horizontal,
             Padding{ 0.0f },
-            Spacing{ 0.0f },
             std::forward<Args>(args)...
         }
     {

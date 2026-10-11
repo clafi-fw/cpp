@@ -1221,23 +1221,85 @@ namespace SeeDocs_App
 
         // The bases under the title
 
+        // The public types standing directly on each base the surface does not have, not nested in
+        // another, in reading order, by what the base is known by.
+        using UnknownBaseIndex = std::unordered_map<std::wstring, TypeList>;
+
+        // What a base the surface does not have is known by: its spelling, template arguments
+        // aside.
+        [[nodiscard]] std::wstring unknownBaseKey(const std::wstring_view spelling)
+        {
+            return std::wstring{ plainType(withoutArguments(spelling)) };
+        }
+
+        [[nodiscard]] UnknownBaseIndex unknownBaseIndexOf(const Surface& surface)
+        {
+            UnknownBaseIndex index;
+            for (const Type& type : surface.types())
+            {
+                if (!type.isPublic() || isNested(type))
+                    continue;
+                for (const std::wstring& spelled : type.bases)
+                {
+                    if (isTemplateParameter(type, spelled))
+                        continue;
+                    const std::wstring resolvedSpelling =
+                        surface.resolvedBase(spelled, type.nameSpace);
+                    if (surface.resolve(resolvedSpelling, type.nameSpace))
+                        continue;
+                    TypeList& standing = index[unknownBaseKey(resolvedSpelling)];
+                    if (std::ranges::find(standing, &type) == standing.end())
+                        standing.push_back(&type);
+                }
+            }
+            for (TypeList& standing : index | std::views::values)
+            {
+                std::ranges::sort(standing, [](const Type* left, const Type* right) {
+                    return readsBefore(*left, *right);
+                });
+            }
+            return index;
+        }
+
+        [[nodiscard]] std::wstring spellingOf(const BaseNode& base)
+        {
+            std::wstring result;
+            for (const Run& run : base.text)
+                result += run.text;
+            return result;
+        }
+
+        // The types standing directly on a base: by the type it names, or by what it is known by
+        // where the surface does not have it; null for none.
+        [[nodiscard]] const TypeList* derivedOf(const BaseNode& base, const DerivedIndex& index,
+            const UnknownBaseIndex& unknown)
+        {
+            if (base.type)
+            {
+                const auto found = index.find(base.type);
+                return found == index.end() ? nullptr : &found->second;
+            }
+            const auto found = unknown.find(unknownBaseKey(spellingOf(base)));
+            return found == unknown.end() ? nullptr : &found->second;
+        }
+
         // Each base's derived types, and among them the one the way up came through last - the
         // way holds the types from the page's own up to the base's.
-        void addDerivedLists(BaseNodes& bases, const DerivedIndex& index, TypeList& way)
+        void addDerivedLists(BaseNodes& bases, const DerivedIndex& index,
+            const UnknownBaseIndex& unknown, TypeList& way)
         {
             for (BaseNode& base : bases)
             {
-                const auto derived = base.type ? index.find(base.type) : index.end();
-                if (derived != index.end())
+                if (const TypeList* derived = derivedOf(base, index, unknown))
                 {
-                    base.derived = derived->second;
+                    base.derived = *derived;
                     const std::ranges::reverse_view nearestFirst{ way };
                     const auto from = std::ranges::find_first_of(nearestFirst, base.derived);
                     if (from != nearestFirst.end())
                         base.from = *from;
                 }
                 way.push_back(base.type);
-                addDerivedLists(base.bases, index, way);
+                addDerivedLists(base.bases, index, unknown, way);
                 way.pop_back();
             }
         }
@@ -1248,8 +1310,9 @@ namespace SeeDocs_App
             const DerivedIndex& index, const Type& type)
         {
             BaseWalk walk = baseWalkOf(surface, type);
+            const UnknownBaseIndex unknown = unknownBaseIndexOf(surface);
             TypeList way = { &type };
-            addDerivedLists(walk.bases, index, way);
+            addDerivedLists(walk.bases, index, unknown, way);
             page.bases = std::move(walk.bases);
             return std::move(walk.reached);
         }

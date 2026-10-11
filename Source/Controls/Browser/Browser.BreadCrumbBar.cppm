@@ -359,7 +359,8 @@ namespace ClaFi::Browser
                 line.scrollIntoView();
             });
         }
-        menu.executeUnder(*this);
+        // The list hangs from the mark that drops it, starting where the mark does.
+        menu.executeUnder(*secondaryPart());
     }
 
     void BreadCrumbBarItem::adjustPaint(AdjustPaintEvent& event)

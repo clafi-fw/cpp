@@ -757,7 +757,7 @@ namespace ClaFi::PlatformImplementation::Windows
             break;
         }
 
-        default: // top, bottom, mouse, mousePoint(contextMenu) cases
+        default: // top, bottom, bottom end, mouse, mousePoint(contextMenu) cases
         {
             // The edge the window grows from on each side, and the room that side has between
             // that edge and the screen. A window on the pointer states no clearance and hangs
@@ -796,7 +796,11 @@ namespace ClaFi::PlatformImplementation::Windows
             }
 
             const float top = placeAbove ? aboveY - size.y : belowY;
-            result = FloatRect::fromDimensions({ anchor.left, top }, size);
+            // BottomEnd hangs the window from the anchor's right end, the two right edges level.
+            const float left = placement.placement == FormPlacement::BottomEnd
+                ? anchor.right - size.x
+                : anchor.left;
+            result = FloatRect::fromDimensions({ left, top }, size);
             break;
         }
         }

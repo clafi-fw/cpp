@@ -5,16 +5,18 @@ import SeeDocs_App.PageText;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
+import ClaFi.Controls.Base.Container;
 import ClaFi.Controls.Base.DropdownControlBase;
 import ClaFi.Controls.Menu;
-import ClaFi.Controls.Stack;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
@@ -25,6 +27,9 @@ namespace SeeDocs_App
 
     namespace
     {
+        // What a base's list says while no type the surface has stands on the base.
+        constexpr std::wstring_view k_noDerived = L"No derived types";
+
         // The page a crumb names: the link its words carry; empty for a base with no page.
         [[nodiscard]] std::wstring_view targetOf(const BaseNode& node)
         {
@@ -68,19 +73,16 @@ namespace SeeDocs_App
             SecondaryPartPlacement::Left,
             params.themeMetrics().toolButton,
             Padding{ 4.0f },
-            // **A crumb is as narrow as its own spelling**, so bases wider than the page narrow
-            // their crumbs, and the over-text hint shows a spelling cut short. Only the width is
-            // freed: the height stays a button's.
+            // The bar narrows its crumbs itself, so only the height is held: a button's.
             MinSize{ 0.0f, params.themeMetrics().button.minSize.y },
-            // Level with the middle of a column of bases standing beside it on the row.
+            // One line, cut short where the bar narrows it.
+            WordWrap::No,
+            // Level with the middle of the run it stands in, a column of bases beside it included.
             VerticalAlign::Center
         },
         m_bar{ bar },
         m_node{ node }
     {
-        // The strip is what says there is a list behind the crumb, so a base with no type standing
-        // on it - one the surface does not have - has none.
-        secondaryPart()->setVisible(!m_node.derived.empty());
         onContextPopup([this](ContextPopupEvent& event) {
             const std::wstring_view target = targetOf(m_node);
             if (target.empty())
@@ -100,6 +102,7 @@ namespace SeeDocs_App
     void BaseCrumb::showDropdown(Control& initiator)
     {
         Menu menu{ initiator };
+        menu.setPlaceHolderText(Text{ k_noDerived });
         for (const Type* type : m_node.derived)
         {
             const RowIcon icon = rowIconOf(*type);
@@ -128,7 +131,9 @@ namespace SeeDocs_App
                 line.scrollIntoView();
             });
         }
-        menu.executeUnder(*this);
+        // The list hangs from the mark that drops it, ending where the mark does - a path crumb's
+        // list mirrored.
+        menu.executeUnder(*secondaryPart(), FormPlacement::BottomEnd);
     }
 
     void BaseCrumb::adjustPaint(AdjustPaintEvent& event)
@@ -159,41 +164,136 @@ namespace SeeDocs_App
     void BasesBar::setBases(const BaseNodes& bases)
     {
         clearBases();
-        addRun(*this, bases);
+        m_bases = bases;
+        addCrumbs(m_bases);
+        m_fullWidths.assign(m_crumbs.size(), 0.0f);
     }
 
     void BasesBar::clearBases()
     {
+        m_bases = {};
+        m_crumbs.clear();
+        m_fullWidths.clear();
         while (!controls().empty())
             controls().back()->deleteSelf();
     }
 
-    void BasesBar::addRun(Stack& row, const BaseNodes& bases)
+    // **What a crumb measured is kept here**, where it is still its measurement: the align pass
+    // writes the width a crumb is given over it.
+    ScaledDimensions BasesBar::calculateContent(AlignEvent&)
     {
-        const BaseNodes* step = &bases;
-        while (step->size() == 1)
+        for (std::size_t i = 0; i != m_crumbs.size(); ++i)
+            m_fullWidths[i] = m_crumbs[i]->width();
+        std::size_t crumb = 0;
+        const RunExtent whole = runExtent(m_bases, crumb, k_maxFloat);
+        return { whole.width, whole.height };
+    }
+
+    void BasesBar::alignContent(AlignEvent& event, ScaledPosition position,
+        ScaledDimensions& contentDimensions)
+    {
+        const float cap = capFor(contentDimensions.x, event.scale(k_leastCrumb));
+        std::size_t crumb = 0;
+        const RunExtent whole = runExtent(m_bases, crumb, cap);
+        crumb = 0;
+        placeRun(event, m_bases, crumb, cap, position, whole.height);
+        contentDimensions = { whole.width, whole.height };
+    }
+
+    void BasesBar::addCrumbs(const BaseSpan bases)
+    {
+        for (const BaseNode& base : bases)
         {
-            row.add<BaseCrumb>(*this, step->front());
-            step = &step->front().bases;
+            m_crumbs.push_back(&add<BaseCrumb>(*this, base));
+            addCrumbs(base.bases);
         }
-        if (step->empty())
+    }
+
+    // Along a way the crumbs add up, and a column is as wide as its widest row and as tall as its
+    // rows together.
+    BasesBar::RunExtent BasesBar::runExtent(BaseSpan bases, std::size_t& crumb,
+        const float cap) const
+    {
+        RunExtent run = {};
+        while (bases.size() == 1)
+        {
+            run.width += crumbWidth(crumb, cap);
+            run.height = std::max(run.height, m_crumbs[crumb]->height());
+            ++crumb;
+            bases = bases.front().bases;
+        }
+        if (bases.empty())
+            return run;
+        RunExtent column = {};
+        for (std::size_t i = 0; i != bases.size(); ++i)
+        {
+            const RunExtent row = runExtent(bases.subspan(i, 1), crumb, cap);
+            column.width = std::max(column.width, row.width);
+            column.height += row.height;
+        }
+        run.width += column.width;
+        run.height = std::max(run.height, column.height);
+        return run;
+    }
+
+    void BasesBar::placeRun(AlignEvent& event, BaseSpan bases, std::size_t& crumb,
+        const float cap, ScaledPosition position, const float height)
+    {
+        while (bases.size() == 1)
+        {
+            const float width = crumbWidth(crumb, cap);
+            alignControl(m_crumbs[crumb], event, position, { width, height });
+            ++crumb;
+            position.x += width;
+            bases = bases.front().bases;
+        }
+        if (bases.empty())
             return;
-        Stack& column = row.add<Stack>(
-            Orientation::Vertical,
-            Padding{ 0.0f },
-            Spacing{ 0.0f },
-            VerticalAlign::Center
-        );
-        for (const BaseNode& base : *step)
+        std::vector<float> rowHeights;
+        float columnHeight = 0.0f;
+        std::size_t ahead = crumb;
+        for (std::size_t i = 0; i != bases.size(); ++i)
         {
-            Stack& branch = column.add<Stack>(
-                Orientation::Horizontal,
-                Padding{ 0.0f },
-                Spacing{ 0.0f }
-            );
-            branch.add<BaseCrumb>(*this, base);
-            addRun(branch, base.bases);
+            rowHeights.push_back(runExtent(bases.subspan(i, 1), ahead, cap).height);
+            columnHeight += rowHeights.back();
         }
+        position.y += (height - columnHeight) / 2.0f;
+        for (std::size_t i = 0; i != bases.size(); ++i)
+        {
+            placeRun(event, bases.subspan(i, 1), crumb, cap, position, rowHeights[i]);
+            position.y += rowHeights[i];
+        }
+    }
+
+    float BasesBar::crumbWidth(const std::size_t crumb, const float cap) const
+    {
+        return std::min(m_fullWidths[crumb], cap);
+    }
+
+    // **The widest crumbs come down to one common width**, the way a fit levels a row of tabs, so
+    // a short name stays whole while a long template spelling gives way. A column makes the bar's
+    // width the widest of its rows rather than their sum, so the cap is found by halving the range
+    // it can stand in rather than solved for. A bar that overruns at the least a crumb keeps is
+    // left to overrun.
+    float BasesBar::capFor(const float width, const float leastCrumb) const
+    {
+        std::size_t crumb = 0;
+        if (runExtent(m_bases, crumb, k_maxFloat).width <= width)
+            return k_maxFloat;
+        float fits = leastCrumb;
+        float overruns = std::ranges::max(m_fullWidths);
+        for (int step = 0; step != k_capSteps; ++step)
+        {
+            const float cap = (fits + overruns) / 2.0f;
+            crumb = 0;
+            if (runExtent(m_bases, crumb, cap).width <= width)
+                fits = cap;
+            else
+                overruns = cap;
+        }
+        // Whole pixels: a crumb's align ceils the width it is given, and a fraction would push it
+        // over the next crumb.
+        return std::floor(fits);
     }
 
     void BasesBar::choose(std::wstring target)

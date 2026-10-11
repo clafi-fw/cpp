@@ -474,7 +474,8 @@ namespace ClaFi
         Top,
         ContextMenu,
         Mouse,
-        Right   // beside the anchor, off its right edge and level with its top
+        Right,      // beside the anchor, off its right edge and level with its top
+        BottomEnd   // under the anchor, its right edge level with the anchor's
     };
     export using HintPlacement = FormPlacement;
 
@@ -722,7 +723,7 @@ namespace ClaFi
         float open{ ChevronTurn::up };
     };
 
-    // Design width of a dropdown strip standing at the control's right. See UI-Types
+    // Design width of a dropdown strip standing beside the control's face. See UI-Types
     export struct DropdownWidth
     {
         float value{ 18.0f };
