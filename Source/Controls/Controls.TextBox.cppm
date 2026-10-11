@@ -317,7 +317,7 @@ namespace ClaFi::Controls
         // Records the link the pointer stands on, and has the hint asked again when it changed.
         void pointAtLink(const std::optional<LinkHit>&);
         // What a link's hint says when no handler says it. See Controls#link-hints
-        void writeLinkHint(Text&) const;
+        void writeLinkHint(GetHintEvent&) const;
         // The line of the pointed link the pointer is on, in form coordinates.
         [[nodiscard]] FloatRect pointedLinkLine() const;
         [[nodiscard]] Place currentPlace() const;

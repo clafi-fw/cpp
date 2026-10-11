@@ -343,8 +343,10 @@ closed; then, as the page's footnote headed Details, the note the type's comment
 prose, its file and section in the heading's hint; then
 the types beside it in its module. A property, an event, a field or a member
 whose comment references a note carries a mark in a column of its own, and the note stands as a
-footnote under the grid; the mark leads to it, as an anchor of the page's url. A section's
-heading says what the section is; how many elements it holds is the heading's hint.
+footnote under the grid; the mark leads to it, as an anchor of the page's url, and its hint shows
+the footnote's first lines over the row, as a link's hint shows the paragraph of the anchor it
+leads to. A section's heading says what the section is; how many elements it holds is the
+heading's hint.
 A declaration whose comment references nothing takes the section named after it from its
 folder's note - the one the folder's declarations cite the most, as a new footnote's home is
 chosen below - marked as matched by name in that hint: a type's, a function's or a constant's

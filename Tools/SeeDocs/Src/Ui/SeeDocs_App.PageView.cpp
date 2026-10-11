@@ -726,6 +726,17 @@ namespace SeeDocs_App
                         writeSignature(event.text(), row.hint, false, row.language);
                 });
             }
+            // The mark previews its footnote over the row, as a link previews its anchor.
+            if (anchor.has_value())
+            {
+                gridRow.onGetCellHint([&row](Grids::GetCellHintEvent& event) {
+                    if (event.column().tag().value != k_markColumn)
+                        return;
+                    GetHintEvent& hint = event.hint();
+                    hint.placement = FormPlacement::Top;
+                    hint.writePreview(textOf(row.excerpt->blocks));
+                });
+            }
             gridRow.onGetCellText([&row, anchor](Grids::GetCellTextEvent& event) {
                 const TagValue column = event.column().tag().value;
                 if (column == k_markColumn)

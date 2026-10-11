@@ -315,6 +315,21 @@ line it came to - a short hint stays as short as its words. The one exception is
 over text: it repeats the lines the control broke, at the width the control broke them. Either way a
 hint shows k_maxLines lines at most, 20, and fades the last of them when the text runs on.
 
+## GetHintEvent::writePreview
+
+A hint written as a preview of a longer text - the paragraph an anchor link leads to, the footnote
+a mark leads to. The preview goes after what the hint holds already.
+
+**A preview stops after six lines.** The text is laid out at Hint::k_lineWidth, the width the hint
+breaks its lines at, and cut where the sixth line ends. An ellipsis ends what is left, in the
+styles still open where it stands - muted inside a muted run, regular after a bold word that ends
+at the cut. A word the ellipsis would push onto a seventh line goes with the rest, and a line
+holding one word longer than itself gives up characters instead. The cut costs one shaping of the
+text on top of the hint's own.
+
+An indent or an alignment the preview states holds for what is written after it, so a line added
+under a preview states its own.
+
 ## Score
 
 How one candidate is ranked against another when a key has to choose between them. A

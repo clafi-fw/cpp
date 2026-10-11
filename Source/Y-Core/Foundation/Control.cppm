@@ -376,6 +376,9 @@ namespace ClaFi
         HorizontalTextAnchor textAnchor{ HorizontalTextAnchor::None };
         const EventPhase phase;
         bool hideOnUserInput{ true };
+    public:
+        // Writes the text cut to the lines a preview shows. See Control-Foundation
+        void writePreview(Text preview);
     };
 
     export struct HitTestEvent

@@ -47,58 +47,6 @@ namespace ClaFi::Controls
             return false;
         }
 
-        // How many lines of a paragraph a link's hint shows before it cuts the rest off.
-        constexpr std::size_t k_previewLines = 6;
-
-        // Where the first lines of a laid-out text end, or where the text does for one with no
-        // more lines than that.
-        [[nodiscard]] std::size_t linesEnd(TextLayout& layout, std::size_t lines)
-        {
-            std::size_t end = 0;
-            for (std::size_t line = 0; line != lines; ++line)
-                end = layout.rowEnd({ end, false });
-            return end;
-        }
-
-        // Cuts a preview to the lines a hint shows, broken at the width the hint breaks at. The
-        // ellipsis ending it takes the styles still open where it stands.
-        void cutPreview(Text& preview, ScaleFactor scale)
-        {
-            TextLayout layout;
-            layout.setWrap(true);
-            layout.setBoundsAndScale({ Hint::k_lineWidth * scale, k_maxFloat }, scale);
-            layout.setText(preview);
-            const std::size_t length = preview.plainText().size();
-            std::size_t cut = linesEnd(layout, k_previewLines);
-            if (cut == length)
-                return;
-
-            const std::size_t lastLine = linesEnd(layout, k_previewLines - 1);
-            const Text whole = preview;
-            const std::wstring& plain = whole.plainText();
-            while (true)
-            {
-                while (cut > lastLine && std::iswspace(plain[cut - 1]))
-                    --cut;
-                preview = whole;
-                preview.replaceText({ cut, length - cut }, L"\u2026");
-                layout.setText(preview);
-                const bool fits = linesEnd(layout, k_previewLines) == preview.plainText().size();
-                if (fits || cut == lastLine)
-                    return;
-
-                // The ellipsis pushed a word onto a line of its own: that word goes instead, or a
-                // character where the line holds a single word.
-                std::size_t word = cut;
-                while (word > lastLine && !std::iswspace(plain[word - 1]))
-                    --word;
-                if (word > lastLine)
-                    cut = word;
-                else
-                    cut -= plain[cut - 1] >= 0xDC00 && plain[cut - 1] <= 0xDFFF ? 2 : 1;
-            }
-        }
-
         // The locale the environment names, or the classic one where this machine has no such
         // locale installed.
         [[nodiscard]] std::locale userLocale()
@@ -412,7 +360,7 @@ namespace ClaFi::Controls
         GetLinkHintEvent linkEvent{ *this, m_pointedLink.target, m_pointedLink.range, event };
         emitEvent(linkEvent);
         if (event.text.empty())
-            writeLinkHint(event.text);
+            writeLinkHint(event);
     }
 
     void TextBox::nestedClick(ClickEvent& event)
@@ -638,12 +586,13 @@ namespace ClaFi::Controls
         Hint::hoveredZoneChanged();
     }
 
-    void TextBox::writeLinkHint(Text& out) const
+    void TextBox::writeLinkHint(GetHintEvent& event) const
     {
         // **The paragraph, not the anchor.** An anchor holds a few words - a clue's number, a
         // heading - and what the reader wants before jumping is what stands around them. Taken
         // with its formatting through selectedText, which closes what it opens, without the
-        // newline that ends it, and no longer than a few lines.
+        // newline that ends it, and cut as every preview is.
+        Text& out = event.text;
         const std::wstring_view target = m_pointedLink.target;
         const std::optional<TextRange> anchor = target.starts_with(L'#')
             ? m_layoutText.anchorRange(target.substr(1))
@@ -654,9 +603,7 @@ namespace ClaFi::Controls
             const std::wstring& plain = m_layoutText.plainText();
             if (paragraph.length && plain[paragraph.end() - 1] == L'\n')
                 --paragraph.length;
-            Text preview = m_layoutText.selectedText(paragraph);
-            cutPreview(preview, formContext().scaleFactor());
-            out << preview;
+            event.writePreview(m_layoutText.selectedText(paragraph));
         }
         else
         {

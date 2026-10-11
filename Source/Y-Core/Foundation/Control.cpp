@@ -4,6 +4,7 @@ module;
 module ClaFi.Core.Foundation;
 
 import :Form;
+import :Hint;
 import :Input;
 import :Action;
 import ClaFi.Core.AppTheme_AnimationSlots;
@@ -122,6 +123,58 @@ namespace ClaFi
             Horizontal,
             Vertical
         };
+
+        // How many lines of a text a preview shows before it cuts the rest off.
+        constexpr std::size_t k_previewLines = 6;
+
+        // Where the first lines of a laid-out text end, or where the text does for one with no
+        // more lines than that.
+        [[nodiscard]] std::size_t linesEnd(TextLayout& layout, std::size_t lines)
+        {
+            std::size_t end = 0;
+            for (std::size_t line = 0; line != lines; ++line)
+                end = layout.rowEnd({ end, false });
+            return end;
+        }
+
+        // Cuts a preview to the lines a hint shows, broken at the width the hint breaks at. The
+        // ellipsis ending it takes the styles still open where it stands.
+        void cutPreview(Text& preview, ScaleFactor scale)
+        {
+            TextLayout layout;
+            layout.setWrap(true);
+            layout.setBoundsAndScale({ Hint::k_lineWidth * scale, k_maxFloat }, scale);
+            layout.setText(preview);
+            const std::size_t length = preview.plainText().size();
+            std::size_t cut = linesEnd(layout, k_previewLines);
+            if (cut == length)
+                return;
+
+            const std::size_t lastLine = linesEnd(layout, k_previewLines - 1);
+            const Text whole = preview;
+            const std::wstring& plain = whole.plainText();
+            while (true)
+            {
+                while (cut > lastLine && std::iswspace(plain[cut - 1]))
+                    --cut;
+                preview = whole;
+                preview.replaceText({ cut, length - cut }, L"\u2026");
+                layout.setText(preview);
+                const bool fits = linesEnd(layout, k_previewLines) == preview.plainText().size();
+                if (fits || cut == lastLine)
+                    return;
+
+                // The ellipsis pushed a word onto a line of its own: that word goes instead, or a
+                // character where the line holds a single word.
+                std::size_t word = cut;
+                while (word > lastLine && !std::iswspace(plain[word - 1]))
+                    --word;
+                if (word > lastLine)
+                    cut = word;
+                else
+                    cut -= plain[cut - 1] >= 0xDC00 && plain[cut - 1] <= 0xDFFF ? 2 : 1;
+            }
+        }
     }
 
     // **What the children of a lane can be cut to**, composed by the rule the lane composes their
@@ -460,6 +513,12 @@ namespace ClaFi
         anchorRect{ control.boundsInForm() },
         phase{ phase }
     {
+    }
+
+    void GetHintEvent::writePreview(Text preview)
+    {
+        cutPreview(preview, formContext().scaleFactor());
+        text << preview;
     }
 
     // AdjustChildInsetEvent

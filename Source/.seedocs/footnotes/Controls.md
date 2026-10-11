@@ -232,12 +232,9 @@ is written the box writes its own:
   formatting - in the Ledger, the clue a reference names;
 - any other target: the target as the text states it.
 
-**A preview stops after six lines.** The box lays the paragraph out at Hint::k_lineWidth, the width
-the hint breaks its lines at, and cuts it where the sixth line ends. An ellipsis ends what is left,
-in the styles still open where it stands - muted inside a muted run, regular after a bold word
-that ends at the cut. A word the ellipsis would push onto a seventh line goes with the rest, and
-a line holding one word longer than itself gives up characters instead. The paragraph is shaped
-once more for this than the hint shapes it.
+**A preview stops after six lines.** The paragraph goes into the hint through
+GetHintEvent::writePreview, which cuts it where the sixth line ends and puts an ellipsis after what
+is left.
 
 In a box the user types into, a muted line follows saying Ctrl+click follows the link: a plain
 click there places the caret, and nothing else on screen says the link can be followed at all.
