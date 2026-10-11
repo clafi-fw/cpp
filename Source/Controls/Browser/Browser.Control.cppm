@@ -56,6 +56,13 @@ namespace ClaFi::Browser
         Replace     // the url left is forgotten, and the forward stack stays
     };
 
+    // Whether a tab opened is selected, or left behind the one shown.
+    export enum class SelectTab
+    {
+        No,
+        Yes
+    };
+
     // One tab of the browser, standing for a page it can return to.
     export class BrowserTab : public Tab
     {
@@ -196,10 +203,10 @@ namespace ClaFi::Browser
     public:
         // Opens a tab on the home page, which is where a browser with nothing said to it starts.
         void addTab();
-        // Opens one on a page named outright. The new tab is selected, the way a tab the user
-        // asked for is.
-        void addTab(PageData&, std::wstring_view anchor = {});
-        void addTab(const Url&);
+        // Opens one on a page named outright - selected, the way a tab the user asked for is, or
+        // behind the one shown, whose page stays on screen.
+        void addTab(PageData&, std::wstring_view anchor = {}, SelectTab = SelectTab::Yes);
+        void addTab(const Url&, SelectTab = SelectTab::Yes);
         BrowserTab* restoreTab(std::wstring_view id, const Url&);
         void goUp();
         void goTo(std::wstring_view path, std::wstring_view subPath);

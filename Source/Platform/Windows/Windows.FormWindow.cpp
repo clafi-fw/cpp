@@ -558,8 +558,17 @@ namespace ClaFi
                 (msg.lParam & k_previousKeyDown) != 0,
                 msg.handled };
             m_form.wnd_keyDown(event);
+            m_keyDownHandled = msg.handled;
             break;
         }
+
+        // **The character an Alt combination types belongs to its key.** Handed on, DefWindowProc
+        // reads it as a menu's mnemonic, finds no menu and beeps - so the character of a key the
+        // form answered goes no further. One nothing answered still does, which keeps Alt+Space.
+        case WM_SYSCHAR:
+            if (m_keyDownHandled)
+                msg.handled = true;
+            break;
 
         case WM_SYSKEYUP:
         case WM_KEYUP:

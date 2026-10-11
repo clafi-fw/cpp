@@ -85,6 +85,7 @@ namespace ClaFi::PlatformImplementation::Windows
         IntPoint m_doubleClickPos{};
         // A right press landed on the caption; the release over it is the window menu's.
         bool m_captionRightPressed{ false };
+        bool m_keyDownHandled{ false };   // the last key down was answered, and so is its char
         std::unique_ptr<CompositionPresenter> m_presenter;
         // A resize step has gone out and the compositor has not shown it yet; the posted paint
         // waits until it has - see WM_SIZE.

@@ -401,9 +401,9 @@ takes the new words where it stands; a footnote added builds the page again at t
 A type's name on a page is a link to its page, in a grid cell as in prose: a type named in a
 hint, in a note's prose or code, or in a signature - bare or qualified, as `Control` or
 `Grids::Row` - links wherever the surface has a page for it. A right click on a link, or the menu
-key on a grid cell holding one, offers Open and Open in new tab. A row of the
-derived types opens the type it names; a method's page picks the method's type in the tree.
-A page's trees start closed, and a node's rows are built the first time it opens.
+key on a grid cell holding one, offers Open and Open in new tab, which opens behind the tab shown.
+A row of the derived types opens the type it names; a method's page picks the method's type in the
+tree. A page's trees start closed, and a node's rows are built the first time it opens.
 The pages are built by
 `SeeDocs_App.Pages` - facts, sections, tables of rows with their footnotes, branches of a tree,
 signatures and blocks of prose - out of the surface and the notes; SeeDocs builds controls
@@ -440,12 +440,13 @@ with the mark of what it is - a member's line leaves the mark's room blank - a m
 before it, the words typed in the accent and its kind at the line's end; while a line is current,
 its hint and where it stands are beside the list. **The first line is current**: the name spelled
 as typed where there is one, else the search, so that Enter opens that name's page, or the
-search's. Up and Down walk the list, Alt+Enter opens a line in a new tab, Escape takes the list
-down and the next one empties the box, and Escape on the empty box gives the focus back where it
-came from - a row of the tree, a cell of the page. Where that has gone, or stands on a tab no longer
-shown, the focus goes to the page's row its anchor selected, else to its first row. A member with no
-page of its own opens its type's page at its row: the url's anchor names the row by the member's
-name, and the row's section opens and the row is selected.
+search's. Up and Down walk the list. Alt+Enter or an Alt+click opens a line in a new tab behind the
+one shown, and the list stays up so that more lines can be opened. Escape takes the list down and
+the next one empties the box, and Escape on the empty box gives the focus back where it came from -
+a row of the tree, a cell of the page. Where that has gone, or stands on a tab no longer shown, the
+focus goes to the page's row its anchor selected, else to its first row. A member with no page of
+its own opens its type's page at its row: the url's anchor names the row by the member's name, and
+the row's section opens and the row is selected.
 
 The search's page is a page of the browser like any other, titled with the words and marked
 `search`, its url the project's with a segment of `.search=` and the words after it - a slash in

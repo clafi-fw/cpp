@@ -81,8 +81,8 @@ namespace ClaFi::Controls
     export class DropList
     {
     public:
-        // The target is the control the focus stays in - a list going down hands it the focus.
-        DropList(Control& target, DropListPickFunc);
+        // The target is the control the focus stays in; a pick holding keptBy leaves the list up.
+        DropList(Control& target, DropListPickFunc, KeyModifiers keptBy = {});
         DropList(const DropList&) = delete;
         DropList& operator=(const DropList&) = delete;
     public:
@@ -99,7 +99,7 @@ namespace ClaFi::Controls
         bool moveCurrentByPage(ScrollDirection);
         // Takes the current line as Return does; false where the list is down or no line current.
         bool pickCurrent(KeyModifiers, InputStamp);
-        // Takes the line: the list goes down first, then the owner is told.
+        // Takes the line: the list goes down first, then the owner is told. See Controls#droplist
         void pick(const DropListPick&);
     private:
         void ensureForm();
@@ -110,6 +110,7 @@ namespace ClaFi::Controls
 
         Control& m_target;
         DropListPickFunc m_pick;
+        KeyModifiers m_keptBy;
         DropListLines m_lines{};
         std::optional<Form<DropListBox>> m_form{};
         ScopedEventConnection m_aligned{};

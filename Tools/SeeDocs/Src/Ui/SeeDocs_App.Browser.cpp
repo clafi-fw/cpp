@@ -1712,7 +1712,7 @@ namespace SeeDocs_App
         if (!url.has_value())
             return;
         if (modifiers.alt)
-            addTab(*url);
+            addTab(*url, SelectTab::No);
         else
             goTo(*url);
     }
@@ -1725,9 +1725,8 @@ namespace SeeDocs_App
             return;
         const ShownProject* project = m_shownProject ? projectOf(*m_shownProject) : nullptr;
         const Url url{ searchPath(project, typed) };
-        m_search.hideList();
         if (modifiers.alt)
-            addTab(url);
+            addTab(url, SelectTab::No);
         else
             goTo(url);
     }

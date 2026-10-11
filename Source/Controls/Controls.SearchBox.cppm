@@ -66,6 +66,8 @@ namespace ClaFi::Controls
     public:
         // Where the box's list drops: under it from its left edge, or from its right (BottomEnd).
         DECLARE_PROPERTY(FormPlacement, listPlacement, FormPlacement::Bottom)
+        // The modifiers that keep the list up across a pick - Alt, say. See Controls#search
+        DECLARE_PROPERTY(KeyModifiers, listKeptBy, KeyModifiers{})
     public:
         // The user asked the box for something. See Controls#search
         DECLARE_EVENT(SearchEvent, OnSearch, onSearch)
@@ -136,10 +138,11 @@ namespace ClaFi::Controls
             std::forward<Args>(args)...
         },
         INIT_PROPERTY(listPlacement),
+        INIT_PROPERTY(listKeptBy),
         // The field keeps the focus, and the list going down hands it back there.
         m_list{ m_field, [this](const DropListPick& picked) {
             pick(picked);
-        } }
+        }, m_listKeptBy }
     {
         m_count.hide();
         m_field.onTextEdit([this](TextEditEvent&){

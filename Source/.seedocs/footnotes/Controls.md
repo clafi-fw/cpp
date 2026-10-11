@@ -311,6 +311,9 @@ standing, and the next one empties the box. Once it has listed lines, Down drops
 raising Search so that its owner lists anew over the text as it stands. The list goes down with the
 focus, and with Tab before the focus moves on. listPlacement says where it drops: under the box from
 its left edge, or with BottomEnd from its right edge, for a box at a window's right end.
+listKeptBy names the modifiers that keep the list up across a pick: a line taken with them held
+raises Pick as ever, and the list stays with its current line, so the next can be taken from it -
+SeeDocs names Alt, which opens each line in a tab behind the one shown.
 
 StdActions::find, findNext and findPrevious carry Ctrl+F, F3 and Shift+F3. A page holding a
 search box claims them for everything under it, so F3 steps from the searched text and from the
@@ -449,7 +452,8 @@ stands beside the list while the line is current, as a CompletionList's does.
 
 **A pick is told once the list is down**: the owner's function is handed the line, the modifiers
 held with the key or the click, and the stamp of the input that took it, so whatever it opens or
-takes stands with the list out of the way.
+takes stands with the list out of the way. A pick holding every modifier the list is kept by - the
+modifiers given with the target - leaves it up instead, its current line where it was.
 
 ## SelectionMoveEvent
 

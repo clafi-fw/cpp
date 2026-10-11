@@ -21,6 +21,16 @@ namespace ClaFi::Controls
     namespace
     {
         constexpr float k_hintGap = 6.0f;   // how far the hint stands off the list's edge
+
+        // Whether every modifier named is held, where any is named.
+        [[nodiscard]] bool holdsAll(const KeyModifiers held, const KeyModifiers named)
+        {
+            if (named.empty())
+                return false;
+            return (held.shift || !named.shift)
+                && (held.ctrl || !named.ctrl)
+                && (held.alt || !named.alt);
+        }
     }
 
     // DropListRow
@@ -210,10 +220,11 @@ namespace ClaFi::Controls
 
     // DropList
 
-    DropList::DropList(Control& target, DropListPickFunc pick)
+    DropList::DropList(Control& target, DropListPickFunc pick, const KeyModifiers keptBy)
         :
         m_target{ target },
-        m_pick{ std::move(pick) }
+        m_pick{ std::move(pick) },
+        m_keptBy{ keptBy }
     {
     }
 
@@ -292,10 +303,12 @@ namespace ClaFi::Controls
     }
 
     // Down before the owner hears: what it does with the line - a page opened, a text taken - is
-    // done with the list out of the way, and a list it shows again is shown anew.
+    // done with the list out of the way, and a list it shows again is shown anew. A pick holding
+    // the modifiers the list is kept by leaves it standing, its current line where it was.
     void DropList::pick(const DropListPick& picked)
     {
-        hide();
+        if (!holdsAll(picked.modifiers, m_keptBy))
+            hide();
         if (m_pick)
             m_pick(picked);
     }

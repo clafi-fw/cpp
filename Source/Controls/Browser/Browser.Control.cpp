@@ -392,7 +392,8 @@ namespace ClaFi::Browser
         addTab(m_homePageData);
     }
 
-    void BrowserControl::addTab(PageData& pageData, const std::wstring_view anchor)
+    void BrowserControl::addTab(PageData& pageData, const std::wstring_view anchor,
+        const SelectTab select)
     {
         // Generate new tab Id
         int n = 0;
@@ -409,7 +410,12 @@ namespace ClaFi::Browser
         tab.setId(*this, newTabId);
         tab.setPageData(&pageData);
         tab.m_anchor = anchor;
-        tab.select();
+        // **A tab left behind is stored here**: selecting is what stores a tab otherwise, and a run
+        // ending before this one is selected restores it from its entry.
+        if (select == SelectTab::Yes)
+            tab.select();
+        else
+            storeTabSettings(tab);
 
         // in case if there the same page is on both tabs.
         // But may be it worth it to move that into the item's constructor
@@ -417,11 +423,11 @@ namespace ClaFi::Browser
         form().invalidateAlign();
     }
 
-    void BrowserControl::addTab(const Url& url)
+    void BrowserControl::addTab(const Url& url, const SelectTab select)
     {
         // The same assumption goTo(const Url&) makes: a path handed to the browser names a page
         // the tree can reach, and findOrAdd builds the ones it has not been asked for yet.
-        addTab(*findPageData(url.path()), url.anchor());
+        addTab(*findPageData(url.path()), url.anchor(), select);
     }
 
     BrowserTab* BrowserControl::restoreTab(const std::wstring_view id, const Url& url)
@@ -684,10 +690,10 @@ namespace ClaFi::Browser
             // went with the page. goToLater is the wait that answers it.
             if (&event.action == &Actions::open)
                 goToLater(Url{ path });
-            // A new tab leaves the page it was asked from standing: the strip gains a tab and
-            // the page behind it is hidden rather than freed, so there is nothing to wait for.
+            // **A new tab opens behind the one shown**, so the page it was asked from stays on
+            // screen - several can be opened from it in turn, and there is nothing to wait for.
             else if (&event.action == &Actions::openInNewTab)
-                addTab(Url{ path });
+                addTab(Url{ path }, SelectTab::No);
         });
     }
 

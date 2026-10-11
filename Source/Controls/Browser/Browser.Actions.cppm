@@ -18,8 +18,7 @@ namespace ClaFi::Browser::Actions
     //
     // Neither carries an icon: each is a line in a menu and names itself in words.
     export extern Action open;
-    // Opens the page beside what is on screen rather than over it, so the page the user is on
-    // stays where it is.
+    // Opens the page in a tab behind the one shown, so the page the user is on stays on screen.
     export extern Action openInNewTab;
 
     // **Neither carries a shortcut**, and Enter is the reason. Enter on a focused control is that
