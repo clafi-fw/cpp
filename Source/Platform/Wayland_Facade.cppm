@@ -23,7 +23,7 @@ namespace ClaFi
     public:
         struct Params
         {
-            // WATCHING THE CLIPBOARD IS NOT THE SAME PRIVILEGE AS PASTING FROM IT. A compositor
+            // **Watching the clipboard is not the same privilege as pasting from it.** A compositor
             // announces a selection to the client holding the keyboard focus and to nobody else,
             // so a window that shows what is on the clipboard is told nothing while it is not the
             // one being typed into. An application that states this here is given the clipboard
@@ -39,8 +39,8 @@ namespace ClaFi
         [[nodiscard]] std::vector<std::wstring> diagnosticLines() const override;
         [[nodiscard]] PlatformImplementation::Wayland::DisplayManager& display() override;
     private:
-        // IN THIS ORDER. The display is the connection and the loop, so everything else is built
-        // on it and goes before it; the two managers put their descriptor in its loop for as
+        // **In this order.** The display is the connection and the loop, so everything else is
+        // built on it and goes before it; the two managers put their descriptor in its loop for as
         // long as they stand; the clipboard last, handing its selection and its change handler
         // back to the display on the way out.
         PlatformImplementation::Wayland::DisplayManager m_display{};
@@ -63,7 +63,7 @@ namespace ClaFi
         Transfer::Clipboard m_clipboard{ *this };
     };
 
-    // NO GPU BACKEND ON THIS PLATFORM, so an application here draws on the CPU and is offered
+    // **No GPU backend on this platform**, so an application here draws on the CPU and is offered
     // nothing to turn on. A wl_shm buffer is memory the compositor can read, which is exactly
     // what a CPU backend already produces.
     export using WaylandApplication = Application<WaylandPlatform>;

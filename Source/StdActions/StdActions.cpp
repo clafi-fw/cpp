@@ -17,7 +17,7 @@ import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi::StdActions
 {
-    // THESE ARE CONSTRUCTED BEFORE MAIN, so nothing built here may touch the platform, the
+    // **These are constructed before main**, so nothing built here may touch the platform, the
     // theme or the text engine - none of them exists yet. Text is a string and its markers,
     // and EventComponent connects handlers into a map of its own, so both are safe; anything
     // added to an action below has to answer the same question. An icon is a function pointer
@@ -85,7 +85,7 @@ namespace ClaFi::StdActions
         Text{ L"Save as" },
         Shortcut{ L'S', { .shift = true, .ctrl = true } }
     };
-    // THE KEY IS STATED HERE AND ANSWERED BY THE CONTROL. WithInPlaceEdit takes F2 in its own
+    // **The key is stated here and answered by the control.** WithInPlaceEdit takes F2 in its own
     // nestedKeyDown, so the press never reaches the shortcut scopes and there is no contest - the
     // same shape a text box's Delete has. It has to be answered there: the subject walk starts at
     // the focused control, and a container holding the focus answers for itself rather than for the

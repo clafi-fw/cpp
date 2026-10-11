@@ -32,9 +32,9 @@ namespace SeeDocs_App
 
     namespace
     {
-        // THE WIDEST A PATH MAY MAKE THE PAGE. The column is as wide as what it holds, so a long
-        // path left to itself would stretch every row under it; past this it is trimmed, and the
-        // hint over it shows the rest.
+        // **The widest a path may make the page.** The column is as wide as what it holds, so a
+        // long path left to itself would stretch every row under it; past this it is trimmed, and
+        // the hint over it shows the rest.
         constexpr float k_pathWidth = 440.0f;
         constexpr float k_rowSpacing = 10.0f;    // between the parts of a row
         constexpr float k_fieldWidth = 440.0f;   // the narrowest a field stands
@@ -89,8 +89,8 @@ namespace SeeDocs_App
             Choose m_changed;   // after a change has been read back
         };
 
-        // THE PROJECT'S FOLDERS OF SOURCES, a row each: the folder, whether the folders under it
-        // are read, and Remove. The rows are built again from the project after each change,
+        // **The project's folders of sources**, a row each: the folder, whether the folders under
+        // it are read, and Remove. The rows are built again from the project after each change,
         // what stands being what was read back. A row given way is hidden, and goes at the next
         // change: one of them holds the button that was pressed.
         class SourceList : public Stack
@@ -110,7 +110,7 @@ namespace SeeDocs_App
             std::vector<Control*> m_goneRows{};
         };
 
-        // THE AGE IS WORKED OUT WHEN THE PAGE IS BUILT, and after a rescan. It does not tick
+        // **The age is worked out when the page is built**, and after a rescan. It does not tick
         // while the page stands.
         [[nodiscard]] Text scanText(const OpenProject& project)
         {
@@ -171,7 +171,7 @@ namespace SeeDocs_App
         }
     }
 
-    // THE PAGE STANDS THROUGH A SCAN OF ITS PROJECT. A scan shows the surface again, and the
+    // **The page stands through a scan of its project.** A scan shows the surface again, and the
     // browser keeps the selected tab's options page while it does - see SurfaceBrowser - so a
     // button writes what came of it onto the page once the work is done. The project's own rows
     // stand under the page's title with no group of their own; the groups follow.
@@ -378,7 +378,7 @@ namespace SeeDocs_App
             showSource();
         }
 
-        // WHAT STANDS AFTERWARDS IS THE FOLDER TYPED, spelled as the properties write it - a
+        // **What stands afterwards is the folder typed**, spelled as the properties write it - a
         // tree's own folder from its project's is "..", however it was typed.
         std::wstring SourceBox::writeWords(const std::wstring_view words)
         {
@@ -453,7 +453,7 @@ namespace SeeDocs_App
             invalidateFormAlign();
         }
 
-        // THE ROW NAMES ITS FOLDER BY ITS BOX, which holds the path - a copy that outlasts the
+        // **The row names its folder by its box**, which holds the path - a copy that outlasts the
         // list it was built from, and that a folder typed over moves. The field is the new
         // project dialog's, as the name's is: a surface of its own at a button's radius, taking
         // the row's width but for the answers at its end.

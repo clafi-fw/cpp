@@ -17,8 +17,8 @@ namespace ClaFi::Tools::WhatsClip
 
     using HandlePageBase = WithBody<RepresentationPage, TextBox>;
 
-    // THE HANDLE A FORMAT CARRIES, where the clipboard's entry for it is a handle and not bytes.
-    // Nothing travelled for such a format, so the number is the whole of the reading: what a
+    // **The handle a format carries**, where the clipboard's entry for it is a handle and not
+    // bytes. Nothing travelled for such a format, so the number is the whole of the reading: what a
     // hex dump or a decoding would show is something this viewer made, not what is on the
     // clipboard, and neither is offered beside this one - see representationsOf.
     //

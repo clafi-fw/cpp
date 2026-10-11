@@ -49,7 +49,7 @@ namespace ClaFi::Tools::WhatsClip
 
     namespace
     {
-        // STATED RATHER THAN FITTED. A format's name is whatever the application that copied
+        // **Stated rather than fitted.** A format's name is whatever the application that copied
         // decided to call it, from a word to a MIME type, and a strip that took its width from the
         // longest of them would change width every time the clipboard did. The names wrap instead.
         // Room for the platform's own CF_ names on one line.
@@ -67,7 +67,7 @@ namespace ClaFi::Tools::WhatsClip
         constexpr float k_tabPaddingY = 12.0f;
         constexpr Padding k_dividerPadding = { 24.0f, 12.0f };
 
-        // WHAT TO CALL A FORMAT: its platform name, in whatever spelling the platform handed
+        // **What to call a format**: its platform name, in whatever spelling the platform handed
         // over. An offer lists platform formats alone - the framework's own are what a paste
         // asks for, and this viewer never does - so a nameless one cannot reach here.
         [[nodiscard]] std::wstring displayName(const Transfer::Format& format)
@@ -78,7 +78,7 @@ namespace ClaFi::Tools::WhatsClip
             return L"Unnamed framework format";
         }
 
-        // WHICH FORMATS WINDOWS MAKES FROM WHICH. Each group is listed richest first: a source
+        // **Which formats Windows makes from which.** Each group is listed richest first: a source
         // places one and the system derives the rest, so a format is synthesized when a richer one
         // in its group is also on the clipboard. There is no flag for this - it is read from the
         // rules, so a format a source placed alongside its richer form reads as synthesized too.
@@ -166,8 +166,8 @@ namespace ClaFi::Tools::WhatsClip
             return pages.add<PicturePage>();
         }
 
-        // A PREVIEW IS REGISTERED AGAINST A STANDARD FORMAT KIND AND NEVER AGAINST A PLATFORM
-        // SPELLING. Which spelling serves a kind is the platform's own ranking - a PNG ahead of a
+        // **A preview is registered against a standard format kind and never against a platform
+        // spelling.** Which spelling serves a kind is the platform's own ranking - a PNG ahead of a
         // DIB, the GDI bitmap last and never while a PNG is listed - and Offer::platformFormat is
         // where that is answered, so this viewer keeps no table of its own. The order here is the
         // order the tabs stand in, which is also the one that opens.
@@ -188,8 +188,8 @@ namespace ClaFi::Tools::WhatsClip
         // these - see Viewer::orderTabs.
         constexpr std::size_t k_leadingStripControls = std::size(k_previews) + 1;
 
-        // WHAT A PREVIEW OF ONE KIND READS, AND WHAT TO CALL WHERE IT CAME FROM, which are not the
-        // same format: the pixels are asked for as the framework's own Picture, and the name is
+        // **What a preview of one kind reads, and what to call where it came from**, which are not
+        // the same format: the pixels are asked for as the framework's own Picture, and the name is
         // the platform spelling that answered for it.
         struct PreviewSource
         {
@@ -197,7 +197,7 @@ namespace ClaFi::Tools::WhatsClip
             std::wstring name;
         };
 
-        // THE FRAMEWORK'S OWN RICH TEXT STANDS AHEAD OF PLAIN TEXT - the same words with their
+        // **The framework's own rich text stands ahead of plain text** - the same words with their
         // markers on. It is the one preference stated here rather than below: ClaFi.Text is
         // declared above the Transfer core, so no platform spelling table can name it.
         //
@@ -221,13 +221,13 @@ namespace ClaFi::Tools::WhatsClip
             return PreviewSource{ Transfer::Format::of(kind), served->name() };
         }
 
-        // THE REPRESENTATION REGISTRY. A format is not one thing to look at: it has bytes, and a
-        // byte string meant to be read is text. WHAT THE CLIPBOARD IS WORTH SEEING AS - a picture,
-        // a text with its markers on - is not one format's representation but a reading of the
-        // whole clipboard, and stands on a tab of its own above the divider; see k_previews.
+        // **The representation registry.** A format is not one thing to look at: it has bytes, and
+        // a byte string meant to be read is text. **What the clipboard is worth seeing as** - a
+        // picture, a text with its markers on - is not one format's representation but a reading of
+        // the whole clipboard, and stands on a tab of its own above the divider; see k_previews.
         //
-        // A FORMAT WHOSE ENTRY IS A HANDLE HAS NEITHER OF THE TWO. Nothing travelled for it, so a
-        // hex dump would be of bytes this viewer made and a reading as text would be of the same;
+        // **A format whose entry is a handle has neither of the two.** Nothing travelled for it, so
+        // a hex dump would be of bytes this viewer made and a reading as text would be of the same;
         // what it has is one number, and the Handle representation is the only one it is offered.
         //
         // The order is the order the tabs stand in, and the first one is the one that opens.
@@ -266,12 +266,12 @@ namespace ClaFi::Tools::WhatsClip
             std::wstring m_formatName{};
         };
 
-        // WHAT IS ON SCREEN AGAINST WHAT IS ON THE CLIPBOARD. A tab per format ever seen, hidden
-        // while its format is absent and shown again when it comes back - so the strip settles
-        // rather than being rebuilt. WHICH PRESENTATION IS OPEN IS NOT THE VIEW'S TO KEEP: it is
-        // held here and every view reads and writes it, so walking the formats reads them all the
-        // same way. Above them stand the previews, made once and belonging to the clipboard
-        // rather than to any one format.
+        // **What is on screen against what is on the clipboard.** A tab per format ever seen,
+        // hidden while its format is absent and shown again when it comes back - so the strip
+        // settles rather than being rebuilt. **Which presentation is open is not the view's to
+        // keep**: it is held here and every view reads and writes it, so walking the formats reads
+        // them all the same way. Above them stand the previews, made once and belonging to the
+        // clipboard rather than to any one format.
         class Viewer
         {
         public:
@@ -327,11 +327,11 @@ namespace ClaFi::Tools::WhatsClip
             // The presentation being browsed in - Bytes or As Text - which every format view both
             // reads and writes. Empty until the first view with a choice in it settles one.
             std::wstring_view m_openRepresentation{};
-            // SCOPED, because the page control outlives this class. A handler left connected to a
-            // live control after the object it captured is gone is called with a dangling this.
+            // **Scoped**, because the page control outlives this class. A handler left connected to
+            // a live control after the object it captured is gone is called with a dangling this.
             ScopedEventConnection m_pageChanged;
-            // The clipboard the strip was last brought in line with. A GENERATION RATHER THAN THE
-            // OFFER: two copies made here in a row are one static object at one address, and an
+            // The clipboard the strip was last brought in line with. **A generation rather than the
+            // offer**: two copies made here in a row are one static object at one address, and an
             // offer this side does not own can be freed and its address handed to the next one.
             std::uint64_t m_generation{ 0 };
         };
@@ -361,7 +361,7 @@ namespace ClaFi::Tools::WhatsClip
             for (const Preview& preview : k_previews)
                 addPreviewTab(preview);
 
-            // A STRIP TAKES A CONTROL THAT IS NOT A TAB: its paint order draws those before the
+            // **A strip takes a control that is not a tab**: its paint order draws those before the
             // tabs and its focus test answers for tabs alone, so the line is drawn and can never
             // become the current item. Added here, which puts it after every preview tab and
             // before every format tab - a container lays its children out in the order it holds
@@ -388,8 +388,8 @@ namespace ClaFi::Tools::WhatsClip
 
             showPreviews(offer);
 
-            // A TAB IS NEVER TAKEN AWAY, only hidden. One whose format comes back is the same tab
-            // in the place it was, showing the page it always was.
+            // **A tab is never taken away**, only hidden. One whose format comes back is the same
+            // tab in the place it was, showing the page it always was.
             for (FormatTab& entry : m_formatTabs)
             {
                 const bool onClipboard = std::ranges::find(formats, entry.format) != formats.end();
@@ -422,8 +422,8 @@ namespace ClaFi::Tools::WhatsClip
 
             orderTabs(formats);
 
-            // THE OPEN TAB CAN BE THE ONE THAT WENT. Leaving it selected would leave its page on
-            // screen reading a clipboard that has moved on, so the first tab still standing is
+            // **The open tab can be the one that went.** Leaving it selected would leave its page
+            // on screen reading a clipboard that has moved on, so the first tab still standing is
             // opened instead, and with none left the strip is cleared. It is also what opens the
             // first tab of all.
             const Control* open = m_box.pageControl().currentItem();
@@ -477,7 +477,7 @@ namespace ClaFi::Tools::WhatsClip
         void Viewer::addTabFor(const Transfer::Format& format)
         {
             FormatView& view = m_box.pageControl().add<FormatView>();
-            // BEFORE THE REPRESENTATIONS, which is what opens one of them.
+            // **Before the representations**, which is what opens one of them.
             view.setPreference(m_openRepresentation);
             view.setRepresentations(representationsOf(format), m_picks);
             ReaderTab& tab = m_box.strip().add<ReaderTab>(
@@ -493,7 +493,7 @@ namespace ClaFi::Tools::WhatsClip
             m_formatTabs.push_back(FormatTab{ format, &tab, &view, false });
         }
 
-        // WHAT THE CLIPBOARD IS WORTH LOOKING AT, asked of the offer rather than of its format
+        // **What the clipboard is worth looking at**, asked of the offer rather than of its format
         // list: a kind is served by whichever spelling the platform ranks first, and the tab says
         // which that was. A kind this clipboard cannot serve takes its tab down, and with every
         // preview down the divider goes with them.
@@ -517,16 +517,16 @@ namespace ClaFi::Tools::WhatsClip
             m_divider->setVisible(anyShown);
         }
 
-        // THE ORDER THE PLATFORM GAVE THEM IN, which a strip made a tab at a time does not keep on
-        // its own: a tab is added when its format is first seen and stays for good, so the strip
+        // **The order the platform gave them in**, which a strip made a tab at a time does not keep
+        // on its own: a tab is added when its format is first seen and stays for good, so the strip
         // would stand in the order this viewer met the formats rather than the order this
         // clipboard lists them. The list is ordered, and an application that copies names its
         // best format first - so where a tab stands says something its name does not.
         //
-        // A FORMAT THIS CLIPBOARD DOES NOT CARRY HAS NO PLACE IN THAT ORDER, its tab being hidden.
-        // Those trail after the listed ones, keeping the order they had between them.
+        // **A format this clipboard does not carry has no place in that order**, its tab being
+        // hidden. Those trail after the listed ones, keeping the order they had between them.
         //
-        // THE PREVIEWS AND THEIR DIVIDER ARE NOT IN THIS WALK. They stand where they were made,
+        // **The previews and their divider are not in this walk.** They stand where they were made,
         // which is what k_leadingStripControls counts.
         void Viewer::orderTabs(const Transfer::FormatList& formats)
         {
@@ -581,7 +581,7 @@ namespace ClaFi::Tools::WhatsClip
             if (!preview && !entry)
                 return;
 
-            // A FORMAT OPENS ON THE PRESENTATION BEING BROWSED IN rather than on the one it was
+            // **A format opens on the presentation being browsed in** rather than on the one it was
             // last left showing, which may have been picked before the presentation moved on.
             if (entry)
                 entry->view->openPreferred();
@@ -591,7 +591,7 @@ namespace ClaFi::Tools::WhatsClip
             if (entry && entry->current)
                 return;
 
-            // ASKED FOR AGAIN RATHER THAN KEPT. An offer belongs to Transfer and is freed the
+            // **Asked for again rather than kept.** An offer belongs to Transfer and is freed the
             // moment anything else reads a clipboard that has moved on - the paste action polls
             // for its state far more often than this page is opened.
             Transfer::Offer* offer = m_box.formContext().clipboard().offer();
@@ -682,7 +682,7 @@ namespace ClaFi::Tools::WhatsClip
 
         Viewer viewer{ form->body(), picks };
 
-        // NOTHING POLLS. Transfer raises this when the display server says the selection moved
+        // **Nothing polls.** Transfer raises this when the display server says the selection moved
         // on. Under Wayland that is the clipboard manager's channel this application asks for at
         // startup, or, on a compositor offering none, the moment this window takes the keyboard
         // focus - see the Wayland entry point.

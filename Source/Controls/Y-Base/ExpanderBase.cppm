@@ -123,7 +123,7 @@ namespace ClaFi::Controls
         ExpanderButton& m_button{ createChevronButton() };
     };
 
-    // A CONTAINER THAT HOLDS ITS EXPANDER HEADER AGAINST THE TOP OF THE VIEW while the body it
+    // **A container that holds its expander header against the top of the view** while the body it
     // heads is scrolled under it, the way a grid holds its header row - see Control::heldHeader.
     // The header is an overlay control whose entry goes to the host Control::heldHeaderHost names,
     // as the grid's does: what the header draws around itself then lands on the body it is held

@@ -72,11 +72,11 @@ namespace Themes_App
             Interactivity::ActiveContainer
         ) };
 
-        // WHAT THE PREVIEW IS SHOWING - taken by invalidatePreview, and read by both halves of it
-        // so that the panel and the application show one theme. Not asked of the list per paint: a
-        // list answers with the tile it is ON, and between a tile being reached and the preview
-        // delay elapsing that is a tile ahead of the one the preview has been asked for. See
-        // Stack::previewItem
+        // **What the preview is showing** - taken by invalidatePreview, and read by both halves of
+        // it so that the panel and the application show one theme. Not asked of the list per paint:
+        // a list answers with the tile it is **on**, and between a tile being reached and the
+        // preview delay elapsing that is a tile ahead of the one the preview has been asked for.
+        // See Stack::previewItem
         const AppTheme* m_previewTheme{ nullptr };
         // What that theme is painted from, kept beside it because the panel paints from a
         // reference the adjustment hands on.
@@ -191,9 +191,9 @@ namespace Themes_App
         m_previewPanel.setVisible(previewVisible);
     }
 
-    // EVERY POINT AT WHICH WHAT THE PREVIEW SHOWS HAS MOVED. The theme is taken once here, so the
-    // panel and the application answer the same question at the same moment; asking the list again
-    // while painting put the panel a preview delay ahead of the window.
+    // **Every point at which what the preview shows has moved.** The theme is taken once here, so
+    // the panel and the application answer the same question at the same moment; asking the list
+    // again while painting put the panel a preview delay ahead of the window.
     template<IsDocumentsPage PageBase>
     void WithPreview<PageBase>::invalidatePreview()
     {

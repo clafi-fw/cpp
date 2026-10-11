@@ -19,7 +19,7 @@ namespace ClaFi
         return std::array{ L"Auto", L"Dark", L"Light" };
     }
 
-    // WHERE A THEME IS WORN BETWEEN THE TWO POLES: 0 is Dark, 1 is Light, and anything between
+    // **Where a theme is worn between the two poles**: 0 is Dark, 1 is Light, and anything between
     // is a crossing between the modes part way through. See AppTheme
     export using Lightness = float;
 
@@ -329,8 +329,8 @@ namespace ClaFi
         // The luminosity elevation 0 is lifted to at the dark end. See AppTheme
         float darkModeFloor{};
 
-        // THE THEME'S OWN EMPHASIS, AND WHAT SAYS A THING IS ON - one effect for both, because the
-        // two are one colour. It is the ink anything asking for emphasis is drawn in, over the
+        // **The theme's own emphasis, and what says a thing is on** - one effect for both, because
+        // the two are one colour. It is the ink anything asking for emphasis is drawn in, over the
         // palette's accent hue - the same one a button under the pointer moves toward, so an icon
         // drawn in it belongs to the family of the controls around it - and it is equally the
         // active state of every mark: a text caret, a hot link, the band a StackView draws behind a

@@ -16,7 +16,7 @@ namespace ClaFi::Controls
         Spacer(const CreateParams& params, float, float);
     };
 
-    // THE ROOM NOBODY ELSE CLAIMED, so what stands after it sits at the lane's end. See Controls
+    // The room nobody else claimed, so what stands after it sits at the lane's end. See Controls
     export class FlexSpacer : public SpacerBase
     {
     public:
@@ -28,9 +28,9 @@ namespace ClaFi::Controls
 
     //-------------------------------------------------------------------------
 
-    // IT KEEPS THE BOX IT IS GIVEN, which is the whole of the difference from Spacer above and
+    // **It keeps the box it is given**, which is the whole of the difference from Spacer above and
     // the one thing to leave alone here. Control::align hands a control the room its lane granted
-    // and then TAKES IT BACK where the control aligns to an edge rather than filling - see
+    // and then **takes it back** where the control aligns to an edge rather than filling - see
     // needSecondAlignY - so a spacer stated Top would be handed the surplus, shrink to the
     // nothing it measured, and leave everything after it exactly where it was. Fill is the
     // default on both axes, so this constructor states no alignment at all.

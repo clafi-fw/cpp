@@ -48,21 +48,21 @@ namespace ClaFi::Browser
         /// Frees the sub-items standing at this index and after, other than the ones the callback
         /// keeps. What is kept holds the order it stands in.
         ///
-        /// @note A PAGE IS FREED WITH EVERYTHING UNDER IT, so a page reached through is kept by
+        /// @note **A page is freed with everything under it**, so a page reached through is kept by
         /// answering for the page itself - the callback is asked only about this page's own
         /// sub-items, and never about what stands beneath them.
         void dropSubItemsFrom(std::size_t index, const KeepPageDataCallback&);
         /// Takes the name this page is known by where it stands - a file name, a key, whatever the
         /// browser walks a path out of.
         ///
-        /// @note THE PAGE ITSELF STAYS PUT, so every `PageData*` held elsewhere - a tab, an open
-        /// page, the browser's selection - goes on naming it and follows the new name. What does
-        /// change is the path of this page and of every page under it, which a browser storing
+        /// @note **The page itself stays put**, so every `PageData*` held elsewhere - a tab, an
+        /// open page, the browser's selection - goes on naming it and follows the new name. What
+        /// does change is the path of this page and of every page under it, which a browser storing
         /// paths writes out again.
         ///
-        /// @note THE TITLE GOES WITH THE NAME. A title is worked out from the name - the browser
-        /// does that as a page is built - so one worked out from the name being replaced is not
-        /// this page's title any more, and the browser is asked for it again.
+        /// @note **The title goes with the name.** A title is worked out from the name - the
+        /// browser does that as a page is built - so one worked out from the name being replaced is
+        /// not this page's title any more, and the browser is asked for it again.
         void rename(std::wstring_view newName);
     public:
         PageData* parent{};
@@ -179,8 +179,9 @@ namespace ClaFi::Browser
 
         const PageDataList::iterator found = items.begin() + current;
 
-        // THE POINTERS IN THE LIST MOVE, THE PAGES THEY POINT AT DO NOT. That is what lets a tab go
-        // on holding a PageData* across a reorder of the list it stands in - and every tab does.
+        // **The pointers in the list move, the pages they point at do not.** That is what lets a
+        // tab go on holding a PageData* across a reorder of the list it stands in - and every tab
+        // does.
         if (current > index)
             std::rotate(items.begin() + index, found, found + 1);
         else

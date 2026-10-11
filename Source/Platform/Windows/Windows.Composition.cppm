@@ -30,7 +30,7 @@ namespace ClaFi::PlatformImplementation::Windows
         [[nodiscard]] ID3D11Device* d3dDevice();
         // Which device this is. Moves when the device is lost and made again.
         [[nodiscard]] unsigned generation() const { return m_generation; }
-        // THE FRAME TEXTURE, at the size of the whole surface, for a backend that draws on the
+        // **The frame texture**, at the size of the whole surface, for a backend that draws on the
         // device. Made or remade to the size asked for; its contents are then undefined. Null
         // when there is no device.
         [[nodiscard]] IDXGISurface* renderSurface(IntSize);
@@ -180,7 +180,7 @@ namespace ClaFi::PlatformImplementation::Windows
         std::ignore = commit();
     }
 
-    // HARDWARE FIRST, WARP SECOND. A session without a usable GPU - a remote desktop, a virtual
+    // **Hardware first, warp second.** A session without a usable GPU - a remote desktop, a virtual
     // machine, a driver mid-update - still composes, only in software.
     bool CompositionPresenter::ensureDevice()
     {
@@ -333,8 +333,8 @@ namespace ClaFi::PlatformImplementation::Windows
             return false;
         }
 
-        // THE NEW FRAME'S RECT AND WHAT THIS BUFFER MISSED, both from the source, which holds the
-        // whole current frame; the runtime is told the same rect, since that is what changed in
+        // **The new frame's rect and what this buffer missed**, both from the source, which holds
+        // the whole current frame; the runtime is told the same rect, since that is what changed in
         // this buffer.
         IntRect copyTarget = chainTarget;
         if (m_wholeUploadsLeft > 0)

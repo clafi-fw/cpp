@@ -151,7 +151,7 @@ namespace ClaFi
         // the view's own. Drawn over the strip it would fade the strip instead.
         void raisePinnedTop(float value);
         [[nodiscard]] float pinnedTop() const { return m_pinnedTop; }
-        // WHAT GOES UNDER A HEADER HELD OVER THE CONTENT: its shadow, and an opaque backdrop of
+        // **What goes under a header held over the content**: its shadow, and an opaque backdrop of
         // this control's surface. Drawn by the container holding the header, from its own event,
         // because the header is clipped to its own rect and neither of the two stays within it:
         // the shadow rings the header and falls outside, and the backdrop covers what the
@@ -267,7 +267,7 @@ namespace ClaFi
         float m_radius{};
         CornerRadii m_cornerRadii{};
         ScaledSpacing m_spacing;
-        // A ROOT'S RING IS DRAWN OVER ITS CONTENT. Its children stand right inside the ring and
+        // **A root's ring is drawn over its content.** Its children stand right inside the ring and
         // turn its corners, so a stroke drawn under them would have its inner edge painted over
         // along every arc. The stroke is held until the content is painted, and the content is
         // painted under the clip a corner pass hands the root, so that clip cuts what stands

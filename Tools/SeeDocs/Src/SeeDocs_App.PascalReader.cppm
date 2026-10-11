@@ -4,7 +4,7 @@ import SeeDocs_App.Surface;
 
 import ClaFi.StdLib;
 
-// THE DELPHI READER. A unit's interface section is what the unit publishes, read declaration by
+// **The Delphi reader.** A unit's interface section is what the unit publishes, read declaration by
 // declaration over the framework's own Pascal lexer: its types with their members, its routines,
 // constants and variables. By loose rules its implementation section gives a routine the hint
 // written under its header. A unit is a module, and its name is the namespace its declarations

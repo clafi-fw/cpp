@@ -97,9 +97,9 @@ namespace ClaFi::Controls
         return 0ull;
     }
 
-    // The lit look is a STATE, reached through invalidateState and animated from there - a repaint
-    // alone draws the factors the item last settled on. The items between the two runs are the
-    // ones whose state moved.
+    // The lit look is a **state**, reached through invalidateState and animated from there - a
+    // repaint alone draws the factors the item last settled on. The items between the two runs are
+    // the ones whose state moved.
     void StepsMenu::setRun(const std::size_t value)
     {
         if (value == m_run)

@@ -14,7 +14,7 @@ import ClaFi.Core.DomEngine_Dt;
 
 import ClaFi.StdLib;
 
-// NOTHING HERE NAMES A PLATFORM OR A BACKEND. What an entry point keeps is what its operating
+// **Nothing here names a platform or a backend.** What an entry point keeps is what its operating
 // system asks for and the two types the application is built out of; everything else - what the
 // application is called, what its config holds, where its scripts stand - stands here and runs
 // over any platform the framework has.

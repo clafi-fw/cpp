@@ -30,6 +30,6 @@ restoreDiagnosticLogState is the first moment that answer exists.
 A window that has gone is never reached, because the one pointer kept to it is compared and never
 dereferenced - what the window grid says about it was copied while it was live.
 
-THE NUMBERS ARE TEXT CELLS OF MOVING COLUMNS - see Grids::MovingText. Rewritten ten
+**The numbers are text cells of moving columns** - see Grids::MovingText. Rewritten ten
 times a second, they are shaped past the layout cache, which a text cell of an ordinary
 column would cycle and empty for every other window.

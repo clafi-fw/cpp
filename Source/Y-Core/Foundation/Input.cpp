@@ -81,7 +81,7 @@ namespace ClaFi
         s_focusedControl = value;
 
         // Told after s_focusedControl has moved, so isFocused() answers for the control being
-        // told whichever side of the change it is on. The control that HOLDS the focus and the
+        // told whichever side of the change it is on. The control that **holds** the focus and the
         // one it delegates to can be two controls - a container answers focusDelegate() with the
         // item inside it - and each is told once. A control that answers with itself is one
         // control and is told once, which is what the identity test is for.
@@ -143,9 +143,9 @@ namespace ClaFi
             while (controlToFocus && !controlToFocus->canTakeFocus())
             {
                 Control* parent = controlToFocus->m_parent;
-                // A MOUSE-ONLY CONTROL IS PRESSED FOR ITSELF, and its press leaves the focus where
-                // it is: a tool bar's button beside an editor keeps the caret in the editor. A
-                // part is the exception - a slider's thumb, a check box's mark, a control hosted
+                // **A mouse-only control is pressed for itself**, and its press leaves the focus
+                // where it is: a tool bar's button beside an editor keeps the caret in the editor.
+                // A part is the exception - a slider's thumb, a check box's mark, a control hosted
                 // in a grid cell - there the press is the owner's, and the walk goes on from it.
                 // See UI-Types#interactivity
                 const bool mouseOnly = controlToFocus->interactivity() == Interactivity::MouseOnly;
@@ -221,13 +221,13 @@ namespace ClaFi
         appContext.events().emit<InputSwitchEvent>();
     }
 
-    // The repaint is asked for OUTRIGHT, not left to invalidateState. These factors belong to the
-    // application rather than to any control, so no control's own state has moved, and
+    // The repaint is asked for **outright**, not left to invalidateState. These factors belong to
+    // the application rather than to any control, so no control's own state has moved, and
     // invalidateState repaints only when one of the control's own factors has - it would leave
     // the ring at its last painted width until something else happened to repaint the control,
     // and then drop it in one step instead of fading.
     //
-    // The control that HOLDS the focus and the item it answers for can be two controls, and the
+    // The control that **holds** the focus and the item it answers for can be two controls, and the
     // ring is on the item.
     void Input::invalidateForControllers(Control* control)
     {

@@ -98,9 +98,9 @@ namespace ClaFi::Controls
         // And align is invalidated in the base updateVisibility()
     }
 
-    // A CONTROL IS CALCULATED WHILE IT IS VISIBLE, and a page control shows one page - so the
+    // **A control is calculated while it is visible**, and a page control shows one page - so the
     // pages nobody is looking at are never measured, and most of what makes this cheap is that
-    // they are not. Asking for their size is asking for a layout of each, so it is asked ONCE:
+    // they are not. Asking for their size is asking for a layout of each, so it is asked **once**:
     // again when a page is added or taken away, and again when the scale they were measured at
     // is no longer the form's, and not on the passes in between.
     //
@@ -123,16 +123,16 @@ namespace ClaFi::Controls
         m_measuredScale = scale;
     }
 
-    // THE BOX A PAGE CAME TO, NOT THE FLOOR IT CAN BE CUT TO. Control::calculate keeps both: the
-    // measurement in its dimensions and the content's floor in calculatedMinSize, and a floor is
-    // what a page survives being squeezed to - a button's text ellipsizes long before its page
+    // **The box a page came to, not the floor it can be cut to.** Control::calculate keeps both:
+    // the measurement in its dimensions and the content's floor in calculatedMinSize, and a floor
+    // is what a page survives being squeezed to - a button's text ellipsizes long before its page
     // runs out of room. What this control has to be is the measurement.
     //
-    // BOTH EXTENTS, under either sizing. Under WidestPage that is what keeps turning to another
+    // **Both extents**, under either sizing. Under WidestPage that is what keeps turning to another
     // page from resizing what holds this one: the menu is as big as the largest page it can
     // show, whichever it happens to be showing.
     //
-    // THE FLOOR IS THE PAGE'S FLOOR, by the same rule: what the page cannot be cut below, this
+    // **The floor is the page's floor**, by the same rule: what the page cannot be cut below, this
     // control cannot be either - a scroll box's bars, a MinSize the page states. Under WidestPage
     // it is the largest of them, since any of the pages may be the one showing.
     ScaledDimensions PageControl::calculateContent(AlignEvent& event)

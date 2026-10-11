@@ -31,7 +31,7 @@ goes back through the transform, so it turns, shears and scales with what it fil
 
 ## decodePng
 
-DECODED BY THE PLATFORM. The declaration is the core's and the body is the platform layer's,
+**Decoded by the platform.** The declaration is the core's and the body is the platform layer's,
 in an implementation unit of this module the way Transfer::Clipboard's is: WIC on Windows,
 through the PNG decoder alone rather than whichever codec claims the bytes, and libpng on
 Linux. A build with no platform has no body and nothing that calls one.

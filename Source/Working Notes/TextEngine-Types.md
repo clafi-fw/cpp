@@ -4,13 +4,13 @@ The author's side of the footnote of the same name.
 
 ## FlexSpace
 
-THE ROOM IS TAKEN LESS THE FIT TOLERANCE. The width is stated by building the line a second
+**The room is taken less the fit tolerance.** The width is stated by building the line a second
 time, and a line filled to the box exactly can come back from that build a hair wider than the
 box - which a wrapping text breaks at the gap, and a one-line box then collapses.
 
 ## TextRenderMode
 
-THE WHOLE PATH STANDS ON CLAFI_TEXT_MOVING, in Source/Y-Core/System/Switches.h, and it is 0.
+**The whole path stands on** CLAFI_TEXT_MOVING, in Source/Y-Core/System/Switches.h, and it is 0.
 At 0 this type, Control::textRenderMode, the mode parameter of TextEngine::drawText and
 TextLayout::draw, and everything under them down to the backends' raster state are left out
 of the build, and every run is drawn the way Static asks. Nothing moves text at 0 either: the
@@ -59,20 +59,20 @@ a request is resolved once, negative answers included.
 
 ## Paragraph placement
 
-ONE LINE, OR A ROW OF CELLS, IS PLACED BY THE LAYOUT. The native layout is never told the alignment
-and holds the line at the leading edge; paragraphOffset moves it by the alignment's share of the
-room the line leaves in the placement width, or not at all where the paragraph is wider than that
-width. Most text is this: a label, a caption, a cell, every text that does not wrap.
+**One line, or a row of cells, is placed by the layout.** The native layout is never told the
+alignment and holds the line at the leading edge; paragraphOffset moves it by the alignment's share
+of the room the line leaves in the placement width, or not at all where the paragraph is wider than
+that width. Most text is this: a label, a caption, a cell, every text that does not wrap.
 
-SEVERAL LINES ARE ALIGNED BY THE NATIVE LAYOUT, once, in the width they were broken at
+**Several lines are aligned by the native layout**, once, in the width they were broken at
 (alignedWidth), because only it can place each line. It is told after its metrics are read - see
 shapeParagraph - and moved as a whole from there: half the difference between the two widths for
 Center, all of it for Right. That holds because the lines fit both widths or neither: a wrapped
 text is never placed wider than it was broken at nor narrower than its widest line - see
 TextLayout::acceptsWidth and placementWidth.
 
-JUSTIFIED LINES ARE STRETCHED TO THE WIDTH, which no move reproduces, so a justified paragraph of
-several lines is told every width it is placed in (alignParagraph) - the one setMaxWidth left.
+**Justified lines are stretched to the width**, which no move reproduces, so a justified paragraph
+of several lines is told every width it is placed in (alignParagraph) - the one setMaxWidth left.
 
 Every reader of the native layout's coordinates - the draw, both hit tests, charRect and the ink a
 link's underline is cut around - adds paragraphOffset. A collapse line a layout holds at the
@@ -80,7 +80,7 @@ leading edge is moved by the draw's origin, since the layout moves no line left 
 
 ## Layout cache
 
-WHAT THE PASS ASKED FOR IS KEPT. Every entry is stamped with the pass it was last asked for in,
+**What the pass asked for is kept.** Every entry is stamped with the pass it was last asked for in,
 and FormBase::reAlign starts a pass through beginPass. A sweep drops only the entries no pass
 since the one before the current asked for: the measurement and the paint that draws it are
 one pass, and a hint or a popup laying out between them is a pass of its own, which the
@@ -90,11 +90,11 @@ many more than the sweep kept, and the rows a window shows are the first a pass 
 paint then built those layouts again, at the box's own width, and a text broken at a width equal
 to its own measured width fell to a second line on the ULP the rect round trip loses.
 
-THE SWEEP RUNS AT A THRESHOLD, k_sweepLayouts, and the threshold moves with what the sweep
+**The sweep runs at a threshold**, k_sweepLayouts, and the threshold moves with what the sweep
 left: the next one waits for the count to grow by half of k_sweepLayouts again. A page asking
 for more entries than that keeps every one of them, and is not swept on every insert for it.
 
-PAST k_maxCachedLayouts a pass is holding more than the cache will carry for it, and its own
+**Past** k_maxCachedLayouts a pass is holding more than the cache will carry for it, and its own
 entries go too, down to the most recent half by use. A list of a million fixed-size items never
 gets there, since a fixed size is not measured; a page of that many texts churns the entries
 its paints need, as every page did before.
@@ -104,18 +104,18 @@ its paints need, as every page did before.
 Which paragraphs of a TextLayout hold their native layout while k_releaseNativeLayouts is on -
 the switch at the top of TextEngine.Layout.cpp - and which of them are given back first.
 
-EVERY PARAGRAPH IS STILL SHAPED ONCE, when the text is. Its bounds and its lines go into the
+**Every paragraph is still shaped once**, when the text is. Its bounds and its lines go into the
 paragraph record and the pool, and those are what the fit to the box, the extent the bars range
 over and a caret's line and column are read from. What is given back is the native layout behind
 them: the object that draws the paragraph and answers a hit test or a character's rect.
 
-A PARAGRAPH IS BUILT AGAIN WHEN IT IS DRAWN OR ASKED ABOUT, by shapeParagraph from what it was
+**A paragraph is built again when it is drawn or asked about**, by shapeParagraph from what it was
 first built from - its slice of the baked text, the span cursors found by bisection at its start,
 the width the text was broken at and the event phase it was shaped in, a change of which
 reshapes the text. The width ensurePlacement told the held layouts to place their lines in is
 stated to the rebuilt one after the build, the order a held one was told in.
 
-WHAT IS KEPT is the paragraphs nearest what the last draw showed, counted in paragraphs, up to
+**What is kept** is the paragraphs nearest what the last draw showed, counted in paragraphs, up to
 k_heldLayoutBudget. A shaping keeps the first ones: all a text shorter than the budget has, so a
 label is never built twice, and what the top of a longer one shows. An edit keeps the last
 paragraphs it shaped, where the caret is, and takes the last of them for the view until the next
@@ -125,6 +125,6 @@ a row it has not reached yet could be the one to go, and trims once it is over; 
 outside a draw makes room before it builds, so the paragraph it answers about is never the one
 given back.
 
-WHAT IT COSTS is a native build, with the allocations inside it, for every paragraph that comes
+**What it costs** is a native build, with the allocations inside it, for every paragraph that comes
 into view: a wheel notch builds a few, a thumb dragged across the document a screenful per frame.
 A paint that shows what the last one showed builds nothing.

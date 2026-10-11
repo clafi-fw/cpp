@@ -10,9 +10,9 @@ namespace TextEngine_App
     // family named at all - so every row is a question put to the platform's fallback rather than
     // to a font the page chose.
     //
-    // WHAT A ROW ANSWERS WITH is one of three things, and telling them apart is the whole use of
-    // the page. A row that draws its characters found a face. A row of boxes found a face that has
-    // no glyph for them and drew .notdef. A row of blanks found a face whose .notdef is empty,
+    // **What a row answers with** is one of three things, and telling them apart is the whole use
+    // of the page. A row that draws its characters found a face. A row of boxes found a face that
+    // has no glyph for them and drew .notdef. A row of blanks found a face whose .notdef is empty,
     // which is what a text face answers with for a script it never heard of. Only the first is
     // coverage; the other two are the same miss wearing different clothes.
     //

@@ -659,8 +659,8 @@ namespace ClaFi::Browser
     {
         Actions::registerAll();
 
-        // CLAIMED BY THE BROWSER, NAMED BY THE PAGE. Opening belongs to the browser - it owns the
-        // tabs and the route between pages - and what to open belongs to the page, because only
+        // **Claimed by the browser, named by the page.** Opening belongs to the browser - it owns
+        // the tabs and the route between pages - and what to open belongs to the page, because only
         // the page knows what the user has picked in it. So the browser claims both wherever the
         // walk reaches it, and a page naming nothing is a state the commands are disabled in
         // rather than a reason to say nothing: the commands are still about this browser.
@@ -679,7 +679,7 @@ namespace ClaFi::Browser
             if (path.empty())
                 return;
 
-            // A COMMAND THAT NAVIGATES TAKES THE PAGE IT WAS RUN FROM DOWN WITH IT, and the
+            // **A command that navigates takes the page it was run from down with it**, and the
             // frames above it - a menu item, the press under that - go on reading controls that
             // went with the page. goToLater is the wait that answers it.
             if (&event.action == &Actions::open)
@@ -726,7 +726,7 @@ namespace ClaFi::Browser
     }
 
     // Everything in the strip was put there by addTab or restoreTab, which make BrowserTabs.
-    // A WINDOW CLOSING WITH THE SETTINGS UNKEPT IS EVERY TAB LEAVING ITS PAGE. A page's work
+    // **A window closing with the settings unkept is every tab leaving its page.** A page's work
     // waits in the tab's view state for the next run, and the view state reaches the disk only
     // where the user allowed storing - so where it will not, each page is asked about now, under
     // its own tab, and the first no keeps the window up.
@@ -860,8 +860,8 @@ namespace ClaFi::Browser
         initPageData(pageData);
         const std::wstring newPath = pageData.path();
 
-        // EVERY PAGE UNDER THIS ONE IS AT A NEW PATH: a path is walked from the name each page on
-        // it carries, and one of those names has just changed. So every tab standing on such a
+        // **Every page under this one is at a new path**: a path is walked from the name each page
+        // on it carries, and one of those names has just changed. So every tab standing on such a
         // page, and every history entry naming one, is stored under a path that names nothing
         // until it is written out again.
         for (BrowserTab& tab : tabs())
@@ -878,7 +878,7 @@ namespace ClaFi::Browser
             tab.invalidate();
         }
 
-        // THE PAGE ITSELF IS STILL THE ONE THE BROWSER IS SHOWING, so this rebuilds the same
+        // **The page itself is still the one the browser is showing**, so this rebuilds the same
         // crumbs over the same pages and the crumb the editor stands on is one of them. It runs
         // while that editor is up - the sink is called from inside it - and dropping the crumb
         // from under it would take the edit down as well.
@@ -902,9 +902,9 @@ namespace ClaFi::Browser
         {
             const RichControl* pageBefore = tab->page();
             showPage(*tab);
-            // SPENT AFTER THE PAGE HAS BEEN SHOWN, which is what reads it. From here on the view
-            // state under this tab is whatever the page just put there, so the next page shown on
-            // it is an ordinary navigation.
+            // **Spent after the page has been shown**, which is what reads it. From here on the
+            // view state under this tab is whatever the page just put there, so the next page shown
+            // on it is an ordinary navigation.
             tab->m_onRestoredPage = false;
             // A page this show has just built has not been told its anchor, whatever the url did.
             anchorToShow = urlChanged || tab->page() != pageBefore;
@@ -952,9 +952,10 @@ namespace ClaFi::Browser
     {
     }
 
-    // NOTHING A TAB STOOD ON IS THERE AFTERWARDS, and that is what lets the pages go: a tab holds
-    // its page data by pointer, so the tabs go first and the sub-items of home after them. The
-    // selection is let go of ahead of the tabs, so no tab is selected as its neighbour goes down.
+    // **Nothing a tab stood on is there afterwards**, and that is what lets the pages go: a tab
+    // holds its page data by pointer, so the tabs go first and the sub-items of home after them.
+    // The selection is let go of ahead of the tabs, so no tab is selected as its neighbour goes
+    // down.
     void BrowserControl::resetToHome()
     {
         m_tabs.setCurrentItem(nullptr);
@@ -994,9 +995,9 @@ namespace ClaFi::Browser
             fetchSubItems(pageData);
         }
         dropGoneSubItems(pageData);
-        // A FETCH THAT NAMES NOTHING LEAVES A HasChildren MARK STANDING. The mark says the page is
-        // a list, and a list read from a folder is empty whenever the folder is - the crumb keeps
-        // its strip, and drops the list's placeholder - see BreadCrumbBarItem::showDropdown.
+        // **A fetch that names nothing leaves a HasChildren mark standing.** The mark says the page
+        // is a list, and a list read from a folder is empty whenever the folder is - the crumb
+        // keeps its strip, and drops the list's placeholder - see BreadCrumbBarItem::showDropdown.
     }
 
     void BrowserControl::dropGoneSubItems(PageData& pageData)
@@ -1011,8 +1012,8 @@ namespace ClaFi::Browser
 
     bool BrowserControl::isPageInUse(const PageData& pageData) const
     {
-        // A TAB HOLDS THE PAGE DATA IT STANDS ON BY POINTER, and reaches it through every page of
-        // the path down to it, so a page on the way to an open tab is as much in use as the one
+        // **A tab holds the page data it stands on by pointer**, and reaches it through every page
+        // of the path down to it, so a page on the way to an open tab is as much in use as the one
         // that tab is on. Freeing either would leave the tab, its crumbs and its page pointing at
         // nothing.
         for (const BrowserTab& tab : tabs())

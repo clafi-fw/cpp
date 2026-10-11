@@ -85,7 +85,7 @@ namespace ClaFi::Browser
         void updateIconMode();
         void setId(BrowserControl&, const std::wstring_view id);
         std::wstring_view id() const { return m_id; }
-        // Whether this tab is standing on a page it was RESTORED onto and has not opened yet.
+        // Whether this tab is standing on a page it was **restored** onto and has not opened yet.
         // Only then is the view state under it the page's own - written by a previous run, edits
         // and all - and a browser that keeps a page's state there must leave it alone. A tab that
         // has navigated carries the state of where it came from, and one the user has just opened
@@ -166,7 +166,7 @@ namespace ClaFi::Browser
         // What the user has picked inside this page, as the path a browser would open. Empty
         // where nothing is picked, which is what leaves Open and Open in new tab disabled.
         //
-        // ASKED AS EACH COMMAND'S STATE IS, never kept: what is picked moves under a page that
+        // **Asked as each command's state is**, never kept: what is picked moves under a page that
         // is standing still, and nothing tells the commands so. A page that shows a list of
         // pages answers with the one the user is on; a page that is not a list of anything
         // answers with nothing and says so by leaving this alone.
@@ -205,11 +205,11 @@ namespace ClaFi::Browser
         void goTo(PageData&, Control& initiator);
         void goTo(PageData&, std::wstring_view anchor, Control& initiator,
             HistoryEntry = HistoryEntry::Push);
-        // Goes to a page once the press that asked for it has unwound. A COMMAND THAT NAVIGATES
-        // FROM INSIDE A CLICK DESTROYS THE PAGE IT WAS PRESSED ON, and the frames above that click
-        // go on reading controls that went down with it. The wait is held here rather than on the
-        // page, because a page holding it would be destroying the very dispatcher delivering the
-        // tick.
+        // Goes to a page once the press that asked for it has unwound. **A command that navigates
+        // from inside a click destroys the page it was pressed on**, and the frames above that
+        // click go on reading controls that went down with it. The wait is held here rather than on
+        // the page, because a page holding it would be destroying the very dispatcher delivering
+        // the tick.
         void goToLater(const Url&);
         PageData& homePageData() { return m_homePageData; }
         const PageData& homePageData() const { return m_homePageData; }
@@ -224,8 +224,8 @@ namespace ClaFi::Browser
         // Names the pages under this one, with addSubItem() for each of them. Called before a
         // crumb drops its list, unless that page is already marked Fetched.
         //
-        // ONLY FOR A PAGE THAT SAYS IT HAS A LIST. A crumb carries the strip that drops one only
-        // where PageData::hasSubItems() answers yes, so a browser whose pages are enumerated
+        // **Only for a page that says it has a list.** A crumb carries the strip that drops one
+        // only where PageData::hasSubItems() answers yes, so a browser whose pages are enumerated
         // lazily has to mark them FetchState::HasChildren in initPageData - which runs for every
         // page as it is built. A page reached with no sub-items and no such mark reads as a leaf
         // and is never asked about here.
@@ -234,7 +234,7 @@ namespace ClaFi::Browser
         // the application is up. A browser reading a directory leaves it unmarked and is asked
         // again on every drop, which is what keeps a crumb current.
         //
-        // A FETCH NAMES THE WHOLE SET, and what it does not name is freed: that is what lets a
+        // **A fetch names the whole set**, and what it does not name is freed: that is what lets a
         // crumb's list follow a source written to while the application is up. The one thing kept
         // unnamed is a page a tab stands on or under - a tab holds its page data by pointer, and
         // m_selectedPageData is one of those - which stays until that tab leaves it.
@@ -243,7 +243,7 @@ namespace ClaFi::Browser
         // reached before. This is what a fetchSubItems override adds with: it carries the
         // initPageData callback, which a page built any other way never gets.
         //
-        // THE ORDER A FETCH NAMES PAGES IN IS THE ORDER THEY ARE SHOWN. Each one is moved into
+        // **The order a fetch names pages in is the order they are shown.** Each one is moved into
         // place as it is named, so a page walked into before the fetch ran does not keep wherever
         // it happened to land then. Anything the fetch does not name is left at the end of the
         // list, which is where ensureSubItems looks for the pages that have gone.
@@ -286,11 +286,11 @@ namespace ClaFi::Browser
         // the name and says why, which keeps the editor standing with the reason over it and the
         // value still there to be corrected.
         //
-        // ANSWERS THE NAME THE PAGE IS KNOWN BY AFTERWARDS, which is what the browser writes into
-        // the page and walks the new paths out of. A page that is a file is known by its file name
-        // while the user typed a title, so the two are not one string. Nothing is the answer both
-        // for a name that was refused and for one the page already had: in either case the page
-        // stands where it stood, and nothing below has to be put right.
+        // **Answers the name the page is known by afterwards**, which is what the browser writes
+        // into the page and walks the new paths out of. A page that is a file is known by its file
+        // name while the user typed a title, so the two are not one string. Nothing is the answer
+        // both for a name that was refused and for one the page already had: in either case the
+        // page stands where it stood, and nothing below has to be put right.
         virtual std::wstring renamePage(PageData&, AcceptEditEvent&) { return {}; }
         // What a tab shows in its icon slot. A tab reaches its icon by asking the browser rather
         // than by being a class of its own, so a browser can answer per tab - from the page, its
@@ -349,7 +349,7 @@ namespace ClaFi::Browser
         void storeHistory(const BrowserTab&) const; // into the document of the tab's file
         // Puts the name the user typed to the browser, and puts the tree right when it is taken.
         void acceptPageName(PageData&, AcceptEditEvent&);
-        // Whether a page IS the one named or stands under it - which is every page whose path a
+        // Whether a page **is** the one named or stands under it - which is every page whose path a
         // rename of that page has just changed.
         [[nodiscard]] static bool isPageUnder(const PageData&, const PageData& ancestor);
         void selectPage(BrowserTab*, bool urlChanged);

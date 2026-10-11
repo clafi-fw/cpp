@@ -156,7 +156,7 @@ there, and the ramp's clamp keeps every pixel on the ramp without saying which c
 
 ## IBackend
 
-Stroke alignment: every draw* here lays its stroke INSIDE the bounds it is given. The
+Stroke alignment: every draw* here lays its stroke **inside** the bounds it is given. The
 outer edge of the stroke is the edge of the shape, so a fill and a stroke over the same
 bounds meet exactly and no fill shows past the border.
 
@@ -203,16 +203,16 @@ A device-independent bitmap read into pixels: the block a Windows clipboard carr
 CF_DIB or CF_DIBV5, and the same block behind the file header a .bmp starts with, which is
 what image/bmp carries and what decodeBmpFile takes.
 
-WHAT IS READ. An info header of 40 bytes or more, the V4 and V5 headers included, or the
+**What is read.** An info header of 40 bytes or more, the V4 and V5 headers included, or the
 12-byte core header. 1, 4 and 8 bits a pixel through the colour table, 16 and 32 through
 masks - the header's own with BI_BITFIELDS, 5-5-5 and 8-8-8 without - and 24 as the bytes
 they are. Rows bottom up unless the height is negative.
 
-WHAT ALPHA MEANS. A 32-bit pixel under BI_RGB is opaque whatever its fourth byte holds:
+**What alpha means.** A 32-bit pixel under BI_RGB is opaque whatever its fourth byte holds:
 the byte is reserved there, and a synthesised DIB leaves whatever was in it. Only an alpha
 mask stated with BI_BITFIELDS makes a pixel translucent.
 
-NOTHING FOR WHAT IS NOT PIXELS. A compressed block - RLE, or a JPEG or PNG carried inside a
+**Nothing for what is not pixels.** A compressed block - RLE, or a JPEG or PNG carried inside a
 DIB - and a header past the size a bitmap can be answer nothing rather than a guess: a
 reader that wants to show something shows the bytes.
 

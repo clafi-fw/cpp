@@ -207,7 +207,7 @@ namespace ClaFi::Controls
     void Slider::nestedMouseWheel(MouseWheelEvent&)
     {
         // That may be useful, but it we want to process the wheel here,
-        // it MUST be optional and turned off by default.
+        // it **must** be optional and turned off by default.
         // Think of a slider on a scroll box body.
         // event.handled = true;
         // offsetPositionBySteps(event.delta);

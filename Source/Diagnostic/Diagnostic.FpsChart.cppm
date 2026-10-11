@@ -25,7 +25,7 @@ namespace ClaFi::Diagnostic
     constexpr float k_plotWidth{ 96.0f };
 
     /// @brief What a chart asks for across, before scale. Whatever stands in the same column
-    /// STATES THIS as its own width: a neighbour left to be sized by its words re-measures the
+    /// **states this** as its own width: a neighbour left to be sized by its words re-measures the
     /// column every time a reading gains a digit.
     export constexpr float k_fpsChartWidth{ k_axisAreaWidth + k_plotWidth };
 
@@ -202,7 +202,7 @@ namespace ClaFi::Diagnostic
         m_pointFps.clear();
         m_pointDrawFps.clear();
 
-        // THE DRAWING RATE IS STATED BY WHOLE FRAMES ALONE - see FrameExtent. A slice holding
+        // **The drawing rate is stated by whole frames alone** - see FrameExtent. A slice holding
         // none keeps the rate last stated, and the slices before the first statement take that
         // first one: the line is a ceiling, and a ceiling holds until a whole frame measures it
         // again. Negative marks a slice still waiting for the first statement.
@@ -226,7 +226,7 @@ namespace ClaFi::Diagnostic
                 ++unstated;
             }
 
-            // THE AXIS IS SET BY THE HIGHER OF THE TWO, which is the drawing rate whenever the
+            // **The axis is set by the higher of the two**, which is the drawing rate whenever the
             // two have parted. Set by the arrival rate alone, the line above it would sit off the
             // top of the chart in exactly the case the chart exists to show.
             maxFps = std::max({ maxFps, fps, carriedDrawFps });
@@ -245,7 +245,7 @@ namespace ClaFi::Diagnostic
         return maxFps;
     }
 
-    // WHERE THE CURVE STARTS AND ENDS IS THE WHOLE DIFFERENCE between the two series. An area
+    // **Where the curve starts and ends is the whole difference** between the two series. An area
     // runs down to the baseline at both ends and closes; a line begins and ends on its own first
     // and last readings.
     void FpsChart::buildSeriesPath(const FloatRect& plot, const FloatValues& fps,
@@ -419,7 +419,7 @@ namespace ClaFi::Diagnostic
             );
         }
 
-        // DRAWN OVER THE AREA AND NEVER FILLED. It is the rate the drawing alone would allow -
+        // **Drawn over the area and never filled.** It is the rate the drawing alone would allow -
         // a ceiling the arrivals stand under, not a second reading to be compared by area.
         buildSeriesPath(plot, m_pointDrawFps, false);
         if (m_path.isEmpty())

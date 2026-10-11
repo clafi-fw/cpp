@@ -11,7 +11,7 @@ written and the last fill's strips are cleared by the next.
 
 ## FadeTextRenderer
 
-THE LINES ARE PLACED BY A TABLE STATED BEFORE THE DRAW. DirectWrite hands over every glyph
+**The lines are placed by a table stated before the draw.** DirectWrite hands over every glyph
 run of a layout first and its inline objects after them, so the order the runs arrive in
 says nothing about where along a line they stand. DWriteLayout::draw reads the lines off the
 layout and states a LineMove for each: the collapse line moves by the collapse offset and no
@@ -33,7 +33,7 @@ At most k_maxSpareBuffers sets are kept, and a layout whose buffers grew past
 k_maxSpareCharacters gives them to the allocator, so the spares never hold what one long
 paragraph once needed.
 
-THE SPARES CAN GO BEFORE THE LAYOUTS. The text engine's cache is a static, and the layouts it
+**The spares can go before the layouts.** The text engine's cache is a static, and the layouts it
 holds are destroyed at exit in no set order against this one. The spares' destructor closes
 them, and a layout destroyed after that frees its buffers as it would with no spares at all.
 
@@ -65,10 +65,10 @@ connection first, then the registered sources in the order they were added, then
 
 ## CompositionPresenter
 
-A SWAP CHAIN AND NOT A COMPOSITION SURFACE: a present waits its turn at the vertical blank
+**A swap chain and not a composition surface**: a present waits its turn at the vertical blank
 and every frame presented is a frame shown, and it is what Direct2D draws into.
 
-THE BUFFERS ROTATE, so the back buffer handed out holds the frame before the last one, and
+**The buffers rotate**, so the back buffer handed out holds the frame before the last one, and
 what the last frame changed is stale in it. That rect is kept and copied again with the new
 frame's own, which is the whole of what two buffers need.
 
@@ -82,7 +82,7 @@ so a hook finding none standing is a broken order, and unreachable.
 
 ## ShmBuffers
 
-TWO OF THEM, because a buffer that has been attached belongs to the compositor until it
+**Two of them**, because a buffer that has been attached belongs to the compositor until it
 says otherwise. Painting into the one on screen tears the frame being read. The other is
 painted into meanwhile, and they change places.
 
@@ -95,7 +95,7 @@ Premultiplied colour scales with its own alpha, so all four channels take one fa
 is still premultiplied colour - no destination is read, and a rounded corner keeps the coverage it
 was drawn with.
 
-TWO CHANNELS SHARE EACH MULTIPLY. The pixel is read as one 32-bit word, blue with red in its
+**Two channels share each multiply.** The pixel is read as one 32-bit word, blue with red in its
 even bytes and green with alpha in its odd ones, and a byte times a byte fits the 16 bits
 each channel has there. The division by 255 is (t + (t >> 8)) >> 8 over t = c * o + 128,
 which is c * o / 255 rounded to nearest and exact for every pair of bytes. Written this way
@@ -144,7 +144,7 @@ that ends the wait.
 
 ## DisplayManager::activate
 
-THE SURFACE HOLDING THE KEYBOARD ASKS. KWin grants a token only to the surface of the window it
+**The surface holding the keyboard asks.** KWin grants a token only to the surface of the window it
 holds active, and answers any other surface with a token it will not honour; the keyboard is on
 that window. The surface the input landed on can be another one: a menu line is clicked in a
 popup, which is never the active window and is unmapped before its command runs. The raise is
@@ -165,7 +165,7 @@ which is why Platform::pickFolder asks Window::isToplevelRole first.
 
 ## FolderRequest
 
-THE ANSWER IS WATCHED FOR BEFORE IT IS ASKED FOR. The request path is the caller's unique name
+**The answer is watched for before it is asked for.** The request path is the caller's unique name
 and the `handle_token` it chose, so the match rule for its Response is sent ahead of OpenFile on
 the same connection and the bus has it before the portal can answer. A portal older than the
 token answers OpenFile with a path of its own, and that one is watched as the reply arrives.
@@ -182,8 +182,8 @@ of its own and a bus killed mid-wait each settle in one or two passes.
 
 ## WindowsManager::settingChanged
 
-WM_SETTINGCHANGE IS A BROADCAST, sent to every top-level window - a form, a menu, a hint - and to
-no message-only window at all, which is why it is read in the manager's window procedure rather
+WM_SETTINGCHANGE **is a broadcast**, sent to every top-level window - a form, a menu, a hint - and
+to no message-only window at all, which is why it is read in the manager's window procedure rather
 than by a listener window of its own. The mode is read again on `ImmersiveColorSet` and announced
 only where it differs from the last one read, so one change of mode raises one
 SystemColorModeEvent however many windows were told, and a change of the accent colour, which

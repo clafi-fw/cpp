@@ -101,7 +101,7 @@ namespace ClaFi
 
             // Implicit conversion from iterator to const_iterator.
             //
-            // A TEMPLATE, so that it is not also the copy constructor of Iterator<false>. A
+            // **A template**, so that it is not also the copy constructor of Iterator<false>. A
             // constructor taking const Iterator& is exactly that whatever its constraint says,
             // and declaring one suppresses the implicit copy constructor and the move with it -
             // which leaves Iterator<false> uncopyable, so anything returning one by value fails
@@ -305,7 +305,7 @@ namespace ClaFi
         // --- Capacity Management ---
 
         // Changes the maximum capacity of the RingBuffer.
-        // If shrinking, it safely retains the LATEST elements.
+        // If shrinking, it safely retains the **latest** elements.
         constexpr void set_capacity(size_type new_capacity) {
             if (new_capacity == capacity_) return;
 

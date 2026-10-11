@@ -88,7 +88,7 @@ namespace ClaFi
     // corner named here would put every Information and Question icon on the violet side of blue,
     // and would leave the blue a theme actually holds too far out to reach the pigment.
     //
-    // THE FOUR ARE NOT EVENLY SPREAD, and no rule here may assume they are. Yellow and green
+    // **The four are not evenly spread**, and no rule here may assume they are. Yellow and green
     // stand 58 degrees apart while blue and red stand 140.
     constexpr std::array<int, k_pigmentsCount> k_pigmentReferenceDegrees{
         90,

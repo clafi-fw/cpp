@@ -50,13 +50,14 @@ namespace ClaFi
         /// @brief Puts a text the layout has not been told about into it.
         ///
         /// @note The whole of it, which is what a text rewritten from nothing needs. A host that
-        /// knows what CHANGED says so instead: TextBox splices the paragraphs its edit reached and
-        /// leaves the rest of the document where it stands.
+        /// knows what **changed** says so instead: TextBox splices the paragraphs its edit reached
+        /// and leaves the rest of the document where it stands.
         virtual void takeText(const Text&) const;
 
-        /// @brief The stamp of the control's OWN text, when that is what a gather answered with.
+        /// @brief The stamp of the control's **own** text, when that is what a gather answered
+        /// with.
         ///
-        /// @note A gather NAMES a control's text rather than copying it, so the answer is that
+        /// @note A gather **names** a control's text rather than copying it, so the answer is that
         /// object itself and is recognised by address. Anything else - a text composed by a
         /// parent, or built by a handler - has no life of its own and no stamp, and is told from
         /// the last one by being compared.
@@ -65,7 +66,7 @@ namespace ClaFi
         // What the layout was built from. Mutable, both of them: measuring is a const question
         // about the control, and the layout is the answer's working - a memo of the control's own
         // text, not state a caller can observe by any other route. What a const measurement must
-        // not do is CHANGE what is drawn, and it cannot: every path here builds the layout from
+        // not do is **change** what is drawn, and it cannot: every path here builds the layout from
         // doGetText, which is what paintText hands it too.
         mutable Text m_layoutText;
         mutable TextLayout m_layout;
@@ -149,7 +150,7 @@ namespace ClaFi
     }
 
     // Measured on the layout the paint will draw from. Through TextEngine's cache instead, a
-    // control building a text of its own gets a SECOND layout of it: the key carries the text's
+    // control building a text of its own gets a **second** layout of it: the key carries the text's
     // hash, so a control whose text moved misses on every measurement, shapes it again to answer
     // one question, and leaves the entry for the evictor to sweep.
     template <IsControl HostClass>
@@ -191,10 +192,10 @@ namespace ClaFi
     TextLayout& WithTextLayout<HostClass>::syncedLayout(const FormContext& formContext,
         const FloatRect& textBounds) const
     {
-        // Gathered into a member rather than a local. A gather that has to BUILD its answer copies
-        // the whole text and every marker in it, and a Text declared here would take the buffers
-        // for that copy from the allocator on every measurement. Cleared instead, so the buffers
-        // one gather grew are the ones the next fills.
+        // Gathered into a member rather than a local. A gather that has to **build** its answer
+        // copies the whole text and every marker in it, and a Text declared here would take the
+        // buffers for that copy from the allocator on every measurement. Cleared instead, so the
+        // buffers one gather grew are the ones the next fills.
         m_gatheredText.clear();
         const Text& gathered = this->doGetText(formContext, m_gatheredText, EventPhase::Paint);
         return syncedLayout(formContext, textBounds, gathered);
@@ -212,10 +213,10 @@ namespace ClaFi
         // Compared rather than assigned: setText invalidates whatever it is handed, so a control
         // measured four times in one pass would rebuild four times.
         //
-        // A LAYOUT NOT YET STATED A TEXT IS TOLD ONE WHATEVER THE COMPARISON SAYS. An empty first
-        // text compares equal to the empty text this was constructed beside, so nothing would be
-        // taken and the layout would be asked to shape from a text it never held - a control whose
-        // reading stands empty until something is there to read draws exactly that.
+        // **A layout not yet stated a text is told one whatever the comparison says.** An empty
+        // first text compares equal to the empty text this was constructed beside, so nothing would
+        // be taken and the layout would be asked to shape from a text it never held - a control
+        // whose reading stands empty until something is there to read draws exactly that.
         const TextStamp stamp = stampOf(text);
         const bool recognised = stamp.named() && stamp == m_layoutStamp;
         if (!m_layout.isTextStated() || (!recognised && text != m_layoutText))

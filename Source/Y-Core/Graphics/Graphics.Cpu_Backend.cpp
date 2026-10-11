@@ -62,13 +62,13 @@ namespace ClaFi::Graphics::Cpu
         applyClipStateToGlobal();
         updateActiveView();
 
-        // A FRAME THAT CARRIES ALPHA STARTS FROM NOTHING. Every other frame keeps what the last
+        // **A frame that carries alpha starts from nothing.** Every other frame keeps what the last
         // one left and relies on the children covering every pixel, which costs nothing and is
         // invisible for as long as the covering holds. It does not hold where a window has a
         // rounded corner: the pixels outside the curve are the ones nothing draws, and they have
         // to read as absent rather than as whatever stood there two frames ago.
         //
-        // ONLY THE DIRTY RECT, because that is what this pass will paint and the clip already
+        // **Only the dirty rect**, because that is what this pass will paint and the clip already
         // states it.
         if (m_transparentBase)
             m_activeView.fill(k_noColor);

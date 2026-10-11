@@ -339,8 +339,9 @@ namespace ClaFi
                         case TextOp::PushSuperscript:
                         case TextOp::PushSubscript:
                         {
-                            // Off the size the level is ENTERED at, so the step a script takes is
-                            // the same fraction of what the reader sees beside it at every depth.
+                            // Off the size the level is **entered** at, so the step a script takes
+                            // is the same fraction of what the reader sees beside it at every
+                            // depth.
                             const float rise = (arg == TextOp::PushSuperscript
                                 ? ScriptMetrics::superRise
                                 : -ScriptMetrics::subDrop) * getEffectiveSize();
@@ -410,8 +411,8 @@ namespace ClaFi
 
         // Emit tail paragraph:
         // - if text exists post the last newline.
-        // - OR if we're in Editable mode AND we're exactly at the end (meaning the whole string ended with \n).
-        // - OR if the entire string is empty (sz == 0) to guarantee a layout foundation exists.
+        // - **Or** if we're in Editable mode **and** we're exactly at the end (meaning the whole string ended with \n).
+        // - **Or** if the entire string is empty (sz == 0) to guarantee a layout foundation exists.
         if (currentParagraphStart < sz || (isEditable && currentParagraphStart == sz) || sz == 0) {
             m_paragraphs.push_back({ {currentParagraphStart, sz - currentParagraphStart}, currentAlign, currentLineSpacing, currentIndent });
         }

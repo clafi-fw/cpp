@@ -68,9 +68,9 @@ namespace ClaFi
         [[nodiscard]] const Text& measuredText() const { return m_measuredText; }
         // The words the last visible paint put on screen.
         //
-        // THEY OUTLIVE THE CONTROL BEING CLEARED, because the pixels do. A window taken down goes
-        // out over an alpha animation and is painted the whole way, and these are the words every
-        // one of those paints repeats - see HintLabel::getText.
+        // **They outlive the control being cleared**, because the pixels do. A window taken down
+        // goes out over an alpha animation and is painted the whole way, and these are the words
+        // every one of those paints repeats - see HintLabel::getText.
         [[nodiscard]] const Text& shownText() const { return m_shownText; }
     protected:
         void updateVisibility() override;
@@ -100,14 +100,14 @@ namespace ClaFi
     {
         const HintForm& form = static_cast<const HintForm&>(this->form());
 
-        // A WINDOW THAT HAS BEEN LET GO OF KEEPS THE WORDS IT WENT OUT WITH. It goes on being
+        // **A window that has been let go of keeps the words it went out with.** It goes on being
         // painted for as long as its alpha runs down, and every one of those paints asks again -
         // so asking a control there would repaint the window part way through the fade as
-        // whatever that control says for itself NOW. A message being taken down is exactly that
+        // whatever that control says for itself **now**. A message being taken down is exactly that
         // case: it has been forgotten by the time the fade starts, and what the user was reading
         // would turn into the control's own hint in front of them.
         //
-        // HAVING NO CONTROL IS THE WHOLE TEST, and the form's own visibility is not part of it.
+        // **Having no control is the whole test**, and the form's own visibility is not part of it.
         // A hint stands over a control whose answer changes underneath it - a slider dragged with
         // its value on the thumb - and the visible flag says where the alpha is heading rather
         // than whether there is anything to say. Read here, it stops a window that is on screen
@@ -130,7 +130,7 @@ namespace ClaFi
         if (!ContextMessage::answer(*m_control, hintEvent))
             m_control->nestedGetHint(hintEvent);
         m_format = hintEvent.format;
-        // WHAT A PAINT PRODUCED IS WHAT THE FADE REPEATS. A calculation is a measurement and is
+        // **What a paint produced is what the fade repeats.** A calculation is a measurement and is
         // answered with the room a later value will need, so recording that one would send the
         // window out saying a line it never showed.
         if (event.phase() == EventPhase::Paint)
@@ -163,11 +163,11 @@ namespace ClaFi
             ownerForm.appContext(),
             // The pointer goes through the window to whatever is behind it.
             WindowRole::Hint,
-            // THE FORM IT STANDS OVER, NAMED DIRECTLY. Every other popup names the CONTROL it was
-            // opened on and its form is read off that; this one is a member of the form it belongs
-            // to and is built with it, before it is about any control at all. Owning the window to
-            // that form is what keeps it above that form - a menu's hint over the menu - and is
-            // why the window carries no always-on-top bit of its own.
+            // **The form it stands over, named directly.** Every other popup names the **control**
+            // it was opened on and its form is read off that; this one is a member of the form it
+            // belongs to and is built with it, before it is about any control at all. Owning the
+            // window to that form is what keeps it above that form - a menu's hint over the menu -
+            // and is why the window carries no always-on-top bit of its own.
             ownerForm,
             // And the label under it is not pointed at either. Said in its own right rather than
             // taken from the window: the two are separate answers, and this one is the label's.
@@ -215,10 +215,11 @@ namespace ClaFi
         m_measuredText = event.text;
         setPlacement(event.placement);
         m_hideOnUserInput = event.hideOnUserInput;
-        // AN OVER-TEXT HINT IS THE CONTROL'S OWN LAYOUT, UNCUT. It stands on the words it repeats,
-        // so it breaks its lines where they were broken - the anchor rect is the box that text was
-        // drawn in - and its window is then sized to the whole of the text instead of to the part
-        // that fitted. Every other placement is a hint in its own right and lays itself out.
+        // **An over-text hint is the control's own layout, uncut.** It stands on the words it
+        // repeats, so it breaks its lines where they were broken - the anchor rect is the box that
+        // text was drawn in - and its window is then sized to the whole of the text instead of to
+        // the part that fitted. Every other placement is a hint in its own right and lays itself
+        // out.
         const bool overText = event.placement == FormPlacement::OverText;
         content().m_breakWidth = overText ? event.anchorRect.width() : 0.0f;
         const bool wrap = !overText or event.wordWrap;

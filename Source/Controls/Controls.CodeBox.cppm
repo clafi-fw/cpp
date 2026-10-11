@@ -327,8 +327,8 @@ namespace ClaFi::Controls
         // opened, and whether the text has changed since. See Controls#completionlist
         Syntax::Declarations m_declarations{};
         mutable bool m_declarationsStale{ true };
-        // Whether the character of the press being answered belongs in the text. THE CHARACTER OF
-        // A PRESS IS QUEUED BEFORE THE PRESS IS ANSWERED, so a Return that took a row would still
+        // Whether the character of the press being answered belongs in the text. **The character of
+        // a press is queued before the press is answered**, so a Return that took a row would still
         // break the line: the press settles this and the character reads it - see charPress.
         bool m_completionTakesChar{ true };
         // Whether the edit under way is a row being taken, which is the one edit no list follows.

@@ -456,7 +456,7 @@ class Scanner:
 
     def resolve_value_kind(self, type_name):
         bare = self.resolve(type_name.replace("const ", "").replace("&", "").replace("*", "").strip())
-        # A pointer to member is the kind of what it points AT: the class it reaches into says
+        # A pointer to member is the kind of what it points **at**: the class it reaches into says
         # where the value lives, not what the value is.
         if "::*" in bare:
             bare = bare.split()[0]

@@ -104,8 +104,9 @@ namespace ClaFi
         void start(void* control, const AnimationSlot&, float currentValue, float endValue, const OnAnimate&);
         bool isActive();
         // Whether anything at all is running on this slot, whichever control is running it. The
-        // question is about the MOVEMENT rather than about who is making it: something waiting for
-        // a scroll to settle waits for scrolling, and which bar is scrolling is not its business.
+        // question is about the **movement** rather than about who is making it: something waiting
+        // for a scroll to settle waits for scrolling, and which bar is scrolling is not its
+        // business.
         [[nodiscard]] bool isActive(const AnimationSlot&) const;
         [[nodiscard]] bool ticking() const { return m_ticking; }
         void externalTimerTick();
@@ -296,7 +297,7 @@ namespace ClaFi
         restartTimer();
     }
 
-    // Whether anything is still running, which is not the same question as whether any CONTROL
+    // Whether anything is still running, which is not the same question as whether any **control**
     // is. An animation that belongs to the application rather than to one control carries no
     // control at all - each input controller's fade is one - and reading a null control as
     // finished ends the walk one tick in, leaving that animation's value frozen wherever the tick

@@ -533,7 +533,7 @@ namespace ClaFi::Graphics::Cpu
         int geomTop = static_cast<int>(std::floor(surface.top()));
         int geomLeft = static_cast<int>(std::floor(surface.left()));
 
-        // --- HOIST LOOP INVARIANTS --- [CP]
+        // --- **Hoist loop invariants** --- [CP]
         const float* clipBaseRow = nullptr;
         int clipYOffset = 0;
         int clipMaxHeight = 0;
@@ -666,7 +666,7 @@ namespace ClaFi::Graphics::Cpu
         int geomTop = static_cast<int>(std::floor(target.top()));
         int geomLeft = static_cast<int>(std::floor(target.left()));
 
-        // --- HOIST LOOP INVARIANTS --- [CP]
+        // --- **Hoist loop invariants** --- [CP]
         const float* clipBaseRow = nullptr;
         int clipYOffset = 0;
         int clipMaxHeight = 0;
@@ -838,7 +838,7 @@ namespace ClaFi::Graphics::Cpu
         const __m256 vFactor = _mm256_set1_ps(p.lightColor.alpha / 255.0f);
         const __m256i vColor = _mm256_set1_epi32(p.lightColor.fullyOpaque().asUint());
 
-        // --- HOIST LOOP MULTIPLIER --- [CP]
+        // --- **Hoist loop multiplier** --- [CP]
         // Folds the x-ratio and the reciprocal spread into one broadcast, so the inner loop
         // needs a single multiply rather than a divide plus a multiply.
         const __m256 vXRatioSpread = _mm256_set1_ps((p.xRatio > 0.0f ? p.xRatio : 1.0f) / p.lightSpread);
@@ -872,7 +872,7 @@ namespace ClaFi::Graphics::Cpu
             float dyVal = std::abs(py - p.lightPos.y);
             float dyNormVal = dyVal / p.lightSpread;
 
-            // --- EARLY-ROW REJECTION --- [CP]
+            // --- **Early-row rejection** --- [CP]
             // Rows outside the vertical radius contribute nothing.
             if (dyNormVal >= 1.0f)
             {

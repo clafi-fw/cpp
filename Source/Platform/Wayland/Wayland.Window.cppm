@@ -14,13 +14,13 @@ import ClaFi.StdLib;
 
 namespace ClaFi::PlatformImplementation::Wayland
 {
-    // THE UNIT A SCALE IS STATED IN, here and in the protocol: 120 is 100%, so 175% is 210 and
+    // **The unit a scale is stated in**, here and in the protocol: 120 is 100%, so 175% is 210 and
     // 250% is 300. Every scale a compositor names is a whole number of these, which is why none
     // of this needs a float and why two windows on one screen cannot disagree by a rounding
     // error.
     export constexpr int k_scaleUnit = 120;
 
-    // HOW FAR INTO THE SHADOW A WINDOW CAN BE GRABBED TO BE SIZED, in surface pixels. It is the
+    // **How far into the shadow a window can be grabbed to be sized**, in surface pixels. It is the
     // reach of the input region past the geometry, and the reach of the form window's edge test.
     export constexpr int k_resizeGrab = 8;
 
@@ -31,7 +31,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         bool maximized{};
     };
 
-    // ONE WINDOW, AND WHAT A COMPOSITOR WILL AND WILL NOT ANSWER ABOUT IT. See Platform
+    // **One window, and what a compositor will and will not answer about it.** See Platform
     export class Window : public IPlatformWindow, public INativeEventSink
     {
     public:
@@ -41,19 +41,19 @@ namespace ClaFi::PlatformImplementation::Wayland
         Window& operator=(const Window&) = delete;
     public:
         [[nodiscard]] WindowRole role() const { return m_role; }
-        // A MENU OR A HINT: a window that stands on another one and is placed by a positioner
+        // **A menu or a hint**: a window that stands on another one and is placed by a positioner
         // against it. A dialog is a toplevel and is placed by the compositor's own rule.
         [[nodiscard]] bool isPopupRole() const
         {
             return m_role == WindowRole::Menu || m_role == WindowRole::Hint;
         }
-        // A WINDOW ON THE SCREEN'S EDGE: a layer surface rather than a toplevel, anchored by the
-        // compositor to the edges it named and sized between them. It is what a Dialog placed
+        // **A window on the screen's edge**: a layer surface rather than a toplevel, anchored by
+        // the compositor to the edges it named and sized between them. It is what a Dialog placed
         // ScreenRight becomes on a compositor with the layer shell - decided at its first
         // placement, since a surface takes one role and keeps it. Nothing above this layer knows
         // the difference; the placement kind is the whole of what the form said.
         [[nodiscard]] bool isLayerRole() const { return m_layerSurface != nullptr; }
-        // WHETHER THE USER SIZES THIS WINDOW: a dialog whose range is more than one size. One a
+        // **Whether the user sizes this window**: a dialog whose range is more than one size. One a
         // form's content sizes states its range as that one size - see setSizeRange.
         [[nodiscard]] bool userSized() const
         {
@@ -62,13 +62,13 @@ namespace ClaFi::PlatformImplementation::Wayland
         [[nodiscard]] wl_surface* surface() const { return m_surface; }
         // An xdg toplevel, which is what another client can parent a window of its own by.
         [[nodiscard]] bool isToplevelRole() const { return m_toplevel != nullptr; }
-        // A WINDOW IS COMPOSITED OVER WHAT IT STANDS ON when something of it is not a filled
+        // **A window is composited over what it stands on** when something of it is not a filled
         // rectangle: a popup fades and rounds its corners, and a toplevel whose frame has a corner
         // to round or a shadow to cast is the same case. Its frames then carry an alpha channel
         // and start cleared. A toplevel wearing no frame is opaque, keeps XRGB, and pays for
         // neither.
         //
-        // EVERYTHING THE TRANSLUCENCY WORK TURNS ON HANGS OFF THIS ONE ANSWER: the ARGB frames,
+        // **Everything the translucency work turns on hangs off this one answer**: the ARGB frames,
         // the cleared base the backend paints from, and the premultiplied copy out.
         [[nodiscard]] bool isTranslucent() const
         {
@@ -83,8 +83,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         // Sent and never confirmed: xdg_toplevel has no minimized state and the compositor never
         // reports one back, so this is a request with no answer and isMinimized cannot read it.
         void minimize() override;
-        // A REQUEST, NOT A COMMAND. The compositor may refuse - a tiling one generally will - and
-        // nothing is true until the configure that answers it arrives. That is why isMaximized
+        // **A request, not a command.** The compositor may refuse - a tiling one generally will -
+        // and nothing is true until the configure that answers it arrives. That is why isMaximized
         // reads state written by the configure and never by this call, and why a title bar glyph
         // is one frame behind the click that changed it. One frame behind is correct: the window
         // is not maximized yet.
@@ -92,7 +92,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         void restore() override;
         [[nodiscard]] bool isFocused() override { return m_activated; }
         [[nodiscard]] bool isMaximized() override { return m_maximized; }
-        // ALWAYS FALSE. xdg_toplevel carries no minimized state; a compositor that iconifies a
+        // **Always false.** xdg_toplevel carries no minimized state; a compositor that iconifies a
         // window simply stops asking it for frames and never says why.
         [[nodiscard]] bool isMinimized() override { return false; }
         // Asks the compositor to raise this toplevel, and is refused here with no stamp.
@@ -102,9 +102,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         void update() override;
         void setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize) override;
         void setFrame(const WindowFrame&) override;
-        // THE FRAME THIS WINDOW APPLIES, in real pixels: the design, less what the window's state
-        // takes away. Maximized and fullscreen wear no frame at all; tiled keeps the shadow and
-        // loses the corners; a layer surface loses both.
+        // **The frame this window applies**, in real pixels: the design, less what the window's
+        // state takes away. Maximized and fullscreen wear no frame at all; tiled keeps the shadow
+        // and loses the corners; a layer surface loses both.
         [[nodiscard]] WindowFrame appliedFrame() const;
         PlacedWindow place(const WindowPlacement&) override;
         // Applied by the compositor or by the frame. See Platform#window-opacity
@@ -112,17 +112,18 @@ namespace ClaFi::PlatformImplementation::Wayland
         void setAlpha(ColorByte value) override;
         void initiateWindowDrag(IntPoint pt, InputStamp) override;
         void showWindowMenu(PointInForm, InputStamp) override;
-        // THE SIDE IS THE COMPOSITOR'S. A positioner may flip a popup for want of room and the
+        // **The side is the compositor's.** A positioner may flip a popup for want of room and the
         // configure that says so names a position this class does not read back yet, so the
         // answer is the side the placement asked for.
         [[nodiscard]] bool standsAbove() const override
             { return m_placement.placement == FormPlacement::Top; }
-        // KEEP ABOVE IS THE COMPOSITOR'S. No xdg request states it, the compositor toggles it from
-        // its own menu and never tells the client, so nothing is set here and nothing is stored.
+        // **Keep above is the compositor's.** No xdg request states it, the compositor toggles it
+        // from its own menu and never tells the client, so nothing is set here and nothing is
+        // stored.
         [[nodiscard]] bool canSetAlwaysOnTop() const override { return false; }
         [[nodiscard]] bool isAlwaysOnTop() const override { return false; }
         void setAlwaysOnTop(bool) override {}
-        // THE NAME THIS TOPLEVEL RESTORES BY in the application's session. Stated before the
+        // **The name this toplevel restores by** in the application's session. Stated before the
         // first placement, which makes the toplevel and names it - see createToplevel.
         void setSessionName(std::string_view value) { m_sessionName = value; }
         // Named to a session opened after this window was made - see Platform
@@ -132,7 +133,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // What the config would keep now.
         [[nodiscard]] RememberedPlacement rememberedPlacement() const;
     public:
-        // FROM THE DISPLAY, IN SURFACE COORDINATES. Each of these converts and hands on to the
+        // **From the display, in surface coordinates.** Each of these converts and hands on to the
         // protected twin below it, so the conversion happens once, in the class that owns the
         // scale, and a derived window never sees a surface coordinate at all. Final for the same
         // reason: overriding one of these would be overriding the conversion.
@@ -142,14 +143,15 @@ namespace ClaFi::PlatformImplementation::Wayland
         void onPointerSideButton(IntPoint surfacePoint, SideButton, InputStamp) final;
         void onPointerWheel(IntPoint surfacePoint, float delta, bool horizontal) final;
         void onPointerLeft() final;
-        // A KEY HAS NO COORDINATES TO CONVERT, and is routed the same way even so, so that a
+        // **A key has no coordinates to convert**, and is routed the same way even so, so that a
         // derived window overrides one family of methods and not two.
         void onKeyPressed(const KeyPress&) final;
         void onCharacter(wchar_t) final;
         void onKeyReleased() final;
         void onIdle() final;
-        // HOW MANY REAL PIXELS ONE SURFACE PIXEL IS, IN 120ths. Everything the compositor states
-        // - a configure size, a pointer position - is in SURFACE coordinates; everything the
+        // **How many real pixels one surface pixel is, in** 120ths. Everything the compositor
+        // states
+        // - a configure size, a pointer position - is in **surface** coordinates; everything the
         // framework works in is real pixels. This is the one number between them.
         //
         // 120ths because a screen at 175% is not an integer and the protocol says so in the same
@@ -157,7 +159,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // screen cannot disagree by a rounding error.
         [[nodiscard]] int scale120() const { return m_scale120; }
         [[nodiscard]] int scalePercent() const { return m_scale120 * 100 / k_scaleUnit; }
-        // ROUNDED TO NEAREST. A point between two real pixels belongs to one of them, and the
+        // **Rounded to nearest.** A point between two real pixels belongs to one of them, and the
         // hit test that reads this has to land on the same one every time - which is what makes
         // the rule matter more than the choice.
         [[nodiscard]] IntPoint toBufferPoint(IntPoint surfacePoint) const
@@ -168,7 +170,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             };
         }
     protected:
-        // WHAT A WINDOW IS TOLD, ALL IN REAL PIXELS. These are the extension points; the ones
+        // **What a window is told, all in real pixels.** These are the extension points; the ones
         // above are the boundary.
         virtual void pointerMoved(IntPoint) {}
         virtual void pointerButton(IntPoint, std::uint32_t time, InputStamp, bool down) {}
@@ -189,28 +191,28 @@ namespace ClaFi::PlatformImplementation::Wayland
         [[nodiscard]] const IntRect& dirtyRect() const { return m_dirtyRect; }
         void clearDirtyRect() { m_dirtyRect = {}; }
         virtual void paint() {}
-        // ATTACHES A FRAME AND ASKS FOR IT TO BE SHOWN. The damage is in BUFFER coordinates,
-        // which is what survives a scale change - surface coordinates would not.
+        // **Attaches a frame and asks for it to be shown.** The damage is in **buffer**
+        // coordinates, which is what survives a scale change - surface coordinates would not.
         void presentFrame(ShmBuffers::Frame&, const IntRect& damage);
         // The opacity a frame's own pixels carry - full where the compositor applies the window's.
         [[nodiscard]] ColorByte pixelAlpha() const { return m_alphaModifier ? 255 : m_alpha; }
 
-        // THE TWO REQUESTS THAT HAND THE WINDOW TO THE COMPOSITOR - to be moved, or to be sized
+        // **The two requests that hand the window to the compositor** - to be moved, or to be sized
         // from the edge or corner named. Both are refused on the same terms: a request naming no
         // input event is one the compositor would reject, so it is not sent. From the moment
         // either is accepted the compositor holds the pointer and this client sees nothing of the
-        // gesture, THE RELEASE INCLUDED, so a caller has to have settled the form's own press
+        // gesture, **the release included**, so a caller has to have settled the form's own press
         // before asking - see FormWindow::handOverToCompositor.
         void requestWindowMove(InputStamp);
         void requestWindowResize(std::uint32_t edges, InputStamp);
         [[nodiscard]] DisplayManager& display() const { return m_display; }
         wl_surface* m_surface{ nullptr };
-        // THE SIZE IN REAL PIXELS, which is what the buffer is and what the framework lays out
+        // **The size in real pixels**, which is what the buffer is and what the framework lays out
         // into. Not what a configure names - see m_surfaceSize.
         IntSize m_size{ 0, 0 };
         ShmBuffers m_buffers;
     private:
-        // THE ROLE A DIALOG'S SURFACE TAKES, made at its first placement rather than in the
+        // **The role a dialog's surface takes**, made at its first placement rather than in the
         // constructor: that is the first moment the window knows what it is. The popup roles
         // follow the same rule in placePopup, for the same reason.
         void createToplevel();
@@ -227,8 +229,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         // What the compositor is told to place this window by. The caller owns the result and
         // destroys it once the popup has been made from it.
         [[nodiscard]] xdg_positioner* buildPositioner(const WindowPlacement&) const;
-        // THE MARGINS IN SURFACE PIXELS, whole ones - the design's real pixels rounded up at this
-        // scale, or none for a window that fills its screen or is docked to its edges.
+        // **The margins in surface pixels**, whole ones - the design's real pixels rounded up at
+        // this scale, or none for a window that fills its screen or is docked to its edges.
         [[nodiscard]] FrameMargins surfaceMargins() const;
         // The surface is the geometry and its margins; the buffer is the surface in real pixels.
         void updateSurfaceSize();
@@ -239,16 +241,16 @@ namespace ClaFi::PlatformImplementation::Wayland
         // Where the window stands in its surface, what of the surface is solid, and what of it
         // takes the pointer. Double-buffered state, applied by the commit that carries the frame.
         void stateGeometry();
-        // THE SIZE THIS WINDOW HOLDS, MADE TRUE EVERYWHERE IT IS HELD: destination, geometry and
-        // regions stated, frames re-cut, form told. For the paths that move m_size without a
+        // **The size this window holds, made true everywhere it is held**: destination, geometry
+        // and regions stated, frames re-cut, form told. For the paths that move m_size without a
         // configure, so that the configure following one of them reads m_size as the size
         // everything already is.
         void applySize();
         // A design that arrived once the frame was cut: the surface and the buffer follow it here
         // rather than waiting for a configure.
         void reframe();
-        // THE PARENT'S SCALE. A positioner states everything in the parent surface's coordinates,
-        // and a popup has no scale of its own until its first configure.
+        // **The parent's scale.** A positioner states everything in the parent surface's
+        // coordinates, and a popup has no scale of its own until its first configure.
         [[nodiscard]] int parentScale120() const;
         [[nodiscard]] bool canReposition() const;
         void applyConfigure(std::uint32_t serial);
@@ -285,53 +287,54 @@ namespace ClaFi::PlatformImplementation::Wayland
         std::optional<RememberedPlacement> m_remembered{};
         xdg_popup* m_popup{ nullptr };
         zwlr_layer_surface_v1* m_layerSurface{ nullptr };
-        // THE WIDTH THE LAYER SURFACE WAS LAST GIVEN, in surface pixels - stated again only when
-        // a placement asks for another, since each statement is a configure round trip.
+        // **The width the layer surface was last given**, in surface pixels - stated again only
+        // when a placement asks for another, since each statement is a configure round trip.
         int m_layerWidth{ 0 };
-        // THE RANGE STATED BEFORE THERE WAS A TOPLEVEL TO STATE IT TO. A form measures before it
-        // is placed, and the role is made at the placement; what it said is said again then.
+        // **The range stated before there was a toplevel to state it to.** A form measures before
+        // it is placed, and the role is made at the placement; what it said is said again then.
         ScaledDimensions m_pendingMinSize{};
         ScaledDimensions m_pendingMaxSize{ k_maxFloat, k_maxFloat };
-        // THE LAST PLACEMENT THIS WINDOW WAS GIVEN, which is the only one worth building a
+        // **The last placement this window was given**, which is the only one worth building a
         // positioner from - see onIdle.
         WindowPlacement m_placement{};
         // Counts the reposition requests, so the event answering one names which. A popup here
         // has a single placement in flight, so it is traced rather than matched.
         std::uint32_t m_repositionToken{ 0 };
         zxdg_toplevel_decoration_v1* m_decoration{ nullptr };
-        // PRESENT TOGETHER OR NOT AT ALL. With them the compositor states the real ratio and the
-        // buffer is presented at the size it asked for; without them the scale is whatever whole
-        // number the outputs report.
+        // **Present together or not at all.** With them the compositor states the real ratio and
+        // the buffer is presented at the size it asked for; without them the scale is whatever
+        // whole number the outputs report.
         wp_viewport* m_viewport{ nullptr };
         wp_fractional_scale_v1* m_fractionalScale{ nullptr };
         // Null where the compositor offers no multiplier and the frame carries the opacity.
         wp_alpha_modifier_surface_v1* m_alphaModifier{ nullptr };
-        // OUTSTANDING WHILE A FRAME IS OWED. The compositor answers it when this surface is about
-        // to be drawn, which is the only moment another frame is worth producing. Painting on any
-        // other schedule draws frames that are overwritten before a screen refresh reaches them.
+        // **Outstanding while a frame is owed.** The compositor answers it when this surface is
+        // about to be drawn, which is the only moment another frame is worth producing. Painting on
+        // any other schedule draws frames that are overwritten before a screen refresh reaches
+        // them.
         wl_callback* m_frameCallback{ nullptr };
         std::wstring m_title;
         ColorByte m_alpha{ 255 };   // what a caller last asked for
         IntRect m_dirtyRect{};
-        // WHAT THE LAST CONFIGURE PROPOSED, and not yet what is true. A configure is a proposal
+        // **What the last configure proposed**, and not yet what is true. A configure is a proposal
         // in two halves - the toplevel names a size and a set of states, the surface then says
         // that is the whole of it - and none of it takes effect until the second half is acked.
-        // WHAT THE COMPOSITOR NAMES, in surface coordinates: the window geometry, which is the
+        // **What the compositor names**, in surface coordinates: the window geometry, which is the
         // window as the user sees it. A configure sizes it, a positioner places it, the size range
         // bounds it.
         IntSize m_geometrySize{ 0, 0 };
-        // THE GEOMETRY AND ITS MARGINS, in surface coordinates - what the viewport shows and what
-        // the buffer covers. The buffer is this times the scale, and the two are the same number
-        // only while the scale is 1.
+        // **The geometry and its margins**, in surface coordinates - what the viewport shows and
+        // what the buffer covers. The buffer is this times the scale, and the two are the same
+        // number only while the scale is 1.
         IntSize m_surfaceSize{ 0, 0 };
         int m_scale120{ k_scaleUnit };
         int m_pendingScale120{ k_scaleUnit };
-        // THE OUTPUTS THIS SURFACE OVERLAPS. Read only on a compositor too old to name the scale
-        // itself; the largest scale among them is what this window should draw at.
+        // **The outputs this surface overlaps.** Read only on a compositor too old to name the
+        // scale itself; the largest scale among them is what this window should draw at.
         std::vector<wl_output*> m_outputs;
         IntSize m_pendingSize{ 0, 0 };
         WindowFrame m_frameDesign{};
-        // THE SIZE TO COME BACK TO. A compositor that un-maximizes a window states no size for
+        // **The size to come back to.** A compositor that un-maximizes a window states no size for
         // it - the client chose the size it had before, so the client is the one that remembers
         // it. Written on every configure that leaves the window ordinary, which is what makes it
         // the size before whatever came next.
@@ -357,21 +360,21 @@ namespace ClaFi::PlatformImplementation::Wayland
 
 namespace ClaFi::PlatformImplementation::Wayland
 {
-    // SURFACE PIXELS TO REAL ONES, ROUNDED UP. A buffer a fraction of a pixel short is a row the
-    // compositor has to invent the edge of, so the fraction is always paid for.
+    // **Surface pixels to real ones, rounded up.** A buffer a fraction of a pixel short is a row
+    // the compositor has to invent the edge of, so the fraction is always paid for.
     constexpr int toBufferLength(int surfaceLength, int scale120)
     {
         return (surfaceLength * scale120 + k_scaleUnit - 1) / k_scaleUnit;
     }
 
-    // REAL PIXELS TO SURFACE ONES, ROUNDED TO NEAREST, for where something stands: a position has
-    // no side to be rounded towards. A size is stated through toSurfaceHolding.
+    // **Real pixels to surface ones, rounded to nearest**, for where something stands: a position
+    // has no side to be rounded towards. A size is stated through toSurfaceHolding.
     constexpr int toSurfaceLength(int bufferLength, int scale120)
     {
         return (bufferLength * k_scaleUnit + scale120 / 2) / scale120;
     }
 
-    // THE FEWEST SURFACE PIXELS THAT COME BACK AS NO LESS THAN THE REAL ONES ASKED FOR, between
+    // **The fewest surface pixels that come back as no less than the real ones asked for**, between
     // margins of the surface lengths given - geometryPixels' arithmetic run backwards. The nearest
     // comes back a pixel short at some scales, and a grant short of the ask is content laid out
     // narrower than it measured; a grant past it is left transparent - see FormBase::contentExtent.
@@ -425,14 +428,14 @@ namespace ClaFi::PlatformImplementation::Wayland
         m_surface = ::wl_compositor_create_surface(manager.compositor());
         ::wl_surface_add_listener(m_surface, &k_surfaceEventListener, this);
 
-        // A HINT IS NOT SOMETHING THE POINTER CAN REACH. It stands over the very control it
+        // **A hint is not something the pointer can reach.** It stands over the very control it
         // is about, so a pointer that entered it would leave that control - and the form the
         // hint belongs to is the hint's own, whose hint is where the recursion stops and
-        // has no form at all. An EMPTY input region tells the compositor to deliver the
+        // has no form at all. An **empty** input region tells the compositor to deliver the
         // pointer to whatever is underneath instead. Win32 says the same with
         // WS_EX_TRANSPARENT, which is why this never had to be said before.
         //
-        // A MENU IS THE OPPOSITE and states nothing here: it is exactly what the pointer is
+        // **A menu is the opposite** and states nothing here: it is exactly what the pointer is
         // meant to reach, and its region is its geometry, stated with it - see stateGeometry.
         if (m_role == WindowRole::Hint)
         {
@@ -441,7 +444,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             ::wl_region_destroy(inputRegion);
         }
 
-        // THE REAL RATIO, WHERE THE COMPOSITOR WILL STATE ONE. The viewport is what makes it
+        // **The real ratio, where the compositor will state one.** The viewport is what makes it
         // usable: a buffer drawn at 175% has to be presented at the size the compositor
         // asked for, and set_buffer_scale cannot say a fraction. Where neither exists the
         // whole-number scale from the outputs stands instead.
@@ -461,25 +464,25 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (alphaModifier)
             m_alphaModifier = ::wp_alpha_modifier_v1_get_surface(alphaModifier, m_surface);
 
-        // A POPUP IS DRAWN AT ITS PARENT'S SCALE AND TAKES NONE OF ITS OWN - see placePopup,
-        // which reads it. NOT HERE: a hint's window is a member of the form it belongs to and is
-        // built with it, which is before that form's own window has been configured and so before
-        // the parent knows what scale it is drawn at. Copied here it would be the default for the
-        // life of the application.
+        // **A popup is drawn at its parent's scale and takes none of its own** - see placePopup,
+        // which reads it. **Not here**: a hint's window is a member of the form it belongs to and
+        // is built with it, which is before that form's own window has been configured and so
+        // before the parent knows what scale it is drawn at. Copied here it would be the default
+        // for the life of the application.
 
-        // A HINT FADES, so its frames need a channel to fade in. Stated for every popup rather
+        // **A hint fades**, so its frames need a channel to fade in. Stated for every popup rather
         // than for the hint alone: a menu is small, its frames are written the same way, and one
         // rule about which windows carry alpha beats two. A toplevel's answer comes with its frame
         // - see setFrame, which restates this while no frame has been cut.
         m_buffers.useAlphaChannel(isTranslucent());
 
-        // REGISTERED WITH ITS SURFACE, because that is what a pointer event names. The surface
+        // **Registered with its surface**, because that is what a pointer event names. The surface
         // has to exist first, which is why this is not the first thing the constructor does.
         manager.registerSink(*this, m_surface);
         m_registered = true;
 
-        // NO ROLE YET. A surface takes one role and keeps it, and which one this window wants is
-        // not known here: a menu or a hint stands on something and is placed against it by a
+        // **No role yet.** A surface takes one role and keeps it, and which one this window wants
+        // is not known here: a menu or a hint stands on something and is placed against it by a
         // positioner, a dialog is a toplevel unless its placement names a screen edge - and the
         // form states its placement after the window is built, at its first placement. So every
         // role is made there: the popups in placePopup, the rest in place(). Until then the
@@ -501,8 +504,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         }
     }
 
-    // A WINDOW THAT HAS BEEN UNMAPPED IS MAPPED AGAIN THE WAY IT WAS MAPPED FIRST: a commit with
-    // no buffer, which asks the compositor for the configure that the next frame answers. The
+    // **A window that has been unmapped is mapped again the way it was mapped first**: a commit
+    // with no buffer, which asks the compositor for the configure that the next frame answers. The
     // role stands this whole time - it is the surface's content that went and comes back - and
     // nothing is painted between here and that configure, which is what m_unmapped holds off.
     void Window::show()
@@ -520,13 +523,13 @@ namespace ClaFi::PlatformImplementation::Wayland
                 m_configured ? 1 : 0);
     }
 
-    // A SURFACE WITH NO BUFFER IS NOT ON SCREEN. There is no hide request: a window is unmapped
+    // **A surface with no buffer is not on screen.** There is no hide request: a window is unmapped
     // by taking its content away, and mapped again by giving it back.
     void Window::hide()
     {
         m_visible = false;
 
-        // NOTHING WITH NO ROLE IS ON SCREEN TO BE TAKEN OFF IT. A hint's window is a member of
+        // **Nothing with no role is on screen to be taken off it.** A hint's window is a member of
         // the form it belongs to, so it is built with that form and told its alpha is zero at
         // once - before anything has placed it and before the form's own window has been mapped.
         // A commit on a bare surface says nothing the protocol defines, and it is the moment a
@@ -536,19 +539,19 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (!m_surface || !hasRole())
             return;
 
-        // AN UNMAPPED POPUP IS FINISHED. The protocol has no way to map one a second time, so
+        // **An unmapped popup is finished.** The protocol has no way to map one a second time, so
         // hiding a menu or a hint destroys its role and the next placement builds another - which
         // is what placePopup does whenever it finds none. The wl_surface itself stands: it is
         // what the sink is registered against, and what the next popup is made from. Taking the
-        // buffer off goes with the role and lives in there, so that EVERY caller gets it.
+        // buffer off goes with the role and lives in there, so that **every** caller gets it.
         if (isPopupRole())
         {
             destroyPopupRole();
             return;
         }
 
-        // A FRAME CALLBACK DOES NOT SURVIVE THE UNMAP. The compositor asks for frames of what is
-        // on the screen, so one left outstanding here is never answered - and the idle holds off
+        // **A frame callback does not survive the unmap.** The compositor asks for frames of what
+        // is on the screen, so one left outstanding here is never answered - and the idle holds off
         // every paint while a frame is owed. The window would come back to nothing being drawn in
         // it for the rest of the run.
         if (m_frameCallback)
@@ -560,7 +563,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         ::wl_surface_attach(m_surface, nullptr, 0, 0);
         ::wl_surface_commit(m_surface);
 
-        // AN UNMAPPED SURFACE IS UNCONFIGURED AGAIN. The protocol puts the role back where it
+        // **An unmapped surface is unconfigured again.** The protocol puts the role back where it
         // stood before the first buffer: another bufferless commit, another configure and another
         // acknowledgement are owed before anything may be attached to it - see show. A buffer
         // attached without them maps nothing, which is a window that never comes back.
@@ -575,7 +578,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         m_registered = false;
         m_visible = false;
 
-        // DESTROYED INNERMOST FIRST. Each of these was made from the one below it, and a
+        // **Destroyed innermost first.** Each of these was made from the one below it, and a
         // compositor is entitled to treat a parent destroyed before its child as a protocol
         // error rather than as tidying up.
         if (m_alphaModifier)
@@ -655,7 +658,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         m_display.activate(m_surface, stamp);
     }
 
-    // THE DAMAGE IS ACCUMULATED, NOT SENT. A commit is what asks for a frame, and committing on
+    // **The damage is accumulated, not sent.** A commit is what asks for a frame, and committing on
     // every invalidate would ask twenty times for one. It goes once, from the idle callback,
     // when there is nothing else waiting.
     void Window::invalidateRect(const IntRect* value)
@@ -663,7 +666,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         const IntRect whole = IntRect::fromDimensions({ 0, 0 }, m_size);
         const IntRect rect = value ? *value : whole;
 
-        // TOLD TO THE FRAMES AS WELL AS TO THE WINDOW, and the two mean different things. This
+        // **Told to the frames as well as to the window**, and the two mean different things. This
         // rect says a paint is owed; what each frame carries says what that frame has missed. A
         // paint answers the first and clears it, and answers only the frame it happens to take.
         m_buffers.addDamage(rect);
@@ -682,14 +685,14 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (!m_toplevel)
             return;
 
-        // A TITLE CROSSES THE WIRE AS UTF-8, whatever the platform holds it in.
+        // **A title crosses the wire as UTF-8**, whatever the platform holds it in.
         ::xdg_toplevel_set_title(m_toplevel, toUtf8(m_title).c_str());
     }
 
-    // A REQUEST TO PAINT NOW, WHICH IS NOT A THING ON THIS PLATFORM. Win32 answers it inside the
-    // call - UpdateWindow - and a caller can rely on the pixels being up when it returns. A
+    // **A request to paint now, which is not a thing on this platform.** Win32 answers it inside
+    // the call - UpdateWindow - and a caller can rely on the pixels being up when it returns. A
     // Wayland client paints when the compositor asks it to and at no other time: painting here
-    // would produce a frame nobody asked for and take the buffer the frame that WAS asked for
+    // would produce a frame nobody asked for and take the buffer the frame that **was** asked for
     // needs, and it would leave a second callback outstanding behind the first.
     //
     // So this marks the window and lets the frame callback drive. Where nothing is owed the idle
@@ -699,18 +702,18 @@ namespace ClaFi::PlatformImplementation::Wayland
         invalidateRect(nullptr);
     }
 
-    // THE RANGE THE COMPOSITOR HOLDS A USER'S DRAG INSIDE. Stated to the system rather than
+    // **The range the compositor holds a user's drag inside.** Stated to the system rather than
     // enforced here: the window is sized by whoever drags its edge, and the only way to be held
     // up is to have said where the floor is. Zero on an axis says there is no limit, which is
     // what k_maxFloat means on the way in.
     void Window::setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize)
     {
-        // KEPT FOR THE TOPLEVEL STILL TO BE MADE - see createToplevel, which states it then. A
+        // **Kept for the toplevel still to be made** - see createToplevel, which states it then. A
         // layer surface has no range: the compositor sizes it between its anchors.
         const bool userSizedBefore = userSized();
         m_pendingMinSize = minSize;
         m_pendingMaxSize = maxSize;
-        // A RANGE OF ONE SIZE TAKES THE EDGES AWAY: the input region stops reaching into the
+        // **A range of one size takes the edges away**: the input region stops reaching into the
         // shadow for a grab, and the compositor, told a floor and a ceiling that agree, offers
         // neither a resize nor a maximize of its own.
         if (userSized() != userSizedBefore)
@@ -718,9 +721,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (!m_toplevel)
             return;
 
-        // THE CONTENT MEASURES IN REAL PIXELS and a toplevel's range is stated in surface ones -
-        // the space a configure names, and the space place() converts into for the same reason.
-        // Handed the real numbers, a window on a 200% screen is held at twice the floor its
+        // **The content measures in real pixels** and a toplevel's range is stated in surface
+        // ones - the space a configure names, and the space place() converts into for the same
+        // reason. Handed the real numbers, a window on a 200% screen is held at twice the floor its
         // content asked for, which is a size it cannot be dragged back down from. The Win32 twin
         // answers WM_GETMINMAXINFO in physical pixels and needs no conversion, which is why the
         // range crosses this interface in real ones.
@@ -735,8 +738,9 @@ namespace ClaFi::PlatformImplementation::Wayland
                 : toSurfaceHolding(maxSize.y, margins.top, margins.bottom, m_scale120));
     }
 
-    // THE ALPHA CHANNEL IS DECIDED BEFORE THE FIRST FRAME IS CUT and never after; a design arriving
-    // once frames exist changes the margins and the buffer, and the form is told through reframe.
+    // **The alpha channel is decided before the first frame is cut** and never after; a design
+    // arriving once frames exist changes the margins and the buffer, and the form is told through
+    // reframe.
     void Window::setFrame(const WindowFrame& value)
     {
         if (m_frameDesign == value)
@@ -766,12 +770,12 @@ namespace ClaFi::PlatformImplementation::Wayland
         return result;
     }
 
-    // ASKS FOR A SIZE AND IS TOLD ONE. A toplevel is not positioned by its client and cannot be:
-    // the compositor weighs the room on each side, knows about panels this process cannot see,
+    // **Asks for a size and is told one.** A toplevel is not positioned by its client and cannot
+    // be: the compositor weighs the room on each side, knows about panels this process cannot see,
     // and answers with a size in a configure. Until it has answered, what the content measured
     // is the best answer there is.
     //
-    // A WINDOW AGAINST THE SCREEN'S EDGE IS A LAYER SURFACE, where the compositor has the layer
+    // **A window against the screen's edge is a layer surface**, where the compositor has the layer
     // shell: it states the edges and its width, and the compositor answers the height and puts
     // it there. Where the compositor has not, the window is a toplevel that gets the height and
     // not the edge: it asks for its width and the tallest output's rows, read as surface pixels,
@@ -779,8 +783,8 @@ namespace ClaFi::PlatformImplementation::Wayland
     // area and says so in the configure that follows the first commit - and where it stands is
     // the compositor's, xdg-shell having no request for an edge.
     //
-    // THE ROLE IS MADE HERE, at the first placement, because this is the first moment the window
-    // knows which one it wants.
+    // **The role is made here**, at the first placement, because this is the first moment the
+    // window knows which one it wants.
     PlacedWindow Window::place(const WindowPlacement& placement)
     {
         if (isPopupRole())
@@ -795,7 +799,7 @@ namespace ClaFi::PlatformImplementation::Wayland
                 createToplevel();
         }
 
-        // THE CONTENT MEASURES IN REAL PIXELS and the compositor is told surface ones, so what
+        // **The content measures in real pixels** and the compositor is told surface ones, so what
         // the form asked for is divided by the scale on the way out and multiplied by it again
         // on the way back in. What it asked for is the geometry; the surface adds the margins,
         // which the role just made decides.
@@ -804,8 +808,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (!m_configured)
         {
             m_geometrySize = askedSurface;
-            // THE SIZE THE CONFIG KEPT, held up to the floor the content states now. It is what a
-            // configure naming no size is answered with, and the size an un-maximize comes back
+            // **The size the config kept**, held up to the floor the content states now. It is what
+            // a configure naming no size is answered with, and the size an un-maximize comes back
             // to; a compositor that remembered the window itself names its own in the configure.
             if (m_remembered && placement.placement == FormPlacement::Default)
             {
@@ -823,7 +827,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         }
         else if (isLayerRole() && askedSurface.x != m_layerWidth)
         {
-            // A WIDTH ASKED FOR AGAIN, at another scale or by other content. The height stays
+            // **A width asked for again**, at another scale or by other content. The height stays
             // the compositor's. Committed at once so the configure that answers it is not left
             // waiting for a frame nothing has asked for.
             m_layerWidth = std::max(1, askedSurface.x);
@@ -851,7 +855,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         const bool wasOpaque = m_alpha == 255;
         m_alpha = value;
 
-        // WHAT IS SOLID CHANGES WITH THE OPACITY: a window at less than full strength has no
+        // **What is solid changes with the opacity**: a window at less than full strength has no
         // opaque region, whatever its pixels would be at full.
         if (wasOpaque != (m_alpha == 255))
             stateGeometry();
@@ -887,7 +891,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             ::wl_surface_commit(m_surface);
     }
 
-    // ADDED, NOT RESTORED, AND MAPPED THIS WHOLE TIME. A session opened while this window stood
+    // **Added, not restored, and mapped this whole time.** A session opened while this window stood
     // cannot restore it - restore_toplevel is refused after the first commit - and has nothing to
     // restore into it either, the window being where the user put it. What is wanted is that the
     // compositor start keeping this window's state, which is what add_toplevel says and which it
@@ -915,7 +919,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         return { m_restoreSize, m_maximized };
     }
 
-    // AN ORDINARY WINDOW, placed by the compositor's own rule.
+    // **An ordinary window**, placed by the compositor's own rule.
     void Window::createToplevel()
     {
         DisplayManager& manager = m_display;
@@ -935,12 +939,12 @@ namespace ClaFi::PlatformImplementation::Wayland
         m_toplevel = ::xdg_surface_get_toplevel(m_xdgSurface);
         ::xdg_toplevel_add_listener(m_toplevel, &k_toplevelListener, this);
         ::xdg_toplevel_set_app_id(m_toplevel, manager.appId());
-        // A DIALOG RAISED FROM ANOTHER WINDOW STANDS ABOVE IT, as an owned window does on Win32.
+        // A dialog raised from another window stands above it, as an owned window does on Win32.
         if (m_parent && m_parent->m_toplevel)
             ::xdg_toplevel_set_parent(m_toplevel, m_parent->m_toplevel);
 
-        // THE FRAME IS THE FRAMEWORK'S OWN, and a compositor that would otherwise add one has to
-        // be told. Where the global is absent - Mutter does not advertise it - nobody was going
+        // **The frame is the framework's own**, and a compositor that would otherwise add one has
+        // to be told. Where the global is absent - Mutter does not advertise it - nobody was going
         // to add a frame anyway, so its absence needs no fallback.
         if (manager.decorationManager())
         {
@@ -950,16 +954,16 @@ namespace ClaFi::PlatformImplementation::Wayland
                 ZXDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE);
         }
 
-        // WHAT WAS SAID BEFORE THERE WAS A TOPLEVEL TO SAY IT TO: the title a form sets on
+        // **What was said before there was a toplevel to say it to**: the title a form sets on
         // creation, the range its first measuring pass stated.
         if (!m_title.empty())
             ::xdg_toplevel_set_title(m_toplevel, toUtf8(m_title).c_str());
         setSizeRange(m_pendingMinSize, m_pendingMaxSize);
 
-        // NAMED TO THE SESSION BEFORE THE FIRST COMMIT, which is the protocol's rule: a toplevel
-        // once committed cannot be restored. A compositor holding a record of the name answers
-        // the first configure with the size, the state and, unseen by the client, the place it
-        // remembered. What the config kept is stated as well - the size as the first placement's
+        // **Named to the session before the first commit**, which is the protocol's rule: a
+        // toplevel once committed cannot be restored. A compositor holding a record of the name
+        // answers the first configure with the size, the state and, unseen by the client, the place
+        // it remembered. What the config kept is stated as well - the size as the first placement's
         // ask, the maximized state as a request here - and is the whole of the memory where no
         // compositor keeps one.
         if (!m_sessionName.empty())
@@ -978,9 +982,9 @@ namespace ClaFi::PlatformImplementation::Wayland
                 ::xdg_toplevel_set_maximized(m_toplevel);
         }
 
-        // COMMITTED WITH NO BUFFER, AND THAT IS THE POINT. This asks the compositor what size it
-        // would like the window to be; attaching anything before its answer arrives is a protocol
-        // error and takes the connection down.
+        // **Committed with no buffer, and that is the point.** This asks the compositor what size
+        // it would like the window to be; attaching anything before its answer arrives is a
+        // protocol error and takes the connection down.
         ::wl_surface_commit(m_surface);
 
         if (traceEnabled())
@@ -988,9 +992,9 @@ namespace ClaFi::PlatformImplementation::Wayland
                 static_cast<void*>(this), roleName(m_role));
     }
 
-    // A STRIP DOWN THE RIGHT EDGE OF THE SCREEN. Anchored to the top, the bottom and the right,
+    // **A strip down the right edge of the screen.** Anchored to the top, the bottom and the right,
     // its width is its own and its height is the compositor's - a size of zero on the axis
-    // between two anchors says so - and the configure names both. THE STRIP IS RESERVED: the
+    // between two anchors says so - and the configure names both. **The strip is reserved**: the
     // exclusive zone is its width, so other windows are placed and maximized beside it rather
     // than under it, which is what a panel says and what a log meant to be read while the
     // application runs wants. The top layer keeps it over ordinary windows; no keyboard, because
@@ -1027,7 +1031,7 @@ namespace ClaFi::PlatformImplementation::Wayland
                 static_cast<void*>(this), roleName(m_role), m_layerWidth);
     }
 
-    // The role and everything owed on it. THE FRAME CALLBACK GOES WITH IT: it belongs to the
+    // The role and everything owed on it. **The frame callback goes with it**: it belongs to the
     // surface rather than to the role, so one left outstanding fires on a surface that no longer
     // has a role, and the frame it asks for would attach a buffer to it - which is a protocol
     // error and takes the connection down.
@@ -1036,7 +1040,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (!m_surface)
             return;
 
-        // THE BUFFER COMES OFF BEFORE THE ROLE DOES, AND IT IS DONE HERE so that every caller
+        // **The buffer comes off before the role does, and it is done here** so that every caller
         // gets it - hiding a hint, the compositor dismissing one, and a placement that moved far
         // enough to want a new positioner all arrive at this one function. A fresh xdg_surface
         // may not be made from a surface that still has a buffer attached, because the initial
@@ -1066,7 +1070,7 @@ namespace ClaFi::PlatformImplementation::Wayland
 
     FrameMargins Window::surfaceMargins() const
     {
-        // A LAYER SURFACE IS PLACED FLUSH TO THE EDGES IT NAMED, and margins would stand it off
+        // **A layer surface is placed flush to the edges it named**, and margins would stand it off
         // them. A tiled window keeps its shadow: the compositor tiles the geometry inside it.
         if (m_maximized || m_fullscreen || isLayerRole())
             return {};
@@ -1114,14 +1118,14 @@ namespace ClaFi::PlatformImplementation::Wayland
         };
     }
 
-    // THE OPAQUE REGION IS A SAVING AND NOT A PROMISE: what it names the compositor need not
+    // **The opaque region is a saving and not a promise**: what it names the compositor need not
     // blend, and what it leaves out is blended as it always was. So it leaves out everything that
     // might not be solid - the corner squares, rather than tracing the arc, since a region is
     // rectangles; and one surface pixel along every side, because at a fractional scale a surface
     // pixel on the edge is made of a solid buffer pixel and a shadow one, and claimed solid it
-    // would be shown unblended. A window at less than full opacity states none. THE INPUT REGION
-    // IS THE GEOMETRY, reaching k_resizeGrab into the shadow on a window the user may size; a hint
-    // keeps the empty region its constructor gave it and takes no pointer at all.
+    // would be shown unblended. A window at less than full opacity states none. **The input region
+    // is the geometry**, reaching k_resizeGrab into the shadow on a window the user may size; a
+    // hint keeps the empty region its constructor gave it and takes no pointer at all.
     void Window::stateGeometry()
     {
         if (!m_surface || !hasRole() || m_geometrySize.x <= 0 || m_geometrySize.y <= 0)
@@ -1190,27 +1194,27 @@ namespace ClaFi::PlatformImplementation::Wayland
         applySize();
     }
 
-    // FLIP, THEN SLIDE, THEN SHRINK, and the flip only on the axis a menu grows along. These are
-    // the same three answers placeWithin works through by hand in the Win32 twin: a menu that does
-    // not fit below is put above, one that fits neither way takes the room the larger side has,
-    // and the width slides along the edge rather than flipping across it.
+    // **Flip, then slide, then shrink**, and the flip only on the axis a menu grows along. These
+    // are the same three answers placeWithin works through by hand in the Win32 twin: a menu that
+    // does not fit below is put above, one that fits neither way takes the room the larger side
+    // has, and the width slides along the edge rather than flipping across it.
     constexpr std::uint32_t k_menuConstraints =
         XDG_POSITIONER_CONSTRAINT_ADJUSTMENT_FLIP_Y
         | XDG_POSITIONER_CONSTRAINT_ADJUSTMENT_SLIDE_X
         | XDG_POSITIONER_CONSTRAINT_ADJUSTMENT_RESIZE_Y;
 
-    // THE BARE REQUEST. A form's window overrides this to release the form's press first, since
+    // **The bare request.** A form's window overrides this to release the form's press first, since
     // the compositor will swallow the real release; a window with no form has no press to release.
     void Window::initiateWindowDrag(IntPoint, InputStamp stamp)
     {
         requestWindowMove(stamp);
     }
 
-    // HANDS THE WINDOW TO THE COMPOSITOR TO BE DRAGGED. No point is taken: this platform never
+    // **Hands the window to the compositor to be dragged.** No point is taken: this platform never
     // learns where its window is, so a drag is a gesture handed over rather than a position
     // tracked. What it does read is the stamp - the compositor weighs this against the press that
     // asked for it and refuses a request that names no event.
-    // THE COMPOSITOR'S MENU, at a point in surface coordinates. Refused unstamped on the same
+    // **The compositor's menu**, at a point in surface coordinates. Refused unstamped on the same
     // terms as a move: the request names the press it answers. The menu takes the pointer as a
     // popup of its own, with the leave and the enter that go with one, so nothing here has to be
     // restated afterwards.
@@ -1285,32 +1289,32 @@ namespace ClaFi::PlatformImplementation::Wayland
         keyReleased();
     }
 
-    // A POPUP'S ROLE IS MADE HERE, NOT IN place(). A FORM IS PLACED MORE THAN ONCE BEFORE IT IS
-    // SHOWN: initPlacement runs its passes, and a hint is placed again afterwards when the
+    // **A popup's role is made here, not in** place(). **A form is placed more than once before it
+    // is shown**: initPlacement runs its passes, and a hint is placed again afterwards when the
     // control it is about hands over the rect it stands on - Hint::showOrHide calls show()
-    // first and updatePosition second, so THE FIRST PLACEMENT CARRIES AN ANCHOR THE FORM HAS NOT
-    // FILLED IN YET, an empty rect at the origin. A positioner is read once, when the popup is
+    // first and updatePosition second, so **the first placement carries an anchor the form has not
+    // filled in yet**, an empty rect at the origin. A positioner is read once, when the popup is
     // made from it, and a compositor without xdg_popup.reposition will never hear a correction -
-    // so the popup is built from the LAST placement rather than the first. The idle is when the
+    // so the popup is built from the **last** placement rather than the first. The idle is when the
     // placing is over and a frame is wanted, which is exactly that moment.
     void Window::onIdle()
     {
-        // THE ALPHA IS PART OF THE QUESTION, not decoration on it. HintForm::updateVisibility
-        // calls window().show() UNCONDITIONALLY - on the way out as well as the way in - so
+        // **The alpha is part of the question**, not decoration on it. HintForm::updateVisibility
+        // calls window().show() **unconditionally** - on the way out as well as the way in - so
         // m_visible goes true again after the fade has already reached zero and taken the role
         // down. Without the alpha in this condition the next idle builds the popup straight back
         // and the hint never leaves the screen.
         if (isPopupRole() && !m_popup && m_visible && m_alpha)
             createPopup();
 
-        // NOTHING IS PAINTED BEFORE THE FIRST CONFIGURE, OR BEFORE THE ONE A REMAP ASKED FOR. A
+        // **Nothing is painted before the first configure, or before the one a remap asked for.** A
         // buffer attached before either is a protocol error, and a frame drawn for a window
         // nobody has asked to see has no reader.
         if (!m_configured || m_unmapped || !m_visible || m_dirtyRect.empty())
             return;
 
-        // A FRAME IS ALREADY OWED. Painting now would produce one the compositor has not asked
-        // for and will not show, and would take the free buffer that the frame it DID ask for
+        // **A frame is already owed.** Painting now would produce one the compositor has not asked
+        // for and will not show, and would take the free buffer that the frame it **did** ask for
         // needs. The damage stands until the callback comes.
         if (m_frameCallback)
             return;
@@ -1344,9 +1348,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (!m_toplevel || !seat)
             return;
 
-        // REFUSED RATHER THAN GUESSED AT. Reaching for the last serial the compositor sent would
-        // let a drag start that no press asked for, which is the hole the stamp exists to close.
-        // An unstamped request here is a wiring fault, so it is worth saying so.
+        // **Refused rather than guessed at.** Reaching for the last serial the compositor sent
+        // would let a drag start that no press asked for, which is the hole the stamp exists to
+        // close. An unstamped request here is a wiring fault, so it is worth saying so.
         if (stamp.empty())
         {
             if (traceEnabled())
@@ -1392,13 +1396,13 @@ namespace ClaFi::PlatformImplementation::Wayland
             ::xdg_surface_ack_configure(m_xdgSurface, serial);
     }
 
-    // A POPUP IS PLACED BY THE COMPOSITOR AND THE CLIENT IS NEVER TOLD WHERE. What this states is
-    // an anchor, a gravity and what may be done when the window will not fit; the answer comes
+    // **A popup is placed by the compositor and the client is never told where.** What this states
+    // is an anchor, a gravity and what may be done when the window will not fit; the answer comes
     // back as a size and nothing else - see PlacedWindow, which holds no position for exactly
     // this reason.
     PlacedWindow Window::placePopup(const WindowPlacement& placement)
     {
-        // THE PARENT'S SCALE, READ AT EVERY PLACEMENT. A popup is drawn at what its parent is
+        // **The parent's scale, read at every placement.** A popup is drawn at what its parent is
         // drawn at and never at what its output says - the framework states the same rule, a popup
         // form sharing its parent's Scaler outright. Read here rather than at construction because
         // a hint is built with its form, long before that form's window has been configured: taken
@@ -1411,10 +1415,10 @@ namespace ClaFi::PlatformImplementation::Wayland
             m_pendingScale120 = m_scale120;
         }
 
-        // A HINT IS ONE WINDOW FOR THE WHOLE FORM, shown about a different control every time and
-        // asked for a new size and a new anchor each time - see Control-Foundation#hint. So a
-        // popup already on screen being asked for something else is the ORDINARY case here, not an
-        // edge of one, and the question every time is whether what is being asked for has moved.
+        // **A hint is one window for the whole form**, shown about a different control every time
+        // and asked for a new size and a new anchor each time - see Control-Foundation#hint. So a
+        // popup already on screen being asked for something else is the **ordinary** case here, not
+        // an edge of one, and the question every time is whether what is being asked for has moved.
         const IntSize askedSurface = surfaceSizeFor(placement.size);
         const bool changed = scaleMoved
             || askedSurface != surfaceSizeFor(m_placement.size)
@@ -1423,32 +1427,32 @@ namespace ClaFi::PlatformImplementation::Wayland
 
         m_placement = placement;
 
-        // THE ASKED SIZE STANDS UNTIL A CONFIGURE ANSWERS. That answer is asynchronous and this
+        // **The asked size stands until a configure answers.** That answer is asynchronous and this
         // call is not, which is the same bargain the toplevel path makes. Recomputed whenever the
-        // ask moves and NOT only before the first configure: held to that, the first hint of a
+        // ask moves and **not** only before the first configure: held to that, the first hint of a
         // session fixes the window's size for the rest of it and every later ask is answered with
         // the size of a button's hint.
         const IntSize sizeBefore = m_size;
         if (changed || !m_configured)
         {
             m_geometrySize = askedSurface;
-            // ANSWERED FROM THE ROUND TRIP AND NOT FROM WHAT WAS ASKED. A surface size is what a
-            // configure will state back, and at a scale of 2 an odd number of real pixels does
+            // **Answered from the round trip and not from what was asked.** A surface size is what
+            // a configure will state back, and at a scale of 2 an odd number of real pixels does
             // not survive the journey out and home. Told what it asked for, the form lays out at
             // a size it is about to lose and again at the one the configure names; told this, it
             // lays out once.
             updateSurfaceSize();
         }
 
-        // TOLD AFTER THE SIZE AND NOT WITH THE SCALE IT BELONGS TO. What a viewport is told is the
-        // surface size, which the block above is what computes - and a scale that moved is one of
-        // the things that sends it through, so the size read here is the one this placement asked
-        // for.
+        // **Told after the size and not with the scale it belongs to.** What a viewport is told is
+        // the surface size, which the block above is what computes - and a scale that moved is one
+        // of the things that sends it through, so the size read here is the one this placement
+        // asked for.
         if (scaleMoved)
             applyScaleToSurface();
 
-        // A POSITIONER IS READ ONCE, when the popup is made from it. Moving one that is already up
-        // therefore means either handing the compositor a new positioner to read - reposition,
+        // **A positioner is read once**, when the popup is made from it. Moving one that is already
+        // up therefore means either handing the compositor a new positioner to read - reposition,
         // which arrived in xdg_wm_base 3 - or taking the popup down and letting the idle build
         // another from the placement just recorded. The second unmaps and remaps, which shows; it
         // is what there is on a compositor that binds less.
@@ -1470,8 +1474,8 @@ namespace ClaFi::PlatformImplementation::Wayland
             }
         }
 
-        // A POPUP THAT IS UP TAKES THE SIZE IT ASKED FOR AT ONCE, as a Win32 window does when its
-        // bounds are set; the configure that answers the reposition then finds m_size already
+        // **A popup that is up takes the size it asked for at once**, as a Win32 window does when
+        // its bounds are set; the configure that answers the reposition then finds m_size already
         // true and has nothing to do. Left to that configure, the answer would be compared with
         // an m_size this call has already moved, and the geometry, the input region, the frames
         // and the form's canvas would keep the size before the ask - a scroll bar the second ask
@@ -1492,9 +1496,9 @@ namespace ClaFi::PlatformImplementation::Wayland
     void Window::createPopup()
     {
         DisplayManager& manager = m_display;
-        // A POPUP STANDS ON A PARENT'S XDG SURFACE, or on a parent's layer surface, which is the
-        // one other thing a popup may stand on. With neither there is nothing to anchor against,
-        // and the surface keeps no role - which shows nothing rather than the wrong thing.
+        // **A popup stands on a parent's XDG surface**, or on a parent's layer surface, which is
+        // the one other thing a popup may stand on. With neither there is nothing to anchor
+        // against, and the surface keeps no role - which shows nothing rather than the wrong thing.
         if (!m_surface || !manager.windowManager() || !m_parent)
             return;
         if (!m_parent->m_xdgSurface && !m_parent->m_layerSurface)
@@ -1512,25 +1516,25 @@ namespace ClaFi::PlatformImplementation::Wayland
         xdg_positioner* positioner = buildPositioner(m_placement);
         m_xdgSurface = ::xdg_wm_base_get_xdg_surface(manager.windowManager(), m_surface);
         ::xdg_surface_add_listener(m_xdgSurface, &k_surfaceListener, this);
-        // A LAYER SURFACE IS NOT AN XDG SURFACE, so the popup is made with no parent and the
+        // **A layer surface is not an XDG surface**, so the popup is made with no parent and the
         // layer surface then claims it - before the initial commit, which is the protocol's one
         // condition on the order.
         m_popup = ::xdg_surface_get_popup(m_xdgSurface, m_parent->m_xdgSurface, positioner);
         ::xdg_popup_add_listener(m_popup, &k_popupListener, this);
         if (!m_parent->m_xdgSurface)
             ::zwlr_layer_surface_v1_get_popup(m_parent->m_layerSurface, m_popup);
-        // ITS WHOLE PURPOSE IS SPENT. A positioner is read when the popup is made from it and
+        // **Its whole purpose is spent.** A positioner is read when the popup is made from it and
         // holds nothing afterwards; reposition builds another.
         ::xdg_positioner_destroy(positioner);
         stateGeometry();
 
-        // NO xdg_popup_grab, AND THAT IS A DECISION. A grab takes the pointer away from this
+        // **No xdg_popup_grab, and that is a decision.** A grab takes the pointer away from this
         // client altogether: a press outside the popup goes to the compositor, which dismisses
         // the popup and tells this window - while the framework, which raised the menu and is the
         // thing holding it open, never sees the press it closes menus on. Ungrabbed, that press
         // reaches the parent surface and the framework closes the menu exactly as it does on
         // Win32, which is one code path rather than two. What it costs is dismissal by a click in
-        // ANOTHER application. Taking the grab wants a way to tell a form its popup is gone.
+        // **another** application. Taking the grab wants a way to tell a form its popup is gone.
         ::wl_surface_commit(m_surface);
 
         if (traceEnabled())
@@ -1538,7 +1542,7 @@ namespace ClaFi::PlatformImplementation::Wayland
                 static_cast<void*>(this), roleName(m_role), static_cast<void*>(m_parent));
     }
 
-    // WHAT THE COMPOSITOR IS TOLD, AND ALL IT IS TOLD: where this window stands, which way it
+    // **What the compositor is told, and all it is told**: where this window stands, which way it
     // grows, and what may be done to it when it will not fit. It decides the rest, because it is
     // the only one that knows where the panels and the screen edges are.
     //
@@ -1555,22 +1559,22 @@ namespace ClaFi::PlatformImplementation::Wayland
         xdg_positioner* positioner =
             ::xdg_wm_base_create_positioner(m_display.windowManager());
 
-        // NEITHER MAY BE ZERO. A positioner with no size is a protocol error and takes the
+        // **Neither may be zero.** A positioner with no size is a protocol error and takes the
         // connection down with it, and a window measured before its content has any is how one
         // would arrive here.
         const IntSize size = surfaceSizeFor(placement.size);
         ::xdg_positioner_set_size(positioner, std::max(1, size.x), std::max(1, size.y));
 
-        // THE ANCHOR IS IN THE PARENT FORM'S COORDINATES - its surface, margins and all - and a
+        // **The anchor is in the parent form's coordinates** - its surface, margins and all - and a
         // positioner states it against the parent's window geometry, so the parent's margins come
         // off before the change of unit.
         //
-        // NOT EMPTY, EVER. A window raised at the pointer names an empty rect there, which is a
+        // **Not empty, ever.** A window raised at the pointer names an empty rect there, which is a
         // point and reads as one everywhere above this line - but a positioner whose anchor rect
-        // has no width is INCOMPLETE, and get_popup answers that with a protocol error that takes
-        // the connection down. A point is therefore sent as the smallest rectangle there is. What
-        // it costs is one surface pixel: the popup hangs off the bottom left of a 1x1 rect rather
-        // than off the point, and a pointer placement has already stood itself clear of the
+        // has no width is **incomplete**, and get_popup answers that with a protocol error that
+        // takes the connection down. A point is therefore sent as the smallest rectangle there is.
+        // What it costs is one surface pixel: the popup hangs off the bottom left of a 1x1 rect
+        // rather than off the point, and a pointer placement has already stood itself clear of the
         // cursor by more than that.
         FloatRect anchor = placement.anchorRect;
         if (m_parent)
@@ -1586,8 +1590,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         {
         case FormPlacement::OverText:
             // The two texts land on top of each other: the window is anchored by the top left of
-            // the text it covers and offset back by where its own text starts inside it. IT MUST
-            // NOT FLIP - a flipped OverText stands where its text is not, which is the one thing
+            // the text it covers and offset back by where its own text starts inside it. **It must
+            // not flip** - a flipped OverText stands where its text is not, which is the one thing
             // this placement exists to prevent.
             ::xdg_positioner_set_anchor(positioner, XDG_POSITIONER_ANCHOR_TOP_LEFT);
             ::xdg_positioner_set_gravity(positioner, XDG_POSITIONER_GRAVITY_BOTTOM_RIGHT);
@@ -1629,8 +1633,8 @@ namespace ClaFi::PlatformImplementation::Wayland
             break;
         }
 
-        // WHAT WENT OUT, in both spaces. A popup that lands somewhere unexpected is either asking
-        // for the wrong thing or being constrained, and only the pair of these against the
+        // **What went out**, in both spaces. A popup that lands somewhere unexpected is either
+        // asking for the wrong thing or being constrained, and only the pair of these against the
         // xdg_popup.configure that answers them says which.
         if (traceEnabled())
             std::fprintf(stderr,
@@ -1662,13 +1666,13 @@ namespace ClaFi::PlatformImplementation::Wayland
         return windowManager && ::xdg_wm_base_get_version(windowManager) >= 3;
     }
 
-    // THE PROPOSAL BECOMES THE TRUTH HERE AND NOWHERE ELSE. Everything the toplevel named was
+    // **The proposal becomes the truth here and nowhere else.** Everything the toplevel named was
     // pending until this arrived; acknowledging it is what makes it so, and the frame committed
     // afterwards is the answer to it.
     void Window::applyConfigure(std::uint32_t serial)
     {
-        // THE FIRST CONFIGURE ALWAYS COUNTS AS A CHANGE, whatever it names. A compositor with no
-        // requirement sends 0x0, which is read as the size the content measured - so the pending
+        // **The first configure always counts as a change**, whatever it names. A compositor with
+        // no requirement sends 0x0, which is read as the size the content measured - so the pending
         // size is one this window already held, and comparing the two finds nothing to do. There
         // is everything to do: no buffer exists yet, and until one is attached the window is not
         // on screen at all.
@@ -1685,29 +1689,29 @@ namespace ClaFi::PlatformImplementation::Wayland
         m_tiled = m_pendingTiled;
         m_fullscreen = m_pendingFullscreen;
 
-        // REAL PIXELS, which is what the buffer holds and what the form lays out into. The
+        // **Real pixels**, which is what the buffer holds and what the form lays out into. The
         // compositor names a geometry and is told a scale; the geometry, its margins and the
         // scale make the only size anything above this line has ever meant.
         updateSurfaceSize();
         const bool sizeChanged = m_size != sizeBefore;
-        // THE FRAME IS PART OF THE STATE: a window maximized at the size it already had has
+        // **The frame is part of the state**: a window maximized at the size it already had has
         // lost its shadow, its corners and its ring, and the form has to be told as for a resize.
         const WindowFrame frame = appliedFrame();
         const bool frameChanged = frame != frameBefore;
 
-        // TAKEN WHILE THE WINDOW IS ORDINARY, which is the only time this size means anything:
+        // **Taken while the window is ordinary**, which is the only time this size means anything:
         // taken while it is maximized it would record the screen, and restoring would restore
-        // nothing. IN SURFACE COORDINATES, because that is the space a configure will ask this
+        // nothing. **In surface coordinates**, because that is the space a configure will ask this
         // window to choose in - remembered in real pixels it would come back multiplied by the
         // scale a second time.
         if (!m_maximized && !m_fullscreen)
             m_restoreSize = m_geometrySize;
 
-        // ACKED BEFORE THE COMMIT THAT ANSWERS IT. The other order hands the compositor a frame
+        // **Acked before the commit that answers it.** The other order hands the compositor a frame
         // it has not asked for, followed by an acknowledgement of a proposal already superseded.
         ackConfigure(serial);
         m_configured = true;
-        // AND THE MAP IS PAID FOR. Whatever asked for this configure, the surface may hold a
+        // **And the map is paid for.** Whatever asked for this configure, the surface may hold a
         // buffer again from here.
         m_unmapped = false;
 
@@ -1719,7 +1723,7 @@ namespace ClaFi::PlatformImplementation::Wayland
                 m_surfaceSize.x, m_surfaceSize.y, m_size.x, m_size.y, m_scale120,
                 m_activated ? 1 : 0, m_maximized ? 1 : 0, m_tiled ? 1 : 0, m_fullscreen ? 1 : 0);
 
-        // THE COMPOSITOR IS TOLD WHAT THE BUFFER MEANS. Without this it reads a buffer of real
+        // **The compositor is told what the buffer means.** Without this it reads a buffer of real
         // pixels as one of surface pixels and puts a window twice the size on screen. The
         // destination has to be restated whenever the surface size changes, not only the scale.
         if (firstConfigure || scaleWasChanged || sizeChanged)
@@ -1731,7 +1735,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             m_buffers.resize(m_size);
         if (firstConfigure || sizeChanged || frameChanged)
             resized(m_size, frame);
-        // TOLD AFTER THE SIZE, because laying out at a new scale needs the canvas that scale
+        // **Told after the size**, because laying out at a new scale needs the canvas that scale
         // asked for. The form re-measures everything it holds against it.
         if (scaleWasChanged)
             scaleChanged();
@@ -1741,17 +1745,17 @@ namespace ClaFi::PlatformImplementation::Wayland
             invalidateRect(nullptr);
     }
 
-    // THE SCALE A CHANGE OF OUTPUTS IMPLIES. A compositor that moves a window between screens
+    // **The scale a change of outputs implies.** A compositor that moves a window between screens
     // changes what its pixels are worth without changing the size it asked for, so no configure
     // follows and there is nothing to wait for - applyConfigureless does the work instead.
     void Window::updateScaleFromOutputs()
     {
-        // A POPUP'S SCALE IS ITS PARENT'S AND NOT ITS SCREEN'S. It still enters and leaves
+        // **A popup's scale is its parent's and not its screen's.** It still enters and leaves
         // outputs, and what they say is not read.
         if (isPopupRole())
             return;
 
-        // OVERRULED WHERE THE COMPOSITOR STATES THE RATIO ITSELF. The outputs report whole
+        // **Overruled where the compositor states the ratio itself.** The outputs report whole
         // numbers, so reading them over a fractional scale would round 175% down to 100%.
         if (m_fractionalScale)
             return;
@@ -1773,9 +1777,9 @@ namespace ClaFi::PlatformImplementation::Wayland
             applyConfigureless();
     }
 
-    // A SCALE CHANGE WITH NO CONFIGURE BEHIND IT. Moving a window to a denser screen changes what
-    // its pixels mean without changing the size the compositor asked for, so there is no serial
-    // to acknowledge and nothing to ack - only a buffer to rebuild and a form to re-measure.
+    // **A scale change with no configure behind it.** Moving a window to a denser screen changes
+    // what its pixels mean without changing the size the compositor asked for, so there is no
+    // serial to acknowledge and nothing to ack - only a buffer to rebuild and a form to re-measure.
     void Window::applyConfigureless()
     {
         if (m_pendingScale120 == m_scale120)
@@ -1794,7 +1798,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         scaleChanged();
     }
 
-    // HOW THE BUFFER IS TO BE READ, stated in whichever of the two ways this compositor offers.
+    // **How the buffer is to be read**, stated in whichever of the two ways this compositor offers.
     // With a viewport the buffer scale stays 1 and the destination carries the ratio, which is
     // the only way to state a fraction; without one the scale must be a whole number, and a
     // fractional one has already been rounded away before it reaches here.
@@ -1806,9 +1810,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (m_viewport)
         {
             ::wl_surface_set_buffer_scale(m_surface, 1);
-            // A DESTINATION OF ZERO IS A PROTOCOL ERROR, and a protocol error takes the connection
-            // down with it. A window reaching here before it has been given a size states its
-            // destination at the first configure instead, which is where a size arrives.
+            // **A destination of zero is a protocol error**, and a protocol error takes the
+            // connection down with it. A window reaching here before it has been given a size
+            // states its destination at the first configure instead, which is where a size arrives.
             if (m_surfaceSize.x > 0 && m_surfaceSize.y > 0)
                 ::wp_viewport_set_destination(m_viewport, m_surfaceSize.x, m_surfaceSize.y);
             return;
@@ -1831,9 +1835,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         window.m_pendingFullscreen = false;
         window.m_pendingActivated = false;
 
-        // THE STATES ARE THE WHOLE TRUTH ABOUT THIS WINDOW, and they arrive as a list rather than
-        // as flags: one not named is one this window is not in. ACTIVATED is among them rather
-        // than on the keyboard, which is why focus is known with no seat bound at all.
+        // **The states are the whole truth about this window**, and they arrive as a list rather
+        // than as flags: one not named is one this window is not in. **Activated** is among them
+        // rather than on the keyboard, which is why focus is known with no seat bound at all.
         const std::uint32_t* first = static_cast<const std::uint32_t*>(states->data);
         const std::size_t count = states->size / sizeof(std::uint32_t);
 
@@ -1870,15 +1874,15 @@ namespace ClaFi::PlatformImplementation::Wayland
             }
         }
 
-        // ZERO IS NOT A SIZE, IT IS A QUESTION - the compositor saying it has no requirement and
-        // the window may be whatever it wants. WHICH SIZE THAT IS DEPENDS ON WHAT IT IS BECOMING.
-        // A window being un-maximized is asked to choose, and the only right answer is the size
-        // it had before it was maximized; answering with the size it has now leaves it filling
-        // the screen with the state of an ordinary window, which is a window that cannot be
+        // **Zero is not a size, it is a question** - the compositor saying it has no requirement
+        // and the window may be whatever it wants. **Which size that is depends on what it is
+        // becoming.** A window being un-maximized is asked to choose, and the only right answer is
+        // the size it had before it was maximized; answering with the size it has now leaves it
+        // filling the screen with the state of an ordinary window, which is a window that cannot be
         // restored. Anything else keeps what it has, which on the first configure is what the
         // content measured.
         //
-        // AN UN-MAXIMIZE THAT NAMES THE MAXIMIZED SIZE IS THE SAME QUESTION. KWin's session
+        // **An un-maximize that names the maximized size is the same question.** KWin's session
         // record of a window closed maximized holds the maximized rect, and a window restored
         // from it is un-maximized into that rect - the size it already fills, with the state of
         // an ordinary window. Outside the maximized, fullscreen and tiled states the named size
@@ -1907,7 +1911,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             std::fprintf(stderr, "[wayland] session %p restored toplevel\n", data);
     }
 
-    // THE POSITION IS STATED AND UNREAD. x and y are where the compositor put this popup in its
+    // **The position is stated and unread.** x and y are where the compositor put this popup in its
     // parent's coordinates; nothing above the platform layer is told where a window is, and the
     // size is the whole of what a form needs back.
     void Window::onPopupConfigure(void* data, xdg_popup*, std::int32_t x, std::int32_t y,
@@ -1925,11 +1929,11 @@ namespace ClaFi::PlatformImplementation::Wayland
             window.m_pendingSize = window.m_geometrySize;
     }
 
-    // THE COMPOSITOR HAS TAKEN IT AWAY, and it is gone whether this client agrees or not - the
+    // **The compositor has taken it away**, and it is gone whether this client agrees or not - the
     // parent unmapped, this popup unmapped, or a grab broken. There is nothing here to refuse.
     //
-    // THE ROLE GOES AND THE WINDOW STAYS. Closing outright would destroy the wl_surface and
-    // unregister the sink, which is unrecoverable - and a hint is ONE window per form, shown
+    // **The role goes and the window stays.** Closing outright would destroy the wl_surface and
+    // unregister the sink, which is unrecoverable - and a hint is **one** window per form, shown
     // and hidden for the life of the application. It is the same teardown hide() does, and the
     // next placement builds a new popup on the surface that is still standing.
     void Window::onPopupDone(void* data, xdg_popup*)
@@ -1954,7 +1958,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         std::fprintf(stderr, "[wayland] repos   %p token=%u\n", data, token);
     }
 
-    // A LAYER SURFACE'S CONFIGURE IS THE WHOLE PROPOSAL IN ONE EVENT - the size, and nothing
+    // **A layer surface's configure is the whole proposal in one event** - the size, and nothing
     // else, since a layer surface has no states. It answers the width this window asked for and
     // the height the anchors gave it; zero on an axis leaves the choice to this window, which
     // keeps what it has.
@@ -1981,16 +1985,16 @@ namespace ClaFi::PlatformImplementation::Wayland
         static_cast<Window*>(data)->closeRequested();
     }
 
-    // ASKED FOR BEFORE THE COMMIT THAT CARRIES IT. The callback belongs to the surface state this
-    // commit is about to apply, so requesting it afterwards attaches it to the next frame instead
-    // and the answer never comes.
-    // DESTROYS THE ONE THAT FIRED, and never whatever the window happens to be holding. The two
+    // **Asked for before the commit that carries it.** The callback belongs to the surface state
+    // this commit is about to apply, so requesting it afterwards attaches it to the next frame
+    // instead and the answer never comes.
+    // **Destroys the one that fired**, and never whatever the window happens to be holding. The two
     // are not always the same object: a frame can still be owed when the role under it is torn
     // down, which is exactly what hiding a popup does, and a present made while one was already
     // outstanding leaves two alive to answer. Reaching for the member instead destroys the wrong
     // callback, or a null - which is a segfault inside libwayland with this frame on the stack.
     //
-    // A STALE ONE ANSWERS NOTHING ELSE. The frame it belonged to is gone, and the callback the
+    // **A stale one answers nothing else.** The frame it belonged to is gone, and the callback the
     // window is holding now is the one that will ask for the next.
     void Window::onFrameDone(void* data, wl_callback* callback, std::uint32_t)
     {
@@ -2004,10 +2008,11 @@ namespace ClaFi::PlatformImplementation::Wayland
             window.paint();
     }
 
-    // WHICH OUTPUTS THIS SURFACE OVERLAPS. This is how a client learns its scale on a compositor
-    // older than wl_compositor 6, which is most of them: the surface is told what it is on, the
-    // outputs were each told their own scale, and the client takes the largest. A compositor that
-    // names the scale itself sends preferred_buffer_scale instead and overrules all of this.
+    // **Which outputs this surface overlaps.** This is how a client learns its scale on a
+    // compositor older than wl_compositor 6, which is most of them: the surface is told what it is
+    // on, the outputs were each told their own scale, and the client takes the largest. A
+    // compositor that names the scale itself sends preferred_buffer_scale instead and overrules all
+    // of this.
     void Window::onSurfaceEnter(void* data, wl_surface*, wl_output* output)
     {
         Window& window = *static_cast<Window*>(data);
@@ -2025,9 +2030,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         window.updateScaleFromOutputs();
     }
 
-    // THE SCALE THIS SURFACE SHOULD DRAW AT, named by the compositor. Answering it is what makes
-    // the difference between a window drawn at the screen's resolution and one drawn small and
-    // stretched up to it - which looks the same on a filled rectangle and does not on a glyph.
+    // **The scale this surface should draw at**, named by the compositor. Answering it is what
+    // makes the difference between a window drawn at the screen's resolution and one drawn small
+    // and stretched up to it - which looks the same on a filled rectangle and does not on a glyph.
     //
     // Nothing is applied here. A scale change resizes the buffer and re-lays-out the form, and
     // both of those belong with the configure that states the size they are about.
@@ -2040,8 +2045,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         window.m_pendingScale120 = factor * k_scaleUnit;
     }
 
-    // ALREADY IN 120ths - the protocol states the ratio in the same unit this layer holds it in,
-    // so 175% arrives as 210 and needs no conversion and no rounding.
+    // **Already in** 120ths - the protocol states the ratio in the same unit this layer holds it
+    // in, so 175% arrives as 210 and needs no conversion and no rounding.
     void Window::onPreferredFractionalScale(void* data, wp_fractional_scale_v1*, std::uint32_t scale)
     {
         Window& window = *static_cast<Window*>(data);

@@ -72,7 +72,7 @@ namespace ClaFi
         // The hint waiting or showing, and nothing while neither is happening.
         inline static Hint* s_current{ nullptr };
         FormBase& m_ownerForm;
-        // A HINT HAS NO HINT OF ITS OWN: this is null on the one form whose role is Hint,
+        // **A hint has no hint of its own**: this is null on the one form whose role is Hint,
         // and that is where the recursion of every form building one ends. Nothing asks for it
         // there - a hint window takes no pointer and holds nothing that can be hovered.
         std::unique_ptr<HintForm> m_form;

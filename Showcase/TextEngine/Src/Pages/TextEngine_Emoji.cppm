@@ -16,7 +16,7 @@ namespace TextEngine_App
     // either ligates or draws as its parts. And an emoji face carries its colour in layers or in
     // bitmap strikes, neither of which a run drawn with one brush can put on the screen.
     //
-    // WHAT THE PAGE ANSWERS WITH IS THE STATE OF THE MACHINE. Families for both platforms are
+    // **What the page answers with is the state of the machine.** Families for both platforms are
     // named, so a row naming one this machine does not have is part of the reading: it shows what a
     // name nothing matches falls to. The counts beside a sequence are taken from the literal
     // itself, so they are this build's numbers rather than a claim about wchar_t.

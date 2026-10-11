@@ -45,7 +45,7 @@ namespace ClaFi::PlatformImplementation::Linux
         DirWatchManager(const DirWatchManager&) = delete;
         DirWatchManager& operator=(const DirWatchManager&) = delete;
     public:
-        // THE ONE STANDING, or null while the platform holds none. A DirWatch sits below every
+        // **The one standing**, or null while the platform holds none. A DirWatch sits below every
         // context, so its platform half reaches the manager through this and nothing else; the
         // manager sets it as it is built and clears it as it goes. The platform stands before
         // anything that owns a DirWatch and after it - see Application - so a watch finding

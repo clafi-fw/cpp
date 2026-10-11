@@ -20,7 +20,7 @@ namespace ClaFi::PlatformImplementation::Wayland
     {
     public:
         FormWindow(DisplayManager&, IForm&, WindowRole, IForm* parentForm);
-        // THE FRAMEWORK'S OWN ASK - a tab on the title bar makes it on every drag event. Routed
+        // **The framework's own ask** - a tab on the title bar makes it on every drag event. Routed
         // through handOverToCompositor, so the form is told the button went up first: the
         // compositor swallows the real release, and a tab still in its drag would ask again on
         // every motion after the move, and be granted, the seat never having seen the release.
@@ -43,14 +43,14 @@ namespace ClaFi::PlatformImplementation::Wayland
         void scaleChanged() override;
         void paint() override;
     private:
-        // WHICH PRESS OF A RUN THIS IS. No display server counts them: Wayland says a button went
-        // down and nothing more, so a double and a triple click are recognised here or nowhere.
-        // Two limits, the same two every platform uses - a time since the last press and a box
-        // around it.
+        // **Which press of a run this is.** No display server counts them: Wayland says a button
+        // went down and nothing more, so a double and a triple click are recognised here or
+        // nowhere. Two limits, the same two every platform uses - a time since the last press and a
+        // box around it.
         [[nodiscard]] int takeClickCount(IntPoint, std::uint32_t time);
-        // WHICH EDGE OR CORNER THIS POINT SIZES THE WINDOW FROM, as an xdg_toplevel resize edge,
-        // or zero for a point that sizes nothing. Only a window the user is allowed to size has
-        // any: a menu and a hint are whatever their content came to, and a maximized window is
+        // **Which edge or corner this point sizes the window from**, as an xdg_toplevel resize
+        // edge, or zero for a point that sizes nothing. Only a window the user is allowed to size
+        // has any: a menu and a hint are whatever their content came to, and a maximized window is
         // what the compositor holds it to.
         [[nodiscard]] std::uint32_t borderResizeEdges(IntPoint);
         // A length stated at 100%, in the real pixels this window is drawn in.
@@ -58,7 +58,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         {
             return length * scale120() / k_scaleUnit;
         }
-        // GIVES THE PRESS TO THE COMPOSITOR, having first told the form it is over. See the
+        // **Gives the press to the compositor**, having first told the form it is over. See the
         // definition - the order of those two is the whole point.
         void handOverToCompositor(IntPoint, InputStamp, std::uint32_t edges);
     private:
@@ -92,9 +92,9 @@ namespace ClaFi::PlatformImplementation::Wayland
     constexpr std::uint32_t k_multiClickTimeMs = 400;
     constexpr int k_multiClickSlopPx = 4;
     // How far into the window an edge reaches, and how far along an edge counts as its corner.
-    // AT 100%, AND SCALED WITH THE WINDOW. These are hit targets, so what matters is how big they
-    // are to the person aiming at them - and every other thing they are aiming at grows with the
-    // scale. Left fixed, the border a user can grab halves on a screen at 200%.
+    // **At 100%, and scaled with the window.** These are hit targets, so what matters is how big
+    // they are to the person aiming at them - and every other thing they are aiming at grows with
+    // the scale. Left fixed, the border a user can grab halves on a screen at 200%.
     constexpr int k_resizeBorder = 6;
     constexpr int k_resizeCornerFactor = 4;
     // How far a press on the title must travel before it is a drag rather than a click. Scaled
@@ -117,8 +117,8 @@ namespace ClaFi::PlatformImplementation::Wayland
 
     void FormWindow::pointerMoved(IntPoint pt)
     {
-        // A PRESS ON THE TITLE THAT HAS TRAVELLED IS A DRAG. It is recognised here rather than on
-        // the press, and against the press's own position, so the threshold measures the whole
+        // **A press on the title that has travelled is a drag.** It is recognised here rather than
+        // on the press, and against the press's own position, so the threshold measures the whole
         // gesture rather than the last step of it.
         if (m_titlePressed)
         {
@@ -132,12 +132,12 @@ namespace ClaFi::PlatformImplementation::Wayland
         }
         m_form.wnd_mouseMove(pt.toFloat());
 
-        // THE EDGE NAMES THE SHAPE, AFTER THE FORM HAS. The form sets the cursor for the control
-        // under the pointer on every move, and a point on the border is over some control too -
-        // the frame is drawn by one - so the resize arrow is stated after it and is the one shown.
-        // Win32 arranges the same precedence by answering HTLEFT to WM_NCHITTEST, which outranks
-        // the client area's cursor. Only the border is stated here: off it, the form's shape is
-        // the right one and stands.
+        // **The edge names the shape, after the form has.** The form sets the cursor for the
+        // control under the pointer on every move, and a point on the border is over some control
+        // too - the frame is drawn by one - so the resize arrow is stated after it and is the one
+        // shown. Win32 arranges the same precedence by answering HTLEFT to WM_NCHITTEST, which
+        // outranks the client area's cursor. Only the border is stated here: off it, the form's
+        // shape is the right one and stands.
         if (const std::uint32_t edges = borderResizeEdges(pt))
             display().setResizeCursor(edges);
     }
@@ -151,7 +151,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             return;
         }
 
-        // AN EDGE IS THE COMPOSITOR'S TO DRAG, and the form is asked first because a form with
+        // **An edge is the compositor's to drag**, and the form is asked first because a form with
         // something open - a menu standing over the frame - answers that the press is its own.
         if (const std::uint32_t edges = borderResizeEdges(pt))
             if (m_form.wnd_systemMouseDown())
@@ -160,14 +160,14 @@ namespace ClaFi::PlatformImplementation::Wayland
                 return;
             }
 
-        // A SECOND AND A THIRD PRESS ARE PRESSES. Each carries the stamp of the press it actually
-        // is, because a drag begun from a double click is a real gesture and the compositor
-        // weighs it against that press and no other.
+        // **A second and a third press are presses.** Each carries the stamp of the press it
+        // actually is, because a drag begun from a double click is a real gesture and the
+        // compositor weighs it against that press and no other.
         bool handled = false;
         const int clicks = takeClickCount(pt, time);
 
-        // A DOUBLE CLICK ON THE TITLE TOGGLES MAXIMIZED. On Win32 that is DefWindowProc's answer
-        // to WM_NCLBUTTONDBLCLK over HTCAPTION, and every dialog the user sizes carries
+        // **A double click on the title toggles maximized.** On Win32 that is DefWindowProc's
+        // answer to WM_NCLBUTTONDBLCLK over HTCAPTION, and every dialog the user sizes carries
         // WS_MAXIMIZEBOX there; here the compositor never sees the title, the frame being the
         // client's, so the window answers itself. The form is asked as for any press the system
         // takes - see wnd_systemMouseDown - and the press reaches nothing else: it is the
@@ -191,8 +191,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         else
             m_form.wnd_mouseDown(pt.toFloat(), stamp, handled);
 
-        // ARMED, NOT ACTED ON. The press has already reached whatever is drawn on the title bar;
-        // the drag begins only if the pointer then travels - see pointerMoved.
+        // **Armed, not acted on.** The press has already reached whatever is drawn on the title
+        // bar; the drag begins only if the pointer then travels - see pointerMoved.
         if (!handled && m_form.wnd_hitTest(pt.toFloat()) == HitTest::Title)
         {
             m_titlePressed = true;
@@ -203,7 +203,7 @@ namespace ClaFi::PlatformImplementation::Wayland
 
     void FormWindow::pointerContextMenu(IntPoint pt, InputStamp stamp)
     {
-        // Taken by address because the pointer is what NAMES the control the menu is about. A
+        // Taken by address because the pointer is what **names** the control the menu is about. A
         // menu raised from the keyboard passes none, and the form asks the focus instead.
         PointInForm point = pt.toFloat();
         m_form.wnd_contextMenu(&point, stamp);
@@ -250,7 +250,7 @@ namespace ClaFi::PlatformImplementation::Wayland
 
     void FormWindow::resized(IntSize value, const WindowFrame& frame)
     {
-        // COMPARED AGAINST WHAT THE FORM WAS TOLD, not against the window. A configure resizes
+        // **Compared against what the form was told**, not against the window. A configure resizes
         // the window at once, so the next one measured against the window would find them equal
         // and report nothing, leaving the form holding a canvas of the size it was created at.
         if (value == m_reportedSize && frame == m_reportedFrame)
@@ -276,8 +276,8 @@ namespace ClaFi::PlatformImplementation::Wayland
 
     void FormWindow::paint()
     {
-        // THE FORM SETTLES FIRST, AND THE FRAME IS TAKEN AFTER IT. A form sized by its content is
-        // placed again in here, and a popup whose ask moved re-cuts its frames on the spot - see
+        // **The form settles first, and the frame is taken after it.** A form sized by its content
+        // is placed again in here, and a popup whose ask moved re-cuts its frames on the spot - see
         // Window::applySize - so a frame and a size taken earlier would be the ones from before
         // the cut, written at the wrong stride.
         m_form.wnd_beforePaint();
@@ -286,17 +286,17 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (size.x <= 0 || size.y <= 0)
             return;
 
-        // BOTH FRAMES ARE WITH THE COMPOSITOR, which is not a fault to work around. It means this
-        // client is drawing faster than the screen refreshes, so the frame it would have drawn is
-        // one nobody was going to see. The damage stands and the next callback draws it.
+        // **Both frames are with the compositor**, which is not a fault to work around. It means
+        // this client is drawing faster than the screen refreshes, so the frame it would have drawn
+        // is one nobody was going to see. The damage stands and the next callback draws it.
         ShmBuffers::Frame* frame = m_buffers.freeFrame();
         if (!frame)
             return;
 
-        // TAKEN AND CLEARED BEFORE THE PAINT, not after. Anything the paint itself invalidates is
-        // damage for the NEXT frame, and clearing afterwards would throw it away.
+        // **Taken and cleared before the paint**, not after. Anything the paint itself invalidates
+        // is damage for the **next** frame, and clearing afterwards would throw it away.
         //
-        // THE FRAME'S OWN DAMAGE AND NOT THE WINDOW'S. This frame was last written two presents
+        // **The frame's own damage and not the window's.** This frame was last written two presents
         // ago, so what it has missed is everything since then and not everything since the last
         // one. The window's rect is cleared with it because it asks a different question - whether
         // a paint is owed at all - and this paint answers that.
@@ -311,8 +311,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (!backBuffer || backBuffer->empty())
             return;
 
-        // CLIPPED TO BOTH, because they can disagree for one frame. A configure resizes the pool
-        // at once and the backend is resized when the form is laid out into the new size, so a
+        // **Clipped to both**, because they can disagree for one frame. A configure resizes the
+        // pool at once and the backend is resized when the form is laid out into the new size, so a
         // paint caught between the two has a buffer of one size and a bitmap of another.
         const int left = std::max(0, damage.left);
         const int top = std::max(0, damage.top);
@@ -321,14 +321,14 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (right <= left || bottom <= top)
             return;
 
-        // ROW BY ROW AND NOT WHOLESALE. The two have different strides - the bitmap is as wide as
-        // the backend made it, the frame as wide as the compositor asked for - so only a row is
+        // **Row by row and not wholesale.** The two have different strides - the bitmap is as wide
+        // as the backend made it, the frame as wide as the compositor asked for - so only a row is
         // contiguous in both.
         const Color* source = backBuffer->data();
         Color* target = static_cast<Color*>(frame->pixels);
 
-        // THE BITMAP IS ALREADY PREMULTIPLIED, which is what wl_shm's ARGB means, and it is so
-        // for free: an opaque colour drawn at coverage c over a CLEARED frame leaves its colour
+        // **The bitmap is already premultiplied**, which is what wl_shm's ARGB means, and it is so
+        // for free: an opaque colour drawn at coverage c over a **cleared** frame leaves its colour
         // scaled by c and an alpha equal to c, which is the same number. So a full-strength frame
         // needs no conversion at all, whichever format it is in - what XRGB8888 and ARGB8888 name
         // on a little-endian machine is the order Graphics::Color already holds.
@@ -380,7 +380,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         return m_clickCount;
     }
 
-    // THE SAME WIDTH THE SERVER STATES IT IN, deliberately. A display server's clock is 32 bits
+    // **The same width the server states it in**, deliberately. A display server's clock is 32 bits
     // of milliseconds and wraps every seven weeks; held in a wider type the subtraction below
     // stops wrapping with it, and one run of clicks in seven weeks is read as a single press.
     std::uint32_t FormWindow::borderResizeEdges(IntPoint pt)
@@ -397,15 +397,15 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (size.x <= 0 || size.y <= 0)
             return XDG_TOPLEVEL_RESIZE_EDGE_NONE;
 
-        // THE EDGES ARE THE WINDOW'S AND NOT THE BUFFER'S. The buffer reaches into the shadow by
-        // the frame's margins, and the shadow is not the window: what the user sees as the edge
+        // **The edges are the window's and not the buffer's.** The buffer reaches into the shadow
+        // by the frame's margins, and the shadow is not the window: what the user sees as the edge
         // is the geometry, and that is the line the zones are laid along.
         const FrameMargins& margins = m_reportedFrame.margins;
         const IntRect window{ margins.left, margins.top, size.x - margins.right, size.y - margins.bottom };
         if (window.width() <= 0 || window.height() <= 0)
             return XDG_TOPLEVEL_RESIZE_EDGE_NONE;
 
-        // A ZONE REACHES OUT INTO THE SHADOW AND IN OVER THE BORDER, so an edge is taken from
+        // **A zone reaches out into the shadow and in over the border**, so an edge is taken from
         // either side of the line it is drawn on. Past the outer reach is shadow and nothing else
         // - the input region ends there too, and a pointer that far out is over the window
         // underneath - but the answer is the same without relying on that.
@@ -415,9 +415,9 @@ namespace ClaFi::PlatformImplementation::Wayland
             || pt.y < window.top - outside || pt.y >= window.bottom + outside)
             return XDG_TOPLEVEL_RESIZE_EDGE_NONE;
 
-        // A CORNER REACHES FURTHER THAN THE EDGES THAT MEET IN IT, ALONG BOTH OF THEM. It is the
-        // smaller target and the harder one to hit - an edge is a whole side long, a corner is a
-        // few pixels square - so the slack goes where the aiming is hard. A pointer coming down
+        // **A corner reaches further than the edges that meet in it, along both of them.** It is
+        // the smaller target and the harder one to hit - an edge is a whole side long, a corner is
+        // a few pixels square - so the slack goes where the aiming is hard. A pointer coming down
         // the left side finds the corner before it reaches the actual corner, and one coming
         // along the top finds the same corner, which is why both are tested for it.
         const int corner = inside * k_resizeCornerFactor;
@@ -426,8 +426,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         const bool nearTop = pt.y < window.top + corner;
         const bool nearBottom = pt.y >= window.bottom - corner;
 
-        // TOP AND BOTTOM FIRST, so a point in the region where two of these overlap resolves the
-        // same way whichever edge the pointer came in by.
+        // **Top and bottom first**, so a point in the region where two of these overlap resolves
+        // the same way whichever edge the pointer came in by.
         if (pt.y < window.top + inside)
         {
             if (nearLeft)
@@ -468,7 +468,7 @@ namespace ClaFi::PlatformImplementation::Wayland
     {
         m_titlePressed = false;
 
-        // THE FORM IS TOLD THE BUTTON WENT UP, AND IT DID NOT.
+        // **The form is told the button went up, and it did not.**
         //
         // From the moment the compositor takes over it holds the pointer, and every event until
         // the user lets go goes to it. The release among them never arrives here. Without this

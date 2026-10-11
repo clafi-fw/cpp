@@ -99,7 +99,7 @@ namespace ClaFi
     // inside a script compounds both.
     //
     // A line is not made taller for a script: DirectWrite breaks lines from the font metrics of
-    // the runs, and the shift is applied where a run is DRAWN rather than where it is measured.
+    // the runs, and the shift is applied where a run is **drawn** rather than where it is measured.
     // superRise plus a script's own cap height stays inside the ascent of the run it stands on,
     // so a raised run keeps to its line. A lowered one has no such room - a sub whose glyphs
     // descend reaches past the descent of the run it stands on, and the line box does not grow

@@ -41,8 +41,8 @@ namespace ClaFi
         return *mutableAppThemes();
     }
 
-    // THE NODES ARE THE SETTING, AND THIS IS WHAT READS THEM. Every route that changes the theme
-    // states a path or a mode - the Settings page, an application of its own - and the node
+    // **The nodes are the setting, and this is what reads them.** Every route that changes the
+    // theme states a path or a mode - the Settings page, an application of its own - and the node
     // carries the change here, so a stored theme and a chosen one travel one path. Under Auto the
     // desktop's mode is part of the setting, so a change the desktop announces is read here too.
     //
@@ -67,8 +67,8 @@ namespace ClaFi
         applyStoredTheme(appContext);
     }
 
-    // A PATH NAMING NOTHING IS NOT AN APPLICATION WITHOUT A THEME. A user theme can be renamed or
-    // deleted between two sessions, and the config still holds the path it had, so the built-in
+    // **A path naming nothing is not an application without a theme.** A user theme can be renamed
+    // or deleted between two sessions, and the config still holds the path it had, so the built-in
     // the framework can always answer for stands in its place. The node is left as it is - the
     // theme may be back the next time the application runs.
     const AppTheme& storedTheme(AppContext& appContext)

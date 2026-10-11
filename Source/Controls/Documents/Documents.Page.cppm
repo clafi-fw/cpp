@@ -103,8 +103,8 @@ namespace ClaFi::Documents
         :
         DocumentsBasePage{ params, std::forward<Args>(args)... }
     {
-        // The second half of the button IS Save as: behind the strip the command names itself in
-        // the strip's hint and runs off one press.
+        // The second half of the button **is** Save as: behind the strip the command names itself
+        // in the strip's hint and runs off one press.
         m_saveButton.dropdownAction(StdActions::saveAs);
 
         onGetActionState([this](GetActionStateEvent& event) {
@@ -127,8 +127,8 @@ namespace ClaFi::Documents
                 ? *event.presenter
                 : m_saveButton;
 
-            // SAVE ON A PAGE WITH NO FILE OF ITS OWN IS SAVE AS. The work has somewhere to go and
-            // the press said to put it there, so the command that can reach the disk is the one
+            // **Save on a page with no file of its own is save as.** The work has somewhere to go
+            // and the press said to put it there, so the command that can reach the disk is the one
             // that runs.
             if (isSave && canSaveEdits())
             {
@@ -141,7 +141,7 @@ namespace ClaFi::Documents
                 return;
             }
 
-            // SAVE AS SAYS NOTHING HERE. It takes the tab to the file it wrote, and the page it
+            // **Save as says nothing here.** It takes the tab to the file it wrote, and the page it
             // arrives at is the answer: a message hung off this button would be raised about a
             // control the rebuild is about to destroy - see saveAs.
             saveAs(shownBy);

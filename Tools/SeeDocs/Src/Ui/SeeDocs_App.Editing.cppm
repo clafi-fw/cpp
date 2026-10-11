@@ -17,9 +17,9 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-// A PAGE'S WORDS EDITED WHERE THEY STAND: the commands that start an edit, what a page writes the
-// words back through, words typed into the box that shows them - a hint, the project's name - and
-// a footnote's markdown typed in the footnote's place. See the README beside the project.
+// **A page's words edited where they stand**: the commands that start an edit, what a page writes
+// the words back through, words typed into the box that shows them - a hint, the project's name -
+// and a footnote's markdown typed in the footnote's place. See the README beside the project.
 namespace SeeDocs_App
 {
     using namespace ::ClaFi;
@@ -77,6 +77,8 @@ namespace SeeDocs_App
     protected:
         // Writes the words typed where they belong; the reason where they were refused.
         [[nodiscard]] virtual std::wstring writeWords(std::wstring_view words) = 0;
+        // The words a write hands on, read off what the box holds.
+        [[nodiscard]] virtual std::wstring wordsOf(const Text&) const;
         [[nodiscard]] bool edited() const;
         void focusChanged() override;   // leaving writes, but not for a popup opened on the box
         void nestedKeyDown(KeyDownEvent&) override;
@@ -98,6 +100,8 @@ namespace SeeDocs_App
         void connectSite(IPageWriter&, const CommentSite&);
     protected:
         [[nodiscard]] std::wstring writeWords(std::wstring_view words) override;
+        // The bold and the code the box shows, written back as the comment marks them.
+        [[nodiscard]] std::wstring wordsOf(const Text&) const override;
     private:
         IPageWriter* m_writer{ nullptr };
         const CommentSite* m_site{ nullptr };

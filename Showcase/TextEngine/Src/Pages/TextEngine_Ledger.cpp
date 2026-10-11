@@ -14,9 +14,9 @@ namespace TextEngine_App
 
     namespace
     {
-        // THE CAST. Five lists of PRIME length, each stepped by a stride of its own, so the tuple
-        // a clue is written from repeats only after the product of the five - 323,323 clues, where
-        // a round spends nine. A page of any length anyone will scroll holds no two alike.
+        // **The cast.** Five lists of **prime** length, each stepped by a stride of its own, so the
+        // tuple a clue is written from repeats only after the product of the five - 323,323 clues,
+        // where a round spends nine. A page of any length anyone will scroll holds no two alike.
         constexpr std::wstring_view k_persons[] = {
             L"Adele", L"Bruno", L"Clara", L"Dmitri", L"Elif", L"Farouk", L"Greta", L"Hideo",
             L"Ines", L"Jonas", L"Kira", L"Lars", L"Mira", L"Noor", L"Otto", L"Pia", L"Quentin"
@@ -79,8 +79,8 @@ namespace TextEngine_App
             return k_rooms[(clue * 11) % std::size(k_rooms)];
         }
 
-        // THE PAGE'S TYPE. Two voices, each set in one family, and a line kind stays in its voice
-        // from the first round to the last: two lines of one kind are told apart by what they
+        // **The page's type.** Two voices, each set in one family, and a line kind stays in its
+        // voice from the first round to the last: two lines of one kind are told apart by what they
         // say, never by what they are set in. The prose - the title, the headings, the clues, the
         // asides and the running text - is set in a serif. The apparatus a solver keeps beside it -
         // the lists, the grid, the tallies and the column tables - stays in the body family the
@@ -423,17 +423,17 @@ namespace TextEngine_App
         // A row of the grid a solver keeps beside the clues: who, what, where, and how they were
         // found, on tab stops rather than in a sentence.
         //
-        // A stop states a DESIGN x and is scaled with everything else, so the columns are sized
+        // A stop states a **design** x and is scaled with everything else, so the columns are sized
         // for the narrowest box this page is read in, and the cells drop the articles the prose
         // keeps - an item is "brass compass" in a column and "a brass compass" in a sentence.
         //
-        // TWO WAYS A ROW CAN OUTGROW ITS COLUMNS. Wider than the box, it breaks at a stop: an
+        // **Two ways a row can outgrow its columns.** Wider than the box, it breaks at a stop: an
         // inline object states a neutral break condition and the character one stands on is a
         // contingent break, so half a row goes to a line of its own rather than being lost. Wider
-        // than the gap to the next stop, it GLUES: a stop already behind the pen resolves to no
+        // than the gap to the next stop, it **glues**: a stop already behind the pen resolves to no
         // width at all, and the next column starts where this one ended.
         //
-        // A row states an EARLIER clue rather than the one the round has reached, and takes its
+        // A row states an **earlier** clue rather than the one the round has reached, and takes its
         // distance from the line it stands on - so a run of rows walks back through the clues just
         // written instead of saying one of them over and over.
         void writeGridRow(Text& out, std::size_t reached, std::size_t line, std::size_t lastClue)

@@ -62,7 +62,7 @@ namespace ClaFi::StdActions
         Transfer::registerConversion<Transfer::ClaFiText, Transfer::PlainText>();
         Transfer::registerConversion<Transfer::PlainText, Transfer::ClaFiText>();
 
-        // EVERY PASTE PRESENTER IN EVERY WINDOW, from this one connection. A presenter is
+        // **Every paste presenter in every window**, from this one connection. A presenter is
         // attached to the action and not to the clipboard, so the action is what has to be told:
         // invalidateState asks each of them for its answer again. Nothing in an application
         // subscribes to learn whether Paste is available, and nothing polls to find out.

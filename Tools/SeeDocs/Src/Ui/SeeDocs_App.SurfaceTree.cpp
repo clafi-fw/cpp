@@ -45,7 +45,7 @@ namespace SeeDocs_App
 
     // SurfaceTree
 
-    // A ROW IS PICKED BY A CLICK, NOT BY BECOMING CURRENT: the arrow keys walk the rows without
+    // **A row is picked by a click, not by becoming current**: the arrow keys walk the rows without
     // opening a page for each one passed, and Enter opens the row they stop on.
     void SurfaceTree::addProject(const ProjectId id, const std::wstring_view name,
         const ContentsTree& contents)
@@ -66,7 +66,7 @@ namespace SeeDocs_App
         connectNode(rows, *rows.node, std::nullopt);
     }
 
-    // THE ROWS STANDING WERE MADE OVER THE CONTENTS BEFORE, which the project has let go of by
+    // **The rows standing were made over the contents before**, which the project has let go of by
     // now, so they are taken down by what was made and not by what the contents say.
     void SurfaceTree::rebuildProject(const ProjectId id, const ContentsTree& contents,
         const OpenRows& open)

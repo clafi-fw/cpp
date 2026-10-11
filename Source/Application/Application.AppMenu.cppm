@@ -36,7 +36,7 @@ namespace ClaFi
         bool openPage(std::wstring_view caption);
         void openStoredPage();
     private:
-        // A FLOOR. The page control measures every page - see PageSizing::WidestPage - so an
+        // **A floor.** The page control measures every page - see PageSizing::WidestPage - so an
         // application's page that wants more than this widens the menu on its own.
         static constexpr float k_width{ 480.0f };
         // Tall enough for the Settings page with every section open. See Application

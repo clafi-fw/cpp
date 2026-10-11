@@ -6,7 +6,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // THE ONE THING UTILS USED TO CLIMB TO UiTypes FOR. It is declared here instead, so Utils
+    // **The one thing Utils used to climb to UiTypes for.** It is declared here instead, so Utils
     // imports nothing but StdLib and UiTypes stands above it rather than beside it - setFlag
     // below is what wanted it, and the enums in UiTypes that spell it as an underlying type
     // reach it from up there.

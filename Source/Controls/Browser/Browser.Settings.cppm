@@ -156,7 +156,7 @@ namespace ClaFi::Browser
                 L"tab config written {}", tabDocument.second->path().wstring()));
         }
 
-        // THE FOLDER IS THE BROWSER'S. A file in it under an id the entries do not carry is a
+        // **The folder is the browser's.** A file in it under an id the entries do not carry is a
         // closed tab's, and this is where it goes: the disk changes when the entries are written,
         // and a run that ends without writing leaves the files the last written entries name.
         std::error_code error{};

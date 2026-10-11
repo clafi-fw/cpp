@@ -61,7 +61,7 @@ which is what a page and a tile are known by.
 
 ## Questions
 
-A question is put about ONE thing, and documentInQuestionText says which words in the sentence
+A question is put about **one** thing, and documentInQuestionText says which words in the sentence
 are that thing, in the spot ink. Said in one place so that two questions never mark it
 differently. It is not always a name: a question about several documents names none of them,
 and the count stands in the sentence where a name would.

@@ -14,7 +14,7 @@ namespace ClaFi::PlatformImplementation::Windows
     using namespace Graphics;
     using Microsoft::WRL::ComPtr;
 
-    // --- UNIFIED BRUSH HASHING ---
+    // --- **Unified brush hashing** ---
     struct BrushHash
     {
         std::size_t operator()(const Brush&) const;
@@ -80,8 +80,8 @@ namespace ClaFi::PlatformImplementation::Windows
         void drawEllipse(FloatPoint center, float radiusX, float radiusY, const Brush& brush, float strokeWidth) override;
         void fillEllipse(FloatPoint center, float radiusX, float radiusY, const Brush& brush) override;
 
-        // A SHADOW IS THE DISTANCE FIELD OF ITS SILHOUETTE, and a rounded rectangle's is made of
-        // pieces a gradient states exactly - see the definition. Rectangles and brushes, no
+        // **A shadow is the distance field of its silhouette**, and a rounded rectangle's is made
+        // of pieces a gradient states exactly - see the definition. Rectangles and brushes, no
         // geometry, no layer, no ring; what it costs does not grow with the silhouette.
         bool castShadow(const RoundedRectangleParts&, const ShadowParams&) override;
 
@@ -222,7 +222,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // A push that reached no render target counts as nothing, which is what the pop reads.
         int m_opacityLayers{ 0 };
 
-        // --- SINGLE UNIFIED CACHE FOR ALL BRUSHES ---
+        // --- **Single unified cache for all brushes** ---
         std::unordered_map<Brush, ComPtr<ID2D1Brush>, BrushHash> m_brushCache;
 
         // One per StrokeCap, made on first use. The factory owns them, so a lost device keeps them.

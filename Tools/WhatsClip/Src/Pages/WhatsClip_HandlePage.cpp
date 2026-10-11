@@ -22,7 +22,7 @@ namespace ClaFi::Tools::WhatsClip
     {
         constexpr std::wstring_view k_hexDigits = L"0123456789ABCDEF";
 
-        // WHAT THE NUMBER IS WORTH, on the page rather than left for a reader to assume.
+        // **What the number is worth**, on the page rather than left for a reader to assume.
         constexpr std::wstring_view k_handleNote = L"";
             //L"A handle names an object rather than an address, and no bytes travelled for this "
             //L"format. The value is the one this read was handed - the clipboard hands each reader "
@@ -37,9 +37,9 @@ namespace ClaFi::Tools::WhatsClip
             std::wstring_view holds;
         };
 
-        // WINDOWS SPELLINGS, since Windows is the platform that offers an object where the other
-        // offers a pipe. A metafile picture is not among them: its entry is memory holding the
-        // handle, and memory is bytes like anything else.
+        // **Windows spellings**, since Windows is the platform that offers an object where the
+        // other offers a pipe. A metafile picture is not among them: its entry is memory holding
+        // the handle, and memory is bytes like anything else.
         constexpr HandleFormat k_handleFormats[] = {
             { L"CF_BITMAP", L"HBITMAP", L"a GDI bitmap" },
             { L"CF_PALETTE", L"HPALETTE", L"a GDI palette" },
@@ -60,8 +60,9 @@ namespace ClaFi::Tools::WhatsClip
             return nullptr;
         }
 
-        // WRITTEN TO A WIDTH AND NOT TRIMMED TO ITS DIGITS: a handle is a place in a table rather
-        // than a quantity, so a leading zero of it is as much of the value as any other digit.
+        // **Written to a width and not trimmed to its digits**: a handle is a place in a table
+        // rather than a quantity, so a leading zero of it is as much of the value as any other
+        // digit.
         [[nodiscard]] std::wstring hexOf(const std::uint64_t value)
         {
             const std::size_t digits = value > 0xFFFFFFFFull ? 16u : 8u;
@@ -91,7 +92,7 @@ namespace ClaFi::Tools::WhatsClip
         return entryFor(format) != nullptr;
     }
 
-    // A HANDLE OF ZERO IS A FAILED READ HERE. The page is only ever offered for a format whose
+    // **A handle of zero is a failed read here.** The page is only ever offered for a format whose
     // entry is a handle, so nothing else a zero could mean is reachable, and the sentence every
     // other page says of a clipboard that held its peace is the right one.
     void HandlePage::showContent(Transfer::Offer& offer, const Transfer::Format& format)

@@ -84,14 +84,14 @@ namespace ClaFi
     constexpr float k_pagePadding{ 12.0f };
     constexpr float k_pageSpacing{ 10.0f };
     constexpr float k_captionSpacing{ 3.0f };
-    // THE GAP DOWN A GROUP, from one row to the next. The gap ACROSS a row - a caption and what
-    // it names - is the one above, and the two are different questions: a row reads as one thing
-    // by standing close, and two rows read as two by standing apart.
+    // **The gap down a group**, from one row to the next. The gap **across** a row - a caption and
+    // what it names - is the one above, and the two are different questions: a row reads as one
+    // thing by standing close, and two rows read as two by standing apart.
     constexpr float k_rowSpacing{ 6.0f };
     // The room a section holds its options in, under its heading.
     constexpr Padding k_groupPadding{ 12.0f };
 
-    // THE WIDEST THE THEMES MAY MAKE THE PAGE, whatever the list asks for. The backstage is
+    // **The widest the themes may make the page**, whatever the list asks for. The backstage is
     // measured from its pages - see AppMenu - so a page that widens widens it, and the themes
     // are the one thing here that grows with what the user has made.
     constexpr float k_themesWidth{ 360.0f };
@@ -99,13 +99,13 @@ namespace ClaFi
     // The tallest the options may make the page - past it they scroll. See Application
     constexpr float k_optionsHeight{ 440.0f };
 
-    // WHAT EACH ROW OF THE APPEARANCE SECTION IS CALLED, in a box the rows share, so what they
+    // **What each row of the appearance section is called**, in a box the rows share, so what they
     // name starts at one left edge whichever word is the longer.
     constexpr float k_rowCaptionWidth{ 64.0f };
     // The box the percent is written in - wide enough for the widest of them, so the slot's left
     // edge holds still while the number under the pointer changes.
     constexpr float k_readoutWidth{ 44.0f };
-    // THE SLOT IS STATED, NOT FILLED. A lane hands every item the width it measured and only a
+    // **The slot is stated, not filled.** A lane hands every item the width it measured and only a
     // FlexSpacer takes what is over - see Control::fillsLane - so this is what the row comes to,
     // and it is stated to leave the row about as wide as the themes above it are capped at.
     constexpr float k_sliderWidth{ 250.0f };
@@ -117,7 +117,7 @@ namespace ClaFi
 
     // SettingsPage
 
-    // ONE UNIT OF THE SLOT IS ONE PERCENT, so the slot runs from the floor to the ceiling and a
+    // **One unit of the slot is one percent**, so the slot runs from the floor to the ceiling and a
     // step of the slider - an arrow key, a click on an end button - is a step of one.
     int percentAt(const float position)
     {
@@ -141,7 +141,7 @@ namespace ClaFi
     }
 #endif
 
-    // THE SYSTEM'S PART IS THE PLATFORM'S APPLICATION DATA ROOT, the floor deleteConfigFolder
+    // **The system's part is the platform's application data root**, the floor deleteConfigFolder
     // stops at. Each ink is pushed inside the link, which keeps the link's own ink off it.
     Text folderText(const AppContext& context, const FolderDisplayPurpose purpose)
     {
@@ -210,7 +210,7 @@ namespace ClaFi
 
     // OptionsPage
 
-    // THE PAGE IS THE STACK. One column down the page, a group at a time, each item handed the
+    // **The page is the stack.** One column down the page, a group at a time, each item handed the
     // page's width by the lane it stands in.
     OptionsPage::OptionsPage(const CreateParams& params)
         :
@@ -223,12 +223,12 @@ namespace ClaFi
     {
     }
 
-    // A GROUP IS A SECTION THAT CAN BE PUT AWAY. The caption heads the column its options stand
+    // **A group is a section that can be put away.** The caption heads the column its options stand
     // in and that column is its body, so the two are one control and collapsing the caption takes
     // the options with it. It wears the divider look with the caption in the heading style - a
     // labeled line with the chevron at its end, and no surface of its own under the options.
     //
-    // VerticalAlign::Top IS WHAT LETS A SECTION GROW, the same as it is there: a wrapping panel
+    // VerticalAlign::Top **is what lets a section grow**, the same as it is there: a wrapping panel
     // deeper in measures one lane and wraps into as many as it needs once the width arrives, and
     // every group between it and the page has to follow.
     OptionsPage::Section& OptionsPage::addSection(const std::wstring_view caption)
@@ -249,7 +249,7 @@ namespace ClaFi
 
     // ScaleSlider
 
-    // BEFORE THE BASE, which sends the position to the point under the pointer and raises the
+    // **Before the base**, which sends the position to the point under the pointer and raises the
     // change that writes the config. See Application
     void ScaleSlider::nestedPressDown(PressDownEvent& event)
     {
@@ -264,7 +264,7 @@ namespace ClaFi
         Slider::thumbPressDown();
     }
 
-    // AFTER THE BASE, which is what clears the pointer's claim on the position.
+    // **After the base**, which is what clears the pointer's claim on the position.
     void ScaleSlider::nestedPressUp(PressUpEvent& event)
     {
         Slider::nestedPressUp(event);
@@ -382,7 +382,7 @@ namespace ClaFi
 #endif
         m_windowSection{ m_options.addSection(L"Main Window") },
         m_windowGroup{ m_windowSection.body() },
-        // NO ROOM AT THE SIDES, so the box stands where a label's text stands. A check box is
+        // **No room at the sides**, so the box stands where a label's text stands. A check box is
         // built on the theme's listItem metrics and a Label states none, so the indicator is
         // inset by that padding and the two start at different edges down one group. The room
         // above and below is the theme's, which is what holds the row's height.
@@ -405,8 +405,8 @@ namespace ClaFi
         m_footerDivider{ m_footer.add<Divider>() },
         m_keepSettings{ m_footer.add<CheckBox>(L"Keep settings on this PC") }
     {
-        // THE MODE IS STATED, NOT TRIED ON. A click writes the config like a pick from the list,
-        // and the node's change carries it to the theme - see connectAppThemes.
+        // **The mode is stated, not tried on.** A click writes the config like a pick from the
+        // list, and the node's change carries it to the theme - see connectAppThemes.
         for (ToolButton* button : { &m_autoButton, &m_darkButton, &m_lightButton })
         {
             button->onGetState([this](GetStateEvent& event) {
@@ -424,7 +424,7 @@ namespace ClaFi
         m_scaleSlider.setMaxPosition(positionOf(AppContext::k_maxScalePercent));
         m_scaleSlider.setPosition(positionOf(appContext().scalePercent()), false);
         writeScaleReadout();
-        // EVERY WINDOW TAKES THE NEW PERCENT AS IT IS WRITTEN - see AppContext::stateScale. The
+        // **Every window takes the new percent as it is written** - see AppContext::stateScale. The
         // menu is one of them, except while the pointer is moving the thumb: the slider holds
         // this form's size for the length of that gesture and lets it follow again at the
         // release - see ScaleSlider.
@@ -451,7 +451,7 @@ namespace ClaFi
             root.setAlwaysOnTop(!root.isAlwaysOnTop());
             m_alwaysOnTop.invalidateState();
         });
-        // THE SECTION GOES, NOT THE CHECK. Hidden where the platform has no keep-above a client
+        // **The section goes, not the check.** Hidden where the platform has no keep-above a client
         // may ask for - see IPlatformWindow::canSetAlwaysOnTop - and a check that could be turned
         // on and would not hold says something untrue about the window. The section is what draws
         // the caption and its line, so hiding the one answer inside it would leave a Main Window
@@ -459,7 +459,7 @@ namespace ClaFi
         if (!form().rootForm().canSetAlwaysOnTop())
             m_windowSection.setVisible(false);
 
-        // THE ANSWER IS WRITTEN, NOT ACTED ON HERE. The node carries it to the context, which
+        // **The answer is written, not acted on here.** The node carries it to the context, which
         // states the backend and tells every window - see AppContext::stateBackend - the same
         // path a colour mode travels.
         m_gpuAcceleration.onGetState([this](GetStateEvent& event) {
@@ -475,13 +475,13 @@ namespace ClaFi
                 L"[b]Off[/b][tabto 26] They are drawn on the CPU instead"
             };
         });
-        // THE SECTION GOES, NOT THE CHECK, the same as the window's above: an application that
+        // **The section goes, not the check**, the same as the window's above: an application that
         // named no GPU backend has nothing to turn on, and the section is what draws the caption
         // and its line.
         if (!appContext().gpuAvailable())
             m_graphicsSection.setVisible(false);
 
-        // THE FOLDER IS THE PERMISSION. Nothing is stored until one exists, so the check reads
+        // **The folder is the permission.** Nothing is stored until one exists, so the check reads
         // the folder rather than a value of its own - see AppContext::configFolderExists.
         m_keepSettings.onGetState([this](GetStateEvent& event) {
             event.state.selected = appContext().configFolderExists();
@@ -511,7 +511,7 @@ namespace ClaFi
         });
     }
 
-    // ASKED BEFORE THE FOLDER IS MADE, because the folder is what is being allowed: the path is
+    // **Asked before the folder is made**, because the folder is what is being allowed: the path is
     // in the question so that what appears on the disk is what was read there.
     void SettingsPage::allowStorage()
     {
@@ -569,7 +569,7 @@ namespace ClaFi
         appContext().deleteConfigFolder();
     }
 
-    // WHAT THE APPLICATION IS DRAWN AT, not what the thumb names: a percent outside the band is
+    // **What the application is drawn at**, not what the thumb names: a percent outside the band is
     // brought inside it - see AppContext::stateScale - and the readout states the answer that was
     // taken.
     void SettingsPage::writeScaleReadout()

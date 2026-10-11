@@ -2,7 +2,7 @@ import SeeDocs_App.Cli;
 
 import ClaFi.StdLib;
 
-// THE WHOLE OF WHAT THIS PROJECT KNOWS ABOUT WINDOWS: the entry point that takes its arguments
+// **The whole of what this project knows about Windows**: the entry point that takes its arguments
 // as the wide strings the framework works in. The commands are in SeeDocs_App.Cli, beside the
 // Linux entry point that names them the same way.
 int wmain(int argc, wchar_t** argv)

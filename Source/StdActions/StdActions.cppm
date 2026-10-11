@@ -4,8 +4,8 @@ import ClaFi.Core.Foundation;
 
 namespace ClaFi::StdActions
 {
-    // The commands the framework's own controls answer, and the objects they answer BY ADDRESS: a
-    // text box claims Copy without ever having seen the button that presents it, so the object
+    // The commands the framework's own controls answer, and the objects they answer **by address**:
+    // a text box claims Copy without ever having seen the button that presents it, so the object
     // both ends compare has to be one the framework owns.
     //
     // They live above Core rather than on AppActions, which is where the scope they are looked up

@@ -167,7 +167,7 @@ namespace ClaFi
 
     public:
         EventDispatcher() = default;
-        // WHAT KEEPS A CONNECTION FROM OUTLIVING ITS EMITTER. An EventConnection holds a raw
+        // **What keeps a connection from outliving its emitter.** An EventConnection holds a raw
         // pointer here, and a ScopedEventConnection disconnects through it when it goes. Two
         // controls in one container have no order between them - a std::vector destroys its
         // elements front to back under libstdc++ and back to front under libc++, and the standard
@@ -175,8 +175,8 @@ namespace ClaFi
         // caller can arrange. Every live connection is told here instead, and finds a null pointer
         // rather than a freed one.
         ~EventDispatcher();
-        // The tracked connections are NOT carried. A connection names the dispatcher it was made
-        // on; copying the listeners does not move the connections that reach them.
+        // The tracked connections are **not** carried. A connection names the dispatcher it was
+        // made on; copying the listeners does not move the connections that reach them.
         EventDispatcher(const EventDispatcher&);
         EventDispatcher& operator=(const EventDispatcher&);
 

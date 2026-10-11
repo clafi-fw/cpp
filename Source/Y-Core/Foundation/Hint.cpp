@@ -20,7 +20,7 @@ namespace ClaFi
     Hint::Hint(FormBase& ownerForm)
         :
         m_ownerForm{ ownerForm },
-        // A HINT HAS NO HINT OF ITS OWN. Every form builds one with itself and a hint
+        // **A hint has no hint of its own.** Every form builds one with itself and a hint
         // window is a form like any other, so this is where that recursion ends.
         //
         // Built here rather than at the first hover, because a form owning its own window is what
@@ -40,7 +40,7 @@ namespace ClaFi
         destroyForm();
     }
 
-    // Called from the TOP of ~FormBase rather than left to the member teardown below it. The
+    // Called from the **top** of ~FormBase rather than left to the member teardown below it. The
     // window this one is owned by is about to go, and the system destroys an owned window along
     // with its owner - a hint taken down after that would be destroying a handle that had
     // already been taken. Reaching the owner form from here also reaches it while it is whole.
@@ -62,7 +62,7 @@ namespace ClaFi
             stopAndHide();
     }
 
-    // THE HOVER HAS ITS SAY WHILE THE MOUSE DRIVES. The hover moves without the pointer moving:
+    // **The hover has its say while the mouse drives.** The hover moves without the pointer moving:
     // a window put up under a still pointer is handed a move for it and the form beneath a leave
     // - see FormBase::wnd_mouseMove - and a hit-test after a scroll or an edit lands wherever the
     // pointer was left. None of that is the user pointing at anything, so nothing standing comes
@@ -95,8 +95,8 @@ namespace ClaFi
         pointedControlChanged();
     }
 
-    // THE FOCUS HAS ITS SAY WHILE THE KEYBOARD ALONE DRIVES. A click lands the focus as well, and
-    // the pointer's hint is the one for that: the hover it reads is where the click went.
+    // **The focus has its say while the keyboard alone drives.** A click lands the focus as well,
+    // and the pointer's hint is the one for that: the hover it reads is where the click went.
     void Hint::focusedControlChanged()
     {
         if (Input::mouse().active())
@@ -129,7 +129,7 @@ namespace ClaFi
     {
         Control* pointed = pointedControl();
 
-        // A MESSAGE STANDS WHILE WHAT IS POINTED AT IS STILL THE CONTROL IT IS ABOUT - crossing
+        // **A message stands while what is pointed at is still the control it is about** - crossing
         // between two zones of one control is not the pointer going anywhere, and the window is
         // left exactly as it stands rather than taken down and put back up a moment later.
         //
@@ -155,19 +155,19 @@ namespace ClaFi
         // said once.
         ContextMessage::forget();
 
-        // THE ONE COMING DOWN IS NOT ALWAYS THE ONE ABOUT TO WAIT. Each form has a hint of its
+        // **The one coming down is not always the one about to wait.** Each form has a hint of its
         // own, and the pointer crosses from one form to another - a menu raised over the form it
         // was raised from is two windows. The one to take down is named by s_current rather than
-        // looked for under the pointer, because it is the form the pointer has LEFT that is
+        // looked for under the pointer, because it is the form the pointer has **left** that is
         // holding a window up and a timer running, and a timer left running there would put a
         // hint up over a control the pointer is nowhere near.
         //
-        // s_current IS NOT CLEARED HERE. A hidden window goes on being painted for the whole of
+        // s_current **is not cleared here.** A hidden window goes on being painted for the whole of
         // its fade, and while it has pixels it is still the hint on screen - which is what
         // Escape answers by dismissing. It stops being the one only when another takes over
         // below, or when stopAndHide finishes it off.
         //
-        // The CONTROL is let go of, which is what hides the window and what tells the label to
+        // The **control** is let go of, which is what hides the window and what tells the label to
         // keep the words it went out with rather than ask again - see HintLabel::getText. A
         // hint the pointer has left is about nothing from here on, exactly as one dismissed is.
         if (s_current)
@@ -315,7 +315,7 @@ namespace ClaFi
         if (!it)
             return;
 
-        // THE CONTROL IS ONE OF THIS FORM'S. The timer runs only while this hint is the one in
+        // **The control is one of this form's.** The timer runs only while this hint is the one in
         // play, and the one in play is the pointed control's form's - see pointedControlChanged;
         // the other way in is showRightNow, which a control reaches through its own form.
         HintForm& form = *m_form;
@@ -340,11 +340,11 @@ namespace ClaFi
                 const bool answerMoved = form.control() != it or form.measuredText() != tmpText;
                 if (answerMoved)
                     form.setControl(*it, event);
-                // SHOWN BEFORE IT IS MEASURED OR PAINTED. While a form is not visible its label
+                // **Shown before it is measured or painted.** While a form is not visible its label
                 // answers for it with the words the window went out with - see
                 // HintLabel::getText, which is how a window keeps them for the whole of its
                 // fade - and a placement measures the label. Taken before this, the window is
-                // sized to the PREVIOUS answer and the paint forced inside it puts that answer
+                // sized to the **previous** answer and the paint forced inside it puts that answer
                 // back on the screen: a box cut short of the words in it, or one left as wide as
                 // a longer hint that stood there before, holding a value the user has gone past.
                 form.show();

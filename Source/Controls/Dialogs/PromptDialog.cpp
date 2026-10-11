@@ -67,7 +67,7 @@ namespace ClaFi::Controls
 
     void PromptDialog::nestedKeyDown(KeyDownEvent& event)
     {
-        // Return commits FOR THE BOX, and only while the box holds the focus. A key walks leaf
+        // Return commits **for the box**, and only while the box holds the focus. A key walks leaf
         // to root and the navigator's click on the focused control is the last thing to run, so
         // this root sees every Return in the dialog before the answer the user is standing on
         // does: claimed unconditionally, Return on Cancel would commit the text.

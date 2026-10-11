@@ -214,7 +214,7 @@ namespace ClaFi
     //export using DoubleRect = Rect<double>;
     export using FloatRect  = Rect<float>;
     export using IntRect    = Rect<std::int32_t>; // WinApi compatible
-    export using IntMargins = Rect<std::int32_t>; // NOT WinApi compatible (suddenly members order differs)
+    export using IntMargins = Rect<std::int32_t>; // **Not** WinApi compatible (suddenly members order differs)
 
     export struct CornerNook
     {

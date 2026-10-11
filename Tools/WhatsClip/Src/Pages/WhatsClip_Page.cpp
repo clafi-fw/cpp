@@ -167,11 +167,11 @@ namespace ClaFi::Tools::WhatsClip
         }
     }
 
-    // WHAT A PAGE ANSWERS A READ WITH, and where the view is sent home. What stands under the
+    // **What a page answers a read with**, and where the view is sent home. What stands under the
     // bars afterwards is a different document, so a bar left where the last one was scrolled to
     // would open this one part-way down, at a place it may not even have. Every page is read
     // through here, so one written later is carried by this rather than having to remember it.
-    // THE WAIT SHAPE IS SET HERE, not left to the align pass: the read is a transfer out of
+    // **The wait shape is set here**, not left to the align pass: the read is a transfer out of
     // another process, and the caret's reading shapes the whole document before this returns.
     void RepresentationPage::show(Transfer::Offer& offer, const Transfer::Format& format)
     {
@@ -306,7 +306,7 @@ namespace ClaFi::Tools::WhatsClip
         body().setCaretPos(0);
     }
 
-    // BOTH NUMBERS COUNTED FROM ONE - see TextLineColumn. A caret that was never placed answers
+    // **Both numbers counted from one** - see TextLineColumn. A caret that was never placed answers
     // the start of the text, so a page nobody has clicked in reads the first character rather
     // than nothing at all.
     void TextPageBase::writeCaretReadout()

@@ -24,7 +24,7 @@ namespace ClaFi
         Padding padding{};
         Spacing spacing{};
         MinSize minSize{};
-        // WHAT THIS CONTROL ASKS FOR WHEN IT IS FREE TO CHOOSE, per axis. Zero states no
+        // **What this control asks for when it is free to choose**, per axis. Zero states no
         // preference on that axis and the content decides it, which is the usual case; a stated
         // one is the whole box, padding included, and stands in place of what the content
         // measured. Held between minSize and maxSize like any other answer.
@@ -95,7 +95,7 @@ namespace ClaFi
         ControlMetrics button;
         ControlMetrics toolButton; // a button's, with a surface that grows in as it arrives
         ControlMetrics dialogTitle;
-        // THE FRAME A WINDOW WEARS: border is the ring its content stands inside and radius its
+        // **The frame a window wears**: border is the ring its content stands inside and radius its
         // corners, both painted by the framework on every platform. The padding of a primary
         // window is that ring and nothing more.
         ControlMetrics primaryWindow;
@@ -164,7 +164,7 @@ namespace ClaFi
         checkMark.border = Thickness::Hairline;
         checkMark.padding = 2.33f;
         checkMark.radius = 3.0f;
-        // minSize MUST always be equal maxSize.
+        // minSize **must** always be equal maxSize.
         // that allows skipping the text calculating in list items
         // and run list items calculation in parallel (only it the list item themthelves have fixed size)
         checkMark.minSize = 16.0f;

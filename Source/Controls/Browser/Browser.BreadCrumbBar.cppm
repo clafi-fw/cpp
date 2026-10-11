@@ -200,7 +200,7 @@ namespace ClaFi::Browser
             // The base sits on ButtonBase so that a combo box can share it without being handed a
             // button's metrics, so a crumb asks for a tool button's here.
             Interactivity::Focusable,
-            // THE FILLED SURFACE IS WHAT SAYS WHICH PAGE THE BROWSER IS SHOWING, and that is
+            // **The filled surface is what says which page the browser is showing**, and that is
             // the crumb's own answer to getControlState - so the selected state has to reach the
             // surface. A button keeps it off by default, which is right where an indicator or
             // a dot says the same thing, and a crumb has neither.
@@ -213,7 +213,7 @@ namespace ClaFi::Browser
             MinSize{ 0.0f, params.themeMetrics().button.minSize.y }
         }
     {
-        // THE PAGE IS READ AS THE SINK RUNS, and that is sound because a crumb is given a
+        // **The page is read as the sink runs**, and that is sound because a crumb is given a
         // different page only by a rebuild of the bar, which every ending of an editor happens
         // before: an ending the user drove offers the text from inside the press, and the press
         // is what goes on to move the browser.
@@ -251,14 +251,14 @@ namespace ClaFi::Browser
 
     EditorMode BreadCrumbBarItem::editorMode() const
     {
-        // ONLY THE CRUMB NAMING THE PAGE THE BROWSER IS SHOWING. The bar is an address, and the
+        // **Only the crumb naming the page the browser is showing.** The bar is an address, and the
         // page at the end of it is the one the user is in; the crumbs before it name pages that
         // are only on the way there, and a name is changed where the thing it names is open.
         //
-        // ASKED AS THE GESTURE IS ANSWERED, never kept. What a browser will let be renamed moves
-        // under a bar that is standing still - a file appears, goes, or is renamed - and nothing
-        // rebuilds the crumbs to tell them so. An answer settled when the crumb was given its page
-        // would be the answer to a question about a state that has since changed.
+        // **Asked as the gesture is answered**, never kept. What a browser will let be renamed
+        // moves under a bar that is standing still - a file appears, goes, or is renamed - and
+        // nothing rebuilds the crumbs to tell them so. An answer settled when the crumb was given
+        // its page would be the answer to a question about a state that has since changed.
         if (!isCurrentPage() || !m_data || !parentAs<BreadCrumbBar>().canRenamePage(*m_data))
             return EditorMode::None;
         return BreadCrumbBarItemBase::editorMode();
@@ -266,8 +266,8 @@ namespace ClaFi::Browser
 
     FloatPoint BreadCrumbBarItem::editorMaxTextSize(const FloatRect&) const
     {
-        // A CRUMB IS ONE LINE AS WIDE AS ITS OWN TITLE, and a path longer than the bar narrows it
-        // further, so a name being typed outgrows it almost at once. No ceiling on either axis:
+        // **A crumb is one line as wide as its own title**, and a path longer than the bar narrows
+        // it further, so a name being typed outgrows it almost at once. No ceiling on either axis:
         // the editor grows to the right over the crumbs after this one, and the monitor is the
         // only bound left - which is what lets a name be read whole while it is typed. The crumb's
         // own rect is still the floor, so what it was showing stays covered.
@@ -276,14 +276,14 @@ namespace ClaFi::Browser
 
     bool BreadCrumbBarItem::clickOpensEditor() const
     {
-        // THE FIRST PRESS ON THE CRUMB'S FACE OPENS THE EDITOR. The base's rule keeps a press that
-        // PICKS a control from also editing it, and there is nothing to pick here: the only crumb
-        // with an editor is the one naming the page already on screen, so that press has no other
-        // meaning. A press on the strip never reaches this - the base stops the click there and
-        // drops the list instead.
+        // **The first press on the crumb's face opens the editor.** The base's rule keeps a press
+        // that **picks** a control from also editing it, and there is nothing to pick here: the
+        // only crumb with an editor is the one naming the page already on screen, so that press has
+        // no other meaning. A press on the strip never reaches this - the base stops the click
+        // there and drops the list instead.
         //
-        // The pointer test goes with the rule. A crumb's face IS its title: the icon slot is the
-        // root crumb's alone, and editorMode is what settles which crumb this applies to.
+        // The pointer test goes with the rule. A crumb's face **is** its title: the icon slot is
+        // the root crumb's alone, and editorMode is what settles which crumb this applies to.
         return true;
     }
 
@@ -317,12 +317,12 @@ namespace ClaFi::Browser
                 [&bar, target](PaintIconEvent& event){
                     bar.paintPageIcon(*target, event);
                 },
-                // GONE TO FROM INSIDE THE MENU, and owned by the line that was pressed. A browser
-                // with a question to put before it moves - work that is not saved - stands that
-                // question on top of this menu rather than in place of it, so what is being left
-                // is still on screen while it is answered.
+                // **Gone to from inside the menu**, and owned by the line that was pressed. A
+                // browser with a question to put before it moves - work that is not saved - stands
+                // that question on top of this menu rather than in place of it, so what is being
+                // left is still on screen while it is answered.
                 //
-                // THIS CRUMB IS STILL STANDING AFTERWARDS: every page in the list is under the
+                // **This crumb is still standing afterwards**: every page in the list is under the
                 // page it names, so the path the bar rebuilds reaches at least as far as this
                 // crumb, and createItems drops only the crumbs past the end of the new path. That
                 // is what lets the going happen here rather than after the menu has closed.
@@ -333,11 +333,11 @@ namespace ClaFi::Browser
             if (target != m_pathSubItem)
                 continue;
 
-            // THE PAGE THE USER IS ALREADY INSIDE. It is one of the pages under this crumb, so it
-            // is one of the lines of the list, and it is marked rather than left out - a list
+            // **The page the user is already inside.** It is one of the pages under this crumb, so
+            // it is one of the lines of the list, and it is marked rather than left out - a list
             // missing the line the path went through reads as a list of somewhere else.
             //
-            // ENABLED, AND ENTERED ON: the list opens with the keys on this line, so the arrows
+            // **Enabled, and entered on**: the list opens with the keys on this line, so the arrows
             // start from where the path is rather than from the top - a disabled line cannot be
             // stood on, and the keys would skip it. A press on it goes where the tab already is,
             // which the browser reads as staying - see BrowserControl::moveTab.
@@ -347,7 +347,7 @@ namespace ClaFi::Browser
             });
             // Ahead of the run: a form finds the focus already inside it and enters there.
             line.setFocus();
-            // INTO VIEW ONCE THE LIST HAS ITS WINDOW. The pass that measures what to ask for is
+            // **Into view once the list has its window.** The pass that measures what to ask for is
             // bounded by nothing, so nothing overruns in it and a scroll asked of it is spent on
             // nothing; the aligned event is raised by the pass that lays the list out into the
             // window it was given, and that is the one with a scroll range. Once: the scroll can
@@ -385,7 +385,7 @@ namespace ClaFi::Browser
 
     void BreadCrumbBarItem::nestedClick(ClickEvent& event)
     {
-        // WHICH HALF WAS PRESSED IS READ FIRST, and that is load bearing: the base runs the
+        // **Which half was pressed is read first**, and that is load bearing: the base runs the
         // dropdown from here, and the fetch behind it can take the strip away - every page under
         // an unmarked one gone - after which the press lands on no part at all and would read as
         // a press on the crumb's own face.
@@ -396,9 +396,9 @@ namespace ClaFi::Browser
         if (pressedStrip || !m_data)
             return;
 
-        // THE LAST CRUMB NAMES THE PAGE THE BROWSER IS ALREADY SHOWING, so there is nowhere for a
-        // press on it to go. What that press means instead is an edit of the title, which the base
-        // call above has already answered - see clickOpensEditor.
+        // **The last crumb names the page the browser is already showing**, so there is nowhere for
+        // a press on it to go. What that press means instead is an edit of the title, which the
+        // base call above has already answered - see clickOpensEditor.
         if (isCurrentPage())
             return;
 
@@ -407,7 +407,7 @@ namespace ClaFi::Browser
 
     void BreadCrumbBarItem::updateIconMode()
     {
-        // THE ROOT CRUMB IS THE ONLY ONE THAT CARRIES A PICTURE. It stands for the whole tree
+        // **The root crumb is the only one that carries a picture.** It stands for the whole tree
         // rather than for a step through it, and a row of icons along a line of names reads as a
         // toolbar instead of as one address. The root is the crumb whose page has no parent,
         // which is where the bar starts every path it lays out.

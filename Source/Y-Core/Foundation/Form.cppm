@@ -117,14 +117,14 @@ namespace ClaFi
     public:
         template<typename ...Args>
         FormControlBase(const CreateParams& params, Args&& ...args);
-        // STOPS THE ROOT'S ANIMATIONS WHILE IT CAN STILL NAME ITS FORM. Control's own destructor
-        // stops them too, but by then getForm is Control's, which walks the parents - and a root
-        // has none - so the root's are stopped here, where getForm still answers m_form.
+        // **Stops the root's animations while it can still name its form.** Control's own
+        // destructor stops them too, but by then getForm is Control's, which walks the parents -
+        // and a root has none - so the root's are stopped here, where getForm still answers m_form.
         ~FormControlBase() override;
     public:
         DECLARE_PROPERTY(WindowShadow, windowShadow, WindowShadow{}) // the shadow its window casts
     public:
-        // Where this root's text begins, measured from THIS ROOT'S top left. A form placed
+        // Where this root's text begins, measured from **this root's** top left. A form placed
         // OverText is placed so that this point lands on the text it covers, which is what puts
         // the two texts on top of each other.
         //
@@ -134,9 +134,9 @@ namespace ClaFi
         // margin up and to the left of the text.
         //
         // A root that paints its own text answers with its content padding, since that is where
-        // its text starts. A root showing a CHILD's text - an in-place editor holds a text box -
-        // answers for the child: the child sits inside this control's inset and adds an inset of
-        // its own, and neither of those is in this control's padding.
+        // its text starts. A root showing a **child's** text - an in-place editor holds a text
+        // box - answers for the child: the child sits inside this control's inset and adds an inset
+        // of its own, and neither of those is in this control's padding.
         [[nodiscard]] virtual FloatPoint textOrigin() const;
     protected:
         using RichControl::getForm;
@@ -156,16 +156,16 @@ namespace ClaFi
         friend FormControlBase;
     public:
         // The role is what kind of window this is, and it is named by whoever builds the form.
-        // Nothing about the root is read to arrive at it: what the WINDOW does with activation
-        // and how the ROOT CONTROL takes part in focus and selection are separate questions,
+        // Nothing about the root is read to arrive at it: what the **window** does with activation
+        // and how the **root control** takes part in focus and selection are separate questions,
         // and the root answers its own with its Interactivity. A popup list whose root tracks a
         // current item is the case that needs them apart - WindowRole::Menu, root
         // ActiveContainer - and neither value can be inferred from the other.
         FormBase(AppContext&, WindowRole, FormControlBase&, Control* popupTarget, FormPlacement);
-        // The form this one's window is OWNED BY, named outright rather than read off a control.
-        // A popup stands on a control and its form is whatever holds that control; a hint is a
-        // member of the form it belongs to and is built with it, before it is about any control at
-        // all - so it has a form to name and no control to name it through.
+        // The form this one's window is **owned by**, named outright rather than read off a
+        // control. A popup stands on a control and its form is whatever holds that control; a hint
+        // is a member of the form it belongs to and is built with it, before it is about any
+        // control at all - so it has a form to name and no control to name it through.
         FormBase(AppContext&, WindowRole, FormControlBase&, FormBase& ownerForm, FormPlacement);
         ~FormBase() override;
     public:
@@ -197,7 +197,7 @@ namespace ClaFi
         const AppTheme& theme() const { return m_context.theme(); }
         const ThemeMetrics& themeMetrics() const { return m_context.themeMetrics(); }
         const BakedColors& bakedColors() const { return m_context.bakedColors(); }
-        // THE SCALE THIS FORM IS DRAWN AT, and it is read-only from the outside: what a form
+        // **The scale this form is drawn at**, and it is read-only from the outside: what a form
         // is drawn at is decided by the monitor it was placed on, or by the form it stands on,
         // and by nothing that merely holds it - see m_scaler.
         const Scaler& scaler() const { return *m_scaler; }
@@ -206,7 +206,7 @@ namespace ClaFi
         // Puts it back to being drawn at the scale of the form under it - see the definition.
         void followScale();
         [[nodiscard]] Control& content() { return m_content; }
-        // The control the focus goes to when this form is entered. THE ROOT ANSWERS, and only a
+        // The control the focus goes to when this form is entered. **The root answers**, and only a
         // root that keeps a current item has anything but itself to answer with: a Stack or
         // a Grid names the item it is on, and a plain Panel names itself. The form stores
         // nothing of its own - remembering where the focus was is what a container does, and a
@@ -219,7 +219,7 @@ namespace ClaFi
         IPlatformWindow& window() const { return *m_window; }
         // How far this form's window holds the focus, from 0 to 1. See Control-Foundation
         [[nodiscard]] float windowFocusedFactor() const;
-        // THE FRAME THE WINDOW IS WEARING - what the platform applies, not what the root states.
+        // The frame the window is wearing - what the platform applies, not what the root states.
         [[nodiscard]] const WindowFrame& frame() const { return m_frame; }
         // Where the window stands inside its surface: the surface less the frame's margins and
         // its overhang, in surface coordinates - what the screen shows. The root is laid out into
@@ -247,7 +247,7 @@ namespace ClaFi
         [[nodiscard]] LayoutPass& layoutPass() { return m_layoutPass; }
         void validateAlign();
         bool contentAligned() const { return m_aligned; }
-        // Whether the pass running is measuring to ASK for a window rather than laying out into
+        // Whether the pass running is measuring to **ask** for a window rather than laying out into
         // the one this form has - its align included. A bound a control carries over from the
         // last layout does not hold over this pass, and a width this pass lays out at is not one
         // to carry over - it is the one the form finds out what it wants in.
@@ -273,10 +273,10 @@ namespace ClaFi
         [[nodiscard]] FloatPoint boundsOriginOfControl(const Control*) const;
         [[nodiscard]] FloatPoint contentOriginOfControl(const Control*) const;
         [[nodiscard]] FloatRect rectOfControl(const Control*, bool clipIntoParents = false) const;
-        // THE WINDOW IS A CEILING, NOT A SETTING. What the root may grow to is the window it has,
-        // and Control::doAdjustMetrics asks this of the form because a root is the one control
+        // **The window is a ceiling, not a setting.** What the root may grow to is the window it
+        // has, and Control::doAdjustMetrics asks this of the form because a root is the one control
         // with no parent to adjust its metrics. MaxSize is left alone - it is what the form was
-        // BUILT with, and nothing in the framework writes it. See the definition.
+        // **built** with, and nothing in the framework writes it. See the definition.
         void adjustRootMetrics(AdjustMetricsEvent&) const;
         [[nodiscard]] Control* popupTarget() const { return m_popupTarget; }
         [[nodiscard]] FormBase* popupTargetForm();
@@ -308,11 +308,11 @@ namespace ClaFi
         // of the content being cut to fit what the window already is.
         [[nodiscard]] AutoFit autoFit() const { return m_autoFit; }
         void setAutoFit(AutoFit value) { m_autoFit = value; }
-        // Asked before something OUTSIDE this form closes it - a click on the form behind a
+        // Asked before something **outside** this form closes it - a click on the form behind a
         // popup, the window's own close button. False keeps the window up, and the press that
         // asked does nothing else either.
         //
-        // IT IS ALLOWED TO ACT, which is why it is not spelled canClose(): a form holding work
+        // **It is allowed to act**, which is why it is not spelled canClose(): a form holding work
         // the user has not finished settles that work here and answers by whether it could. That
         // is what lets an in-place editor whose value nothing will take stay open and say so,
         // rather than losing the edit to a click somewhere else. close() does not ask - Escape
@@ -322,7 +322,7 @@ namespace ClaFi
     public:
         // Builds a popup window over this form and gives it back to the caller to run. What the
         // root control is - a list that tracks a current item, a panel that tracks nothing - is
-        // the root's own business; this names the WINDOW, and the pack reaches the root
+        // the root's own business; this names the **window**, and the pack reaches the root
         // untouched.
         template <ClassOfFormControl ControlClass, typename... Args>
         Form<ControlClass> createPopup(Control* ownerButton, Args&&... args);
@@ -356,11 +356,11 @@ namespace ClaFi
         bool visible() const { return m_visible; }
         void setVisible(bool value);
     public:
-        // The layout laid out on the spot, for code whose subject IS the alignment pass - a page
-        // measuring what one costs, with a wait cursor over it. Work that merely needs a finished
-        // layout asks for a pass instead: invalidateAlign, or Control::scrollIntoViewOnAlign for a
-        // scroll. One pass answers every invalidation made before it, and forcing one here turns N
-        // changes into N layouts.
+        // The layout laid out on the spot, for code whose subject **is** the alignment pass - a
+        // page measuring what one costs, with a wait cursor over it. Work that merely needs a
+        // finished layout asks for a pass instead: invalidateAlign, or
+        // Control::scrollIntoViewOnAlign for a scroll. One pass answers every invalidation made
+        // before it, and forcing one here turns N changes into N layouts.
         //void reAlign()
         //{
         //    invalidateAlign();
@@ -494,7 +494,7 @@ namespace ClaFi
     private:
         FormControlBase& m_content;
 
-        // A FORM WITH A PARENT HAS NO SCALE OF ITS OWN. It stands inside the picture the form
+        // **A form with a parent has no scale of its own.** It stands inside the picture the form
         // under it is drawn in, so it is drawn at that form's scale and takes nothing from the
         // monitor it lands on or from the system - a menu at one scale over a window at another
         // is two sizes of the same design on one screen. m_scaler names whichever scaler this
@@ -507,19 +507,19 @@ namespace ClaFi
         // machine's, initialize and scaleSwitched for the application's.
         Scaler m_ownScaler{ Platform::globalScaleFactor() };
         Scaler* m_scaler;
-        // SCOPED, because a child form is connected to another form's scaler: a connection left
+        // **Scoped**, because a child form is connected to another form's scaler: a connection left
         // in that form's dispatcher would be dispatched to this form after it has gone.
         ScopedEventConnection m_scalerConnection;
         WindowRole m_windowRole;
         FormPlacement m_placement;
-        // WHAT THE WINDOW GOT, as a size: the geometry, inside the frame's margins.
+        // **What the window got**, as a size: the geometry, inside the frame's margins.
         PlacedWindow m_placed{};
         // The frame the root states, and the frame the platform applies - see WindowFrame.
         WindowFrame m_frameDesign{};
         WindowFrame m_frame{};
         // The shadow around this window's geometry, baked once per design.
         Graphics::ShadowPainter m_shadowPainter;
-        // TWO LINKS BACK, AND THEY GO DOWN AT DIFFERENT TIMES. The form is where this popup
+        // **Two links back, and they go down at different times.** The form is where this popup
         // de-registers itself, and it must still be reachable then; the target is only who gets
         // the focus back, and it may be deleted while the popup is still up - a list rebuilt
         // under an open in-place editor does exactly that. Reading the form out of the target,
@@ -527,23 +527,23 @@ namespace ClaFi
         // is left holding a pointer to a popup that has gone.
         FormBase* m_popupTargetForm;
         Control* m_popupTarget;
-        // WHAT THIS FORM IS PLACED ON, IN THE PARENT FORM'S COORDINATES - see FormPlacement.
+        // **What this form is placed on, in the parent form's coordinates** - see FormPlacement.
         // Under OverText it is the target's text rect, otherwise the target's bounds. A form with
         // no target has none, and Default is placed without reading one.
         FloatRect m_placementRect;
-        // Where the target stood when m_placementRect was measured off it. The DIFFERENCE between
-        // this and where the target stands now is what carries the popup along with it - see
-        // followPopupTarget. Recorded rather than the rect being derived again, because an opener
-        // places on something SMALLER than the target as often as not: the run of text inside a
-        // tile, a cell inside a grid. Only a shift keeps a rect like that intact.
+        // Where the target stood when m_placementRect was measured off it. The **difference**
+        // between this and where the target stands now is what carries the popup along with it -
+        // see followPopupTarget. Recorded rather than the rect being derived again, because an
+        // opener places on something **smaller** than the target as often as not: the run of text
+        // inside a tile, a cell inside a grid. Only a shift keeps a rect like that intact.
         //
         // In the parent form's coordinates, as the rect itself is, so a step is what the target
-        // moved INSIDE that form: the form's own window moving leaves it at zero and the rect
+        // moved **inside** that form: the form's own window moving leaves it at zero and the rect
         // standing.
         FloatRect m_placementTargetBounds{};
         float m_dropdownClearance{ 4.0f };
         float m_minWidth{ 0.0f };
-        // Whether the pass running is measuring to ASK for a window rather than laying out into
+        // Whether the pass running is measuring to **ask** for a window rather than laying out into
         // the one this form has. Read by adjustRootMetrics, and true only inside updateAlign.
         bool m_measuringPlacement{};
         // What the content measured in the last pass, before it was laid out into anything - see
@@ -605,14 +605,14 @@ namespace ClaFi
         InputStamp m_mouseDownStamp{};
         Control* m_downItem{};
         bool m_isKeyboardClick{};
-        // A press this form handed to a popup. THE CHARACTER OF A PRESS IS QUEUED BEFORE THE
-        // PRESS IS ANSWERED - TranslateMessage runs ahead of the dispatch - so if that popup goes
+        // A press this form handed to a popup. **The character of a press is queued before the
+        // press is answered** - TranslateMessage runs ahead of the dispatch - so if that popup goes
         // down on the press, its character still arrives here, at the control the focus has just
         // been handed back to, and marking the press handled cannot stop it. It stands for one
         // press and no other; see wnd_keyDown, which raises it and clears it, and wnd_char, which
         // spends it once the popup has had its chance at the character.
         bool m_popupTookKey{};
-        // THE LAST MEMBER, AND IT HAS TO STAY LAST. It is a form of its own that takes this
+        // **The last member, and it has to stay last.** It is a form of its own that takes this
         // form's window as its owner, so it is built once everything that window is made of is
         // standing - and it goes down before any of that, which is why ~FormBase takes it down at
         // the top of its body rather than leaving it to the teardown that follows.

@@ -126,7 +126,7 @@ namespace ClaFi::Documents
         // The list the page was built over, as its own type.
         [[nodiscard]] ListType& list() { return m_list; }
     private:
-        // THE BOX IS THE PAGE'S, NOT THE LIST'S - the list is the view alone. The window gives
+        // **The box is the page's, not the list's** - the list is the view alone. The window gives
         // the tiles the whole of its room, so what scrolls them stands here.
         ScrollBoxWith<ListType>& m_listBox;
         ListType& m_list;

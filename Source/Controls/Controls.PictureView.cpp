@@ -171,9 +171,9 @@ namespace ClaFi::Controls
         paintCrosshair(event, pictureRect, covered);
     }
 
-    // A PRESS STATES THE TARGET: the crosshair and the reading follow the button down rather than
-    // waiting for it to come back up. A press that goes on to travel pans, and leaves selected the
-    // pixel it was taken hold of at.
+    // **A press states the target**: the crosshair and the reading follow the button down rather
+    // than waiting for it to come back up. A press that goes on to travel pans, and leaves selected
+    // the pixel it was taken hold of at.
     void PictureView::nestedPressDown(PressDownEvent& event)
     {
         Control::nestedPressDown(event);
@@ -225,7 +225,7 @@ namespace ClaFi::Controls
         m_pointerPos = event.posOnForm;
     }
 
-    // A NOTCH SELECTS THE PIXEL UNDER THE POINTER AND ZOOMS ABOUT IT, so the crosshair and the
+    // **A notch selects the pixel under the pointer and zooms about it**, so the crosshair and the
     // readout land where the zoom is going without a click. Over the squares beside the
     // picture there is no pixel to take, and the selection stands while the zoom still keeps
     // the point under the pointer still.
@@ -241,8 +241,8 @@ namespace ClaFi::Controls
         zoomTo(m_zoom * std::pow(k_zoomStep, event.delta), anchorAt(m_pointerPos));
     }
 
-    // THE MENU IS ABOUT THE PIXEL IT WAS RAISED ON: the press selects that pixel first, as a left
-    // one does, so the crosshair and the commands name the same one. A menu raised from the
+    // **The menu is about the pixel it was raised on**: the press selects that pixel first, as a
+    // left one does, so the crosshair and the commands name the same one. A menu raised from the
     // keyboard moves nothing - the pixel already selected is what it is about. The commands
     // themselves are the application's: the view holds none of its own.
     void PictureView::nestedContextPopup(ContextPopupEvent& event)
@@ -268,7 +268,7 @@ namespace ClaFi::Controls
         return pixels * m_zoom;
     }
 
-    // THE PICTURE STANDS WHERE IT IS PUT, small or large, and the view is measured around it:
+    // **The picture stands where it is put**, small or large, and the view is measured around it:
     // the picture, and any strip of the window it leaves bare while hanging out the other
     // side. The bars range over that, so nothing pulls the picture in to cover the window,
     // and a zoom keeps its point under the pointer across the size of the window as it does
@@ -374,7 +374,7 @@ namespace ClaFi::Controls
         return pixel;
     }
 
-    // AN ANCHOR IS TAKEN FROM THE ORIGIN THE PLACEMENT FLOORED, so that a zoom measured from
+    // **An anchor is taken from the origin the placement floored**, so that a zoom measured from
     // what is on screen does not lose that fraction again, and a slider dragged across its track
     // does not carry the picture off a fraction of a pixel at a time.
     PictureView::Anchor PictureView::anchorAt(const PointInForm point) const
@@ -474,7 +474,7 @@ namespace ClaFi::Controls
         emitEvent(event);
     }
 
-    // SAMPLED ONCE, COPIED AFTER. The cache holds the part of the picture on screen at the
+    // **Sampled once, copied after.** The cache holds the part of the picture on screen at the
     // zoom, so a paint copies its rows into the staging view: what a paint costs is set by
     // the size of the view, and what a zoom costs is one sampling of it.
     IntRect PictureView::paintPicture(PaintEvent& event, const FloatRect& pictureRect,
@@ -532,7 +532,7 @@ namespace ClaFi::Controls
         return drawn;
     }
 
-    // THE BARE PART OF THE VIEW SHOWS THE SAME SQUARES AT HALF THE BRIGHTNESS, counted from the
+    // **The bare part of the view shows the same squares at half the brightness**, counted from the
     // same pixel: they line up across the edge and pan with the picture, and the edge still shows.
     // The strips are staged one by one, so no pixel the picture drew is staged again.
     void PictureView::paintBare(PaintEvent& event, const IntRect& shown, const IntRect& covered,
@@ -590,8 +590,9 @@ namespace ClaFi::Controls
         });
     }
 
-    // ONE HAIRLINE EACH WAY THROUGH THE PIXEL, EVERY PIXEL OF IT THE CONTRAST OF WHAT IT CROSSES:
-    // a picture pixel read from the cache, the square past the picture's edge. See Controls
+    // **One hairline each way through the pixel, every pixel of it the contrast of what it
+    // crosses**: a picture pixel read from the cache, the square past the picture's edge.
+    // See Controls
     void PictureView::paintCrosshair(PaintEvent& event, const FloatRect& pictureRect,
         const IntRect& covered)
     {
@@ -699,7 +700,7 @@ namespace ClaFi::Controls
                     second[column.second], column.blend, row.blend);
             if (color.alpha != 255)
             {
-                // A TRANSLUCENT PIXEL IS LAID OVER SQUARES, and what leaves here is opaque: the
+                // **A translucent pixel is laid over squares**, and what leaves here is opaque: the
                 // staging view the cache is copied into is premultiplied, and a straight colour
                 // at partial alpha would be added to the surface rather than blended into it.
                 Color square = squareAt({ at.x + i, at.y });

@@ -2,7 +2,7 @@
 // ClaFi.Dom.Formats.ClaFi
 // =========================================================================
 //
-// Implements ClaFi v1.0 (see the ClaFi Handbook) for THIS engine's
+// Implements ClaFi v1.0 (see the ClaFi Handbook) for **this** engine's
 // schema-driven DOM — not a general-purpose, standalone ClaFi parser.
 // Known deviations from the spec:
 //
@@ -57,9 +57,9 @@ namespace ClaFi::Dom::FileFormat
 
         Section dummy = Section{ nullptr };
 
-        // A value and its continuation lines are ONE assignment, made when the run ends. Writing
-        // each line as it arrives would read the whole accumulated value back and rewrite it,
-        // which is quadratic in the lines a value spans - a document's plain text is one value.
+        // A value and its continuation lines are **one** assignment, made when the run ends.
+        // Writing each line as it arrives would read the whole accumulated value back and rewrite
+        // it, which is quadratic in the lines a value spans - a document's plain text is one value.
         auto writePending = [&](){
             if (!lastValue)
             {

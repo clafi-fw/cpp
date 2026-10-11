@@ -73,7 +73,7 @@ namespace ClaFi::Icons
             // Move along the inner radius
             path.lineTo({ innerR * std::cos(a1), innerR * std::sin(a1) });
 
-            // Curve UP to the tooth top
+            // Curve **up** to the tooth top
             path.quadTo(
                 { outerR * std::cos(a1), outerR * std::sin(a1) }, // Control point at corner
                 { outerR * std::cos(a3), outerR * std::sin(a3) }  // Target top edge
@@ -82,7 +82,7 @@ namespace ClaFi::Icons
             // Flat top of tooth
             path.lineTo({ outerR * std::cos(a4), outerR * std::sin(a4) });
 
-            // Curve DOWN back to the inner circle
+            // Curve **down** back to the inner circle
             path.quadTo(
                 { outerR * std::cos(a5), outerR * std::sin(a5) }, // Control point at corner
                 { innerR * std::cos(a5), innerR * std::sin(a5) }  // Target inner edge
@@ -96,7 +96,7 @@ namespace ClaFi::Icons
             float alpha = i * (k_2Pi / 32.0f);
             FloatPoint p = { holeR * std::cos(alpha), holeR * std::sin(alpha) };
 
-            if (i == 0) path.moveTo(p); // LIFT THE PEN
+            if (i == 0) path.moveTo(p); // **Lift the pen**
             else path.lineTo(p);
         }
 

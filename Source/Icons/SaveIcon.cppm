@@ -105,7 +105,7 @@ namespace ClaFi::Icons::SaveIcon
         Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         PixelPath path;
 
-        // 1. Draw BACK FLOPPY (The Shadow)
+        // 1. Draw **back floppy** (The Shadow)
         // The radius (shadowR) is widened so the curve stays parallel to the front floppy
         float shadowR = m.r * 2.0f;
 
@@ -123,12 +123,12 @@ namespace ClaFi::Icons::SaveIcon
 
         canvas.drawPath(path, { PathDrawLayer::stroke(event.textRgb(InkGrade::Muted), strokeWidth) }, &transform);
 
-        // 2. Draw FRONT FLOPPY (Body)
+        // 2. Draw **front floppy** (Body)
         path.clear();
         addFloppyBody(path, m);
         canvas.drawPath(path, { PathDrawLayer::stroke(event.textRgb(InkGrade::Strongest), strokeWidth) }, &transform);
 
-        // 3. Draw FRONT FLOPPY (Label)
+        // 3. Draw **front floppy** (Label)
         path.clear();
         addFloppyLabel(path, m);
         canvas.drawPath(

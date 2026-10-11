@@ -18,7 +18,7 @@ stands behind NativeClipboard.
 
 ## NativeClipboard
 
-THE PLATFORM'S HALF OF THE CLIPBOARD. Declared in the interface without a body and defined
+**The platform's half of the clipboard.** Declared in the interface without a body and defined
 in the platform's implementation unit, so the interface names no platform type: on Win32 it
 is the IDataObject OLE holds a reference to, the clipboard sequence numbers the held reader
 and the own copy were seen at, the retry flag and the listener window; on Wayland it is the
@@ -27,7 +27,7 @@ is a friend of Clipboard and the only thing that is: the helpers a platform buil
 data object, the source listener - reach the package through it and never through the
 clipboard itself.
 
-THE LISTENER WINDOW IS THE PLATFORM'S TO MAKE. On the first watch the Windows half casts the
+**The listener window is the platform's to make.** On the first watch the Windows half casts the
 platform the clipboard was handed to the Windows IMessageWindowFactory - sound, the one
 platform of a Windows build being the Win32Platform, which derives from it - asks it for a
 MessageWindow and names itself as the window's sink, so it receives WM_CLIPBOARDUPDATE and

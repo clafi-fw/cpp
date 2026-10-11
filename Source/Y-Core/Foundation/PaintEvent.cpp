@@ -146,12 +146,12 @@ namespace ClaFi
             StateFactors factors = control.factors();
             const Control* lender = lendingParent();
 
-            // HOW FAR THE ENABLED FACTOR GATES A STATE. Hovered and pressed are things a pointer
-            // is doing to a control, and a control that cannot be acted on is having none of them
-            // done to it. Selected is what the data says, and goes on being true of a control that
-            // cannot be acted on - which is how the check and the dot have always read it, so the
-            // fill reads it the same way. What disabled still takes off it is the blend towards
-            // the surface behind, which every colour here goes through.
+            // **How far the enabled factor gates a state.** Hovered and pressed are things a
+            // pointer is doing to a control, and a control that cannot be acted on is having none
+            // of them done to it. Selected is what the data says, and goes on being true of a
+            // control that cannot be acted on - which is how the check and the dot have always read
+            // it, so the fill reads it the same way. What disabled still takes off it is the blend
+            // towards the surface behind, which every colour here goes through.
             auto stateEnabledFactor = [](const VisualStateIndex index, const float enabledFactor){
                 return index == VisualStateIndex::Selected ? 1.0f : enabledFactor;
             };
@@ -184,7 +184,7 @@ namespace ClaFi
             const float effectivePressedFactor = calcEffectiveFactor(VisualStateIndex::Pressed,
                 m_parentPressedAmount);
 
-            // WHAT THE CONTROL STANDS ON. The host's answer where it gave one, because the
+            // **What the control stands on.** The host's answer where it gave one, because the
             // parent chain cannot: a grid cell is filled by the row, so a control hosted in a
             // coloured cell stands on the cell and not on the row - see
             // AdjustPaintEvent::setSurfaceHsl.
@@ -294,8 +294,8 @@ namespace ClaFi
         }
     }
 
-    // A CONTROL SHOWING A THEME OF ITS OWN SHOWS IT TO WHAT IT CONTAINS AND TO NOTHING ELSE.
-    // The context that carries the theme belongs to the FORM, and this event's life is exactly
+    // **A control showing a theme of its own shows it to what it contains and to nothing else.**
+    // The context that carries the theme belongs to the **form**, and this event's life is exactly
     // this control's subtree - its children are painted inside its own paint() - so putting the
     // theme back here is what bounds the reset. Left standing, it would carry that theme to every
     // control painted after this one, and to every frame after this one: nothing else in the tree
@@ -448,9 +448,9 @@ namespace ClaFi
 
     // A hidden control is not painted, wherever the call comes from. traverseChildren tests this
     // on its own walk, and a hand-written paint order - a tab strip's hover stack, an expander's
-    // held header - REPLACES that walk rather than extending it, so the test belongs here, which
-    // is the one point all of them pass through. Layout already skips a hidden control, so one
-    // painted anyway is drawn over whatever took its place.
+    // held header - **replaces** that walk rather than extending it, so the test belongs here,
+    // which is the one point all of them pass through. Layout already skips a hidden control, so
+    // one painted anyway is drawn over whatever took its place.
     void PaintEvent::paintChild(Control& control) const
     {
         if (!control.visible())
@@ -648,7 +648,7 @@ namespace ClaFi
         return changed;
     }
 
-    // WHICH CORNERS A CONTROL ROUNDS. Its own radius goes on the corners of its bounds, and a
+    // **Which corners a control rounds.** Its own radius goes on the corners of its bounds, and a
     // corner the viewport cuts off is not one of them, so it is square. Each corner is then held
     // against the corner of its container it stands at: where this control's arc - a square
     // corner at any inset under 0.29 of the container's radius, a rounder one at less - would
@@ -749,7 +749,7 @@ namespace ClaFi
             :
             !isOverlayControl && !isListedByEnclosingHost(control);
 
-        // --- RESOLVE CLIPPING MODE ---
+        // --- **Resolve clipping mode** ---
         bool shouldClip = false;
         if (!m_overlayStage)
         {
@@ -797,7 +797,7 @@ namespace ClaFi
             if (m_contentClip)
                 canvas().pushClip(*m_contentClip);
             {
-                // --- ROBUST STAGE ENGINE ---
+                // --- **Robust stage engine** ---
                 // If this control has overlays and we are not currently inside an active overlay stage,
                 // manage the standard and overlay loops directly in the paint loop.
                 bool hasOverlays = control.hasOverlayControls();

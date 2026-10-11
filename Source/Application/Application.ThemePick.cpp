@@ -39,8 +39,8 @@ namespace ClaFi
         return {};
     }
 
-    // A PATH NAMING NOTHING IS WORN AS THE BUILT-IN - see storedTheme - and the config keeps the
-    // path it holds, so a theme whose file comes back is stood on again.
+    // **A path naming nothing is worn as the built-in** - see storedTheme - and the config keeps
+    // the path it holds, so a theme whose file comes back is stood on again.
     void ThemePick::setCurrentPath(const std::wstring_view path)
     {
         ItemIndexValue index = findPath(path);
@@ -51,8 +51,8 @@ namespace ClaFi
         setItemIndex(index.value());
     }
 
-    // THE PATH IS WHAT THE PICKER COMES BACK TO, not the item: every item here is taken down and
-    // built again, and a theme is the same theme under the same path.
+    // **The path is what the picker comes back to**, not the item: every item here is taken down
+    // and built again, and a theme is the same theme under the same path.
     void ThemePick::rebuild()
     {
         std::wstring pathToStandOn = currentPath();
@@ -90,7 +90,7 @@ namespace ClaFi
         const std::wstring openedOn = currentPath();
         ComboBox::showDropdown(initiator);
         const std::wstring picked = currentPath();
-        // WHAT THE LIST GIVES BACK IS THE STATED THEME. A theme under the pointer is worn and
+        // **What the list gives back is the stated theme.** A theme under the pointer is worn and
         // not written, so a list closed on the theme it opened on leaves the config's on.
         if (picked == openedOn)
         {

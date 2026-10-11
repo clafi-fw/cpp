@@ -208,7 +208,7 @@ namespace SeeDocs_App
                 origins.push_back(origin.value_or(Run{ at + i, at + i + 1 }));
         }
 
-        // THE TREE'S OWN MACROS, expanded where their names stand in a limited read's code. An
+        // **The tree's own macros**, expanded where their names stand in a limited read's code. An
         // object-like macro is replaced by its body, expanded in turn; a function-like one is
         // dropped with its arguments, since what it makes of them takes a preprocessor to know.
         // The first definition met in a branch that is read stands, and a name defined only in
@@ -3055,9 +3055,9 @@ namespace SeeDocs_App
             return file.role == FileRole::PascalUnit || file.role == FileRole::PascalInclude;
         }
 
-        // EVERY FILE IS GATHERED FROM BEFORE ANY IS READ, a macro being used far from the header
-        // that defines it and a Delphi symbol far from the unit testing it; each is read from
-        // disk once, for both passes. A Delphi include file is gathered from only.
+        // **Every file is gathered from before any is read**, a macro being used far from the
+        // header that defines it and a Delphi symbol far from the unit testing it; each is read
+        // from disk once, for both passes. A Delphi include file is gathered from only.
         void readLimited(Surface& surface, const SourceFolders& sources, const TreeFiles& files,
             const HintRules rules)
         {

@@ -281,7 +281,7 @@ namespace ClaFi
             if (FAILED(frame->SetPixelFormat(&format)))
                 return {};
 
-            // --- FIX FOR BOTTOM-UP INPUT DATA ---
+            // --- **Fix for bottom-up input data** ---
             std::uint32_t stride = width * sizeof(Color);
 
             // We iterate backwards through the source rows (bottom-to-top)

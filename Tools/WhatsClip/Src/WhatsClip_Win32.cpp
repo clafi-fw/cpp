@@ -29,7 +29,7 @@ namespace
     using namespace ClaFi;
     using namespace ClaFi::Tools::WhatsClip;
 
-    // THE CODE PAGE THE ANSI AND OEM READINGS USE. Resolved from the clipboard's CF_LOCALE each
+    // **The code page the ANSI and OEM readings use.** Resolved from the clipboard's CF_LOCALE each
     // time a text page opens a format - see readLocale - so a code-page reading follows the locale
     // the text was copied in. The system defaults stand for a clipboard that names no locale.
     UINT s_ansiCodePage{ CP_ACP };
@@ -51,8 +51,8 @@ namespace
     // Bytes read in one Windows code page. What the code page cannot spell becomes its own default
     // character; a code page not installed reads as nothing, which is itself an answer.
     //
-    // A BYTE A SINGLE-BYTE CODE PAGE LEAVES UNASSIGNED READS AS THE REPLACEMENT CHARACTER, as the
-    // Encodings contract has it. Windows reads one as a private-use character - 0xFF in 1253 is
+    // **A byte a single-byte code page leaves unassigned reads as the replacement character**, as
+    // the Encodings contract has it. Windows reads one as a private-use character - 0xFF in 1253 is
     // U+F8FB, by Microsoft's own table - which no font draws.
     [[nodiscard]] std::wstring fromCodePage(const UINT codePage, const std::string_view bytes)
     {
@@ -113,9 +113,9 @@ namespace
         return codePage == 0 ? fallback : codePage;
     }
 
-    // THE LOCALE THE CLIPBOARD SAYS ITS CODE-PAGE TEXT IS IN. CF_LOCALE carries an LCID beside the
-    // text, and the ANSI and OEM readings take their code page from it - so text copied under one
-    // locale reads right on a machine set to another. A clipboard with no CF_LOCALE leaves the
+    // **The locale the clipboard says its code-page text is in.** CF_LOCALE carries an LCID beside
+    // the text, and the ANSI and OEM readings take their code page from it - so text copied under
+    // one locale reads right on a machine set to another. A clipboard with no CF_LOCALE leaves the
     // system defaults standing.
     void readLocale(Transfer::Offer& offer)
     {
@@ -140,7 +140,7 @@ namespace
         }
     }
 
-    // THE ENCODINGS A WINDOWS CLIPBOARD IS READ IN. UTF-16 and UTF-8 claim by content; ANSI and
+    // **The encodings a Windows clipboard is read in. UTF-16** and UTF-8 claim by content; ANSI and
     // OEM claim CF_TEXT and CF_OEMTEXT, whose code page CF_LOCALE names, and stand before UTF-8 so
     // those formats read in their defined code page rather than as a UTF-8 guess. The numbered code
     // pages claim nothing - they are picked by hand for a format carrying text in one. Latin-1

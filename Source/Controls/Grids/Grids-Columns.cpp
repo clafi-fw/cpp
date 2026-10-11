@@ -85,7 +85,7 @@ namespace ClaFi::Controls::Grids
         m_neededWidth = 0;
         m_calculatedWidth = 0;
         m_finalWidth = 0;
-        // NOTE: do NOT invalidate the descriptor's cached layout here. This runs on the
+        // **Note**: do **not** invalidate the descriptor's cached layout here. This runs on the
         // hot path (preCalcRows calls it per column, per pass) and would wipe the value
         // calculateGrid() has just stored, disabling the cache entirely.
         // Invalidation belongs at the mutation site: ColumnCollection::invalidateLayout().

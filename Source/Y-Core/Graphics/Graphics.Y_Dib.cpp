@@ -203,7 +203,7 @@ namespace ClaFi::Graphics
                 return header;
             }
 
-            // WHERE THE MASKS STAND. A header of 40 bytes is followed by them, three or four; a
+            // **Where the masks stand.** A header of 40 bytes is followed by them, three or four; a
             // longer one carries them in its own fields.
             std::size_t masksAt = header.size;
             if (header.size >= k_infoHeaderWithMasks)

@@ -20,8 +20,8 @@ namespace SeeDocs_App
 {
     using namespace ::ClaFi;
 
-    // THE PROJECTS SEEDOCS HAS OPEN, and everything that follows from them: the surface read out
-    // of each one's database, its notes, the window title that names the one shown, and the
+    // **The projects SeeDocs has open**, and everything that follows from them: the surface read
+    // out of each one's database, its notes, the window title that names the one shown, and the
     // record of them in the application's config - the projects to start on next time, the list
     // of those opened before, and where new ones were last stored. One per window, standing for
     // as long as the window does.

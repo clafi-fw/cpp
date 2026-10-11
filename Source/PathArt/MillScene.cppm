@@ -25,7 +25,7 @@ namespace ClaFi::PathArt
     public:
         MillScene();
         std::size_t themeIndex() const { return m_themeIndex; }
-        // WHAT THE SCENE IS PAINTING, which between two picks is a blend of them and not any
+        // **What the scene is painting**, which between two picks is a blend of them and not any
         // theme in the list.
         const SceneTheme& theme() const { return m_theme; }
         // The theme it was told to wear, blend or no blend - what a caller taking colours or a
@@ -75,7 +75,7 @@ namespace ClaFi::PathArt
         void drawDust(Canvas& canvas, float w, float h, FloatPoint offset, float t);
     private:
         std::size_t m_themeIndex{ 0 };
-        // NULL UNTIL THE CONSTRUCTOR FADES THE FIRST THEME IN - see MillScene::MillScene.
+        // **NULL until the constructor fades the first theme in** - see MillScene::MillScene.
         SceneTheme m_theme{};
         SceneTheme m_prevTheme{};
         const SceneTheme* m_nextTheme{};
@@ -97,7 +97,7 @@ namespace ClaFi::PathArt
         .easingFactor{ EasingFactor::EaseInOut }
     };
 
-    // ALWAYS A FADE IN, NEVER A CUT. The scene stands on a null theme - every colour zero and
+    // **Always a fade in, never a cut.** The scene stands on a null theme - every colour zero and
     // every effect off - until this, so the first theme rises out of nothing the way every later
     // one crossfades out of the one before it. A scene restored from a config fades into the
     // stored theme rather than into the first of the list: the pick lands before the first paint,

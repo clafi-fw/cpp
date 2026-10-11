@@ -222,7 +222,7 @@ namespace ClaFi::Controls
         :
         Stack{ params,
             Orientation::Vertical,
-            // A SCROLLED BODY KEEPS THE SIZE IT MEASURED - see ComboBoxDropdownStack.
+            // **A scrolled body keeps the size it measured** - see ComboBoxDropdownStack.
             WordWrap::No
         },
         m_box{ box }
@@ -914,7 +914,7 @@ namespace ClaFi::Controls
 
     void CodeBox::updateCompletion()
     {
-        // THE LIST STANDS ON A BOX THAT HAS BEEN LAID OUT - see
+        // **The list stands on a box that has been laid out** - see
         // InPlaceEditRoot::updateSuggestions.
         if (!form().contentAligned())
         {
@@ -1162,7 +1162,7 @@ namespace ClaFi::Controls
 
     void CodeBox::updateParameterHint()
     {
-        // THE HINT STANDS ON A BOX THAT HAS BEEN LAID OUT - see updateCompletion.
+        // **The hint stands on a box that has been laid out** - see updateCompletion.
         if (!form().contentAligned())
         {
             m_parameterHintWaitsOnAlign = true;

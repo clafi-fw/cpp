@@ -32,7 +32,7 @@ namespace ClaFi::Tools::WhatsClip
     {
     }
 
-    // THE WORDS AS THEY WOULD BE DRAWN, out of whichever format the preview was read from. Both
+    // **The words as they would be drawn**, out of whichever format the preview was read from. Both
     // readings are decoded before they arrive - the framework's own rich text as a Text with its
     // markers, a standard text as the string it is - so the encoding pick never appears here and
     // the language is the text's own. Which of the two came is what the answer holds, not what

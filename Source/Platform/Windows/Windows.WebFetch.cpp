@@ -95,8 +95,8 @@ namespace ClaFi
         m_owner.reportDone(status, std::move(body));
     }
 
-    // THE REQUEST IS REGISTERED UNDER THE MUTEX, and closed under it by whichever side gets there
-    // first, so the destructor never closes a handle the thread has already closed.
+    // **The request is registered under the mutex**, and closed under it by whichever side gets
+    // there first, so the destructor never closes a handle the thread has already closed.
     int WebFetch::Impl::fetch(std::string& body)
     {
         const std::wstring& url = m_owner.url();
@@ -152,7 +152,7 @@ namespace ClaFi
         return status;
     }
 
-    // A CLOSED REQUEST FAILS THE CALL BLOCKED ON IT, and the flag is read after every call, so
+    // **A closed request fails the call blocked on it**, and the flag is read after every call, so
     // the thread makes no further call on a handle the destructor has closed.
     int WebFetch::Impl::exchange(const HINTERNET request, std::string& body) const
     {

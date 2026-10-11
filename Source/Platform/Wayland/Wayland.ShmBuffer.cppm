@@ -27,10 +27,10 @@ namespace ClaFi::PlatformImplementation::Wayland
             void* pixels{ nullptr };
             // The compositor has this one and has not given it back.
             bool busy{ false };
-            // WHAT THIS FRAME HAS YET TO BE TOLD, and the reason damage is held here rather than
-            // once for the window. A frame is written every other present, so what it holds is the
-            // image from two presents ago and not the one on screen. A partial copy into it is
-            // right only if it carries everything that has changed since IT was last written -
+            // **What this frame has yet to be told**, and the reason damage is held here rather
+            // than once for the window. A frame is written every other present, so what it holds is
+            // the image from two presents ago and not the one on screen. A partial copy into it is
+            // right only if it carries everything that has changed since **it** was last written -
             // handed the damage since the last present instead, it keeps whatever the frame between
             // the two changed, and shows a mix of the two images.
             IntRect damage{};
@@ -59,8 +59,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         [[nodiscard]] Frame* freeFrame();
         // Says the compositor is done with a frame. Called from the buffer's own listener.
         void releaseFrame(wl_buffer*);
-        // Adds to what EVERY frame has yet to be told. The one not painted this time still has to
-        // carry this when its turn comes.
+        // Adds to what **every** frame has yet to be told. The one not painted this time still has
+        // to carry this when its turn comes.
         void addDamage(const IntRect&);
     private:
         // Makes the pool at least this big, keeping whatever is already mapped. Answers whether
@@ -72,13 +72,13 @@ namespace ClaFi::PlatformImplementation::Wayland
         wl_shm* const m_shm;
         IntSize m_size{ 0, 0 };
         bool m_hasAlphaChannel{ false };
-        // KEPT OPEN FOR THE LIFE OF THE POOL. Growing means growing the file first, and a
+        // **Kept open for the life of the pool.** Growing means growing the file first, and a
         // descriptor that was closed cannot be truncated. The compositor holds its own duplicate
         // and is unaffected by what this one does.
         int m_fd{ -1 };
         wl_shm_pool* m_pool{ nullptr };
         void* m_mapping{ nullptr };
-        // WHAT IS MAPPED, which is not what is in use. A pool only ever grows, so this is the
+        // **What is mapped**, which is not what is in use. A pool only ever grows, so this is the
         // high-water mark of every size this window has been.
         std::size_t m_capacity{ 0 };
         std::array<Frame, 2> m_frames{};
@@ -91,15 +91,15 @@ namespace ClaFi::PlatformImplementation::Wayland
 
 namespace ClaFi::PlatformImplementation::Wayland
 {
-    // XRGB RATHER THAN ARGB BY DEFAULT, and this is a decision about the BACKEND rather than about
-    // the compositor. The CPU backend does not promise a correct alpha channel across the whole
-    // surface - it writes alpha where it blends and leaves it alone elsewhere - so a format that
-    // is read as translucent shows the desktop through everything that was never blended. Stating
-    // no alpha channel says what is true of these bytes.
+    // **XRGB rather than ARGB by default**, and this is a decision about the **backend** rather
+    // than about the compositor. The CPU backend does not promise a correct alpha channel across
+    // the whole surface - it writes alpha where it blends and leaves it alone elsewhere - so a
+    // format that is read as translucent shows the desktop through everything that was never
+    // blended. Stating no alpha channel says what is true of these bytes.
     //
-    // A WINDOW THAT FADES IS THE EXCEPTION, and it is exempt for the same reason the rule exists:
-    // it does not trust the bitmap's alpha either. Its frame is written a channel at a time with
-    // the WINDOW's opacity - see FormWindow::paint - so every pixel carries the same alpha
+    // **A window that fades is the exception**, and it is exempt for the same reason the rule
+    // exists: it does not trust the bitmap's alpha either. Its frame is written a channel at a time
+    // with the **window's** opacity - see FormWindow::paint - so every pixel carries the same alpha
     // whatever the backend left there, which is what a layered window means on Win32. Both
     // formats are guaranteed by wl_shm.
     constexpr std::uint32_t k_opaqueFormat = WL_SHM_FORMAT_XRGB8888;
@@ -134,7 +134,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (!growTo(frameSize * m_frames.size()))
             return false;
 
-        // CUT AFTER THE GROWTH AND NEVER BEFORE. A buffer names an offset and a size within the
+        // **Cut after the growth and never before.** A buffer names an offset and a size within the
         // pool, so every one of them is wrong the moment either the pool or the frame size
         // changes - and the mapping may have moved underneath them as well.
         destroyFrames();
@@ -151,8 +151,8 @@ namespace ClaFi::PlatformImplementation::Wayland
                 m_hasAlphaChannel ? k_alphaFormat : k_opaqueFormat);
             frame.pixels = static_cast<std::byte*>(m_mapping) + frameSize * i;
             frame.busy = false;
-            // WHOLE, BECAUSE A RE-CUT FRAME HOLDS NOTHING IT CAN BE TRUSTED TO KEEP. The pool is
-            // never cleared and never shrinks, so these bytes are the last window's image at the
+            // **Whole, because a re-cut frame holds nothing it can be trusted to keep.** The pool
+            // is never cleared and never shrinks, so these bytes are the last window's image at the
             // last window's stride. Only a frame written edge to edge is rid of it.
             frame.damage = IntRect::fromDimensions({ 0, 0 }, value);
             ::wl_buffer_add_listener(frame.handle, &k_bufferListener, this);
@@ -192,7 +192,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         }
     }
 
-    // A POOL GROWS AND NEVER SHRINKS - the protocol has no request for it - so a window made
+    // **A pool grows and never shrinks** - the protocol has no request for it - so a window made
     // smaller keeps the mapping it had and cuts smaller frames from it. That is the whole reason
     // this is separate from resize(): dragging an edge asks for a new size on every frame, and
     // rebuilding the file, the mapping and the pool a hundred times a second is a great deal of
@@ -202,14 +202,14 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (m_pool && bytes <= m_capacity)
             return true;
 
-        // HALF AS MUCH AGAIN, so a drag that grows a window by a pixel at a time stops asking
+        // **Half as much again**, so a drag that grows a window by a pixel at a time stops asking
         // after the first few. The memory is not touched until it is written into, so a capacity
         // ahead of the size costs address space rather than pages.
         const std::size_t capacity = std::max(bytes, m_capacity + m_capacity / 2);
 
         if (m_fd < 0)
         {
-            // ANONYMOUS AND NAMED NOTHING. memfd is memory with a file descriptor on it and no
+            // **Anonymous and named nothing.** memfd is memory with a file descriptor on it and no
             // entry in any directory, which is what this needs: a name would be a file another
             // process could open, and there is nothing here to share with anyone but the
             // compositor.
@@ -232,8 +232,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         }
         else
         {
-            // MAY MOVE, so every pointer into the old mapping is stale afterwards. The frames are
-            // re-cut by the caller, which is what makes that safe.
+            // **May move**, so every pointer into the old mapping is stale afterwards. The frames
+            // are re-cut by the caller, which is what makes that safe.
             void* moved = ::mremap(m_mapping, m_capacity, capacity, MREMAP_MAYMOVE);
             if (moved == MAP_FAILED)
                 return false;
@@ -265,7 +265,7 @@ namespace ClaFi::PlatformImplementation::Wayland
     {
         for (Frame& frame : m_frames)
         {
-            // A BUFFER THE COMPOSITOR STILL HOLDS MAY BE DESTROYED. It has already read what it
+            // **A buffer the compositor still holds may be destroyed.** It has already read what it
             // needed, and one it has not read is a frame nobody was going to see at a size this
             // window no longer is.
             if (frame.handle)

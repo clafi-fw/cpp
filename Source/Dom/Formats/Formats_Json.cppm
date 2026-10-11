@@ -3,7 +3,7 @@
 // =========================================================================
 //
 // Not a general-purpose RFC 8259 parser — implements enough of JSON to
-// round-trip THIS engine's own schema-driven DOM. Known deviations:
+// round-trip **this** engine's own schema-driven DOM. Known deviations:
 //
 // - No \uXXXX Unicode escape support. parseString's escape handling
 //   recognizes \n, \t, \r, \\, and \" only; any other escape (including

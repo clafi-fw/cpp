@@ -33,7 +33,7 @@ namespace ClaFi::Tools::WhatsClip
             return std::nullopt;
         }
 
-        // WHAT A FORMAT'S NAME SETTLES BEFORE ITS BYTES ARE READ. The framework's rich text is
+        // **What a format's name settles before its bytes are read.** The framework's rich text is
         // written as ClaFi, whose strings may hold any language's source - a reading of the text
         // would find that language instead. A format named after XML or HTML carries XML under a
         // header no reading of the text sees past.

@@ -75,7 +75,7 @@ namespace ClaFi
         );
     }
 
-    // THE ROW SPANS THE PAGE, so the button stands at the end of the line the version ends. The
+    // **The row spans the page**, so the button stands at the end of the line the version ends. The
     // status is hidden until there is something to say - see stateUpdateRow.
     void InformationPage::addUpdateRow()
     {
@@ -109,7 +109,7 @@ namespace ClaFi
         stateUpdateRow();
     }
 
-    // THE AGE IS WORKED OUT HERE AND NOWHERE ELSE - when the page is built, which is every time
+    // **The age is worked out here and nowhere else** - when the page is built, which is every time
     // the menu opens, and when the check moves. It does not tick while the menu stays open.
     void InformationPage::stateUpdateRow()
     {
@@ -142,8 +142,8 @@ namespace ClaFi
             return text;
         }
 
-        // A NEWER RELEASE NAMES ITS PAGE IN PLACE OF THE AGE. The address in full runs under the
-        // button at the page's usual width, so the line links it under a name.
+        // **A newer release names its page in place of the age.** The address in full runs under
+        // the button at the page's usual width, so the line links it under a name.
         Text statusText(const UpdateCheck& updates, const std::chrono::sys_seconds now)
         {
             Text text{ TextStyleId::SubHeading };

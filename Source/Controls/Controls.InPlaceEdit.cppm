@@ -35,14 +35,14 @@ namespace ClaFi::Controls
     public:
         AcceptEditEvent(Control& askedBy, const Text&);
         /// The control that asked for this text to be taken - the answer that was pressed, or
-        /// the box a Return was pressed in. A SINK WITH A QUESTION OF ITS OWN OWNS IT BY THIS,
+        /// the box a Return was pressed in. **A sink with a question of its own owns it by this**,
         /// so the question stands on top of the editor with the value still on screen behind it.
         Control& askedBy;
         const Text& text;
         /// Refuses the text and says why, in a sentence the user reads.
         void refuse(std::wstring_view why);
-        /// Refuses it with nothing to say, for a sink that has ALREADY had its say: one that put
-        /// a question of its own to the user and was told no. A reason there would only repeat
+        /// Refuses it with nothing to say, for a sink that has **already** had its say: one that
+        /// put a question of its own to the user and was told no. A reason there would only repeat
         /// what they have just answered.
         void refuse();
         [[nodiscard]] bool refused() const { return m_refused; }
@@ -64,22 +64,22 @@ namespace ClaFi::Controls
         // stands in - the space a placement rect is stated in, which is where this one goes.
         FloatRect textRect;
         HorizontalTextAnchor textAnchor{ HorizontalTextAnchor::None };
-        // How far the editor may grow, measured on the TEXT and not on the window: the frame
+        // How far the editor may grow, measured on the **text** and not on the window: the frame
         // the editor draws around it is added on top, which is the padding correction a caller
         // stating its own control's MaxSize would otherwise have to make twice. Zero on an axis
         // means the caller sets no limit there and the monitor is the only bound left.
         //
-        // A CONTROL WHOSE TEXT WRAPS PASSES ITS OWN WIDTH HERE - which is textRect's
+        // **A control whose text wraps passes its own width here** - which is textRect's
         // width, since that rect is where the text is laid out. Floor and ceiling are then one
         // number, the editor wraps exactly as the covered text does, and only the height grows.
         // Leaving it open instead pulls a wrapped caption into a single long line the moment the
-        // editor opens, which is the covered text MOVING rather than being covered.
+        // editor opens, which is the covered text **moving** rather than being covered.
         //
         // A control whose text does not wrap - a grid cell, which trims - wants the opposite: a
         // ceiling wider than the covered rect is how a value too long for its column is finally
         // seen whole.
         FloatPoint maxTextSize{};
-        // Whether the box may be typed into. A READ-ONLY EDITOR IS A READER: it is how a value
+        // Whether the box may be typed into. **A read-only editor is a reader**: it is how a value
         // too long for the place it is shown in is finally seen whole, selected and copied, and
         // it refuses every change to what it holds. Its text is the one handed in here, so the
         // sink is never offered it - see InPlaceEditRoot::offerText.
@@ -87,7 +87,7 @@ namespace ClaFi::Controls
         // What the user typed to open the editor. It replaces the value, which opens selected
         // whole, so the keys that asked for the editor are the first keys of the edit.
         std::wstring_view typed{};
-        // What the editor completes from, NAMED rather than copied. See Controls#suggestionlist
+        // What the editor completes from, **named** rather than copied. See Controls#suggestionlist
         const TextItems* suggestions{ nullptr };
         // What the covered text is laid out over, or none. The editor lays its own out the same.
         const TextFormat* textFormat{ nullptr };
@@ -117,8 +117,8 @@ namespace ClaFi::Controls
     private:
         void clearRefusal();
     private:
-        // Whether the line break of the press being answered belongs in the text. THE CHARACTER
-        // OF A PRESS IS QUEUED BEFORE THE PRESS IS ANSWERED, so a Return the form takes for
+        // Whether the line break of the press being answered belongs in the text. **The character
+        // of a press is queued before the press is answered**, so a Return the form takes for
         // itself would still break the line here. The press settles this and the character reads
         // it: Shift+Return is the box's, a plain Return is the form's.
         bool m_takeLineBreak{ false };
@@ -168,7 +168,7 @@ namespace ClaFi::Controls
     // The suggestion list as it is dropped: a box that scrolls, holding the rows. See Controls
     using SuggestionList = ScrollBoxWith<SuggestionStack>;
 
-    // The root of an in-place edit form: a frame with one text box in it. The box holds a COPY
+    // The root of an in-place edit form: a frame with one text box in it. The box holds a **copy**
     // of the text being edited - the control underneath keeps showing its own until the sink
     // takes the new one, and keeps it unchanged when nothing does.
     class InPlaceEditRoot : public WithBody<Panel, PromptBox>
@@ -184,12 +184,12 @@ namespace ClaFi::Controls
         // Offers the text to the sink, and answers whether the edit is over. Called by the
         // endings the user drives - Enter, and a click outside.
         //
-        // A REFUSAL DOES NOT SETTLE: it leaves an edit still to be corrected or abandoned, so a
+        // **A refusal does not settle**: it leaves an edit still to be corrected or abandoned, so a
         // later ending offers the corrected value again. The reason is recorded on the box
         // rather than shown, because only the caller knows whether there is still an editor to
         // show it over.
         bool offerText();
-        // Offers the text only if the sink has never been asked. This is for the endings NOBODY
+        // Offers the text only if the sink has never been asked. This is for the endings **nobody**
         // drove - a loop that ended underneath the editor - and it is the one place that must
         // not ask again: a sink is not obliged to be idempotent, and a rename that failed the
         // first time would otherwise get a retry the user never asked for, after they had
@@ -264,16 +264,16 @@ namespace ClaFi::Controls
         /// the user to finish. The value reaches the caller through `accept`, which runs while the
         /// editor is still up and may refuse it.
         ///
-        /// @note COMMITTING IS THE DEFAULT. Enter offers the text, and so does every other way an
-        /// edit ends - a click elsewhere, the window going away. Escape is the only thing that does
-        /// not, so a user who finishes by walking off gets the same answer as one who presses
+        /// @note **Committing is the default.** Enter offers the text, and so does every other way
+        /// an edit ends - a click elsewhere, the window going away. Escape is the only thing that
+        /// does not, so a user who finishes by walking off gets the same answer as one who presses
         /// Enter. Shift+Enter breaks the line and the edit goes on.
         ///
-        /// @note A REFUSED VALUE KEEPS THE EDITOR OPEN. Enter and clicking away are both vetoable -
-        /// a click on the form behind a popup goes through FormBase::readyToClose, which this form
-        /// answers - so neither can lose an edit to a value nothing would take. The endings that
-        /// cannot be vetoed are the window going away and the loop ending underneath it, and there
-        /// a refusal means only what it always means: the value was not taken.
+        /// @note **A refused value keeps the editor open.** Enter and clicking away are both
+        /// vetoable - a click on the form behind a popup goes through FormBase::readyToClose, which
+        /// this form answers - so neither can lose an edit to a value nothing would take. The
+        /// endings that cannot be vetoed are the window going away and the loop ending underneath
+        /// it, and there a refusal means only what it always means: the value was not taken.
         ///
         /// @note This runs a message loop of its own and returns once the editor is gone, so
         /// anything the caller holds across the call - `accept` included - has to survive the user
@@ -282,13 +282,13 @@ namespace ClaFi::Controls
         static EditResult run(const EditTarget&, const Text& source, AcceptEditFunc);
         /// @brief Whether an in-place editor is on screen.
         ///
-        /// @note THERE IS ONE AT A TIME, APPLICATION-WIDE, and this is what a caller asks before
-        /// opening one. An editor runs a message loop of its own, so a request made before it
-        /// opened - a timer tick, a key already queued - is dispatched INSIDE that loop; and there
-        /// is one caret and one focus, so a second editor standing over the first is one the user
-        /// cannot see the end of. A request that arrives while one is up is dropped: the user is
-        /// typing a name somewhere else, and the one they asked for before that is not the one in
-        /// front of them.
+        /// @note **There is one at a time, application-wide**, and this is what a caller asks
+        /// before opening one. An editor runs a message loop of its own, so a request made before
+        /// it opened - a timer tick, a key already queued - is dispatched **inside** that loop; and
+        /// there is one caret and one focus, so a second editor standing over the first is one the
+        /// user cannot see the end of. A request that arrives while one is up is dropped: the user
+        /// is typing a name somewhere else, and the one they asked for before that is not the one
+        /// in front of them.
         [[nodiscard]] static bool isRunning() { return s_editorOnScreen; }
     private:
         // Whether an editor is on screen. There is one of these for the application, because
@@ -322,25 +322,25 @@ namespace ClaFi::Controls
         /// reader answers ReadOnly - see the class note.
         [[nodiscard]] virtual EditorMode editorMode() const;
         /// The value the editor opens on. It is this control's own text, which is what a control
-        /// that keeps one shows. A control that COMPOSES its caption - out of the data item it
+        /// that keeps one shows. A control that **composes** its caption - out of the data item it
         /// stands for, or out of parts it puts together as it is asked to draw - keeps no text of
         /// its own, and states that caption here instead.
         ///
-        /// @note THE GEOMETRY IS NOT ASKED FOR AGAIN. The editor is placed over the rect this
-        /// control lays ITS text out in, so what is stated here is the run of glyphs standing in
-        /// that rect - the caption as it is read, and not some longer name behind it.
+        /// @note **The geometry is not asked for again.** The editor is placed over the rect this
+        /// control lays **its** text out in, so what is stated here is the run of glyphs standing
+        /// in that rect - the caption as it is read, and not some longer name behind it.
         virtual void getEditorText(Text&) const;
         /// Hands the value the editor was left with to whatever takes it, while the editor is still
         /// up. The default raises AcceptEditEvent; a control that takes the value itself answers
         /// here instead.
         virtual void acceptEditorText(AcceptEditEvent&);
-        /// How far the editor may grow, measured on the TEXT rather than on the window. The
+        /// How far the editor may grow, measured on the **text** rather than on the window. The
         /// default is this control's own text rect width and no limit in height - floor and
-        /// ceiling one number - which is what keeps a caption that WRAPS wrapped: the rect the
+        /// ceiling one number - which is what keeps a caption that **wraps** wrapped: the rect the
         /// editor covers is where this control lays its text out, so it is also where that text
         /// breaks.
         ///
-        /// A control whose text does NOT wrap - one line, trimmed at the edge - wants the
+        /// A control whose text does **not** wrap - one line, trimmed at the edge - wants the
         /// opposite. A ceiling wider than the covered rect, or none at all, is how a value too
         /// long for the control is read whole while it is being typed. Zero on an axis says no
         /// limit, and the monitor is then the only bound left.
@@ -352,13 +352,14 @@ namespace ClaFi::Controls
         /// of it - a dropdown strip, a close button - is that part's. A control above may still
         /// refuse the editor on a click this answers yes to - see Control::mayDropPopupImplicitly.
         ///
-        /// The default is A CLICK ON THE TEXT OF A CONTROL THE USER IS ALREADY ON: the click that
-        /// PICKS a control never edits it, or a control could never be picked without editing it,
-        /// and the pointer has to be over the text rather than over an icon or a check mark.
+        /// The default is **a click on the text of a control the user is already on**: the click
+        /// that **picks** a control never edits it, or a control could never be picked without
+        /// editing it, and the pointer has to be over the text rather than over an icon or a check
+        /// mark.
         ///
         /// A control a click cannot pick answers on the first press instead - it already stands
         /// for the one thing it names, so the press has no other meaning to be kept apart from.
-        /// A control that wants a condition of its own ON TOP of the default says it with the
+        /// A control that wants a condition of its own **on top** of the default says it with the
         /// base's answer as well, the way editorMode is written.
         [[nodiscard]] virtual bool clickOpensEditor() const;
         void nestedKeyDown(KeyDownEvent&) override;
@@ -383,8 +384,8 @@ namespace ClaFi::Controls
         // What was typed with a request that is waiting for the layout.
         std::wstring m_typed{};
         // Recorded as the press happens, because nothing afterwards can answer it:
-        // Input::setMouseDown moves the focus BEFORE it dispatches the press, so by nestedClick()
-        // the control reads focused whichever way the click went.
+        // Input::setMouseDown moves the focus **before** it dispatches the press, so by
+        // nestedClick() the control reads focused whichever way the click went.
         bool m_wasCurrentBeforePress{ false };
         // The trailing release of a double click raises an ordinary click of its own,
         // indistinguishable from a lone one, and that pair means whatever double clicking means
@@ -418,10 +419,10 @@ namespace ClaFi::Controls
     template <IsControl HostClass>
     bool WithInPlaceEdit<HostClass>::openEditor(const std::wstring_view typed)
     {
-        // ONE EDITOR AT A TIME. Every route here can arrive while another is already up - a tick
-        // is dispatched by the loop the editor runs, and so is a key press - and false is what
+        // **One editor at a time.** Every route here can arrive while another is already up - a
+        // tick is dispatched by the loop the editor runs, and so is a key press - and false is what
         // lets the gesture that asked travel on. See InPlaceEdit::isRunning.
-        // A WAIT ENDS HERE WHATEVER IS DECIDED BELOW. A request dropped while another editor is
+        // **A wait ends here whatever is decided below.** A request dropped while another editor is
         // up stays dropped; one left connected would open an editor nobody asked for, from the
         // first pass after that editor closes. What such a request kept of the keys goes with it.
         m_alignedRequest = {};
@@ -430,7 +431,7 @@ namespace ClaFi::Controls
         if (mode == EditorMode::None || InPlaceEdit::isRunning())
             return false;
 
-        // THE RECT IS READ OFF A SETTLED LAYOUT. A rebuild that made this control asks for the
+        // **The rect is read off a settled layout.** A rebuild that made this control asks for the
         // editor before the pass that lays it out has run, and a platform that paints when the
         // compositor asks rather than when the queue empties can deliver a 0 ms tick ahead of
         // that pass. Asked for again from the pass that settles the form, on a tick of its own:
@@ -509,7 +510,7 @@ namespace ClaFi::Controls
     template <IsControl HostClass>
     void WithInPlaceEdit<HostClass>::nestedKeyDown(KeyDownEvent& event)
     {
-        // THE KEY IS ANSWERED HERE RATHER THAN LEFT TO StdActions::rename's SHORTCUT. A key the
+        // **The key is answered here rather than left to StdActions::rename's shortcut.** A key the
         // control handles never reaches the shortcut scopes, and this is the control that has to
         // answer: the subject walk starts at the focused control, and a container holding the
         // focus answers for itself rather than for the item it is on, so a tile inside a
@@ -528,15 +529,15 @@ namespace ClaFi::Controls
     template <IsControl HostClass>
     void WithInPlaceEdit<HostClass>::nestedControlFocusing(FocusEvent& event)
     {
-        // BEFORE the base, which is what carries the walk up to the container. isFocused()
-        // answers for where the user WAS only until that container has recorded its new current
+        // **Before** the base, which is what carries the walk up to the container. isFocused()
+        // answers for where the user **was** only until that container has recorded its new current
         // item, and it does that from inside the base call below.
         //
-        // Control::setFocus raises this on EVERY press, including a press on the control that
+        // Control::setFocus raises this on **every** press, including a press on the control that
         // already holds the focus, so the case being detected is reported rather than skipped.
         //
         // focusChanged cannot answer this. A container that owns its items retargets the event
-        // to itself - StackBase does - so the focus is written to the CONTAINER and an item
+        // to itself - StackBase does - so the focus is written to the **container** and an item
         // is only its focusDelegate. No such item is ever told its focus changed.
         if (event.control == this)
             m_wasCurrentBeforePress = this->isFocused();
@@ -571,7 +572,7 @@ namespace ClaFi::Controls
     template <IsControl HostClass>
     void WithInPlaceEdit<HostClass>::connectRenameAction()
     {
-        // CLAIMING SAYS THE COMMAND IS ABOUT THIS CONTROL; what is claimed says whether it can
+        // **Claiming says the command is about this control**; what is claimed says whether it can
         // run now. A host with nowhere for a new name to go has no rename at all - that is a
         // property of the control rather than a state it is in - so it says nothing and the walk
         // carries on up, and something above it may answer the same command for something else.
@@ -591,20 +592,20 @@ namespace ClaFi::Controls
         });
     }
 
-    // THE EDITOR CANNOT OPEN INSIDE THE MENU THAT ASKED FOR IT, and a menu item runs its command
-    // before it closes, so a command answered on the spot would open one there.
+    // **The editor cannot open inside the menu that asked for it**, and a menu item runs its
+    // command before it closes, so a command answered on the spot would open one there.
     //
-    // The editor is a popup owned by this control, so it registers on THIS control's form - which
-    // is the form the menu is registered on - and takes the menu's place there: the menu is left
-    // standing with nothing guarding it. It is placed over this control's text as well, and the
-    // menu is what that text is under.
+    // The editor is a popup owned by this control, so it registers on **this** control's form -
+    // which is the form the menu is registered on - and takes the menu's place there: the menu is
+    // left standing with nothing guarding it. It is placed over this control's text as well, and
+    // the menu is what that text is under.
     //
     // WM_TIMER is behind every message already queued, so the tick arrives once the input that
     // asked for the rename has been answered. A command presented from anywhere else pays one
     // tick for it, which is the same tick a rename asked for by a rebuild already waits.
     //
-    // IT DOES NOT PROMISE THE MENU HAS FINISHED CLOSING: a modal loop pumps WM_TIMER too, and the
-    // queue can empty inside one. What keeps that from standing two editors on screen is the
+    // **It does not promise the menu has finished closing**: a modal loop pumps WM_TIMER too, and
+    // the queue can empty inside one. What keeps that from standing two editors on screen is the
     // one-at-a-time test in openEditor.
     // TODO: should the request wait on there being no popup over this control's form, rather than
     // on the queue being empty? A popup's registration is guarded by identity, so an editor

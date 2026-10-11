@@ -50,5 +50,5 @@ rectangle is swept from the surface alone. For a view whose items are moved.
 
 `CanSelectItemEvent` is the view's own question, and nothing but the view asks it - a rubber
 band sweeping the subtree wants an answer for controls it never intends to make current.
-Whether an item may be the CURRENT one is asked separately, a level down - see
+Whether an item may be the **current** one is asked separately, a level down - see
 `CanFocusItemEvent` in `StackBase`.

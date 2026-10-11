@@ -1,7 +1,7 @@
 // =========================================================================
 // ClaFi.Application.ThemesManager_Elements
 //
-// WHAT A THEME IS MADE OF, STATED ONCE. Every element a theme colours, the
+// **What a theme is made of, stated once.** Every element a theme colours, the
 // three spellings it goes by, what it is painted on, and for the elements
 // an ink names, the ThemeColors member holding that effect.
 //
@@ -32,7 +32,7 @@ namespace ClaFi
         // nesting once, so a rule can be shown against the colour it will actually change.
         // An empty base is the bare colour of the mode, before any rule.
         OptionalUiElement base{};
-        // WHETHER THE ELEMENT OPENS A WINDOW OF ITS OWN, and with it whether its Surface rule
+        // **Whether the element opens a window of its own**, and with it whether its Surface rule
         // states an absolute colour. What stands behind a window is not the theme's to know - the
         // desktop, another application, a form of its own - so a root's surface names its hue
         // outright and sets its saturation and elevation rather than moving them. Its text and
@@ -45,7 +45,7 @@ namespace ClaFi
 
     // Indexed by UiElement, so it and this table must stay in step.
     export constexpr std::array<UiElementDescriptor, static_cast<std::size_t>(UiElement::Count)> k_uiElements{
-        // A WINDOW ROOT. Menu and Hint are the other two, and the three carry the same pair -
+        // **A window root.** Menu and Hint are the other two, and the three carry the same pair -
         // the surface the window is filled with and the ink everything in it starts from - and
         // the window's frame: the stroke around it and the shadow it casts. Nothing is under a
         // root, so this one has no base - it stands on the bare colour of the mode.
@@ -175,9 +175,9 @@ namespace ClaFi
             .token = L"HoverIndicator",
             .base = UiElement::Section
         },
-        // THREE THINGS IN ONE EFFECT: the theme's own emphasis, the ring on the control the user is
-        // on, and the indicator under an open tab. They are one colour on purpose - the interface
-        // says "this one" in a single ink - so they are edited as one row.
+        // **Three things in one effect**: the theme's own emphasis, the ring on the control the
+        // user is on, and the indicator under an open tab. They are one colour on purpose - the
+        // interface says "this one" in a single ink - so they are edited as one row.
         UiElementDescriptor{
             .name = L"Accent",
             .codeName = L"accent",
@@ -204,7 +204,7 @@ namespace ClaFi
             .token = L"ScrollThumb",
             .base = UiElement::Section
         },
-        // THE TWO TEST SUBJECTS. Only the rules a theme states for them reach them: with none,
+        // **The two test subjects.** Only the rules a theme states for them reach them: with none,
         // each paints no surface and draws its text in the ink it inherits.
         UiElementDescriptor{
             .name = L"Testee",

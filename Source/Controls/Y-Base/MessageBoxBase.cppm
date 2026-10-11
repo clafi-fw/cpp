@@ -61,7 +61,7 @@ namespace ClaFi::Controls
         [[nodiscard]] MessageBoxBody& field() { return m_box; }
         // Adds an answer to the row. They read left to right in the order they arrive.
         //
-        // THE FIRST ANSWER IS WHAT THE DIALOG OPENS ON. Return and Space run the focused
+        // **The first answer is what the dialog opens on.** Return and Space run the focused
         // control, so a dialog opening anywhere else is a dialog only the mouse can answer: the
         // text takes the focus otherwise, being the first focusable thing in slot order, and
         // pressing Return on it does nothing. A dialog whose answer is the text it holds says so

@@ -71,8 +71,8 @@ box or a button drops nothing, and acts on the picking press.
   the editor on the first click, and the second lands on the cell it picked. `WithInPlaceEdit`
   counts the pair as two ordinary clicks when the editor was refused on its first click.
 
-THE CLICK REACHES THE GRID AS A CLICK ON THE ROW. `RowContainer::nestedClick` retargets it the way
-`nestedControlFocusing` retargets the focus. The grid's click pass completes a pick - a Ctrl
+**The click reaches the grid as a click on the row.** `RowContainer::nestedClick` retargets it the
+way `nestedControlFocusing` retargets the focus. The grid's click pass completes a pick - a Ctrl
 toggle, a plain press on a row already held - and it can make only a row current: handed the
 control, it would read the click as landing on nothing and clear the selection.
 
@@ -225,29 +225,29 @@ expanded(), setExpanded(), toggleExpanded() - and emits ToggleExpandedEvent, the
 expander's header emits, so a host answers both the same way. RowGroup answers it by
 showing and hiding its body.
 
-THE MARK LEADS THE SPAN'S FIRST CELL, the first column the span fills, left to right. It
+**The mark leads the span's first cell**, the first column the span fills, left to right. It
 is an ExpanderButton the size of a check mark, standing where the column puts a line of
 text, and the cell's content starts after it. RowBase::cellLead is where a row keeps that
 room, and everything that finds a cell's content box reads it: calculateCell, paintCell,
 the hint, the in-place editor and the box a hosted control is given.
 
-A CLOSED GROUP IS ITS SPAN ALONE, with a blank in every leaf column no span fills - this
+**A closed group is its span alone**, with a blank in every leaf column no span fills - this
 span, in the leaf or in a column above it, or the span of any group this one stands in,
 whose cells stretch over it. A column nothing fills has no width and gets no blank. Rows
 that fill different columns fold into the same closed row, so a column none of them fill
 shows a blank while the group is closed and a gap while it is open.
 
-A BLANK IS THE CELL'S SURFACE AND LINES AND NOTHING ELSE - see RowBase::hasBlank. The
+**A blank is the cell's surface and lines and nothing else** - see RowBase::hasBlank. The
 walk reports it so that the lattice closes, and everything that addresses a cell steps
 over it: no text is asked for it, no editor opens on it, and no key or click lands there.
 
-A CLOSED GROUP IS MET IN EVERY COLUMN. Its row reads whole, so each blank stands for the
+**A closed group is met in every column.** Its row reads whole, so each blank stands for the
 cell of the row nearest to it, and that cell's lane is its rect widened over the blanks it
 stands for - see RowBase::traverseLanes. Up and Down stop on the group whichever column the
 run follows and land on that cell, keeping the column for the next press. A press on a blank
 selects the same cell, and a double click there opens the group.
 
-THE KEYS ARE A TREE NODE'S. On the mark's cell Right opens a closed group and Left closes
+**The keys are a tree node's.** On the mark's cell Right opens a closed group and Left closes
 an open one. Every other press moves the selection as it moves anywhere in the grid, so
 Right from an open group's mark steps into its rows, where a tree node's Right goes too.
 The mark is MouseOnly like every control a row holds, so the row keeps the focus, and a
@@ -255,17 +255,17 @@ double click on it toggles twice, as a double click on an expander's button does
 
 ## SubGrid
 
-THE BODY OF A GROUP OR A SECTION. A grid only in that it holds rows: it stands inside the
+**The body of a group or a section.** A grid only in that it holds rows: it stands inside the
 grid whose columns its rows fill, and shares that grid's descriptor.
 
 ## RowGroupBase
 
-A ROW HOLDING A GRID OF ROWS, under an expander's header or beside a group's span. A span
+**A row holding a grid of rows**, under an expander's header or beside a group's span. A span
 and the rows fill disjoint sets of columns, so the two are laid over each other rather than
 stacked and the span's cells merge down the whole group - see RowGroup::alignContent. A
 closed group is left stacked, its body hidden - see Collapsible.
 
-It holds no cells of its own, so it PAINTS NOTHING - see RowBase::paintSurface. Its surface
+It holds no cells of its own, so it **paints nothing** - see RowBase::paintSurface. Its surface
 is still the group's colour: the span and the rows of the body inherit it, add only what
 they have of their own, and each paints it through its own cells, so a row that also holds
 the selected cell applies the rule over it a second time. This is why the group is in
@@ -305,7 +305,7 @@ handler that adds nothing leaves the selection where it was.
 
 ## GridRow
 
-THE ELEMENT EVERY ROW OF A GRID WEARS, a group and a section among them -
+**The element every row of a grid wears**, a group and a section among them -
 RowBase::adjustPaint puts it on each. A row paints no rect of its own: its cells are filled
 from its surface, so every rule in its list reaches the screen through them.
 

@@ -88,7 +88,7 @@ namespace ClaFi
         ComboBox{
             params,
             m_themeItems,
-            // A THEME IS A PICTURE BEFORE IT IS A NAME, so the face and every item carry one.
+            // **A theme is a picture before it is a name**, so the face and every item carry one.
             // Said ahead of the caller's own props, which are read after these and stand in
             // their place - see Props::get.
             ButtonViewMode::LeftIcon,
@@ -104,7 +104,7 @@ namespace ClaFi
         onPaintItemIcon([this](PaintItemIconEvent& event) {
             paintThemeIcon(event, entryOf(event.item()).theme->colors);
         });
-        // TRIED ON, NOT STATED. The colours are taken directly rather than through the config
+        // **Tried on, not stated.** The colours are taken directly rather than through the config
         // node, so nothing is written for a theme the user is only looking at.
         onPreviewItem([this](PreviewItemEvent& event) {
             applyTheme(appContext(), *entryOf(event.item()).theme);

@@ -135,10 +135,10 @@ namespace ClaFi
         // Zero on an axis means the content decides it - see ControlMetrics::preferredSize.
         ScaledDimensions preferredSize;
         ScaledDimensions maxSize;
-        // WHAT THE CONTENT OF THIS CONTROL NEEDS, written by whoever composes that content out
+        // **What the content of this control needs**, written by whoever composes that content out
         // of what its children answered, by the same rule their sizes were composed by. Zero says
         // nothing inside states a floor, and the control is then held up by its own MinSize
-        // alone. WHAT THE CONTENT MEASURED IS NO PART OF THIS - see Control::calculatedMinSize.
+        // alone. **What the content measured is no part of this** - see Control::calculatedMinSize.
         ScaledDimensions calculatedMinSize{ 0.0f, 0.0f };
     private:
         // Borrowed - the form owns the pass and outlives every event raised inside it.
@@ -177,7 +177,7 @@ namespace ClaFi
         Control* control;
         FormBase& form;
         KeyModifiers modifiers;
-        // WHAT THE USER DID THAT LED HERE. A command run from a button or a menu line is
+        // **What the user did that led here.** A command run from a button or a menu line is
         // authorised by this, exactly as one run from a key is authorised by the key's.
         InputStamp stamp;
     };
@@ -271,14 +271,14 @@ namespace ClaFi
     {
     public:
         // The buffer a gather builds its answer in. Everything that reads or writes it comes
-        // through here, which is what lets a text be NAMED rather than copied: a name is put into
-        // the buffer by the first access of any kind, so nothing can see a buffer missing it.
+        // through here, which is what lets a text be **named** rather than copied: a name is put
+        // into the buffer by the first access of any kind, so nothing can see a buffer missing it.
         class Buffer
         {
         public:
             explicit Buffer(GetTextEventBase& owner) : m_owner{ owner } {}
-            // Both of these REPLACE what the buffer holds, so a named text is dropped rather than
-            // put into it: what was named is no part of the answer any more.
+            // Both of these **replace** what the buffer holds, so a named text is dropped rather
+            // than put into it: what was named is no part of the answer any more.
             Buffer& operator=(const Text& text)
             {
                 m_owner.discardName();
@@ -310,9 +310,9 @@ namespace ClaFi
         GetTextEventBase(GetTextEventBase& other, bool dummy);
         Buffer text{ *this };
         EventPhase phase() const { return m_phase; }
-        // A control whose own text is the whole of its answer NAMES it here instead of writing it
-        // into the buffer. A name is a pointer where a copy is the plain text and every marker in
-        // it, and a measurement gathers once for every question it asks.
+        // A control whose own text is the whole of its answer **names** it here instead of writing
+        // it into the buffer. A name is a pointer where a copy is the plain text and every marker
+        // in it, and a measurement gathers once for every question it asks.
         //
         // The first contribution to arrive with nothing written yet is the one that can be named.
         // Anything after it - a second contribution, or a handler streaming into `text` - puts the
@@ -481,7 +481,7 @@ namespace ClaFi
         FloatRect selectionRect() const;
         const PointInForm startPos() const { return m_startPos; }
         const PointInForm currentPos() const { return m_currentPos; }
-        // What the display server called the PRESS this drag started from, which is what a
+        // What the display server called the **press** this drag started from, which is what a
         // request made on the strength of the gesture is weighed against.
         [[nodiscard]] InputStamp stamp() const { return m_stamp; }
         float scaledDistance() const;
@@ -635,14 +635,14 @@ namespace ClaFi
         // This control fills its parent's body slot, so its size is the parent's to give. A
         // control that is not a body owns its own, and may grow past what it was offered.
         [[nodiscard]] bool isHostedAsBody() const { return m_parent && m_parent->isChildBody(*this); }
-        // WHOSE ANSWER THIS CONTROL'S WIDTH IS: what holds it, or what is in it. A control laid
+        // **Whose answer this control's width is**: what holds it, or what is in it. A control laid
         // across its parent's lane or into a slot is handed a width and has to live in it; one
         // whose parent measures it and then gives it back exactly that - a panel's left bar, a
         // control with no parent at all - is as wide as what it contains, and nothing outside it
         // has an opinion.
         //
         // The difference matters wherever a control would state its own width as a bound on what
-        // is inside it: on a control that is measured FROM its content, such a bound is derived
+        // is inside it: on a control that is measured **from** its content, such a bound is derived
         // from the thing it bounds, and anything that narrows the content once narrows it for
         // good. See ScrollBox::adjustChildMetrics, which is what asked for this.
         [[nodiscard]] bool isWidthGivenByParent() const
@@ -653,9 +653,9 @@ namespace ClaFi
         // Whether the host scrolls this control along the axis, so its extent there is its own.
         [[nodiscard]] bool isScrolledByParent(ScrollAxis axis) const
             { return m_parent && m_parent->scrollsChild(*this, axis); }
-        // THE SAME QUESTION, ASKED ALL THE WAY UP, and the one a bound carried over from the last
-        // pass has to answer. One level is not enough: a lane handed down through five stacks is
-        // still the content's own answer where the form at the top is measured from what it
+        // **The same question, asked all the way up**, and the one a bound carried over from the
+        // last pass has to answer. One level is not enough: a lane handed down through five stacks
+        // is still the content's own answer where the form at the top is measured from what it
         // holds, and a bound stated under one of those narrows the very thing it came from. The
         // walk ends at the first control that is not handed its width - that one's content
         // decides it - and at the root, where the window does, unless the window was asked for
@@ -703,14 +703,15 @@ namespace ClaFi
         void invalidateFormAlign();
 
         virtual Interactivity interactivity() const { return Interactivity::None; }
-        // WHETHER THIS CONTROL TAKES WHAT ITS LANE HAS OVER. A stack places its items at the
+        // **Whether this control takes what its lane has over.** A stack places its items at the
         // sizes they measured and the room left sits at the lane's end; a control answering true
         // is handed that room instead, shared evenly with any other item in the lane that asked.
-        // It is what puts the items AFTER it at the end of the lane - see FlexSpacer. A wrapping
-        // stack answers nothing here: a lane it broke to fit has no room left by definition.
+        // It is what puts the items **after** it at the end of the lane - see FlexSpacer. A
+        // wrapping stack answers nothing here: a lane it broke to fit has no room left by
+        // definition.
         [[nodiscard]] virtual bool fillsLane() const { return false; }
-        // Whether the pointer ADDRESSES this control - MouseOnly or Focusable, the two answers that
-        // mean a press here is a press on something. ActiveContainer is not one of them: a
+        // Whether the pointer **addresses** this control - MouseOnly or Focusable, the two answers
+        // that mean a press here is a press on something. ActiveContainer is not one of them: a
         // container is what a press lands inside rather than what it was aimed at, and None is
         // decoration. Everything a press spends on its way out asks this - the state invalidation
         // that walks up from the pressed control, and the scroll a release asks for - so a click on
@@ -774,11 +775,11 @@ namespace ClaFi
         void show() { setVisible(true); }
         void hide() { setVisible(false); }
         //
-        // WHAT IS HELD IS NOT SCROLLED TO. A control carried by its parent's float offset stands
-        // where the viewport is rather than where it was laid out, and that offset is measured off
-        // the scroll: a scroll made to reveal it hands the whole distance back to the hold, and
-        // what moves is the content behind it. Both requests below answer nothing for a held
-        // control, and nothing for anything inside one - a child is held with its host.
+        // **What is held is not scrolled to.** A control carried by its parent's float offset
+        // stands where the viewport is rather than where it was laid out, and that offset is
+        // measured off the scroll: a scroll made to reveal it hands the whole distance back to the
+        // hold, and what moves is the content behind it. Both requests below answer nothing for a
+        // held control, and nothing for anything inside one - a child is held with its host.
         //
         // Brings this control's scrollHotspot() into view.
         void scrollIntoView();
@@ -816,11 +817,11 @@ namespace ClaFi
         [[nodiscard]] float width() const { return m_dimensions.x; }
         [[nodiscard]] float height() const { return m_dimensions.y; }
         [[nodiscard]] ScaledDimensions dimensions() const { return m_dimensions; }
-        // THE LEAST THIS CONTROL MAY BE MADE. Answered by the measuring pass beside the size
+        // **The least this control may be made.** Answered by the measuring pass beside the size
         // itself, out of the MinSize this control was given and the floor its content composed
         // from its children's. Never larger than the size it came to.
         //
-        // A MEASUREMENT NEVER RAISES IT. A control is as wide as it is because of what it holds
+        // **A measurement never raises it.** A control is as wide as it is because of what it holds
         // today, and cutting it back is what leaves a strip of tabs or a run of columns the room
         // to fit itself into a narrower box. So the floor is a MinSize somebody set, here or
         // below: a control that must not lose what it shows states one and is held up by it, and
@@ -839,15 +840,15 @@ namespace ClaFi
         // answers overlayChildOffset with something - a grid whose header stays at the top of the
         // viewport does.
         //
-        // Asked of the PARENT, and of nothing else. Where a control is drawn is a question about
-        // the space its topLeft is measured in, which is its parent's content space and no one
-        // else's. Which container holds the overlay entry naming it is a separate question -
+        // Asked of the **parent**, and of nothing else. Where a control is drawn is a question
+        // about the space its topLeft is measured in, which is its parent's content space and no
+        // one else's. Which container holds the overlay entry naming it is a separate question -
         // that one says when the control is painted and what clips it, and its answer may be an
         // ancestor several levels up.
         //
-        // Everything that says where the control IS carries it: form space, through
+        // Everything that says where the control **is** carries it: form space, through
         // FormBase::boundsOriginOfControl; the bounds the paint traversal builds; and the hit
-        // test. Everything that says where the control BELONGS does not: topLeft() and
+        // test. Everything that says where the control **belongs** does not: topLeft() and
         // boundsInParent(), what the layout writes and what the content extent is read off, and
         // the leading edges firstChildInViewport and isViewportEnd compare. Those last two are
         // the reason the offset is not simply written into topLeft: they range over children
@@ -869,7 +870,7 @@ namespace ClaFi
         // The point this control's own topLeft is measured from, in form space: the parent's
         // content origin, or the form origin when there is no parent.
         [[nodiscard]] FloatPoint parentContentOrigin() const;
-        // WHICH PART OF THIS CONTROL A MENU IS ABOUT, in form coordinates. A menu raised by the
+        // **Which part of this control a menu is about**, in form coordinates. A menu raised by the
         // keyboard has no pointer to drop at, and the whole control is the wrong answer for
         // anything that has a place inside itself: a text box's menu belongs at the caret, which
         // is where every command in it acts. The default is the whole control, which is what a
@@ -954,9 +955,9 @@ namespace ClaFi
         [[nodiscard]] T tag() const { return m_tag.get<N, Total, T>(); }
 
         void setTag(const Tag value) { m_tag = value; }
-        // PUTS A RANGE OF THIS CONTROL'S TEXT ON THE CLIPBOARD, as plain text. What a control has
-        // in hand here is plain text, and the framework's rich format is declared above this layer,
-        // so a control wanting to put one there builds the package itself - see TextBox.
+        // **Puts a range of this control's text on the clipboard**, as plain text. What a control
+        // has in hand here is plain text, and the framework's rich format is declared above this
+        // layer, so a control wanting to put one there builds the package itself - see TextBox.
         //
         // The stamp is the input event that asked for the copy. A display server that authorises
         // the request refuses one naming no event.
@@ -1028,15 +1029,16 @@ namespace ClaFi
         // child, so a scroll that moves the viewport needs to tell nobody: the offset is a
         // function of where the viewport is now. See Control::floatOffset for what reads it.
         [[nodiscard]] virtual FloatPoint overlayChildOffset(const Control&) const { return {}; }
-        // THE CHILD THIS CONTROL HOLDS AGAINST THE TOP OF THE VIEW for as long as what it heads is
-        // scrolled under it - a grid's header row, an expander's header strip. Null - the default -
-        // is a container that holds nothing, and a holder answers null too while the header or
-        // what it heads is hidden: nothing is under it then. What reads it is restLineInForm on
-        // the containers below, which is what stacks one header on another, and heldHeaderStrip.
+        // **The child this control holds against the top of the view** for as long as what it heads
+        // is scrolled under it - a grid's header row, an expander's header strip. Null - the
+        // default - is a container that holds nothing, and a holder answers null too while the
+        // header or what it heads is hidden: nothing is under it then. What reads it is
+        // restLineInForm on the containers below, which is what stacks one header on another, and
+        // heldHeaderStrip.
         [[nodiscard]] virtual const Control* heldHeader() const { return nullptr; }
-        // THE LINE A HEADER HELD OVER THIS CONTROL'S CONTENT COMES TO REST ON, in form space: where
-        // the first item of the scrolled content sits while nothing has been scrolled - the slot of
-        // the box scrolling this control plus the inset its body lays that content in, see
+        // **The line a header held over this control's content comes to rest on**, in form space:
+        // where the first item of the scrolled content sits while nothing has been scrolled - the
+        // slot of the box scrolling this control plus the inset its body lays that content in, see
         // scrollContentInset - so a header holds the place it had rather than moving to a line of
         // its own; the top of the window this control is seen through, where that is lower; or,
         // where an ancestor already holds a header there, the bottom edge of that header as drawn.
@@ -1130,22 +1132,23 @@ namespace ClaFi
         // event.control is about to drop a popup from its click, and stopping the event refuses it.
         virtual void nestedControlDroppingPopup(DropPopupEvent&);
         // What the pointer is on has changed, and it is this control or something inside it. Told
-        // to EVERY ancestor of the new one, which is what tells this apart from childHoverEnter:
-        // that pair rides the walk which invalidates state, and that walk stops at the common
-        // parent of the control being left and the one being entered. For a pointer crossing from
-        // one item to another the common parent is the panel holding them both, so a container
-        // standing above that panel - one holding its items in groups - hears nothing at all.
+        // to **every** ancestor of the new one, which is what tells this apart from
+        // childHoverEnter: that pair rides the walk which invalidates state, and that walk stops at
+        // the common parent of the control being left and the one being entered. For a pointer
+        // crossing from one item to another the common parent is the panel holding them both, so a
+        // container standing above that panel - one holding its items in groups - hears nothing at
+        // all.
         //
         // hovered is what Input now reports, and is never null: the hover being given up
         // altogether is not a control being hovered, and hoverLeave is what says it.
         virtual void nestedControlHovered(Control* hovered);
         // The focus has arrived at this control or left it. Both sides of every change are told,
-        // AFTER the move, so isFocused() answers for the control being told whichever side it is
-        // on - which is also why nothing is passed in.
+        // **after** the move, so isFocused() answers for the control being told whichever side it
+        // is on - which is also why nothing is passed in.
         //
         // A control that only looks different while focused needs none of this: the state is
         // invalidated alongside the call and the focused factor animates itself. This is for a
-        // control that DOES something - draws a caret, runs a timer - and would otherwise go on
+        // control that **does** something - draws a caret, runs a timer - and would otherwise go on
         // doing it, since adjustFocus reports only the arrival.
         virtual void focusChanged() {}
         virtual void sizeChanged();
@@ -1329,20 +1332,20 @@ namespace ClaFi
         // current item or a stack's is left naming freed memory.
         void releaseChildren();
 
-        // HOW THE CONTROL READS, which is not always where the framework's pointers are: a
+        // **How the control reads**, which is not always where the framework's pointers are: a
         // control with a popup of its own open is still the one being acted on, and this says so
         // while Input::focusedControl names something inside that popup. state() is the other
-        // half - what the control IS - and the two meet here.
+        // half - what the control **is** - and the two meet here.
         //
         // Reachable by a derived class because a control drawing something the focus decides
         // has to ask the same question the ring and the fill are drawn from, rather than
         // assembling its own answer beside it.
         [[nodiscard]] VisualState visualState() const;
 
-        // EVERY CONTROL FROM `from` UP TO BUT NOT INCLUDING `upTo`, told its visual state may
-        // have changed. This is for a state that belongs to a PATH rather than to one control:
-        // the pointer entering a control enters everything that control stands in, and a grid's
-        // selected cell is in effect in its own row and in every row that row stands in.
+        // **Every control from** `from` **up to but not including** `upTo`, told its visual state
+        // may have changed. This is for a state that belongs to a **path** rather than to one
+        // control: the pointer entering a control enters everything that control stands in, and a
+        // grid's selected cell is in effect in its own row and in every row that row stands in.
         //
         // Reachable by a derived class for the second of those. A control that is on the path
         // without carrying the state answers the same before and after, so it costs the walk

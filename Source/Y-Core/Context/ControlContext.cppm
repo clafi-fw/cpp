@@ -17,7 +17,7 @@ namespace ClaFi
         FormContext& formContext() { return m_formContext; }
         const FormContext& formContext() const { return m_formContext; }
         const BakedColors& bakedColors() const { return *m_bakedColors; }
-        // THE THEME THIS CONTEXT RESOLVES IN, which a control showing a theme of its own states
+        // **The theme this context resolves in**, which a control showing a theme of its own states
         // after the context was built - doAdjustPaint runs after the event's members - so the
         // control that states it resolves its own inks in it and not only its children. See
         // PaintEvent::resetTheme

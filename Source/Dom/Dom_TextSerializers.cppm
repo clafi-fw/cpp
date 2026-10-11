@@ -6,8 +6,8 @@ import ClaFi.Core.DomEngine;
 import ClaFi.Core.System.Serialization;
 import ClaFi.StdLib;
 
-// A TEXT IN A DOCUMENT IS A SECTION OF TWO CHILDREN: the plain text, and the markers standing in
-// it. Import this module wherever a blueprint states a Text, and Dt::Value{ L"Caption", Text{} }
+// **A text in a document is a section of two children**: the plain text, and the markers standing
+// in it. Import this module wherever a blueprint states a Text, and Dt::Value{ L"Caption", Text{} }
 // reads and writes as
 //
 //     Caption=[

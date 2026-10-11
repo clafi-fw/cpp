@@ -1,13 +1,13 @@
 module;
 #include "Wayland.Headers.h"
-// FOR THE MACROS, which no module can export: SIGPIPE, SIG_IGN and SIG_ERR from the first,
+// **For the macros**, which no module can export: SIGPIPE, SIG_IGN and SIG_ERR from the first,
 // F_SETFD and FD_CLOEXEC from the second.
 #include <csignal>
 #include <fcntl.h>
 
-// AN IMPLEMENTATION UNIT OF THE MODULE THAT DECLARED Clipboard, not of the Wayland layer. A class
-// member belongs to the module its class was declared in and must be defined there, so the bodies
-// of Clipboard:: live here whatever platform supplies them.
+// **An implementation unit of the module that declared** Clipboard, not of the Wayland layer. A
+// class member belongs to the module its class was declared in and must be defined there, so the
+// bodies of Clipboard:: live here whatever platform supplies them.
 module ClaFi.Core.Transfer.Clipboard;
 
 import ClaFi.Platform.Wayland.Display;
@@ -38,14 +38,14 @@ namespace ClaFi::Transfer
         constexpr std::string_view k_shortTextMime = "text/plain";
         // What a client coming through XWayland offers for the same thing.
         constexpr std::string_view k_legacyTextMime = "UTF8_STRING";
-        // A PICTURE'S TWO SPELLINGS: a BMP file, a DIB behind a file header, which is what this
+        // **A picture's two spellings**: a BMP file, a DIB behind a file header, which is what this
         // application places, and a PNG, which is what most sources place.
         constexpr std::string_view k_bmpMime = "image/bmp";
         constexpr std::string_view k_pngMime = "image/png";
 
-        // WHICH PLATFORM FORMATS SERVE A FRAMEWORK FORMAT, best first. The three text names carry
-        // the same UTF-8; a picture is the PNG where the source placed one - lossless, its alpha
-        // intact - else the BMP.
+        // **Which platform formats serve a framework format**, best first. The three text names
+        // carry the same UTF-8; a picture is the PNG where the source placed one - lossless, its
+        // alpha intact - else the BMP.
         constexpr std::string_view k_textSpellings[] = {
             k_textMime,
             k_shortTextMime,
@@ -62,7 +62,7 @@ namespace ClaFi::Transfer
         constexpr int k_pipeTimeoutMs = 1000;
     }
 
-    // THE CLIPBOARD AS THE COMPOSITOR HAS IT: the source standing behind the selection this
+    // **The clipboard as the compositor has it**: the source standing behind the selection this
     // process took, and the offer object the held reader was built for. See Transfer
     struct NativeClipboard
     {
@@ -75,21 +75,21 @@ namespace ClaFi::Transfer
 
         // The held package's content for a format, as the bytes that format travels as.
         [[nodiscard]] std::string bytesFor(const Format&);
-        // SOMEBODY IS PASTING. The fd is this process's to write and to close, and the content
+        // **Somebody is pasting.** The fd is this process's to write and to close, and the content
         // is produced now rather than at the copy - which is the whole shape of a selection here.
         void send(const char* mimeName, std::int32_t fd);
-        // ANOTHER CLIENT TOOK THE SELECTION, and the package this process was standing behind
+        // **Another client took the selection**, and the package this process was standing behind
         // goes with it.
         //
-        // TESTED AGAINST THE STANDING SOURCE rather than assumed to be it. A cancel for a source
-        // a later copy already replaced would otherwise drop the package behind the current one,
-        // and what that looks like is a copy that works and then stops a moment later with
+        // **Tested against the standing source** rather than assumed to be it. A cancel for a
+        // source a later copy already replaced would otherwise drop the package behind the current
+        // one, and what that looks like is a copy that works and then stops a moment later with
         // nothing to see. A source cancelled is a source finished, so one that is not the
         // standing one is destroyed here and nowhere else.
         void cancelled(wl_data_source*);
         void destroyDataSource();
-        // THE DISPLAY BEHIND THE NAME the clipboard holds the platform by - the Wayland one, the
-        // only platform of this build, which derives from IDisplayAccess. See Transfer
+        // **The display behind the name** the clipboard holds the platform by - the Wayland one,
+        // the only platform of this build, which derives from IDisplayAccess. See Transfer
         [[nodiscard]] DisplayManager& display() const;
 
         Clipboard& owner;
@@ -145,8 +145,8 @@ namespace ClaFi::Transfer
 
                     return {};
                 case Format::Kind::Custom:
-                    // A DECLARED FORMAT IS SPELLED FROM ITS NAME. Anything else already carries a
-                    // spelling, that being the only name it has.
+                    // **A declared format is spelled from its name.** Anything else already carries
+                    // a spelling, that being the only name it has.
                     if (ByteSpellingTable::instance().find(format))
                         return { std::string{ k_namedMimePrefix } + loweredUtf8(format.name()) };
 
@@ -157,7 +157,7 @@ namespace ClaFi::Transfer
         }
 
         // The format a MIME name names: every platform format under its platform name, never a
-        // framework format - see Offer::platformFormat. ASKED OF WHAT THIS APPLICATION DECLARED
+        // framework format - see Offer::platformFormat. **Asked of what this application declared**
         // rather than guessed from the name: the prefix a declared format is spelled with is not
         // this framework's alone, so a name that merely looks like one of ours is not one.
         [[nodiscard]] Format formatForMimeName(const std::string& mimeName)
@@ -176,7 +176,7 @@ namespace ClaFi::Transfer
             return Format::custom(fromUtf8(mimeName));
         }
 
-        // A READER THAT CLOSES EARLY MUST NOT KILL THE PROCESS. Writing into a pipe nobody is
+        // **A reader that closes early must not kill the process.** Writing into a pipe nobody is
         // reading raises SIGPIPE, whose default action is termination, and a paste the user
         // abandoned does exactly that. The disposition belongs to the process, so it is set once.
         void ignoreBrokenPipe()
@@ -191,8 +191,9 @@ namespace ClaFi::Transfer
             if (::pipe(ends) != 0)
                 return false;
 
-            // NOT INHERITED BY A CHILD PROCESS. A process started while a transfer is open would
-            // hold the write end, and the reader would wait for an end of data that never comes.
+            // **Not inherited by a child process.** A process started while a transfer is open
+            // would hold the write end, and the reader would wait for an end of data that never
+            // comes.
             ::fcntl(ends[0], F_SETFD, FD_CLOEXEC);
             ::fcntl(ends[1], F_SETFD, FD_CLOEXEC);
             readEnd = ends[0];
@@ -246,7 +247,7 @@ namespace ClaFi::Transfer
             StandardFormat::Picture
         };
 
-        // THE PACKAGE'S OWN NAME FOR WHAT A PASTE ASKS BY THE PLATFORM'S. A package holds a
+        // **The package's own name for what a paste asks by the platform's.** A package holds a
         // framework format under the framework's name and this platform offers it under its
         // own MIME names, so a name a framework format is offered as is asked of the package as
         // that format; anything else is asked for by its platform name.
@@ -279,7 +280,7 @@ namespace ClaFi::Transfer
             static_cast<NativeClipboard*>(data)->cancelled(source);
         }
 
-        // READS THE CLIPBOARD THROUGH THE COMPOSITOR. Built for one wl_data_offer and replaced
+        // **Reads the clipboard through the compositor.** Built for one wl_data_offer and replaced
         // when the selection changes.
         class CompositorOffer : public Offer
         {
@@ -296,7 +297,7 @@ namespace ClaFi::Transfer
         private:
             // Owned by the display manager, which destroys it when the selection changes. Tested
             // against the current selection before every read, so a handle left behind by a
-            // change this object did not see is never touched. WHICH CHANNEL IT CAME ON travels
+            // change this object did not see is never touched. **Which channel it came on** travels
             // with it, the two spelling the read request differently.
             DisplayManager& m_display;
             SelectionOffer m_offer{};
@@ -410,7 +411,7 @@ namespace ClaFi::Transfer
                 return {};
 
             display.receiveSelection(m_offer, mimeName->c_str(), writeEnd);
-            // THE REQUEST REACHES THE COMPOSITOR BEFORE THE READ. Requests are buffered
+            // **The request reaches the compositor before the read.** Requests are buffered
             // client-side, and a read waiting on a pipe whose other end was never asked for waits
             // out the timeout and comes back empty.
             ::wl_display_flush(display.display());
@@ -419,9 +420,9 @@ namespace ClaFi::Transfer
             const std::string bytes = readAll(readEnd);
             ::close(readEnd);
 
-            // NO ENVELOPE. A compositor hands over a stream that ends when the writer closes it,
-            // so the payload's length is the read's own answer and nothing is written in front of
-            // it - see the Windows twin, which cannot do that.
+            // **No envelope.** A compositor hands over a stream that ends when the writer closes
+            // it, so the payload's length is the read's own answer and nothing is written in front
+            // of it - see the Windows twin, which cannot do that.
             return bytes;
         }
 
@@ -437,8 +438,8 @@ namespace ClaFi::Transfer
         }
     }
 
-    // UTF-8 AND LF, which is what text/plain;charset=utf-8 carries. Nothing is written around it:
-    // a compositor's stream ends where the payload does.
+    // **UTF-8 and LF**, which is what text/plain;charset=utf-8 carries. Nothing is written around
+    // it: a compositor's stream ends where the payload does.
     std::string nativeBytes(const Format& format, const Payload& content)
     {
         if (format.kind() == Format::Kind::Standard)
@@ -482,9 +483,9 @@ namespace ClaFi::Transfer
         DisplayManager& display = m_native->display();
         wl_data_device* device = display.dataDevice();
 
-        // NOTHING IS HELD THAT CANNOT BE OFFERED. A compositor refuses a selection request naming
-        // no input event, and a package kept anyway would answer pastes inside this process with
-        // content the rest of the desktop cannot see.
+        // **Nothing is held that cannot be offered.** A compositor refuses a selection request
+        // naming no input event, and a package kept anyway would answer pastes inside this process
+        // with content the rest of the desktop cannot see.
         if (!device || stamp.empty())
         {
             release();
@@ -504,7 +505,7 @@ namespace ClaFi::Transfer
             = ::wl_data_device_manager_create_data_source(display.dataDeviceManager());
         ::wl_data_source_add_listener(m_native->dataSource, &k_sourceListener, m_native.get());
 
-        // WHAT THE PACKAGE CAN ANSWER, not only what it holds. Without the reachable formats a
+        // **What the package can answer**, not only what it holds. Without the reachable formats a
         // conversion would serve ClaFi talking to itself, no other application knowing to ask.
         std::vector<std::string> offered{};
         for (const Format& format : held->advertisedFormats())
@@ -521,7 +522,7 @@ namespace ClaFi::Transfer
 
         ::wl_data_device_set_selection(device, m_native->dataSource, stamp.serial);
 
-        // THE NEW SELECTION IS IN PLACE FIRST. Destroying the source behind a selection clears
+        // **The new selection is in place first.** Destroying the source behind a selection clears
         // it, and doing that before this one is set would leave the clipboard empty in between.
         if (previous)
             ::wl_data_source_destroy(previous);
@@ -529,7 +530,7 @@ namespace ClaFi::Transfer
 
     Offer* Clipboard::offer()
     {
-        // THIS PROCESS'S OWN SELECTION IS READ WITHOUT THE COMPOSITOR. The write that answers a
+        // **This process's own selection is read without the compositor.** The write that answers a
         // receive happens on the event loop, so a read going out and back would be waiting on
         // the loop it is blocking.
         if (Offer* own = ownSelectionOffer())

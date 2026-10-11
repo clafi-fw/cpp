@@ -34,7 +34,7 @@ namespace ClaFi::Diagnostic
     protected:
         void visibilityChanged() override;
     private:
-        // The footer holds its OWN layout - see WithTextLayout. Its count moves with every
+        // The footer holds its **own** layout - see WithTextLayout. Its count moves with every
         // frame, and a layout taken from the cache for each value would evict what the rest of
         // the window draws from.
         using Readout = WithTextLayout<Label>;
@@ -140,7 +140,7 @@ namespace ClaFi::Diagnostic
         // it does not show, and its plot is small enough to follow every one.
         static constexpr std::chrono::milliseconds k_readoutInterval{ 100 };
         static constexpr std::chrono::milliseconds k_chartInterval{ 0 };
-        // THE COLUMNS ARE FIXED. A column fitted to its digits would ask for a new width
+        // **The columns are fixed.** A column fitted to its digits would ask for a new width
         // whenever a value gained one, and an align pass is paid by the whole window. A
         // five-digit rate and its unit in the mono face, plus the cell padding, is what the
         // reading width holds; the Stats column holds the same at size 18 over the metric's
@@ -163,7 +163,7 @@ namespace ClaFi::Diagnostic
         } };
     private:
         FpsBenchmark m_benchmark{};
-        // The window the readings are of, FOR IDENTITY ONLY - see the class note.
+        // The window the readings are of, **for identity only** - see the class note.
         const FormBase* m_target{ nullptr };
         // Whether the last tick found a window to drive.
         bool m_driving{ false };

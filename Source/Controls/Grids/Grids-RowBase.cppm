@@ -18,7 +18,7 @@ namespace ClaFi::Controls::Grids
 {
     export class RowContainer;
 
-    // Per-column content state for ONE row, laid out in pre-order.
+    // Per-column content state for **one** row, laid out in pre-order.
     // Built once per walk with exactly one hasContent() call per column, so a walk never
     // re-queries the row. `subtreeEnd` is the index just past this column's subtree, which
     // lets the walk step to the next sibling - or skip a merged subtree entirely - without
@@ -128,12 +128,12 @@ namespace ClaFi::Controls::Grids
         // still open while this runs, so a reason reaches the user and the edit survives.
         virtual std::wstring acceptCellText(const Column&, const Text&);
         virtual void paintCell(PaintEvent&, const FloatRect& cellRect, const Column&);
-        // NO ROW PAINTS ITS OWN RECT. A row's surface reaches the screen through its cells, which
-        // paintOneCell fills from it unconditionally - so a rect fill on top of that is the same
-        // colour drawn twice, and drawn worse: the base fills controlBounds() with the ROW's
-        // corner radius and rounded corners, where a cell frame snaps to the grid's edges,
-        // subtracts the border bands its lines stand in, and rounds only the corners a first or
-        // last cell actually turns.
+        // **No row paints its own rect.** A row's surface reaches the screen through its cells,
+        // which paintOneCell fills from it unconditionally - so a rect fill on top of that is the
+        // same colour drawn twice, and drawn worse: the base fills controlBounds() with the
+        // **row's** corner radius and rounded corners, where a cell frame snaps to the grid's
+        // edges, subtracts the border bands its lines stand in, and rounds only the corners a first
+        // or last cell actually turns.
         //
         // A row with no cells - a group, an expander - therefore paints nothing at all, and its
         // surface is a colour the rows inside it inherit and paint for it. See

@@ -9,7 +9,7 @@ colour has moved.
 
 ## ThemeColors
 
-THE BUILT-IN THEME IS WRITTEN, NOT EDITED. `ThemeColors()` states it, and its definition stands
+**The built-in theme is written, not edited.** `ThemeColors()` states it, and its definition stands
 alone in `AppTheme_BuiltInColors.cpp`, which the Themes app's Write to source rewrites whole from
 the theme it has open. The declarations say what each member is and carry no values, so a theme
 change rebuilds that one file rather than everything that imports the module.

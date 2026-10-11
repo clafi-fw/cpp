@@ -102,7 +102,7 @@ namespace ClaFi::PlatformImplementation::Linux
             settle();
     }
 
-    // A PRIVATE CONNECTION, so that its lifetime is the request's. The answer is watched for
+    // **A private connection**, so that its lifetime is the request's. The answer is watched for
     // before OpenFile is sent, under the path the token names, so it cannot arrive unwatched.
     // Every way this fails settles the request with no answer.
     void FolderRequest::ask(const std::string_view parentWindow, const std::string_view title,
@@ -182,8 +182,8 @@ namespace ClaFi::PlatformImplementation::Linux
         dbus_bus_add_match(m_connection, rule.c_str(), nullptr);
     }
 
-    // ONE MESSAGE OFF THE BUS: OpenFile's reply, its refusal, or the answer. A portal older than
-    // the token answers OpenFile with a request path of its own, and that path is watched
+    // **One message off the bus**: OpenFile's reply, its refusal, or the answer. A portal older
+    // than the token answers OpenFile with a request path of its own, and that path is watched
     // instead. Anything else - the bus's own greeting among them - is passed over.
     void FolderRequest::take(DBusMessage* message)
     {
@@ -215,7 +215,7 @@ namespace ClaFi::PlatformImplementation::Linux
         }
     }
 
-    // THE ANSWER: a response code, then the results. Any code but success is the dialog
+    // **The answer**: a response code, then the results. Any code but success is the dialog
     // cancelled or failed, and settles the request with nothing.
     void FolderRequest::takeResponse(DBusMessage* message)
     {

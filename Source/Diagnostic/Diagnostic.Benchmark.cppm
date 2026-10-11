@@ -80,9 +80,9 @@ namespace ClaFi::Diagnostic
     {
         explicit FpsBucket(TimePoint start);
 
-        /// @brief What one whole frame in this slice cost to DRAW. Zero while it holds none.
+        /// @brief What one whole frame in this slice cost to **draw**. Zero while it holds none.
         [[nodiscard]] float avgDurationInMilliSeconds() const;
-        /// @brief How long one frame in this slice took END TO END - the drawing and everything
+        /// @brief How long one frame in this slice took **end to end** - the drawing and everything
         /// the frame then waited on.
         [[nodiscard]] float avgFrameIntervalMs() const;
 
@@ -120,7 +120,7 @@ namespace ClaFi::Diagnostic
         /// time taken at one size says nothing about another.
         void setDimensions(ScaledDimensions value);
         [[nodiscard]] ScaledDimensions dimensions() const { return m_dimensions; }
-        /// @brief What the measured work cost. THIS IS NOT A FRAME RATE - see frameInterval.
+        /// @brief What the measured work cost. **This is not a frame rate** - see frameInterval.
         [[nodiscard]] const BenchmarkValue& paintTime() const { return m_paintTime; }
         /// @brief From one frame's start to the next one's, which is the rate anything is
         /// actually seen at.
@@ -317,7 +317,7 @@ namespace ClaFi::Diagnostic
         m_prevRunStart = startedAt;
         m_hasPrevRun = true;
 
-        // THE FIRST FRAME STATES NOTHING. An interval is between two frames, and taking the
+        // **The first frame states nothing.** An interval is between two frames, and taking the
         // drawing time for it would report a rate this has never run at.
         if (!hadPrevRun)
             return;
@@ -325,7 +325,7 @@ namespace ClaFi::Diagnostic
         const float durationMs =
             static_cast<float>(duration_cast<microseconds>(finishedAt - startedAt).count())
             / 1000.0f;
-        // MEASURED START TO START, not end to start. A frame is the whole turn of the loop, and
+        // **Measured start to start**, not end to start. A frame is the whole turn of the loop, and
         // an interval taken from where the drawing finished would leave the drawing out of it.
         const float intervalMs =
             static_cast<float>(duration_cast<microseconds>(startedAt - prevRunStart).count())

@@ -252,7 +252,7 @@ namespace ClaFi::Controls
         :
         Control{
             params,
-            // A PICTURE IS THE SIZE IT IS AT ITS ZOOM, so nothing about it is broken to the box
+            // **A picture is the size it is at its zoom**, so nothing about it is broken to the box
             // it is drawn in, and the bars carry the view across what does not fit. It is also
             // what tells the align pass that a scrolled body keeps the size it measured. It comes
             // before the caller's own arguments, so a stated one still wins - Props takes the

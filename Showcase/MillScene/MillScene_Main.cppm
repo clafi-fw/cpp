@@ -41,16 +41,16 @@ import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
-// NOTHING HERE NAMES A PLATFORM OR A BACKEND. What the project file keeps is the entry point its
-// operating system asks for and the two types the application is built out of; everything else -
-// the form, its size, its title and what is built into it - stands here and would run over any
-// platform the framework has.
+// **Nothing here names a platform or a backend.** What the project file keeps is the entry point
+// its operating system asks for and the two types the application is built out of; everything
+// else - the form, its size, its title and what is built into it - stands here and would run over
+// any platform the framework has.
 namespace MillScene_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // THE LANES THE DROPDOWN OPENED AS. Twenty-four themes in lanes of eight are the three
+    // **The lanes the dropdown opened as.** Twenty-four themes in lanes of eight are the three
     // columns the picker had in the title bar, and the page keeps them.
     constexpr std::size_t k_themeLaneSize{ 8 };
     constexpr float k_themeIconSize{ 24.0f };
@@ -67,7 +67,7 @@ namespace MillScene_App
     constexpr std::wstring_view k_drawnOnCpuOnly{
         L"The scene is rendered on a single CPU thread with no GPU acceleration." };
 
-    // WHAT THE PICKED SCENE THEME IS KEPT UNDER, and it is kept by name: an index moves the
+    // **What the picked scene theme is kept under**, and it is kept by name: an index moves the
     // moment the list gains a theme, and a name is what a config file read by hand should show.
     export constexpr std::wstring_view k_sceneThemeNodeName{ L"SceneTheme" };
 
@@ -152,8 +152,8 @@ namespace MillScene_App
             ) };
         using MetricsReadout = WithTextLayout<Label>;
         MetricsReadout& m_metricsReadout{ m_infoBar.add<MetricsReadout>(
-            // THE WIDTH IS STATED, and it is the chart's. The reading is rewritten every frame, so
-            // a readout sized by its own words asks the bar for a new width every time a number
+            // **The width is stated**, and it is the chart's. The reading is rewritten every frame,
+            // so a readout sized by its own words asks the bar for a new width every time a number
             // gains a digit - and an align pass per frame is paid by the whole form.
             MinSize{Diagnostic::k_fpsChartWidth, 0.0f },
             MaxSize{Diagnostic::k_fpsChartWidth, k_maxFloat },
@@ -181,8 +181,8 @@ namespace MillScene_App
         :
         Panel{ params, std::forward<Args>(args)... }
     {
-        // BEFORE ANYTHING READS THE SCENE. The info bar takes its colours from the theme, so the
-        // stored one has to be the scene's by now.
+        // **Before anything reads the scene.** The info bar takes its colours from the theme, so
+        // the stored one has to be the scene's by now.
         restoreSceneTheme();
 
 
@@ -197,7 +197,7 @@ namespace MillScene_App
     // What the application is called, wherever its name is shown and wherever its config is kept.
     export [[nodiscard]] AppParams millSceneAppParams();
 
-    // WHAT THIS APPLICATION KEEPS OF ITS OWN, handed to the application beside the framework's
+    // **What this application keeps of its own**, handed to the application beside the framework's
     // schema and merged with it. The picked scene theme is the whole of it so far; empty is no
     // pick yet, and the scene then stands on the theme it starts with.
     export [[nodiscard]] Dom::Dt::Section createMillSceneConfigSchema();
@@ -271,7 +271,7 @@ void MillSceneForm::advanceCycleTime()
 
 }
 
-// THE PICKED THEME'S COLOURS, NOT THE BLEND'S. This runs the moment a theme is picked, when
+// **The picked theme's colours, not the blend's.** This runs the moment a theme is picked, when
 // the blend still wears the one before it - and at startup, when it wears nothing at all.
 void MillSceneForm::applySceneColors() const
 {
@@ -302,12 +302,12 @@ void MillSceneForm::pickSceneTheme(std::size_t index)
 void MillSceneForm::buildScenePage(OptionsPage& page)
 {
     Stack& group = page.addGroup(L"Scene Theme");
-    // THE LANES ARE STATED, NOT WRAPPED. A wrapping stack's MINIMUM is one lane - wrapping is
-    // its promise to fit whatever width it is given - so nothing measuring this page could
+    // **The lanes are stated, not wrapped.** A wrapping stack's **minimum** is one lane - wrapping
+    // is its promise to fit whatever width it is given - so nothing measuring this page could
     // learn that it wants three, and the third lane was laid out past the popup's edge. A row
     // of columns has the width of its columns for a minimum, which is the truth.
     //
-    // THE ROW OWNS THE BUTTONS, not the columns: a container answers canFocusItem only where
+    // **The row owns the buttons**, not the columns: a container answers canFocusItem only where
     // it follows the user (Interactivity::ActiveContainer, see StackBase::followsUser),
     // and the walk from the pointer returns the first control it says yes to - the button,
     // through the column standing between them. That is what Stack::nestedControlHovered
@@ -320,8 +320,8 @@ void MillSceneForm::buildScenePage(OptionsPage& page)
     );
 
     m_themeLanes = &lanes;
-    // WHAT THE POINTER IS ON, WHICH IS NOT WHAT THE USER HAS CHOSEN. A stack previewing what
-    // it is hovered over goes back to its CURRENT ITEM when the pointer leaves it, so the
+    // **What the pointer is on, which is not what the user has chosen.** A stack previewing what
+    // it is hovered over goes back to its **current item** when the pointer leaves it, so the
     // pick is made that item below and the scene finds its own way home - see PreviewEvent.
     lanes.setPreviewMode(PreviewMode::Hover);
     lanes.onPreview([this](PreviewEvent& event) {
@@ -404,7 +404,7 @@ void MillSceneForm::storeSceneTheme()
 void MillSceneForm::traceMetrics()
 {
 #pragma warning(push)
-#pragma warning(disable : 4996) // 'getenv': the CRT's alternative is Windows-only
+#pragma warning(disable : 4996) // 'getenv': the **crt's** alternative is Windows-only
     static const bool s_enabled = std::getenv("CLAFI_FPS_TRACE") != nullptr;
 #pragma warning(pop)
     if (!s_enabled)

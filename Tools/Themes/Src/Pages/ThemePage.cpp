@@ -108,9 +108,9 @@ namespace Themes_App
         restoreView();
     }
 
-    // A BUILT-IN HAS NO FILE OF ITS OWN, so the disk is the wrong side for one: the path it would
-    // name is never written and never read. The compiled-in colours are what it was opened from,
-    // and the manager answers a built-in name with those whatever stands on the disk.
+    // **A built-in has no file of its own**, so the disk is the wrong side for one: the path it
+    // would name is never written and never read. The compiled-in colours are what it was opened
+    // from, and the manager answers a built-in name with those whatever stands on the disk.
     bool ThemePage::readSavedDocument(Dom::DomNodeBase& into) const
     {
         if (!isBuiltIn())
@@ -313,9 +313,9 @@ namespace Themes_App
 
         m_darkModeFloorSlider.setPosition(editColors().darkModeFloor, false);
 
-        // THE ANCHOR FIRST, THEN THE MAP, THEN THE PALETTE. Each step below is what the next one
-        // reads, so the order is the whole of it and anchorChanged() cannot stand in for the pair:
-        // it derives the palette, which is the last step, not the first.
+        // **The anchor first, then the map, then the palette.** Each step below is what the next
+        // one reads, so the order is the whole of it and anchorChanged() cannot stand in for the
+        // pair: it derives the palette, which is the last step, not the first.
         //
         // The anchor decides every colour a harmony is built from - ColorHarmony::anchorChanged
         // fills m_colors out of it - and the search below matches on those colours.
@@ -340,10 +340,10 @@ namespace Themes_App
             }
         }
 
-        // THE PALETTE IS WHAT THE THEME STATES, so nothing derives it here. mapHuesToColors fills
-        // the hues in from the selected map, and at restore that is one of two things: the map the
-        // search above just matched, in which case it writes back the hues it was given, or the
-        // harmony's first map where nothing matched, in which case it writes a palette nobody
+        // **The palette is what the theme states**, so nothing derives it here. mapHuesToColors
+        // fills the hues in from the selected map, and at restore that is one of two things: the
+        // map the search above just matched, in which case it writes back the hues it was given, or
+        // the harmony's first map where nothing matched, in which case it writes a palette nobody
         // chose over the one the file states. Never useful, and half the time a silent edit.
         //
         // What is wanted from it here is the invalidation at its end.
@@ -362,7 +362,7 @@ namespace Themes_App
 
     void ThemePage::edited(const EditPhase phase, const Text& what, const RuleSelection& at)
     {
-        // A RESTORE IS NOT AN EDIT. showEditTheme brings the controls up by calling the same
+        // **A restore is not an edit.** showEditTheme brings the controls up by calling the same
         // handlers a user edit calls, and mapHuesToColors along the way fills the palette hues in
         // from the harmony rather than reading them. Stored, that normalisation would stand in the
         // view state as a change nobody made, and the page would read as edited the moment it was

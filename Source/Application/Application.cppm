@@ -105,7 +105,7 @@ namespace ClaFi
     template<typename T>
         concept IsApplication = std::derived_from<T, ApplicationBase>;
 
-    // THE PLATFORM STANDS FIRST AND FALLS LAST. Held in a base ahead of ApplicationBase rather
+    // **The platform stands first and falls last.** Held in a base ahead of ApplicationBase rather
     // than as a member behind it, so the context, the themes manager and every window are built
     // on a standing platform and go down on one. See Application
     template <IsPlatform PlatformType>
@@ -177,7 +177,7 @@ namespace ClaFi
 
     void ApplicationBase::initialize()
     {
-        // FIRST, before any window exists: the identity a toplevel is made under.
+        // **First**, before any window exists: the identity a toplevel is made under.
         Platform::setApplicationId(publisher(), name().plainText());
         // The standard commands, in the application's shortcut scope. Every application has
         // them from here; one that wants a key for itself clears that action's shortcut.
@@ -193,7 +193,7 @@ namespace ClaFi
         initializeDiagnosticLog(m_context);
         for (const std::wstring& line : m_context.platform().diagnosticLines())
             diagnosticLog(line);
-        // BEFORE THE CONFIG IS READ, so that the theme the file names is carried in by the load
+        // **Before the config is read**, so that the theme the file names is carried in by the load
         // itself rather than applied a second time after it. No window exists yet, so what the
         // node states is what the first one opens in - see AppContext::takeTheme.
         connectAppThemes(m_context, m_themesManager);
@@ -210,9 +210,9 @@ namespace ClaFi
         restoreDiagnosticLogState();
     }
 
-    // WHAT THE USER ALLOWED TO BE KEPT IS KEPT, whether or not the application saves for itself.
-    // Keep settings on this PC is the framework's offer, so honouring it is the framework's work;
-    // an application that wants its config written earlier still saves it itself. Nothing is
+    // **What the user allowed to be kept is kept**, whether or not the application saves for
+    // itself. Keep settings on this PC is the framework's offer, so honouring it is the framework's
+    // work; an application that wants its config written earlier still saves it itself. Nothing is
     // written where no folder was allowed - that is what saveConfig(false) answers.
     //
     // Ahead of the diagnostic window going, because saveConfig reads the state that window is
@@ -256,7 +256,7 @@ namespace ClaFi
         }
         m_configFilePath = m_configFileName + L".cfg";
 
-        // WHAT THE PUBLISHER'S APPLICATIONS SHARE STANDS UNDER Share, apart from their own
+        // **What the publisher's applications share stands under** Share, apart from their own
         // folders, so an application named after one of them takes no directory it shares.
         constexpr std::wstring_view k_shareFolderName = L"Share";
         constexpr std::wstring_view k_themesFolderName = L"Themes";
@@ -273,9 +273,9 @@ namespace ClaFi
     template <ClassOfFormControl ControlClass, typename ... Args>
     std::unique_ptr<Form<ControlClass>> ApplicationBase::createDialog(Args&&... args)
     {
-        // WHAT A DIALOG'S ROOT IS FOR, offered rather than imposed. It leads the pack, and Props
-        // takes the last match, so a root naming its own Interactivity overrides this while one
-        // that says nothing gets what a dialog root wants: Home, End and the page keys, which
+        // **What a dialog's root is for**, offered rather than imposed. It leads the pack, and
+        // Props takes the last match, so a root naming its own Interactivity overrides this while
+        // one that says nothing gets what a dialog root wants: Home, End and the page keys, which
         // address the nearest ActiveContainer in scope, and a current item the focus returns to
         // when the window is shown again.
         //

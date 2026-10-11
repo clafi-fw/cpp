@@ -8,7 +8,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // ONE CHANNEL OF A RULE, EVERY OPERATION CARRIED AT A WEIGHT. See AppTheme
+    // **One channel of a rule, every operation carried at a weight.** See AppTheme
     export struct BakedValue
     {
     public:
@@ -25,7 +25,7 @@ namespace ClaFi
         float luminosityFloor{};
     };
 
-    // THE HUE A RULE PULLS TOWARD AND HOW FAR, a pull of nothing being no hue of its own.
+    // **The hue a rule pulls toward and how far**, a pull of nothing being no hue of its own.
     export struct BakedHue
     {
     public:
@@ -37,7 +37,7 @@ namespace ClaFi
         float setPull{};
     };
 
-    // AN EFFECT AS THE PAINT PATH READS IT - three channels, each operation held at a weight.
+    // **An effect as the paint path reads it** - three channels, each operation held at a weight.
     export struct BakedEffect
     {
     public:
@@ -52,7 +52,7 @@ namespace ClaFi
         BakedValue elevation{};
     };
 
-    // A RULE AS THE PAINT PATH READS IT.
+    // **A rule as the paint path reads it.**
     export struct BakedColorRule
     {
     public:
@@ -69,7 +69,7 @@ namespace ClaFi
 
     export using BakedColorRules = std::vector<BakedColorRule>;
 
-    // THE RULES AS THE PAINT PATH READS THEM - each element's own, the window's and the shared.
+    // **The rules as the paint path reads them** - each element's own, the window's and the shared.
     export struct BakedRules
     {
     public:
@@ -88,7 +88,7 @@ namespace ClaFi
     export using BakedEffects = std::array<BakedEffect, k_uiElementCount>;
     export using PigmentHues = std::array<float, k_pigmentsCount>;
 
-    // A THEME AS THE PAINT PATH READS IT: every element's rules, and the effects an ink names.
+    // **A theme as the paint path reads it**: every element's rules, and the effects an ink names.
     export struct BakedColors
     {
     public:
@@ -119,7 +119,7 @@ namespace ClaFi
         BakedRules rules{};
     };
 
-    // WHETHER TWO SETS STATE THE SAME COLOURS, lightness aside - which is the whole of what the
+    // **Whether two sets state the same colours**, lightness aside - which is the whole of what the
     // colour factor has to cross. One theme worn in the two modes is one design read at the two
     // lightnesses, so a switch of mode moves nothing at all on this axis.
     export [[nodiscard]] bool sameColors(const BakedColors&, const BakedColors&);
@@ -134,7 +134,7 @@ namespace ClaFi
     export [[nodiscard]] BakedColorRules bake(const ColorRules&, const ThemeColors&);
     export [[nodiscard]] BakedRules bake(const ThemeRules&, const ThemeColors&);
 
-    // CROSSING A SET WITH ITSELF ANSWERS THAT SET AT EVERY FACTOR, which is what the weighted
+    // **Crossing a set with itself answers that set at every factor**, which is what the weighted
     // targets below are for. See AppTheme
     export [[nodiscard]] BakedValue blend(const BakedValue& from, const BakedValue& to,
         float factor);

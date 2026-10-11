@@ -228,7 +228,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // What m_layout is actually aligned to. Every setter on an IDWriteTextLayout throws away
         // the analysis the build has already paid for, and the GetMetrics after it pays for that
         // again - so an alignment that has not moved must not be stated a second time. The same
-        // reason m_appliedColors exists, and the same cost: a paragraph of Left text is LEADING
+        // reason m_appliedColors exists, and the same cost: a paragraph of Left text is **leading**
         // already, so stating it re-breaks every line to arrive at the lines it had.
         DWRITE_TEXT_ALIGNMENT m_appliedAlignment{ DWRITE_TEXT_ALIGNMENT_LEADING };
     };
@@ -481,7 +481,7 @@ namespace ClaFi::PlatformImplementation::Windows
     void DWriteLayout::build(const BuildParams& params)
     {
         // A new layout carries no drawing effects, whatever the old one carried, and is aligned
-        // LEADING whatever the old one was aligned to.
+        // **leading** whatever the old one was aligned to.
         m_runsWereApplied = false;
         m_requestedAlignment = DWRITE_TEXT_ALIGNMENT_LEADING;
         m_appliedAlignment = DWRITE_TEXT_ALIGNMENT_LEADING;
@@ -589,7 +589,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // branch that moved something: the metrics of a layout left alone are the ones it already
         // reported.
         //
-        // This is the layout's placed extent, and it is not what a paragraph is MEASURED by -
+        // This is the layout's placed extent, and it is not what a paragraph is **measured** by -
         // TextLayout::shapeParagraph reads that before it gets here, and the comment there says
         // why it has to.
         DWRITE_TEXT_METRICS aligned;
@@ -811,7 +811,7 @@ namespace ClaFi::PlatformImplementation::Windows
             // difference from whatever it held before.
             checkHr(m_layout->SetDrawingEffect(nullptr, DWRITE_TEXT_RANGE{ 0, m_textLength }));
 
-            // The scripts are cut INTO the colour spans rather than laid over them: one run
+            // The scripts are cut **into** the colour spans rather than laid over them: one run
             // carries one drawing effect, so a range that is both coloured and raised has to be
             // stated as a single effect saying both.
             std::size_t scriptCursor = 0;
@@ -961,9 +961,9 @@ namespace ClaFi::PlatformImplementation::Windows
             ? DWRITE_TEXT_ALIGNMENT_LEADING
             : m_requestedAlignment;
 
-        // Resolved rather than requested, because the overflow test above can answer LEADING for
-        // a paragraph that asked for Center - and that answer moves with the box width while the
-        // TextAlign stands still, so it is the resolved value that has to be remembered.
+        // Resolved rather than requested, because the overflow test above can answer **leading**
+        // for a paragraph that asked for Center - and that answer moves with the box width while
+        // the TextAlign stands still, so it is the resolved value that has to be remembered.
         if (resolved == m_appliedAlignment)
             return false;
 

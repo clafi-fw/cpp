@@ -213,7 +213,7 @@ namespace ClaFi::Controls
     // and issues no selection command, and Space or Return is the command it sets up - so
     // Ctrl+arrow walks the items and Ctrl+Space toggles the one walked to. Shift is not
     // separable that way: a range is named by the item it ends on, so the navigation key that
-    // ends it IS the command, and Ctrl+Shift+arrow extends the range without giving up what
+    // ends it **is** the command, and Ctrl+Shift+arrow extends the range without giving up what
     // stands.
     //
     // A mouse press waits for the click pass wherever what it means depends on what the
@@ -221,7 +221,7 @@ namespace ClaFi::Controls
     //
     // - a press carrying a modifier may become a rubber band, which adds a rectangle rather
     //   than naming a range or toggling the one item
-    // - a press INSIDE the selection may become a drag of the whole selection, and a press
+    // - a press **inside** the selection may become a drag of the whole selection, and a press
     //   that acted would collapse the selection to the one item under the pointer first
     //
     // A plain press outside the selection means the same thing whatever follows it, so it is

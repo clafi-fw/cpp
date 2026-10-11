@@ -89,7 +89,7 @@ namespace ClaFi
         text.replaceText(range, inserted);
         m_textSize = text.plainText().size();
 
-        // AN AUTOMATIC EDIT IS PART OF THE STEP THAT CAUSED IT, and lands where it says: the
+        // **An automatic edit is part of the step that caused it**, and lands where it says: the
         // indent a line break brings, the block a paste is moved to. The step is closed to its
         // run from here, since undo takes its changes back in the reverse of the order they were
         // made, and a run growing past them would break that order.

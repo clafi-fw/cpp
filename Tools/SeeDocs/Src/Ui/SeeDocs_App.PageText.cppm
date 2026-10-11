@@ -7,7 +7,7 @@ import ClaFi.Core.TextEngine.Text;
 
 import ClaFi.StdLib;
 
-// A PAGE'S WORDS AS THE TEXT SEEDOCS SHOWS: the engine's named styles for the runs and the
+// **A page's words as the text SeeDocs shows**: the engine's named styles for the runs and the
 // prose, and a link carrying the name the page gave it.
 namespace SeeDocs_App
 {
@@ -16,6 +16,8 @@ namespace SeeDocs_App
     // Writes the runs as they are styled, a linked run inside a link.
     export void writeRuns(Text&, const Runs&);
     export [[nodiscard]] Text textOf(const Runs&);
+    // The words of a text as a note line writes them: bold between its marks, code between its.
+    export [[nodiscard]] std::wstring markdownOf(const Text&);
     // The prose of a note, a paragraph per line, the whole of it set in from the margin as asked.
     export void writeBlocks(Text&, const Blocks&, float indent = 0.0f);
     export [[nodiscard]] Text textOf(const Blocks&);

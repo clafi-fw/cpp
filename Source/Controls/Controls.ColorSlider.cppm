@@ -176,7 +176,7 @@ namespace ClaFi::Controls
         setEditedColor(m_displayColor);
     }
 
-    // THE LIGHTNESS IS AN INPUT TO THE SPECTRUM - the luminosity floor is read from it - so a
+    // **The lightness is an input to the spectrum** - the luminosity floor is read from it - so a
     // theme crossing under a slot that is still valid would leave the bitmap stating the side of
     // the theme it was left on. The size is one too: the owner's own size is followed through
     // sizeChanged, and a finer slider's is not.
@@ -322,7 +322,7 @@ namespace ClaFi::Controls
         }
     }
 
-    // THE VALUE THE SLIDER WAS GIVEN, marked above the slot: what a drag has moved away from,
+    // **The value the slider was given**, marked above the slot: what a drag has moved away from,
     // and where it stands while nothing has moved. A triangle pointing at the slot, in the room
     // the thumb leaves above it. A slot over a span the value lies outside has nothing to mark.
     void ColorSlider::paintNotch(PaintEvent& event, const FloatRect& slotRect, SlotSpan span) const

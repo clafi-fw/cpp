@@ -248,7 +248,7 @@ namespace ClaFi::Diagnostic
         FormBase* target = formUnderPointer();
 
         // With no window under the pointer the repeater looks again after a pause rather than
-        // spinning on nothing. An interval set here is the one the NEXT re-arm takes.
+        // spinning on nothing. An interval set here is the one the **next** re-arm takes.
         const MilliSeconds interval = target ? k_driveInterval : k_lookInterval;
         m_drive.setIntervals(interval, interval);
 
@@ -333,7 +333,7 @@ namespace ClaFi::Diagnostic
         return &hoveredForm;
     }
 
-    // Read while the target is LIVE - handed in by whoever holds it as such, never reached
+    // Read while the target is **live** - handed in by whoever holds it as such, never reached
     // through m_target.
     void FpsPage::takeTargetFacts(FormBase& target)
     {
@@ -417,7 +417,7 @@ namespace ClaFi::Diagnostic
         text << Fmt{ L"[code]{:.0f} x {:.0f}[color muted] pix[/color]", dimensions.x, dimensions.y };
     }
 
-    // THE APPLICATION'S ANSWER, NOT THE TARGET'S. One context builds every window of an
+    // **The application's answer, not the target's.** One context builds every window of an
     // application, so they all draw through the same kind and this page's own form answers for
     // them - which is what lets the row stand while nothing is being measured.
     void FpsPage::writeBackend(Text& text) const

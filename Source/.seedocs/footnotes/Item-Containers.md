@@ -31,7 +31,7 @@ Holding several items selected at once is a different idea, and it lives in Stac
 `CanFocusItemEvent` is asked of every candidate, and is answerable by a handler that knows
 something the container does not.
 
-Whether an item may join a SELECTION is a different question, asked separately and one level up
+Whether an item may join a **selection** is a different question, asked separately and one level up
 - see `CanSelectItemEvent` in StackView. Neither answer implies the other: a view sweeping a
 rubber band asks only about selection, and a container with no selection at all still asks this
 one.
@@ -44,7 +44,7 @@ in it; `LaneSize` caps how many items one lane takes before the next begins.
 
 ### A stated lane is a break, not a hint
 
-`LaneSize` breaks the lane wherever it is read, and BOTH passes read it. The measure counts the
+`LaneSize` breaks the lane wherever it is read, and **both** passes read it. The measure counts the
 items into lanes - `Control::calculateLanes`, which closes a lane on the count or on the maximum
 the panel states - and the align closes the same lane on the same count, in `nextLane`. A stack
 stated four to a lane stands four to a lane in a window of any size, and what a larger host gives
@@ -56,7 +56,7 @@ one, which would otherwise begin on something that is never placed.
 
 ### Filling the lane, and filling across it
 
-A WRAPPING STACK SHARES WHAT IT WAS GIVEN, both ways round.
+**A wrapping stack shares what it was given**, both ways round.
 
 Across the lanes: what is left once every lane stands at its own thickness goes to the lanes in
 equal parts, so a list dropped into a window wider than its columns fills it - and a stack of rows
@@ -65,19 +65,20 @@ told to fill a taller box spreads its rows down it the same way.
 Along the lane: what is left once every item stands at its own size goes to the items in equal
 parts.
 
-THE SURPLUS IS ONE NUMBER FOR THE WHOLE STACK, AND IT IS DIVIDED BY THE ITEM: what the length has
-over the LONGEST lane, over the count of items on that lane. Every item in the stack then grows by
-the same amount, the fullest lane comes out exactly at the length, and a short last lane simply
-stays short.
+**The surplus is one number for the whole stack, and it is divided by the item**: what the length
+has over the **longest** lane, over the count of items on that lane. Every item in the stack then
+grows by the same amount, the fullest lane comes out exactly at the length, and a short last lane
+simply stays short.
 
-ONE GATE: THE STACK'S OWN ALIGNMENT, read along the lane - `fillsMain`.
+**One gate: the stack's own alignment**, read along the lane - `fillsMain`.
 
-A lane holding something that ASKED for the surplus takes it either way, gate or no gate, which is
-what a single lane already does: `alignContent` reaches for the granted length on `hasFillingItem`
-alone. On a wrapping stack the question is asked per lane, off the count `nextLane` already made,
-because walking a million items to answer it once would cost the pass more than the layout.
+A lane holding something that **asked** for the surplus takes it either way, gate or no gate, which
+is what a single lane already does: `alignContent` reaches for the granted length on
+`hasFillingItem` alone. On a wrapping stack the question is asked per lane, off the count `nextLane`
+already made, because walking a million items to answer it once would cost the pass more than the
+layout.
 
-A lane holding something that ASKED for what the lane has over takes it whole - see
+A lane holding something that **asked** for what the lane has over takes it whole - see
 `Control::fillsLane` and `FlexSpacer`. Something that asked already says where the surplus goes, so
 the equal parts are what happens where nothing asked.
 
@@ -88,25 +89,25 @@ aligned to an edge keeps the size it measured and stands in it.
 
 Shares divided among the items on one lane are as many as that lane holds, so a short last lane
 makes larger parts than the lanes above it and the tracks go ragged. `ItemSizing::Equal` divides by
-the LANE instead: every lane is cut into the same number of equal shares - four shares whether it
-holds four items or two - so the short last lane leaves its tracks standing rather than spreading
+the **lane** instead: every lane is cut into the same number of equal shares - four shares whether
+it holds four items or two - so the short last lane leaves its tracks standing rather than spreading
 two items over the room for four.
 
 The share is a box, not a size. What stands in it is placed by its own alignment, the way
 `Control::align` places anything handed more room than it kept: an item that fills takes the share
 whole, one aligned to an edge keeps the size it measured and stands in it.
 
-FILLING IS WHAT MAKES THE SHARES SHOW. An item that keeps its own size is only as wide as its own
-content, so a set of them comes out ragged inside a set of equal shares - a `ThemeTile` told to
-Center came out as wide as its NAME, and the picture inside it, drawn at a stated size and centred,
-was then clipped to a tile narrower than itself: a theme called "1" showed a third of its picture
-and one called "123456789" showed all of it. Filling the share is what makes every tile the same
-width, and a name too long for it wraps under the picture instead of widening the tile.
+**Filling is what makes the shares show.** An item that keeps its own size is only as wide as its
+own content, so a set of them comes out ragged inside a set of equal shares - a `ThemeTile` told to
+Center came out as wide as its **name**, and the picture inside it, drawn at a stated size and
+centred, was then clipped to a tile narrower than itself: a theme called "1" showed a third of its
+picture and one called "123456789" showed all of it. Filling the share is what makes every tile the
+same width, and a name too long for it wraps under the picture instead of widening the tile.
 
-Nothing about the MEASURE changes - the panel still asks for its natural lane length, and what it
-asks for is what a host measured from its content still gives it.
+Nothing about the **measure** changes - the panel still asks for its natural lane length, and what
+it asks for is what a host measured from its content still gives it.
 
-AN EVEN LANE IS CUT ON ITS SHARES, NOT ON THE ITEMS. Every share is as long as the largest item,
+**An even lane is cut on its shares, not on the items.** Every share is as long as the largest item,
 so a lane holds as many of those as the length has room for, capped by the lane's own count -
 `sharesThatFit` - and every lane then holds the same number. Cutting on the items instead leaves
 the lane of long names holding two while the one above it holds three, at shares that are all one
@@ -117,18 +118,18 @@ size, so the third slot stands empty for no reason.
 So a wrapping panel carries the length over: `alignIntoLanes` remembers the length it broke the
 lanes at - the content width for rows, the content height for columns - and the next measure breaks
 them at that same length - `wrapLengthLimit`, handed to `Control::calculateRows` or
-`Control::calculateColumns` as a maximum. Where that length has CHANGED, the panel asks for one more
-pass through `AlignEvent::invalidatePass` and the pass after it hands back the same number, which is
-what ends it.
+`Control::calculateColumns` as a maximum. Where that length has **changed**, the panel asks for one
+more pass through `AlignEvent::invalidatePass` and the pass after it hands back the same number,
+which is what ends it.
 
-THE BOX ABOVE CARRIES ITS OWN. `ScrollBox` states the viewport as a wrapping body's maximum, and it
-writes that width in `PanelBase::bodySlotSettled` - the moment the slot is settled and before the
-body is laid into it - so a body that FILLS breaks its lanes at this pass's viewport. A body that
-does not fill keeps the width it MEASURED, and the measure ran earlier in the pass, against the
-viewport of the one before, so for that one the box asks for another pass and the pass after hands
-back the same width.
+**The box above carries its own.** `ScrollBox` states the viewport as a wrapping body's maximum, and
+it writes that width in `PanelBase::bodySlotSettled` - the moment the slot is settled and before the
+body is laid into it - so a body that **fills** breaks its lanes at this pass's viewport. A body
+that does not fill keeps the width it **measured**, and the measure ran earlier in the pass, against
+the viewport of the one before, so for that one the box asks for another pass and the pass after
+hands back the same width.
 
-BOTH AXES CARRY IT, in one member read along the lane. The length is the extent the measure runs
+**Both axes carry it**, in one member read along the lane. The length is the extent the measure runs
 against - `Control::calculateRows` and `Control::calculateColumns` each take a maximum - and
 whether it may be kept is asked the same way round: `isWidthGivenFromOutside` for a stack of rows,
 `isHeightGivenFromOutside` for a stack of columns, which `isLaneLengthGivenFromOutside` picks
@@ -136,13 +137,13 @@ between. A change of orientation drops what was kept, since it was measured alon
 
 Three things the remembered length is not allowed to do, and each is a guard:
 
-- It is stored in DESIGN UNITS, at the scale that laid it out. Converting it at whatever scale
+- It is stored in **design units**, at the scale that laid it out. Converting it at whatever scale
   reads it next latches a form taken to 250% and back at a fraction of the length it has.
-- It is kept only where the length is given from outside, which asks the question ALL THE WAY UP
-  and asks it of this control first. **A control that does not FILL keeps what it measured**,
+- It is kept only where the length is given from outside, which asks the question **all the way up**
+  and asks it of this control first. **A control that does not fill keeps what it measured**,
   however freely its host hands a width down - align gives the surplus back - so its width is
   its own content's answer and a bound taken from it eats itself: the rows wrap, the panel comes
-  out narrower than the width it wrapped at, the next pass wraps THAT, and a stack aligned Left
+  out narrower than the width it wrapped at, the next pass wraps **that**, and a stack aligned Left
   walks from five items a row down to two. **An item of a row keeps what it measured too**, Fill or
   not: a row sizes its items from what they measured, and hands a width out only to an item that
   takes what the lane has over - `Stack::isChildWidthGiven`. Without that a crumb held its
@@ -159,16 +160,16 @@ Three things the remembered length is not allowed to do, and each is a guard:
   A panel's top and bottom bars are as tall as they measured, while its side bars and its body are
   handed the slot's height - `PanelBase::isChildHeightGiven`. A scroll box gives its body no height
   on an axis it scrolls - `ScrollBox::isChildHeightGiven`, and see the next section.
-- It states nothing while the form is measuring to ASK for a window -
+- It states nothing while the form is measuring to **ask** for a window -
   `FormBase::isMeasuringPlacement`. That pass is where a form finds out what it wants, and one
   held to the size it was last given could never grow.
 
-THE SAME THREE GOVERN THE VIEWPORT A SCROLL BOX STATES FOR ITS BODY, which is a remembered width of
-the same kind - see ScrollBox::adjustChildMetrics, and Controls-Base for where it is written.
+**The same three govern the viewport a scroll box states for its body**, which is a remembered width
+of the same kind - see ScrollBox::adjustChildMetrics, and Controls-Base for where it is written.
 
 A first open therefore shows the lane count's answer, then the length's: the placement is asked
 for off the first, and the pass that lays the content into the window is where the length
-arrives. A page that converges SHORTER keeps the window it already asked for.
+arrives. A page that converges **shorter** keeps the window it already asked for.
 
 So a panel in a window fills the length it is given, and a panel in something sized by what it
 holds stands at its lane count. Which is the right answer to each: there is no length to fill in
@@ -178,16 +179,16 @@ that makes, with the body beside it giving up the room.
 
 ### A column on a box that scrolls
 
-A COLUMN IS NOT BROKEN AT A HEIGHT ITS HOST SCROLLS. There `calculateColumns` breaks a column at the
-stack's own maximum and nowhere else, and a scroll box hands its body the viewport whatever the body
-measured.
+**A column is not broken at a height its host scrolls.** There `calculateColumns` breaks a column at
+the stack's own maximum and nowhere else, and a scroll box hands its body the viewport whatever the
+body measured.
 
 So where `Control::isScrolledByParent` answers yes for the vertical axis, the column is granted
 at least the height it measured, and the lanes the align cuts are the lanes the measure counted.
 A `ScrollBox` answers from its bars: `Both`, `Vertical` and `Auto` scroll the body's height,
 which is the same reading `ScrollBox::stateSizeGivenWay` makes of what the body can give up.
 
-NOTHING IS REMEMBERED THERE EITHER. `ScrollBox::isChildHeightGiven` answers no for a body whose
+**Nothing is remembered there either.** `ScrollBox::isChildHeightGiven` answers no for a body whose
 height the box scrolls, so `isHeightGivenFromOutside` stops at the box and the measure has no
 length to break the column at but the stack's own maximum. A remembered viewport would turn a list
 that scrolls into one that flows sideways the moment it outgrew the height it was last laid out at.
@@ -224,7 +225,7 @@ key and a pointer sweeping the stack each answer once, for the item they came to
 
 ## LaneSizing
 
-How a lane's count is read. A CEILING IS SPREAD, A COUNT IS NOT.
+How a lane's count is read. **A ceiling is spread, a count is not.**
 
 `Exact` - every lane takes the count, and the remainder stands in a short last lane.
 
@@ -243,7 +244,7 @@ the gaps between them.
 
 `Equal` - the lane divided evenly: every item is handed the same share of it, whatever it
 calculated. A row of answers reads as one band this way rather than as buttons of several widths.
-The lane is then AS LONG AS THE LARGEST ITEM TIMES THE COUNT, because a share has to hold every
+The lane is then **as long as the largest item times the count**, because a share has to hold every
 item that could stand in it - taking the natural total instead would divide a row that fits Save,
 Discard and Cancel into three widths none of which fits Discard.
 

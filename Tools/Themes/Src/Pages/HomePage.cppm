@@ -44,8 +44,8 @@ namespace Themes_App
         :
         Base{ params, std::forward<Args>(args)... }
     {
-        // THE TILE BEING LOOKED AT, not the one that has been picked. Moving the current item is
-        // immediate and a theme change is a movement of its own, so a current tile travelling
+        // **The tile being looked at**, not the one that has been picked. Moving the current item
+        // is immediate and a theme change is a movement of its own, so a current tile travelling
         // down the list on a held key would ask for one per step and the application would never
         // arrive anywhere. A preview is raised once the tile settles, whether the pointer or the
         // keyboard brought it there, so the application crosses to the theme that was stopped on.

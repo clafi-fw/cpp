@@ -5,9 +5,9 @@ import ClaFi.Core.Foundation;
 namespace ClaFi::Browser::Actions
 {
     // The commands a browser answers about the page it is showing, and the objects both ends
-    // compare BY ADDRESS - the shape ClaFi::StdActions has for the framework's own commands.
+    // compare **by address** - the shape ClaFi::StdActions has for the framework's own commands.
     //
-    // WHAT IS OPENED IS NAMED BY THE PAGE. BrowserControl claims both against
+    // **What is opened is named by the page.** BrowserControl claims both against
     // BrowserPage::pathToOpen, so a menu item, a toolbar button and any other presenter run one
     // implementation, and a page that names nothing leaves both disabled.
     //
@@ -22,7 +22,7 @@ namespace ClaFi::Browser::Actions
     // stays where it is.
     export extern Action openInNewTab;
 
-    // NEITHER CARRIES A SHORTCUT, and Enter is the reason. Enter on a focused control is that
+    // **Neither carries a shortcut**, and Enter is the reason. Enter on a focused control is that
     // control's press, answered by FocusNavigator after the shortcut scopes have had their turn,
     // so a browser claiming the key would take it from every button standing inside the browser -
     // which is all of them. An application that wants one says so:

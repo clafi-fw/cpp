@@ -3,7 +3,7 @@ module;
 #include <wincodec.h>
 #pragma comment(lib, "windowscodecs.lib")
 
-// AN IMPLEMENTATION UNIT OF THE MODULE THAT DECLARED decodePng, not of the Windows layer - see
+// **An implementation unit of the module that declared** decodePng, not of the Windows layer - see
 // Windows.Transfer.cpp, which stands in the same relation to Clipboard.
 module ClaFi.Core.Graphics.Png;
 
@@ -22,7 +22,7 @@ namespace ClaFi::Graphics
         constexpr std::size_t k_maxPixels = std::size_t{ 1 } << 28;
     }
 
-    // THROUGH THE PNG DECODER ALONE, not whichever codec claims the bytes: what was handed over
+    // **Through the PNG decoder alone**, not whichever codec claims the bytes: what was handed over
     // as a PNG is read as one or not at all. The frame is converted to straight BGRA, which is
     // what Bitmap holds, whatever depth, palette or interlace the file has.
     std::optional<Bitmap> decodePng(const std::string_view bytes)

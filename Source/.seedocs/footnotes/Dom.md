@@ -4,7 +4,7 @@ The words that no longer fit above a declaration.
 
 ## ScalarSerializer<Color>
 
-A COLOUR AS CLAFI WRITES IT FOR CLAFI TO READ BACK: `#` and the red, green and blue bytes as six
+**A colour as ClaFi writes it for ClaFi to read back**: `#` and the red, green and blue bytes as six
 hex digits for an opaque colour, with the alpha byte following as two more for any other. Upper
 case is written and either case is read. The reader takes the two forms the writer produces and
 nothing else - no bare digits, no short forms - and a string it cannot read leaves the colour as

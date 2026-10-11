@@ -32,12 +32,12 @@ namespace ClaFi::Tools::WhatsClip
 {
     using namespace ::ClaFi::Controls;
 
-    // WHAT A PAGE SAYS WHEN THE CLIPBOARD HELD ITS PEACE. One sentence rather than one per page:
-    // they all report a failed read in the same place, and there was never a reason for them to
-    // report it in different words.
+    // **What a page says when the clipboard held its peace.** One sentence rather than one per
+    // page: they all report a failed read in the same place, and there was never a reason for them
+    // to report it in different words.
     export auto k_noAnswer = Text{ InkGrade::Muted, L"The clipboard did not answer for this format." };
 
-    // WHAT THE TEXT PAGES PICK FROM: the encodings a format's bytes are read in, and the
+    // **What the text pages pick from**: the encodings a format's bytes are read in, and the
     // languages the text is coloured in. Built by the entry point, which is where an application
     // over this viewer adds its own.
     export struct PickLists
@@ -50,30 +50,30 @@ namespace ClaFi::Tools::WhatsClip
         void (*readLocale)(Transfer::Offer&) { nullptr };
     };
 
-    // ONE WAY OF SHOWING ONE FORMAT'S CONTENT. A format is not one thing to look at: it has
+    // **One way of showing one format's content.** A format is not one thing to look at: it has
     // bytes, it can almost always be read as text, and some formats carry more than either says.
     //
-    // A page reads WHEN IT IS OPENED and not before. Reading is a transfer out of another process
-    // on one of the two platforms, so a format with four representations would pay four of them
-    // to fill three pages nobody is looking at.
+    // A page reads **when it is opened** and not before. Reading is a transfer out of another
+    // process on one of the two platforms, so a format with four representations would pay four of
+    // them to fill three pages nobody is looking at.
     //
-    // THE PAGE IS THE SCROLL BOX AND NOT ITS BODY. What stands in the body is the page's own
+    // **The page is the scroll box and not its body.** What stands in the body is the page's own
     // choice: text for the representations that decode into text, the byte view for the bytes.
     //
-    // THE VIEW GOES HOME WITH THE CONTENT. A read replaces the document the page is showing, so
+    // **The view goes home with the content.** A read replaces the document the page is showing, so
     // the bars go back to the start and the caret with them - a place in the last document is not
     // a place in this one.
     //
-    // ITS STATUS BAR IS IN TWO PIECES, because the two readings change on different clocks. THE
-    // STRIP ABOVE says what the page is showing - how much of it there is, or why there is
-    // nothing - and is written once, when a format is opened. THE CORNER between the two scroll
+    // **Its status bar is in two pieces**, because the two readings change on different clocks.
+    // **The strip above** says what the page is showing - how much of it there is, or why there is
+    // nothing - and is written once, when a format is opened. **The corner** between the two scroll
     // bars says where the point of interest stands, and is written on every move of a caret or a
     // selection. A sentence needs the strip, being a sentence; a reading that moves belongs in
     // the corner, whose width is stated so that nothing else on the page moves when it does.
     export class RepresentationPage : public ScrollBox
     {
     public:
-        // THE READING OWNS ITS LAYOUT. It is a different text on every move, and a text the
+        // **The reading owns its layout.** It is a different text on every move, and a text the
         // engine's cache has not seen is an entry it keeps - see WithTextLayout, and the bucket
         // per text in the layout cache.
         using Readout = WithTextLayout<Label>;
@@ -90,7 +90,7 @@ namespace ClaFi::Tools::WhatsClip
         void writeStatus(Text&&);
         // Where the point of interest stands.
         void writeReadout(Text&&);
-        // THE CORNER SHORTENS THE HORIZONTAL BAR BY ITS OWN WIDTH AT ALL TIMES, so a page whose
+        // **The corner shortens the horizontal bar by its own width at all times**, so a page whose
         // reading does not fit the default says so and the bar keeps what is left. Called from a
         // page's constructor, which is before there is a pass to invalidate.
         void setReadoutWidth(float);
@@ -156,10 +156,10 @@ namespace ClaFi::Tools::WhatsClip
         TextPageBase(const CreateParams&, const PickLists&, HostProps<HProps...>&&,
             BodyProps<BProps...>&&);
     protected:
-        // THE TAIL EVERY TEXT PAGE SHARES. The box takes the text, the align pass a text of a new
-        // length needs is asked for, and the caret goes back to the start - which is also what
-        // writes the corner. THE FORMAT IS THE BYTES' CONTEXT: a page showing a format's bytes as
-        // text names it, and the name is put beside the box's question about the language, since
+        // **The tail every text page shares.** The box takes the text, the align pass a text of a
+        // new length needs is asked for, and the caret goes back to the start - which is also what
+        // writes the corner. **The format is the bytes' context**: a page showing a format's bytes
+        // as text names it, and the name is put beside the box's question about the language, since
         // a name can settle what a reading of the text would get wrong. A page showing a text
         // decoded from the bytes names nothing, and the text is judged by what it holds.
         void showText(Text&&, const Transfer::Format&);
@@ -170,16 +170,17 @@ namespace ClaFi::Tools::WhatsClip
         // padded with. A control left in reads as a stand-in - a dot for a NUL, a small square
         // for the rest - and a byte the encoding has no character for as a lozenge, so the text
         // stays on cells, and a NUL ends the line where it closes a string. None where there are
-        // no bytes. THE PICK STANDS WHERE THE PAGE READS BYTES THROUGH IT: hidden from
+        // no bytes. **The pick stands where the page reads bytes through it**: hidden from
         // construction, shown by the first call that has bytes, never seen on a page whose text
         // was decoded elsewhere.
         [[nodiscard]] std::optional<std::wstring> decode(std::string_view bytes,
             const Transfer::Format&);
         // The encoding pick has moved. A page that keeps its bytes reads them again.
         virtual void encodingPicked() {}
-        // WHETHER A FORMAT'S BYTES ARE NO TEXT, judged from their first kilobyte in the encoding
-        // Auto claims over all of them: a NUL inside, a control other than tab, the line breaks
-        // and form feed, or a replacement character says so. A terminated-string format is text.
+        // **Whether a format's bytes are no text**, judged from their first kilobyte in the
+        // encoding Auto claims over all of them: a NUL inside, a control other than tab, the line
+        // breaks and form feed, or a replacement character says so. A terminated-string format is
+        // text.
         [[nodiscard]] bool isBinary(std::string_view bytes, const Transfer::Format&) const;
         // Resolves the code page a code-page reading uses from the offer, before the page decodes.
         // Called with the offer a read has in hand; a page keeps no offer of its own.
@@ -218,7 +219,7 @@ namespace ClaFi::Tools::WhatsClip
         void (*m_readLocale)(Transfer::Offer&) { nullptr };
     };
 
-    // A REPRESENTATION IS A LINE IN A TABLE: the word on its tab, and how to make the page that
+    // **A representation is a line in a table**: the word on its tab, and how to make the page that
     // shows it. Some belong to every format - a format always has bytes - and some to one format
     // alone, as the text with its markers belongs to the framework's own rich text.
     //
@@ -305,7 +306,7 @@ namespace ClaFi::Tools::WhatsClip
                 languagePicked();
             } }
         ) },
-        // THE MARK READS THE BOX AND THE CLICK WRITES IT: the box's own property is the
+        // **The mark reads the box and the click writes it**: the box's own property is the
         // setting.
         m_wrapCheck{ createStripBar<CheckBox>(
             L"Wrap",

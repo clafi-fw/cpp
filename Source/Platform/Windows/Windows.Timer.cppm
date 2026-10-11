@@ -20,7 +20,7 @@ namespace ClaFi::PlatformImplementation::Windows
         TimerManager(const TimerManager&) = delete;
         TimerManager& operator=(const TimerManager&) = delete;
     public:
-        // THE ONE STANDING, or null while the platform holds none. A UiTimer sits below every
+        // **The one standing**, or null while the platform holds none. A UiTimer sits below every
         // context - the animation controller's, a directory watcher's, a control's - so the two
         // hooks below reach the manager through this and nothing else; the manager sets it as it
         // is built and clears it as it goes. The platform stands before anything that owns a
@@ -66,7 +66,7 @@ namespace ClaFi::PlatformImplementation::Windows
     }
 }
 
-// THE TWO HOOKS System.Timer DECLARES AND DOES NOT DEFINE.
+// **The two hooks System.Timer declares and does not define.**
 namespace ClaFi::PlatformTimer
 {
     using PlatformImplementation::Windows::TimerManager;

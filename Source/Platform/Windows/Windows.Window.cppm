@@ -77,7 +77,7 @@ namespace ClaFi::PlatformImplementation::Windows
         LRESULT result;
     };
 
-    // WHAT THE MANAGER'S WINDOW PROCEDURE DELIVERS TO. See Platform
+    // **What the manager's window procedure delivers to.** See Platform
     export class IMessageSink
     {
     public:
@@ -89,7 +89,7 @@ namespace ClaFi::PlatformImplementation::Windows
     //-------------------------------------------------------------------------
 
 
-    // HOW FAR INTO THE SHADOW A WINDOW CAN BE GRABBED TO BE SIZED, at 100%. On this platform it
+    // **How far into the shadow a window can be grabbed to be sized**, at 100%. On this platform it
     // is also how far the window itself reaches past its geometry: a pixel owns the pointer by
     // being inside the window rect, and this band of the shadow is drawn by the window for that.
     export constexpr int k_resizeGrab = 8;
@@ -115,9 +115,10 @@ namespace ClaFi::PlatformImplementation::Windows
     public:
         //
         WindowRole role() const { return m_Role; }
-        // EVERY WINDOW HERE IS COMPOSED: it has no redirection surface, the platform presents the
-        // form's frame through DirectComposition, the window wears the frame the form designs and
-        // casts its shadow from a window of its own - see FormWindow. So every frame carries alpha.
+        // **Every window here is composed**: it has no redirection surface, the platform presents
+        // the form's frame through DirectComposition, the window wears the frame the form designs
+        // and casts its shadow from a window of its own - see FormWindow. So every frame carries
+        // alpha.
         [[nodiscard]] bool wantsAlphaChannel() const override { return true; }
         //
         // IFormWindow ---->
@@ -141,13 +142,13 @@ namespace ClaFi::PlatformImplementation::Windows
         [[nodiscard]] bool userSized() const { return m_Role == WindowRole::Dialog && m_userSized; }
         void setFrame(const WindowFrame& value) override { m_frameDesign = value; }
         [[nodiscard]] const WindowFrame& frameDesign() const { return m_frameDesign; }
-        // THE FRAME THIS WINDOW APPLIES, in real pixels: the design, less the corners when
+        // **The frame this window applies**, in real pixels: the design, less the corners when
         // snapped; when maximized, only how far the window hangs past the work area.
         [[nodiscard]] WindowFrame appliedFrame() const;
-        // HOW FAR THE WINDOW RECT REACHES PAST THE GEOMETRY on each side: k_resizeGrab scaled,
+        // **How far the window rect reaches past the geometry** on each side: k_resizeGrab scaled,
         // held within the margins, only on a window the user sizes, and none while snapped.
         [[nodiscard]] FrameMargins ring() const;
-        // WHERE THE WINDOW RECT'S TOP LEFT STANDS IN THE FORM'S SURFACE. The surface is the
+        // **Where the window rect's top left stands in the form's surface.** The surface is the
         // geometry and its margins; the window is the geometry and its ring; the two share the
         // geometry, so this is margins less ring - and zero where there are neither.
         [[nodiscard]] IntPoint surfaceOrigin() const;
@@ -163,7 +164,7 @@ namespace ClaFi::PlatformImplementation::Windows
         [[nodiscard]] bool isAlwaysOnTop() const override;
         void setAlwaysOnTop(bool value) override;
         // <---- IFormWindow
-        // THE PLACEMENT A CONFIG REMEMBERED, taken instead of the default by every placement
+        // **The placement a config remembered**, taken instead of the default by every placement
         // until the window is shown, and shown maximized and held on top where it says so.
         void setNormalPlacement(const NormalPlacement& value) { m_normalPlacement = value; }
         // What the window would come back to now, as WINDOWPLACEMENT answers it.
@@ -208,7 +209,7 @@ namespace ClaFi::PlatformImplementation::Windows
         std::optional<NormalPlacement> m_normalPlacement{};
     };
 
-    // A MESSAGE-ONLY WINDOW, never shown; its messages go to the sink it is given. See Platform
+    // **A message-only window**, never shown; its messages go to the sink it is given. See Platform
     export class MessageWindow : public WindowBase, public IMessageSink
     {
     public:
@@ -222,7 +223,7 @@ namespace ClaFi::PlatformImplementation::Windows
         IMessageSink* m_sink{ nullptr };
     };
 
-    // WHAT STANDS BEHIND IPlatformServices ON WIN32: a message window. See Platform
+    // **What stands behind IPlatformServices on Win32**: a message window. See Platform
     export class IMessageWindowFactory : public IPlatformServices
     {
     public:
@@ -251,7 +252,7 @@ namespace ClaFi::PlatformImplementation::Windows
     {
         ::SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
-        // THE APARTMENT THE CLIPBOARD LIVES IN. OleSetClipboard and OleGetClipboard work on an
+        // **The apartment the clipboard lives in.** OleSetClipboard and OleGetClipboard work on an
         // OLE-initialised thread and nowhere else, and this is the thread that runs the message
         // loop. Failure is not fatal: everything except the clipboard carries on without it.
         ::OleInitialize(nullptr);
@@ -310,9 +311,9 @@ namespace ClaFi::PlatformImplementation::Windows
         return k_shadowClassName;
     }
 
-    // THE APP MODE, the half of the setting that speaks to applications - the system mode beside
-    // it colours the taskbar and the Start menu. A value that cannot be read is a desktop stating
-    // no preference, and that reads as Light, the mode Windows starts in.
+    // **The app mode**, the half of the setting that speaks to applications - the system mode
+    // beside it colours the taskbar and the Start menu. A value that cannot be read is a desktop
+    // stating no preference, and that reads as Light, the mode Windows starts in.
     ColorMode WindowsManager::appsColorMode()
     {
         DWORD appsUseLightTheme = 1;
@@ -353,7 +354,7 @@ namespace ClaFi::PlatformImplementation::Windows
         return ::DefWindowProc(hWnd, message, wParam, lParam);
     }
 
-    // ONE BROADCAST REACHES EVERY TOP-LEVEL WINDOW, so the mode is announced where it has moved
+    // **One broadcast reaches every top-level window**, so the mode is announced where it has moved
     // and not once for each window told. ImmersiveColorSet names a change of the accent colours
     // as well as of the mode, and the accent alone announces nothing.
     void WindowsManager::settingChanged(const LPARAM area)
@@ -497,8 +498,8 @@ namespace ClaFi::PlatformImplementation::Windows
                 flags = SW_SHOWMAXIMIZED;
             else
                 flags = SW_SHOW;
-            // THE REMEMBERED PLACEMENT ENDS HERE: what was placed from it is the window now, and
-            // a placement asked for later starts from the window rather than from the config.
+            // **The remembered placement ends here**: what was placed from it is the window now,
+            // and a placement asked for later starts from the window rather than from the config.
             if (m_normalPlacement)
             {
                 if (m_normalPlacement->maximized)
@@ -517,7 +518,7 @@ namespace ClaFi::PlatformImplementation::Windows
         ::ShowWindow(handle(), SW_HIDE);
     }
 
-    // DESTROYED DIRECTLY, NOT THROUGH WM_CLOSE. That message is the system asking, and a form
+    // **Destroyed directly, not through** WM_CLOSE. That message is the system asking, and a form
     // window answers it by asking its form - which closes through this call. Sent from here it
     // would come round again.
     void Window::close()
@@ -573,7 +574,7 @@ namespace ClaFi::PlatformImplementation::Windows
             maxSize.y >= k_maxFloat ? 0 : static_cast<int>(maxSize.y)
         };
 
-        // A RANGE OF ONE SIZE IS A DIALOG THE USER DOES NOT SIZE. It wears neither the sizing
+        // **A range of one size is a dialog the user does not size.** It wears neither the sizing
         // frame nor the maximize box, which takes its edges, the maximize its caption and its
         // window menu offer, and the system's snapping; its ring goes with them - see ring.
         const bool rangeOpen = minSize != maxSize;
@@ -590,8 +591,8 @@ namespace ClaFi::PlatformImplementation::Windows
             SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
-    // THE PART OF A WINDOW PAST ITS MONITOR'S WORK AREA. A maximized window is sized to the work
-    // area plus its resize borders and keeps all of it as client area - see WM_NCCALCSIZE in
+    // **The part of a window past its monitor's work area.** A maximized window is sized to the
+    // work area plus its resize borders and keeps all of it as client area - see WM_NCCALCSIZE in
     // FormWindow - and what lands on a taskbar is covered by it, so the work area is what the
     // screen shows.
     [[nodiscard]] static FrameMargins overhangPastWorkArea(HWND hwnd)
@@ -653,8 +654,8 @@ namespace ClaFi::PlatformImplementation::Windows
         };
     }
 
-    // SNAPPED TO A SIDE OR A CORNER OF THE SCREEN, which is Win32's tiled. Looked up by name: the
-    // function arrived with Windows 10 1903 and the header hides it behind a version macro.
+    // **Snapped to a side or a corner of the screen**, which is Win32's tiled. Looked up by name:
+    // the function arrived with Windows 10 1903 and the header hides it behind a version macro.
     bool Window::isArranged() const
     {
         using IsWindowArrangedFunc = BOOL(__stdcall*)(HWND);
@@ -681,7 +682,7 @@ namespace ClaFi::PlatformImplementation::Windows
         };
     }
 
-    // NEVER LARGER THAN THE ROOM IT MAY STAND IN. clampTo MOVES a rect inside its boundary and
+    // **Never larger than the room it may stand in. ClampTo moves** a rect inside its boundary and
     // leaves an oversized one oversized - deliberately, since something covering a whole screen is
     // meant to - so a size the work area cannot hold is cut here first. A window wider or taller
     // than the work area has its title bar off the top and its edges out of reach, which no size a
@@ -696,7 +697,7 @@ namespace ClaFi::PlatformImplementation::Windows
         return rect;
     }
 
-    // WHERE A WINDOW GOES INSIDE THE RECTANGLE IT MAY STAND IN. The room above the anchor
+    // **Where a window goes inside the rectangle it may stand in.** The room above the anchor
     // against the room below it, the flip, and holding the result inside that rectangle.
     //
     // Pure geometry, and it knows nothing about screens: the anchor and the bound arrive in one
@@ -728,7 +729,7 @@ namespace ClaFi::PlatformImplementation::Windows
             break;
 
         case FormPlacement::OverText:
-            // OverText places the window by its TEXT rather than by its box. The anchor is the
+            // OverText places the window by its **text** rather than by its box. The anchor is the
             // text being covered, and textOrigin is where this window's own text starts inside
             // it, so putting the second on the first lands the two texts on top of each other.
             result = FloatRect::fromDimensions(
@@ -804,17 +805,17 @@ namespace ClaFi::PlatformImplementation::Windows
 
     PlacedWindow Window::place(const WindowPlacement& placement)
     {
-        // THE ANCHOR IS IN THE PARENT FORM'S SURFACE, whose top left stands surfaceOrigin before
-        // the parent's window rect. A window is told where it stands and the windows standing on
-        // it are not, so this is the one place the two meet. GetParent answers the OWNER for a
-        // popup, which is the window the anchor was measured in.
+        // **The anchor is in the parent form's surface**, whose top left stands surfaceOrigin
+        // before the parent's window rect. A window is told where it stands and the windows
+        // standing on it are not, so this is the one place the two meet. GetParent answers the
+        // **owner** for a popup, which is the window the anchor was measured in.
         ::RECT parentRect{};
         IntPoint parentOrigin{};
         const HWND parentHandle = ::GetParent(handle());
         if (parentHandle)
         {
             ::GetWindowRect(parentHandle, &parentRect);
-            // The user data names the SINK, and the owner is a Window - see FormWindow's
+            // The user data names the **sink**, and the owner is a Window - see FormWindow's
             // constructor - so the cast walks back through the base it was stored as.
             const auto sink = reinterpret_cast<IMessageSink*>(
                 ::GetWindowLongPtr(parentHandle, GWLP_USERDATA));
@@ -833,7 +834,7 @@ namespace ClaFi::PlatformImplementation::Windows
         const bool onAnchor = placement.placement != FormPlacement::Default
             && placement.placement != FormPlacement::ScreenRight;
         const bool remembered = m_normalPlacement && placement.placement == FormPlacement::Default;
-        // A SHOWN TOPLEVEL PLACED AGAIN STANDS WHERE IT STANDS. A form its content sizes is
+        // **A shown toplevel placed again stands where it stands.** A form its content sizes is
         // placed again whenever what is in it changes size, and put back in the middle of the
         // screen each time it would walk away from wherever the user moved it.
         const bool standing = !remembered && placement.placement == FormPlacement::Default
@@ -859,7 +860,7 @@ namespace ClaFi::PlatformImplementation::Windows
         monInfo.cbSize = sizeof ::MONITORINFO;
         ::GetMonitorInfoW(hMon, &monInfo);
 
-        // THE RING IS SCALED FOR THE MONITOR IT LANDS ON, before that monitor's WM_DPICHANGED
+        // **The ring is scaled for the monitor it lands on**, before that monitor's WM_DPICHANGED
         // has said so: the rect stated here is measured in that monitor's pixels.
         UINT dpiX{};
         UINT dpiY{};
@@ -903,18 +904,18 @@ namespace ClaFi::PlatformImplementation::Windows
         windowRect.bottom += band.bottom;
         // The scale of wherever it lands reaches the form through WM_DPICHANGED, which the move
         // below sends while this call runs - see FormWindow::wndProc.
-        // A PLACEMENT THAT AGREES WITH THE WINDOW IS THE NEGOTIATION SETTLING, and stating it
+        // **A placement that agrees with the window is the negotiation settling**, and stating it
         // again is not free: SetWindowPlacement reports the position whether or not it moved,
         // and the resize reporting it puts the form's alignment back in question - see
         // FormBase::wnd_resize, which is where a pass that changed nothing costs the pass after
         // it. A maximized window answers with the rect it is maximized to and never matches,
         // which leaves that case as it was.
         //
-        // WHAT IT IS COMPARED WITH DEPENDS ON WHETHER ANYONE CAN SEE IT. setBounds states the
-        // NORMAL position, and a window that has never been shown goes on answering GetWindowRect
-        // with the rect it was created at however often that is stated - so for one of those the
-        // rect last asked for is the only record there is. A shown window cannot be held to that
-        // record: the user may have moved it since, and only the window itself knows.
+        // **What it is compared with depends on whether anyone can see it.** setBounds states the
+        // **normal** position, and a window that has never been shown goes on answering
+        // GetWindowRect with the rect it was created at however often that is stated - so for one
+        // of those the rect last asked for is the only record there is. A shown window cannot be
+        // held to that record: the user may have moved it since, and only the window itself knows.
         const bool settled = ::IsWindowVisible(handle())
             ? windowRect == bounds()
             : windowRect == m_placedBounds;
@@ -959,7 +960,7 @@ namespace ClaFi::PlatformImplementation::Windows
         ::SendMessageW(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, lParam);
     }
 
-    // TRACKED FROM HERE, NOT BY THE SYSTEM. DefWindowProc raises the window menu for a right
+    // **Tracked from here, not by the system.** DefWindowProc raises the window menu for a right
     // click on a caption it measures itself, and WM_NCCALCSIZE has made the whole of this window
     // client area - it has no caption by that measure, whatever WM_NCHITTEST answers. So the menu
     // is the system's but the tracking is this window's, and the item states with it: the system
@@ -994,7 +995,7 @@ namespace ClaFi::PlatformImplementation::Windows
                 MAKELPARAM(screenPoint.x, screenPoint.y));
     }
 
-    // A WINDOW PLACEMENT IS IN WORKSPACE COORDINATES: its origin is the top left of the work
+    // **A window placement is in workspace coordinates**: its origin is the top left of the work
     // area, not of the monitor, so a taskbar on the left or the top stands between that space and
     // the screen one every other call takes. This is the distance between the two - taken off a
     // screen rect on the way into WINDOWPLACEMENT and put back by the system on the way out. A
@@ -1033,7 +1034,7 @@ namespace ClaFi::PlatformImplementation::Windows
             SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
     }
 
-    // THE NORMAL RECT IS IN WORKSPACE COORDINATES and reaches past the geometry by the ring an
+    // **The normal rect is in workspace coordinates** and reaches past the geometry by the ring an
     // ordinary window wears - both taken off here, so what is answered is what setBounds takes
     // back. A minimized window that was maximized is maximized; on top is read off the style.
     NormalPlacement Window::normalPlacement() const
@@ -1085,7 +1086,7 @@ namespace ClaFi::PlatformImplementation::Windows
         {
         case WM_GETMINMAXINFO:
         {
-            // WHERE A USER'S DRAG STOPS. The system fills the structure with its own defaults
+            // **Where a user's drag stops.** The system fills the structure with its own defaults
             // before sending this, so an axis nothing was stated for is left exactly as it
             // arrived. The frame is the framework's own - WS_POPUP with a WM_NCCALCSIZE that
             // returns zero - so the window rectangle the system is asking about is the client
@@ -1145,7 +1146,7 @@ namespace ClaFi::PlatformImplementation::Windows
 
     HWND Window::createHandle(const WindowsManager& owner, WindowRole role, HWND hWndParent)
     {
-        // NO REDIRECTION SURFACE - see CompositionPresenter.
+        // **No redirection surface** - see CompositionPresenter.
         DWORD exStyle = WS_EX_NOREDIRECTIONBITMAP;
         DWORD style = WS_POPUP;
 
@@ -1162,12 +1163,12 @@ namespace ClaFi::PlatformImplementation::Windows
             break;
         case WindowRole::Hint:
             className = k_popupClassName;
-            // NOT TOPMOST. A hint window is OWNED by the window whose control it is about -
+            // **Not topmost.** A hint window is **owned** by the window whose control it is about -
             // every form builds one - and an owned popup always stands above its owner, which is
             // the whole of what a hint needs. Topmost is what an unowned window needed instead,
             // and it put the hint over every other application on the screen as well.
             //
-            // AND NOT WS_EX_TRANSPARENT. That style is two things at once: the pointer falls
+            // **And not** WS_EX_TRANSPARENT. That style is two things at once: the pointer falls
             // through the window, and the window is not painted until every sibling beneath it
             // that this thread made has been painted. The second is what a hint cannot have - it
             // stands over a form that repaints continuously while a slider is dragged under it,

@@ -20,23 +20,23 @@ already up is asked again where it stands, and one that is not starts the usual 
 
 ## ScrollBars::Auto
 
-A ROOT ANSWERS AGAINST ITS MAXIMUM, in the measuring pass - see calculateContent. The window reaches
-a root as that maximum, so a menu cut short by its placement is measured against the room it got and
-puts the bar up in one pass. A BOX INSIDE ANOTHER ANSWERS THE VERTICAL BAR FROM ITS SLOT. Its
-maximum is its own, and a window cut short lowers no maximum below the root's. So the align pass
-records whether the body stood past the slot it was laid out into, and asks for another pass where
-the bar standing is the wrong one - see settleAutoVerticalBar. The measuring pass that follows
-stands the bar that answer names. One pass settles it: a body laid out narrower is never shorter,
-nor a wider one taller. Until the box has been laid out once, its maximum answers for it. A pass
-measuring what to ask a placement for records nothing - it lays the box out at the content's own
-size, so its slot is no viewport - but it reads the answer, and the size it asks for carries the
-bar. THE HORIZONTAL BAR IS ANSWERED AGAINST THE MAXIMUM ALONE. A box whose width is its host's
-answer has no maximum of its own there and states the horizontal bar it wants. A BAR TAKES ITS STRIP
-FROM THE OTHER AXIS. Content that fits beside no bar may not fit beside one, so once a bar comes up
-the axis still without one is read again against what is left - see calculateContent. Only a bar
-coming up is read then: one taken down would hand its strip back and ask the first question over. A
-bar the second reading raises finds the other one up already, so a pass measures the box again twice
-at most, and only where a bar changes.
+**A root answers against its maximum**, in the measuring pass - see calculateContent. The window
+reaches a root as that maximum, so a menu cut short by its placement is measured against the room it
+got and puts the bar up in one pass. **A box inside another answers the vertical bar from its
+slot.** Its maximum is its own, and a window cut short lowers no maximum below the root's. So the
+align pass records whether the body stood past the slot it was laid out into, and asks for another
+pass where the bar standing is the wrong one - see settleAutoVerticalBar. The measuring pass that
+follows stands the bar that answer names. One pass settles it: a body laid out narrower is never
+shorter, nor a wider one taller. Until the box has been laid out once, its maximum answers for it. A
+pass measuring what to ask a placement for records nothing - it lays the box out at the content's
+own size, so its slot is no viewport - but it reads the answer, and the size it asks for carries the
+bar. **The horizontal bar is answered against the maximum alone.** A box whose width is its host's
+answer has no maximum of its own there and states the horizontal bar it wants. **A bar takes its
+strip from the other axis.** Content that fits beside no bar may not fit beside one, so once a bar
+comes up the axis still without one is read again against what is left - see calculateContent. Only
+a bar coming up is read then: one taken down would hand its strip back and ask the first question
+over. A bar the second reading raises finds the other one up already, so a pass measures the box
+again twice at most, and only where a bar changes.
 
 ## SuggestionList
 
@@ -53,14 +53,14 @@ box, under it.
 
 ## HexView
 
-ONLY THE LINES THE VIEWPORT REACHES ARE SHAPED. The view states its whole height through
+**Only the lines the viewport reaches are shaped.** The view states its whole height through
 calculateContent, so the scroll box it stands in takes the range from the layout and
 nothing holds a second copy of it. The paint then draws the lines its viewport covers and
 touches no others, which is what lets the view hold a buffer larger than a shaped document
 could be.
 
-EVERY COLUMN IS A COUNT OF CHARACTERS. One measurement of the monospace style per layout
-pass gives the cell, and a line is drawn as ONE text laid out on that same grid - so where a
+**Every column is a count of characters.** One measurement of the monospace style per layout
+pass gives the cell, and a line is drawn as **one** text laid out on that same grid - so where a
 byte is drawn and where the view says it is cannot part. The style is one format both are
 shaped under, so the run measured and the lines drawn cannot disagree about it either - see
 Control-Foundation#text-format. This holds for as long as TextStyleId::Code resolves to a

@@ -8,7 +8,7 @@ import ClaFi.App.Application;
 
 import ClaFi.StdLib;
 
-// NOTHING HERE NAMES A PLATFORM OR A BACKEND. What an entry point keeps is what its operating
+// **Nothing here names a platform or a backend.** What an entry point keeps is what its operating
 // system asks for and the two types the application is built out of; everything else - the form,
 // its pages, its tabs and the caret readout in each corner - stands here and runs over any platform
 // the framework has.

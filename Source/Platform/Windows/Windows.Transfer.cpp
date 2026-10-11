@@ -7,9 +7,9 @@ module;
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "shell32.lib")
 
-// AN IMPLEMENTATION UNIT OF THE MODULE THAT DECLARED Clipboard, not of the Windows layer. A class
-// member belongs to the module its class was declared in and must be defined there, so the bodies
-// of Clipboard:: live here whatever platform supplies them.
+// **An implementation unit of the module that declared** Clipboard, not of the Windows layer. A
+// class member belongs to the module its class was declared in and must be defined there, so the
+// bodies of Clipboard:: live here whatever platform supplies them.
 module ClaFi.Core.Transfer.Clipboard;
 
 import ClaFi.Platform.Windows.Window;
@@ -46,13 +46,13 @@ namespace ClaFi::Transfer
         constexpr UINT k_retryDelay = 1000;
     }
 
-    // THE CLIPBOARD AS OLE HAS IT: the data object this process stands behind, the generations
+    // **The clipboard as OLE has it**: the data object this process stands behind, the generations
     // the held reader and the own copy were seen at, and the window that hears of a change. See
     // Transfer
     struct NativeClipboard : public IMessageSink
     {
         explicit NativeClipboard(Clipboard&);
-        // RENDERS THE PACKAGE ONTO THE CLIPBOARD ON THE WAY OUT, while this process still owns
+        // **Renders the package onto the clipboard on the way out**, while this process still owns
         // it, so the copy outlives the process. OLE refuses the flush from any other owner, so
         // it is asked first - and a package another application's copy replaced has already
         // been released with it.
@@ -64,13 +64,13 @@ namespace ClaFi::Transfer
         [[nodiscard]] std::string bytesFor(const Format&);
         // Whether the held package provides a format, which is what QueryGetData answers.
         [[nodiscard]] bool provides(const Format&);
-        // BRINGS THE HELD READER IN LINE WITH THE CLIPBOARD, or answers false while another holder
-        // keeps it shut - in which case the last reading stands, its generation with it, and the
-        // next call reads again. A reading that could not be made is not an empty clipboard.
+        // **Brings the held reader in line with the clipboard**, or answers false while another
+        // holder keeps it shut - in which case the last reading stands, its generation with it, and
+        // the next call reads again. A reading that could not be made is not an empty clipboard.
         bool refreshOffer();
-        // TAKES A LISTENER WINDOW FROM THE PLATFORM and puts it on the clipboard's format listener
-        // list. AddClipboardFormatListener has to name a window, and WM_CLIPBOARDUPDATE is the
-        // only message it exists to receive - see wndProc, which is where the window delivers.
+        // **Takes a listener window from the platform** and puts it on the clipboard's format
+        // listener list. AddClipboardFormatListener has to name a window, and WM_CLIPBOARDUPDATE is
+        // the only message it exists to receive - see wndProc, which is where the window delivers.
         void startListening();
         // WM_CLIPBOARDUPDATE, and the retry's timer. Windows tells every listener, this process's
         // own copies included. That is right rather than wasteful: a cut changes what a paste
@@ -93,7 +93,7 @@ namespace ClaFi::Transfer
         // never asks.
         std::unique_ptr<MessageWindow> listener{};
     private:
-        // A CHANGE IS ANNOUNCED ONCE IT HAS BEEN READ. Every listener in the session is told at
+        // **A change is announced once it has been read.** Every listener in the session is told at
         // the same moment and one holder at a time is all the clipboard allows, so the read can
         // find it shut - see whileClipboardShut. A change that could not be read is read again a
         // second later, and the listeners hear of it then; until then the last reading stands.
@@ -102,8 +102,9 @@ namespace ClaFi::Transfer
 
     namespace
     {
-        // THE CLIPBOARD'S LINE END IS CRLF HERE, and the framework's is LF. The conversion belongs
-        // in this layer: a caller made to think about it gets one of the two directions wrong.
+        // **The clipboard's line end is CRLF here**, and the framework's is LF. The conversion
+        // belongs in this layer: a caller made to think about it gets one of the two directions
+        // wrong.
         [[nodiscard]] std::wstring toCrLf(const std::wstring_view text)
         {
             std::wstring result{};
@@ -134,7 +135,7 @@ namespace ClaFi::Transfer
 
         [[nodiscard]] std::string wideBytes(const std::wstring_view text)
         {
-            // TERMINATED, which is what CF_UNICODETEXT is defined as.
+            // **Terminated**, which is what CF_UNICODETEXT is defined as.
             std::string bytes((text.size() + 1) * sizeof(wchar_t), '\0');
             std::memcpy(bytes.data(), text.data(), text.size() * sizeof(wchar_t));
             return bytes;
@@ -146,7 +147,7 @@ namespace ClaFi::Transfer
             std::wstring text(characters, L'\0');
             std::memcpy(text.data(), bytes.data(), characters * sizeof(wchar_t));
 
-            // UP TO THE TERMINATOR. The block can be larger than what was written into it, and
+            // **Up to the terminator.** The block can be larger than what was written into it, and
             // the rest of it is whatever was there before.
             const std::size_t end = text.find(L'\0');
             if (end != std::wstring::npos)
@@ -176,7 +177,7 @@ namespace ClaFi::Transfer
             return true;
         }
 
-        // WHAT THIS LAYER CALLS THE FORMATS THAT HAVE NO NAME OF THEIR OWN. A predefined format
+        // **What this layer calls the formats that have no name of their own.** A predefined format
         // answers nothing to GetClipboardFormatName, and a clipboard the user can see must not
         // look emptier than it is, so the names are this platform's to give - as they are for
         // every other standard spelling.
@@ -203,12 +204,12 @@ namespace ClaFi::Transfer
             { CF_TIFF, L"CF_TIFF" }
         };
 
-        // THE PNG'S NAMES ON THIS CLIPBOARD: the one nearly every source registers, and the MIME
-        // name a few register instead.
+        // **The png's names on this clipboard**: the one nearly every source registers, and the
+        // MIME name a few register instead.
         constexpr std::wstring_view k_pngName = L"PNG";
         constexpr std::wstring_view k_pngMimeName = L"image/png";
 
-        // WHICH PLATFORM FORMATS SERVE A FRAMEWORK FORMAT, best first. Text is CF_UNICODETEXT
+        // **Which platform formats serve a framework format**, best first. Text is CF_UNICODETEXT
         // alone: Windows synthesises it from CF_TEXT, so it is there whenever text is. A picture
         // is the PNG where the source placed one - lossless, its alpha intact - else the DIB
         // with its alpha mask, else the plain DIB, else the GDI bitmap read as one: OLE lists
@@ -240,22 +241,22 @@ namespace ClaFi::Transfer
             return sameIgnoringCase(name, k_pngName) || sameIgnoringCase(name, k_pngMimeName);
         }
 
-        // A FORMAT WHOSE CLIPBOARD ENTRY IS A HANDLE AND NOT BYTES: a GDI bitmap, a palette, an
+        // **A format whose clipboard entry is a handle and not bytes**: a GDI bitmap, a palette, an
         // enhanced metafile. No memory or stream medium carries one and nothing here spells one, so
         // asked for as bytes it answers nothing rather than an error - what it has is a number, and
         // Offer::readHandle is where that is asked for.
         //
-        // CF_METAFILEPICT IS NOT ONE OF THESE. Its entry is memory holding a METAFILEPICT, whose
-        // last member is the handle, and those bytes are as readable as any other format's - under
-        // a medium of its own, which is the whole of what makes it look different.
+        // CF_METAFILEPICT **is not one of these.** Its entry is memory holding a METAFILEPICT,
+        // whose last member is the handle, and those bytes are as readable as any other format's -
+        // under a medium of its own, which is the whole of what makes it look different.
         [[nodiscard]] bool isHandleFormat(const CLIPFORMAT clipFormat)
         {
             return clipFormat == CF_BITMAP || clipFormat == CF_PALETTE
                 || clipFormat == CF_ENHMETAFILE;
         }
 
-        // WHICH MEDIUM CARRIES A HANDLE FORMAT: a metafile comes on its own, a bitmap and a palette
-        // are both GDI objects.
+        // **Which medium carries a handle format**: a metafile comes on its own, a bitmap and a
+        // palette are both GDI objects.
         [[nodiscard]] DWORD handleMediumOf(const CLIPFORMAT clipFormat)
         {
             if (clipFormat == CF_ENHMETAFILE)
@@ -273,13 +274,13 @@ namespace ClaFi::Transfer
             return medium.hBitmap;
         }
 
-        // THE DIB A GDI BITMAP'S PIXELS MAKE: the block CF_DIB carries, an info header and 32-bit
-        // rows top down, so the bytes read as the picture and decode as one. A GDI bitmap has no
-        // alpha to speak of, and BI_RGB says so.
+        // **The DIB a GDI bitmap's pixels make**: the block CF_DIB carries, an info header and
+        // 32-bit rows top down, so the bytes read as the picture and decode as one. A GDI bitmap
+        // has no alpha to speak of, and BI_RGB says so.
         //
-        // THIS IS A READING OF THE OBJECT AND NOT THE FORMAT'S BYTES. CF_BITMAP carries a handle;
-        // these bytes were made here, never travelled, and are only ever handed out as a decoded
-        // picture - see ClipboardOffer::read.
+        // **This is a reading of the object and not the format's bytes.** CF_BITMAP carries a
+        // handle; these bytes were made here, never travelled, and are only ever handed out as a
+        // decoded picture - see ClipboardOffer::read.
         [[nodiscard]] std::string dibOf(const HBITMAP bitmap)
         {
             BITMAP shape{};
@@ -313,9 +314,9 @@ namespace ClaFi::Transfer
             return bytes;
         }
 
-        // A REGISTERED NAME CAN COME BACK IN ANOTHER SPELLING - the OS folds case and answers with
-        // whichever spelling reached it first - so a name is matched against what this application
-        // declared rather than trusted as it arrives.
+        // **A registered name can come back in another spelling** - the OS folds case and answers
+        // with whichever spelling reached it first - so a name is matched against what this
+        // application declared rather than trusted as it arrives.
         [[nodiscard]] Format declaredOrNamed(std::wstring name)
         {
             for (const Format& known : ByteSpellingTable::instance().knownFormats())
@@ -329,7 +330,7 @@ namespace ClaFi::Transfer
             return Format::custom(std::move(name));
         }
 
-        // EVERY PLATFORM FORMAT UNDER ITS PLATFORM NAME, the synthesised ones included: Windows
+        // **Every platform format under its platform name**, the synthesised ones included: Windows
         // makes CF_TEXT from CF_UNICODETEXT and CF_DIBV5 and CF_BITMAP from CF_DIB, and each
         // answers different bytes. Never a framework format - see Offer::platformFormat.
         [[nodiscard]] Format formatFor(const CLIPFORMAT clipFormat)
@@ -354,7 +355,7 @@ namespace ClaFi::Transfer
             switch (format.kind())
             {
                 case Format::Kind::Standard:
-                    // CF_UNICODETEXT ALONE. Windows synthesises CF_TEXT and CF_OEMTEXT from it,
+                    // CF_UNICODETEXT **alone**. Windows synthesises CF_TEXT and CF_OEMTEXT from it,
                     // and offering those as well would make every format look explicitly placed
                     // to whoever enumerates the clipboard - the order is the only thing that tells
                     // a placed format from a convertible one.
@@ -383,7 +384,7 @@ namespace ClaFi::Transfer
             StandardFormat::Picture
         };
 
-        // THE PACKAGE'S OWN NAME FOR WHAT A PASTE ASKS BY THE PLATFORM'S. A package holds a
+        // **The package's own name for what a paste asks by the platform's.** A package holds a
         // framework format under the framework's name and this platform places it under its
         // own, so the clip format a framework format is placed as is asked of the package as
         // that format; anything else is asked for by its platform name.
@@ -419,17 +420,17 @@ namespace ClaFi::Transfer
             return result;
         }
 
-        // ONE HOLDER AT A TIME IS ALL WINDOWS ALLOWS, and every listener in the session is told of
-        // a change at once - so the readers that lose the race for it are answered with a
+        // **One holder at a time is all Windows allows**, and every listener in the session is told
+        // of a change at once - so the readers that lose the race for it are answered with a
         // failure to read, which is not an empty clipboard; the two are told apart by asking
-        // again while whoever holds it finishes. EVERY CALL THAT OPENS THE CLIPBOARD CAN LOSE
-        // THAT RACE: taking the data object, enumerating its formats and reading one all open
+        // again while whoever holds it finishes. **Every call that opens the clipboard can lose
+        // that race**: taking the data object, enumerating its formats and reading one all open
         // it, the last two through OLE's own object, so all of them go through here.
         //
-        // TWO CODES SAY SHUT. A direct open and GetData answer CLIPBRD_E_CANT_OPEN; OLE's object
-        // answers a shut clipboard from EnumFormatEtc as E_OUTOFMEMORY, the enumerator it could
-        // not fill - every enumeration that failed under a change out of a Chromium application
-        // came back so, and every one read on the next try.
+        // **Two codes say shut.** A direct open and GetData answer CLIPBRD_E_CANT_OPEN; OLE's
+        // object answers a shut clipboard from EnumFormatEtc as E_OUTOFMEMORY, the enumerator it
+        // could not fill - every enumeration that failed under a change out of a Chromium
+        // application came back so, and every one read on the next try.
         //
         // The wait is on the thread the notification arrived on, and short: a holder that keeps
         // the clipboard past it is waited for off the thread, on the listener window's timer.
@@ -536,7 +537,7 @@ namespace ClaFi::Transfer
             FORMATETC entry{};
             while (enumerator->Next(1, &entry, nullptr) == S_OK)
             {
-                // A TARGET DEVICE IS THE CALLER'S TO FREE, and nothing here reads one.
+                // **A target device is the caller's to free**, and nothing here reads one.
                 if (entry.ptd)
                     ::CoTaskMemFree(entry.ptd);
 
@@ -564,14 +565,14 @@ namespace ClaFi::Transfer
             return true;
         }
 
-        // WHAT THE CLIPBOARD HOLDS ON THIS PROCESS'S BEHALF. OLE keeps a reference of its own and
-        // asks for a format only when somebody pastes, which is the pull contract the whole
+        // **What the clipboard holds on this process's behalf. OLE** keeps a reference of its own
+        // and asks for a format only when somebody pastes, which is the pull contract the whole
         // subsystem is built on - and the one DoDragDrop takes, so a drag will reuse this.
         //
         // The formats are settled when the object is made. It lives exactly as long as the package
         // it was made for: a later copy replaces both together.
         //
-        // THE CLIPBOARD IT SERVES OUTLIVES EVERY CALL INTO IT. OLE calls in on the thread that
+        // **The clipboard it serves outlives every call into it. OLE** calls in on the thread that
         // owns the apartment, from its message loop or from the flush the clipboard's own
         // destructor makes, and the apartment is closed after that destructor has run.
         class DataObject : public IDataObject
@@ -603,7 +604,7 @@ namespace ClaFi::Transfer
             LONG m_references{ 1 };
         };
 
-        // READS THE CLIPBOARD THROUGH OLE. Built for one data object and replaced when the
+        // **Reads the clipboard through OLE.** Built for one data object and replaced when the
         // clipboard generation moves.
         class ClipboardOffer : public Offer
         {
@@ -619,9 +620,9 @@ namespace ClaFi::Transfer
             // One native format's bytes off the object, as they arrive. Empty where it answers
             // nothing, and empty for a handle format, which has none.
             [[nodiscard]] std::string readNative(CLIPFORMAT, const Format&);
-            // THE PICTURE A CF_BITMAP OFFERS, read off the object its handle names. A decode rather
-            // than a read: the DIB it goes through is made here - see dibOf - so it is served as a
-            // Payload and never as the format's bytes.
+            // **The picture a CF_BITMAP offers**, read off the object its handle names. A decode
+            // rather than a read: the DIB it goes through is made here - see dibOf - so it is
+            // served as a Payload and never as the format's bytes.
             [[nodiscard]] Payload readBitmapPicture(const Format&);
         private:
             ComPtr<IDataObject> m_data;
@@ -803,7 +804,7 @@ namespace ClaFi::Transfer
         {
             if (format.kind() != Format::Kind::Standard)
             {
-                // THE ONE PLATFORM FORMAT THIS LAYER DECODES FOR ITSELF. CF_BITMAP carries a
+                // **The one platform format this layer decodes for itself.** CF_BITMAP carries a
                 // handle, so there are no bytes to spell and readBytes answers none; its picture
                 // is read off the object, and a decode is what this call is for.
                 if (clipFormatFor(format) == CF_BITMAP)
@@ -817,8 +818,8 @@ namespace ClaFi::Transfer
             if (!served)
                 return {};
 
-            // A PICTURE SERVED FROM CF_BITMAP TAKES THE SAME ROUTE, which is the last spelling in
-            // the picture list and the only one a source may place alone.
+            // **A picture served from CF_BITMAP takes the same route**, which is the last spelling
+            // in the picture list and the only one a source may place alone.
             if (clipFormatFor(*served) == CF_BITMAP)
                 return readBitmapPicture(*served);
 
@@ -879,9 +880,9 @@ namespace ClaFi::Transfer
                 return 0;
             }
 
-            // READ BEFORE THE MEDIUM GOES BACK, which is where OLE takes away the handle it made
-            // for this reader. What is answered is therefore a value that was live and is not any
-            // more, which is the whole of what a handle can honestly say from here.
+            // **Read before the medium goes back**, which is where OLE takes away the handle it
+            // made for this reader. What is answered is therefore a value that was live and is not
+            // any more, which is the whole of what a handle can honestly say from here.
             const std::uint64_t value{ reinterpret_cast<std::uintptr_t>(handleOf(medium)) };
             ::ReleaseStgMedium(&medium);
             return value;
@@ -892,8 +893,8 @@ namespace ClaFi::Transfer
             if (!clipFormat || !m_data || isHandleFormat(clipFormat))
                 return {};
 
-            // EITHER MEDIUM, since the source chooses: memory is what the clipboard itself hands
-            // over, and a stream is what some sources serve a format as, HTML among them. A
+            // **Either medium**, since the source chooses: memory is what the clipboard itself
+            // hands over, and a stream is what some sources serve a format as, HTML among them. A
             // metafile picture is memory as well, under a medium of its own, and its bytes are the
             // METAFILEPICT it carries.
             FORMATETC requested{};
@@ -916,8 +917,8 @@ namespace ClaFi::Transfer
             }
 
             std::string bytes{};
-            // A METAFILEPICT ARRIVES ON ITS OWN MEDIUM AND IS STILL AN HGLOBAL, which is why one
-            // branch reads both: the union's members alias, and GlobalSize answers for either.
+            // **A METAFILEPICT arrives on its own medium and is still an HGLOBAL**, which is why
+            // one branch reads both: the union's members alias, and GlobalSize answers for either.
             if ((medium.tymed == TYMED_HGLOBAL || medium.tymed == TYMED_MFPICT) && medium.hGlobal)
             {
                 const SIZE_T size = ::GlobalSize(medium.hGlobal);
@@ -935,11 +936,11 @@ namespace ClaFi::Transfer
 
             ::ReleaseStgMedium(&medium);
 
-            // THE LENGTH IN FRONT IS THIS APPLICATION'S ENVELOPE, not the content. A format with
-            // a byte spelling travels with its length written ahead of it - see the writer, which
-            // puts it there - because an HGLOBAL is rounded up and the reader cannot otherwise
-            // tell the payload from the padding. The other platform sends the payload alone, and
-            // the two have to answer the same bytes.
+            // **The length in front is this application's envelope**, not the content. A format
+            // with a byte spelling travels with its length written ahead of it - see the writer,
+            // which puts it there - because an HGLOBAL is rounded up and the reader cannot
+            // otherwise tell the payload from the padding. The other platform sends the payload
+            // alone, and the two have to answer the same bytes.
             if (!ByteSpellingTable::instance().find(format))
                 return bytes;
 
@@ -989,7 +990,7 @@ namespace ClaFi::Transfer
         }
     }
 
-    // UTF-16, CRLF AND THE TERMINATOR, which is what CF_UNICODETEXT is defined as and what a
+    // **UTF-16, CRLF and the terminator**, which is what CF_UNICODETEXT is defined as and what a
     // reader on the other side of this clipboard is handed.
     std::string nativeBytes(const Format& format, const Payload& content)
     {
@@ -1029,7 +1030,7 @@ namespace ClaFi::Transfer
 
     Clipboard::~Clipboard() = default;
 
-    // THE STAMP IS NOT READ HERE. OLE authorises nothing against an input event, so a copy this
+    // **The stamp is not read here. OLE** authorises nothing against an input event, so a copy this
     // application made for itself takes the clipboard exactly as a user's does. The other platform
     // refuses that request, and the difference belongs to the platforms rather than to this
     // framework.
@@ -1045,7 +1046,7 @@ namespace ClaFi::Transfer
         // OleSetClipboard takes another of its own.
         m_native->dataObject.Attach(new DataObject{ *m_native, formatEtcFor(*held) });
         ::OleSetClipboard(m_native->dataObject.Get());
-        // READ AFTER THE CALL, which moves it.
+        // **Read after the call**, which moves it.
         m_native->ownedSequence = ::GetClipboardSequenceNumber();
 
         // The cached reader is over whatever was on the clipboard before this.
@@ -1106,7 +1107,7 @@ namespace ClaFi::Transfer
         if (!content)
             return {};
 
-        // FRAMED ONLY WHERE THIS APPLICATION SPELLS THE FORMAT ITSELF. A format nothing is
+        // **Framed only where this application spells the format itself.** A format nothing is
         // registered for is bytes that arrived from elsewhere, and they go back out as they
         // came.
         const bool framed = ByteSpellingTable::instance().find(format) != nullptr;
@@ -1131,7 +1132,7 @@ namespace ClaFi::Transfer
     {
         const DWORD sequence = ::GetClipboardSequenceNumber();
 
-        // WHETHER THIS PROCESS STILL OWNS THE CLIPBOARD. Nothing arrives to say it changed
+        // **Whether this process still owns the clipboard.** Nothing arrives to say it changed
         // hands, and a package held here would shadow a copy made in another application. OLE
         // is asked only once the generation has moved: until then nothing can have taken it,
         // and this is read on every poll of the paste action.
@@ -1160,7 +1161,7 @@ namespace ClaFi::Transfer
         return true;
     }
 
-    // THE PLATFORM BEHIND THE NAME IS THE WINDOWS ONE, the only platform of this build, and it
+    // **The platform behind the name is the Windows one**, the only platform of this build, and it
     // derives from the factory - see Win32Platform.
     void NativeClipboard::startListening()
     {

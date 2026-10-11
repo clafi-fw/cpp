@@ -10,7 +10,7 @@ namespace ClaFi::PlatformImplementation::Linux
 {
     namespace
     {
-        // WHERE THE DESKTOP'S OWN SETTINGS ARE SERVED: the Settings interface of the XDG portal.
+        // Where the desktop's own settings are served: the Settings interface of the XDG portal.
         namespace SettingsPortal
         {
             constexpr const char* busName = "org.freedesktop.portal.Desktop";
@@ -30,7 +30,7 @@ namespace ClaFi::PlatformImplementation::Linux
             constexpr dbus_uint32_t preferDark = 1;
         }
 
-        // THE BUS FILTERS THE SIGNALS, so a change of the colour scheme is the one delivered.
+        // **The bus filters the signals**, so a change of the colour scheme is the one delivered.
         constexpr const char* k_changeRule =
             "type='signal',"
             "interface='org.freedesktop.portal.Settings',"
@@ -117,7 +117,7 @@ namespace ClaFi::PlatformImplementation::Linux
             closeConnection();
         }
 
-        // THE FIRST ASK CONNECTS AND READS, and every later one is answered from what the bus
+        // **The first ask connects and reads**, and every later one is answered from what the bus
         // has said since.
         ColorMode Portal::colorMode()
         {
@@ -140,9 +140,9 @@ namespace ClaFi::PlatformImplementation::Linux
                 m_handler();
         }
 
-        // A PRIVATE CONNECTION, so its lifetime is this reader's and nothing else in the process
-        // can close it. Every way this can fail leaves the mode at Light: a desktop without a
-        // session bus or a portal states no preference.
+        // **A private connection**, so its lifetime is this reader's and nothing else in the
+        // process can close it. Every way this can fail leaves the mode at Light: a desktop without
+        // a session bus or a portal states no preference.
         void Portal::connect()
         {
             m_connectTried = true;
@@ -160,7 +160,7 @@ namespace ClaFi::PlatformImplementation::Linux
             dbus_bus_add_match(m_connection, k_changeRule, nullptr);
             requestScheme(SettingsPortal::readOneMethod);
 
-            // THE FIRST ANSWER IS WAITED FOR, so the first window opens in the desktop's mode
+            // **The first answer is waited for**, so the first window opens in the desktop's mode
             // rather than crossing to it. A portal slower than this - one the session starts for
             // this application - is answered from the loop when it comes.
             const std::chrono::steady_clock::time_point deadline =
@@ -217,7 +217,7 @@ namespace ClaFi::PlatformImplementation::Linux
             dbus_connection_flush(m_connection);
         }
 
-        // EVERY MESSAGE THE CONNECTION HOLDS, in the order they came. A connection the bus has
+        // **Every message the connection holds**, in the order they came. A connection the bus has
         // closed is let go once its last message is read. True where the mode has moved.
         bool Portal::takeQueued()
         {
@@ -233,7 +233,7 @@ namespace ClaFi::PlatformImplementation::Linux
             return moved;
         }
 
-        // ONE MESSAGE OFF THE BUS: the answer to the read still out, or a change the desktop
+        // **One message off the bus**: the answer to the read still out, or a change the desktop
         // announced. Anything else - the bus's own greeting among them - is passed over.
         bool Portal::take(DBusMessage* message)
         {
@@ -266,7 +266,7 @@ namespace ClaFi::PlatformImplementation::Linux
             return false;
         }
 
-        // A CHANGE THE DESKTOP ANNOUNCED: the namespace, the key and the new value. The rule
+        // **A change the desktop announced**: the namespace, the key and the new value. The rule
         // asks the bus for this one change, and the arguments are checked all the same.
         bool Portal::takeSignal(DBusMessage* message)
         {
@@ -292,7 +292,7 @@ namespace ClaFi::PlatformImplementation::Linux
             return takeScheme(arguments);
         }
 
-        // THE VALUE, INSIDE AS MANY VARIANTS AS IT ARRIVED IN - one from ReadOne and from the
+        // **The value, inside as many variants as it arrived in** - one from ReadOne and from the
         // signal, two from Read. True where it moves the mode.
         bool Portal::takeScheme(DBusMessageIter& value)
         {

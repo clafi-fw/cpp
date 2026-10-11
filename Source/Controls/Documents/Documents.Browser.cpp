@@ -145,10 +145,11 @@ namespace ClaFi::Documents
         {
             tabPage = static_cast<DocumentsBasePage*>(tab.page());
             const TagValue tabTag = tabPage->tag().value;
-            // A PAGE IS BUILT FOR ONE PAGE DATA AND HOLDS IT BY REFERENCE, so a tab that has moved
-            // to a different one needs a new page even where the kind of page is the same. Kept,
-            // the editor would go on showing the document it was built for, and saving to that
-            // document's file, while the caption, the path and the tab all named the one chosen.
+            // **A page is built for one page data and holds it by reference**, so a tab that has
+            // moved to a different one needs a new page even where the kind of page is the same.
+            // Kept, the editor would go on showing the document it was built for, and saving to
+            // that document's file, while the caption, the path and the tab all named the one
+            // chosen.
             const bool pageDataChanged = &tabPage->pageData() != tab.pageData();
             if (tabTag != needTag || pageDataChanged)
             {

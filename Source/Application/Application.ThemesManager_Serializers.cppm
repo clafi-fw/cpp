@@ -70,7 +70,7 @@ namespace ClaFi // AppTheme serializers
         );
     }
 
-    // ONE FIELD AT A TIME, BECAUSE ONLY SOME ELEMENTS NAME AN EFFECT. Each index answers with a
+    // **One field at a time, because only some elements name an effect.** Each index answers with a
     // tuple of its own, empty where the element names none, and tuple_cat joins them.
     template <std::size_t I>
     constexpr auto elementField()

@@ -211,7 +211,7 @@ namespace ClaFi::Controls
             VerticalTextAnchor::Center
         );
         Row result{};
-        // THE READING OWNS ITS LAYOUT: it is a different text on every move of the slider.
+        // **The reading owns its layout**: it is a different text on every move of the slider.
         result.value = &row.add<WithTextLayout<Label>>(
             MinSize{ k_valueWidth, 0.0f },
             MaxSize{ k_valueWidth, k_maxFloat },
@@ -238,7 +238,7 @@ namespace ClaFi::Controls
         emitEvent(event);
     }
 
-    // ONE FORMAT OUT: the colour as the caller spells it, which is what an application that has
+    // **One format out**: the colour as the caller spells it, which is what an application that has
     // never heard of this dialog can take.
     void ColorEditDialog::copy(const InputStamp stamp)
     {

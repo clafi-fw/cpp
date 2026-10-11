@@ -40,13 +40,13 @@ namespace TextEngine_App
 
         return Text{ Fmt{
             // ==========================================
-            // 1. ALIGNMENT & HEADINGS
+            // 1. **Alignment & headings**
             // ==========================================
             L"[center][title]ClaFi TextEngine[/title][n]"
             L"[subtitle]A comprehensive demonstration of all formatting features[/subtitle][n][n]"
 
             // ==========================================
-            // 2. STRUCTURAL TAGS & TYPOGRAPHY
+            // 2. **Structural tags & typography**
             // ==========================================
             L"[left][heading]1. Typography & Hierarchy[/heading][n]"
             L"[body]The engine supports predefined structural tags, such as [b]title[/b] and [b]subtitle[/b] used above, alongside:[/body][n]"
@@ -59,7 +59,7 @@ namespace TextEngine_App
             L"[body]and override the font family dynamically to [font Consolas]Consolas[/font].[/body][n][n]"
 
             // ==========================================
-            // 3. COLOR SYSTEM
+            // 3. **Color system**
             // ==========================================
             L"[heading]3. Color System[/heading][n]"
             L"[body]Grades are steps between the surface and the ink the chain arrived at: "
@@ -84,7 +84,7 @@ namespace TextEngine_App
             L"[body]...and one handed in as an argument: [color {}]Injected Argument Color[/color].[/body][n][n]"
 
             // ==========================================
-            // 4. LAYOUT & SPACING
+            // 4. **Layout & spacing**
             // ==========================================
             L"[heading]4. Layout, Spacing & Alignment[/heading][n]"
             L"[left]Left alignment.[end]"
@@ -105,21 +105,21 @@ namespace TextEngine_App
             L"If the specified vspace height is less than the natural text height, it has no effect.[n][n]"
 
             // ==========================================
-            // 5. VARIABLE INJECTION
+            // 5. **Variable injection**
             // ==========================================
             L"[heading]5. Dynamic Variable Injection[/heading][n]"
             L"[body]Because Fmt executes over std::vformat, standard format specifiers are supported natively:[/body][n]"
             L"Integer: {}, Float: {:.2f}, Hex: 0x{:02X}[n][n]"
 
             // ==========================================
-            // 6. IN-TEXT ICONS
+            // 6. **In-text icons**
             // ==========================================
             L"[heading]6. In-Text Icons[/heading][n]"
             L"[body]Icons align with text. Default size fallback: [icon {}].[/body][n]"
             L"[body]Custom dimensions (W,H,B): [icon {} 24,24,20] sizes the element relative to the layout.[/body][n][n]"
 
             // ==========================================
-            // 7. LISTS & CUSTOM DRAWING
+            // 7. **Lists & custom drawing**
             // ==========================================
             L"[heading]7. Lists & Custom Drawing\n[/heading]"
 
@@ -132,7 +132,7 @@ namespace TextEngine_App
             L"[indent 0][n]" // Reset the indent back to normal for the following note
 
             // ==========================================
-            // 8. LINKS
+            // 8. **Links**
             // ==========================================
             L"[heading]8. Links[/heading][n]"
             L"[body]A [link https://example.com]link[/link] is drawn in the accent ink and underlined under the pointer. "

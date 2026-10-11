@@ -6,7 +6,7 @@ import ClaFi.Core.DomEngine_Dt;
 
 import ClaFi.StdLib;
 
-// THE SURFACE AS A DOCUMENT. One file, in the framework's own format, read by the designer and
+// **The surface as a document.** One file, in the framework's own format, read by the designer and
 // the documentation generator. An entry states only what it has: a key at its default is left
 // out, and the layout puts it back on reading.
 namespace SeeDocs_App

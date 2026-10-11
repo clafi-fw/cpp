@@ -10,13 +10,13 @@ through the function of the same name - `logThemeCrossing()`, `apiErrors()` and 
 answers off, or `ApiErrors::Ignore`, while `enabled` is off. A caller asks one question and never
 checks `enabled` beside it.
 
-A RELEASE CARRIES NO DIAGNOSTIC. A build defining `CLAFI_NO_DIAGNOSTIC` holds `enabled` off,
+**A release carries no diagnostic.** A build defining `CLAFI_NO_DIAGNOSTIC` holds `enabled` off,
 whatever the source says. A Visual Studio build defines it under `-p:ClaFiNoDiagnostic=true`
 (ClaFi.vcxitems), a CMake build under `-DCLAFI_NO_DIAGNOSTIC=ON`. The release recipe passes both -
 `.github/workflows/release.yml` for Windows, `.github/release/build-linux.sh` for Linux - so an
 application published from GitHub carries none, however the source was left.
 
-OFF MEANS NOT LINKED, not only not run. Code behind an option stands in an `if constexpr`, so a
+**Off means not linked**, not only not run. Code behind an option stands in an `if constexpr`, so a
 build with the option off has none of it. The diagnostic window asks for more: the controls it is
 built from - the FPS page's grids among them - must not reach an executable that never opens it.
 
@@ -31,7 +31,7 @@ a tab strip along the bottom with the Always on top check beside the tabs. It is
 application and hidden until the application menu's Show diagnostic, which brings it to the front
 when it is already up; its close button hides it, and the application's exit takes it down.
 
-WHAT IT REMEMBERS is kept in the config in two places. Its placement stands in the Forms
+**What it remembers** is kept in the config in two places. Its placement stands in the Forms
 section under `Diagnostic`, the way the main form's does - always on top included where the
 platform keeps that, which is Win32. Whether it was up and which page it was on stand in a
 section of its own, `Diagnostic`, as `Visible` and `Tab`;
@@ -42,7 +42,7 @@ placement while the window is up, from ApplicationBase::saveConfig - the window 
 long as the application, so the hide that writes a placement never comes for it, and the
 config is saved before the window goes.
 
-THE PAGE IS KEPT BY ITS TAB CAPTION rather than by a number, so the config file says `Output` or
+**The page is kept by its tab caption** rather than by a number, so the config file says `Output` or
 `FPS` and a page added between them moves nothing. The captions are stated once and the tabs are
 built from them, so the name written and the name matched cannot come apart, and a name that matches
 neither reads as the Output page.
@@ -53,8 +53,8 @@ check is hidden.
 
 ## FrameExtent
 
-How much of what is measured a frame covered. EVERY FRAME COUNTS TOWARDS THE RATE;
-ONLY A WHOLE ONE STATES A PAINT TIME. A paint of a part is an arrival like any other, but
+How much of what is measured a frame covered. **Every frame counts towards the rate;
+only a whole one states a paint time.** A paint of a part is an arrival like any other, but
 what it cost says nothing about what the whole costs.
 
 ## FpsPage
@@ -63,7 +63,7 @@ What the framework window under the pointer paints: what the window is, what a
 frame of it costs and the rate its paints arrive at, each reading against its extremes,
 and the rate charted over the last two seconds.
 
-THE PAGE DRIVES ITS TARGET. While the page is showing, a repeater asks the window
+**The page drives its target.** While the page is showing, a repeater asks the window
 under the pointer for a whole frame on every tick, and each paint of that window comes
 back through FormPaintedEvent and is timed. The repeater is a timer, which is the lowest
 priority message there is: a pointer streaming moves, and the paints they cause, hold it
@@ -71,16 +71,16 @@ off for as long as the pointer keeps moving. So the whole frames are the idle th
 work, and a core is spent on them for as long as the page is open with a window under the
 pointer.
 
-EVERY PAINT COUNTS TOWARDS THE RATE; ONLY A WHOLE ONE STATES A PAINT TIME. A paint
+**Every paint counts towards the rate; only a whole one states a paint time.** A paint
 covering less than 80% of the window is a control repainting itself - a tile the pointer
 has reached - which is an arrival like any other and says nothing about what the whole
 costs.
 
-THE TARGET IS READ OFF THE POINTER ON EVERY TICK and never followed across one. Over this page's own
-window, or over no framework window, there is none: nothing is driven and the readings stand at
+**The target is read off the pointer on every tick** and never followed across one. Over this page's
+own window, or over no framework window, there is none: nothing is driven and the readings stand at
 their last values.
 
-THE BACKEND ROW IS THE APPLICATION'S ANSWER AND NOT THE TARGET'S. One context builds every
+**The backend row is the application's answer and not the target's.** One context builds every
 window of an application, so they all draw through the same kind and this page's own form answers
 for them - which is what lets that row stand while nothing is being measured and every other row
 reads a dash.
@@ -90,15 +90,15 @@ reads a dash.
 The frame rate a benchmark measured over the last two seconds, drawn against an
 axis that names the rate.
 
-TWO CURVES, and the gap between them is the point. The filled one is the rate frames
+**Two curves**, and the gap between them is the point. The filled one is the rate frames
 actually arrived at; the line above it is the rate the drawing alone would allow. They
 meet when the drawing is what limits the rate, and part when something after the drawing
 is - the rest of the form, the copy to the screen, or the display server's own pace.
 
-THE CHART READS ITS BENCHMARK AND NEVER RUNS IT. Whoever runs the benchmark says when
+**The chart reads its benchmark and never runs it.** Whoever runs the benchmark says when
 the chart is repainted; the chart holds no timer and asks for no frame of its own.
 
-ITS COLOURS ARE STATED where it stands over something with a palette of its own - a
+**Its colours are stated** where it stands over something with a palette of its own - a
 chart over a scene belongs to that scene's. Given none, it takes the theme's: the accent for
 the curve and the spot for the field, resolved on whatever it stands on at each paint, so a
 theme switch carries it across. Either way the two are full strength, and the weight each

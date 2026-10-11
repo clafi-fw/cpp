@@ -14,7 +14,7 @@ namespace ClaFi::Syntax
         // Lexes the whole text from its start.
         void reset(const Language&, std::wstring_view text);
         // Re-lexes from the first line the edit reached, and on until a line starts in the state
-        // it already had. The edit is stated in the coordinates of the text BEFORE it, the text
+        // it already had. The edit is stated in the coordinates of the text **before** it, the text
         // given is the one after, and the two have to agree on the length that leaves.
         void applyEdit(std::wstring_view textAfter, const TextRange& replaced,
             std::size_t insertedLength);

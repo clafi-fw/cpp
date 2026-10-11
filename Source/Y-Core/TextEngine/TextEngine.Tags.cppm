@@ -5,7 +5,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // THE ONE SPELLING OF A MARKER AS TEXT, read and written from the same tables. Fmt reads a
+    // **The one spelling of a marker as text**, read and written from the same tables. Fmt reads a
     // tag from between the brackets of a markup string, and a document reads and writes one per
     // marker - so a tag a Text can be written as is a tag Fmt understands, and neither side can
     // learn a name the other lacks.

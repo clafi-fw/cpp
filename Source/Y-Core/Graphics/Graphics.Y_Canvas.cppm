@@ -15,9 +15,10 @@ namespace ClaFi::Graphics
         explicit Canvas(std::unique_ptr<IBackend>);
         ~Canvas() = default;
     public:
-        // THE BACKEND THIS CANVAS DRAWS THROUGH, PUT IN AFTER IT WAS BUILT. Everything the old one
-        // held goes with it - its brushes, its geometries, its kept images - so whoever calls this
-        // paints whole afterwards, and calls it where no paint is open. See FormBase::stateBackend
+        // **The backend this canvas draws through, put in after it was built.** Everything the old
+        // one held goes with it - its brushes, its geometries, its kept images - so whoever calls
+        // this paints whole afterwards, and calls it where no paint is open.
+        // See FormBase::stateBackend
         void setBackend(std::unique_ptr<IBackend>);
         void resize(IntSize);
         void pushClip(const FloatRect& exactClipRect);
@@ -47,7 +48,7 @@ namespace ClaFi::Graphics
         void setTransform(const Matrix3x2& matrix);
         void resetTransform();
 
-        // --- Decoupled Shapes (Pairs ANY shape with ANY brush!) ---
+        // --- Decoupled Shapes (Pairs **any** shape with **any** brush!) ---
         void drawLine(FloatPoint pt1, FloatPoint pt2, const Brush& brush, float strokeWidth = 1.0f);
         void drawLine(FloatPoint pt1, FloatPoint pt2, Color color, float strokeWidth = 1.0f);
         void drawRectangle(const FloatRect& rect, const Brush& brush, float strokeWidth = 1.0f);
@@ -84,10 +85,10 @@ namespace ClaFi::Graphics
         // that wants the soft ring without anything standing in it is asking for a glow, and
         // should say so through a path layer.
         //
-        // Call this BEFORE drawing the shape. The ramp is measured from the silhouette's edge and
-        // reaches inward as far as it reaches out, and what covers the inward half is the shape.
-        // A shape that does not cover its own silhouette - one drawn with a translucent fill -
-        // will show that half through, and wants the shadow clipped to the outside instead.
+        // Call this **before** drawing the shape. The ramp is measured from the silhouette's edge
+        // and reaches inward as far as it reaches out, and what covers the inward half is the
+        // shape. A shape that does not cover its own silhouette - one drawn with a translucent
+        // fill - will show that half through, and wants the shadow clipped to the outside instead.
         void castShadow(const RoundedRectangleParts& parts, const ShadowParams&);
         void castShadowDef(const RoundedRectangleParts& parts, const ShadowParams&);
 

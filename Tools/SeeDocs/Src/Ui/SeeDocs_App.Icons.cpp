@@ -28,9 +28,9 @@ namespace SeeDocs_App
         constexpr float k_softFill = 0.35f; // a face tinted rather than filled
         constexpr float k_kindGap = 12.0f;  // the least room before a row's kind word
 
-        // THE MENU'S ICONS ARE DRAWN ON A GRID OF THEIR OWN, the size the menu shows them at, and
-        // in the theme's Thin stroke rather than the rows' one, which is how the framework's own
-        // menu icons beside them are drawn.
+        // **The menu's icons are drawn on a grid of their own**, the size the menu shows them at,
+        // and in the theme's Thin stroke rather than the rows' one, which is how the framework's
+        // own menu icons beside them are drawn.
         constexpr float k_menuGrid = 32.0f;
         constexpr float k_flapFill = 0.2f;   // the open folder's flap, tinted rather than filled
         constexpr float k_haloWidth = 3.2f;  // the band cleared around the spark, in strokes
@@ -123,7 +123,7 @@ namespace SeeDocs_App
             };
         }
 
-        // THE BACK OF AN OPEN FOLDER, open where the flap stands in front of it: up the left
+        // **The back of an open folder**, open where the flap stands in front of it: up the left
         // side, over the tab, and down the right side as far as the flap's top.
         void addFolderBack(PixelPath& path)
         {
@@ -457,7 +457,7 @@ namespace SeeDocs_App
         return RowIcon::Class;
     }
 
-    // THE KIND IS THE ICON'S TAG: the layout cache tells icons apart by size and tag alone, so
+    // **The kind is the icon's tag**: the layout cache tells icons apart by size and tag alone, so
     // a folder's row and a module's row of one name would otherwise be drawn from one layout.
     InTextIcon rowIcon(const RowIcon icon)
     {

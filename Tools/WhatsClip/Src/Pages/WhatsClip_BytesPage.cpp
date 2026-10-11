@@ -34,9 +34,9 @@ namespace ClaFi::Tools::WhatsClip
 
     void BytesPage::showContent(Transfer::Offer& offer, const Transfer::Format& format)
     {
-        // THE BYTES AS THEY ARRIVED. A format this application knows would come back from read()
-        // as its Content with the bytes gone, which is the whole reason readBytes exists. The
-        // view borrows them, so they are held here before the span is made.
+        // **The bytes as they arrived.** A format this application knows would come back from
+        // read() as its Content with the bytes gone, which is the whole reason readBytes exists.
+        // The view borrows them, so they are held here before the span is made.
         m_bytes = offer.readBytes(format);
 
         body().setBytes({
@@ -61,8 +61,8 @@ namespace ClaFi::Tools::WhatsClip
         Text reading{};
         //reading << TextStyleId::Code;
 
-        // THE OFFSETS ARE THE VIEW'S OWN SPELLING - see HexView::offsetText - so the reading and
-        // the left column cannot disagree about how wide an offset is. A single byte reads as
+        // **The offsets are the view's own spelling** - see HexView::offsetText - so the reading
+        // and the left column cannot disagree about how wide an offset is. A single byte reads as
         // where it stands; a run reads as where it starts, where it ends, and how much of it
         // there is. The count is decimal against the offsets' hexadecimal, which is what its
         // unit is there to say.

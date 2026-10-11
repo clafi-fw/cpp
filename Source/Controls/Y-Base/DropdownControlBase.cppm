@@ -26,18 +26,18 @@ namespace ClaFi::Controls
     /// The dropdown strip. It is a button in its own right for its colours, its states and its
     /// press.
     ///
-    /// @note WHAT IT CARRIES DEPENDS ON WHETHER THE OWNER SENT ITS TEXT DOWN. A strip on its own
-    /// is icon-only and the mark IS that icon, centred in the strip by the view mode. A ribbon
-    /// strip - the owner's text moved onto it, see textOnDropdown - is a text label instead, and
-    /// there the mark is the last glyph of the run so that the label and the mark centre together
-    /// as one line.
+    /// @note **What it carries depends on whether the owner sent its text down.** A strip on its
+    /// own is icon-only and the mark **is** that icon, centred in the strip by the view mode. A
+    /// ribbon strip - the owner's text moved onto it, see textOnDropdown - is a text label instead,
+    /// and there the mark is the last glyph of the run so that the label and the mark centre
+    /// together as one line.
     ///
-    /// @note WHOSE AVAILABILITY THE STRIP READS IS THE OWNER'S CALL. Where the owner says the
+    /// @note **Whose availability the strip reads is the owner's call.** Where the owner says the
     /// strip acts alone - see dropdownActsAlone - the strip stands for a second command beside
     /// the button's, a Save that has nothing to write over still has a Save as behind its strip,
     /// so the button being unavailable does not make the strip so. What the strip inherits even
-    /// then is a genuinely disabled ANCESTOR: a page turned off turns off everything standing on
-    /// it. Otherwise, which is the default, the two halves are one command and the strip is
+    /// then is a genuinely disabled **ancestor**: a page turned off turns off everything standing
+    /// on it. Otherwise, which is the default, the two halves are one command and the strip is
     /// exactly as available as the control.
     ///
     /// The class stays complete here rather than moving to the implementation unit: the owner's
@@ -104,13 +104,13 @@ namespace ClaFi::Controls
         // yes: every part of it opens the same list. A split button says no: its main half is a
         // separate action.
         [[nodiscard]] virtual bool dropOnPrimaryPress() const { return false; }
-        // WHETHER THE STRIP IS A COMMAND OF ITS OWN, and so stands or falls apart from the
+        // **Whether the strip is a command of its own**, and so stands or falls apart from the
         // control's own face. A combo box says no - every part of it opens the same list, so a
         // combo box that cannot be used cannot be dropped either. A split button says yes where
         // an action stands behind the strip: its face carries one command and its strip another,
         // and a Save with nothing to write over still has a Save as behind it.
         //
-        // A strip that acts alone is available whenever it is SHOWN. A control that wants it
+        // A strip that acts alone is available whenever it is **shown**. A control that wants it
         // unavailable hides it, which the base already reads as the strip not being there at all -
         // see shownSecondaryPart. There is no third answer to give: the state the control reports
         // is the one an attached action wrote into it, and the strip's command is not that one.

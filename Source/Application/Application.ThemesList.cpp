@@ -129,7 +129,7 @@ namespace ClaFi
         return &static_cast<ThemeTile*>(item)->theme();
     }
 
-    // THE FILE NAME IS WHAT THE LIST COMES BACK TO, not the tile: every tile here is taken down
+    // **The file name is what the list comes back to**, not the tile: every tile here is taken down
     // and built again, and a theme is the same theme under the same name. The built-in goes by
     // the name its page goes by, so a tab coming up from it lands on its tile.
     void ThemesList::rebuild()

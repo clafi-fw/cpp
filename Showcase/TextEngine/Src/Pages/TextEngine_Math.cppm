@@ -13,7 +13,7 @@ namespace TextEngine_App
     // [sub], a family carrying the symbols, a rule or a bracket drawn into the flow as an inline
     // object, rows lined up on tab stops, a paragraph centred.
     //
-    // WHAT THE PAGE HAS TO STATE FOR ITSELF is the arrangement. The engine breaks lines and
+    // **What the page has to state for itself** is the arrangement. The engine breaks lines and
     // places runs; it does not stack a numerator over a denominator, and it does not grow a
     // bracket to the height of what it encloses. So a display fraction is written as three rows -
     // over the bar, the bar, under the bar - and a matrix bracket is written as one drawn piece

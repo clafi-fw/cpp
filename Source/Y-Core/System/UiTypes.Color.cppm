@@ -18,7 +18,7 @@ namespace ClaFi
         ColorByte red;
         ColorByte alpha;
     public:
-        /// @brief Blends another color OVER this color, assuming this color is already opaque (Alpha = 255).
+        /// @brief Blends another color **over** this color, assuming this color is already opaque (Alpha = 255).
         /// @note This is extremely fast (zero divisions, zero branches in hot paths, processes channels in parallel).
         constexpr void paint_over_opaque(const Color& other) noexcept
         {
@@ -60,7 +60,7 @@ namespace ClaFi
             *this = std::bit_cast<Color>(result);
         }
 
-        /// @brief Blends another color OVER this color, mathematically handling arbitrary alphas for both colors.
+        /// @brief Blends another color **over** this color, mathematically handling arbitrary alphas for both colors.
         /// @note Slightly slower than paint_over_opaque due to a dynamic integer division, but fully general.
         constexpr void paint_over_general(const Color& other) noexcept
         {
@@ -189,7 +189,7 @@ namespace ClaFi
             __m256i res_ga = _mm256_slli_epi32(_mm256_add_epi32(d_ga, _mm256_srai_epi32(prod_ga, 8)), 8);
 
             // Blend using the ga_mask to finalize the combine
-            // This is often faster than a separate final mask + OR
+            // This is often faster than a separate final mask + **or**
             return _mm256_blendv_epi8(res_rb, res_ga, ga_mask);
         }
 

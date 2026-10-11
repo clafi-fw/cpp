@@ -50,7 +50,7 @@ namespace ClaFi
         ThemeSwitchKind m_kind;
     };
 
-    // THE APPLICATION HAS CHANGED WHICH BACKEND ITS WINDOWS DRAW THROUGH. See Context
+    // **The application has changed which backend its windows draw through.** See Context
     export struct BackendSwitchEvent : public Event
     {
     };
@@ -104,10 +104,10 @@ namespace ClaFi
         [[nodiscard]] UpdateCheck& updateCheck() { return m_updateCheck; }
         [[nodiscard]] const UpdateCheck& updateCheck() const { return m_updateCheck; }
 
-        // ONE ANSWER FOR THE PROCESS, and the only place a form can ask for a backend: the kind
+        // **One answer for the process**, and the only place a form can ask for a backend: the kind
         // the application is on at that moment, so no two windows can disagree. See Context
         [[nodiscard]] std::unique_ptr<Graphics::IBackend> createBackend(IPlatformWindow&, IntSize) const;
-        // WHETHER THE APPLICATION HAS A GPU BACKEND AT ALL - whether it named one. Where it did
+        // **Whether the application has a GPU backend at all** - whether it named one. Where it did
         // not, the CPU backend is the whole of the choice and nothing is offered to the user.
         [[nodiscard]] bool gpuAvailable() const { return m_createGpuBackend != nullptr; }
         // Which of the two every window draws through now.
@@ -115,7 +115,7 @@ namespace ClaFi
 
         const Platform& platform() const { return m_platform; }
         Platform& platform() { return m_platform; }
-        // THE APPLICATION'S ANIMATIONS: every control's, every form's and the theme crossing's,
+        // **The application's animations**: every control's, every form's and the theme crossing's,
         // stepped by one timer. A control reaches it through its form - see Control::animator.
         [[nodiscard]] AnimationController& animator() { return m_animator; }
         AppTheme& theme() { return m_theme; }
@@ -124,17 +124,17 @@ namespace ClaFi
         const ThemeMetrics& themeMetrics() const { return m_theme.metrics; }
         ThemeColors& themeColors() { return m_theme.colors; }
         const ThemeColors& themeColors() const { return m_theme.colors; }
-        // WHAT EVERY WINDOW IS PAINTED FROM. The theme above is what a file holds and an editor
+        // **What every window is painted from.** The theme above is what a file holds and an editor
         // edits; this is what that theme becomes, and the paint path reads only this.
         const BakedColors& bakedColors() const { return m_bakedColors; }
         //
         // --- Switching themes ---:
-        // THE APPLICATION PUTS THIS THEME ON, crossing to it over AnimationSlots::themeSwitch.
+        // **The application puts this theme on**, crossing to it over AnimationSlots::themeSwitch.
         // Baking is answered above the core - see connectAppThemes - so the set arrives already
         // made, every value of which has a half way, which is what the crossing rests on.
         // See Context
         //
-        // COLOURS ONLY: a theme's metrics take no part, and nothing here lays anything out.
+        // **Colours only**: a theme's metrics take no part, and nothing here lays anything out.
         //
         // The set is copied, because what it was taken from is free to be edited from under it: a
         // theme editor previewing its own work in the application states the same set on every
@@ -159,12 +159,12 @@ namespace ClaFi
         [[nodiscard]] ThemePathNode& themePath() const { return m_themePath; }
         // The mode the user chose to wear the theme in, answered where the path is. See Application
         [[nodiscard]] ColorModeNode& colorMode() const { return m_colorMode; }
-        // WHERE THE USER'S ANSWER ABOUT THE GPU IS KEPT, and what the Settings check writes: the
-        // node's own change is what reaches stateBackend. Null where the application has no GPU
+        // **Where the user's answer about the GPU is kept**, and what the Settings check writes:
+        // the node's own change is what reaches stateBackend. Null where the application has no GPU
         // backend, the node not being in the schema then - gpuAvailable is that same answer. The
         // node is the config's state rather than this context's, so a const context hands it out.
         [[nodiscard]] GpuAccelerationNode* gpuAcceleration() const { return m_gpuAcceleration; }
-        // WHERE THE USER'S ANSWER ABOUT THE SIZE IS KEPT, and what the Settings slider writes:
+        // **Where the user's answer about the size is kept**, and what the Settings slider writes:
         // the node's own change is what reaches stateScale. The node is the config's state
         // rather than this context's, so a const context hands it out. See Context
         [[nodiscard]] ScaleNode& scale() const { return m_scale; }
@@ -260,7 +260,7 @@ namespace ClaFi
         // The application wears the default theme until it is told otherwise. The baked set
         // beside it is filled before any window exists - see connectAppThemes.
         AppTheme m_theme{ defaultTheme() };
-        // WHAT EVERY WINDOW IS PAINTED FROM: part way between the two below while a crossing
+        // **What every window is painted from**: part way between the two below while a crossing
         // runs, and the incoming set once it has landed.
         BakedColors m_bakedColors{};
         // What the crossing started from - what stood on the screen when it did, itself part
@@ -274,7 +274,7 @@ namespace ClaFi
         float m_lightnessFactor{ 1.0f };
         // Either factor moved in this tick; the repaint waits for the tick so it is made once.
         bool m_bakedColorsPending{ false };
-        // WHAT IS WORN, as an address and a lightness, which is what tells an edit from a
+        // **What is worn**, as an address and a lightness, which is what tells an edit from a
         // crossing. Seeded with what m_theme is, so a first theme equal to it is not crossed to
         // from itself. See Context
         const AppTheme* m_taken{ &defaultTheme() };
@@ -289,14 +289,14 @@ namespace ClaFi
         // place the node's presence is decided.
         GpuAccelerationNode* m_gpuAcceleration{
             static_cast<GpuAccelerationNode*>(m_config.child(k_gpuAccelerationNodeName)) };
-        // WHICH BACKEND EVERY WINDOW DRAWS THROUGH NOW. Taken from the node above while the
+        // **Which backend every window draws through now.** Taken from the node above while the
         // context is built, so a stored answer is what the first window stands on rather than
         // something switched to once it is up.
         bool m_usingGpu{ false };
         ScopedEventConnection m_gpuConnection{};
         ScaleNode& m_scale{
             *(static_cast<ScaleNode*>(m_appearance.child(k_scaleNodeName))) };
-        // THE PERCENT EVERY WINDOW IS DRAWN AT. Taken from the node above while the context is
+        // **The percent every window is drawn at.** Taken from the node above while the context is
         // built, so a stored size is what the first window opens at rather than one it is moved
         // to once it is up.
         int m_scalePercent{ k_defaultScalePercent };
@@ -387,12 +387,12 @@ namespace ClaFi
         m_animator.clearTickEndListener(this);
     }
 
-    // NO HANDLER ON THE THEME NODES. A path is resolved against the themes on the disk as well as
-    // against the one compiled in, and reading a theme file is not the core's work - see
+    // **No handler on the theme nodes.** A path is resolved against the themes on the disk as well
+    // as against the one compiled in, and reading a theme file is not the core's work - see
     // connectAppThemes, which is what answers a change of either.
     //
-    // THE GPU NODE STANDS ONLY WHERE A GPU BACKEND DOES, so an application that has none keeps no
-    // answer to a question it cannot ask, and a file it wrote holds nothing about a backend. The
+    // **The GPU node stands only where a GPU backend does**, so an application that has none keeps
+    // no answer to a question it cannot ask, and a file it wrote holds nothing about a backend. The
     // update check's section stands only where the check is available, for the same reason.
     Dom::Dt::Section AppContext::coreConfigSchema(const bool withGpuAcceleration,
         const bool withUpdateCheck)
@@ -417,8 +417,8 @@ namespace ClaFi
         return section;
     }
 
-    // THE NODE IS WHAT THE ANSWER TRAVELS ON, the same as the theme's: a Settings check writes it
-    // and the change arrives here. The connection is a member so that it goes before the config
+    // **The node is what the answer travels on**, the same as the theme's: a Settings check writes
+    // it and the change arrives here. The connection is a member so that it goes before the config
     // the node stands in.
     void AppContext::connectGpuAcceleration()
     {
@@ -431,8 +431,8 @@ namespace ClaFi
             }) };
     }
 
-    // A WINDOW IS BUILT ON WHAT THE APPLICATION IS WEARING AT THAT MOMENT, so one opened after a
-    // switch matches the windows that swapped. m_usingGpu stands only where a factory does - the
+    // **A window is built on what the application is wearing at that moment**, so one opened after
+    // a switch matches the windows that swapped. m_usingGpu stands only where a factory does - the
     // node it is read from is in the schema on that condition alone.
     std::unique_ptr<Graphics::IBackend> AppContext::createBackend(IPlatformWindow& window,
         IntSize size) const
@@ -442,7 +442,7 @@ namespace ClaFi
         return makeBackend<Graphics::Cpu::CpuBackend>(window, size);
     }
 
-    // THE ANSWER MOVES ONCE AND EVERY WINDOW HEARS IT. A form takes it at the top of its next
+    // **The answer moves once and every window hears it.** A form takes it at the top of its next
     // frame rather than here - see FormBase::stateBackend - so a switch asked for from inside a
     // click cannot land between the passes of a frame that is being painted.
     void AppContext::stateBackend(const bool useGpu)
@@ -454,7 +454,7 @@ namespace ClaFi
         m_events.emit<BackendSwitchEvent>();
     }
 
-    // THE NODE IS WHAT THE ANSWER TRAVELS ON, the same as the backend's: the Settings slider
+    // **The node is what the answer travels on**, the same as the backend's: the Settings slider
     // writes it and the change arrives here. The connection is a member so that it goes before
     // the config the node stands in.
     void AppContext::connectScale()
@@ -466,7 +466,7 @@ namespace ClaFi
             }) };
     }
 
-    // THE ANSWER MOVES ONCE AND EVERY WINDOW HEARS IT. The percent is brought inside the band
+    // **The answer moves once and every window hears it.** The percent is brought inside the band
     // first: the config is text the user is free to edit, and a window drawn at a factor outside
     // it is one nothing on it can be reached in.
     void AppContext::stateScale(const int percent)
@@ -510,7 +510,7 @@ namespace ClaFi
         return m_config.path().parent_path();
     }
 
-    // THE FOLDER IS THE PERMISSION, and this is the only place one is made. An application with
+    // **The folder is the permission**, and this is the only place one is made. An application with
     // nowhere to put it - no appDataPath - has no folder to offer and asks for nothing.
     void AppContext::ensureConfigFolder()
     {
@@ -523,15 +523,15 @@ namespace ClaFi
         m_configFolderExists = true;
     }
 
-    // EVERYTHING UNDER THE FOLDER GOES, because the folder is what the user was asked about: a
+    // **Everything under the folder goes**, because the folder is what the user was asked about: a
     // permission withdrawn is not withdrawn from one file. The publisher's folder above it goes
     // with it once it is empty: an application that has stopped storing should leave nothing
     // behind, and a publisher folder still holding another application's settings or the shared
     // themes directory is not empty and stays.
     //
-    // THE APPLICATION DATA ROOT IS THE FLOOR. Where a publisher is unnamed the folder above this
-    // one IS that root, shared with every other publisher, and its being empty says nothing about
-    // who may still want it.
+    // **The application data root is the floor.** Where a publisher is unnamed the folder above
+    // this one **is** that root, shared with every other publisher, and its being empty says
+    // nothing about who may still want it.
     void AppContext::deleteConfigFolder()
     {
         if (!m_configFolderExists)
@@ -551,7 +551,7 @@ namespace ClaFi
         std::filesystem::remove(publisher, error);
     }
 
-    // NOTHING IS ASKED FOR WITHOUT THE FOLDER. A placement is stored in the config, and on a
+    // **Nothing is asked for without the folder.** A placement is stored in the config, and on a
     // platform where the display server keeps it, against an id the config holds - so before the
     // user has allowed storing there is nothing to restore from, and no id may be created.
     void AppContext::restoreFormPlacement(std::wstring_view formName, IForm& form)
@@ -564,7 +564,7 @@ namespace ClaFi
     // Written whether or not the folder exists: the config reaches the disk only through an
     // application that saves it, and that is where the folder decides.
     //
-    // THE SESSION IS ASKED FOR HERE WHEN IT WAS NOT ASKED FOR AT THE RESTORE. The folder can be
+    // **The session is asked for here when it was not asked for at the restore.** The folder can be
     // made while the application runs - Keep settings on this PC - and a window standing since
     // before it was never named to a session. It is named now, while it is still up, so that the
     // compositor has its place to give back on the next launch.
@@ -575,8 +575,8 @@ namespace ClaFi
         Platform::storeFormPlacement(m_config.childSection(k_formsSectionName), formName, form);
     }
 
-    // THE FIRST LOOP ENTERED IS THE ONE THE APPLICATION STANDS ON, so a nested one - a dialog, a
-    // menu, an in-place editor - never takes it, and the form holding it ends the run by closing.
+    // **The first loop entered is the one the application stands on**, so a nested one - a dialog,
+    // a menu, an in-place editor - never takes it, and the form holding it ends the run by closing.
     bool AppContext::claimRootLoop(const IForm& form)
     {
         if (m_rootLoopForm)
@@ -592,7 +592,7 @@ namespace ClaFi
         m_rootLoopForm = nullptr;
     }
 
-    // ONE REPAINT TO A TICK. Both slots reach this while a mode is crossing, and a set blended
+    // **One repaint to a tick.** Both slots reach this while a mode is crossing, and a set blended
     // and painted from the first of them is overwritten by the second before anyone sees it -
     // half the painting of the first 330 ms of every light-dark crossing. Outside a tick there
     // is nothing to wait for and the answer is stated at once.
@@ -617,7 +617,7 @@ namespace ClaFi
 
     void AppContext::takeTheme(const AppTheme& theme, const BakedColors& colors)
     {
-        // THE SAME THEME AT THE SAME LIGHTNESS STATED AGAIN IS AN EDIT. The lightness is not an
+        // **The same theme at the same lightness stated again is an edit.** The lightness is not an
         // edit: it inverts everything a set states, so the same theme in the other mode is a
         // crossing. See Context
         const bool edited = &theme == m_taken and colors.lightness == m_takenLightness;
@@ -625,8 +625,8 @@ namespace ClaFi
         m_takenLightness = colors.lightness;
         m_theme.colors = theme.colors;
 
-        // AN EDIT RESTATES WHAT IS WORN, and while a crossing runs what is worn is not the set it
-        // is heading to - so an edit arriving then is a restatement of that destination and the
+        // **An edit restates what is worn**, and while a crossing runs what is worn is not the set
+        // it is heading to - so an edit arriving then is a restatement of that destination and the
         // crossing carries on to it. Landing it instead would put the destination on the screen
         // until the next tick took it back off, which is what a preview committed through the
         // config path does: the item was tried on, and the commit states the same theme again.
@@ -653,7 +653,7 @@ namespace ClaFi
         // already heads to is that animation, and would carry on from where it had reached.
         m_outgoingColors = m_bakedColors;
         m_incomingColors = colors;
-        // AN AXIS TWO SETS AGREE ON HAS NOTHING TO CROSS, so its slot is left alone and its
+        // **An axis two sets agree on has nothing to cross**, so its slot is left alone and its
         // factor states the answer outright. Two themes worn in one mode agree on the lightness;
         // one theme worn in the two modes agrees on every colour - and a slot run over an axis
         // that does not move paints every form for a picture that has already stopped.

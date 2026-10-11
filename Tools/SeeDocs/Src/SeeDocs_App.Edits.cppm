@@ -5,11 +5,11 @@ import SeeDocs_App.Surface;
 
 import ClaFi.StdLib;
 
-// WORDS WRITTEN BACK WHERE THEY ARE READ FROM: a hint into the comment it was read off, a footnote
-// into its note's section. Every write reads its file again and refuses where the file no longer
-// holds what was read; a file keeps its byte order mark and each line its own line end; and what
-// the surface and the notes hold afterwards is what the file now reads. See the README beside the
-// project.
+// **Words written back where they are read from**: a hint into the comment it was read off, a
+// footnote into its note's section. Every write reads its file again and refuses where the file no
+// longer holds what was read; a file keeps its byte order mark and each line its own line end; and
+// what the surface and the notes hold afterwards is what the file now reads. See the README beside
+// the project.
 namespace SeeDocs_App
 {
     // The widest a comment line or a footnote line is written.

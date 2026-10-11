@@ -224,8 +224,8 @@ namespace ClaFi::Controls
         float newScrollPos = areaHeight - myHeight;
         if (newScrollPos)
         {
-            // THE POSITION IS READ OFF WHERE THE THUMB HAS BEEN PUT, not off where it stood when
-            // this step began. One drag event carries the whole of a movement, however far the
+            // **The position is read off where the thumb has been put**, not off where it stood
+            // when this step began. One drag event carries the whole of a movement, however far the
             // pointer went since the last one, and the thumb is not laid out from the position
             // while it is held - controlFeedBack leaves it alone - so the old place is exactly
             // one event behind the pointer, and a fast drag makes that a whole flick.

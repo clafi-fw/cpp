@@ -480,10 +480,10 @@ namespace ClaFi::Graphics
         virtual void pushOpacity(float opacity) = 0;
         virtual void popOpacity() = 0;
 
-        // A KEPT IMAGE the size of the surface, named by index. Everything drawn between pushImage
-        // and the matching pop goes into it instead of the surface, and drawImage puts it back at
-        // an opacity. Unlike an opacity layer it outlives the frame that drew it, which is what
-        // makes it worth having: a crossfade builds its next image out of its last one, so a
+        // **A kept image** the size of the surface, named by index. Everything drawn between
+        // pushImage and the matching pop goes into it instead of the surface, and drawImage puts it
+        // back at an opacity. Unlike an opacity layer it outlives the frame that drew it, which is
+        // what makes it worth having: a crossfade builds its next image out of its last one, so a
         // caller holds two and trades them over.
         //
         // An image spans the surface and is drawn into under the surface's own transform, so a
@@ -498,7 +498,7 @@ namespace ClaFi::Graphics
         virtual void drawImage(int index, float opacity) = 0;
         [[nodiscard]] virtual bool hasImage(int index) const = 0;
 
-        // WHETHER A FRAME STARTS FROM NOTHING. Off by default: a frame otherwise keeps whatever
+        // **Whether a frame starts from nothing.** Off by default: a frame otherwise keeps whatever
         // the last one left, which costs nothing and is invisible for as long as the children
         // cover every pixel. A window whose alpha is read by whoever shows it cannot rely on that
         // - the pixels outside a rounded corner are exactly the ones nothing covers.

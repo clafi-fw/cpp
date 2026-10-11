@@ -1,6 +1,7 @@
 module SeeDocs_App.Editing;
 
 import SeeDocs_App.Edits;
+import SeeDocs_App.PageText;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
@@ -63,6 +64,11 @@ namespace SeeDocs_App
         text() = words;
     }
 
+    std::wstring WordsBox::wordsOf(const Text& words) const
+    {
+        return words.plainText();
+    }
+
     bool WordsBox::edited() const
     {
         return text().plainText() != m_shown.plainText();
@@ -101,10 +107,10 @@ namespace SeeDocs_App
         PromptBox::charPress(event);
     }
 
-    // A REFUSED WRITE KEEPS THE WORDS TYPED, the reason shown under the box.
+    // **A refused write keeps the words typed**, the reason shown under the box.
     void WordsBox::write()
     {
-        const std::wstring refusal = writeWords(text().plainText());
+        const std::wstring refusal = writeWords(wordsOf(text()));
         if (refusal.empty())
             return;
         setRefusal(refusal);
@@ -134,6 +140,11 @@ namespace SeeDocs_App
         // A copy: the write refreshes the page, which moves a new site into the one this reads.
         const CommentSite site = *m_site;
         return m_writer->writeHint(site, words);
+    }
+
+    std::wstring HintBox::wordsOf(const Text& words) const
+    {
+        return markdownOf(words);
     }
 
     // FootnoteSlot
@@ -217,9 +228,9 @@ namespace SeeDocs_App
         );
     }
 
-    // A WRITE THAT WAS REFUSED KEEPS THE EDITOR UP, the words as typed and the reason in the bar,
-    // so nothing typed is lost to a file that changed or a heading in the wrong place. A footnote
-    // not written yet that is left goes with its slot.
+    // **A write that was refused keeps the editor up**, the words as typed and the reason in the
+    // bar, so nothing typed is lost to a file that changed or a heading in the wrong place. A
+    // footnote not written yet that is left goes with its slot.
     void FootnoteSlot::finish(const bool write)
     {
         if (write && m_box->visible())

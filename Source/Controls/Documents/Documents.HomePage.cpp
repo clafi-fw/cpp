@@ -32,7 +32,7 @@ namespace ClaFi::Documents
         m_tiles->setCurrentFileName(fileNameOfPage(value));
     }
 
-    // THE TILE THE USER IS ON, which a right click has just moved the current item to, so the
+    // **The tile the user is on**, which a right click has just moved the current item to, so the
     // browser's Open and Open in new tab are about the tile the menu was raised from as well as
     // about the one the keyboard stands on.
     std::wstring DocumentsHomePageBase::pathToOpen()
@@ -67,8 +67,8 @@ namespace ClaFi::Documents
             documentsRebuilt();
         });
 
-        // A PRESS ON THE TILE OPENS THE DOCUMENT, AND THE KEYBOARD'S PRESS IS A PRESS. Return and
-        // Space on the tile the keyboard stands on arrive as an ordinary click, so the mouse's
+        // **A press on the tile opens the document, and the keyboard's press is a press.** Return
+        // and Space on the tile the keyboard stands on arrive as an ordinary click, so the mouse's
         // single click and the keyboard's press are one event, and the form is what tells them
         // apart. A modifier makes the press a selection command rather than an activation.
         view.onClick([this](ClickEvent& event) {
@@ -83,9 +83,9 @@ namespace ClaFi::Documents
             DocumentTile* tile = m_tiles->currentTile();
             if (!tile || tile != event.control)
                 return;
-            // THE GESTURE IS SPENT HERE. A double click that nothing stopped is read by the form
-            // as the press it also is, and that press would act on a tile the navigation is about
-            // to take down.
+            // **The gesture is spent here.** A double click that nothing stopped is read by the
+            // form as the press it also is, and that press would act on a tile the navigation is
+            // about to take down.
             event.stopPropagation();
             openDocument(*tile, event.stamp);
         });
@@ -111,7 +111,7 @@ namespace ClaFi::Documents
             renameAfterAlign(m_fileNameToRename);
     }
 
-    // ASKED FOR ON A TICK, because the rebuild that created the tile is still on the stack: it
+    // **Asked for on a tick**, because the rebuild that created the tile is still on the stack: it
     // holds the list this tile is in, and clears it, and the editor runs a message loop of its
     // own. The tile has no layout yet either, so the editor waits for the form to settle by
     // itself - see WithInPlaceEdit::openEditor.
@@ -129,7 +129,7 @@ namespace ClaFi::Documents
         m_fileNameToRename.clear();
         if (!tile)
             return;
-        // THE FOCUS, not just the current item: the focus is still on the button that made the
+        // **The focus**, not just the current item: the focus is still on the button that made the
         // document, which is where it would go back to when the editor closes.
         tile->setFocus();
         tile->openEditor();
@@ -140,19 +140,19 @@ namespace ClaFi::Documents
         const std::wstring newName = folder().renameFile(tile.path(), event);
         if (newName.empty())
             return;
-        // THE FILE IS RENAMED AND THIS TILE STILL SAYS OTHERWISE until the folder reports, and
+        // **The file is renamed and this tile still says otherwise** until the folder reports, and
         // the watch behind that waits out a quiet period first. The rebuild replaces this tile
         // with one that reads the same.
         tile.text().clear();
         tile.text() << event.text.plainText();
         // A name is as many lines as it needs inside a fixed width, so a new one is a new height.
         tile.invalidateFormAlign();
-        // A RENAME MOVES THE TILE THE LIST REMEMBERS. The file name is the whole of a tile's
+        // **A rename moves the tile the list remembers.** The file name is the whole of a tile's
         // identity here, so the one to come back to after the rebuild is under the new name.
         m_tiles->selectFileNameAfterRebuild(newName);
     }
 
-    // THE MENU NAMES FOUR COMMANDS AND SETTLES NONE OF THEM. Rename is answered by the tile,
+    // **The menu names four commands and settles none of them.** Rename is answered by the tile,
     // against the caption that is the file's name; Delete by the page, against the selection;
     // Open and Open in new tab by the browser, against the path this page names for whichever
     // tile is current.
@@ -169,7 +169,7 @@ namespace ClaFi::Documents
         menu.execute();
     }
 
-    // OPEN IS THE COMMAND, AND THE BROWSER ANSWERS IT, on a wait rather than from inside the
+    // **Open is the command, and the browser answers it**, on a wait rather than from inside the
     // press that asked. The tile is the presenter: it is where the command was given.
     void DocumentsHomePageBase::openDocument(Control& presenter, const InputStamp stamp)
     {
@@ -256,9 +256,9 @@ namespace ClaFi::Documents
         if (editedCount == 0)
             return true;
 
-        // ONE QUESTION FOR THE WHOLE SELECTION, AND IT SETTLES ALL OF IT. The first line is what
-        // stands to be lost - the one document by its name, several by how many of the selection
-        // they are. The second is the question itself. See Documents#questions
+        // **One question for the whole selection, and it settles all of it.** The first line is
+        // what stands to be lost - the one document by its name, several by how many of the
+        // selection they are. The second is the question itself. See Documents#questions
         const DocumentKind& kind = folder().kind();
         Text message{};
         if (soleEdited)

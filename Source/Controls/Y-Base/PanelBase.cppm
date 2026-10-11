@@ -110,7 +110,7 @@ namespace ClaFi::Controls
         // Sizes the bar in slotId to what its content measures, and keeps that as its extent.
         void fitBarToContent(PanelSlot slotId);
         ScaledDimensions calculateContent(AlignEvent&) override;
-        // WHAT THE PARTS OF THIS PANEL CAN BE CUT TO, composed by the panel's own arrangement:
+        // **What the parts of this panel can be cut to**, composed by the panel's own arrangement:
         // a strip above, a strip below, and a body between two side bars. The panel's text is no
         // part of it - a floor is a MinSize somebody set, and a text carries none.
         //
@@ -121,7 +121,7 @@ namespace ClaFi::Controls
         [[nodiscard]] ScaledDimensions bodyMinSize() const;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions& contentSize) override;
         // The body's slot is settled and the body has not been laid out into it yet, so anything a
-        // panel states ABOUT that slot reaches the body on the pass that settled it. See
+        // panel states **about** that slot reaches the body on the pass that settled it. See
         // Controls-Base
         virtual void bodySlotSettled(AlignEvent&) {}
         // The box the body is laid out into - its slot, unless stated larger. See Controls-Base
@@ -134,7 +134,7 @@ namespace ClaFi::Controls
         void swapBarsClockWise();
         void swapBarsCounterClockWise();
         bool isChildBody(const Control& child) const override { return body() == &child; }
-        // A LEFT OR RIGHT BAR IS AS WIDE AS IT MEASURED. Everything else in a panel is handed a
+        // **A left or right bar is as wide as it measured.** Everything else in a panel is handed a
         // width: the body gets the body slot, a top or bottom bar spans the content. alignContent
         // is where each of those is handed out, and this says the same thing before the fact.
         bool isChildWidthGiven(const Control& child) const override

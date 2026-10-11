@@ -6,7 +6,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // WHICH text, and WHICH state of it. See TextEngine-Types
+    // **Which** text, and **which** state of it. See TextEngine-Types
     export struct TextStamp
     {
         std::size_t id{ 0 };
@@ -31,7 +31,7 @@ namespace ClaFi
         // marker that puts a character in - a space, an icon - stands at that character.
         explicit Text(std::wstring plainText, Markers markers);
 
-        // Anything the stream below takes, written as an assignment. What is assigned REPLACES
+        // Anything the stream below takes, written as an assignment. What is assigned **replaces**
         // what the text holds, which is the one thing that separates this from operator<<: the
         // stream adds to a text, this states the whole of it. One argument, because an
         // assignment operator takes exactly one - several parts are a Text of their own:
@@ -60,7 +60,7 @@ namespace ClaFi
         Text& operator<<(const wchar_t*);
         Text& operator<<(wchar_t);
         Text& operator<<(int);
-        // WHAT THE FRAMEWORK COUNTS WITH, and so what a caller has in hand to write: a line, a
+        // **What the framework counts with**, and so what a caller has in hand to write: a line, a
         // column, a length. Stated on its own rather than left to the int above, because an
         // unsigned reaches int and wchar_t by the same rank of conversion and neither wins - a
         // caller writing a count would be told the two are ambiguous.
@@ -191,7 +191,7 @@ namespace ClaFi
 
     public:
         ControlText() = default;
-        // A copy and a move both produce a NEW text, so neither takes the other's id - and the
+        // A copy and a move both produce a **new** text, so neither takes the other's id - and the
         // one a move empties has changed as much as anything here ever changes.
         ControlText(const ControlText& other) : Text{ other } {}
         ControlText(ControlText&& other) noexcept : Text{ std::move(other) } { other.changed(); }

@@ -31,8 +31,9 @@ namespace ClaFi::Documents
     {
         if (m_savedUnderAnotherName)
             return false;
-        // THE SAVED DOCUMENT IS THE OTHER SIDE OF THE COMPARISON, not a flag kept as edits arrive.
-        // A saved side that cannot be read is work the disk does not hold. See Documents#unsaved
+        // **The saved document is the other side of the comparison**, not a flag kept as edits
+        // arrive. A saved side that cannot be read is work the disk does not hold.
+        // See Documents#unsaved
         const std::unique_ptr<Dom::DomNodeBase> saved = documentNode().clone(nullptr);
         if (!readSavedDocument(*saved))
             return true;
@@ -50,7 +51,7 @@ namespace ClaFi::Documents
             ContextMessage::show(initiator, notSavedText());
             return false;
         }
-        // A PAGE WITH NO FILE OF ITS OWN SAVES AS. The work still has to land somewhere and the
+        // **A page with no file of its own saves as.** The work still has to land somewhere and the
         // user is being asked before it is lost, so the command that can keep it is the one to
         // offer. It writes the file and no more: the tab is already on its way somewhere else.
         return !saveAsFile(initiator).empty();
@@ -110,9 +111,9 @@ namespace ClaFi::Documents
         // the disk under the name that was just given, so there is nothing left to ask about.
         m_savedUnderAnotherName = true;
 
-        // ONLY THE GOING WAITS: taking the tab to what it wrote rebuilds this page, and the frames
-        // above the press go on reading the button that goes down with it. The browser holds that
-        // wait, because it outlives what the going destroys.
+        // **Only the going waits**: taking the tab to what it wrote rebuilds this page, and the
+        // frames above the press go on reading the button that goes down with it. The browser holds
+        // that wait, because it outlives what the going destroys.
         tab().browserControl().goToLater(Url{ pagePathOfDocument(fileName), tab().anchor() });
     }
 
@@ -135,7 +136,7 @@ namespace ClaFi::Documents
             if (event.refused())
                 return;
 
-            // A NAME ALREADY TAKEN IS A QUESTION, NOT A REFUSAL. Writing over a document is a
+            // **A name already taken is a question, not a refusal.** Writing over a document is a
             // thing the user may well have meant, and the one who typed the name is the only one
             // who can say whether they did.
             std::error_code errorCode;

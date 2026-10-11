@@ -363,30 +363,31 @@ its bases as a method does, and a type below declaring the name hides it as it h
 
 Footnotes are edited where they stand in every project; hints only where the project writes them
 into the sources, follows the strict ClaFi rules - whose comment is the one the writer puts words in
-- and only in C++ sources. A hint cell opens its editor with F2, Enter or a double click, on the
-comment's own words - its types unlinked, a missing hint empty. The hint under a page's title and
-the one under each declaration of a method page are typed into where they stand, a missing one an
-empty box: Ctrl+click follows a link there, and Escape puts back the words the page shows. Enter
-writes the words into the comment the hint is read from - leaving one of those boxes writes them too
-- the `See` it ends with kept: on the declaration's line while the whole line fits 100 columns,
-lined up with the comments of the lines of code round it, and above it otherwise - always above a
-class, a struct or an enum. A method's row writes the overload whose words it shows, and an override
-that shows its base's words writes the base's comment. A footnote opens its markdown in its place
-with F2 or Edit footnote on its menu: each paragraph and each bullet on one line, the headings
-inside it and its code as written. Ctrl+S or Save writes it into its note - a paragraph or a bullet
-that reads as it did keeps its lines, any other is broken at 100 columns again - and Escape or
-Cancel leaves it. The row of a property, an event, a field or a member with no footnote offers Add
-footnote on its menu: the footnote goes after the type's own section in its note, or at the end of
-the folder's note, headed by the type's name and the member's, and is found by that heading - the
-source is left as it is. A folder's note is the one its declarations cite the most, through the
-`See` of their comments, or where they cite none, one named after the folder's own name - `Y-Base`
-for `Controls/Y-Base` - and the root's is `Home`; the folder of footnotes and the note are made with
-the first footnote written into them. Every write reads its file again first and refuses, saying
-why, where the file no longer holds what the page was built from - a file changed in an editor since
-the scan is scanned again before it is edited here. A file keeps its byte order mark and each line
-its own line end. The words are written by `SeeDocs_App.Edits`, the database follows every hint
-written, and the page shown takes the new words where it stands; a footnote added builds the page
-again at the new footnote.
+- and only in C++ sources. A hint reads as a line of a note does: words between `**` are bold, and
+words between backticks are code. A hint cell opens its editor with F2, Enter or a double click, on
+the comment's own words - its types unlinked, a missing hint empty. The hint under a page's title
+and the one under each declaration of a method page are typed into where they stand, a missing one
+an empty box: Ctrl+click follows a link there, and Escape puts back the words the page shows. The
+bold and the code a box shows are written back as their marks. Enter writes the words into the
+comment the hint is read from - leaving one of those boxes writes them too - the `See` it ends with
+kept: on the declaration's line while the whole line fits 100 columns, lined up with the comments of
+the lines of code round it, and above it otherwise - always above a class, a struct or an enum. A
+method's row writes the overload whose words it shows, and an override that shows its base's words
+writes the base's comment. A footnote opens its markdown in its place with F2 or Edit footnote on
+its menu: each paragraph and each bullet on one line, the headings inside it and its code as
+written. Ctrl+S or Save writes it into its note - a paragraph or a bullet that reads as it did keeps
+its lines, any other is broken at 100 columns again - and Escape or Cancel leaves it. The row of a
+property, an event, a field or a member with no footnote offers Add footnote on its menu: the
+footnote goes after the type's own section in its note, or at the end of the folder's note, headed
+by the type's name and the member's, and is found by that heading - the source is left as it is. A
+folder's note is the one its declarations cite the most, through the `See` of their comments, or
+where they cite none, one named after the folder's own name - `Y-Base` for `Controls/Y-Base` - and
+the root's is `Home`; the folder of footnotes and the note are made with the first footnote written
+into them. Every write reads its file again first and refuses, saying why, where the file no longer
+holds what the page was built from - a file changed in an editor since the scan is scanned again
+before it is edited here. A file keeps its byte order mark and each line its own line end. The words
+are written by `SeeDocs_App.Edits`, the database follows every hint written, and the page shown
+takes the new words where it stands; a footnote added builds the page again at the new footnote.
 
 A type's name on a page is a link to its page, in a grid cell as in prose: a type named in a
 hint, in a note's prose or code, or in a signature - bare or qualified, as `Control` or

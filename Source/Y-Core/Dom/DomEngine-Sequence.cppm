@@ -54,7 +54,7 @@ namespace ClaFi::Dom
         template <typename T>
         [[nodiscard]] const DomNodeBase* childWhere(std::span<const std::wstring_view> path, const T& targetValue) const;
 
-        // Predicate form — closer to SQL's actual WHERE (an arbitrary boolean
+        // Predicate form — closer to SQL's actual **where** (an arbitrary boolean
         // expression over a row), rather than the path+equality shorthand
         // above. The predicate receives the whole child and decides for
         // itself, so there's no separate path/key/initializer_list variant
@@ -415,7 +415,7 @@ namespace ClaFi::Dom
 }
 
 // =========================================================================
-// IMPLEMENTATIONS
+// **Implementations**
 // =========================================================================
 
 namespace ClaFi::Dom

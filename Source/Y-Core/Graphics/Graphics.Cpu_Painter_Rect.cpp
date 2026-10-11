@@ -26,7 +26,7 @@ namespace ClaFi::Graphics::Cpu
             (rect.bottom == std::floor(rect.bottom));
 
         // ====================================================================
-        // PATH A: SNAPPED SOLID COLOR BRUSH (aliased memory writes)
+        // **Path a: snapped solid color brush** (aliased memory writes)
         // ====================================================================
         if (isSnapped && std::holds_alternative<SolidColor>(brush))
         {
@@ -97,7 +97,7 @@ namespace ClaFi::Graphics::Cpu
         }
 
         // ====================================================================
-        // PATH B: FRACTIONAL SOLID COLOR (sub-pixel anti-aliased blending)
+        // **Path b: fractional solid color** (sub-pixel anti-aliased blending)
         // ====================================================================
         if (std::holds_alternative<SolidColor>(brush))
         {
@@ -179,7 +179,7 @@ namespace ClaFi::Graphics::Cpu
             }
         }
         // ====================================================================
-        // PATH C: COMPLEX BRUSH (direct mask-free pixel compositing loop)
+        // **Path c: complex brush** (direct mask-free pixel compositing loop)
         // ====================================================================
         else
         {

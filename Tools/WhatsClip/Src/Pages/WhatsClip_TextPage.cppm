@@ -32,12 +32,13 @@ namespace ClaFi::Tools::WhatsClip
         // and the text into the box. None where the read failed.
         void showReading(std::optional<std::wstring>&&, std::size_t wholeSize,
             std::wstring_view unit);
-        // THE MOST OF A FORMAT READ AS TEXT. The engine shapes a document whole before its
+        // **The most of a format read as text.** The engine shapes a document whole before its
         // first paint, and a screenshot is tens of megabytes of bytes that are not text; the
         // byte view shows the rest. Room for a source tree's worth of text.
         static constexpr std::size_t k_textLimit = 4 * 1024 * 1024;
-        // A BINARY FORMAT LARGER THAN THIS WAITS TO BE ASKED FOR. Bytes that are no text can lay
-        // out as one line of millions of characters, which takes minutes; a smaller block is read.
+        // **A binary format larger than this waits to be asked for.** Bytes that are no text can
+        // lay out as one line of millions of characters, which takes minutes; a smaller block is
+        // read.
         static constexpr std::size_t k_askAbove = 64 * 1024;
     private:
         // The format's first k_textLimit bytes at most, kept so that a new encoding reads them

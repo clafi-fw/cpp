@@ -6,7 +6,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Transfer
 {
-    // WHICH FORMAT TO ASK FOR, and what it becomes once read.
+    // **Which format to ask for**, and what it becomes once read.
     export struct Match
     {
         Format offered;
@@ -19,45 +19,46 @@ namespace ClaFi::Transfer
     public:
         virtual ~Offer() = default;
 
-        // THE PLATFORM'S FORMATS, EVERY ONE UNDER ITS PLATFORM NAME - CF_UNICODETEXT beside
+        // **The platform's formats, every one under its platform name** - CF_UNICODETEXT beside
         // CF_TEXT, image/png beside image/bmp - so a viewer of the list sees what is on the
         // clipboard. The framework's own formats are never in it: they are asked for through
         // platformFormat.
         [[nodiscard]] virtual FormatList advertisedFormats() const = 0;
-        // THE PLATFORM FORMAT A FRAMEWORK FORMAT IS SERVED FROM: one of the advertised formats, by
-        // reference, or null where none of them can serve it. A paste asks for Text or Picture,
+        // **The platform format a framework format is served from**: one of the advertised formats,
+        // by reference, or null where none of them can serve it. A paste asks for Text or Picture,
         // and this is the platform deciding which of its formats fits - a PNG ahead of a DIB.
         [[nodiscard]] virtual const Format* platformFormat(StandardFormat) const = 0;
         // Decoded: a framework format as its Content, read from the platform format that serves
         // it; a format with a byte spelling as that; anything else as its bytes.
         [[nodiscard]] virtual Payload read(const Format&) = 0;
-        // THE BYTES BEHIND A FORMAT, WITH NO SPELLING APPLIED. `read` decodes: a format this
+        // **The bytes behind a format, with no spelling applied.** `read` decodes: a format this
         // application knows comes back as its Content and the bytes it travelled as are gone. A
         // reader that wants to show what actually arrived asks here instead.
         //
-        // What comes back is the CONTENT's bytes and not the envelope around them: a platform
+        // What comes back is the **content's** bytes and not the envelope around them: a platform
         // that wraps a payload for its own carriage unwraps it here, so both platforms answer the
         // same bytes for the same clipboard.
         //
-        // A FRAMEWORK FORMAT'S BYTES ARE THOSE OF THE PLATFORM FORMAT SERVING IT - UTF-16 and CRLF
-        // on one side, UTF-8 and LF on the other, a PNG file where that is what the picture came
-        // as. Nothing normalises them, because what they are is the thing being looked at.
+        // **A framework format's bytes are those of the platform format serving it - UTF-16** and
+        // CRLF on one side, UTF-8 and LF on the other, a PNG file where that is what the picture
+        // came as. Nothing normalises them, because what they are is the thing being looked at.
         //
-        // Empty where the read failed, which is what a null Payload says on the other call, AND
-        // EMPTY WHERE THE FORMAT CARRIES NO BYTES - a handle format has none, and this call will
+        // Empty where the read failed, which is what a null Payload says on the other call, **and
+        // empty where the format carries no bytes** - a handle format has none, and this call will
         // not invent any. What it has is read through readHandle, which is what tells the two
         // apart.
         [[nodiscard]] virtual std::string readBytes(const Format&) = 0;
-        // THE HANDLE A FORMAT CARRIES, WHERE WHAT IS OFFERED IS NOT BYTES AT ALL. A platform may
-        // advertise a format whose entry is a handle to an object it holds - a bitmap, a palette, a
-        // metafile - and such a format has nothing on the wire to hand over. Anything made out of
-        // the object instead would be this framework's bytes rather than the clipboard's, so the
-        // number is what there is, and a reader that wants to say what is offered says it.
+        // **The handle a format carries, where what is offered is not bytes at all.** A platform
+        // may advertise a format whose entry is a handle to an object it holds - a bitmap, a
+        // palette, a metafile - and such a format has nothing on the wire to hand over. Anything
+        // made out of the object instead would be this framework's bytes rather than the
+        // clipboard's, so the number is what there is, and a reader that wants to say what is
+        // offered says it.
         //
-        // THE VALUE IS THE ONE THIS READ WAS HANDED and no more than that: a platform that copies a
-        // handle per reader answers a different number to each of them, and the object can be gone
-        // by the time the number is looked at. It says what kind of thing is offered, never where
-        // to find it.
+        // **The value is the one this read was handed** and no more than that: a platform that
+        // copies a handle per reader answers a different number to each of them, and the object can
+        // be gone by the time the number is looked at. It says what kind of thing is offered, never
+        // where to find it.
         //
         // Zero where the format carries bytes, and zero where the read failed - a caller that knows
         // the format is a handle format is the one that can tell those apart. A platform holding no

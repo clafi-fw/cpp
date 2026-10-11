@@ -62,7 +62,7 @@ namespace SeeDocs_App
         std::vector<std::wstring> modules{};
     };
 
-    // THE OPEN PROJECTS AS A TREE, a node each: its options row and a line, then its folders,
+    // **The open projects as a tree**, a node each: its options row and a line, then its folders,
     // modules and types, read off the project's contents tree, which every tree shares. A node's
     // rows are made the first time it opens, so a tree costs the rows it has shown. A click on a
     // row picks what it names.

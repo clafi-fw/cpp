@@ -276,7 +276,7 @@ namespace ClaFi::Dom
 }
 
 // =========================================================================
-// IMPLEMENTATIONS
+// **Implementations**
 // =========================================================================
 
 namespace ClaFi::Dom
@@ -461,7 +461,7 @@ namespace ClaFi::Dom
     // Section (and Value<CompositeValue>, which inherits it) already override
     // operator/ virtually — see :Section and the Value<CompositeValue>
     // inheritance in :Value. Any node whose type() is Section or
-    // CompositeValue is therefore guaranteed to BE one of those, and a call
+    // CompositeValue is therefore guaranteed to **be** one of those, and a call
     // to operator/ on it dispatches straight to that override, never
     // reaching this base body. So this body only ever runs for node kinds that
     // don't support path traversal, and for those it should simply refuse.

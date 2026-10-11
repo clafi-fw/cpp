@@ -15,7 +15,7 @@ import ClaFi.Core.System.InkWell;
 import ClaFi.StdLib;
 import ClaFi.Core.TextEngine.Text;
 
-// NOTHING HERE NAMES A PLATFORM OR A BACKEND. What an entry point keeps is what its operating
+// **Nothing here names a platform or a backend.** What an entry point keeps is what its operating
 // system asks for and the two types the application is built out of; the form, its pages and
 // everything they read stand here and run over any platform the framework has.
 namespace ClaFi::Tools::WhatsClip

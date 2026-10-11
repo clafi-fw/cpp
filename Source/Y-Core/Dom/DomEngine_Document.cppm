@@ -93,7 +93,7 @@ namespace ClaFi::Dom
 }
 
 // =========================================================================
-// IMPLEMENTATIONS
+// **Implementations**
 // =========================================================================
 
 namespace ClaFi::Dom
@@ -142,7 +142,7 @@ namespace ClaFi::Dom
             body.remove_prefix(k_utf8Bom.size());
         }
 
-        // A FILE WRITTEN ON WINDOWS ENDS ITS LINES WITH CR LF. A text stream drops the CR there
+        // **A file written on Windows ends its lines with CR LF.** A text stream drops the CR there
         // and keeps it everywhere else, where it would end every value read; the reader's line
         // end is LF alone, on every platform.
         std::string lines;

@@ -130,9 +130,10 @@ namespace ClaFi::Controls
         // means naming them.
         void setReadOnly(ReadOnly);
 
-        // WHAT A BOX TAKES FROM THE CLIPBOARD, best first. Rich before plain: both are reachable
-        // whenever either is, because the conversion between them runs in both directions, so this
-        // order is the whole of what decides whether formatting survives a paste.
+        // **What a box takes from the clipboard**, best first. Rich before plain: both are
+        // reachable whenever either is, because the conversion between them runs in both
+        // directions, so this order is the whole of what decides whether formatting survives a
+        // paste.
         [[nodiscard]] static Transfer::FormatList pasteFormats();
 
         // The stamp is the input event that asked for the copy. A display server that authorises
@@ -412,8 +413,8 @@ namespace ClaFi::Controls
         }
     }
 
-    // CLAMPED, because a position is only ever a position in some text. A host writing a new text
-    // into the box names one against the text it is writing, and the box holds that text only
+    // **Clamped**, because a position is only ever a position in some text. A host writing a new
+    // text into the box names one against the text it is writing, and the box holds that text only
     // once the write has happened.
     void TextBox::setCaretPos(const std::size_t pos)
     {
@@ -460,9 +461,9 @@ namespace ClaFi::Controls
         if (!m_editProps.selRange.length)
             return;
 
-        // ONE FORMAT IN. Plain text is advertised out of the conversion table, so an application
-        // that has never heard of this framework pastes what it can read without this site knowing
-        // such an application exists.
+        // **One format in.** Plain text is advertised out of the conversion table, so an
+        // application that has never heard of this framework pastes what it can read without this
+        // site knowing such an application exists.
         Transfer::Source source{};
         source.add<Transfer::ClaFiText>(text().selectedText(m_editProps.selRange));
         formContext().clipboard().set(std::move(source), stamp);
@@ -532,7 +533,7 @@ namespace ClaFi::Controls
         if (m_editProps.selRange.start == k_maxSize)
             return Label::contextMenuAnchor();
 
-        // Measured in FORM space by handing the form rect in: textBounds and caretRect both
+        // Measured in **form** space by handing the form rect in: textBounds and caretRect both
         // answer in whatever space the rect they are given is in, so nothing is converted
         // afterwards. Same route Control::nestedGetHint takes for an OverText anchor.
         const FloatRect textBounds = this->textBounds(formContext(), boundsInForm());
@@ -661,8 +662,8 @@ namespace ClaFi::Controls
         FloatRect thisRect = boundsInForm();
         FloatRect textBounds = this->textBounds(formContext, thisRect);
 
-        // Both ends of the drag are asked of ONE layout. caretHitAt syncs before it answers, and
-        // a sync gathers and compares the whole text - so asking it twice pays that twice over,
+        // Both ends of the drag are asked of **one** layout. caretHitAt syncs before it answers,
+        // and a sync gathers and compares the whole text - so asking it twice pays that twice over,
         // for a text that cannot have changed between the two questions. This runs on every
         // pointer move, and a move that costs more than the pointer's own sample interval leaves
         // input pending at all times, which is what holds WM_PAINT off until the pointer stops.
@@ -856,7 +857,7 @@ namespace ClaFi::Controls
                     caretPos = 0;
                 else
                     caretPos = rowHome({ caretPos, m_editProps.affinityTrailing });
-                m_editProps.affinityTrailing = false; // Home ALWAYS snaps to start of line
+                m_editProps.affinityTrailing = false; // Home **always** snaps to start of line
                 break;
 
             case Keys::End:
@@ -865,7 +866,7 @@ namespace ClaFi::Controls
                 else
                     caretPos = syncedLayout(formContext, textBounds).rowEnd(
                         { caretPos, m_editProps.affinityTrailing });
-                m_editProps.affinityTrailing = true; // End ALWAYS snaps to end of line
+                m_editProps.affinityTrailing = true; // End **always** snaps to end of line
                 break;
 
             case Keys::Up:
@@ -948,7 +949,7 @@ namespace ClaFi::Controls
         restartCaretBlink();
         announceCaretMove();
         invalidateEditActions();
-        // LAST, once the box has finished with the edit. A listener is free to do anything with
+        // **Last**, once the box has finished with the edit. A listener is free to do anything with
         // the text it has just been told about, the box included.
         TextEditEvent event{ *this };
         emitEvent(event);
@@ -1059,7 +1060,7 @@ namespace ClaFi::Controls
         // measured in. A page is a distance on screen, and nothing about where the caret happens
         // to stand inside the view says what that distance is.
         //
-        // THE VIEW A GLIDE IS HEADING FOR, NOT THE ONE ON SHOW. A held page key repeats faster
+        // **The view a glide is heading for, not the one on show.** A held page key repeats faster
         // than the 220ms glide it starts, so the view a press reads is still on its way to where
         // the press before it sent it. Measuring from that view names the screenful the previous
         // press already claimed, and the caret lands back inside it - a held key would then
@@ -1095,8 +1096,8 @@ namespace ClaFi::Controls
             { m_editProps.targetX.value_or(sourceRect.left), targetY });
         FloatRect hitRect = caretRect(textBounds, result.hit);
 
-        // THE VIEW TRAVELS THE DISTANCE THE CARET TRAVELLED, WHICH IS THE SCREENFUL SETTLED ON A
-        // ROW. A screenful names a point, and the caret can only stand on the row holding that
+        // **The view travels the distance the caret travelled, which is the screenful settled on a
+        // row.** A screenful names a point, and the caret can only stand on the row holding that
         // point, so it arrives short of the screenful by however far into that row the point
         // fell. A view given the whole screenful takes that difference out of the caret's place
         // in it, and a held key adds one up per press until the caret has climbed out of the
@@ -1104,12 +1105,12 @@ namespace ClaFi::Controls
         // held, and what the view gives up is a sliver of a row it has already shown - a press
         // passes nothing unseen either way.
         //
-        // TOP TO TOP, BOTH DIRECTIONS. The distance is the caret's, and the leading edge is only
-        // where the screenful was counted from: measured from the row's bottom going back, the
+        // **Top to top, both directions.** The distance is the caret's, and the leading edge is
+        // only where the screenful was counted from: measured from the row's bottom going back, the
         // view is handed the row's own height on top of the screenful, so it passes a row unseen
         // and the caret slides a whole row down the view on every press.
         //
-        // The page is stated as the rect the view BECOMES: the client area carried by that
+        // The page is stated as the rect the view **becomes**: the client area carried by that
         // distance. ScrollBox puts a rect no taller than its client area against the leading
         // edge, so naming that rect moves the view by exactly the travel, whichever way it goes.
         const float travel = hitRect.top - sourceRow.top;
@@ -1120,7 +1121,7 @@ namespace ClaFi::Controls
         // left: a taller row at the same offset reaches past the edge, and a caret that was out
         // of sight starts from the edge itself. Either way the caret is drawn on the sliver of
         // the row that is left, inside the fade ScrollBox paints at that edge - on screen and
-        // impossible to find. One step INTO the page puts it on the first row shown whole. Only
+        // impossible to find. One step **into** the page puts it on the first row shown whole. Only
         // the caret moves: the view keeps the travel it was given, so the step costs no coverage.
         if (hitRect.top < result.page.top || hitRect.bottom > result.page.bottom)
         {
@@ -1195,7 +1196,7 @@ namespace ClaFi::Controls
         // zero is the setting for a caret that holds still. Either way nothing is scheduled, and
         // the caret keeps the state it was last put in.
         //
-        // The VISUAL focus, not Input's: a menu opened on this box holds the real one, and the
+        // The **visual** focus, not Input's: a menu opened on this box holds the real one, and the
         // box goes on being what the user is typing into - see Control::visualState.
         const MilliSeconds interval = Platform::caretBlinkTime();
         if (visualState().focused && interval.value)

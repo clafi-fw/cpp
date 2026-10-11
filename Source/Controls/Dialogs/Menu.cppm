@@ -34,8 +34,8 @@ namespace ClaFi::Controls
         // does the share become a maximum - FormBase::monitorHeightShare, asked by the placement?
         constexpr float k_monitorHeightShare = 0.8f;
 
-        // How far a line may run before it turns. This one is NOT a share of anything: it is how
-        // far the eye carries along a line, the same distance on a small screen and on a large
+        // How far a line may run before it turns. This one is **not** a share of anything: it is
+        // how far the eye carries along a line, the same distance on a small screen and on a large
         // one - the message box states its own reading width for the same reason.
         constexpr float k_maxItemWidth = 360.0f;
 
@@ -48,7 +48,7 @@ namespace ClaFi::Controls
     /// the press all belong to a button already. What a menu adds is the key printed at the
     /// right-hand end of the line, and closing behind the command it ran.
     // Button for its z animation - the press depth that allowZAnimation() turns on - with a tool
-    // button's element and metrics, which the item names itself. NOT ToolButton: a line of a
+    // button's element and metrics, which the item names itself. **Not** ToolButton: a line of a
     // menu is not a tool, and all it wanted from that class was the look.
     using MenuItemBase = Button;
     // One line of a menu.
@@ -87,9 +87,9 @@ namespace ClaFi::Controls
     export using BaseMenuForm = Form<ScrollBoxWith<Stack>>;
 
     /// @brief What a text item does when it is chosen.
-    /// @note It is handed the ITEM that was pressed. A handler raising a question of its own owns
-    /// it by that: the question then stands on top of this menu, which stays on screen behind it,
-    /// rather than replacing the thing the user was reading.
+    /// @note It is handed the **item** that was pressed. A handler raising a question of its own
+    /// owns it by that: the question then stands on top of this menu, which stays on screen behind
+    /// it, rather than replacing the thing the user was reading.
     export using MenuItemCallback = std::function<void(Control& item)>;
 
     /// @brief What a text item paints in its icon slot.
@@ -182,8 +182,8 @@ namespace ClaFi::Controls
     Menu::Menu(Control& owner)
         :
         BaseMenuForm{
-            // Takes the pointer, never the ACTIVATION - which leaves the form that opened it
-            // captioned and active behind it. The FOCUS does move here, so that the arrows read
+            // Takes the pointer, never the **activation** - which leaves the form that opened it
+            // captioned and active behind it. The **focus** does move here, so that the arrows read
             // the items the way they read any other list. What the menu is about stays behind:
             // an item's action finds its subject through FormBase::popupTarget, and the owner
             // keeps its caret and its selected look through Control::isDroppedDown.
@@ -288,7 +288,7 @@ namespace ClaFi::Controls
     {
         if (nothingToShow())
             return 0;
-        // The pointer decides where a menu the MOUSE raised lands, and the rect below is not
+        // The pointer decides where a menu the **mouse** raised lands, and the rect below is not
         // read at all - see FormBase::initPlacement. This is the other case: raised from the
         // keyboard there is no pointer, and the menu drops under the part of its owner the
         // commands are about, which for a text box is the caret rather than the whole box.
@@ -349,7 +349,7 @@ namespace ClaFi::Controls
             // Every item is as wide as the menu, and that is what the key at the end of the line
             // is measured against.
             HorizontalAlign::Fill,
-            // How wide the line may be. Stated by the ITEM rather than by the menu around it,
+            // How wide the line may be. Stated by the **item** rather than by the menu around it,
             // because an item aligned Fill keeps whatever width it measured when that is the
             // larger - see Control::align - so a maximum on the list would leave the long item
             // standing past the view with its key out of sight. Capped here, a long name turns

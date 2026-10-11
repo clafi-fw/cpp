@@ -124,9 +124,9 @@ namespace ClaFi
         }
 
         // Whether a marker standing where a text is put in closes a run that text is no part of.
-        // A Pop there closes a run that opened before it, and what goes in JOINS that run - which
-        // is how a character typed at the end of a bold word comes out bold - unless it states
-        // that category for itself, and then the run closes in front of it.
+        // A Pop there closes a run that opened before it, and what goes in **joins** that run -
+        // which is how a character typed at the end of a bold word comes out bold - unless it
+        // states that category for itself, and then the run closes in front of it.
         bool closesBeforeInsertion(const FormatItem& item, const StatedCategories& statedAtStart)
         {
             const MarkerCat category = getPopCategory(item);
@@ -299,15 +299,15 @@ namespace ClaFi
         AnnihilateScratch g_annihilateScratch;
 
         // Takes out the Push/Pop pairs that both open and close at one text index: nothing
-        // stands between them, so they change nothing. A Pop closes the NEAREST unclosed Push
+        // stands between them, so they change nothing. A Pop closes the **nearest** unclosed Push
         // of its category - the stack BakedText::rebuild walks - so Push(red), Push(blue), Pop
         // at one index leaves red in force.
         //
         // One pass with one stack per category finds every pair. Nothing is moved here - the
-        // pairs are only MARKED, and the caller compacts the vector once for all of them, because
-        // a group can hold a whole text's markers: Text::replaceText collapses every preservable
-        // marker inside the replaced range onto its start, so a Select All followed by a Delete
-        // puts all of them at one index.
+        // pairs are only **marked**, and the caller compacts the vector once for all of them,
+        // because a group can hold a whole text's markers: Text::replaceText collapses every
+        // preservable marker inside the replaced range onto its start, so a Select All followed by
+        // a Delete puts all of them at one index.
         //
         // Answers how many entries it marked.
         std::size_t annihilateGroup(const std::vector<std::pair<std::size_t, FormatItem>>& markers,
@@ -345,7 +345,7 @@ namespace ClaFi
             return annihilatedCount;
         }
 
-        // MARKERS ARRIVE IN TEXT ORDER, and this does not sort them. Every route that builds a
+        // **Markers arrive in text order**, and this does not sort them. Every route that builds a
         // marker vector writes it that way: both replaceText overloads write what stands before
         // the replaced range, then that range's own boundary, then the tail, and selectedText
         // writes the inherited state at 0, the selection's markers in order, and the closers at
@@ -904,7 +904,7 @@ namespace ClaFi
             }
         }
 
-        // WHAT STANDS AT INDEX 0 IS THE STATE THE SELECTION INHERITED, and it stays there even
+        // **What stands at index 0 is the state the selection inherited**, and it stays there even
         // where the selection's own first marker closes it again. Annihilating that pair would
         // leave the text saying nothing about a run it stood inside, and that is what replaceText
         // reads to tell a run the text belongs to from one that closes where the text lands. The

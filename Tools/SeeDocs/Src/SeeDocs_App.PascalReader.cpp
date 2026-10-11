@@ -248,7 +248,7 @@ namespace SeeDocs_App
             return result;
         }
 
-        // THE HINT A DELPHI DOC COMMENT GIVES: its <summary>, Delphi's own brief, where it has
+        // **The hint a Delphi doc comment gives**: its <summary>, Delphi's own brief, where it has
         // one; else what any doc comment gives, a line opening with a tag ending a paragraph as
         // a command does.
         [[nodiscard]] std::wstring pascalBrief(const std::span<const std::wstring> lines)
@@ -1811,7 +1811,7 @@ namespace SeeDocs_App
             owner.properties.push_back(std::move(property));
         }
 
-        // A ROUTINE'S COMMENT MAY STAND UNDER ITS HEADER in the implementation section, between
+        // **A routine's comment may stand under its header** in the implementation section, between
         // the header and what the routine opens with - var, const, begin. It gives the hint of
         // the routine the interface declares, where the interface gives that one none.
         void UnitReader::readImplementation()
@@ -2180,8 +2180,8 @@ namespace SeeDocs_App
             return MethodType::Unknown;
         }
 
-        // A METHOD TYPE MAKES AN EVENT, as the Object Inspector has it. A type the tree does not
-        // declare - the RTL's TNotifyEvent - says nothing either way, and there Delphi's own
+        // **A method type makes an event**, as the Object Inspector has it. A type the tree does
+        // not declare - the RTL's TNotifyEvent - says nothing either way, and there Delphi's own
         // naming decides: On and a capital. A type of the language's own is no method type.
         [[nodiscard]] bool isEvent(const Surface& surface, const Type& owner,
             const Property& property)

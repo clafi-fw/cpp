@@ -87,8 +87,8 @@ namespace ClaFi::Diagnostic::Options
     }
 
     /// @brief Two things a text layout does that a paint should not have to go to the Output
-    /// page. A wrapping text SHAPED IN THE PAINT PHASE at a finite width: the calculate pass
-    /// measured it, and the paint could not find that layout. A line the fit test FADES: the
+    /// page. A wrapping text **shaped in the paint phase** at a finite width: the calculate pass
+    /// measured it, and the paint could not find that layout. A line the fit test **fades**: the
     /// test that failed with both sides of it - the line's bottom against the box's height, or
     /// its width against the room the box leaves it - and the box, the shaped size and the
     /// width the lines were broken at. A text faded in a box of its own measured size shows

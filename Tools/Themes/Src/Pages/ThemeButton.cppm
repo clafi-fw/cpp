@@ -35,8 +35,8 @@ namespace Themes_App
     using namespace ::ClaFi::Controls;
 
 
-    // The caption IS the theme file's name without its extension, so the in-place editor over it
-    // renames the file. WithInPlaceEdit carries the whole of that - the gestures, the geometry -
+    // The caption **is** the theme file's name without its extension, so the in-place editor over
+    // it renames the file. WithInPlaceEdit carries the whole of that - the gestures, the geometry -
     // and what is left here is what is about themes.
     export class ThemeButton : public WithInPlaceEdit<Button>
     {
@@ -102,11 +102,11 @@ namespace Themes_App
             OnEvent{ [this](AcceptEditEvent& event) {
                 if (appThemes().renameFile(tag<UserTheme*>()->path(), event).empty())
                     return;
-                // THE FILE IS RENAMED AND THIS TILE STILL SAYS OTHERWISE. The list is rebuilt from
-                // the directory, and the watch behind that waits out a quiet period first, so for a
-                // moment after the editor closes this caption is the only thing on screen naming the
-                // theme - and it would be naming it by the name it no longer has. The rebuild
-                // replaces this tile with one that reads the same.
+                // **The file is renamed and this tile still says otherwise.** The list is rebuilt
+                // from the directory, and the watch behind that waits out a quiet period first, so
+                // for a moment after the editor closes this caption is the only thing on screen
+                // naming the theme - and it would be naming it by the name it no longer has. The
+                // rebuild replaces this tile with one that reads the same.
                 text().clear();
                 text() << event.text.plainText();
                 // A name is as many lines as it needs inside a fixed width, so a new one is a new
@@ -123,13 +123,13 @@ namespace Themes_App
         setPadding({ newPadding });
     }
 
-    // A PRESS ON THE TILE OPENS THE THEME, AND THE KEYBOARD'S PRESS IS A PRESS. Return and Space
-    // on the tile the keyboard stands on arrive here as an ordinary click - FocusNavigator answers
-    // both by clicking the item the focus delegates to - so the mouse's single click and the
-    // keyboard's press are one event, and the form is what tells them apart.
+    // **A press on the tile opens the theme, and the keyboard's press is a press.** Return and
+    // Space on the tile the keyboard stands on arrive here as an ordinary click - FocusNavigator
+    // answers both by clicking the item the focus delegates to - so the mouse's single click and
+    // the keyboard's press are one event, and the form is what tells them apart.
     //
-    // A MODIFIER MAKES THE PRESS A SELECTION COMMAND rather than an activation: Ctrl+Space takes
-    // the tile in or out of the selection and Shift+Space ends a range, both answered by the
+    // **A modifier makes the press a selection command** rather than an activation: Ctrl+Space
+    // takes the tile in or out of the selection and Shift+Space ends a range, both answered by the
     // container above, and opening a theme on top of either is a second thing nobody asked for.
     //
     // The modifiers are read before the base runs, because ButtonBase reads a press over the check
@@ -153,7 +153,7 @@ namespace Themes_App
     void ThemeButton::nestedDoubleClick(DoubleClickEvent& event)
     {
         Base::nestedDoubleClick(event);
-        // THE GESTURE IS SPENT HERE. A double click that nothing stopped is read by the form as
+        // **The gesture is spent here.** A double click that nothing stopped is read by the form as
         // the press it also is, and that press would act on a tile the navigation is about to
         // take down. Said before the command runs, because the command owns what happens next and
         // the event outlives this tile either way.
@@ -178,8 +178,8 @@ namespace Themes_App
         if (event.propagationStopped())
             return;
 
-        // THE MENU NAMES FOUR COMMANDS AND SETTLES NONE OF THEM. Rename is answered by the tile,
-        // against the caption that is the theme file's name; Delete by the page, against the
+        // **The menu names four commands and settles none of them.** Rename is answered by the
+        // tile, against the caption that is the theme file's name; Delete by the page, against the
         // selection; Open and Open in new tab by the browser, against the path this page names
         // for whichever tile is current. So a menu item, a toolbar button and the Delete key all
         // run one implementation, and a built-in theme arrives with the first two greyed rather
@@ -189,9 +189,9 @@ namespace Themes_App
         // raised this menu moved the focus, which selects a tile standing outside the selection
         // and leaves a selection the tile is part of as it stands.
         Menu menu{ *this };
-        // WHAT THE TILE IS, in the strip: a theme has a name and a file, and a picture says
+        // **What the tile is**, in the strip: a theme has a name and a file, and a picture says
         // either at a glance, so the two of them stand side by side in what the list would spend
-        // on one line. WHERE IT GOES, in the list: opening is a sentence rather than a picture,
+        // on one line. **Where it goes**, in the list: opening is a sentence rather than a picture,
         // and the two lines differ by their words alone.
         menu.addToCommandBar(StdActions::rename);
         menu.addToCommandBar(StdActions::del);
@@ -210,7 +210,7 @@ namespace Themes_App
         paintThemeIcon(event, colors);
     }
 
-    // OPEN IS THE COMMAND, AND THE BROWSER ANSWERS IT. What is opened is named by the page,
+    // **Open is the command, and the browser answers it.** What is opened is named by the page,
     // against the tile the user is on - which is this one, because a press reaches a tile through
     // the focus and the focus is what moves the current item. So the line in this tile's menu, a
     // double click and a keyboard press run one implementation, and it is the one that navigates

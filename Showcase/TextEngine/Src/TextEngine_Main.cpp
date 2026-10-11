@@ -54,16 +54,16 @@ namespace TextEngine_App
         // is not laid out, so a page's first shaping is paid on the first click of its tab rather
         // than at startup.
         //
-        // Set to be FELT rather than to be reasonable: a re-shape is linear in paragraphs, at
+        // Set to be **felt** rather than to be reasonable: a re-shape is linear in paragraphs, at
         // roughly 5 microseconds each for a line of source, so this is about a quarter of a second
         // per key press on the code page. Both blocks are 50 lines, so a round number here divides
         // exactly. Raising it costs memory in proportion and once per page opened - one native
         // layout is held per paragraph for as long as the page exists.
         constexpr std::size_t k_generatedLines = 50000;
 
-        // The caret readout in a page's corner. A label holding its OWN layout rather than a plain
-        // one: the reading is rewritten on every caret move, and a text that changes takes a fresh
-        // entry in TextEngine's cache for every value it passes through, evicting the static
+        // The caret readout in a page's corner. A label holding its **own** layout rather than a
+        // plain one: the reading is rewritten on every caret move, and a text that changes takes a
+        // fresh entry in TextEngine's cache for every value it passes through, evicting the static
         // layouts the rest of the form draws from.
         using CaretReadout = WithTextLayout<Label>;
 
@@ -156,7 +156,7 @@ namespace TextEngine_App
 
     int runTextEngineShowcase(ApplicationBase& application)
     {
-        // THE APPLICATION STATES ITS OWN DEFAULT, NOT THE USER'S CHOICE. Where a config
+        // **The application states its own default, not the user's choice.** Where a config
         // folder stands the mode has just been loaded out of it, and writing over it here
         // would undo the Settings page on every start.
         if (!application.configFolderExists())
@@ -277,7 +277,7 @@ namespace TextEngine_App
             Page{ formulasPage }
         );
 
-        // The emoji stands INSIDE the word, so the label is one run broken into three by a face
+        // The emoji stands **inside** the word, so the label is one run broken into three by a face
         // change and closed up again. A tab measures and draws through the same path a page does,
         // over a MinSize of 32 and a centred anchor - so a label taller than the strip allows for,
         // or a gap where the faces meet, shows here and nowhere else on the form.

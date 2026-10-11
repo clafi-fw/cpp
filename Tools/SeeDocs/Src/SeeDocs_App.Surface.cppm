@@ -2,8 +2,8 @@ export module SeeDocs_App.Surface;
 
 import ClaFi.StdLib;
 
-// WHAT THE SCANNER READS OUT OF A TREE, as plain records. Nothing here knows how the records are
-// found or how they are written; the scanner fills a Surface and the database and the checks
+// **What the scanner reads out of a tree**, as plain records. Nothing here knows how the records
+// are found or how they are written; the scanner fills a Surface and the database and the checks
 // read it.
 namespace SeeDocs_App
 {

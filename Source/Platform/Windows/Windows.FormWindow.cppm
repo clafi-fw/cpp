@@ -53,13 +53,13 @@ namespace ClaFi::PlatformImplementation::Windows
         [[nodiscard]] FloatPoint toSurface(FloatPoint clientPoint) const;
         // The client area as a rect in the form's surface.
         [[nodiscard]] IntRect clientArea() const;
-        // THE FRAME CHANGED UNDER THE WINDOW - a new design, or a ring come or gone. A window not
-        // shown keeps it for the show; a shown one moves its rect by what the ring did, so the
+        // **The frame changed under the window** - a new design, or a ring come or gone. A window
+        // not shown keeps it for the show; a shown one moves its rect by what the ring did, so the
         // geometry stays where it is, and tells the form.
         void restateFrame(const FrameMargins& ringBefore);
-        // THE DESIGN CHANGED UNDER A WINDOW OF THE SAME SIZE - a theme switch, a scale. The ring
-        // moves the window rect so the geometry stays where it is; anything else is a resize the
-        // form is told of directly.
+        // **The design changed under a window of the same size** - a theme switch, a scale. The
+        // ring moves the window rect so the geometry stays where it is; anything else is a resize
+        // the form is told of directly.
         void reframe();
         // Where the shadow window stands and whether it shows, from the window rect given or the
         // current one. Called on every move and on every change of state.
@@ -71,7 +71,7 @@ namespace ClaFi::PlatformImplementation::Windows
         void paint();
         void schedulePaint();
     private:
-        // WHAT THE FORM HAS INVALIDATED SINCE THE LAST PAINT, in the surface: one rect, or the
+        // **What the form has invalidated since the last paint**, in the surface: one rect, or the
         // whole of it after a size, a frame or a whole invalidation. The window's own record -
         // see invalidateRect.
         static constexpr UINT k_paintMessage = WM_APP + 1;

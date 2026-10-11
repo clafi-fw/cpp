@@ -2,7 +2,7 @@
 // Benchmark: Save/Load performance across ClaFi, Json, and Xml
 // =========================================================================
 //
-// NOT a module itself - a plain translation unit with main(), importing the
+// **Not** a module itself - a plain translation unit with main(), importing the
 // library modules it needs. ClaFi.StdLib re-exports the whole std module, so
 // the clock, the stream formatting and the filesystem paths used below all
 // arrive with it.

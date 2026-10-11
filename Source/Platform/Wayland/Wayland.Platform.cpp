@@ -5,9 +5,9 @@ module;
 #include <unistd.h>
 #include <sys/wait.h>
 
-// AN IMPLEMENTATION UNIT OF THE MODULE THAT DECLARED Platform, not of the Wayland layer. A class
-// member belongs to the module its class was declared in and must be defined there, so the bodies
-// of Platform:: live here whatever platform supplies them.
+// **An implementation unit of the module that declared** Platform, not of the Wayland layer. A
+// class member belongs to the module its class was declared in and must be defined there, so the
+// bodies of Platform:: live here whatever platform supplies them.
 module ClaFi.Core.Context.FormContext;
 
 import ClaFi.Platform.Wayland.FormWindow;
@@ -38,7 +38,7 @@ namespace ClaFi
             Platform::events().emit<SystemColorModeEvent>();
         }
 
-        // THE DISPLAY THE PLATFORM HOLDS, for the statics here, which have no object in hand. A
+        // **The display the platform holds**, for the statics here, which have no object in hand. A
         // static asked while none stands is a broken order - see DisplayManager::standing.
         [[nodiscard]] DisplayManager& standingDisplay()
         {
@@ -50,7 +50,7 @@ namespace ClaFi
         }
     }
 
-    // THE DESKTOP-FILE SHAPE: the two names joined by a dot, spaces dropped, so that a
+    // **The desktop-file shape**: the two names joined by a dot, spaces dropped, so that a
     // .desktop entry can be named the same and match.
     void Platform::setApplicationId(std::wstring_view publisher, std::wstring_view name)
     {
@@ -59,8 +59,8 @@ namespace ClaFi
         standingDisplay().setAppId(std::move(appId));
     }
 
-    // A WINDOW'S PLACE IS NOT THE CLIENT'S TO STORE. There is no global coordinate space to write
-    // down and none to restore into: a compositor that remembers where a window was keeps the
+    // **A window's place is not the client's to store.** There is no global coordinate space to
+    // write down and none to restore into: a compositor that remembers where a window was keeps the
     // rectangle itself, against an opaque session id the client persists and hands back - the
     // one value here that belongs to the application rather than to a form. What a form's own
     // section keeps is what a client can restore by itself: its ordinary size in surface pixels,
@@ -111,7 +111,7 @@ namespace ClaFi
         (storage / L"Maximized").set(placement.maximized);
     }
 
-    // A WINDOW THAT WAS ALREADY UP WHEN STORING WAS ALLOWED. Nothing asked the compositor for a
+    // **A window that was already up when storing was allowed.** Nothing asked the compositor for a
     // session while there was nowhere to write its id, so the session is asked for here instead,
     // and the window is added to it rather than restored from it: restore_toplevel is refused
     // once the surface has been committed, add_toplevel is not, and the compositor keeps the
@@ -130,7 +130,7 @@ namespace ClaFi
         static_cast<FormWindow&>(form.wnd_window()).addToSession(toUtf8(name));
     }
 
-    // THE NAME IS THE KEY'S, NOT THE LAYOUT'S. A key code here is a Win32 virtual key, and a
+    // **The name is the key's, not the layout's.** A key code here is a Win32 virtual key, and a
     // letter's is the Latin letter on the key whatever layout is active - see Keyboard - so the
     // shortcut Ctrl+C is spelled with a C under a Cyrillic layout too. Win32 spells it with the
     // layout's letter, which is the one thing here that reads differently between the two.
@@ -255,8 +255,8 @@ namespace ClaFi
     {
     }
 
-    // ONE, ALWAYS. Scale is per-surface here and arrives on the surface that landed on a monitor,
-    // so there is no global answer - and a form that has a window reads its own.
+    // **One, always.** Scale is per-surface here and arrives on the surface that landed on a
+    // monitor, so there is no global answer - and a form that has a window reads its own.
     ScaleFactor Platform::globalScaleFactor()
     {
         return 1.0f;
@@ -315,8 +315,8 @@ namespace ClaFi
         }
     }
 
-    // TWICE FORKED, so the child is reparented to init and there is no zombie for this process to
-    // reap. A UI process that waits on a document viewer is a UI process that has stopped.
+    // **Twice forked**, so the child is reparented to init and there is no zombie for this process
+    // to reap. A UI process that waits on a document viewer is a UI process that has stopped.
     void Platform::shellExecute(const IForm*, const std::wstring_view file,
         const std::wstring_view params)
     {
@@ -344,10 +344,10 @@ namespace ClaFi
         ::waitpid(outer, &status, 0);
     }
 
-    // THE PORTAL'S FILE CHOOSER, parented by the form's toplevel where the compositor exports one.
-    // The answer comes over the session bus whenever the dialog is closed, so the loop runs until
-    // it does, with the bus among what it sleeps on - the source only wakes it, and the request
-    // reads its own socket after every pass.
+    // **The portal's file chooser**, parented by the form's toplevel where the compositor exports
+    // one. The answer comes over the session bus whenever the dialog is closed, so the loop runs
+    // until it does, with the bus among what it sleeps on - the source only wakes it, and the
+    // request reads its own socket after every pass.
     std::optional<std::filesystem::path> Platform::pickFolder(const IForm* form,
         const std::wstring_view title, const std::filesystem::path& startFolder)
     {
@@ -440,7 +440,7 @@ namespace ClaFi
         std::fputs(text.c_str(), stderr);
     }
 
-    // THE PORTAL'S ANSWER, read over the session bus. The handler is named ahead of the first
+    // **The portal's answer**, read over the session bus. The handler is named ahead of the first
     // read, which is what subscribes to the changes.
     ColorMode Platform::systemColorMode()
     {

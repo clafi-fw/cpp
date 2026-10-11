@@ -36,7 +36,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // HOW MANY PASSES ONE FRAME MAY SPEND. A pass that asks for another converges on the next
+    // **How many passes one frame may spend.** A pass that asks for another converges on the next
     // one, which hands back the width it was measured against, and a box above a wrapping panel
     // can ask once more on top of that. Past this the layout is not converging, and the frame
     // goes out on what the last pass produced rather than the application stopping.
@@ -68,7 +68,7 @@ namespace ClaFi
 
     namespace
     {
-        // ONE CROSSING TO A LINE, ONE PAIR TO A TICK: how long the frame was on the screen, and
+        // **One crossing to a line, one pair to a tick**: how long the frame was on the screen, and
         // how much of that the application spent making it. A frame that was on the screen for
         // two refreshes having worked for three milliseconds waited on something this process
         // does not do - the compositor, the driver; one that worked for twenty-five was busy.
@@ -76,8 +76,8 @@ namespace ClaFi
         //
         // The forms of one tick paint back to back, so the work is the whole run of them: the
         // first form's start to the last form's end. Both numbers are therefore known only once
-        // the NEXT tick begins, which is where the pair is written. The count of forms rides the
-        // last pair of the line.
+        // the **next** tick begins, which is where the pair is written. The count of forms rides
+        // the last pair of the line.
         //
         // A gathered line is written when the next crossing starts, because a line costs a
         // control and a layout of its own, which inside a crossing would be measuring the
@@ -194,9 +194,9 @@ namespace ClaFi
 
     FormBase::~FormBase()
     {
-        // FIRST, and not left to the member teardown that follows this body. The hint is a form
-        // of its own whose window this form's window OWNS, and the system destroys an owned window
-        // along with its owner - so a hint taken down after m_window would be destroying a
+        // **First**, and not left to the member teardown that follows this body. The hint is a form
+        // of its own whose window this form's window **owns**, and the system destroys an owned
+        // window along with its owner - so a hint taken down after m_window would be destroying a
         // handle that had already been taken. It also reads this form on its way down.
         m_hint.destroyForm();
 
@@ -216,7 +216,7 @@ namespace ClaFi
         }
     }
 
-    // THE PICTURE STANDS STILL AND STOPS FOLLOWING. The percents are copied over first, so what
+    // **The picture stands still and stops following.** The percents are copied over first, so what
     // this form is left drawn at is what it was already showing, and every route that reads the
     // scaler is pointed at the form's own.
     //
@@ -231,17 +231,17 @@ namespace ClaFi
         stateScaler(m_ownScaler);
     }
 
-    // THE FORM UNDERNEATH OWNS THE SCALE AGAIN, which is the state every popup is built in - see
-    // m_scaler. A form with nobody under it has nothing to follow and keeps its own.
+    // **The form underneath owns the scale again**, which is the state every popup is built in -
+    // see m_scaler. A form with nobody under it has nothing to follow and keeps its own.
     //
-    // A PLACEMENT AND NOT AN ALIGNMENT. A popup's window is as big as what was in it when the
+    // **A placement and not an alignment.** A popup's window is as big as what was in it when the
     // window was placed - see initPlacement, where the size asked for is the content's own - so
     // a scale that has to be measured again is a placement. An alignment lays the content out
     // inside the window that is already there, which cuts it to a size taken at the scale being
     // left, and nothing would ever ask for another: a popup is placed again when the control it
     // stands on moves, and the form underneath is standing still by the time this runs.
     //
-    // ASKED FOR WHERE NOTHING IS BEING STEERED. The press point a drag measures its travel from
+    // **Asked for where nothing is being steered.** The press point a drag measures its travel from
     // is not moved here, the way a scaler's own change moves it - see scaleFactorChanged - so a
     // form brought back under a held pointer would answer that pointer at the wrong scale.
     void FormBase::followScale()
@@ -315,10 +315,10 @@ namespace ClaFi
 
     void FormBase::controlHidden(const Control& control)
     {
-        // A HIDDEN TARGET IS AS GONE AS A DELETED ONE. The popup was placed on where the control
-        // stood, and a hidden control stands nowhere: followPopupTarget2 has no rect to carry it
-        // to, so the window stays over the place the control left, with its loop running. A
-        // strip that hides the tab an editor is over - WhatsClip, when the copy made inside that
+        // **A hidden target is as gone as a deleted one.** The popup was placed on where the
+        // control stood, and a hidden control stands nowhere: followPopupTarget2 has no rect to
+        // carry it to, so the window stays over the place the control left, with its loop running.
+        // A strip that hides the tab an editor is over - WhatsClip, when the copy made inside that
         // editor changes the clipboard - is the case that showed it.
         //
         // The whole subtree is asked, since hiding a container hides what is in it without any
@@ -394,20 +394,20 @@ namespace ClaFi
 
     void FormBase::adjustRootMetrics(AdjustMetricsEvent& event) const
     {
-        // THE WINDOW IS THE CEILING - the size the placement granted, or the size the user
+        // **The window is the ceiling** - the size the placement granted, or the size the user
         // dragged the frame to. A root measured against more than that is measured for a window
         // nobody has, and the overflow is what ScrollBars::Auto reads in the measuring pass,
         // which is why the window has to be stated here rather than in the align.
         //
-        // A ceiling, not a maximum: this is what the form HAS, and MaxSize is what it was asked
+        // A ceiling, not a maximum: this is what the form **has**, and MaxSize is what it was asked
         // to be. The two are different facts and the second is not the framework's to write.
         //
-        // ON THE AXES THE WINDOW ACTUALLY BOUNDS, AND NO OTHERS.
+        // **On the axes the window actually bounds, and no others.**
         //
-        // An axis the placement REFUSED bounds every pass that follows it, the pass measuring
+        // An axis the placement **refused** bounds every pass that follows it, the pass measuring
         // what to ask for next included. That is the one that matters: a list too long for the
         // room is measured against the room, which is where ScrollBars::Auto sees the overrun and
-        // puts the bar up - so the width that placement is then asked for is the width WITH the
+        // puts the bar up - so the width that placement is then asked for is the width **with** the
         // bar. Leave the ask unbounded and the bar can only ever be discovered afterwards, by
         // which time the window has been sized without it, and the strip comes out of the body:
         // every item stands past the view by exactly that width with its tail under the bar.
@@ -415,8 +415,8 @@ namespace ClaFi
         // An axis it granted in full bounds nothing while the form is measuring what to ask for -
         // a form held to the window it is about to replace could never grow, and growing by a
         // scroll bar is exactly what it has to do. Once it is laying content into the window it
-        // got, that window bounds both axes if it is the USER'S: a window the user dragged is not
-        // an answer to the content, and the content has to fit it or show a bar.
+        // got, that window bounds both axes if it is the **user's**: a window the user dragged is
+        // not an answer to the content, and the content has to fit it or show a bar.
         const bool userSized = m_autoFit == AutoFit::No && !m_measuringPlacement;
         const bool boundX = m_placedShortX || userSized;
         const bool boundY = m_placedShortY || userSized;
@@ -427,8 +427,8 @@ namespace ClaFi
         if (boundY && client.y > 0.0f && client.y / factor < event.metrics.maxSize.y)
             event.metrics.maxSize.y = client.y / factor;
 
-        // THE FLOOR THE WINDOW STANDS ON - the width a dropdown was told to be at least, which is
-        // that of the control it fell from. A MinSize, because that is what the placement reads
+        // **The floor the window stands on** - the width a dropdown was told to be at least, which
+        // is that of the control it fell from. A MinSize, because that is what the placement reads
         // as a floor and what Control::calculate holds the root up by; the ceiling above still
         // wins where the room is short of it. A root stating a wider floor of its own keeps it.
         if (m_minWidth > event.metrics.minSize.x)
@@ -455,7 +455,7 @@ namespace ClaFi
         if (!m_activePopup)
             return;
 
-        // INNERMOST FIRST. A popup may have one of its own - a question raised from inside a menu
+        // Innermost first. A popup may have one of its own - a question raised from inside a menu
         m_activePopup->closeActivePopup();
         if (m_activePopup->activePopup())
             // A popup's popup refused to close, so we cannot either
@@ -465,21 +465,21 @@ namespace ClaFi
         if (!m_activePopup->readyToClose())
             return;
 
-        // Read AFTERWARDS, both of them. readyToClose is allowed to act, and what it runs may
+        // Read **afterwards**, both of them. readyToClose is allowed to act, and what it runs may
         // have taken the popup down already - a popup that hides itself clears this pointer on
         // its way out - or deleted the control the focus was to go back to.
         FormBase* popup = m_activePopup;
         if (!popup)
             return;
 
-        // THE TARGET IS KEPT. The way down hands the focus back to it - see updateVisibility -
+        // **The target is kept.** The way down hands the focus back to it - see updateVisibility -
         // and that is the whole of what closing a popup from outside owes the form behind it.
         // A menu dismissed by a click on that form, or by the application being deactivated,
         // comes through here and through nothing else, so clearing the target here left the user
         // with nothing focused at all: the next key press had nowhere to go, and the
         // context-menu key had no control to be about.
         //
-        // Cleared only where there is a reason to hand the focus to NOBODY, which is
+        // Cleared only where there is a reason to hand the focus to **nobody**, which is
         // forgetControl - the target there is being destroyed.
         Control* target = popup->m_popupTarget;
         popup->close();
@@ -535,7 +535,7 @@ namespace ClaFi
             return;
         m_placementRect = value;
         rememberPlacementTarget();
-        // A FORM HOLDING ITS OWN SCALE HOLDS ITS PLACE. The rect goes on tracking the control
+        // **A form holding its own scale holds its place.** The rect goes on tracking the control
         // this form stands on, so the placement it comes back to is where that control is by
         // then - but the window is not moved while the hold stands. The hold is there so that a
         // gesture can steer the size of the form underneath without this one moving under the
@@ -673,24 +673,25 @@ namespace ClaFi
 
     void FormBase::wnd_beforePaint()
     {
-        // A FORM NOBODY CAN SEE HAS NO FRAME TO PREPARE, and a layout run for one is work for a
+        // **A form nobody can see has no frame to prepare**, and a layout run for one is work for a
         // frame that will never be drawn. A window is sized before it is shown by
         // updateVisibility, which reaches the placement directly and not through here, so
         // nothing that has to happen first happens here.
         if (!m_visible)
             return;
 
-        // A PASS THAT ASKED FOR ANOTHER IS ANSWERED BEFORE THIS FRAME. The request is raised while
-        // the tree is being laid out - a wrapping panel broken at a width the measure never saw, a
-        // body handed a viewport the measure ran ahead of - so painting on it shows the very
+        // **A pass that asked for another is answered before this frame.** The request is raised
+        // while the tree is being laid out - a wrapping panel broken at a width the measure never
+        // saw, a body handed a viewport the measure ran ahead of - so painting on it shows the very
         // layout the request exists to correct. updateAlign returns at once on a form that is
         // already aligned, so the loop ends the moment nothing asks.
         for (int pass = 0; pass < k_maxAlignPasses; ++pass)
         {
-            // A form sized by its content is PLACED again rather than aligned. updateAlign(false)
-            // lays the content out inside the window that is already there, which is the wrong way
-            // round here: text that has grown would be cut to the old window instead of moving it.
-            // initPlacement takes the content's own size and sets the bounds from it.
+            // A form sized by its content is **placed** again rather than aligned.
+            // updateAlign(false) lays the content out inside the window that is already there,
+            // which is the wrong way round here: text that has grown would be cut to the old window
+            // instead of moving it. initPlacement takes the content's own size and sets the bounds
+            // from it.
             if (m_autoFit == AutoFit::Yes && !m_aligned)
             {
                 m_placementValid = false;
@@ -714,8 +715,9 @@ namespace ClaFi
     // Timed only while something is connected to FormPaintedEvent - see the event.
     void FormBase::wnd_paint(void* nativeContext, IntRect& dirtyRect, Graphics::Bitmap*& outData)
     {
-        // AHEAD OF THE TIMING BELOW. Building a backend is not what a frame costs, and the frame
-        // charged with one would stand in the FPS page's worst reading for the rest of the run.
+        // **Ahead of the timing below.** Building a backend is not what a frame costs, and the
+        // frame charged with one would stand in the FPS page's worst reading for the rest of the
+        // run.
         if (m_backendPending)
             stateBackend();
 
@@ -739,7 +741,7 @@ namespace ClaFi
         return searchResult.hitZone;
     }
 
-    // THE FIRST MOVE SINCE THE POINTER CAME IN IS AN ENTRY. Win32 sends a window that appears
+    // **The first move since the pointer came in is an entry.** Win32 sends a window that appears
     // under a still pointer a move all the same, and a Wayland enter arrives as one, so that move
     // says where the pointer is and not that it moved: it hit-tests, and the mouse is left as it
     // is. A dropdown a key opened under the pointer keeps the keyboard on. Every move after it
@@ -806,7 +808,7 @@ namespace ClaFi
                     // the form behind it alone reads as the popup being ignored, and the popup
                     // is refusing precisely because it has something to say.
                     //
-                    // BOTH HALVES OF THE CLICK. Returning here drops the press; the item the
+                    // **Both halves of the click.** Returning here drops the press; the item the
                     // press went down on has to go with it, or the button-up finds it under the
                     // pointer still and fires the click that the press never started.
                     if (m_activePopup)
@@ -955,8 +957,8 @@ namespace ClaFi
         }
         update();
 
-        // THE POINTER NAMES THE CONTROL A RIGHT-CLICK IS ABOUT; THE KEYBOARD NAMES THE FOCUSED
-        // ONE. The hover is where the pointer is and nothing else, so a menu the keyboard raised
+        // **The pointer names the control a right-click is about; the keyboard names the focused
+        // one.** The hover is where the pointer is and nothing else, so a menu the keyboard raised
         // reads the focus, and a container answering for an item hands the item over.
         Control* it;
         if (pt)
@@ -992,7 +994,7 @@ namespace ClaFi
             it = it->parent();
         };
 
-        // A RIGHT CLICK ON THE TITLE BAR THAT NOTHING CLAIMED IS THE WINDOW'S OWN MENU - the
+        // **A right click on the title bar that nothing claimed is the window's own menu** - the
         // system's, as on every title bar the system draws itself.
         if (pt && !event.propagationStopped() && wnd_hitTest(*pt) == HitTest::Title)
             m_window->showWindowMenu(*pt, stamp);
@@ -1055,18 +1057,18 @@ namespace ClaFi
 
         if (m_activePopup)
         {
-            // SET BEFORE THE FORWARD, and never cleared after it. Two reasons, and each on its
+            // **Set before the forward**, and never cleared after it. Two reasons, and each on its
             // own is enough:
             //
-            // A NESTED PUMP MAY SPEND THE CHARACTER INSIDE THIS CALL. A menu item runs its
+            // **A nested pump may spend the character inside this call.** A menu item runs its
             // command before it closes the menu, and a command is free to open a dialog or an
             // in-place editor - that runs a message loop of its own, on this stack, and it
             // dispatches the character this press already queued. Set afterwards, the flag would
             // be set too late to be read.
             //
-            // AND NOTHING HERE MAY READ `this` ONCE THE FORWARD RETURNS. A command is allowed to
-            // take this form down with it, which is the same hazard the focused-control walk
-            // below names.
+            // **And nothing here may read** `this` **once the forward returns.** A command is
+            // allowed to take this form down with it, which is the same hazard the focused-control
+            // walk below names.
             //
             // Left standing costs nothing. wnd_char spends it only after declining to forward
             // the character to a popup that is still up, and the next press clears it at the top
@@ -1083,7 +1085,7 @@ namespace ClaFi
         // held. A glide already in flight - a caret scrolled into view by the previous press -
         // stands still until the key is let go without this.
         //
-        // Ticked BEFORE the press is dispatched, so a handler that asks for a new glide is
+        // Ticked **before** the press is dispatched, so a handler that asks for a new glide is
         // measuring from where the last one has actually reached.
         m_appContext.animator().externalTimerTick();
 
@@ -1127,7 +1129,7 @@ namespace ClaFi
             }
         }
 
-        // ESCAPE IS THE FOCUSED CONTROL'S BEFORE IT IS THE HINT'S. Dismissing a hint is
+        // **Escape is the focused control's before it is the hint's.** Dismissing a hint is
         // what Escape means when nothing else wants it, and the same test below says so once the
         // walk has passed. Answering it here as well took Escape away from any control with a
         // meaning of its own for it, but only while a hint happened to be up - an in-place
@@ -1144,7 +1146,7 @@ namespace ClaFi
                 control = control->focusDelegate();
             while (control && !event.handled)
             {
-                // The next step is read BEFORE the handler runs. A key handler is allowed to do
+                // The next step is read **before** the handler runs. A key handler is allowed to do
                 // something that outlives the press - open a menu, run an in-place editor - and
                 // whatever it opens pumps messages, so the control the walk is standing on may
                 // be deleted before it returns. Reading its parent afterwards would be reading a
@@ -1182,7 +1184,7 @@ namespace ClaFi
             event.handled = m_actions.runShortcut(event, *this)
                 || AppActions::get().runShortcut(event, *this);
 
-        // ESCAPE CLOSES A WINDOW WHOSE CLOSING ENDS NOTHING. The form holding the root loop is
+        // **Escape closes a window whose closing ends nothing.** The form holding the root loop is
         // what the application stands on, so the key reaches the navigator there instead.
         if (!event.handled)
         {
@@ -1206,7 +1208,7 @@ namespace ClaFi
 
     void FormBase::wnd_keyUp()
     {
-        // Cleared BEFORE the forward. A key that opened a popup on its way down has its way up
+        // Cleared **before** the forward. A key that opened a popup on its way down has its way up
         // forwarded to that popup, and the flag would otherwise stay set here for as long as the
         // popup is open - Control::isPressed reads it, so the focused item would read pressed.
         // Enter starting an in-place edit is exactly that key.
@@ -1246,11 +1248,11 @@ namespace ClaFi
         // The forward is conditional on where the focus actually is, which the walk below is
         // conditional on too. The focus is one per application rather than one per window, so a
         // popup can be up with the focus outside it - clicking the control a popup was opened
-        // over leaves it open and moves the focus - and forwarding then hands the POPUP's
+        // over leaves it open and moves the focus - and forwarding then hands the **popup's**
         // context to a control of this form, which is the thing the paragraph above forbids.
         //
-        // THE WHOLE CHAIN, not this form's own popup alone. Popups stack - a prompt raised from
-        // inside a dialog stands on it and registers on ITS form - and a key press reaches the
+        // **The whole chain**, not this form's own popup alone. Popups stack - a prompt raised from
+        // inside a dialog stands on it and registers on **its** form - and a key press reaches the
         // innermost by being forwarded at every level. A character has to travel the same way, or
         // the focus two levels down never matches here, the forward is declined, and the flag
         // below spends the character the press already handed on.
@@ -1261,14 +1263,14 @@ namespace ClaFi
             return;
         }
 
-        // THE CHARACTER OF A PRESS IS QUEUED BEFORE THE PRESS IS ANSWERED, so a key this form
-        // handed to a popup that the key then CLOSED produced nothing for the control behind
-        // it: the Enter that chose Select All is the MENU's, and the box the focus has just
+        // **The character of a press is queued before the press is answered**, so a key this form
+        // handed to a popup that the key then **closed** produced nothing for the control behind
+        // it: the Enter that chose Select All is the **menu's**, and the box the focus has just
         // come back to must not be given a newline by it. Marking the press handled cannot say
         // this - TranslateMessage has already run by the time anything answers - so the press
         // leaves a flag instead.
         //
-        // TESTED AFTER THE FORWARD, so that a popup still up and still holding the focus is
+        // **Tested after the forward**, so that a popup still up and still holding the focus is
         // given its characters as usual. Reading the flag clears it, so exactly one character
         // is dropped - and only where the popup has gone. A popup still up that does not hold
         // the focus took nothing: its walk started from the control that holds it, which is a
@@ -1311,7 +1313,7 @@ namespace ClaFi
         const ScaledDimensions placed =
             IntSize{ surface.x - taken.x, surface.y - taken.y }.toFloat();
 
-        // A RESIZE THAT MOVED NOTHING IS NOT A RESIZE. A window's position is stated whether or
+        // **A resize that moved nothing is not a resize.** A window's position is stated whether or
         // not it has changed - see Window::place - and the message stating it arrives here all
         // the same, so a placement pass that agreed with the window would throw away the
         // alignment it had just made, and the loop that asked for it could never tell that it
@@ -1326,7 +1328,7 @@ namespace ClaFi
         m_placed.size = placed;
         m_canvas.resize(surface);
 
-        // THE PASS IS LEFT TO THE FRAME, AND THE FRAME IS ASKED FOR AT ONCE. On Win32 update()
+        // **The pass is left to the frame, and the frame is asked for at once.** On Win32 update()
         // paints inside this call, which is inside SetWindowPos: a sizing loop takes pointer
         // input ahead of anything posted, so a frame left to the queue waits for the pointer to
         // stop. On Wayland update() only marks the window, and the idle drains every queued
@@ -1391,19 +1393,19 @@ namespace ClaFi
         if (m_downItem == item)
             m_downItem = nullptr;
         std::erase(m_scrollIntoViewOnAlign, item);
-        // THE POPUP GOES WITH THE CONTROL IT IS OVER. A list rebuilt under an open in-place
+        // **The popup goes with the control it is over.** A list rebuilt under an open in-place
         // editor deletes the item being edited, and a popup is placed, sized and aimed by that
         // control: what would be left is a window standing over nothing, with a modal loop still
         // running underneath it. Nothing else would ever take it down - the user cannot reach it,
         // and every ending it has runs through a control that no longer exists. Each rebuild
         // would leave one more on screen.
         //
-        // NOT THROUGH closeActivePopup: that asks readyToClose, and there is nothing left to
+        // **Not through** closeActivePopup: that asks readyToClose, and there is nothing left to
         // argue about. A popup refuses to close in order to keep a value the user must correct,
         // and the place that value was going has just gone.
         //
-        // The target is cleared FIRST, so the way down hands the focus to nobody rather than to a
-        // control being destroyed - the popup reads it there. m_popupTargetForm carries the
+        // The target is cleared **first**, so the way down hands the focus to nobody rather than to
+        // a control being destroyed - the popup reads it there. m_popupTargetForm carries the
         // de-registration and is untouched by this.
         if (m_activePopup && m_activePopup->m_popupTarget == item)
             dropActivePopup();
@@ -1415,8 +1417,8 @@ namespace ClaFi
             return;
 
         m_placementValid = true;
-        // BEFORE THE FIRST PLACEMENT, which is what reads it - a platform that names a window to
-        // the display server has to do so before that window is first placed.
+        // **Before the first placement**, which is what reads it - a platform that names a window
+        // to the display server has to do so before that window is first placed.
         if (!m_placementRestored && !m_configName.empty())
         {
             m_placementRestored = true;
@@ -1442,7 +1444,7 @@ namespace ClaFi
 
             m_window->show();
 
-            // REGISTERED BEFORE THE FOCUS MOVES. Both sides of a focus change are told as it
+            // **Registered before the focus moves.** Both sides of a focus change are told as it
             // happens, and what the control this popup was opened on answers there - its
             // selected look, and a text box's caret - is read off activePopup(). Told after the
             // focus had already left, it answered as though nothing had been opened on it and
@@ -1474,7 +1476,7 @@ namespace ClaFi
         }
         else
         {
-            // WHILE THE WINDOW IS STILL UP, which is the only time its placement can be read.
+            // **While the window is still up**, which is the only time its placement can be read.
             if (!m_configName.empty() && m_placementRestored)
                 m_appContext.storeFormPlacement(m_configName, *this);
             m_window->hide();
@@ -1494,7 +1496,7 @@ namespace ClaFi
         FormBase* ownerForm, Control* popupTarget, FormPlacement placement)
         :
         m_content{ content },
-        // THE FORM UNDERNEATH OWNS THE SCALE. Its own pointer is taken rather than its scaler,
+        // **The form underneath owns the scale.** Its own pointer is taken rather than its scaler,
         // so a popup opened from a popup is drawn at the same scale the whole stack is, and a
         // form with nobody underneath is drawn at its own.
         m_scaler{ ownerForm ? ownerForm->m_scaler : &m_ownScaler },
@@ -1557,15 +1559,15 @@ namespace ClaFi
         request.placement = m_placement;
         request.anchorRect = placementAnchor();
 
-        // A FRESH NEGOTIATION EVERY TIME. What the last placement refused says nothing about what
-        // this one will, and a form still held to it could not grow back when what is in it
+        // **A fresh negotiation every time.** What the last placement refused says nothing about
+        // what this one will, and a form still held to it could not grow back when what is in it
         // shrank - see adjustRootMetrics, which is the only reader.
         m_placedShortX = false;
         m_placedShortY = false;
 
-        // WHAT THIS PLACEMENT STARTS FROM: the scale the content is about to be measured at, and
-        // the window standing from the last one. The two disagree wherever a form has been handed
-        // a scale since it was placed - see adjustRootMetrics, which reads the window in the
+        // **What this placement starts from**: the scale the content is about to be measured at,
+        // and the window standing from the last one. The two disagree wherever a form has been
+        // handed a scale since it was placed - see adjustRootMetrics, which reads the window in the
         // factor's own units.
         if constexpr (Diagnostic::Options::logFormPlacement())
         {
@@ -1576,17 +1578,17 @@ namespace ClaFi
                 &m_content);
         }
 
-        // THREE AT MOST, AND EACH PASS IS A WHOLE ANSWER: measure what the content asks for,
+        // **Three at most, and each pass is a whole answer**: measure what the content asks for,
         // place the window on it, lay the content out into what it got. Two things send it round
         // again, and neither is knowable before the step that finds it.
         //
-        // THE WINDOW MOVING UNDER THE PASS. Setting its bounds resizes it, and the resize
+        // **The window moving under the pass.** Setting its bounds resizes it, and the resize
         // invalidates the alignment before place() returns; a scale taken from the monitor it
         // landed on does the same. Only a form with nobody underneath sees a scale change at all:
         // a popup is drawn at its parent's scale wherever it lands - see m_scaler.
         //
-        // WHAT THE LAST STEP MEASURED. Laying the content out into the window is where a
-        // ScrollBox discovers it needs a bar, and a bar makes the content WIDER than the window
+        // **What the last step measured.** Laying the content out into the window is where a
+        // ScrollBox discovers it needs a bar, and a bar makes the content **wider** than the window
         // just granted for it. A form sized by its content is then a scroll bar too narrow: the
         // strip comes out of the body instead, and every Fill item in it stands past the view
         // with its tail under the bar. That pass cannot ask for another placement from inside
@@ -1595,16 +1597,16 @@ namespace ClaFi
         // compared.
         for (int pass = 0; pass < 3; ++pass)
         {
-            // THE ASK PASS HAS TO ACTUALLY RUN. updateAlign returns at once on a form that is
+            // **The ask pass has to actually run.** updateAlign returns at once on a form that is
             // already aligned, and the pass before this one left it that way - so without this
-            // the size asked for is not a measurement at all: it is what the last ALIGN left on
+            // the size asked for is not a measurement at all: it is what the last **align** left on
             // the root, which is the window it was laid out into. The placement is then handed
             // back the window it already granted, agrees with itself, and the content that no
             // longer fits stands past it.
             m_aligned = false;
             updateAlign(true);
             request.size = m_content.dimensions();
-            // THE FLOOR THE CONTENT STATES - the MinSize set on the root or anywhere below it,
+            // **The floor the content states** - the MinSize set on the root or anywhere below it,
             // composed up the tree, and zero where nobody set one. The placement reads it instead
             // of asking whether this form may be shortened.
             request.minSize = m_content.calculatedMinSize();
@@ -1614,7 +1616,7 @@ namespace ClaFi
             request.screenMargin = scaler().scaled4;
             m_placed = m_window->place(request);
 
-            // WHAT THE PASS ASKED FOR AND WHAT IT GOT. An ask that matches the content and a
+            // **What the pass asked for and what it got.** An ask that matches the content and a
             // grant short of it is the placement refusing; an ask already short of the content
             // is a measure that was bounded before it ran.
             if constexpr (Diagnostic::Options::logFormPlacement())
@@ -1631,23 +1633,23 @@ namespace ClaFi
                     &m_content);
             }
 
-            // THE PLACEMENT MOVED SOMETHING THIS PASS WAS MEASURED AGAINST. Setting the window's
-            // bounds resizes it, and the resize invalidates the alignment before place() has even
-            // returned; a scale taken from the monitor it landed on does the same. Either way what
-            // was just placed was measured against something that no longer holds, so nothing is
-            // laid out into it and the next pass measures again.
+            // **The placement moved something this pass was measured against.** Setting the
+            // window's bounds resizes it, and the resize invalidates the alignment before place()
+            // has even returned; a scale taken from the monitor it landed on does the same. Either
+            // way what was just placed was measured against something that no longer holds, so
+            // nothing is laid out into it and the next pass measures again.
             if (!m_aligned)
                 continue;
 
-            // ONCE REFUSED, REFUSED FOR THE REST OF THE CYCLE. The next pass asks for the size
+            // **Once refused, refused for the rest of the cycle.** The next pass asks for the size
             // that refusal produced - a list measured against the room, with the bar it needs -
-            // and being granted THAT is not the placement changing its mind. Recomputed instead
+            // and being granted **that** is not the placement changing its mind. Recomputed instead
             // of accumulated, the axis would read as granted again, the ceiling would come off,
             // and the next measurement would go back to asking for the height it cannot have.
             m_placedShortX = m_placedShortX || m_placed.size.x < request.size.x;
             m_placedShortY = m_placedShortY || m_placed.size.y < request.size.y;
 
-            // LAID OUT AGAINST THE RECT IT ACTUALLY GOT, which is not always the one it asked
+            // **Laid out against the rect it actually got**, which is not always the one it asked
             // for: the size above came from what the content wanted, and the placement is free to
             // give it less - the room the side it took had, or what the work area could hold. A
             // window that could not grow has to wrap its text rather than cut it, and one that
@@ -1660,9 +1662,9 @@ namespace ClaFi
             m_aligned = false;
             updateAlign(false);
 
-            // A form whose window is the USER'S stands at whatever its content came to, and this
-            // is the end of it. A form whose window came from its content asks again while what
-            // it measured in that window differs from what it asked for - which is how the bar
+            // A form whose window is the **user's** stands at whatever its content came to, and
+            // this is the end of it. A form whose window came from its content asks again while
+            // what it measured in that window differs from what it asked for - which is how the bar
             // that pass put up gets a window wide enough to hold it. A grant past the ask is the
             // platform's rounding and asks for nothing.
             if (m_autoFit == AutoFit::No || m_calculatedSize == request.size)
@@ -1673,9 +1675,9 @@ namespace ClaFi
         m_aligned = m_layoutPass.valid();
     }
 
-    // A FORM NOBODY CAN SEE IS PLACED BY show(). A pass run here would raise its FormAlignedEvent
-    // while the form is hidden, and show() would then find the placement valid and run none.
-    // See Control-Foundation#formalignedevent
+    // **A form nobody can see is placed by** show(). A pass run here would raise its
+    // FormAlignedEvent while the form is hidden, and show() would then find the placement valid and
+    // run none. See Control-Foundation#formalignedevent
     void FormBase::placementChanged()
     {
         if (!m_placementValid)
@@ -1690,7 +1692,7 @@ namespace ClaFi
 
     void FormBase::initialize()
     {
-        // THE SIZE THE APPLICATION IS AT, so a window opened after a change matches the windows
+        // **The size the application is at**, so a window opened after a change matches the windows
         // already up. A form standing on another takes nothing here: it is drawn at that form's
         // scale and follows through the scaler it shares - see m_scaler.
         if (!m_popupTargetForm)
@@ -1698,13 +1700,13 @@ namespace ClaFi
         stateFrame();
     }
 
-    // A FORM IS ENTERED, NOT STEPPED THROUGH. Where the focus belongs the moment the window
+    // **A form is entered, not stepped through.** Where the focus belongs the moment the window
     // appears is the form's entry - the item its root is on, which is a dropdown's selected
     // entry - and the first item in the form when the root is on none, which is every root that
     // is not a container in its own right.
     //
     // Those are two different moves, and only the second one is a search. Tab means "leave what
-    // I am on and take the next", so a Tab emulated from the entry lands one item PAST it: a
+    // I am on and take the next", so a Tab emulated from the entry lands one item **past** it: a
     // combo box opened on its third entry comes up with the fourth lit. Landing on the item is
     // therefore said outright, and the walk is what answers the case with nothing to return to -
     // there the root answers with itself, the search starts from it, and the first item is what
@@ -1767,8 +1769,9 @@ namespace ClaFi
         };
     }
 
-    // WHETHER THE FRAMES START FROM NOTHING follows the window's answer, and the answer can change
-    // with the design: a window is composited once it has a corner to round or a shadow to cast.
+    // **Whether the frames start from nothing** follows the window's answer, and the answer can
+    // change with the design: a window is composited once it has a corner to round or a shadow to
+    // cast.
     void FormBase::stateFrame()
     {
         m_shadowPainter.setDesign(shadowDesign());
@@ -1778,7 +1781,7 @@ namespace ClaFi
             backend->setTransparentBase(m_window->wantsAlphaChannel());
     }
 
-    // THE TOP OF A FRAME IS THE ONE PLACE A BACKEND MAY BE CHANGED. One frame is up to five
+    // **The top of a frame is the one place a backend may be changed.** One frame is up to five
     // beginPaint/endPaint pairs - the dirty rect, and each corner square it touches painted again
     // under a clip - so a backend put in between two of them would leave the passes drawing into
     // different surfaces and hand back a bitmap only one of them wrote.
@@ -1817,7 +1820,7 @@ namespace ClaFi
         return FloatRect::fromDimensions(frameOrigin(), m_content.dimensions());
     }
 
-    // A CORNER IS PAINTED TWICE. A paint clears the rect it covers, and a rect reaching into a
+    // **A corner is painted twice.** A paint clears the rect it covers, and a rect reaching into a
     // corner square clears the notch outside the arc with it - the root's own rect does, on any
     // change of its state - while the main pass lays no shadow inside the root's rectangle. So
     // each square the dirty rect touches is cleared, given its shadow back and painted again with
@@ -1890,7 +1893,7 @@ namespace ClaFi
         m_canvas.endPaint(nativeContext, rect, outData);
     }
 
-    // THE SHADOW LIVES IN THE MARGINS AND IN THE CORNER NOTCHES. The children cover the root's
+    // **The shadow lives in the margins and in the corner notches.** The children cover the root's
     // rectangle, notches included, so a paint lays the shadow only on the parts of its rect outside
     // the rectangle, a strip at a time. A paint inside the rectangle lays none, and that is every
     // paint but a resize. The corner pass is the exception: it clears its square and paints only
@@ -1934,7 +1937,7 @@ namespace ClaFi
         invalidateAlign();
     }
 
-    // AN ANIMATION IS NOT AN INVALIDATION: every tick of a crossing is a frame someone is
+    // **An animation is not an invalidation**: every tick of a crossing is a frame someone is
     // meant to see, so a form that is on the screen paints the tick it was given rather
     // than scheduling one. A scheduled paint is one posted message for any number of
     // invalidations - see FormWindow::schedulePaint - and a moving pointer's own messages
@@ -1942,7 +1945,7 @@ namespace ClaFi
     // arrives at the end of the crossing in one step. A preview is asked for by the
     // pointer, so it is the case that always meets a full queue.
     //
-    // A SET TAKEN OUTRIGHT WAITS FOR THE SCHEDULED PAINT. It is raised inside
+    // **A set taken outright waits for the scheduled paint.** It is raised inside
     // AppContext::takeTheme, and so inside whatever called that - a page being built, a view
     // state being restored - where a frame made on the spot shows that work half done.
     //
@@ -1971,7 +1974,7 @@ namespace ClaFi
             logCrossingFrame(startedAt);
     }
 
-    // MARKED HERE AND TAKEN AT THE NEXT FRAME - see stateBackend, which is where the canvas is
+    // **Marked here and taken at the next frame** - see stateBackend, which is where the canvas is
     // allowed to change what it draws through. A window nobody can see keeps the mark and swaps
     // on the paint its next showing asks for.
     void FormBase::backendSwitched(BackendSwitchEvent&)
@@ -1980,7 +1983,7 @@ namespace ClaFi
         invalidate();
     }
 
-    // TAKEN AT ONCE, and by a form with nobody under it alone. Every other form is drawn at the
+    // **Taken at once**, and by a form with nobody under it alone. Every other form is drawn at the
     // scale of the form it stands on and follows through the scaler they share - except one
     // holding a scale of its own, which is gated out here by still naming the form under it.
     // See holdScale
@@ -2012,7 +2015,7 @@ namespace ClaFi
     // A theme change is one set of colours coming over another rather than replacing it, and the
     // coming over is made in the colours themselves: every control resolves its own once per theme
     // still on the screen and mixes what each comes to - see ControlPaintContext. So the tree is
-    // laid out and painted ONCE a frame, in whatever the crossing has reached by then, and what
+    // laid out and painted **once** a frame, in whatever the crossing has reached by then, and what
     // the window shows part way through is live rather than a still of the frame before it.
     void FormBase::paintContent(const FloatRect& dirtyRect, const Graphics::PixelPath* contentClip)
     {
@@ -2024,16 +2027,16 @@ namespace ClaFi
         m_aligned = true;
         m_layoutInProgress = true;
         m_layoutPass.revalidate();
-        // What this pass is FOR, which the root reads through adjustRootMetrics: a form measuring
-        // to ask for a window is bounded by nothing, a form laying out into the window it has is
-        // bounded by that window. A measuring pass stays one through its align: that lays the
-        // content out at its own size, and no width in it is one the window gave.
+        // What this pass is **for**, which the root reads through adjustRootMetrics: a form
+        // measuring to ask for a window is bounded by nothing, a form laying out into the window it
+        // has is bounded by that window. A measuring pass stays one through its align: that lays
+        // the content out at its own size, and no width in it is one the window gave.
         m_measuringPlacement = initPlacementMode;
         // The layouts this pass measures are the ones its paint draws - see TextEngine::evict.
         Control::textEngine().beginPass();
-        // calculate() must be ALWAYS called – the align() implementations depend on it.
+        // calculate() must be **always** called – the align() implementations depend on it.
         m_content.calculate(*this);
-        // What the content ASKED FOR, taken before the align gives it its extent instead.
+        // What the content **asked for**, taken before the align gives it its extent instead.
         m_calculatedSize = m_content.dimensions();
         const ScaledDimensions newSize = initPlacementMode ? m_calculatedSize : contentExtent();
         m_content.align(m_context, m_layoutPass, frameOrigin(), newSize);
@@ -2042,11 +2045,11 @@ namespace ClaFi
         m_layoutInProgress = false;
         stateSizeRange();
         contentMoved(m_content);
-        // A SCROLL IS MEASURED AGAINST A LAYOUT THAT STANDS. A pass measuring what to ask a window
-        // for lays the content out at its own size, and a pass a control has put back in question
-        // is laid out again before the frame goes out; in either, a row that wraps once the
-        // viewport is known still stands on one line, and a scroll answered there lands short of
-        // it. The requests stand for the pass that follows.
+        // **A scroll is measured against a layout that stands.** A pass measuring what to ask a
+        // window for lays the content out at its own size, and a pass a control has put back in
+        // question is laid out again before the frame goes out; in either, a row that wraps once
+        // the viewport is known still stands on one line, and a scroll answered there lands short
+        // of it. The requests stand for the pass that follows.
         //
         // Taken whole before the first scroll rather than one by one: scrolling moves controls
         // and can ask for another alignment, and a request left standing would be answered again
@@ -2056,17 +2059,17 @@ namespace ClaFi
             for (Control* scrollTarget : std::exchange(m_scrollIntoViewOnAlign, {}))
                 scrollTarget->scrollIntoView();
         }
-        // A CONTROL LAID OUT AT A WIDTH THE PASS DID NOT MEASURE IT AGAINST. Put back in question
-        // here, where the alignment has already been marked valid - a request raised inside the
-        // pass is wiped by the line above the align. The window is not invalidated with it: the
-        // caller runs the pass this asks for before the frame goes out, so a repaint asked for
-        // here would be a second frame drawing what the first one already shows. See
+        // **A control laid out at a width the pass did not measure it against.** Put back in
+        // question here, where the alignment has already been marked valid - a request raised
+        // inside the pass is wiped by the line above the align. The window is not invalidated with
+        // it: the caller runs the pass this asks for before the frame goes out, so a repaint asked
+        // for here would be a second frame drawing what the first one already shows. See
         // AlignEvent::invalidatePass
         if (!m_layoutPass.valid())
             m_aligned = false;
-        // WHAT A REQUEST FOR A SETTLED LAYOUT WAITS ON. Only a pass that leaves the form aligned
-        // says so: a scroll asked for above may have asked for another pass, and a pass measuring
-        // what to ask a window for lays nothing out into one.
+        // **What a request for a settled layout waits on.** Only a pass that leaves the form
+        // aligned says so: a scroll asked for above may have asked for another pass, and a pass
+        // measuring what to ask a window for lays nothing out into one.
         if (m_aligned && !initPlacementMode)
         {
             FormAlignedEvent event{ *this };
@@ -2084,10 +2087,10 @@ namespace ClaFi
 
     FloatRect FormBase::placementAnchor() const
     {
-        // A MENU THE POINTER RAISED STANDS ON THE POINTER, not on a control: an empty rect where
-        // the pointer is, held clear of the arrow by what the cursor takes below its hot spot so
-        // the first line is not underneath it. Read here rather than by the placement, which runs
-        // again every time the target moves, by which time the pointer has gone elsewhere.
+        // **A menu the pointer raised stands on the pointer**, not on a control: an empty rect
+        // where the pointer is, held clear of the arrow by what the cursor takes below its hot spot
+        // so the first line is not underneath it. Read here rather than by the placement, which
+        // runs again every time the target moves, by which time the pointer has gone elsewhere.
         if (Input::mouse().active() &&
             (m_placement == FormPlacement::ContextMenu || m_placement == FormPlacement::Mouse))
         {
@@ -2099,10 +2102,10 @@ namespace ClaFi
             }
             return FloatRect::fromDimensions(pt, {});
         }
-        // A MENU THE KEYBOARD RAISED STANDS ON THE PART OF ITS TARGET THAT IS ON SCREEN. The rect
-        // is the target's own statement and reaches wherever the target does - a scrolled tree's
-        // bounds run past the window - and a placement weighing the room under an edge that is
-        // off the screen drops the menu above it, clamped to the screen's top. Clipped into what
+        // **A menu the keyboard raised stands on the part of its target that is on screen.** The
+        // rect is the target's own statement and reaches wherever the target does - a scrolled
+        // tree's bounds run past the window - and a placement weighing the room under an edge that
+        // is off the screen drops the menu above it, clamped to the screen's top. Clipped into what
         // the viewports over the target leave open; a target scrolled clear of them puts the rect
         // on the edge it left by, which is as near the control as a menu can stand.
         if (m_placement == FormPlacement::ContextMenu)
@@ -2121,12 +2124,12 @@ namespace ClaFi
 
     void FormBase::stateSizeRange()
     {
-        // WHAT THE USER MAY DRAG THIS WINDOW TO is the floor its content states and the maximum
+        // **What the user may drag this window to** is the floor its content states and the maximum
         // it was given - the same range the placement gives way inside. A window is held up by
         // the MinSizes set inside it and by nothing else, so one that states none is held only by
         // whatever default the system keeps for a window nothing was stated for.
         //
-        // A FORM ITS CONTENT SIZES LEAVES THE USER NOTHING TO DRAG. It is placed again around
+        // **A form its content sizes leaves the user nothing to drag.** It is placed again around
         // whatever the content comes to, so an edge pulled out would only spring back. Its range
         // is the one size the content asked for, and a platform answers a range of one size with
         // a window that has no edge to take hold of and no maximize. See UI-Types#autofit
@@ -2193,13 +2196,13 @@ namespace ClaFi
         if (m_placement == FormPlacement::Mouse || m_placement == FormPlacement::ContextMenu)
             return;
 
-        // THE RECT FOLLOWS THE TARGET'S BOX, both where it is and how big it is. A placement
+        // **The rect follows the target's box**, both where it is and how big it is. A placement
         // reads the rect's edges - Bottom drops the form below it - so a rect that tracks the
         // top-left and keeps its first size anchors to an edge the target no longer has: a
         // control that grew leaves the form over it, one that shrank leaves a gap. A scale
         // change moves both at once, which is where it shows.
         //
-        // CARRIED AS A CHANGE rather than taken from the target, because the rect is not always
+        // **Carried as a change** rather than taken from the target, because the rect is not always
         // the target's bounds - a caller is free to state one - and what it states should move
         // and grow with the control rather than be replaced by it.
         const FloatRect targetBounds = placementTargetBounds(*target);
@@ -2316,8 +2319,9 @@ namespace ClaFi
         );
     }
 
-    // A POINTER PUSHED AGAINST A MAXIMIZED WINDOW'S EDGE MEETS WHAT STANDS k_edgeReach IN. A point
-    // outside the window is left where it is, so a drag carried past the edge keeps its course.
+    // **A pointer pushed against a maximized window's edge meets what stands k_edgeReach in.** A
+    // point outside the window is left where it is, so a drag carried past the edge keeps its
+    // course.
     PointInForm FormBase::searchPoint(PointInForm pt) const
     {
         if (!window().isMaximized())

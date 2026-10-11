@@ -105,7 +105,7 @@ namespace ClaFi
         if (!event.text.empty())
             return;
 
-        // ITS OWN NAME WHERE IT SAYS NOTHING MORE. A command with a key has something to tell
+        // **Its own name where it says nothing more.** A command with a key has something to tell
         // even when its hint would only repeat its label, because the key is shown nowhere
         // else on a button. What the action says of itself is preferred where it says anything.
         if (m_hintText.empty())
@@ -240,7 +240,7 @@ namespace ClaFi
         // Four answers to "where is the user", nearest first, because no single one of them is
         // right for every form a command can be raised from.
         //
-        // THE PRESENTER IS THE FIRST, when there is one and it is the one asking. A control
+        // **The presenter is the first**, when there is one and it is the one asking. A control
         // showing a command stands, by construction, somewhere in the tree that command is about -
         // a page's own toolbar button stands in the page - and the focus need never have been
         // there. Without it a document command reads as unavailable until the user happens to
@@ -258,9 +258,9 @@ namespace ClaFi
         if (focused && &focused->form() != &form)
             focused = nullptr;
 
-        // What a popup was opened ON is the third, and for a menu it is THE answer: the focus
-        // moves into the menu so that its items can be walked, and a menu item is never what the
-        // command is about. It is the more precise answer anyway - a context menu acts on the
+        // What a popup was opened **on** is the third, and for a menu it is **the** answer: the
+        // focus moves into the menu so that its items can be walked, and a menu item is never what
+        // the command is about. It is the more precise answer anyway - a context menu acts on the
         // control it was raised from, whether or not the focus ever reached it.
         //
         // The form's current item is the last, for a form that is neither: the focus is in

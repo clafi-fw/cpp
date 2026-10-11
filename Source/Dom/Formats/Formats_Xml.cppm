@@ -3,7 +3,7 @@
 // =========================================================================
 //
 // Not a general-purpose XML 1.0 parser — implements enough of XML to
-// round-trip THIS engine's own schema-driven DOM. Known deviations:
+// round-trip **this** engine's own schema-driven DOM. Known deviations:
 //
 // - No CDATA sections, XML comments ("<!-- -->"), DOCTYPE/DTD, namespaces,
 //   or processing instructions other than the leading "<?xml ... ?>"

@@ -140,7 +140,7 @@ namespace ClaFi::Controls::Grids
         // Control::heldHeaderStrip.
         void scrollChildIntoView(Control&, FloatRect) override;
         void nestedPressDown(PressDownEvent&) override;
-        // Answered HERE and not on the row. The double-click walk starts at the control the
+        // Answered **here** and not on the row. The double-click walk starts at the control the
         // pointer hit and climbs, so the grid sees every one of them, and the grid is what holds
         // the selected cell the edit is for. The first click of the pair has already put the
         // selection on the cell under the pointer.
@@ -177,7 +177,7 @@ namespace ClaFi::Controls::Grids
         //
         // The editor runs a message loop, so this call lasts the whole edit and the user is free
         // to work in the form behind it meanwhile. The row and the column are therefore
-        // re-checked against the selection before the accepted text is handed over. The GRID is
+        // re-checked against the selection before the accepted text is handed over. The **grid** is
         // not re-checked and cannot be: this call is on the stack of the grid's own key walk, so
         // a grid that does not survive the edit has already taken the caller with it.
         bool editSelectedCell();
@@ -246,7 +246,7 @@ namespace ClaFi::Controls::Grids
         // keyboard field only while it is at rest, where the two are the same place - see
         // traverseRows and edgeRow.
         [[nodiscard]] bool isHeaderHeld() const;
-        // BOTH PATHS OF A SELECTION MOVE. The rows in effect are the row the selected cell
+        // **Both paths of a selection move.** The rows in effect are the row the selected cell
         // stands in and every row that row stands inside, so a move changes the state of two
         // paths - and only below where they meet. The first control above the row being left
         // that also holds the row being entered is that meeting point: above it the answer is

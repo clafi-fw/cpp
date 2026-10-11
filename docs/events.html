@@ -475,7 +475,7 @@ conn.<span class="fn">disconnect</span>();</pre>
 
             <div class="rules-grid">
                 <div class="rule-card dos">
-                    <h4>DO:</h4>
+                    <h4>Do:</h4>
                     <ul>
                         <li>Hold a <code>ScopedEventConnection</code> when the <em>listener</em> dies first, and
                         store it as a member of that listener.</li>
@@ -486,7 +486,7 @@ conn.<span class="fn">disconnect</span>();</pre>
                     </ul>
                 </div>
                 <div class="rule-card donts">
-                    <h4>DON'T:</h4>
+                    <h4>Don't:</h4>
                     <ul>
                         <li>Don't let a <code>ScopedEventConnection</code> outlive the emitter it points at. Its
                         destructor calls <code>disconnect()</code> through a raw pointer to the dispatcher, and

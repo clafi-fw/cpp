@@ -92,7 +92,7 @@ namespace ClaFi::Graphics::Cpu
         void drawPixelView(const PixelView& view) override { getActiveView().drawSurface(view, view.topLeft()); }
 
         // ====================================================================
-        // CLEAN ROUTING PASS-THROUGHS TO RE-DECOUPLED MODULAR PAINTERS
+        // **Clean routing pass-throughs to re-decoupled modular painters**
         // ====================================================================
         // Direct2D carries the canvas transform on the render target, so every primitive it issues
         // is mapped for free. These painters rasterize into a pixel buffer with no such stage, so
@@ -118,7 +118,7 @@ namespace ClaFi::Graphics::Cpu
         bool castShadow(const RoundedRectangleParts&, const ShadowParams&) override { return false; }
 
         // ====================================================================
-        // STANDARD VECTOR FALLBACKS
+        // **Standard vector fallbacks**
         // ====================================================================
 
         void fillPath(const PixelPath& path, const Brush& brush, const Matrix3x2* transform = nullptr) override;

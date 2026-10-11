@@ -79,9 +79,9 @@ namespace ClaFi
         ) };
         bool m_stopped{};
         RichControl* m_itemToSelect{};
-        // THE WHOLE PAGE, which is what a log is copied FOR - StdActions::copy beside it takes
-        // the one row the menu was raised on. No shortcut and no icon: it is the second line of
-        // a menu two lines long, and it is named in words.
+        // **The whole page**, which is what a log is copied **for** - StdActions::copy beside it
+        // takes the one row the menu was raised on. No shortcut and no icon: it is the second line
+        // of a menu two lines long, and it is named in words.
         Action m_copyRows{ Text{ L"Copy all rows" } };
     };
 
@@ -111,7 +111,7 @@ namespace ClaFi
         ) };
         // The check stays at one end of the bar and the tabs at the other, whatever is between.
         FlexSpacer& stripSpacer{ form.body().strip().add<FlexSpacer>() };
-        // NO BAR ON THE WIDTH, which is what makes a line wrap: a scrolled body keeps the width
+        // **No bar on the width**, which is what makes a line wrap: a scrolled body keeps the width
         // it measured, and a line given somewhere to run to runs there instead of breaking. A
         // line nobody can read to the end of is a line that was not recorded.
         OutputPage& output{ form.body().pageControl().add<OutputPage>(
@@ -293,9 +293,9 @@ namespace ClaFi
         menu.execute();
     }
 
-    // Every row, or the one given, as one text with a line to each. A row is copied as its PLAIN
-    // text: the colours a pointer line carries say nothing once it is out of this window, and a
-    // reading pasted somewhere else is read as words.
+    // Every row, or the one given, as one text with a line to each. A row is copied as its
+    // **plain** text: the colours a pointer line carries say nothing once it is out of this window,
+    // and a reading pasted somewhere else is read as words.
     void OutputPage::copyRows(const Control* single, const InputStamp stamp)
     {
         std::wstring gathered{};
@@ -310,8 +310,8 @@ namespace ClaFi
         if (gathered.empty())
             return;
 
-        // ONE FORMAT IN. Plain text is advertised out of the conversion table, so an application
-        // that has never heard of this framework pastes what it can read.
+        // **One format in.** Plain text is advertised out of the conversion table, so an
+        // application that has never heard of this framework pastes what it can read.
         Transfer::Source source{};
         source.add<Transfer::ClaFiText>(Text{ gathered });
         formContext().clipboard().set(std::move(source), stamp);
@@ -338,7 +338,7 @@ namespace ClaFi
             }
         }
     {
-        // THE STRIP HAS TO SPAN THE BAR BEFORE ANYTHING IN IT CAN FILL. TabbedBox states
+        // **The strip has to span the bar before anything in it can fill.** TabbedBox states
         // HorizontalAlign::Right on a bottom strip, and a control aligned to an edge is handed
         // the bar and hands back everything past its own content - see Control::align - so the
         // check and the tabs stood as one block at the right and the spacer between them had
@@ -381,7 +381,7 @@ namespace ClaFi
         form.window().setFocus(stamp);
     }
 
-    // THE TAB IS OPENED HERE AND NOWHERE ELSE, which is why the constructor selects none: the
+    // **The tab is opened here and nowhere else**, which is why the constructor selects none: the
     // page the window opens on is the config's answer, and the config is not loaded until now.
     // An unrecognised name reads as the Output page rather than as no page at all.
     void DiagnosticWindow::restoreState()
@@ -394,7 +394,7 @@ namespace ClaFi
             form.show();
     }
 
-    // THE PLACEMENT IS WRITTEN HERE ONLY WHILE THE WINDOW IS UP: a hide has already written it,
+    // **The placement is written here only while the window is up**: a hide has already written it,
     // and a window that is up when the config is saved would otherwise be saved where it stood
     // when it was last hidden.
     void DiagnosticWindow::storeState()

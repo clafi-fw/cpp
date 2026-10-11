@@ -581,8 +581,8 @@ namespace ClaFi::Tools::WhatsClip::AppIcon
             PathSink tailSink{ tail, false };
             addRoundedQuad(tailSink, tailQuad(), { 0.0f, k_tailCorner, k_tailCorner, 0.0f });
 
-            // BOTH EDGES BEFORE EITHER FILL. Where the ring and the tail meet, the fill covers the
-            // edge under it and only the fringe outside the two shapes is left showing.
+            // **Both edges before either fill.** Where the ring and the tail meet, the fill covers
+            // the edge under it and only the fringe outside the two shapes is left showing.
             canvas.drawPath(ring,
                 { PathDrawLayer::stroke(k_frameEdgeColor, k_glassWidth + k_frameEdgeWidth * 2.0f) }, &transform);
             canvas.drawPath(tail,

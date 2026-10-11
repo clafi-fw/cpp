@@ -39,7 +39,7 @@ namespace ClaFi::Controls
     public:
         std::wstring_view diagnosticText() const override { return L"ScrollBox"; }
         // Fills the corner - the square the two bars leave between them - so what is put here
-        // stands only while BOTH bars are up, and a box that shows one bar shows no corner. The
+        // stands only while **both** bars are up, and a box that shows one bar shows no corner. The
         // control is sized by itself and the horizontal bar shortens by it; a corner nothing was
         // put in is k_cornerSize wide, which is what holds the horizontal bar clear of the
         // vertical one.
@@ -97,7 +97,7 @@ namespace ClaFi::Controls
         // Whether the body's extent along the axis is its own, with a bar to reach what overruns.
         [[nodiscard]] bool givesWay(ScrollAxis) const;
         // One place the three visibilities are settled together: the corner is the square the
-        // two bars leave between them, so it belongs to whether BOTH are up.
+        // two bars leave between them, so it belongs to whether **both** are up.
         void showBars(bool vVisible, bool hVisible);
         // Whether Auto wants the vertical bar beside content this tall. See Controls
         [[nodiscard]] bool autoVerticalBarNeeded(const AlignEvent&, float contentHeight) const;
@@ -126,15 +126,15 @@ namespace ClaFi::Controls
     private:
         // The colour the body's surface resolved to. What paints across the gap between the body
         // and something standing beside it needs the colour and not the rule: a vertical tab strip
-        // is the body of a ScrollBox, and its open tab meets the page THROUGH the strip's scroll
-        // bar, which is outside the body. The body's own paint is the only place the rules are
-        // settled into a colour.
+        // is the body of a ScrollBox, and its open tab meets the page **through** the strip's
+        // scroll bar, which is outside the body. The body's own paint is the only place the rules
+        // are settled into a colour.
         Color m_actualBodyColor{};
         std::optional<Hsl> m_barSurface{};
         // What the box was told to show. Both bars stand until something says otherwise, which
         // is what they do with no ScrollBars prop passed at all.
         ScrollBars m_scrollBars{ ScrollBars::Both };
-        // The width of the body's viewport IN DESIGN UNITS, taken with the scale that laid it
+        // The width of the body's viewport **in design units**, taken with the scale that laid it
         // out - see adjustChildMetrics, the only reader, and bodySlotSettled, the only writer.
         float m_viewportWidthInDesign{};
         // Whether the body stood past its slot the last time one was laid out. See Controls
@@ -189,7 +189,7 @@ namespace ClaFi::Controls
         );
     }
 
-    // BOTH BARS HOME, AND WITHOUT A GLIDE. A glide explains a change to a view the user is
+    // **Both bars home, and without a glide.** A glide explains a change to a view the user is
     // already looking at, and what stands under the bars after this is not the content they were
     // measuring - so there is no travel across it to show.
     void ScrollBox::scrollToBegin()
@@ -236,13 +236,13 @@ namespace ClaFi::Controls
             // content, and Control::calculate is what adds the padding and applies the maximum to
             // the sum. The two are compared on the same terms.
             //
-            // ANSWERED AGAINST A MAXIMUM, SO A PASS THAT STATES NONE ANSWERS NOTHING - the bars
-            // stay as they stand. A form measuring what to ASK a placement for is measured against
-            // no maximum by design: that pass is where it finds out what it wants. Re-deciding
-            // there would take down the bar the pass before it put up, every time - the ask says
-            // "no bar, and this is my height", the placement cuts that height, the pass laying the
-            // content into the cut window puts the bar back, and the next ask takes it down again.
-            // The two passes would disagree for as long as they were asked. See
+            // **Answered against a maximum, so a pass that states none answers nothing** - the bars
+            // stay as they stand. A form measuring what to **ask** a placement for is measured
+            // against no maximum by design: that pass is where it finds out what it wants.
+            // Re-deciding there would take down the bar the pass before it put up, every time - the
+            // ask says "no bar, and this is my height", the placement cuts that height, the pass
+            // laying the content into the cut window puts the bar back, and the next ask takes it
+            // down again. The two passes would disagree for as long as they were asked. See
             // FormBase::initPlacement, which runs them in turn.
             //
             // A box inside another reads the slot the last align found it in, and the maximum
@@ -252,8 +252,9 @@ namespace ClaFi::Controls
             if (vNeeded != m_vScrollBar.visible() || hNeeded != m_bottomBar.visible())
             {
                 result = remeasureWithBars(event, vNeeded, hNeeded);
-                // A BAR TAKES ITS STRIP FROM THE OTHER AXIS, so what fitted beside no bar is read
-                // again beside the one that came up - and only for a bar to come up. See Controls
+                // **A bar takes its strip from the other axis**, so what fitted beside no bar is
+                // read again beside the one that came up - and only for a bar to come up.
+                // See Controls
                 vNeeded = vNeeded || autoVerticalBarNeeded(event, result.y);
                 hNeeded = hNeeded || autoHorizontalBarNeeded(event, result.x);
                 if (vNeeded != m_vScrollBar.visible() || hNeeded != m_bottomBar.visible())
@@ -266,7 +267,7 @@ namespace ClaFi::Controls
 
     void ScrollBox::stateSizeGivenWay(AlignEvent& event) const
     {
-        // WHAT IS LEFT WHEN THE SCROLLED BODY GIVES UP ITS SIZE. A box that scrolls can be made
+        // **What is left when the scrolled body gives up its size.** A box that scrolls can be made
         // as small as the parts of it that do not scroll - its bars, and a strip held above them -
         // and still show everything it holds, because what falls past the edge is reached by
         // scrolling. That is the whole of how a menu says it would rather be short than stand
@@ -340,7 +341,7 @@ namespace ClaFi::Controls
         m_bodyScroll = content ? content->scrollMetrics() : ScrollMetrics{};
     }
 
-    // A body that WRAPS is broken at the width the align pass grants it, and that width is the
+    // A body that **wraps** is broken at the width the align pass grants it, and that width is the
     // viewport - so the viewport is a maximum the box states here rather than something the body
     // has to find out by being laid out. Whatever bars are up: a wrapping body is never wider
     // than its slot, so a horizontal bar over one has nothing to carry the view across and no say
@@ -358,18 +359,18 @@ namespace ClaFi::Controls
         if (&event.control != body())
             return;
 
-        // ONLY A BODY THAT WRAPS. A wrapping body is broken at the width the align pass grants
+        // **Only a body that wraps.** A wrapping body is broken at the width the align pass grants
         // it, which is the slot, so the viewport is the one width it is ever shaped at. A body
         // that does not wrap is as wide as its longest line whatever it is offered, and that
         // width is the range the horizontal bar carries the view across: capped here, the body
-        // comes out the width of the slot the PREVIOUS pass laid out, so a drag inward hands
+        // comes out the width of the slot the **previous** pass laid out, so a drag inward hands
         // the bar one mouse move of travel, a drag outward hands it none, and the lines past
         // the edge are clipped with nothing to reach them.
         if (!event.control.wordWrap())
             return;
 
-        // ONLY WHERE THIS BOX'S WIDTH IS GIVEN FROM OUTSIDE, ASKED ALL THE WAY UP. The viewport is
-        // this box's width less its bars, so on a box measured FROM its body the viewport is
+        // **Only where this box's width is given from outside, asked all the way up.** The viewport
+        // is this box's width less its bars, so on a box measured **from** its body the viewport is
         // derived from the very thing it would bound - and that is a ratchet: whatever narrows the
         // body once narrows the box, narrows the viewport, and caps the body there for good. A tab
         // strip that wrapped one label while the DPI changed stayed wrapped, because a wrapped
@@ -379,14 +380,14 @@ namespace ClaFi::Controls
         // the options at the collapsed width once it opened again. See
         // Control::isWidthGivenFromOutside
         //
-        // Where the width IS given - a page filling a window the user sized, a body in a slot of
-        // one - the viewport is an independent number and stating it is what keeps a wrapping
+        // Where the width **is** given - a page filling a window the user sized, a body in a slot
+        // of one - the viewport is an independent number and stating it is what keeps a wrapping
         // body from shaping its whole text at a width no line can reach.
         if (!isWidthGivenFromOutside())
             return;
 
-        // NOT WHILE THE FORM IS ASKING FOR A WINDOW. That pass is where a form finds out what it
-        // wants, and a body held to the viewport of a window it is about to replace can only ask
+        // **Not while the form is asking for a window.** That pass is where a form finds out what
+        // it wants, and a body held to the viewport of a window it is about to replace can only ask
         // for that window again - see FormBase::isMeasuringPlacement. The viewport it would be
         // held to is not even a viewport it ever showed: a form handed a scale is laid out once
         // inside the window it still has, and the body squeezed by that pass is what the writer
@@ -400,7 +401,7 @@ namespace ClaFi::Controls
         if (m_viewportWidthInDesign <= 0.0f)
             return;
 
-        // A METRIC IS IN DESIGN UNITS, AND SO IS THIS ONE ALREADY. The viewport it came from is
+        // **A metric is in design units, and so is this one already.** The viewport it came from is
         // scaled pixels measured at the scale of the pass that laid it out, which is not always
         // the scale in force now: converting it here, with whatever factor is current, reads the
         // two at different scales. What that costs is a latch. Take a form from 250% to 100% and
@@ -411,16 +412,16 @@ namespace ClaFi::Controls
         event.metrics.maxSize.x = m_viewportWidthInDesign;
     }
 
-    // WRITTEN BEFORE THE BODY IS LAID OUT INTO THE SLOT, which is what makes it this pass's
+    // **Written before the body is laid out into the slot**, which is what makes it this pass's
     // viewport rather than the last one's. The body reads it through adjustChildMetrics, and that
     // runs inside the very alignControl call PanelBase makes on the line after this one - see
-    // PanelBase::bodySlotSettled. A body that FILLS is therefore right on the pass that resized
+    // PanelBase::bodySlotSettled. A body that **fills** is therefore right on the pass that resized
     // it: the align hands it the slot, and the slot is what it now breaks its lanes at.
     //
-    // AND THE BOX STILL ASKS FOR ONE MORE PASS, because a body that does NOT fill keeps the width
-    // it MEASURED - see Control::align - and the measure ran before this line, against the
-    // viewport of the pass before. There is no way round that ordering: the viewport is this box's
-    // width less its bars, and this box has no width until its own parent lays it out. So the
+    // **And the box still asks for one more pass**, because a body that does **not** fill keeps the
+    // width it **measured** - see Control::align - and the measure ran before this line, against
+    // the viewport of the pass before. There is no way round that ordering: the viewport is this
+    // box's width less its bars, and this box has no width until its own parent lays it out. So the
     // width the align hands over reaches a filling body immediately and a non-filling one on the
     // pass after; the pass after that hands back the same width, which is what ends it. Maximizing
     // with the body aligned Left was where the miss showed - the rows stayed broken at the width
@@ -430,8 +431,8 @@ namespace ClaFi::Controls
     // here and not in adjustChildMetrics.
     void ScrollBox::bodySlotSettled(AlignEvent& event)
     {
-        // NOT WHILE THE FORM IS ASKING FOR A WINDOW. That pass lays the box out at the content's
-        // own size and not into a window, so its slot is no viewport - see
+        // **Not while the form is asking for a window.** That pass lays the box out at the
+        // content's own size and not into a window, so its slot is no viewport - see
         // FormBase::isMeasuringPlacement.
         const FormBase* hostForm = getForm();
         if (hostForm && hostForm->isMeasuringPlacement())
@@ -444,7 +445,7 @@ namespace ClaFi::Controls
             return;
         if (std::abs(m_viewportWidthInDesign - previous) < k_viewportEpsilon)
             return;
-        // Only where the body READS the maximum - the same three questions adjustChildMetrics
+        // Only where the body **reads** the maximum - the same three questions adjustChildMetrics
         // asks before stating it. Where it is not stated, nothing was measured against it.
         const Control* content = body();
         if (!content || !content->wordWrap() || !isWidthGivenFromOutside())
@@ -452,7 +453,7 @@ namespace ClaFi::Controls
         event.invalidatePass();
     }
 
-    // THE ROOM IS LAID OUT AS PART OF THE BODY, in the one align that lays the body out: its
+    // **The room is laid out as part of the body**, in the one align that lays the body out: its
     // surface paints the room and a press there reaches it. At the end of the travel the last
     // step of the content - a text's last line - stands where the first stands at its start, a
     // padding below the top of the slot.
@@ -571,12 +572,12 @@ namespace ClaFi::Controls
         }
     }
 
-    // MEASURED WHERE EVERYTHING COMES TO REST, NOT WHERE IT STANDS. A glide already in flight
+    // **Measured where everything comes to rest, not where it stands.** A glide already in flight
     // is going to carry the item by the travel still to come, and the bar is going to end at
     // its target, so the overlaps are taken against where the item will be and the new position
     // is named from where the bar is heading. A run of requests then accumulates - each asks
     // for its own distance on top of the one before it, rather than for ground a glide is still
-    // covering. With nothing in flight the target IS the position and this is the layout as it
+    // covering. With nothing in flight the target **is** the position and this is the layout as it
     // stands, so the two readings are one.
     //
     // A caller measuring a distance on screen for itself has to read the same view - see
@@ -737,7 +738,7 @@ namespace ClaFi::Controls
     }
 
     // The body slot in form coordinates: the window the body is seen through, and the one
-    // answer behind every reader of it. bodyRect is measured from this box's CONTENT origin -
+    // answer behind every reader of it. bodyRect is measured from this box's **content** origin -
     // the point a child's topLeft is measured from - so the origin handed in is that point and
     // not the box's bounds, which sit a padding outside it.
     FloatRect ScrollBox::bodySlotInForm(FloatPoint contentOriginInForm) const
@@ -790,7 +791,7 @@ namespace ClaFi::Controls
         return PanelBase::calculateContent(event);
     }
 
-    // THE SLOT A BOX INSIDE ANOTHER GOT is the one fact its maximum cannot state: a window cut
+    // **The slot a box inside another got** is the one fact its maximum cannot state: a window cut
     // short by its placement lowers the root's ceiling and no one else's. See Controls
     void ScrollBox::settleAutoVerticalBar(AlignEvent& event)
     {
@@ -799,8 +800,8 @@ namespace ClaFi::Controls
         // A root is measured against its window already - see FormBase::adjustRootMetrics.
         if (!parent())
             return;
-        // NOT WHILE THE FORM IS ASKING FOR A WINDOW. That pass lays the box out at the content's
-        // own size, so its slot is no viewport - see FormBase::isMeasuringPlacement.
+        // **Not while the form is asking for a window.** That pass lays the box out at the
+        // content's own size, so its slot is no viewport - see FormBase::isMeasuringPlacement.
         const FormBase* hostForm = getForm();
         if (hostForm && hostForm->isMeasuringPlacement())
             return;
@@ -854,7 +855,7 @@ namespace ClaFi::Controls
     // thumb drag from re-entering itself through the mouse move it would ask for.
     void ScrollBox::bodyScrolled(FloatPoint change)
     {
-        // Said before the two answers below, which are about the POINTER and not about the
+        // Said before the two answers below, which are about the **pointer** and not about the
         // content: whatever else a scroll does or does not do, the content has moved, and
         // anything holding a picture of where it was has to be told. See FormBase::contentMoved.
         form().contentMoved(*body());

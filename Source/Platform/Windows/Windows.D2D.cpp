@@ -257,7 +257,7 @@ namespace ClaFi::PlatformImplementation::Windows
             return;
         }
 
-        // The transform belongs to the TARGET, and an image is a second target. It is carried
+        // The transform belongs to the **target**, and an image is a second target. It is carried
         // across so that what a caller has asked the surface for is what the image is drawn under,
         // and put back by the pop - a target keeps what it was last told between one BeginDraw and
         // the next, so an image reused on a later frame would otherwise still be carrying the
@@ -278,7 +278,7 @@ namespace ClaFi::PlatformImplementation::Windows
             m_renderTarget->BeginDraw();
             m_renderTarget->SetTransform(transform);
             // ClearType, the mode the window's own target is put in, said outright rather than
-            // assumed: an image is a target of its own, made at the default mode and REUSED
+            // assumed: an image is a target of its own, made at the default mode and **reused**
             // between frames.
             m_renderTarget->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE);
 #if CLAFI_TEXT_MOVING
@@ -368,9 +368,9 @@ namespace ClaFi::PlatformImplementation::Windows
         return held.width == surface.width && held.height == surface.height;
     }
 
-    // THE FRAME'S DIRTY RECT STANDS AS A CLIP for the whole frame, as it does on the CPU backend:
-    // what this pass paints is that rect, and a control reaching past it must not land twice on
-    // the pixels beside it. A frame that carries alpha starts that rect from nothing.
+    // **The frame's dirty rect stands as a clip** for the whole frame, as it does on the CPU
+    // backend: what this pass paints is that rect, and a control reaching past it must not land
+    // twice on the pixels beside it. A frame that carries alpha starts that rect from nothing.
     void Direct2DBackend::beginPaint(void* nativeContext, const IntRect* dirtyRect)
     {
         CompositionPresenter* presenter = static_cast<CompositionPresenter*>(nativeContext);
@@ -443,7 +443,7 @@ namespace ClaFi::PlatformImplementation::Windows
         m_clipTypeStack.clear();
         m_opacityLayers = 0;
 
-        // --- FRAME-LOCAL BRUSH CACHING ---
+        // --- **Frame-local brush caching** ---
         // Resolves unbounded D2D cache growth across frames, which happens when elements shift
         // visually - animated scrolling, for instance - and every frame asks for brushes at new
         // fractional coordinates.
@@ -783,9 +783,9 @@ namespace ClaFi::PlatformImplementation::Windows
         m_renderTarget->FillEllipse(D2D1::Ellipse(reinterpret_cast<D2D_POINT_2F&>(center), radiusX, radiusY), d2dBrush);
     }
 
-    // A SHADOW IS THE DISTANCE FIELD OF ITS SILHOUETTE - full inside, and outside it the falloff
-    // of the distance to the outline, out to the reach. A rounded rectangle's distance field is
-    // made of pieces a gradient states exactly. Beside a straight edge the distance grows
+    // **A shadow is the distance field of its silhouette** - full inside, and outside it the
+    // falloff of the distance to the outline, out to the reach. A rounded rectangle's distance
+    // field is made of pieces a gradient states exactly. Beside a straight edge the distance grows
     // straight out, so the band of the reach's width along the edge is a linear gradient. Round
     // a corner it grows out from the arc's centre, so the square from that centre to the reach
     // past the arc is a radial gradient: full to the arc, the falloff beyond it, and the arc
@@ -793,8 +793,8 @@ namespace ClaFi::PlatformImplementation::Windows
     // into rectangles the way the CPU painter cuts a rounded rectangle.
     //
     // Every piece is an axis-aligned rectangle, and every pixel falls in exactly one of them:
-    // they are drawn ALIASED, so no edge pixel is shared between two pieces and painted twice at
-    // the shadow's opacity, and what meets across a seam is the same value on both sides - the
+    // they are drawn **aliased**, so no edge pixel is shared between two pieces and painted twice
+    // at the shadow's opacity, and what meets across a seam is the same value on both sides - the
     // one value the distance field has there. The pieces are the silhouette as
     // Canvas::castShadowDef states it: carried by the offset, grown by the spread, a round
     // corner growing with it, no corner past the middle of the shorter side. The brushes are
@@ -1062,7 +1062,8 @@ namespace ClaFi::PlatformImplementation::Windows
     // Ring i covers the band between reach*(i-1)/n and reach*i/n. A stroke straddles the geometry
     // it follows, so a ring reaching d outwards is 2d wide and every ring lies inside the one
     // before it. They are drawn outside in, each over the last, so what a ring is given is what
-    // it has to ADD to leave its share of the ramp standing - which is what ringOpacity answers.
+    // it has to **add** to leave its share of the ramp standing - which is what ringOpacity
+    // answers.
     //
     // The opacity is set on the brush and put back afterwards rather than a brush being built per
     // ring: the brush cache is keyed on the whole brush and never evicts, so a glow whose colour
@@ -1114,7 +1115,7 @@ namespace ClaFi::PlatformImplementation::Windows
         d2dBrush->SetOpacity(restoreOpacity);
     }
 
-    // THE RAMP IS KEPT OUTSIDE THE SILHOUETTE by a layer whose mask is everything around it but
+    // **The ramp is kept outside the silhouette** by a layer whose mask is everything around it but
     // it, and the silhouette is then filled solid. Both are rasterized aliased: the mask's edge
     // and the fill's are then the same pixels, and what meets across them is the ramp's first
     // step against the full colour, which is no step the eye can find. Antialiased, each side
@@ -1205,7 +1206,7 @@ namespace ClaFi::PlatformImplementation::Windows
         return createStopCollection(stops);
     }
 
-    // A DEVICE CAN GO AWAY under a running process - a driver reset, a driver update, a switch
+    // **A device can go away** under a running process - a driver reset, a driver update, a switch
     // between the GPUs of a hybrid machine, a session moving to or from a remote desktop - and
     // Direct2D reports it once, from EndDraw. The presenter counts its devices; a Direct2D device
     // built on one that has gone is dropped here and built on the next. The frame texture moves
@@ -1757,10 +1758,10 @@ namespace ClaFi::PlatformImplementation::Windows
     // run is at, so runs animating at their own rates each cross their own threshold at their own
     // moment. Enhanced contrast boosts coverage non linearly, which turns any change in coverage
     // into a larger change in ink. The rasterizer is the deepest of the three: the cached path
-    // rebuilds the glyph at every sub pixel position it is asked for, while OUTLINE fills the
+    // rebuilds the glyph at every sub pixel position it is asked for, while **outline** fills the
     // beziers as geometry with plain antialiasing that varies smoothly with position.
     //
-    // OUTLINE is not cheap. It bypasses the glyph cache, so every glyph is rebuilt from beziers
+    // **Outline** is not cheap. It bypasses the glyph cache, so every glyph is rebuilt from beziers
     // every frame - measured at roughly 11ms of a 14ms frame on a list of cards, against 3ms with
     // text skipped entirely, back when every interactive control was given it whether or not it was
     // moving. Which runs are worth that is not decided here.

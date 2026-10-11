@@ -58,8 +58,8 @@ namespace ClaFi::Tools::WhatsClip
             HostProps{ ScrollBars::Both },
             BodyProps{}
         },
-        // THE FACE OPENS THE EDITOR AND THE STRIP DROPS THE SPELLINGS. Its width is stated, like
-        // the reading's, so the corner holds still whatever value it reads.
+        // **The face opens the editor and the strip drops the spellings.** Its width is stated,
+        // like the reading's, so the corner holds still whatever value it reads.
         m_colorReadout{ createCornerBar<ColorReadout>(
             MinSize{ k_readoutWidth, 0.0f },
             MaxSize{ k_readoutWidth, k_maxFloat },
@@ -120,7 +120,7 @@ namespace ClaFi::Tools::WhatsClip
         followZoom();
     }
 
-    // WHAT THE FORMAT OFFERS, decoded by whoever knows how to. The standard picture format is
+    // **What the format offers**, decoded by whoever knows how to. The standard picture format is
     // served from whichever spelling the platform ranks first and answers pixels whichever that
     // was - a PNG or a DIB out of its bytes, a GDI bitmap read off the object its handle names -
     // so there is one route here and no table of decoders. The bitmap is moved out of the answer
@@ -207,8 +207,8 @@ namespace ClaFi::Tools::WhatsClip
         menu.executeUnder(m_colorReadout);
     }
 
-    // WHAT A COPY TAKES IS THE COLOUR, spelled the way the readout spells it now. The picture came
-    // off the clipboard and putting it back says nothing; the digits are what a pixel is worth
+    // **What a copy takes is the colour**, spelled the way the readout spells it now. The picture
+    // came off the clipboard and putting it back says nothing; the digits are what a pixel is worth
     // taking away. The page claims the command rather than the view, so the key answers wherever
     // the focus rests on the page - the picture, the readout, the zoom slider.
     void PicturePage::connectCopyAction()
@@ -228,8 +228,8 @@ namespace ClaFi::Tools::WhatsClip
         });
     }
 
-    // ONE FORMAT OUT: the digits, which an application that has never heard of this viewer reads
-    // as the text they are.
+    // **One format out**: the digits, which an application that has never heard of this viewer
+    // reads as the text they are.
     void PicturePage::copyColor(const InputStamp stamp)
     {
         const std::optional<Color> color = body().selectedColor();
@@ -241,9 +241,9 @@ namespace ClaFi::Tools::WhatsClip
         formContext().clipboard().set(std::move(source), stamp);
     }
 
-    // THE CORNER'S TWO COMMANDS, AT THE PIXEL ITSELF. The view has already selected the pixel the
-    // press landed on - see PictureView::nestedContextPopup - so both act on what was pointed at.
-    // The editor is owned by the line that opened it, which is what stands it over the menu.
+    // **The corner's two commands, at the pixel itself.** The view has already selected the pixel
+    // the press landed on - see PictureView::nestedContextPopup - so both act on what was pointed
+    // at. The editor is owned by the line that opened it, which is what stands it over the menu.
     void PicturePage::showPixelMenu(ContextPopupEvent& event)
     {
         event.stopPropagation();
@@ -264,7 +264,7 @@ namespace ClaFi::Tools::WhatsClip
         menu.execute();
     }
 
-    // THE EDITOR'S COLOUR STANDS IN THE READOUT WHILE IT IS OPEN, so the digits follow the
+    // **The editor's colour stands in the readout while it is open**, so the digits follow the
     // sliders, and the pixel's own comes back once it closes. A copy out of the editor takes
     // the clipboard, and this viewer then shows what it took - the picture goes with its tab,
     // and the editor with the picture.

@@ -42,7 +42,7 @@ namespace SeeDocs_App
 
     // NewProjectDialog
 
-    // THE SHELL IS A WINDOW'S, framed as the window it stands over is, and the middle and the
+    // **The shell is a window's**, framed as the window it stands over is, and the middle and the
     // answers are a message box's. The title is dragged to move it; its one button closes it, the
     // window being whatever its rows come out as and never a size the user picks.
     NewProjectDialog::NewProjectDialog(FormBase& owner, const std::filesystem::path& location,
@@ -270,7 +270,7 @@ namespace SeeDocs_App
         close();
     }
 
-    // AN EMPTY FOLDER TAKES A PROJECT, one standing there before it included; a folder holding
+    // **An empty folder takes a project**, one standing there before it included; a folder holding
     // anything else is somebody's, and is left to them.
     std::wstring NewProjectDialog::refusalOf(const std::wstring_view name,
         const std::filesystem::path& folder) const

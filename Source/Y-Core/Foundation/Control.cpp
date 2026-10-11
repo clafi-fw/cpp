@@ -81,7 +81,8 @@ namespace ClaFi
                 currentLineMain += sizeWithSpacing;
 
                 // A line holding nothing yet takes the item whatever it measures. Counted rather than
-                // compared against the first CHILD: the line begins at the first VISIBLE one.
+                // compared against the first **child**: the line begins at the first **visible**
+                // one.
                 const bool breakLine = autoWrap && (itemsOnLineNum == wrapCount ||
                     (currentLineMain > maxConstraint && itemsOnLineNum != 0));
 
@@ -102,7 +103,7 @@ namespace ClaFi
                 }
             }
 
-            // THE OPEN LINE IS COMMITTED WHERE THE WALK ENDS, not on the last child. A walk ending on
+            // **The open line is committed where the walk ends**, not on the last child. A walk ending on
             // a hidden child leaves a line nothing closed, and a last child that wrapped opens a line
             // the break did not close - either one reports no size at all while holding items.
             if (itemsOnLineNum != 0)
@@ -123,9 +124,9 @@ namespace ClaFi
         };
     }
 
-    // WHAT THE CHILDREN OF A LANE CAN BE CUT TO, composed by the rule the lane composes their
+    // **What the children of a lane can be cut to**, composed by the rule the lane composes their
     // sizes by: along the lane the floors add up, across it the largest one stands for all of
-    // them. A LANE THAT WRAPS ADDS NOTHING ALONG ITSELF - everything past the first item can
+    // them. **A lane that wraps adds nothing along itself** - everything past the first item can
     // fall onto a line of its own, so the lane is only as long as its longest item.
     //
     // Across a wrapping lane this is the largest single item rather than the lines that item
@@ -133,8 +134,8 @@ namespace ClaFi
     // own across the wrap. What reads this gives way, so an under-report costs room rather than
     // losing anything.
     //
-    // SPACING COUNTS ONLY BETWEEN ITEMS THAT STATE A FLOOR. An item cut to nothing takes the gap
-    // beside it with it, and a lane of items that all give way gives way whole - which is what
+    // **Spacing counts only between items that state a floor.** An item cut to nothing takes the
+    // gap beside it with it, and a lane of items that all give way gives way whole - which is what
     // keeps a count of items from standing as a minimum nobody set.
     static ScaledDimensions composeLaneMinSize(ControlSpan controls, const LaneAxis axis,
                                                const bool autoWrap, float mainSpacing)
@@ -429,8 +430,8 @@ namespace ClaFi
         return m_source ? *m_source : m_buffer;
     }
 
-    // In FRONT of whatever the buffer already holds: a text is named before anything that reaches
-    // the buffer afterwards, so that is the order the two go in.
+    // In **front** of whatever the buffer already holds: a text is named before anything that
+    // reaches the buffer afterwards, so that is the order the two go in.
     void GetTextEventBase::materialise()
     {
         if (!m_source)
@@ -654,7 +655,7 @@ namespace ClaFi
     bool Control::isWidthGivenFromOutside() const
     {
         const Control* control = this;
-        // A CONTROL THAT DOES NOT FILL KEEPS WHAT IT MEASURED, whatever its host was willing to
+        // **A control that does not fill keeps what it measured**, whatever its host was willing to
         // hand it - align gives the surplus back. Its width is its own content's answer then, and
         // so is the width of everything standing inside it, however freely the hosts between hand
         // one down.
@@ -939,7 +940,7 @@ namespace ClaFi
 
     void Control::scrollIntoView(const FloatRect& rectInControl)
     {
-        // A HELD CONTROL IS SHOWN WHERE IT WAS LAID OUT, which is the rect handed up from here:
+        // **A held control is shown where it was laid out**, which is the rect handed up from here:
         // the hold is where the control is drawn, not where it is, and a request to show it - a
         // key landing on it, Home on a tree whose first row heads an open node, a click on the
         // held strip - brings the view to its place, with what it heads under it. For the first
@@ -1265,8 +1266,8 @@ namespace ClaFi
         // over an unordered range returns an arbitrary position rather than a wrong one
         // that is merely conservative.
         //
-        // A HIDDEN CHILD IS NOT ORDERED EITHER, and it is the same fault by another road: it was
-        // never laid out, so it stands at the origin with no size, and its key answers "ends
+        // **A hidden child is not ordered either**, and it is the same fault by another road: it
+        // was never laid out, so it stands at the origin with no size, and its key answers "ends
         // before the view" from wherever in the collection it sits. One of those behind a child
         // that does not answer so leaves the range unpartitioned, and the search then reports a
         // position that is not merely early - it can report the end and take every child with it.
@@ -1582,7 +1583,7 @@ namespace ClaFi
         // A handler of its own makes the control the authority on its own state, and the walk
         // ends here. The only thing above that writes a descendant's state is a container
         // marking its current item, and that is a default for an item with no opinion: a radio
-        // button's selected IS its dot, and no container has any business turning it off.
+        // button's selected **is** its dot, and no container has any business turning it off.
         if (hasEventListeners<GetStateEvent>())
             event.stopPropagation();
     }
@@ -1681,7 +1682,7 @@ namespace ClaFi
         // The fallback stands in for text this control has cut, so it starts where that text
         // is and nowhere else. A hint given to the control is about the control and starts
         // anywhere inside it, which is why the pointer test guards this branch alone.
-        // isTextHovered names THIS control, so a parent reached by the walk up from the hovered
+        // isTextHovered names **this** control, so a parent reached by the walk up from the hovered
         // one answers with a hint of its own or with nothing.
         //
         // A scroll body is left out of it. Its text is reached by scrolling rather than
@@ -1700,9 +1701,9 @@ namespace ClaFi
             // the buffer already holds to itself is the gather having built one, and costs the
             // comparison in Text::operator= and nothing else.
             event.text = doGetText(event.formContext(), event.text, EventPhase::Paint);
-            // THE HINT STANDS ON THE GLYPHS, NOT ON THE BOX THEY WERE GIVEN. An anchor moves the
-            // block inside that box - a line centred in a title bar sits half the band below its
-            // top - and the placement lands the hint's own first glyph on this rect's top left.
+            // **The hint stands on the glyphs, not on the box they were given.** An anchor moves
+            // the block inside that box - a line centred in a title bar sits half the band below
+            // its top - and the placement lands the hint's own first glyph on this rect's top left.
             // The width is the box's, which is the width the lines were broken at and what
             // HintForm breaks its own at.
             const FloatRect textRect = textBounds(event.formContext(), boundsInForm());
@@ -1852,7 +1853,7 @@ namespace ClaFi
         else
         {
             AlignEvent event{ form.context(), form.layoutPass(), designMetrics };
-            // THE BOX THE CONTENT CAME TO, ceiled and padded here rather than where it is read.
+            // **The box the content came to**, ceiled and padded here rather than where it is read.
             // It is what this control is, unless a preference stands in its place.
             //
             // TODO: ceiling, padding and the min clamp run only on this calculated-content path,
@@ -1873,9 +1874,9 @@ namespace ClaFi
             }
             measured.y = std::min(measured.y, event.maxSize.y);
 
-            // A STATED PREFERENCE STANDS IN PLACE OF THE MEASUREMENT, ON ITS OWN AXIS. The content
-            // is measured either way - a control preferring a width still finds its height that
-            // way, and its children are laid out whatever it comes to - and what a preference
+            // **A stated preference stands in place of the measurement, on its own axis.** The
+            // content is measured either way - a control preferring a width still finds its height
+            // that way, and its children are laid out whatever it comes to - and what a preference
             // states is the whole box, so the padding the measured value is grown by is already
             // inside it. The minimum still holds it up and the maximum still holds it down: a
             // preference is what the control would like, not what it is owed.
@@ -1886,13 +1887,13 @@ namespace ClaFi
                 ? std::min(std::max(event.preferredSize.y, event.minSize.y), event.maxSize.y)
                 : measured.y;
 
-            // WHAT SOMEBODY SET, HERE OR BELOW - NEITHER THE MEASUREMENT NOR THE PREFERENCE. A
-            // preference is what this control would LIKE to be, and a measurement is what it came
-            // to holding what it holds today; the least it can be is the MinSize it was given,
+            // **What somebody set, here or below - neither the measurement nor the preference.** A
+            // preference is what this control would **like** to be, and a measurement is what it
+            // came to holding what it holds today; the least it can be is the MinSize it was given,
             // held up against the floor its content composed out of its children's.
             //
-            // A MEASUREMENT IS NOT A FLOOR. The range a drag is held inside is this number - see
-            // FormBase::stateSizeRange - so a window whose minimum is what it measured can only
+            // **A measurement is not a floor.** The range a drag is held inside is this number -
+            // see FormBase::stateSizeRange - so a window whose minimum is what it measured can only
             // ever be grown: open enough tabs and the strip that got wide is the strip that pins
             // the frame, and the fit that would have cut those tabs back is never reached because
             // the box holding them is never made narrower.
@@ -2008,20 +2009,20 @@ namespace ClaFi
         // again would say so again.
         if (wordWrap())
         {
-            // A FIXED SIZE IS NOT MEASURED, on this pass as on the calculate pass: a control
+            // **A fixed size is not measured**, on this pass as on the calculate pass: a control
             // whose minimum and maximum agree is that size whatever its text comes to, so the
             // measurement below would be made and thrown away - and for a list of a million
             // fixed items it is a million shapings the cache cannot hold, on every pass.
             if (event.maxSize == event.minSize)
                 return;
 
-            // AN EMPTY MEASUREMENT IS NOT A SIZE. calculateText answers {0, 0} for a control
+            // **An empty measurement is not a size.** calculateText answers {0, 0} for a control
             // that holds no text, and this box is what the control's children are laid out in -
             // a grid row hands it to the control standing in every one of its cells. Taking the
             // empty answer gives each of them a slot of no height, and a control with no height
             // paints nothing at all.
             //
-            // A control with no text reaches here because a calculated size is CEILED while the
+            // A control with no text reaches here because a calculated size is **ceiled** while the
             // size it is then given is not, so a box measured at a fractional width arrives a
             // fraction of a pixel narrower than the width it was measured at.
             const ScaledDimensions measuredText = calculateText(event, { newDimensions.x, k_maxFloat });
@@ -2092,7 +2093,7 @@ namespace ClaFi
         // content box begins in that space. It is {0, 0} unless the control separates the two.
         ScaledPosition contentOrigin = event.padding - childInset(event.formContext(), event.padding);
         alignContent(event, contentOrigin, alignedDimensions);
-        // Rounded the way Control::calculate rounds what IT measures, and at the same point: on
+        // Rounded the way Control::calculate rounds what **it** measures, and at the same point: on
         // the content, before the padding goes back on. These are the two routes to one number,
         // and a control sized by one of them has to come out the size the other would give it.
         // Where they disagreed, a wrapping text measured to a fraction of a pixel was handed a box
@@ -2136,9 +2137,9 @@ namespace ClaFi
             }
         }
 
-        // A MAXIMUM ON A FILL AXIS IS A CALLER ERROR. Fill says take the whole lane and a maximum
-        // says never be this big; nothing resolves the two, and no clamp here would make them
-        // agree - it would only hide which of them was meant. Fill is what stands.
+        // **A maximum on a fill axis is a caller error.** Fill says take the whole lane and a
+        // maximum says never be this big; nothing resolves the two, and no clamp here would make
+        // them agree - it would only hide which of them was meant. Fill is what stands.
         //
         // The measuring pass does clamp to the maximum, so a control given both carries a size
         // measured against its cap inside a box that ignores the cap: a wrapping text broken to
@@ -2193,7 +2194,7 @@ namespace ClaFi
         control->align(parentEvent.formContext(), parentEvent.pass(), position, newDimensions);
     }
 
-    // NOTHING IS HANDED OUT WHERE NOBODY ASKED, which is every lane that has not been told
+    // **Nothing is handed out where nobody asked**, which is every lane that has not been told
     // otherwise: the walk runs, counts none, and the placement below is the one it always was.
     float Control::laneSurplusShare(ControlSpan::iterator begin, ControlSpan::iterator end,
         const float laneExtent, const float spacing, float (Control::*extent)() const)
@@ -2311,9 +2312,9 @@ namespace ClaFi
             control->m_topLeft.offset(pt);
     }
 
-    // THE SUBTREE'S ANIMATIONS ARE STOPPED HERE, WHILE THE FORM IS STILL REACHABLE. The children
-    // go down detached, and a control with no parent cannot find the controller from its own
-    // destructor - so it is found here, once, for the whole subtree. A container that is itself
+    // **The subtree's animations are stopped here, while the form is still reachable.** The
+    // children go down detached, and a control with no parent cannot find the controller from its
+    // own destructor - so it is found here, once, for the whole subtree. A container that is itself
     // detached by now finds none, and has nothing left running: whoever detached it stopped its
     // subtree the same way.
     void Control::releaseChildren()
@@ -2344,20 +2345,20 @@ namespace ClaFi
             .enabled = actionState.enabled,
             .textHovered = interactive && isTextHovered()
         };
-        // A CONTROL WITH A POPUP OF ITS OWN OPEN IS STILL WHERE THE USER IS. The popup takes the
-        // focus so that its items can be walked, and the control it was opened on would otherwise
-        // read as abandoned the moment it opened: the ring goes out, the fill goes cold, and a
-        // text box's caret goes dark - while every command in the popup names that control and
-        // nothing else. Said here, once, so that a control needing it says nothing of its own:
+        // **A control with a popup of its own open is still where the user is.** The popup takes
+        // the focus so that its items can be walked, and the control it was opened on would
+        // otherwise read as abandoned the moment it opened: the ring goes out, the fill goes cold,
+        // and a text box's caret goes dark - while every command in the popup names that control
+        // and nothing else. Said here, once, so that a control needing it says nothing of its own:
         // TextBox draws its caret from this focused, and a dropped-down control keeps its ring.
         //
-        // NO EXCEPTIONS, and the one worth naming is the control an in-place editor covers: it
+        // **No exceptions**, and the one worth naming is the control an in-place editor covers: it
         // reads live while the editor is over it, because being edited is the same relation. A
         // control that wants to read otherwise dims itself from its own popup's
         // adjustNestedControlVisualState, which runs after this.
         //
-        // This is how the control READS. Where the focus RESTS is Input::focusedControl, and
-        // that is untouched - the two answers differ for exactly as long as the popup is up.
+        // This is how the control **reads**. Where the focus **rests** is Input::focusedControl,
+        // and that is untouched - the two answers differ for exactly as long as the popup is up.
         if (isDroppedDown())
         {
             result.focused = true;
@@ -2458,7 +2459,7 @@ namespace ClaFi
         visibilityChanged();
     }
 
-    // WHAT THE SEARCH OVER THE CHILDREN STANDS ON - see firstChildInViewport, which reads this
+    // **What the search over the children stands on** - see firstChildInViewport, which reads this
     // flag rather than the children. Hiding one states it outright; showing one has to ask the
     // rest, since another may still be hidden. That walk is the price of a show, which is a
     // gesture rather than a frame.
@@ -2544,7 +2545,7 @@ namespace ClaFi
             nestedContextPopup(event);
     }
 
-    // A ROOT HAS NO PARENT TO ADJUST IT, and the one thing standing over it is the form: the
+    // **A root has no parent to adjust it**, and the one thing standing over it is the form: the
     // window it is measuring for and the frame that window is wearing - see
     // FormBase::adjustRootMetrics. Applied here, so every reader of a root's metrics - the
     // measuring pass, the align, the paint, the padding the traversal walks by - reads the same
@@ -2573,8 +2574,8 @@ namespace ClaFi
         }
     }
 
-    // THE TWO TEXT FLAGS STATE WHAT THE LAST PAINT OF THIS CONTROL'S OWN TEXT PRODUCED, which is
-    // why they are cleared where that paint happens rather than on every visit. A control is
+    // **The two text flags state what the last paint of this control's own text produced**, which
+    // is why they are cleared where that paint happens rather than on every visit. A control is
     // walked once per paint stage and paints itself in one of them - an unselected tab is walked
     // in the standard stage and again in the overlay stage its selected sibling is drawn in - so
     // a clear on the visit leaves the answer the drawing stage wrote wiped by the stage that

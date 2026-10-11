@@ -65,7 +65,7 @@ namespace ClaFi
     {
     }
 
-    // THE NEWEST VERSION IS KEPT WHETHER OR NOT IT WAS NEWER, as its tag spells it, and empty
+    // **The newest version is kept whether or not it was newer**, as its tag spells it, and empty
     // where no tag was published. Empty values are no answer at all.
     Dom::Dt::Section UpdateCheck::createConfigSchema()
     {
@@ -92,7 +92,7 @@ namespace ClaFi
         return address;
     }
 
-    // THE SECTION'S OWN CHANGE IS WHAT A STORED ANSWER ARRIVES ON. The config is read after the
+    // **The section's own change is what a stored answer arrives on.** The config is read after the
     // context is built, inside one transaction, so the section is told once with both values in.
     void UpdateCheck::keepIn(Dom::Section& record)
     {
@@ -104,7 +104,7 @@ namespace ClaFi
         takeRecord();
     }
 
-    // NOT FROM INSIDE AN UpdateCheckEvent HANDLER: the fetch replaced here may be the one whose
+    // **Not from inside an UpdateCheckEvent handler**: the fetch replaced here may be the one whose
     // done event raised it.
     void UpdateCheck::start()
     {
@@ -154,8 +154,8 @@ namespace ClaFi
         takeAnswer(answeredAt, newestSpelling);
     }
 
-    // ONE CHANGE FOR THE TWO VALUES. The section's handler reads both, and a new time beside the
-    // previous answer's version would be an answer nobody gave.
+    // **One change for the two values.** The section's handler reads both, and a new time beside
+    // the previous answer's version would be an answer nobody gave.
     void UpdateCheck::storeAnswer(const std::chrono::sys_seconds answeredAt,
         const std::wstring_view newestVersion)
     {
@@ -179,7 +179,7 @@ namespace ClaFi
         takeAnswer(moment.value(), newestVersionNode.get());
     }
 
-    // A RUNNING VERSION AHEAD OF EVERY TAG IS THE LATEST - one bumped and not yet released. An
+    // **A running version ahead of every tag is the latest** - one bumped and not yet released. An
     // answer kept by an earlier run is compared against the version running now, so an update
     // installed since then reads as the latest.
     void UpdateCheck::takeAnswer(const std::chrono::sys_seconds answeredAt,
@@ -238,9 +238,9 @@ namespace ClaFi
             return Version{ parts[0], parts[1], parts[2] };
         }
 
-        // THE ANSWER IS A JSON ARRAY OF REFS, and a ref name is the only string in it that starts
-        // with refs/tags/ - every address in it starts with its scheme - so a quote followed by
-        // that and the prefix opens one. Anything that is not an array is no answer at all.
+        // **The answer is a JSON array of refs**, and a ref name is the only string in it that
+        // starts with refs/tags/ - every address in it starts with its scheme - so a quote followed
+        // by that and the prefix opens one. Anything that is not an array is no answer at all.
         std::optional<std::vector<std::wstring>> taggedVersions(const std::string_view answer,
             const std::wstring_view tagPrefix)
         {
@@ -276,7 +276,7 @@ namespace ClaFi
                 time.seconds().count());
         }
 
-        // THE SPELLING IS READ BY ITS SHAPE: the config is text the user is free to edit, and
+        // **The spelling is read by its shape**: the config is text the user is free to edit, and
         // anything else - a time zone, a fraction of a second, a date that does not exist - is
         // taken for no answer.
         UpdateCheck::AnswerTime parseUtcSpelling(const std::wstring_view spelling)

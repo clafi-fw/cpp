@@ -169,8 +169,8 @@ namespace ClaFi
 
     namespace
     {
-        // NEVER CLOSED: a transfer aborted while a name resolves leaves libcurl's resolver thread
-        // detached, running libcurl's code until the lookup returns. See Platform
+        // **Never closed**: a transfer aborted while a name resolves leaves libcurl's resolver
+        // thread detached, running libcurl's code until the lookup returns. See Platform
         std::optional<CurlEntries> openCurl()
         {
             for (const char* name : k_curlNames)

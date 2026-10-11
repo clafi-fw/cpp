@@ -125,10 +125,10 @@ namespace ClaFi
         // not ask it: the range is the whole collection.
         const bool clipped = m_owner.clipMode() != ClipMode::None;
 
-        // IN THE SPACE THE CHILDREN'S OWN TOPLEFTS ARE MEASURED IN, which is the content position
-        // and not the bounds: a container with padding asked the range against a rect a whole
-        // inset too far in, so the cull was stricter here than the one FormBase::controlAt makes
-        // for the pointer - and a child the pointer could reach was dropped from the paint.
+        // **In the space the children's own toplefts are measured in**, which is the content
+        // position and not the bounds: a container with padding asked the range against a rect a
+        // whole inset too far in, so the cull was stricter here than the one FormBase::controlAt
+        // makes for the pointer - and a child the pointer could reach was dropped from the paint.
         FloatRect localViewPort = m_viewport;
         localViewPort.offset(-m_contentPosition);
         // The mode names the rect to clip by, and the range is that rect's alone: a clip far

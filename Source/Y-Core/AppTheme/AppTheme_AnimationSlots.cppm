@@ -101,7 +101,7 @@ namespace ClaFi::AnimationSlots
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseOut }
     };
 
-    // A THEME'S LIGHTNESS CROSSES ON A SLOT OF ITS OWN, because it is the one axis with no half
+    // **A theme's lightness crosses on a slot of its own**, because it is the one axis with no half
     // way: contrast closes as it crosses and is gone in the middle, so the window passes through
     // a flat mid-tone whatever the colours are doing. How long that lasts is its own question,
     // and the answer is shorter than the colours take - the palette settles at leisure once the

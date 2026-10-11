@@ -213,8 +213,8 @@ namespace ClaFi::Controls
         :
         Control{
             params,
-            // A LINE IS A FIXED GRID OF CHARACTERS, so nothing about it can be broken to the box
-            // it is drawn in: the view is as wide as its line whatever width it is offered, and
+            // **A line is a fixed grid of characters**, so nothing about it can be broken to the
+            // box it is drawn in: the view is as wide as its line whatever width it is offered, and
             // the horizontal bar is what carries the view across the rest. It is also what tells
             // the align pass that a scrolled body keeps the size it measured - a wrapping body is
             // cut to its slot instead, which leaves a view of any length exactly one screen tall

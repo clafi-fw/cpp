@@ -25,9 +25,9 @@ namespace SeeDocs_App
 
     namespace
     {
-        // THE WIDEST A PATH MAY MAKE THE PAGE. The menu is measured from its pages, so a long path
-        // left to itself would widen the whole backstage; past this it is trimmed, and the hint
-        // over it shows the rest.
+        // **The widest a path may make the page.** The menu is measured from its pages, so a long
+        // path left to itself would widen the whole backstage; past this it is trimmed, and the
+        // hint over it shows the rest.
         constexpr float k_pathWidth = 440.0f;
         constexpr float k_iconGap = 5.0f;   // between a row's icon and its text
         constexpr float k_nameGap = 12.0f;  // between a row's name and its folder
@@ -49,8 +49,8 @@ namespace SeeDocs_App
             Stack& group = page.addGroup(L"Project");
             if (!workspace.anyOpen())
                 group.add<Label>(Text{ L"No project is open" }, TextFormat{ InkGrade::Muted });
-            // THE MENU CLOSES BEFORE THE DIALOG OPENS: the menu is a popup, and a popup goes down
-            // when a dialog takes the focus - see Platform::pickFolder.
+            // **The menu closes before the dialog opens**: the menu is a popup, and a popup goes
+            // down when a dialog takes the focus - see Platform::pickFolder.
             group.add<Button>(
                 L"Browse",
                 EndIcon::OpensWindow,

@@ -490,7 +490,7 @@ namespace ClaFi::PlatformImplementation::Windows
 
         if (m_rt)
         {
-            // GPU PATH: Render using standard hardware accelerated Direct2D
+            // **GPU path**: Render using standard hardware accelerated Direct2D
             //
             // The brush is resolved here, against the backend that owns m_rt. A native brush belongs
             // to the ID2D1Device that created it and D2D refuses one from any other, so a brush
@@ -507,8 +507,8 @@ namespace ClaFi::PlatformImplementation::Windows
 
         else
         {
-            // CPU PATH: rasterize each glyph once, place them all into one mask, blend once. The
-            // compositor states why one mask.
+            // **CPU path**: rasterize each glyph once, place them all into one mask, blend once.
+            // The compositor states why one mask.
             //
             // Placing per glyph is what lets the run follow the canvas transform. The cached
             // coverage is a fixed size, so a glyph cannot shrink - but its pen position can be

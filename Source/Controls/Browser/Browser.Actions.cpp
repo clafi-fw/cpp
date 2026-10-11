@@ -9,8 +9,8 @@ import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi::Browser::Actions
 {
-    // THESE ARE CONSTRUCTED BEFORE MAIN, so nothing built here may touch the platform, the theme
-    // or the text engine - none of them exists yet. Text is a string and its markers, and
+    // **These are constructed before main**, so nothing built here may touch the platform, the
+    // theme or the text engine - none of them exists yet. Text is a string and its markers, and
     // EventComponent connects handlers into a map of its own, so both are safe; anything added
     // to an action below has to answer the same question. The same rule ClaFi::StdActions
     // states for the standard set.

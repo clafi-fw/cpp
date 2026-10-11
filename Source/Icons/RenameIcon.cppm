@@ -14,7 +14,7 @@ namespace ClaFi::Icons::RenameIcon
     namespace
     {
         // The field, as a share of the icon's square. Wider than it is tall, which is what makes
-        // it something a name is written IN rather than a box drawn around one.
+        // it something a name is written **in** rather than a box drawn around one.
         constexpr float k_fieldInset = 0.02f;
         constexpr float k_fieldTop = 0.15f;
         constexpr float k_fieldBottom = 0.85f;
@@ -45,7 +45,7 @@ namespace ClaFi::Icons::RenameIcon
         const Color bodyColor = event.textRgb(InkGrade::Strong);
         const Color accentColor = event.accentRgb(InkGrade::Strongest);
 
-        // THE FIELD'S BOUNDS ARE STATED WHOLE. A stroke lies inside the rect it is given, so
+        // **The field's bounds are stated whole.** A stroke lies inside the rect it is given, so
         // nothing here pre-insets by half of it.
         const FloatRect field = box.relativeRect(
             { k_fieldInset, k_fieldTop },
@@ -54,9 +54,9 @@ namespace ClaFi::Icons::RenameIcon
         const float radius = box.width() * k_fieldRadius;
         canvas.drawRoundedRectangle(field, radius, radius, bodyColor, strokeWidth);
 
-        // A PATH'S STROKE IS CENTRED ON THE LINE, which is the other convention: these points are
-        // where the middle of each stroke goes, and that is why the caret is not built the way the
-        // field above is.
+        // **A path's stroke is centred on the line**, which is the other convention: these points
+        // are where the middle of each stroke goes, and that is why the caret is not built the way
+        // the field above is.
         PixelPath path;
         path.moveTo(box.relativePt(k_caretX - k_caretHalfWidth, k_caretTop));
         path.lineTo(box.relativePt(k_caretX + k_caretHalfWidth, k_caretTop));

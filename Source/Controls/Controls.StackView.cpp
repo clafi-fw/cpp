@@ -188,7 +188,7 @@ namespace ClaFi::Controls
         // The pass that reads the gesture whole has not run yet, so the set is left as it
         // stands and only the current item has moved. The anchor follows it, because the user
         // is standing there and the next range starts from where they stand - but a Shift is
-        // MEASURED from the anchor, so it must not move the thing it is measured from.
+        // **measured** from the anchor, so it must not move the thing it is measured from.
         // Nothing picked is nothing to stand on, and the anchor keeps the place it was given.
         if (!applyGesture)
         {
@@ -540,7 +540,7 @@ namespace ClaFi::Controls
         if (!m_selectionOverlayRect.has_value())
             return;
 
-        // WHOLE ITEMS, NEVER A STRIP ACROSS ONE. An item is painted through its Z scale, about
+        // **Whole items, never a strip across one.** An item is painted through its Z scale, about
         // its own centre, so what it puts on the screen is not the rect it occupies: a child
         // sitting near a corner is drawn a pixel or so in from where it was laid out. A strip
         // crossing part of an item repaints content the strip was not measured against, and the

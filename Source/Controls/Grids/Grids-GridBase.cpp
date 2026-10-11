@@ -76,8 +76,8 @@ namespace ClaFi::Controls::Grids
         // hosting the entry itself, which costs the shadow the room outside the grid and nothing
         // else.
         //
-        // Standard clipping either way: the header is clipped to where it is DRAWN rather than to
-        // where it was laid out, because the traversal has already moved its bounds by
+        // Standard clipping either way: the header is clipped to where it is **drawn** rather than
+        // to where it was laid out, because the traversal has already moved its bounds by
         // overlayChildOffset.
         m_headerHost = heldHeaderHost();
         if (!m_headerHost || !m_headerHost->addOverlayControl(*m_header, ClippingMode::Standard))
@@ -336,10 +336,10 @@ namespace ClaFi::Controls::Grids
         RowBase* const row = stop.row;
         const Column* const column = stop.column;
 
-        // ONLY A CELL DRAWN AS TEXT. A cell holding a control is that control's - its row hands it
-        // the key, see RowContainer::nestedKeyDown - and a box laid over it would be showing a
+        // **Only a cell drawn as text.** A cell holding a control is that control's - its row hands
+        // it the key, see RowContainer::nestedKeyDown - and a box laid over it would be showing a
         // value the cell does not draw. The column cannot answer this: which cells hold controls is
-        // the ROW's, so a column of plain text with one check box in it is asked per cell.
+        // the **row's**, so a column of plain text with one check box in it is asked per cell.
         if (row->cellControl(*column))
             return false;
 
@@ -348,9 +348,10 @@ namespace ClaFi::Controls::Grids
         // handed over: offerText is what declines to run it, in one place for every caller.
         const bool readOnly = column->editorMode() == EditorMode::ReadOnly;
 
-        // The editor is placed over the TEXT it replaces, so what it is given is where that text
-        // is drawn: the cell inside its lines, inset by the same padding and lead paintCell insets
-        // it by, in this form's coordinates, which is the space a placement rect is stated in.
+        // The editor is placed over the **text** it replaces, so what it is given is where that
+        // text is drawn: the cell inside its lines, inset by the same padding and lead paintCell
+        // insets it by, in this form's coordinates, which is the space a placement rect is stated
+        // in.
         FloatRect textRect = m_descriptor.cellInnerRect(stop.rect);
         textRect.inflate(-m_descriptor.scaledCellMetrics().padding.toFloat());
         textRect.left += row->cellLead(*column).x;
@@ -384,9 +385,9 @@ namespace ClaFi::Controls::Grids
             // This runs while the editor is up, on the stack of the loop it is pumping, so the
             // grid may have been worked on since the edit began.
             //
-            // THE ROW IS THE TEST AND THE COLUMN IS NOT. What is being tested for is a deleted
+            // **The row is the test and the column is not.** What is being tested for is a deleted
             // row: it takes the selection with it, because RowBase's destructor tells the
-            // descriptor, which drops the row it was holding. The selected COLUMN has usually
+            // descriptor, which drops the row it was holding. The selected **column** has usually
             // moved by the time this runs and means nothing here - the commonest way to end an
             // edit with the mouse is to click another cell, and the press that does it moves
             // the selection before the release closes the editor. The value belongs to the cell
@@ -405,14 +406,14 @@ namespace ClaFi::Controls::Grids
             invalidateFormAlign();
         });
 
-        // THE POINTER NEVER MOVED AND THE HOVER WENT ANYWAY. The editor is a window of its own
+        // **The pointer never moved and the hover went anyway.** The editor is a window of its own
         // over the cell, so this form is told the mouse left it as the editor opens - and nothing
         // tells it otherwise when the editor goes, because a still pointer raises no move. So the
         // form hit-tests the pointer where it last saw it, which puts the hover back on whatever
         // the pointer is on.
         //
-        // ONLY FOR AN ENDING THE KEYBOARD DROVE. An edit ended with the mouse ends with a pointer
-        // event of its own, which has hit-tested where the pointer is. The mouse controller
+        // **Only for an ending the keyboard drove.** An edit ended with the mouse ends with a
+        // pointer event of its own, which has hit-tested where the pointer is. The mouse controller
         // answers this and the EditResult does not: Escape is as much a keyboard ending as Return.
         if (!Input::mouse().active())
             form().mouseTick(false);
@@ -447,7 +448,7 @@ namespace ClaFi::Controls::Grids
             // Left and Right are the field's own axis - the columns are what they address - so
             // the field root answers them whenever the selection is in its field, and a press at
             // the end of the line rests there. Letting one travel on hands it to the focus
-            // navigator, whose source is the whole ROW: everything ahead of the row's centre
+            // navigator, whose source is the whole **row**: everything ahead of the row's centre
             // scores, so a press at the last column lands on whatever control stands further
             // right on some other row, an expander's button among them. Up and Down do travel
             // on, which is how a move leaves the grid at all.
@@ -641,7 +642,7 @@ namespace ClaFi::Controls::Grids
             : next.rect.bottom - viewport.height();
         arriving.bottom = arriving.top + viewport.height();
 
-        // The selection lands at the FAR edge of that view rather than at its start: the press
+        // The selection lands at the **far** edge of that view rather than at its start: the press
         // moves the view by a page and leaves the selection against the edge it travelled to,
         // which is where the next press measures its own page from.
         std::size_t bestIndex = lastWholeInBand(stops, arriving, line, key);
@@ -912,7 +913,7 @@ namespace ClaFi::Controls::Grids
 
     void GridBase::selectedRowChanged(Control* from, Control* to)
     {
-        // BOTH PATHS, WHOLE. A row's state belongs to the path it stands on - every row that
+        // **Both paths, whole.** A row's state belongs to the path it stands on - every row that
         // holds the selected cell inside it is in effect - so both paths are told, from the row
         // to the grid. The grid is where they end: a control above it holds the same answer
         // whatever the grid's selection does.

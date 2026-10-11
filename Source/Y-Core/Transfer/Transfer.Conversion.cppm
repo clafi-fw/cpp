@@ -22,7 +22,7 @@ namespace ClaFi::Transfer
 
     export using Converter = Payload (*)(const Payload&);
 
-    // WHICH FORMATS REACH WHICH, and how. See Transfer
+    // **Which formats reach which**, and how. See Transfer
     export class ConversionTable
     {
     public:
@@ -44,7 +44,7 @@ namespace ClaFi::Transfer
 
         using EntryList = std::vector<Entry>;
 
-        // EVERY ENTRY IS PUT HERE BY A CALL. A static library drops a translation unit nothing
+        // **Every entry is put here by a call.** A static library drops a translation unit nothing
         // references, so self-registration at static init would leave this table full in some
         // builds and empty in others.
         ConversionTable() = default;

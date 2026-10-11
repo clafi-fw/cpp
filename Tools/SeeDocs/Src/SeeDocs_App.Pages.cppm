@@ -5,7 +5,7 @@ import SeeDocs_App.Surface;
 
 import ClaFi.StdLib;
 
-// THE REFERENCE AS PAGES: what a folder, a module, a type or a method says, built out of the
+// **The reference as pages**: what a folder, a module, a type or a method says, built out of the
 // surface and the notes, and rendered by whoever shows it - SeeDocs as controls, a generator
 // as a file. See the README beside the project.
 namespace SeeDocs_App
@@ -45,6 +45,8 @@ namespace SeeDocs_App
     export using Commands = std::vector<Command>;
 
     export constexpr std::wstring_view k_noHint = L"no hint";   // a missing hint, as a page says it
+    export constexpr std::wstring_view k_boldMark = L"**";   // what a note sets words bold between
+    export constexpr wchar_t k_codeMark = L'`';   // what a note sets words in code between
 
     // The prose of a note, as its lines read.
     export enum class BlockKind
@@ -276,9 +278,9 @@ namespace SeeDocs_App
     export using ContentsRows = std::vector<ContentsRow>;
     export using RowIndexes = std::vector<std::size_t>;
 
-    // THE CONTENTS AS A TREE: the folders, each holding the folders under it before its modules,
-    // and each module the types it exports. Made once over the contents it views, which stand
-    // for as long as it does, and read by every view of them.
+    // **The contents as a tree**: the folders, each holding the folders under it before its
+    // modules, and each module the types it exports. Made once over the contents it views, which
+    // stand for as long as it does, and read by every view of them.
     export class ContentsTree
     {
     public:

@@ -18,7 +18,7 @@ namespace ClaFi::Tools::WhatsClip
 {
     using namespace Controls;
 
-    // EVERYTHING THE VIEWER KNOWS ABOUT ONE FORMAT, which is what a tab in the strip down the
+    // **Everything the viewer knows about one format**, which is what a tab in the strip down the
     // left opens. Its own tabs are the representations - the same content read a different way -
     // and only the one on top is ever read.
     export class FormatView : public TabbedBox
@@ -30,15 +30,16 @@ namespace ClaFi::Tools::WhatsClip
         // One tab per representation, in the order given, the preferred one open. Called once,
         // when the format is first seen. The lists go to the pages that pick.
         void setRepresentations(const RepresentationList&, const PickLists&);
-        // THE OPEN PRESENTATION IS THE APPLICATION'S AND NOT ONE VIEW'S: picked on one format, it
-        // is what the next format opens on, so walking the strip never changes what is being read.
-        // The word is kept by whoever owns the views; a view reads it when it opens and writes it
-        // when the user picks. Called before setRepresentations, which is the first read of it.
+        // **The open presentation is the application's and not one view's**: picked on one format,
+        // it is what the next format opens on, so walking the strip never changes what is being
+        // read. The word is kept by whoever owns the views; a view reads it when it opens and
+        // writes it when the user picks. Called before setRepresentations, which is the first read
+        // of it.
         void setPreference(std::wstring_view& kept) { m_preference = &kept; }
         // Opens the presentation being browsed in, or this format's first where it has no such
         // presentation - a handle format has none, and a view is never left showing nothing.
         void openPreferred();
-        // THE CLIPBOARD HAS MOVED. Whatever is open reads it now; whatever is opened after this
+        // **The clipboard has moved.** Whatever is open reads it now; whatever is opened after this
         // reads it when its own tab is picked.
         void show(Transfer::Offer&, const Transfer::Format&);
     private:
@@ -78,7 +79,7 @@ namespace ClaFi::Tools::WhatsClip
 //-----------------------------------------------------------------------------
 
 
-    // The tabs go across the TOP: the format strip already runs down the left, and a second
+    // The tabs go across the **top**: the format strip already runs down the left, and a second
     // vertical strip beside it would read as one list of two kinds of thing.
     template<typename... Args>
     FormatView::FormatView(const CreateParams& params, Args&&... args)

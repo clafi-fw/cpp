@@ -11,7 +11,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::PlatformImplementation::Windows
 {
-    // THE SHADOW OF A COMPOSED WINDOW, as a window of its own. See Platform
+    // **The shadow of a composed window**, as a window of its own. See Platform
     export class ShadowWindow
     {
     public:

@@ -22,7 +22,7 @@ namespace ClaFi::Controls
         :
         ToolButton{ params,
             Interactivity::MouseOnly,
-            // THE MARK IS THE STRIP'S ICON WHERE THE STRIP HAS NOTHING ELSE TO SHOW. IconOnly
+            // **The mark is the strip's icon where the strip has nothing else to show.** IconOnly
             // centres it in the content box, which is the whole of the strip - carried as text it
             // would be placed by the text anchor instead, and a run narrower than the strip leaves
             // all of the slack on one side.
@@ -65,7 +65,7 @@ namespace ClaFi::Controls
             return;
 
         // Otherwise answered here, and the walk ends here, so that it never reaches the owner and
-        // reads the state of the command on its FACE. What the owner stands on is folded in
+        // reads the state of the command on its **face**. What the owner stands on is folded in
         // instead - and left alone is whatever already answered for the strip itself, which is
         // the command behind it where a dropdown action put one there.
         event.state.enabled = event.state.enabled && enabledAlone();
@@ -97,8 +97,8 @@ namespace ClaFi::Controls
 
     /// Whether a strip that stands for a command of its own is available.
     ///
-    /// @note THE OWNER IS STEPPED OVER, AND EVERYTHING ABOVE IT IS NOT. The owner is the one
-    /// control on the chain whose answer is about the OTHER command - a Save with nothing to
+    /// @note **The owner is stepped over, and everything above it is not.** The owner is the one
+    /// control on the chain whose answer is about the **other** command - a Save with nothing to
     /// write over says nothing about the Save as behind the strip - so its answer is skipped and
     /// the climb resumes above it. A page turned off still turns this off.
     bool DropdownPart::enabledAlone() const
@@ -300,8 +300,8 @@ namespace ClaFi::Controls
 
     void DropdownControlBase::getDropdownPartText(GetTextEvent& event) const
     {
-        // A STRIP THAT CARRIES NO TEXT STATES NONE. Its mark is its icon, and ButtonBase asks an
-        // icon-only control for its text to fill an empty hint - a chevron is not what a
+        // **A strip that carries no text states none.** Its mark is its icon, and ButtonBase asks
+        // an icon-only control for its text to fill an empty hint - a chevron is not what a
         // hint says.
         if (!m_config.textOnDropdown)
             return;

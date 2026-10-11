@@ -368,7 +368,7 @@ namespace SeeDocs_App
             addTab(Url{ homePath(*shown) });
     }
 
-    // THE SELECTED TAB'S OPTIONS PAGE STANDS, where it is this project's: its own buttons are
+    // **The selected tab's options page stands**, where it is this project's: its own buttons are
     // what read the sources again, and it shows no surface. Each tree's open nodes are asked for
     // before the contents they were made over go.
     void SurfaceBrowser::rebindProject(OpenProject& open)
@@ -434,7 +434,7 @@ namespace SeeDocs_App
             goTo(*selected->pageData(), selected->anchor(), *selected);
     }
 
-    // NO TAB CLOSES WHILE IT IS SHOWN: the selected one gives way first, to a tab standing
+    // **No tab closes while it is shown**: the selected one gives way first, to a tab standing
     // elsewhere or to a new one on the root, and only then do the project's tabs go.
     void SurfaceBrowser::removeProject(OpenProject& open)
     {
@@ -520,9 +520,9 @@ namespace SeeDocs_App
         return Url{ pathOf(*project, named.folder, named.module, named.type, link->member) };
     }
 
-    // THE CLICK IS STILL UNWINDING ON THE PAGE THAT ASKED, and the answer may take that page down,
-    // so the owner is told and does the closing when it sees fit. The target is a home path, the
-    // project's segment after the separator - see closeCommand.
+    // **The click is still unwinding on the page that asked**, and the answer may take that page
+    // down, so the owner is told and does the closing when it sees fit. The target is a home path,
+    // the project's segment after the separator - see closeCommand.
     void SurfaceBrowser::answerCommand(const std::wstring_view target)
     {
         if (!target.starts_with(ConfigNames::pathSeparator))
@@ -593,9 +593,9 @@ namespace SeeDocs_App
         data.fetchState = FetchState::Fetched;
     }
 
-    // A PAGE IS BUILT FOR ONE PAGE DATA, so a tab that has moved to another needs a new page even
-    // where the kind of page is the same. The tab's tree is shown and follows the tab wherever it
-    // has gone, and the project it stands in is told when it is another than before.
+    // **A page is built for one page data**, so a tab that has moved to another needs a new page
+    // even where the kind of page is the same. The tab's tree is shown and follows the tab wherever
+    // it has gone, and the project it stands in is told when it is another than before.
     void SurfaceBrowser::showPage(BrowserTab& tab)
     {
         PageData& data = *tab.pageData();
@@ -657,8 +657,8 @@ namespace SeeDocs_App
         }
     }
 
-    // ASKED AS A TAB'S PAGE GOES WITH THE TAB, which is the one time it is: the nodes the tree has
-    // open were written into the tab's file as they opened, and the file goes too.
+    // **Asked as a tab's page goes with the tab**, which is the one time it is: the nodes the tree
+    // has open were written into the tab's file as they opened, and the file goes too.
     void SurfaceBrowser::saveViewState(BrowserTab& tab)
     {
         const TabTrees::iterator found = std::ranges::find_if(m_tabTrees,
@@ -1179,8 +1179,8 @@ namespace SeeDocs_App
     // The selected tab is sent to the url it stands on, which builds its page again where it
     // went; any other tab's page is built when the tab is selected.
     //
-    // A PAGE A PROJECT REACHES WAS BUILT SINCE THE PROJECT WAS ADDED - adding one drops every page
-    // on its paths - so the target a standing page resolves to says which kind of page it is.
+    // **A page a project reaches was built since the project was added** - adding one drops every
+    // page on its paths - so the target a standing page resolves to says which kind of page it is.
     void SurfaceBrowser::rebuildPages(const ShownProject* project, const BrowserPage* keep)
     {
         BrowserTab* selected = nullptr;
@@ -1198,8 +1198,8 @@ namespace SeeDocs_App
             goTo(*selected->pageData(), selected->anchor(), *selected);
     }
 
-    // THE EDIT THAT ASKED STANDS ON THE SELECTED TAB'S PAGE, so that page takes the new words in
-    // place - nothing under the edit is deleted - and is built again only once the edit has
+    // **The edit that asked stands on the selected tab's page**, so that page takes the new words
+    // in place - nothing under the edit is deleted - and is built again only once the edit has
     // unwound, where the words changed what the page is made of: a footnote added. Any other
     // tab's page the project reaches goes, and is built when its tab is selected. An options
     // page takes no words from the files, and stands as it is.

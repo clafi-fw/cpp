@@ -23,8 +23,6 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_noteExtension = L".md";
         constexpr std::wstring_view k_codeFence = L"    ";
         constexpr std::wstring_view k_bulletMark = L"- ";
-        constexpr std::wstring_view k_boldMark = L"**";
-        constexpr wchar_t k_codeMark = L'`';
         constexpr std::wstring_view k_scope = L"::";
         constexpr std::wstring_view k_separator = L" \u00B7 ";
         constexpr std::wstring_view k_baseJoin = L": ";
@@ -377,18 +375,6 @@ namespace SeeDocs_App
             return linked;
         }
 
-        // The hint as it reads in a namespace, the types it names linked. A tree read by loose
-        // rules owes no hint, so one it does not give is nothing rather than missing.
-        [[nodiscard]] Runs hintRuns(const Surface& surface, const Comment& comment,
-            const std::wstring_view nameSpace)
-        {
-            if (!comment.text.empty())
-                return linkNames(surface, { plain(comment.text) }, nameSpace);
-            if (surface.hintRules() == HintRules::Loose)
-                return {};
-            return { missing(std::wstring{ k_noHint }) };
-        }
-
         // A spelled type, linked to its page where the surface has one.
         [[nodiscard]] Run typeRun(const Surface& surface, const std::wstring& spelled,
             const std::wstring_view nameSpace)
@@ -464,6 +450,18 @@ namespace SeeDocs_App
             }
             flush();
             return linkNames(surface, runs, nameSpace);
+        }
+
+        // The hint read as a note line is, in a namespace. A tree read by loose rules owes no
+        // hint, so one it does not give is nothing rather than missing.
+        [[nodiscard]] Runs hintRuns(const Surface& surface, const Comment& comment,
+            const std::wstring_view nameSpace)
+        {
+            if (!comment.text.empty())
+                return inlineRuns(comment.text, surface, nameSpace);
+            if (surface.hintRules() == HintRules::Loose)
+                return {};
+            return { missing(std::wstring{ k_noHint }) };
         }
 
         [[nodiscard]] bool isCodeLine(const std::wstring_view line)
@@ -1655,8 +1653,8 @@ namespace SeeDocs_App
             return names;
         }
 
-        // DELPHI DECLARES A PROPERTY AGAIN TO PUBLISH IT, and the base's declaration is then the
-        // type's no longer: for each base reached, the names the type and the bases met before
+        // **Delphi declares a property again to publish it**, and the base's declaration is then
+        // the type's no longer: for each base reached, the names the type and the bases met before
         // it declare.
         [[nodiscard]] std::vector<NameSet> namesBelow(const Type& type, const ReachedBases& bases)
         {
@@ -2590,7 +2588,7 @@ namespace SeeDocs_App
         return page;
     }
 
-    // MODULES STANDING IN THE TREE'S OWN FOLDER ARE THE ROOT'S, which is home: the folder with
+    // **Modules standing in the tree's own folder are the root's**, which is home: the folder with
     // the empty path, whose exports the home page carries.
     Page homePage(const Surface& surface, Notes& notes, const ContentsFolders& folders,
         const std::wstring_view title)

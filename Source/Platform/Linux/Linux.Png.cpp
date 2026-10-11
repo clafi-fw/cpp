@@ -2,7 +2,7 @@ module;
 // libpng, from the global module fragment for the reason Linux.TextHeaders.h gives.
 #include <png.h>
 
-// AN IMPLEMENTATION UNIT OF THE MODULE THAT DECLARED decodePng, not of the Linux layer - see
+// **An implementation unit of the module that declared** decodePng, not of the Linux layer - see
 // Wayland.Transfer.cpp, which stands in the same relation to Clipboard.
 module ClaFi.Core.Graphics.Png;
 
@@ -50,7 +50,7 @@ namespace ClaFi::Graphics
         }
     }
 
-    // LIBPNG REPORTS AN ERROR BY LONGJMP, so everything the landing has to free is made before
+    // **Libpng reports an error by longjmp**, so everything the landing has to free is made before
     // setjmp and nothing that owns anything is created in the guarded region after it. The
     // result and the row table are declared ahead for that reason: a jump back lands with
     // them alive, and the return path destroys them as it would any other local.

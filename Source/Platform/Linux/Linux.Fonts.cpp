@@ -33,18 +33,18 @@ namespace ClaFi::Platform::Linux
         // CPU backend answers grayscale and differs by 12 - and carries 1.4% more ink for it. Close
         // enough that a curve fitted to it lands near this one, and not the same measurement.
         //
-        // MEASURED AGAINST ONE FACE. What a generic family resolves to is machine by machine, and a
-        // heavier face moves more ink than the whole usable range of this curve does - so a machine
-        // whose sans-serif is not Noto Sans is not covered by this number.
+        // **Measured against one face.** What a generic family resolves to is machine by machine,
+        // and a heavier face moves more ink than the whole usable range of this curve does - so a
+        // machine whose sans-serif is not Noto Sans is not covered by this number.
         constexpr float k_coverageGamma = 0.6f;
 
         constexpr float k_coverageScale = 1.0f / 255.0f;
 
-        // AN IDENTITY CURVE IS A MULTIPLY, AND ANY OTHER IS A TABLE. This is read once per pixel of
-        // every glyph rasterized, and where the curve does nothing a lookup buys nothing: a byte
-        // scaled by 1/255 is an instruction the vectoriser takes, and a gather is not.
+        // **An identity curve is a multiply, and any other is a table.** This is read once per
+        // pixel of every glyph rasterized, and where the curve does nothing a lookup buys nothing:
+        // a byte scaled by 1/255 is an instruction the vectoriser takes, and a gather is not.
         //
-        // SCALED AND NOT DIVIDED. The reciprocal is not exact, so a coverage can land one 8-bit
+        // **Scaled and not divided.** The reciprocal is not exact, so a coverage can land one 8-bit
         // level from what dividing by 255 answers - which is under a quarter of a percent of the
         // pixels of a glyph, and invisible. Dividing to close that gap costs the vectorised
         // multiply, because 1/255 being inexact is the same reason the compiler will not fold it.

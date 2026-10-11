@@ -48,7 +48,7 @@ namespace ClaFi
             createMessageWindow() override;
     private:
         Params m_params;
-        // IN THIS ORDER. The manager registers the window classes and opens the OLE apartment,
+        // **In this order.** The manager registers the window classes and opens the OLE apartment,
         // and closes both on the way out, so everything made from it is built after it and goes
         // before it; the clipboard last, its flush wanting the apartment open.
         PlatformImplementation::Windows::WindowsManager m_manager{ m_params.appInstance };
@@ -129,8 +129,8 @@ namespace ClaFi
     {
     }
 
-    // THE CLIENT KEEPS THE RECTANGLE. A window's normal geometry in screen pixels and whether it
-    // stands maximized - what WINDOWPLACEMENT answers, less the ring the window wears past it -
+    // **The client keeps the rectangle.** A window's normal geometry in screen pixels and whether
+    // it stands maximized - what WINDOWPLACEMENT answers, less the ring the window wears past it -
     // and whether it is held above the others, which is a style here and the client's to keep.
     Dom::Dt::Section Platform::createFormsConfigSchema(FormNames formNames)
     {

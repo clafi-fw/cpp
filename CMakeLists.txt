@@ -27,15 +27,15 @@
 cmake_minimum_required(VERSION 3.30)
 
 # `import std` is behind an experimental gate, and the token that opens it is recycled whenever
-# the feature's BEHAVIOUR changes rather than on a schedule - 4.0.3 through 4.2 shared one value,
-# 4.3 took its own, 4.4 took another. A token that does not match the CMake in use leaves the gate
-# shut, and what is reported then is a missing `std` module, which does not read as a version
+# the feature's **behaviour** changes rather than on a schedule - 4.0.3 through 4.2 shared one
+# value, 4.3 took its own, 4.4 took another. A token that does not match the CMake in use leaves the
+# gate shut, and what is reported then is a missing `std` module, which does not read as a version
 # mismatch at all.
 #
-# A LOOKUP RATHER THAN ONE VALUE, because the two machines this tree builds on run different
+# **A lookup rather than one value**, because the two machines this tree builds on run different
 # releases: Fedora 44 ships CMake 4.3.0 and WSL runs 4.4. Both configure from this file.
 #
-# cmake_minimum_required above states the POLICY floor and stays where it is. 4.3 is the floor
+# cmake_minimum_required above states the **policy** floor and stays where it is. 4.3 is the floor
 # this gate imposes, and it is stated here rather than by raising that, which would change policy
 # defaults as a side effect.
 #
@@ -51,7 +51,7 @@ else()
     set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "f35a9ac6-8463-4d38-8eec-5d6008153e7d")
 endif()
 
-# SAID BEFORE THE BUILD FAILS, rather than left to a diagnostic that names `std`. 4.4 is the
+# **Said before the build fails**, rather than left to a diagnostic that names `std`. 4.4 is the
 # newest release with a token here, and a newer one is given 4.4's on the chance the token was
 # carried rather than recycled - which is what happened from 4.0.3 through 4.2.
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
@@ -63,11 +63,11 @@ endif()
 
 project(ClaFi CXX)
 
-# STATED, BECAUSE NOTHING STATES IT OTHERWISE. A single-config generator with no build type passes
-# no -O flag at all and no NDEBUG, and the compile line looks complete enough to be mistaken for a
-# real build - the tree is a software rasterizer, and one measured that way reads about ten times
-# slower than the same code under MSVC. -mavx2 and -mfma below buy nothing without this: there is
-# no vectorising and no inlining with the optimiser off.
+# **Stated, because nothing states it otherwise.** A single-config generator with no build type
+# passes no -O flag at all and no NDEBUG, and the compile line looks complete enough to be mistaken
+# for a real build - the tree is a software rasterizer, and one measured that way reads about ten
+# times slower than the same code under MSVC. -mavx2 and -mfma below buy nothing without this: there
+# is no vectorising and no inlining with the optimiser off.
 #
 # RelWithDebInfo while chasing a crash - it is -O2 with symbols, against Release's -O3 with none.
 # A -DCMAKE_BUILD_TYPE on the command line is already in the cache when this runs and stands.
@@ -80,22 +80,22 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# WHAT AN EDITOR READS THIS TREE THROUGH. Visual Studio's own C++ IntelliSense does not
+# **What an editor reads this tree through.** Visual Studio's own C++ IntelliSense does not
 # understand C++20 modules, so it paints the source red whatever state it is in. ReSharper C++
 # parses the tree itself; clangd needs this file, which lands in the build directory.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_MODULE_STD ON)
 
-# HERE RATHER THAN ON THE TARGET, because the synthesized `std` module has to carry it too. CMake
-# builds that module from CMAKE_CXX_FLAGS alone - a target's own options never reach it - and clang
-# refuses a BMI whose thread support differs from the consumer's. freetype2, harfbuzz and fontconfig
-# each state -pthread in their pkg-config Cflags, so every file importing the text layer has thread
-# support switched on, and the `std` module they all import has to agree.
+# **Here rather than on the target**, because the synthesized `std` module has to carry it too.
+# CMake builds that module from CMAKE_CXX_FLAGS alone - a target's own options never reach it - and
+# clang refuses a BMI whose thread support differs from the consumer's. freetype2, harfbuzz and
+# fontconfig each state -pthread in their pkg-config Cflags, so every file importing the text layer
+# has thread support switched on, and the `std` module they all import has to agree.
 string(APPEND CMAKE_CXX_FLAGS " -pthread")
 
-# WHAT DISPLAY SERVER THE PLATFORM LAYER IS BUILT AGAINST. A string rather than a switch, because
-# a second display server is the thing this is for: two booleans would have four states of which
-# two are nonsense, and a name reads at the command line as the thing being chosen.
+# **What display server the platform layer is built against.** A string rather than a switch,
+# because a second display server is the thing this is for: two booleans would have four states of
+# which two are nonsense, and a name reads at the command line as the thing being chosen.
 set(CLAFI_PLATFORM "none" CACHE STRING "Display-server backend: none or wayland")
 set_property(CACHE CLAFI_PLATFORM PROPERTY STRINGS none wayland)
 if(NOT CLAFI_PLATFORM MATCHES "^(none|wayland)$")
@@ -115,17 +115,17 @@ file(GLOB_RECURSE clafi_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/S
 # Windows-only, parked, generated, or scratch. No trailing slash after Windows: it has to catch
 # both Platform/Windows/ and Platform/Windows_Platform.cppm beside it.
 #
-# PROGRAMS RATHER THAN LIBRARY CODE live outside Source/ - Showcase/ holds one subsystem
+# **Programs rather than library code** live outside Source/ - Showcase/ holds one subsystem
 # demonstrated thoroughly (MillScene, TextEngine), Tools/ the applications used to do work (Themes,
 # PascalScripts, WhatsClip, Dom Benchmark) - so the glob never sees them.
 set(clafi_excluded "/Platform/Windows")
 string(APPEND clafi_excluded "|/_to_delete/|/build|/out/")
 if(CLAFI_PLATFORM STREQUAL "none")
-    # TWO FOLDERS ON TWO DIFFERENT AXES, switched together because no build wants one without the
-    # other. Platform/Linux/ is the OPERATING SYSTEM - eventfd timers, inotify directory watching,
-    # the font stack, the desktop's settings over the session bus - and nothing in it knows what a
-    # display server is. Platform/Wayland/ is the DISPLAY SERVER. They are siblings rather than
-    # alternatives.
+    # **Two folders on two different axes**, switched together because no build wants one without
+    # the other. Platform/Linux/ is the **operating system** - eventfd timers, inotify directory
+    # watching, the font stack, the desktop's settings over the session bus - and nothing in it
+    # knows what a display server is. Platform/Wayland/ is the **display server.** They are siblings
+    # rather than alternatives.
     #
     # No trailing slash after Wayland, for the same reason as Windows: it has to catch both
     # Platform/Wayland/ and Platform/Wayland_Facade.cppm beside it.
@@ -168,7 +168,7 @@ set(clafi_compile_options
 )
 target_compile_options(ClaFi PRIVATE ${clafi_compile_options})
 
-# A BUILD WITH NO DIAGNOSTIC, whatever Diagnostic.Options says: CLAFI_NO_DIAGNOSTIC holds
+# **A build with no diagnostic**, whatever Diagnostic.Options says: CLAFI_NO_DIAGNOSTIC holds
 # Diagnostic::Options::enabled off. The release recipe builds with it.
 option(CLAFI_NO_DIAGNOSTIC "Build with every diagnostic off, whatever Diagnostic.Options says" OFF)
 if(CLAFI_NO_DIAGNOSTIC)
@@ -236,9 +236,9 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
     clafi_wayland_protocol(
         "${WAYLAND_PROTOCOLS_DIR}/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml"
         xdg-decoration-unstable-v1)
-    # A SCREEN AT 175% IS NOT AN INTEGER. wl_output states a whole-number scale and nothing else,
-    # so without these two a window on such a screen is drawn at 1x or 2x and stretched to fit -
-    # which is the blurry text every toolkit exists to avoid. fractional-scale states the real
+    # **A screen at 175% is not an integer.** wl_output states a whole-number scale and nothing
+    # else, so without these two a window on such a screen is drawn at 1x or 2x and stretched to
+    # fit - which is the blurry text every toolkit exists to avoid. fractional-scale states the real
     # ratio; viewporter is how a buffer drawn at that ratio is presented at the size the
     # compositor asked for. Neither is useful without the other.
     if(NOT EXISTS "${WAYLAND_PROTOCOLS_DIR}/staging/fractional-scale/fractional-scale-v1.xml")
@@ -250,7 +250,7 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
     clafi_wayland_protocol(
         "${WAYLAND_PROTOCOLS_DIR}/staging/fractional-scale/fractional-scale-v1.xml"
         fractional-scale-v1)
-    # THE POINTER IMAGE, BY NAME. The compositor draws the I-beam and the resize arrows from its
+    # **The pointer image, by name.** The compositor draws the I-beam and the resize arrows from its
     # own theme at its own size, and a client that drew them itself would be the one window on
     # the desk with the wrong cursor. The protocol names a tablet tool as one thing a shape can
     # be set on, so its interface table has to be linked too - which is the only reason tablet-v2
@@ -268,7 +268,7 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
     clafi_wayland_protocol("${wl_tablet_xml}" tablet-v2)
     clafi_wayland_protocol(
         "${WAYLAND_PROTOCOLS_DIR}/staging/cursor-shape/cursor-shape-v1.xml" cursor-shape-v1)
-    # WHAT A CLIPBOARD MANAGER IS ALLOWED AND AN APPLICATION IS NOT. wl_data_device announces a
+    # **What a clipboard manager is allowed and an application is not.** wl_data_device announces a
     # selection to the client holding the keyboard focus and to nobody else, so a window watching
     # the clipboard is told nothing while it is not the one being typed into. This is the channel
     # that answers whatever the focus - asked for through WaylandPlatform::Params and bound in
@@ -281,7 +281,7 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
     clafi_wayland_protocol(
         "${WAYLAND_PROTOCOLS_DIR}/staging/ext-data-control/ext-data-control-v1.xml"
         ext-data-control-v1)
-    # WHERE A WINDOW WAS. A client cannot ask, so the compositor remembers a toplevel's place
+    # **Where a window was.** A client cannot ask, so the compositor remembers a toplevel's place
     # against a session id the client persists and puts it back at the next launch - see
     # Window::createToplevel. Staging since wayland-protocols 1.48 (April 2026). KWin answers it
     # from Plasma 6.7; a compositor without the global places the window by its own rule, and
@@ -293,26 +293,26 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
             "wayland-protocols is too old for xdg-session-management-v1 (needs 1.48 or newer).")
     endif()
     clafi_wayland_protocol("${wl_session_xml}" xdg-session-management-v1)
-    # RAISING A WINDOW THAT IS ALREADY UP, which only the compositor does. The client asks for a
+    # **Raising a window that is already up**, which only the compositor does. The client asks for a
     # token against the input event that wanted the raise, then hands it back naming the window;
     # see DisplayManager::activate. Every wayland-protocols accepted above carries it.
     clafi_wayland_protocol(
         "${WAYLAND_PROTOCOLS_DIR}/staging/xdg-activation/xdg-activation-v1.xml"
         xdg-activation-v1)
-    # A WINDOW'S OPACITY, multiplied in by the compositor - see Window::setAlpha. Every
+    # **A window's opacity**, multiplied in by the compositor - see Window::setAlpha. Every
     # wayland-protocols accepted above carries it.
     clafi_wayland_protocol(
         "${WAYLAND_PROTOCOLS_DIR}/staging/alpha-modifier/alpha-modifier-v1.xml"
         alpha-modifier-v1)
-    # A WINDOW NAMED TO ANOTHER CLIENT, which parents a dialog of its own by the handle - the
+    # **A window named to another client**, which parents a dialog of its own by the handle - the
     # portal's file chooser, see ExportedToplevel. Every wayland-protocols accepted above carries
     # it.
     clafi_wayland_protocol(
         "${WAYLAND_PROTOCOLS_DIR}/unstable/xdg-foreign/xdg-foreign-unstable-v2.xml"
         xdg-foreign-unstable-v2)
 
-    # A WINDOW ON THE SCREEN'S EDGE. xdg-shell has no request that names an edge; the layer shell
-    # states an anchor, a size and a reserved strip, and the compositor does the rest - see
+    # **A window on the screen's edge.** xdg-shell has no request that names an edge; the layer
+    # shell states an anchor, a size and a reserved strip, and the compositor does the rest - see
     # Window::createLayerSurface. Never upstreamed into wayland-protocols, so its XML ships in a
     # package of its own: Fedora wlr-protocols-devel, Arch wlr-protocols, both publishing
     # wlr-protocols.pc. KWin implements it; Mutter does not, and a compositor without the global
@@ -335,7 +335,7 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
     target_include_directories(ClaFiWaylandProtocols PUBLIC "${wl_gen}")
     target_link_libraries(ClaFiWaylandProtocols PUBLIC PkgConfig::WAYLAND_CLIENT)
 
-    # The headers are a target of their own so ClaFi can depend on their EXISTENCE without
+    # The headers are a target of their own so ClaFi can depend on their **existence** without
     # depending on the C library being compiled. The module scan is its own build step, and it
     # reads a global module fragment that includes them - which is earlier than a link-time
     # dependency alone would guarantee.
@@ -348,14 +348,14 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
     target_include_directories(ClaFi PRIVATE "${wl_gen}")
     target_link_libraries(ClaFi PUBLIC ClaFiWaylandProtocols)
 
-    # THE KEYBOARD. wl_keyboard hands a client a keymap and key numbers and nothing else; xkbcommon
-    # is what reads the one and turns the other into keys and characters. Debian/Ubuntu
+    # **The keyboard.** wl_keyboard hands a client a keymap and key numbers and nothing else;
+    # xkbcommon is what reads the one and turns the other into keys and characters. Debian/Ubuntu
     # libxkbcommon-dev; Fedora libxkbcommon-devel.
     pkg_check_modules(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)
     target_include_directories(ClaFi PRIVATE ${XKBCOMMON_INCLUDE_DIRS})
     target_link_libraries(ClaFi PUBLIC PkgConfig::XKBCOMMON)
 
-    # THE FONT STACK, which is the operating system layer's and not the display server's, but is
+    # **The font stack**, which is the operating system layer's and not the display server's, but is
     # built with it: Platform/Linux/ is in the build only alongside a display server. FreeType
     # rasterizes a glyph, HarfBuzz shapes a run, fontconfig names the file for a family and
     # libunibreak names where a line may break. Debian/Ubuntu libfreetype-dev libharfbuzz-dev
@@ -367,13 +367,13 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
     target_include_directories(ClaFi PRIVATE ${CLAFI_TEXT_INCLUDE_DIRS})
     target_link_libraries(ClaFi PUBLIC PkgConfig::CLAFI_TEXT)
 
-    # THE PNG DECODER, which the platform layer supplies behind ClaFi.Core.Graphics.Png the
+    # **The PNG decoder**, which the platform layer supplies behind ClaFi.Core.Graphics.Png the
     # way Windows supplies it through WIC. Debian/Ubuntu libpng-dev; Fedora libpng-devel.
     pkg_check_modules(CLAFI_PNG REQUIRED IMPORTED_TARGET libpng)
     target_include_directories(ClaFi PRIVATE ${CLAFI_PNG_INCLUDE_DIRS})
     target_link_libraries(ClaFi PUBLIC PkgConfig::CLAFI_PNG)
 
-    # THE XDG PORTAL, served over the session bus: the desktop's settings - the colour mode an
+    # **The XDG portal**, served over the session bus: the desktop's settings - the colour mode an
     # application set to Auto follows - and its file chooser. libdbus-1 is on every desktop; its
     # headers are not.
     # Debian/Ubuntu libdbus-1-dev; Fedora dbus-devel.
@@ -383,8 +383,8 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
 endif()
 
 if(NOT CLAFI_PLATFORM STREQUAL "none")
-    # AN APPLICATION'S VERSION is stated by hand in the version.txt beside its project and reaches
-    # the code as CLAFI_APP_VERSION. Editing the file configures again.
+    # **An application's version** is stated by hand in the version.txt beside its project and
+    # reaches the code as CLAFI_APP_VERSION. Editing the file configures again.
     function(clafi_app_version target version_file)
         set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${version_file}")
         file(STRINGS "${version_file}" version LIMIT_COUNT 1)
@@ -396,7 +396,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         target_compile_definitions(${target} PRIVATE "CLAFI_APP_VERSION=L\"${version}\"")
     endfunction()
 
-    # THE EXECUTABLES, built only with a platform layer because without one there is nothing to
+    # **The executables**, built only with a platform layer because without one there is nothing to
     # link against. The MillScene showcase's sources are excluded from the library glob above -
     # a showcase is application code that imports ClaFi, not part of it - so the six files are
     # named here instead. Five of them know nothing of any platform; the sixth is the entry
@@ -412,7 +412,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     target_compile_options(MillScene PRIVATE ${clafi_compile_options})
     clafi_app_version(MillScene "${millscene_dir}/version.txt")
 
-    # THE TEXT ENGINE SHOWCASE, laid out the same way: six page modules, the Icon module and the
+    # **The text engine showcase**, laid out the same way: six page modules, the Icon module and the
     # Main module know nothing of any platform, and the entry point is one file per platform. It
     # is the text stack's test bed - fifty thousand paragraphs on the code page, formulas set in
     # mathematical symbols, prose in a second family, emoji set in one family after another - so
@@ -440,12 +440,12 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     target_compile_options(TextEngine PRIVATE ${clafi_compile_options})
     clafi_app_version(TextEngine "${CMAKE_CURRENT_SOURCE_DIR}/Showcase/TextEngine/version.txt")
 
-    # WHATSCLIP, which lists what is on the clipboard and reads it - including the formats
+    # **WhatsClip**, which lists what is on the clipboard and reads it - including the formats
     # nothing in the framework understands, which it shows as the bytes they arrived as. It
     # is the application the Transfer subsystem's known-against-unknown split exists for, so
     # it is also the test of it.
     #
-    # A LIBRARY AND AN ENTRY POINT, so that a viewer built outside this tree links the library
+    # **A library and an entry point**, so that a viewer built outside this tree links the library
     # and writes the entry point alone - the split WhatsClip_Lib.vcxitems makes for Visual
     # Studio. The entry point is where the pick lists are built, which is what such a viewer
     # adds to.
@@ -488,7 +488,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     target_link_libraries(WhatsClip PRIVATE WhatsClip_Lib)
     target_compile_options(WhatsClip PRIVATE ${clafi_compile_options})
 
-    # SEEDOCS, the window over a project's database: the surface as a tree, and the page
+    # **SeeDocs**, the window over a project's database: the surface as a tree, and the page
     # of whatever is picked, as the documentation it is to become. It shares the Surface, Scanner,
     # Database, Project, Notes and Pages modules with SeeDocsCli at the end of this file,
     # and scans a tree itself where its project has no database yet.
@@ -539,10 +539,10 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     target_link_libraries(SeeDocs PRIVATE ClaFi)
     target_compile_options(SeeDocs PRIVATE ${clafi_compile_options})
 
-    # THEMES, the browser the themes are made in, laid out the same way: the Main module and every
-    # page and control under it know nothing of any platform, and the entry point is one file per
-    # platform. Its modules are named Themes_App.*, as an application's are - it imports the library
-    # and is no part of it. Dom Benchmark is a console program built by Visual Studio only.
+    # **Themes**, the browser the themes are made in, laid out the same way: the Main module and
+    # every page and control under it know nothing of any platform, and the entry point is one file
+    # per platform. Its modules are named Themes_App.*, as an application's are - it imports the
+    # library and is no part of it. Dom Benchmark is a console program built by Visual Studio only.
     set(themes_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/Themes/Src")
     add_executable(Themes
         "${themes_dir}/Themes_Main.cpp"
@@ -584,8 +584,8 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     target_compile_options(Themes PRIVATE ${clafi_compile_options})
     clafi_app_version(Themes "${CMAKE_CURRENT_SOURCE_DIR}/Tools/Themes/version.txt")
 
-    # PASCALSCRIPTS, the editor for Pascal scripts, laid out as Themes is and standing on the same
-    # Documents layer.
+    # **PascalScripts**, the editor for Pascal scripts, laid out as Themes is and standing on the
+    # same Documents layer.
     set(pascalscripts_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/PascalScripts")
     add_executable(PascalScripts
         "${pascalscripts_dir}/Src/PascalScripts_Main.cpp"
@@ -606,7 +606,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     target_compile_options(PascalScripts PRIVATE ${clafi_compile_options})
     clafi_app_version(PascalScripts "${pascalscripts_dir}/version.txt")
 
-    # WHAT A SCRIPT IS, read from beside the executable when the config folder holds no copy of
+    # **What a script is**, read from beside the executable when the config folder holds no copy of
     # its own. Copied whenever it changes, as Visual Studio's CopyFileToFolders does, and not only
     # when the executable is linked again.
     if(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
@@ -624,8 +624,8 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     add_dependencies(PascalScripts PascalScripts_Language)
 endif()
 
-# SEEDOCSCLI, the scanner that reads the design surface out of a tree of sources into the tree's own
-# .seedocs/Surface.cfg and holds the tree to the declaration routine. It draws on the Dom, the
+# **SeeDocsCli**, the scanner that reads the design surface out of a tree of sources into the tree's
+# own .seedocs/Surface.cfg and holds the tree to the declaration routine. It draws on the Dom, the
 # Syntax lexer and the text file reader alone, none of which reaches the platform layer, so it is
 # built with or without one and a `check` runs wherever the tree is checked out.
 set(seedocs_cli_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/Src")

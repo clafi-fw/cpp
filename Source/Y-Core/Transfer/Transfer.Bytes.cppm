@@ -6,11 +6,11 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Transfer
 {
-    // A FORMAT THAT STATES ITS OWN BYTES. A named format does: what one process writes is read
+    // **A format that states its own bytes.** A named format does: what one process writes is read
     // back by another running the same application, and no display server has a say in the
     // spelling.
     //
-    // The standard set states none. Its bytes ARE the platform's - UTF-16 and CRLF on one side,
+    // The standard set states none. Its bytes **are** the platform's - UTF-16 and CRLF on one side,
     // UTF-8 and LF on the other - and the platform layer answers for those itself, in
     // nativeBytes.
     export template<typename F>
@@ -27,7 +27,7 @@ namespace ClaFi::Transfer
         Payload (*fromBytes)(std::string_view);
     };
 
-    // WHICH FORMATS THIS APPLICATION KNOWS HOW TO DEAL WITH, and how. See Transfer
+    // **Which formats this application knows how to deal with**, and how. See Transfer
     export class ByteSpellingTable
     {
     public:
@@ -57,13 +57,13 @@ namespace ClaFi::Transfer
     export template<HasByteSpelling F>
         void registerByteSpelling();
 
-    // THE BYTES A FORMAT TRAVELS AS, WHERE THIS APPLICATION IS THE ONE SPELLING IT. A format
-    // nothing is registered for converts nothing: its content IS the bytes, which is what lets a
-    // clipboard viewer read a format this application has never heard of. So both of these always
+    // **The bytes a format travels as, where this application is the one spelling it.** A format
+    // nothing is registered for converts nothing: its content **is** the bytes, which is what lets
+    // a clipboard viewer read a format this application has never heard of. So both of these always
     // answer, and neither has a "no" to test for.
     //
-    // THE STANDARD SET IS NOT SPELLED HERE. Nothing is registered for it and its content is not a
-    // byte string, so these answer nothing for it - nativeBytes is what spells it.
+    // **The standard set is not spelled here.** Nothing is registered for it and its content is not
+    // a byte string, so these answer nothing for it - nativeBytes is what spells it.
     export [[nodiscard]] std::string toBytes(const Format&, const Payload&);
     export [[nodiscard]] Payload fromBytes(const Format&, std::string_view bytes);
 }

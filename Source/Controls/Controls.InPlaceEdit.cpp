@@ -78,7 +78,7 @@ namespace ClaFi::Controls
             return;
         }
         // A refusal stands in front of anything else this box would say, and it is placed under
-        // the box rather than at the pointer: it answers what was TYPED, and the user reaching
+        // the box rather than at the pointer: it answers what was **typed**, and the user reaching
         // for Enter has left the pointer wherever it happened to be.
         event.text << m_refusal;
         event.placement = FormPlacement::Bottom;
@@ -94,7 +94,7 @@ namespace ClaFi::Controls
         m_sawPress = true;
         if (event.key == Keys::Return)
             m_takeLineBreak = event.modifiers.shift;
-        // THE LIST'S KEYS. Up and Down are the list's while it is up, and Alt+Down - the key
+        // **The list's keys.** Up and Down are the list's while it is up, and Alt+Down - the key
         // that drops a combo box's list - is the list's always. The walk reaches the box before
         // the root, and the box would move the caret on them; left alone here, they reach the
         // root next. F4, the other dropping key, is a key the box never takes.
@@ -179,7 +179,7 @@ namespace ClaFi::Controls
         :
         Stack{ params,
             Orientation::Vertical,
-            // A SCROLLED BODY KEEPS THE SIZE IT MEASURED - see ComboBoxDropdownStack.
+            // **A scrolled body keeps the size it measured** - see ComboBoxDropdownStack.
             WordWrap::No
         }
     {
@@ -256,7 +256,7 @@ namespace ClaFi::Controls
         :
         Base{
             params,
-            // NOTHING ON THE FRAME BUT THE BOX. The panel is a holder, not a border: it takes
+            // **Nothing on the frame but the box.** The panel is a holder, not a border: it takes
             // no inset of its own, so the box reaches every edge of the window.
             HostProps{
                 params.themeMetrics().secondaryWindow,
@@ -268,8 +268,8 @@ namespace ClaFi::Controls
                 // pointer and is not a focus scope of its own.
                 Interactivity::MouseOnly
             },
-            // THE PADDING AND THE BORDER ARE THE BOX'S. The ring a focused text box draws sits
-            // on its own edge, so with the inset here it falls OUTSIDE the text rather than
+            // **The padding and the border are the box's.** The ring a focused text box draws sits
+            // on its own edge, so with the inset here it falls **outside** the text rather than
             // through the selection - and that same ring is then the window's edge, which is
             // what says at a glance that this is an editor and not the control it covers.
             BodyProps{
@@ -294,9 +294,9 @@ namespace ClaFi::Controls
         box.setTextFormat(target.textFormat ? *target.textFormat : TextFormat{});
         box.setReadOnly(target.readOnly);
 
-        // A READER HAS NOTHING TO COMPLETE, and an editor with nothing listed has no list. Built
-        // before the value is written below: the keys that opened the editor are its first edit,
-        // and that edit is what first asks for the list.
+        // **A reader has nothing to complete**, and an editor with nothing listed has no list.
+        // Built before the value is written below: the keys that opened the editor are its first
+        // edit, and that edit is what first asks for the list.
         const bool lists = target.readOnly == ReadOnly::No
             && target.suggestions
             && !target.suggestions->empty();
@@ -338,18 +338,18 @@ namespace ClaFi::Controls
         // metric is stated in design units and scaled again by the pass that reads it. Both go
         // back through the scale once here, so the two agree.
         const float scale = scaler().factor();
-        // Both rects describe TEXT, and these are the BOX's sizes - the box is bigger than its
-        // text by the inset it carries, so that inset is added back. The POSITION needs no such
-        // correction: textOrigin() reads the box's text rect out of the finished layout, so it
+        // Both rects describe **text**, and these are the **box's** sizes - the box is bigger than
+        // its text by the inset it carries, so that inset is added back. The **position** needs no
+        // such correction: textOrigin() reads the box's text rect out of the finished layout, so it
         // already counts whatever the box puts between its edge and its first glyph.
         const Padding boxInset = box.padding();
 
-        // NEVER SMALLER THAN THE TEXT IT COVERS, IN EITHER AXIS. The covered rect is a floor and
-        // the text grows the box from there. Each axis floors it for its own reason:
+        // **Never smaller than the text it covers, in either axis.** The covered rect is a floor
+        // and the text grows the box from there. Each axis floors it for its own reason:
         //
         // width  - the placement lands the box's text rect on the target's, and it can only land
         //          the two anchors together while the two rects are the same width.
-        // height - ONLY THE NEW TEXT IS VISIBLE IN EDIT MODE, and the editor is what hides the
+        // height - **only the new text is visible in edit mode**, and the editor is what hides the
         //          old one. A box that shrank to what has been typed would let the rest of a
         //          wrapped caption show out from under it. The blank under a short line is not
         //          waste - it is the cover.
@@ -374,20 +374,20 @@ namespace ClaFi::Controls
     {
         if (m_settled)
             return true;
-        // THE CONTROL THE SINK WAS BUILT TO WRITE TO MAY BE GONE. The editor pumps messages for
+        // **The control the sink was built to write to may be gone.** The editor pumps messages for
         // as long as the user wants it up, and a list rebuilt behind it takes its items with it.
         // The form clears a dead control out of its popup's target - see FormBase::forgetControl
-        // - and this popup's target IS that control, so a target still here is a control still
+        // - and this popup's target **is** that control, so a target still here is a control still
         // here. It is set at every point a sink is offered the text and nulled only afterwards.
         //
         // Nothing to write to means nothing to refuse either: the edit is simply over. This is
         // what lets a sink capture the control it belongs to and use it without a guard of its
         // own - see WithInPlaceEdit.
         //
-        // A READ-ONLY BOX HAS NOTHING TO OFFER: what it holds is the value the caller handed in,
-        // and asking a sink to take its own value back invites a refusal the user cannot answer,
-        // since nothing in the box can be corrected. Enter and a click away would then both be
-        // vetoed and only Escape would close the reader.
+        // **A read-only box has nothing to offer**: what it holds is the value the caller handed
+        // in, and asking a sink to take its own value back invites a refusal the user cannot
+        // answer, since nothing in the box can be corrected. Enter and a click away would then both
+        // be vetoed and only Escape would close the reader.
         if (!m_accept || body().readOnly() == ReadOnly::Yes || !form().popupTarget())
         {
             m_settled = true;
@@ -435,14 +435,14 @@ namespace ClaFi::Controls
         return body().textOriginInForm() - boundsInForm().topLeft();
     }
 
-    // THE EDITOR OWNS THE POINTER FOR AS LONG AS IT IS UP. Nothing behind it can be reached
+    // **The editor owns the pointer for as long as it is up.** Nothing behind it can be reached
     // without going through readyToClose, so where the pointer happens to be says nothing about
     // where the user is: the box is what they are on, and it reads that way whatever they point
     // at. Both halves of the focus ring follow from that, and both are stated here rather than
-    // in the painting, because what is being said is about the STATE - see the ring's two terms
+    // in the painting, because what is being said is about the **state** - see the ring's two terms
     // in the Focus ring list's default rules.
     //
-    // hovered - what keeps the ring drawn LIVE rather than in the inactive grey. That is a
+    // hovered - what keeps the ring drawn **live** rather than in the inactive grey. That is a
     //           question the input device decides for every other control, and here there is
     //           nothing for it to decide.
     // current - what says there is a ring at all. A ring the keyboard put on is gated on the
@@ -489,7 +489,7 @@ namespace ClaFi::Controls
         case Keys::Escape:
             {
                 event.handled = true;
-                // WITH THE LIST UP, ESCAPE TAKES THE LIST DOWN and leaves the edit standing;
+                // **With the list up, Escape takes the list down** and leaves the edit standing;
                 // the next one cancels it.
                 if (suggestionsShown())
                 {
@@ -553,8 +553,8 @@ namespace ClaFi::Controls
 
     void InPlaceEditRoot::updateSuggestions()
     {
-        // THE LIST STANDS ON A BOX THAT HAS BEEN LAID OUT. A request can arrive ahead of the pass
-        // that lays the edit out - a platform that paints when the compositor asks rather than
+        // **The list stands on a box that has been laid out.** A request can arrive ahead of the
+        // pass that lays the edit out - a platform that paints when the compositor asks rather than
         // when the queue empties delivers a 0 ms tick first - and a list placed then stands on
         // where the box was. Asked for again from the pass that settles the form.
         if (!form().contentAligned())
@@ -650,11 +650,11 @@ namespace ClaFi::Controls
         editor.setPlacement(FormPlacement::OverText, target.textRect);
         s_editorOnScreen = true;
         editor.execute();
-        // CLEARED AS THE WINDOW GOES, not as this call returns: the tidy-up offer below runs a
+        // **Cleared as the window goes**, not as this call returns: the tidy-up offer below runs a
         // sink with nothing on screen, and a sink is free to ask for an editor of its own.
         s_editorOnScreen = false;
 
-        // The endings NOBODY DROVE end here, and only here: a loop that stopped underneath the
+        // The endings **nobody drove** end here, and only here: a loop that stopped underneath the
         // editor, an owner form that went away. Everything the user actually did - Enter, a
         // click outside, Escape - has already had its answer, and an answer is not asked for
         // again.

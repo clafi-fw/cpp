@@ -15,7 +15,7 @@ at its own width. `MenuCommand` in the menu strip is built that way, because the
 every name whole. Measured at the icon's width, a word longer than the icon cannot break: the text
 engine reports it at the width it was asked about, and the paint cuts it.
 
-The other modes are unchanged. `LeftIcon` puts the caption BESIDE the picture, where the two
+The other modes are unchanged. `LeftIcon` puts the caption **beside** the picture, where the two
 together are the width and the caption has no reason to wrap to the icon; `TextLabel` has no
 picture; `IconOnly` lays no text out at all.
 
@@ -32,7 +32,7 @@ takes a part on the right off as well.
 
 A panel places its bars, settles the rect its body will stand in, and then lays the body into it.
 `bodySlotSettled` is the moment between those two: the slot's width takes no more changes, and the
-body has not been asked for anything yet - so whatever a panel wants to state ABOUT that slot
+body has not been asked for anything yet - so whatever a panel wants to state **about** that slot
 reaches the body on the pass that settled it, rather than one pass late.
 
 Called whether or not a body stands in the slot - the slot is settled either way, and a panel
@@ -96,15 +96,15 @@ like, where exactly it lands and what pressing it does belong to the derived cla
 The shell every dialog of this family is: a title across the top, a middle carrying
 an icon and the text, and a strip of answers across the bottom. What a derived dialog adds
 is the answers it offers and what it does with the text - the shape is settled here.
-THE THREE BARS ARE FULL BLEED. Each states its own colours and its own padding, and
+**The three bars are full bleed.** Each states its own colours and its own padding, and
 the window keeps of itself exactly the border it draws. A strip inset further reads as a
 card floating on the window rather than as a band of it.
-THE TEXT IS A `Text`, not a run of characters. What a dialog is about is named in
+**The text is a** `Text`, not a run of characters. What a dialog is about is named in
 the sentence it puts - a theme, a file, a page - and the sentence has to be able to mark
 which words those are. A caller with nothing to mark writes `Text{ L"..." }`.
 Built on the stack where it is asked, filled, then run: the derived execute() answers
 once the dialog has closed, so nothing outlives the call that raised it.
-A POPUP, not a dialog window. That is what makes it safe to raise one from inside a
+**A popup**, not a dialog window. That is what makes it safe to raise one from inside a
 click: a popup registers as its owner form's active popup, so the next press anywhere
 underneath closes it and goes no further. A dialog window leaves the window beneath it live
 - nothing here disables it - and the work that raised the question could be reached again,

@@ -40,7 +40,7 @@ The form's content has been laid out and nothing has asked for another pass. `se
 form. Raised at the end of the pass, so every rect in the form may be read from a handler; a
 message loop may not be started from one.
 
-A FORM NOBODY CAN SEE IS NOT PLACED. A setter that moves what the placement reads -
+**A form nobody can see is not placed.** A setter that moves what the placement reads -
 `setPlacement`, `setPlacementRect`, `setMinWidth` - places a visible form again at once and
 leaves a hidden one for `show()`, so the pass that raises this event runs with the form on
 screen. A handler that ignores a hidden form, as the completion list's hint does, hears the
@@ -62,7 +62,7 @@ the close, and is what the title bar's close button and the platform's close req
 The form has painted: the rect it was asked to paint, and when the paint started and finished.
 `sender()` is the form.
 
-RAISED ON THE APPLICATION'S DISPATCHER - `AppContext::events()` - and not on the form's own.
+**Raised on the application's dispatcher** - `AppContext::events()` - and not on the form's own.
 Whatever watches paints follows them from window to window, and a connection to a form must not
 outlive the form, while the application outlives every form. Raised only while something is
 connected there: a form nobody watches reads no clock.
@@ -88,7 +88,7 @@ connects nothing pays nothing for them.
 
 ## Control::animate
 
-RUNS THIS CONTROL'S ANIMATION THROUGH THE APPLICATION'S CONTROLLER, which a control reaches
+**Runs this control's animation through the application's controller**, which a control reaches
 through its form - `animator()` answers it, or null while the control stands in no form, there
 being no application to reach then. A control in no form has nothing to run an animation on
 and takes the end value outright: nobody sees it, and the end value is what it is drawn from
@@ -108,13 +108,13 @@ against. A control that finds it does not - a wrapping panel broken at a width t
 saw, a scrolled body handed a viewport the measure ran ahead of - says so through
 `AlignEvent::invalidatePass`, and the form walks the tree again before the frame goes out.
 
-ONLY AN ALIGN EVENT CAN SAY IT. `invalidate` is private and `AlignEvent` is the friend, so the
+**Only an align event can say it.** `invalidate` is private and `AlignEvent` is the friend, so the
 request is unspellable outside a pass. `FormBase::invalidateAlign` is the route from outside one,
 and it is dropped where it is raised inside a pass - `updateAlign` marks the form aligned before the
 walk begins.
 
-READING IT IS NOT SKIPPING WORK. `valid()` is there for a control with something to decide on it.
-A pass that has been put in question still has to produce a layout the next one can be measured
+**Reading it is not skipping work.** `valid()` is there for a control with something to decide on
+it. A pass that has been put in question still has to produce a layout the next one can be measured
 against: the remembered wrap width, the viewport a box states for its body, the range a scroll bar
 carries the view across are all written by the align. A control that returned early on the flag
 would leave the pass after it reading numbers nobody wrote, and the walk order would decide which
@@ -125,10 +125,10 @@ ones.
 Says the control being laid out has been given a box the measure did not answer for, so the tree
 is walked again once this walk ends.
 
-IT ASKS, IT DOES NOT LAY OUT. The walk is in progress and the sizes around it are half of one
+**It asks, it does not lay out.** The walk is in progress and the sizes around it are half of one
 answer and half of another, so nothing is recomputed on the spot.
 
-WHAT IT IS ASKED ON HAS TO CONVERGE. The pass that answers it must hand back the same number, or
+**What it is asked on has to converge.** The pass that answers it must hand back the same number, or
 every pass asks for another and the program lays itself out until it is killed. A width carried
 over in design units converges in one step, because the pass measured against it produces that
 width again. A height does not: `Control::calculate` ceils the content it measured and the align
@@ -223,9 +223,9 @@ command act on every click they are given.
 
 ## Popup owner
 
-THE CONTROL A POPUP IS ABOUT, answered by `Control::popupOwner`. A control answers itself; a part
-of another control's face answers that control, which is how a dropdown strip says it is half of
-the control it drops for. The form takes the answer as the popup is built, so
+**The control a popup is about**, answered by `Control::popupOwner`. A control answers itself; a
+part of another control's face answers that control, which is how a dropdown strip says it is half
+of the control it drops for. The form takes the answer as the popup is built, so
 `FormBase::popupTarget` is the owner whichever part the popup was opened on - through `dropPopup`,
 a `Menu` built on the pressed part, or a command whose presenter is the strip.
 
@@ -289,7 +289,7 @@ about document order rather than about what is on screen.
 
 Hint is an internal class used by the framework - never use it directly
 
-WHAT A HINT IS ABOUT FOLLOWS THE CONTROLLER. While the mouse drives it is the control under the
+**What a hint is about follows the controller.** While the mouse drives it is the control under the
 pointer, and the hover moving is what takes a hint down and starts the wait for the next. While
 the keyboard alone drives it is the item the focus rests on - the control a key landed on, which
 a container holds the focus for - and the focus landing does the same. Each hears its own
@@ -301,18 +301,18 @@ already up is left standing while it is still the answer the control pointed at 
 its own, or that of a control it stands in: crossing children that have no hint of their own is
 not leaving the control that has one.
 
-AT MOST ONE IS IN PLAY. Which form's hint that is follows the control pointed at.
+**At most one is in play.** Which form's hint that is follows the control pointed at.
 
-A HINT STANDS WHERE ITS CONTROL COMES TO REST. A control a glide is still carrying - a list
+**A hint stands where its control comes to rest.** A control a glide is still carrying - a list
 scrolling to the row a hint was put up beside - is measured where the glide will leave it, so
 the hint goes there at once and stands still while the content travels to it. After that the
 window goes with the control the way a popup goes with the control it was opened on: a pass
 that lays the form out again moves it by the control's step. A control scrolled out of its view
 is nothing to follow, and the hint stands where it was put.
 
-A HINT BREAKS ITS LINES AT k_lineWidth, 480 design units, and its window is sized to the widest line
-it came to - a short hint stays as short as its words. The one exception is a hint standing over
-text: it repeats the lines the control broke, at the width the control broke them. Either way a
+**A hint breaks its lines at** k_lineWidth, 480 design units, and its window is sized to the widest
+line it came to - a short hint stays as short as its words. The one exception is a hint standing
+over text: it repeats the lines the control broke, at the width the control broke them. Either way a
 hint shows k_maxLines lines at most, 20, and fades the last of them when the text runs on.
 
 ## Score
@@ -329,7 +329,7 @@ two input controllers are on. There is one of each per application rather than p
 focus leaves a control when it arrives somewhere else, and where that is may be another
 window - which is why they are static here instead of being members of FormBase.
 
-A control asks about ITSELF through Control::isFocused(), isHovered() and isPressed()
+A control asks about **itself** through Control::isFocused(), isHovered() and isPressed()
 rather than comparing pointers against these. A container answers for the item it holds,
 and only those helpers know it.
 
@@ -354,7 +354,7 @@ that cannot occur is both off. A held key's repeats switch nothing.
 pointer raised, always finds the mouse on. A key other than a modifier finds it off, unless the
 pointer moved while that key was held down and repeating.
 
-THE HOVER IS WHERE THE POINTER IS, and only the form's hit-test moves it. A control reached by a
+**The hover is where the pointer is**, and only the form's hit-test moves it. A control reached by a
 key reads through its own focus and the keyboard's factor instead: the default rules gate each
 look the pointer lights on the mouse and repeat it "when focused, and keyboard", so with one
 controller on, one item is lit. `FormBase::mouseTick` is the hit-test, and it is no act of the
@@ -372,21 +372,21 @@ Something said about a control without stopping the user: why the value they typ
 was refused, that the file they asked for was written. It is shown in the hint window,
 under the control it is about.
 
-A MESSAGE IS RAISED BY SOMETHING THE USER DID. That is what tells it from a hint,
+**A message is raised by something the user did.** That is what tells it from a hint,
 which is about whatever the pointer happens to be on. It is placed under its control for
 the same reason: it answers an action, and the hand that took that action left the pointer
 wherever it happened to be.
 
-IT LIVES EXACTLY AS LONG AS THE WINDOW SHOWING IT. The pointer moving to another
+**It lives exactly as long as the window showing it.** The pointer moving to another
 control takes it down, and so does anything the user does - the same two things that take
 a hint down - and it is forgotten as it goes, so there is nothing left to point at it
 for again. A message raised while the pointer rests on the control it is about therefore
 stands for as long as the pointer rests there, and needs no time of its own.
 
-ONE AT A TIME. There is one hint window, so a second message takes the place of
+**One at a time.** There is one hint window, so a second message takes the place of
 the first rather than queueing behind it.
 
-WHAT A CONTROL HAS TO SAY EVERY TIME IT IS ASKED belongs in its nestedGetHint, not
+**What a control has to say every time it is asked** belongs in its nestedGetHint, not
 here. A message is what is said once, at the moment it becomes true. A control that must
 go on saying it answers for itself as well - see PromptBox and the value it has refused.
 
@@ -420,9 +420,9 @@ Icons sits above Core.
 
 ## appMenuAction
 
-THE ONE COMMAND EVERY APPLICATION PRESENTS THE SAME WAY: an AppButton is a presenter of this action
-from its constructor, and ApplicationBase::initialize connects its click to the application menu
-through connectAppMenu.
+**The one command every application presents the same way**: an AppButton is a presenter of this
+action from its constructor, and ApplicationBase::initialize connects its click to the application
+menu through connectAppMenu.
 
 ## TraversalMode
 
@@ -443,7 +443,7 @@ between two oriented rectangles are meaningful.
 
 ## FormBase::setConfigName
 
-THE NAME A FORM'S PLACEMENT IS KEPT UNDER in the application's config - the name of a section
+**The name a form's placement is kept under** in the application's config - the name of a section
 the application declared in its Forms schema, `MainForm` for the one every application has.
 Set before show(): the first placement is what hands the stored placement to the window, and
 on Wayland that is also the last moment a toplevel can be named to its session. A form with no
@@ -453,20 +453,20 @@ through IForm::wnd_closeRequested, which closes the form the way its own close b
 
 ## FormBase::windowFocusedFactor
 
-HOW FAR A FORM'S WINDOW HOLDS THE FOCUS, from 0 to 1. The form animates it itself, on
+**How far a form's window holds the focus**, from 0 to 1. The form animates it itself, on
 `AnimationSlots::windowFocused`, whenever the platform reports a change through
-`wnd_focusChanged`: `WM_SETFOCUS` and `WM_KILLFOCUS` on Win32, the ACTIVATED state of a toplevel
+`wnd_focusChanged`: `WM_SETFOCUS` and `WM_KILLFOCUS` on Win32, the **activated** state of a toplevel
 configure on Wayland. A form not painted yet takes the value outright.
 
-NOTHING SUBSCRIBES. A control reads the factor while it paints, through
+**Nothing subscribes.** A control reads the factor while it paints, through
 `PaintEvent::windowFocusedFactor`, which is read from the form once at the root of the paint and
 handed down the chain. The form cannot know which controls read it, so every step of the
 animation invalidates the whole window.
 
-A POPUP READS THE WINDOW IT STANDS ON. A Menu or Hint window never takes the focus -
-`WS_EX_NOACTIVATE` on Win32, and an `xdg_popup` has no ACTIVATED state - so a popup answers its
+**A popup reads the window it stands on.** A Menu or Hint window never takes the focus -
+`WS_EX_NOACTIVATE` on Win32, and an `xdg_popup` has no **activated** state - so a popup answers its
 owner's factor, up to the first Dialog. A Dialog answers its own, owned or not. A Wayland
-layer-shell Dialog, placed `ScreenRight`, is sent no ACTIVATED state and reads 0.
+layer-shell Dialog, placed `ScreenRight`, is sent no **activated** state and reads 0.
 
 What reads it:
 
@@ -485,7 +485,7 @@ What reads it:
 
 ## Edge reach
 
-A POINTER PUSHED AGAINST A MAXIMIZED WINDOW'S EDGE MEETS WHAT STANDS k_edgeReach IN - eight
+**A pointer pushed against a maximized window's edge meets what stands k_edgeReach in** - eight
 design pixels. FormBase::searchPoint moves a point that close to the edge to that depth before
 the search, so a press against the top lands on a tab on the title and one in the corner on the
 close button, rather than on the root's border ring or the band above the tabs.
@@ -515,8 +515,9 @@ walk of any number of steps each way; the newest step is 0 going back, the neare
 going forward. A walk the history does not reach does nothing.
 
 The owner applies what it keeps - puts the text or the controls back, and the caret or the
-selection where the step left the user: where the OLDEST step undone was made, where the NEWEST
-step redone was. A walk of several steps is one walk, so the owner reports one change for it.
+selection where the step left the user: where the **oldest** step undone was made, where the
+**newest** step redone was. A walk of several steps is one walk, so the owner reports one change for
+it.
 
 ## GetEditHistoryEvent
 

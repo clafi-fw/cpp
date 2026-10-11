@@ -45,9 +45,9 @@ namespace ClaFi::Controls
         void removeOverlayControl(const Control&) override;
         bool isLeaf() const override { return false; }
         void deleteControl(Control&) override;
-        // PUTS A CHILD AT A PLACE IN THE ORDER, the rest keeping theirs. The collection's order is
-        // the order the children are laid out in, and a container built one child at a time is in
-        // the order they were asked for - so this is what a container whose order is given to it
+        // **Puts a child at a place in the order**, the rest keeping theirs. The collection's order
+        // is the order the children are laid out in, and a container built one child at a time is
+        // in the order they were asked for - so this is what a container whose order is given to it
         // from outside calls: a tab strip made a tab at a time standing in the order its data
         // lists them. An index past the end is the last place, and a control this container does
         // not hold is left alone.

@@ -19,7 +19,7 @@ namespace ClaFi::Transfer
 
     std::uint64_t Clipboard::generation()
     {
-        // ASKED THROUGH offer(), because that is where a platform notices. Windows reads its
+        // **Asked through** offer(), because that is where a platform notices. Windows reads its
         // sequence counter there and Wayland compares the selection handle, so until one of them
         // has been asked nothing here has been told the clipboard moved.
         [[maybe_unused]] const Offer* current = offer();
@@ -106,7 +106,7 @@ namespace ClaFi::Transfer
         return content ? *content : Payload{};
     }
 
-    // WHAT THIS PACKAGE WOULD SEND. Nothing is sent while this process holds the selection,
+    // **What this package would send.** Nothing is sent while this process holds the selection,
     // so the bytes are written here rather than read - the platform's spelling for a
     // framework format, under its own name or the platform's, the format's own for the rest.
     // A reader is handed what another application would receive, whoever owns the clipboard.

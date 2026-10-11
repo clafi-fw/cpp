@@ -13,7 +13,7 @@ namespace ClaFi::Controls::Grids
     public:
         using GridBase::GridBase;
     protected:
-        // THE GRID ELEMENT IS STATED ONCE, BY THE GRID. A body inherits the surface that
+        // **The grid element is stated once, by the grid.** A body inherits the surface that
         // statement arrived at, so stating it again applies grid.surface over a surface already
         // carrying it. PaintEvent gives a surface its alpha from how much the rule changed, so
         // the second application is what makes the body paint a fill of its own - over the

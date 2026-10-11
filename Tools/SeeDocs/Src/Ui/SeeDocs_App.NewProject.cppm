@@ -16,7 +16,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-// A NEW PROJECT IS A NAME AND A PLACE: the folder the project is kept in is the place with the
+// **A new project is a name and a place**: the folder the project is kept in is the place with the
 // name under it, made when the user creates it, and the project reads no sources until its
 // options page is given some. See README
 namespace SeeDocs_App
@@ -30,10 +30,10 @@ namespace SeeDocs_App
 
     using NewProjectForm = Form<PanelBase>;
 
-    // A WINDOW OF ITS OWN over the one it was raised from, standing until it is answered: it asks
-    // for a new project's name and where to store it, and shows the folder the two make as they
-    // are typed. Create hands the folder to the maker and closes; a refusal, the dialog's or the
-    // maker's, keeps it up with the reason under the folder.
+    // **A window of its own** over the one it was raised from, standing until it is answered: it
+    // asks for a new project's name and where to store it, and shows the folder the two make as
+    // they are typed. Create hands the folder to the maker and closes; a refusal, the dialog's or
+    // the maker's, keeps it up with the reason under the folder.
     export class NewProjectDialog : public NewProjectForm
     {
     public:

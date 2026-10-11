@@ -11,7 +11,7 @@ never made by hand.
 
 ## InputStamp
 
-WHAT THE USER DID THAT LED HERE, in whatever form the display server states it. A display server
+**What the user did that led here**, in whatever form the display server states it. A display server
 answers a request made on the user's behalf - moving a window by its title bar, opening a menu
 that takes the pointer, writing the clipboard - only when the request names the input event that
 asked for it, by the number the server itself put on that event. A request naming no event is
@@ -38,7 +38,7 @@ navigation (focusable items) and how it reacts to mouse move and click events - 
 animations. Interactivity is evaluated only after HitTest confirms the cursor is over the
 control.
 
-WHERE A PRESS PUTS THE FOCUS. A press walks up from the control under the pointer to the first
+**Where a press puts the focus.** A press walks up from the control under the pointer to the first
 one that can take the focus - Focusable or ActiveContainer - and puts it there, which is how a
 press on a label inside a tile selects the tile. A MouseOnly control is pressed for itself, and
 its press moves no focus at all: a tool bar's button beside an editor keeps the caret in the
@@ -52,15 +52,15 @@ and Grids::RowContainer answer yes for every child of theirs.
 
 What the platform layer switches on - window class, styles, activation, how it is shown.
 
-NAMED AT THE CREATION SITE: a form is created with the role it is meant to have, and its root
+**Named at the creation site**: a form is created with the role it is meant to have, and its root
 control's `Interactivity` is a separate answer the root gives for itself. The two are about
-different things - what the WINDOW does with activation, and how the CONTROL takes part in focus
-and selection - so neither is read off the other. A popup list whose root tracks a current item
-is the case that says so: `WindowRole::Menu`, root `ActiveContainer`.
+different things - what the **window** does with activation, and how the **control** takes part in
+focus and selection - so neither is read off the other. A popup list whose root tracks a current
+item is the case that says so: `WindowRole::Menu`, root `ActiveContainer`.
 
 ## IPlatformServices
 
-THE PLATFORM, AS A SERVICE STANDING BELOW THE CONTEXT SEES IT: a name and nothing else.
+**The platform, as a service standing below the context sees it**: a name and nothing else.
 
 ## PresenterRole
 
@@ -129,7 +129,7 @@ reports the caret where the text is not.
 
 ## FormPlacement
 
-`Default` and `ScreenRight` are the two a TOPLEVEL takes, and neither reads the anchor.
+`Default` and `ScreenRight` are the two a **toplevel** takes, and neither reads the anchor.
 `Default` is the platform's own placement, used for dialogs, and the placement rect is ignored.
 `ScreenRight` puts the window against the right edge of the work area, the full height of it, at
 the width asked for; a platform that does not place toplevels for its client answers the size
@@ -153,7 +153,7 @@ popup that grows with what is typed into it needs.
 
 The placement clamps to the monitor either way, and that clamp is the bound of last resort.
 
-A DIALOG ITS CONTENT SIZES IS NOT THE USER'S TO SIZE. The form states its range as the one size
+**A dialog its content sizes is not the user's to size.** The form states its range as the one size
 the content asked for, and the platform answers a range of one size with a window that offers no
 edge to drag and no maximize, from its caption, its window menu or the system's snapping; a
 DialogTitle over it is built with `TitleButtons::Close`, so the title offers neither. Placed
@@ -206,11 +206,11 @@ and nothing is written back.
 `Editable` - the value is typed, and offered back to its source when the edit ends. The source
 may refuse it and say why, and the editor stays up for the value to be corrected.
 
-A grid states it per COLUMN, because a column is what says where a cell's text comes from, and a
+A grid states it per **column**, because a column is what says where a cell's text comes from, and a
 value that can be typed back is a property of that source rather than of the row that happens to
 hold one. What an Editable cell is left with goes to RowBase::acceptCellText.
 
-ReadOnly is a column's default because a cell TRIMS what does not fit its column: every text
+ReadOnly is a column's default because a cell **trims** what does not fit its column: every text
 cell therefore has a value worth being read whole and copied out of, and a column that wants
 that says nothing. Only a cell drawn as plain text opens one - a cell holding a control is that
 control's, whatever its column says.
@@ -348,7 +348,7 @@ scales with what the theme itself declared readable.
 These five are the steps the framework draws in. A caller wanting one of its own states the
 share instead; nothing rounds a stated grade to the nearest of these.
 
-A LIGHT SURFACE COUNTS THE STEPS FROM THE INK'S END. The shares in k_inkGrades are a dark
+**A light surface counts the steps from the ink's end.** The shares in k_inkGrades are a dark
 surface's. Over a light one a grade stands at the mirror of the step as far from the ink as the
 grade is from the surface - Faint at 0.20, Subtle 0.40, Muted 0.73, Strong 0.88 - scaled by one
 less the theme's dark mode floor, so each stops short of the ink as far as the dark side's

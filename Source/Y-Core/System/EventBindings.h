@@ -40,7 +40,7 @@
 
 // A property the class keeps nowhere of its own - it lands in a field of another
 // member, goes through a setter, or is read straight into a call. The binding line
-// IS the declaration: it names the property's type, and that is what the scanner
+// **is** the declaration: it names the property's type, and that is what the scanner
 // reads the surface off. One comment line, like every other declaration.
 //
 //     // Space kept inside the control's border, around its content.

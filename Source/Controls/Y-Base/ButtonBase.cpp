@@ -327,7 +327,7 @@ namespace ClaFi::Controls
         RichControl::adjustTextRect(event);
     }
 
-    // THE MARK STANDS AT THE LINE'S RIGHT-HAND END, which is what the flex space ahead of it
+    // **The mark stands at the line's right-hand end**, which is what the flex space ahead of it
     // buys: a column of buttons stretched to one width lands every mark on the same edge, the
     // way a menu's keys do. A button measured to its own caption leaves the space nothing to
     // take, and the mark follows the words. See Controls-Base
@@ -356,7 +356,7 @@ namespace ClaFi::Controls
         }
     }
 
-    // AN ICON-ONLY BUTTON DOES NOT LAY ITS TEXT OUT. Its words are what the hint says - see
+    // **An icon-only button does not lay its text out.** Its words are what the hint says - see
     // nestedGetHint - and paintText draws none of them, so they take no space in either pass.
     // calculateContent answers for that mode with the icon alone, and the align pass re-measures a
     // wrapping text against the box the control was granted and takes that answer as its content:
@@ -369,8 +369,9 @@ namespace ClaFi::Controls
             return {};
 
         const float iconWidth = event.scale(m_iconSize).x;
-        // A WRAPPING TEXT IS BROKEN IN THE BOX IT IS DRAWN IN, and the box handed in here is the
-        // content's: what stands beside the text is taken off it the way adjustTextRect takes it.
+        // **A wrapping text is broken in the box it is drawn in**, and the box handed in here is
+        // the content's: what stands beside the text is taken off it the way adjustTextRect takes
+        // it.
         if (wordWrap())
         {
             FloatRect box = FloatRect::fromDimensions({ 0.0f, 0.0f }, asked.toFloat());
@@ -378,9 +379,9 @@ namespace ClaFi::Controls
             asked.x = std::max(box.width(), 0.0f);
         }
 
-        // A PICTURE STANDING OVER THE WORDS SETS THE WIDTH, and the words wrap under it. Asked
-        // against the whole box instead, a caption longer than the picture comes out on ONE LINE
-        // and the button is as wide as its name - a button wider than the thing it is built
+        // **A picture standing over the words sets the width**, and the words wrap under it. Asked
+        // against the whole box instead, a caption longer than the picture comes out on **one
+        // line** and the button is as wide as its name - a button wider than the thing it is built
         // around, and every name a different width. In a lane of equal shares that is worse than
         // untidy: the widest name in the stack sizes every share in it, so one long caption drops
         // a whole column out of the grid. A caption that does not wrap has nothing to wrap under

@@ -207,11 +207,11 @@ namespace ClaFi
     // in the coordinates before either. Key repeat outruns the paint loop, so several edits reach
     // the text before anything asks the layout about it, and one record has to carry all of them.
     //
-    // The answer is the HULL of the two, which can name text neither of them touched - a position
-    // inside what the first edit inserted has no place in the coordinates before it, and the edge
-    // of what that edit replaced stands for it. Widening is the safe direction: a hull too wide
-    // re-shapes a paragraph that did not have to move, or is refused for crossing a boundary, and
-    // both of those are answers the caller already handles.
+    // The answer is the **hull** of the two, which can name text neither of them touched - a
+    // position inside what the first edit inserted has no place in the coordinates before it, and
+    // the edge of what that edit replaced stands for it. Widening is the safe direction: a hull too
+    // wide re-shapes a paragraph that did not have to move, or is refused for crossing a boundary,
+    // and both of those are answers the caller already handles.
     export [[nodiscard]] TextEdit mergedEdits(TextEdit first, TextEdit second);
 
     export class TextLayout
@@ -239,10 +239,10 @@ namespace ClaFi
         void setCellFallback(CellFallback);
         // Lines across the box for None, inside the measured block for any other anchor.
         void setHorizontalAnchor(HorizontalTextAnchor);
-        // The width the lines are BROKEN at, when that is not the box they stand in. Zero, the
+        // The width the lines are **broken** at, when that is not the box they stand in. Zero, the
         // standing answer, breaks them at the box - which is what a control laying out its own
-        // text asks for. A layout that has to repeat ANOTHER's line breaks states the width that
-        // one was broken at, and is then free to stand in a box of any size: the box no longer
+        // text asks for. A layout that has to repeat **another's** line breaks states the width
+        // that one was broken at, and is then free to stand in a box of any size: the box no longer
         // decides where a line ends, so a wider one shows what the narrower box cut instead of
         // breaking the text somewhere else. See HintLabel, which an over-text hint is drawn
         // from.
@@ -317,7 +317,7 @@ namespace ClaFi
         void alignParagraph(ParagraphLayoutState&, float width);
         // The width a shaping breaks at: the stated one, or the box where none is stated.
         [[nodiscard]] float breakWidth() const;
-        // The width the lines are PLACED in: the box, the stated break width, or the block.
+        // The width the lines are **placed** in: the box, the stated break width, or the block.
         [[nodiscard]] float placementWidth() const;
         // The paragraph's lines, out of the pool every paragraph's lines are kept in.
         [[nodiscard]] std::span<const NativeLineMetrics> linesOf(const ParagraphLayoutState&) const;
@@ -358,7 +358,7 @@ namespace ClaFi
         // the given pool. The cursors are advanced past what this paragraph consumed, so a walk
         // hands the same set to the next one and a caller shaping a single paragraph hands a
         // fresh set and pays one pass over the spans. boundsWidth is the width the lines are
-        // BROKEN at, which is not always the box the layout currently holds: a paragraph shaped
+        // **broken** at, which is not always the box the layout currently holds: a paragraph shaped
         // on its own has to be broken the way the paragraphs around it were, or it is the one
         // line in the document that wraps differently.
         [[nodiscard]] ParagraphLayoutState shapeParagraph(const ParagraphStyle&, float top,

@@ -137,7 +137,7 @@ namespace ClaFi::Controls
             std::size_t takers;
         };
     private:
-        // EVERY WRAPPING STACK, BOTH WAYS ROUND. See Item-Containers
+        // **Every wrapping stack, both ways round.** See Item-Containers
         void alignIntoLanes(AlignEvent&, ScaledPosition, ScaledDimensions& contentDimensions);
         // The lane beginning at begin: as many items as the lane takes, as many as fit the length
         // it is given, and never fewer than one.
@@ -146,7 +146,7 @@ namespace ClaFi::Controls
         // How many equal shares of this size fit the length given: never more than the lane takes,
         // and never fewer than one. See Item-Containers
         [[nodiscard]] std::size_t sharesThatFit(float largest, float spacing, float limitMain) const;
-        // A lane with what the STACK was given over what it measured divided among the items on
+        // A lane with what the **stack** was given over what it measured divided among the items on
         // it - or among the items that asked for it, where any did. See Item-Containers
         void alignSharedLane(AlignEvent&, const LaneCut&, ScaledPosition, float laneSurplus,
             float laneCross, ScaledDimensions& contentDimensions);
@@ -166,7 +166,7 @@ namespace ClaFi::Controls
                 ? horizontalAlign() == HorizontalAlign::Fill
                 : verticalAlign() == VerticalAlign::Fill;
         }
-        // MAIN IS THE WAY A LANE RUNS, CROSS THE WAY THE LANES STACK. Every extent a wrapping
+        // **Main is the way a lane runs, cross the way the lanes stack.** Every extent a wrapping
         // stack reads goes through these, which is what lets one routine serve both.
         [[nodiscard]] float& mainOf(FloatPoint& value) const
             { return lanesRunAcross() ? value.x : value.y; }
@@ -345,10 +345,10 @@ namespace ClaFi::Controls
 
         case Orientation::Horizontal:
             calculatedContent.y = contentDimensions.y;
-            // THE ROW IS AS WIDE AS THE PANEL WAS GIVEN, which is what an even division divides.
-            // dimensions() above is still the width the calculate pass arrived at - align sets
-            // the new one only after this returns - and contentDimensions is what the parent is
-            // handing over now. A natural row never had to tell the two apart: alignSingleRow
+            // **The row is as wide as the panel was given**, which is what an even division
+            // divides. dimensions() above is still the width the calculate pass arrived at - align
+            // sets the new one only after this returns - and contentDimensions is what the parent
+            // is handing over now. A natural row never had to tell the two apart: alignSingleRow
             // reads the height it is given and takes each item's width from the item.
             if (dividesEvenly() || hasFillingItem())
                 calculatedContent.x = std::max(calculatedContent.x, contentDimensions.x);
@@ -451,7 +451,7 @@ namespace ClaFi::Controls
         emitEvent(event);
     }
 
-    // ONE ROUTINE, READ THROUGH MAIN AND CROSS. A wrapping stack does the same four things
+    // **One routine, read through main and cross.** A wrapping stack does the same four things
     // whichever way its lanes run - cut the lane on its count or on the length it was given,
     // share what the stack has over the length among the items on each lane, share what it has
     // over the thickness among the lanes, and divide an Equal lane by its count - and writing
@@ -465,7 +465,7 @@ namespace ClaFi::Controls
         ScaledDimensions granted = {
             std::min(contentDimensions.x, event.maxContentWidth()),
             std::min(contentDimensions.y, event.maxContentHeight()) };
-        // A COLUMN IS NOT BROKEN AT A HEIGHT ITS HOST SCROLLS. The measure breaks it at this
+        // **A column is not broken at a height its host scrolls.** The measure breaks it at this
         // stack's own maximum alone, and a scroll box hands its body the viewport - so a cut
         // there makes lanes nobody measured. See Item-Containers
         if (!lanesRunAcross() && isScrolledByParent(ScrollAxis::Vertical))
@@ -475,9 +475,9 @@ namespace ClaFi::Controls
         contentDimensions = { 0.0f, 0.0f };
         m_maxLaneExtent = 0.0f;
 
-        // AN EVEN LANE IS CUT ON ITS SHARES, not on the items. Every share is as long as the
+        // **An even lane is cut on its shares**, not on the items. Every share is as long as the
         // largest item, so a lane holds as many of those as the length has room for, capped by the
-        // lane's own count - and every lane then holds the SAME number. Cutting on the items
+        // lane's own count - and every lane then holds the **same** number. Cutting on the items
         // instead leaves the lane with the long names holding two while the one above it holds
         // three, at shares all one size, so the third slot stands empty for no reason.
         //
@@ -491,8 +491,8 @@ namespace ClaFi::Controls
                 spacingMain, limitMain)
             : itemsPerLane();
 
-        // THE LANES ARE CUT TWICE, because what each one gets is settled by all of them and that
-        // is known only once the last one has been cut. The cut is a walk over sizes already
+        // **The lanes are cut twice**, because what each one gets is settled by all of them and
+        // that is known only once the last one has been cut. The cut is a walk over sizes already
         // measured, so running it again costs less than the vector it would take to remember - and
         // one cut cannot then disagree with the other.
         std::size_t laneCount = 0ull;
@@ -511,20 +511,21 @@ namespace ClaFi::Controls
             ++laneCount;
         }
 
-        // WHAT THE LENGTH HAS OVER THE LONGEST LANE, which is all a lane has to spend - see
-        // alignSharedLane. Read off THIS pass's cut, never off a walk asking the items how large
-        // they are: an item that fills was left at the size the last pass gave it, so a metric
-        // taken from the items is a metric taken from its own last answer - three tiles a lane
-        // become wider tiles, wider tiles fit two, and two are wider still.
+        // **What the length has over the longest lane**, which is all a lane has to spend - see
+        // alignSharedLane. Read off **this** pass's cut, never off a walk asking the items how
+        // large they are: an item that fills was left at the size the last pass gave it, so a
+        // metric taken from the items is a metric taken from its own last answer - three tiles a
+        // lane become wider tiles, wider tiles fit two, and two are wider still.
         const float surplus = surplusOver(limitMain, longestLane);
-        // ONLY WHERE THE STACK WAS TOLD TO FILL THAT WAY. On a scrolled body the granted length is
-        // the viewport whatever the alignment says - Control::align gives the surplus back only to
-        // a control whose measure is SHORTER than its slot, and a wrapping stack measured against
-        // no maximum is longer - so the length alone cannot say whether filling was asked for.
+        // **Only where the stack was told to fill that way.** On a scrolled body the granted length
+        // is the viewport whatever the alignment says - Control::align gives the surplus back only
+        // to a control whose measure is **shorter** than its slot, and a wrapping stack measured
+        // against no maximum is longer - so the length alone cannot say whether filling was asked
+        // for.
         //
-        // DIVIDED BY THE ITEM, NOT BY THE LANE: the fullest lane's count is the divisor, so every
-        // item in the stack grows by the same amount, the fullest lane comes out exactly at the
-        // length, and a short last lane stays short.
+        // **Divided by the item, not by the lane**: the fullest lane's count is the divisor, so
+        // every item in the stack grows by the same amount, the fullest lane comes out exactly at
+        // the length, and a short last lane stays short.
         const float perItem = fillsMain() && fullestLane
             ? surplus / static_cast<float>(fullestLane)
             : 0.0f;
@@ -559,9 +560,9 @@ namespace ClaFi::Controls
             }
             else
             {
-                // A LANE HOLDING SOMETHING THAT ASKED TAKES ALL THE ROOM IT HAS, whether the stack
-                // fills or not, as a single lane does - see alignContent, which reaches for the
-                // granted length on hasFillingItem() alone. Read off the cut rather than by
+                // **A lane holding something that asked takes all the room it has**, whether the
+                // stack fills or not, as a single lane does - see alignContent, which reaches for
+                // the granted length on hasFillingItem() alone. Read off the cut rather than by
                 // walking a million items. Otherwise a share for each item on it, and never more
                 // room than the lane has: one long item can make a lane already at the length.
                 const float laneRoom = surplusOver(limitMain, lane.main);
@@ -611,13 +612,13 @@ namespace ClaFi::Controls
         return lane;
     }
 
-    // A STATED LANE BREAKS THE LANE WHATEVER THE LENGTH. The measure has already answered on the
-    // count - see Control::calculateLanes - so a lane running past it here would be a lane nobody
-    // measured, and the lanes it saves stand beside the items as dead space.
-    // THE LAST SHARE CARRIES NO GAP AFTER IT, so the length a lane has to fit is one gap longer
+    // **A stated lane breaks the lane whatever the length.** The measure has already answered on
+    // the count - see Control::calculateLanes - so a lane running past it here would be a lane
+    // nobody measured, and the lanes it saves stand beside the items as dead space.
+    // **The last share carries no gap after it**, so the length a lane has to fit is one gap longer
     // than the shares it holds.
     //
-    // ASKED BY THE ALIGN PASS AND ONLY BY IT. The measure must not break its lanes on this: it
+    // **Asked by the align pass and only by it.** The measure must not break its lanes on this: it
     // would be measuring against the length the last pass laid out - see wrapLengthLimit - so a
     // narrow pass would shrink what the panel asks for, a host measured from the panel would grant
     // that, and the count would walk down one pass at a time and never come back.
@@ -629,8 +630,8 @@ namespace ClaFi::Controls
         if (share <= 0.0f)
             return perLane;
         const float fits = std::floor((limitMain + spacing) / share);
-        // ONE IS THE FLOOR. A share too long for the lane still stands in it, as the first item on
-        // a natural lane does whatever its length.
+        // **One is the floor.** A share too long for the lane still stands in it, as the first item
+        // on a natural lane does whatever its length.
         if (fits < 1.0f)
             return 1ull;
         // Compared before the cast: a length of k_maxFloat over a small share is a number no
@@ -640,9 +641,9 @@ namespace ClaFi::Controls
         return static_cast<std::size_t>(fits);
     }
 
-    // A WRAPPING STACK THAT DIVIDES EVENLY IS A GRID, AND A GRID IS MEASURED AS ONE. Every share
-    // is as long as the largest item, so a lane is that times the LANE'S count whatever the items
-    // on it are called, and the lanes are as thick as the largest item across.
+    // **A wrapping stack that divides evenly is a grid, and a grid is measured as one.** Every
+    // share is as long as the largest item, so a lane is that times the **lane's** count whatever
+    // the items on it are called, and the lanes are as thick as the largest item across.
     //
     // Measured from the natural sum instead, a lane of four short items and a lane of two long
     // ones come to the same length, so the align breaks one at four and the other at two in the
@@ -650,18 +651,18 @@ namespace ClaFi::Controls
     // share it never measured against is not a width its text was broken at. A theme tile stating
     // its own fixed width was the workaround for this, and it is not needed once the grid is
     // measured as a grid.
-    // THE LANE SHARES WHAT THE STACK WAS GIVEN OVER WHAT IT MEASURED. A stack that kept its own
+    // **The lane shares what the stack was given over what it measured.** A stack that kept its own
     // size was given nothing over, and every lane stands where it measured.
     //
-    // THE SURPLUS IS THE STACK'S, NOT THE LANE'S. Sharing out the difference between this lane and
-    // the longest instead would stretch a short lane to the length of a long one while nothing at
-    // all had been granted - a last row of two spread across a lane of five.
+    // **The surplus is the stack's, not the lane's.** Sharing out the difference between this lane
+    // and the longest instead would stretch a short lane to the length of a long one while nothing
+    // at all had been granted - a last row of two spread across a lane of five.
     //
-    // WHAT ASKED FOR THE SURPLUS TAKES IT ALL, and where nothing asked it goes to the items in
+    // **What asked for the surplus takes it all**, and where nothing asked it goes to the items in
     // equal parts - see Control::fillsLane and FlexSpacer.
     //
-    // WHAT AN ITEM DOES WITH ITS PART IS THE ITEM'S TO SAY. One that fills takes it; one aligned
-    // to an edge keeps the size it measured and stands in it - see Control::align.
+    // **What an item does with its part is the item's to say.** One that fills takes it; one
+    // aligned to an edge keeps the size it measured and stands in it - see Control::align.
     void Stack::alignSharedLane(AlignEvent& event, const LaneCut& lane,
         const ScaledPosition position, const float laneSurplus, const float laneCross,
         ScaledDimensions& contentDimensions)
@@ -723,13 +724,13 @@ namespace ClaFi::Controls
     {
         if (m_wrapLengthInDesign <= 0.0f)
             return k_maxFloat;
-        // NOT WHILE THE FORM IS ASKING FOR A WINDOW. That pass is where a form finds out what it
-        // wants, and one held to the size it was last given could never grow - see
+        // **Not while the form is asking for a window.** That pass is where a form finds out what
+        // it wants, and one held to the size it was last given could never grow - see
         // FormBase::isMeasuringPlacement.
         const FormBase* hostForm = getForm();
         if (hostForm && hostForm->isMeasuringPlacement())
             return k_maxFloat;
-        // NOT WHERE THE LENGTH IS THE CONTENT'S OWN ANSWER, however many hosts down. A bound
+        // **Not where the length is the content's own answer**, however many hosts down. A bound
         // stated there is derived from the thing it bounds: the lanes wrap, the panel comes out
         // shorter along them, the host measured from it follows, and the next pass wraps them
         // again - a backstage walked down to three tiles a lane, one pass at a time.
@@ -738,22 +739,22 @@ namespace ClaFi::Controls
         return m_wrapLengthInDesign * event.scaleFactor();
     }
 
-    // IN DESIGN UNITS, WITH THE SCALE THAT LAID IT OUT. Converting it at the scale in force when
-    // it is read puts the two at different scales, and a form taken to 250% and back is left
+    // **In design units, with the scale that laid it out.** Converting it at the scale in force
+    // when it is read puts the two at different scales, and a form taken to 250% and back is left
     // measuring against a fraction of the length it has - see ScrollBox::adjustChildMetrics.
     //
-    // A LENGTH THAT HAS NOT CHANGED ASKS FOR NOTHING, and that is what ends this. Comparing what
-    // the lanes CAME TO across against what they measured cannot: Control::calculate ceils the
-    // content it measured and the align pass does not, so an extent with a fraction in it differs
-    // by up to a whole unit for ever - every pass asks for another, and the program lays itself
-    // out until it is killed. The length converges in one step because the pass that measures
-    // against it hands back the same number.
+    // **A length that has not changed asks for nothing**, and that is what ends this. Comparing
+    // what the lanes **came to** across against what they measured cannot: Control::calculate ceils
+    // the content it measured and the align pass does not, so an extent with a fraction in it
+    // differs by up to a whole unit for ever - every pass asks for another, and the program lays
+    // itself out until it is killed. The length converges in one step because the pass that
+    // measures against it hands back the same number.
     void Stack::rememberWrapLength(AlignEvent& event, const float limitLength)
     {
         if (!isLaneLengthGivenFromOutside())
             return;
-        // NOT WHILE THE FORM IS ASKING FOR A WINDOW. That pass lays the lanes out at the content's
-        // own size, not at a size the window gave - see FormBase::isMeasuringPlacement.
+        // **Not while the form is asking for a window.** That pass lays the lanes out at the
+        // content's own size, not at a size the window gave - see FormBase::isMeasuringPlacement.
         const FormBase* hostForm = getForm();
         if (hostForm && hostForm->isMeasuringPlacement())
             return;
@@ -766,7 +767,7 @@ namespace ClaFi::Controls
         event.invalidatePass();
     }
 
-    // A CEILING IS SPREAD, A COUNT IS NOT. Under UpTo the items go into the fewest lanes the
+    // **A ceiling is spread, a count is not.** Under UpTo the items go into the fewest lanes the
     // count allows and every lane but the last is filled to the same depth, so eleven under a
     // ceiling of ten stands as six and five rather than ten and one.
     std::size_t Stack::itemsPerLane() const
@@ -794,9 +795,9 @@ namespace ClaFi::Controls
         return result;
     }
 
-    // WHAT A WRAPPING STACK LACKED WAS A DIVISOR KNOWN BEFORE THE WRAP. Its lanes' own counts are
-    // settled by the sizes the items came to, and dividing by those is dividing by the answer - so
-    // Equal used to read only where a LaneSize stated the count outright. sharesThatFit is that
+    // **What a wrapping stack lacked was a divisor known before the wrap.** Its lanes' own counts
+    // are settled by the sizes the items came to, and dividing by those is dividing by the answer -
+    // so Equal used to read only where a LaneSize stated the count outright. sharesThatFit is that
     // divisor without the statement: how many shares of the largest item the length has room for,
     // both of them known before a lane is cut. A stated lane is now a cap on it rather than the
     // only way to have one.
@@ -805,7 +806,7 @@ namespace ClaFi::Controls
         return m_itemSizing == ItemSizing::Equal;
     }
 
-    // A LANE WITH ONE IS AS LONG AS IT WAS GRANTED, not as long as it measured - there is no
+    // **A lane with one is as long as it was granted**, not as long as it measured - there is no
     // surplus to hand out otherwise, and the item would take nothing. The same reach for the
     // granted box an even division makes, for the same reason. See Control::fillsLane
     bool Stack::hasFillingItem() const
@@ -837,7 +838,7 @@ namespace ClaFi::Controls
         return fill.largest * count + spacing * (count - 1.0f);
     }
 
-    // UNDER A PIXEL IS NOTHING OVER. Control::calculate ceils the content it measured and the
+    // **Under a pixel is nothing over.** Control::calculate ceils the content it measured and the
     // align pass does not, so a stack that was granted exactly what it asked for still answers a
     // fraction here - and a fraction shared out is every item moved by part of a pixel on a pass
     // that changed nothing.
@@ -894,8 +895,8 @@ namespace ClaFi::Controls
 
     void Stack::onPreviewTimer()
     {
-        // A GLIDE IS NOT THE USER LOOKING AT ANYTHING. Content travelling under a pointer that is
-        // holding still hands the hover a new item on every frame - see ScrollBox's wheel glide,
+        // **A glide is not the user looking at anything.** Content travelling under a pointer that
+        // is holding still hands the hover a new item on every frame - see ScrollBox's wheel glide,
         // which repeats the mouse move for exactly that reason - and what passes under the pointer
         // on the way is not what is being looked at. So the wait starts again, and the item that
         // is finally under the pointer when the movement lands is the one previewed.

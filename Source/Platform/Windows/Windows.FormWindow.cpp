@@ -40,8 +40,8 @@ namespace ClaFi
         m_form{ form }
     {
         dwmEnableDarkMode();
-        // MADE BEFORE ANY OTHER WINDOW THIS ONE OWNS, so it stands lowest among them: a hint or a
-        // menu raised later stands above the shadow rather than under it.
+        // **Made before any other window this one owns**, so it stands lowest among them: a hint or
+        // a menu raised later stands above the shadow rather than under it.
         m_shadow = std::make_unique<ShadowWindow>(
             owner.appHandle(), WindowsManager::shadowClassName(), handle());
     }
@@ -88,9 +88,9 @@ namespace ClaFi
             restateFrame(ringBefore);
     }
 
-    // THE WINDOW KEEPS ITS OWN DIRTY RECT AND RAISES ITS OWN PAINT. It has no redirection surface,
-    // so the update region the system keeps for it and the rect BeginPaint answers with are not
-    // about anything the window shows; what the form invalidated is recorded here, in the
+    // **The window keeps its own dirty rect and raises its own paint.** It has no redirection
+    // surface, so the update region the system keeps for it and the rect BeginPaint answers with
+    // are not about anything the window shows; what the form invalidated is recorded here, in the
     // surface, and painted when the posted paint message arrives or update() asks.
     void FormWindow::invalidateRect(const IntRect* value)
     {
@@ -124,7 +124,7 @@ namespace ClaFi
         m_lockDpiChange = false;
     }
 
-    // THE EDGES ARE THE GEOMETRY'S: the client area reaches past it by the ring, and a point in
+    // **The edges are the geometry's**: the client area reaches past it by the ring, and a point in
     // the ring is on the shadow, outside the window the user sees. Each edge's zone runs from the
     // ring outside it to a frame's width inside it; a corner reaches further along both edges
     // that meet in it, being the smaller target.
@@ -193,7 +193,7 @@ namespace ClaFi
         Window::wndProc(msg);
         switch (msg.msg)
         {
-        // THE SYSTEM ASKING - Alt+F4, the taskbar, a shutdown. The form closes itself the way
+        // **The system asking** - Alt+F4, the taskbar, a shutdown. The form closes itself the way
         // its own close button does, so what happens on a close happens on every close.
         case WM_CLOSE:
             m_form.wnd_closeRequested();
@@ -238,7 +238,7 @@ namespace ClaFi
             }
             break;
 
-        // THE WHOLE WINDOW IS THE CLIENT AREA: the frame is the framework's own, drawn in the
+        // **The whole window is the client area**: the frame is the framework's own, drawn in the
         // surface. Maximized included: the system sizes a maximized window to the work area plus
         // its resize borders, so the client hangs off the monitor by that much. The form is told
         // by how much - WindowFrame::overhang - and lays its content out on the part the screen
@@ -309,9 +309,9 @@ namespace ClaFi
             break;
         }
 
-        // A RIGHT CLICK ON THE CAPTION IS THE WINDOW MENU, and it is raised from here rather than
-        // left to DefWindowProc, which measures the caption itself and finds none on a window that
-        // is all client area. The press is remembered and kept from DefWindowProc; the release
+        // **A right click on the caption is the window menu**, and it is raised from here rather
+        // than left to DefWindowProc, which measures the caption itself and finds none on a window
+        // that is all client area. The press is remembered and kept from DefWindowProc; the release
         // over the caption is handed to the form as a context menu, which raises the window menu
         // when nothing on the title bar claims the point - see FormBase::wnd_contextMenu.
         case WM_NCRBUTTONDOWN:
@@ -343,7 +343,7 @@ namespace ClaFi
             m_captionRightPressed = false;
             break;
 
-        // A SIDE BUTTON ACTS AS IT GOES DOWN, and a second press inside the double-click time
+        // **A side button acts as it goes down**, and a second press inside the double-click time
         // arrives as a double click. Each of its messages is answered TRUE, which tells the system
         // the window took it - DefWindowProc would otherwise raise a WM_APPCOMMAND on the release.
         case WM_XBUTTONDOWN:
@@ -382,7 +382,7 @@ namespace ClaFi
 
         case WM_NCHITTEST:
         {
-            // A HINT TAKES NO POINTER, and this is where it says so. WS_EX_TRANSPARENT says the
+            // **A hint takes no pointer**, and this is where it says so. WS_EX_TRANSPARENT says the
             // same thing and one more besides - it holds the window's own painting back until
             // every sibling beneath it has been painted, which starves a hint standing over a
             // form that is repainting under a drag. Said here, the pointer falls through and the
@@ -435,8 +435,8 @@ namespace ClaFi
             break;
         }
 
-        // WM_PAINT IS THE SYSTEM'S, raised by a show or an uncover; it is validated, and whatever
-        // the form has invalidated by then is painted.
+        // WM_PAINT **is the system's**, raised by a show or an uncover; it is validated, and
+        // whatever the form has invalidated by then is painted.
         case WM_PAINT:
         {
             ::PAINTSTRUCT ps;
@@ -570,14 +570,14 @@ namespace ClaFi
             m_form.wnd_char(LOWORD(msg.wParam));
             break;
 
-        // THE SURFACE FOLLOWS THE CLIENT AREA: less the ring, plus the margins. Minimized has no
-        // area and nothing to lay out into. The form marks the whole surface and paints it inside
-        // the call - see FormBase::wnd_resize - so nothing is invalidated after it: that would
-        // post a second whole paint behind the one just made.
+        // **The surface follows the client area**: less the ring, plus the margins. Minimized has
+        // no area and nothing to lay out into. The form marks the whole surface and paints it
+        // inside the call - see FormBase::wnd_resize - so nothing is invalidated after it: that
+        // would post a second whole paint behind the one just made.
         //
-        // A STEP IS COMPOSED BEFORE THE NEXT ONE BEGINS. The paint the form posted arrives ahead
-        // of the next pointer position and waits there for the compositor to show this step, so
-        // every step of a drag begins right after a composition with a whole period ahead of it.
+        // **A step is composed before the next one begins.** The paint the form posted arrives
+        // ahead of the next pointer position and waits there for the compositor to show this step,
+        // so every step of a drag begins right after a composition with a whole period ahead of it.
         // Steps begun at any moment land after the compositor has started its frame as often as
         // not and are shown a frame late, which is a resize that stutters - on a window whose
         // step costs less than a period, where the compositor is what sets the pace. A step that
@@ -594,7 +594,7 @@ namespace ClaFi
             syncShadow(nullptr);
             break;
 
-        // THE SHADOW MOVES FIRST. Placed from the position about to be taken, it reaches the
+        // **The shadow moves first.** Placed from the position about to be taken, it reaches the
         // compositor in the same frame as the window; placed afterwards it trails by one.
         case WM_WINDOWPOSCHANGING:
         {
@@ -614,7 +614,7 @@ namespace ClaFi
             m_form.wnd_posChanged();
             break;
 
-        // THE POSTED PAINT IS THE ONE THAT CLEARS THE FLAG. A paint made directly - update()
+        // **The posted paint is the one that clears the flag.** A paint made directly - update()
         // inside a resize step - leaves the posted one standing, so it is not posted twice.
         case k_paintMessage:
             m_paintScheduled = false;
@@ -630,7 +630,7 @@ namespace ClaFi
 
         case WM_DPICHANGED:
         {
-            // THE SCALE FIRST, THEN THE RECT. The ring is scaled, and the resize the new rect
+            // **The scale first, then the rect.** The ring is scaled, and the resize the new rect
             // sends measures the surface with it; the form's own design follows through
             // wnd_setScalePercent and reframes once more with its new margins.
             const IntRect& r = *(IntRect*)msg.lParam;
@@ -725,7 +725,7 @@ namespace ClaFi
         return IntRect::fromDimensions(surfaceOrigin(), WindowBase::clientRect().dimensions());
     }
 
-    // A WINDOW NOT SHOWN ONLY KEEPS THE FRAME, and applies it on the show. The first design
+    // **A window not shown only keeps the frame**, and applies it on the show. The first design
     // arrives from the form's own constructor, before the form has its content, and a window is
     // placed before it is shown - the placement reads the ring, and the resize it sends tells the
     // form the frame.
@@ -737,7 +737,7 @@ namespace ClaFi
             return;
         }
 
-        // A RING THAT GREW OR SHRANK MOVES THE WINDOW RECT and leaves the geometry where it was.
+        // A ring that grew or shrank moves the window rect and leaves the geometry where it was.
         const FrameMargins band = ring();
         if (band != ringBefore)
         {
@@ -773,17 +773,17 @@ namespace ClaFi
         const IntRect rect = windowRect ? *windowRect : bounds();
         const IntPoint origin = surfaceOrigin();
         m_shadow->moveTo({ rect.left - origin.x, rect.top - origin.y });
-        // SHOWN RIGHT ABOVE ITS OWNER. Showing puts a window at the top of the owner's group, over
-        // a hint or a menu standing in the shadow's band; it is put back under them.
+        // **Shown right above its owner.** Showing puts a window at the top of the owner's group,
+        // over a hint or a menu standing in the shadow's band; it is put back under them.
         if (m_shadow->show(true))
             ::SetWindowPos(m_shadow->handle(), wnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     }
 
-    // THE FRAME IS THE WHOLE SURFACE, and the window shows the part inside its client area: from
-    // the bitmap a CPU backend painted, or from the presenter's frame texture a GPU backend drew
-    // into. The shadow window paints the margins for itself, from the form's painter, and paints
-    // them again on every paint that reaches them: a paint reaching the margins is a size or a
-    // design the shadow has to follow, a theme switch as much as a resize. The window's own area
+    // **The frame is the whole surface**, and the window shows the part inside its client area:
+    // from the bitmap a CPU backend painted, or from the presenter's frame texture a GPU backend
+    // drew into. The shadow window paints the margins for itself, from the form's painter, and
+    // paints them again on every paint that reaches them: a paint reaching the margins is a size or
+    // a design the shadow has to follow, a theme switch as much as a resize. The window's own area
     // is the hole.
     void FormWindow::present(const Graphics::Bitmap* bitmap, const IntRect& dirty)
     {
@@ -820,13 +820,13 @@ namespace ClaFi
         m_shadow->fill(m_form.wnd_shadowPainter(), surface, geometry, area, position, m_alpha);
     }
 
-    // THE DIRTY RECT IS TAKEN BEFORE THE FORM IS CALLED, so what the form invalidates while it
+    // **The dirty rect is taken before the form is called**, so what the form invalidates while it
     // paints - a placement that moved, an animation stepping - is kept for the next paint rather
     // than lost with this one. The presenter goes to the form as the paint's native context: a
     // GPU backend draws on its device, a CPU backend ignores it and hands its bitmap back.
     void FormWindow::paint()
     {
-        // A WINDOW NOBODY CAN SEE IS NOT PAINTED. Nothing it paints reaches the screen, and the
+        // **A window nobody can see is not painted.** Nothing it paints reaches the screen, and the
         // show asks for the whole surface - see WM_SHOWWINDOW.
         if (!::IsWindowVisible(handle()))
             return;
@@ -857,8 +857,8 @@ namespace ClaFi
         present(bitmap, dirty);
     }
 
-    // ONE POSTED MESSAGE FOR ANY NUMBER OF INVALIDATIONS. Posted rather than left to WM_PAINT: a
-    // posted message is taken in its turn among the input, where WM_PAINT waits for an empty
+    // **One posted message for any number of invalidations.** Posted rather than left to WM_PAINT:
+    // a posted message is taken in its turn among the input, where WM_PAINT waits for an empty
     // queue, and the paint it raises covers whatever accumulated by then.
     void FormWindow::schedulePaint()
     {

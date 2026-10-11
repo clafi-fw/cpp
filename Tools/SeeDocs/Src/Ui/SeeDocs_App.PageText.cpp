@@ -159,6 +159,65 @@ namespace SeeDocs_App
         return text;
     }
 
+    // **A mark is written where the look changes between two characters**, not where a marker
+    // stands: a run cut round a link closes its bold and opens it again at one place, and the
+    // words read on as one bold span.
+    std::wstring markdownOf(const Text& text)
+    {
+        const std::wstring& plain = text.plainText();
+        const Text::Markers& markers = text.markers();
+        std::wstring result;
+        std::size_t boldDepth = 0;
+        std::vector<TextStyleId> styles;
+        bool boldOpen = false;
+        bool codeOpen = false;
+        std::size_t next = 0;
+        for (std::size_t at = 0; at <= plain.size(); ++at)
+        {
+            for (; next < markers.size() && markers[next].first <= at; ++next)
+            {
+                const FormatItem& item = markers[next].second;
+                if (const TextOp* op = std::get_if<TextOp>(&item))
+                {
+                    if (*op == TextOp::PushBold)
+                        ++boldDepth;
+                    else if (*op == TextOp::PopBold && boldDepth > 0)
+                        --boldDepth;
+                }
+                else if (const PushTextStyle* push = std::get_if<PushTextStyle>(&item))
+                {
+                    styles.push_back(push->style);
+                }
+                else if (std::holds_alternative<PopTextStyle>(item) && !styles.empty())
+                {
+                    styles.pop_back();
+                }
+            }
+            const bool atEnd = at == plain.size();
+            const bool bold = !atEnd && boldDepth > 0;
+            const bool code = !atEnd
+                && std::ranges::find(styles, TextStyleId::Code) != styles.end();
+            if (codeOpen && !code)
+            {
+                result += k_codeMark;
+                codeOpen = false;
+            }
+            if (boldOpen != bold)
+            {
+                result += k_boldMark;
+                boldOpen = bold;
+            }
+            if (code && !codeOpen)
+            {
+                result += k_codeMark;
+                codeOpen = true;
+            }
+            if (!atEnd)
+                result += plain[at];
+        }
+        return result;
+    }
+
     void writeBlocks(Text& text, const Blocks& blocks, const float indent)
     {
         bool opened = !text.empty();

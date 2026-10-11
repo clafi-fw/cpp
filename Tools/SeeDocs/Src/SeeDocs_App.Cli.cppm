@@ -2,9 +2,9 @@ export module SeeDocs_App.Cli;
 
 import ClaFi.StdLib;
 
-// NOTHING HERE NAMES A PLATFORM. What an entry point keeps is the signature its operating system
-// asks for and the spelling of its arguments; the commands, their arguments and what they print
-// stand here and run over any platform the framework has.
+// **Nothing here names a platform.** What an entry point keeps is the signature its operating
+// system asks for and the spelling of its arguments; the commands, their arguments and what they
+// print stand here and run over any platform the framework has.
 namespace SeeDocs_App
 {
     export using Arguments = std::vector<std::wstring>;

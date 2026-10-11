@@ -4,7 +4,7 @@ import SeeDocs_App.Surface;
 
 import ClaFi.StdLib;
 
-// A PROJECT IS A FOLDER OF ITS OWN. Its properties, the database the scanner writes and the
+// **A project is a folder of its own.** Its properties, the database the scanner writes and the
 // footnotes the pages show stand in it; the sources it documents stand wherever they are - any
 // number of folders, each read as it stands. A project made inside a tree, in the tree's .seedocs
 // folder, is a project all the same, naming its tree as `..`. See README

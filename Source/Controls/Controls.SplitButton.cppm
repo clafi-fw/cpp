@@ -54,14 +54,14 @@ namespace ClaFi::Controls
         /// its availability - an unavailable command greys its own half of the button - and
         /// pressing the strip runs it, by mouse and by the dropdown keys alike.
         ///
-        /// The strip is a DISPLAY presenter: what routes its press is this button, so the
+        /// The strip is a **display** presenter: what routes its press is this button, so the
         /// action is not wired to the strip's own click - see PresenterRole.
         void dropdownAction(Action&);
         [[nodiscard]] const Action* dropdownAction() const { return m_dropdownAction; }
     protected:
         // The strip is a command of its own where one stands behind it, and then it stands whether
-        // or not the face's can be run. A strip handed to OnDropdown drops a list ABOUT the face's
-        // command - the steps behind Undo - so it is half of that command and greys with it.
+        // or not the face's can be run. A strip handed to OnDropdown drops a list **about** the
+        // face's command - the steps behind Undo - so it is half of that command and greys with it.
         [[nodiscard]] bool dropdownActsAlone() const override
         {
             return m_dropdownAction != nullptr;
@@ -133,7 +133,7 @@ namespace ClaFi::Controls
     void SplitButton::adjustPaint(AdjustPaintEvent& event)
     {
         DropdownControlBase::adjustPaint(event);
-        // TWO TARGETS ON ONE FACE, so the surface arrives with the pointer: one at rest would
+        // **Two targets on one face**, so the surface arrives with the pointer: one at rest would
         // draw a single box around both halves, and the seam between them is what has to read.
         // An element passed in is read here or not at all - SplitButtonBase stops short of
         // RichControl.

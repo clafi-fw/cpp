@@ -334,7 +334,7 @@ namespace ClaFi::Controls
             Orientation::VerticalWrap,
             PlaceHolderText{ L"No items" },
             LaneSize{ comboBox.m_itemsLaneSize.value, comboBox.m_itemsLaneSize.sizing },
-            // A SCROLLED BODY KEEPS THE SIZE IT MEASURED. The box states its viewport as a
+            // **A scrolled body keeps the size it measured.** The box states its viewport as a
             // wrapping body's maximum width, and a list measured against a viewport the bar
             // has already taken its strip out of comes back a bar narrower than the window.
             WordWrap::No,
@@ -356,7 +356,7 @@ namespace ClaFi::Controls
         }
         // Sized by its items, so a bar the list needs is room the window grows by. See Controls
         params.form.setAutoFit(AutoFit::Yes);
-        // ASKED OF THE PASS THAT SETTLES THE FORM. A pass measuring what to ask the placement
+        // **Asked of the pass that settles the form.** A pass measuring what to ask the placement
         // for is bounded by nothing, so nothing overruns and there is nothing to scroll yet.
         m_aligned = params.form.onAligned([this](FormAlignedEvent&) {
             scrollToCurrentItem();
@@ -408,7 +408,7 @@ namespace ClaFi::Controls
                 themeMetrics().secondaryWindow,
                 themeMetrics().secondaryWindowShadow,
                 UiElement::Section,
-                // A LIST TALLER THAN THE ROOM IT FELL INTO SCROLLS. The placement cuts the
+                // **A list taller than the room it fell into scrolls.** The placement cuts the
                 // window to the room the side it took had, and the pass that follows is
                 // measured against that window - which is where Auto reads the overrun.
                 ScrollBars::Auto,
@@ -481,8 +481,8 @@ namespace ClaFi::Controls
 
     void ComboBox::adjustPaint(AdjustPaintEvent& event)
     {
-        // A COMBO BOX WEARS A TOOL BUTTON'S COLOURS, and it has to say so itself: the chain above
-        // it names no rule set, so a combo box that states none paints against an empty one.
+        // **A combo box wears a tool button's colours**, and it has to say so itself: the chain
+        // above it names no rule set, so a combo box that states none paints against an empty one.
         // An element passed in is read here or not at all - SplitButtonBase stops short of
         // RichControl.
         ComboBoxBaseClass::adjustPaint(event);

@@ -86,12 +86,12 @@ namespace ClaFi
     protected:
         void documentsFolderChanged() override { rebuild(); }
     private:
-        // A GROUP IS A SECTION THAT CAN BE PUT AWAY. Each expander heads the panel its tiles
+        // **A group is a section that can be put away.** Each expander heads the panel its tiles
         // stand in, and that panel is its body - so the group and what the group holds are one
         // control, and collapsing the header takes the tiles with it. The view reaches items
         // through the whole subtree, so a tile is no less selectable for standing a level deeper.
         //
-        // VerticalAlign::Top IS WHAT LETS A GROUP GROW. A wrapping panel measures itself before
+        // VerticalAlign::Top **is what lets a group grow.** A wrapping panel measures itself before
         // it knows the width it will be handed, so it reports one lane and wraps into as many as
         // it needs once the width arrives - and the group holding it has to follow. A panel
         // aligned Fill has its height dictated from outside and keeps the one lane, cutting off
@@ -171,7 +171,7 @@ namespace ClaFi
             params,
             Orientation::Vertical,
             Spacing{ k_groupSpacing },
-            // WHAT A LIST OF THEMES IS FOR IS PICKING ONE, so a stated selection mode is what
+            // **What a list of themes is for is picking one**, so a stated selection mode is what
             // makes it more than that. Said ahead of the caller's own props, which are read
             // after these and stand in their place - see Props::get.
             SelectionMode::None,
@@ -193,8 +193,8 @@ namespace ClaFi
             event.canFocus = event.item.parent() == &m_userTiles
                 || event.item.parent() == &m_builtInTiles;
         });
-        // ONLY A FILE CAN BE HELD SELECTED. What a selection is asked for here is a command over
-        // the themes - deleting them - and a built-in answers no such command.
+        // **Only a file can be held selected.** What a selection is asked for here is a command
+        // over the themes - deleting them - and a built-in answers no such command.
         onCanSelectItem([this](CanSelectItemEvent& event) {
             event.canSelect = event.item.parent() == &m_userTiles;
         });

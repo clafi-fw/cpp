@@ -35,7 +35,7 @@ namespace Themes_App
         rebuild();
     }
 
-    // THE ROWS NAME RULES BY THEIR PLACE IN THE LIST, so they are built afresh whenever a place
+    // **The rows name rules by their place in the list**, so they are built afresh whenever a place
     // moves.
     void ElementPage::rebuild()
     {

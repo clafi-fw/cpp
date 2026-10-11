@@ -84,7 +84,7 @@ namespace ClaFi
         factorChanged();
     }
 
-    // THE PERCENT THAT WAS STATED, and rounded rather than truncated to get it back. A percent
+    // **The percent that was stated**, and rounded rather than truncated to get it back. A percent
     // becomes a factor by a division with no exact answer in a float - 4 of the 76 values
     // between 75 and 150 are such - so multiplying back lands just under and a truncation loses
     // the last unit. A percent that comes back one low makes setSystemPercent and setAppPercent

@@ -2,7 +2,7 @@ export module ClaFi.Core.System.Serialization;
 
 import ClaFi.StdLib;
 
-// WHY THIS SITS BELOW UiTypes. UiTypes.Rect states its own fields with SerializedField, and
+// **Why this sits below** UiTypes. UiTypes.Rect states its own fields with SerializedField, and
 // UiTypes is what nearly everything else is built on - so the descriptor has to be reachable
 // from under UiTypes rather than from the Dom layer that consumes it. Nothing here may import
 // UiTypes, or the two close a loop.

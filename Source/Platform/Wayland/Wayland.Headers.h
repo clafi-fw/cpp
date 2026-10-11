@@ -13,22 +13,22 @@
 #include <viewporter-client-protocol.h>
 #include <fractional-scale-v1-client-protocol.h>
 #include <cursor-shape-v1-client-protocol.h>
-// THE CLIPBOARD WITHOUT THE KEYBOARD FOCUS. A selection on wl_data_device is announced to the
+// **The clipboard without the keyboard focus.** A selection on wl_data_device is announced to the
 // focused client and to nobody else; this one is announced to whoever made a device, which is what
 // a viewer of the clipboard needs and what an ordinary window has no business asking for.
 #include <ext-data-control-v1-client-protocol.h>
-// WHERE A WINDOW WAS IS THE COMPOSITOR'S TO REMEMBER. A client cannot ask where its window is or
-// put it anywhere; it names the window to a session the compositor keeps, and is put back.
+// **Where a window was is the compositor's to remember.** A client cannot ask where its window is
+// or put it anywhere; it names the window to a session the compositor keeps, and is put back.
 #include <xdg-session-management-v1-client-protocol.h>
-// RAISING A WINDOW IS THE COMPOSITOR'S. The client asks for a token against the input event that
-// wanted the raise, and hands it back naming the window.
+// **Raising a window is the compositor's.** The client asks for a token against the input event
+// that wanted the raise, and hands it back naming the window.
 #include <xdg-activation-v1-client-protocol.h>
-// A WINDOW'S OPACITY IS THE COMPOSITOR'S TO APPLY, as a multiplier on the surface.
+// **A window's opacity is the compositor's to apply**, as a multiplier on the surface.
 #include <alpha-modifier-v1-client-protocol.h>
-// ANOTHER CLIENT PARENTS A WINDOW OF ITS OWN BY A HANDLE - the portal's file chooser among them.
-// The compositor names a toplevel by one while the client keeps it exported.
+// **Another client parents a window of its own by a handle** - the portal's file chooser among
+// them. The compositor names a toplevel by one while the client keeps it exported.
 #include <xdg-foreign-unstable-v2-client-protocol.h>
-// THE LAYER SHELL NAMES AN ARGUMENT "namespace", which C accepts and C++ cannot, and the
+// **The layer shell names an argument** "namespace", which C accepts and C++ cannot, and the
 // generated header is C. It reads as namespace_ for the length of the include; nothing else
 // in that header spells the word outside a comment.
 #define namespace namespace_

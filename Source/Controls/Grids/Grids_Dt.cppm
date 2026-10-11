@@ -410,7 +410,7 @@ namespace ClaFi::Controls::Grids::Dt
 }
 
 // =========================================================================
-// IMPLEMENTATIONS
+// **Implementations**
 // =========================================================================
 
 namespace ClaFi::Controls::Grids::Dt

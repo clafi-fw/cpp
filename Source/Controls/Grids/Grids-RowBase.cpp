@@ -359,8 +359,8 @@ namespace ClaFi::Controls::Grids
 
         const float snapThreshhold = gridEvent.radius();
         bool snapToRight = gridEvent.right() - cellRect.right <= snapThreshhold;
-        // bottom snapThreshhold MUST be less than a separator size,
-        // in case there's one at the very bottom, so it's a < and NOT <=
+        // bottom snapThreshhold **must** be less than a separator size,
+        // in case there's one at the very bottom, so it's a < and **not** <=
         bool snapToBottom = gridEvent.bottom() - cellRect.bottom < snapThreshhold;
 
         bool isfirstVisibleSection = isFirstRow
@@ -395,15 +395,15 @@ namespace ClaFi::Controls::Grids
         const bool drawsVertical = (alwaysDrawLines || m_descriptor.drawsVerticalLines()) && !snapToRight;
         const bool drawsHorizontal = (alwaysDrawLines || m_descriptor.drawsHorizontalLines()) && !snapToBottom;
         cellFrame.sides = { drawsHorizontal, drawsVertical, drawsHorizontal, drawsVertical };
-        // A ROW PAINTS NO SURFACE OF ITS OWN, SO ITS CELLS ARE IT, and the fill is
+        // **A row paints no surface of its own, so its cells are it**, and the fill is
         // unconditional. What a cell stands on is the row's surface: what the row inherited from
         // whatever holds it, with the row's own rules over that - GridRow's Selected rule among
         // them.
         //
         // Unconditional because the colour a row inherits is as much a colour it has to paint as
         // one it states itself. A row standing in a group that holds the selection states nothing
-        // of its own, and a fill made conditional on the ROW having moved the surface would drop
-        // exactly that case.
+        // of its own, and a fill made conditional on the **row** having moved the surface would
+        // drop exactly that case.
         const Hsl bgHsl = event.surfaceHsl();
         event.canvas().fillPartialRoundedRectangle(cellFrame, bgHsl.toColor());
         // Each side drawn is half a line, inside the bounds, and the cell across the edge draws
@@ -480,14 +480,14 @@ namespace ClaFi::Controls::Grids
         });
     }
 
-    // A CELL SAYS WHAT ITS COLUMN IS TOO NARROW TO SHOW, which is the over-text hint
+    // **A cell says what its column is too narrow to show**, which is the over-text hint
     // Control::nestedGetHint offers for a control's own text - see that one for the shape of the
     // answer. A row draws its cells rather than holding a control per cell, so the question is
     // asked of the row about one of its cells, and every part of the answer is worked out here
     // rather than read off what a paint recorded.
     void RowBase::nestedGetHint(GetHintEvent& event)
     {
-        // ONLY THE ROW THE HOVER NAMES ANSWERS. The walk that asks this climbs from the control
+        // **Only the row the hover names answers.** The walk that asks this climbs from the control
         // under the pointer, so a row holding the hovered one is asked in its turn - and the
         // cells it would answer about are not the ones the pointer stands on.
         if (m_descriptor.hoveredRow() != this)
@@ -503,8 +503,8 @@ namespace ClaFi::Controls::Grids
         if (cellRect.empty())
             return;
 
-        // THE CELL'S OWN HINT FIRST. Whoever answers for the cell's text may answer for its hint
-        // the same way, and the anchor is set ahead so a placement against the cell needs
+        // **The cell's own hint first.** Whoever answers for the cell's text may answer for its
+        // hint the same way, and the anchor is set ahead so a placement against the cell needs
         // nothing more. Only a cell nobody spoke for goes on to repeat the words its column cut.
         event.anchorRect = cellRect;
         GetCellHintEvent cellEvent{ *this, *hoveredColumn, event };
@@ -531,7 +531,7 @@ namespace ClaFi::Controls::Grids
         // above. Reached only once a hint is going up, so the second gather costs a hover.
         doGetCellText(*hoveredColumn, event.text);
         event.format = cellTextFormat(*hoveredColumn);
-        // THE HINT STANDS ON THE GLYPHS, NOT ON THE BOX THEY WERE GIVEN. The column's vertical
+        // **The hint stands on the glyphs, not on the box they were given.** The column's vertical
         // anchor moves the block inside that box - paintCell states the same anchor - and the
         // placement lands the hint's own first glyph on this rect's top left. The width is the
         // box's, which is the width the lines were broken at.
@@ -552,11 +552,11 @@ namespace ClaFi::Controls::Grids
     {
         if (&event.control != this)
             return;
-        // WHAT A GRID ROW IS SELECTED BY IS THE CELL SELECTION - the row holding the selected
+        // **What a grid row is selected by is the cell selection** - the row holding the selected
         // cell, and every row that row is nested in, a group row included - and the grid's own
         // selection where it holds several rows. Never the container's current item.
         //
-        // THE WALK ENDS HERE, and it has to. `Control::state()` runs leaf to root and the last
+        // **The walk ends here**, and it has to. `Control::state()` runs leaf to root and the last
         // writer wins; a grid is an ActiveContainer, so `StackBase::getControlState` above
         // answers for its items with `m_currentItem == item` and would replace this. That answer
         // is true of the one row the user last landed on and false of every row that merely holds
@@ -648,10 +648,10 @@ namespace ClaFi::Controls::Grids
         LaneBase::nestedClick(event);
     }
 
-    // A LINK IS WHAT THE MENU IS ABOUT where one stands under the pointer or, from the keyboard,
-    // in the selected cell. Only the row the request was raised on answers - it passes through
-    // every row on the way up. A handler that has shown the link's menu stops the request; one
-    // that has not leaves it to go on up as from anywhere else on the row.
+    // **A link is what the menu is about** where one stands under the pointer or, from the
+    // keyboard, in the selected cell. Only the row the request was raised on answers - it passes
+    // through every row on the way up. A handler that has shown the link's menu stops the request;
+    // one that has not leaves it to go on up as from anywhere else on the row.
     void RowBase::nestedContextPopup(ContextPopupEvent& event)
     {
         if (event.control == this)

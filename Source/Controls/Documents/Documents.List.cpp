@@ -88,7 +88,7 @@ namespace ClaFi::Documents
         m_fileNameToSelect = fileName;
     }
 
-    // THE FILE NAME IS WHAT THE LIST COMES BACK TO, not the tile: every tile here is taken down
+    // **The file name is what the list comes back to**, not the tile: every tile here is taken down
     // and built again, and a document is the same document under the same name.
     void DocumentsList::rebuild()
     {

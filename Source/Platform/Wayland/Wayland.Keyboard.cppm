@@ -113,7 +113,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // compositor put a number on.
         xkb_keycode_t m_repeatKey{ XKB_KEYCODE_INVALID };
         InputStamp m_repeatStamp{};
-        // Whether the repeater has fired for this key yet. Its first firing IS the press; the
+        // Whether the repeater has fired for this key yet. Its first firing **is** the press; the
         // ones after it are the repeats.
         bool m_repeatFired{ false };
         bool m_repeatEnabled{ true };
@@ -134,9 +134,10 @@ namespace ClaFi::PlatformImplementation::Wayland
     // An xkb keycode is the evdev code plus this, by the X convention xkbcommon keeps.
     constexpr std::uint32_t k_evdevOffset = 8;
 
-    // THE KEYS THAT ARE NAMED RATHER THAN PRINTED, by the keysym the state answers for them. That
-    // keysym is the one WITH the modifiers, and deliberately: the keypad's 7 is Home without Num
-    // Lock and a digit with it, and Win32 names each press by what it is at that moment.
+    // **The keys that are named rather than printed**, by the keysym the state answers for them.
+    // That keysym is the one **with** the modifiers, and deliberately: the keypad's 7 is Home
+    // without Num Lock and a digit with it, and Win32 names each press by what it is at that
+    // moment.
     [[nodiscard]] KeyCode namedKey(xkb_keysym_t keysym)
     {
         if (keysym >= XKB_KEY_KP_0 && keysym <= XKB_KEY_KP_9)
@@ -255,7 +256,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         return 0;
     }
 
-    // WHAT IS PRINTED ON THE KEY in one layout: its first level, which is the key with nothing
+    // **What is printed on the key** in one layout: its first level, which is the key with nothing
     // held. Shift and AltGr change what the key types and not what it is, so the level with them
     // is never read here.
     [[nodiscard]] KeyCode printedKey(xkb_keymap* keymap, xkb_keycode_t keycode,
@@ -273,7 +274,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         return 0;
     }
 
-    // THE KEY BY WHERE IT IS, read as a US keyboard, which is what Win32's OEM codes name. The
+    // **The key by where it is**, read as a US keyboard, which is what Win32's OEM codes name. The
     // last resort, for a key no layout of the keymap puts a Latin letter on.
     [[nodiscard]] KeyCode positionKey(std::uint32_t evdevCode)
     {
@@ -468,8 +469,8 @@ namespace ClaFi::PlatformImplementation::Wayland
             m_state = ::xkb_state_new(m_keymap);
     }
 
-    // THE MASKS ARE TAKEN AS STATED AND NEVER WORKED OUT FROM THE KEYS. The compositor is the one
-    // that knows which modifiers are held - a Shift pressed before this window had the keyboard
+    // **The masks are taken as stated and never worked out from the keys.** The compositor is the
+    // one that knows which modifiers are held - a Shift pressed before this window had the keyboard
     // was never seen here as a key - so the state is updated from its word and a key event never
     // touches it.
     void Keyboard::setModifiers(std::uint32_t depressed, std::uint32_t latched, std::uint32_t locked,
@@ -499,7 +500,7 @@ namespace ClaFi::PlatformImplementation::Wayland
 
         const xkb_keycode_t keycode = evdevCode + k_evdevOffset;
 
-        // A KEY THAT DOES NOT REPEAT IS DELIVERED AND FORGOTTEN, and leaves a repeat in flight
+        // **A key that does not repeat is delivered and forgotten**, and leaves a repeat in flight
         // alone: Shift pressed while a letter is held does not end the letter, it capitalises
         // the repeats that follow. Any other key takes the repeat over, which is what a second
         // key does under every display server.
@@ -574,13 +575,13 @@ namespace ClaFi::PlatformImplementation::Wayland
 
     wchar_t Keyboard::characterFor(xkb_keycode_t keycode, xkb_keysym_t keysym, KeyCode key)
     {
-        // ALT TYPES NOTHING. Win32 turns a letter pressed with Alt into WM_SYSCHAR, which no
+        // **Alt types nothing.** Win32 turns a letter pressed with Alt into WM_SYSCHAR, which no
         // window of the framework reads as text, and a menu accelerator that also typed its letter
         // would be one no text box could stand in front of.
         if (m_modifiers.alt)
             return 0;
 
-        // CTRL TYPES A CONTROL CODE OR NOTHING. WM_CHAR delivers Ctrl+C as 0x03 whatever the
+        // **Ctrl types a control code or nothing.** WM_CHAR delivers Ctrl+C as 0x03 whatever the
         // layout, and the framework's text boxes count on it: the shortcut takes the key and the
         // character that follows is unprintable. Read from the layout instead, Ctrl+C under a
         // Cyrillic layout is the letter es, which a text box would happily type after the copy.
@@ -593,10 +594,10 @@ namespace ClaFi::PlatformImplementation::Wayland
             return control ? static_cast<wchar_t>(codePoint) : 0;
         }
 
-        // THE DEAD KEYS. A keysym fed to the compose state either starts or continues a sequence,
-        // which types nothing yet; completes one, which types the composed character; breaks one,
-        // which drops the sequence and types the key itself; or is no part of any, and types
-        // itself.
+        // **The dead keys.** A keysym fed to the compose state either starts or continues a
+        // sequence, which types nothing yet; completes one, which types the composed character;
+        // breaks one, which drops the sequence and types the key itself; or is no part of any, and
+        // types itself.
         if (m_composeState
             && ::xkb_compose_state_feed(m_composeState, keysym) == XKB_COMPOSE_FEED_ACCEPTED)
         {
@@ -636,12 +637,12 @@ namespace ClaFi::PlatformImplementation::Wayland
         const bool isRepeat = m_repeatFired;
         m_repeatFired = true;
 
-        // TRANSLATED AGAIN ON EVERY REPEAT, against the modifiers held now. A letter held while
+        // **Translated again on every repeat**, against the modifiers held now. A letter held while
         // Shift goes down starts repeating its capital, which is what the keyboard on the desk
         // does.
         const KeyPress press = translate(m_repeatKey, isRepeat, m_repeatStamp);
 
-        // A DEAD KEY DOES NOT REPEAT. Held, it is one accent waiting for one letter; fed to the
+        // **A dead key does not repeat.** Held, it is one accent waiting for one letter; fed to the
         // compose state again it would cancel itself.
         if (m_composeState
             && ::xkb_compose_state_get_status(m_composeState) == XKB_COMPOSE_COMPOSING)

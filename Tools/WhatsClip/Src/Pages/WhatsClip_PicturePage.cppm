@@ -22,7 +22,7 @@ namespace ClaFi::Tools::WhatsClip
 {
     using namespace Controls;
 
-    // THE PIXELS A FORMAT DECODES TO. The strip says how many; the corner reads the selected
+    // **The pixels a format decodes to.** The strip says how many; the corner reads the selected
     // pixel's place, then its colour as a swatch and a value whose digits wear their channel's
     // colour, with the spelling behind the strip of that button and the editor behind its face;
     // the zoom stands at the right end of the strip above. The pixel itself carries those same two

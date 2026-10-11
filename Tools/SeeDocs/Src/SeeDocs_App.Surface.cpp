@@ -521,9 +521,9 @@ namespace SeeDocs_App
         }
     }
 
-    // AN INCLUDE PUTS THE HEADER'S TEXT WHERE IT STANDS, so a header written to be included from
-    // inside a namespace declares into that one, and its own namespaces stand inside it - as do
-    // the headers it includes in turn. The first include reaching a header decides.
+    // **An include puts the header's text where it stands**, so a header written to be included
+    // from inside a namespace declares into that one, and its own namespaces stand inside it - as
+    // do the headers it includes in turn. The first include reaching a header decides.
     void Surface::encloseIncludes()
     {
         std::set<std::size_t> enclosed;
@@ -576,8 +576,8 @@ namespace SeeDocs_App
         }
     }
 
-    // THE NAMESPACE A HEADER RE-PUBLISHES FROM IS ITS LIBRARY'S IMPLEMENTATION: what the library
-    // means to be used it names again where a reader is to find it, and the rest of that
+    // **The namespace a header re-publishes from is its library's implementation**: what the
+    // library means to be used it names again where a reader is to find it, and the rest of that
     // namespace, and of every namespace inside it, is how it is made.
     void Surface::republish()
     {

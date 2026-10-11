@@ -104,7 +104,7 @@ namespace ClaFi::Controls
         if (m_bytes.empty())
             return;
 
-        // ONE FORMAT OUT. The digits are what survives the crossing: an application that has
+        // **One format out.** The digits are what survives the crossing: an application that has
         // never heard of this one reads them as text, and they read back as the bytes they are.
         Transfer::Source source{};
         source.add<Transfer::PlainText>(selectionAsHex());
@@ -187,7 +187,7 @@ namespace ClaFi::Controls
         if (visible.empty())
             return;
 
-        // THE LINES THE VIEWPORT REACHES AND NO OTHERS. The bound is taken before a line is
+        // **The lines the viewport reaches and no others.** The bound is taken before a line is
         // built, so what a paint costs is set by the size of the view and not by the size of the
         // buffer behind it.
         const float firstLine = std::max(0.0f,
@@ -303,7 +303,7 @@ namespace ClaFi::Controls
         if (editEvent.propagationStopped())
             return;
 
-        // NO COMMAND STRIP. The strip across the top of a menu compresses a long edit menu into
+        // **No command strip.** The strip across the top of a menu compresses a long edit menu into
         // icons, and two commands have nothing to compress - see TextBox::nestedContextPopup, which
         // has seven.
         Menu menu{ *this };
@@ -450,7 +450,7 @@ namespace ClaFi::Controls
             return Hit{ std::min(lineStart + indexInLine, lineLast), HexPane::Characters };
         }
 
-        // EVERYTHING LEFT OF THE CHARACTERS NAMES A BYTE IN THE DIGITS. The offset column and
+        // **Everything left of the characters names a byte in the digits.** The offset column and
         // both gaps round to the byte nearest them, so a press anywhere on the line lands on one
         // rather than falling through to nothing.
         const int bytesStart = byteColumn(0, HexPane::Bytes);
@@ -573,7 +573,7 @@ namespace ClaFi::Controls
         m_lineText << PopColor{};
         m_lineText << L"  ";
 
-        // A BYTE OF NOTHING IS DRAWN BACK TOWARDS THE SURFACE, so what the buffer carries is
+        // **A byte of nothing is drawn back towards the surface**, so what the buffer carries is
         // what the eye finds first. The runs of zeroes a structure is padded with are most of
         // what a dump shows, and reading them at full strength is reading the padding.
         bool dimmed = false;
@@ -671,7 +671,7 @@ namespace ClaFi::Controls
             fillRun(selectedFrom, selectedTo - 1, HexPane::Characters, band);
         }
 
-        // THE POINTER'S BYTE IS MARKED IN BOTH COLUMNS AT ONCE, which is the whole of what says
+        // **The pointer's byte is marked in both columns at once**, which is the whole of what says
         // that the digits and the character beside them are one byte. Inside the selection there
         // is a band there already, and a second mark over it would read as a third state.
         const bool hoveredHere = m_hovered

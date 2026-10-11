@@ -2,8 +2,8 @@ import Themes_App.Main;
 
 import ClaFi.Platform.Windows;
 
-// THE WHOLE OF WHAT THIS PROJECT KNOWS ABOUT WINDOWS: the entry point the operating system calls,
-// the instance handle it hands over, and the two types the application is built out of. The
+// **The whole of what this project knows about Windows**: the entry point the operating system
+// calls, the instance handle it hands over, and the two types the application is built out of. The
 // application itself is in Themes_App.Main and names neither.
 int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, wchar_t* /*lpCmdLine*/, int /*nCmdShow*/)
 {

@@ -32,9 +32,9 @@ namespace ClaFi::Controls
         /// The part whatever its state, which is what a control that shows and hides one holds it
         /// by.
         [[nodiscard]] Control* secondaryPart() const { return m_secondaryPart; }
-        /// The part, when there is one and it is shown. A PART THAT IS NOT SHOWN IS NOT THERE: it
-        /// takes no room on either axis, nothing is laid out against it, and no press lands on it.
-        /// Every reader that asks what the control's face is made of asks this one.
+        /// The part, when there is one and it is shown. **A part that is not shown is not there**:
+        /// it takes no room on either axis, nothing is laid out against it, and no press lands on
+        /// it. Every reader that asks what the control's face is made of asks this one.
         [[nodiscard]] Control* shownSecondaryPart() const;
     protected:
         /// Creates the part and hands it to ButtonBase to own. A member initializer is the usual

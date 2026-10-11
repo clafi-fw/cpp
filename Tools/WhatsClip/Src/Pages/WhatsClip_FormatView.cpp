@@ -73,7 +73,7 @@ namespace ClaFi::Tools::WhatsClip
         if (!page || std::ranges::find(m_readPages, page) != m_readPages.end())
             return;
 
-        // ASKED FOR AGAIN RATHER THAN KEPT, for the reason the Viewer asks again: an offer
+        // **Asked for again rather than kept**, for the reason the Viewer asks again: an offer
         // belongs to Transfer and is freed the moment anything else reads a clipboard that has
         // moved on, so the one show was handed is not a thing to hold on to.
         Transfer::Offer* offer = formContext().clipboard().offer();
@@ -84,7 +84,7 @@ namespace ClaFi::Tools::WhatsClip
         m_readPages.push_back(page);
     }
 
-    // A VIEW OFFERING ONE REPRESENTATION OFFERS NO CHOICE, so it writes none: a handle format
+    // **A view offering one representation offers no choice**, so it writes none: a handle format
     // would otherwise make Handle the presentation to browse in, and every format after it would
     // be left showing whatever it already had. The same test covers the view while it is still
     // being built, its first page arriving before there is a second to pick between.

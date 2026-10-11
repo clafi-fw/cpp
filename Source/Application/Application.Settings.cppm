@@ -87,7 +87,7 @@ namespace ClaFi
         void writeZAnimationReadout();
 #endif
     private:
-        // EVERY OPTION THE PAGE HOLDS, ON ONE BOX THAT SCROLLS. The sections are expanders on
+        // **Every option the page holds, on one box that scrolls.** The sections are expanders on
         // this column and nothing inside it scrolls on its own, so a group opened past the foot
         // of the menu is reached by scrolling the page rather than through a bar of its own.
         ScrollBoxWith<OptionsPage>& m_optionsBox;

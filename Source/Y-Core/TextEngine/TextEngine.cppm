@@ -269,11 +269,12 @@ namespace ClaFi
         // way to find them and not proof of anything, so each is asked what it was built from -
         // two texts landing on one key would otherwise draw the wrong words.
         //
-        // ADDRESSED BY WHAT A TEXT SAYS, never by which text it is. That is what lets two controls
-        // saying the same thing share one shaping, and what a caller whose answer is composed anew
-        // for every paint needs - such a text is a different object each time and would match
-        // nothing by identity. A ControlText's stamp is for a reader holding ONE text across time,
-        // which is what a control does with its own and what this cache never does.
+        // **Addressed by what a text says**, never by which text it is. That is what lets two
+        // controls saying the same thing share one shaping, and what a caller whose answer is
+        // composed anew for every paint needs - such a text is a different object each time and
+        // would match nothing by identity. A ControlText's stamp is for a reader holding **one**
+        // text across time, which is what a control does with its own and what this cache never
+        // does.
         auto found = m_layouts.find(key);
         if (found != m_layouts.end())
         {
@@ -438,9 +439,9 @@ namespace ClaFi
     }
 
     // The paragraph a position stands in, from the start of the text or the newline before it, up
-    // to and INCLUDING the newline that ends it. The newline is part of what a paragraph is here:
-    // a selection that leaves it behind cuts the text and leaves an empty row where it was, and
-    // pastes back as a fragment rather than as a paragraph.
+    // to and **including** the newline that ends it. The newline is part of what a paragraph is
+    // here: a selection that leaves it behind cuts the text and leaves an empty row where it was,
+    // and pastes back as a fragment rather than as a paragraph.
     TextRange TextEngine::paragraphAt(const Text& text, std::size_t pos)
     {
         const std::wstring& raw = text.plainText();
@@ -449,8 +450,8 @@ namespace ClaFi
         if (pos > raw.length())
             pos = raw.length();
 
-        // Searched from the character BEFORE the position: a position sits between characters, and
-        // the newline the paragraph opens after is the one to the left of it.
+        // Searched from the character **before** the position: a position sits between characters,
+        // and the newline the paragraph opens after is the one to the left of it.
         std::size_t start = pos ? raw.rfind(L'\n', pos - 1) : std::wstring::npos;
         start = start == std::wstring::npos ? 0 : start + 1;
 

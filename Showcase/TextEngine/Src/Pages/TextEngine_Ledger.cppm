@@ -16,8 +16,8 @@ namespace TextEngine_App
     // a fixed space, a flex space. A page of source carries none of those, so a cost that scales
     // with them shows here and nowhere else in the showcase.
     //
-    // WHAT IT SAYS is a logic puzzle of the Einstein kind, at a length no puzzle should reach: an
-    // opening that states the cast and how to read a round, rounds of numbered clues, and a
+    // **What it says** is a logic puzzle of the Einstein kind, at a length no puzzle should reach:
+    // an opening that states the cast and how to read a round, rounds of numbered clues, and a
     // closing that claims the thing is solved and answers by reference rather than by naming
     // anyone. The two ends are written once and are built line by line; a round is a table of
     // fifty and is repeated. Clue numbers run across the whole document, so a clue in the last

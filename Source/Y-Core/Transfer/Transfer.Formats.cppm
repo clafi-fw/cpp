@@ -5,14 +5,14 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Transfer
 {
-    // THE FRAMEWORK'S OWN FORMATS, what a paste asks for. See Transfer
+    // **The framework's own formats**, what a paste asks for. See Transfer
     export enum class StandardFormat
     {
         Text,
         Picture
     };
 
-    // WHICH FORMAT, at runtime. See Transfer
+    // **Which format**, at runtime. See Transfer
     export class Format
     {
     public:

@@ -41,7 +41,7 @@ namespace ClaFi::Tools::WhatsClip
         m_question.setVisible(false);
     }
 
-    // WHAT IS ON THE CLIPBOARD, AS TEXT: the format's own bytes, read in the encoding picked in
+    // **What is on the clipboard, as text**: the format's own bytes, read in the encoding picked in
     // the corner, controls marked - see decode. Every format is a platform format here, its
     // bytes as they arrived - CF_UNICODETEXT's UTF-16 beside CF_TEXT's ANSI - so every one
     // goes through the pick. The framework's rich text comes out as the ClaFi it travels as,
@@ -90,7 +90,7 @@ namespace ClaFi::Tools::WhatsClip
         showReading(decode(m_bytes, *m_format), m_byteCount, L"bytes");
     }
 
-    // THE BOX IS EMPTIED rather than left showing the last format's text under a question about
+    // **The box is emptied** rather than left showing the last format's text under a question about
     // this one's, and it names no format, so the language is judged from nothing.
     void TextPage::showHeldBack()
     {

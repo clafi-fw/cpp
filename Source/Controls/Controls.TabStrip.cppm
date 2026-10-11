@@ -766,7 +766,7 @@ namespace ClaFi::Controls
             if (tab != selItem)
                 event.paintChild(*tab);
 
-        // --- DYNAMIC OVERLAY PASS-THROUGH ---
+        // --- **Dynamic overlay pass-through** ---
         // Paint the selected item if we are in the overlay stage,
         // or if there is no overlay host managing it.
         if (selItem && (event.overlayStage() || !event.overlayHost()))

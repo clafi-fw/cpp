@@ -766,7 +766,7 @@ namespace SeeDocs_App
         });
     }
 
-    // THE CELL SHOWS MORE THAN THE COMMENT HOLDS - its types linked, a missing hint marked, an
+    // **The cell shows more than the comment holds** - its types linked, a missing hint marked, an
     // event's payload named after it - so the editor opens on the comment's own words.
     void PageView::connectHintCell(Grids::Row& gridRow, const TableRow& row,
         const TagValue hintColumn)
@@ -874,8 +874,8 @@ namespace SeeDocs_App
         footnote.slot->edit(*m_writer, m_writer->draftFootnote(footnote.excerpt->from));
     }
 
-    // A FOOTNOTE NOT WRITTEN YET STANDS UNDER THE TABLE only while its editor does: written, the
-    // page is built again with it; left, its slot goes.
+    // **A footnote not written yet stands under the table** only while its editor does: written,
+    // the page is built again with it; left, its slot goes.
     void PageView::addFootnote(const TableRow& row, Stack& notes)
     {
         if (!canAddFootnote(row))
@@ -926,8 +926,9 @@ namespace SeeDocs_App
             each();
     }
 
-    // A LINK IS ANSWERED BY WHOEVER SHOWS THE PAGE, a footnote's as much as a page's: a footnote
-    // is an anchor of the page, and where a tab stands is the browser's to record. See Browser
+    // **A link is answered by whoever shows the page**, a footnote's as much as a page's: a
+    // footnote is an anchor of the page, and where a tab stands is the browser's to record.
+    // See Browser
     void PageView::connectLinks(Grids::Grid& grid)
     {
         grid.onCellLinkClick([this](Grids::CellLinkClickEvent& event) {
@@ -955,19 +956,20 @@ namespace SeeDocs_App
         emitEvent(event);
     }
 
-    // A COMMAND IS ANSWERED BY WHOEVER SHOWS THE PAGE, as a link is: what it is about was spelled
-    // by whoever built the page, and the page may be one of the things its answer takes down.
+    // **A command is answered by whoever shows the page**, as a link is: what it is about was
+    // spelled by whoever built the page, and the page may be one of the things its answer takes
+    // down.
     void PageView::ask(std::wstring target)
     {
         PageCommandEvent event{ std::move(target) };
         emitEvent(event);
     }
 
-    // THE MENU NAMES TWO COMMANDS AND SETTLES NEITHER: Open and Open in new tab are the browser's,
-    // answered against the path this page names - the link the menu is up for, held for exactly
-    // that long, so a target the surface does not carry arrives greyed. An anchor of the page is
-    // a move on the page standing, and no menu is made for one. Stopped before the menu runs, so
-    // nothing above raises a second menu behind it. See Browser
+    // **The menu names two commands and settles neither**: Open and Open in new tab are the
+    // browser's, answered against the path this page names - the link the menu is up for, held for
+    // exactly that long, so a target the surface does not carry arrives greyed. An anchor of the
+    // page is a move on the page standing, and no menu is made for one. Stopped before the menu
+    // runs, so nothing above raises a second menu behind it. See Browser
     void PageView::showLinkMenu(Control& owner, std::wstring target, ContextPopupEvent& event)
     {
         if (target.starts_with(k_anchorPrefix))

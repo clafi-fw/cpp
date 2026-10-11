@@ -28,12 +28,12 @@ namespace ClaFi
 
     void FocusNavigator::formKeyDown(KeyDownEvent& event)
     {
-        // NAVIGATION IS WITHIN THE FORM THE KEY WAS DELIVERED TO, and the focus is one per
+        // **Navigation is within the form the key was delivered to**, and the focus is one per
         // application rather than one per form - so a form that has not taken it sees a control
         // in another window. Starting there searches a tree this form has nothing to do with:
         // a menu shown over a text box is opened with the focus still on the box, and its very
         // first move - the emulated Tab that gives the menu its first item - walked the form
-        // BEHIND it and focused whatever stood after the box there. It reached the menu at all
+        // **behind** it and focused whatever stood after the box there. It reached the menu at all
         // only when that walk found nothing and fell through to the wrap.
         //
         // The same case as no focus at all, and it has the same answer. Nothing has been focused
@@ -77,7 +77,7 @@ namespace ClaFi
             key = isReverse ? Keys::Left : Keys::Right;
             entryEdge = isReverse ? ScrollDirection::ToEnd : ScrollDirection::ToBegin;
 
-            // Tab leaves a container as a whole, so the walk starts AT the container rather
+            // Tab leaves a container as a whole, so the walk starts **at** the container rather
             // than at the item inside it - a grid or a list is one stop, not one stop per cell.
             //
             // The form is a container too, and it is the one that cannot be left: there is
@@ -355,8 +355,8 @@ namespace ClaFi
         Control* bestCandidate = nullptr;
         Score bestScore;
 
-        // THE WALK IS AROUND THE SOURCE, NOT THE VIEWPORT, AND IN THE SPACE THE CONTROLS WERE
-        // LAID OUT IN. A source the scroll has carried off the screen still has its neighbours,
+        // **The walk is around the source, not the viewport, and in the space the controls were
+        // laid out in.** A source the scroll has carried off the screen still has its neighbours,
         // and they are what a key from it reaches - the row after the first, not the first row
         // the screen happens to show. A screenful each way reaches the next stop from any source,
         // and a page press, whose source is the rect it projected, the stop past that. A held

@@ -65,12 +65,12 @@ namespace ClaFi
     public:
         ActionClickEvent(const Action&, Control* subject, Control* presenter, FormBase&, InputStamp);
         FormBase& form;
-        // WHAT SHOWED THE COMMAND that was run - the toolbar button, the menu item - or null for
-        // a shortcut, which was shown by nothing. A handler raising a question of its own owns it
-        // by this, so the question stands where the user pressed and on top of whatever the press
-        // came from, rather than over a control the user is not looking at.
+        // **What showed the command** that was run - the toolbar button, the menu item - or null
+        // for a shortcut, which was shown by nothing. A handler raising a question of its own owns
+        // it by this, so the question stands where the user pressed and on top of whatever the
+        // press came from, rather than over a control the user is not looking at.
         Control* presenter;
-        // WHAT THE USER DID TO RUN IT, as the display server states it. A handler making a
+        // **What the user did to run it**, as the display server states it. A handler making a
         // request the server has to authorise - taking the clipboard, raising a menu that takes
         // the pointer - names this. Empty where the command was not run by a person: an action
         // the application invoked for itself has no press and no key behind it.
@@ -123,7 +123,7 @@ namespace ClaFi
         // What answers for this action in that form, or null when nothing up the focus chain
         // claimed it and the action answers for itself. Asked, never stored: two calls a frame
         // apart may answer differently.
-        // The presenter is what is ASKING, where something is - a button showing this command
+        // The presenter is what is **asking**, where something is - a button showing this command
         // wanting to know whether to draw itself available. It is the nearest answer there is to
         // where the command is about to act, and a caller with none - a shortcut - passes none.
         [[nodiscard]] Control* subject(FormBase&, Control* presenter = nullptr) const;
@@ -134,7 +134,7 @@ namespace ClaFi
         }
         // Runs the action, on the subject if there is one. Answers whether it ran - a disabled
         // action refuses, and the key that reached it stays unhandled.
-        // EVERY ARGUMENT IS NAMED. A defaulted stamp reads as an argument nobody has to think
+        // **Every argument is named.** A defaulted stamp reads as an argument nobody has to think
         // about, and what it produces is a command that works from the keyboard and silently does
         // nothing from a menu on any display server that authorises the request.
         bool invoke(FormBase&, Control* presenter, InputStamp);

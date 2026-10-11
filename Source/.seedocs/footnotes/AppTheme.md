@@ -4,14 +4,14 @@ The words that no longer fit above a declaration.
 
 ## WindowShadow
 
-THE SHADOW A WINDOW CASTS, in logical pixels, mirroring Graphics::ShadowParams: blur is
+**The shadow a window casts**, in logical pixels, mirroring Graphics::ShadowParams: blur is
 how far it reaches past the window, offset which way the light falls, spread how much
 wider than the window it starts. Zero opacity or zero blur is no shadow, and a window with
 none keeps no margins for one. All four are metrics, and a theme is colours only, so
 putting a theme on never changes a window's frame. A window casts the shadow its root states as
 a property, and a root stating none casts none.
 
-THE COLOUR IS THE WINDOW ROOT'S SHADOW RULES, taken at this opacity: the Shadow rules of the
+**The colour is the window root's shadow rules**, taken at this opacity: the Shadow rules of the
 element the root wears, then Any Window's, then the shared ones. `BakedColors::windowShadow`
 resolves them for the root - Any Window's alone for a root that wears no element - and
 `FormBase::shadowDesign` hands the colour to the painter.
@@ -29,7 +29,7 @@ nothing here.
 
 ## ThemeRoots
 
-A THEME IS NAMED BY A PATH, and the path is virtual: it stands for a theme, not for a file. Two
+**A theme is named by a path**, and the path is virtual: it stands for a theme, not for a file. Two
 roots, `BuiltIn` and `User`, and a bare name under one of them - `BuiltIn/Default`, `User/Ocean`.
 That is what an application's config holds, and what every route that changes the theme states.
 The path names the colours and not the mode they are worn in, which the config states beside it -
@@ -50,14 +50,14 @@ naming a theme that is no longer there falls back to.
 
 ## ThemeColors
 
-A THEME STATES NO MODE. Once the dark mode floor lifts the dark end, one design reads right at
+**A theme states no mode.** Once the dark mode floor lifts the dark end, one design reads right at
 both, so which end a theme is worn at is no longer the theme's to say: it is the user's, kept in
 the application's config beside the theme's path - see `applyColorMode` in Application. Whatever
 reads a theme at a mode is handed the mode: `bake` and `ThemeColors::rootSurface`.
 
 ## Lightness
 
-WHERE A THEME IS WORN BETWEEN THE TWO POLES, as a float: 0 is Dark, 1 is Light, and anything
+**Where a theme is worn between the two poles**, as a float: 0 is Dark, 1 is Light, and anything
 between is a crossing between the modes part way through. `lightnessOf(ColorMode)` is the one
 place a mode becomes the float, and `colorModeOf` the way back - the pole a lightness stands
 nearer to. `elevationOf` and `luminosityOf` take it in place of the mode - a control's own
@@ -72,8 +72,8 @@ a flat mid-tone, and it is chosen knowing that.
 
 ## DarkModeFloor
 
-WHERE THE DARK END OF THE THEME PUTS ELEVATION 0. There the elevation axis runs from the floor to
-white rather than from black: the luminosity `luminosityOf` would name is taken to
+**Where the dark end of the theme puts elevation** 0. There the elevation axis runs from the floor
+to white rather than from black: the luminosity `luminosityOf` would name is taken to
 `floor + (1 - floor) * luminosity`, so every elevation stays reachable, `elevationOf` stays its
 inverse, and each step a theme states is scaled by `1 - floor`. The floor is taken by
 `1 - lightness`: light mode is left as it is, and a crossing between the modes fades it.
@@ -103,10 +103,10 @@ Themes app's slider stops at 0.5.
 
 ## BakedValue
 
-WHAT A THEME BECOMES SO THAT TWO OF THEM HAVE A HALF WAY. A Theme names one operation per channel
-and the ThemesManager edits it; a baked channel carries every operation at a weight, and the paint
-path reads that. The two are separate types because the file format and the editor stay as they
-are: a Theme is what a person writes, a baked set is what a window is painted from.
+**What a theme becomes so that two of them have a half way.** A Theme names one operation per
+channel and the ThemesManager edits it; a baked channel carries every operation at a weight, and the
+paint path reads that. The two are separate types because the file format and the editor stay as
+they are: a Theme is what a person writes, a baked set is what a window is painted from.
 
 Per channel, in place of the operation and its value:
 
@@ -133,13 +133,13 @@ destination's.
 
 ## Focus ring
 
-THE RING IS THE CONTROL'S OWN STROKE, taken further by the theme's Focus ring list. That list
+**The ring is the control's own stroke**, taken further by the theme's Focus ring list. That list
 reaches every control whose interactivity is not None, whatever element it wears, and it is read
 after the stroke's own chain - the control's rules, its element's, the window's, Any element's.
 Only its stroke rules are read, and only for the control's own stroke: a line a control draws
 through `strokeRgbOn`, a grid cell's or a divider's, does not take the ring.
 
-HOW FAR THE LIST REACHES THE STROKE IS HOW MUCH RING THERE IS. That share thickens the border
+**How far the list reaches the stroke is how much ring there is.** That share thickens the border
 toward `ThemeMetrics::focusedBorder`, and it holds the control's frame out of the surface
 grow-in, since a ring marks the frame and not the surface. The weight is a paint effect, not
 layout.
@@ -160,7 +160,7 @@ ring by editing these rules too.
 
 ## A pigment as a baked theme holds it
 
-A PIGMENT'S HUE IS THE THEME'S AND ITS TONE IS THE INK'S. The harmony answers while a theme is
+**A pigment's hue is the theme's and its tone is the ink's.** The harmony answers while a theme is
 baked, so what a baked set carries per pigment is the hue itself - a value two themes have a half
 way between - and `ColorHarmonyKind` reaches no further than the bake.
 
@@ -172,7 +172,7 @@ them.
 
 ## Found Text
 
-THE BAND BEHIND WHAT A SEARCH HAS FOUND starts from the Yellow pigment's hue over the surface it
+**The band behind what a search has found** starts from the Yellow pigment's hue over the surface it
 is laid on, rather than from that surface's own hue - seedPigmentOf states which element starts
 from which pigment. Its rules then move saturation and elevation the way any band's do, and a rule
 naming a hue still overrides the seed. ControlPaintContext::foundTextRgb resolves it where a
@@ -180,8 +180,9 @@ paragraph holding found ranges is drawn, raised by the inputs of the control dra
 selection band is, and faded on a control that cannot be used. The Themes app seeds its preview of
 the element the same way.
 
-WHERE A SELECTION COVERS A MATCH, the selection is raised over the found band as over any surface
-text sits on. ControlPaintContext::selectedFoundRgb applies FoundText's rules, then SelectedText's,
-then the shared ones once, and each backend paints the result over the part of a match the
-selection covers. A SelectedText rule naming a hue replaces the seed there - the built-in one names
-Palette 2 - while the saturation and lift FoundText gave stay under the selection's offsets.
+**Where a selection covers a match**, the selection is raised over the found band as over any
+surface text sits on. ControlPaintContext::selectedFoundRgb applies FoundText's rules, then
+SelectedText's, then the shared ones once, and each backend paints the result over the part of a
+match the selection covers. A SelectedText rule naming a hue replaces the seed there - the built-in
+one names Palette 2 - while the saturation and lift FoundText gave stay under the selection's
+offsets.

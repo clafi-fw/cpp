@@ -25,7 +25,7 @@ namespace ClaFi::PlatformImplementation::Linux
         ~TimerManager();
         TimerManager(const TimerManager&) = delete;
         TimerManager& operator=(const TimerManager&) = delete;
-        // THE ONE STANDING, or null while the platform holds none. A UiTimer sits below every
+        // **The one standing**, or null while the platform holds none. A UiTimer sits below every
         // context - the animation controller's, a directory watcher's, a control's - so the two
         // hooks in Linux.Timer.cpp reach the manager through this and nothing else; the manager
         // sets it as it is built and clears it as it goes. The platform stands before anything

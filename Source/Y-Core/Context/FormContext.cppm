@@ -146,7 +146,7 @@ namespace ClaFi
         InputStamp stamp;
     };
 
-    // A LENGTH ON EACH EDGE OF A WINDOW, in real pixels. See Context
+    // **A length on each edge of a window**, in real pixels. See Context
     export struct FrameMargins
     {
         int left{};
@@ -180,7 +180,7 @@ namespace ClaFi
         virtual HitTest wnd_hitTest(PointInForm) = 0;
         virtual void wnd_mouseMove(PointInForm) = 0;
         virtual void wnd_ncMouseDown(PointInForm, InputStamp) = 0;
-        // A press on a part of the window the SYSTEM acts on itself - the caption it drags the
+        // A press on a part of the window the **system** acts on itself - the caption it drags the
         // window by, the frame it sizes it from. No position is passed: the form is told that a
         // press landed somewhere it does not own, which is all it can act on.
         //
@@ -199,7 +199,7 @@ namespace ClaFi
         virtual void wnd_keyDown(KeyDownEvent& key) = 0;
         virtual void wnd_keyUp() = 0;
         virtual void wnd_char(wchar_t value) = 0;
-        // THE SURFACE THE BITMAP COVERS, and the frame the platform is applying inside it. The
+        // **The surface the bitmap covers**, and the frame the platform is applying inside it. The
         // window the user sees is the surface less the frame's margins.
         virtual void wnd_resize(IntSize surface, const WindowFrame& frame) = 0;
         // The shadow this form casts, for a platform that draws it from a window of its own.
@@ -218,9 +218,9 @@ namespace ClaFi
     export struct WindowPlacement
     {
         FormPlacement placement{ FormPlacement::Default };
-        // What this window stands on, in the PARENT WINDOW's coordinates. A window raised at the
-        // POINTER names an empty rect where the pointer is, so a placement reads one field for
-        // every kind and never asks where the mouse is. Default states nothing here.
+        // What this window stands on, in the **parent window's** coordinates. A window raised at
+        // the **pointer** names an empty rect where the pointer is, so a placement reads one field
+        // for every kind and never asks where the mouse is. Default states nothing here.
         FloatRect anchorRect{};
         // What the window is asking for: the preferred size where its root states one, and what
         // the content came to where it does not - see ControlMetrics::preferredSize.
@@ -261,10 +261,10 @@ namespace ClaFi
         void invalidateRect(const FloatRect& value) { invalidateRect(value.roundedOut()); }
         void invalidateRect(const IntRect& value) { invalidateRect(&value); }
     public:
-        // WHETHER THIS WINDOW'S ALPHA CHANNEL MEANS ANYTHING. False is the standing answer and the
-        // cheap one: a frame is opaque, nothing clears it, and every pixel is expected to be
-        // covered by whatever draws over it. A window the display server COMPOSITES - one with a
-        // rounded corner, or one that fades - answers true, and its frames then start from
+        // **Whether this window's alpha channel means anything.** False is the standing answer and
+        // the cheap one: a frame is opaque, nothing clears it, and every pixel is expected to be
+        // covered by whatever draws over it. A window the display server **composites** - one with
+        // a rounded corner, or one that fades - answers true, and its frames then start from
         // nothing so that a pixel nobody covered reads as absent rather than as stale.
         [[nodiscard]] virtual bool wantsAlphaChannel() const { return false; }
         virtual void doLoop() = 0;
@@ -284,7 +284,7 @@ namespace ClaFi
         // [[nodiscard]] virtual std::wstring title() = 0;
         virtual void setTitle(const std::wstring_view) = 0;
         virtual void update() = 0;
-        // THE RANGE A USER'S DRAG IS HELD INSIDE: the floor the content states, and the most it
+        // **The range a user's drag is held inside**: the floor the content states, and the most it
         // may ever grow to. Stated whenever a measuring pass changes either, because that pass is
         // what answers both - what holds a window up changes with what is in it. k_maxFloat on an
         // axis is no maximum at all, and zero is no minimum: the system's own default stands.
@@ -293,32 +293,32 @@ namespace ClaFi
         // window's range to the system rather than enforcing it itself - xdg_toplevel's
         // set_min_size and set_max_size - this call is that one.
         //
-        // A RANGE OF ONE SIZE IS A WINDOW THE USER DOES NOT SIZE, which is what a form its
+        // **A range of one size is a window the user does not size**, which is what a form its
         // content sizes states. A dialog given one offers no edge to drag and no maximize, and
         // gets both back with a range the user can move in.
         virtual void setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize) = 0;
-        // THE FRAME THE FORM WANTS, from its theme and scale. The platform keeps it and answers
+        // **The frame the form wants**, from its theme and scale. The platform keeps it and answers
         // with the frame it applies on every resize; a platform that cannot composite a frame
         // answers zero and the form paints none.
         virtual void setFrame(const WindowFrame&) = 0;
-        // PLACES THIS WINDOW ON WHAT IT STANDS ON, and answers what it got. The window is moved
+        // **Places this window on what it stands on**, and answers what it got. The window is moved
         // and sized by this call: which monitor, the room above against the room below, flipping
         // or sliding, and holding the result inside the work area are all the platform's, which
         // is the only layer that can answer them at all.
         virtual PlacedWindow place(const WindowPlacement&) = 0;
-        // WHETHER THE LAST PLACEMENT STOOD THE WINDOW ABOVE ITS ANCHOR - a Top placement held, a
-        // Bottom one flipped for want of room. A window placed on no anchor answers false, and a
+        // **Whether the last placement stood the window above its anchor** - a Top placement held,
+        // a Bottom one flipped for want of room. A window placed on no anchor answers false, and a
         // platform whose compositor decides answers what it asked for.
         [[nodiscard]] virtual bool standsAbove() const = 0;
         virtual ColorByte alpha() = 0;
         virtual void setAlpha(ColorByte value) = 0;
-        // HANDS THE WINDOW TO THE SYSTEM TO BE DRAGGED, on the press that asked for it. The stamp
-        // is the PRESS's and not the move's: a display server that authorises this weighs the
-        // request against the event that started the gesture.
+        // **Hands the window to the system to be dragged**, on the press that asked for it. The
+        // stamp is the **press's** and not the move's: a display server that authorises this weighs
+        // the request against the event that started the gesture.
         virtual void initiateWindowDrag(IntPoint pt, InputStamp) = 0;
         // The system's own menu for this window, at the point, on the press that asked. See Context
         virtual void showWindowMenu(PointInForm, InputStamp) = 0;
-        // WHETHER THE CLIENT MAY HOLD THIS WINDOW ABOVE THE OTHERS. A display server that keeps
+        // **Whether the client may hold this window above the others.** A display server that keeps
         // that state to itself answers false, and the two calls below then state nothing.
         [[nodiscard]] virtual bool canSetAlwaysOnTop() const = 0;
         [[nodiscard]] virtual bool isAlwaysOnTop() const = 0;
@@ -361,13 +361,13 @@ namespace ClaFi
         }
         else
         {
-            // A CPU BACKEND IS BUILT FROM A SIZE ALONE - see IsCpuBackend, which states that.
+            // **A CPU backend is built from a size alone** - see IsCpuBackend, which states that.
             backend = std::make_unique<Backend>(size);
         }
-        // THE ONE THING A BACKEND IS TOLD ABOUT ITS WINDOW BESIDES ITS SIZE, said here rather than
-        // taken through either constructor, so that a backend arrives ready whichever branch built
-        // it - a backend put into a canvas that is already running is built through here too. A
-        // backend that does not care ignores it.
+        // **The one thing a backend is told about its window besides its size**, said here rather
+        // than taken through either constructor, so that a backend arrives ready whichever branch
+        // built it - a backend put into a canvas that is already running is built through here too.
+        // A backend that does not care ignores it.
         backend->setTransparentBase(window.wantsAlphaChannel());
         return backend;
     }

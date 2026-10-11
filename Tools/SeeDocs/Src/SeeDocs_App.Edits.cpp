@@ -986,7 +986,7 @@ namespace SeeDocs_App
         return count;
     }
 
-    // THE SECTION IS COMPARED WITH WHAT WAS SHOWN before anything is written: the editor opened
+    // **The section is compared with what was shown** before anything is written: the editor opened
     // on the notes as last read, and a file changed under it since would lose the change.
     Refusal writeFootnote(Notes& notes, const Reference& reference, const std::wstring_view flowed)
     {
@@ -1047,7 +1047,7 @@ namespace SeeDocs_App
         return {};
     }
 
-    // A NOTE NOT MADE YET TAKES A FOOTNOTE ALL THE SAME, made when the footnote is written.
+    // **A note not made yet takes a footnote all the same**, made when the footnote is written.
     std::optional<NewFootnote> placeFootnote(Notes& notes, const CommentSite& site,
         const std::wstring_view note, const std::wstring_view after,
         const std::wstring_view owner, Refusal& refusal)
@@ -1071,7 +1071,7 @@ namespace SeeDocs_App
         };
     }
 
-    // A NOTE MADE NEW opens with its title - its stem, a blank for each hyphen - and ends its
+    // **A note made new** opens with its title - its stem, a blank for each hyphen - and ends its
     // lines the way the folder's first note does.
     Refusal addFootnote(Notes& notes, const NewFootnote& placed, const std::wstring_view flowed)
     {

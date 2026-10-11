@@ -4,9 +4,9 @@ The words that no longer fit above a declaration.
 
 ## TextStamp
 
-WHICH text, and WHICH state of it. Two stamps are equal only for one ControlText that has not
-been written to in between: an id is never reused, a copy being a new text with a new one,
-and a revision only moves forward. What a stamp cannot say is that two texts SAY the same
+**Which** text, and **which** state of it. Two stamps are equal only for one ControlText that has
+not been written to in between: an id is never reused, a copy being a new text with a new one,
+and a revision only moves forward. What a stamp cannot say is that two texts **say** the same
 thing - that is Text::operator==.
 
 An id of zero is no stamp at all: what a plain Text answers, having no earlier self to be
@@ -26,7 +26,7 @@ between leaves it nothing to join, and it stands as a step of its own.
 
 ## TextLineColumn
 
-Where a position stands in the text as a reader counts it, both numbers from one. A LINE is
+Where a position stands in the text as a reader counts it, both numbers from one. **A line** is
 a paragraph - what the newlines cut the text into - so a line broken across several rows
 carries one number and the column is the offset along the whole of it. Which of those rows
 the position fell on is a different question, asked of the layout - see TextLayout::rowStart.
@@ -71,7 +71,7 @@ adds is a stamp, so a reader holding the last one can tell an unchanged text fro
 without reading either of them. A Text passed as an argument, built for one paint or read
 out of a file has no earlier self to be told from and carries none of this.
 
-EVERY ROUTE THAT WRITES IS HERE, and each one moves the stamp on. Reached as a Text it is
+**Every route that writes is here**, and each one moves the stamp on. Reached as a Text it is
 data like any other, so a caller that writes through such a reference writes behind the
 stamp's back - which is why the machinery that edits a control's text, TextHistory above
 all, takes a ControlText and not a Text.
@@ -87,8 +87,8 @@ anchor do not compile, and a TextOp other than PushBold and PushItalic is refuse
 streamed. A script is not held: how far one is raised depends on the size in force where it opens,
 so it would be the one value whose place among the others changes what is drawn.
 
-ONE OF EACH KIND. A value streamed in replaces what the format already holds of its kind. Along a
-chain of constructors - each class stating its own format ahead of the arguments it forwards - the
+**One of each kind.** A value streamed in replaces what the format already holds of its kind. Along
+a chain of constructors - each class stating its own format ahead of the arguments it forwards - the
 caller's value wins for every kind it states, then the most derived class's, and so on down to the
 base. The values are kept in the order of the kinds rather than the order they were stated, so two
 formats saying the same thing are equal and share a cache entry however they were composed. Bold
@@ -98,7 +98,7 @@ The text's own markers stand over it. A push the text makes is read after the fo
 paragraph property is read when the paragraph's newline is reached, so one the text states replaces
 the format's for the whole paragraph it stands in and for every paragraph after it.
 
-THE FORMAT IS THE FLOOR OF EVERY STACK. A pop the text holds no push for leaves what the format
+**The format is the floor of every stack.** A pop the text holds no push for leaves what the format
 opened standing. For a text whose pushes and pops pair up, that is the same as the format written
 at index 0.
 
@@ -111,7 +111,7 @@ format and an empty one are the same answer.
 
 ## TextEdit
 
-What one edit did, stated in the coordinates of the text BEFORE it: the range taken out and
+What one edit did, stated in the coordinates of the text **before** it: the range taken out and
 how many characters went in. It is the whole of what a layout needs to tell which paragraph
 moved and by how much, which is why it carries no text of its own.
 
@@ -160,7 +160,7 @@ overlay answers in the paragraph's coordinates, in order, without overlap, and e
 answer leaves uncovered keeps the colour the text states - so an overlay that says nothing
 about a paragraph changes nothing in it.
 
-A DRAW-TIME QUESTION ALONE. The shaping never sees the overlay, which is what lets a layout
+**A draw-time question alone.** The shaping never sees the overlay, which is what lets a layout
 be handed one, or a different one, without shaping again; the cost is a repaint. It is also
 what holds the overlay to colour: a weight or a face is a shaping input, and an overlay that
 could state one would have to invalidate the lines it stands over.
@@ -176,7 +176,7 @@ states - a URL, a path, or a word an application answers. The tags are `[link ta
 any other tag, so a target holding `]` cannot be written in a format string; a document and the
 clipboard carry it whole.
 
-A LINK DOES NOT GROW AT ITS END. Every other run takes in what is typed at its end - a
+**A link does not grow at its end.** Every other run takes in what is typed at its end - a
 character typed after a bold word is bold - and a link is the exception, because a word typed
 after it is not part of where it points. Text::replaceText keeps a PopLink standing at the
 insertion point in front of what goes in, when nothing is replaced. A replaced range keeps the
@@ -184,17 +184,17 @@ standing rule: typing over the last word of a link replaces part of the link, an
 belongs to it. The start needs nothing of its own, since a push at the insertion point already
 moves behind what goes in.
 
-TWO LINKS THAT MEET AND NAME ONE TARGET ARE ONE. An undo puts a link's last characters back as
+**Two links that meet and name one target are one.** An undo puts a link's last characters back as
 a link of their own, standing against the rest of it. BakedText joins the two into one span, so
 the link is pointed at and underlined whole, and replaceText lets what is typed where they meet
 go inside, as it would anywhere else in the link. The markers are left as they stand: a later
 undo is recorded against them, and a pair taken out would put a word back into the wrong link.
 
-A LINK IS DRAWN IN THE ACCENT INK, where no colour is pushed inside it. A colour pushed before
+**A link is drawn in the accent ink**, where no colour is pushed inside it. A colour pushed before
 the link opened gives way to that ink, and one pushed inside it is the link's own. The ink is
 k_linkInk in TextEngine.BakedText, and goes into the theme with the other text inks.
 
-THE UNDERLINE IS A HOVER STATE. The control holding the layout names the link under the
+**The underline is a hover state.** The control holding the layout names the link under the
 pointer through TextLayout::setHoveredLink, and the layout draws a line under it - one segment
 per line the link reaches, under the glyphs that line shows, in the colour the segment's first
 glyph was drawn in. It is drawn over the glyphs, so a selection band does not cover it. Its
@@ -202,9 +202,9 @@ place under the baseline is a share of the room the line has below the baseline,
 thickness is the thin stroke; the font's own underline metrics are not read. It does not fade
 with the glyphs of a line cut by the box.
 
-THE LINE STANDS CLEAR OF THE INK IT WOULD CROSS, the way a browser draws an underline.
+**The line stands clear of the ink it would cross**, the way a browser draws an underline.
 
-WHICH LINK IS UNDER A POINT is TextLayout::linkAt. A hit test names the nearest character even
+**Which link is under a point** is TextLayout::linkAt. A hit test names the nearest character even
 past the end of a line, so the point is held to the box that character's glyph stands in: past
 the end of a line, between lines, or below the text there is no link.
 
@@ -216,7 +216,7 @@ reaches it with # and the name: `[anchor clue-17]Clue 17[/anchor]` and
 in text order is the one answered, and Text::anchorRange walks the markers to find it - an
 anchor is asked for when a link to it is followed, so nothing is kept for it in between.
 
-A RUN RATHER THAN A POINT, so it rides the pair machinery every other run does. An edit inside
+**A run rather than a point**, so it rides the pair machinery every other run does. An edit inside
 it moves its end, a deletion of the whole of it takes the pair out in the cleanup, and an undo
 puts it back where it stood, as it does for a link. A point would need rules of its own for all
 three. What the run also buys is text to land on: the box going to an
@@ -282,7 +282,7 @@ reach the same draw primitive - with one exception: a glyph per character means 
 ligatures are not applied, which Consolas and DejaVu Sans Mono do not have and Cascadia Code
 does.
 
-A CHARACTER WITHOUT A CELL IS THE CALLER'S TO DECIDE - CellFallback, stated on a layout and
+**A character without a cell is the caller's to decide** - CellFallback, stated on a layout and
 through WithTextLayout::setCellFallback. Native, the standing answer, shapes that paragraph
 natively, where another font can draw the character. MissingGlyph keeps it on cells and draws
 the character as the font's missing glyph, so whatever a text holds costs one pass over its

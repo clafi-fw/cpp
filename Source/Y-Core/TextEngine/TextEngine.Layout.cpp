@@ -316,10 +316,10 @@ namespace ClaFi
     // Whether this paragraph shows the band standing for the newline the selection runs through
     // it by, which is the question of whether that newline is selected at all.
     //
-    // WHICH newline that is, is the caret's. A selection runs from where it was opened toward the
-    // caret, so a caret below this paragraph carries it out through the newline that ENDS the
-    // paragraph, and a caret above carries it out through the newline that OPENS it - the one
-    // ending the row above, at textStart - 1. EditProps::caretOnLeft is that direction, and the
+    // **Which** newline that is, is the caret's. A selection runs from where it was opened toward
+    // the caret, so a caret below this paragraph carries it out through the newline that **ends**
+    // the paragraph, and a caret above carries it out through the newline that **opens** it - the
+    // one ending the row above, at textStart - 1. EditProps::caretOnLeft is that direction, and the
     // whole of the mirror is this pair: the end swaps with the start, and the row with none below
     // it swaps with the row with none above. A paragraph's own range stops short of both
     // newlines - TextEngine::paragraphAt is where that split is stated - so neither position is
@@ -569,10 +569,10 @@ namespace ClaFi
         invalidate();
     }
 
-    // ONE paragraph re-shaped, and every paragraph after it moved. What makes that sound is that a
-    // paragraph is an independent shaping: its own native layout, broken from its own slice of the
-    // text. An edit that stays inside one of them cannot change what any other one says, only where
-    // its characters start and where its lines sit.
+    // **One** paragraph re-shaped, and every paragraph after it moved. What makes that sound is
+    // that a paragraph is an independent shaping: its own native layout, broken from its own slice
+    // of the text. An edit that stays inside one of them cannot change what any other one says,
+    // only where its characters start and where its lines sit.
     //
     // Everything this declines is a case where that stops being true, and the caller's setText is
     // the answer to all of them.
@@ -584,7 +584,7 @@ namespace ClaFi
             return false;
 
         // The paragraphs the edit reaches, looked for in the list as it still stands - which is
-        // stated in the coordinates of the text BEFORE the edit, the same ones the edit is. A
+        // stated in the coordinates of the text **before** the edit, the same ones the edit is. A
         // position at the very end of a paragraph belongs to it: the newline that ends it is not
         // part of its range, so an insertion there goes in front of that newline, and a deletion
         // that takes it reaches into the paragraph after. So the first paragraph is the first
@@ -853,8 +853,8 @@ namespace ClaFi
         // DirectWrite is told about lines rather than asked which ones matter - so a text taller
         // than its viewport spends the frame proving that, one glyph run at a time.
         const FloatRect& canvasClipBox = controlContext.canvas().clipBox();
-        // Where a collapse stands, if there is one. EVERY PARAGRAPH IS DRAWN WHERE IT WAS LAID
-        // OUT except the one this falls in: FadeTextRenderer lifts a run onto the collapse
+        // Where a collapse stands, if there is one. **Every paragraph is drawn where it was laid
+        // out** except the one this falls in: FadeTextRenderer lifts a run onto the collapse
         // baseline only while drawing that paragraph, and a paragraph below it is handed no
         // baseline at all - so it draws under the box and the clip takes it. That makes a
         // paragraph's own bounds the honest test for every one of them, and leaves exactly one
@@ -910,7 +910,7 @@ namespace ClaFi
                 collectLocalRanges(editProps->hits, paragraph.textStart, paragraph.textStart + paragraph.textLength, buffers.hits);
             }
 
-            // --- FIXED: Extend the right edge of the paragraph bounds to the container's right boundary ---
+            // --- **Fixed**: Extend the right edge of the paragraph bounds to the container's right boundary ---
             FloatRect paraDrawBounds{
                 position.x + paragraph.bounds.left,
                 position.y + paragraph.bounds.top,
@@ -1047,14 +1047,14 @@ namespace ClaFi
                 drawLinkUnderline(controlContext, paragraph, paraDrawBounds.topLeft(), drawnColors);
         }
 
-        // Whether a caret was ever placed is the range's START: a whole-text selection holds
-        // k_maxSize as its LENGTH, so caretPos answers what an unplaced caret answers.
+        // Whether a caret was ever placed is the range's **start**: a whole-text selection holds
+        // k_maxSize as its **length**, so caretPos answers what an unplaced caret answers.
         if (editProps && editProps->caretVisible && editProps->selRange.start != k_maxSize)
         {
             FloatRect cRect = getCaretRect({ editProps->caretPos(), editProps->affinityTrailing });
             const float caretWidth = controlContext.scaledStrokeWidth(Thickness::Thin);
             // The caret stands after the last character, and a row that fills the width puts that
-            // point ON the right edge of the bounds - which the clip pushed above is exclusive
+            // point **on** the right edge of the bounds - which the clip pushed above is exclusive
             // of, so the whole caret falls outside it. Right aligned and justified rows reach that
             // edge by definition. Held one width inside instead, where the caret marks the same
             // insertion point and can be seen.
@@ -1159,7 +1159,7 @@ namespace ClaFi
         // Map DWrite char index + trailing half to a Logical Insertion Point
         std::size_t offset = localPos + (isTrailing ? 1 : 0);
 
-        // --- FIXED: Explicitly clamp the offset against the logical paragraph length ---
+        // --- **Fixed**: Explicitly clamp the offset against the logical paragraph length ---
         // (Solves invalid logical index leak that caused jumping over empty lines and crashing off the end bounds)
         if (offset > p.textLength)
         {
@@ -1380,9 +1380,9 @@ namespace ClaFi
     {
         if (!m_layoutValid)
             return true;
-        // Lines broken at a STATED width are the lines this layout holds whatever box it is given:
-        // a wider box shows a line the one they were broken at cut, standing where that box put
-        // it.
+        // Lines broken at a **stated** width are the lines this layout holds whatever box it is
+        // given: a wider box shows a line the one they were broken at cut, standing where that box
+        // put it.
         if (m_breakWidth > 0.0f)
             return true;
         // A text that is not broken to its box is not shaped from a width at all - unless it
@@ -1613,7 +1613,7 @@ namespace ClaFi
         m_placedWidth = width;
     }
 
-    // A PARAGRAPH ITS LAYOUT ALIGNED IN ONE WIDTH MOVES INTO ANOTHER AS A WHOLE. Its lines were
+    // **A paragraph its layout aligned in one width moves into another as a whole.** Its lines were
     // broken at the width they are aligned in, and the width they are placed in is never wider
     // than that nor narrower than the widest of them - see acceptsWidth and placementWidth - so
     // every line moves by the same amount. Justified lines are stretched to the width, which no
@@ -1639,7 +1639,7 @@ namespace ClaFi
         return m_breakWidth > 0.0f ? m_breakWidth : m_bounds.x;
     }
 
-    // A STATED BREAK WIDTH IS WHERE AN UNANCHORED TEXT IS PLACED as well as broken: a centred
+    // **A stated break width is where an unanchored text is placed** as well as broken: a centred
     // paragraph stands where the text it repeats stands. See UI-Types#horizontaltextanchor
     float TextLayout::placementWidth() const
     {
@@ -1685,8 +1685,8 @@ namespace ClaFi
         return static_cast<std::size_t>(below - m_paragraphs.begin());
     }
 
-    // ONE LINE, OR A ROW OF CELLS, IS PLACED HERE from the leading edge its layout left it at. A
-    // paragraph its layout aligned moves as a whole, from the width it was aligned in to the one
+    // **One line, or a row of cells, is placed here** from the leading edge its layout left it at.
+    // A paragraph its layout aligned moves as a whole, from the width it was aligned in to the one
     // it is placed in. See TextEngine-Types#paragraph-placement
     float TextLayout::paragraphOffset(const ParagraphLayoutState& p) const
     {
@@ -1812,7 +1812,7 @@ namespace ClaFi
                     : std::get<1>(value);
             }
 
-            // THE LINE IS CUT WHERE A GLYPH'S INK CROSSES IT, the way a browser draws an
+            // **The line is cut where a glyph's ink crosses it**, the way a browser draws an
             // underline: a descender stands clear of it by the gap on either side. A piece left
             // no longer than the line is thick would read as a dot between two descenders, and
             // is not drawn.
@@ -2065,7 +2065,7 @@ namespace ClaFi
         nativeLayout->appendLineMetrics(lines);
         bool needsRebuild = false;
 
-        // --- RESOLVE TAB-STOPS AND FLEX-SPACES LINE-BY-LINE ---
+        // --- **Resolve tab-stops and flex-spaces line-by-line** ---
         const std::span<const NativeLineMetrics> built = std::span<const NativeLineMetrics>{ lines }
             .subspan(lineStart);
         for (const NativeLineMetrics& line : built)
@@ -2104,16 +2104,16 @@ namespace ClaFi
             if (!lineFillers.empty() && m_eventPhase == EventPhase::Paint)
             {
                 float totalUsedWidth = line.width + accumulatedShift;
-                // SHORT OF THE BOX BY THE FIT TOLERANCE. Filled to the box exactly, the line can
-                // come back from the rebuild a hair wider than the box and be broken again at
+                // **Short of the box by the fit tolerance.** Filled to the box exactly, the line
+                // can come back from the rebuild a hair wider than the box and be broken again at
                 // the filler - and a one-line box then collapses what was a line that fit.
                 float remainingSpace = availableWidth - totalUsedWidth - k_fitTolerance;
                 float spacePerFiller = remainingSpace / lineFillers.size() / m_scaleFactor;
                 if (spacePerFiller > 0.01f)
                 {
-                    // ON TOP OF THE FLOOR each filler was measured at, which is why the share is
-                    // added rather than stated: line.width above counted those floors, so what is
-                    // shared out here is the room left beyond them.
+                    // **On top of the floor** each filler was measured at, which is why the share
+                    // is added rather than stated: line.width above counted those floors, so what
+                    // is shared out here is the room left beyond them.
                     for (std::size_t idx : lineFillers)
                     {
                         buildParams.inlineObjects[idx].second.width += spacePerFiller;
@@ -2130,21 +2130,21 @@ namespace ClaFi
             nativeLayout->appendLineMetrics(lines);
         }
 
-        // The size the paragraph came to, read BEFORE anything places its lines. Alignment says
+        // The size the paragraph came to, read **before** anything places its lines. Alignment says
         // where a line sits inside the box, not how much room the text needs, so the two must not
         // be read off one another - and reading them the other way round is not merely untidy. A
         // centred layout reports its width relative to a centred origin, and a measuring pass asks
         // at an effectively infinite width: at 2^31 a float's ULP is 256, so those widths come back
-        // rounded to multiples of 64 and the paragraph measures NARROWER than its text. Measured
-        // before alignment the origin is zero and there is no such loss.
+        // rounded to multiples of 64 and the paragraph measures **narrower** than its text.
+        // Measured before alignment the origin is zero and there is no such loss.
         const NativeParagraphMetrics metrics = nativeLayout->getMetrics();
 
-        // After the last build, which would have dropped it, and in EVERY phase: the cache hands
-        // the layout a calculate pass built to the paint that follows, so a placement left to the
-        // paint phase never reaches a text the align pass saw first.
+        // After the last build, which would have dropped it, and in **every** phase: the cache
+        // hands the layout a calculate pass built to the paint that follows, so a placement left to
+        // the paint phase never reaches a text the align pass saw first.
         //
-        // ONLY A PARAGRAPH OF SEVERAL LINES IS TOLD, because only its layout can move each of its
-        // lines. One line is placed by paragraphOffset and costs no setter.
+        // **Only a paragraph of several lines is told**, because only its layout can move each of
+        // its lines. One line is placed by paragraphOffset and costs no setter.
         const std::size_t lineCount = lines.size() - lineStart;
         float alignedWidth = 0.0f;
         if (para.alignment != TextAlign::Left && lineCount > 1)

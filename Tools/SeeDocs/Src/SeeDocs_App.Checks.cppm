@@ -4,7 +4,7 @@ import SeeDocs_App.Surface;
 
 import ClaFi.StdLib;
 
-// THE DECLARATION ROUTINE, held to. Every rule the routine states is read off the surface: the
+// **The declaration routine**, held to. Every rule the routine states is read off the surface: the
 // one-line comment and where it sits, the binds a property needs, the three spellings of an
 // event, the references into the footnotes. See the README beside the project.
 namespace SeeDocs_App

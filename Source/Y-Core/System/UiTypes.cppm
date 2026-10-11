@@ -242,7 +242,7 @@ namespace ClaFi
     export constexpr ControlFlag cfVerticalAlignMask = cfVerticalAlignBit1 | cfVerticalAlignBit2;
     export constexpr ControlFlag cfHidden = 16;
     export constexpr ControlFlag cfTextTrimmed = 32;
-    // Set on the CONTAINER, not on the child: what it says is that the collection is no
+    // Set on the **container**, not on the child: what it says is that the collection is no
     // longer ordered by geometry - see Control::firstChildInViewport.
     export constexpr ControlFlag cfChildHidden = 64;
 
@@ -402,7 +402,7 @@ namespace ClaFi
             return static_cast<T>((value >> (N * bits)) & mask);
         }
 
-        // Comparing two of the SAME derived type: hidden friends, so that both operands
+        // Comparing two of the **same** derived type: hidden friends, so that both operands
         // are explicit parameters.
         //
         // As a member this is ambiguous. The implicit object argument needs a
@@ -416,7 +416,7 @@ namespace ClaFi
 
         // Comparison against enums, integers and pointers. Constrained to exclude Derived
         // so it never competes with the friends above - and so that comparing two
-        // DIFFERENT derivations does not compile, which is the point of deriving rather
+        // **different** derivations does not compile, which is the point of deriving rather
         // than aliasing: the else branch cannot static_cast another TagBase to uintptr_t.
         template<typename T>
             requires (!std::is_same_v<std::decay_t<T>, Tag>)

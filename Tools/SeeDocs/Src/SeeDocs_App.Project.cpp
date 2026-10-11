@@ -91,7 +91,7 @@ namespace SeeDocs_App
             return depth;
         }
 
-        // A SOURCE IS WRITTEN RELATIVE TO THE PROJECT while the two share a folder under the
+        // **A source is written relative to the project** while the two share a folder under the
         // root of their volume - a tree's project and its tree, a project kept beside the
         // sources - so that they move together, and a project kept in a repository names no
         // place outside it. Any other is written as it stands.
@@ -173,7 +173,7 @@ namespace SeeDocs_App
         return std::nullopt;
     }
 
-    // A PROJECT READS WHAT ITS PROPERTIES NAME and nothing besides: a tree's project names its
+    // **A project reads what its properties name** and nothing besides: a tree's project names its
     // tree as `..`, as any other source. A folder with no properties in it, or with no name in
     // them, is a project still, named after its folder.
     std::optional<Project> readProject(const std::filesystem::path& named)

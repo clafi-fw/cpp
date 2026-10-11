@@ -354,9 +354,9 @@ namespace ClaFi::Controls
         return WithTextLayout<Label>::drawText(event, textBounds, text);
     }
 
-    // A FLEX SPACE IS MEASURED AT ITS FLOOR, in the Calculate phase the engine measures a Label's
-    // text in. The box's own layout is built for the paint, where a flex space takes the room its
-    // line has over: measured on it, the text claims the whole width it is asked at, and a
+    // **A flex space is measured at its floor**, in the Calculate phase the engine measures a
+    // Label's text in. The box's own layout is built for the paint, where a flex space takes the
+    // room its line has over: measured on it, the text claims the whole width it is asked at, and a
     // measuring pass asks at an unbounded one.
     CalculatedDimensions TextBox::measureText(AlignEvent& event, ScaledDimensions asked,
         const Text& text)
@@ -461,8 +461,8 @@ namespace ClaFi::Controls
         if (!mousePosInSelection())
             setCaretPosFromMouse();
 
-        // A LINK UNDER THE POINTER IS WHAT THE MENU IS ABOUT, ahead of the box: the box's menu is
-        // its edit commands, and none of them is about where the link goes. The target is copied
+        // **A link under the pointer is what the menu is about**, ahead of the box: the box's menu
+        // is its edit commands, and none of them is about where the link goes. The target is copied
         // out before anyone is told, as a click's is. A handler that has shown the link's menu
         // stops the request, and the box raises nothing over it; one that has not leaves the
         // box to answer as for a click anywhere else in it.
@@ -631,7 +631,7 @@ namespace ClaFi::Controls
 
         m_pointedLink.range = range;
         m_pointedLink.target = hit.has_value() ? std::wstring{ hit->link.value } : std::wstring{};
-        // A HINT IS ASKED FOR ONCE PER HOVERED CONTROL, and a link is a part of this one the
+        // **A hint is asked for once per hovered control**, and a link is a part of this one the
         // pointer enters and leaves - so the box says when the part changed, the way a grid says
         // its hovered cell did. A hint already up is asked again where it stands, and one that is
         // not starts the wait.
@@ -640,7 +640,7 @@ namespace ClaFi::Controls
 
     void TextBox::writeLinkHint(Text& out) const
     {
-        // THE PARAGRAPH, NOT THE ANCHOR. An anchor holds a few words - a clue's number, a
+        // **The paragraph, not the anchor.** An anchor holds a few words - a clue's number, a
         // heading - and what the reader wants before jumping is what stands around them. Taken
         // with its formatting through selectedText, which closes what it opens, without the
         // newline that ends it, and no longer than a few lines.

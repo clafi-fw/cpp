@@ -194,12 +194,12 @@ namespace SeeDocs_App
             openFolder(*picked);
     }
 
-    // THE PROJECT IS MADE WHILE THE DIALOG STANDS, so a folder that cannot be made is said there,
-    // with the name and the place still on screen; it opens once the dialog is down, on a timer,
-    // since the click that made it is the dialog's and the dialog closes after it. A source given
-    // is written in before it opens, so that its first scan reads it. A source asked for while a
-    // dialog stands is a new question, and the dialog standing makes way for it. Where a project
-    // is stored is kept whichever way the dialog closes.
+    // **The project is made while the dialog stands**, so a folder that cannot be made is said
+    // there, with the name and the place still on screen; it opens once the dialog is down, on a
+    // timer, since the click that made it is the dialog's and the dialog closes after it. A source
+    // given is written in before it opens, so that its first scan reads it. A source asked for
+    // while a dialog stands is a new question, and the dialog standing makes way for it. Where a
+    // project is stored is kept whichever way the dialog closes.
     void Workspace::createNew(const std::filesystem::path& source, const InputStamp stamp)
     {
         if (m_newProject && m_newProject->visible() && source.empty())
@@ -245,7 +245,7 @@ namespace SeeDocs_App
         return open.surface.scanned();
     }
 
-    // WHAT IS SHOWN IS WHAT WAS READ BACK, so a name the file did not take does not stand. The
+    // **What is shown is what was read back**, so a name the file did not take does not stand. The
     // name the project already goes by is no edit: an empty name kept in the file is what lets
     // the project follow its folder's name, and writing that name out would end it.
     std::wstring Workspace::rename(OpenProject& open, const std::wstring_view name)
@@ -263,8 +263,8 @@ namespace SeeDocs_App
         return open.project.name;
     }
 
-    // THE DATABASE IS READ BACK BEFORE ANYTHING IS LET GO OF, so a scan that could not be written
-    // leaves the project as it was last read.
+    // **The database is read back before anything is let go of**, so a scan that could not be
+    // written leaves the project as it was last read.
     void Workspace::rescan(OpenProject& open)
     {
         ScopedWaitCursor wait{};
@@ -306,8 +306,8 @@ namespace SeeDocs_App
         return true;
     }
 
-    // THE FOLDER TAKES THE SOURCE'S PLACE in the order the roots count them, and keeps whether the
-    // folders under it are read. The same folder again is no change.
+    // **The folder takes the source's place** in the order the roots count them, and keeps whether
+    // the folders under it are read. The same folder again is no change.
     std::wstring Workspace::replaceSource(OpenProject& open, const std::filesystem::path& source,
         const std::filesystem::path& folder)
     {
@@ -395,8 +395,8 @@ namespace SeeDocs_App
         };
     }
 
-    // THE DATABASE IS READ BEFORE ANYTHING IS SHOWN, so a project that cannot be opened leaves the
-    // window as it was. A project with no database is scanned first, and so is one whose
+    // **The database is read before anything is shown**, so a project that cannot be opened leaves
+    // the window as it was. A project with no database is scanned first, and so is one whose
     // database was read otherwise than the project now asks; what is shown is always what was
     // read back from the file, one path for a fresh scan and an old one alike.
     bool Workspace::openProject(Project project, Text& reason, const HomeTab homeTab)
@@ -470,8 +470,8 @@ namespace SeeDocs_App
         dialog.execute();
     }
 
-    // WRITTEN BEFORE ANYTHING IS READ AGAIN, so a scan that fails leaves the project set as asked
-    // all the same; what stands afterwards is what was read back.
+    // **Written before anything is read again**, so a scan that fails leaves the project set as
+    // asked all the same; what stands afterwards is what was read back.
     void Workspace::change(OpenProject& open, const std::function<void(Project&)>& edit,
         const Reread reread)
     {

@@ -16,14 +16,14 @@ FormBase holds its root as one of these and asks it for `Control::focusDelegate`
 protected: a friend of this class reaches an inherited protected member through an object of this
 class, and Control's own friendship with FormBase does not.
 
-ITS DESTRUCTOR STOPS THE ROOT'S ANIMATIONS while the root can still name its form. Control's own
+**Its destructor stops the root's animations** while the root can still name its form. Control's own
 destructor stops them too, but by the time it runs getForm is Control's, which walks the parents
 - and a root has none - so an animation the root left running would tick on into freed memory.
 Here getForm still answers m_form, and the stop reaches the controller.
 
 ## Control::animate
 
-A CONTROL GOING DOWN STOPS WHAT IT WAS RUNNING, and where it does so depends on whether it can
+**A control going down stops what it was running**, and where it does so depends on whether it can
 still find its form. One destroyed in place - deleteControl erases it attached - stops from its
 own destructor. The children of a dying container go down detached, since releaseChildren
 detaches them before they are destroyed, so releaseChildren stops the whole subtree's animations
@@ -38,11 +38,11 @@ to be told about; one channel that exists only where it works tells them itself.
 
 ## invalidatePass
 
-FormBase::wnd_beforePaint IS WHAT ANSWERS IT, and it answers a bounded number of times - see
+FormBase::wnd_beforePaint **is what answers it**, and it answers a bounded number of times - see
 `k_maxAlignPasses`. Past that the frame goes out on what the last pass produced and the next frame
 carries on, so a request that cannot converge costs frames rather than the application.
 
-A DEFERRED SCROLL WAITS FOR A LAYOUT THAT STANDS. `scrollIntoViewOnAlign` requests are answered
+**A deferred scroll waits for a layout that stands.** `scrollIntoViewOnAlign` requests are answered
 only by a pass that lays the content into the window and that no control put back in question;
 a measuring pass and an invalidated pass leave them for the pass that follows. Both lay a
 wrapping row out on one line - the remembered widths are not read while measuring, and the
@@ -58,8 +58,8 @@ query.
 
 ## Hint
 
-ONE PER FORM, BUILT WITH IT. The window a hint shows in stands over the window whose control
-the hint is about, and it is OWNED by that window - which is what keeps it above that window
+**One per form, built with it.** The window a hint shows in stands over the window whose control
+the hint is about, and it is **owned** by that window - which is what keeps it above that window
 without being told anything about the rest of the screen. A form is the one thing that knows
 which window that is, so a form is what a hint is a member of.
 
