@@ -27,7 +27,7 @@ namespace ClaFi::Controls
         Next,       // Enter
         Previous,   // Shift+Enter
         Pick,       // a line of the box's list taken - Enter on the current one, or a click on any
-        End         // Escape, once the box is empty: the focus goes back to what was searched
+        End         // Escape on the empty box: the focus goes back to what was searched
     };
 
     export class SearchBox;
@@ -83,7 +83,7 @@ namespace ClaFi::Controls
         // Whether the box has lines to drop, up or down - the last ones its owner gave it.
         [[nodiscard]] bool hasList() const { return !m_list.lines().empty(); }
     protected:
-        // Enter steps or takes the list's line; Escape takes the list down, then empties the box.
+        // Enter takes the list's line or steps; Escape closes the list, empties the box, then ends.
         void nestedKeyDown(KeyDownEvent&) override;
     private:
         // Holds its own layout: a text per step would crowd the shared layout cache.
@@ -136,7 +136,8 @@ namespace ClaFi::Controls
             std::forward<Args>(args)...
         },
         INIT_PROPERTY(listPlacement),
-        m_list{ *this, [this](const DropListPick& picked) {
+        // The field keeps the focus, and the list going down hands it back there.
+        m_list{ m_field, [this](const DropListPick& picked) {
             pick(picked);
         } }
     {

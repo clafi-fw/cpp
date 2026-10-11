@@ -33,6 +33,9 @@ namespace SeeDocs_App
     // What a link to an anchor of the page opens with, ahead of the anchor's name.
     export constexpr std::wstring_view k_anchorPrefix = L"#";
 
+    // Whether the control and every holder up to the host are shown.
+    export [[nodiscard]] bool shownWithin(const Control&, const Control& host);
+
     // A link on the page was clicked. The surface has an Event of its own.
     export class PageLinkEvent : public ::ClaFi::Event
     {
@@ -115,6 +118,8 @@ namespace SeeDocs_App
         void showAnchor(std::wstring_view anchor);
         // The anchor of the footnote that section's words stand in; empty where none on the page.
         [[nodiscard]] std::wstring anchorOf(const Reference&) const;
+        // Focuses the row the anchor selected, else the first row, where one is shown.
+        void focusContent();
         // The link a menu is up for, as the text states it; empty while no link menu is up.
         [[nodiscard]] std::wstring_view menuLink() const { return m_menuLink; }
     private:
@@ -222,6 +227,8 @@ namespace SeeDocs_App
         std::vector<Render> m_renders{};   // every box the page writes its words into
         PageFootnotes m_footnotes{};
         RowAnchors m_rowAnchors{};
+        Grids::Row* m_firstRow{ nullptr };      // the first row a table of the page holds
+        Grids::Row* m_anchoredRow{ nullptr };   // the row the anchor shown selected
         // A footnote not written yet, by the row it is for, while its editor stands.
         std::map<const TableRow*, FootnoteSlot*> m_newFootnotes{};
         std::size_t m_footnoteCount{ 0 };   // numbered through the page, so an anchor names one

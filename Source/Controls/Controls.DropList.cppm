@@ -81,6 +81,7 @@ namespace ClaFi::Controls
     export class DropList
     {
     public:
+        // The target is the control the focus stays in - a list going down hands it the focus.
         DropList(Control& target, DropListPickFunc);
         DropList(const DropList&) = delete;
         DropList& operator=(const DropList&) = delete;
@@ -89,8 +90,9 @@ namespace ClaFi::Controls
         [[nodiscard]] bool shown() const;
         // The line the keys are on, while the list is up and one is.
         [[nodiscard]] std::optional<std::size_t> current();
-        // Shows the lines under the target, the one given current; no lines take the list down.
-        void show(DropListLines, std::optional<std::size_t> current, FormPlacement);
+        // Shows the lines off the anchor, a rect in the target's form. See Controls#droplist
+        void show(DropListLines, std::optional<std::size_t> current, FormPlacement,
+            const FloatRect& anchor);
         void hide();
         // Moves the current line; false where the list is down and the key is not its to take.
         bool moveCurrent(ScrollDirection);

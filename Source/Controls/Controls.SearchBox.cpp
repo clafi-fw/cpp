@@ -107,7 +107,7 @@ namespace ClaFi::Controls
 
     void SearchBox::showList(DropListLines lines, const std::optional<std::size_t> current)
     {
-        m_list.show(std::move(lines), current, m_listPlacement);
+        m_list.show(std::move(lines), current, m_listPlacement, boundsInForm());
     }
 
     void SearchBox::nestedKeyDown(KeyDownEvent& event)
@@ -128,8 +128,8 @@ namespace ClaFi::Controls
             case Keys::Escape:
             {
                 event.handled = true;
-                // **With the list up, Escape takes the list down** and leaves the text standing;
-                // the next one empties the box.
+                // **Escape steps back once a press**: the list goes down, then the text, and only
+                // the empty box hands the focus back - a new search can be typed after either.
                 if (m_list.shown())
                 {
                     m_list.hide();
@@ -140,6 +140,7 @@ namespace ClaFi::Controls
                 {
                     m_field.selectAll();
                     m_field.deleteSelectedText();
+                    return;
                 }
                 request(SearchRequest::End);
                 return;
@@ -164,6 +165,11 @@ namespace ClaFi::Controls
                 }
                 break;
             }
+            // **Down before the focus moves on**: a list going down hands the focus back to the
+            // field, which would take back the step Tab is about to make.
+            case Keys::Tab:
+                m_list.hide();
+                break;
             case Keys::Prior:
             case Keys::Next:
             {

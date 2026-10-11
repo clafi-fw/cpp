@@ -229,11 +229,11 @@ namespace ClaFi::Controls
         return m_form->content().body().current();
     }
 
-    // At least as wide as the target, and placed off it - both read now rather than once, since
-    // the target may have moved or grown since the list last stood. In design units, which a popup
-    // shares with its parent.
+    // At least as wide as the anchor, and placed off it - both read now rather than once, since
+    // what the anchor stands for may have moved or grown since the list last stood. In design
+    // units, which a popup shares with its parent.
     void DropList::show(DropListLines lines, const std::optional<std::size_t> current,
-        const FormPlacement placement)
+        const FormPlacement placement, const FloatRect& anchor)
     {
         if (lines.empty())
         {
@@ -248,8 +248,8 @@ namespace ClaFi::Controls
         ensureForm();
         m_lines = std::move(lines);
         m_form->content().body().showLines(current);
-        m_form->setMinWidth(m_target.width() / m_target.scaler().factor());
-        m_form->setPlacement(placement, m_target.boundsInForm());
+        m_form->setMinWidth(anchor.width() / m_target.scaler().factor());
+        m_form->setPlacement(placement, anchor);
         if (shown())
             return;
         // Opened at its first row: where the list was left is not on screen to glide from.

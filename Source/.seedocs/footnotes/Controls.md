@@ -296,8 +296,9 @@ A SearchBox is where a search is typed: a one-line box on the Page element with 
 and a count at its right end while it holds text - "2 of 7", "? of 7" while the selection lies
 within no found range, and "No results" in the red pigment. It knows nothing of what it searches. It
 raises SearchEvent: Search for every change to its text, emptied included; Next and Previous for
-Enter and Shift+Enter; End for Escape, once the box is empty, which is where its owner hands the
-focus back to what was searched. Its text goes in and out as edits, so its own Undo walks it.
+Enter and Shift+Enter; End for Escape on the empty box, which is where its owner hands the focus
+back to what was searched. Escape over text empties the box and leaves the focus in it, so a new
+search can be typed. Its text goes in and out as edits, so its own Undo walks it.
 startSearch puts the focus in the box with its text selected, replaced by a text given, and
 setResult is how the owner reports what was found.
 
@@ -308,8 +309,8 @@ so Alt+Enter can mean a new tab - and a click on any line raises it too; Enter w
 takes the list down and raises Next as ever. Escape takes the list down and leaves the text
 standing, and the next one empties the box. Once it has listed lines, Down drops the list again,
 raising Search so that its owner lists anew over the text as it stands. The list goes down with the
-focus. listPlacement says where it drops: under the box from its left edge, or with BottomEnd from
-its right edge, for a box at a window's right end.
+focus, and with Tab before the focus moves on. listPlacement says where it drops: under the box from
+its left edge, or with BottomEnd from its right edge, for a box at a window's right end.
 
 StdActions::find, findNext and findPrevious carry Ctrl+F, F3 and Shift+F3. A page holding a
 search box claims them for everything under it, so F3 steps from the searched text and from the
@@ -435,11 +436,16 @@ and by the keys the control hands on: moveCurrent and moveCurrentByPage for the 
 page keys, pickCurrent for Enter. Each answers false while the list is down, which is how the
 control knows the key is still its own.
 
-**A line is a Text and a hint.** show states the lines, the one current or none, and where the list
-stands off the control - Bottom, or BottomEnd from its right edge; no lines take the list down. The
-list is at least as wide as the control and as tall as twelve lines, and scrolls past that. A flex
-space in a line spans the list's width, so a word after one stands at the list's right edge. A
-line's hint stands beside the list while the line is current, as a CompletionList's does.
+**The target is the control the focus is in**, the field rather than the box around it: a list
+going down hands the focus to its target, as every popup does. So a key that moves the focus on -
+Tab - takes the list down before the focus moves, or the list going down would take the step back.
+
+**A line is a Text and a hint.** show states the lines, the one current or none, the anchor the list
+stands off - a rect in the target's form, the whole box where the target is its field - and the
+placement, Bottom, or BottomEnd from the anchor's right edge; no lines take the list down. The list
+is at least as wide as the anchor and as tall as twelve lines, and scrolls past that. A flex space
+in a line spans the list's width, so a word after one stands at the list's right edge. A line's hint
+stands beside the list while the line is current, as a CompletionList's does.
 
 **A pick is told once the list is down**: the owner's function is handed the line, the modifiers
 held with the key or the click, and the stamp of the input that took it, so whatever it opens or

@@ -1520,7 +1520,7 @@ namespace SeeDocs_App
     }
 
     // Enter with no line current, the list taken down, opens the search's page as the search line
-    // does; Escape on the emptied box hands the focus back to the page.
+    // does; Escape on the empty box hands the focus back where it came from.
     void SurfaceBrowser::searchRequested(const SearchEvent& event)
     {
         switch (event.request)
@@ -1536,10 +1536,45 @@ namespace SeeDocs_App
                 openListed(event.line, event.modifiers);
                 return;
             case SearchRequest::End:
-                if (BrowserPage* page = currentPage())
-                    page->setFocus();
+                handBackFocus();
                 return;
         }
+    }
+
+    // **A tab not selected keeps its tree and its page, hidden**: a control there is passed over.
+    // A page with no row to take the focus leaves it in the box.
+    void SurfaceBrowser::handBackFocus()
+    {
+        if (m_focusOrigin && shownWithin(*m_focusOrigin, *this) && m_focusOrigin->canTakeFocus())
+        {
+            m_focusOrigin->setFocus();
+            return;
+        }
+        BrowserPage* page = currentPage();
+        if (!page || resolve(page->pageData()).projectOptions)
+            return;
+        static_cast<SurfacePage*>(page)->view().focusContent();
+    }
+
+    // Read before the walk ends, while the focus is still where it comes from - and only inside the
+    // browser, which is told of its controls' deletion.
+    void SurfaceBrowser::nestedControlFocusing(FocusEvent& event)
+    {
+        Control* from = Input::focusedControl();
+        if (m_search.containsNested(event.control)
+            && containsNested(from)
+            && !m_search.containsNested(from))
+        {
+            m_focusOrigin = from;
+        }
+        BrowserControl::nestedControlFocusing(event);
+    }
+
+    void SurfaceBrowser::nestedControlDeleted(Control* value)
+    {
+        if (value == m_focusOrigin)
+            m_focusOrigin = nullptr;
+        BrowserControl::nestedControlDeleted(value);
     }
 
     // **The first line is current**: the name spelled as typed where there is one, else the search

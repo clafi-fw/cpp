@@ -212,6 +212,16 @@ namespace SeeDocs_App
         }
     }
 
+    bool shownWithin(const Control& control, const Control& host)
+    {
+        for (const Control* item = &control; item && item != &host; item = item->parent())
+        {
+            if (!item->visible())
+                return false;
+        }
+        return true;
+    }
+
     // PageLinkEvent
 
     PageLinkEvent::PageLinkEvent(std::wstring linkTarget)
@@ -391,6 +401,21 @@ namespace SeeDocs_App
         named.expander->header().setExpanded(true);
         named.grid->selectCell(*named.row, named.grid->findColumnByTag(Tag{ 0 }));
         named.row->scrollIntoViewOnAlign();
+        m_anchoredRow = named.row;
+    }
+
+    // A row in a section shut since, or in a group folded, stands hidden and is passed over.
+    void PageView::focusContent()
+    {
+        for (Grids::Row* row : { m_anchoredRow, m_firstRow })
+        {
+            if (row && shownWithin(*row, *this))
+            {
+                row->scrollIntoView();
+                row->setFocus();
+                return;
+            }
+        }
     }
 
     std::wstring PageView::anchorOf(const Reference& reference) const
@@ -413,6 +438,8 @@ namespace SeeDocs_App
         m_renders.clear();
         m_footnotes.clear();
         m_rowAnchors.clear();
+        m_firstRow = nullptr;
+        m_anchoredRow = nullptr;
         m_newFootnotes.clear();
         m_footnoteCount = 0;
         m_pending = {};
@@ -458,6 +485,8 @@ namespace SeeDocs_App
         for (const Fact& fact : m_page.facts)
         {
             Grids::Row& row = grid.addRow();
+            if (!m_firstRow)
+                m_firstRow = &row;
             row.onGetCellText([&fact](Grids::GetCellTextEvent& event) {
                 if (event.column().tag().value == k_factLabel)
                     event.text() << fact.label;
@@ -742,6 +771,8 @@ namespace SeeDocs_App
                 made = &target->addRow();
             }
             Grids::Row& gridRow = *made;
+            if (!m_firstRow)
+                m_firstRow = &gridRow;
             if (!row.anchor.empty())
                 m_rowAnchors.try_emplace(row.anchor, RowAnchor{ &expander, target, &gridRow });
             if (!row.hint.empty())

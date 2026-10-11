@@ -441,9 +441,11 @@ before it, the words typed in the accent and its kind at the line's end; while a
 its hint and where it stands are beside the list. **The first line is current**: the name spelled
 as typed where there is one, else the search, so that Enter opens that name's page, or the
 search's. Up and Down walk the list, Alt+Enter opens a line in a new tab, Escape takes the list
-down and the next one empties the box, and Escape on the empty box gives the focus back to the
-page. A member with no page of its own opens its type's page at its row: the url's anchor names the
-row by the member's name, and the row's section opens and the row is selected.
+down and the next one empties the box, and Escape on the empty box gives the focus back where it
+came from - a row of the tree, a cell of the page. Where that has gone, or stands on a tab no longer
+shown, the focus goes to the page's row its anchor selected, else to its first row. A member with no
+page of its own opens its type's page at its row: the url's anchor names the row by the member's
+name, and the row's section opens and the row is selected.
 
 The search's page is a page of the browser like any other, titled with the words and marked
 `search`, its url the project's with a segment of `.search=` and the words after it - a slash in

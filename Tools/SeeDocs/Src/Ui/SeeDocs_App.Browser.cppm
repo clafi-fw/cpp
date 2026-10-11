@@ -180,6 +180,9 @@ namespace SeeDocs_App
         void paintPageIcon(PageData&, PaintIconEvent&) override;
         IconSize tabIconSize(BrowserTab&) override;
         void paintTabIcon(BrowserTab&, PaintIconEvent&) override;
+        // Notes the control the focus comes into the search box from - Escape hands it back.
+        void nestedControlFocusing(FocusEvent&) override;
+        void nestedControlDeleted(Control*) override;   // forgets a focus origin being deleted
     private:
         struct ShownProject;
         // What a path names, read off its segments: the root for none, else a project by its
@@ -334,6 +337,8 @@ namespace SeeDocs_App
         [[nodiscard]] Page searchPageOf(const Target&) const;
         void connectSearch();   // the box's requests, and Ctrl+F putting the focus in it
         void searchRequested(const SearchEvent&);
+        // The focus back where it came into the box from, while that is shown, else onto the page.
+        void handBackFocus();
         // Drops the names holding what the box holds under it, the search among them. See README
         void listMatches();
         [[nodiscard]] DropListLine lineOf(const ListedLine&, const NameHit&,
@@ -360,6 +365,7 @@ namespace SeeDocs_App
         Text m_words{};   // what the root shows while no project is open
         ProjectPageBuilder m_projectPageBuilder{};
         ListedLines m_listed{};   // what each line of the search box's list stands for
+        Control* m_focusOrigin{ nullptr };   // what held the focus before the search box took it
 
         TabTrees m_tabTrees{};
         // The tabs' trees, the selected tab's shown.
