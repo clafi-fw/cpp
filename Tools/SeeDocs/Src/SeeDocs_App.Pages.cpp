@@ -1401,7 +1401,8 @@ namespace SeeDocs_App
                         hintRuns(surface, property.comment, type.nameSpace) },
                     .excerpt = memberExcerpt(surface, notes, property.comment, property.name,
                         type),
-                    .site = siteOf(property.comment, property.place, property.name)
+                    .site = siteOf(property.comment, property.place, property.name),
+                    .anchor = property.name
                 });
             }
             return rows;
@@ -1434,7 +1435,8 @@ namespace SeeDocs_App
                     .cells = { { code(event.alias) },
                         { typeRun(surface, event.type, type.nameSpace) }, std::move(hint) },
                     .excerpt = memberExcerpt(surface, notes, event.comment, event.type, type),
-                    .site = siteOf(event.comment, event.place, event.type)
+                    .site = siteOf(event.comment, event.place, event.type),
+                    .anchor = event.alias
                 });
             }
             return rows;
@@ -1930,7 +1932,8 @@ namespace SeeDocs_App
                         { typeRun(surface, field.type, type.nameSpace) }, valueCell(field.value),
                         hintRuns(surface, field.comment, type.nameSpace) },
                     .excerpt = memberExcerpt(surface, notes, field.comment, field.name, type),
-                    .site = siteOf(field.comment, field.place, field.name)
+                    .site = siteOf(field.comment, field.place, field.name),
+                    .anchor = field.name
                 });
             }
             TableGroups groups;
@@ -1951,7 +1954,8 @@ namespace SeeDocs_App
                     .cells = { { code(member.name) }, valueCell(member.value),
                         hintRuns(surface, member.comment, type.nameSpace) },
                     .excerpt = memberExcerpt(surface, notes, member.comment, member.name, type),
-                    .site = memberSite(type, member)
+                    .site = memberSite(type, member),
+                    .anchor = member.name
                 });
             }
             TableGroups groups;
@@ -2798,6 +2802,18 @@ namespace SeeDocs_App
         for (const Variable* variable : module.constants)
             result.push_back(variable->field.name);
         return result;
+    }
+
+    Runs hintRunsOf(const Surface& surface, const Comment& comment,
+        const std::wstring_view nameSpace)
+    {
+        return hintRuns(surface, comment, nameSpace);
+    }
+
+    Runs noteRunsOf(const Surface& surface, const std::wstring& text,
+        const std::wstring_view nameSpace)
+    {
+        return inlineRuns(text, surface, nameSpace);
     }
 
     std::wstring memberLink(const Type& type, const std::wstring_view member)

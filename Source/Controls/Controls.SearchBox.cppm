@@ -3,6 +3,7 @@ module;
 
 export module ClaFi.Controls.SearchBox;
 
+import ClaFi.Controls.DropList;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.TextBox;
@@ -12,6 +13,7 @@ import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.System.Events;
+import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -24,6 +26,7 @@ namespace ClaFi::Controls
         Search,     // the text in the box changed, emptied included
         Next,       // Enter
         Previous,   // Shift+Enter
+        Pick,       // a line of the box's list taken - Enter on the current one, or a click on any
         End         // Escape, once the box is empty: the focus goes back to what was searched
     };
 
@@ -33,16 +36,25 @@ namespace ClaFi::Controls
     export struct SearchEvent : public EventOf<SearchBox>
     {
         SearchEvent(SearchBox&, SearchRequest);
-        SearchRequest request; // what was asked
+        SearchEvent(SearchBox&, const DropListPick&);
+        SearchRequest request;      // what was asked
+        std::size_t line{ 0 };      // the line taken, for Pick
+        KeyModifiers modifiers{};   // held with the key or the click that asked
+        InputStamp stamp{};         // the input that took the line, for Pick
     };
 
     // The line a search is typed on, which Return does not break.
     class SearchField : public TextBox
     {
     public:
-        using TextBox::TextBox;
+        template<typename... Args>
+        explicit SearchField(const CreateParams&, SearchBox&, Args&&...);
     protected:
+        void focusChanged() override;   // the list goes down with the focus
+        void nestedKeyDown(KeyDownEvent&) override;   // the list's keys go on to the box
         void charPress(CharPressEvent&) override;
+    private:
+        SearchBox& m_box;
     };
 
     // A box a search is typed into, with how much it found. See Controls#search
@@ -51,6 +63,9 @@ namespace ClaFi::Controls
     public:
         template<typename... Args>
         explicit SearchBox(const CreateParams&, Args&&...);
+    public:
+        // Where the box's list drops: under it from its left edge, or from its right (BottomEnd).
+        DECLARE_PROPERTY(FormPlacement, listPlacement, FormPlacement::Bottom)
     public:
         // The user asked the box for something. See Controls#search
         DECLARE_EVENT(SearchEvent, OnSearch, onSearch)
@@ -61,16 +76,24 @@ namespace ClaFi::Controls
         void startSearch(std::wstring_view text = {});
         // Shows which found range is selected, and how many were found. See Controls#search
         void setResult(std::optional<std::size_t> selected, std::size_t count);
+        // Drops the lines under the box, the one given current. See Controls#search
+        void showList(DropListLines, std::optional<std::size_t> current);
+        void hideList() { m_list.hide(); }
+        [[nodiscard]] bool listShown() const { return m_list.shown(); }
+        // Whether the box has lines to drop, up or down - the last ones its owner gave it.
+        [[nodiscard]] bool hasList() const { return !m_list.lines().empty(); }
     protected:
-        // Enter and Shift+Enter step; Escape empties the box and hands the focus back.
+        // Enter steps or takes the list's line; Escape takes the list down, then empties the box.
         void nestedKeyDown(KeyDownEvent&) override;
     private:
         // Holds its own layout: a text per step would crowd the shared layout cache.
         using CountReadout = WithTextLayout<Label>;
     private:
-        void request(SearchRequest);
+        void request(SearchRequest, KeyModifiers = {});
+        void pick(const DropListPick&);
     private:
         SearchField& m_field{ createBody<SearchField>(
+            *this,
             PlaceHolderText{ L"Search..." },
             WordWrap::No,
             Padding{ 6.0f, 4.0f },
@@ -82,11 +105,24 @@ namespace ClaFi::Controls
             Padding{ 6.0f, 0.0f },
             VerticalTextAnchor::Center
         ) };
+        DropList m_list;
     };
 
 
     //-------------------------------------------------------------------------
 
+
+    // SearchField
+
+    template<typename... Args>
+    SearchField::SearchField(const CreateParams& params, SearchBox& box, Args&&... args)
+        :
+        TextBox{ params, std::forward<Args>(args)... },
+        m_box{ box }
+    {
+    }
+
+    // SearchBox
 
     template<typename... Args>
     SearchBox::SearchBox(const CreateParams& params, Args&&... args)
@@ -98,7 +134,11 @@ namespace ClaFi::Controls
             params.themeMetrics().page,
             UiElement::Page,
             std::forward<Args>(args)...
-        }
+        },
+        INIT_PROPERTY(listPlacement),
+        m_list{ *this, [this](const DropListPick& picked) {
+            pick(picked);
+        } }
     {
         m_count.hide();
         m_field.onTextEdit([this](TextEditEvent&){

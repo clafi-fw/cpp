@@ -143,6 +143,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.MessageBar.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.SearchBox.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.SearchBox.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.DropList.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.DropList.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.PictureView.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.PictureView.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CodeBox.cppm" />

@@ -109,8 +109,9 @@ namespace SeeDocs_App
         [[nodiscard]] bool refresh(Page);
         // Shows SeeDocs' own words in place of a page.
         void showText(const Text&);
-        // Scrolls to the footnote the anchor names. An empty anchor names the page itself, and
-        // the page stays where it stands for it.
+        // Scrolls to the footnote the anchor names, or else to the row of a member of that name,
+        // its section opened and the row selected. An empty anchor names the page itself, and the
+        // page stays where it stands for it.
         void showAnchor(std::wstring_view anchor);
         // The anchor of the footnote that section's words stand in; empty where none on the page.
         [[nodiscard]] std::wstring anchorOf(const Reference&) const;
@@ -126,9 +127,18 @@ namespace SeeDocs_App
             std::wstring anchor{};
             const TableRow* row{ nullptr };
         };
+        // A row an anchor names: the section's expander, the grid the row stands in, and the row.
+        struct RowAnchor
+        {
+            Expander* expander{ nullptr };
+            Grids::GridBase* grid{ nullptr };
+            Grids::Row* row{ nullptr };
+        };
         // Writes one box's words out of the page again.
         using Render = std::function<void()>;
         using PageFootnotes = std::vector<PageFootnote>;
+        // The first row of each name on the page, by the anchor that names it.
+        using RowAnchors = std::map<std::wstring, RowAnchor, std::less<>>;
     private:
         void clear();
         void addHead();
@@ -148,8 +158,8 @@ namespace SeeDocs_App
         [[nodiscard]] Text treeRowText(const Branch&) const;
         [[nodiscard]] HeaderText treeHeaderText(const Branch&) const;
         // The column at the end holding the rows' buttons; null where no row has a command.
-        void addTableRows(Grids::GridBase&, const Table&, const TableGroup&, Stack& notes,
-            TagValue hintColumn, Grids::Column* commandColumn, PageFootnotes&);
+        void addTableRows(Expander&, Grids::GridBase&, const Table&, const TableGroup&,
+            Stack& notes, TagValue hintColumn, Grids::Column* commandColumn, PageFootnotes&);
         // The button's caption and hint are written out of the command, and its click raises it.
         void connectCommand(Button&, const Command&);
         // The row's hint cell opens on the comment's words and writes them back.
@@ -211,6 +221,7 @@ namespace SeeDocs_App
         std::vector<Control*> m_parts{};   // what the page stands as under the title, in order
         std::vector<Render> m_renders{};   // every box the page writes its words into
         PageFootnotes m_footnotes{};
+        RowAnchors m_rowAnchors{};
         // A footnote not written yet, by the row it is for, while its editor stands.
         std::map<const TableRow*, FootnoteSlot*> m_newFootnotes{};
         std::size_t m_footnoteCount{ 0 };   // numbered through the page, so an anchor names one

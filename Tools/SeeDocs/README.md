@@ -276,7 +276,8 @@ again. Its url is the project's with `/.project` after it: the scanner passes ov
 with a dot, so no folder can take it.
 
 SeeDocs is a browser of the framework's own kind: tabs across the top, under them the crumbs of
-the page shown with a list dropping from each, and Back, Forward and Up beside them. Every page has
+the page shown with a list dropping from each, Back, Forward and Up beside them, and a search box at
+the bar's end - see Search. Every page has
 a url - `/project/folder/module/type/method`, the project named by its name - so a tab goes back
 and forward through the pages it has visited (Alt+Left and Alt+Right, the side buttons of the
 mouse, or a right click on either button for the list), a type's crumb lists its methods, and Up
@@ -408,6 +409,54 @@ The pages are built by
 signatures and blocks of prose - out of the surface and the notes; SeeDocs builds controls
 from them (`SeeDocs_App.PageView`), the browser (`SeeDocs_App.Browser`) shows one per tab, and a generator renders the same pages as files.
 
+## Search
+
+A search is typed into the box at the crumb bar's end, and Ctrl+F puts the focus there from
+anywhere in the window. It searches the project the shown tab stands in; on the root, which lists
+the projects, it searches every one, and its lines and its rows name their project.
+
+What a search finds by name is every folder, module, type, function and constant the surface
+carries, and every member a type's page lists: its properties, its events, its methods and its
+fields or members. A private member is none, a constructor and a destructor are the type's own, a
+property's getter and setter are the property, and a method with no comment of its own that a base
+declares too is the base's - the base's row stands for it. A method or a function is one name
+however many overloads it has. A name is found by every spelling it has: what its row shows - an
+event by its alias - and a type's qualified name, an event's struct and its method, a folder's path
+and a module's whole name.
+
+A name holds what is typed, case aside, in one of four ways, best first: it is what is typed; it
+starts with it; a word of it starts with it, a word starting after `_`, `:`, `.` or `/`, at a
+capital after a lower-case letter or a digit, and at the last capital of a run before a lower-case
+letter; or it holds it anywhere. A query of two parts - cut at its last `::`, else at its last
+space, as `Grids::Row` and `Button onClick` are - finds as well a name its second part is found in
+whose owner holds the first: a member's type, the namespace of a type, a function or a constant,
+and the folder of a module or a folder. A member of a base of the type the first part names exactly
+is found too, after the type's own, since that type's page lists it. The names found are ranked by
+how they hold the words, then by how their owner holds a first part, then types, folders and
+modules before the rest, then the shorter name, and last the tree's own order.
+
+The box drops a list as it is typed into: a line for the search itself and the ten best names, each
+with the mark of what it is - a member's line leaves the mark's room blank - a member's type muted
+before it, the words typed in the accent and its kind at the line's end; while a line is current,
+its hint and where it stands are beside the list. **The first line is current**: the name spelled
+as typed where there is one, else the search, so that Enter opens that name's page, or the
+search's. Up and Down walk the list, Alt+Enter opens a line in a new tab, Escape takes the list
+down and the next one empties the box, and Escape on the empty box gives the focus back to the
+page. A member with no page of its own opens its type's page at its row: the url's anchor names the
+row by the member's name, and the row's section opens and the row is selected.
+
+The search's page is a page of the browser like any other, titled with the words and marked
+`search`, its url the project's with a segment of `.search=` and the words after it - a slash in
+them written `%2F`, a % `%25` - or the root's for the root's search, so Back and Forward step
+through searches and a tab is restored onto one. It holds a section for each kind of name found,
+the names in the order they are ranked; then In hints, the declarations whose hints hold the words
+and whose names do not; then In footnotes, every footnote section holding them, named by its note
+and its heading and linked to the declaration it belongs to - the one its heading names, else the
+first whose See reaches it - with the sentence the words stand in. Hints and footnotes are searched
+as they read, their code and bold marks taken out, and a section's words are its own, up to the
+first heading under it. A section lists its first 200 rows, and its heading's hint says how many
+there are. The words found are set bold.
+
 ## The checks
 
 `check` holds a project's sources read as ClaFi modules to the routine, and a project reading
@@ -434,10 +483,10 @@ any C++ and Delphi to nothing:
 `SeeDocs.sln` builds both programs with Visual Studio against the shared items: `SeeDocs` the window
 and `SeeDocsCli` the scanner, which share the Surface, Reading, Scanner, PascalReader, Database,
 Project, Notes and Pages modules under `Src/`, the window's own standing under `Src/Ui/` and the
-Edits module beside the shared ones. The CMake target `SeeDocs` builds the window on Wayland beside
-the other applications. The CMake target `SeeDocsCli` builds the scanner on Linux with or without a
-platform layer - the Dom, the Syntax lexer and the text file reader reach no further down than
-`UiTypes` - so a `check` runs wherever the tree is checked out:
+Edits and Search modules beside the shared ones. The CMake target `SeeDocs` builds the window on
+Wayland beside the other applications. The CMake target `SeeDocsCli` builds the scanner on Linux
+with or without a platform layer - the Dom, the Syntax lexer and the text file reader reach no
+further down than `UiTypes` - so a `check` runs wherever the tree is checked out:
 
     cmake -S . -B build -G Ninja -DCLAFI_PLATFORM=none \
           -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_BUILD_TYPE=Release

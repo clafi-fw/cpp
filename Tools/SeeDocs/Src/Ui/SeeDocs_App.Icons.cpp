@@ -22,7 +22,6 @@ namespace SeeDocs_App
     {
         // Every icon is drawn on this grid and scaled to the rect it is given, stroke and all.
         constexpr float k_grid = 14.0f;
-        constexpr float k_rowIconSize = 14.0f;
         constexpr float k_titleIconSize = 32.0f;   // beside a 28 pt title
         constexpr float k_stroke = 1.1f;
         constexpr float k_softFill = 0.35f; // a face tinted rather than filled
@@ -382,6 +381,18 @@ namespace SeeDocs_App
             check.lineTo(8.8f, 5.4f);
             drawing.stroke(check, drawing.inks.accent);
         }
+
+        // A lens over what is searched, its handle in the accent.
+        void paintSearch(const Drawing& drawing)
+        {
+            PixelPath lens;
+            addCircle(lens, { 6.0f, 6.0f }, 3.9f);
+            drawing.stroke(lens, drawing.inks.body);
+
+            PixelPath handle;
+            addLine(handle, { 8.9f, 8.9f }, { 12.3f, 12.3f });
+            drawing.stroke(handle, drawing.inks.accent);
+        }
     }
 
     void paintRowIcon(PaintIconEvent& event, const RowIcon icon)
@@ -430,6 +441,9 @@ namespace SeeDocs_App
                 break;
             case RowIcon::Concept:
                 paintConcept(drawing);
+                break;
+            case RowIcon::Search:
+                paintSearch(drawing);
                 break;
         }
     }

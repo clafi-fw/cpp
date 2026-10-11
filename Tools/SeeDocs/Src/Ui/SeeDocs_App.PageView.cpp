@@ -291,6 +291,8 @@ namespace SeeDocs_App
                 if (page.type)
                     return rowIconOf(*page.type);
                 return std::nullopt;
+            case PageKind::Search:
+                return RowIcon::Search;
             case PageKind::Member:
                 break;
         }
@@ -382,6 +384,13 @@ namespace SeeDocs_App
             if (footnote.slot->shown().goToAnchor(anchor))
                 return;
         }
+        const RowAnchors::const_iterator found = m_rowAnchors.find(anchor);
+        if (found == m_rowAnchors.end())
+            return;
+        const RowAnchor& named = found->second;
+        named.expander->header().setExpanded(true);
+        named.grid->selectCell(*named.row, named.grid->findColumnByTag(Tag{ 0 }));
+        named.row->scrollIntoViewOnAlign();
     }
 
     std::wstring PageView::anchorOf(const Reference& reference) const
@@ -403,6 +412,7 @@ namespace SeeDocs_App
         m_parts.clear();
         m_renders.clear();
         m_footnotes.clear();
+        m_rowAnchors.clear();
         m_newFootnotes.clear();
         m_footnoteCount = 0;
         m_pending = {};
@@ -599,7 +609,7 @@ namespace SeeDocs_App
 
         PageFootnotes footnotes;
         for (const TableGroup& group : table.groups)
-            addTableRows(grid, table, group, notes, hintColumn, commandColumn, footnotes);
+            addTableRows(expander, grid, table, group, notes, hintColumn, commandColumn, footnotes);
         const Padding footnotePadding{ k_prosePadding, k_footnotePadding };
         for (PageFootnote& footnote : footnotes)
             addFootnoteSlot(notes, std::move(footnote), footnotePadding);
@@ -680,7 +690,7 @@ namespace SeeDocs_App
     // a held expander row of the label where the table has no such column; the groups it holds
     // follow its rows inside it, each under a header of its own. A row with a command is one
     // that holds a control, its button, in the column at the end.
-    void PageView::addTableRows(Grids::GridBase& grid, const Table& table,
+    void PageView::addTableRows(Expander& expander, Grids::GridBase& grid, const Table& table,
         const TableGroup& group, Stack& notes, const TagValue hintColumn,
         Grids::Column* commandColumn, PageFootnotes& footnotes)
     {
@@ -708,9 +718,9 @@ namespace SeeDocs_App
         }
         else if (!group.label.empty())
         {
-            Grids::RowExpander& expander = grid.addExpander();
-            expander.header().setHeaderText(textOf(group.label));
-            target = &expander.body();
+            Grids::RowExpander& groupExpander = grid.addExpander();
+            groupExpander.header().setHeaderText(textOf(group.label));
+            target = &groupExpander.body();
         }
         for (const TableRow& row : group.rows)
         {
@@ -732,6 +742,8 @@ namespace SeeDocs_App
                 made = &target->addRow();
             }
             Grids::Row& gridRow = *made;
+            if (!row.anchor.empty())
+                m_rowAnchors.try_emplace(row.anchor, RowAnchor{ &expander, target, &gridRow });
             if (!row.hint.empty())
             {
                 gridRow.onGetCellHint([&row](Grids::GetCellHintEvent& event) {
@@ -776,7 +788,10 @@ namespace SeeDocs_App
             }
         }
         for (const TableGroup& nested : group.groups)
-            addTableRows(*target, table, nested, notes, hintColumn, commandColumn, footnotes);
+        {
+            addTableRows(expander, *target, table, nested, notes, hintColumn, commandColumn,
+                footnotes);
+        }
     }
 
     void PageView::connectCommand(Button& button, const Command& command)

@@ -301,6 +301,16 @@ focus back to what was searched. Its text goes in and out as edits, so its own U
 startSearch puts the focus in the box with its text selected, replaced by a text given, and
 setResult is how the owner reports what was found.
 
+A box drops a list under it where its owner gives it lines - see DropList. showList states the
+lines and the one current, and no lines take the list down. While the list is up, Up, Down and the
+page keys walk it, Enter on the current line raises Pick, naming the line and the modifiers held -
+so Alt+Enter can mean a new tab - and a click on any line raises it too; Enter with no line current
+takes the list down and raises Next as ever. Escape takes the list down and leaves the text
+standing, and the next one empties the box. Once it has listed lines, Down drops the list again,
+raising Search so that its owner lists anew over the text as it stands. The list goes down with the
+focus. listPlacement says where it drops: under the box from its left edge, or with BottomEnd from
+its right edge, for a box at a window's right end.
+
 StdActions::find, findNext and findPrevious carry Ctrl+F, F3 and Shift+F3. A page holding a
 search box claims them for everything under it, so F3 steps from the searched text and from the
 box alike, and Ctrl+F fills the box from a one-line selection where the searched text holds the
@@ -415,6 +425,25 @@ Escape.
 offers it in the same press; a refusal then stands under the box as any refusal does, with
 the list already down. Escape with the list up takes the list down and leaves the edit
 standing; the next Escape cancels it.
+
+## DropList
+
+A list dropped under a control that keeps the focus - the one a SearchBox drops. **The caret stays
+in the control**: the list is a window of its own standing on it, and its root, its stack and its
+rows are all MouseOnly, so nothing in it can take the focus. The rows are reached by the pointer,
+and by the keys the control hands on: moveCurrent and moveCurrentByPage for the arrows and the
+page keys, pickCurrent for Enter. Each answers false while the list is down, which is how the
+control knows the key is still its own.
+
+**A line is a Text and a hint.** show states the lines, the one current or none, and where the list
+stands off the control - Bottom, or BottomEnd from its right edge; no lines take the list down. The
+list is at least as wide as the control and as tall as twelve lines, and scrolls past that. A flex
+space in a line spans the list's width, so a word after one stands at the list's right edge. A
+line's hint stands beside the list while the line is current, as a CompletionList's does.
+
+**A pick is told once the list is down**: the owner's function is handed the line, the modifiers
+held with the key or the click, and the stamp of the input that took it, so whatever it opens or
+takes stands with the list out of the way.
 
 ## SelectionMoveEvent
 

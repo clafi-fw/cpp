@@ -27,8 +27,12 @@ namespace SeeDocs_App
         Union,
         Enum,
         Alias,
-        Concept
+        Concept,
+        Search     // what holds the words a search was given
     };
+
+    // How wide a row's icon stands, which a row with none leaves blank to line up with the rest.
+    export constexpr float k_rowIconSize = 14.0f;
 
     // The icon of a type's row - a control's, whatever else the type is.
     export [[nodiscard]] RowIcon rowIconOf(const Type&);

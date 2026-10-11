@@ -7,8 +7,10 @@ import SeeDocs_App.SurfaceTree;
 import SeeDocs_App.Database;
 import SeeDocs_App.Edits;
 import SeeDocs_App.Notes;
+import SeeDocs_App.PageText;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Project;
+import SeeDocs_App.Search;
 import SeeDocs_App.Surface;
 
 import ClaFi.App.Settings;
@@ -17,10 +19,14 @@ import ClaFi.Browser.Consts;
 import ClaFi.Browser.Control;
 import ClaFi.Browser.PageData;
 
+import ClaFi.Controls.DropList;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
+import ClaFi.Controls.SearchBox;
 import ClaFi.Controls.Tree;
+
+import ClaFi.StdActions;
 
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.PaintIconEvent;
@@ -54,6 +60,12 @@ namespace SeeDocs_App
         // starts with a dot, and no module or header is named so, so no page of a surface can
         // take it.
         constexpr std::wstring_view k_optionsSegment = L".project";
+        // What a search page's segment opens with, the query after it - a dot for the same reason.
+        constexpr std::wstring_view k_searchPrefix = L".search=";
+        constexpr std::wstring_view k_searchWord = L"search";
+        constexpr std::wstring_view k_scope = L"::";
+        constexpr float k_iconGap = 5.0f;   // between a list line's icon and its text
+        constexpr float k_kindGap = 12.0f;  // the least room before a list line's kind word
         constexpr std::wstring_view k_unnamedSegment = L"Project";   // for a name that gives none
         constexpr std::wstring_view k_closeProjectCaption = L"Close project";   // on a home
         constexpr std::wstring_view k_closeCaption = L"Close";   // on a row of the root
@@ -100,6 +112,47 @@ namespace SeeDocs_App
                 return std::wstring{ name };
             std::wstring result{ folder };
             result.append(1, ConfigNames::pathSeparator).append(name);
+            return result;
+        }
+
+        // **A query is one segment of a url**, so a slash in it is written as %2F, and a % that
+        // would read as the start of one as %25.
+        [[nodiscard]] std::wstring escapedQuery(const std::wstring_view query)
+        {
+            std::wstring result;
+            for (const wchar_t current : query)
+            {
+                if (current == L'%')
+                    result += L"%25";
+                else if (current == ConfigNames::pathSeparator)
+                    result += L"%2F";
+                else
+                    result += current;
+            }
+            return result;
+        }
+
+        [[nodiscard]] std::wstring unescapedQuery(const std::wstring_view segment)
+        {
+            std::wstring result;
+            for (std::size_t i = 0; i < segment.size(); ++i)
+            {
+                const std::wstring_view rest = segment.substr(i);
+                if (rest.starts_with(L"%2F") || rest.starts_with(L"%2f"))
+                {
+                    result += ConfigNames::pathSeparator;
+                    i += 2;
+                }
+                else if (rest.starts_with(L"%25"))
+                {
+                    result += L'%';
+                    i += 2;
+                }
+                else
+                {
+                    result += segment[i];
+                }
+            }
             return result;
         }
 
@@ -193,6 +246,8 @@ namespace SeeDocs_App
             ++resolved;
         if (!method.empty())
             ++resolved;
+        if (searching)
+            ++resolved;
         return depth > resolved;
     }
 
@@ -211,6 +266,7 @@ namespace SeeDocs_App
     {
         contents = contentsOf(open.surface);
         contentsTree = ContentsTree{ contents };
+        index = SearchIndex{ open.surface, contents };
         targets.clear();
         folders.clear();
         for (const ContentsFolder& folder : contents)
@@ -379,6 +435,7 @@ namespace SeeDocs_App
         std::vector<OpenRows> opened;
         for (const TabTree& entry : m_tabTrees)
             opened.push_back(entry.tree->openRows(shown->id));
+        dropListed();
         shown->read();
         for (std::size_t i = 0; i != m_tabTrees.size(); ++i)
             m_tabTrees[i].tree->rebuildProject(shown->id, shown->contentsTree, opened[i]);
@@ -471,6 +528,7 @@ namespace SeeDocs_App
         }
         for (const TabTree& entry : m_tabTrees)
             entry.tree->removeProject(removed->id);
+        dropListed();
         m_projects.erase(found);
         refreshPageTree();
         rebuildPages(nullptr, nullptr);
@@ -487,37 +545,17 @@ namespace SeeDocs_App
         m_projectPageBuilder = std::move(builder);
     }
 
-    // A target starting with the path separator is a path already - the root's links to the
-    // projects are; anything else is looked up in the page's own project.
+    // A target starting with the path separator is a url already, an anchor and all - the root's
+    // links are; anything else is looked up in the page's own project.
     std::optional<Url> SurfaceBrowser::urlOf(const std::wstring_view target,
         const PageData& from) const
     {
         if (target.starts_with(ConfigNames::pathSeparator))
-            return Url{ target };
+            return Url::parse(target);
         const ShownProject* project = resolve(from).project;
         if (!project)
             return std::nullopt;
-
-        const Targets::const_iterator found = project->targets.find(std::wstring{ target });
-        if (found != project->targets.end())
-        {
-            const Target& named = found->second;
-            return Url{ pathOf(*project, named.folder, named.module, named.type) };
-        }
-
-        const std::optional<MemberLink> link = readMemberLink(target);
-        if (!link.has_value())
-            return std::nullopt;
-        const Targets::const_iterator owner = project->targets.find(std::wstring{ link->type });
-        if (owner == project->targets.end() || !owner->second.module)
-            return std::nullopt;
-        const Target& named = owner->second;
-        const bool reached = named.type
-            ? hasMethod(*named.type, link->member)
-            : exports(*named.module, link->member);
-        if (!reached)
-            return std::nullopt;
-        return Url{ pathOf(*project, named.folder, named.module, named.type, link->member) };
+        return urlIn(*project, target);
     }
 
     // **The click is still unwinding on the page that asked**, and the answer may take that page
@@ -543,7 +581,7 @@ namespace SeeDocs_App
         const Target target = resolve(data);
         data.title = titleOf(data, target);
         const bool hasList = target.isRoot()
-            || (target.project && !target.isGone() && !target.projectOptions
+            || (target.project && !target.isGone() && !target.projectOptions && !target.searching
                 && target.method.empty() && target.exportName.empty()
                 && (!target.type || !methodNames(*target.type).empty()));
         if (hasList)
@@ -563,7 +601,7 @@ namespace SeeDocs_App
             data.fetchState = FetchState::Fetched;
             return;
         }
-        if (target.isGone() || target.projectOptions)
+        if (target.isGone() || target.projectOptions || target.searching)
             return;
         const ShownProject& project = *target.project;
         if (target.isFolder())
@@ -639,7 +677,7 @@ namespace SeeDocs_App
         m_trees.setCurrentItem(tabTree.box);
         showTreeWidth(tab);
         SurfaceTree& tree = *tabTree.tree;
-        if (!target.project || target.isGone())
+        if (!target.project || target.isGone() || target.searching)
             tree.setCurrentItem(nullptr);
         else if (target.projectOptions)
             tree.followOptions(target.project->id);
@@ -705,6 +743,12 @@ namespace SeeDocs_App
         Target result{ .depth = segments.size() };
         if (segments.empty())
             return result;
+        if (segments.size() == 1 && segments.front().starts_with(k_searchPrefix))
+        {
+            result.searching = true;
+            result.search = unescapedQuery(segments.front().substr(k_searchPrefix.size()));
+            return result;
+        }
         ShownProject* project = projectOf(segments.front());
         if (!project)
             return result;
@@ -712,6 +756,12 @@ namespace SeeDocs_App
         if (segments.size() == 2 && segments[1] == k_optionsSegment)
         {
             result.projectOptions = true;
+            return result;
+        }
+        if (segments.size() == 2 && segments[1].starts_with(k_searchPrefix))
+        {
+            result.searching = true;
+            result.search = unescapedQuery(segments[1].substr(k_searchPrefix.size()));
             return result;
         }
 
@@ -1005,6 +1055,8 @@ namespace SeeDocs_App
     {
         if (target.isRoot())
             return appContext().appName().plainText();
+        if (target.searching)
+            return target.search;
         if (!target.project)
             return data.name;
         if (target.isHome())
@@ -1025,6 +1077,8 @@ namespace SeeDocs_App
     {
         if (target.isRoot())
             return RowIcon::Home;
+        if (target.searching)
+            return RowIcon::Search;
         if (!target.project || target.isGone() || !target.method.empty()
             || !target.exportName.empty())
         {
@@ -1048,6 +1102,12 @@ namespace SeeDocs_App
             if (m_projects.empty())
                 return std::nullopt;
             return projectsPage();
+        }
+        if (target.searching)
+        {
+            if (m_projects.empty())
+                return std::nullopt;
+            return searchPageOf(target);
         }
         if (target.isGone() || target.projectOptions || target.project->contents.empty())
             return std::nullopt;
@@ -1128,12 +1188,17 @@ namespace SeeDocs_App
     void SurfaceBrowser::fill(SurfacePage& page, const Target& target, const PageData& data) const
     {
         PageView& view = page.view();
-        if (target.isRoot())
+        if (target.isRoot() || (target.searching && m_projects.empty()))
         {
             if (m_projects.empty())
                 view.showText(m_words);
             else
                 view.show(projectsPage());
+            return;
+        }
+        if (target.searching)
+        {
+            view.show(searchPageOf(target));
             return;
         }
         if (target.isGone())
@@ -1171,9 +1236,12 @@ namespace SeeDocs_App
             refreshPageData(*item);
     }
 
+    // The root's search reads every project, as the root lists them.
     bool SurfaceBrowser::reaches(const Target& target, const ShownProject* project)
     {
-        return target.isRoot() || (project && target.project == project);
+        if (target.isRoot() || (target.searching && !target.project))
+            return true;
+        return project && target.project == project;
     }
 
     // The selected tab is sent to the url it stands on, which builds its page again where it
@@ -1326,5 +1394,312 @@ namespace SeeDocs_App
                 return variable->field.name == name;
             });
         return isFunction || isConstant;
+    }
+
+    bool SurfaceBrowser::hasRow(const Type& type, const std::wstring_view name)
+    {
+        const bool property = std::ranges::any_of(type.properties,
+            [name](const Property& value) {
+                return value.name == name;
+            });
+        const bool event = std::ranges::any_of(type.events, [name](const Event& value) {
+            return value.alias == name;
+        });
+        const bool field = std::ranges::any_of(type.fields, [name](const Field& value) {
+            return value.name == name;
+        });
+        const bool member = std::ranges::any_of(type.members, [name](const EnumMember& value) {
+            return value.name == name;
+        });
+        return property || event || field || member;
+    }
+
+    // A member that has no page of its own is a row of its type's page, which the anchor names.
+    std::optional<Url> SurfaceBrowser::urlIn(const ShownProject& project,
+        const std::wstring_view target) const
+    {
+        const Targets::const_iterator found = project.targets.find(std::wstring{ target });
+        if (found != project.targets.end())
+        {
+            const Target& named = found->second;
+            return Url{ pathOf(project, named.folder, named.module, named.type) };
+        }
+
+        const std::optional<MemberLink> link = readMemberLink(target);
+        if (!link.has_value())
+            return std::nullopt;
+        const Targets::const_iterator owner = project.targets.find(std::wstring{ link->type });
+        if (owner == project.targets.end() || !owner->second.module)
+            return std::nullopt;
+        const Target& named = owner->second;
+        if (named.type && !hasMethod(*named.type, link->member))
+        {
+            if (!hasRow(*named.type, link->member))
+                return std::nullopt;
+            return Url{ pathOf(project, named.folder, named.module, named.type), link->member };
+        }
+        if (!named.type && !exports(*named.module, link->member))
+            return std::nullopt;
+        return Url{ pathOf(project, named.folder, named.module, named.type, link->member) };
+    }
+
+    SurfaceBrowser::ShownProjects SurfaceBrowser::searchedProjects() const
+    {
+        ShownProjects result;
+        if (m_shownProject)
+        {
+            if (const ShownProject* shown = projectOf(*m_shownProject))
+            {
+                result.push_back(shown);
+                return result;
+            }
+        }
+        for (const std::unique_ptr<ShownProject>& shown : m_projects)
+            result.push_back(shown.get());
+        return result;
+    }
+
+    std::wstring SurfaceBrowser::searchPath(const ShownProject* project,
+        const std::wstring_view query)
+    {
+        std::wstring result = project ? homePath(*project) : std::wstring{};
+        result.append(1, ConfigNames::pathSeparator);
+        result.append(k_searchPrefix);
+        result.append(escapedQuery(query));
+        return result;
+    }
+
+    // A project's search page links in the project, as its other pages do; the root's by url,
+    // which names the project each row stands in.
+    Page SurfaceBrowser::searchPageOf(const Target& target) const
+    {
+        ShownProjects projects;
+        if (target.project)
+            projects.push_back(target.project);
+        else
+        {
+            for (const std::unique_ptr<ShownProject>& shown : m_projects)
+                projects.push_back(shown.get());
+        }
+        SearchedProjects searched;
+        for (const ShownProject* project : projects)
+        {
+            searched.push_back({
+                .name = project->open.project.name,
+                .surface = &project->open.surface,
+                .notes = &project->open.notes,
+                .index = &project->index
+            });
+        }
+        const bool rooted = !target.project;
+        const LinkSpeller spell = [this, &projects, rooted](const std::size_t at,
+            const std::wstring_view link) {
+            if (!rooted)
+                return std::wstring{ link };
+            const std::optional<Url> url = urlIn(*projects[at], link);
+            return url.has_value() ? url->str() : std::wstring{};
+        };
+        return searchPage(searched, target.search, spell);
+    }
+
+    // **Ctrl+F is the box's from anywhere in the window**: the browser stands over every control
+    // in it, and the action asks each control from the focused one upwards.
+    void SurfaceBrowser::connectSearch()
+    {
+        m_search.onSearch([this](SearchEvent& event) {
+            searchRequested(event);
+        });
+        onGetActionState([](GetActionStateEvent& event) {
+            if (&event.action == &StdActions::find)
+                event.claim({});
+        });
+        onActionClick([this](ActionClickEvent& event) {
+            if (&event.action == &StdActions::find)
+                m_search.startSearch();
+        });
+    }
+
+    // Enter with no line current, the list taken down, opens the search's page as the search line
+    // does; Escape on the emptied box hands the focus back to the page.
+    void SurfaceBrowser::searchRequested(const SearchEvent& event)
+    {
+        switch (event.request)
+        {
+            case SearchRequest::Search:
+                listMatches();
+                return;
+            case SearchRequest::Next:
+            case SearchRequest::Previous:
+                openSearch(event.modifiers);
+                return;
+            case SearchRequest::Pick:
+                openListed(event.line, event.modifiers);
+                return;
+            case SearchRequest::End:
+                if (BrowserPage* page = currentPage())
+                    page->setFocus();
+                return;
+        }
+    }
+
+    // **The first line is current**: the name spelled as typed where there is one, else the search
+    // itself, so Enter opens that name's page or the search's. The best names of each project
+    // searched are merged by how they hold the words, and a line names its project where several
+    // are searched.
+    void SurfaceBrowser::listMatches()
+    {
+        m_listed.clear();
+        const std::wstring_view typed = trimmed(m_search.searchText());
+        if (typed.empty())
+        {
+            m_search.hideList();
+            return;
+        }
+
+        // A name found, and the project it was found in.
+        struct Found
+        {
+            NameHit hit;
+            const ShownProject* project{ nullptr };
+        };
+
+        const ShownProjects projects = searchedProjects();
+        std::vector<Found> found;
+        for (const ShownProject* project : projects)
+        {
+            for (const NameHit& hit : project->index.find(typed, k_listedNames))
+                found.push_back({ .hit = hit, .project = project });
+        }
+        std::ranges::stable_sort(found, [](const Found& left, const Found& right) {
+            return left.hit.rank < right.hit.rank;
+        });
+        if (found.size() > k_listedNames)
+            found.resize(k_listedNames);
+
+        const bool namesProject = projects.size() > 1;
+        const bool exact = !found.empty() && found.front().hit.rank == MatchRank::Exact;
+        DropListLines lines;
+        std::size_t next = 0;
+        if (exact)
+        {
+            m_listed.push_back({
+                .project = found.front().project,
+                .entry = found.front().hit.entry
+            });
+            lines.push_back(lineOf(m_listed.back(), found.front().hit, namesProject));
+            next = 1;
+        }
+        m_listed.push_back({ .project = nullptr, .entry = nullptr });
+        lines.push_back(searchLine(typed));
+        for (std::size_t i = next; i < found.size(); ++i)
+        {
+            m_listed.push_back({ .project = found[i].project, .entry = found[i].hit.entry });
+            lines.push_back(lineOf(m_listed.back(), found[i].hit, namesProject));
+        }
+        m_search.showList(std::move(lines), 0);
+    }
+
+    // The mark of what the name is - a member's line keeps the room blank - a member's type muted
+    // before it, the typed words in the accent and the kind at the line's end; the hint is the
+    // declaration's words and where it stands.
+    DropListLine SurfaceBrowser::lineOf(const ListedLine& listed, const NameHit& hit,
+        const bool namesProject) const
+    {
+        const NamedEntry& entry = *listed.entry;
+        DropListLine line;
+        Text& text = line.text;
+        if (entry.kind == NameKind::Type)
+            text << rowIcon(rowIconOf(*entry.type)) << Space{ k_iconGap };
+        else if (entry.kind == NameKind::Folder)
+            text << rowIcon(RowIcon::Folder) << Space{ k_iconGap };
+        else if (entry.kind == NameKind::Module)
+            text << rowIcon(RowIcon::Module) << Space{ k_iconGap };
+        else
+            text << Space{ k_rowIconSize + k_iconGap };
+        if (entry.type && entry.kind != NameKind::Type)
+            text << InkGrade::Muted << entry.type->name << k_scope << PopColor{};
+        const std::wstring_view name = entry.name;
+        if (hit.start.has_value() && *hit.start + hit.length <= name.size())
+        {
+            text << name.substr(0, *hit.start);
+            text << InkWell::accentInk() << name.substr(*hit.start, hit.length) << PopColor{};
+            text << name.substr(*hit.start + hit.length);
+        }
+        else
+        {
+            text << name;
+        }
+        text << FlexSpace{ k_kindGap } << TextStyleId::SubBody << InkGrade::Muted;
+        text << entry.kindWord;
+        if (namesProject)
+            text << k_separator << listed.project->open.project.name;
+        text << PopColor{} << PopTextStyle{};
+
+        if (entry.comment && !entry.comment->text.empty())
+        {
+            writeRuns(line.hint, hintRunsOf(listed.project->open.surface, *entry.comment,
+                entry.nameSpace));
+            line.hint << k_endLine;
+        }
+        std::wstring place = entry.folder;
+        if (entry.module && entry.kind != NameKind::Module)
+        {
+            if (!place.empty())
+                place += k_sourceJoin;
+            place += entry.module->shortName;
+        }
+        if (place.empty())
+            place = listed.project->open.project.name;
+        line.hint << InkGrade::Muted << place << PopColor{};
+        return line;
+    }
+
+    DropListLine SurfaceBrowser::searchLine(const std::wstring_view typed)
+    {
+        DropListLine line;
+        line.text << rowIcon(RowIcon::Search) << Space{ k_iconGap } << typed;
+        line.text << FlexSpace{ k_kindGap } << TextStyleId::SubBody << InkGrade::Muted
+            << k_searchWord << PopColor{} << PopTextStyle{};
+        return line;
+    }
+
+    void SurfaceBrowser::openListed(const std::size_t line, const KeyModifiers modifiers)
+    {
+        if (line >= m_listed.size())
+            return;
+        const ListedLine& listed = m_listed[line];
+        if (!listed.entry)
+        {
+            openSearch(modifiers);
+            return;
+        }
+        const std::optional<Url> url = urlIn(*listed.project, listed.entry->link);
+        if (!url.has_value())
+            return;
+        if (modifiers.alt)
+            addTab(*url);
+        else
+            goTo(*url);
+    }
+
+    // The search page of the project the shown tab stands in, or the root's.
+    void SurfaceBrowser::openSearch(const KeyModifiers modifiers)
+    {
+        const std::wstring_view typed = trimmed(m_search.searchText());
+        if (typed.empty())
+            return;
+        const ShownProject* project = m_shownProject ? projectOf(*m_shownProject) : nullptr;
+        const Url url{ searchPath(project, typed) };
+        m_search.hideList();
+        if (modifiers.alt)
+            addTab(url);
+        else
+            goTo(url);
+    }
+
+    void SurfaceBrowser::dropListed()
+    {
+        m_search.hideList();
+        m_listed.clear();
     }
 }

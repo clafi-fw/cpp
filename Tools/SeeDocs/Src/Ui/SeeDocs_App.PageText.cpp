@@ -121,6 +121,7 @@ namespace SeeDocs_App
         }
     }
 
+    // **Found words are set bold** over whatever the run's own style is, a link's included.
     void writeRuns(Text& text, const Runs& runs)
     {
         for (const Run& run : runs)
@@ -128,6 +129,8 @@ namespace SeeDocs_App
             const bool linked = !run.link.empty();
             if (linked)
                 text << PushLink{ run.link };
+            if (run.found)
+                text << TextOp::PushBold;
             switch (run.style)
             {
                 case RunStyle::Plain:
@@ -147,6 +150,8 @@ namespace SeeDocs_App
                         << TextOp::PopItalic << PopColor{};
                     break;
             }
+            if (run.found)
+                text << TextOp::PopBold;
             if (linked)
                 text << PopLink{};
         }

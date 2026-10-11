@@ -28,6 +28,7 @@ namespace SeeDocs_App
         // A type's qualified name, a module's name, a folder's path, or a link to a type's
         // member or to a module's function or constant (memberLink, exportLink); empty for none.
         std::wstring link;
+        bool found{ false };   // words a search found, marked whatever the style
     };
 
     export using Runs = std::vector<Run>;
@@ -109,6 +110,7 @@ namespace SeeDocs_App
         std::optional<Excerpt> excerpt;
         std::optional<CommentSite> site;
         std::optional<Command> command;
+        std::wstring anchor;   // what a url names the row by - a member's name; empty for none
     };
 
     export using TableRows = std::vector<TableRow>;
@@ -214,7 +216,8 @@ namespace SeeDocs_App
         Folder,     // a folder of sources
         Module,     // a module or a header
         Type,
-        Member      // a method, a function or a constant
+        Member,     // a method, a function or a constant
+        Search      // what holds the words a search was given
     };
 
     export struct Page
@@ -360,6 +363,14 @@ namespace SeeDocs_App
     // The names a module's page lists after its types: its functions, one per name, then its
     // constants, each in the order declared.
     export [[nodiscard]] std::vector<std::wstring_view> exportNames(const ContentsModule&);
+
+    // A declaration's hint as its row reads it: code and bold marks read, the types the surface
+    // has a page for linked, and a missing one said so where the rules owe one.
+    export [[nodiscard]] Runs hintRunsOf(const Surface&, const Comment&,
+        std::wstring_view nameSpace);
+    // A line of a note as a page reads it: code and bold marks read, the types linked.
+    export [[nodiscard]] Runs noteRunsOf(const Surface&, const std::wstring& text,
+        std::wstring_view nameSpace);
 
     // The link to a member's page: the type's qualified name, ::, the member's name.
     export [[nodiscard]] std::wstring memberLink(const Type&, std::wstring_view member);

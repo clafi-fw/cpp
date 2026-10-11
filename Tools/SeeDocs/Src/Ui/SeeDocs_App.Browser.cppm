@@ -7,6 +7,7 @@ import SeeDocs_App.SurfaceTree;
 import SeeDocs_App.Notes;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Project;
+import SeeDocs_App.Search;
 import SeeDocs_App.Surface;
 
 import ClaFi.App.Settings;
@@ -15,9 +16,11 @@ import ClaFi.Browser.Control;
 import ClaFi.Browser.PageData;
 
 import ClaFi.Controls.AppButton;
+import ClaFi.Controls.DropList;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
+import ClaFi.Controls.SearchBox;
 import ClaFi.Controls.Tree;
 import ClaFi.Icons.SideBar;
 
@@ -129,7 +132,7 @@ namespace SeeDocs_App
     // none is open. What a project's pages edit is written through the browser into that project,
     // and a project's closing, which its home and the root offer, is asked of whoever owns it. A
     // tab's tree is made the first time the tab is shown, and the nodes it has open are kept
-    // with the tab.
+    // with the tab. A search is typed at the crumb bar's end. See the README beside the project.
     export class SurfaceBrowser : public BrowserControl
     {
     public:
@@ -194,8 +197,10 @@ namespace SeeDocs_App
             const Type* type{ nullptr };
             std::wstring_view exportName{};     // a function or a constant of the module
             std::wstring_view method{};
+            std::wstring search{};              // what a search page searches for
             std::size_t depth{ 0 };   // segments of the path
             bool projectOptions{ false };   // the project's options page
+            bool searching{ false };   // a search page - the project's, or the root's for none
             [[nodiscard]] bool isRoot() const { return depth == 0; }
             [[nodiscard]] bool isHome() const { return project && depth == 1; }
             [[nodiscard]] bool isFolder() const { return project && depth == folderDepth + 1; }
@@ -218,6 +223,7 @@ namespace SeeDocs_App
             std::wstring segment{};
             ContentsFolders contents{};
             ContentsTree contentsTree{};   // over the contents, which every tab's tree reads
+            SearchIndex index{};   // over the contents, which a search reads
             Targets targets{};
             Folders folders{};
             // Reads the contents, the targets and the folders off the surface as it now reads.
@@ -242,6 +248,14 @@ namespace SeeDocs_App
             SurfaceTree* tree{ nullptr };
         };
         using TabTrees = std::vector<TabTree>;
+        // A line of the search box's list: a name and the project it stands in, or the search.
+        struct ListedLine
+        {
+            const ShownProject* project{ nullptr };   // null for the search
+            const NamedEntry* entry{ nullptr };
+        };
+        using ListedLines = std::vector<ListedLine>;
+        using ShownProjects = std::vector<const ShownProject*>;
     private:
         [[nodiscard]] Target resolve(const PageData&) const;
         [[nodiscard]] ShownProject* projectOf(std::wstring_view segment) const;
@@ -308,11 +322,35 @@ namespace SeeDocs_App
         [[nodiscard]] static bool hasMethod(const Type&, std::wstring_view name);
         // Whether the module exports a function or a constant of the name.
         [[nodiscard]] static bool exports(const ContentsModule&, std::wstring_view name);
+        // Whether a row of the type's page is named so: a property, an event, a field or a member.
+        [[nodiscard]] static bool hasRow(const Type&, std::wstring_view name);
+        // The url a link of the project's pages names; nothing where it names none.
+        [[nodiscard]] std::optional<Url> urlIn(const ShownProject&,
+            std::wstring_view target) const;
+        // The projects a search reaches: the one the shown tab stands in, or all from the root.
+        [[nodiscard]] ShownProjects searchedProjects() const;
+        // The path of a search's page: the query after the project's segment, or after the root.
+        [[nodiscard]] static std::wstring searchPath(const ShownProject*, std::wstring_view query);
+        [[nodiscard]] Page searchPageOf(const Target&) const;
+        void connectSearch();   // the box's requests, and Ctrl+F putting the focus in it
+        void searchRequested(const SearchEvent&);
+        // Drops the names holding what the box holds under it, the search among them. See README
+        void listMatches();
+        [[nodiscard]] DropListLine lineOf(const ListedLine&, const NameHit&,
+            bool namesProject) const;
+        [[nodiscard]] static DropListLine searchLine(std::wstring_view typed);
+        // Opens what a line of the list stands for, in a new tab where Alt was held.
+        void openListed(std::size_t line, KeyModifiers);
+        // Opens the page of what the box holds, in a new tab where Alt was held.
+        void openSearch(KeyModifiers);
+        void dropListed();   // the list down and its lines forgotten, a surface being read again
     private:
         static constexpr float k_treeWidth = 300.0f;   // where the trees' bar starts
         static constexpr float k_leastTreeWidth = 120.0f;   // the least the bar is dragged to
         static constexpr float k_leastPageWidth = 240.0f;   // what a page keeps against the bar
         static constexpr IconSize k_pageIconSize{ 16.0f };
+        static constexpr float k_searchWidth = 300.0f;
+        static constexpr std::size_t k_listedNames = 10;   // what the search box's list holds
 
         Projects m_projects{};
         ProjectId m_nextId{ 0 };
@@ -321,12 +359,19 @@ namespace SeeDocs_App
         std::optional<Reference> m_rebuildFootnote{};   // to show once the page stands again
         Text m_words{};   // what the root shows while no project is open
         ProjectPageBuilder m_projectPageBuilder{};
+        ListedLines m_listed{};   // what each line of the search box's list stands for
 
         TabTrees m_tabTrees{};
         // The tabs' trees, the selected tab's shown.
         PageControl& m_trees{ createLeftBar<PageControl>(
             PreferredSize{ k_treeWidth, 0.0f },
             MinSize{ k_leastTreeWidth, 0.0f }
+        ) };
+        SearchBox& m_search{ createCrumbBarEnd<SearchBox>(
+            MinSize{ k_searchWidth, 0.0f },
+            MaxSize{ k_searchWidth, k_maxFloat },
+            // The box stands at the window's right end, so its list drops from the right edge.
+            FormPlacement::BottomEnd
         ) };
     };
 
@@ -389,6 +434,7 @@ namespace SeeDocs_App
         m_rebuildTimer.onTick([this](TimerEvent&) {
             rebuildCurrentPage();
         });
+        connectSearch();
     }
 
     template<typename F>

@@ -190,6 +190,9 @@ namespace ClaFi::Browser
         void initialize(BrowserSettings&);
         DialogTitle& title() const { return m_title; }
         AppButton& appButton() const { return m_appButton; }
+        // Puts a control at the end of the crumb bar, past the crumbs - a search box, as a rule.
+        template<typename ControlClass, typename... Args>
+        ControlClass& createCrumbBarEnd(Args&&...);
     public:
         // Opens a tab on the home page, which is where a browser with nothing said to it starts.
         void addTab();
@@ -482,5 +485,11 @@ namespace ClaFi::Browser
         connectParts();
         connectPageActions();
         connectHistory();
+    }
+
+    template<typename ControlClass, typename... Args>
+    ControlClass& BrowserControl::createCrumbBarEnd(Args&&... args)
+    {
+        return m_breadCrumbArea.createRightBar<ControlClass>(std::forward<Args>(args)...);
     }
 }
