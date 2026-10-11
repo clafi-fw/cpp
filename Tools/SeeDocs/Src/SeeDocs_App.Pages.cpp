@@ -901,12 +901,11 @@ namespace SeeDocs_App
             std::wstring spelling;
         };
 
-        // The walk up through a type's bases: the lines it writes, the way so far as words and as
-        // types, and every base it reaches, once each, in the order the lines name them.
+        // The walk up through a type's bases: the tree of them it builds, the way so far, and every
+        // base it reaches, once each, in the order the tree names them reading down.
         struct BaseWalk
         {
-            Chains chains;
-            Runs chain;
+            BaseNodes bases;
             std::vector<WayStep> way;
             ReachedBases reached;
         };
@@ -918,11 +917,12 @@ namespace SeeDocs_App
             std::wstring_view nameSpace;
         };
 
-        // Along a type's bases: a base that is one of the type's template parameters stands for
-        // the argument the spelling gave it, which is how a mixin hands its host on.
-        void addBaseChains(BaseWalk& walk, const Surface& surface, const Type& type,
-            std::wstring_view spelled, std::wstring_view nameSpace, std::size_t depth,
-            const Flow& flow);
+        // Along a type's bases, a node each into the list given: a base that is one of the type's
+        // template parameters stands for the argument the spelling gave it, which is how a mixin
+        // hands its host on.
+        void addBaseNodes(BaseWalk& walk, BaseNodes& into, const Surface& surface,
+            const Type& type, std::wstring_view spelled, std::wstring_view nameSpace,
+            std::size_t depth, const Flow& flow);
 
         // Where a base spelled inside a type is read from on the chain: a template parameter of
         // the type stands for the argument the chain's spelling gave it, read where the chain is;
@@ -1024,14 +1024,12 @@ namespace SeeDocs_App
             return carried;
         }
 
-        // A base put on the way: a colon, then its spelling, linked where the surface has its page.
-        void joinBase(Runs& chain, std::wstring spelling, const Type* type)
+        // A base's words: its spelling, linked where the surface has its page.
+        [[nodiscard]] Runs baseText(std::wstring spelling, const Type* type)
         {
-            chain.push_back(muted(std::wstring{ k_baseJoin }));
             if (type && type->isPublic())
-                chain.push_back(code(std::move(spelling), type->qualifiedName));
-            else
-                chain.push_back(code(std::move(spelling)));
+                return { code(std::move(spelling), type->qualifiedName) };
+            return { code(std::move(spelling)) };
         }
 
         // A base met on the way, recorded the first time it is met.
@@ -1057,43 +1055,38 @@ namespace SeeDocs_App
         }
 
         // A base on the way: its spelling with a private alias replaced, the type its head names,
-        // and that type's own bases after it; a way that ends here is a line, and so is one that
-        // meets a type it has come through. A nested base is a part of some type, not a type of
-        // its own, and is left out.
-        void addBaseChain(BaseWalk& walk, const Surface& surface, const BaseReading& reading,
-            const std::size_t depth, const Flow& flow)
+        // and that type's own bases under it; the way ends at a type it has come through. A nested
+        // base is a part of some type, not a type of its own, and is left out.
+        void addBaseNode(BaseWalk& walk, BaseNodes& into, const Surface& surface,
+            const BaseReading& reading, const std::size_t depth, const Flow& flow)
         {
             const std::wstring resolvedSpelling =
                 surface.resolvedBase(reading.spelling, reading.nameSpace);
             const Type* type = surface.resolve(resolvedSpelling, reading.nameSpace);
             if (type && isNested(*type))
                 return;
-            const std::size_t length = walk.chain.size();
-            const std::size_t count = walk.chains.size();
-            joinBase(walk.chain, resolvedSpelling, type);
+            BaseNode node{ .text = baseText(resolvedSpelling, type), .type = type };
             if (type && !closesRing(walk, *type, resolvedSpelling))
             {
                 ReachedBase base = reachedBase(resolvedSpelling, *type, flow);
-                Flow into = flow;
-                into.hidden = base.hidden;
-                into.republished = carriedPast(base.republished, *type);
-                into.constructors = base.constructorsInherited;
+                Flow beyond = flow;
+                beyond.hidden = base.hidden;
+                beyond.republished = carriedPast(base.republished, *type);
+                beyond.constructors = base.constructorsInherited;
                 reachBase(walk.reached, std::move(base));
                 if (depth < k_maxTreeDepth)
                 {
                     walk.way.push_back({ .type = type, .spelling = resolvedSpelling });
-                    addBaseChains(walk, surface, *type, resolvedSpelling, reading.nameSpace,
-                        depth + 1, into);
+                    addBaseNodes(walk, node.bases, surface, *type, resolvedSpelling,
+                        reading.nameSpace, depth + 1, beyond);
                     walk.way.pop_back();
                 }
             }
-            if (walk.chains.size() == count)
-                walk.chains.push_back(walk.chain);
-            walk.chain.resize(length);
+            into.push_back(std::move(node));
         }
 
-        void addBaseChains(BaseWalk& walk, const Surface& surface, const Type& type,
-            const std::wstring_view spelled, const std::wstring_view nameSpace,
+        void addBaseNodes(BaseWalk& walk, BaseNodes& into, const Surface& surface,
+            const Type& type, const std::wstring_view spelled, const std::wstring_view nameSpace,
             const std::size_t depth, const Flow& flow)
         {
             const Flow outward = flowFrom(surface, type, spelled, nameSpace, flow);
@@ -1103,13 +1096,10 @@ namespace SeeDocs_App
                     readBase(type, spelled, nameSpace, base);
                 if (reading)
                 {
-                    addBaseChain(walk, surface, *reading, depth, outward);
+                    addBaseNode(walk, into, surface, *reading, depth, outward);
                     continue;
                 }
-                const std::size_t length = walk.chain.size();
-                joinBase(walk.chain, base, nullptr);
-                walk.chains.push_back(walk.chain);
-                walk.chain.resize(length);
+                into.push_back({ .text = baseText(base, nullptr) });
             }
         }
 
@@ -1128,20 +1118,9 @@ namespace SeeDocs_App
             if (!derives(type))
                 return walk;
             walk.way.push_back({ .type = &type, .spelling = type.name });
-            addBaseChains(walk, surface, type, type.name, type.nameSpace, 0,
+            addBaseNodes(walk, walk.bases, surface, type, type.name, type.nameSpace, 0,
                 Flow{ .constructors = true });
             return walk;
-        }
-
-        // The lines under the title; answers the bases they reach, whose members the tables carry.
-        [[nodiscard]] ReachedBases addTypeBases(Page& page, const Surface& surface,
-            const Type& type)
-        {
-            BaseWalk walk = baseWalkOf(surface, type);
-            page.titleLines.insert(page.titleLines.end(),
-                std::make_move_iterator(walk.chains.begin()),
-                std::make_move_iterator(walk.chains.end()));
-            return std::move(walk.reached);
         }
 
         // The derived types
@@ -1238,6 +1217,41 @@ namespace SeeDocs_App
                 return;
             Section& section = addSection(page, SectionKind::Tree, { plain(L"Derived types") });
             section.branches = std::move(derived);
+        }
+
+        // The bases under the title
+
+        // Each base's derived types, and among them the one the way up came through last - the
+        // way holds the types from the page's own up to the base's.
+        void addDerivedLists(BaseNodes& bases, const DerivedIndex& index, TypeList& way)
+        {
+            for (BaseNode& base : bases)
+            {
+                const auto derived = base.type ? index.find(base.type) : index.end();
+                if (derived != index.end())
+                {
+                    base.derived = derived->second;
+                    const std::ranges::reverse_view nearestFirst{ way };
+                    const auto from = std::ranges::find_first_of(nearestFirst, base.derived);
+                    if (from != nearestFirst.end())
+                        base.from = *from;
+                }
+                way.push_back(base.type);
+                addDerivedLists(base.bases, index, way);
+                way.pop_back();
+            }
+        }
+
+        // The tree of bases under the title; answers the bases it reaches, whose members the
+        // tables carry.
+        [[nodiscard]] ReachedBases addTypeBases(Page& page, const Surface& surface,
+            const DerivedIndex& index, const Type& type)
+        {
+            BaseWalk walk = baseWalkOf(surface, type);
+            TypeList way = { &type };
+            addDerivedLists(walk.bases, index, way);
+            page.bases = std::move(walk.bases);
+            return std::move(walk.reached);
         }
 
         // The type's own note, where its comment references one or a section is named after it.
@@ -2751,8 +2765,8 @@ namespace SeeDocs_App
         page.type = &type;
         addTypeHead(page, surface, type);
         page.footnoteHome = typeFootnoteHome(surface, notes, type);
-        const ReachedBases bases = addTypeBases(page, surface, type);
         const DerivedIndex derived = derivedIndexOf(surface);
+        const ReachedBases bases = addTypeBases(page, surface, derived, type);
         addDerivedTypes(page, derived, type);
         addProperties(page, surface, notes, type, bases);
         addEvents(page, surface, notes, type, bases);

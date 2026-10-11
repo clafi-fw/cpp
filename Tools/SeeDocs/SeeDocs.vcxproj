@@ -132,6 +132,8 @@
     <ClCompile Include="Src\SeeDocs_App.Scanner.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cppm" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.BasesBar.cpp" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.BasesBar.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Browser.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Browser.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Editing.cpp" />

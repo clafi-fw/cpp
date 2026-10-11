@@ -12,11 +12,12 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    // Where a split control's secondary part follows its content - to its right or below it.
+    // Where a split control's secondary part stands against its content - right, below or left.
     export enum class SecondaryPartPlacement
     {
         Right,
-        Bottom
+        Bottom,
+        Left
     };
 
     // SplitButtonBase

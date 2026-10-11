@@ -38,11 +38,10 @@ namespace ClaFi::Controls
             );
             return;
         }
-        setControlPlacement(
-            *part,
-            { childArea.x - size.x, (childArea.y - size.y) / 2.0f },
-            size
-        );
+        const float left = secondaryPartPlacement() == SecondaryPartPlacement::Left
+            ? 0.0f
+            : childArea.x - size.x;
+        setControlPlacement(*part, { left, (childArea.y - size.y) / 2.0f }, size);
     }
 
     void SplitButtonBase::secondaryClicked(ClickEvent&)
@@ -88,8 +87,8 @@ namespace ClaFi::Controls
         return { std::max(spacing.x + size.x - taken.x, 0.0f), 0.0f };
     }
 
-    // A part on the right stands beside a wrapping text, so its room comes off the box the text is
-    // broken in - the way adjustTextRect takes it off the box the text is drawn in.
+    // A part at either side stands beside a wrapping text, so its room comes off the box the text
+    // is broken in - the way adjustTextRect takes it off the box the text is drawn in.
     CalculatedDimensions SplitButtonBase::measureText(AlignEvent& event, ScaledDimensions asked,
         const Text& text)
     {
@@ -177,7 +176,10 @@ namespace ClaFi::Controls
     void SplitButtonBase::adjustTextRect(AdjustTextRectEvent& event) const
     {
         ScaledDimensions extent = secondaryExtent(event.formContext(), event.padding, event.spacing);
-        event.textBounds.right -= extent.x;
+        if (secondaryPartPlacement() == SecondaryPartPlacement::Left)
+            event.textBounds.left += extent.x;
+        else
+            event.textBounds.right -= extent.x;
         event.textBounds.bottom -= extent.y;
         ButtonBase::adjustTextRect(event);
     }
@@ -187,8 +189,17 @@ namespace ClaFi::Controls
         FloatRect result = ButtonBase::iconRect(event);
         ScaledDimensions extent = secondaryExtent(event.formContext(), event.padding(), event.spacing());
         // The base anchored the icon against the whole content box, which still includes the part.
-        // Pull it back by whatever the part took, on the axis the anchoring measures: a top left
-        // icon is held against a corner no part ever moves, so it takes no correction at all.
+        // A part on the left pushes every icon along by what it took, and a centred one by half.
+        if (secondaryPartPlacement() == SecondaryPartPlacement::Left)
+        {
+            const bool centred = viewMode() == ButtonViewMode::IconOnly
+                || viewMode() == ButtonViewMode::TopCenterIcon;
+            result.offset(centred ? extent.x / 2.0f : extent.x, 0.0f);
+            return result;
+        }
+        // A part on the right or below pulls the icon back by what it took, on the axis the
+        // anchoring measures: a top left icon is held against a corner such a part never moves, so
+        // it takes no correction at all.
         switch (viewMode())
         {
             case ButtonViewMode::IconOnly:

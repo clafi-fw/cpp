@@ -174,7 +174,10 @@ namespace ClaFi::Controls
             setControlPlacement(*part, { 0.0f, childArea.y - size.y }, { childArea.x, size.y });
             return;
         }
-        setControlPlacement(*part, { childArea.x - size.x, 0.0f }, { size.x, childArea.y });
+        const float left = m_config.placement == SecondaryPartPlacement::Left
+            ? 0.0f
+            : childArea.x - size.x;
+        setControlPlacement(*part, { left, 0.0f }, { size.x, childArea.y });
     }
 
     void DropdownControlBase::secondaryClicked(ClickEvent&)
@@ -210,8 +213,8 @@ namespace ClaFi::Controls
         if (!part || m_config.placement == SecondaryPartPlacement::Bottom)
             return;
 
-        // A right hand strip is as wide as the caller asked for. Its own content would only size
-        // it to the mark.
+        // A strip at either side is as wide as the caller asked for. Its own content would only
+        // size it to the mark.
         float zoneWidth = form.scaler().scale(m_config.dropdownWidth);
         setControlPlacement(*part, part->topLeft(), { zoneWidth, part->height() });
     }
@@ -242,15 +245,20 @@ namespace ClaFi::Controls
 
         // The seam side is square, so the two halves meet flush and only the control's outer
         // corners stay rounded.
-        if (m_config.placement == SecondaryPartPlacement::Bottom)
+        switch (m_config.placement)
         {
-            event.setCornerRadius(Corner::TopLeft, 0.0f);
-            event.setCornerRadius(Corner::TopRight, 0.0f);
-        }
-        else
-        {
-            event.setCornerRadius(Corner::TopLeft, 0.0f);
-            event.setCornerRadius(Corner::BottomLeft, 0.0f);
+            case SecondaryPartPlacement::Right:
+                event.setCornerRadius(Corner::TopLeft, 0.0f);
+                event.setCornerRadius(Corner::BottomLeft, 0.0f);
+                break;
+            case SecondaryPartPlacement::Bottom:
+                event.setCornerRadius(Corner::TopLeft, 0.0f);
+                event.setCornerRadius(Corner::TopRight, 0.0f);
+                break;
+            case SecondaryPartPlacement::Left:
+                event.setCornerRadius(Corner::TopRight, 0.0f);
+                event.setCornerRadius(Corner::BottomRight, 0.0f);
+                break;
         }
     }
 

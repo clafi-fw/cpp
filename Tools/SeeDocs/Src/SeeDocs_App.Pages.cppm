@@ -183,8 +183,19 @@ namespace SeeDocs_App
 
     export using Sections = std::vector<Section>;
 
-    // The ways up from a type through its bases to the roots, a line each.
-    export using Chains = std::vector<Runs>;
+    export using TypeList = std::vector<const Type*>;
+
+    // A base on a type's way up, with the types standing on it and its own bases.
+    export struct BaseNode
+    {
+        Runs text;                     // the base as spelled, linked where the surface has its page
+        const Type* type{ nullptr };   // what it names; null for a base the surface does not have
+        TypeList derived;              // the public types standing directly on it, in reading order
+        const Type* from{ nullptr };   // the one of them the way up came through last
+        std::vector<BaseNode> bases;   // a base each, the ways up parting where there are several
+    };
+
+    export using BaseNodes = std::vector<BaseNode>;
 
     // Where a footnote written new for a declaration on a page goes: a note, the section it
     // follows, and the name a heading that would repeat another's takes in front.
@@ -213,9 +224,10 @@ namespace SeeDocs_App
         Runs scope;     // before the title, in its style - a method's type and ::
         std::wstring title;
         Runs badges;    // what the title is - the kind, control, template
-        // Under the title, the C++ way: a colon before each base or an enum's underlying type, an
-        // equals sign before what an alias stands for.
+        // Under the title, the C++ way: a colon before an enum's underlying type, an equals sign
+        // before what an alias stands for.
         std::vector<Runs> titleLines;
+        BaseNodes bases;   // a class's ways up, under the title lines
         Runs lead;      // the hint
         std::optional<CommentSite> leadSite;   // the comment the lead is read from
         Facts facts;
@@ -225,7 +237,6 @@ namespace SeeDocs_App
         Commands commands;   // at the page's end
     };
 
-    export using TypeList = std::vector<const Type*>;
     export using FunctionList = std::vector<const FreeFunction*>;
     export using VariableList = std::vector<const Variable*>;
 

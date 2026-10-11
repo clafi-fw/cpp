@@ -303,11 +303,14 @@ A node's rows are made the first time it opens, out of the project's contents, w
 once and shared by every tab's tree. A page is a column of
 controls: its title, marked with the mark its tree row wears, what the page is after it - a
 project, a folder, a module, a function, a constant, a type's kind - and its hint under it,
-a grid of facts - namespace, module, source - and then a section per expander. A type's title
-carries the ways up through its bases under it, written the C++ way - a colon before each base,
-a mixin's host through the argument it was given, a second line where the bases fork; an
-alias's line is what it stands for after an equals sign, an enum's its underlying type after a
-colon. A folder's page says what it holds at every depth, leads with the folders directly under
+a grid of facts - namespace, module, source - and then a section per expander. A class's title
+carries its bases under it as a breadcrumb bar reversed: a crumb per base, its mark before it
+pointing back toward the type standing on it, the ways up running right and parting into a column of
+rows where a type has several bases, a mixin's host reached through the argument it was given.
+A crumb opens its base's page, and its mark drops the types standing directly on that base, the
+one the way up came through marked. An alias's line is what it stands for after an equals sign,
+an enum's its underlying type after a colon. A folder's page says what it holds at every depth,
+leads with the folders directly under
 its own, as the tree lists them, each with what it holds at every depth, and where the folder
 holds modules of its own goes on with a grid of their types with their kinds and hints, then
 their functions and their constants, each grid by module, the module's name beside its rows and
@@ -356,7 +359,7 @@ the page says so, in place of the words, so what the documentation still lacks i
 preview. Hints read from every recognizable comment owe nothing, and their pages leave a missing
 one empty.
 
-A Delphi type's page is spelled as a C++ type's is - its title, its bases after colons, the
+A Delphi type's page is spelled as a C++ type's is - its title, its bases as crumbs under it, the
 access labels written `public:` - and its code is Delphi's own: a routine's signature and a
 constant's or a variable's declaration stand as written, coloured as Pascal. Its properties and
 its events stand in a grid per access - published, public, protected - and a base's member that

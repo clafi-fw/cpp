@@ -24,7 +24,7 @@ picture; `IconOnly` lays no text out at all.
 A wrapping caption is broken in the box it is drawn in, and the box `measureText` is handed is the
 content's. The indicator and a `LeftIcon` stand beside the caption, so `measureText` takes them off
 the way `adjustTextRect` does - `adjustForSideParts` states it for both - and `SplitButtonBase`
-takes a part on the right off as well.
+takes a part at either side off as well.
 
 ## PanelBase
 
@@ -90,6 +90,11 @@ with something other than the button's primary action - a dropdown strip, a tab'
 button. What lives here is the part's ownership, the room it takes out of the content box,
 and the rule that a press on the part is not a press on the button. What the part looks
 like, where exactly it lands and what pressing it does belong to the derived class.
+
+**The part stands at the content's right, below it or at its left**, as the control's
+`SecondaryPartPlacement` says. A part on the left moves the caption and the icon along by the
+room it takes. The selection indicator stays where `ButtonBase` puts it, so a control with a part
+on the left carries no indicator.
 
 ## MessageBoxBase
 

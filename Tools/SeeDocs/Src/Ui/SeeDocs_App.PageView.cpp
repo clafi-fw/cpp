@@ -1,5 +1,6 @@
 module SeeDocs_App.PageView;
 
+import SeeDocs_App.BasesBar;
 import SeeDocs_App.Editing;
 import SeeDocs_App.Icons;
 import SeeDocs_App.PageText;
@@ -178,6 +179,7 @@ namespace SeeDocs_App
             to.title = std::move(from.title);
             to.badges = std::move(from.badges);
             to.titleLines = std::move(from.titleLines);
+            to.bases = std::move(from.bases);
             to.lead = std::move(from.lead);
             to.leadSite = std::move(from.leadSite);
             for (std::size_t i = 0; i != to.facts.size(); ++i)
@@ -230,6 +232,9 @@ namespace SeeDocs_App
 
     // PageHead
 
+    // **The crumbs are built again on every write**, because each holds the base it names by
+    // reference: a page refreshed in place takes a new set of bases, and the crumbs of the old set
+    // must not outlive it.
     void PageHead::write(const Page& page)
     {
         Text head;
@@ -248,7 +253,8 @@ namespace SeeDocs_App
             head << k_endLine << ParaIndent{ k_basesIndent };
             writeRuns(head, line);
         }
-        text() = head;
+        m_title.text() = head;
+        m_bases.setBases(page.bases);
     }
 
     void PageHead::write(const std::optional<RowIcon> icon, const std::wstring_view title)
@@ -257,7 +263,14 @@ namespace SeeDocs_App
         head << TextStyleId::Title;
         writeIcon(head, icon);
         head << title << PopTextStyle{};
-        text() = head;
+        m_title.text() = head;
+        m_bases.clearBases();
+    }
+
+    void PageHead::clear()
+    {
+        m_title.text().clear();
+        m_bases.clearBases();
     }
 
     // A page wears the mark its tree row does - a folder's the folder, a header's the module's -
@@ -349,8 +362,8 @@ namespace SeeDocs_App
     void PageView::showText(const Text& text)
     {
         clear();
+        m_head.clear();
         m_page = {};
-        m_head.text().clear();
         m_head.setVisible(false);
         TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes);
         box.text() = text;
@@ -958,6 +971,22 @@ namespace SeeDocs_App
         });
         box.onLinkContextPopup([this](LinkContextPopupEvent& event) {
             showLinkMenu(event.sender(), event.target, event.popup);
+        });
+    }
+
+    // **A crumb's page opens once the press has unwound**: the page shown next builds the crumbs
+    // again, and the one pressed - or the one whose list is still closing - goes with them.
+    void PageView::connectHead()
+    {
+        connectLinks(m_head.titleBox());
+        BasesBar& bases = m_head.basesBar();
+        bases.onBaseLink([this](BaseLinkEvent& event) {
+            later([this, target = event.target]() {
+                open(target);
+            });
+        });
+        bases.onBaseLinkContextPopup([this](BaseLinkContextPopupEvent& event) {
+            showLinkMenu(event.crumb, event.target, event.popup);
         });
     }
 

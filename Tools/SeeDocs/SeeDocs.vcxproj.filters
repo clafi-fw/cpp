@@ -64,6 +64,12 @@
     <ClCompile Include="Src\SeeDocs_App.Surface.cppm">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.BasesBar.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.BasesBar.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Ui\SeeDocs_App.Browser.cpp">
       <Filter>Src\Ui</Filter>
     </ClCompile>

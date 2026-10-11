@@ -218,10 +218,15 @@ namespace ClaFi::Controls
         result.viewMode = READ_PROPERTY(ButtonViewMode, ButtonViewMode::TextLabel);
         // The design width of the dropdown strip.
         result.dropdownWidth = READ_PROPERTY(DropdownWidth, DropdownWidth{}).value;
+        // The side of the face the strip stands at - a top icon puts it below whatever is asked.
+        result.placement = READ_PROPERTY(SecondaryPartPlacement, SecondaryPartPlacement::Right);
         // A top icon takes the strip below it and moves the text onto the strip, as a ribbon
-        // control does. Any other face has the strip at its right.
+        // control does. Any other face has the strip at its right, or at its left where asked.
         const bool topIcon = hasTopIcon(result.viewMode);
-        result.placement = topIcon ? SecondaryPartPlacement::Bottom : SecondaryPartPlacement::Right;
+        if (topIcon)
+            result.placement = SecondaryPartPlacement::Bottom;
+        else if (result.placement != SecondaryPartPlacement::Left)
+            result.placement = SecondaryPartPlacement::Right;
         result.textOnDropdown = topIcon;
         return result;
     }

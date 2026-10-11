@@ -161,9 +161,9 @@ again once it is up, it keeps where it stands, wherever the user moved it, and t
 
 ## DropdownWidth
 
-Design width of a dropdown strip standing at the control's right, which is where every face
-without a top icon has it. A strip below a top icon is as tall as the text it carries, and this
-width does not apply to it.
+Design width of a dropdown strip standing beside the control's face - at its right, which is where
+every face without a top icon has it unless the control asks for its left. A strip below a top
+icon is as tall as the text it carries, and this width does not apply to it.
 
 ## ExpanderViewMode
 

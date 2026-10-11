@@ -1,5 +1,6 @@
 export module SeeDocs_App.PageView;
 
+import SeeDocs_App.BasesBar;
 import SeeDocs_App.Editing;
 import SeeDocs_App.Icons;
 import SeeDocs_App.Pages;
@@ -56,22 +57,29 @@ namespace SeeDocs_App
     constexpr float k_headPadding = 12.0f;   // above and below the title, and over the body
 
     // The bar a page's title stands in, which stays while the page scrolls: the mark of what
-    // the page is, large, then the title with its scope before it and its badges after it, and
-    // the title's lines under it. Every page of the browser wears one, whatever it is made of.
-    export class PageHead : public TextBox
+    // the page is, large, then the title with its scope before it and its badges after it, the
+    // title's lines under it, and a class's bases under those as crumbs. Every page of the browser
+    // wears one, whatever it is made of.
+    export class PageHead : public Stack
     {
     public:
         template<typename... Args>
         explicit PageHead(const CreateParams&, Args&&...);
     public:
+        [[nodiscard]] TextBox& titleBox() { return m_title; }
+        [[nodiscard]] BasesBar& basesBar() { return m_bases; }
         void write(const Page&);
         void write(std::optional<RowIcon>, std::wstring_view title);
+        void clear();
     private:
         [[nodiscard]] static std::optional<RowIcon> iconOf(const Page&);
         static void writeIcon(Text&, std::optional<RowIcon>);
     private:
         static constexpr float k_iconGap = 8.0f;      // between the icon and the title
-        static constexpr float k_basesIndent = 24.0f;   // of the lines under the title
+        static constexpr float k_basesIndent = 24.0f;   // of what stands under the title
+
+        TextBox& m_title{ add<TextBox>(ReadOnly::Yes, Padding{ 0.0f }) };
+        BasesBar& m_bases{ add<BasesBar>(Padding{ k_basesIndent, 0.0f }) };
     };
 
     // A page as controls: its head, and under it, scrolling, its lead, its facts, its own links
@@ -161,6 +169,7 @@ namespace SeeDocs_App
         void render();
         void connectLinks(Grids::Grid&);
         void connectLinks(TextBox&);
+        void connectHead();
         void open(std::wstring target);
         void ask(std::wstring target);   // raises the command the target is about
         // Runs the menu for a link - Open and Open in new tab - on the control it was asked on.
@@ -230,10 +239,11 @@ namespace SeeDocs_App
     template<typename... Args>
     PageHead::PageHead(const CreateParams& params, Args&&... args)
         :
-        TextBox{
+        Stack{
             params,
-            ReadOnly::Yes,
+            Orientation::Vertical,
             Padding{ k_pagePadding, k_headPadding },
+            Spacing{ 0.0f },
             std::forward<Args>(args)...
         }
     {
@@ -247,7 +257,7 @@ namespace SeeDocs_App
         Panel{ params, UiElement::Page, std::forward<Args>(args)... }
     {
         Actions::registerAll();
-        connectLinks(m_head);
+        connectHead();
         m_later.onTick([this](TimerEvent&) {
             const std::function<void()> pending = std::exchange(m_pending, {});
             if (pending)
