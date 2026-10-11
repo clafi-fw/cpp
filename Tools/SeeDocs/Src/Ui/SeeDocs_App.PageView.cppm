@@ -183,6 +183,8 @@ namespace SeeDocs_App
         [[nodiscard]] bool writesHint(const std::optional<CommentSite>&) const;
         [[nodiscard]] static std::wstring footnoteAnchor(std::size_t index);
     private:
+        // The look of every section's expander at the root of a page.
+        static constexpr ExpanderViewMode k_expanderViewMode = ExpanderViewMode::Ellipsis;
         static constexpr float k_sectionSpacing = 18.0f;  // between the parts down the page
         static constexpr float k_headerSpacing = 6.0f;    // between a section's header and body
         static constexpr float k_prosePadding = 12.0f;

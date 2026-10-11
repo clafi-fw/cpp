@@ -22,7 +22,7 @@ import ClaFi.Core.Context.PaintIconEvent;
 
 namespace ClaFi::Controls
 {
-    // What an expander draws of itself: a section its rules, the other two looks nothing - a
+    // What an expander draws of itself: a section its rules, the other looks nothing - a
     // control that names no colour rules paints nothing in any state, which is what leaves it
     // standing on the surface it was put on. The header answers for its own look.
     export [[nodiscard]] inline OptionalUiElement expanderColorRules(
@@ -99,6 +99,7 @@ namespace ClaFi::Controls
         ScaledDimensions calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
+        void paintText(PaintEvent&) override;
         void paintSurface(PaintEvent& event) override
         {
             PanelBase::paintSurface(event);
@@ -114,6 +115,7 @@ namespace ClaFi::Controls
         void scrollSectionIntoView() const;
         [[nodiscard]] bool squaresBottomCorners() const;
     private:
+        static constexpr std::wstring_view k_ellipsis = L"\u2026";
         bool m_expanded{ true };
         float m_expandedFactor{ 1.0f };
         float m_lead{};
@@ -197,6 +199,9 @@ namespace ClaFi::Controls
         // nothing says how far the header had been carried.
         const float travel = floatOffset().y;
         m_expanded = value;
+        // The ellipsis a collapsed header draws past the button is the header's to repaint.
+        if (m_viewMode == ExpanderViewMode::Ellipsis)
+            invalidate();
         float newValue = value ? 1.0f : 0.0f;
         // A mark nobody has seen has nothing to turn from.
         if (isPainted() && visible())
@@ -291,8 +296,28 @@ namespace ClaFi::Controls
         event.textBounds.offset(event.scale(m_lead), 0.0f);
     }
 
+    // A collapsed ellipsis header trails its button with a muted ellipsis on the label's line, set
+    // in the style the label ends in.
+    void ExpanderHeader::paintText(PaintEvent& event)
+    {
+        PanelBase::paintText(event);
+        if (m_viewMode != ExpanderViewMode::Ellipsis || m_expanded)
+            return;
+        Text buffer;
+        const Text& label = doGetText(event.formContext(), buffer, EventPhase::Paint);
+        if (label.empty())
+            return;
+        Text ellipsis = label.selectedText({ label.plainText().size() - 1, 1 });
+        ellipsis.replaceText({ 0, 1 }, Text{ InkGrade::Muted, k_ellipsis });
+        const FloatRect content{ event.controlBounds(), -event.padding() };
+        FloatRect bounds = textBounds(event);
+        bounds.left = content.left + m_button.boundsInParent().right + event.spacing().x;
+        bounds.right = content.right;
+        drawText(event, bounds, ellipsis);
+    }
+
     // The tree look's header is a tool button in metrics as in paint, being a row of the tree.
-    // The other two looks have no metrics of their own beyond what the expander sets on them.
+    // The other looks have no metrics of their own beyond what the expander sets on them.
     ControlMetrics ExpanderHeader::metricsFor(const CreateParams& params, ExpanderViewMode viewMode)
     {
         if (viewMode == ExpanderViewMode::TreeNode)
@@ -309,19 +334,20 @@ namespace ClaFi::Controls
         return Interactivity::None;
     }
 
-    // The divider look holds its label against the left edge, which is what frees the body slot
-    // for the line. The other two leave the label in the body, where a panel puts it by default -
-    // and a panel places its bars before its body, so a label in the body follows the chevron
-    // that a tree node leads with. A label placed Left would precede it.
+    // A panel sets a Left label at its left edge, before the left bar, and a body label after the
+    // left bar. The divider look holds its label Left to free the body slot for the line, and the
+    // ellipsis look to have the button in its left bar follow the label. A section and a tree
+    // node leave the label in the body, which puts it after the chevron a tree node leads with.
     TextPlacement ExpanderHeader::textPlacementFor(ExpanderViewMode viewMode)
     {
-        if (viewMode == ExpanderViewMode::Divider)
+        if (viewMode == ExpanderViewMode::Divider || viewMode == ExpanderViewMode::Ellipsis)
             return TextPlacement::Left;
         return TextPlacement::Body;
     }
 
     // A section's header is a filled strip, and the tree look's a tool button that shows its
-    // hover, its focus and its pick. A divider line's names nothing and so paints nothing.
+    // hover, its focus and its pick. A divider's header and an ellipsis's name nothing and so
+    // paint nothing.
     OptionalUiElement ExpanderHeader::colorRulesFor(ExpanderViewMode viewMode)
     {
         switch (viewMode)
@@ -331,20 +357,24 @@ namespace ClaFi::Controls
             case ExpanderViewMode::TreeNode:
                 return UiElement::ToolButton;
             case ExpanderViewMode::Divider:
+            case ExpanderViewMode::Ellipsis:
                 break;
         }
         return std::nullopt;
     }
 
     // A bar field takes its control once, so the look is settled here and holds for the life of
-    // the header. TreeNode leads the strip with the button; the other two put it at the far end,
-    // past the label and past whatever the header carries between them. On a divider line the
+    // the header. TreeNode leads the strip with the button and Ellipsis sets it straight after
+    // the label; the other two put it at the far end, past the label and past whatever the header
+    // carries between them. On a header that paints nothing - a divider's or an ellipsis's - the
     // button wears a button's look, with a surface at rest; elsewhere a tool button's. In the
     // tree look the header is the row the keyboard lands on, so the button is the mouse's alone.
     ExpanderButton& ExpanderHeader::createChevronButton()
     {
         if (m_viewMode == ExpanderViewMode::Divider)
             return createRightBar<ExpanderButton>(UiElement::Button, themeMetrics().button);
+        if (m_viewMode == ExpanderViewMode::Ellipsis)
+            return createLeftBar<ExpanderButton>(UiElement::Button, themeMetrics().button);
         if (m_viewMode == ExpanderViewMode::TreeNode)
             return createLeftBar<ExpanderButton>(Interactivity::MouseOnly);
         return createRightBar<ExpanderButton>();

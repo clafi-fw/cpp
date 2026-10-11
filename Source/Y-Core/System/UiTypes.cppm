@@ -734,6 +734,7 @@ namespace ClaFi
     {
         Section,
         Divider,
+        Ellipsis,
         TreeNode
     };
 

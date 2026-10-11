@@ -170,7 +170,7 @@ icon is as tall as the text it carries, and this width does not apply to it.
 ## ExpanderViewMode
 
 What an expander draws of itself, and what its header is built from. The header paints the label
-in all three, and the button shows the mark alone, so picking a header and opening it are
+in every look, and the button shows the mark alone, so picking a header and opening it are
 separate acts on separate targets.
 
 `Section` fills the page and its header, with the chevron at the right end of the strip: a group
@@ -179,6 +179,11 @@ that reads as a box with a heading.
 `Divider` states no colours at all. The chevron keeps the right end, the label goes against the
 left edge, and a line fills what lies between them, so the heading reads as a labeled divider
 across whatever it stands on.
+
+`Ellipsis` states no colours and has no line. The label goes against the left edge and the chevron
+follows it straight away; the rest of the strip is the header's, so a held header covers the width
+of what scrolls under it. While the section is collapsed, a muted ellipsis trails the chevron on the
+label's line, set in the style the label ends in.
 
 `TreeNode` states no colours either and has no line. The chevron leads the strip and the label
 follows it, which is the shape a tree of expanders is built from: the click that opens a node is
