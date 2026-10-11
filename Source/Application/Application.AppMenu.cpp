@@ -53,6 +53,12 @@ namespace ClaFi
     // The commands applications have asked for, in the order they asked.
     static std::vector<AppCommand>& appCommands();
 
+    // A command in the strip, doing whatever its handler does with the click that chose it.
+    static void addCommand(TabStripBase& strip, const Text& caption,
+        const PaintIconFunc& paintIcon, EndIcon, const AppCommandHandler& run);
+    // Closes the menu, then asks the application's window to close as its close button does.
+    static void closeApplication(ClickEvent&);
+
     constexpr Padding k_itemPadding{ 24.0f, 12.0f };
     // Twice what a button draws its icon at. The strip's items are the backstage's own headings,
     // and an icon at the toolbar's size reads as a bullet beside one.
@@ -91,9 +97,6 @@ namespace ClaFi
             AppCommand{ std::wstring{ caption }, std::move(paintIcon), endIcon, std::move(run) });
     }
 
-    // THE MENU IS RUN TO ITS CLOSE, AND WHAT IT ANSWERED IS CARRIED OUT AFTER. Exit closes the
-    // window the menu stands on, and doing that from inside the menu's own loop would take the
-    // loop down under the click that asked.
     void openAppMenu(ActionClickEvent& event)
     {
         Form menu{ event.form.createPopup<AppMenu>(event.presenter) };
@@ -106,21 +109,31 @@ namespace ClaFi
         // and where nothing was tried on this is the theme it already has, which crosses to
         // itself and shows nothing. See ThemePick
         applyStoredTheme(event.form.appContext());
+    }
 
-        switch (menu.command())
-        {
-        case AppMenuCommand::Application:
-            appCommands()[menu.appCommand()].run(menu.commandStamp());
-            break;
-        case AppMenuCommand::ShowDiagnostic:
-            showDiagnosticWindow(menu.commandStamp());
-            break;
-        case AppMenuCommand::Exit:
-            event.form.rootForm().close();
-            break;
-        case AppMenuCommand::None:
-            break;
-        }
+    // addCommand
+
+    void addCommand(TabStripBase& strip, const Text& caption, const PaintIconFunc& paintIcon,
+        const EndIcon endIcon, const AppCommandHandler& run)
+    {
+        strip.add<ToolButton>(
+            caption,
+            k_itemPadding,
+            endIcon,
+            ButtonViewMode::LeftIcon,
+            k_iconSize,
+            k_textAnchor,
+            ToolButton::OnPaintIcon{ paintIcon },
+            ToolButton::OnClick{ run }
+        );
+    }
+
+    // closeApplication
+
+    void closeApplication(ClickEvent& event)
+    {
+        event.closeForm();
+        event.form.rootForm().requestClose();
     }
 
     // AppMenu
@@ -159,50 +172,24 @@ namespace ClaFi
         }
 
         // The application's own commands lead the framework's.
-        for (std::size_t index = 0; index < appCommands().size(); ++index)
+        for (const AppCommand& command : appCommands())
         {
-            const AppCommand& command = appCommands()[index];
-            strip().add<ToolButton>(
-                Text{ TextStyleId::SubHeading, command.caption },
-                k_itemPadding,
-                command.endIcon,
-                ButtonViewMode::LeftIcon,
-                k_iconSize,
-                k_textAnchor,
-                ToolButton::OnPaintIcon{ command.paintIcon },
-                ToolButton::OnClick{ [this, index](ClickEvent& event) {
-                    m_appCommand = index;
-                    closeWith(AppMenuCommand::Application, event);
-                } }
-            );
+            addCommand(strip(), Text{ TextStyleId::SubHeading, command.caption },
+                command.paintIcon, command.endIcon, command.run);
         }
 
         if constexpr (Diagnostic::Options::enabled)
         {
-            strip().add<ToolButton>(
-                Text{ TextStyleId::SubHeading, L"Show diagnostic" },
-                k_itemPadding,
-                EndIcon::OpensWindow,
-                ButtonViewMode::LeftIcon,
-                k_iconSize,
-                k_textAnchor,
-                ToolButton::OnPaintIcon{ Icons::GaugeIcon::paint },
-                ToolButton::OnClick{ [this](ClickEvent& event) {
-                    closeWith(AppMenuCommand::ShowDiagnostic, event);
-                } }
-            );
+            addCommand(strip(), Text{ TextStyleId::SubHeading, L"Show diagnostic" },
+                Icons::GaugeIcon::paint, EndIcon::OpensWindow,
+                [](ClickEvent& event) {
+                    event.closeForm();
+                    showDiagnosticWindow(event.stamp);
+                });
         }
-        strip().add<ToolButton>(
+        addCommand(strip(),
             Text{ TextStyleId::SubHeading, L"Exit ", params.appContext().appName() },
-            k_itemPadding,
-            ButtonViewMode::LeftIcon,
-            k_iconSize,
-            k_textAnchor,
-            ToolButton::OnPaintIcon{ Icons::DoorIcon::paint },
-            ToolButton::OnClick{ [this](ClickEvent& event) {
-                closeWith(AppMenuCommand::Exit, event);
-            } }
-        );
+            Icons::DoorIcon::paint, EndIcon::None, closeApplication);
 
         // The settings sit at the foot of the strip, whatever the commands above them come to.
         strip().add<FlexSpacer>();
@@ -220,13 +207,6 @@ namespace ClaFi
     void AppMenu::storePage()
     {
         (appContext().config() / k_pageNodeName).set(std::wstring{ m_pageCaption });
-    }
-
-    void AppMenu::closeWith(const AppMenuCommand command, ClickEvent& event)
-    {
-        m_command = command;
-        m_commandStamp = event.stamp;
-        event.closeForm();
     }
 
     // THE CAPTION IS WHAT IS STORED, not the tab's place: a page an application adds moves every

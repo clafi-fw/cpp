@@ -11,17 +11,8 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // What the user asked of the application menu, answered once the menu has closed.
-    export enum class AppMenuCommand
-    {
-        None,
-        Application,   // one of the application's own, named by AppMenu::appCommand
-        ShowDiagnostic,
-        Exit
-    };
-
-    // What an application's own command does, given the input that chose it. See Application
-    export using AppCommandHandler = std::function<void(InputStamp)>;
+    // What an application's own command does with the click that chose it. See Application
+    export using AppCommandHandler = std::function<void(ClickEvent&)>;
 
     // The application's menu: its pages down the left, its commands under them. See Application
     export class AppMenu : public Controls::TabbedBox
@@ -29,11 +20,6 @@ namespace ClaFi
     public:
         explicit AppMenu(const CreateParams&);
         std::wstring_view diagnosticText() const override { return L"AppMenu"; }
-        [[nodiscard]] AppMenuCommand command() const { return m_command; }
-        // The application's command chosen, by the order it was connected in.
-        [[nodiscard]] std::size_t appCommand() const { return m_appCommand; }
-        // The input that chose the command, which is what carrying it out is authorised by.
-        [[nodiscard]] InputStamp commandStamp() const { return m_commandStamp; }
         // The page the menu was left on, which is the page the next one opens. See Application
         [[nodiscard]] std::wstring_view pageCaption() const { return m_pageCaption; }
         // Keeps the open page for the next menu, while this one still stands. See Application
@@ -44,8 +30,6 @@ namespace ClaFi
         // What the config keeps the last opened page under, by caption. See Application
         static constexpr std::wstring_view k_pageNodeName{ L"AppMenuPage" };
     private:
-        // Whoever ran the menu carries the command out, once the menu has closed.
-        void closeWith(AppMenuCommand, ClickEvent&);
         // A tab for a page, kept so that the stored page can be opened by its caption.
         void addPageTab(std::wstring_view caption, RichControl& page, const PaintIconFunc& paintIcon);
         // Opens the page under that caption, and answers whether the strip has one.
@@ -58,9 +42,6 @@ namespace ClaFi
         // Tall enough for the Settings page with every section open. See Application
         static constexpr float k_height{ 400.0f };
     private:
-        AppMenuCommand m_command{ AppMenuCommand::None };
-        std::size_t m_appCommand{ 0 };
-        InputStamp m_commandStamp{};
         // Every caption here outlives the menu: a literal, or a page an application stated once.
         std::wstring_view m_pageCaption{ k_settingsPageCaption };
         std::vector<std::pair<std::wstring_view, Controls::Tab*>> m_tabs{};

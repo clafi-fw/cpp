@@ -37,11 +37,9 @@ removes the folder and everything under it. Under `Share` no application name re
 
 ## AppMenu
 
-THE MENU IS RUN TO ITS CLOSE, AND WHAT IT ANSWERED IS CARRIED OUT AFTER. A command pressed inside
-the menu takes note of itself and closes the menu; openAppMenu reads the answer once execute has
-returned and acts on it. Exit closes the window the menu stands on, and doing that from inside the
-menu's own loop would take the loop down under the click that asked. An application's own command
-is carried out the same way, by its place in the order the commands were connected in.
+**A command runs in the click that chose it**, inside the menu's loop. The menu's Form is a local of
+openAppMenu, so it outlives the click whatever the handler closes. Exit closes the menu before it
+asks the root form to close, so no popup stands on a window that has gone.
 
 ## OptionsPage
 

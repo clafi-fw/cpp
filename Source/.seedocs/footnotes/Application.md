@@ -42,9 +42,10 @@ The application menu, under the AppButton of every application: a popup of the m
 a TabbedBox, its pages and commands down the left column. The strip reads top down: an
 application's own pages first - see connectAppPage - then the commands, the application's own
 ahead of the framework's - see connectAppCommand - and at the foot the framework's two pages,
-Information above Settings. Show diagnostic stands only where
-Diagnostic::Options::showForm is on; Exit names the application, spelled as its name is
-spelled, and closes the form the menu stands on, through its root form.
+Information above Settings. Show diagnostic stands only in a build with
+Diagnostic::Options::enabled. Exit names the application, spelled as its name is spelled; it
+closes the menu and asks the application's window to close, as the window's close button does, so
+a page holding unsaved work can refuse.
 
 THE MENU KEEPS THE WINDOW IT WAS PLACED IN. It is `AutoFit::No`: a window placed again around
 its pages would move under the pointer, a section opened or closed on the Settings page taking
@@ -277,10 +278,10 @@ Nothing calls it for an application, and one that never does gets Settings alone
 
 ## AppCommandHandler
 
-What a command of the application's own does, run once the menu it was chosen from has closed
-and handed the input that chose it. A window the command raises is raised there; one already up
-is brought forward on that input, since raising a window is what a display server weighs against
-the click that asked.
+What a command of the application's own does, handed the click that chose it. The menu stays up
+unless the handler closes it with `event.closeForm()`. A command that opens a window closes the
+menu first, so the window never stands over a menu going down under it, and raises the window on
+`event.stamp`: raising a window is what a display server weighs against the click that asked.
 
 ## connectAppCommand
 
@@ -289,13 +290,10 @@ and Exit, by caption and icon, once per application - and more than once for mor
 in the order asked. It wears the end mark it states as well: `EndIcon::OpensWindow` for a command
 that opens a window.
 
-THE MENU IS DOWN BEFORE THE COMMAND RUNS, as it is for the framework's own. The click closes the
-menu, and the handler runs once the menu's loop has returned, so a window the command opens never
-stands over a menu going down under it.
-
     connectAppCommand(L"New project", paintNewProjectIcon, EndIcon::OpensWindow,
-        [&workspace](InputStamp stamp){
-            workspace.createNew({}, stamp);
+        [&workspace](ClickEvent& event){
+            event.closeForm();
+            workspace.createNew({}, event.stamp);
         });
 
 ## UiElement

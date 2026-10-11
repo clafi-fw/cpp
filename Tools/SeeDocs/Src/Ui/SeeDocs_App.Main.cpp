@@ -69,8 +69,9 @@ namespace SeeDocs_App
             buildOpenPage(page, workspace);
         });
         connectAppCommand(k_newProjectCaption, paintNewProjectIcon, EndIcon::OpensWindow,
-            [&workspace](const InputStamp stamp) {
-                workspace.createNew({}, stamp);
+            [&workspace](ClickEvent& event) {
+                event.closeForm();
+                workspace.createNew({}, event.stamp);
             });
         form.content().connectProjectPage([&workspace](OptionsPage& page, OpenProject& project) {
             buildProjectOptions(page, workspace, project);
