@@ -117,11 +117,30 @@ namespace ClaFi
         if (event.text.empty())
             return;
 
-        const std::wstring shortcutText = m_shortcut.text();
+        const std::wstring shortcutText = shortcut().text();
         if (shortcutText.empty())
             return;
 
         event.text << L" (" << shortcutText << L")";
+    }
+
+    Shortcut Action::shortcut() const
+    {
+        if (m_shortcuts.empty())
+            return {};
+        return m_shortcuts.front();
+    }
+
+    void Action::setShortcut(const Shortcut value)
+    {
+        m_shortcuts.clear();
+        addShortcut(value);
+    }
+
+    void Action::addShortcut(const Shortcut value)
+    {
+        if (!value.empty())
+            m_shortcuts.push_back(value);
     }
 
     Control* Action::subject(FormBase& form, Control* presenter) const
@@ -319,7 +338,7 @@ namespace ClaFi
         }));
 
         connections.push_back(presenter.onGetShortcut([this](GetShortcutEvent& event) {
-            event.shortcut = m_shortcut;
+            event.shortcut = shortcut();
         }));
 
         connections.push_back(presenter.onDestroy([this](DestroyEvent& event) {
@@ -359,9 +378,12 @@ namespace ClaFi
 
     bool Actions::runShortcut(const KeyDownEvent& event, FormBase& form) const
     {
+        const auto pressed = [&event](const Shortcut& shortcut){
+            return shortcut.matches(event);
+        };
         for (Action* action : m_actions)
         {
-            if (!action->shortcut().matches(event))
+            if (!std::ranges::any_of(action->shortcuts(), pressed))
                 continue;
             if (action->invoke(form, nullptr, event.stamp))
                 return true;

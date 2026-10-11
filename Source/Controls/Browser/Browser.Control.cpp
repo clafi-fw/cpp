@@ -218,57 +218,9 @@ namespace ClaFi::Browser
         }
     }
 
-    void BrowserTab::closeThisTab(ClickEvent& event)
+    void BrowserTab::secondaryClicked(ClickEvent&)
     {
-        // Closing a tab loses whatever its page holds exactly as navigating away from it does, so
-        // it asks the same question - and asks it before the tab beside this one is selected,
-        // which is the first thing below that cannot be taken back.
-        //
-        // Under the tab rather than under the close button inside it. The button is the press, but
-        // the tab is what the question is about, and it is the shape the user has been reading -
-        // a question hung off a corner of it would read as being about the corner.
-        if (m_browserControl && !m_browserControl->canLeavePage(*this, *this))
-            return;
-
-        ControlSpan tabs = parent().controls();
-        if (tabs.size() == 1ull) // is last remaining tab
-            // so the tab remains selected and will be reselected on the next initialization
-            return event.closeForm();
-
-        if (selected())
-        {
-            // Selecting the item that supposed to be selected after this one will be closed
-            auto prevIterator = std::ranges::find_if(
-                tabs,
-                [&](const ControlPtr& aTab){
-                    return this == &*aTab;
-                }
-            );
-            if (prevIterator < std::prev(tabs.end()))
-            {
-                ++prevIterator;
-                static_cast<Tab&>(**prevIterator).select();
-            }
-            else if (prevIterator != tabs.begin())
-            {
-                --prevIterator;
-                static_cast<Tab&>(**prevIterator).select();
-            }
-        }
-
-        BrowserControl* browser = m_browserControl;
-        browser->tabClosing(*this);
-        deleteSelf();
-        browser->tabClosed();
-
-        // Todo: to implement Chrome behavior (delayed tabs realigning),
-        // first shift the tabs on right to the freshly vacant space,
-        // without changing their size, then make invalidateAlign() call on hotLeave
-        // (but make sure to do that only if user is using the mouse)
-        // event.form.validateAlign(); // this cancels invalidateAlign() triggered by closing/reselecting the tabs and/or showing/hiding their pages
-
-        // To highlight a tab, or its close button that moved under the mouse
-        event.form.mouseTick();
+        m_browserControl->closeTab(*this);
     }
 
     void BrowserTab::recordLeft(const Url& left, const HistoryEntry entry)
@@ -613,11 +565,6 @@ namespace ClaFi::Browser
 
         m_tabs.setOverlayHost(m_title);
 
-        m_plusButton.onClick([this](ClickEvent& event) {
-            addTab();
-            event.form.mouseTick();
-        });
-
         m_tabs.onCurrentItemChange([this](CurrentItemChangeEvent&) {
             handleTabSelect();
         });
@@ -728,6 +675,29 @@ namespace ClaFi::Browser
         m_forwardButton.onContextPopup([this](ContextPopupEvent& event) {
             event.stopPropagation();
             showHistoryMenu(1);
+        });
+    }
+
+    void BrowserControl::connectTabActions()
+    {
+        onGetActionState([this](GetActionStateEvent& event){
+            if (&event.action == &Actions::newTab)
+                event.claim({ .enabled = true });
+            else if (&event.action == &Actions::closeTab)
+                event.claim({ .enabled = currentTab() != nullptr });
+        });
+
+        onActionClick([this](ActionClickEvent& event){
+            if (&event.action == &Actions::newTab)
+            {
+                addTab();
+                event.form.mouseTick();
+            }
+            else if (&event.action == &Actions::closeTab)
+            {
+                if (BrowserTab* tab = currentTab())
+                    closeTab(*tab);
+            }
         });
     }
 
@@ -947,6 +917,61 @@ namespace ClaFi::Browser
         // because the close button on non-selected tabs can be hidden while aligning
         form().invalidateAlign();
         storeSelectedTab(tab);
+    }
+
+    void BrowserControl::closeTab(BrowserTab& tab)
+    {
+        // Closing a tab loses whatever its page holds exactly as navigating away from it does, so
+        // it asks the same question - and asks it before the tab beside it is selected, which is
+        // the first thing below that cannot be taken back.
+        //
+        // Under the tab, whatever asked for the closing. The close button or the key is the press,
+        // but the tab is what the question is about, and it is the shape the user has been
+        // reading - a question hung off a corner of it would read as being about the corner.
+        if (!canLeavePage(tab, tab))
+            return;
+
+        ControlSpan tabControls = m_tabs.controls();
+        if (tabControls.size() == 1ull) // is last remaining tab
+        {
+            // so the tab remains selected and will be reselected on the next initialization
+            form().close();
+            return;
+        }
+
+        if (tab.selected())
+        {
+            // Selecting the item that supposed to be selected after this one will be closed
+            auto prevIterator = std::ranges::find_if(
+                tabControls,
+                [&](const ControlPtr& aTab){
+                    return &tab == &*aTab;
+                }
+            );
+            if (prevIterator < std::prev(tabControls.end()))
+            {
+                ++prevIterator;
+                static_cast<Tab&>(**prevIterator).select();
+            }
+            else if (prevIterator != tabControls.begin())
+            {
+                --prevIterator;
+                static_cast<Tab&>(**prevIterator).select();
+            }
+        }
+
+        tabClosing(tab);
+        tab.deleteSelf();
+        tabClosed();
+
+        // Todo: to implement Chrome behavior (delayed tabs realigning),
+        // first shift the tabs on right to the freshly vacant space,
+        // without changing their size, then make invalidateAlign() call on hotLeave
+        // (but make sure to do that only if user is using the mouse)
+        // form().validateAlign(); // this cancels invalidateAlign() triggered by closing/reselecting the tabs and/or showing/hiding their pages
+
+        // To highlight a tab, or its close button that moved under the mouse
+        form().mouseTick();
     }
 
     void BrowserControl::tabClosing(BrowserTab& tab)

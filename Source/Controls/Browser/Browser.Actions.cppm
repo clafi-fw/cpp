@@ -34,6 +34,8 @@ namespace ClaFi::Browser::Actions
 
     export extern Action back; // a step back through the current tab's history
     export extern Action forward; // a step forward through the current tab's history
+    export extern Action newTab; // opens a tab on the home page
+    export extern Action closeTab; // closes the tab shown, or the window when it is the only tab
 
     // Puts them in the application's scope, which is what a shortcut is looked up in. A
     // BrowserControl calls it as it is built, so a browser holds them without writing anything.

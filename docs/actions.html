@@ -342,6 +342,7 @@
                 </div>
                 <ul>
                     <li><a href="#declaring-shortcut">Declaring One</a></li>
+                    <li><a href="#several-keys">More Than One Key</a></li>
                     <li><a href="#scopes">Scopes, and the Order They Are Asked</a></li>
                 </ul>
             </li>
@@ -592,6 +593,18 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
             user is labelled - modifiers included - so a German layout reads <code>Strg+S</code> and nothing in
             your code has to know.</p>
 
+            <h3 id="several-keys">More Than One Key</h3>
+            <p>An action takes as many shortcuts as it is given, and every one of them runs it. The first is the
+            one it is known by: a menu line and a hint show that one, and the rest just work.</p>
+<pre><span class="tp">Action</span> m_closeTab{
+    <span class="tp">Text</span>{ L<span class="st">"Close tab"</span> },
+    <span class="tp">Shortcut</span>{ L<span class="st">'W'</span>, { .ctrl = <span class="kw">true</span> } },        <span class="cm">// Ctrl+W, the one shown</span>
+    <span class="tp">Shortcut</span>{ <span class="tp">Keys</span>::F4, { .ctrl = <span class="kw">true</span> } }      <span class="cm">// Ctrl+F4</span>
+};</pre>
+            <p><code>addShortcut()</code> puts one more key after the ones an action has, and
+            <code>setShortcut()</code> makes the key it is given the only one - so <code>setShortcut({})</code>
+            leaves the action with none.</p>
+
             <h3 id="scopes">Scopes, and the Order They Are Asked</h3>
             <p>A shortcut belongs to a scope, never to a control: bound to a control it would stop working the
             moment that control was scrolled away or its menu closed. There are two scopes:</p>
@@ -622,7 +635,7 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
 <span class="tp">StdActions</span>::del;          <span class="cm">// Delete. Spelt short because `delete` is a keyword</span>
 <span class="tp">StdActions</span>::selectAll;
 <span class="tp">StdActions</span>::undo;         <span class="cm">// Ctrl+Z</span>
-<span class="tp">StdActions</span>::redo;         <span class="cm">// Ctrl+Y</span></pre>
+<span class="tp">StdActions</span>::redo;         <span class="cm">// Ctrl+Y, Ctrl+Shift+Z</span></pre>
             <p><code>ApplicationBase::initialize</code> calls <code>StdActions::registerAll()</code>, which puts
             all seven in the application's scope. Every application has the standard keys from there; one that
             wants a key for itself clears that action's shortcut.</p>
@@ -735,7 +748,8 @@ view.<span class="fn">onActionClick</span>([&amp;](<span class="tp">ActionClickE
                 <tr><td><code>OnGetState</code>, <code>onGetState</code></td><td>Its own answer for its state.</td></tr>
                 <tr><td><code>OnPaintIcon</code>, <code>onPaintIcon</code></td><td>Its icon.</td></tr>
                 <tr><td><code>text()</code>, <code>hintText()</code></td><td>Mutable. Follow a change with <code>invalidateText()</code> or <code>invalidate()</code>.</td></tr>
-                <tr><td><code>shortcut()</code>, <code>setShortcut()</code></td><td>The key, if it has one.</td></tr>
+                <tr><td><code>shortcut()</code>, <code>shortcuts()</code></td><td>The key shown for it, and every key that runs it.</td></tr>
+                <tr><td><code>setShortcut()</code>, <code>addShortcut()</code></td><td>Make one key the only one, or put one more after the ones it has.</td></tr>
                 <tr><td><code>subject(form)</code></td><td>What would answer for it in that form, or null.</td></tr>
                 <tr><td><code>state(form)</code>, <code>enabled(form)</code></td><td>Ask for the state now.</td></tr>
                 <tr><td><code>invoke(form)</code></td><td>Run it, on the subject if there is one. Answers whether it ran.</td></tr>

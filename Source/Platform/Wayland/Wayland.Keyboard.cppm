@@ -32,7 +32,6 @@ namespace ClaFi::PlatformImplementation::Wayland
         constexpr KeyCode pause = 0x13;
         constexpr KeyCode capsLock = 0x14;
         constexpr KeyCode print = 0x2c;
-        constexpr KeyCode insert = 0x2d;
         constexpr KeyCode help = 0x2f;
         constexpr KeyCode leftWindows = 0x5b;
         constexpr KeyCode rightWindows = 0x5c;
@@ -198,7 +197,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             return VirtualKey::print;
         case XKB_KEY_Insert:
         case XKB_KEY_KP_Insert:
-            return VirtualKey::insert;
+            return Keys::Insert;
         case XKB_KEY_Delete:
         case XKB_KEY_KP_Delete:
             return Keys::Delete;

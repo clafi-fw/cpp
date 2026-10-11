@@ -2,6 +2,7 @@ module ClaFi.Browser.Actions;
 
 import ClaFi.Icons.BrowseBackIcon;
 import ClaFi.Icons.BrowseForwardIcon;
+import ClaFi.Icons.PlusMark;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
@@ -31,6 +32,16 @@ namespace ClaFi::Browser::Actions
         Shortcut{ Keys::Right, { .alt = true } },
         Action::OnPaintIcon{ Icons::BrowseForwardIcon::paint }
     };
+    Action newTab{
+        Text{ L"New tab" },
+        Shortcut{ L'T', { .ctrl = true } },
+        Action::OnPaintIcon{ Icons::PlusMark::paint }
+    };
+    Action closeTab{
+        Text{ L"Close tab" },
+        Shortcut{ L'W', { .ctrl = true } },
+        Shortcut{ Keys::F4, { .ctrl = true } }
+    };
 
     void registerAll()
     {
@@ -49,6 +60,8 @@ namespace ClaFi::Browser::Actions
         actions.add(openInNewTab);
         actions.add(back);
         actions.add(forward);
+        actions.add(newTab);
+        actions.add(closeTab);
     }
 
 }

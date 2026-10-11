@@ -90,6 +90,8 @@ namespace ClaFi
     export class Action : public EventComponent
     {
     public:
+        using ShortcutCollection = std::vector<Shortcut>;
+    public:
         Action() = default;
         template <typename... Args>
             requires (sizeof...(Args) > 0) && NotSelfCopy<Action, Args...>
@@ -117,8 +119,11 @@ namespace ClaFi
         // somewhere the action is not attached - a line drawn by hand - asks for it here.
         void getHint(GetHintEvent&) const;
         //
-        [[nodiscard]] Shortcut shortcut() const { return m_shortcut; }
-        void setShortcut(const Shortcut value) { m_shortcut = value; }
+        [[nodiscard]] Shortcut shortcut() const; // the key shown on a menu line and in the hint
+        // Every key that runs it, the one shown first.
+        [[nodiscard]] const ShortcutCollection& shortcuts() const { return m_shortcuts; }
+        void setShortcut(Shortcut); // makes this the only key, and an empty one leaves none
+        void addShortcut(Shortcut); // one more key that runs it, after the ones it has
     public:
         // What answers for this action in that form, or null when nothing up the focus chain
         // claimed it and the action answers for itself. Asked, never stored: two calls a frame
@@ -193,7 +198,7 @@ namespace ClaFi
     private:
         Text m_text{};
         HintText m_hintText{};
-        Shortcut m_shortcut{};
+        ShortcutCollection m_shortcuts{};
         AttachmentCollection m_attachments{};
     };
 
@@ -209,7 +214,7 @@ namespace ClaFi
         // Registers one owned elsewhere.
         void add(Action&);
         void remove(const Action&);
-        // Runs the action this key is the shortcut of, and answers whether one ran. A disabled
+        // Runs the action this key is a shortcut of, and answers whether one ran. A disabled
         // action leaves the key alone rather than swallowing it, so the next scope still gets
         // to answer - and so does a second action sharing the shortcut.
         [[nodiscard]] bool runShortcut(const KeyDownEvent&, FormBase&) const;
@@ -269,7 +274,7 @@ namespace ClaFi
         Props::ifThereIs<std::wstring_view>(appendText, args...);
         Props::ifThereIs<const wchar_t*>(appendText, args...);
         Props::ifThereIs<Shortcut>([&](const Shortcut& p) {
-            m_shortcut = p;
+            addShortcut(p);
         }, args...);
         Props::ifThereIs<HintText>([&](const HintText& p) {
             m_hintText = p;

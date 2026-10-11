@@ -18,7 +18,6 @@ import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.TabStrip;
 
-import ClaFi.Icons.PlusMark;
 import ClaFi.Icons.XMark;
 import ClaFi.Icons.BrowseUpIcon;
 
@@ -106,9 +105,8 @@ namespace ClaFi::Browser
         void nestedGetHint(GetHintEvent&) override;
         void getText(GetTextEvent&) const override;
         void paintIcon(PaintIconEvent&) override;
-        void secondaryClicked(ClickEvent& event) override { closeThisTab(event); }
+        void secondaryClicked(ClickEvent&) override;
     private:
-        void closeThisTab(ClickEvent& params);
         // Keeps the url this tab has just moved from, the way the move asked.
         void recordLeft(const Url& left, HistoryEntry);
         // Moves the stacks past a travel of this many steps from the url this tab has just left.
@@ -341,6 +339,7 @@ namespace ClaFi::Browser
         void connectPageActions();
         // Claims Browser::Actions::back and forward, and wires the buttons' history menus.
         void connectHistory();
+        void connectTabActions(); // claims Browser::Actions::newTab and closeTab
         [[nodiscard]] BrowserTab* currentTab(); // nothing when no tab is selected
         // Whether the window may close now: yes where the settings will keep every page's work,
         // and otherwise what every page with work of its own answers. See Browser#closing
@@ -365,6 +364,7 @@ namespace ClaFi::Browser
         void selectPage(BrowserTab*, bool urlChanged);
         void showAnchor(BrowserTab&); // raises ShowAnchorEvent on the tab's page
         void handleTabSelect();
+        void closeTab(BrowserTab&); // closes the window instead when it is the only tab
         void tabClosing(BrowserTab&);
         void tabClosed();
         void pagePathChanged();
@@ -421,7 +421,7 @@ namespace ClaFi::Browser
             VerticalAlign::Bottom,
             ButtonViewMode::IconOnly,
             IconSize{ 12.0f },
-            ButtonBase::OnPaintIcon{ Icons::PlusMark::paint }
+            Actions::newTab
         ) };
         Panel& m_breadCrumbArea{ m_title.createBottomBar<Panel>(
             Padding{ 4.0f },
@@ -492,6 +492,7 @@ namespace ClaFi::Browser
         connectParts();
         connectPageActions();
         connectHistory();
+        connectTabActions();
     }
 
     template<typename ControlClass, typename... Args>

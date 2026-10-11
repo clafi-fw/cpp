@@ -192,7 +192,7 @@ namespace ClaFi
             return L"Caps Lock";
         case VirtualKey::print:
             return L"Print Screen";
-        case VirtualKey::insert:
+        case Keys::Insert:
             return L"Insert";
         case VirtualKey::help:
             return L"Help";

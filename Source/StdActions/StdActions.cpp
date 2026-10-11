@@ -27,16 +27,19 @@ namespace ClaFi::StdActions
     Action cut{
         Text{ L"Cut" },
         Shortcut{ L'X', { .ctrl = true } },
+        Shortcut{ Keys::Delete, { .shift = true } },
         Action::OnPaintIcon{ Icons::CutIcon::paint }
     };
     Action copy{
         Text{ L"Copy" },
         Shortcut{ L'C', { .ctrl = true } },
+        Shortcut{ Keys::Insert, { .ctrl = true } },
         Action::OnPaintIcon{ Icons::CopyIcon::paint }
     };
     Action paste{
         Text{ L"Paste" },
         Shortcut{ L'V', { .ctrl = true } },
+        Shortcut{ Keys::Insert, { .shift = true } },
         Action::OnPaintIcon{ Icons::PasteIcon::paint }
     };
     // Delete removes what is selected. A control whose Delete key means more than that keeps the
@@ -55,7 +58,7 @@ namespace ClaFi::StdActions
     // No shortcut. Every key that would read as Clear is one an application may want for itself,
     // and a key given here is given to every application at once. One that wants it says so:
     //
-    //     StdActions::clear.setShortcut({ vkDelete, { .shift = true } });
+    //     StdActions::clear.setShortcut({ Keys::Delete, { .alt = true } });
     Action clear{
         Text{ L"Clear" },
         Action::OnPaintIcon{ Icons::WipeIcon::paint }
@@ -70,6 +73,7 @@ namespace ClaFi::StdActions
     Action redo{
         Text{ L"Redo" },
         Shortcut{ L'Y', { .ctrl = true } },
+        Shortcut{ L'Z', { .shift = true, .ctrl = true } },
         Action::OnPaintIcon{ Icons::RedoIcon::paint }
     };
 

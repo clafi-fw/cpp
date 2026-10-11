@@ -733,6 +733,12 @@ namespace ClaFi::Controls
 
         case Keys::Delete:
             {
+                // Shift+Delete is Cut, an action like Ctrl+X - see connectEditActions.
+                if (event.modifiers.shift && !event.modifiers.ctrl)
+                {
+                    event.handled = false;
+                    return;
+                }
                 // The key is answered here rather than left to the Delete action, which removes
                 // the selection and only that. With nothing selected this key deletes forward, by
                 // a character or by a word, and that is a meaning of its own - the action is what
@@ -795,6 +801,7 @@ namespace ClaFi::Controls
         case 'V':
         case 'Y':
         case 'Z':
+        case Keys::Insert:
             event.handled = false;
             return;
 

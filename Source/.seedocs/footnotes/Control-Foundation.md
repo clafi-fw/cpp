@@ -254,6 +254,11 @@ An action given to a control as a property takes that control as a presenter, in
 A key and the modifiers held with it. An empty shortcut is one an action does not have:
 no key matches it, and it contributes nothing to a hint.
 
+**An action holds any number of them, and every one runs it.** The first is the one it is known
+by - a menu line and a hint show that one alone. A declaration states them in that order, one
+`Shortcut` property each; `addShortcut` puts one more after them, and `setShortcut` makes the key
+it is given the only one, so `setShortcut({})` leaves the action with none.
+
 ## ActionEventBase
 
 What both action events carry. An action asks its two questions with these and no others,
