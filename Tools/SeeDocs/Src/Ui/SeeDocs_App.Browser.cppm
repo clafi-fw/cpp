@@ -102,6 +102,7 @@ namespace SeeDocs_App
         // anything else names a page of the surface.
         void followLink(std::wstring_view target);
         void runCommand(std::wstring_view target);   // hands a command's click to the browser
+        void openSource(const SourcePlace&);   // hands a source button's click to the browser
         // Shows the anchor the tab arrived at, and tells the browser where the page opens.
         void arrive(const Url&);
     private:
@@ -174,6 +175,8 @@ namespace SeeDocs_App
         // A page's command was clicked: the project whose home the target names is asked to be
         // closed, the one command a page has.
         void answerCommand(std::wstring_view target);
+        // Opens a source a page names in the editor Settings keeps for its language.
+        void openSource(const PageData& from, const SourcePlace&);
         [[nodiscard]] const Searcher& searcher() const { return m_searcher; }   // the box's words
         // Opens what a link on the page names; a link on a search page takes the search on there.
         void openLinked(const PageData& from, const Url&);
@@ -435,6 +438,9 @@ namespace SeeDocs_App
         });
         m_view.onPageCommand([this](PageCommandEvent& event) {
             runCommand(event.target);
+        });
+        m_view.onPageSource([this](PageSourceEvent& event) {
+            openSource(event.source);
         });
         onShowAnchor([this](ShowAnchorEvent& event) {
             arrive(event.url);

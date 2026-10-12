@@ -2,6 +2,7 @@ module SeeDocs_App.PageView;
 
 import SeeDocs_App.BasesBar;
 import SeeDocs_App.Editing;
+import SeeDocs_App.ExternalEditors;
 import SeeDocs_App.Icons;
 import SeeDocs_App.PageText;
 import SeeDocs_App.Pages;
@@ -118,11 +119,23 @@ namespace SeeDocs_App
             return true;
         }
 
+        [[nodiscard]] bool sameShape(const Facts& left, const Facts& right)
+        {
+            if (left.size() != right.size())
+                return false;
+            for (std::size_t i = 0; i != left.size(); ++i)
+            {
+                if (left[i].source.has_value() != right[i].source.has_value())
+                    return false;
+            }
+            return true;
+        }
+
         [[nodiscard]] bool sameShape(const Page& left, const Page& right)
         {
             const bool counts = left.lead.empty() == right.lead.empty()
                 && left.leadSite.has_value() == right.leadSite.has_value()
-                && left.facts.size() == right.facts.size()
+                && sameShape(left.facts, right.facts)
                 && left.links.empty() == right.links.empty()
                 && left.sections.size() == right.sections.size()
                 && left.commands.size() == right.commands.size();
@@ -274,6 +287,15 @@ namespace SeeDocs_App
         :
         ::ClaFi::Event{},
         target{ std::move(commandTarget) }
+    {
+    }
+
+    // PageSourceEvent
+
+    PageSourceEvent::PageSourceEvent(const SourcePlace& sourcePlace)
+        :
+        ::ClaFi::Event{},
+        source{ sourcePlace }
     {
     }
 
@@ -458,6 +480,7 @@ namespace SeeDocs_App
 
     void PageView::clear()
     {
+        m_editorWatches.clear();
         for (Control* part : m_parts)
             part->deleteSelf();
         m_parts.clear();
@@ -496,7 +519,8 @@ namespace SeeDocs_App
         });
     }
 
-    // The facts as a grid of two columns, the label muted.
+    // The facts as a grid, the label muted. A fact naming a source has a button opening it at its
+    // row's end; the words of a fact with none stand across the button's column.
     void PageView::addFacts()
     {
         if (m_page.facts.empty())
@@ -507,16 +531,54 @@ namespace SeeDocs_App
             Grids::GridLines::Horizontal
         );
         grid.columns().add(Tag{ k_factLabel }, TextFormat{ InkGrade::Muted });
-        grid.columns().add(Tag{ k_factValue }, Grids::ColumnWidthMode::Fill);
+        const bool opens = std::ranges::any_of(m_page.facts, [](const Fact& fact) {
+            return fact.source.has_value();
+        });
+        Grids::Column* buttonColumn = nullptr;
+        if (opens)
+        {
+            Grids::Column& across = grid.columns().add(Tag{ k_factAcross },
+                Grids::ColumnWidthMode::Fill);
+            Grids::ColumnCollection& under = across.createSubColumns();
+            under.add(Tag{ k_factValue }, Grids::ColumnWidthMode::Fill);
+            buttonColumn = &under.add(Tag{ k_factButton });
+        }
+        else
+        {
+            grid.columns().add(Tag{ k_factValue }, Grids::ColumnWidthMode::Fill);
+        }
         for (const Fact& fact : m_page.facts)
         {
-            Grids::Row& row = grid.addRow();
+            const bool hasButton = fact.source.has_value();
+            Grids::Row* made = nullptr;
+            if (hasButton)
+            {
+                Grids::RowContainer& container = grid.addControlRow();
+                connectSource(container.addControl<Button>(*buttonColumn), fact);
+                made = &container;
+            }
+            else
+            {
+                made = &grid.addRow();
+            }
+            Grids::Row& row = *made;
             if (!m_firstRow)
                 m_firstRow = &row;
+            if (opens)
+            {
+                row.onCellContent([hasButton](Grids::CellContentEvent& event) {
+                    const TagValue column = event.column().tag().value;
+                    if (column == k_factAcross)
+                        event.hasContent = !hasButton;
+                    else if (column != k_factLabel)
+                        event.hasContent = hasButton;
+                });
+            }
             row.onGetCellText([&fact](Grids::GetCellTextEvent& event) {
-                if (event.column().tag().value == k_factLabel)
+                const TagValue column = event.column().tag().value;
+                if (column == k_factLabel)
                     event.text() << fact.label;
-                else
+                else if (column == k_factValue || column == k_factAcross)
                     writeRuns(event.text(), fact.value);
             });
         }
@@ -859,6 +921,30 @@ namespace SeeDocs_App
             button.text() = Text{ command.text };
             button.hintText() = HintText{ command.hint };
         });
+    }
+
+    // **The setting is read whenever the button is asked**, and a change to it asks again, so a
+    // command line typed on the Settings page takes the grey off a page standing behind it.
+    void PageView::connectSource(Button& button, const Fact& fact)
+    {
+        button.text() = Text{ k_openInEditor };
+        button.onGetState([this, &fact](GetStateEvent& event) {
+            event.state.enabled = hasEditorCommand(appContext(), fact.source->language);
+        });
+        button.onGetHint([this, &fact](GetHintEvent& event) {
+            const SourceLanguage language = fact.source->language;
+            if (hasEditorCommand(appContext(), language))
+                return;
+            event.text << L"Set a " << editorLanguageName(language) << L" editor in Settings";
+        });
+        button.onClick([this, &fact](ClickEvent&) {
+            PageSourceEvent event{ *fact.source };
+            emitEvent(event);
+        });
+        m_editorWatches.push_back(onEditorCommandChange(appContext(), fact.source->language,
+            [&button]() {
+                button.invalidateState();
+            }));
     }
 
     // **The cell shows more than the comment holds** - its types linked, a missing hint marked, an

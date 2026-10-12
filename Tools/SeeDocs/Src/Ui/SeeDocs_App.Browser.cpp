@@ -1,6 +1,7 @@
 module SeeDocs_App.Browser;
 
 import SeeDocs_App.Editing;
+import SeeDocs_App.ExternalEditors;
 import SeeDocs_App.Icons;
 import SeeDocs_App.PageView;
 import SeeDocs_App.SurfaceTree;
@@ -101,7 +102,7 @@ namespace SeeDocs_App
         // header being named by its path, whose folders are segments of their own.
         [[nodiscard]] std::wstring_view segmentOf(const ContentsModule& module)
         {
-            return module.header ? module.shortName : module.name;
+            return module.header ? module.shownName : module.name;
         }
 
         // A folder's path with one more folder under it; the root's is the folder alone.
@@ -229,6 +230,11 @@ namespace SeeDocs_App
     void SurfacePage::runCommand(const std::wstring_view target)
     {
         browser().answerCommand(target);
+    }
+
+    void SurfacePage::openSource(const SourcePlace& source)
+    {
+        browser().openSource(pageData(), source);
     }
 
     void SurfacePage::arrive(const Url& url)
@@ -576,6 +582,21 @@ namespace SeeDocs_App
             return;
         CloseProjectEvent event{ shown->open };
         emitEvent(event);
+    }
+
+    // **The database keeps a file by its path under its source's folder**, so the place is read
+    // against the folders the project reads now, as a hint written into the file is.
+    void SurfaceBrowser::openSource(const PageData& from, const SourcePlace& source)
+    {
+        const ShownProject* shown = resolve(from).project;
+        if (!shown)
+            return;
+        const SourceFile& file = shown->open.surface.files()[source.place.file];
+        const SourceRoots roots = shown->open.project.sourceRoots();
+        if (file.root >= roots.size())
+            return;
+        const std::filesystem::path path = (roots[file.root] / file.path).lexically_normal();
+        openInEditor(appContext(), source.language, path, source.place.line);
     }
 
     // Said for every page as it is built, which is before anything asks for its list: a page
@@ -1078,7 +1099,7 @@ namespace SeeDocs_App
         if (target.depth <= folders)
             return folderNameOf(data.name);
         if (target.module && target.depth == folders + 1)
-            return target.module->shortName;
+            return target.module->shownName;
         if (target.type && target.depth == folders + 2)
             return target.type->name;
         return data.name;
@@ -1800,7 +1821,7 @@ namespace SeeDocs_App
         {
             if (!place.empty())
                 place += k_sourceJoin;
-            place += entry.module->shortName;
+            place += entry.module->shownName;
         }
         if (place.empty())
             place = listed.project->open.project.name;

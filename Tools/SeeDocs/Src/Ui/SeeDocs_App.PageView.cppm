@@ -57,6 +57,15 @@ namespace SeeDocs_App
         const std::wstring target;   // what the command is about, as the page was given it
     };
 
+    // A fact's Open in editor button was clicked. The surface has an Event of its own.
+    export class PageSourceEvent : public ::ClaFi::Event
+    {
+    public:
+        explicit PageSourceEvent(const SourcePlace&);
+    public:
+        const SourcePlace source;   // the file and line the fact names
+    };
+
     constexpr float k_pagePadding = 24.0f;   // at the sides of a page's parts
     constexpr float k_headPadding = 12.0f;   // above and below the title, and over the body
 
@@ -116,6 +125,9 @@ namespace SeeDocs_App
         // Connects a handler raised when a command's button on the page is clicked.
         template<typename F>
         EventConnection onPageCommand(F&& callback);
+        // Connects a handler raised when a fact's Open in editor button is clicked.
+        template<typename F>
+        EventConnection onPageSource(F&& callback);
         // What the page writes edited words back through. A page with none shows them only.
         void setWriter(IPageWriter&);
         // Builds the page's controls, the page kept for as long as they stand.
@@ -185,6 +197,8 @@ namespace SeeDocs_App
             Stack& notes, TagValue hintColumn, Grids::Column* commandColumn, PageFootnotes&);
         // The button's caption and hint are written out of the command, and its click raises it.
         void connectCommand(Button&, const Command&);
+        // The button opens the fact's source, greyed with a hint while no editor is set for it.
+        void connectSource(Button&, const Fact&);
         // The row's hint cell opens on the comment's words and writes them back.
         void connectHintCell(Grids::Row&, const TableRow&, TagValue hintColumn);
         // The row's menu edits its footnote, or adds one where it has none.
@@ -231,12 +245,15 @@ namespace SeeDocs_App
         static constexpr float k_iconGap = 5.0f;    // between a tree row's icon and its text
         static constexpr TagValue k_factLabel = 0;
         static constexpr TagValue k_factValue = 1;
+        static constexpr TagValue k_factButton = 2;
+        static constexpr TagValue k_factAcross = 3;   // the value and the button's column as one
         static constexpr TagValue k_markColumn = std::numeric_limits<TagValue>::max();
         static constexpr TagValue k_groupColumn = k_markColumn - 1;
         static constexpr TagValue k_noColumn = k_markColumn - 2;
         static constexpr TagValue k_markParentColumn = k_markColumn - 3;
         static constexpr TagValue k_commandColumn = k_markColumn - 4;
         static constexpr std::wstring_view k_mark = L"*";
+        static constexpr std::wstring_view k_openInEditor = L"Open in editor";
 
         Page m_page{};
         IPageWriter* m_writer{ nullptr };
@@ -252,6 +269,7 @@ namespace SeeDocs_App
         std::wstring m_menuLink{};   // the link the menu that is up is about
         std::function<void()> m_pending{};
         UiTimer m_later{};
+        std::vector<ScopedEventConnection> m_editorWatches{};   // on the editors' command lines
 
         PageHead& m_head{ createTopBar<PageHead>() };
 
@@ -314,6 +332,12 @@ namespace SeeDocs_App
     EventConnection PageView::onPageCommand(F&& callback)
     {
         return connectEvent<PageCommandEvent>(std::forward<F>(callback));
+    }
+
+    template<typename F>
+    EventConnection PageView::onPageSource(F&& callback)
+    {
+        return connectEvent<PageSourceEvent>(std::forward<F>(callback));
     }
 
     template<typename Holder>

@@ -391,7 +391,7 @@ namespace SeeDocs_App
                     row.type = entry.type;
                     row.cells.push_back({ muted(std::wstring{ entry.kindWord }) });
                     row.cells.push_back({ Run{
-                        .text = entry.module->shortName,
+                        .text = entry.module->shownName,
                         .style = RunStyle::Plain,
                         .link = entry.module->name
                     } });
@@ -406,7 +406,7 @@ namespace SeeDocs_App
                 case NameKind::Function:
                 case NameKind::Constant:
                     row.cells.push_back({ Run{
-                        .text = entry.module->shortName,
+                        .text = entry.module->shownName,
                         .style = RunStyle::Plain,
                         .link = entry.module->name
                     } });
@@ -737,8 +737,8 @@ namespace SeeDocs_App
         add({
             .kind = NameKind::Module,
             .kindWord = module.header ? k_headerWord : std::wstring_view{ L"module" },
-            .name = module.shortName,
-            .spellings = { module.name },
+            .name = module.shownName,
+            .spellings = module.header ? Names{ module.name } : Names{},
             .owner = folder.path,
             .nameSpace = {},
             .type = nullptr,

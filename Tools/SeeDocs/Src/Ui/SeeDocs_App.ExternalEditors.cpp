@@ -1,5 +1,7 @@
 module SeeDocs_App.ExternalEditors;
 
+import SeeDocs_App.Surface;
+
 import ClaFi.App.Settings;
 
 import ClaFi.Controls.Button;
@@ -24,6 +26,7 @@ import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
@@ -44,6 +47,7 @@ namespace SeeDocs_App
             constexpr std::wstring_view delphi = L"Delphi";
         }
         constexpr std::wstring_view k_commandPlaceHolder = L"A command line with {file} and {line}";
+        constexpr std::wstring_view k_filePlaceHolder = L"{file}";
         constexpr std::wstring_view k_linePlaceHolder = L"{line}";
         // The captions' shared width, so the fields line up as the Settings page's rows do.
         constexpr float k_captionWidth = 64.0f;
@@ -198,6 +202,26 @@ namespace SeeDocs_App
             return context.config() / k_editorsNodeName / key;
         }
 
+        [[nodiscard]] Dom::DomNodeBase& commandNode(AppContext& context,
+            const SourceLanguage language)
+        {
+            const std::wstring_view key = language == SourceLanguage::Pascal
+                ? EditorKey::delphi
+                : EditorKey::cpp;
+            return commandNode(context, key);
+        }
+
+        void replaceEvery(std::wstring& text, const std::wstring_view what,
+            const std::wstring_view replacement)
+        {
+            std::size_t at = text.find(what);
+            while (at != std::wstring::npos)
+            {
+                text.replace(at, what.size(), replacement);
+                at = text.find(what, at + replacement.size());
+            }
+        }
+
         [[nodiscard]] constexpr Suggestions onThisDesktop(const Suggestions windows,
             const Suggestions others)
         {
@@ -286,6 +310,38 @@ namespace SeeDocs_App
         addEditorRow(group, L"Delphi:", EditorKey::delphi,
             onThisDesktop(WindowsSuggestions::delphi, LinuxSuggestions::delphi),
             HintText{ L"Opens a Delphi source at a line - {file} and {line} are filled in" });
+    }
+
+    bool hasEditorCommand(AppContext& context, const SourceLanguage language)
+    {
+        return !commandNode(context, language).get<std::wstring>().empty();
+    }
+
+    std::wstring_view editorLanguageName(const SourceLanguage language)
+    {
+        return language == SourceLanguage::Pascal ? L"Delphi" : L"C++";
+    }
+
+    EventConnection onEditorCommandChange(AppContext& context, const SourceLanguage language,
+        std::function<void()> callback)
+    {
+        return commandNode(context, language).connectEvent(
+            [callback = std::move(callback)](Dom::ChangeEvent&) {
+                callback();
+            });
+    }
+
+    // **The command line is the user's own** and runs as a terminal would run it, so a path is
+    // quoted where the line quotes {file}, and nowhere else.
+    void openInEditor(AppContext& context, const SourceLanguage language,
+        const std::filesystem::path& file, const std::size_t line)
+    {
+        std::wstring command = commandNode(context, language).get<std::wstring>();
+        if (command.empty())
+            return;
+        replaceEvery(command, k_filePlaceHolder, file.wstring());
+        replaceEvery(command, k_linePlaceHolder, std::to_wstring(line));
+        Platform::runCommand(command);
     }
 
     // CommandBox

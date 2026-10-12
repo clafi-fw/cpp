@@ -77,11 +77,19 @@ namespace SeeDocs_App
         Blocks blocks;
     };
 
+    // A file and line of the sources, and the language an editor opens the file as.
+    export struct SourcePlace
+    {
+        Place place;
+        SourceLanguage language{ SourceLanguage::Cpp };
+    };
+
     // One fact of a page's head: what it is called and what it says.
     export struct Fact
     {
         std::wstring label;
         Runs value;
+        std::optional<SourcePlace> source;   // what an editor opens for it; none for most facts
     };
 
     export using Facts = std::vector<Fact>;
@@ -248,7 +256,7 @@ namespace SeeDocs_App
     export struct ContentsModule
     {
         std::wstring name;        // the module's full name, a header's path
-        std::wstring shortName;   // what a reader sees: the last part, a unit's whole name
+        std::wstring shownName;   // what a reader sees: the full name, a header's file name
         bool header{ false };
         TypeList types;
         FunctionList functions;
@@ -329,8 +337,6 @@ namespace SeeDocs_App
         std::unordered_map<std::wstring_view, std::size_t> m_modules{};   // by the module's name
     };
 
-    // What a reader calls a module.
-    export [[nodiscard]] std::wstring moduleShortNameOf(std::wstring_view module);
     // The last folder of a path - the folder's own name; the root's is empty.
     export [[nodiscard]] std::wstring folderNameOf(std::wstring_view path);
     // The folders with modules standing under this path at any depth, in reading order; every

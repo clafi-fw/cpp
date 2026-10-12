@@ -266,12 +266,12 @@ namespace SeeDocs_App
         else if (row.children.empty())
         {
             made.item = &holder.addItem(
-                Text{ rowIcon(RowIcon::Module), Space{ k_iconGap }, row.module->shortName });
+                Text{ rowIcon(RowIcon::Module), Space{ k_iconGap }, row.module->shownName });
         }
         else
         {
             made.node = &holder.addNode(
-                HeaderText{ rowIcon(RowIcon::Module), Space{ k_iconGap }, row.module->shortName });
+                HeaderText{ rowIcon(RowIcon::Module), Space{ k_iconGap }, row.module->shownName });
         }
 
         ProjectRows* holderRows = &rows;

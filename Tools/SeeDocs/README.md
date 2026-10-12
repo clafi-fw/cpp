@@ -323,9 +323,9 @@ settings, so a run starts where the last one left off. A url no project open car
 closed, or a type gone since the sources were scanned - shows a page saying so.
 
 The pages: down the left, under each project's node, a tree of the sources' folders, named as
-they stand on disk, each holding the folders under it and then its modules, and each module the
-types it exports, controls first; a module that exports functions or constants and no type is a
-row with nothing under it. On the right the
+they stand on disk, each holding the folders under it and then its modules by their full names,
+and each module the types it exports, controls first; a module that exports functions or
+constants and no type is a row with nothing under it. On the right the
 page of whatever is clicked. Each tab has a tree of its own, which follows wherever the tab goes -
 to the project's own node for a page the tree has no row for, a search's or one gone: the nodes it
 has open and how far it is scrolled are the tab's, and the nodes open are kept with
@@ -334,7 +334,10 @@ A node's rows are made the first time it opens, out of the project's contents, w
 once and shared by every tab's tree. A page is a column of
 controls: its title, marked with the mark its tree row wears, what the page is after it - a
 project, a folder, a module, a function, a constant, a type's kind - and its hint under it,
-a grid of facts - namespace, module, source - and then a section per expander. A class's title
+a grid of facts - namespace, module, source - and then a section per expander. The source is the
+file and line a type, a method, a function or a constant stands at, and a module's interface file;
+an Open in editor button at its row's end runs the command line Settings keeps for the file's
+language, and stands greyed, its hint naming Settings, while there is none. A class's title
 carries its bases under it as a breadcrumb bar reversed: a crumb per base, its mark before it
 pointing back toward the type standing on it, the ways up running right and parting into a column of
 rows where a type has several bases, a mixin's host reached through the argument it was given.

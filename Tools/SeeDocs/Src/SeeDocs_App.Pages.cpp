@@ -753,6 +753,16 @@ namespace SeeDocs_App
             page.facts.push_back({ .label = std::move(label), .value = std::move(value) });
         }
 
+        void addSourceFact(Page& page, std::wstring where, const Place& place,
+            const SourceLanguage language)
+        {
+            page.facts.push_back({
+                .label = L"source",
+                .value = { code(std::move(where)) },
+                .source = SourcePlace{ .place = place, .language = language }
+            });
+        }
+
         // What a reader calls the unit a declaration stands in: a header, which a limited read
         // takes for a module, or a module.
         [[nodiscard]] std::wstring moduleWordOf(const Surface& surface,
@@ -763,6 +773,18 @@ namespace SeeDocs_App
             };
             const bool header = std::ranges::any_of(surface.modules(), isThisHeader);
             return std::wstring{ header ? k_headerWord : k_moduleWord };
+        }
+
+        // The unit declaring a module - its interface, a header or a Delphi unit; null for none.
+        [[nodiscard]] const Module* interfaceOf(const Surface& surface,
+            const std::wstring_view name)
+        {
+            for (const Module& module : surface.modules())
+            {
+                if (module.isInterface && module.name == name)
+                    return &module;
+            }
+            return nullptr;
         }
 
         // The head of a type page
@@ -785,7 +807,8 @@ namespace SeeDocs_App
             page.leadSite = siteOf(type);
             addFact(page, L"namespace", { code(type.nameSpace) });
             addFact(page, moduleWordOf(surface, type.module), { code(type.module, type.module) });
-            addFact(page, L"source", { code(fileLineOf(surface, type.place)) });
+            addSourceFact(page, fileLineOf(surface, type.place), type.place,
+                surface.languageOf(type.module));
             if (type.target.empty())
                 return;
             if (type.kind == TypeKind::Concept)
@@ -2219,11 +2242,13 @@ namespace SeeDocs_App
         {
             if (rows.empty())
                 return;
-            groups.push_back({
-                .label = { { .text = module.shortName, .link = module.name } },
-                .hint = { plain(module.name) },
+            TableGroup group{
+                .label = { { .text = module.shownName, .link = module.name } },
                 .rows = std::move(rows)
-            });
+            };
+            if (module.header)
+                group.hint = { plain(module.name) };
+            groups.push_back(std::move(group));
         }
 
         // A folder's table: each module's rows beside its name in the Module column, the modules
@@ -2396,12 +2421,13 @@ namespace SeeDocs_App
             return result;
         }
 
-        void addExportFacts(Page& page, const std::wstring_view nameSpace,
-            const ContentsModule& module)
+        void addExportFacts(Page& page, const Surface& surface, const std::wstring_view nameSpace,
+            const ContentsModule& module, const Place& place)
         {
             addFact(page, L"namespace", { code(std::wstring{ nameSpace }) });
             addFact(page, std::wstring{ module.header ? k_headerWord : k_moduleWord },
                 { code(module.name, module.name) });
+            addSourceFact(page, fileLineOf(surface, place), place, surface.languageOf(module.name));
         }
 
         // A constant's page: what it is after the title, its hint under it, where it is
@@ -2415,7 +2441,7 @@ namespace SeeDocs_App
             page.badges.push_back(muted(std::wstring{ kind }));
             page.lead = hintRuns(surface, field.comment, variable.nameSpace);
             page.leadSite = siteOf(field.comment, field.place, field.name);
-            addExportFacts(page, variable.nameSpace, module);
+            addExportFacts(page, surface, variable.nameSpace, module, field.place);
             const FoundNote found = noteFor(surface, notes, field.comment, field.name, folder,
                 field.name);
             const SourceLanguage language = surface.languageOf(variable.module);
@@ -2494,17 +2520,15 @@ namespace SeeDocs_App
                 contents.name = name;
                 contents.header = headers.contains(name);
                 if (contents.header)
-                    contents.shortName = name.substr(name.rfind(L'/') + 1);
-                else if (surface.languageOf(name) == SourceLanguage::Pascal)
-                    contents.shortName = name;
+                    contents.shownName = name.substr(name.rfind(L'/') + 1);
                 else
-                    contents.shortName = moduleShortNameOf(name);
+                    contents.shownName = name;
                 folder.modules.push_back(std::move(contents));
             }
             std::ranges::sort(folder.modules,
                 [](const ContentsModule& left, const ContentsModule& right) {
-                    return std::tuple{ !hasControl(left), lowered(left.shortName) }
-                        < std::tuple{ !hasControl(right), lowered(right.shortName) };
+                    return std::tuple{ !hasControl(left), lowered(left.shownName) }
+                        < std::tuple{ !hasControl(right), lowered(right.shownName) };
                 });
             folders.push_back(std::move(folder));
         }
@@ -2512,18 +2536,6 @@ namespace SeeDocs_App
             return listsBefore(left.path, right.path);
         });
         return folders;
-    }
-
-    // The last dotted part; a partition keeps the module it belongs to in front of the colon.
-    std::wstring moduleShortNameOf(const std::wstring_view module)
-    {
-        const std::size_t colon = module.find(L':');
-        const std::wstring_view head = module.substr(0, colon);
-        const std::size_t dot = head.rfind(L'.');
-        const std::wstring_view last = dot == std::wstring_view::npos ? head : head.substr(dot + 1);
-        if (colon == std::wstring_view::npos)
-            return std::wstring{ last };
-        return std::wstring{ last } + std::wstring{ module.substr(colon) };
     }
 
     std::wstring folderOf(const std::wstring_view relativeFile)
@@ -2689,12 +2701,16 @@ namespace SeeDocs_App
         Page page;
         const std::wstring word{ module.header ? k_headerWord : k_moduleWord };
         page.kind = PageKind::Module;
-        page.title = module.shortName;
+        page.title = module.shownName;
         page.badges.push_back(muted(word));
         page.footnoteHome = folderFootnoteHome(surface, notes, folder.path);
-        addFact(page, word, { code(module.name) });
-        if (!folder.path.empty())
-            addFact(page, L"folder", { code(folder.path, folder.path) });
+        if (module.header)
+            addFact(page, word, { code(module.name) });
+        if (const Module* unit = interfaceOf(surface, module.name))
+        {
+            addSourceFact(page, surface.files()[unit->file].relative,
+                { .file = unit->file, .line = 1 }, unit->language);
+        }
         if (!module.types.empty())
         {
             TableGroups groups;
@@ -2713,10 +2729,13 @@ namespace SeeDocs_App
         page.title = std::wstring{ name };
         page.footnoteHome = folderFootnoteHome(surface, notes, folder.path);
         Overloads overloads;
+        const Function* first = nullptr;
         for (const FreeFunction* free : module.functions)
         {
             if (free->function.name != name)
                 continue;
+            if (!first)
+                first = &free->function;
             overloads.push_back({
                 .code = signatureRuns(surface, *free, k_signatureJoin),
                 .holder = &free->function,
@@ -2726,9 +2745,9 @@ namespace SeeDocs_App
                 .language = surface.languageOf(free->module)
             });
         }
-        if (!overloads.empty())
+        if (first)
         {
-            addExportFacts(page, overloads.front().nameSpace, module);
+            addExportFacts(page, surface, overloads.front().nameSpace, module, first->place);
             addOverloads(page, surface, notes, k_functionWord, std::move(overloads));
             return page;
         }
@@ -2764,7 +2783,10 @@ namespace SeeDocs_App
             if (function.name != name)
                 continue;
             if (overloads.empty())
+            {
                 kind = function.kind;
+                addSourceFact(page, fileLineOf(surface, function.place), function.place, language);
+            }
             overloads.push_back({
                 .code = signatureRuns(surface, type, function, k_signatureJoin),
                 .holder = &commentHolder(function, above, language),
