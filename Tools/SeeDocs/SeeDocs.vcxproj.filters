@@ -28,6 +28,12 @@
     <ClCompile Include="Src\SeeDocs_App.Notes.cppm">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.PascalLibraries.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.PascalLibraries.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.PascalReader.cpp">
       <Filter>Src</Filter>
     </ClCompile>

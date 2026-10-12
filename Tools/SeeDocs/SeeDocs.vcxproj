@@ -120,6 +120,8 @@
     <ClCompile Include="Src\SeeDocs_App.Edits.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Notes.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Notes.cppm" />
+    <ClCompile Include="Src\SeeDocs_App.PascalLibraries.cpp" />
+    <ClCompile Include="Src\SeeDocs_App.PascalLibraries.cppm" />
     <ClCompile Include="Src\SeeDocs_App.PascalReader.cpp" />
     <ClCompile Include="Src\SeeDocs_App.PascalReader.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Pages.cpp" />

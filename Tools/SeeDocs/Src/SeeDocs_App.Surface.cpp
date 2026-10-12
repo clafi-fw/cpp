@@ -1,5 +1,7 @@
 module SeeDocs_App.Surface;
 
+import SeeDocs_App.PascalLibraries;
+
 import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
@@ -187,6 +189,22 @@ namespace SeeDocs_App
             return shared;
         }
 
+        // The library a Delphi unit's class names are read in, by the units it uses.
+        [[nodiscard]] ClassLibrary libraryOf(const Modules& modules, const std::wstring_view module)
+        {
+            for (const Module& candidate : modules)
+            {
+                if (candidate.name != module)
+                    continue;
+                const bool fireMonkey = std::ranges::any_of(candidate.imports,
+                    [](const Import& imported){
+                        return isFireMonkeyUnit(imported.name);
+                    });
+                return fireMonkey ? ClassLibrary::FireMonkey : ClassLibrary::Vcl;
+            }
+            return ClassLibrary::Vcl;
+        }
+
         // Every declaration's place and comment, a type's own ahead of its members', until the
         // visitor answers true. The containers are the surface's, const or not alike.
         template<typename Types, typename Functions, typename Variables, typename Visit>
@@ -354,13 +372,16 @@ namespace SeeDocs_App
         if (type.kind != TypeKind::Class)
             return false;
 
+        const bool pascal = languageOf(type.module) == SourceLanguage::Pascal;
+
         struct Spelled
         {
             std::wstring text;
             std::wstring nameSpace;
+            std::wstring module;    // the unit spelling it, whose uses say which library it means
         };
         std::vector<Spelled> queue;
-        queue.push_back({ type.name, type.nameSpace });
+        queue.push_back({ type.name, type.nameSpace, type.module });
         std::set<std::wstring> seen;
         while (!queue.empty())
         {
@@ -373,15 +394,25 @@ namespace SeeDocs_App
                 continue;
 
             const Type* found = lookUp(head, spelled.nameSpace);
+            // The libraries answer for a class the tree does not declare, and only for one.
             if (!found)
+            {
+                const bool libraryControl = pascal
+                    && isLibraryControl(bareName(head), libraryOf(m_modules, spelled.module));
+                if (libraryControl)
+                    return true;
                 continue;
+            }
             if (found->kind == TypeKind::Alias)
             {
-                queue.push_back({ found->target, found->nameSpace });
+                queue.push_back({ found->target, found->nameSpace, found->module });
                 continue;
             }
             const std::wstring_view bare = bareName(found->name);
-            if (bare == k_control || bare == k_richControl)
+            const bool root = pascal
+                ? isControlRoot(bare)
+                : bare == k_control || bare == k_richControl;
+            if (root)
                 return true;
 
             const Names parameters = templateParameterNames(found->templateParameters);
@@ -392,13 +423,13 @@ namespace SeeDocs_App
                 const auto parameter = std::ranges::find(parameters, baseHead);
                 if (parameter == parameters.end())
                 {
-                    queue.push_back({ base, found->nameSpace });
+                    queue.push_back({ base, found->nameSpace, found->module });
                     continue;
                 }
                 const std::size_t index =
                     static_cast<std::size_t>(parameter - parameters.begin());
                 if (index < arguments.size())
-                    queue.push_back({ arguments[index], spelled.nameSpace });
+                    queue.push_back({ arguments[index], spelled.nameSpace, spelled.module });
             }
         }
         return false;

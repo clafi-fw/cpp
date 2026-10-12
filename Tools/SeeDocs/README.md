@@ -155,6 +155,14 @@ adding nothing to a page, `automated` reading as public.
   `reference to` - is an event, as the Object Inspector parts them. Where the tree declares no
   such type - the RTL's `TNotifyEvent` - the property is an event when it is named as Delphi
   names one, `On` and a capital.
+- A class is a control when its base chain reaches `TControl`, in any case. A chain leaving the tree
+  ends at a class of the libraries Delphi code builds on, and SeeDocs knows which of theirs descend
+  from `TControl` - `TCustomControl`, `TCustomEdit` and `THintWindow` among them. A unit that uses
+  an `FMX.` unit means FMX's classes, and any other the VCL's, with the LCL's under a name the VCL
+  leaves free: `TMenuItem` is a control in a FireMonkey unit and a menu's item in a VCL one, and
+  `TForm` the other way round. The names come from Embarcadero's compiler output and class reference
+  and from the LCL's sources. A tree holding the libraries' own sources is walked through them to
+  their `TControl`.
 - A conditional on a symbol neither the tree nor the compiler defines is read false -
   `{$IFDEF FPC}`, `{$IF Defined(VT_FMX)}` - and its `{$ELSE}` read; any other reads its first
   branch, as a C++ conditional does. The tree's symbols are those its units and its include files
@@ -222,8 +230,8 @@ takes one; its `Name` is its path under its folder of sources. `Language` is `pa
 unit, whose code a page reads and colours as Pascal, and a C++ module states none; a Delphi
 interface's `Kind` is `interface`, and a Delphi member's `Access` may be `published`.
 
-`Control` marks a type whose base chain reaches `Control` or `RichControl`, template arguments
-walked as bases, which is what makes it a toolbox entry; `Folder` is its folder under its
+`Control` marks a type whose base chain reaches `Control`, `RichControl` or `TControl`, template
+arguments walked as bases, which is what makes it a toolbox entry; `Folder` is its folder under its
 folder of sources. `Bases` are written as a reader can follow them: an alias the database does not
 carry - a private `using ComboBoxBaseClass = WithInPlaceEdit<DropdownControlBase>` - is replaced
 by what it names, and a base that is one of the type's own template parameters - a mixin's

@@ -204,7 +204,7 @@ namespace SeeDocs_App
         std::wstring target;                // an alias's type, a concept's constraint, an enum base
         bool exported{ false };
         Access access{ Access::Public };    // a nested type's, under the label it stands in
-        bool isControl{ false };            // the base chain reaches Control, resolved later
+        bool isControl{ false };            // the bases reach Control or TControl, resolved later
         std::wstring folder;                // its file's folder as a path under the root
         std::vector<Property> properties;
         std::vector<Event> events;
@@ -377,7 +377,7 @@ namespace SeeDocs_App
         // followed until the spelling names a type the database does carry.
         [[nodiscard]] std::wstring resolvedBase(std::wstring_view spelled,
             std::wstring_view nameSpace) const;
-        // Whether a type's base chain reaches Control, template arguments walked as bases.
+        // Whether the base chain reaches Control or TControl, template arguments walked as bases.
         [[nodiscard]] bool reachesControl(const Type&) const;
         // What a designer shows a property of the type as.
         [[nodiscard]] std::wstring valueKindOf(std::wstring_view type, std::wstring_view nameSpace,
