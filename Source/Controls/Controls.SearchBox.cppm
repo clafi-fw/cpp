@@ -27,7 +27,7 @@ namespace ClaFi::Controls
         Next,       // Enter
         Previous,   // Shift+Enter
         Pick,       // a line of the box's list taken - Enter on the current one, or a click on any
-        End         // Escape on the empty box: the focus goes back to what was searched
+        End         // Escape with the list down: the focus goes back to what was searched
     };
 
     export class SearchBox;
@@ -76,6 +76,10 @@ namespace ClaFi::Controls
         [[nodiscard]] const std::wstring& searchText() const { return m_field.text().plainText(); }
         // Focuses the box with its text selected, a text given replacing it. See Controls#search
         void startSearch(std::wstring_view text = {});
+        // Puts the text in the box as typing would, the focus staying where it is.
+        void setSearchText(std::wstring_view);
+        // Counts by place - "15 on page" - in a box searching wider than it counts.
+        void setCountPlace(std::wstring_view value) { m_countPlace = value; }
         // Shows which found range is selected, and how many were found. See Controls#search
         void setResult(std::optional<std::size_t> selected, std::size_t count);
         // Drops the lines under the box, the one given current. See Controls#search
@@ -85,7 +89,7 @@ namespace ClaFi::Controls
         // Whether the box has lines to drop, up or down - the last ones its owner gave it.
         [[nodiscard]] bool hasList() const { return !m_list.lines().empty(); }
     protected:
-        // Enter takes the list's line or steps; Escape closes the list, empties the box, then ends.
+        // Enter takes the list's line or steps; Escape closes the list, then ends.
         void nestedKeyDown(KeyDownEvent&) override;
     private:
         // Holds its own layout: a text per step would crowd the shared layout cache.
@@ -108,6 +112,7 @@ namespace ClaFi::Controls
             VerticalTextAnchor::Center
         ) };
         DropList m_list;
+        std::wstring m_countPlace{};   // what the count is taken over; empty for all of it
     };
 
 
@@ -139,10 +144,11 @@ namespace ClaFi::Controls
         },
         INIT_PROPERTY(listPlacement),
         INIT_PROPERTY(listKeptBy),
-        // The field keeps the focus, and the list going down hands it back there.
+        // The field keeps the focus, and the list going down hands it back there. Up on the first
+        // line hands the keys back to the text.
         m_list{ m_field, [this](const DropListPick& picked) {
             pick(picked);
-        }, DropListOptions{ .keptBy = m_listKeptBy } }
+        }, DropListOptions{ .keptBy = m_listKeptBy, .upFromFirst = UpFromFirst::Leaves } }
     {
         m_count.hide();
         m_field.onTextEdit([this](TextEditEvent&){

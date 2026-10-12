@@ -28,6 +28,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
@@ -87,6 +88,7 @@ namespace SeeDocs_App
     export class SurfacePage : public BrowserPage
     {
     public:
+        // The page bands the words of the browser's search.
         template<typename... Args>
         explicit SurfacePage(const CreateParams&, Args&&...);
     public:
@@ -100,8 +102,10 @@ namespace SeeDocs_App
         // anything else names a page of the surface.
         void followLink(std::wstring_view target);
         void runCommand(std::wstring_view target);   // hands a command's click to the browser
+        // Shows the anchor the tab arrived at, and tells the browser where the page opens.
+        void arrive(const Url&);
     private:
-        PageView& m_view{ createBody<PageView>() };
+        PageView& m_view;
     };
 
     // A project's options as a page of the browser: the head every page wears, and under it the
@@ -132,7 +136,8 @@ namespace SeeDocs_App
     // none is open. What a project's pages edit is written through the browser into that project,
     // and a project's closing, which its home and the root offer, is asked of whoever owns it. A
     // tab's tree is made the first time the tab is shown, and the nodes it has open are kept
-    // with the tab. A search is typed at the crumb bar's end. See the README beside the project.
+    // with the tab. A search is typed at the crumb bar's end, and every page shown bands its
+    // words. See the README beside the project.
     export class SurfaceBrowser : public BrowserControl
     {
     public:
@@ -169,6 +174,12 @@ namespace SeeDocs_App
         // A page's command was clicked: the project whose home the target names is asked to be
         // closed, the one command a page has.
         void answerCommand(std::wstring_view target);
+        [[nodiscard]] const Searcher& searcher() const { return m_searcher; }   // the box's words
+        // Opens what a link on the page names; a link on a search page takes the search on there.
+        void openLinked(const PageData& from, const Url&);
+        // A page has shown the anchor its tab arrived at: one the search opened goes on with it
+        // from where the page opens, and the box counts what the page holds. See README
+        void pageArrived(SurfacePage&, const Control& opening);
         // What a tab's own file keeps of its tree: the nodes open, by project.
         [[nodiscard]] static Dom::Dt::Section createTabConfigSchema();
     protected:
@@ -335,9 +346,19 @@ namespace SeeDocs_App
         // The path of a search's page: the query after the project's segment, or after the root.
         [[nodiscard]] static std::wstring searchPath(const ShownProject*, std::wstring_view query);
         [[nodiscard]] Page searchPageOf(const Target&) const;
-        void connectSearch();   // the box's requests, and Ctrl+F putting the focus in it
+        // The box's requests, Ctrl+F putting the focus in it, and F3 and Shift+F3 stepping.
+        void connectSearch();
         void searchRequested(const SearchEvent&);
-        // The focus back where it came into the box from, while that is shown, else onto the page.
+        // The box's words are the search's: the pages band them, and the list drops under the box
+        // while it is typed in.
+        void takeWords();
+        // The selected tab's page; null where it shows a project's options, or there is none.
+        [[nodiscard]] SurfacePage* surfacePage();
+        // Steps through the shown page's matches, the focus going with them from the page.
+        void stepFound(FindTarget);
+        void writeFound();   // the box's count, of the shown page
+        // The focus onto the shown page's current match, else back where it came into the box
+        // from while that is shown, else onto the page.
         void handBackFocus();
         // Drops the names holding what the box holds under it, the search among them. See README
         void listMatches();
@@ -366,6 +387,8 @@ namespace SeeDocs_App
         ProjectPageBuilder m_projectPageBuilder{};
         ListedLines m_listed{};   // what each line of the search box's list stands for
         Control* m_focusOrigin{ nullptr };   // what held the focus before the search box took it
+        Searcher m_searcher{};   // the box's words, which every page shown bands
+        std::optional<Url> m_searchOpens{};   // what the search opened, which goes on with it
 
         TabTrees m_tabTrees{};
         // The tabs' trees, the selected tab's shown.
@@ -398,7 +421,8 @@ namespace SeeDocs_App
             Spacing{ 0.0f },
             UiElement::Page,
             std::forward<Args>(args)...
-        }
+        },
+        m_view{ createBody<PageView>(browser().searcher()) }
     {
         m_view.onPageLink([this](PageLinkEvent& event) {
             followLink(event.target);
@@ -407,7 +431,7 @@ namespace SeeDocs_App
             runCommand(event.target);
         });
         onShowAnchor([this](ShowAnchorEvent& event) {
-            m_view.showAnchor(event.url.anchor());
+            arrive(event.url);
         });
     }
 

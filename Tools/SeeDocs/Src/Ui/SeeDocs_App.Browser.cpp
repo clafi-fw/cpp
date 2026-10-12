@@ -35,6 +35,7 @@ import ClaFi.Core.DomEngine_Dt;
 // The std::wstring serializer, which is what makes the tab's nodes readable as strings.
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
@@ -223,12 +224,18 @@ namespace SeeDocs_App
             return;
         }
         if (const std::optional<Url> url = browser().urlOf(target, pageData()))
-            browser().goToLater(*url);
+            browser().openLinked(pageData(), *url);
     }
 
     void SurfacePage::runCommand(const std::wstring_view target)
     {
         browser().answerCommand(target);
+    }
+
+    void SurfacePage::arrive(const Url& url)
+    {
+        const Control& opening = m_view.showAnchor(url.anchor());
+        browser().pageArrived(*this, opening);
     }
 
     // SurfaceBrowser::Target
@@ -633,7 +640,9 @@ namespace SeeDocs_App
 
     // **A page is built for one page data**, so a tab that has moved to another needs a new page
     // even where the kind of page is the same. The tab's tree is shown and follows the tab wherever
-    // it has gone, and the project it stands in is told when it is another than before.
+    // it has gone, and the project it stands in is told when it is another than before. A search
+    // page puts its words back in the box, for every page to band from then on - unless the box
+    // holds them already, spaced as typed.
     void SurfaceBrowser::showPage(BrowserTab& tab)
     {
         PageData& data = *tab.pageData();
@@ -693,6 +702,9 @@ namespace SeeDocs_App
             ProjectShownEvent event{ shown };
             emitEvent(event);
         }
+        if (target.searching && trimmed(m_search.searchText()) != target.search)
+            m_search.setSearchText(target.search);
+        writeFound();
     }
 
     // **Asked as a tab's page goes with the tab**, which is the one time it is: the nodes the tree
@@ -1297,6 +1309,7 @@ namespace SeeDocs_App
             m_rebuildFootnote = std::move(show);
             m_rebuildTimer.start(MilliSeconds{ 0u });
         }
+        writeFound();
     }
 
     // A footnote waiting to be shown is reached the way a click on its mark reaches it, once the
@@ -1502,35 +1515,49 @@ namespace SeeDocs_App
         return searchPage(searched, target.search, spell);
     }
 
-    // **Ctrl+F is the box's from anywhere in the window**: the browser stands over every control
-    // in it, and the action asks each control from the focused one upwards.
+    // **Ctrl+F, F3 and Shift+F3 are the search's from anywhere in the window**: the browser
+    // stands over every control in it, and an action asks each control from the focused one
+    // upwards.
     void SurfaceBrowser::connectSearch()
     {
+        m_search.setCountPlace(L"on page");
         m_search.onSearch([this](SearchEvent& event) {
             searchRequested(event);
         });
-        onGetActionState([](GetActionStateEvent& event) {
+        onGetActionState([this](GetActionStateEvent& event) {
             if (&event.action == &StdActions::find)
                 event.claim({});
+            else if (&event.action == &StdActions::findNext
+                || &event.action == &StdActions::findPrevious)
+            {
+                const SurfacePage* page = surfacePage();
+                event.claim({ .enabled = page && page->view().found().count() != 0 });
+            }
         });
         onActionClick([this](ActionClickEvent& event) {
             if (&event.action == &StdActions::find)
                 m_search.startSearch();
+            else if (&event.action == &StdActions::findNext)
+                stepFound(FindTarget::Next);
+            else if (&event.action == &StdActions::findPrevious)
+                stepFound(FindTarget::Previous);
         });
     }
 
-    // Enter with no line current, the list taken down, opens the search's page as the search line
-    // does; Escape on the empty box hands the focus back where it came from.
+    // Enter, the list taken down, steps through the page's matches; the search's own page is
+    // opened from its line of the list.
     void SurfaceBrowser::searchRequested(const SearchEvent& event)
     {
         switch (event.request)
         {
             case SearchRequest::Search:
-                listMatches();
+                takeWords();
                 return;
             case SearchRequest::Next:
+                stepFound(FindTarget::Next);
+                return;
             case SearchRequest::Previous:
-                openSearch(event.modifiers);
+                stepFound(FindTarget::Previous);
                 return;
             case SearchRequest::Pick:
                 openListed(event.line, event.modifiers);
@@ -1541,19 +1568,96 @@ namespace SeeDocs_App
         }
     }
 
-    // **A tab not selected keeps its tree and its page, hidden**: a control there is passed over.
-    // A page with no row to take the focus leaves it in the box.
+    // **One box for both searches**: the names of the projects drop under it while it is typed
+    // in, and the pages band its words however they came there - typed, or put back by a search
+    // page shown.
+    void SurfaceBrowser::takeWords()
+    {
+        // The searcher knows nothing of the pages, so the bands are repainted from here. A page
+        // not shown is painted afresh when it is.
+        const std::wstring words = searchedWords(m_search.searchText());
+        if (m_searcher.setText(words, SearchSplit::Words))
+        {
+            if (BrowserPage* page = currentPage())
+                page->invalidate();
+        }
+        if (m_search.containsNested(Input::focusedControl()))
+            listMatches();
+        else
+            dropListed();
+        writeFound();
+    }
+
+    SurfacePage* SurfaceBrowser::surfacePage()
+    {
+        BrowserPage* page = currentPage();
+        if (!page || resolve(page->pageData()).projectOptions)
+            return nullptr;
+        return static_cast<SurfacePage*>(page);
+    }
+
+    // **The focus goes with the match from the page**, so the keys that follow act where the
+    // match stands; in the box it stays, for the next step.
+    void SurfaceBrowser::stepFound(const FindTarget target)
+    {
+        SurfacePage* page = surfacePage();
+        if (!page)
+            return;
+        const bool fromPage = page->containsNested(Input::focusedControl());
+        page->view().found().step(target);
+        if (fromPage)
+            page->view().focusFound();
+        writeFound();
+    }
+
+    // An options page counts as a page holding none.
+    void SurfaceBrowser::writeFound()
+    {
+        if (const SurfacePage* page = surfacePage())
+        {
+            const SearchResult& found = page->view().found();
+            m_search.setResult(found.currentIndex(), found.count());
+        }
+        else
+            m_search.setResult(std::nullopt, 0);
+        // A presenter keeps the answer it was last given until it is asked again.
+        StdActions::findNext.invalidateState();
+        StdActions::findPrevious.invalidateState();
+    }
+
+    void SurfaceBrowser::openLinked(const PageData& from, const Url& url)
+    {
+        m_searchOpens.reset();
+        if (resolve(from).searching)
+            m_searchOpens = url;
+        goToLater(url);
+    }
+
+    // **Asked of the url the tab arrived at**, so an opening refused, or one that moved nothing,
+    // is not taken up by the next page shown.
+    void SurfaceBrowser::pageArrived(SurfacePage& page, const Control& opening)
+    {
+        const std::optional<Url> opened = std::exchange(m_searchOpens, std::nullopt);
+        if (opened == page.tab().url())
+            page.view().found().stepFrom(opening);
+        writeFound();
+    }
+
+    // **What was searched for takes the focus first**: the page's current match. A tab not
+    // selected keeps its tree and its page, hidden, so a control there is passed over, and a page
+    // with nothing to take the focus leaves it in the box.
     void SurfaceBrowser::handBackFocus()
     {
+        SurfacePage* page = surfacePage();
+        if (page && page->view().focusFound())
+            return;
         if (m_focusOrigin && shownWithin(*m_focusOrigin, *this) && m_focusOrigin->canTakeFocus())
         {
             m_focusOrigin->setFocus();
             return;
         }
-        BrowserPage* page = currentPage();
-        if (!page || resolve(page->pageData()).projectOptions)
-            return;
-        static_cast<SurfacePage*>(page)->view().focusContent();
+        if (page)
+            page->view().focusContent();
     }
 
     // Read before the walk ends, while the focus is still where it comes from - and only inside the
@@ -1577,10 +1681,10 @@ namespace SeeDocs_App
         BrowserControl::nestedControlDeleted(value);
     }
 
-    // **The first line is current**: the name spelled as typed where there is one, else the search
-    // itself, so Enter opens that name's page or the search's. The best names of each project
-    // searched are merged by how they hold the words, and a line names its project where several
-    // are searched.
+    // **No line is current until the keys go down the list**, so Enter steps through the page's
+    // matches; Down enters at the first line - the name spelled as typed where there is one, else
+    // the search itself. The best names of each project searched are merged by how they hold the
+    // words, and a line names its project where several are searched.
     void SurfaceBrowser::listMatches()
     {
         m_listed.clear();
@@ -1631,7 +1735,7 @@ namespace SeeDocs_App
             m_listed.push_back({ .project = found[i].project, .entry = found[i].hit.entry });
             lines.push_back(lineOf(m_listed.back(), found[i].hit, namesProject));
         }
-        m_search.showList(std::move(lines), 0);
+        m_search.showList(std::move(lines), std::nullopt);
     }
 
     // The mark of what the name is - a member's line keeps the room blank - a member's type muted
@@ -1712,9 +1816,12 @@ namespace SeeDocs_App
         if (!url.has_value())
             return;
         if (modifiers.alt)
+        {
             addTab(*url, SelectTab::No);
-        else
-            goTo(*url);
+            return;
+        }
+        m_searchOpens = *url;
+        goTo(*url);
     }
 
     // The search page of the project the shown tab stands in, or the root's.

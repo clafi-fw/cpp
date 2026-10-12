@@ -2,6 +2,7 @@ module ClaFi.Core.Foundation;
 
 import :SearchResult;
 import :Control;
+import :Form;
 
 import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.System.Events;
@@ -85,41 +86,61 @@ namespace ClaFi
         return m_found.current ? m_found.current->range : TextRange{};
     }
 
+    Control* SearchResult::currentHolder() const
+    {
+        refresh();
+        return m_found.current ? m_found.texts[m_found.current->text].holder : nullptr;
+    }
+
     bool SearchResult::step(const FindTarget target)
     {
         refresh();
         if (m_found.count == 0)
             return false;
+        return makeCurrent(targetOf(target));
+    }
 
-        // The holder the mark leaves, repainted once it has moved. A current match is one the
-        // walk just taken met, so the holder stands.
-        const Control* left = m_found.current ? m_found.reader->holder : nullptr;
-        CurrentMatch next = targetOf(target);
-        const FoundText& text = m_found.texts[next.text];
-        findPlaces(text);
-        next.range = m_places[next.place];
-        Control& holder = *text.holder;
-        const std::size_t part = text.part;
-        m_found.reader = ReaderPlace{ &holder, part, next.range };
-        m_found.readerOrdinal = text.ordinal;
-        m_found.current = next;
-
-        // **Shown last**: a holder keeping a selection moves it, and what hears of the move may ask
-        // this result again, which reads everything anew.
-        const bool revealed = reveal(holder);
-        holder.showFound(part, next.range);
-        // What was hidden has not been laid out yet, so it is scrolled to once it has.
-        if (revealed)
-            holder.scrollIntoViewOnAlign();
-        if (left && left != &holder)
-            left->invalidate();
-        holder.invalidate();
-        return true;
+    // **The reader stands where the control is read from**: the selection of the first text the
+    // walk meets in it, where that text keeps one, else that text's start.
+    bool SearchResult::stepFrom(const Control& from)
+    {
+        refresh();
+        if (m_found.count == 0)
+            return false;
+        std::optional<ReaderPlace> place;
+        std::size_t placeOrdinal = 0;
+        std::size_t ordinal = 0;
+        const auto read = [&](Control& holder, const std::size_t part, const std::wstring_view,
+            const TextRange* selection) {
+            if (!place && from.containsNested(holder))
+            {
+                place = ReaderPlace{ &holder, part, selection ? *selection : TextRange{} };
+                placeOrdinal = ordinal;
+            }
+            ++ordinal;
+        };
+        walk(*m_container, read);
+        // The holder the mark leaves is repainted here, as the reader no longer names it.
+        if (m_found.current)
+            m_found.reader->holder->invalidate();
+        m_found.reader = place;
+        m_found.readerOrdinal = placeOrdinal;
+        m_found.current.reset();
+        return makeCurrent(targetOf(FindTarget::AtSelection));
     }
 
     void SearchResult::invalidate()
     {
         m_found.stale = true;
+    }
+
+    // **Matched by address alone**: one the deleted control leaves may be taken by a control
+    // built after it, which the reader must not be taken to stand in.
+    void SearchResult::controlDeleted(const Control& control)
+    {
+        m_found.stale = true;
+        if (m_found.reader && m_found.reader->holder == &control)
+            m_found.reader.reset();
     }
 
     // **The reader is looked for again.** Met, it follows the selection its text keeps, and the
@@ -270,6 +291,33 @@ namespace ClaFi
         if (place == m_places.size())
             return CurrentMatch{ split == last ? 0 : split + 1 };
         return CurrentMatch{ split, place };
+    }
+
+    bool SearchResult::makeCurrent(CurrentMatch next)
+    {
+        // The holder the mark leaves, repainted once it has moved. A current match is one the
+        // walk just taken met, so the holder stands.
+        const Control* left = m_found.current ? m_found.reader->holder : nullptr;
+        const FoundText& text = m_found.texts[next.text];
+        findPlaces(text);
+        next.range = m_places[next.place];
+        Control& holder = *text.holder;
+        const std::size_t part = text.part;
+        m_found.reader = ReaderPlace{ &holder, part, next.range };
+        m_found.readerOrdinal = text.ordinal;
+        m_found.current = next;
+
+        // **Shown last**: a holder keeping a selection moves it, and what hears of the move may ask
+        // this result again, which reads everything anew.
+        const bool revealed = reveal(holder);
+        holder.showFound(part, next.range);
+        // What was hidden, or built since the last layout, is scrolled to once it is laid out.
+        if (revealed || !holder.form().contentAligned())
+            holder.scrollIntoViewOnAlign();
+        if (left && left != &holder)
+            left->invalidate();
+        holder.invalidate();
+        return true;
     }
 
     // From the container down, so that an outer body is opened ahead of one inside it.

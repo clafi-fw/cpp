@@ -615,11 +615,14 @@ shut or open, so their matches count while they are shut.
 
 **What was found is read again when next asked, after anything moved.** Whatever asks for a new
 layout - a text written, a control added, shown or hidden, an edit - tells the search over it
-through invalidateFound, and so do a control deleted under the container and a caret moved. A text
-that changes without a new layout, a cell whose data moved, is told the same way by whoever changed
-it. New words are noticed by the searcher's revision. One walk over the container answers the count
-and the current match: it keeps the texts holding matches and how many each holds, and a step reads
-the places of one text again. currentIndex counts the matches in reading order.
+through invalidateFound, and so does a caret moved. A control deleted under the container is told by
+the container, through controlDeleted, and the reader standing in it is forgotten: an address it
+leaves may be taken by a control built after it. A text that changes without a new layout, a cell
+whose data moved, is told the same way by whoever changed it. New words are noticed by the
+searcher's revision. One walk over the container answers the count and the current match: it keeps
+the texts holding matches and how many each holds, and a step reads the places of one text again.
+currentIndex counts the matches in reading order, and currentHolder names the control the current
+match is in - the one an application focuses to hand the focus back to what was searched.
 
 **A step is measured from where the reader stands**: the match a step made current, or the selection
 a text box keeps there, which follows the caret; with neither, the first selection the walk meets.
@@ -629,9 +632,13 @@ takes the first match at or after the reader, so typing a search keeps a match t
 Next takes the first after it; Previous takes the one before the match it stands on, or before the
 first match after it. Where the reader's text holds no match, the next text holding one is taken, or
 going back the last one before it. Past either end is the other end, and with nowhere to stand a
-step takes the first match, or the last going back.
+step takes the first match, or the last going back. stepFrom puts the reader where a control under
+the container is read from - the selection of the first text the walk meets in it, else that text's
+start - and takes the first match at or after it, so a page opened at a member goes on with the
+search from there.
 
 **A step shows the match.** A hidden body on the way is opened first, from the outside in, and the
-view goes to the match once the opened body is laid out. A text box selects the match, a row selects
-the cell as a press would, and anything else is scrolled into view. The holder the current match
-left and the one it reached are repainted.
+view goes to the match once the opened body is laid out - as it does for a match in controls built
+since the last layout, a page just made. A text box selects the match, a row selects the cell as a
+press would, and anything else is scrolled into view. The holder the current match left and the one
+it reached are repainted.

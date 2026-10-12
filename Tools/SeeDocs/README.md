@@ -452,15 +452,33 @@ modules before the rest, then the shorter name, and last the tree's own order.
 The box drops a list as it is typed into: a line for the search itself and the ten best names, each
 with the mark of what it is - a member's line leaves the mark's room blank - a member's type muted
 before it, the words typed in the accent and its kind at the line's end; while a line is current,
-its hint and where it stands are beside the list. **The first line is current**: the name spelled
-as typed where there is one, else the search, so that Enter opens that name's page, or the
-search's. Up and Down walk the list. Alt+Enter or an Alt+click opens a line in a new tab behind the
-one shown, and the list stays up so that more lines can be opened. Escape takes the list down and
-the next one empties the box, and Escape on the empty box gives the focus back where it came from -
-a row of the tree, a cell of the page. Where that has gone, or stands on a tab no longer shown, the
-focus goes to the page's row its anchor selected, else to its first row. A member with no page of
-its own opens its type's page at its row: the url's anchor names the row by the member's name, and
-the row's section opens and the row is selected.
+its hint and where it stands are beside the list. **No line is current as the list drops**, so Enter
+steps through the page's matches; Down enters the list at its first line - the name spelled as typed
+where there is one, else the search - and Up on the first line leaves it again. Enter on a line
+opens that name's page, or the search's. Alt+Enter or an Alt+click opens a line in a new tab behind
+the one shown, and the list stays up so that more lines can be opened. A member with no page of its
+own opens its type's page at its row: the url's anchor names the row by the member's name, and the
+row's section opens and the row is selected.
+
+**The box searches the page shown as well.** Each word in it stands on the found band an editor's
+own search paints with, wherever the page shows it, case aside - the two parts of a query of two
+being a word each - and it bands every page shown after, from the tree, Back and Forward or another
+tab, until the box is emptied. The count at the box's end is the page's: "15 on page" while no match
+is current, "4 of 15" once one is, and a muted "0 on page" where the page holds none, the project
+perhaps holding more. With no line of the list current, Enter and Shift+Enter take the list down and
+step to the page's next match and the one before, and F3 and Shift+F3 do so from anywhere in the
+window. A section a match stands in opens, and the match is selected - a cell as a click selects it,
+the words in a footnote - and drawn over its band. A step taken on the page brings the focus with
+it, and one taken in the box leaves it there. **A page the search opens goes on with it**: opened
+from a name's line of the list or from a link on the search's page, its first match from where it
+opens - the place its anchor names, else its top - is made current and brought into view. Showing a
+search's page puts its words back in the box.
+
+Escape takes the list down, and the next one hands the focus back: to the page's current match, else
+where it came into the box from - a row of the tree, a cell of the page - and where that has gone,
+or stands on a tab no longer shown, to the row the page's anchor selected, else its first row.
+Escape never empties the box: the search stands while the page is read, and goes as its words are
+typed away.
 
 The search's page is a page of the browser like any other, titled with the words and marked
 `search`, its url the project's with a segment of `.search=` and the words after it - a slash in
@@ -472,8 +490,7 @@ and its heading and linked to the declaration it belongs to - the one its headin
 first whose See reaches it - with the sentence the words stand in. Hints and footnotes are searched
 as they read, their code and bold marks taken out, and a section's words are its own, up to the
 first heading under it. A section lists its first 200 rows, and its heading's hint says how many
-there are. Each word of the search stands on the found band an editor's own search paints with,
-wherever the page shows it, case aside - the two parts of a query of two being a word each.
+there are.
 
 ## The checks
 

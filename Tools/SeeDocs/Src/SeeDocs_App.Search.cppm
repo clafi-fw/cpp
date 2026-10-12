@@ -121,4 +121,7 @@ namespace SeeDocs_App
     // footnote sections holding them, a group per project where there are several. See README
     export [[nodiscard]] Page searchPage(const SearchedProjects&, std::wstring_view query,
         const LinkSpeller&);
+
+    // The words a page bands for a query: its two parts where it has two, else the query whole.
+    export [[nodiscard]] std::wstring searchedWords(std::wstring_view query);
 }

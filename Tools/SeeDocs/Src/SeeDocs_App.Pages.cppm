@@ -237,7 +237,6 @@ namespace SeeDocs_App
         Sections sections;
         std::optional<FootnoteHome> footnoteHome;   // none where no note takes one
         Commands commands;   // at the page's end
-        std::wstring searched;   // the words the page bands wherever it shows them
     };
 
     export using FunctionList = std::vector<const FreeFunction*>;

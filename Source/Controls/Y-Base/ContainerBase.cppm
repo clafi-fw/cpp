@@ -225,7 +225,7 @@ namespace ClaFi::Controls
         FormControlBase::nestedControlDeleted(control);
         tryRemoveOverlayControl(*control);
         if (m_searchResult)
-            m_searchResult->invalidate();
+            m_searchResult->controlDeleted(*control);
     }
 
     void ContainerBase::getText(GetTextEvent& event) const

@@ -327,7 +327,6 @@ namespace SeeDocs_App
     {
         clear();
         m_page = std::move(page);
-        m_searcher.setText(m_page.searched, SearchSplit::Words);
         addHead();
         addLead();
         addFacts();
@@ -378,7 +377,6 @@ namespace SeeDocs_App
         clear();
         m_head.clear();
         m_page = {};
-        m_searcher.setText({}, SearchSplit::Words);
         m_head.setVisible(false);
         TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes);
         box.text() = text;
@@ -388,28 +386,43 @@ namespace SeeDocs_App
     }
 
     // The footnote the anchor names stands in one of the slots; each is asked until one has it.
-    void PageView::showAnchor(const std::wstring_view anchor)
+    Control& PageView::showAnchor(const std::wstring_view anchor)
     {
         if (anchor.empty())
-            return;
+            return *this;
         for (const PageFootnote& footnote : m_footnotes)
         {
-            if (footnote.slot->shown().goToAnchor(anchor))
-                return;
+            TextBox& shown = footnote.slot->shown();
+            if (shown.goToAnchor(anchor))
+                return shown;
         }
         const RowAnchors::const_iterator found = m_rowAnchors.find(anchor);
         if (found == m_rowAnchors.end())
-            return;
+            return *this;
         const RowAnchor& named = found->second;
         named.expander->header().setExpanded(true);
         named.grid->selectCell(*named.row, named.grid->findColumnByTag(Tag{ 0 }));
         named.row->scrollIntoViewOnAlign();
         m_anchoredRow = named.row;
+        return *named.row;
+    }
+
+    // A match whose section was shut since stands hidden, and is passed over.
+    bool PageView::focusFound()
+    {
+        Control* holder = m_found.currentHolder();
+        if (!holder || !shownWithin(*holder, *this) || !holder->canTakeFocus())
+            return false;
+        holder->scrollIntoView();
+        holder->setFocus();
+        return true;
     }
 
     // A row in a section shut since, or in a group folded, stands hidden and is passed over.
     void PageView::focusContent()
     {
+        if (focusFound())
+            return;
         for (Grids::Row* row : { m_anchoredRow, m_firstRow })
         {
             if (row && shownWithin(*row, *this))

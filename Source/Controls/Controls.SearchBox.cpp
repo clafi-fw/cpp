@@ -79,19 +79,36 @@ namespace ClaFi::Controls
         m_field.setFocus();
     }
 
+    // An edit like typing, so it reaches the field's history and raises the search; a text the box
+    // holds already raises nothing.
+    void SearchBox::setSearchText(const std::wstring_view text)
+    {
+        if (text == searchText())
+            return;
+        m_field.selectAll();
+        if (text.empty())
+            m_field.deleteSelectedText();
+        else
+            m_field.replaceSelectedText(text);
+    }
+
+    // **A count taken over a place says so**: none found there is a count like any other, since
+    // the search may find more elsewhere.
     void SearchBox::setResult(const std::optional<std::size_t> selected, const std::size_t count)
     {
         Text reading{};
         if (!searchText().empty())
         {
             reading << TextStyleId::SubBody;
-            if (count == 0)
+            if (count == 0 && m_countPlace.empty())
                 reading << InkWell::redInk() << L"No results";
             else
             {
                 reading << InkWell::textInk(InkGrade::Muted);
                 if (selected.has_value())
                     reading << Fmt{ L"{} of {}", *selected + 1, count };
+                else if (!m_countPlace.empty())
+                    reading << Fmt{ L"{} {}", count, m_countPlace };
                 else
                     reading << Fmt{ L"? of {}", count };
             }
@@ -128,18 +145,11 @@ namespace ClaFi::Controls
             case Keys::Escape:
             {
                 event.handled = true;
-                // **Escape steps back once a press**: the list goes down, then the text, and only
-                // the empty box hands the focus back - a new search can be typed after either.
+                // **Escape steps back once a press**: the list goes down, then the focus goes back,
+                // and the text stays - the search stands while what was searched is read.
                 if (m_list.shown())
                 {
                     m_list.hide();
-                    return;
-                }
-                // An edit like any other, so the search it raises marks nothing.
-                if (!searchText().empty())
-                {
-                    m_field.selectAll();
-                    m_field.deleteSelectedText();
                     return;
                 }
                 request(SearchRequest::End);

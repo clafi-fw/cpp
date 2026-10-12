@@ -963,11 +963,6 @@ namespace SeeDocs_App
         Page page;
         page.kind = PageKind::Search;
         page.title = std::wstring{ typed };
-        // A word a part: a query cut at :: reads as its two parts, as a query cut at a space does.
-        const std::optional<QueryParts> parts = partsOf(typed);
-        page.searched = parts.has_value()
-            ? parts->owner + L' ' + parts->name
-            : std::wstring{ typed };
         page.badges = { muted(std::wstring{ k_searchWord }) };
         for (Gathered& section : sections)
             addGathered(page, section, projects);
@@ -979,5 +974,13 @@ namespace SeeDocs_App
             : L"The names, hints and footnotes of " + place + L" that hold the words.";
         page.lead = { plain(std::move(lead)) };
         return page;
+    }
+
+    // **A word a part**: a query cut at :: reads as its two parts, as a query cut at a space does.
+    std::wstring searchedWords(const std::wstring_view query)
+    {
+        const std::wstring_view typed = trimmed(query);
+        const std::optional<QueryParts> parts = partsOf(typed);
+        return parts.has_value() ? parts->owner + L' ' + parts->name : std::wstring{ typed };
     }
 }

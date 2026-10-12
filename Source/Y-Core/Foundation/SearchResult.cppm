@@ -37,9 +37,14 @@ namespace ClaFi
         [[nodiscard]] std::optional<std::size_t> currentIndex() const;
         // The current match where it stands in that text of the holder; empty where it does not.
         [[nodiscard]] TextRange currentIn(const Control& holder, std::size_t part) const;
+        [[nodiscard]] Control* currentHolder() const;   // the control the current match is in
         // Makes the match the target names current and shows it; false where there is none.
         bool step(FindTarget);
+        // Makes the first match at or after where the control is read from current, and shows it.
+        bool stepFrom(const Control&);
         void invalidate();   // a text it reads moved: read again when next asked
+        // A control under the container is deleted: read again, the reader not looked for in it.
+        void controlDeleted(const Control&);
     private:
         // A text holding matches: whose, which of its texts, how many, and where the walk met it.
         struct FoundText
@@ -82,6 +87,7 @@ namespace ClaFi
         void findPlaces(const FoundText&) const;   // into m_places
         // The text among the found ones a step lands in, and the place in it.
         [[nodiscard]] CurrentMatch targetOf(FindTarget) const;
+        bool makeCurrent(CurrentMatch);   // and shows it
         // Opens what hides the control below the container; true where anything was opened.
         bool reveal(Control&);
     private:

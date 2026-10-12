@@ -278,28 +278,33 @@ step makes current is selected and brought into view. The current match is the o
 lies within, ends included, so a caret standing in a match or against either end of it names that
 match; a caret where two meet names the second.
 
-A SearchBox is where a search is typed: a one-line box on the Page element with a placeholder,
-and a count at its right end while it holds text - "2 of 7", "? of 7" while no match is
-current, and "No results" in the red pigment. It knows nothing of what it searches. It
+A SearchBox is where a search is typed: a one-line box on the Page element with a placeholder, and a
+count at its right end while it holds text - "2 of 7", "? of 7" while no match is current, and "No
+results" in the red pigment. A box searching wider than it counts names what it counts over with
+setCountPlace, and says so while no match is current - "7 on page" - none found there being a count
+like any other, since the search may find more elsewhere. It knows nothing of what it searches. It
 raises SearchEvent: Search for every change to its text, emptied included; Next and Previous for
-Enter and Shift+Enter; End for Escape on the empty box, which is where its owner hands the focus
-back to what was searched. Escape over text empties the box and leaves the focus in it, so a new
-search can be typed. Its text goes in and out as edits, so its own Undo walks it.
-startSearch puts the focus in the box with its text selected, replaced by a text given, and
-setResult is how the owner reports what was found.
+Enter and Shift+Enter; End for Escape, which is where its owner hands the focus back to what was
+searched. **Escape never empties the box**: the search stands while what was searched is read, and
+its text goes only as it is typed away. Its text goes in and out as edits, so its own Undo walks it.
+startSearch puts the focus in the box with its text selected, replaced by a text given;
+setSearchText puts a text in as typing would, raising Search, the focus staying where it is - an
+owner showing what a search was for puts its words back so; and setResult is how the owner reports
+what was found.
 
-A box drops a list under it where its owner gives it lines - see DropList. showList states the
-lines and the one current, and no lines take the list down. While the list is up, Up, Down and the
-page keys walk it, Enter on the current line raises Pick, naming the line and the modifiers held -
-so Alt+Enter can mean a new tab - and a click on any line raises it too; Enter with no line current
-takes the list down and raises Next as ever. Escape takes the list down and leaves the text
-standing, and the next one empties the box. Once it has listed lines, Down drops the list again,
-raising Search so that its owner lists anew over the text as it stands. The list goes down with the
-focus, and with Tab before the focus moves on. listPlacement says where it drops: under the box from
-its left edge, or with BottomRight from its right edge, for a box at a window's right end.
-listKeptBy names the modifiers that keep the list up across a pick: a line taken with them held
-raises Pick as ever, and the list stays with its current line, so the next can be taken from it -
-SeeDocs names Alt, which opens each line in a tab behind the one shown.
+A box drops a list under it where its owner gives it lines - see DropList. showList states the lines
+and the one current, if any, and no lines take the list down. While the list is up, Up, Down and the
+page keys walk it - Down enters at the first line, and Up on the first line leaves the list with
+none current, the keys the text's own again. Enter on the current line raises Pick, naming the line
+and the modifiers held - so Alt+Enter can mean a new tab - and a click on any line raises it too;
+Enter with no line current takes the list down and raises Next as ever. Escape takes the list down
+and leaves the text standing, and the next one raises End. Once it has listed lines, Down drops the
+list again, raising Search so that its owner lists anew over the text as it stands. The list goes
+down with the focus, and with Tab before the focus moves on. listPlacement says where it drops:
+under the box from its left edge, or with BottomRight from its right edge, for a box at a window's
+right end. listKeptBy names the modifiers that keep the list up across a pick: a line taken with
+them held raises Pick as ever, and the list stays with its current line, so the next can be taken
+from it - SeeDocs names Alt, which opens each line in a tab behind the one shown.
 
 StdActions::find, findNext and findPrevious carry Ctrl+F, F3 and Shift+F3. A page holding a
 search box claims them for everything under it, so F3 steps from the searched text and from the

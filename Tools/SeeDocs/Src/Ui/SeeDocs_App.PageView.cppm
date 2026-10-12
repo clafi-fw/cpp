@@ -94,8 +94,9 @@ namespace SeeDocs_App
     export class PageView : public Panel
     {
     public:
+        // The searcher is the window's: every page shown bands its words.
         template<typename... Args>
-        explicit PageView(const CreateParams&, Args&&...);
+        explicit PageView(const CreateParams&, const Searcher&, Args&&...);
     public:
         // Connects a handler raised when a link on the page is clicked.
         template<typename F>
@@ -114,13 +115,17 @@ namespace SeeDocs_App
         // Shows SeeDocs' own words in place of a page.
         void showText(const Text&);
         // Scrolls to the footnote the anchor names, or else to the row of a member of that name,
-        // its section opened and the row selected. An empty anchor names the page itself, and the
-        // page stays where it stands for it.
-        void showAnchor(std::wstring_view anchor);
+        // its section opened and the row selected. Answers where the page opens: what the anchor
+        // names, else the page itself.
+        Control& showAnchor(std::wstring_view anchor);
         // The anchor of the footnote that section's words stand in; empty where none on the page.
         [[nodiscard]] std::wstring anchorOf(const Reference&) const;
-        // Focuses the row the anchor selected, else the first row, where one is shown.
+        // Focuses the current match's control, where it takes the focus; false where none does.
+        bool focusFound();
+        // Focuses the current match's control, else the row the anchor selected, else the first.
         void focusContent();
+        // What the page holds of the window's search.
+        [[nodiscard]] SearchResult& found() { return m_found; }
         // The link a menu is up for, as the text states it; empty while no link menu is up.
         [[nodiscard]] std::wstring_view menuLink() const { return m_menuLink; }
     private:
@@ -236,7 +241,6 @@ namespace SeeDocs_App
         std::wstring m_menuLink{};   // the link the menu that is up is about
         std::function<void()> m_pending{};
         UiTimer m_later{};
-        Searcher m_searcher{};   // the words of the page's search, which the page box bands
 
         PageHead& m_head{ createTopBar<PageHead>() };
 
@@ -250,7 +254,7 @@ namespace SeeDocs_App
                 Spacing{ k_sectionSpacing }
             }
         ) };
-        SearchResult m_found{ m_searcher, m_pageBox };   // what the page box holds of the search
+        SearchResult m_found;   // what the page holds of the window's search
     };
 
 
@@ -275,9 +279,10 @@ namespace SeeDocs_App
     // PageView
 
     template<typename... Args>
-    PageView::PageView(const CreateParams& params, Args&&... args)
+    PageView::PageView(const CreateParams& params, const Searcher& searcher, Args&&... args)
         :
-        Panel{ params, UiElement::Page, std::forward<Args>(args)... }
+        Panel{ params, UiElement::Page, std::forward<Args>(args)... },
+        m_found{ searcher, *this }
     {
         Actions::registerAll();
         connectHead();
