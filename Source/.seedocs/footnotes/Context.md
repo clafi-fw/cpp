@@ -230,18 +230,20 @@ at all, which on a platform with no GPU backend it never is.
 
 ## AppContext::gpuAcceleration
 
-**Where the user's answer is kept**: a `Dom::Value<bool>` under GpuAcceleration, true by default.
-Writing it is the whole of a switch - the node's own change reaches the context, which states the
-kind and raises BackendSwitchEvent - which is the path a colour mode takes to the theme.
+**Where the user's answer is kept**: a `Dom::Value<bool>` under GpuAcceleration in the Performance
+section, true by default. Writing it is the whole of a switch - the node's own change reaches the
+context, which states the kind and raises BackendSwitchEvent - which is the path a colour mode
+takes to the theme.
 
-**The node is in the schema only where a GPU backend is.** An application that named none keeps no
-answer to a question it cannot ask, so the node is null there and `gpuAvailable` is that same
-answer. `usingGpu` is what is worn now, taken from the node while the context is built, so a
-stored answer is what the first window stands on rather than something switched to once it is up.
+**The node and its section are in the schema only where a GPU backend is.** An application that
+named none keeps no answer to a question it cannot ask, so the node is null there and
+`gpuAvailable` is that same answer. `usingGpu` is what is worn now, taken from the node while the
+context is built, so a stored answer is what the first window stands on rather than something
+switched to once it is up.
 
 ## AppContext::scale
 
-**Where the user's answer is kept**: a `Dom::Value<int>` under Scale in the Appearance section, the
+**Where the user's answer is kept**: a `Dom::Value<int>` under Scale in the Interface section, the
 percent of the design everything is drawn at, 100 by default. Writing it is the whole of a
 change - the node's own change reaches the context, which states the percent and raises
 ScaleSwitchEvent - which is the path the backend answer takes to the windows.
@@ -257,10 +259,10 @@ where a form reads it, so a window opened later matches the windows already up.
 
 ## AppContext::zAnimation
 
-**Where the user's answer is kept**: a `Dom::Value<float>` under ZAnimation, the share of the
-theme's Z animation every control takes - 0 none, 1 the depth the theme states, 0.5 by default.
-Writing it is the whole of a change - the node's own change reaches the context, which states the
-amount and raises ZAnimationSwitchEvent.
+**Where the user's answer is kept**: a `Dom::Value<float>` under ZAnimation in the Interface
+section, the share of the theme's Z animation every control takes - 0 none, 1 the depth the theme
+states, 0.5 by default. Writing it is the whole of a change - the node's own change reaches the
+context, which states the amount and raises ZAnimationSwitchEvent.
 
 The amount multiplies `ControlMetrics::zDepthFactor` where a paint reads it, so the resting depth
 and the held depth scale together and flush stays flush. It is brought inside 0 to 1 and taken

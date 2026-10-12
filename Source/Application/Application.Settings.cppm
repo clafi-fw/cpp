@@ -69,7 +69,7 @@ namespace ClaFi
     private:
         // A percent as it stands, in a box of its own.
         using PercentReadout = WithTextLayout<Label>;
-        // What a row of the appearance section is called, in the box the rows share.
+        // What a row of the interface section is called, in the box the rows share.
         class RowCaption : public Label
         {
         public:
@@ -92,7 +92,7 @@ namespace ClaFi
         // of the menu is reached by scrolling the page rather than through a bar of its own.
         ScrollBoxWith<OptionsPage>& m_optionsBox;
         OptionsPage& m_options;
-        Stack& m_appearanceGroup;
+        Stack& m_interfaceGroup;
         // The theme and the mode it is worn in, as one row.
         Stack& m_themeRow;
         RowCaption& m_themeCaption;
@@ -114,14 +114,10 @@ namespace ClaFi
         PercentReadout& m_zAnimationReadout;
         Slider& m_zAnimationSlider;
 #endif
-        // Held whole: the whole of it goes where the platform has no keep-above to ask for.
-        OptionsPage::Section& m_windowSection;
-        Stack& m_windowGroup;
         CheckBox& m_alwaysOnTop;
-        // Held whole for the same reason the window's is: all of it goes where the application
-        // named no GPU backend.
-        OptionsPage::Section& m_graphicsSection;
-        Stack& m_graphicsGroup;
+        // Held whole: all of it goes where the application named no GPU backend.
+        OptionsPage::Section& m_performanceSection;
+        Stack& m_performanceGroup;
         CheckBox& m_gpuAcceleration;
         // The foot of the page, outside the box: the answer here is about the page as a whole,
         // so it stands where it can be seen rather than travelling with the options.

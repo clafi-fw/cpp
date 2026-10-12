@@ -723,10 +723,10 @@
             <p>The choice is made in the application's type. <code>Application</code> is a template and a form is
             not, so it travels down as a function pointer - <code>gpuBackendFactory&lt;GpuBackend&gt;()</code>,
             null where none was named - and <code>AppContext::gpuAvailable()</code> is that pointer's answer.
-            Where there is one, the config holds a <code>GpuAcceleration</code> value, on by default, and the
+            Where there is one, the config's <code>Performance</code> section holds a <code>GpuAcceleration</code> value, on by default, and the
             Settings page shows the check that writes it; a change reaches every window at the top of its next
             frame, and the window's canvas lets go of everything the old backend held. Where there is none,
-            neither the value nor the check exists.</p>
+            neither the section nor the check exists.</p>
             <p>Nothing else in the platform depends on which backend draws, and nothing in a control does. What
             the two draw, and where they still differ, is the <a href="graphics.html">Graphics</a> manual's.</p>
             <h2 id="from-above">Reaching the Platform From Above</h2>

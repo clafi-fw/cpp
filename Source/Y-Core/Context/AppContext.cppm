@@ -215,6 +215,8 @@ namespace ClaFi
         // The core's own section of an application's config - see the definition.
         [[nodiscard]] static Dom::Dt::Section coreConfigSchema(bool withGpuAcceleration,
             bool withUpdateCheck);
+        // The GPU node in the Performance section, null where the schema has no such section.
+        [[nodiscard]] static GpuAccelerationNode* gpuAccelerationIn(Dom::Section& config);
         // Takes the wish the config holds and stands on the node for what follows. See Context
         void connectGpuAcceleration();
         // The application is on this kind from now on, and every window is told. See Context
@@ -233,15 +235,16 @@ namespace ClaFi
         void stateZAnimation(float amount);
 #endif
     private:
-        static constexpr std::wstring_view k_appearanceSectionName = L"Appearance";
+        static constexpr std::wstring_view k_interfaceSectionName = L"Interface";
         static constexpr std::wstring_view k_themeNodeName = L"Theme";
         static constexpr std::wstring_view k_colorModeNodeName = L"ColorMode";
-        static constexpr std::wstring_view k_gpuAccelerationNodeName = L"GpuAcceleration";
         static constexpr std::wstring_view k_scaleNodeName = L"Scale";
-        static constexpr std::wstring_view k_updateCheckSectionName = L"UpdateCheck";
 #if CLAFI_TEXT_MOVING
         static constexpr std::wstring_view k_zAnimationNodeName = L"ZAnimation";
 #endif
+        static constexpr std::wstring_view k_performanceSectionName = L"Performance";
+        static constexpr std::wstring_view k_gpuAccelerationNodeName = L"GpuAcceleration";
+        static constexpr std::wstring_view k_updateCheckSectionName = L"UpdateCheck";
         Platform& m_platform;
         Text m_appName;
         std::wstring_view m_publisher;
@@ -280,22 +283,21 @@ namespace ClaFi
         const AppTheme* m_taken{ &defaultTheme() };
         Lightness m_takenLightness{ k_darkLightness };
         Dom::Document<Dom::FileFormat::ClaFi> m_config;
-        Dom::Section& m_appearance{ m_config.childSection(k_appearanceSectionName) };
+        Dom::Section& m_interface{ m_config.childSection(k_interfaceSectionName) };
         ThemePathNode& m_themePath{
-            *(static_cast<ThemePathNode*>(m_appearance.child(k_themeNodeName))) };
+            *(static_cast<ThemePathNode*>(m_interface.child(k_themeNodeName))) };
         ColorModeNode& m_colorMode{
-            *(static_cast<ColorModeNode*>(m_appearance.child(k_colorModeNodeName))) };
+            *(static_cast<ColorModeNode*>(m_interface.child(k_colorModeNodeName))) };
         // Null where the schema carries no such node - see coreConfigSchema, which is the one
         // place the node's presence is decided.
-        GpuAccelerationNode* m_gpuAcceleration{
-            static_cast<GpuAccelerationNode*>(m_config.child(k_gpuAccelerationNodeName)) };
+        GpuAccelerationNode* m_gpuAcceleration{ gpuAccelerationIn(m_config) };
         // **Which backend every window draws through now.** Taken from the node above while the
         // context is built, so a stored answer is what the first window stands on rather than
         // something switched to once it is up.
         bool m_usingGpu{ false };
         ScopedEventConnection m_gpuConnection{};
         ScaleNode& m_scale{
-            *(static_cast<ScaleNode*>(m_appearance.child(k_scaleNodeName))) };
+            *(static_cast<ScaleNode*>(m_interface.child(k_scaleNodeName))) };
         // **The percent every window is drawn at.** Taken from the node above while the context is
         // built, so a stored size is what the first window opens at rather than one it is moved
         // to once it is up.
@@ -303,7 +305,7 @@ namespace ClaFi
         ScopedEventConnection m_scaleConnection{};
 #if CLAFI_TEXT_MOVING
         ZAnimationNode& m_zAnimation{
-            *(static_cast<ZAnimationNode*>(m_config.child(k_zAnimationNodeName))) };
+            *(static_cast<ZAnimationNode*>(m_interface.child(k_zAnimationNodeName))) };
         float m_zAnimationAmount{ k_defaultZAnimationAmount };
         ScopedEventConnection m_zAnimationConnection{};
 #endif
@@ -391,30 +393,45 @@ namespace ClaFi
     // as against the one compiled in, and reading a theme file is not the core's work - see
     // connectAppThemes, which is what answers a change of either.
     //
-    // **The GPU node stands only where a GPU backend does**, so an application that has none keeps
-    // no answer to a question it cannot ask, and a file it wrote holds nothing about a backend. The
-    // update check's section stands only where the check is available, for the same reason.
+    // **The Performance section stands only where a GPU backend does**, its GPU node being all it
+    // holds, so an application that has none keeps no answer to a question it cannot ask, and a
+    // file it wrote holds nothing about a backend. The update check's section stands only where
+    // the check is available, for the same reason.
     Dom::Dt::Section AppContext::coreConfigSchema(const bool withGpuAcceleration,
         const bool withUpdateCheck)
     {
         Dom::Dt::Section section = {};
-        section.children.push_back(std::make_unique<Dom::Dt::Section>(
-            k_appearanceSectionName,
+        auto interfaceSection = std::make_unique<Dom::Dt::Section>(
+            k_interfaceSectionName,
             Dom::Dt::Value{ k_themeNodeName, std::wstring{ k_defaultThemePath } },
             Dom::Dt::Value{ k_colorModeNodeName, ColorModeSetting::Auto },
-            Dom::Dt::Value{ k_scaleNodeName, k_defaultScalePercent }));
+            Dom::Dt::Value{ k_scaleNodeName, k_defaultScalePercent });
 #if CLAFI_TEXT_MOVING
-        section.append(Dom::Dt::Section{
+        interfaceSection->append(Dom::Dt::Section{
             Dom::Dt::Value{ k_zAnimationNodeName, k_defaultZAnimationAmount } });
 #endif
+        section.children.push_back(std::move(interfaceSection));
         if (withGpuAcceleration)
-            section.append(Dom::Dt::Section{ Dom::Dt::Value{ k_gpuAccelerationNodeName, true } });
+        {
+            section.children.push_back(std::make_unique<Dom::Dt::Section>(
+                k_performanceSectionName,
+                Dom::Dt::Value{ k_gpuAccelerationNodeName, true }));
+        }
         if (withUpdateCheck)
         {
             section.children.push_back(std::make_unique<Dom::Dt::Section>(
                 k_updateCheckSectionName, UpdateCheck::createConfigSchema()));
         }
         return section;
+    }
+
+    // The section stands only where the node does - see coreConfigSchema.
+    AppContext::GpuAccelerationNode* AppContext::gpuAccelerationIn(Dom::Section& config)
+    {
+        if (!config.child(k_performanceSectionName))
+            return nullptr;
+        Dom::Section& performance = config.childSection(k_performanceSectionName);
+        return static_cast<GpuAccelerationNode*>(performance.child(k_gpuAccelerationNodeName));
     }
 
     // **The node is what the answer travels on**, the same as the theme's: a Settings check writes

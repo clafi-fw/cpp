@@ -25,7 +25,7 @@ the folder, which is the permission - and belongs only where an application mean
 without being allowed to.
 
 **An application must not write over a loaded value** to state its own default. The config is
-loaded before an application's own code runs, so `config() / L"Appearance" / L"Theme"` already holds
+loaded before an application's own code runs, so `config() / L"Interface" / L"Theme"` already holds
 what the user last chose; an application whose default differs from the schema's states it
 behind `configFolderExists()`, which is false exactly when nothing was loaded.
 
@@ -93,24 +93,23 @@ not there is anything to scroll, so a section opening or closing moves nothing a
 It has travel only where the options outgrow the box: past the box's stated maximum, which is how
 tall the page grows, or on a screen too short for the menu's floor.
 
-The common options are Appearance, which is the theme, the size the application is drawn at and
-how far its controls move in depth, a row each - Theme, a ThemePick over the themes the
-application can wear and a button for each colour mode setting, Auto first; Scale, the percent and
-the slot that moves it; and Z-Hover, the Z animation amount as a percent and its slot, laid out the
-way Scale is, where CLAFI_TEXT_MOVING is 1. The captions share a stated width, so what each row
-names starts at one left edge whichever word is the longer, and the slots carry no stepping
-buttons - a percent is stepped by an arrow key, and an end button on a slot that resizes the form
-it sits in walks out from under the pointer holding it. Then Always on top, which addresses the
-window the menu stands on rather than the menu; and
-Keep settings on this PC. **The section goes, not the check**, where
-the platform has no keep-above a client may ask for - see IPlatformWindow::canSetAlwaysOnTop. A
-check that could be turned on and would not hold says something untrue about the window, and hiding
-only the check would leave a Main Window heading over nothing.
+The common options are Interface and Performance / Display. Interface is the theme, the size the
+application is drawn at and how far its controls move in depth, a row each, and then the window's
+place among others - Theme, a ThemePick over the themes the application can wear and a button for
+each colour mode setting, Auto first; Scale, the percent and the slot that moves it; Z-Hover, the
+Z animation amount as a percent and its slot, laid out the way Scale is, where CLAFI_TEXT_MOVING
+is 1; and Always on top, which addresses the window the menu stands on rather than the menu. The
+captions share a stated width, so what each row names starts at one left edge whichever word is
+the longer, and the slots carry no stepping buttons - a percent is stepped by an arrow key, and an
+end button on a slot that resizes the form it sits in walks out from under the pointer holding it.
+Always on top is hidden where the platform has no keep-above a client may ask for - see
+IPlatformWindow::canSetAlwaysOnTop - since a check that could be turned on and would not hold says
+something untrue about the window.
 
-**Enable GPU acceleration is written, not acted on**, the way the colour mode is: the check writes
+**GPU acceleration is written, not acted on**, the way the colour mode is: the check writes
 AppContext::gpuAcceleration, and the node's change is what states the backend and tells every
-window. Its section goes whole where the application named no GPU backend, for the reason Always
-on top's does - there is nothing to turn on.
+window. It is all Performance / Display holds, so the section goes whole where the application
+named no GPU backend - there is nothing to turn on, and the section is what draws the heading.
 
 **The pointer tries a theme on, the current tile chooses it.** The list is built
 `PreviewMode::Hover`, so a tile under the pointer is worn through

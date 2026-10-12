@@ -103,7 +103,7 @@ namespace ClaFi
     // The tallest the options may make the page - past it they scroll. See Application
     constexpr float k_optionsHeight{ 440.0f };
 
-    // **What each row of the appearance section is called**, in a box the rows share, so what they
+    // **What each row of the interface section is called**, in a box the rows share, so what they
     // name starts at one left edge whichever word is the longer.
     constexpr float k_rowCaptionWidth{ 64.0f };
     // The box the percent is written in - wide enough for the widest of them, so the slot's left
@@ -317,8 +317,8 @@ namespace ClaFi
             BodyProps<>{}
         ) },
         m_options{ m_optionsBox.body() },
-        m_appearanceGroup{ m_options.addGroup(L"Appearance") },
-        m_themeRow{ m_appearanceGroup.add<Stack>(
+        m_interfaceGroup{ m_options.addGroup(L"Interface") },
+        m_themeRow{ m_interfaceGroup.add<Stack>(
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
         ) },
@@ -358,7 +358,7 @@ namespace ClaFi
             VerticalAlign::Center,
             Tag{ ColorModeSetting::Light }
         ) },
-        m_scaleRow{ m_appearanceGroup.add<Stack>(
+        m_scaleRow{ m_interfaceGroup.add<Stack>(
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
         ) },
@@ -377,7 +377,7 @@ namespace ClaFi
             HintText{ L"Scales the UI on top of the system scale" }
         ) },
 #if CLAFI_TEXT_MOVING
-        m_zAnimationRow{ m_appearanceGroup.add<Stack>(
+        m_zAnimationRow{ m_interfaceGroup.add<Stack>(
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
         ) },
@@ -397,20 +397,18 @@ namespace ClaFi
             HintText{ L"How far controls move in depth under the pointer" }
         ) },
 #endif
-        m_windowSection{ m_options.addSection(L"Main Window") },
-        m_windowGroup{ m_windowSection.body() },
         // **No room at the sides**, so the box stands where a label's text stands. A check box is
         // built on the theme's listItem metrics and a Label states none, so the indicator is
         // inset by that padding and the two start at different edges down one group. The room
         // above and below is the theme's, which is what holds the row's height.
-        m_alwaysOnTop{ m_windowGroup.add<CheckBox>(
+        m_alwaysOnTop{ m_interfaceGroup.add<CheckBox>(
             L"Always on top",
             HintText{ L"Keep above others" },
             Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
         ) },
-        m_graphicsSection{ m_options.addSection(L"Graphics") },
-        m_graphicsGroup{ m_graphicsSection.body() },
-        m_gpuAcceleration{ m_graphicsGroup.add<CheckBox>(
+        m_performanceSection{ m_options.addSection(L"Performance / Display") },
+        m_performanceGroup{ m_performanceSection.body() },
+        m_gpuAcceleration{ m_performanceGroup.add<CheckBox>(
             L"GPU acceleration",
             Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
         ) },
@@ -468,13 +466,11 @@ namespace ClaFi
             root.setAlwaysOnTop(!root.isAlwaysOnTop());
             m_alwaysOnTop.invalidateState();
         });
-        // **The section goes, not the check.** Hidden where the platform has no keep-above a client
-        // may ask for - see IPlatformWindow::canSetAlwaysOnTop - and a check that could be turned
-        // on and would not hold says something untrue about the window. The section is what draws
-        // the caption and its line, so hiding the one answer inside it would leave a Main Window
-        // heading over nothing.
+        // Hidden where the platform has no keep-above a client may ask for - see
+        // IPlatformWindow::canSetAlwaysOnTop - since a check that could be turned on and would not
+        // hold says something untrue about the window.
         if (!form().rootForm().canSetAlwaysOnTop())
-            m_windowSection.setVisible(false);
+            m_alwaysOnTop.setVisible(false);
 
         // **The answer is written, not acted on here.** The node carries it to the context, which
         // states the backend and tells every window - see AppContext::stateBackend - the same
@@ -492,11 +488,10 @@ namespace ClaFi
                 L"[b]Off[/b][tabto 26] They are drawn on the CPU instead"
             };
         });
-        // **The section goes, not the check**, the same as the window's above: an application that
-        // named no GPU backend has nothing to turn on, and the section is what draws the caption
-        // and its line.
+        // **The section goes, not the check**: an application that named no GPU backend has
+        // nothing to turn on, and the section is what draws the caption and its line.
         if (!appContext().gpuAvailable())
-            m_graphicsSection.setVisible(false);
+            m_performanceSection.setVisible(false);
 
         // Under the common options, so those stand in one place in every application.
         for (const AppPageBuilder& build : mutableAppSettings())
