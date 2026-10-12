@@ -245,6 +245,8 @@ namespace ClaFi
     // Set on the **container**, not on the child: what it says is that the collection is no
     // longer ordered by geometry - see Control::firstChildInViewport.
     export constexpr ControlFlag cfChildHidden = 64;
+    // The last measure took the width from a preference, so the content does not decide it.
+    export constexpr ControlFlag cfWidthStated = 128;
 
     // Second flagset of Control
     export constexpr ControlFlag cfPainted      = 1;

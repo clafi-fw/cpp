@@ -80,6 +80,35 @@ the state it already had, and a whole text stated anew is read from its start.
 The reading is compared with the last before any row is rebuilt, so typing in a routine's body
 rebuilds nothing.
 
+## Tree
+
+### One line for every row
+
+2026-10-12. SeeDocs' tree over a project of 31,925 types, 3,864 modules and 718 folders holds
+about 36,500 rows fully expanded, and every layout pass of the form measured each of them - an
+item and a node header alike gathered its text and measured it unbroken for its width. The
+layout cache keeps 4,096 entries, so a tree past that loses the rows it measured first before
+the pass ends, and by the cache's own rule every pass shaped nearly every row again. Every
+answer was one line of body text, inside the button's `MinSize` once the padding is on, and
+the width was thrown away, the bar's `PreferredSize` standing in its place.
+
+`Tree::calculateChildren` measures one line of body text while the tree's width is given, and
+`TreeItem::measureText` and `TreeNodeHeader::measureText` answer it. The bar's width was not
+"given" to the framework until `isWidthGivenFromOutside` learned that a stated preference ends
+the walk as given - see Item-Containers.
+
+`Expander` builds its header, so the node's header is a type the node names through the
+protected constructor taking `std::type_identity<Header>`. The header reaches its tree through
+its parent, the node that built it.
+
+The tree states `WordWrap::No`. A scroll box holding a wrapping body in a given width caps the
+body at the viewport and asks for another pass whenever the viewport moves, so a splitter drag
+laid the whole tree out twice per move once the bar's width counted as given. No row breaks at
+any width.
+
+What a pass still costs over such a tree is the controls themselves: a node is four (the
+expander, its header, the mark, the rows stack), each measured and placed on every pass.
+
 ## PictureView
 
 Each strip around the picture is staged on its own, so nothing the picture drew is staged twice.

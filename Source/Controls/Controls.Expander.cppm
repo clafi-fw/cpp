@@ -37,6 +37,9 @@ namespace ClaFi::Controls
         [[nodiscard]] ExpanderHeader& header() { return m_header; }
         [[nodiscard]] const ExpanderHeader& header() const { return m_header; }
     protected:
+        // Builds the header as the type named, for a look whose header measures in its own way.
+        template<std::derived_from<ExpanderHeader> Header, typename... Args>
+        Expander(const CreateParams& params, std::type_identity<Header>, Args&&...);
         [[nodiscard]] const Control* headedBody() const override { return body(); }
         // The body is read shut or open, and opened to show a match in it.
         [[nodiscard]] ChildSearch childSearch(const Control&) const override;
@@ -62,6 +65,18 @@ namespace ClaFi::Controls
     template<typename... Args>
     Expander::Expander(const CreateParams& params, Args&&... args)
         :
+        Expander{ params, std::type_identity<ExpanderHeader>{}, std::forward<Args>(args)... }
+    {
+    }
+
+    void Expander::setHeaderText(const Text& value)
+    {
+        m_header.setHeaderText(value);
+    }
+
+    template<std::derived_from<ExpanderHeader> Header, typename... Args>
+    Expander::Expander(const CreateParams& params, std::type_identity<Header>, Args&&... args)
+        :
         WithHeldHeader<PanelBase>{
             params,
             params.themeMetrics().page,
@@ -72,7 +87,7 @@ namespace ClaFi::Controls
         },
         // Only the look is handed on. The header is a control of its own, so a props bag meant
         // for the expander would set its text and its metrics a second time.
-        m_header{ createTopBar<ExpanderHeader>(
+        m_header{ createTopBar<Header>(
             VerticalTextAnchor::Center,
             // The same, handed on to the header the expander builds.
             READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)) }
@@ -91,11 +106,6 @@ namespace ClaFi::Controls
         Props::ifThereIs<HeaderText>([&](const auto& headerText) {
             setHeaderText(headerText);
             }, std::forward<Args>(args)...);
-    }
-
-    void Expander::setHeaderText(const Text& value)
-    {
-        m_header.setHeaderText(value);
     }
 
     ChildSearch Expander::childSearch(const Control& child) const

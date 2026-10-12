@@ -45,6 +45,7 @@ export import ClaFi.Controls.TabStrip;
 
 export import ClaFi.Icons.CheckMark;
 export import ClaFi.Icons.Chevron;
+export import ClaFi.Icons.OpenChevron;
 export import ClaFi.Icons.DialogIcon;
 export import ClaFi.Icons.Eye;
 export import ClaFi.Icons.OjIcon;

@@ -428,6 +428,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\MoonIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OjIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OkIcon.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OpenChevron.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OpenChevron.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OpenInExplorerIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\PasteIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\PlusMark.cppm" />

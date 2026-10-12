@@ -8,8 +8,11 @@ import ClaFi.Controls.StackView;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine;
+import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Scaler;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
 namespace ClaFi::Controls
@@ -33,6 +36,15 @@ namespace ClaFi::Controls
         position.x += lead;
         ToolButton::alignContent(event, position, contentSize);
         contentSize.x += lead;
+    }
+
+    // A row stating a format of its own is measured whole: the tree's line is one of body text.
+    CalculatedDimensions TreeItem::measureText(AlignEvent& event, ScaledDimensions asked,
+        const Text& text)
+    {
+        if (m_tree.m_rowLine.has_value() && !textFormat())
+            return { 0.0f, *m_tree.m_rowLine };
+        return ToolButton::measureText(event, asked, text);
     }
 
     FloatRect TreeItem::iconRect(const PaintEvent& event) const
@@ -78,6 +90,18 @@ namespace ClaFi::Controls
     float TreeDivider::lead() const
     {
         return static_cast<float>(m_level) * TreeRows::step;
+    }
+
+    // TreeNodeHeader
+
+    // A tree node builds its header and holds it, so the parent is that node.
+    CalculatedDimensions TreeNodeHeader::measureText(AlignEvent& event, ScaledDimensions asked,
+        const Text& text)
+    {
+        const Tree& tree = static_cast<const TreeNode*>(parent())->m_tree;
+        if (tree.m_rowLine.has_value() && !textFormat())
+            return { 0.0f, *tree.m_rowLine };
+        return ExpanderHeader::measureText(event, asked, text);
     }
 
     // TreeNode
@@ -161,6 +185,21 @@ namespace ClaFi::Controls
                 node->header().setExpanded(false);
         }
         showCurrentRow();
+    }
+
+    // **Every row is one line**, and where the tree's width is given nothing reads a row's own,
+    // so the line is measured once for all of them. A tree scrolled across is as wide as its
+    // widest row. See Controls#tree
+    void Tree::calculateChildren(FormBase& form)
+    {
+        m_rowLine.reset();
+        if (isWidthGivenFromOutside() && !isScrolledByParent(ScrollAxis::Horizontal))
+        {
+            const Text probe{ k_lineProbe };
+            m_rowLine = textEngine().calculateText(form.context(), probe,
+                { k_maxFloat, k_maxFloat }, false, false).y;
+        }
+        StackView::calculateChildren(form);
     }
 
     // A node's mark opens the node rather than standing as a row, so it is no item.

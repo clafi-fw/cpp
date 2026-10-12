@@ -674,8 +674,8 @@ namespace ClaFi
         // is still the content's own answer where the form at the top is measured from what it
         // holds, and a bound stated under one of those narrows the very thing it came from. The
         // walk ends at the first control that is not handed its width - that one's content
-        // decides it - and at the root, where the window does, unless the window was asked for
-        // out of the content too. See Stack::wrapLengthLimit
+        // decides it, unless a preference states it - and at the root, where the window does,
+        // unless the window was asked for out of the content too. See Stack::wrapLengthLimit
         [[nodiscard]] bool isWidthGivenFromOutside() const;
         // The same walk for the height. See Item-Containers
         [[nodiscard]] bool isHeightGivenFromOutside() const;

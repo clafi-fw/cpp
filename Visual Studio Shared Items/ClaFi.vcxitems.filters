@@ -508,6 +508,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OkIcon.cppm">
       <Filter>Icons</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OpenChevron.cpp">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OpenChevron.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OpenInExplorerIcon.cppm">
       <Filter>Icons</Filter>
     </ClCompile>

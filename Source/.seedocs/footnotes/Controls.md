@@ -292,6 +292,12 @@ setSearchText puts a text in as typing would, raising Search, the focus staying 
 owner showing what a search was for puts its words back so; and setResult is how the owner reports
 what was found.
 
+While the box holds text, three buttons stand after the count. Previous and Next raise what
+Shift+Enter and Enter raise, and Clear empties the box as an edit - so Undo brings the words back -
+and puts the focus in it. The buttons take mouse clicks alone and move no focus, so a step leaves
+the caret where it was. Previous and Next show dimmed while the count last given to setResult is
+zero, there being nothing to step through.
+
 A box drops a list under it where its owner gives it lines - see DropList. showList states the lines
 and the one current, if any, and no lines take the list down. While the list is up, Up, Down and the
 page keys walk it - Down enters at the first line, and Up on the first line leaves the list with
@@ -975,3 +981,17 @@ only shows it. A reader needs no sink and claims no rename.
 A host that answers editorSuggestions gets a list under the box of the values whose names begin
 with what is typed - a combo box answers its items - and F4 or Alt+Down lists them all. Picking
 one, with Return or a click, puts its name in the box and offers it in the same press.
+
+## Tree
+
+**Every row of a tree is one line.** Where the tree's width is given from outside - a pane the
+window sizes, a bar whose width is stated - no row's width is read, so the tree measures one
+line of body text a pass and every row answers that line without laying its own text out. A
+tree of tens of thousands of rows is laid out without shaping any of them, and the rows on
+screen are shaped as they are painted. A node's header is a `TreeNodeHeader`, which answers the
+same way.
+
+A row stating a `TextFormat` is measured whole, so a row whose text needs more than a line of
+body text - a larger style written into it - states the format it is set in. A tree whose
+width is its content's answer measures every row, the widest being that width: a bar fitted to
+its content, a scroll box carrying the tree across.

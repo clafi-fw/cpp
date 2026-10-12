@@ -46,15 +46,17 @@ namespace ClaFi::Controls
     {
     public:
         template<typename... Args>
-        explicit TreeItem(const CreateParams&, std::size_t level, Args&&...);
+        explicit TreeItem(const CreateParams&, Tree& tree, std::size_t level, Args&&...);
     protected:
         ScaledDimensions calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
         FloatRect iconRect(const PaintEvent&) const override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
     private:
         [[nodiscard]] float textLead(const Scaler&) const; // where the text begins past the padding
     private:
+        Tree& m_tree;
         std::size_t m_level;
     };
 
@@ -73,9 +75,19 @@ namespace ClaFi::Controls
         std::size_t m_level;
     };
 
+    // The header of a tree's node, a row of the tree measured the way its items are.
+    export class TreeNodeHeader : public ExpanderHeader
+    {
+    public:
+        using ExpanderHeader::ExpanderHeader;
+    protected:
+        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
+    };
+
     // A branch of a tree: a header that is a row of its own, and under it the rows its mark opens.
     export class TreeNode : public Expander
     {
+        friend TreeNodeHeader;
     public:
         template<typename... Args>
         explicit TreeNode(const CreateParams&, Tree& tree, std::size_t level, Args&&...);
@@ -111,6 +123,8 @@ namespace ClaFi::Controls
     // Rows nested in branches, each level stepped in one mark slot; a node's header is a row too.
     export class Tree : public StackView
     {
+        friend TreeItem;
+        friend TreeNodeHeader;
         friend TreeNode;
     public:
         template<typename... Args>
@@ -133,6 +147,7 @@ namespace ClaFi::Controls
         // Closes every node but the current row's own and the ones it stands under.
         void collapseOthers();
     protected:
+        void calculateChildren(FormBase&) override;
         bool defaultCanFocusItem(Control&) override;
         void nestedContextPopup(ContextPopupEvent&) override;
         void nestedControlDeleted(Control*) override;
@@ -155,7 +170,10 @@ namespace ClaFi::Controls
         // Brings the current row back after the nodes have moved.
         void showCurrentRow();
     private:
+        static constexpr std::wstring_view k_lineProbe = L"0"; // what a row's line is measured on
+
         Nodes m_nodes{}; // every node of the tree, each after the one holding it
+        std::optional<float> m_rowLine{}; // the height of every row's text while the width is given
         Action m_expandAll{ Text{ L"Expand all" } };
         Action m_collapseAll{ Text{ L"Collapse all" } };
         Action m_collapseOthers{ Text{ L"Collapse others" } };
@@ -168,7 +186,8 @@ namespace ClaFi::Controls
     // TreeItem
 
     template<typename... Args>
-    TreeItem::TreeItem(const CreateParams& params, const std::size_t level, Args&&... args)
+    TreeItem::TreeItem(const CreateParams& params, Tree& tree, const std::size_t level,
+        Args&&... args)
         :
         ToolButton{
             params,
@@ -178,6 +197,7 @@ namespace ClaFi::Controls
             WordWrap::No, // a row is one line; before the caller's arguments, so a stated one wins
             std::forward<Args>(args)...
         },
+        m_tree{ tree },
         m_level{ level }
     {
     }
@@ -204,6 +224,7 @@ namespace ClaFi::Controls
         :
         Expander{
             params,
+            std::type_identity<TreeNodeHeader>{},
             ExpanderViewMode::TreeNode,
             VerticalAlign::Top, // a panel filling its slot does not grow to hold its body
             Padding{ 0.0f },    // the page's padding would add up level after level
@@ -227,7 +248,7 @@ namespace ClaFi::Controls
     template<typename... Args>
     TreeItem& TreeNode::addItem(Args&&... args)
     {
-        return m_rows.add<TreeItem>(m_level + 1, std::forward<Args>(args)...);
+        return m_rows.add<TreeItem>(m_tree, m_level + 1, std::forward<Args>(args)...);
     }
 
     template<typename... Args>
@@ -247,7 +268,12 @@ namespace ClaFi::Controls
     template<typename... Args>
     Tree::Tree(const CreateParams& params, Args&&... args)
         :
-        StackView{ params, Orientation::Vertical, std::forward<Args>(args)... }
+        StackView{
+            params,
+            Orientation::Vertical,
+            WordWrap::No, // no row breaks at the width it is given; before the caller's arguments
+            std::forward<Args>(args)...
+        }
     {
         connectActions();
     }
@@ -255,7 +281,7 @@ namespace ClaFi::Controls
     template<typename... Args>
     TreeItem& Tree::addItem(Args&&... args)
     {
-        return add<TreeItem>(std::size_t{ 0 }, std::forward<Args>(args)...);
+        return add<TreeItem>(*this, std::size_t{ 0 }, std::forward<Args>(args)...);
     }
 
     template<typename... Args>

@@ -3,10 +3,15 @@ module;
 
 export module ClaFi.Controls.SearchBox;
 
+import ClaFi.Controls.Button;
 import ClaFi.Controls.DropList;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
+
+import ClaFi.Icons.OpenChevron;
+import ClaFi.Icons.XMark;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
@@ -95,6 +100,10 @@ namespace ClaFi::Controls
         // Holds its own layout: a text per step would crowd the shared layout cache.
         using CountReadout = WithTextLayout<Label>;
     private:
+        void connectParts();
+        void textEdited();
+        void step(SearchRequest, KeyModifiers);
+        void clear();
         void request(SearchRequest, KeyModifiers = {});
         void pick(const DropListPick&);
     private:
@@ -105,14 +114,46 @@ namespace ClaFi::Controls
             Padding{ 6.0f, 4.0f },
             VerticalTextAnchor::Center
         ) };
-        // Hidden while the box is empty, so the field takes the whole width.
-        CountReadout& m_count{ createRightBar<CountReadout>(
+        // The count and the buttons, hidden while the box is empty so the field takes its width.
+        Stack& m_tools{ createRightBar<Stack>(
+            Orientation::Horizontal,
+            VerticalAlign::Center,
+            Spacing{ 0.0f },
+            Padding{ 2.0f, 0.0f }
+        ) };
+        CountReadout& m_count{ m_tools.add<CountReadout>(
             WordWrap::No,
             Padding{ 6.0f, 0.0f },
+            VerticalAlign::Center,
             VerticalTextAnchor::Center
+        ) };
+        ToolButton& m_previous{ m_tools.add<ToolButton>(
+            FixedSize{ 20.0f },
+            ButtonViewMode::IconOnly,
+            IconSize{ 10.0f },
+            Interactivity::MouseOnly,
+            ButtonBase::OnPaintIcon{ Icons::OpenChevron::paintUp },
+            L"Previous"
+        ) };
+        ToolButton& m_next{ m_tools.add<ToolButton>(
+            FixedSize{ 20.0f },
+            ButtonViewMode::IconOnly,
+            IconSize{ 10.0f },
+            Interactivity::MouseOnly,
+            ButtonBase::OnPaintIcon{ Icons::OpenChevron::paintDown },
+            L"Next"
+        ) };
+        ToolButton& m_clear{ m_tools.add<ToolButton>(
+            FixedSize{ 20.0f },
+            ButtonViewMode::IconOnly,
+            IconSize{ 8.0f },
+            Interactivity::MouseOnly,
+            ButtonBase::OnPaintIcon{ Icons::XMark::paint },
+            L"Clear"
         ) };
         DropList m_list;
         std::wstring m_countPlace{};   // what the count is taken over; empty for all of it
+        std::size_t m_foundCount{ 0 };   // the count setResult was last given
     };
 
 
@@ -150,9 +191,6 @@ namespace ClaFi::Controls
             pick(picked);
         }, DropListOptions{ .keptBy = m_listKeptBy, .upFromFirst = UpFromFirst::Leaves } }
     {
-        m_count.hide();
-        m_field.onTextEdit([this](TextEditEvent&){
-            request(SearchRequest::Search);
-        });
+        connectParts();
     }
 }

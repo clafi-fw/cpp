@@ -468,18 +468,19 @@ tab, until the box is emptied. The count at the box's end is the page's: "15 on 
 is current, "4 of 15" once one is, and a muted "0 on page" where the page holds none, the project
 perhaps holding more. With no line of the list current, Enter and Shift+Enter take the list down and
 step to the page's next match and the one before, and F3 and Shift+F3 do so from anywhere in the
-window. A section a match stands in opens, and the match is selected - a cell as a click selects it,
-the words in a footnote - and drawn over its band. A step taken on the page brings the focus with
-it, and one taken in the box leaves it there. **A page the search opens goes on with it**: opened
-from a name's line of the list or from a link on the search's page, its first match from where it
-opens - the place its anchor names, else its top - is made current and brought into view. Showing a
-search's page puts its words back in the box.
+window. The arrows at the box's end step too, dimmed while the page holds none, and its cross
+empties the box. A section a match stands in opens, and the match is selected - a cell as a click
+selects it, the words in a footnote - and drawn over its band. A step taken on the page brings the
+focus with it, and one taken in the box leaves it there. **A page the search opens goes on with
+it**: opened from a name's line of the list or from a link on the search's page, its first match
+from where it opens - the place its anchor names, else its top - is made current and brought into
+view. Showing a search's page puts its words back in the box.
 
 Escape takes the list down, and the next one hands the focus back: to the page's current match, else
 where it came into the box from - a row of the tree, a cell of the page - and where that has gone,
 or stands on a tab no longer shown, to the row the page's anchor selected, else its first row.
 Escape never empties the box: the search stands while the page is read, and goes as its words are
-typed away.
+typed away or cleared with the cross.
 
 The search's page is a page of the browser like any other, named as its line in the list is on its
 tab, its crumb and in the history, its head titled with the words and marked `search`, its url the

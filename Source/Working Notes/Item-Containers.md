@@ -2,6 +2,17 @@
 
 The author's side of the footnote of the same name.
 
+## The width a preference states
+
+2026-10-12. `isWidthGivenFromOutside` ended at SeeDocs' tree bar - a side bar is as wide as it
+measured - although the bar's `PreferredSize`, or the extent a drag left, stands in place of
+that measurement. `Control::calculate` writes `cfWidthStated` before it measures the children,
+so every question asked under the control in a pass reads that pass's answer, and the walk
+ends as given on a control carrying it. A fit zeroes the bar's preference for its pass, which
+is the pass that needs the content's widths. A fixed width would end the walk on the same
+reasoning, and stays out of the flag because it reaches every fixed-size item while nothing has
+asked for it yet.
+
 ## StackBase
 
 PageControl does not need a stack alignment - that part lives in Stack - but it does need

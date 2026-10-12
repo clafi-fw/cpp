@@ -1,8 +1,10 @@
 module ClaFi.Controls.SearchBox;
 
+import ClaFi.Controls.Button;
 import ClaFi.Controls.DropList;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 
 import ClaFi.Core.Foundation;
@@ -18,6 +20,20 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
+    namespace
+    {
+        // A button's name and the key doing the same, as an action's hint reads.
+        void writeHint(GetHintEvent& event, const wchar_t* name, const Shortcut& shortcut)
+        {
+            if (!event.text.empty())
+                return;
+            event.text << name;
+            const std::wstring shortcutText = shortcut.text();
+            if (!shortcutText.empty())
+                event.text << L" (" << shortcutText << L")";
+        }
+    }
+
     SearchEvent::SearchEvent(SearchBox& box, const SearchRequest request)
         :
         EventOf<SearchBox>{ box },
@@ -96,6 +112,14 @@ namespace ClaFi::Controls
     // the search may find more elsewhere.
     void SearchBox::setResult(const std::optional<std::size_t> selected, const std::size_t count)
     {
+        const bool foundBefore = m_foundCount > 0;
+        m_foundCount = count;
+        if (foundBefore != (count > 0))
+        {
+            m_previous.invalidateState();
+            m_next.invalidateState();
+        }
+
         Text reading{};
         if (!searchText().empty())
         {
@@ -137,8 +161,7 @@ namespace ClaFi::Controls
                 // The current line is what Enter means while the list is up.
                 if (m_list.pickCurrent(event.modifiers, event.stamp))
                     return;
-                m_list.hide();
-                request(event.modifiers.shift ? SearchRequest::Previous : SearchRequest::Next,
+                step(event.modifiers.shift ? SearchRequest::Previous : SearchRequest::Next,
                     event.modifiers);
                 return;
             }
@@ -197,6 +220,55 @@ namespace ClaFi::Controls
                 break;
         }
         Panel::nestedKeyDown(event);
+    }
+
+    void SearchBox::connectParts()
+    {
+        m_tools.hide();
+        m_count.hide();
+        m_field.onTextEdit([this](TextEditEvent&){
+            textEdited();
+        });
+        m_previous.onClick([this](ClickEvent& event){
+            step(SearchRequest::Previous, event.modifiers);
+        });
+        m_next.onClick([this](ClickEvent& event){
+            step(SearchRequest::Next, event.modifiers);
+        });
+        m_clear.onClick([this](ClickEvent&){
+            clear();
+        });
+        const auto foundAny = [this](GetStateEvent& event){
+            event.state.enabled = m_foundCount > 0;
+        };
+        m_previous.onGetState(foundAny);
+        m_next.onGetState(foundAny);
+        m_previous.onGetHint([](GetHintEvent& event){
+            writeHint(event, L"Previous", { Keys::Return, { .shift = true } });
+        });
+        m_next.onGetHint([](GetHintEvent& event){
+            writeHint(event, L"Next", { Keys::Return });
+        });
+    }
+
+    void SearchBox::textEdited()
+    {
+        m_tools.setVisible(!searchText().empty());
+        request(SearchRequest::Search);
+    }
+
+    void SearchBox::step(const SearchRequest value, const KeyModifiers modifiers)
+    {
+        m_list.hide();
+        request(value, modifiers);
+    }
+
+    // The emptied box takes the focus, as what follows a clear is typing.
+    void SearchBox::clear()
+    {
+        m_list.hide();
+        setSearchText({});
+        m_field.setFocus();
     }
 
     void SearchBox::request(const SearchRequest value, const KeyModifiers modifiers)

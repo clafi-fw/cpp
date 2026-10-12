@@ -724,6 +724,11 @@ namespace ClaFi
         {
             control = control->m_parent;
         }
+        // **A width a preference states is given too.** It stands in place of what the content
+        // measured - a bar the pointer sized, a bar built with a PreferredSize - and a fit states
+        // none on the pass that measures the content. See Item-Containers
+        if (control->m_flags & cfWidthStated)
+            return true;
         // Stopped short of the root, so this control was reached from one that is as wide as what
         // it contains - and everything under that one is inside that measurement.
         if (control->m_parent)
@@ -1950,9 +1955,13 @@ namespace ClaFi
             AdjustMetricsEvent event{ form.context(), *this, designMetrics };
             doAdjustMetrics(event);
         }
+        // Stated before the children are measured: the walk they ask up through reads it - see
+        // isWidthGivenFromOutside.
+        const bool fixedSize = designMetrics.maxSize == designMetrics.minSize;
+        setFlag(m_flags, cfWidthStated, !fixedSize && designMetrics.preferredSize.x > 0.0f);
         calculateChildren(form);
 
-        if (designMetrics.maxSize == designMetrics.minSize)
+        if (fixedSize)
         {
             m_dimensions = form.scaler().scale(designMetrics.minSize);
             m_minDimensions = m_dimensions;

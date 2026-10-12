@@ -152,7 +152,10 @@ Three things the remembered length is not allowed to do, and each is a guard:
   question is asked of every host in turn, and one level is never enough: the backstage hands a
   width down through five of them and is itself measured from the pages it holds. The walk ends at
   the first host that is as wide as what it contains, and at the root it asks the form: a window
-  asked for out of the content is the content's answer once more, `AutoFit::Yes`.
+  asked for out of the content is the content's answer once more, `AutoFit::Yes`. A host whose
+  width a `PreferredSize` states is that width whatever it holds, so the walk ends there with
+  the width given - a bar the pointer sized states one, and a fit states none for the one pass
+  that measures the bar's content.
 
   The height walk is the same walk down the other axis. A control that does not fill downwards
   keeps the height it measured. A column sizes its items from what they measured and hands a
