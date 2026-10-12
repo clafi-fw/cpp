@@ -253,7 +253,7 @@ namespace ClaFi
         bool trimmed{};
     };
 
-    // The width a cut line fades over before the scale, and the overrun that fades it wholly.
+    // The width a cut line's fade grows to, before the scale.
     export constexpr float k_lineFadeWidth = 30.0f;
 
     // A line its box cuts at the trailing edge, which it is faded out toward. See TextEngine-Types
@@ -263,8 +263,8 @@ namespace ClaFi
         float overrun{ 0.0f }; // how far the line runs past the edge
     };
 
-    // The colour a cut line's fade reaches at the box's edge. See TextEngine-Types#linefade
-    export [[nodiscard]] constexpr Color lineFadeEdgeColor(Color, float overrun, float fadeWidth);
+    // How wide the fade of a line running that far past the edge is. See TextEngine-Types#linefade
+    export [[nodiscard]] constexpr float lineFadeSpan(float overrun, float fadeWidth);
 
 #if CLAFI_TEXT_MOVING
     // What a control's text has to survive, stated as three cases. See TextEngine-Types
@@ -276,11 +276,9 @@ namespace ClaFi
     };
 #endif
 
-    constexpr Color lineFadeEdgeColor(Color color, float overrun, float fadeWidth)
+    constexpr float lineFadeSpan(float overrun, float fadeWidth)
     {
-        const float strength = std::clamp(overrun / fadeWidth, 0.0f, 1.0f);
-        color.alpha = static_cast<ColorByte>(color.alpha * (1.0f - strength));
-        return color;
+        return std::clamp(overrun, 0.0f, fadeWidth);
     }
 
 }

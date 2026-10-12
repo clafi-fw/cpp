@@ -46,10 +46,10 @@ states it here rather than writing a space beside the gap.
 
 A line its box cuts at the trailing edge, and how far it runs past that edge.
 
-**The fade grows with the overrun.** It stands k_lineFadeWidth wide at the edge and takes as much
-of the line's colour away there as the line runs past it, out of that width - a line a pixel too
-long keeps nearly all of its colour, and one running a whole fade's width past the edge or more
-fades out entirely. A scroll box brings its edge fades in over its travel the same way.
+**The fade grows with the overrun.** It takes the line's colour away to nothing at the edge, over
+as much of the line as runs past it and at most over k_lineFadeWidth - a line a pixel too long
+fades over its last pixel, and one running a whole fade's width past the edge or more fades over
+all of that width.
 
 **The collapse line carries everything after it.** The lines below the last one that fits are
 carried on along that line, and its overrun counts all of them, whether the draw reaches them

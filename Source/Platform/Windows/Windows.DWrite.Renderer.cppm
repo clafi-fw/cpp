@@ -458,7 +458,7 @@ namespace ClaFi::PlatformImplementation::Windows
         const float drawX = origin->x;
         float drawY = origin->y;
 
-        float overrun = 0.0f;
+        float fadeSpan = 0.0f;
         // Both sides of the comparison are put in the layout's own coordinates, so the baselines
         // arrive as the layout states them and no absolute copy of them is made.
         float checkBaseline = drawY - m_bounds.top;
@@ -466,22 +466,21 @@ namespace ClaFi::PlatformImplementation::Windows
         {
             if (std::abs(checkBaseline - fade.baseline) < 0.5f)
             {
-                overrun = fade.overrun;
+                fadeSpan = lineFadeSpan(fade.overrun, m_fadeWidth);
                 break;
             }
         }
 
-        if (overrun > 0.0f)
+        if (fadeSpan > 0.0f)
         {
             Color baseColor = std::holds_alternative<Graphics::SolidColor>(effectBrush)
                 ? std::get<Graphics::SolidColor>(effectBrush).color
                 : controlContext->textRgb(InkGrade::Strongest);
-            const Color edgeColor = lineFadeEdgeColor(baseColor, overrun, m_fadeWidth);
 
             effectBrush = Graphics::LinearGradient{
-                .startPoint = { m_bounds.right - m_fadeWidth, 0.0f },
+                .startPoint = { m_bounds.right - fadeSpan, 0.0f },
                 .endPoint = { m_bounds.right, 0.0f },
-                .stops = { { 0.0f, baseColor }, { 1.0f, edgeColor } },
+                .stops = { { 0.0f, baseColor }, { 1.0f, baseColor.withOpacity(0.0f) } },
             };
         }
 

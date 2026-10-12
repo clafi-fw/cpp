@@ -427,12 +427,12 @@ namespace ClaFi::Platform::Linux
                 }
             }
 
-            float overrun = 0.0f;
+            float fadeSpan = 0.0f;
             for (const LineFade& fade : localLineFades)
             {
                 if (std::abs(drawBaseline - fade.baseline) < 0.5f)
                 {
-                    overrun = fade.overrun;
+                    fadeSpan = lineFadeSpan(fade.overrun, fadeWidth);
                     break;
                 }
             }
@@ -486,13 +486,12 @@ namespace ClaFi::Platform::Linux
                     if (!open)
                         return;
                     Graphics::Brush brush = Graphics::SolidColor{ pieceColor };
-                    if (overrun > 0.0f)
+                    if (fadeSpan > 0.0f)
                     {
-                        const Color edgeColor = lineFadeEdgeColor(pieceColor, overrun, fadeWidth);
                         brush = Graphics::LinearGradient{
-                            .startPoint = { bounds.right - fadeWidth, 0.0f },
+                            .startPoint = { bounds.right - fadeSpan, 0.0f },
                             .endPoint = { bounds.right, 0.0f },
-                            .stops = { { 0.0f, pieceColor }, { 1.0f, edgeColor } },
+                            .stops = { { 0.0f, pieceColor }, { 1.0f, pieceColor.withOpacity(0.0f) } },
                         };
                     }
                     m_compositor.composite(*backend, brush);

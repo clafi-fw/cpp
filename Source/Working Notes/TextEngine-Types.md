@@ -62,8 +62,8 @@ for one character and what is on screen, not a lookup and a glyph per character 
 length. cellLeft and the bands under the hits and the selection are counted the same way.
 Inside the shown span, glyphs are gathered into a run for as long as the colour holds and no
 tab breaks the cells, and each run is handed to the platform with the colour's brush - a
-gradient over the box's right edge where the line fades, down to the colour lineFadeEdgeColor
-answers for the row's overrun.
+gradient to transparent at the box's right edge where the line fades, over the span
+lineFadeSpan answers for the row's overrun.
 
 The fonts live in one table for the application, found by family, size, weight and style;
 a request is resolved once, negative answers included.
