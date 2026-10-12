@@ -593,3 +593,45 @@ and nothing to keep in step.
 
 The root control is a base rather than a member, so a form is called like the control it hosts -
 `form.createTopBar<DialogTitle>()` instead of `form.content().createTopBar<DialogTitle>()`.
+
+## SearchResult
+
+**A search result is what one searcher finds in the texts one container shows, and the match
+standing current.** The application keeps one per page, beside a searcher it may share between
+pages. Made over a container, it hands itself to that container, which keeps the one pointer and
+nothing else of the search. The paint hands it down to every control inside: each text is drawn with
+the searcher's places on the found band, and the current match in the colour a text box gives a
+match it has selected - a text box shows its own selection, which a step has put on the match.
+Either may go first: a container gone is forgotten, and a result gone takes itself back from its
+container.
+
+**A match is one place in one text.** A control names its texts by part: its own text is part 0, and
+a row numbers its cells by the cell walk, a cell holding a control being read with that control. A
+button showing its icon alone shows no text. The texts are read in the order the container holds its
+children, a control ahead of what it holds. A hidden child is passed by, and so is what a control is
+made of - a scroll box's bars and the corner between them - and a container keeping a search of its
+own is read by that one. An expander's body, a row expander's and a folding group's rows are read
+shut or open, so their matches count while they are shut.
+
+**What was found is read again when next asked, after anything moved.** Whatever asks for a new
+layout - a text written, a control added, shown or hidden, an edit - tells the search over it
+through invalidateFound, and so do a control deleted under the container and a caret moved. A text
+that changes without a new layout, a cell whose data moved, is told the same way by whoever changed
+it. New words are noticed by the searcher's revision. One walk over the container answers the count
+and the current match: it keeps the texts holding matches and how many each holds, and a step reads
+the places of one text again. currentIndex counts the matches in reading order.
+
+**A step is measured from where the reader stands**: the match a step made current, or the selection
+a text box keeps there, which follows the caret; with neither, the first selection the walk meets.
+The current match is the place the reader stands on, ends included, so a caret in a match or against
+either end of it stands on that match, and a caret where two meet stands on the second. AtSelection
+takes the first match at or after the reader, so typing a search keeps a match that still holds;
+Next takes the first after it; Previous takes the one before the match it stands on, or before the
+first match after it. Where the reader's text holds no match, the next text holding one is taken, or
+going back the last one before it. Past either end is the other end, and with nowhere to stand a
+step takes the first match, or the last going back.
+
+**A step shows the match.** A hidden body on the way is opened first, from the outside in, and the
+view goes to the match once the opened body is laid out. A text box selects the match, a row selects
+the cell as a press would, and anything else is scrolled into view. The holder the current match
+left and the one it reached are repainted.

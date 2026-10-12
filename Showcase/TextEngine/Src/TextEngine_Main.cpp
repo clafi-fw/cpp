@@ -142,27 +142,30 @@ namespace TextEngine_App
             return newlines + 1;
         }
 
-        // The search in the title over the page shown, its searcher banding every page.
+        // The search in the title over the page shown: one searcher, and a result per page.
         class PageSearch
         {
         public:
             // Takes the box's requests, the page control's switches and the keys under the root.
             void attach(Control& root, SearchBox&, PageControl& pages);
-            void addPage(const Control& page, TextBox& box);
+            // The box is where Ctrl+F takes a selection from and where Escape goes back to.
+            void addPage(Control& page, TextBox& box);
         private:
             struct PageBox
             {
-                const Control* page;
-                TextBox* box;
+                const Control* page{ nullptr };
+                TextBox* box{ nullptr };
+                SearchResult* found{ nullptr };
             };
         private:
-            [[nodiscard]] TextBox* shownBox() const;
+            [[nodiscard]] const PageBox* shownPage() const;
             void startSearch();
             void requested(SearchRequest);
             void step(FindTarget);
             void writeResult();
         private:
             Searcher m_searcher{};
+            std::deque<SearchResult> m_found{};   // one per page, each staying where it was made
             SearchBox* m_box{ nullptr };
             PageControl* m_pages{ nullptr };
             std::vector<PageBox> m_pageBoxes{};
@@ -177,7 +180,6 @@ namespace TextEngine_App
         {
             m_box = &box;
             m_pages = &pages;
-            pages.setSearcher(&m_searcher);
             box.onSearch([this](SearchEvent& event) {
                 requested(event.request);
             });
@@ -191,8 +193,8 @@ namespace TextEngine_App
                 else if (&event.action == &StdActions::findNext
                     || &event.action == &StdActions::findPrevious)
                 {
-                    const TextBox* shown = shownBox();
-                    event.claim({ .enabled = shown && shown->found(m_searcher).count != 0 });
+                    const PageBox* shown = shownPage();
+                    event.claim({ .enabled = shown && shown->found->count() != 0 });
                 }
             });
             root.onActionClick([this](ActionClickEvent& event) {
@@ -206,21 +208,22 @@ namespace TextEngine_App
         }
 
         // The count follows the caret, wherever a step lands it or a click puts it.
-        void PageSearch::addPage(const Control& page, TextBox& box)
+        void PageSearch::addPage(Control& page, TextBox& box)
         {
-            m_pageBoxes.push_back({ .page = &page, .box = &box });
+            SearchResult& found = m_found.emplace_back(m_searcher, page);
+            m_pageBoxes.push_back({ .page = &page, .box = &box, .found = &found });
             box.onCaretMove([this](CaretMoveEvent&) {
                 writeResult();
             });
         }
 
-        TextBox* PageSearch::shownBox() const
+        auto PageSearch::shownPage() const -> const PageBox*
         {
             const Control* shown = m_pages ? m_pages->currentItem() : nullptr;
             for (const PageBox& pageBox : m_pageBoxes)
             {
                 if (pageBox.page == shown)
-                    return pageBox.box;
+                    return &pageBox;
             }
             return nullptr;
         }
@@ -230,11 +233,11 @@ namespace TextEngine_App
         void PageSearch::startSearch()
         {
             std::wstring_view selected{};
-            const TextBox* shown = shownBox();
-            if (shown && shown->isFocused())
+            const PageBox* shown = shownPage();
+            if (shown && shown->box->isFocused())
             {
-                const TextRange range = shown->selection();
-                selected = std::wstring_view{ shown->text().plainText() }.substr(range.start,
+                const TextRange range = shown->box->selection();
+                selected = std::wstring_view{ shown->box->text().plainText() }.substr(range.start,
                     range.length);
                 if (selected.find(L'\n') != std::wstring_view::npos)
                     selected = {};
@@ -260,8 +263,8 @@ namespace TextEngine_App
                     step(FindTarget::Previous);
                     break;
                 case SearchRequest::End:
-                    if (TextBox* shown = shownBox())
-                        shown->setFocus();
+                    if (const PageBox* shown = shownPage())
+                        shown->box->setFocus();
                     break;
                 // The box is given no lines, so nothing is picked from a list.
                 case SearchRequest::Pick:
@@ -272,17 +275,18 @@ namespace TextEngine_App
 
         void PageSearch::step(const FindTarget target)
         {
-            if (TextBox* shown = shownBox())
-                shown->find(m_searcher, target);
+            if (const PageBox* shown = shownPage())
+                shown->found->step(target);
         }
 
         void PageSearch::writeResult()
         {
             if (!m_box)
                 return;
-            const TextBox* shown = shownBox();
-            const FoundPlaces found = shown ? shown->found(m_searcher) : FoundPlaces{};
-            m_box->setResult(found.selected, found.count);
+            if (const PageBox* shown = shownPage())
+                m_box->setResult(shown->found->currentIndex(), shown->found->count());
+            else
+                m_box->setResult(std::nullopt, 0);
             // A presenter keeps the answer it was last given until it is asked again.
             StdActions::findNext.invalidateState();
             StdActions::findPrevious.invalidateState();

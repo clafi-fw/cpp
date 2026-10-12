@@ -216,6 +216,18 @@ namespace ClaFi::Controls::Grids
         dimensions.y -= stackedSpanHeight;
     }
 
+    ChildSearch RowGroup::childSearch(const Control& child) const
+    {
+        if (&child == m_controls[k_body].get())
+            return ChildSearch::Revealed;
+        return RowGroupBase::childSearch(child);
+    }
+
+    void RowGroup::revealChild(Control&)
+    {
+        span().setExpanded(true);
+    }
+
     void RowGroup::connectFolding()
     {
         span().connectEvent<ToggleExpandedEvent>([this](ToggleExpandedEvent& event) {

@@ -250,6 +250,7 @@ namespace SeeDocs_App
                 Spacing{ k_sectionSpacing }
             }
         ) };
+        SearchResult m_found{ m_searcher, m_pageBox };   // what the page box holds of the search
     };
 
 
@@ -280,7 +281,6 @@ namespace SeeDocs_App
     {
         Actions::registerAll();
         connectHead();
-        m_pageBox.setSearcher(&m_searcher);
         m_later.onTick([this](TimerEvent&) {
             const std::function<void()> pending = std::exchange(m_pending, {});
             if (pending)

@@ -27,6 +27,8 @@ namespace ClaFi
     export class PaintEvent;
     export class AdjustPaintEvent;
     export class ControlTreePainter;
+    // Defined in :SearchResult, which imports this partition.
+    export class SearchResult;
 
     // A control painting itself, and everything it needs to draw with.
     export class PaintEvent : public ControlEventBase
@@ -103,6 +105,8 @@ namespace ClaFi
         Color indicatorRgb() const { return m_controlContext.indicatorRgb(); }
         ControlPaintContext& controlContext() { return m_controlContext; }
         const ControlPaintContext& controlContext() const { return m_controlContext; }
+        // The current match where it stands in that text of the holder; empty where it does not.
+        [[nodiscard]] TextRange currentFoundIn(const Control& holder, std::size_t part) const;
         Color textRgb(InkGrade grade) const { return inkRgb(InkWell::textInk(grade)); }
         Color accentRgb(InkGrade grade) const { return inkRgb(InkWell::accentInk(grade)); }
         Color spotRgb(InkGrade grade) const { return inkRgb(InkWell::spotInk(grade)); }
@@ -228,6 +232,7 @@ namespace ClaFi
         // would draw the application's spot and accent inside a preview of another theme.
         ControlPaintContext m_controlContext{ formContext(), bakedColors() };
         PaintEvent* m_parentEvent;
+        const SearchResult* m_searchResult{ nullptr };   // what this control is painted under
         const Control* m_overlayHost{};
         bool m_overlayStage{};
         bool m_paintsSelf{};

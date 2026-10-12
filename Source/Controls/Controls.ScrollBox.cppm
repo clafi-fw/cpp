@@ -83,6 +83,8 @@ namespace ClaFi::Controls
         void childPainted(PaintEvent& event) override;
 
         void scrollChildIntoView(Control&, FloatRect) override;
+        // The bars and the corner are the box's own, not what it shows.
+        [[nodiscard]] ChildSearch childSearch(const Control&) const override;
         // user input
         void nestedMouseWheel(MouseWheelEvent&) override;
         void nestedMouseHWheel(MouseWheelEvent&) override;
@@ -658,6 +660,13 @@ namespace ClaFi::Controls
         }
         // alternatively, we may correct the itemRect here and pass it to the inherited scrollControlIntoView()
         scrollIntoView();
+    }
+
+    ChildSearch ScrollBox::childSearch(const Control& child) const
+    {
+        if (&child == &m_vScrollBar || &child == &m_bottomBar)
+            return ChildSearch::Skipped;
+        return PanelBase::childSearch(child);
     }
 
     void ScrollBox::nestedMouseWheel(MouseWheelEvent& event)

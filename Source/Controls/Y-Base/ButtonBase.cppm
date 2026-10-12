@@ -61,6 +61,8 @@ namespace ClaFi::Controls
         // the rounded rect Control paints - can still put an icon on top of it.
         void paintIconLayer(PaintEvent&);
         void paintText(PaintEvent&) override;
+        // The text where it is drawn, which on a button showing its icon alone it is not.
+        void searchTexts(const SearchTextVisitor&) override;
         virtual FloatRect iconRect(const PaintEvent&) const;
         void adjustTextRect(AdjustTextRectEvent&) const override;
         void getText(GetTextEvent&) const override;

@@ -76,6 +76,9 @@ namespace ClaFi::Controls::Grids
         void preCalcColumn(Column& column) override;
         ScaledDimensions calculateContent(AlignEvent& event) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        // The rows are read folded or open, and the group opens to show a match in them.
+        [[nodiscard]] ChildSearch childSearch(const Control&) const override;
+        void revealChild(Control&) override;
     private:
         // Shows and hides the body as the span opens and closes.
         void connectFolding();

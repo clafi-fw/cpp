@@ -2,7 +2,6 @@ export module ClaFi.Controls.Base.Container;
 
 import ClaFi.Core.Foundation;
 
-import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
@@ -30,8 +29,6 @@ namespace ClaFi::Controls
         ~ContainerBase() override;
     public:
         void setPlaceHolderText(const Text& value);
-        // Hands every text painted inside to the searcher for hits. See TextEngine-Types#searcher
-        void setSearcher(const Searcher*);
         // addOverlayControl only affects painting order and clipping:
         // Overlay controls are painted in a second pass on top of other controls
         // and are not clipped by their own bounds
@@ -92,12 +89,13 @@ namespace ClaFi::Controls
         // ancestor, which makes this the one place that hears about all of them.
         void nestedControlDeleted(Control*) override;
         void getText(GetTextEvent&) const override;
-        [[nodiscard]] const Searcher* searcher() const override { return m_searcher; }
+        void setSearchResult(SearchResult* value) override { m_searchResult = value; }
+        [[nodiscard]] SearchResult* searchResult() const override { return m_searchResult; }
     private:
         ControlCollection m_controls{};
         std::vector<OverlayEntry> m_overlayControls{};
         PlaceHolderText m_placeHolderText{};
-        const Searcher* m_searcher{ nullptr };   // the application's, never owned
+        SearchResult* m_searchResult{ nullptr };   // the application's, never owned
     };
 
     template<typename ...Args>
@@ -144,6 +142,7 @@ namespace ClaFi::Controls
         m_controls.emplace_back(std::make_unique<ControlClass>(CreateParams{ *this }, std::forward<Args>(args)...));
         ControlClass& result = static_cast<ControlClass&>(*m_controls.back());
         controlAdded(result);
+        result.invalidateFound();
         return result;
     }
 
@@ -165,14 +164,6 @@ namespace ClaFi::Controls
         //if (m_placeHolderText == value)
         //  return;
         m_placeHolderText = value;
-        invalidate();
-    }
-
-    // **A searcher knows nothing of the containers it is handed to**: new words repaint nothing
-    // until the one that changed them invalidates what shows them, or hands the searcher again.
-    void ContainerBase::setSearcher(const Searcher* value)
-    {
-        m_searcher = value;
         invalidate();
     }
 
@@ -233,6 +224,8 @@ namespace ClaFi::Controls
     {
         FormControlBase::nestedControlDeleted(control);
         tryRemoveOverlayControl(*control);
+        if (m_searchResult)
+            m_searchResult->invalidate();
     }
 
     void ContainerBase::getText(GetTextEvent& event) const

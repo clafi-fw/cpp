@@ -143,6 +143,10 @@ namespace ClaFi::Controls::Grids
         void paintOneCell(PaintEvent&, const RowCell&, bool isFirstRow);
         void doPaintColumns(PaintEvent&);
         void paintText(PaintEvent&) override {}
+        // A row's texts are its cells', each named by its place in the cell walk.
+        void searchTexts(const SearchTextVisitor&) override;
+        // Selects the cell the match stands in and scrolls it into view.
+        void showFound(std::size_t part, TextRange) override;
         void nestedGetHint(GetHintEvent&) override;
         //
         void getControlState(GetStateEvent&) const override;

@@ -74,6 +74,7 @@ namespace ClaFi
         RuleInputLevels ruleInputLevels{};
         Color surface;
         const Searcher* searcher{ nullptr };   // what every text drawn here asks for hits
+        TextRange currentMatch{};   // the current match in the text drawn next; empty for none
     private:
         // A band's rules on one channel: each element's own list in turn, then Any element's.
         void applyBandRules(std::initializer_list<UiElement>, PaintChannel, Hsl& color,

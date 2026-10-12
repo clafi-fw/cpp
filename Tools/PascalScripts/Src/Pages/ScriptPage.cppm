@@ -61,6 +61,7 @@ namespace PascalScripts_App
         ScrollBox& m_scrollBox{ createBody<ScrollBox>(
             ScrollBars::Both
         ) };
+        SearchResult m_found{ m_searcher, m_scrollBox };   // what the search finds in the script
         // The script, read as Pascal.
         CodeBox& m_box{ m_scrollBox.createBody<CodeBox>(
             Syntax::Languages::pascal,
@@ -93,7 +94,6 @@ namespace PascalScripts_App
         :
         DocumentPage{ params, std::forward<Args>(args)... }
     {
-        m_scrollBox.setSearcher(&m_searcher);
         // The folder the browser hands every page is the application's own, which is what
         // knows the language; the cast states that.
         const ScriptsFolder& scripts = static_cast<const ScriptsFolder&>(folder());

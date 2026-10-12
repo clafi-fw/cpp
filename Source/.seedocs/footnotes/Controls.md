@@ -271,26 +271,16 @@ writing the text leaves it standing, and a place is clamped to the text when it 
 
 ## Search
 
-A text box steps through what a searcher finds in its text - see TextEngine-Types#searcher. The box
-searches nothing of its own: its owner holds the searcher, hands it to a container the box stands
-in, so the paint bands what it finds, and hands it to the box's own calls. found answers how many
-places the text holds and the one the selection is on. Each call searches the text whole as it
-stands, so an edit by any route is in the next answer, and nothing is kept between calls.
-
-find selects one found place and brings it into view, measured from where the selection starts.
-AtSelection takes the first place at or after it, which is what typing a search does: a match that
-still holds keeps its place as the search text grows, and one that stops holding gives way to the
-next. Next takes the first place after it. Previous takes the one before the place the selection
-lies within, and where it lies within none, the last place before it. All three wrap at the ends of
-the text, and answer false with nothing found.
-
-FoundPlaces::selected names the place the selection lies within, ends included, so a caret standing
-in a match or against either end of it names that match. A caret where two places meet names the
-second. Next and Previous step from that place, so the count and the steps agree.
+A text box is searched as any text is: a search result over a container it stands in reads its text,
+and its selection with it - see Control-Foundation#searchresult. The selection is where a step is
+measured from, so a click or a key moving the caret moves where the next step starts, and a match a
+step makes current is selected and brought into view. The current match is the one the selection
+lies within, ends included, so a caret standing in a match or against either end of it names that
+match; a caret where two meet names the second.
 
 A SearchBox is where a search is typed: a one-line box on the Page element with a placeholder,
-and a count at its right end while it holds text - "2 of 7", "? of 7" while the selection lies
-within no found range, and "No results" in the red pigment. It knows nothing of what it searches. It
+and a count at its right end while it holds text - "2 of 7", "? of 7" while no match is
+current, and "No results" in the red pigment. It knows nothing of what it searches. It
 raises SearchEvent: Search for every change to its text, emptied included; Next and Previous for
 Enter and Shift+Enter; End for Escape on the empty box, which is where its owner hands the focus
 back to what was searched. Escape over text empties the box and leaves the focus in it, so a new

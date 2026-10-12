@@ -12,7 +12,6 @@ import ClaFi.Core.Foundation.EditHistory;
 
 import ClaFi.Core.TextEngine.History;
 import ClaFi.Core.TextEngine.Layout;
-import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Fmt;
@@ -41,21 +40,6 @@ namespace ClaFi::Controls
     {
         No,
         Yes
-    };
-
-    // Which found range a find selects, measured from the selection's start. See Controls#search
-    export enum class FindTarget
-    {
-        AtSelection,    // the first at or after it - what typing a search does
-        Next,           // the first after it
-        Previous        // the last before it
-    };
-
-    // How many places a searcher finds in a text box's text, and the one the selection is on.
-    export struct FoundPlaces
-    {
-        std::size_t count{ 0 };
-        std::optional<std::size_t> selected{};   // counted from zero; none off every place
     };
 
     export class TextBox;
@@ -176,14 +160,12 @@ namespace ClaFi::Controls
         [[nodiscard]] bool canGoBack() const { return !m_backPlaces.empty(); }
         [[nodiscard]] bool canGoForward() const { return !m_forwardPlaces.empty(); }
 
-        // What the searcher finds in the text, and where the selection is. See Controls#search
-        [[nodiscard]] FoundPlaces found(const Searcher&) const;
-        // Selects a place the searcher finds and brings it into view. See Controls#search
-        bool find(const Searcher&, FindTarget);
         // A step down is the last line's height, read off the layout the measuring pass left.
         [[nodiscard]] ScrollMetrics scrollMetrics() const override;
     protected:
         const EditProps* editProps() const override { return &m_editProps; }
+        // Selects the match and brings it into view. See Controls#search
+        void showFound(std::size_t part, TextRange) override;
         // The hand over a link the box follows, and the I-beam over the rest of the text. A box
         // that takes no input takes no caret either, so the arrow is the honest answer while it
         // is disabled.
@@ -961,6 +943,9 @@ namespace ClaFi::Controls
     {
         m_history.breakRun();
         restartCaretBlink();
+        // Ahead of the announcement, so a listener asking the search over the box is answered from
+        // the selection as it stands - a find steps from there.
+        invalidateFound();
         announceCaretMove();
         invalidateEditActions();
     }

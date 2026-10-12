@@ -20,7 +20,6 @@ import ClaFi.Core.System.Props;
 import ClaFi.Core.System.Scaler;
 import ClaFi.Core.System.Utils;
 
-import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.TextEngine;
@@ -72,6 +71,18 @@ namespace ClaFi
 
     export template<typename T>
         concept IsControl = std::derived_from<T, Control>;
+
+    // How a search reads a child of a control. See Control-Foundation#searchresult
+    export enum class ChildSearch
+    {
+        Searched,   // read while it is shown
+        Revealed,   // read shown or hidden, and opened to show a match in it - an expander's body
+        Skipped     // never read - what the control is made of, such as a scroll box's bars
+    };
+
+    // Takes one text a control shows: which of its texts, the text, and the selection in it.
+    export using SearchTextVisitor = std::function<void(std::size_t part, std::wstring_view,
+        const TextRange* selection)>;
 
     export class AdjustMetricsEvent : public ControlEventBaseC
     {
@@ -547,6 +558,7 @@ namespace ClaFi
         friend class Hint;
         friend class HintLabel;
         friend class FocusNavigator;
+        friend SearchResult;
     public:
         template <typename... Args>
         explicit Control(const CreateParams& params, Args&&... args)
@@ -706,6 +718,7 @@ namespace ClaFi
         void invalidate() const;
         void invalidateFormAlign();
         void invalidateHint();   // its hint's words moved: a hint up about it is asked again
+        void invalidateFound();   // a text it shows moved: the search over it is read again
 
         virtual Interactivity interactivity() const { return Interactivity::None; }
         // **Whether this control takes what its lane has over.** A stack places its items at the
@@ -1257,8 +1270,19 @@ namespace ClaFi
         // which is the whole of what the framework needs to be the same for every control.
         virtual DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&);
         virtual const EditProps* editProps() const { return nullptr; }
-        // What every text painted inside the control asks for hits; none keeps its container's.
-        [[nodiscard]] virtual const Searcher* searcher() const { return nullptr; }
+        // The texts the control shows, as a search reads them. See Control-Foundation#searchresult
+        virtual void searchTexts(const SearchTextVisitor&);
+        // Shows a match a search made current in one of the control's texts.
+        virtual void showFound(std::size_t part, TextRange);
+        // How a search reads that child of the control.
+        [[nodiscard]] virtual ChildSearch childSearch(const Control&) const
+            { return ChildSearch::Searched; }
+        // Opens a hidden child a search reads, to show a match in it.
+        virtual void revealChild(Control&) {}
+        // Keeps the search over the control and what it holds; only a container keeps one.
+        virtual void setSearchResult(SearchResult*);
+        // The search every text painted inside the control is drawn with; none keeps its host's.
+        [[nodiscard]] virtual SearchResult* searchResult() const { return nullptr; }
         // What the control's text is laid out over, or none. See Control-Foundation#text-format
         [[nodiscard]] virtual const TextFormat* textFormat() const { return nullptr; }
         //

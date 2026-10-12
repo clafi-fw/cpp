@@ -269,6 +269,12 @@ namespace ClaFi::Controls
             RichControl::paintText(event);
     }
 
+    void ButtonBase::searchTexts(const SearchTextVisitor& visit)
+    {
+        if (m_viewMode != ButtonViewMode::IconOnly)
+            RichControl::searchTexts(visit);
+    }
+
     FloatRect ButtonBase::iconRect(const PaintEvent& event) const
     {
         FloatRect result = event.controlBounds().toFloat();

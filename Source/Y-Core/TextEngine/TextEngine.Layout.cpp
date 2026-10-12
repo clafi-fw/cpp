@@ -889,9 +889,13 @@ namespace ClaFi
             if (collapsesHere)
                 localCollapseBaseline = collapseBaseline - paragraph.bounds.top;
 
-            TextRange localSelection{};
-            if (editProps)
-                localSelection = getLocalRange(editProps->selRange, paragraph.textStart, paragraph.textStart + paragraph.textLength);
+            // A text with no selection of its own shows the current match as one, which is how a
+            // text box shows a match it has selected. See Control-Foundation#searchresult
+            const TextRange& selected = editProps
+                ? editProps->selRange
+                : controlContext.currentMatch;
+            const TextRange localSelection = getLocalRange(selected, paragraph.textStart,
+                paragraph.textStart + paragraph.textLength);
             // The places the searcher in force finds, asked of the paragraph as it is drawn. See
             // TextEngine-Types#searcher
             if (controlContext.searcher)

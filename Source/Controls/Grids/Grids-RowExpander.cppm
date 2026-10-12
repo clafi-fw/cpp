@@ -41,6 +41,9 @@ namespace ClaFi::Controls::Grids
         RowStop navigationStop() override;
         // declines selection
         void getControlState(GetStateEvent&) const override;
+        // The body is read shut or open, and opened to show a match in it.
+        [[nodiscard]] ChildSearch childSearch(const Control&) const override;
+        void revealChild(Control&) override;
     };
 
 

@@ -8,6 +8,7 @@ export import :Action;
 export import :Form;
 export import :PaintEvent;
 export import :Hint;
+export import :SearchResult;
 export import :ContextMessage;
 export import :Traversal;
 export import :Spatial;

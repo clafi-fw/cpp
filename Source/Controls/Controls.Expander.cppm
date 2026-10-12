@@ -38,6 +38,9 @@ namespace ClaFi::Controls
         [[nodiscard]] const ExpanderHeader& header() const { return m_header; }
     protected:
         [[nodiscard]] const Control* headedBody() const override { return body(); }
+        // The body is read shut or open, and opened to show a match in it.
+        [[nodiscard]] ChildSearch childSearch(const Control&) const override;
+        void revealChild(Control&) override;
     private:
         ExpanderHeader& m_header;
     };
@@ -93,6 +96,18 @@ namespace ClaFi::Controls
     void Expander::setHeaderText(const Text& value)
     {
         m_header.setHeaderText(value);
+    }
+
+    ChildSearch Expander::childSearch(const Control& child) const
+    {
+        if (isChildBody(child))
+            return ChildSearch::Revealed;
+        return WithHeldHeader<PanelBase>::childSearch(child);
+    }
+
+    void Expander::revealChild(Control&)
+    {
+        m_header.setExpanded(true);
     }
 
 }

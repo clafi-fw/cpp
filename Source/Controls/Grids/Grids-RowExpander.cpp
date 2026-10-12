@@ -18,4 +18,16 @@ namespace ClaFi::Controls::Grids
             event.state.selected = false;
     }
 
+    ChildSearch RowExpander::childSearch(const Control& child) const
+    {
+        if (&child == m_controls[k_body].get())
+            return ChildSearch::Revealed;
+        return RowGroupBase::childSearch(child);
+    }
+
+    void RowExpander::revealChild(Control&)
+    {
+        header().setExpanded(true);
+    }
+
 }

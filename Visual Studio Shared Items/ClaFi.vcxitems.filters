@@ -784,6 +784,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\RichControl.cppm">
       <Filter>Y_Core\Foundation</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\SearchResult.cpp">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\SearchResult.cppm">
+      <Filter>Y_Core\Foundation</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Spatial.cpp">
       <Filter>Y_Core\Foundation</Filter>
     </ClCompile>

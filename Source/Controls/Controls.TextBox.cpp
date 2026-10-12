@@ -13,7 +13,6 @@ import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.TextEngine;
 import ClaFi.Core.TextEngine.Layout;
-import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
@@ -46,20 +45,6 @@ namespace ClaFi::Controls
                 }
             }
             return false;
-        }
-
-        // The place the selection lies within, ends included, so a caret against either end of a
-        // place names it; a caret where two meet names the second.
-        [[nodiscard]] std::optional<std::size_t> placeOfSelection(
-            const std::vector<TextRange>& places, const TextRange& selection)
-        {
-            const std::size_t after = static_cast<std::size_t>(
-                std::ranges::upper_bound(places, selection.start, {}, &TextRange::start)
-                - places.begin());
-            // A whole-text selection and an unplaced caret both end at k_maxSize, past every place.
-            if (after == 0 || selection.end() > places[after - 1].end())
-                return std::nullopt;
-            return after - 1;
         }
     }
 
@@ -196,59 +181,6 @@ namespace ClaFi::Controls
         restorePlace(place);
     }
 
-    // The text as it stands now, searched whole - the places are the searcher's to name, and
-    // nothing of them is kept here.
-    FoundPlaces TextBox::found(const Searcher& searcher) const
-    {
-        std::vector<TextRange> places;
-        searcher.findIn(text().plainText(), places);
-        return {
-            .count = places.size(),
-            .selected = placeOfSelection(places, m_editProps.selRange)
-        };
-    }
-
-    bool TextBox::find(const Searcher& searcher, const FindTarget target)
-    {
-        std::vector<TextRange> found;
-        searcher.findIn(text().plainText(), found);
-        if (found.empty())
-            return false;
-
-        // A caret that was never placed stands at the start of the text.
-        const std::size_t from = m_editProps.selRange.start == k_maxSize
-            ? 0
-            : m_editProps.selRange.start;
-        const std::size_t atOrAfter = static_cast<std::size_t>(
-            std::ranges::lower_bound(found, from, {}, &TextRange::start) - found.begin());
-        const std::size_t after = static_cast<std::size_t>(
-            std::ranges::upper_bound(found, from, {}, &TextRange::start) - found.begin());
-        std::size_t index = 0;
-        switch (target)
-        {
-            case FindTarget::AtSelection:
-                index = atOrAfter;
-                break;
-            case FindTarget::Next:
-                index = after;
-                break;
-            case FindTarget::Previous:
-                // Back from the range the count names, where the selection lies within one.
-                index = placeOfSelection(found, m_editProps.selRange).value_or(atOrAfter)
-                    + found.size() - 1;
-                break;
-        }
-        // Past the last range is the first again, and before the first is the last.
-        index %= found.size();
-
-        const TextRange range = found[index];
-        m_editProps.targetX.reset();
-        setSelection(range.start, range.end());
-        // The view moves last, once the selection is written - the order nestedKeyDown keeps.
-        scrollIntoView();
-        return true;
-    }
-
     // Read without syncing: the measure that runs ahead of every align has stated the text, and a
     // sync to the bounds the body is about to leave would have its fit read again at the paint.
     ScrollMetrics TextBox::scrollMetrics() const
@@ -256,6 +188,14 @@ namespace ClaFi::Controls
         ScrollMetrics result{};
         result.step.y = m_layout.lastLineHeight() / scaler().factor();
         return result;
+    }
+
+    // The view moves last, once the selection is written - the order nestedKeyDown keeps.
+    void TextBox::showFound(std::size_t, const TextRange range)
+    {
+        m_editProps.targetX.reset();
+        setSelection(range.start, range.end());
+        scrollIntoView();
     }
 
     CursorShape TextBox::cursor() const

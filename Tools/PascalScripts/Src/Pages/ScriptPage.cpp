@@ -62,16 +62,16 @@ namespace PascalScripts_App
             else if (&event.action == &StdActions::findNext
                 || &event.action == &StdActions::findPrevious)
             {
-                event.claim({ .enabled = m_box.found(m_searcher).count != 0 });
+                event.claim({ .enabled = m_found.count() != 0 });
             }
         });
         onActionClick([this](ActionClickEvent& event) {
             if (&event.action == &StdActions::find)
                 startSearch();
             else if (&event.action == &StdActions::findNext)
-                m_box.find(m_searcher, FindTarget::Next);
+                m_found.step(FindTarget::Next);
             else if (&event.action == &StdActions::findPrevious)
-                m_box.find(m_searcher, FindTarget::Previous);
+                m_found.step(FindTarget::Previous);
         });
     }
 
@@ -98,13 +98,13 @@ namespace PascalScripts_App
                 // The searcher knows nothing of the box, so the bands are repainted from here.
                 if (m_searcher.setText(m_search.searchText(), SearchSplit::Phrase))
                     m_box.invalidate();
-                m_box.find(m_searcher, FindTarget::AtSelection);
+                m_found.step(FindTarget::AtSelection);
                 break;
             case SearchRequest::Next:
-                m_box.find(m_searcher, FindTarget::Next);
+                m_found.step(FindTarget::Next);
                 break;
             case SearchRequest::Previous:
-                m_box.find(m_searcher, FindTarget::Previous);
+                m_found.step(FindTarget::Previous);
                 break;
             case SearchRequest::End:
                 m_box.setFocus();
@@ -118,8 +118,7 @@ namespace PascalScripts_App
 
     void ScriptPage::writeSearchResult()
     {
-        const FoundPlaces found = m_box.found(m_searcher);
-        m_search.setResult(found.selected, found.count);
+        m_search.setResult(m_found.currentIndex(), m_found.count());
         // A presenter keeps the answer it was last given until it is asked again.
         StdActions::findNext.invalidateState();
         StdActions::findPrevious.invalidateState();

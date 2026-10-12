@@ -4,6 +4,7 @@ module;
 module ClaFi.Core.Foundation;
 
 import :PaintEvent;
+import :SearchResult;
 import :Input;
 import :Form;
 import :Control;
@@ -102,11 +103,11 @@ namespace ClaFi
 #endif
         }
 
-        // **A searcher is handed down**: a control naming none keeps its container's.
-        if (const Searcher* own = control.searcher())
-            m_controlContext.searcher = own;
-        else if (m_parentEvent)
-            m_controlContext.searcher = m_parentEvent->m_controlContext.searcher;
+        // **A search is handed down**: a control keeping none is painted with its host's.
+        m_searchResult = control.searchResult();
+        if (!m_searchResult && m_parentEvent)
+            m_searchResult = m_parentEvent->m_searchResult;
+        m_controlContext.searcher = m_searchResult ? &m_searchResult->searcher() : nullptr;
 
         // Metrics
         {
@@ -396,6 +397,11 @@ namespace ClaFi
         Color result = surface.toColor();
         result.setOpacity(changed);
         return result;
+    }
+
+    TextRange PaintEvent::currentFoundIn(const Control& holder, const std::size_t part) const
+    {
+        return m_searchResult ? m_searchResult->currentIn(holder, part) : TextRange{};
     }
 
     float PaintEvent::disabledAmount() const

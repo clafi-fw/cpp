@@ -34,6 +34,7 @@ namespace ClaFi
         if (words == m_words)
             return false;
         m_words = std::move(words);
+        ++m_revision;
         return true;
     }
 

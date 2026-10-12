@@ -7,6 +7,7 @@ import :Form;
 import :Hint;
 import :Input;
 import :Action;
+import :SearchResult;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.TextEngine;
 import ClaFi.Core.TextEngine.Text;
@@ -911,14 +912,31 @@ namespace ClaFi
         form->invalidateControl(controlToInvalidate);
     }
 
+    // **What asks for a new layout asks for a new search too**: a text written, a control added
+    // or shown, an edit - each moves what a search over the control finds.
     void Control::invalidateFormAlign()
     {
+        invalidateFound();
         getForm()->invalidateAlign();
     }
 
     void Control::invalidateHint()
     {
         Hint::controlHintChanged(*this);
+    }
+
+    // The innermost search over the control is the one reading it, as it is the one it is
+    // painted with.
+    void Control::invalidateFound()
+    {
+        for (Control* control = this; control; control = control->m_parent)
+        {
+            if (SearchResult* result = control->searchResult())
+            {
+                result->invalidate();
+                return;
+            }
+        }
     }
 
     bool Control::respondsToPointer() const
@@ -993,6 +1011,7 @@ namespace ClaFi
         // A popup standing on this control, or on anything inside it, goes down with it.
         if (!value)
             form().controlHidden(*this);
+        invalidateFound();
         form().invalidateAlign();
     }
 
@@ -1875,6 +1894,7 @@ namespace ClaFi
             return;
         Text text;
         const Text& gathered = doGetText(event.formContext(), text, EventPhase::Paint);
+        event.controlContext().currentMatch = event.currentFoundIn(*this, 0);
         DrawTextResult result = drawText(event, txtRect, gathered);
         if (result.drawn)
             m_flags2 |= cfTextDrawn;
@@ -1898,6 +1918,29 @@ namespace ClaFi
             wordWrap(),
             textFormat()
         );
+    }
+
+    // The own text as it is painted, with the selection where the control keeps one and has
+    // placed it.
+    void Control::searchTexts(const SearchTextVisitor& visit)
+    {
+        Text buffer;
+        const Text& shown = doGetText(formContext(), buffer, EventPhase::Paint);
+        if (shown.empty())
+            return;
+        const EditProps* edit = editProps();
+        const bool placed = edit && edit->selRange.start != k_maxSize;
+        visit(0, shown.plainText(), placed ? &edit->selRange : nullptr);
+    }
+
+    void Control::showFound(std::size_t, TextRange)
+    {
+        scrollIntoView();
+    }
+
+    void Control::setSearchResult(SearchResult*)
+    {
+        noReach("Only a container keeps a search result");
     }
 
     void Control::calculate(FormBase& form)

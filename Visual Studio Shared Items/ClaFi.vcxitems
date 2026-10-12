@@ -258,6 +258,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Hint.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Hint.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\HintForm.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\SearchResult.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\SearchResult.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation_Facade.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Backend.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Backend.cpp" />

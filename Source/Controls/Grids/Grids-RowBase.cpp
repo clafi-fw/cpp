@@ -475,9 +475,53 @@ namespace ClaFi::Controls::Grids
     {
         // isFirstRow is a property of the row, so the walk carries no trace of it.
         const bool isFirstRow = parent() == &descriptor().owner() && isFirstInParent();
+        // A cell is drawn with the current match where it stands in that cell's text.
+        std::size_t part = 0;
         traverseCells(event.topLeft(), [&](const RowCell& cell){
+            event.controlContext().currentMatch = event.currentFoundIn(*this, part);
+            ++part;
             paintOneCell(event, cell, isFirstRow);
         });
+    }
+
+    // A cell holding a control is that control's to answer, and is read with it.
+    void RowBase::searchTexts(const SearchTextVisitor& visit)
+    {
+        std::size_t part = 0;
+        Text text;
+        traverseCells([&](const RowCell& cell) {
+            if (!cell.blank && !cellControl(cell.column))
+            {
+                doGetCellText(cell.column, text);
+                visit(part, text.plainText(), nullptr);
+            }
+            ++part;
+        });
+    }
+
+    // Selected as a press selects it, the lines a later key move keeps included: at the cell, in
+    // the grid's own space.
+    void RowBase::showFound(const std::size_t part, TextRange)
+    {
+        const Column* column = nullptr;
+        FloatRect cellRect;
+        std::size_t at = 0;
+        traverseCells([&](const RowCell& cell) {
+            if (at == part)
+            {
+                column = &cell.column;
+                cellRect = cell.rect;
+            }
+            ++at;
+        });
+        if (!column)
+            return;
+        selectColumn(*column);
+        const FloatPoint rowOrigin = boundsInForm().topLeft();
+        const FloatPoint gridOrigin = m_descriptor.owner().boundsInForm().topLeft();
+        m_descriptor.setDesiredCellX(rowOrigin.x + cellRect.centerX() - gridOrigin.x);
+        m_descriptor.setDesiredCellY(rowOrigin.y + cellRect.centerY() - gridOrigin.y);
+        scrollCellIntoView(cellRect);
     }
 
     // **A cell says what its column is too narrow to show**, which is the over-text hint

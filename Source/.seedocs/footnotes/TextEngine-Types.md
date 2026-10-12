@@ -170,13 +170,14 @@ viewport pays for the paragraphs on screen. A CodeBox is the overlay the framewo
 
 ## Searcher
 
-**A searcher is the application's, and a container only points at it.** ContainerBase::setSearcher
-hands it every text painted inside the container - a grid's cells, a label, a text box read-only or
-not - and the paint asks it for the places each paragraph holds one of its words, drawn on the
-FoundText band. The paint hands the searcher down: a control naming none keeps its container's, so
-the innermost container naming one is the one in force, and naming none takes the bands down. The
-application keeps the searcher for as long as a container points at it. A text box steps through the
-places it finds with the same searcher handed in - see Controls#search.
+**A searcher is the application's, and a search result points at it.** A SearchResult made over a
+container hands the searcher every text painted inside it, a grid's cells and a label as much as a
+text box, read-only or not, and the paint asks it for the places each paragraph holds one of its
+words, drawn on the FoundText band. The paint hands the result down: a control keeping none is
+painted with its host's, so the innermost one is in force. One searcher serves any number of
+results, a page each, and the application keeps it for as long as a result points at it. What a
+result does with the places - the count, the current match, the steps - is in
+Control-Foundation#searchresult.
 
 **Its text is taken as SearchSplit says**: Words splits it at white space, a word at a time, which
 is a search over a page; Phrase takes it whole as typed, which is a find in an editor. Each word is
@@ -186,10 +187,10 @@ order and apart. A paragraph is folded as it is painted, into a buffer the searc
 grows only for a paragraph longer than any before; text out of view costs nothing.
 
 **The band is drawn, and the text stays as it was**: it is measured, copied and saved as it was. The
-searcher knows nothing of the containers it is handed to, so new words repaint nothing until whoever
-gave them invalidates what shows them, or hands the searcher again. A hint is a window of its own
-and asks no searcher. The buffer makes findIn a const call that writes, so a searcher is asked from
-one thread.
+searcher knows nothing of the results it serves, so new words repaint nothing until whoever gave
+them invalidates what shows them. revision moves with the words, so a result reads its texts again
+when next asked. A hint is a window of its own and asks no searcher. The buffer makes findIn a const
+call that writes, so a searcher is asked from one thread.
 
 ## Links
 
