@@ -42,14 +42,13 @@ namespace SeeDocs_App
 
         // The box one line is typed into, in the field that gives it a surface of its own.
         template<typename Box>
-        [[nodiscard]] Box& addBox(Panel& field, PlaceHolderText placeHolder)
+        [[nodiscard]] Box& addBox(Panel& field)
         {
             return field.createBody<Box>(
                 Interactivity::Focusable,
                 WordWrap::No,
                 Padding{ 0.0f },
-                VerticalTextAnchor::Center,
-                std::move(placeHolder)
+                VerticalTextAnchor::Center
             );
         }
     }
@@ -94,10 +93,7 @@ namespace SeeDocs_App
             Radius{ owner.themeMetrics().button.radius },
             owner.themeMetrics().button.padding
         ) },
-        m_name{ addBox<PromptBox>(
-            m_nameField,
-            PlaceHolderText{ L"The name the project goes by" }
-        ) },
+        m_name{ addBox<PromptBox>(m_nameField) },
         m_locationGroup{ addGroup(m_column) },
         m_locationCaption{ m_locationGroup.add<Label>(Text{ L"Where to store the project?" }) },
         m_locationRow{ m_locationGroup.add<Panel>(Spacing{ k_cellSpacing }) },
@@ -107,10 +103,7 @@ namespace SeeDocs_App
             owner.themeMetrics().button.padding
         ) },
         // Lists from a root only: the project's place is a path from one.
-        m_location{ addBox<FolderBox<PromptBox>>(
-            m_locationField,
-            PlaceHolderText{ L"A folder on this computer" }
-        ) },
+        m_location{ addBox<FolderBox<PromptBox>>(m_locationField) },
         m_folderGroup{ addGroup(m_column) },
         m_folderCaption{ m_folderGroup.add<Label>(
             Text{ L"The project files will be created in" }

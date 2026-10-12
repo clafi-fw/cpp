@@ -84,7 +84,7 @@ namespace SeeDocs_App
         static constexpr std::size_t k_recentLimit = 10;
         // Where a new project is offered to be stored before one has been: under the user's
         // documents.
-        static constexpr std::wstring_view k_defaultLocation = L"Code Documentations";
+        static constexpr std::wstring_view k_defaultLocation = L"SeeDocs";
         // What SeeDocs keeps of its own, beside the framework's schema.
         [[nodiscard]] static Dom::Dt::Section createConfigSchema();
     private:

@@ -25,7 +25,7 @@ so is whether a hint edited in SeeDocs is written back into the sources.
 ## Projects
 
 A project is a folder of its own, stored wherever the user chooses - SeeDocs offers
-`Documents/Code Documentations`. Everything SeeDocs keeps of a project stands in it: `Project.cfg`,
+`Documents/SeeDocs`. Everything SeeDocs keeps of a project stands in it: `Project.cfg`,
 the project's properties; `Surface.cfg`, the database the scanner writes; and `footnotes`, the
 notes the pages show beside the hints. The sources stand wherever they are, in any number of
 folders, and are read as they stand.

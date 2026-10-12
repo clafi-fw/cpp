@@ -193,6 +193,7 @@ namespace SeeDocs_App
                 caption,
                 HintText{ hint },
                 Padding{ 0.0f, set.themeMetrics().listItem.padding.y },
+                HorizontalAlign::Left,
                 RadioButton::OnGetState{ [chosen, enabled](GetStateEvent& event) {
                     event.state.selected = chosen();
                     if (enabled)
