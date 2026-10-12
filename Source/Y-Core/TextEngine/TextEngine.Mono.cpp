@@ -378,7 +378,7 @@ namespace ClaFi
 #endif
 
         const Color defaultColor = context.textRgb(InkGrade::Strongest);
-        const float fadeWidth = context.scaleF(30.0f);
+        const float fadeWidth = context.scaleF(k_lineFadeWidth);
         const std::span<const ColorSpan>::iterator shownColors = std::ranges::partition_point(
             params.colors, [&](const ColorSpan& span){
                 return span.range.end() <= shownStart.index;
@@ -399,12 +399,13 @@ namespace ClaFi
             if (left < params.bounds.right && origin.x + runRight > params.clip.left)
             {
                 Graphics::Brush brush = Graphics::SolidColor{ runColor };
-                if (params.fades)
+                if (params.overrun > 0.0f)
                 {
+                    const Color edgeColor = lineFadeEdgeColor(runColor, params.overrun, fadeWidth);
                     brush = Graphics::LinearGradient{
                         .startPoint = { params.bounds.right - fadeWidth, 0.0f },
                         .endPoint = { params.bounds.right, 0.0f },
-                        .stops = { { 0.0f, runColor }, { 1.0f, runColor.withOpacity(0.0f) } },
+                        .stops = { { 0.0f, runColor }, { 1.0f, edgeColor } },
                     };
                 }
                 m_native->drawRun(context, { left, baselineY }, glyphs, brush);

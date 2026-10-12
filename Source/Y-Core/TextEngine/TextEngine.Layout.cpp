@@ -825,7 +825,7 @@ namespace ClaFi
         ensureLayout();
         if constexpr (k_releaseNativeLayouts)
             m_held.beginDraw();
-        DrawTextResult result{ .drawn = true, .trimmed = !m_globalBaselinesToFade.empty() };
+        DrawTextResult result{ .drawn = true, .trimmed = !m_globalLineFades.empty() };
 
 #if CLAFI_TEXT_MOVING
         // Held for the whole run rather than per paragraph, because on Direct2D this is render
@@ -876,13 +876,12 @@ namespace ClaFi
             if constexpr (k_releaseNativeLayouts)
                 m_held.drawn(paragraphIndex);
 
-            buffers.baselines.clear();
-            for (float gb : m_globalBaselinesToFade)
+            buffers.lineFades.clear();
+            for (const LineFade& fade : m_globalLineFades)
             {
-                if (gb >= paragraph.bounds.top && gb <= paragraph.bounds.bottom)
-                {
-                    buffers.baselines.push_back(gb - paragraph.bounds.top);
-                }
+                const float baseline = fade.baseline;
+                if (baseline >= paragraph.bounds.top && baseline <= paragraph.bounds.bottom)
+                    buffers.lineFades.push_back({ baseline - paragraph.bounds.top, fade.overrun });
             }
 
             float localCollapseBaseline = -9999.0f;
@@ -985,12 +984,12 @@ namespace ClaFi
                     origin.x += std::max(m_collapseXOffset, -offset);
 
                 // The one row a paragraph on cells has fades when the fit named its baseline.
-                bool fades = false;
-                for (const float baseline : buffers.baselines)
+                float overrun = 0.0f;
+                for (const LineFade& fade : buffers.lineFades)
                 {
-                    if (std::abs(baseline - font.baseline()) < 0.5f)
+                    if (std::abs(fade.baseline - font.baseline()) < 0.5f)
                     {
-                        fades = true;
+                        overrun = fade.overrun;
                         break;
                     }
                 }
@@ -1001,7 +1000,7 @@ namespace ClaFi
                     .colors = drawnColors,
                     .hits = buffers.hits,
                     .selection = localSelection,
-                    .fades = fades,
+                    .overrun = overrun,
                 });
             }
             else
@@ -1029,7 +1028,7 @@ namespace ClaFi
                     buffers.scripts,
                     buffers.hits,
                     localSelection,
-                    buffers.baselines,
+                    buffers.lineFades,
                     localCollapseBaseline,
                     collapseXOffset);
             }
@@ -1132,7 +1131,7 @@ namespace ClaFi
     bool TextLayout::isTrimmed()
     {
         ensureLayout();
-        return !m_globalBaselinesToFade.empty();
+        return !m_globalLineFades.empty();
     }
 
     CaretHit TextLayout::caretPos(FloatPoint pt)
@@ -1481,12 +1480,17 @@ namespace ClaFi
         if (m_verticalValid)
             return;
 
-        m_globalBaselinesToFade.clear();
+        m_globalLineFades.clear();
         m_globalCollapseBaseline = -9999.0f;
         m_collapseXOffset = 0.0f;
 
         bool hasCollapsed = false;
         float lastValidBaseline = -9999.0f;
+        float lastValidWidth = 0.0f;
+        float lastValidRoom = 0.0f;
+        bool lastValidFades = false;
+        float collapseLineWidth = 0.0f;
+        float collapseRoom = 0.0f;
         float appendedLinesWidth = 0.0f;
         TextAlign collapseAlignment = TextAlign::Left;
         bool isFirstParagraph = true;
@@ -1516,6 +1520,7 @@ namespace ClaFi
 
                 if (!hasCollapsed)
                 {
+                    const float availableW = std::max(1.0f, m_bounds.x - p.bounds.left);
                     if (absoluteBottom > constraintsY + k_fitTolerance)
                     {
                         hasCollapsed = true;
@@ -1523,6 +1528,8 @@ namespace ClaFi
                         if (lastValidBaseline > -9000.0f)
                         {
                             m_globalCollapseBaseline = lastValidBaseline;
+                            collapseLineWidth = lastValidWidth;
+                            collapseRoom = lastValidRoom;
                             if (needsGap)
                                 appendedLinesWidth += line.height * 0.25f;
 
@@ -1531,8 +1538,13 @@ namespace ClaFi
                         else
                         {
                             m_globalCollapseBaseline = absoluteBaseline;
+                            collapseLineWidth = line.width;
+                            collapseRoom = availableW;
                         }
-                        m_globalBaselinesToFade.push_back(m_globalCollapseBaseline);
+                        // A collapse line fading for its own width keeps that entry. The overrun
+                        // is stated once everything carried on along the line is known.
+                        if (!lastValidFades)
+                            m_globalLineFades.push_back({ m_globalCollapseBaseline, 0.0f });
                         if constexpr (Diagnostic::Options::logTextLayout())
                         {
                             diagnosticLog(std::format(
@@ -1549,10 +1561,17 @@ namespace ClaFi
                     else
                     {
                         lastValidBaseline = absoluteBaseline;
-                        float availableW = std::max(1.0f, m_bounds.x - p.bounds.left);
-                        if (line.isTrimmed || line.width > availableW + k_fitTolerance)
+                        lastValidWidth = line.width;
+                        lastValidRoom = availableW;
+                        lastValidFades = line.isTrimmed
+                            || line.width > availableW + k_fitTolerance;
+                        if (lastValidFades)
                         {
-                            m_globalBaselinesToFade.push_back(absoluteBaseline);
+                            // What a trimmed line left out was never measured, so it fades wholly.
+                            const float overrun = line.isTrimmed
+                                ? k_maxFloat
+                                : line.width - availableW;
+                            m_globalLineFades.push_back({ absoluteBaseline, overrun });
                             if constexpr (Diagnostic::Options::logTextLayout())
                             {
                                 diagnosticLog(std::format(
@@ -1586,6 +1605,12 @@ namespace ClaFi
                 m_collapseXOffset = -appendedLinesWidth / 2.0f;
             else if (collapseAlignment == TextAlign::Right)
                 m_collapseXOffset = -appendedLinesWidth;
+
+            // Everything after the collapse line counts as carried on along it, drawn or not.
+            // See TextEngine-Types#linefade
+            LineFade& collapse = m_globalLineFades.back();
+            collapse.overrun = std::max(collapse.overrun,
+                collapseLineWidth + appendedLinesWidth - collapseRoom);
         }
 
         m_calcWidth = std::min(m_bounds.x, m_shapedWidth);

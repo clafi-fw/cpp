@@ -8,6 +8,16 @@ The author's side of the footnote of the same name.
 time, and a line filled to the box exactly can come back from that build a hair wider than the
 box - which a wrapping text breaks at the gap, and a one-line box then collapses.
 
+## LineFade
+
+The collapse line's overrun is its own width and everything appended to it, less the room its
+paragraph has, whatever its alignment. A centred or right aligned collapse line moves left by the
+collapse offset to make room for what follows, and no further than the leading edge, so either
+the whole run fits or its start is held at that edge and all of it past the room is overrun. The
+appended width is the layout's own sum - line widths without their trailing whitespace, and a
+quarter of a line's height between paragraphs - so it can come out a space per lifted line short
+of what DirectWrite and HarfBuzz draw.
+
 ## TextRenderMode
 
 **The whole path stands on** CLAFI_TEXT_MOVING, in Source/Y-Core/System/Switches.h, and it is 0.
@@ -52,7 +62,8 @@ for one character and what is on screen, not a lookup and a glyph per character 
 length. cellLeft and the bands under the hits and the selection are counted the same way.
 Inside the shown span, glyphs are gathered into a run for as long as the colour holds and no
 tab breaks the cells, and each run is handed to the platform with the colour's brush - a
-gradient to transparent over the box's right edge where the line fades.
+gradient over the box's right edge where the line fades, down to the colour lineFadeEdgeColor
+answers for the row's overrun.
 
 The fonts live in one table for the application, found by family, size, weight and style;
 a request is resolved once, negative answers included.

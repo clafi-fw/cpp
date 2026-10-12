@@ -143,7 +143,7 @@ namespace ClaFi::PlatformImplementation::Windows
             ID2D1RenderTarget* rt,
             const FloatRect& bounds,
             float fadeWidth,
-            std::span<const float> localBaselinesToFade,
+            std::span<const LineFade> localLineFades,
             float globalCollapseBaseline,
             std::span<const LineMove> lineMoves,
             Graphics::Canvas* canvas
@@ -203,7 +203,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // Stated relative to m_bounds.top, which is where the layout's own lines are measured
         // from. Held as a view onto the caller's buffer: the renderer lives only for the Draw call
         // it was made for, which is inside the call that owns that buffer.
-        std::span<const float> m_localBaselinesToFade;
+        std::span<const LineFade> m_localLineFades;
         float m_globalCollapseBaseline;
         std::span<const LineMove> m_lineMoves; // ordered by baseline, held the same way
 
@@ -225,18 +225,19 @@ namespace ClaFi::PlatformImplementation::Windows
         ID2D1RenderTarget* rt,
         const FloatRect& bounds,
         float fadeWidth,
-        std::span<const float> localBaselinesToFade,
+        std::span<const LineFade> localLineFades,
         float globalCollapseBaseline,
         std::span<const LineMove> lineMoves,
         Graphics::Canvas* canvas
     )
-        : m_rt(rt)
-        , m_bounds(bounds)
-        , m_fadeWidth(fadeWidth)
-        , m_localBaselinesToFade(localBaselinesToFade)
-        , m_globalCollapseBaseline(globalCollapseBaseline)
-        , m_lineMoves(lineMoves)
-        , m_canvas(canvas)
+        :
+        m_rt{ rt },
+        m_bounds{ bounds },
+        m_fadeWidth{ fadeWidth },
+        m_localLineFades{ localLineFades },
+        m_globalCollapseBaseline{ globalCollapseBaseline },
+        m_lineMoves{ lineMoves },
+        m_canvas{ canvas }
     {
     }
 
@@ -457,29 +458,30 @@ namespace ClaFi::PlatformImplementation::Windows
         const float drawX = origin->x;
         float drawY = origin->y;
 
-        bool shouldFade = false;
+        float overrun = 0.0f;
         // Both sides of the comparison are put in the layout's own coordinates, so the baselines
         // arrive as the layout states them and no absolute copy of them is made.
         float checkBaseline = drawY - m_bounds.top;
-        for (float bf : m_localBaselinesToFade)
+        for (const LineFade& fade : m_localLineFades)
         {
-            if (std::abs(checkBaseline - bf) < 0.5f) {
-                shouldFade = true;
+            if (std::abs(checkBaseline - fade.baseline) < 0.5f)
+            {
+                overrun = fade.overrun;
                 break;
             }
         }
 
-        // Apply linear gradient fade brush if requested
-        if (shouldFade)
+        if (overrun > 0.0f)
         {
             Color baseColor = std::holds_alternative<Graphics::SolidColor>(effectBrush)
                 ? std::get<Graphics::SolidColor>(effectBrush).color
                 : controlContext->textRgb(InkGrade::Strongest);
+            const Color edgeColor = lineFadeEdgeColor(baseColor, overrun, m_fadeWidth);
 
             effectBrush = Graphics::LinearGradient{
-              .startPoint = { m_bounds.right - m_fadeWidth, 0.0f },
-              .endPoint = { m_bounds.right, 0.0f },
-              .stops = { { 0.0f, baseColor }, { 1.0f, baseColor.withOpacity(0.0f) } }
+                .startPoint = { m_bounds.right - m_fadeWidth, 0.0f },
+                .endPoint = { m_bounds.right, 0.0f },
+                .stops = { { 0.0f, baseColor }, { 1.0f, edgeColor } },
             };
         }
 

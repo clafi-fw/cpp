@@ -42,6 +42,20 @@ A gap that takes the room its line has over, and never less than the width it st
 is what shows on a line with nothing to spare, so a caller wanting the two sides held apart there
 states it here rather than writing a space beside the gap.
 
+## LineFade
+
+A line its box cuts at the trailing edge, and how far it runs past that edge.
+
+**The fade grows with the overrun.** It stands k_lineFadeWidth wide at the edge and takes as much
+of the line's colour away there as the line runs past it, out of that width - a line a pixel too
+long keeps nearly all of its colour, and one running a whole fade's width past the edge or more
+fades out entirely. A scroll box brings its edge fades in over its travel the same way.
+
+**The collapse line carries everything after it.** The lines below the last one that fits are
+carried on along that line, and its overrun counts all of them, whether the draw reaches them
+or not. A line its native layout trimmed has left out a part nobody measured, and fades
+entirely.
+
 ## TextRenderMode
 
 What a control's text has to survive, stated as three cases rather than as raster settings.

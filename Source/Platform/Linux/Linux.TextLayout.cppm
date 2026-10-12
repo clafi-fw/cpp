@@ -38,7 +38,7 @@ namespace ClaFi::Platform::Linux
             std::span<const ScriptSpan> scripts,
             std::span<const TextRange> hitRanges,
             const TextRange& selectionRange,
-            std::span<const float> localBaselinesToFade,
+            std::span<const LineFade> localLineFades,
             float localCollapseBaseline,
             float collapseXOffset) override;
     private:

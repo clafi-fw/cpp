@@ -82,7 +82,7 @@ namespace ClaFi
             std::span<const ScriptSpan> scripts,
             std::span<const TextRange> hitRanges,
             const TextRange& selectionRange,
-            std::span<const float> localBaselinesToFade,
+            std::span<const LineFade> localLineFades,
             float localCollapseBaseline,
             float collapseXOffset) = 0;
     };
@@ -113,8 +113,8 @@ namespace ClaFi
     //
     // One set is enough for as long as nothing draws text inside a text draw. The place that could
     // is an in text icon: its paint function runs while the backend is drawing the run it sits in,
-    // and baselines is still being read at that point - colors and hits are finished with before
-    // the run is drawn, baselines is not. An icon that drew text would refill baselines under the
+    // and lineFades is still being read at that point - colors and hits are finished with before
+    // the run is drawn, lineFades is not. An icon that drew text would refill lineFades under the
     // renderer reading it, so an icon paints shapes.
     //
     // colors, overlayColors, mergedColors and inkedColors are a chain because each step is stated
@@ -123,7 +123,7 @@ namespace ClaFi
     // reads one and writes the next, so none of them can be another.
     struct TextDrawBuffers
     {
-        NoAllocFloatVector baselines;
+        std::vector<LineFade> lineFades;
         std::vector<TextRange> hits;
         std::vector<ColorSpan> colors;
         std::vector<ColorSpan> overlayColors;
@@ -136,7 +136,7 @@ namespace ClaFi
         // The selection bands standing past the last glyph of a row, in the coordinates the draw
         // was asked for. Those lie off the end of the row's text, which a row filling its box
         // puts outside the layout's own box, so they are held while the paragraphs are walked and
-        // filled once that box is off the clip stack. Live for the whole of a draw, baselines
+        // filled once that box is off the clip stack. Live for the whole of a draw, lineFades
         // being the other one that is.
         std::vector<FloatRect> newlineBands;
     };
@@ -401,7 +401,7 @@ namespace ClaFi
         float m_placedWidth{ -1.0f }; // what ensurePlacement last placed in, or -1 after a shaping
         float m_calcWidth{ 0.0f };
         float m_calcHeight{ 0.0f };
-        std::vector<float> m_globalBaselinesToFade;
+        std::vector<LineFade> m_globalLineFades;
         float m_globalCollapseBaseline{ -9999.0f };
         float m_collapseXOffset{ 0.0f };
         // The paragraphs holding a native layout, while k_releaseNativeLayouts is on.

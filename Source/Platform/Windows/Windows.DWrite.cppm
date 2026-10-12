@@ -192,7 +192,7 @@ namespace ClaFi::PlatformImplementation::Windows
             std::span<const ScriptSpan> scripts,
             std::span<const TextRange> hitRanges,
             const TextRange& selectionRange,
-            std::span<const float> localBaselinesToFade,
+            std::span<const LineFade> localLineFades,
             float localCollapseBaseline,
             float collapseXOffset) override;
 
@@ -727,7 +727,7 @@ namespace ClaFi::PlatformImplementation::Windows
         std::span<const ScriptSpan> scripts,
         std::span<const TextRange> hitRanges,
         const TextRange& selectionRange,
-        std::span<const float> localBaselinesToFade,
+        std::span<const LineFade> localLineFades,
         float localCollapseBaseline,
         float collapseXOffset)
     {
@@ -884,8 +884,8 @@ namespace ClaFi::PlatformImplementation::Windows
         FadeTextRenderer renderer(
             rt,
             bounds,
-            controlContext.scaleF(30.0f),
-            localBaselinesToFade,
+            controlContext.scaleF(k_lineFadeWidth),
+            localLineFades,
             localCollapseBaseline + bounds.top,
             lineMoves,
             &controlContext.canvas()

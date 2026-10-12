@@ -339,7 +339,7 @@ namespace ClaFi::Platform::Linux
         std::span<const ScriptSpan> scripts,
         std::span<const TextRange> hitRanges,
         const TextRange& selectionRange,
-        std::span<const float> localBaselinesToFade,
+        std::span<const LineFade> localLineFades,
         float localCollapseBaseline,
         float collapseXOffset)
     {
@@ -389,7 +389,7 @@ namespace ClaFi::Platform::Linux
 #if CLAFI_TEXT_MOVING
         const bool snap = backend->snapTextOrigins();
 #endif
-        const float fadeWidth = controlContext.scaleF(30.0f);
+        const float fadeWidth = controlContext.scaleF(k_lineFadeWidth);
         const Graphics::Matrix3x2& canvasTransform = canvas.transform();
         const bool transformed = !(canvasTransform == Graphics::Matrix3x2::identity());
         const Color defaultColor = controlContext.textRgb(InkGrade::Strongest);
@@ -427,12 +427,12 @@ namespace ClaFi::Platform::Linux
                 }
             }
 
-            bool fades = false;
-            for (float baseline : localBaselinesToFade)
+            float overrun = 0.0f;
+            for (const LineFade& fade : localLineFades)
             {
-                if (std::abs(drawBaseline - baseline) < 0.5f)
+                if (std::abs(drawBaseline - fade.baseline) < 0.5f)
                 {
-                    fades = true;
+                    overrun = fade.overrun;
                     break;
                 }
             }
@@ -486,12 +486,13 @@ namespace ClaFi::Platform::Linux
                     if (!open)
                         return;
                     Graphics::Brush brush = Graphics::SolidColor{ pieceColor };
-                    if (fades)
+                    if (overrun > 0.0f)
                     {
+                        const Color edgeColor = lineFadeEdgeColor(pieceColor, overrun, fadeWidth);
                         brush = Graphics::LinearGradient{
                             .startPoint = { bounds.right - fadeWidth, 0.0f },
                             .endPoint = { bounds.right, 0.0f },
-                            .stops = { { 0.0f, pieceColor }, { 1.0f, pieceColor.withOpacity(0.0f) } },
+                            .stops = { { 0.0f, pieceColor }, { 1.0f, edgeColor } },
                         };
                     }
                     m_compositor.composite(*backend, brush);

@@ -64,7 +64,7 @@ namespace ClaFi
         std::span<const ColorSpan> colors;
         std::span<const TextRange> hits;
         TextRange selection;
-        bool fades;
+        float overrun{ 0.0f }; // how far the line runs past the box, which it fades out toward
     };
 
     // A monospace font with the glyph of every code point asked so far. See TextEngine-Types
