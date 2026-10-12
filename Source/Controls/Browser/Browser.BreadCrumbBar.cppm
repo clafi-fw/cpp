@@ -58,6 +58,7 @@ namespace ClaFi::Browser
         explicit GetPageIconSizeEvent(PageData& pageData) : pageData{ pageData } {}
         PageData& pageData;
         IconSize size{ 0.0f };
+        ButtonViewMode viewMode{ ButtonViewMode::LeftIcon };
     };
 
     /// @brief Paints a page's icon - in a crumb's own slot, or beside a line of a crumb's list.
@@ -178,7 +179,7 @@ namespace ClaFi::Browser
     private:
         void selectBrowserData(PageData&, Control& initiator);
         void fetchSubItems(PageData&);
-        [[nodiscard]] IconSize pageIconSize(PageData&);
+        void getPageIcon(GetPageIconSizeEvent&);
         void paintPageIcon(PageData&, PaintIconEvent&);
         // Const because a crumb asks it while answering editorMode(), which is const. Raising an
         // event is a const operation - the answer is the handler's, and none of it is the bar's
@@ -415,13 +416,19 @@ namespace ClaFi::Browser
         //
         // A crumb's list is the other way round - there a picture is what tells one line from the
         // next - so showDropdown asks per page.
-        const IconSize size = m_data && !m_data->parent
-            ? parentAs<BreadCrumbBar>().pageIconSize(*m_data)
-            : IconSize{ 0.0f };
+        IconSize size = IconSize{ 0.0f };
+        ButtonViewMode viewMode = ButtonViewMode::LeftIcon;
+        if (m_data && !m_data->parent)
+        {
+            GetPageIconSizeEvent icon{ *m_data };
+            parentAs<BreadCrumbBar>().getPageIcon(icon);
+            size = icon.size;
+            viewMode = icon.viewMode;
+        }
         const bool hasIcon = size.x > 0.0f && size.y > 0.0f;
         // A crumb with nothing to show keeps its title against its own left edge, rather than
         // holding a slot open beside it.
-        setViewMode(hasIcon ? ButtonViewMode::LeftIcon : ButtonViewMode::TextLabel);
+        setViewMode(hasIcon ? viewMode : ButtonViewMode::TextLabel);
         if (hasIcon)
             setIconSize(size);
     }
@@ -484,11 +491,9 @@ namespace ClaFi::Browser
         emitEvent(event);
     }
 
-    IconSize BreadCrumbBar::pageIconSize(PageData& value)
+    void BreadCrumbBar::getPageIcon(GetPageIconSizeEvent& event)
     {
-        GetPageIconSizeEvent event{ value };
         emitEvent(event);
-        return event.size;
     }
 
     void BreadCrumbBar::paintPageIcon(PageData& value, PaintIconEvent& iconEvent)

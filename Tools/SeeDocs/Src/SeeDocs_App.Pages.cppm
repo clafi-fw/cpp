@@ -97,6 +97,18 @@ namespace SeeDocs_App
 
     export using TableColumns = std::vector<TableColumn>;
 
+    // What a page is about, which is what its title is marked with.
+    export enum class PageKind
+    {
+        Projects,   // the root, listing the projects open
+        Project,    // a project's home
+        Folder,     // a folder of sources
+        Module,     // a module or a header
+        Type,
+        Member,     // a method, a function or a constant
+        Search      // what holds the words a search was given
+    };
+
     // A row of a table: its cells, the type it stands for where it does, what the first cell's
     // hint shows where it has one, the note the declaration's comment references, the comment
     // the row's hint is read from, and what the row offers at its end.
@@ -104,6 +116,8 @@ namespace SeeDocs_App
     {
         Cells cells;
         const Type* type{ nullptr };
+        // The kind of page the first cell opens, which marks the cell where no type does.
+        std::optional<PageKind> pageKind;
         Runs hint;   // a method's signature, set as code
         SourceLanguage language{ SourceLanguage::Cpp };   // what the hint's code is written in
         std::optional<Excerpt> excerpt;
@@ -205,18 +219,6 @@ namespace SeeDocs_App
         std::wstring note;
         std::wstring after;   // an anchor; empty for the note's end
         std::wstring owner;   // the type the page is about; empty on a folder's or a module's
-    };
-
-    // What a page is about, which is what its title is marked with.
-    export enum class PageKind
-    {
-        Projects,   // the root, listing the projects open
-        Project,    // a project's home
-        Folder,     // a folder of sources
-        Module,     // a module or a header
-        Type,
-        Member,     // a method, a function or a constant
-        Search      // what holds the words a search was given
     };
 
     export struct Page

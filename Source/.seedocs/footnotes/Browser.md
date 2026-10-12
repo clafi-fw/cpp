@@ -23,6 +23,8 @@ What a page's icon is. A zero size says the page has none, and closes the slot.
 Asked of the root crumb when it is given its page, and of nothing else: the crumbs
 after it are text. A line of a crumb's list holds a slot of its own size and asks only for
 the paint.
+The view mode says how the root crumb shows the icon: LeftIcon beside its title, or IconOnly
+with the title as the crumb's hint. BrowserControl::rootCrumbViewMode is what fills it in.
 
 ## CanRenamePageEvent
 

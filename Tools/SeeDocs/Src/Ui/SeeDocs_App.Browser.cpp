@@ -1161,6 +1161,7 @@ namespace SeeDocs_App
         for (const std::unique_ptr<ShownProject>& shown : m_projects)
         {
             TableRow row;
+            row.pageKind = PageKind::Project;
             row.cells.push_back({
                 Run{ .text = shown->open.project.name, .link = homePath(*shown) }
             });
@@ -1179,6 +1180,7 @@ namespace SeeDocs_App
             TableColumn{ .name = L"Project" },
             TableColumn{ .name = L"Folder", .fills = true }
         };
+        section.table.header = false;
         section.table.groups.push_back(std::move(projects));
 
         Page page;

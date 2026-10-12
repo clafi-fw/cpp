@@ -189,6 +189,7 @@ namespace SeeDocs_App
         void saveViewState(BrowserTab&) override;   // the tab is closing: its tree goes
         IconSize pageIconSize(PageData&) override;
         void paintPageIcon(PageData&, PaintIconEvent&) override;
+        ButtonViewMode rootCrumbViewMode() const override { return ButtonViewMode::IconOnly; }
         IconSize tabIconSize(BrowserTab&) override;
         void paintTabIcon(BrowserTab&, PaintIconEvent&) override;
         // Notes the control the focus comes into the search box from - Escape hands it back.

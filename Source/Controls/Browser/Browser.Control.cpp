@@ -585,6 +585,7 @@ namespace ClaFi::Browser
 
         m_breadCrumbBar.onGetPageIconSize([this](GetPageIconSizeEvent& event) {
             event.size = pageIconSize(event.pageData);
+            event.viewMode = rootCrumbViewMode();
         });
 
         m_breadCrumbBar.onPaintPageIcon([this](PaintPageIconEvent& event) {

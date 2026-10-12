@@ -319,6 +319,8 @@ namespace ClaFi::Browser
         // page with no icon there is one paintPageIcon leaves blank.
         virtual IconSize pageIconSize(PageData&) { return IconSize{ 0.0f }; }
         virtual void paintPageIcon(PageData&, PaintIconEvent&) {}
+        // How the root crumb shows its icon: beside its title, or alone with the title as its hint.
+        virtual ButtonViewMode rootCrumbViewMode() const { return ButtonViewMode::LeftIcon; }
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void nestedSideClick(SideClickEvent&) override;
         bool tabsRestoring() const { return m_tabsRestoring; }

@@ -60,6 +60,7 @@ namespace SeeDocs_App
         {
             return left.cells.size() == right.cells.size()
                 && left.type == right.type
+                && left.pageKind == right.pageKind
                 && left.hint.empty() == right.hint.empty()
                 && left.excerpt.has_value() == right.excerpt.has_value()
                 && left.site.has_value() == right.site.has_value()
@@ -210,6 +211,42 @@ namespace SeeDocs_App
                 return {};
             return textOf(runs);
         }
+
+        // A page wears the mark its tree row does - a folder's the folder, a header's the
+        // module's - and the root wears home's; a member's page has none, as its crumb has none.
+        [[nodiscard]] std::optional<RowIcon> iconOf(const PageKind kind, const Type* type)
+        {
+            switch (kind)
+            {
+                case PageKind::Projects:
+                    return RowIcon::Home;
+                case PageKind::Project:
+                    return RowIcon::Project;
+                case PageKind::Folder:
+                    return RowIcon::Folder;
+                case PageKind::Module:
+                    return RowIcon::Module;
+                case PageKind::Type:
+                    if (type)
+                        return rowIconOf(*type);
+                    return std::nullopt;
+                case PageKind::Search:
+                    return RowIcon::Search;
+                case PageKind::Member:
+                    break;
+            }
+            return std::nullopt;
+        }
+
+        // A row wears its type's mark, or the mark of the page its first cell opens.
+        [[nodiscard]] std::optional<RowIcon> iconOf(const TableRow& row)
+        {
+            if (row.type)
+                return rowIconOf(*row.type);
+            if (row.pageKind.has_value())
+                return iconOf(*row.pageKind, nullptr);
+            return std::nullopt;
+        }
     }
 
     bool shownWithin(const Control& control, const Control& host)
@@ -249,7 +286,7 @@ namespace SeeDocs_App
     {
         Text head;
         head << TextStyleId::Title;
-        writeIcon(head, iconOf(page));
+        writeIcon(head, iconOf(page.kind, page.type));
         writeRuns(head, page.scope);
         head << page.title << PopTextStyle{};
         if (!page.badges.empty())
@@ -281,32 +318,6 @@ namespace SeeDocs_App
     {
         m_title.text().clear();
         m_bases.clearBases();
-    }
-
-    // A page wears the mark its tree row does - a folder's the folder, a header's the module's -
-    // and the root wears home's; a member's page has none, as its crumb has none.
-    std::optional<RowIcon> PageHead::iconOf(const Page& page)
-    {
-        switch (page.kind)
-        {
-            case PageKind::Projects:
-                return RowIcon::Home;
-            case PageKind::Project:
-                return RowIcon::Project;
-            case PageKind::Folder:
-                return RowIcon::Folder;
-            case PageKind::Module:
-                return RowIcon::Module;
-            case PageKind::Type:
-                if (page.type)
-                    return rowIconOf(*page.type);
-                return std::nullopt;
-            case PageKind::Search:
-                return RowIcon::Search;
-            case PageKind::Member:
-                break;
-        }
-        return std::nullopt;
     }
 
     void PageHead::writeIcon(Text& head, const std::optional<RowIcon> icon)
@@ -816,8 +827,12 @@ namespace SeeDocs_App
                 }
                 if (column >= row.cells.size())
                     return;
-                if (column == 0 && row.type)
-                    event.text() << rowIcon(rowIconOf(*row.type)) << Space{ k_iconGap };
+                if (column == 0)
+                {
+                    const std::optional<RowIcon> icon = iconOf(row);
+                    if (icon.has_value())
+                        event.text() << rowIcon(*icon) << Space{ k_iconGap };
+                }
                 writeRuns(event.text(), row.cells[column]);
             });
             if (row.site.has_value() && m_writer)

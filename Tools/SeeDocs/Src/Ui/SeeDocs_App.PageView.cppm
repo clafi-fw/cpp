@@ -77,7 +77,6 @@ namespace SeeDocs_App
         void write(std::optional<RowIcon>, std::wstring_view title);
         void clear();
     private:
-        [[nodiscard]] static std::optional<RowIcon> iconOf(const Page&);
         static void writeIcon(Text&, std::optional<RowIcon>);
     private:
         static constexpr float k_iconGap = 8.0f;      // between the icon and the title
