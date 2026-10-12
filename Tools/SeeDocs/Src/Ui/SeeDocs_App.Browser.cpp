@@ -63,7 +63,6 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_optionsSegment = L".project";
         // What a search page's segment opens with, the query after it - a dot for the same reason.
         constexpr std::wstring_view k_searchPrefix = L".search=";
-        constexpr std::wstring_view k_searchWord = L"search";
         constexpr std::wstring_view k_scope = L"::";
         constexpr float k_iconGap = 5.0f;   // between a list line's icon and its text
         constexpr float k_kindGap = 12.0f;  // the least room before a list line's kind word
@@ -686,11 +685,11 @@ namespace SeeDocs_App
         m_trees.setCurrentItem(tabTree.box);
         showTreeWidth(tab);
         SurfaceTree& tree = *tabTree.tree;
-        if (!target.project || target.isGone() || target.searching)
+        if (!target.project)
             tree.setCurrentItem(nullptr);
         else if (target.projectOptions)
             tree.followOptions(target.project->id);
-        else if (target.isHome())
+        else if (target.isHome() || target.isGone() || target.searching)
             tree.followHome(target.project->id);
         else
             tree.follow(target.project->id, target.folder, target.module, target.type);
@@ -1068,7 +1067,7 @@ namespace SeeDocs_App
         if (target.isRoot())
             return appContext().appName().plainText();
         if (target.searching)
-            return target.search;
+            return searchTitle(target.search, searchedProjects(target));
         if (!target.project)
             return data.name;
         if (target.isHome())
@@ -1482,18 +1481,38 @@ namespace SeeDocs_App
         return result;
     }
 
+    SurfaceBrowser::ShownProjects SurfaceBrowser::searchedProjects(const Target& target) const
+    {
+        ShownProjects result;
+        if (target.project)
+        {
+            result.push_back(target.project);
+            return result;
+        }
+        for (const std::unique_ptr<ShownProject>& shown : m_projects)
+            result.push_back(shown.get());
+        return result;
+    }
+
+    // The project searched by its name, or all of them from the root; none open names no place.
+    std::wstring SurfaceBrowser::searchTitle(const std::wstring_view typed,
+        const ShownProjects& projects)
+    {
+        std::wstring result = L"Search \"";
+        result.append(typed);
+        result.append(L"\"");
+        if (projects.size() == 1)
+            result.append(L" in ").append(projects.front()->open.project.name);
+        else if (!projects.empty())
+            result.append(L" in all projects");
+        return result;
+    }
+
     // A project's search page links in the project, as its other pages do; the root's by url,
     // which names the project each row stands in.
     Page SurfaceBrowser::searchPageOf(const Target& target) const
     {
-        ShownProjects projects;
-        if (target.project)
-            projects.push_back(target.project);
-        else
-        {
-            for (const std::unique_ptr<ShownProject>& shown : m_projects)
-                projects.push_back(shown.get());
-        }
+        const ShownProjects projects = searchedProjects(target);
         SearchedProjects searched;
         for (const ShownProject* project : projects)
         {
@@ -1681,10 +1700,10 @@ namespace SeeDocs_App
         BrowserControl::nestedControlDeleted(value);
     }
 
-    // **No line is current until the keys go down the list**, so Enter steps through the page's
-    // matches; Down enters at the first line - the name spelled as typed where there is one, else
-    // the search itself. The best names of each project searched are merged by how they hold the
-    // words, and a line names its project where several are searched.
+    // **The search's own line leads**, a divider under it, and the names follow. No line is
+    // current until the keys go down the list, so Enter steps through the page's matches. The
+    // best names of each project searched are merged by how they hold the words, and a line names
+    // its project where several are searched.
     void SurfaceBrowser::listMatches()
     {
         m_listed.clear();
@@ -1716,24 +1735,13 @@ namespace SeeDocs_App
             found.resize(k_listedNames);
 
         const bool namesProject = projects.size() > 1;
-        const bool exact = !found.empty() && found.front().hit.rank == MatchRank::Exact;
         DropListLines lines;
-        std::size_t next = 0;
-        if (exact)
-        {
-            m_listed.push_back({
-                .project = found.front().project,
-                .entry = found.front().hit.entry
-            });
-            lines.push_back(lineOf(m_listed.back(), found.front().hit, namesProject));
-            next = 1;
-        }
         m_listed.push_back({ .project = nullptr, .entry = nullptr });
-        lines.push_back(searchLine(typed));
-        for (std::size_t i = next; i < found.size(); ++i)
+        lines.push_back(searchLine(typed, projects));
+        for (const Found& each : found)
         {
-            m_listed.push_back({ .project = found[i].project, .entry = found[i].hit.entry });
-            lines.push_back(lineOf(m_listed.back(), found[i].hit, namesProject));
+            m_listed.push_back({ .project = each.project, .entry = each.hit.entry });
+            lines.push_back(lineOf(m_listed.back(), each.hit, namesProject));
         }
         m_search.showList(std::move(lines), std::nullopt);
     }
@@ -1793,12 +1801,12 @@ namespace SeeDocs_App
         return line;
     }
 
-    DropListLine SurfaceBrowser::searchLine(const std::wstring_view typed)
+    DropListLine SurfaceBrowser::searchLine(const std::wstring_view typed,
+        const ShownProjects& projects)
     {
         DropListLine line;
-        line.text << rowIcon(RowIcon::Search) << Space{ k_iconGap } << typed;
-        line.text << FlexSpace{ k_kindGap } << TextStyleId::SubBody << InkGrade::Muted
-            << k_searchWord << PopColor{} << PopTextStyle{};
+        line.text << rowIcon(RowIcon::Search) << Space{ k_iconGap } << searchTitle(typed, projects);
+        line.dividerBelow = true;
         return line;
     }
 

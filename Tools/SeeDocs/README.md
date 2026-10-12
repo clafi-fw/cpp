@@ -311,8 +311,9 @@ The pages: down the left, under each project's node, a tree of the sources' fold
 they stand on disk, each holding the folders under it and then its modules, and each module the
 types it exports, controls first; a module that exports functions or constants and no type is a
 row with nothing under it. On the right the
-page of whatever is clicked. Each tab has a tree of its own, which follows wherever the tab goes:
-the nodes it has open and how far it is scrolled are the tab's, and the nodes open are kept with
+page of whatever is clicked. Each tab has a tree of its own, which follows wherever the tab goes -
+to the project's own node for a page the tree has no row for, a search's or one gone: the nodes it
+has open and how far it is scrolled are the tab's, and the nodes open are kept with
 the tab, by project, so a restored tab - or a project opened again - comes back as it was left.
 A node's rows are made the first time it opens, out of the project's contents, which are read
 once and shared by every tab's tree. A page is a column of
@@ -449,16 +450,16 @@ is found too, after the type's own, since that type's page lists it. The names f
 how they hold the words, then by how their owner holds a first part, then types, folders and
 modules before the rest, then the shorter name, and last the tree's own order.
 
-The box drops a list as it is typed into: a line for the search itself and the ten best names, each
+The box drops a list as it is typed into: first the search itself - Search "row" in ClaFi, naming
+the project searched, or all projects from the root - and under a divider the ten best names, each
 with the mark of what it is - a member's line leaves the mark's room blank - a member's type muted
 before it, the words typed in the accent and its kind at the line's end; while a line is current,
 its hint and where it stands are beside the list. **No line is current as the list drops**, so Enter
-steps through the page's matches; Down enters the list at its first line - the name spelled as typed
-where there is one, else the search - and Up on the first line leaves it again. Enter on a line
-opens that name's page, or the search's. Alt+Enter or an Alt+click opens a line in a new tab behind
-the one shown, and the list stays up so that more lines can be opened. A member with no page of its
-own opens its type's page at its row: the url's anchor names the row by the member's name, and the
-row's section opens and the row is selected.
+steps through the page's matches; Down enters the list at the search's line, and Up on it leaves the
+list again. Enter on a line opens that name's page, or the search's. Alt+Enter or an Alt+click opens
+a line in a new tab behind the one shown, and the list stays up so that more lines can be opened. A
+member with no page of its own opens its type's page at its row: the url's anchor names the row by
+the member's name, and the row's section opens and the row is selected.
 
 **The box searches the page shown as well.** Each word in it stands on the found band an editor's
 own search paints with, wherever the page shows it, case aside - the two parts of a query of two
@@ -480,17 +481,17 @@ or stands on a tab no longer shown, to the row the page's anchor selected, else 
 Escape never empties the box: the search stands while the page is read, and goes as its words are
 typed away.
 
-The search's page is a page of the browser like any other, titled with the words and marked
-`search`, its url the project's with a segment of `.search=` and the words after it - a slash in
-them written `%2F`, a % `%25` - or the root's for the root's search, so Back and Forward step
-through searches and a tab is restored onto one. It holds a section for each kind of name found,
-the names in the order they are ranked; then In hints, the declarations whose hints hold the words
-and whose names do not; then In footnotes, every footnote section holding them, named by its note
-and its heading and linked to the declaration it belongs to - the one its heading names, else the
-first whose See reaches it - with the sentence the words stand in. Hints and footnotes are searched
-as they read, their code and bold marks taken out, and a section's words are its own, up to the
-first heading under it. A section lists its first 200 rows, and its heading's hint says how many
-there are.
+The search's page is a page of the browser like any other, named as its line in the list is on its
+tab, its crumb and in the history, its head titled with the words and marked `search`, its url the
+project's with a segment of `.search=` and the words after it - a slash in them written `%2F`, a %
+`%25` - or the root's for the root's search, so Back and Forward step through searches and a tab is
+restored onto one. It holds a section for each kind of name found, the names in the order they are
+ranked; then In hints, the declarations whose hints hold the words and whose names do not; then In
+footnotes, every footnote section holding them, named by its note and its heading and linked to the
+declaration it belongs to - the one its heading names, else the first whose See reaches it - with
+the sentence the words stand in. Hints and footnotes are searched as they read, their code and bold
+marks taken out, and a section's words are its own, up to the first heading under it. A section
+lists its first 200 rows, and its heading's hint says how many there are.
 
 ## The checks
 

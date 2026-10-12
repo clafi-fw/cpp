@@ -87,8 +87,8 @@ namespace SeeDocs_App
         // Takes the project's node out, with every row under it.
         void removeProject(ProjectId);
         // Makes the row of the folder, the module or the type - the nearest one named - the
-        // current row, the nodes over it opened, and scrolls it into view. Nothing named clears
-        // the current row. Raises no pick.
+        // current row, the nodes over it opened, and scrolls it into view. Nothing named makes the
+        // project's own node current. Raises no pick.
         void follow(ProjectId, std::wstring_view folder, const ContentsModule*, const Type*);
         void followHome(ProjectId);      // the project's own node, the same way
         void followOptions(ProjectId);   // the project's options row, the same way

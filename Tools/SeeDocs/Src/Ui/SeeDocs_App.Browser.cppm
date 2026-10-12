@@ -343,6 +343,11 @@ namespace SeeDocs_App
             std::wstring_view target) const;
         // The projects a search reaches: the one the shown tab stands in, or all from the root.
         [[nodiscard]] ShownProjects searchedProjects() const;
+        // The projects a search page searches: its own, or all from the root.
+        [[nodiscard]] ShownProjects searchedProjects(const Target&) const;
+        // Search "row" in ClaFi - the search's list line, and the name of its page.
+        [[nodiscard]] static std::wstring searchTitle(std::wstring_view typed,
+            const ShownProjects&);
         // The path of a search's page: the query after the project's segment, or after the root.
         [[nodiscard]] static std::wstring searchPath(const ShownProject*, std::wstring_view query);
         [[nodiscard]] Page searchPageOf(const Target&) const;
@@ -364,7 +369,9 @@ namespace SeeDocs_App
         void listMatches();
         [[nodiscard]] DropListLine lineOf(const ListedLine&, const NameHit&,
             bool namesProject) const;
-        [[nodiscard]] static DropListLine searchLine(std::wstring_view typed);
+        // The search's own line, naming where it searches, a divider under it.
+        [[nodiscard]] static DropListLine searchLine(std::wstring_view typed,
+            const ShownProjects&);
         // Opens what a line of the list stands for, in a new tab where Alt was held.
         void openListed(std::size_t line, KeyModifiers);
         // Opens the page of what the box holds, in a new tab where Alt was held.

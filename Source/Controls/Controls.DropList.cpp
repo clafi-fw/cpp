@@ -1,6 +1,7 @@
 module ClaFi.Controls.DropList;
 
 import ClaFi.Controls.Button;
+import ClaFi.Controls.Divider;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
 
@@ -95,14 +96,22 @@ namespace ClaFi::Controls
     // there, so new lines go into the rows standing and no row goes down under a click on it.
     void DropListStack::showLines(const std::optional<std::size_t> current)
     {
-        const std::size_t count = m_list.lines().size();
-        for (std::size_t i = controls().size(); i < count; ++i)
-            add<DropListRow>(m_list, i);
-        for (std::size_t i = 0; i != controls().size(); ++i)
-            controls()[i]->setVisible(i < count);
+        const DropListLines& lines = m_list.lines();
+        const std::size_t count = lines.size();
+        for (std::size_t i = m_rows.size(); i < count; ++i)
+        {
+            m_rows.push_back(&add<DropListRow>(m_list, i));
+            m_dividers.push_back(nullptr);
+        }
+        for (std::size_t i = 0; i != m_rows.size(); ++i)
+        {
+            m_rows[i]->setVisible(i < count);
+            // None under the last line, which nothing follows.
+            showDivider(i, i + 1 < count && lines[i].dividerBelow);
+        }
         Control* row = nullptr;
         if (current.has_value() && *current < count)
-            row = controls()[*current].get();
+            row = m_rows[*current];
         setCurrentRow(row);
         // The lines are read as the rows are laid out, and a place may read another line now.
         invalidateFormAlign();
@@ -119,7 +128,7 @@ namespace ClaFi::Controls
         if (shown.empty())
             return result;
         const float rowHeight = shown.front()->dimensions().y / event.scaleFactor();
-        if (m_list.fitShownLines(rowHeight))
+        if (m_list.fitShownLines(rowHeight, cappedDividers(event.scaleFactor())))
             event.invalidatePass();
         return result;
     }
@@ -223,12 +232,47 @@ namespace ClaFi::Controls
     std::vector<Control*> DropListStack::shownRows() const
     {
         std::vector<Control*> shown;
-        for (const ControlPtr& row : controls())
+        for (DropListRow* row : m_rows)
         {
             if (row->visible())
-                shown.push_back(row.get());
+                shown.push_back(row);
         }
         return shown;
+    }
+
+    // **Made where one is first shown**, and moved up to stand right under its row: most lists
+    // show none, and a row made later goes in after every divider there is.
+    void DropListStack::showDivider(const std::size_t place, const bool shown)
+    {
+        Divider* divider = m_dividers[place];
+        if (!divider)
+        {
+            if (!shown)
+                return;
+            divider = &add<Divider>(HorizontalAlign::Fill, Padding{ 0.0f, k_dividerPadding });
+            std::size_t at = 0;
+            while (controls()[at].get() != m_rows[place])
+                ++at;
+            moveControl(*divider, at + 1);
+            m_dividers[place] = divider;
+        }
+        divider->setVisible(shown);
+    }
+
+    // A divider under the last line the cap holds stands below the cap, and adds nothing.
+    float DropListStack::cappedDividers(const float scaleFactor) const
+    {
+        const float lines = m_list.options().shownLines;
+        float result = 0.0f;
+        for (std::size_t i = 0; i + 1 < m_dividers.size(); ++i)
+        {
+            if (static_cast<float>(i + 1) >= lines)
+                break;
+            const Divider* divider = m_dividers[i];
+            if (divider && divider->visible())
+                result += divider->dimensions().y / scaleFactor + spacing().y;
+        }
+        return result;
     }
 
     void DropListStack::setCurrentRow(Control* row)
@@ -348,13 +392,13 @@ namespace ClaFi::Controls
             m_pick(picked);
     }
 
-    bool DropList::fitShownLines(const float rowHeight)
+    bool DropList::fitShownLines(const float rowHeight, const float dividers)
     {
         const float lines = m_options.shownLines;
         if (lines <= 0.0f)
             return false;
         const DropListStack& stack = m_form->content().body();
-        const float rows = lines * rowHeight + (lines - 1.0f) * stack.spacing().y
+        const float rows = lines * rowHeight + (lines - 1.0f) * stack.spacing().y + dividers
             + 2.0f * stack.padding().y;
         const float height = rows + 2.0f * k_padding;
         DropListBox& box = m_form->content();

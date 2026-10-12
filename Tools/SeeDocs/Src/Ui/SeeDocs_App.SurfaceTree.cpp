@@ -123,7 +123,7 @@ namespace SeeDocs_App
             : std::nullopt;
         if (!index.has_value())
         {
-            setCurrentItem(nullptr);
+            followHome(id);
             return;
         }
 

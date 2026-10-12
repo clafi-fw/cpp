@@ -1,6 +1,7 @@
 export module ClaFi.Controls.DropList;
 
 import ClaFi.Controls.Button;
+import ClaFi.Controls.Divider;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
 
@@ -18,6 +19,7 @@ namespace ClaFi::Controls
     {
         Text text;
         Text hint;   // empty for none
+        bool dividerBelow{ false };   // parts it from the lines after
     };
 
     export using DropListLines = std::vector<DropListLine>;
@@ -67,7 +69,7 @@ namespace ClaFi::Controls
         std::size_t m_line;
     };
 
-    // The rows, one per line in order, and the row the keys are on. See Controls#droplist
+    // The rows, one per line in order, the dividers under them, and the row the keys are on.
     class DropListStack : public Stack
     {
     public:
@@ -89,8 +91,16 @@ namespace ClaFi::Controls
     private:
         [[nodiscard]] std::vector<Control*> shownRows() const;
         void setCurrentRow(Control*);
+        // Shows or hides the divider under the row at that place, made the first time it is shown.
+        void showDivider(std::size_t place, bool shown);
+        // What the dividers among the lines the cap holds add to its height, in design units.
+        [[nodiscard]] float cappedDividers(float scaleFactor) const;
     private:
+        static constexpr float k_dividerPadding = 4.0f;   // above and below a divider's line
+
         DropList& m_list;
+        std::vector<DropListRow*> m_rows{};   // a row per place, in order
+        std::vector<Divider*> m_dividers{};   // under the row at the same place; null until shown
     };
 
     // The list as it is dropped: a box that scrolls, holding the rows.
@@ -128,8 +138,9 @@ namespace ClaFi::Controls
         void pick(const DropListPick&);
     private:
         void ensureForm();
-        // Caps the list at its shown lines of the height measured; true where the cap moved.
-        bool fitShownLines(float rowHeight);
+        // Caps the list at its shown lines of the height measured, with the dividers among them;
+        // true where the cap moved.
+        bool fitShownLines(float rowHeight, float dividers);
     private:
         static constexpr float k_padding = 4.0f;
         static constexpr float k_capTolerance = 0.5f;  // a cap nearer than this stands
