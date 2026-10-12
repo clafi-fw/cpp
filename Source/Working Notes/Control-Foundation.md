@@ -86,3 +86,16 @@ unit are initialized in.
 Bases initialize in declaration order, so FormBase is complete - window, canvas, context - before
 CreateParams is formed from it. Nothing about the window moves into Control, so the same class stays
 usable as a nested child.
+
+## Control::contentAroundText
+
+2026-10-12. The align pass took a wrapping text's second measurement as the whole content. A
+ButtonBase draws its caption in the content box less the mark and its gap, so a radio button laid
+out at its measured width - `HorizontalAlign::Left` on SeeDocs' project options page - had its
+caption cut by exactly that, and it faded as trimmed. `Fill` hid it everywhere else: `align` takes
+the larger of the granted and the measured width on a fill axis. The screenshots put the cut at
+53-55 px at 2.5x on four captions of different lengths, against a 38 px mark and a 12 px gap.
+
+`ButtonBase::calculateContent` was the one place the mark and the icon were added.
+`SplitButtonBase::alignContent` guarded its part against the same loss with the larger of the
+answer and the offered box; the guard stands, since `contentAroundText` leaves the part out.

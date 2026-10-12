@@ -26,6 +26,12 @@ content's. The indicator and a `LeftIcon` stand beside the caption, so `measureT
 the way `adjustTextRect` does - `adjustForSideParts` states it for both - and `SplitButtonBase`
 takes a part at either side off as well.
 
+`contentAroundText` puts the icon and the indicator back on what the words came to, in the
+measuring pass and the align pass alike - see Control::contentAroundText. A check box or a radio
+button laid out at its own width, `HorizontalAlign::Left` in a column, keeps its caption whole.
+The part a `SplitButtonBase` carries is not among them; its `alignContent` keeps the granted box
+for it.
+
 ## PanelBase
 
 ### bodySlotSettled

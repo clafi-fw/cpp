@@ -1301,6 +1301,9 @@ namespace ClaFi
         void calculateChildrenSequentially(FormBase&);
         virtual void calculateChildren(FormBase&);
         virtual ScaledDimensions calculateContent(AlignEvent&);
+        // The content a text measured at this size comes to. See Control-Foundation
+        [[nodiscard]] virtual ScaledDimensions contentAroundText(AlignEvent&,
+            ScaledDimensions text) const;
         virtual void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&);
         virtual void adjustPlacement(const Scaler&, ScaledPosition&, ScaledDimensions&) {}
         void align(FormContext&, LayoutPass&, ScaledPosition, ScaledDimensions);

@@ -70,6 +70,7 @@ namespace ClaFi::Controls
         CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
         void calculateChildren(FormBase& form) override;
         ScaledDimensions calculateContent(AlignEvent&) override;
+        ScaledDimensions contentAroundText(AlignEvent&, ScaledDimensions text) const override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void nestedPressDown(PressDownEvent&) override;
         void nestedPressUp(PressUpEvent&) override;

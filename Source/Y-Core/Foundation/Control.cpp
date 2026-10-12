@@ -2119,7 +2119,14 @@ namespace ClaFi
 
     ScaledDimensions Control::calculateContent(AlignEvent& event)
     {
-        return calculateText(event, { textWidthLimit(event), event.maxContentHeight() });
+        const ScaledDimensions text =
+            calculateText(event, { textWidthLimit(event), event.maxContentHeight() });
+        return contentAroundText(event, text);
+    }
+
+    ScaledDimensions Control::contentAroundText(AlignEvent&, const ScaledDimensions text) const
+    {
+        return text;
     }
 
     void Control::alignContent(AlignEvent& event, ScaledPosition, ScaledDimensions& newDimensions)
@@ -2155,7 +2162,7 @@ namespace ClaFi
             if (measuredText.x || measuredText.y)
             {
                 rememberTextWidth(event, newDimensions.x);
-                newDimensions = measuredText;
+                newDimensions = contentAroundText(event, measuredText);
             }
         }
         else if (isOnScrollBox())

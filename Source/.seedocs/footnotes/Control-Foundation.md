@@ -154,6 +154,19 @@ The width remembered is the content's. A control drawing its text in a narrower 
 difference off in `measureText`, so both passes break the text where the paint does - see
 Controls-Base#buttonbase.
 
+## Control::contentAroundText
+
+**What the content comes to, given what the text came to.** The default is the text alone. A
+control that sets something beside or over its text - an icon, a mark - adds it here.
+
+Both passes go through it. `calculateContent` hands it the text measured against the remembered
+width, and `alignContent` hands it the text measured again in the box the control was granted. A
+control laid out at the width it measured therefore keeps that width, and its text keeps the box
+it was measured for. An empty measurement is not handed in, and the granted box stands.
+
+A control that overrides `calculateContent` without calling the base answers the measuring pass
+itself, and adds what stands beside its text there; the align pass still comes here.
+
 ## TraversalOrder
 
 Describes how a container orders its children, so the viewport range can be narrowed by a binary

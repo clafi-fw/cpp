@@ -411,14 +411,21 @@ namespace ClaFi::Controls
         }
     }
 
+    // An icon-only button lays no text out, so its icon stands where the text would.
     ScaledDimensions ButtonBase::calculateContent(AlignEvent& event)
     {
-        ScaledDimensions scaledIconSize;
-        ScaledDimensions zeroSize{ 0, 0 };
-        scaledIconSize = m_viewMode == ButtonViewMode::TextLabel ? zeroSize : event.scale(m_iconSize);
-        // Base text
-        ScaledDimensions result =
-            m_viewMode == ButtonViewMode::IconOnly ? scaledIconSize : RichControl::calculateContent(event);
+        if (m_viewMode == ButtonViewMode::IconOnly)
+            return contentAroundText(event, event.scale(m_iconSize));
+        return RichControl::calculateContent(event);
+    }
+
+    // **The icon and the indicator around the words**, in the measuring pass and the align pass
+    // alike. See Controls-Base
+    ScaledDimensions ButtonBase::contentAroundText(AlignEvent& event,
+        const ScaledDimensions text) const
+    {
+        const ScaledDimensions scaledIconSize = event.scale(m_iconSize);
+        ScaledDimensions result = text;
 
         // Icon
         switch (m_viewMode)

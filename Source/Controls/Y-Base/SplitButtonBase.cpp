@@ -145,8 +145,8 @@ namespace ClaFi::Controls
         }
         // The base is given the box left over above the part, so that the selection indicator
         // centres in the half it belongs to instead of straddling the seam. Only the part's own
-        // axis is taken away: narrowing x as well would read as the control having been squeezed,
-        // and Control::alignContent would re-measure the text and drop the icon's width with it.
+        // axis is taken away: measureText takes a part at the side off the width already, and
+        // taking it off here as well would break the text narrower than it is drawn.
         ScaledDimensions offered = dimensions;
         ScaledDimensions extent = secondaryExtent(event.formContext(), event.padding, event.spacing);
         ScaledDimensions mainBox = { dimensions.x, std::max(dimensions.y - extent.y, 0.0f) };
@@ -154,12 +154,12 @@ namespace ClaFi::Controls
         dimensions.x = mainBox.x;
         dimensions.y = mainBox.y + extent.y;
 
-        // Control::alignContent hands back the size of the text in place of the box whenever the
-        // control was given less width than it calculated - which is exactly what a grid cell
-        // does. For a plain button that only means the surface hugs its text. Here the part is
-        // placed against this box, so it would be sized for one line of text and left sitting in a
-        // corner of a control that is still full size. The part belongs to the control's box, so
-        // keep that.
+        // Control::alignContent hands back the size of the text, with the icon and the indicator
+        // but without the part, in place of the box whenever the control was given less width
+        // than it calculated - which is exactly what a grid cell does. For a plain button that
+        // only means the surface hugs its text. Here the part is placed against this box, so it
+        // would be sized for one line of text and left sitting in a corner of a control that is
+        // still full size. The part belongs to the control's box, so keep that.
         dimensions.x = std::max(dimensions.x, offered.x);
         dimensions.y = std::max(dimensions.y, offered.y);
 
