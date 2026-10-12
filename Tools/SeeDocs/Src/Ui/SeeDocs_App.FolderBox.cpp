@@ -234,8 +234,7 @@ namespace SeeDocs_App
             lines.push_back(std::move(line));
         }
         const Control& anchor = m_box.isHostedAsBody() ? *m_box.parent() : m_box;
-        m_list.show(std::move(lines), std::nullopt, FormPlacement::BottomLeft,
-            anchor.boundsInForm());
+        m_list.show(std::move(lines), std::nullopt, FormPlacement::BottomLeft, anchor);
     }
 
     // **A folder picked is walked into**: it goes into the box closed with a separator, and the

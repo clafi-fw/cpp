@@ -286,6 +286,15 @@ namespace ClaFi::Controls
         invalidateFormAlign();
     }
 
+    // DropListForm
+
+    const Control* DropListForm::placementTarget() const
+    {
+        if (m_anchor)
+            return m_anchor;
+        return Form<DropListBox>::placementTarget();
+    }
+
     // DropList
 
     DropList::DropList(Control& target, DropListPickFunc pick, const DropListOptions options)
@@ -318,33 +327,20 @@ namespace ClaFi::Controls
         return m_form->content().body().current();
     }
 
-    // At least as wide as the anchor and the least width stated, and placed off the anchor - both
-    // read now rather than once, since what the anchor stands for may have moved or grown since
-    // the list last stood. In design units, which a popup shares with its parent.
+    // **The anchor holds the target**: the target going down takes the list down, so the control
+    // the list follows stands for as long as the list does.
+    void DropList::show(DropListLines lines, const std::optional<std::size_t> current,
+        const FormPlacement placement, const Control& anchor)
+    {
+        if (!anchor.containsNested(m_target))
+            throw std::logic_error{ "A drop list's anchor holds its target" };
+        showAt(std::move(lines), current, placement, anchor.boundsInForm(), &anchor);
+    }
+
     void DropList::show(DropListLines lines, const std::optional<std::size_t> current,
         const FormPlacement placement, const FloatRect& anchor)
     {
-        if (lines.empty())
-        {
-            // Down first, and its rows hidden: a row reads the line at its place, which goes with
-            // the lines.
-            hide();
-            m_lines.clear();
-            if (m_form.has_value())
-                m_form->content().body().showLines(std::nullopt);
-            return;
-        }
-        ensureForm();
-        m_lines = std::move(lines);
-        m_form->content().body().showLines(current);
-        m_form->setMinWidth(std::max(anchor.width() / m_target.scaler().factor(),
-            m_options.minWidth));
-        m_form->setPlacement(placement, anchor);
-        if (shown())
-            return;
-        // Opened at its first row: where the list was left is not on screen to glide from.
-        m_form->content().scrollToBegin();
-        m_form->show();
+        showAt(std::move(lines), current, placement, anchor, nullptr);
     }
 
     void DropList::hide()
@@ -390,6 +386,37 @@ namespace ClaFi::Controls
             hide();
         if (m_pick)
             m_pick(picked);
+    }
+
+    // At least as wide as the anchor and the least width stated, and placed off the anchor - both
+    // read now rather than once, since what the anchor stands for may have moved or grown since
+    // the list last stood. In design units, which a popup shares with its parent.
+    void DropList::showAt(DropListLines lines, const std::optional<std::size_t> current,
+        const FormPlacement placement, const FloatRect& anchor, const Control* anchorControl)
+    {
+        if (lines.empty())
+        {
+            // Down first, and its rows hidden: a row reads the line at its place, which goes with
+            // the lines.
+            hide();
+            m_lines.clear();
+            if (m_form.has_value())
+                m_form->content().body().showLines(std::nullopt);
+            return;
+        }
+        ensureForm();
+        m_lines = std::move(lines);
+        m_form->content().body().showLines(current);
+        m_form->setMinWidth(std::max(anchor.width() / m_target.scaler().factor(),
+            m_options.minWidth));
+        // Ahead of the placement, which records where the control it follows stands.
+        m_form->setAnchor(anchorControl);
+        m_form->setPlacement(placement, anchor);
+        if (shown())
+            return;
+        // Opened at its first row: where the list was left is not on screen to glide from.
+        m_form->content().scrollToBegin();
+        m_form->show();
     }
 
     bool DropList::fitShownLines(const float rowHeight, const float dividers)

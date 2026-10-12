@@ -434,12 +434,19 @@ Tab - takes the list down before the focus moves, or the list going down would t
 
 **A line is a Text and a hint, and a divider under it where it asks for one**, parting it from the
 lines after - the keys pass over a divider, and the cap counts it. show states the lines, the one
-current or none, the anchor the list stands off - a rect in the target's form, the whole box where
-the target is its field - and the placement, BottomLeft, or BottomRight from the anchor's right
-edge; no lines take the list down. A flex space in a line spans the list's width, so a word after
-one stands at the list's right edge. A line's hint stands beside the list while the line is current:
-FormPlacement::Right on a rect spanning the list, so a hint the right has no room for stands off the
-list's left edge rather than over its rows.
+current or none, the anchor the list stands off and the placement, BottomLeft, or BottomRight from
+the anchor's right edge; no lines take the list down. A flex space in a line spans the list's width,
+so a word after one stands at the list's right edge. A line's hint stands beside the list while the
+line is current: FormPlacement::Right on a rect spanning the list, so a hint the right has no room
+for stands off the list's left edge rather than over its rows.
+
+**The list goes along with its anchor.** An anchor is a control or a rect. A control - the whole box
+where the target is its field - is followed as it moves and grows, and it holds the target or is it:
+the target going down takes the list down, so the control stands for as long as the list does. A
+rect stands in the target's form and is carried with the target, moved and grown as the target is -
+the way for a rect inside it, such as the caret a CodeBox's list drops under. A box's own rect
+handed over as a rect would be carried by its field instead: a field narrowed by a count coming up
+would take the list's right edge in with it.
 
 **What the owner states, it states once**, in the DropListOptions it builds the list with: the lines
 that stand before the list scrolls - twelve unless stated, and none caps it - the least width, the

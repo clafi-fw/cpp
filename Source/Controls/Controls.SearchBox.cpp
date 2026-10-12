@@ -124,7 +124,7 @@ namespace ClaFi::Controls
 
     void SearchBox::showList(DropListLines lines, const std::optional<std::size_t> current)
     {
-        m_list.show(std::move(lines), current, m_listPlacement, boundsInForm());
+        m_list.show(std::move(lines), current, m_listPlacement, *this);
     }
 
     void SearchBox::nestedKeyDown(KeyDownEvent& event)

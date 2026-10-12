@@ -305,7 +305,7 @@ namespace ClaFi
 
     void FormBase::contentMoved(const Control& movedControl) const
     {
-        if (m_activePopup && movedControl.containsNested(m_activePopup->popupTarget()))
+        if (m_activePopup && movedControl.containsNested(m_activePopup->placementTarget()))
             m_activePopup->followPopupTarget2();
         // A hint stands on the control it is about the same way.
         HintForm* hint = m_hint.m_form.get();

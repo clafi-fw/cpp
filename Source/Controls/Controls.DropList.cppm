@@ -106,6 +106,19 @@ namespace ClaFi::Controls
     // The list as it is dropped: a box that scrolls, holding the rows.
     using DropListBox = ScrollBoxWith<DropListStack>;
 
+    // The list's window, which goes along with the anchor control where one is stated.
+    class DropListForm : public Form<DropListBox>
+    {
+    public:
+        using Form<DropListBox>::Form;
+    public:
+        void setAnchor(const Control* anchor) { m_anchor = anchor; }
+    protected:
+        [[nodiscard]] const Control* placementTarget() const override;
+    private:
+        const Control* m_anchor{ nullptr };   // the control the list follows; null for the target
+    };
+
     // A list dropped under a control that keeps the focus. See Controls#droplist
     export class DropList
     {
@@ -125,6 +138,9 @@ namespace ClaFi::Controls
         void setPlacedFunc(std::function<void()>);
         // The line the keys are on, while the list is up and one is.
         [[nodiscard]] std::optional<std::size_t> current();
+        // Shows the lines off a control holding the target, and follows it. See Controls#droplist
+        void show(DropListLines, std::optional<std::size_t> current, FormPlacement,
+            const Control& anchor);
         // Shows the lines off the anchor, a rect in the target's form. See Controls#droplist
         void show(DropListLines, std::optional<std::size_t> current, FormPlacement,
             const FloatRect& anchor);
@@ -137,6 +153,9 @@ namespace ClaFi::Controls
         // Takes the line: the list goes down first, then the owner is told. See Controls#droplist
         void pick(const DropListPick&);
     private:
+        // What both overloads of show do, the list following the control given, else the target.
+        void showAt(DropListLines, std::optional<std::size_t> current, FormPlacement,
+            const FloatRect& anchor, const Control* anchorControl);
         void ensureForm();
         // Caps the list at its shown lines of the height measured, with the dividers among them;
         // true where the cap moved.
@@ -150,7 +169,7 @@ namespace ClaFi::Controls
         DropListOptions m_options;
         std::function<void()> m_placed{};
         DropListLines m_lines{};
-        std::optional<Form<DropListBox>> m_form{};
+        std::optional<DropListForm> m_form{};
         ScopedEventConnection m_aligned{};
     };
 }

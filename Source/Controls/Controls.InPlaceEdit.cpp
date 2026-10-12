@@ -481,8 +481,7 @@ namespace ClaFi::Controls
             hideSuggestions();
             return;
         }
-        m_list->show(std::move(lines), std::nullopt, FormPlacement::BottomLeft,
-            body().boundsInForm());
+        m_list->show(std::move(lines), std::nullopt, FormPlacement::BottomLeft, body());
     }
 
     void InPlaceEditRoot::hideSuggestions()
