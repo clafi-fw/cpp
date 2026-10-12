@@ -82,15 +82,15 @@ namespace ClaFi
     }
 
     export constexpr std::array<TextStyle, static_cast<std::size_t>(TextStyleId::Count)> k_textStyles = { {
-            { GenericFamily::sansSerif, 14.0f, FontWeight::Normal, FontStyle::Normal },  // Body
-            { GenericFamily::sansSerif, 28.0f, FontWeight::Bold,   FontStyle::Normal },  // Title
-            { GenericFamily::sansSerif, 20.0f, FontWeight::Normal, FontStyle::Normal },  // Subtitle
-            { GenericFamily::sansSerif, 18.0f, FontWeight::SemiBold, FontStyle::Normal },// Heading
-            { GenericFamily::sansSerif, 16.0f, FontWeight::Normal, FontStyle::Normal },  // SubHeading
-            { GenericFamily::sansSerif, 14.0f, FontWeight::Bold,   FontStyle::Normal },  // Section
-            { GenericFamily::sansSerif, 14.0f, FontWeight::Normal, FontStyle::Italic },  // SubSection
-            { GenericFamily::sansSerif, 12.0f, FontWeight::Normal, FontStyle::Normal },  // SubBody
-            { GenericFamily::monospace, 14.0f, FontWeight::Normal, FontStyle::Normal },  // Code
+            { GenericFamily::sansSerif, 12.0f, FontWeight::Normal, FontStyle::Normal },  // Body
+            { GenericFamily::sansSerif, 24.0f, FontWeight::Bold,   FontStyle::Normal },  // Title
+            { GenericFamily::sansSerif, 17.0f, FontWeight::Normal, FontStyle::Normal },  // Subtitle
+            { GenericFamily::sansSerif, 16.0f, FontWeight::SemiBold, FontStyle::Normal },// Heading
+            { GenericFamily::sansSerif, 14.0f, FontWeight::Normal, FontStyle::Normal },  // SubHeading
+            { GenericFamily::sansSerif, 12.0f, FontWeight::Bold,   FontStyle::Normal },  // Section
+            { GenericFamily::sansSerif, 12.0f, FontWeight::Normal, FontStyle::Italic },  // SubSection
+            { GenericFamily::sansSerif, 10.0f, FontWeight::Normal, FontStyle::Normal },  // SubBody
+            { GenericFamily::monospace, 12.0f, FontWeight::Normal, FontStyle::Normal },  // Code
         } };
 
     // What a script run comes to, as fractions of the run it stands on. A level multiplies the
