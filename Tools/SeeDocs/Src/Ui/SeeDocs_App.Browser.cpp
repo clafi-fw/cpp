@@ -1120,7 +1120,7 @@ namespace SeeDocs_App
                 return std::nullopt;
             return searchPageOf(target);
         }
-        if (target.isGone() || target.projectOptions || target.project->contents.empty())
+        if (target.isGone() || target.projectOptions)
             return std::nullopt;
         const ShownProject& project = *target.project;
         OpenProject& open = project.open;
@@ -1145,6 +1145,8 @@ namespace SeeDocs_App
     {
         OpenProject& open = project.open;
         Page page = homePage(open.surface, open.notes, project.contents, open.project.name);
+        if (project.contents.empty())
+            explainEmpty(page, open.project);
         page.links = {
             Run{ .text = std::wstring{ k_optionsTitle }, .link = optionsPath(project) }
         };
@@ -1215,11 +1217,6 @@ namespace SeeDocs_App
         if (target.isGone())
         {
             view.showText(goneWords(data));
-            return;
-        }
-        if (target.project->contents.empty())
-        {
-            view.showText(emptyWords(*target.project));
             return;
         }
         if (std::optional<Page> built = pageOf(target))
@@ -1357,33 +1354,41 @@ namespace SeeDocs_App
         return text;
     }
 
-    Text SurfaceBrowser::emptyWords(const ShownProject& shown)
+    // The folders read are facts, the first one labelled, so that each path has a row of its own.
+    void SurfaceBrowser::explainEmpty(Page& page, const Project& project)
     {
-        const Project& project = shown.open.project;
-        Text text;
-        text << TextStyleId::Title << project.name << PopTextStyle{};
-        text << k_endLine << k_endLine;
         if (project.sources.empty())
         {
-            text << L"There is nothing to document yet: the project reads no folder of sources. "
-                L"Its options page adds them." << k_endLine;
-            return text;
+            page.lead = {
+                Run{ .text = L"There is nothing to document yet: the project reads no folder of "
+                    L"sources. Its options page adds them." }
+            };
+            return;
         }
         if (project.mode == ScanMode::Full)
         {
-            text << L"There is nothing to document: no source in its folders exports a type. "
-                L"A third-party library is read as any C++ and Delphi, which the project's "
-                L"options page sets." << k_endLine;
+            page.lead = {
+                Run{ .text = L"There is nothing to document: no source in its folders exports a "
+                    L"type. A third-party library is read as any C++ and Delphi, which the "
+                    L"project's options page sets." }
+            };
         }
         else
         {
-            text << L"There is nothing to document: no source in its folders declares a type."
-                << k_endLine;
+            page.lead = {
+                Run{ .text = L"There is nothing to document: no source in its folders declares a "
+                    L"type." }
+            };
         }
-        text << (project.sources.size() == 1 ? L"The folder read is:" : L"The folders read are:");
+        std::wstring_view label = L"reads";
         for (const SourceFolder& source : project.sourceFolders())
-            writePath(text, source.path.wstring());
-        return text;
+        {
+            page.facts.push_back({
+                .label = std::wstring{ label },
+                .value = { Run{ .text = source.path.wstring(), .style = RunStyle::Code } }
+            });
+            label = {};
+        }
     }
 
     // Any function of the name, an accessor included: a crumb's line is painted every frame, and

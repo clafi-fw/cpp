@@ -257,7 +257,16 @@ opens in a new tab on its home, and one open already gets a new tab on its home 
 stands for no project is offered one that reads it, made through New project with the folder as its
 first source. The window title names the project the tab shown stands in. Which projects are open
 and which were opened before are kept with the application's settings, so they are remembered once
-settings are kept on the computer.
+settings are kept on the computer. The menu's Settings page holds External editors under the
+framework's own options: a command line each for C++ and Delphi sources, in which `{file}` stands
+for a source file and `{line}` for a line in it, kept with the application's settings as it is
+typed. The chevron at a box's end, or Down in the box, drops the editors most used for that language
+on the desktop SeeDocs runs on, each with its command as it is typed in a terminal; typing at the
+box's end narrows them to those whose name has a word, or whose command, starting with what is
+typed, and an editor picked puts its command in the box's place. RAD Studio and Lazarus have no
+switch for a line, so they are marked no line and open the file alone. Visual Studio goes to the
+line where its command starts it; one already running opens the file alone, since `/command` is
+run by the instance it starts.
 
 Each open project is a node of the tree, named after the project, and the node opens its home. Under
 it stand its Project options row and a line that parts the row from the project's folders. The
@@ -304,14 +313,14 @@ mouse, or a right click on either button for the list), a type's crumb lists its
 climbs the path. The root, `/`, lists the projects open, each with a Close button that closes the
 project and every tab on it. A home page opens each project: a link to its Project options page,
 then the folders under the root as the tree lists them, with what each holds at every depth; a
-Close project button stands at the page's top right. Modules standing in a source folder's own
-folder are home's: they stand in the project's node under its folders, and the home page carries
-what they export, by module, as a folder's page does. Renaming a project takes every url under it
-along, in the tabs and in their histories alike, and a second project open under a name already
-taken goes by that name with a number after it. Where a tab stands, the tabs open and each one's
-history are kept with the settings, so a run starts where the last one left off. A url no project
-open carries - a project closed, or a type gone since the sources were scanned - shows a page saying
-so.
+Close project button stands at the page's top right. A project with nothing to document has the same
+home, saying why under its title. Modules standing in a source folder's own folder are home's: they
+stand in the project's node under its folders, and the home page carries what they export, by
+module, as a folder's page does. Renaming a project takes every url under it along, in the tabs and
+in their histories alike, and a second project open under a name already taken goes by that name
+with a number after it. Where a tab stands, the tabs open and each one's history are kept with the
+settings, so a run starts where the last one left off. A url no project open carries - a project
+closed, or a type gone since the sources were scanned - shows a page saying so.
 
 The pages: down the left, under each project's node, a tree of the sources' folders, named as
 they stand on disk, each holding the folders under it and then its modules, and each module the

@@ -140,6 +140,8 @@
     <ClCompile Include="Src\Ui\SeeDocs_App.Browser.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Editing.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Editing.cppm" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.ExternalEditors.cpp" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.ExternalEditors.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.FolderBox.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.FolderBox.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Icons.cpp" />

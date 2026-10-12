@@ -2678,7 +2678,8 @@ namespace SeeDocs_App
         page.kind = PageKind::Project;
         page.title = std::wstring{ title };
         page.badges.push_back(muted(std::wstring{ k_projectWord }));
-        addFolderContents(page, surface, notes, folders, {});
+        if (!folders.empty())
+            addFolderContents(page, surface, notes, folders, {});
         return page;
     }
 

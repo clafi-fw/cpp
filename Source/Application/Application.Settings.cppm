@@ -130,7 +130,7 @@ namespace ClaFi
         CheckBox& m_keepSettings;
     };
 
-    // What an application puts on a page of its own in the backstage. See Application
+    // What an application puts on a page of the backstage, its own or Settings. See Application
     export using AppPageBuilder = std::function<void(OptionsPage&)>;
 
     // A page an application asked for, as it stated it.
@@ -147,6 +147,9 @@ namespace ClaFi
     // Adds a page of the application's own beside Settings, once per application. See Application
     export void connectAppPage(std::wstring_view caption, PaintIconFunc paintIcon,
         AppPageBuilder);
+
+    // Adds the application's own groups to Settings, under the common ones. See Application
+    export void connectAppSettings(AppPageBuilder);
 
 
     //-------------------------------------------------------------------------

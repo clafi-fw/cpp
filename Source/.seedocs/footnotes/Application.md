@@ -84,8 +84,9 @@ so a page of sections is headings and lines down one column rather than a stack 
 
 ## SettingsPage
 
-The Settings page of the application menu: the options every application has, on a box that
-scrolls, then a line and the storage answer at its foot.
+The Settings page of the application menu: the options every application has, and under them
+the groups the application adds - see connectAppSettings - on a box that scrolls, then a line and
+the storage answer at its foot.
 
 **The bar always stands** - `ScrollBars::Vertical`. Its strip is part of the page's width whether or
 not there is anything to scroll, so a section opening or closing moves nothing across the page.
@@ -258,9 +259,9 @@ changes none of them.
 
 ## AppPageBuilder
 
-What an application puts on a page of its own, run against that page as the menu is built. It is
-handed an OptionsPage and calls addGroup for each caption it wants, filling the column that comes
-back:
+What an application puts on a page of the backstage - a page of its own, or the Settings page -
+run against that page as the menu is built. It is handed an OptionsPage and calls addGroup for each
+caption it wants, filling the column that comes back:
 
     connectAppPage(L"Scene", Icons::DotMark::paint, [](OptionsPage& page){
         Stack& picked = page.addGroup(L"Picked Window");
@@ -275,6 +276,21 @@ the size the framework's own pages wear theirs; `Icons::DotMark::paint` holds th
 with no picture of its own, so its caption still lines up with the others.
 
 Nothing calls it for an application, and one that never does gets Settings alone.
+
+## connectAppSettings
+
+Adds groups of the application's own to the Settings page, once per application - and more than
+once, in the order asked. **The groups stand under the common options**, above the line and the
+storage answer at the page's foot, so the common options keep one place in every application. The
+builder is handed the page's column, as a page's builder is, and is run each time the menu opens -
+so it reads every option from where it lives, as the common ones do.
+
+    connectAppSettings([](OptionsPage& page){
+        Stack& editors = page.addGroup(L"External editors");
+        editors.add<TextBox>(PlaceHolderText{ L"A command line" });
+    });
+
+Nothing calls it for an application, and one that never does gets the common options alone.
 
 ## AppCommandHandler
 

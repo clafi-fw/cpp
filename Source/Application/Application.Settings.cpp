@@ -55,6 +55,10 @@ namespace ClaFi
     // what an application put in it outlives each of those.
     static std::vector<AppPage>& mutableAppPages();
 
+    using SettingsBuilders = std::vector<AppPageBuilder>;
+    // The groups applications add to the Settings page, kept the way the pages are.
+    static SettingsBuilders& mutableAppSettings();
+
     // The two ways between a percent and a point along the scale slot. See the definitions
     [[nodiscard]] static int percentAt(float position);
     [[nodiscard]] static float positionOf(int percent);
@@ -206,6 +210,19 @@ namespace ClaFi
     {
         mutableAppPages().push_back(
             AppPage{ std::wstring{ caption }, std::move(paintIcon), std::move(build) });
+    }
+
+    // connectAppSettings
+
+    SettingsBuilders& mutableAppSettings()
+    {
+        static SettingsBuilders builders{};
+        return builders;
+    }
+
+    void connectAppSettings(AppPageBuilder build)
+    {
+        mutableAppSettings().push_back(std::move(build));
     }
 
     // OptionsPage
@@ -480,6 +497,10 @@ namespace ClaFi
         // and its line.
         if (!appContext().gpuAvailable())
             m_graphicsSection.setVisible(false);
+
+        // Under the common options, so those stand in one place in every application.
+        for (const AppPageBuilder& build : mutableAppSettings())
+            build(m_options);
 
         // **The folder is the permission.** Nothing is stored until one exists, so the check reads
         // the folder rather than a value of its own - see AppContext::configFolderExists.

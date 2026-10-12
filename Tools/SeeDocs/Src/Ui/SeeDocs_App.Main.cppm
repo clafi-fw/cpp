@@ -43,8 +43,7 @@ namespace SeeDocs_App
         [[nodiscard]] int run(const std::filesystem::path& stated);
     };
 
-    // What SeeDocs keeps of its own, beside the browser's schema: the project open and the
-    // projects opened before.
+    // What SeeDocs keeps of its own beside the browser's schema: its projects and its editors.
     [[nodiscard]] Dom::Dt::Section rootConfigBlueprint();
     // Nothing a tab's entry keeps beyond what the browser puts there.
     [[nodiscard]] Dom::Dt::Section tabEntryBlueprint();

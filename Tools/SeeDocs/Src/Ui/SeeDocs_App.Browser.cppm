@@ -303,17 +303,15 @@ namespace SeeDocs_App
         [[nodiscard]] std::wstring titleOf(const PageData&, const Target&) const;
         [[nodiscard]] static std::optional<RowIcon> iconOf(const Target&);
         // The page a target names, built over its project's surface; nothing where it names
-        // words - no project open, a surface that lists nothing, a path no project carries - or
-        // the options page.
+        // words - no project open, a path no project carries - or the options page.
         [[nodiscard]] std::optional<Page> pageOf(const Target&) const;
-        // The project's home: its options page leads the contents, and Close project ends the
-        // page.
+        // The project's home: its options page leads the contents, and Close project stands in
+        // the head.
         [[nodiscard]] static Page homePageOf(const ShownProject&);
         [[nodiscard]] Page projectsPage() const;   // the root's, while a project is open
         [[nodiscard]] static Command closeCommand(const ShownProject&, std::wstring text);
         // Fills a page with what the target names: the projects or SeeDocs' words on the root,
-        // the words of a page no project carries or of a surface that lists nothing, and else the
-        // page the surface gives.
+        // the words of a page no project carries, and else the page the surface gives.
         void fill(SurfacePage&, const Target&, const PageData&) const;
         // Puts the title and the list of every page data, and the icon of every tab, right for
         // the projects shown.
@@ -331,8 +329,8 @@ namespace SeeDocs_App
         // Builds the selected tab's page again, then shows the footnote waiting to be shown.
         void rebuildCurrentPage();
         [[nodiscard]] Text goneWords(const PageData&) const;
-        // A project whose surface lists nothing is open all the same; only its pages are words.
-        [[nodiscard]] static Text emptyWords(const ShownProject&);
+        // What a home with nothing to document says instead: why, and the folders it reads.
+        static void explainEmpty(Page&, const Project&);
         [[nodiscard]] static bool hasMethod(const Type&, std::wstring_view name);
         // Whether the module exports a function or a constant of the name.
         [[nodiscard]] static bool exports(const ContentsModule&, std::wstring_view name);

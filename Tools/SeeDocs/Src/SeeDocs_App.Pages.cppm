@@ -342,7 +342,7 @@ namespace SeeDocs_App
     // it, each linked, as the tree lists them, then what its own modules export, by module.
     export [[nodiscard]] Page folderPage(const Surface&, Notes&, const ContentsFolders&,
         std::wstring_view path);
-    // The page of the tree's root: what a folder's page says of the root.
+    // The page of the tree's root: what a folder's page says of the root, where it holds any.
     export [[nodiscard]] Page homePage(const Surface&, Notes&, const ContentsFolders&,
         std::wstring_view title);
     export [[nodiscard]] Page modulePage(const Surface&, Notes&, const ContentsFolder&,
