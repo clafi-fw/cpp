@@ -17,7 +17,10 @@ import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.Spacer;
 import ClaFi.Controls.Stack;
 
+import ClaFi.Icons.XMark;
+
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -42,6 +45,10 @@ namespace SeeDocs_App
         constexpr float k_listSpacing = 2.0f;    // between the rows of the sources
         constexpr float k_noteWidth = 520.0f;    // the widest a note under a group runs
         constexpr float k_choiceIndent = 20.0f;  // a set of choices in from its caption
+        constexpr float k_browseGap = 4.0f;      // between a source's box and its browse button
+        constexpr float k_browsePadding = 6.0f;  // the browse button's sides
+        constexpr float k_removeSize = 20.0f;
+        constexpr float k_removeMark = 8.0f;
         // The project's own rows stand at the top as a group's body does: set in by as much, and
         // spaced as its rows are.
         constexpr Padding k_headPadding{ 12.0f, 0.0f };
@@ -52,8 +59,8 @@ namespace SeeDocs_App
             constexpr std::wstring_view reads = L"Reads ";
             constexpr std::wstring_view relative = L"A relative path starts from ";
         }
-        constexpr std::wstring_view k_noSourceTyped =
-            L"A folder is needed here. Remove stops reading this one.";
+        constexpr std::wstring_view k_browseText = L"\u2026";
+        constexpr std::wstring_view k_pickTitle = L"Pick a folder of sources";
 
         // What a choice's state is read from, and what a click on it does.
         using Chosen = std::function<bool()>;
@@ -71,46 +78,85 @@ namespace SeeDocs_App
             OpenProject& m_project;
         };
 
-        // A folder of sources as the properties write it, typed over to read another in its place.
-        class SourceBox : public FolderBox<WordsBox>
-        {
-        public:
-            SourceBox(const CreateParams&, Workspace&, OpenProject&, std::filesystem::path source,
-                Choose changed);
-        public:
-            [[nodiscard]] const std::filesystem::path& source() const { return m_source; }
-        protected:
-            [[nodiscard]] std::wstring writeWords(std::wstring_view words) override;
-            void textEdited() override;
-        private:
-            void showSource();
-            void showHint();
-        private:
-            Workspace& m_workspace;
-            OpenProject& m_project;
-            std::filesystem::path m_source;
-            Choose m_changed;   // after a change has been read back
-        };
+        class SourceRow;
 
-        // **The project's folders of sources**, a row each: the folder, whether the folders under
-        // it are read, and Remove. The rows are built again from the project after each change,
-        // what stands being what was read back. A row given way is hidden, and goes at the next
-        // change: one of them holds the button that was pressed.
+        // The project's folders of sources, a row each, over the stub a folder is added through.
         class SourceList : public Stack
         {
         public:
             SourceList(const CreateParams&, Workspace&, OpenProject&, Choose changed);
         public:
-            void rebuild();
-        private:
-            void addRow(const SourceFolder&);
+            [[nodiscard]] Workspace& workspace() { return m_workspace; }
+            [[nodiscard]] OpenProject& project() { return m_project; }
             [[nodiscard]] bool readsSubfolders(const std::filesystem::path& source) const;
+            void changed() const { m_changed(); }   // after a change has been read back
+            void addStub();
+            // Hides an entry's row and hands its focus on; the row is deleted at the next change.
+            void remove(SourceRow&);
+        private:
+            using Rows = std::vector<SourceRow*>;
+        private:
+            void deleteGoneRows();
         private:
             Workspace& m_workspace;
             OpenProject& m_project;
-            Choose m_changed;                  // after a change has been read back
-            std::vector<Control*> m_rows{};
-            std::vector<Control*> m_goneRows{};
+            Choose m_changed;
+            Rows m_rows{};                        // the rows standing, the stub last
+            std::vector<Control*> m_goneRows{};   // each may hold the control that hid it
+        };
+
+        // An entry's answers; the stub carries them unseen, its field ending where an entry's does.
+        class RowAnswers : public Stack
+        {
+        public:
+            RowAnswers(const CreateParams&, bool shown);
+        public:
+            void reveal();
+        protected:
+            void getControlState(GetStateEvent&) const override;   // unseen, no focus reaches them
+            void hitTest(HitTestEvent&) const override;            // unseen, the pointer passes
+            void paintChildren(PaintEvent&) override;
+        private:
+            bool m_shown;
+        };
+
+        // A folder of sources as the properties write it, typed over to read another in its place.
+        class SourceBox : public FolderBox<WordsBox>
+        {
+        public:
+            SourceBox(const CreateParams&, SourceRow&, OpenProject&);
+        public:
+            void showSource();
+        protected:
+            [[nodiscard]] std::wstring writeWords(std::wstring_view words) override;
+            void textEdited() override;
+        private:
+            void showHint();
+        private:
+            SourceRow& m_row;
+            OpenProject& m_project;
+        };
+
+        // One folder of sources, or the stub under them: a row with no folder yet. See README
+        class SourceRow : public Panel
+        {
+        public:
+            SourceRow(const CreateParams&, SourceList&, std::filesystem::path source);
+        public:
+            [[nodiscard]] const std::filesystem::path& source() const { return m_source; }
+            [[nodiscard]] bool isStub() const { return m_source.empty(); }
+            [[nodiscard]] SourceBox& box() { return m_box; }
+            // Reads the folder in the row's place, or as one more; the reason where it was refused.
+            [[nodiscard]] std::wstring take(const std::filesystem::path& folder);
+            void remove();   // the project stops reading the folder, and the row goes
+        private:
+            void browse();
+        private:
+            SourceList& m_list;
+            std::filesystem::path m_source;   // empty on the stub
+            Panel& m_field;
+            SourceBox& m_box;
+            RowAnswers& m_answers;
         };
 
         // **The age is worked out when the page is built**, and after a rescan. It does not tick
@@ -232,19 +278,7 @@ namespace SeeDocs_App
         );
 
         Stack& sources = page.addGroup(L"Sources");
-        SourceList& list = sources.add<SourceList>(workspace, project, rescanned);
-        sources.add<Button>(
-            L"Add folder",
-            EndIcon::OpensWindow,
-            HorizontalAlign::Left,
-            HintText{ L"Adds a folder of sources the project reads, with the folders under it" },
-            Button::OnClick{ [&workspace, &project, &list, rescanned](ClickEvent&) {
-                if (!workspace.addSource(project))
-                    return;
-                list.rebuild();
-                rescanned();
-            } }
-        );
+        sources.add<SourceList>(workspace, project, rescanned);
 
         // The edit choices are built after the hint choices, which grey one of them; the hints
         // reach them through this once they stand.
@@ -357,14 +391,120 @@ namespace SeeDocs_App
         }
     }
 
+    // SourceList
+
+    namespace
+    {
+        SourceList::SourceList(const CreateParams& params, Workspace& workspace,
+            OpenProject& project, Choose changed)
+            :
+            Stack{
+                params,
+                Orientation::Vertical,
+                Padding{ 0.0f },
+                Spacing{ k_listSpacing }
+            },
+            m_workspace{ workspace },
+            m_project{ project },
+            m_changed{ std::move(changed) }
+        {
+            for (const SourceFolder& source : m_project.project.sources)
+                m_rows.push_back(&add<SourceRow>(*this, source.path));
+            m_rows.push_back(&add<SourceRow>(*this, std::filesystem::path{}));
+        }
+
+        bool SourceList::readsSubfolders(const std::filesystem::path& source) const
+        {
+            for (const SourceFolder& folder : m_project.project.sources)
+            {
+                if (folder.path == source)
+                    return folder.subfolders;
+            }
+            return true;
+        }
+
+        void SourceList::addStub()
+        {
+            deleteGoneRows();
+            m_rows.push_back(&add<SourceRow>(*this, std::filesystem::path{}));
+            invalidateFormAlign();
+        }
+
+        void SourceList::remove(SourceRow& row)
+        {
+            deleteGoneRows();
+            const bool heldFocus = row.containsNested(Input::focusedControl());
+            row.box().showWords(Text{});   // or the focus leaving it writes what it holds
+            row.setVisible(false);
+            m_goneRows.push_back(&row);
+            const Rows::iterator next = m_rows.erase(std::ranges::find(m_rows, &row));
+            // The stub is never removed, so an entry always has a row under it.
+            if (heldFocus)
+                (*next)->box().setFocus();
+            invalidateFormAlign();
+        }
+
+        void SourceList::deleteGoneRows()
+        {
+            for (Control* row : m_goneRows)
+                row->deleteSelf();
+            m_goneRows.clear();
+        }
+    }
+
+    // RowAnswers
+
+    namespace
+    {
+        RowAnswers::RowAnswers(const CreateParams& params, const bool shown)
+            :
+            Stack{
+                params,
+                Orientation::Horizontal,
+                VerticalAlign::Center,
+                Spacing{ k_rowSpacing },
+                Padding{ 0.0f }
+            },
+            m_shown{ shown }
+        {
+        }
+
+        void RowAnswers::reveal()
+        {
+            m_shown = true;
+            invalidateState();
+            invalidateChildrenStates();
+            invalidate();
+        }
+
+        void RowAnswers::getControlState(GetStateEvent& event) const
+        {
+            Stack::getControlState(event);
+            if (&event.control == this && !m_shown)
+                event.state.enabled = false;
+        }
+
+        void RowAnswers::hitTest(HitTestEvent& event) const
+        {
+            if (m_shown)
+                Stack::hitTest(event);
+            else
+                event.zone = HitTest::Transparent;
+        }
+
+        void RowAnswers::paintChildren(PaintEvent& event)
+        {
+            if (m_shown)
+                Stack::paintChildren(event);
+        }
+    }
+
     // SourceBox
 
     namespace
     {
-        // Set as the new project dialog's boxes are, filling the field it stands in. A folder typed
-        // relative lists from the project's folder, which is where it is read from.
-        SourceBox::SourceBox(const CreateParams& params, Workspace& workspace, OpenProject& project,
-            std::filesystem::path source, Choose changed)
+        // Set as the new project dialog's boxes are.
+        SourceBox::SourceBox(const CreateParams& params, SourceRow& row, OpenProject& project)
             :
             FolderBox<WordsBox>{
                 params,
@@ -374,47 +514,40 @@ namespace SeeDocs_App
                 VerticalTextAnchor::Center,
                 PlaceHolderText{ L"A folder on this computer" }
             },
-            m_workspace{ workspace },
-            m_project{ project },
-            m_source{ std::move(source) },
-            m_changed{ std::move(changed) }
+            m_row{ row },
+            m_project{ project }
         {
             setBaseFolder(m_project.project.folder);
-            showSource();
         }
 
-        // **What stands afterwards is the folder typed**, spelled as the properties write it - a
-        // tree's own folder from its project's is "..", however it was typed.
+        // As the properties spell it, in the separators of the desktop it runs on.
+        void SourceBox::showSource()
+        {
+            std::filesystem::path written;
+            if (!m_row.isStub())
+                written = m_project.project.writtenSource(m_row.source());
+            written.make_preferred();
+            showWords(Text{ written.wstring() });
+            showHint();
+        }
+
         std::wstring SourceBox::writeWords(const std::wstring_view words)
         {
             if (!edited())
                 return {};
             const std::wstring typed{ trimmed(words) };
-            if (typed.empty())
-                return std::wstring{ k_noSourceTyped };
-            const std::filesystem::path folder =
-                m_project.project.readSource(std::filesystem::path{ typed });
-            std::wstring refusal = m_workspace.replaceSource(m_project, m_source, folder);
-            if (!refusal.empty())
-                return refusal;
-            m_source = folder;
-            showSource();
-            m_changed();
+            if (!typed.empty())
+                return m_row.take(m_project.project.readSource(std::filesystem::path{ typed }));
+            if (m_row.isStub())
+                showWords(Text{});
+            else
+                m_row.remove();
             return {};
         }
 
         void SourceBox::textEdited()
         {
             FolderBox<WordsBox>::textEdited();
-            showHint();
-        }
-
-        // In the separators of the desktop it runs on.
-        void SourceBox::showSource()
-        {
-            std::filesystem::path written = m_project.project.writtenSource(m_source);
-            written.make_preferred();
-            showWords(Text{ written.wstring() });
             showHint();
         }
 
@@ -439,103 +572,131 @@ namespace SeeDocs_App
         }
     }
 
-    // SourceList
+    // SourceRow
 
     namespace
     {
-        SourceList::SourceList(const CreateParams& params, Workspace& workspace,
-            OpenProject& project, Choose changed)
+        // The field is the new project dialog's, as the name's is.
+        SourceRow::SourceRow(const CreateParams& params, SourceList& list,
+            std::filesystem::path source)
             :
-            Stack{
-                params,
-                Orientation::Vertical,
-                Padding{ 0.0f },
-                Spacing{ k_listSpacing }
-            },
-            m_workspace{ workspace },
-            m_project{ project },
-            m_changed{ std::move(changed) }
-        {
-            rebuild();
-        }
-
-        void SourceList::rebuild()
-        {
-            for (Control* row : m_goneRows)
-                row->deleteSelf();
-            m_goneRows = std::exchange(m_rows, {});
-            for (Control* row : m_goneRows)
-                row->setVisible(false);
-            if (m_project.project.sources.empty())
-            {
-                m_rows.push_back(&add<Label>(
-                    Text{ L"No folder of sources yet" },
-                    TextFormat{ InkGrade::Muted }
-                ));
-            }
-            for (const SourceFolder& source : m_project.project.sources)
-                addRow(source);
-            invalidateFormAlign();
-        }
-
-        // **The row names its folder by its box**, which holds the path - a copy that outlasts the
-        // list it was built from, and that a folder typed over moves. The field is the new
-        // project dialog's, as the name's is: a surface of its own at a button's radius, taking
-        // the row's width but for the answers at its end.
-        void SourceList::addRow(const SourceFolder& source)
-        {
-            Panel& row = add<Panel>(Spacing{ k_rowSpacing });
-            Panel& field = row.createBody<Panel>(
+            Panel{ params, Spacing{ k_rowSpacing } },
+            m_list{ list },
+            m_source{ std::move(source) },
+            m_field{ createBody<Panel>(
                 UiElement::Section,
                 Radius{ themeMetrics().button.radius },
                 themeMetrics().button.padding,
+                Spacing{ k_browseGap },
                 MinSize{ k_fieldWidth, 0.0f }
-            );
-            field.setBorder(themeMetrics().button.border);
-            SourceBox& box = field.createBody<SourceBox>(m_workspace, m_project, source.path,
-                m_changed);
-            Stack& answers = row.createRightBar<Stack>(
-                Orientation::Horizontal,
+            ) },
+            m_box{ m_field.createBody<SourceBox>(*this, list.project()) },
+            m_answers{ createRightBar<RowAnswers>(!isStub()) }
+        {
+            m_field.setBorder(themeMetrics().button.border);
+            // As tall as the line it ends, so the field stands as high as the name's.
+            m_field.createRightBar<ToolButton>(
+                k_browseText,
                 VerticalAlign::Center,
-                Spacing{ k_rowSpacing },
-                Padding{ 0.0f }
+                HorizontalTextAnchor::Center,
+                VerticalTextAnchor::Center,
+                Padding{ k_browsePadding, 0.0f },
+                MinSize{ 0.0f },
+                Interactivity::MouseOnly,
+                HintText{ L"Picks the folder in the desktop's own dialog" },
+                Button::OnClick{ [this](ClickEvent&) {
+                    browse();
+                } }
             );
-            answers.add<CheckBox>(
+            m_answers.add<CheckBox>(
                 L"Include subfolders",
                 VerticalAlign::Center,
                 HintText{ L"Reads the folders under this one too" },
-                Padding{ 0.0f, answers.themeMetrics().listItem.padding.y },
-                CheckBox::OnGetState{ [this, &box](GetStateEvent& event) {
-                    event.state.selected = readsSubfolders(box.source());
+                Padding{ 0.0f, themeMetrics().listItem.padding.y },
+                CheckBox::OnGetState{ [this](GetStateEvent& event) {
+                    event.state.selected = m_list.readsSubfolders(m_source);
                 } },
-                CheckBox::OnClick{ [this, &box](ClickEvent& event) {
-                    m_workspace.setSubfolders(m_project, box.source(),
-                        !readsSubfolders(box.source()));
+                CheckBox::OnClick{ [this](ClickEvent& event) {
+                    m_list.workspace().setSubfolders(m_list.project(), m_source,
+                        !m_list.readsSubfolders(m_source));
                     event.control->invalidateState();
-                    m_changed();
+                    m_list.changed();
                 } }
             );
-            answers.add<Button>(
+            m_answers.add<ToolButton>(
                 L"Remove",
+                FixedSize{ k_removeSize },
+                ButtonViewMode::IconOnly,
+                IconSize{ k_removeMark },
                 VerticalAlign::Center,
+                Interactivity::MouseOnly,
+                ButtonBase::OnPaintIcon{ Icons::XMark::paint },
                 HintText{ L"Stops reading this folder" },
-                Button::OnClick{ [this, &box](ClickEvent&) {
-                    m_workspace.removeSource(m_project, box.source());
-                    rebuild();
-                    m_changed();
+                Button::OnClick{ [this](ClickEvent&) {
+                    remove();
                 } }
             );
-            m_rows.push_back(&row);
+            m_box.showSource();
         }
 
-        bool SourceList::readsSubfolders(const std::filesystem::path& source) const
+        std::wstring SourceRow::take(const std::filesystem::path& folder)
         {
-            for (const SourceFolder& folder : m_project.project.sources)
+            Workspace& workspace = m_list.workspace();
+            OpenProject& project = m_list.project();
+            const bool stub = isStub();
+            std::wstring refusal = stub
+                ? workspace.addSource(project, folder)
+                : workspace.replaceSource(project, m_source, folder);
+            if (!refusal.empty())
+                return refusal;
+            m_source = folder;
+            m_box.showSource();
+            if (stub)
             {
-                if (folder.path == source)
-                    return folder.subfolders;
+                m_answers.reveal();
+                m_list.addStub();
             }
-            return true;
+            m_list.changed();
+            return {};
+        }
+
+        void SourceRow::remove()
+        {
+            m_list.workspace().removeSource(m_list.project(), m_source);
+            m_list.remove(*this);
+            m_list.changed();
+        }
+
+        void SourceRow::browse()
+        {
+            const Project& project = m_list.project().project;
+            const std::wstring typed{ trimmed(m_box.text().plainText()) };
+            std::filesystem::path start = project.folder;
+            if (!typed.empty())
+                start = project.readSource(std::filesystem::path{ typed });
+            else if (!project.sources.empty())
+                start = project.sources.back().path;
+            std::error_code error;
+            while (!std::filesystem::is_directory(start, error))
+            {
+                const std::filesystem::path parent = start.parent_path();
+                if (parent == start)
+                    break;
+                start = parent;
+            }
+            const std::optional<std::filesystem::path> picked =
+                Platform::pickFolder(&form(), k_pickTitle, start);
+            if (!picked)
+                return;
+            const std::filesystem::path folder = project.readSource(*picked);
+            const std::wstring refusal = take(folder);
+            if (refusal.empty())
+                return;
+            std::filesystem::path written = project.writtenSource(folder);
+            written.make_preferred();
+            m_box.text() = Text{ written.wstring() };
+            m_box.setRefusal(refusal);
+            m_box.showRefusal();
         }
     }
 }

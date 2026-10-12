@@ -51,6 +51,22 @@ namespace SeeDocs_App
             return result;
         }
 
+        // Why the project cannot read the folder as a source; empty where it can.
+        [[nodiscard]] std::wstring sourceRefusal(const Project& project,
+            const std::filesystem::path& folder)
+        {
+            std::error_code error;
+            if (!std::filesystem::is_directory(folder, error))
+                return L"There is no such folder.";
+            const bool known = std::ranges::any_of(project.sources,
+                [&folder](const SourceFolder& entry) {
+                    return entry.path == folder;
+                });
+            if (known)
+                return L"The project reads this folder already.";
+            return {};
+        }
+
         // A path as a paragraph of its own, in spot ink, the way a question names a folder.
         void writeFolder(Text& text, const std::filesystem::path& folder)
         {
@@ -283,27 +299,15 @@ namespace SeeDocs_App
         m_browser.rebindProject(open);
     }
 
-    // A folder the project reads already is not added again.
-    bool Workspace::addSource(OpenProject& open)
+    std::wstring Workspace::addSource(OpenProject& open, const std::filesystem::path& folder)
     {
-        std::filesystem::path start = open.project.folder;
-        if (!open.project.sources.empty())
-            start = open.project.sources.back().path;
-        const std::optional<std::filesystem::path> picked =
-            Platform::pickFolder(&m_form, L"Add a folder of sources", start);
-        if (!picked)
-            return false;
-        const std::filesystem::path source = cleanFolder(*picked);
-        const bool known = std::ranges::any_of(open.project.sources,
-            [&source](const SourceFolder& folder) {
-                return folder.path == source;
-            });
-        if (known)
-            return false;
-        change(open, [&source](Project& project) {
-            project.sources.push_back({ .path = source });
+        std::wstring refusal = sourceRefusal(open.project, folder);
+        if (!refusal.empty())
+            return refusal;
+        change(open, [&folder](Project& project) {
+            project.sources.push_back({ .path = folder });
         }, Reread::Sources);
-        return true;
+        return {};
     }
 
     // **The folder takes the source's place** in the order the roots count them, and keeps whether
@@ -313,15 +317,9 @@ namespace SeeDocs_App
     {
         if (folder == source)
             return {};
-        std::error_code error;
-        if (!std::filesystem::is_directory(folder, error))
-            return L"There is no such folder.";
-        const bool known = std::ranges::any_of(open.project.sources,
-            [&folder](const SourceFolder& entry) {
-                return entry.path == folder;
-            });
-        if (known)
-            return L"The project reads this folder already.";
+        std::wstring refusal = sourceRefusal(open.project, folder);
+        if (!refusal.empty())
+            return refusal;
         change(open, [&source, &folder](Project& project) {
             for (SourceFolder& entry : project.sources)
             {

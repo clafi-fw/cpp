@@ -56,9 +56,8 @@ namespace SeeDocs_App
         [[nodiscard]] std::wstring rename(OpenProject&, std::wstring_view name);
         // Scans the project's sources again and shows what was read back, the tabs standing.
         void rescan(OpenProject&);
-        // Adds a folder of sources picked in the desktop's own dialog, and scans the project
-        // again; false where none was added.
-        bool addSource(OpenProject&);
+        // Reads the folder as one more source and scans again; the reason where it was refused.
+        [[nodiscard]] std::wstring addSource(OpenProject&, const std::filesystem::path& folder);
         // Reads the folder in place of the source and scans again; the reason where it was refused.
         [[nodiscard]] std::wstring replaceSource(OpenProject&, const std::filesystem::path& source,
             const std::filesystem::path& folder);

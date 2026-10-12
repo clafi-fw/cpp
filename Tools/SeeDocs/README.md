@@ -261,20 +261,22 @@ it stand its Project options row and a line that parts the row from the project'
 options page is titled as every page is, and under the title holds the project's name in a box that
 renames it - Return or leaving the box keeps the name, Escape puts it back, and an emptied box gives
 the project its folder's name - then its folder, and how long ago it was scanned with a Rescan
-button that reads the sources again. Under Sources
-stand the folders it reads, each with Include subfolders and Remove, and Add folder after them.
-Each folder stands in a box, spelled as `Sources` writes it - `..` for a tree's own folder from its
-`.seedocs` - with the folder its text names in full in its hint, which follows what is typed; a
-folder typed over it is read in its place, one
-typed relative read from the project's folder, and a folder that does not exist or is read already
-is refused with the reason under the box;
-under Scan options, whether the sources are read as any C++ and Delphi or as ClaFi modules, and
+button that reads the sources again. Under Sources stand the folders it reads, a row each: the
+folder in a box with a browse button at its end, Include subfolders, and a cross that stops reading
+it. Each folder is spelled as `Sources` writes it (`..` for a tree's own folder from its
+`.seedocs`), and its hint names the folder in full, following what is typed. A folder typed or
+browsed over it is read in its place, one typed relative read from the project's folder, and an
+emptied box stops reading it. Under the folders stands an empty box, always there: a folder typed or
+browsed into it is read as one more, and its row becomes that folder's with a new empty box under
+it. The empty box's row keeps the room of a folder's answers, so the two boxes end at one edge. A
+folder that does not exist or is read already is refused with the reason under the box. Under Scan
+options, the page asks whether the sources are read as any C++ and Delphi or as ClaFi modules, and
 whether hints come from every recognizable comment or follow the strict ClaFi rules - a new project
 starts on the first of each; under Edit hints, whether a hint edited on a page is not written at all
 or written directly into the source, with no undo. Every change reads the sources again, but the
-last, which builds the pages again. The page stays where it stands while the sources are read
-again. Its url is the project's with `/.project` after it: the scanner passes over names that start
-with a dot, so no folder can take it.
+last, which builds the pages again. The page stays where it stands while the sources are read again.
+Its url is the project's with `/.project` after it: the scanner passes over names that start with a
+dot, so no folder can take it.
 
 **A folder typed lists the folders under it.** A source's box, and the New project window's box for
 where to store the project, list as they are typed at their end the folders in the folder the text
