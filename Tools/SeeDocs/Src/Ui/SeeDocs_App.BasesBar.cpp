@@ -274,9 +274,11 @@ namespace SeeDocs_App
     // a short name stays whole while a long template spelling gives way. A column makes the bar's
     // width the widest of its rows rather than their sum, so the cap is found by halving the range
     // it can stand in rather than solved for. A bar that overruns at the least a crumb keeps is
-    // left to overrun.
+    // left to overrun. A bar with no crumbs takes no cap, even at a width under zero.
     float BasesBar::capFor(const float width, const float leastCrumb) const
     {
+        if (m_crumbs.empty())
+            return k_maxFloat;
         std::size_t crumb = 0;
         if (runExtent(m_bases, crumb, k_maxFloat).width <= width)
             return k_maxFloat;
