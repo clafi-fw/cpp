@@ -1148,7 +1148,10 @@ namespace SeeDocs_App
         if (target.isHome())
             return homePageOf(project);
         if (target.isFolder())
-            return folderPage(open.surface, open.notes, project.contents, target.folder);
+        {
+            return folderPage(open.surface, open.notes, project.contents, target.folder,
+                open.project.sourceRoots());
+        }
         if (!target.exportName.empty())
         {
             return exportPage(open.surface, open.notes, *target.contents, *target.module,

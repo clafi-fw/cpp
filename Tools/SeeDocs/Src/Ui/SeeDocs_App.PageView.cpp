@@ -23,6 +23,7 @@ import ClaFi.Controls.Base.ExpanderBase;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
@@ -127,8 +128,15 @@ namespace SeeDocs_App
             {
                 if (left[i].source.has_value() != right[i].source.has_value())
                     return false;
+                if (left[i].folder.has_value() != right[i].folder.has_value())
+                    return false;
             }
             return true;
+        }
+
+        [[nodiscard]] bool takesButton(const Fact& fact)
+        {
+            return fact.source.has_value() || fact.folder.has_value();
         }
 
         [[nodiscard]] bool sameShape(const Page& left, const Page& right)
@@ -519,8 +527,8 @@ namespace SeeDocs_App
         });
     }
 
-    // The facts as a grid, the label muted. A fact naming a source has a button opening it at its
-    // row's end; the words of a fact with none stand across the button's column.
+    // The facts as a grid, the label muted. A fact naming a source or a folder has a button
+    // opening it at its row's end; the words of a fact with none stand across the button's column.
     void PageView::addFacts()
     {
         if (m_page.facts.empty())
@@ -531,9 +539,7 @@ namespace SeeDocs_App
             Grids::GridLines::Horizontal
         );
         grid.columns().add(Tag{ k_factLabel }, TextFormat{ InkGrade::Muted });
-        const bool opens = std::ranges::any_of(m_page.facts, [](const Fact& fact) {
-            return fact.source.has_value();
-        });
+        const bool opens = std::ranges::any_of(m_page.facts, takesButton);
         Grids::Column* buttonColumn = nullptr;
         if (opens)
         {
@@ -549,12 +555,16 @@ namespace SeeDocs_App
         }
         for (const Fact& fact : m_page.facts)
         {
-            const bool hasButton = fact.source.has_value();
+            const bool hasButton = takesButton(fact);
             Grids::Row* made = nullptr;
             if (hasButton)
             {
                 Grids::RowContainer& container = grid.addControlRow();
-                connectSource(container.addControl<Button>(*buttonColumn), fact);
+                Button& button = container.addControl<Button>(*buttonColumn);
+                if (fact.source.has_value())
+                    connectSource(button, fact);
+                else
+                    connectFolder(button, fact);
                 made = &container;
             }
             else
@@ -945,6 +955,14 @@ namespace SeeDocs_App
             [&button]() {
                 button.invalidateState();
             }));
+    }
+
+    void PageView::connectFolder(Button& button, const Fact& fact)
+    {
+        button.text() = Text{ k_openFolder };
+        button.onClick([this, &fact](ClickEvent&) {
+            Platform::shellExecute(form(), fact.folder->wstring());
+        });
     }
 
     // **The cell shows more than the comment holds** - its types linked, a missing hint marked, an

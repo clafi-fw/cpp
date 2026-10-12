@@ -90,6 +90,7 @@ namespace SeeDocs_App
         std::wstring label;
         Runs value;
         std::optional<SourcePlace> source;   // what an editor opens for it; none for most facts
+        std::optional<std::filesystem::path> folder;   // what the desktop's file manager opens
     };
 
     export using Facts = std::vector<Fact>;
@@ -346,10 +347,10 @@ namespace SeeDocs_App
     // The folder a file of the surface stands in, as a path under the root.
     export [[nodiscard]] std::wstring folderOf(std::wstring_view relativeFile);
 
-    // A folder's page: what stands under it at every depth counted, the folders directly under
-    // it, each linked, as the tree lists them, then what its own modules export, by module.
+    // A folder's page: its path on disk, what stands under it at every depth counted, the folders
+    // directly under it, each linked, as the tree lists them, then its own modules' exports.
     export [[nodiscard]] Page folderPage(const Surface&, Notes&, const ContentsFolders&,
-        std::wstring_view path);
+        std::wstring_view path, const SourceRoots&);
     // The page of the tree's root: what a folder's page says of the root, where it holds any.
     export [[nodiscard]] Page homePage(const Surface&, Notes&, const ContentsFolders&,
         std::wstring_view title);

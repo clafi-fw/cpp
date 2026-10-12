@@ -346,7 +346,9 @@ one the way up came through marked - for a base the surface does not have, the t
 spell it the same way, template arguments aside. Crumbs wider than the page come down to one
 common width, the widest first, and keep at least their mark and a few letters. An alias's line
 is what it stands for after an equals sign,
-an enum's its underlying type after a colon. A folder's page says what it holds at every depth,
+an enum's its underlying type after a colon. A folder's page gives its path on disk - one under
+each source holding it, with an Open folder button that shows it in the desktop's file manager -
+says what it holds at every depth,
 leads with the folders directly under
 its own, as the tree lists them, each with what it holds at every depth, and where the folder
 holds modules of its own goes on with a grid of their types with their kinds and hints, then

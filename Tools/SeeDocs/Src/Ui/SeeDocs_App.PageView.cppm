@@ -199,6 +199,7 @@ namespace SeeDocs_App
         void connectCommand(Button&, const Command&);
         // The button opens the fact's source, greyed with a hint while no editor is set for it.
         void connectSource(Button&, const Fact&);
+        void connectFolder(Button&, const Fact&);   // its click opens the fact's folder
         // The row's hint cell opens on the comment's words and writes them back.
         void connectHintCell(Grids::Row&, const TableRow&, TagValue hintColumn);
         // The row's menu edits its footnote, or adds one where it has none.
@@ -254,6 +255,7 @@ namespace SeeDocs_App
         static constexpr TagValue k_commandColumn = k_markColumn - 4;
         static constexpr std::wstring_view k_mark = L"*";
         static constexpr std::wstring_view k_openInEditor = L"Open in editor";
+        static constexpr std::wstring_view k_openFolder = L"Open folder";
 
         Page m_page{};
         IPageWriter* m_writer{ nullptr };

@@ -787,6 +787,33 @@ namespace SeeDocs_App
             return nullptr;
         }
 
+        // The folder on disk, under every source holding a file at or below it.
+        void addFolderPaths(Page& page, const Surface& surface, const SourceRoots& roots,
+            const std::wstring_view path)
+        {
+            std::vector<bool> holds(roots.size(), false);
+            for (const SourceFile& file : surface.files())
+            {
+                if (file.root >= roots.size())
+                    continue;
+                const std::wstring folder = folderOf(file.relative);
+                if (folder == path || standsUnder(folder, path))
+                    holds[file.root] = true;
+            }
+            for (std::size_t root = 0; root != roots.size(); ++root)
+            {
+                if (!holds[root])
+                    continue;
+                const std::filesystem::path onDisk =
+                    (roots[root] / std::filesystem::path{ path }).lexically_normal();
+                page.facts.push_back({
+                    .label = L"path",
+                    .value = { code(onDisk.wstring()) },
+                    .folder = onDisk
+                });
+            }
+        }
+
         // The head of a type page
 
         void addTypeHead(Page& page, const Surface& surface, const Type& type)
@@ -2670,13 +2697,13 @@ namespace SeeDocs_App
     }
 
     Page folderPage(const Surface& surface, Notes& notes, const ContentsFolders& folders,
-        const std::wstring_view path)
+        const std::wstring_view path, const SourceRoots& roots)
     {
         Page page;
         page.kind = PageKind::Folder;
         page.title = folderNameOf(path);
         page.badges.push_back(muted(std::wstring{ k_folderWord }));
-        addFact(page, L"folder", { code(std::wstring{ path }) });
+        addFolderPaths(page, surface, roots, path);
         addFolderContents(page, surface, notes, folders, path);
         return page;
     }
