@@ -24,24 +24,33 @@ namespace SeeDocs_App
         Direct    // it is written into its source file at once, with no undo
     };
 
+    // A folder of sources as the properties write it, and whether the folders under it are read.
+    export struct ProjectSource
+    {
+        std::wstring written;   // as typed, read as a folder only where one is needed
+        bool subfolders{ true };
+    };
+
+    export using ProjectSources = std::vector<ProjectSource>;
+
     // A project: its folder, what it is called, the folders it reads and how it reads them.
     export struct Project
     {
         std::filesystem::path folder;
         std::wstring name;
-        SourceFolders sources;   // absolute, in the order their roots count them
+        ProjectSources sources;   // in the order their roots count them
         ScanMode mode{ ScanMode::Full };
         HintRules hints{ HintRules::Strict };
         HintEdits edits{ HintEdits::None };
 
         [[nodiscard]] std::filesystem::path databasePath() const;
         [[nodiscard]] std::filesystem::path footnotesFolder() const;
-        [[nodiscard]] SourceRoots sourceRoots() const;   // the sources' folders, a root each
-        // A source as the properties write it: relative while the two share a folder. See README
-        [[nodiscard]] std::filesystem::path writtenSource(
-            const std::filesystem::path& source) const;
-        // A source written or typed as the properties take it, read against the project's folder.
-        [[nodiscard]] std::filesystem::path readSource(const std::filesystem::path& written) const;
+        [[nodiscard]] SourceFolders sourceFolders() const;   // the sources, each read as a folder
+        [[nodiscard]] SourceRoots sourceRoots() const;       // the sources' folders, a root each
+        // A folder picked as the properties write it: relative while the two share one. See README
+        [[nodiscard]] std::wstring writtenSource(const std::filesystem::path& picked) const;
+        // The folder a source written or typed names, read against the project's folder. See README
+        [[nodiscard]] std::filesystem::path readSource(std::wstring_view written) const;
         // The name it goes by where it states none: its folder's, or a tree's project's, the
         // tree's.
         [[nodiscard]] std::wstring folderName() const;

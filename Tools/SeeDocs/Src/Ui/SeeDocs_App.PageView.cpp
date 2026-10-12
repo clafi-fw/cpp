@@ -10,7 +10,6 @@ import SeeDocs_App.Surface;
 import ClaFi.Browser.Actions;
 
 import ClaFi.Controls.Button;
-import ClaFi.Controls.Divider;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Menu;
@@ -714,21 +713,16 @@ namespace SeeDocs_App
         m_parts.push_back(&block);
     }
 
-    // A line, and under it the page's commands as buttons in a row; nothing where it has none.
     void PageView::addCommands()
     {
-        if (m_page.commands.empty())
-            return;
-        Divider& line = m_pageBox.body().add<Divider>();
-        Stack& bar = m_pageBox.body().add<Stack>(
-            Orientation::Horizontal,
-            Padding{ 0.0f },
-            Spacing{ k_commandGap }
-        );
+        Stack& bar = m_head.commandBar();
+        bar.setVisible(!m_page.commands.empty());
         for (const Command& command : m_page.commands)
-            connectCommand(bar.add<Button>(), command);
-        m_parts.push_back(&line);
-        m_parts.push_back(&bar);
+        {
+            Button& button = bar.add<Button>();
+            connectCommand(button, command);
+            m_parts.push_back(&button);
+        }
     }
 
     // A labelled group stands beside its label in the group column, folding under it, or under

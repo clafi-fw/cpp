@@ -295,16 +295,18 @@ about document order rather than about what is on screen.
 Hint is an internal class used by the framework - never use it directly
 
 **What a hint is about follows the controller.** While the mouse drives it is the control under the
-pointer, and the hover moving is what takes a hint down and starts the wait for the next. While
-the keyboard alone drives it is the item the focus rests on - the control a key landed on, which
-a container holds the focus for - and the focus landing does the same. Each hears its own
-controller and not the other: the hover moves under a still pointer, when a window appears under
-it or a hit-test follows a scroll, and a click lands the focus with the pointer's hint already
-standing for it. When the mouse takes over, the hover has its say at once, wherever the pointer
-was left - unless it rests on the very item the focus is on, where nothing changed hands. A hint
-already up is left standing while it is still the answer the control pointed at would be given -
-its own, or that of a control it stands in: crossing children that have no hint of their own is
-not leaving the control that has one.
+pointer, and the hover moving is what takes a hint down and starts the wait for the next. While the
+keyboard alone drives it is the item the focus rests on - the control a key landed on, which a
+container holds the focus for - and the focus landing does the same. A landing is the focus coming
+to another item. A list going down hands the focus back to the box it was dropped from, which held
+it all along, so a hint that went down with the list stays down. Each hears its own controller and
+not the other: the hover moves under a still pointer, when a window appears under it or a hit-test
+follows a scroll, and a click lands the focus with the pointer's hint already standing for it. When
+the mouse takes over, the hover has its say at once, wherever the pointer was left - unless it rests
+on the very item the focus is on, where nothing changed hands. A hint already up is left standing
+while it is still the answer the control pointed at would be given - its own, or that of a control
+it stands in: crossing children that have no hint of their own is not leaving the control that has
+one.
 
 **A hint up is asked again when its words move.** Its window is measured for the words it went up
 with and keeps them on screen while it stands, so a control that changes the words of its hint

@@ -1381,7 +1381,7 @@ namespace SeeDocs_App
                 << k_endLine;
         }
         text << (project.sources.size() == 1 ? L"The folder read is:" : L"The folders read are:");
-        for (const SourceFolder& source : project.sources)
+        for (const SourceFolder& source : project.sourceFolders())
             writePath(text, source.path.wstring());
         return text;
     }

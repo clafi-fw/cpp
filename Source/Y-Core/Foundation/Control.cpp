@@ -972,16 +972,26 @@ namespace ClaFi
 
     void Control::setFocus()
     {
+        auto focusedItem = []() -> const Control* {
+            Control* focused = Input::focusedControl();
+            return focused ? focused->focusDelegate() : nullptr;
+        };
+        const Control* previousItem = focusedItem();
         FocusEvent event{ *this, form() };
         nestedControlFocusing(event);
         // Only a retarget needs this. When the focus lands here the write at the end of the walk
         // has already invalidated both sides of the change.
         if (event.control != this)
             invalidateState();
-        // Told after the walk, so that a container has recorded the item it now answers for. A
+        // Read after the walk, so that a container has recorded the item it now answers for. A
         // control a key lands on is what a hint is about while the keyboard drives, the way the
         // one under the pointer is while the mouse does.
-        Hint::focusedControlChanged();
+        //
+        // **The hint hears a landing only where the item changed.** A list going down hands the
+        // focus back to the box it was dropped from, which held it all along, and a hint that
+        // went down with the list stays down.
+        if (focusedItem() != previousItem)
+            Hint::focusedControlChanged();
     }
 
     void Control::animatedClick(FormBase& form, const InputStamp stamp)

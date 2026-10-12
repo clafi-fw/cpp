@@ -51,16 +51,17 @@ namespace SeeDocs_App
             return result;
         }
 
-        // Why the project cannot read the folder as a source; empty where it can.
+        // Why the project cannot read the folder as a source, the one it replaces aside; empty
+        // where it can.
         [[nodiscard]] std::wstring sourceRefusal(const Project& project,
-            const std::filesystem::path& folder)
+            const std::filesystem::path& folder, const std::wstring_view replaced)
         {
             std::error_code error;
             if (!std::filesystem::is_directory(folder, error))
                 return L"There is no such folder.";
             const bool known = std::ranges::any_of(project.sources,
-                [&folder](const SourceFolder& entry) {
-                    return entry.path == folder;
+                [&project, &folder, replaced](const ProjectSource& entry) {
+                    return entry.written != replaced && project.readSource(entry.written) == folder;
                 });
             if (known)
                 return L"The project reads this folder already.";
@@ -239,7 +240,7 @@ namespace SeeDocs_App
                     return std::wstring{ L"The folder could not be made." };
                 if (!source.empty())
                 {
-                    made->sources.push_back({ .path = cleanFolder(source) });
+                    made->sources.push_back({ .written = made->writtenSource(source) });
                     writeProject(*made);
                     if (std::optional<Project> read = readProject(made->folder))
                         made = std::move(read);
@@ -299,54 +300,59 @@ namespace SeeDocs_App
         m_browser.rebindProject(open);
     }
 
-    std::wstring Workspace::addSource(OpenProject& open, const std::filesystem::path& folder)
+    std::wstring Workspace::addSource(OpenProject& open, const std::wstring_view written)
     {
-        std::wstring refusal = sourceRefusal(open.project, folder);
+        std::wstring refusal = sourceRefusal(open.project, open.project.readSource(written), {});
         if (!refusal.empty())
             return refusal;
-        change(open, [&folder](Project& project) {
-            project.sources.push_back({ .path = folder });
+        change(open, [written](Project& project) {
+            project.sources.push_back({ .written = std::wstring{ written } });
         }, Reread::Sources);
         return {};
     }
 
-    // **The folder takes the source's place** in the order the roots count them, and keeps whether
-    // the folders under it are read. The same folder again is no change.
-    std::wstring Workspace::replaceSource(OpenProject& open, const std::filesystem::path& source,
-        const std::filesystem::path& folder)
+    // **The words written take the source's place** in the order the roots count them, and keep
+    // whether the folders under it are read. The same words again are no change, and the same
+    // folder spelled another way is written without a scan.
+    std::wstring Workspace::replaceSource(OpenProject& open, const std::wstring_view source,
+        const std::wstring_view written)
     {
-        if (folder == source)
+        if (written == source)
             return {};
-        std::wstring refusal = sourceRefusal(open.project, folder);
+        const std::filesystem::path folder = open.project.readSource(written);
+        std::wstring refusal = sourceRefusal(open.project, folder, source);
         if (!refusal.empty())
             return refusal;
-        change(open, [&source, &folder](Project& project) {
-            for (SourceFolder& entry : project.sources)
+        const Reread reread = folder == open.project.readSource(source)
+            ? Reread::Pages
+            : Reread::Sources;
+        change(open, [source, written](Project& project) {
+            for (ProjectSource& entry : project.sources)
             {
-                if (entry.path == source)
-                    entry.path = folder;
+                if (entry.written == source)
+                    entry.written = written;
             }
-        }, Reread::Sources);
+        }, reread);
         return {};
     }
 
-    void Workspace::removeSource(OpenProject& open, const std::filesystem::path& source)
+    void Workspace::removeSource(OpenProject& open, const std::wstring_view source)
     {
-        change(open, [&source](Project& project) {
-            std::erase_if(project.sources, [&source](const SourceFolder& folder) {
-                return folder.path == source;
+        change(open, [source](Project& project) {
+            std::erase_if(project.sources, [source](const ProjectSource& entry) {
+                return entry.written == source;
             });
         }, Reread::Sources);
     }
 
-    void Workspace::setSubfolders(OpenProject& open, const std::filesystem::path& source,
+    void Workspace::setSubfolders(OpenProject& open, const std::wstring_view source,
         const bool subfolders)
     {
-        change(open, [&source, subfolders](Project& project) {
-            for (SourceFolder& folder : project.sources)
+        change(open, [source, subfolders](Project& project) {
+            for (ProjectSource& entry : project.sources)
             {
-                if (folder.path == source)
-                    folder.subfolders = subfolders;
+                if (entry.written == source)
+                    entry.subfolders = subfolders;
             }
         }, Reread::Sources);
     }
@@ -486,7 +492,7 @@ namespace SeeDocs_App
 
     void Workspace::scan(const Project& project)
     {
-        writeDatabase(scanSources(project.sources, project.mode, project.hints),
+        writeDatabase(scanSources(project.sourceFolders(), project.mode, project.hints),
             project.databasePath());
     }
 

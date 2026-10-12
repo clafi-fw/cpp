@@ -39,15 +39,18 @@ folders, and are read as they stand.
     EditHints = true
 
 `Name` is what the project goes by; empty, it goes by its folder's name. `Sources` are the folders
-it reads, each with the folders under it or without them; a path is written relative to the
-project's folder while the two share a folder under the root of their volume, so that they move
-together and a project kept in a repository names no place outside it, and as it stands otherwise.
-Folders of one name under two sources are one folder, and a file two sources reach is read once, as
-the first of them found it. `Limited` reads the sources as any C++ and Delphi rather than as ClaFi
-modules, `LooseHints` takes every recognizable comment's hint rather than the strict rules' - see
-Hints - and `EditHints` writes a hint edited on a page into its source. A project the window makes
-is written `Limited` and `LooseHints`; one stating neither reads its sources as ClaFi modules by the
-strict rules.
+it reads, each with the folders under it or without them. A path stands as it was typed and is read
+as a folder when the sources are read: a relative one from the project's folder, one that starts
+with a separator from the root of the project's volume, and a backslash parts folders on every
+desktop, so a path typed on Windows names the same folder on Linux. A folder picked rather than
+typed is written relative to the project's folder while the two share a folder under the root of
+their volume, so that they move together and a project kept in a repository names no place outside
+it, and as it stands otherwise. Folders of one name under two sources are one folder, and a file two
+sources reach is read once, as the first of them found it. `Limited` reads the sources as any C++
+and Delphi rather than as ClaFi modules, `LooseHints` takes every recognizable comment's hint rather
+than the strict rules' - see Hints - and `EditHints` writes a hint edited on a page into its source.
+A project the window makes is written `Limited` and `LooseHints`; one stating neither reads its
+sources as ClaFi modules by the strict rules.
 
 A project made inside a tree, in the tree's `.seedocs` folder, is a project all the same, and a
 tree that has one stands for it: `SeeDocsCli check Source` checks the project in
@@ -258,25 +261,26 @@ settings are kept on the computer.
 
 Each open project is a node of the tree, named after the project, and the node opens its home. Under
 it stand its Project options row and a line that parts the row from the project's folders. The
-options page is titled as every page is, and under the title holds the project's name in a box that
-renames it - Return or leaving the box keeps the name, Escape puts it back, and an emptied box gives
-the project its folder's name - then its folder, and how long ago it was scanned with a Rescan
-button that reads the sources again. Under Sources stand the folders it reads, a row each: the
-folder in a box with a browse button at its end, Include subfolders, and a cross that stops reading
-it. Each folder is spelled as `Sources` writes it (`..` for a tree's own folder from its
-`.seedocs`), and its hint names the folder in full, following what is typed. A folder typed or
-browsed over it is read in its place, one typed relative read from the project's folder, and an
-emptied box stops reading it. Under the folders stands an empty box, always there: a folder typed or
-browsed into it is read as one more, and its row becomes that folder's with a new empty box under
-it. The empty box's row keeps the room of a folder's answers, so the two boxes end at one edge. A
-folder that does not exist or is read already is refused with the reason under the box. Under Scan
-options, the page asks whether the sources are read as any C++ and Delphi or as ClaFi modules, and
-whether hints come from every recognizable comment or follow the strict ClaFi rules - a new project
-starts on the first of each; under Edit hints, whether a hint edited on a page is not written at all
-or written directly into the source, with no undo. Every change reads the sources again, but the
-last, which builds the pages again. The page stays where it stands while the sources are read again.
-Its url is the project's with `/.project` after it: the scanner passes over names that start with a
-dot, so no folder can take it.
+options page is titled as every page is, and under the title holds the project's name, in heading
+type, in a box that renames it - Return or leaving the box keeps the name, Escape puts it back, and
+an emptied box gives the project its folder's name - then its folder, and how long ago it was
+scanned with a Rescan button that reads the sources again. Under Sources stand the folders it reads,
+a row each: the folder in a box with a browse button at its end, Include subfolders, and a cross
+that stops reading it. A box shows the folder it reads in full while the box is left, and while it
+is edited the words `Sources` writes, which are the words typed (`..` for a tree's own folder from
+its `.seedocs`); an edit refused keeps the words typed. A folder typed or browsed over it is read in
+its place, one typed relative read from the project's folder, and an emptied box stops reading it;
+the same folder typed another way is kept as typed, with no scan. Under the folders stands an empty
+box reading Add source, always there: a folder typed or browsed into it is read as one more, and its
+row becomes that folder's with a new empty box under it. The empty box's row keeps the room of a
+folder's answers, so the two boxes end at one edge. A folder that does not exist or is read already
+is refused with the reason under the box. Under Scan options, the page asks whether the sources are
+read as any C++ and Delphi or as ClaFi modules, and whether hints come from every recognizable
+comment or follow the strict ClaFi rules - a new project starts on the first of each; under Edit
+hints, whether a hint edited on a page is not written at all or written directly into the source,
+with no undo. Every change reads the sources again, but the last, which builds the pages again. The
+page stays where it stands while the sources are read again. Its url is the project's with
+`/.project` after it: the scanner passes over names that start with a dot, so no folder can take it.
 
 **A folder typed lists the folders under it.** A source's box, and the New project window's box for
 where to store the project, list as they are typed at their end the folders in the folder the text
@@ -300,9 +304,9 @@ mouse, or a right click on either button for the list), a type's crumb lists its
 climbs the path. The root, `/`, lists the projects open, each with a Close button that closes the
 project and every tab on it. A home page opens each project: a link to its Project options page,
 then the folders under the root as the tree lists them, with what each holds at every depth; a
-Close project button ends the page. Modules standing in a source folder's own folder
-are home's: they stand in the project's node under its folders, and the home page carries what
-they export, by module, as a folder's page does. Renaming a project takes every url under it
+Close project button stands at the page's top right. Modules standing in a source folder's own
+folder are home's: they stand in the project's node under its folders, and the home page carries
+what they export, by module, as a folder's page does. Renaming a project takes every url under it
 along, in the tabs and in their histories alike, and a second project open under a name already
 taken goes by that name with a number after it. Where a tab stands, the tabs open and each one's
 history are kept with the settings, so a run starts where the last one left off. A url no project

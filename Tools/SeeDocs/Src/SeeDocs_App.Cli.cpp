@@ -97,7 +97,7 @@ namespace SeeDocs_App
         {
             if (std::optional<Project> project = readProject(folder))
                 return std::move(*project);
-            return Project{ .sources = { { .path = folder } } };
+            return Project{ .sources = { { .written = folder.wstring() } } };
         }
 
         [[nodiscard]] int scan(const Options& options)
@@ -112,7 +112,8 @@ namespace SeeDocs_App
             }
             if (output.empty())
                 output = project.databasePath();
-            const Surface surface = scanSources(project.sources, project.mode, project.hints);
+            const Surface surface = scanSources(project.sourceFolders(), project.mode,
+                project.hints);
             writeDatabase(surface, output);
             print(std::to_wstring(classCount(surface)) + L" classes, "
                 + std::to_wstring(surface.types().size()) + L" types, "
@@ -136,7 +137,8 @@ namespace SeeDocs_App
                 print(project.name + L" reads any C++ and Delphi, which checks nothing\n");
                 return k_ok;
             }
-            const Surface surface = scanSources(project.sources, ScanMode::Full, project.hints);
+            const Surface surface = scanSources(project.sourceFolders(), ScanMode::Full,
+                project.hints);
             const Report report = checkSurface(surface, project.footnotesFolder());
             print(formatReport(report, surface));
             print(L"\n" + std::to_wstring(classCount(surface)) + L" classes, "

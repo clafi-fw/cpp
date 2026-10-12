@@ -53,11 +53,11 @@ namespace SeeDocs_App
         // spaced as its rows are.
         constexpr Padding k_headPadding{ 12.0f, 0.0f };
         constexpr float k_headSpacing = 6.0f;
-        // A source box's hint: the folder it reads, and where a relative path starts from.
-        namespace SourceHint
+        // What an empty source box shows: the stub's, and an entry's emptied.
+        namespace SourcePlaceHolder
         {
-            constexpr std::wstring_view reads = L"Reads ";
-            constexpr std::wstring_view relative = L"A relative path starts from ";
+            constexpr std::wstring_view stub = L"Add source";
+            constexpr std::wstring_view entry = L"A folder on this computer";
         }
         constexpr std::wstring_view k_browseText = L"\u2026";
         constexpr std::wstring_view k_pickTitle = L"Pick a folder of sources";
@@ -88,7 +88,7 @@ namespace SeeDocs_App
         public:
             [[nodiscard]] Workspace& workspace() { return m_workspace; }
             [[nodiscard]] OpenProject& project() { return m_project; }
-            [[nodiscard]] bool readsSubfolders(const std::filesystem::path& source) const;
+            [[nodiscard]] bool readsSubfolders(std::wstring_view source) const;
             void changed() const { m_changed(); }   // after a change has been read back
             void addStub();
             // Hides an entry's row and hands its focus on; the row is deleted at the next change.
@@ -120,7 +120,7 @@ namespace SeeDocs_App
             bool m_shown;
         };
 
-        // A folder of sources as the properties write it, typed over to read another in its place.
+        // A source's box: the folder read while it is left, and the words written while edited.
         class SourceBox : public FolderBox<WordsBox>
         {
         public:
@@ -129,9 +129,7 @@ namespace SeeDocs_App
             void showSource();
         protected:
             [[nodiscard]] std::wstring writeWords(std::wstring_view words) override;
-            void textEdited() override;
-        private:
-            void showHint();
+            void focusChanged() override;
         private:
             SourceRow& m_row;
             OpenProject& m_project;
@@ -141,19 +139,19 @@ namespace SeeDocs_App
         class SourceRow : public Panel
         {
         public:
-            SourceRow(const CreateParams&, SourceList&, std::filesystem::path source);
+            SourceRow(const CreateParams&, SourceList&, std::wstring source);
         public:
-            [[nodiscard]] const std::filesystem::path& source() const { return m_source; }
+            [[nodiscard]] const std::wstring& source() const { return m_source; }
             [[nodiscard]] bool isStub() const { return m_source.empty(); }
             [[nodiscard]] SourceBox& box() { return m_box; }
-            // Reads the folder in the row's place, or as one more; the reason where it was refused.
-            [[nodiscard]] std::wstring take(const std::filesystem::path& folder);
+            // Writes the source in the row's place, or as one more; the reason where refused.
+            [[nodiscard]] std::wstring take(std::wstring_view written);
             void remove();   // the project stops reading the folder, and the row goes
         private:
             void browse();
         private:
             SourceList& m_list;
-            std::filesystem::path m_source;   // empty on the stub
+            std::wstring m_source;   // as written, empty on the stub
             Panel& m_field;
             SourceBox& m_box;
             RowAnswers& m_answers;
@@ -362,14 +360,15 @@ namespace SeeDocs_App
 
     namespace
     {
-        // Set as the new project dialog's boxes are. Emptied, it shows the folder's name in its
-        // place - the name an empty one gives.
+        // Set as the new project dialog's boxes are, in heading type. Emptied, it shows the
+        // folder's name in its place - the name an empty one gives.
         NameBox::NameBox(const CreateParams& params, Workspace& workspace, OpenProject& project,
             PlaceHolderText folderName)
             :
             WordsBox{
                 params,
                 Interactivity::Focusable,
+                TextFormat{ TextStyleId::Heading },
                 WordWrap::No,
                 Padding{ 0.0f },
                 VerticalTextAnchor::Center,
@@ -408,17 +407,17 @@ namespace SeeDocs_App
             m_project{ project },
             m_changed{ std::move(changed) }
         {
-            for (const SourceFolder& source : m_project.project.sources)
-                m_rows.push_back(&add<SourceRow>(*this, source.path));
-            m_rows.push_back(&add<SourceRow>(*this, std::filesystem::path{}));
+            for (const ProjectSource& source : m_project.project.sources)
+                m_rows.push_back(&add<SourceRow>(*this, source.written));
+            m_rows.push_back(&add<SourceRow>(*this, std::wstring{}));
         }
 
-        bool SourceList::readsSubfolders(const std::filesystem::path& source) const
+        bool SourceList::readsSubfolders(const std::wstring_view source) const
         {
-            for (const SourceFolder& folder : m_project.project.sources)
+            for (const ProjectSource& entry : m_project.project.sources)
             {
-                if (folder.path == source)
-                    return folder.subfolders;
+                if (entry.written == source)
+                    return entry.subfolders;
             }
             return true;
         }
@@ -426,7 +425,7 @@ namespace SeeDocs_App
         void SourceList::addStub()
         {
             deleteGoneRows();
-            m_rows.push_back(&add<SourceRow>(*this, std::filesystem::path{}));
+            m_rows.push_back(&add<SourceRow>(*this, std::wstring{}));
             invalidateFormAlign();
         }
 
@@ -512,7 +511,7 @@ namespace SeeDocs_App
                 WordWrap::No,
                 Padding{ 0.0f },
                 VerticalTextAnchor::Center,
-                PlaceHolderText{ L"A folder on this computer" }
+                PlaceHolderText{ row.isStub() ? SourcePlaceHolder::stub : SourcePlaceHolder::entry }
             },
             m_row{ row },
             m_project{ project }
@@ -520,15 +519,20 @@ namespace SeeDocs_App
             setBaseFolder(m_project.project.folder);
         }
 
-        // As the properties spell it, in the separators of the desktop it runs on.
+        // **The words are replaced only where they differ**, so a menu opened over a selection in
+        // the box keeps the selection.
         void SourceBox::showSource()
         {
-            std::filesystem::path written;
+            std::wstring shown;
             if (!m_row.isStub())
-                written = m_project.project.writtenSource(m_row.source());
-            written.make_preferred();
-            showWords(Text{ written.wstring() });
-            showHint();
+            {
+                const bool left = !isFocused() && !isDroppedDown();
+                shown = left
+                    ? m_project.project.readSource(m_row.source()).wstring()
+                    : m_row.source();
+            }
+            if (edited() || text().plainText() != shown)
+                showWords(Text{ shown });
         }
 
         std::wstring SourceBox::writeWords(const std::wstring_view words)
@@ -537,7 +541,7 @@ namespace SeeDocs_App
                 return {};
             const std::wstring typed{ trimmed(words) };
             if (!typed.empty())
-                return m_row.take(m_project.project.readSource(std::filesystem::path{ typed }));
+                return m_row.take(typed);
             if (m_row.isStub())
                 showWords(Text{});
             else
@@ -545,30 +549,13 @@ namespace SeeDocs_App
             return {};
         }
 
-        void SourceBox::textEdited()
+        // Leaving writes what was typed. An edit written, or none, shows the folder again, and
+        // one refused keeps the words typed.
+        void SourceBox::focusChanged()
         {
-            FolderBox<WordsBox>::textEdited();
-            showHint();
-        }
-
-        // **The hint spells out the folder the text names**, read as a write would read it, so it
-        // follows what is typed, and a hint up while typing is asked again at each edit.
-        void SourceBox::showHint()
-        {
-            const std::wstring typed{ trimmed(text().plainText()) };
-            std::wstring hint;
-            if (!typed.empty())
-            {
-                const std::filesystem::path folder =
-                    m_project.project.readSource(std::filesystem::path{ typed });
-                hint.append(SourceHint::reads);
-                hint.append(folder.wstring());
-                hint.push_back(L'\n');
-            }
-            hint.append(SourceHint::relative);
-            hint.append(m_project.project.folder.wstring());
-            hintText() = HintText{ hint };
-            invalidateHint();
+            FolderBox<WordsBox>::focusChanged();
+            if (!edited())
+                showSource();
         }
     }
 
@@ -578,7 +565,7 @@ namespace SeeDocs_App
     {
         // The field is the new project dialog's, as the name's is.
         SourceRow::SourceRow(const CreateParams& params, SourceList& list,
-            std::filesystem::path source)
+            std::wstring source)
             :
             Panel{ params, Spacing{ k_rowSpacing } },
             m_list{ list },
@@ -639,17 +626,17 @@ namespace SeeDocs_App
             m_box.showSource();
         }
 
-        std::wstring SourceRow::take(const std::filesystem::path& folder)
+        std::wstring SourceRow::take(const std::wstring_view written)
         {
             Workspace& workspace = m_list.workspace();
             OpenProject& project = m_list.project();
             const bool stub = isStub();
             std::wstring refusal = stub
-                ? workspace.addSource(project, folder)
-                : workspace.replaceSource(project, m_source, folder);
+                ? workspace.addSource(project, written)
+                : workspace.replaceSource(project, m_source, written);
             if (!refusal.empty())
                 return refusal;
-            m_source = folder;
+            m_source = written;
             m_box.showSource();
             if (stub)
             {
@@ -673,9 +660,9 @@ namespace SeeDocs_App
             const std::wstring typed{ trimmed(m_box.text().plainText()) };
             std::filesystem::path start = project.folder;
             if (!typed.empty())
-                start = project.readSource(std::filesystem::path{ typed });
+                start = project.readSource(typed);
             else if (!project.sources.empty())
-                start = project.sources.back().path;
+                start = project.readSource(project.sources.back().written);
             std::error_code error;
             while (!std::filesystem::is_directory(start, error))
             {
@@ -688,13 +675,11 @@ namespace SeeDocs_App
                 Platform::pickFolder(&form(), k_pickTitle, start);
             if (!picked)
                 return;
-            const std::filesystem::path folder = project.readSource(*picked);
-            const std::wstring refusal = take(folder);
+            const std::wstring written = project.writtenSource(*picked);
+            const std::wstring refusal = take(written);
             if (refusal.empty())
                 return;
-            std::filesystem::path written = project.writtenSource(folder);
-            written.make_preferred();
-            m_box.text() = Text{ written.wstring() };
+            m_box.text() = Text{ written };
             m_box.setRefusal(refusal);
             m_box.showRefusal();
         }

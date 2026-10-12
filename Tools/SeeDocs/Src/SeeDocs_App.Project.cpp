@@ -91,31 +91,35 @@ namespace SeeDocs_App
             return depth;
         }
 
-        // **A source is written relative to the project** while the two share a folder under the
-        // root of their volume - a tree's project and its tree, a project kept beside the
-        // sources - so that they move together, and a project kept in a repository names no
+        // **A folder picked is written relative to the project** while the two share a folder
+        // under the root of their volume - a tree's project and its tree, a project kept beside
+        // the sources - so that they move together, and a project kept in a repository names no
         // place outside it. Any other is written as it stands.
-        [[nodiscard]] std::wstring storedPath(const std::filesystem::path& source,
+        [[nodiscard]] std::wstring storedPath(const std::filesystem::path& picked,
             const std::filesystem::path& folder)
         {
-            const std::filesystem::path relative = source.lexically_relative(folder);
+            const std::filesystem::path relative = picked.lexically_relative(folder);
             std::size_t climbs = 0;
             for (const std::filesystem::path& part : relative)
             {
                 if (part.wstring() == k_parentStep)
                     ++climbs;
             }
-            if (relative.empty() || climbs >= depthOf(folder))
-                return source.generic_wstring();
-            return relative.generic_wstring();
+            std::filesystem::path written = relative.empty() || climbs >= depthOf(folder)
+                ? picked
+                : relative;
+            return written.make_preferred().wstring();
         }
 
-        // A source as it was written, read against the project's folder.
-        [[nodiscard]] std::filesystem::path sourcePath(const std::wstring& stored,
+        // **A backslash parts folders on every desktop**, so a source typed on Windows names the
+        // same folder where the project is read on Linux.
+        [[nodiscard]] std::filesystem::path sourcePath(const std::wstring_view written,
             const std::filesystem::path& folder)
         {
-            const std::filesystem::path written{ stored };
-            return cleanFolder(written.is_absolute() ? written : folder / written);
+            std::wstring separated{ written };
+            std::ranges::replace(separated, L'\\', L'/');
+            const std::filesystem::path path{ separated };
+            return cleanFolder(path.is_absolute() ? path : folder / path);
         }
     }
 
@@ -131,22 +135,35 @@ namespace SeeDocs_App
         return folder / k_footnotesFolder;
     }
 
+    SourceFolders Project::sourceFolders() const
+    {
+        SourceFolders folders;
+        for (const ProjectSource& source : sources)
+        {
+            folders.push_back({
+                .path = readSource(source.written),
+                .subfolders = source.subfolders
+            });
+        }
+        return folders;
+    }
+
     SourceRoots Project::sourceRoots() const
     {
         SourceRoots roots;
-        for (const SourceFolder& source : sources)
-            roots.push_back(source.path);
+        for (const ProjectSource& source : sources)
+            roots.push_back(readSource(source.written));
         return roots;
     }
 
-    std::filesystem::path Project::writtenSource(const std::filesystem::path& source) const
+    std::wstring Project::writtenSource(const std::filesystem::path& picked) const
     {
-        return std::filesystem::path{ storedPath(source, folder) };
+        return storedPath(cleanFolder(picked), folder);
     }
 
-    std::filesystem::path Project::readSource(const std::filesystem::path& written) const
+    std::filesystem::path Project::readSource(const std::wstring_view written) const
     {
-        return sourcePath(written.wstring(), folder);
+        return sourcePath(written, folder);
     }
 
     std::wstring Project::folderName() const
@@ -197,11 +214,11 @@ namespace SeeDocs_App
                 project.name = stated;
             for (const Dom::Section& entry : (document / Keys::sources).as<Sections>())
             {
-                const std::wstring stored = (entry / Keys::path).get<std::wstring>();
-                if (stored.empty())
+                std::wstring written = (entry / Keys::path).get<std::wstring>();
+                if (written.empty())
                     continue;
                 project.sources.push_back({
-                    .path = sourcePath(stored, folder),
+                    .written = std::move(written),
                     .subfolders = (entry / Keys::subfolders).get<bool>()
                 });
             }
@@ -248,10 +265,10 @@ namespace SeeDocs_App
         const bool folderNamed = project.name == project.folderName();
         (document / Keys::name).set(folderNamed ? std::wstring{} : project.name);
         Sections& sources = (document / Keys::sources).as<Sections>();
-        for (const SourceFolder& source : project.sources)
+        for (const ProjectSource& source : project.sources)
         {
             Dom::Section& entry = sources.add();
-            (entry / Keys::path).set(storedPath(source.path, project.folder));
+            (entry / Keys::path).set(source.written);
             (entry / Keys::subfolders).set(source.subfolders);
         }
         (document / Keys::limited).set(project.mode == ScanMode::Limited);

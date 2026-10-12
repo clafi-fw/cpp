@@ -236,7 +236,7 @@ namespace SeeDocs_App
         Runs links;     // a line under the facts, ahead of the sections - the page's own links
         Sections sections;
         std::optional<FootnoteHome> footnoteHome;   // none where no note takes one
-        Commands commands;   // at the page's end
+        Commands commands;   // at the head's right end
     };
 
     export using FunctionList = std::vector<const FreeFunction*>;

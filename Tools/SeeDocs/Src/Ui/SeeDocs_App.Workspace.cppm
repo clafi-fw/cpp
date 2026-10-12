@@ -56,15 +56,15 @@ namespace SeeDocs_App
         [[nodiscard]] std::wstring rename(OpenProject&, std::wstring_view name);
         // Scans the project's sources again and shows what was read back, the tabs standing.
         void rescan(OpenProject&);
-        // Reads the folder as one more source and scans again; the reason where it was refused.
-        [[nodiscard]] std::wstring addSource(OpenProject&, const std::filesystem::path& folder);
-        // Reads the folder in place of the source and scans again; the reason where it was refused.
-        [[nodiscard]] std::wstring replaceSource(OpenProject&, const std::filesystem::path& source,
-            const std::filesystem::path& folder);
+        // Reads the folder written as one more source and scans again; the reason where refused.
+        [[nodiscard]] std::wstring addSource(OpenProject&, std::wstring_view written);
+        // Writes a source in place of another and scans again; the reason where it was refused.
+        [[nodiscard]] std::wstring replaceSource(OpenProject&, std::wstring_view source,
+            std::wstring_view written);
         // Stops reading the folder of sources, and scans the project again.
-        void removeSource(OpenProject&, const std::filesystem::path& source);
+        void removeSource(OpenProject&, std::wstring_view source);
         // Whether the folders under the source are read too; scans the project again.
-        void setSubfolders(OpenProject&, const std::filesystem::path& source, bool);
+        void setSubfolders(OpenProject&, std::wstring_view source, bool);
         // How the sources are read and how their comments give the hints - each scans the
         // project again so read.
         void setMode(OpenProject&, ScanMode);
