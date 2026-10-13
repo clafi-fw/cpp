@@ -53,7 +53,7 @@ namespace SeeDocs_App
         };
     private:
         [[nodiscard]] Run& runOf(SourceLanguage);
-        // Puts up a notice where the shell says the line did not run, or ended with an error code.
+        // Puts up a notice where the shell says the line did not run.
         void answered(SourceLanguage, const ClaFi::CommandRun&);
     private:
         ClaFi::AppContext& m_context;

@@ -226,16 +226,6 @@ namespace SeeDocs_App
             }
         }
 
-        // An exit code as it is usually written: in decimal, and in hex where it is large enough to
-        // be a Windows status such as 0xC0000005.
-        [[nodiscard]] std::wstring spellExitCode(const std::uint32_t exitCode)
-        {
-            constexpr std::uint32_t k_firstHexCode = 0x10000;
-            if (exitCode < k_firstHexCode)
-                return std::format(L"{}", exitCode);
-            return std::format(L"0x{:08X}", exitCode);
-        }
-
         // The program a command line starts, as a shell reads its first word: up to the closing
         // quote where it opens with one, else up to the first space.
         [[nodiscard]] std::wstring programOf(const std::wstring_view commandLine)
@@ -412,7 +402,9 @@ namespace SeeDocs_App
 
     // **Headed with the button and the file**, since the answer may come long after the click. The
     // program is in the spot ink, and Settings is the answer: the command line is where every one
-    // of these is put right.
+    // of these is put right. **A program that ran is left alone, whatever it exits with.** An exit
+    // code says nothing about the file: devenv hands it to a Visual Studio already up, which opens
+    // it at the line, and exits with -1.
     void EditorRuns::answered(const SourceLanguage language, const CommandRun& command)
     {
         Run& run = runOf(language);
@@ -433,13 +425,9 @@ namespace SeeDocs_App
                 message << L"The shell that runs the " << languageName
                     << L" editor's command line could not be started.";
                 break;
-            case CommandOutcome::Failed:
-                message << PushThemeColor{ InkWell::spotInk() } << run.program << PopColor{}
-                    << L" ended with exit code " << PushThemeColor{ InkWell::spotInk() }
-                    << spellExitCode(command.exitCode()) << PopColor{} << L".";
-                break;
             case CommandOutcome::Running:
             case CommandOutcome::Ended:
+            case CommandOutcome::Failed:
                 return;
         }
         run.notice = notices().post(Notice{

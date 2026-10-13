@@ -404,13 +404,18 @@ a cancel waits that long at most. The connection may take ten seconds and the wh
 
 ## CommandRun on Windows
 
-cmd.exe from the system directory, given `/s /c` and the line in quotes, so the line is read as it
-would be typed into a console: a program is found on the PATH whatever its extension - an editor's
-launcher is often a .cmd - and the line's quotes are read as cmd reads them, `/s` taking off the
-pair put round the whole. The process is made with CREATE_NO_WINDOW, and a thread waits for it
-beside an event the destructor sets. cmd exits with 9009 where no program answers to the name the
-line starts with, which is NotFound. Zero is Ended, and every other code is Failed, whether cmd or
-the program gave it.
+ShellExecuteEx over the line's program, with the rest of the line as its parameters. The program is
+the line's first word - the run inside the quotes where the line opens with a quote, else up to the
+first space - and the shell finds it the way the Run box finds a name: on the PATH or registered
+under App Paths, whatever its extension, with environment variables in it expanded. The parameters
+are passed on as written. **The line is a program and its parameters**, with no cmd syntax - no
+`&&`, no pipe, no `start`.
+
+The shell shows no message of its own. A name it cannot find is NotFound; any other refusal - a file
+nothing opens, an elevation declined - is NotRunnable. Where the shell starts a process, a thread
+waits for it beside an event the destructor sets, and zero is Ended and every other code Failed.
+Where it starts none, having handed the line to a program already running, the run is Ended at once.
+A launcher that is a .cmd or a .bat runs in a console window of its own.
 
 ## CommandRun on Linux
 

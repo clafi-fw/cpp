@@ -44,7 +44,7 @@ namespace ClaFi
         DECLARE_EVENT(CommandRunEvent, OnDone, onDone)
     public:
         [[nodiscard]] CommandOutcome outcome() const { return m_outcome; }
-        // What the shell exited with, once the outcome is known. See UI-Types
+        // What the line exited with, once the outcome is known. See UI-Types
         [[nodiscard]] std::uint32_t exitCode() const { return m_exitCode; }
     private:
         class Impl;

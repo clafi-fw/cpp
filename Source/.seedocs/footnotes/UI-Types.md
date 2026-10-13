@@ -353,10 +353,10 @@ Raised once per run, on the UI thread, when the outcome leaves Running.
 
 ## CommandRun
 
-A command line run the way a console or a terminal runs one - by cmd.exe on Windows, by /bin/sh on
-Linux - and left running. The run starts with the object. The process it starts is no child of the
-application, and nothing waits for it to end. Its answer is handed to the UI thread through a
-UiTimer, the way a WebFetch hands over what it brought back, and CommandRunEvent is raised there.
+A command line run by the desktop's shell - ShellExecuteEx on Windows, /bin/sh on Linux - and left
+running. The run starts with the object. The program it starts stands apart from the application
+and goes on after the application ends. Its answer is handed to the UI thread through a UiTimer, the
+way a WebFetch hands over what it brought back, and CommandRunEvent is raised there.
 
 **The object is the answer's lifetime.** Destroying it stops listening and leaves the line running,
 so whoever holds it hears the answer for as long as it holds it and no longer - an editor started
@@ -370,10 +370,10 @@ Platform for what each shell answers.
 
 ## CommandRun::exitCode
 
-What the shell exited with, as the outcome was read from it - zero while the run is Running and for
-NotStarted. On Linux a program killed by a signal answers 128 and the signal's number, the way a
-shell reports it. On Windows a program that crashed answers the status it went down with, such as
-0xC0000005.
+What the line exited with, as the outcome was read from it - zero while the run is Running, for
+NotStarted, and on Windows wherever the shell refused the line. On Linux a program killed by a
+signal answers 128 and the signal's number, the way a shell reports it. On Windows a program that
+crashed answers the status it went down with, such as 0xC0000005.
 
 ## RepeatEvent::elapsedSeconds
 

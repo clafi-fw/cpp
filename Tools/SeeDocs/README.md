@@ -351,9 +351,10 @@ page may be gone by the time the answer comes. A
 file the last scan read and that is no longer on disk, or that stands in a folder the project no
 longer reads, is said to be gone before anything runs, with Rescan as the answer; the notice is held
 by the project and goes when it closes. A command line whose program the shell does not find, or
-finds and cannot run, is said so by name, and one that ends with any other exit code but zero is
-said so with the code; Settings is the answer to each. A language holds one such notice, which a new
-run or an edit of its command line takes down. A class's title
+finds and cannot run, is said so by name, with Settings as the answer. A program that ran is left
+alone whatever it exits with: an editor's launcher hands the file to an editor already open and
+exits as it likes. A language holds one such notice, which a new run or an edit of its command line
+takes down. A class's title
 carries its bases under it as a breadcrumb bar reversed: a crumb per base, its mark before it
 pointing back toward the type standing on it, the ways up running right and parting into a column of
 rows where a type has several bases, a mixin's host reached through the argument it was given.
