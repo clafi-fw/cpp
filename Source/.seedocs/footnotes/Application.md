@@ -408,6 +408,10 @@ list on every change. A card whose notice is down is hidden at once and deleted 
 press on it is still running: it goes from inside its own answer's click as often as not, an answer
 may run a loop of its own, and a control is not deleted from under the click it is dispatching.
 
+**Every card casts the shadow a menu casts** - the theme's secondary window shadow, in the window's
+colour, around the card's corners - drawn under the cards from one FormBase::shadowPainter. The
+shadows reach past the cards, so the layer repaints whole on every change to the list.
+
 ## UiElement
 
 The order is free. What is indexed by an element - `k_uiElements`, a theme's element lists,

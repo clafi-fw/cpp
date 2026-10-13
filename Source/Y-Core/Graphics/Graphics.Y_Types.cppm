@@ -527,7 +527,8 @@ namespace ClaFi::Graphics
         // Thin Abstracted Drawing Primitives
         virtual PixelView stagingView(const FloatRect& requestedRect) = 0;
         virtual void commitStagingView(const PixelView& view) = 0;
-        virtual void drawPixelView(const PixelView& view) = 0;
+        // Lays the view over what is there, read premultiplied and scaled by opacity.
+        virtual void drawPixelView(const PixelView& view, float opacity) = 0;
         virtual void drawLine(FloatPoint pt1, FloatPoint pt2, const Brush& brush, float strokeWidth) = 0;
 
         virtual void drawRectangle(const FloatRect& rect, const Brush& brush, float strokeWidth) = 0;

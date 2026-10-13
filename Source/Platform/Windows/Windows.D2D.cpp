@@ -561,12 +561,12 @@ namespace ClaFi::PlatformImplementation::Windows
         m_renderTarget->GetTransform(&oldTransform);
         m_renderTarget->SetTransform(D2D1::IdentityMatrix());
 
-        drawPixelView(view);
+        drawPixelView(view, 1.0f);
 
         m_renderTarget->SetTransform(oldTransform);
     }
 
-    void Direct2DBackend::drawPixelView(const PixelView& view)
+    void Direct2DBackend::drawPixelView(const PixelView& view, const float opacity)
     {
         if (!m_isPainting || !m_renderTarget || !m_d2dBitmap)
         {
@@ -641,7 +641,7 @@ namespace ClaFi::PlatformImplementation::Windows
             static_cast<float>(drawRect.bottom)
         );
         m_renderTarget->DrawBitmap(
-            m_d2dBitmap.Get(), &blitRect, 1.0f,
+            m_d2dBitmap.Get(), &blitRect, opacity,
             D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &blitRect
         );
     }

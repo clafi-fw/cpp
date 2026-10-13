@@ -933,17 +933,18 @@ namespace ClaFi::Graphics
         m_backend->commitStagingView(pw);
     }
 
-    void Canvas::drawPixelView(const PixelView& view) const
+    void Canvas::drawPixelView(const PixelView& view, const float opacity) const
     {
         if (m_backend)
-            m_backend->drawPixelView(view);
+            m_backend->drawPixelView(view, opacity);
     }
 
-    void Canvas::drawBitmap(const Bitmap& bitmap, const FloatPoint& position) const
+    void Canvas::drawBitmap(const Bitmap& bitmap, const FloatPoint& position,
+        const float opacity) const
     {
         const FloatRect canvasClip = clipBox();
         const PixelView view = bitmap.pixelView(position, canvasClip);
-        drawPixelView(view);
+        drawPixelView(view, opacity);
     }
 
     IBackend* Canvas::backend() const

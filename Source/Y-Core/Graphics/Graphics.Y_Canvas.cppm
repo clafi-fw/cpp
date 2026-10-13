@@ -120,8 +120,11 @@ namespace ClaFi::Graphics
         //     Matrix3x2 transform = canvasTransform * Matrix3x2::translation(iconRect.topLeft());
         // A caller that works in canvas coordinates maps its points through it directly.
         void stagingDraw(const FloatRect& requestedRect, const StagingDrawFunc&);
-        void drawPixelView(const PixelView& view) const;
-        void drawBitmap(const Bitmap& bitmap, const FloatPoint& position) const;
+        // Lays the view over what is there, read premultiplied and scaled by opacity.
+        void drawPixelView(const PixelView& view, float opacity = 1.0f) const;
+        // Lays the bitmap over what is there at position. See Graphics-Types
+        void drawBitmap(const Bitmap& bitmap, const FloatPoint& position,
+            float opacity = 1.0f) const;
 
         IBackend* backend() const;
     private:

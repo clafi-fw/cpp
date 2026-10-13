@@ -89,7 +89,10 @@ namespace ClaFi::Graphics::Cpu
         // never commit it. It is the only reader.
         PixelView stagingView(const FloatRect& requestedRect) override { return getActiveView().subView(requestedRect); }
         void commitStagingView(const PixelView&) override {}
-        void drawPixelView(const PixelView& view) override { getActiveView().drawSurface(view, view.topLeft()); }
+        void drawPixelView(const PixelView& view, float opacity) override
+        {
+            getActiveView().paintSurfaceOver(view, view.topLeft(), opacity);
+        }
 
         // ====================================================================
         // **Clean routing pass-throughs to re-decoupled modular painters**

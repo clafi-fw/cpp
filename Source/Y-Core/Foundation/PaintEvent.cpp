@@ -18,6 +18,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Graphics.Canvas;
+import ClaFi.Core.Graphics.ShadowPainter;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.System.Utils;
@@ -508,19 +509,24 @@ namespace ClaFi
 
     // The shadow first and the backdrop over it: a shadow is measured from the shape's edge and
     // reaches inward as much as out, and the backdrop is what covers the half that falls inside.
-    // Both are this control's, the one holding the header: its surface and its muted ink.
+    // Both are this control's, the one holding the header: its surface and its muted ink. The
+    // shadow is baked at full strength by one of the form's painters and drawn at the strength
+    // the travel gives, so a lift costs one bake rather than one for each step of it.
     void PaintEvent::paintHeldBackdrop(const RoundedRectangleParts& silhouette, float travel)
     {
         const float reach = scaleF(k_heldShadowReach);
         if (reach > 0.0f)
         {
-            const float strength = std::min(travel / reach, 1.0f);
-            const Graphics::ShadowParams shadow = {
-                .color = textRgb(InkGrade::Muted).withOpacity(k_heldShadowOpacity * strength),
-                .blur = reach,
-                .falloff = Graphics::GlowFalloff::Smooth
+            const Graphics::ShadowPainter::Design design = {
+                .shadow = {
+                    .color = textRgb(InkGrade::Muted).withOpacity(k_heldShadowOpacity),
+                    .blur = reach,
+                    .falloff = Graphics::GlowFalloff::Smooth
+                },
+                .radii = silhouette.radii
             };
-            canvas().castShadow(silhouette, shadow);
+            const float strength = std::min(travel / reach, 1.0f);
+            control().form().shadowPainter(design).paint(canvas(), silhouette.bounds, strength);
         }
         canvas().fillPartialRoundedRectangle(silhouette, surfaceRgb().withOpacity(1.0f));
     }

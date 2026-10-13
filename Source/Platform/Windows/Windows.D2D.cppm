@@ -69,7 +69,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // not pre-rendered output, and should animate with its control.
         void commitStagingView(const PixelView& view) override;
 
-        void drawPixelView(const PixelView& view) override;
+        void drawPixelView(const PixelView& view, float opacity) override;
         void drawLine(FloatPoint pt1, FloatPoint pt2, const Brush& brush, float strokeWidth) override;
         void drawRectangle(const FloatRect& rect, const Brush& brush, float strokeWidth) override;
         void fillRectangle(const FloatRect& rect, const Brush& brush) override;

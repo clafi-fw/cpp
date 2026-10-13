@@ -88,6 +88,7 @@ namespace ClaFi
             bottomRight *= value;
             bottomLeft *= value;
         }
+        [[nodiscard]] bool operator==(const CornerRadii&) const = default;
         [[nodiscard]] static constexpr CornerRadii square() { return {}; }
         [[nodiscard]] static constexpr CornerRadii uniform(float radius) { return { .topLeft = radius, .topRight = radius, .bottomRight = radius, .bottomLeft = radius }; }
         [[nodiscard]] static constexpr CornerRadii topSideRound(float radius) { return { .topLeft = radius, .topRight = radius, .bottomRight = 0.0f, .bottomLeft = 0.0f }; }

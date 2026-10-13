@@ -4,8 +4,10 @@ import ClaFi.Controls.Base.Container;
 import ClaFi.Controls.Base.SplitButtonBase;
 import ClaFi.Controls.MessageBar;
 
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Graphics.ShadowPainter;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
@@ -64,6 +66,8 @@ namespace ClaFi
             void collectGoneCards();
         protected:
             void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+            // The cards' shadows, under the cards.
+            void paintChildren(PaintEvent&) override;
         private:
             using Cards = std::vector<NoticeCard*>;
         private:
@@ -308,9 +312,29 @@ namespace ClaFi
             }
         }
 
+        // **Every card casts the shadow a menu casts** - the theme's secondary window shadow, in
+        // the window's colour, around the card's corners - so one painter draws them all.
+        void NoticesLayer::paintChildren(PaintEvent& event)
+        {
+            if (!m_cards.empty())
+            {
+                FormBase& owner = form();
+                const Graphics::ShadowPainter& painter = owner.shadowPainter(owner.shadowDesign(
+                    owner.themeMetrics().secondaryWindowShadow, m_cards.front()->metrics().radius));
+                for (const NoticeCard* card : m_cards)
+                {
+                    const FloatRect rect = FloatRect::fromDimensions(
+                        event.contentPosition() + card->topLeft(), card->dimensions());
+                    painter.paint(event.canvas(), rect);
+                }
+            }
+            ContainerBase::paintChildren(event);
+        }
+
         // **A card going is hidden at once and deleted later** - see NoticeCard::press. It goes
         // from inside its own answer's click as often as not, and a control is not deleted from
-        // under the click it is dispatching.
+        // under the click it is dispatching. The whole layer is repainted: the shadows reach past
+        // the cards, so a card moving or going leaves shadow where no card's own repaint reaches.
         void NoticesLayer::sync()
         {
             const Notices::StandingNotices& standing = notices().standing();
@@ -334,6 +358,7 @@ namespace ClaFi
             }
             collectGoneCards();
             invalidateFormAlign();
+            invalidate();
         }
 
         void NoticesLayer::deleteGoneCards()

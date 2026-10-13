@@ -548,6 +548,21 @@ What reads it:
 
 `FormFocusChangeEvent` marks the moment of each change; the factor is what a paint reads.
 
+## FormBase::shadowDesign
+
+The Design of a shadow cast inside this window: the WindowShadow's blur, offset and spread and the
+corner radius, scaled to the form, in the window's own shadow colour - the root's rule set and the
+focus the window holds. A shadow built this way reads as one more of the window's. NoticesLayer
+builds its cards' shadow from the theme's secondary window shadow, the one menus cast.
+
+## FormBase::shadowPainter
+
+A ShadowPainter baked for the design. The form keeps the last few designs asked for and bakes the
+oldest over when a new one comes, so the controls of one window share their bakes: the cards over
+it one, its held headers another. **A painter handed out holds until four other designs have been
+asked for**, which is longer than the paint that asked for it, so it is asked for where it is drawn
+rather than kept. The window's own shadow has a painter of its own, which the platform reads.
+
 ## Edge reach
 
 **A pointer pushed against a maximized window's edge meets what stands k_edgeReach in** - eight

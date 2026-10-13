@@ -7,15 +7,15 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Graphics
 {
-    // A window's shadow as nine tiles: four corners, four edges, no middle. See Graphics-Types
+    // A rounded rectangle's shadow as nine tiles, four corners and four edges. See Graphics-Types
     export class ShadowPainter
     {
     public:
-        // What the tiles are baked from, in real pixels. Two windows of one design share the look.
+        // What the tiles are baked from, in real pixels. Rectangles of one design share the look.
         struct Design
         {
             ShadowParams shadow{};
-            float radius{ 0.0f };   // the corner radius of the rectangle that casts it
+            CornerRadii radii{};   // the corners of the rectangle that casts it
             [[nodiscard]] bool operator==(const Design&) const = default;
         };
         // How far the shadow reaches past the rectangle on each side, in real pixels.
@@ -31,8 +31,8 @@ namespace ClaFi::Graphics
         void setDesign(const Design&);
         [[nodiscard]] const Design& design() const { return m_design; }
         [[nodiscard]] Reach reach() const;
-        // Draws the shadow around windowRect, inside the canvas's clip and nowhere else.
-        void paint(Canvas&, const FloatRect& windowRect) const;
+        // Draws the shadow around rect at opacity, inside the canvas's clip and nowhere else.
+        void paint(Canvas&, const FloatRect& rect, float opacity = 1.0f) const;
     private:
         enum class Tile
         {
@@ -62,9 +62,9 @@ namespace ClaFi::Graphics
         void cut(Tile, const Bitmap& from, const IntRect&);
         [[nodiscard]] const Bitmap& tile(Tile) const;
         // One tile at position, when the clip reaches it.
-        void place(Canvas&, const FloatRect& clip, Tile, FloatPoint position) const;
+        void place(Canvas&, const FloatRect& clip, Tile, FloatPoint position, float opacity) const;
         // The tile repeated along span, cut to it and to the clip.
-        void run(Canvas&, const FloatRect& clip, Tile, const FloatRect& span) const;
+        void run(Canvas&, const FloatRect& clip, Tile, const FloatRect& span, float opacity) const;
     private:
         static constexpr std::size_t k_tileCount = 8;
         using Tiles = std::array<Bitmap, k_tileCount>;

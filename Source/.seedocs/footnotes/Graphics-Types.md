@@ -76,14 +76,15 @@ to admit a higher index moves what earlier placements point at.
 
 ## ShadowPainter
 
-A window's shadow as nine tiles: four corners, four edges, and nothing in the middle, since
-what casts the shadow covers it. The tiles are baked once per Design - the ShadowParams and
-the corner radius, in real pixels - by casting the shadow around a small rectangle on a CPU
-canvas and cutting it up, so the look is castShadow's own to the pixel. An edge tile is a
-fixed length and an edge is as many of it as fit, the last cut by the clip, so nothing in
-the cache is ever as long as a window. A corner tile reaches into the rectangle past the arc
-and past the ramp's inward half, which is where the shadow along an edge stops depending on
-the corner. The window covers its rectangle, so no caller asks for the inward part but a
+A rounded rectangle's shadow as nine tiles: four corners, four edges, and nothing in the middle,
+since what casts the shadow covers it. The tiles are baked once per Design - the ShadowParams and a
+radius per corner, in real pixels - by casting the shadow around a small rectangle on a CPU canvas
+and cutting it up, so the look is castShadow's own to the pixel. Each corner tile is cut from its
+own corner, so the corners may differ, and each is as large as the roundest corner needs. An edge
+tile is a fixed length and an edge is as many of it as fit, the last cut by the clip, so nothing in
+the cache is ever as long as the rectangle. A corner tile reaches into the rectangle past the arc
+and past the ramp's inward half, which is where the shadow along an edge stops depending on the
+corner. What casts the shadow covers its rectangle, so nothing asks for the inward part but a
 corner square.
 
 paint draws around a rectangle inside the canvas's clip and nowhere else, and reads the clip
@@ -93,8 +94,33 @@ shadow window around the window it shadows. A rectangle too small for its corner
 stand apart is cast directly - two corner tiles overlapping would each deny the other's arc -
 which is what hints and short menus get.
 
-The cache holds no state of the window: the active and inactive looks differ by a constant
-alpha, and both windows apply that when they present.
+**Baked once, drawn at any opacity.** paint draws the tiles at the opacity it is given, so a shadow
+that fades in - a held header's, over the first stretch of its lift - costs one bake for its design
+rather than one for each step of the fade. A rectangle cast directly is cast with the colour's alpha
+scaled the same way. The tiles go on whole pixels, the rectangle's edges rounded to the nearest:
+every tile lands on one, and an edge between two would have the run along it and the corner past it
+both draw the column it falls in.
+
+**A bake leaves the CPU rasterizer's clip as it found it.** The clip is one state for every canvas,
+and the canvas a bake casts on states its own; a bake runs in the middle of a paint as often as not,
+so the paint's clip is held across it.
+
+**A form hands them out.** A form holds the painter around its own window, which the platform
+reads. Every other shadow is drawn by a painter from FormBase::shadowPainter, one per design, so
+the cards over a window share one bake and its held headers another.
+
+A form's own design follows the focus its window holds - the colour is the window's shadow colour
+at that focus - so each step of a focus change bakes its painter again, and so does each step for
+the shadows its content casts in that colour.
+
+## Canvas::drawBitmap
+
+Lays the bitmap over what is already drawn, at the opacity given. **Its pixels are read
+premultiplied** - the way a CPU canvas over a clear base leaves them, which is how the
+ShadowPainter's tiles are baked, and the way Direct2D reads a bitmap. An opaque pixel is copied and
+a clear one leaves what is there; any other is laid over what is there by what it leaves uncovered,
+so on a clear surface - a window's margins - every pixel lands as it is. Opacity scales all four
+channels of a pixel alike.
 
 ## GlyphCompositor
 

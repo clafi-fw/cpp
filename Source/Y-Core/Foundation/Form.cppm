@@ -232,6 +232,12 @@ namespace ClaFi
         IPlatformWindow& window() const { return *m_window; }
         // How far this form's window holds the focus, from 0 to 1. See Control-Foundation
         [[nodiscard]] float windowFocusedFactor() const;
+        // The design of a shadow of these metrics in this window's colour. See Control-Foundation
+        [[nodiscard]] Graphics::ShadowPainter::Design shadowDesign(const WindowShadow& shadow,
+            float radius) const;
+        // A painter baked for the design, kept among the last few asked for. See Control-Foundation
+        [[nodiscard]] const Graphics::ShadowPainter& shadowPainter(
+            const Graphics::ShadowPainter::Design&);
         // The frame the window is wearing - what the platform applies, not what the root states.
         [[nodiscard]] const WindowFrame& frame() const { return m_frame; }
         // Where the window stands inside its surface: the surface less the frame's margins and
@@ -431,6 +437,8 @@ namespace ClaFi
             { return target.boundsInForm(); }
         void rememberPlacementTarget();
     private:
+        using ShadowPainters = std::vector<std::unique_ptr<Graphics::ShadowPainter>>;
+    private:
         // What both of the above delegate to. They differ in nothing but how the owner form was
         // arrived at - through the control the popup stands on, or named outright.
         FormBase(AppContext&, WindowRole, FormControlBase&, FormBase* ownerForm, Control* popupTarget, FormPlacement);
@@ -505,6 +513,8 @@ namespace ClaFi
         // Where the search meets the pointer - a maximized window's edge is met further in.
         [[nodiscard]] PointInForm searchPoint(PointInForm) const;
     private:
+        // How many designs shadowPainter keeps baked.
+        static constexpr std::size_t k_keptShadowPainters{ 4 };
         FormControlBase& m_content;
 
         // **A form with a parent has no scale of its own.** It stands inside the picture the form
@@ -532,6 +542,8 @@ namespace ClaFi
         WindowFrame m_frame{};
         // The shadow around this window's geometry, baked once per design.
         Graphics::ShadowPainter m_shadowPainter;
+        // The shadows the content casts, one painter per design - see shadowPainter.
+        ShadowPainters m_shadowPainters{};
         // **Two links back, and they go down at different times.** The form is where this popup
         // de-registers itself, and it must still be reachable then; the target is only who gets
         // the focus back, and it may be deleted while the popup is still up - a list rebuilt

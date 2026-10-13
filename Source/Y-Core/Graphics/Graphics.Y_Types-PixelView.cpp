@@ -164,4 +164,69 @@ namespace ClaFi::Graphics
             }
         }
     }
+
+    void PixelView::paintSurfaceOver(const PixelView& source, const FloatPoint& destPos,
+        const float opacity) const
+    {
+        if (opacity <= 0.0f)
+        {
+            return;
+        }
+
+        // Placed and bounded as drawSurface and blendSurface are.
+        const int offsetX = static_cast<int>(std::round(destPos.x - source.left()));
+        const int offsetY = static_cast<int>(std::round(destPos.y - source.top()));
+
+        IntRect area = source.ownedPixels();
+        area.offset(offsetX, offsetY);
+        if (!area.intersectWith(ownedPixels()))
+        {
+            return;
+        }
+        if (!area.intersectWith(clippedBounds().roundedOut()))
+        {
+            return;
+        }
+
+        const int width = area.width();
+        const float srcX = static_cast<float>(area.left - offsetX);
+        // In 1/256ths, as blendSurface takes its amount. A premultiplied pixel is faded by
+        // scaling all four channels alike.
+        const std::uint32_t scale =
+            static_cast<std::uint32_t>(std::clamp(opacity, 0.0f, 1.0f) * 256.0f);
+        auto faded = [scale](const ColorByte channel) {
+            return (static_cast<std::uint32_t>(channel) * scale) >> 8;
+        };
+        // **Source over, premultiplied**: the source as it stands, and what was there kept by
+        // what the source leaves uncovered. Held at 255 for a source that is not premultiplied.
+        auto over = [](const std::uint32_t source, const ColorByte destination,
+            const std::uint32_t uncovered) {
+            const std::uint32_t kept = (destination * uncovered + 127) / 255;
+            return static_cast<ColorByte>(std::min<std::uint32_t>(source + kept, 255));
+        };
+
+        for (int y = area.top; y < area.bottom; ++y)
+        {
+            Color* destRow = scanLineAbs(static_cast<float>(area.left), static_cast<float>(y));
+            const Color* srcRow = source.scanLineAbs(srcX, static_cast<float>(y - offsetY));
+            for (int x = 0; x < width; ++x)
+            {
+                const Color& pixel = srcRow[x];
+                const std::uint32_t alpha = faded(pixel.alpha);
+                if (alpha == 0)
+                    continue;
+                Color& destination = destRow[x];
+                if (alpha == 255)
+                {
+                    destination = pixel;
+                    continue;
+                }
+                const std::uint32_t uncovered = 255 - alpha;
+                destination.red = over(faded(pixel.red), destination.red, uncovered);
+                destination.green = over(faded(pixel.green), destination.green, uncovered);
+                destination.blue = over(faded(pixel.blue), destination.blue, uncovered);
+                destination.alpha = over(alpha, destination.alpha, uncovered);
+            }
+        }
+    }
 }

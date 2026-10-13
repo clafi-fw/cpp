@@ -1779,10 +1779,11 @@ namespace ClaFi
         return result;
     }
 
-    Graphics::ShadowPainter::Design FormBase::shadowDesign() const
+    // **In the window's own shadow colour** - the root's rule set and the focus the window holds -
+    // so a shadow the content casts reads as one more of the window's.
+    Graphics::ShadowPainter::Design FormBase::shadowDesign(const WindowShadow& shadow,
+        const float radius) const
     {
-        const ControlMetrics& metrics = m_content.metrics();
-        const WindowShadow shadow = m_content.windowShadow();
         const Scaler& scaler = this->scaler();
         const Color rgb = bakedColors().windowShadow(m_content.colorRules(),
             windowFocusedFactor()).toColor();
@@ -1794,8 +1795,34 @@ namespace ClaFi
                 .offset = scaler.scaleF(shadow.offset),
                 .spread = scaler.scaleF(shadow.spread)
             },
-            .radius = scaler.scaleF(metrics.radius)
+            .radii = CornerRadii::uniform(scaler.scaleF(radius))
         };
+    }
+
+    // **The last asked for first**, and a design not among them is baked into the painter asked
+    // for longest ago. A painter stays where it is as the list turns, so one handed out holds
+    // until k_keptShadowPainters other designs have been asked for.
+    const Graphics::ShadowPainter& FormBase::shadowPainter(
+        const Graphics::ShadowPainter::Design& design)
+    {
+        ShadowPainters::iterator found = std::ranges::find_if(m_shadowPainters,
+            [&design](const std::unique_ptr<Graphics::ShadowPainter>& painter) {
+                return painter->design() == design;
+            });
+        if (found == m_shadowPainters.end())
+        {
+            if (m_shadowPainters.size() < k_keptShadowPainters)
+                m_shadowPainters.push_back(std::make_unique<Graphics::ShadowPainter>());
+            found = std::prev(m_shadowPainters.end());
+            (*found)->setDesign(design);
+        }
+        std::rotate(m_shadowPainters.begin(), found, std::next(found));
+        return *m_shadowPainters.front();
+    }
+
+    Graphics::ShadowPainter::Design FormBase::shadowDesign() const
+    {
+        return shadowDesign(m_content.windowShadow(), m_content.metrics().radius);
     }
 
     // **Whether the frames start from nothing** follows the window's answer, and the answer can
@@ -1933,7 +1960,9 @@ namespace ClaFi
     {
         if (m_frame.margins.empty())
             return;
-        const FloatRect windowRect = rootRect();
+        // On whole pixels, where the painter places its tiles, so two parts meet on a pixel edge
+        // rather than both painting the row a fractional edge falls in.
+        const FloatRect windowRect = rootRect().rounded().toFloat();
         // The painter skips the tiles the clip does not reach and reads the clip off the canvas,
         // whose own stack stands at the whole surface until a part is pushed.
         auto paintPart = [&](const FloatRect& part) {

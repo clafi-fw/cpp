@@ -1,6 +1,7 @@
 module ClaFi.Core.Graphics.ShadowPainter;
 
 import ClaFi.Core.Graphics.Cpu.Canvas;
+import ClaFi.Core.Graphics.Cpu_Rasterizer;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -8,6 +9,26 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Graphics
 {
+    namespace
+    {
+        // The CPU rasterizer's clip as it stands, put back when this goes.
+        class HeldRasterClip
+        {
+        public:
+            HeldRasterClip() = default;
+            HeldRasterClip(const HeldRasterClip&) = delete;
+            HeldRasterClip& operator=(const HeldRasterClip&) = delete;
+            ~HeldRasterClip();
+        private:
+            bool m_active{ Cpu::g_rasterBuffers.hasActiveClip };
+            const float* m_mask{ Cpu::g_rasterBuffers.activeClipMaskPtr };
+            FloatRect m_box{ Cpu::g_rasterBuffers.clipBox };
+            int m_stride{ Cpu::g_rasterBuffers.m_clipStride };
+        };
+    }
+
+    // ShadowPainter
+
     void ShadowPainter::setDesign(const Design& value)
     {
         if (value == m_design)
@@ -28,10 +49,14 @@ namespace ClaFi::Graphics
         };
     }
 
-    void ShadowPainter::paint(Canvas& canvas, const FloatRect& windowRect) const
+    // **Baked once and drawn at any opacity**, so a shadow fading in costs one bake for the design
+    // rather than one for each step of the fade. **The tiles go on whole pixels**, where each lands
+    // whatever position it is given: around an edge between two pixels, the run along it and the
+    // corner past it would both draw the column the edge falls in.
+    void ShadowPainter::paint(Canvas& canvas, const FloatRect& rect, const float opacity) const
     {
         const ShadowParams& shadow = m_design.shadow;
-        if (windowRect.empty() || shadow.blur <= 0.0f || !shadow.color.alpha)
+        if (rect.empty() || opacity <= 0.0f || shadow.blur <= 0.0f || !shadow.color.alpha)
             return;
 
         const Extent extent = this->extent();
@@ -39,38 +64,42 @@ namespace ClaFi::Graphics
         // A rectangle too small for its corners to stand apart is cast directly: a corner tile is
         // baked beside a straight edge, and two of them overlapping would each deny the other's
         // arc.
-        if (windowRect.width() < 2.0f * corner || windowRect.height() < 2.0f * corner)
+        if (rect.width() < 2.0f * corner || rect.height() < 2.0f * corner)
         {
             const RoundedRectangleParts silhouette{
-                .bounds = windowRect,
-                .radii = CornerRadii::uniform(m_design.radius)
+                .bounds = rect,
+                .radii = m_design.radii
             };
-            canvas.castShadow(silhouette, shadow);
+            ShadowParams faded = shadow;
+            faded.color.alpha = static_cast<ColorByte>(std::lround(
+                static_cast<float>(shadow.color.alpha) * std::min(opacity, 1.0f)));
+            canvas.castShadow(silhouette, faded);
             return;
         }
 
+        const FloatRect placed = rect.rounded().toFloat();
         const FloatRect clip = canvas.clipBox();
-        const float left = windowRect.left - static_cast<float>(extent.left);
-        const float top = windowRect.top - static_cast<float>(extent.top);
-        const float innerLeft = windowRect.left + corner;
-        const float innerTop = windowRect.top + corner;
-        const float innerRight = windowRect.right - corner;
-        const float innerBottom = windowRect.bottom - corner;
+        const float left = placed.left - static_cast<float>(extent.left);
+        const float top = placed.top - static_cast<float>(extent.top);
+        const float innerLeft = placed.left + corner;
+        const float innerTop = placed.top + corner;
+        const float innerRight = placed.right - corner;
+        const float innerBottom = placed.bottom - corner;
         const float depthTop = static_cast<float>(extent.top + extent.corner);
         const float depthRight = static_cast<float>(extent.corner + extent.right);
         const float depthBottom = static_cast<float>(extent.corner + extent.bottom);
         const float depthLeft = static_cast<float>(extent.left + extent.corner);
 
-        place(canvas, clip, Tile::TopLeft, { left, top });
-        place(canvas, clip, Tile::TopRight, { innerRight, top });
-        place(canvas, clip, Tile::BottomRight, { innerRight, innerBottom });
-        place(canvas, clip, Tile::BottomLeft, { left, innerBottom });
-        run(canvas, clip, Tile::Top, { innerLeft, top, innerRight, top + depthTop });
+        place(canvas, clip, Tile::TopLeft, { left, top }, opacity);
+        place(canvas, clip, Tile::TopRight, { innerRight, top }, opacity);
+        place(canvas, clip, Tile::BottomRight, { innerRight, innerBottom }, opacity);
+        place(canvas, clip, Tile::BottomLeft, { left, innerBottom }, opacity);
+        run(canvas, clip, Tile::Top, { innerLeft, top, innerRight, top + depthTop }, opacity);
         run(canvas, clip, Tile::Right,
-            { innerRight, innerTop, innerRight + depthRight, innerBottom });
+            { innerRight, innerTop, innerRight + depthRight, innerBottom }, opacity);
         run(canvas, clip, Tile::Bottom,
-            { innerLeft, innerBottom, innerRight, innerBottom + depthBottom });
-        run(canvas, clip, Tile::Left, { left, innerTop, left + depthLeft, innerBottom });
+            { innerLeft, innerBottom, innerRight, innerBottom + depthBottom }, opacity);
+        run(canvas, clip, Tile::Left, { left, innerTop, left + depthLeft, innerBottom }, opacity);
     }
 
     ShadowPainter::Extent ShadowPainter::extent() const
@@ -79,9 +108,13 @@ namespace ClaFi::Graphics
         const Reach reach = this->reach();
         // Along an edge the shadow is the same from the moment the nearest point of the
         // silhouette is straight across, which is past the arc and past wherever the offset and
-        // the spread have carried the silhouette; the blur is the ramp's own length inward.
+        // the spread have carried the silhouette; the blur is the ramp's own length inward. Every
+        // corner tile is as large as the roundest corner needs.
+        const CornerRadii& radii = m_design.radii;
+        const float radius = std::max({ radii.topLeft, radii.topRight, radii.bottomRight,
+            radii.bottomLeft });
         const float carried = std::max(std::abs(shadow.offset.x), std::abs(shadow.offset.y));
-        const float corner = m_design.radius + shadow.blur + shadow.spread + carried;
+        const float corner = radius + shadow.blur + shadow.spread + carried;
         return {
             static_cast<int>(std::ceil(reach.left)),
             static_cast<int>(std::ceil(reach.top)),
@@ -91,8 +124,12 @@ namespace ClaFi::Graphics
         };
     }
 
+    // **The CPU rasterizer's clip is one state for every canvas**, and a canvas states its own on
+    // beginPaint and endPaint. A bake runs in the middle of a paint as often as not - see
+    // FormBase::shadowPainter - so the clip that paint stated is held across it.
     void ShadowPainter::bake()
     {
+        const HeldRasterClip heldClip{};
         const Extent extent = this->extent();
         // Two corner reaches and one edge tile along each side, so every tile is cut out of a run
         // of shadow that is straight where the tile will be drawn straight.
@@ -112,7 +149,7 @@ namespace ClaFi::Graphics
             { static_cast<float>(side), static_cast<float>(side) });
         const RoundedRectangleParts silhouette{
             .bounds = rect,
-            .radii = CornerRadii::uniform(m_design.radius)
+            .radii = m_design.radii
         };
         canvas.castShadow(silhouette, m_design.shadow);
         Bitmap* painted = nullptr;
@@ -153,18 +190,18 @@ namespace ClaFi::Graphics
     }
 
     void ShadowPainter::place(Canvas& canvas, const FloatRect& clip, Tile which,
-        FloatPoint position) const
+        FloatPoint position, const float opacity) const
     {
         const Bitmap& bitmap = tile(which);
         const FloatRect rect = FloatRect::fromDimensions(position,
             { static_cast<float>(bitmap.width()), static_cast<float>(bitmap.height()) });
         if (FloatRect::intersection(rect, clip).empty())
             return;
-        canvas.drawBitmap(bitmap, position);
+        canvas.drawBitmap(bitmap, position, opacity);
     }
 
     void ShadowPainter::run(Canvas& canvas, const FloatRect& clip, Tile which,
-        const FloatRect& span) const
+        const FloatRect& span, const float opacity) const
     {
         const FloatRect visible = FloatRect::intersection(span, clip);
         if (visible.empty())
@@ -179,14 +216,27 @@ namespace ClaFi::Graphics
         {
             const float skipped = std::floor((visible.left - span.left) / length) * length;
             for (float x = span.left + skipped; x < visible.right; x += length)
-                canvas.drawBitmap(bitmap, { x, span.top });
+                canvas.drawBitmap(bitmap, { x, span.top }, opacity);
         }
         else
         {
             const float skipped = std::floor((visible.top - span.top) / length) * length;
             for (float y = span.top + skipped; y < visible.bottom; y += length)
-                canvas.drawBitmap(bitmap, { span.left, y });
+                canvas.drawBitmap(bitmap, { span.left, y }, opacity);
         }
         canvas.popClip();
+    }
+
+    namespace
+    {
+        // HeldRasterClip
+
+        HeldRasterClip::~HeldRasterClip()
+        {
+            Cpu::g_rasterBuffers.hasActiveClip = m_active;
+            Cpu::g_rasterBuffers.activeClipMaskPtr = m_mask;
+            Cpu::g_rasterBuffers.clipBox = m_box;
+            Cpu::g_rasterBuffers.m_clipStride = m_stride;
+        }
     }
 }
