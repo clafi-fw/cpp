@@ -244,16 +244,6 @@ namespace SeeDocs_App
             return site;
         }
 
-        // The type a name spelled in a namespace links to - one the surface has a page for.
-        [[nodiscard]] const Type* linkedType(const Surface& surface, const std::wstring_view name,
-            const std::wstring_view nameSpace)
-        {
-            const Type* type = surface.resolve(name, nameSpace);
-            if (type && type->isPublic())
-                return type;
-            return nullptr;
-        }
-
         // Names in a text
 
         [[nodiscard]] bool isNameStart(const wchar_t current)
@@ -326,7 +316,7 @@ namespace SeeDocs_App
                 });
                 if (left)
                     continue;
-                const Type* type = linkedType(surface, name, nameSpace);
+                const Type* type = surface.publicType(name, nameSpace);
                 if (!type)
                     continue;
                 if (span->start != plainStart)
@@ -379,7 +369,7 @@ namespace SeeDocs_App
         [[nodiscard]] Run typeRun(const Surface& surface, const std::wstring& spelled,
             const std::wstring_view nameSpace)
         {
-            const Type* type = linkedType(surface, spelled, nameSpace);
+            const Type* type = surface.publicType(spelled, nameSpace);
             if (type)
                 return code(spelled, type->qualifiedName);
             return code(spelled);

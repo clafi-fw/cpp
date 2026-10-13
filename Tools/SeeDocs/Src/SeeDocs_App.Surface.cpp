@@ -344,6 +344,24 @@ namespace SeeDocs_App
         return lookUp(plainType(withoutArguments(spelled)), nameSpace);
     }
 
+    const Type* Surface::publicType(const std::wstring_view spelled,
+        const std::wstring_view nameSpace) const
+    {
+        std::wstring_view name = plainType(withoutArguments(spelled));
+        std::wstring_view from = nameSpace;
+        for (std::size_t depth = 0; depth != k_aliasDepth; ++depth)
+        {
+            const Type* type = lookUp(name, from);
+            if (!type || type->isPublic())
+                return type;
+            if (type->kind != TypeKind::Alias)
+                return nullptr;
+            name = plainType(withoutArguments(type->target));
+            from = type->nameSpace;
+        }
+        return nullptr;
+    }
+
     SourceLanguage Surface::languageOf(const std::wstring_view module) const
     {
         const auto found = m_languageByModule.find(std::wstring{ module });

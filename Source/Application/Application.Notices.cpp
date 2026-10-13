@@ -312,15 +312,19 @@ namespace ClaFi
             }
         }
 
-        // **Every card casts the shadow a menu casts** - the theme's secondary window shadow, in
-        // the window's colour, around the card's corners - so one painter draws them all.
+        // **Every card casts its own shadow**, coloured by the rule set it wears as a hint window's
+        // is, at the theme's secondary window shadow and around its corners. The cards are one
+        // design, so one painter draws them all.
         void NoticesLayer::paintChildren(PaintEvent& event)
         {
             if (!m_cards.empty())
             {
                 FormBase& owner = form();
                 const Graphics::ShadowPainter& painter = owner.shadowPainter(owner.shadowDesign(
-                    owner.themeMetrics().secondaryWindowShadow, m_cards.front()->metrics().radius));
+                    MessageBar::k_colorRules,
+                    owner.themeMetrics().secondaryWindowShadow,
+                    m_cards.front()->metrics().radius
+                ));
                 for (const NoticeCard* card : m_cards)
                 {
                     const FloatRect rect = FloatRect::fromDimensions(

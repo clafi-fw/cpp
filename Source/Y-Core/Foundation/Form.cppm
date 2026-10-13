@@ -232,9 +232,9 @@ namespace ClaFi
         IPlatformWindow& window() const { return *m_window; }
         // How far this form's window holds the focus, from 0 to 1. See Control-Foundation
         [[nodiscard]] float windowFocusedFactor() const;
-        // The design of a shadow of these metrics in this window's colour. See Control-Foundation
-        [[nodiscard]] Graphics::ShadowPainter::Design shadowDesign(const WindowShadow& shadow,
-            float radius) const;
+        // A shadow of these metrics as the rule set colours a window's. See Control-Foundation
+        [[nodiscard]] Graphics::ShadowPainter::Design shadowDesign(OptionalUiElement colorRules,
+            const WindowShadow& shadow, float radius) const;
         // A painter baked for the design, kept among the last few asked for. See Control-Foundation
         [[nodiscard]] const Graphics::ShadowPainter& shadowPainter(
             const Graphics::ShadowPainter::Design&);

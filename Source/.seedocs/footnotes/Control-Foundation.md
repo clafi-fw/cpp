@@ -551,9 +551,10 @@ What reads it:
 ## FormBase::shadowDesign
 
 The Design of a shadow cast inside this window: the WindowShadow's blur, offset and spread and the
-corner radius, scaled to the form, in the window's own shadow colour - the root's rule set and the
-focus the window holds. A shadow built this way reads as one more of the window's. NoticesLayer
-builds its cards' shadow from the theme's secondary window shadow, the one menus cast.
+corner radius, scaled to the form, coloured as the rule set colours a window's shadow at the focus
+this window holds. The window's own shadow takes its root's rule set. A control standing over the
+content takes its own: NoticesLayer casts each card's shadow in Hint, the rule set the card wears,
+so a card's shadow is the one a hint window casts, at the theme's secondary window shadow.
 
 ## FormBase::shadowPainter
 

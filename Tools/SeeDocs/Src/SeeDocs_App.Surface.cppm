@@ -371,6 +371,9 @@ namespace SeeDocs_App
         // The type a name spelled inside a namespace names, an alias as itself.
         [[nodiscard]] const Type* named(std::wstring_view spelled,
             std::wstring_view nameSpace) const;
+        // The public type a name spelled inside a namespace names, a private alias followed.
+        [[nodiscard]] const Type* publicType(std::wstring_view spelled,
+            std::wstring_view nameSpace) const;
         // The language the module is written in; C++ for a module the surface does not hold.
         [[nodiscard]] SourceLanguage languageOf(std::wstring_view module) const;
         // A base's spelling with an alias the database does not carry replaced by what it names,

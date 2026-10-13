@@ -69,7 +69,7 @@ namespace ClaFi::Controls
     void MessageBar::adjustPaint(AdjustPaintEvent& event)
     {
         SplitButtonBase::adjustPaint(event);
-        event.setColorRules(UiElement::Hint);
+        event.setColorRules(k_colorRules);
     }
 
     void MessageBar::paintSurface(PaintEvent& event)
