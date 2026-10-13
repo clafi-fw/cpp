@@ -186,6 +186,16 @@ namespace ClaFi
         m_attachments.erase(it);
     }
 
+    Control* Action::presenterIn(const FormBase& form) const
+    {
+        for (const Attachment& attachment : m_attachments)
+        {
+            if (&attachment.control->form() == &form)
+                return attachment.control;
+        }
+        return nullptr;
+    }
+
     void Action::invalidateState()
     {
         for (const Attachment& attachment : m_attachments)

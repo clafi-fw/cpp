@@ -46,6 +46,29 @@ leaves a hidden one for `show()`, so the pass that raises this event runs with t
 screen. A handler that ignores a hidden form, as the completion list's hint does, hears the
 pass that lays out the form it is about to see.
 
+## RootLoopEvent
+
+A form has taken the loop the application stands on, and its first layout has not run yet.
+`sender()` is the form. Raised on the application's dispatcher - `AppContext::events()` - each time
+a form takes the root loop, which makes that form the main window - see FormBase::holdsRootLoop. It
+is where whatever belongs to the main window is put on it before the window is first shown: the
+application's notices come over the window this way.
+
+## FormBase::topLayer
+
+**A control drawn over the root, inside the window**, in the box the root is laid out in. A form
+holds one at most. setTopLayer puts one in and takes the one standing away, and the form owns it
+from then on. The layer is a root of its own - built with a CreateParams over the form, with no
+parent - and every pass that lays the root out into the window lays the layer out after it, in the
+same box. A pass measuring what to ask a window for leaves it out, so nothing over the content has
+any say in the size of the window.
+
+**Painted after the root and met by the pointer before it.** A point the layer meets nothing in but
+itself - the open space around what stands in it - goes on to the root, so a layer that fills the
+window takes the pointer only where it shows something. It takes no part in the focus walk, which
+runs over the root, and a control in it that is to leave the focus where it is says MouseOnly. The
+form forgets its controls as they go, as it forgets the root's.
+
 ## FormClosingEvent
 
 The form is asked to close from outside - the window's own close button, the system, a click

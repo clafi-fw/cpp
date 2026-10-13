@@ -1,6 +1,7 @@
 export module SeeDocs_App.Browser;
 
 import SeeDocs_App.Editing;
+import SeeDocs_App.ExternalEditors;
 import SeeDocs_App.Icons;
 import SeeDocs_App.PageView;
 import SeeDocs_App.SurfaceTree;
@@ -10,6 +11,7 @@ import SeeDocs_App.Project;
 import SeeDocs_App.Search;
 import SeeDocs_App.Surface;
 
+import ClaFi.App.Notices;
 import ClaFi.App.Settings;
 
 import ClaFi.Browser.Control;
@@ -78,6 +80,15 @@ namespace SeeDocs_App
     {
     public:
         explicit CloseProjectEvent(OpenProject&);
+    public:
+        OpenProject& project;
+    };
+
+    // A notice asked for a project to be scanned again. The surface has an Event of its own.
+    export class RescanProjectEvent : public ::ClaFi::Event
+    {
+    public:
+        explicit RescanProjectEvent(OpenProject&);
     public:
         OpenProject& project;
     };
@@ -151,6 +162,9 @@ namespace SeeDocs_App
         // Connects a handler raised when a page asks for a project to be closed.
         template<typename F>
         EventConnection onCloseProject(F&& callback);
+        // Connects a handler raised when a notice asks for a project to be scanned again.
+        template<typename F>
+        EventConnection onRescanProject(F&& callback);
         // Shows a project opened: a node of its own at the end of the tree, and its pages under a
         // segment of its name. The project is held by reference until it is removed, and what its
         // pages edit is written into it - its tree and its database - unless it is read in
@@ -175,7 +189,7 @@ namespace SeeDocs_App
         // A page's command was clicked: the project whose home the target names is asked to be
         // closed, the one command a page has.
         void answerCommand(std::wstring_view target);
-        // Opens a source a page names in the editor Settings keeps for its language.
+        // Opens a source a page names in the editor Settings keeps for its language. See README
         void openSource(const PageData& from, const SourcePlace&);
         [[nodiscard]] const Searcher& searcher() const { return m_searcher; }   // the box's words
         // Opens what a link on the page names; a link on a search page takes the search on there.
@@ -244,8 +258,11 @@ namespace SeeDocs_App
             SearchIndex index{};   // over the contents, which a search reads
             Targets targets{};
             Folders folders{};
+            NoticeHandle goneSource{};   // a source a page names that is not where it was read
             // Reads the contents, the targets and the folders off the surface as it now reads.
             void read();
+            // Puts up a notice that the source is gone, Rescan its answer. See README
+            void noteGone(const SourceFile&, bool rootRead);
             // A hint read by the strict rules from C++, where the project edits hints directly.
             [[nodiscard]] bool writesHint(const CommentSite&) const override;
             [[nodiscard]] std::wstring writeHint(const CommentSite&,
@@ -398,6 +415,7 @@ namespace SeeDocs_App
         Control* m_focusOrigin{ nullptr };   // what held the focus before the search box took it
         Searcher m_searcher{};   // the box's words, which every page shown bands
         std::optional<Url> m_searchOpens{};   // what the search opened, which goes on with it
+        EditorRuns m_editors{ appContext() };
 
         TabTrees m_tabTrees{};
         // The tabs' trees, the selected tab's shown.
@@ -491,5 +509,11 @@ namespace SeeDocs_App
     EventConnection SurfaceBrowser::onCloseProject(F&& callback)
     {
         return connectEvent<CloseProjectEvent>(std::forward<F>(callback));
+    }
+
+    template<typename F>
+    EventConnection SurfaceBrowser::onRescanProject(F&& callback)
+    {
+        return connectEvent<RescanProjectEvent>(std::forward<F>(callback));
     }
 }

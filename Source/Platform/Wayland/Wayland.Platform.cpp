@@ -344,30 +344,6 @@ namespace ClaFi
         ::waitpid(outer, &status, 0);
     }
 
-    // **Through /bin/sh**, so the line runs as typed into a terminal, and twice forked, as
-    // shellExecute is, so nothing here waits on the editor it starts.
-    void Platform::runCommand(const std::wstring_view commandLine)
-    {
-        const std::string line = toUtf8(commandLine);
-
-        const pid_t outer = ::fork();
-        if (!PlatformImplementation::Linux::check(outer >= 0))
-            return;
-
-        if (outer == 0)
-        {
-            if (::fork() == 0)
-            {
-                ::execl("/bin/sh", "sh", "-c", line.c_str(), nullptr);
-                ::_exit(127);
-            }
-            ::_exit(0);
-        }
-
-        int status = 0;
-        ::waitpid(outer, &status, 0);
-    }
-
     // **The portal's file chooser**, parented by the form's toplevel where the compositor exports
     // one. The answer comes over the session bus whenever the dialog is closed, so the loop runs
     // until it does, with the bus among what it sleeps on - the source only wakes it, and the

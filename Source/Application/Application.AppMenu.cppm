@@ -56,4 +56,7 @@ namespace ClaFi
     // Adds a command of the application's own below its pages. See Application
     export void connectAppCommand(std::wstring_view caption, PaintIconFunc paintIcon, EndIcon,
         AppCommandHandler);
+
+    // Opens the menu over the form on the page under that caption. See Application
+    export void openAppMenuPage(FormBase&, std::wstring_view caption, InputStamp);
 }

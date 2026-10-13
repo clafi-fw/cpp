@@ -97,6 +97,19 @@ namespace ClaFi
             AppCommand{ std::wstring{ caption }, std::move(paintIcon), endIcon, std::move(run) });
     }
 
+    // openAppMenuPage
+
+    // **The way the menu opens on the page it was left on**: the caption is written where the next
+    // menu reads its page. The menu opens on the button presenting it, as a click there opens it:
+    // under that button, and a popup of the form the button stands in, which a click on that form
+    // or Escape closes.
+    void openAppMenuPage(FormBase& form, const std::wstring_view caption, const InputStamp stamp)
+    {
+        (form.appContext().config() / AppMenu::k_pageNodeName).set(std::wstring{ caption });
+        Action& action = appMenuAction();
+        action.invoke(form, action.presenterIn(form), stamp);
+    }
+
     void openAppMenu(ActionClickEvent& event)
     {
         Form menu{ event.form.createPopup<AppMenu>(event.presenter) };

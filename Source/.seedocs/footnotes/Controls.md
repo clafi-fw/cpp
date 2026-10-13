@@ -355,13 +355,16 @@ across the top of what it is about rather than over it. Nothing waits on it: an 
 handler and the page goes on, and the page hides the band once the question is settled.
 
 **A split button that takes no input.** The icon stands in a column of its own, centred against the
-message; the message wraps beside it; the answers are the secondary part at the right end. The
-face is ButtonBase's and the layout SplitButtonBase's. A stripe down the left edge, in the icon's
-colour and following the band's corners, says what kind of message it is.
+message; the message wraps beside it; the answers are the secondary part at the right end, each as
+wide as the widest of them, the way a dialog's answers stand. The face is ButtonBase's and the
+layout SplitButtonBase's. A stripe down the left edge, in the icon's colour and following the band's
+corners, says what kind of message it is.
 
 **An answer carries its caller's caption.** A dialog's answers are one fixed set worded once,
 because they answer the dialog. A band's answer is something the page does - Read as text - and says
-so.
+so. It is a Button, and what follows the handler in addAnswer goes to that button after the band's
+own properties, so it may override them: an icon in place of the caption, or MouseOnly for a band
+whose presses are to leave the focus where it is.
 
 ## EditTarget
 

@@ -254,7 +254,6 @@ namespace SeeDocs_App
         static constexpr TagValue k_markParentColumn = k_markColumn - 3;
         static constexpr TagValue k_commandColumn = k_markColumn - 4;
         static constexpr std::wstring_view k_mark = L"*";
-        static constexpr std::wstring_view k_openInEditor = L"Open in editor";
         static constexpr std::wstring_view k_openFolder = L"Open folder";
 
         Page m_page{};

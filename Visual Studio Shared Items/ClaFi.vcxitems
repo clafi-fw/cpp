@@ -45,6 +45,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Information.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Settings.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Settings.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Notices.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Notices.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemeIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemePick.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemePick.cppm" />
@@ -296,6 +298,7 @@
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.DirWatch.cppm" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.DirWatch.cpp" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.WebFetch.cpp" />
+    <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.CommandRun.cpp" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Appearance.cppm" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Appearance.cpp" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.FileChooser.cppm" />
@@ -342,6 +345,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\WebFetch.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\WebFetch.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.WebFetch.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\CommandRun.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\CommandRun.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.CommandRun.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Url.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Url.cppm" />

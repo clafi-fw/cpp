@@ -109,6 +109,9 @@ namespace SeeDocs_App
         m_closeAsked = m_browser.onCloseProject([this](CloseProjectEvent& event) {
             closeLater(event.project);
         });
+        m_rescanAsked = m_browser.onRescanProject([this](RescanProjectEvent& event) {
+            rescan(event.project);
+        });
     }
 
     Workspace::Folders Workspace::recentFolders() const

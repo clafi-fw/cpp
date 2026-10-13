@@ -401,3 +401,30 @@ executable names no libcurl, and a system without one answers every fetch with n
 
 Cancelling is the progress callback answering nonzero, which libcurl asks at least once a second, so
 a cancel waits that long at most. The connection may take ten seconds and the whole transfer thirty.
+
+## CommandRun on Windows
+
+cmd.exe from the system directory, given `/s /c` and the line in quotes, so the line is read as it
+would be typed into a console: a program is found on the PATH whatever its extension - an editor's
+launcher is often a .cmd - and the line's quotes are read as cmd reads them, `/s` taking off the
+pair put round the whole. The process is made with CREATE_NO_WINDOW, and a thread waits for it
+beside an event the destructor sets. cmd exits with 9009 where no program answers to the name the
+line starts with, which is NotFound. Zero is Ended, and every other code is Failed, whether cmd or
+the program gave it.
+
+## CommandRun on Linux
+
+/bin/sh -c over the line, in a process of its own. The application forks a child that forks the
+waiting process and ends at once, so the waiting process belongs to init and the application has no
+child to reap. The waiting process forks the shell, waits for it, and writes what it exited with
+into a pipe that a thread of the run polls beside a stop pipe the destructor writes into. sh exits
+with 127 where no program answers to the name and with 126 where the program found would not run -
+NotFound and NotRunnable. Zero is Ended and every other code Failed; a program killed by a signal
+is written as 128 and the signal's number. A waiting process that could not fork the shell writes
+NotStarted's answer instead.
+
+**The waiting process keeps standard input and output and the status pipe, and nothing else.** It
+runs on as a copy of the application, running no program of its own, so it would otherwise keep
+every descriptor the application has open for as long as the program runs - and a display server
+keeps a client's windows up while its connection is open. It moves the status pipe to descriptor 3
+and closes everything above it.

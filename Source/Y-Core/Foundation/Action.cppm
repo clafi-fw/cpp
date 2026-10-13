@@ -154,6 +154,8 @@ namespace ClaFi
         void attach(Control& presenter, PresenterRole role = PresenterRole::Button);
         void detach(const Control& presenter);
         [[nodiscard]] std::size_t attachedCount() const { return m_attachments.size(); }
+        // The first presenter standing in the form, or null where none does.
+        [[nodiscard]] Control* presenterIn(const FormBase&) const;
     public:
         // What the action reads has changed. Asks every attached presenter for its state again,
         // and animates the difference.

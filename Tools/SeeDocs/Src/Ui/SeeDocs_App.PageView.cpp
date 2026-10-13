@@ -937,7 +937,7 @@ namespace SeeDocs_App
     // command line typed on the Settings page takes the grey off a page standing behind it.
     void PageView::connectSource(Button& button, const Fact& fact)
     {
-        button.text() = Text{ k_openInEditor };
+        button.text() = Text{ k_openInEditorCaption };
         button.onGetState([this, &fact](GetStateEvent& event) {
             event.state.enabled = hasEditorCommand(appContext(), fact.source->language);
         });

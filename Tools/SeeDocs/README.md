@@ -345,7 +345,15 @@ project, a folder, a module, a function, a constant, a type's kind - and its hin
 a grid of facts - namespace, module, source - and then a section per expander. The source is the
 file and line a type, a method, a function or a constant stands at, and a module's interface file;
 an Open in editor button at its row's end runs the command line Settings keeps for the file's
-language, and stands greyed, its hint naming Settings, while there is none. A class's title
+language, and stands greyed, its hint naming Settings, while there is none. What goes wrong is said
+in a notice over the window's bottom right, headed with Open in editor and the file's name, since a
+page may be gone by the time the answer comes. A
+file the last scan read and that is no longer on disk, or that stands in a folder the project no
+longer reads, is said to be gone before anything runs, with Rescan as the answer; the notice is held
+by the project and goes when it closes. A command line whose program the shell does not find, or
+finds and cannot run, is said so by name, and one that ends with any other exit code but zero is
+said so with the code; Settings is the answer to each. A language holds one such notice, which a new
+run or an edit of its command line takes down. A class's title
 carries its bases under it as a breadcrumb bar reversed: a crumb per base, its mark before it
 pointing back toward the type standing on it, the ways up running right and parting into a column of
 rows where a type has several bases, a mixin's host reached through the argument it was given.

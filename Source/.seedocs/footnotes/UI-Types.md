@@ -339,6 +339,42 @@ Destroying a fetch that is still running cancels it and waits for its thread, so
 short - see Platform for how each backend cancels. A fetch must not be destroyed from inside its
 own WebFetchEvent handler: the event is raised by the fetch's own timer.
 
+## CommandOutcome
+
+What the desktop's shell made of a command line. A run is Running until the shell answers, and then
+one of the other five for good. NotFound and NotRunnable are what the shell says of the program the
+line names, and NotStarted is the shell itself not starting. Ended is a line that ran and exited
+with zero. Failed is every other exit code, whoever gave it - the program, or the shell for a reason
+of its own - and exitCode says which.
+
+## CommandRunEvent
+
+Raised once per run, on the UI thread, when the outcome leaves Running.
+
+## CommandRun
+
+A command line run the way a console or a terminal runs one - by cmd.exe on Windows, by /bin/sh on
+Linux - and left running. The run starts with the object. The process it starts is no child of the
+application, and nothing waits for it to end. Its answer is handed to the UI thread through a
+UiTimer, the way a WebFetch hands over what it brought back, and CommandRunEvent is raised there.
+
+**The object is the answer's lifetime.** Destroying it stops listening and leaves the line running,
+so whoever holds it hears the answer for as long as it holds it and no longer - an editor started
+from a page goes on after the page has gone, and nothing is raised on the page's behalf. A run must
+not be destroyed from inside its own CommandRunEvent handler: the event is raised by the run's own
+timer.
+
+**A program that is not found is answered at once**, because the shell gives up on the spot. A
+program that runs is answered when it ends, which may be never in the life of the application. See
+Platform for what each shell answers.
+
+## CommandRun::exitCode
+
+What the shell exited with, as the outcome was read from it - zero while the run is Running and for
+NotStarted. On Linux a program killed by a signal answers 128 and the signal's number, the way a
+shell reports it. On Windows a program that crashed answers the status it went down with, such as
+0xC0000005.
+
 ## RepeatEvent::elapsedSeconds
 
 Time since the previous repeat. An action that moves at a speed multiplies by this

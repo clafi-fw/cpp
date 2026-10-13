@@ -2,6 +2,8 @@ module SeeDocs_App.ExternalEditors;
 
 import SeeDocs_App.Surface;
 
+import ClaFi.App.AppMenu;
+import ClaFi.App.Notices;
 import ClaFi.App.Settings;
 
 import ClaFi.Controls.Button;
@@ -26,7 +28,9 @@ import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.CommandRun;
 import ClaFi.Core.System.Events;
+import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
@@ -222,6 +226,32 @@ namespace SeeDocs_App
             }
         }
 
+        // An exit code as it is usually written: in decimal, and in hex where it is large enough to
+        // be a Windows status such as 0xC0000005.
+        [[nodiscard]] std::wstring spellExitCode(const std::uint32_t exitCode)
+        {
+            constexpr std::uint32_t k_firstHexCode = 0x10000;
+            if (exitCode < k_firstHexCode)
+                return std::format(L"{}", exitCode);
+            return std::format(L"0x{:08X}", exitCode);
+        }
+
+        // The program a command line starts, as a shell reads its first word: up to the closing
+        // quote where it opens with one, else up to the first space.
+        [[nodiscard]] std::wstring programOf(const std::wstring_view commandLine)
+        {
+            const std::size_t start = commandLine.find_first_not_of(L" \t");
+            if (start == std::wstring_view::npos)
+                return {};
+            if (commandLine[start] == L'"')
+            {
+                const std::size_t close = commandLine.find(L'"', start + 1);
+                return std::wstring{ commandLine.substr(start + 1, close - start - 1) };
+            }
+            const std::size_t end = commandLine.find_first_of(L" \t", start);
+            return std::wstring{ commandLine.substr(start, end - start) };
+        }
+
         [[nodiscard]] constexpr Suggestions onThisDesktop(const Suggestions windows,
             const Suggestions others)
         {
@@ -331,17 +361,100 @@ namespace SeeDocs_App
             });
     }
 
-    // **The command line is the user's own** and runs as a terminal would run it, so a path is
-    // quoted where the line quotes {file}, and nowhere else.
-    void openInEditor(AppContext& context, const SourceLanguage language,
-        const std::filesystem::path& file, const std::size_t line)
+    // openInEditorTitle
+
+    std::wstring openInEditorTitle(const std::filesystem::path& file)
     {
-        std::wstring command = commandNode(context, language).get<std::wstring>();
+        return std::format(L"{}: {}", k_openInEditorCaption, file.filename().wstring());
+    }
+
+    // EditorRuns
+
+    EditorRuns::EditorRuns(AppContext& context)
+        :
+        m_context{ context }
+    {
+        for (const SourceLanguage language : { SourceLanguage::Cpp, SourceLanguage::Pascal })
+        {
+            runOf(language).edited = onEditorCommandChange(m_context, language, [this, language]() {
+                runOf(language).notice.withdraw();
+            });
+        }
+    }
+
+    EditorRuns::~EditorRuns() = default;
+
+    // **The command line is the user's own** and runs as a terminal would run it, so a path is
+    // quoted where the line quotes {file}, and nowhere else. The run before goes with what it
+    // answered - a run is the newest attempt, and its notice speaks for it alone.
+    void EditorRuns::open(const SourceLanguage language, const std::filesystem::path& file,
+        const std::size_t line)
+    {
+        std::wstring command = commandNode(m_context, language).get<std::wstring>();
         if (command.empty())
             return;
         replaceEvery(command, k_filePlaceHolder, file.wstring());
         replaceEvery(command, k_linePlaceHolder, std::to_wstring(line));
-        Platform::runCommand(command);
+        Run& run = runOf(language);
+        run.notice.withdraw();
+        run.program = programOf(command);
+        run.title = openInEditorTitle(file);
+        run.command = std::make_unique<CommandRun>(command);
+        run.command->onDone([this, language](CommandRunEvent& event) {
+            answered(language, event.sender());
+        });
+    }
+
+    EditorRuns::Run& EditorRuns::runOf(const SourceLanguage language)
+    {
+        return language == SourceLanguage::Pascal ? m_delphi : m_cpp;
+    }
+
+    // **Headed with the button and the file**, since the answer may come long after the click. The
+    // program is in the spot ink, and Settings is the answer: the command line is where every one
+    // of these is put right.
+    void EditorRuns::answered(const SourceLanguage language, const CommandRun& command)
+    {
+        Run& run = runOf(language);
+        const std::wstring_view languageName = editorLanguageName(language);
+        Text message{};
+        switch (command.outcome())
+        {
+            case CommandOutcome::NotFound:
+                message << PushThemeColor{ InkWell::spotInk() } << run.program << PopColor{}
+                    << L" was not found. Write its full path in the " << languageName
+                    << L" editor's command line, or put its folder on the PATH.";
+                break;
+            case CommandOutcome::NotRunnable:
+                message << PushThemeColor{ InkWell::spotInk() } << run.program << PopColor{}
+                    << L" was found, and the system would not run it.";
+                break;
+            case CommandOutcome::NotStarted:
+                message << L"The shell that runs the " << languageName
+                    << L" editor's command line could not be started.";
+                break;
+            case CommandOutcome::Failed:
+                message << PushThemeColor{ InkWell::spotInk() } << run.program << PopColor{}
+                    << L" ended with exit code " << PushThemeColor{ InkWell::spotInk() }
+                    << spellExitCode(command.exitCode()) << PopColor{} << L".";
+                break;
+            case CommandOutcome::Running:
+            case CommandOutcome::Ended:
+                return;
+        }
+        run.notice = notices().post(Notice{
+            .icon = MessageIcon::Error,
+            .title = run.title,
+            .message = std::move(message),
+            .answers = {
+                NoticeAnswer{
+                    .caption = L"Settings",
+                    .run = [](ClickEvent& event) {
+                        openAppMenuPage(event.form, AppMenu::k_settingsPageCaption, event.stamp);
+                    }
+                }
+            }
+        });
     }
 
     // CommandBox

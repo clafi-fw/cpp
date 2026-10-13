@@ -26,11 +26,12 @@ namespace ClaFi::Controls
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"MessageBar"; }
         // The message, beside the icon named and a stripe in that icon's colour.
         void setMessage(MessageIcon, const Text& message);
-        // Adds an answer under the caller's own caption, after those already standing.
-        template<typename Handler>
-        Button& addAnswer(std::wstring_view caption, Handler&& onClick);
+        // Adds an answer after those standing, its button taking the pack after the band's own.
+        template<typename Handler, typename... Args>
+        Button& addAnswer(std::wstring_view caption, Handler&& onClick, Args&&... args);
     protected:
         void secondaryClicked(ClickEvent&) override {} // an answer acts on its own click
+        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void paintIcon(PaintIconEvent&) override;
         void adjustPaint(AdjustPaintEvent&) override;
         void paintSurface(PaintEvent&) override;
@@ -68,19 +69,22 @@ namespace ClaFi::Controls
         m_answers{ createSecondaryPart<Stack>(
             Orientation::Horizontal,
             Spacing{ k_answerSpacing },
-            VerticalAlign::Center
+            VerticalAlign::Center,
+            ItemSizing::Equal
         ) }
     {
     }
 
-    template<typename Handler>
-    Button& MessageBar::addAnswer(const std::wstring_view caption, Handler&& onClick)
+    template<typename Handler, typename... Args>
+    Button& MessageBar::addAnswer(const std::wstring_view caption, Handler&& onClick,
+        Args&&... args)
     {
         return m_answers.add<Button>(
             caption,
             VerticalTextAnchor::Center,
             HorizontalTextAnchor::Center,
-            OnEvent{ std::forward<Handler>(onClick) }
+            OnEvent{ std::forward<Handler>(onClick) },
+            std::forward<Args>(args)...
         );
     }
 }

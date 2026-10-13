@@ -3,6 +3,7 @@ export module ClaFi.App.Application;
 export import ClaFi.Dom;
 
 import ClaFi.App.AppMenu;
+import ClaFi.App.Notices;
 import ClaFi.App.Themes;
 import ClaFi.Application.ThemesManager;
 
@@ -188,6 +189,8 @@ namespace ClaFi
         StdActions::registerTransferFormats(m_context.platform().clipboard());
         // The application menu under every AppButton.
         connectAppMenu();
+        // The notices over the main window, from the moment it takes the root loop.
+        connectNotices(m_context);
         // Built before the config is read, so a line logged while reading it has somewhere to
         // go; shown after, because whether it is shown is in the config.
         initializeDiagnosticLog(m_context);

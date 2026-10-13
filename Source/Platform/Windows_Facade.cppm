@@ -358,29 +358,6 @@ namespace ClaFi
 
     }
 
-    // **Through the system's own cmd.exe**, so the line runs as typed into a console: a program
-    // found on the PATH whatever its extension - an editor's launcher is often a .cmd - and its
-    // quotes read as cmd reads them, /s taking off the pair put round the whole. No window: the
-    // shell has nothing to show, and what it starts opens its own.
-    void Platform::runCommand(const std::wstring_view commandLine)
-    {
-        wchar_t system[MAX_PATH]{};
-        const UINT length = ::GetSystemDirectoryW(system, MAX_PATH);
-        if (length == 0 || length >= MAX_PATH)
-            return;
-        const std::wstring shell = std::wstring{ system, length } + L"\\cmd.exe";
-        std::wstring line = L"cmd.exe /s /c \"" + std::wstring{ commandLine } + L"\"";
-        STARTUPINFOW startup{ .cb = sizeof(STARTUPINFOW) };
-        PROCESS_INFORMATION process{};
-        if (!::CreateProcessW(shell.c_str(), line.data(), nullptr, nullptr, FALSE,
-            CREATE_NO_WINDOW, nullptr, nullptr, &startup, &process))
-        {
-            return;
-        }
-        ::CloseHandle(process.hThread);
-        ::CloseHandle(process.hProcess);
-    }
-
     // The common item dialog in its folder mode, over the OLE apartment the window opened. A
     // cancelled dialog fails Show with ERROR_CANCELLED, and is nothing like any other failure.
     std::optional<std::filesystem::path> Platform::pickFolder(const IForm* form,

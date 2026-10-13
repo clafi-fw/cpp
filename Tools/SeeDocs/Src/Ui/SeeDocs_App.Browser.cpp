@@ -14,6 +14,7 @@ import SeeDocs_App.Project;
 import SeeDocs_App.Search;
 import SeeDocs_App.Surface;
 
+import ClaFi.App.Notices;
 import ClaFi.App.Settings;
 
 import ClaFi.Browser.Consts;
@@ -194,6 +195,15 @@ namespace SeeDocs_App
     {
     }
 
+    // RescanProjectEvent
+
+    RescanProjectEvent::RescanProjectEvent(OpenProject& rescanned)
+        :
+        ::ClaFi::Event{},
+        project{ rescanned }
+    {
+    }
+
     // SurfacePage
 
     SurfaceBrowser& SurfacePage::browser() const
@@ -315,6 +325,32 @@ namespace SeeDocs_App
                 }
             }
         }
+    }
+
+    // **A scan is how the pages catch up with the disk**, so Rescan is the answer. The notice goes
+    // with the project, which is all the answer could act on.
+    void SurfaceBrowser::ShownProject::noteGone(const SourceFile& file, const bool folderRead)
+    {
+        Text message{};
+        if (folderRead)
+            message << L"The file is no longer on disk.";
+        else
+            message << L"The file stands in a folder the project no longer reads.";
+        message << L" Rescan the project to bring its pages up to date.";
+        goneSource = notices().post(Notice{
+            .icon = MessageIcon::Warning,
+            .title = openInEditorTitle(file.path),
+            .message = std::move(message),
+            .answers = {
+                NoticeAnswer{
+                    .caption = L"Rescan",
+                    .run = [this](ClickEvent&) {
+                        RescanProjectEvent event{ open };
+                        browser.emitEvent(event);
+                    }
+                }
+            }
+        });
     }
 
     // The writer puts words where a strict read takes them from, in a C++ comment; a surface read
@@ -585,18 +621,28 @@ namespace SeeDocs_App
     }
 
     // **The database keeps a file by its path under its source's folder**, so the place is read
-    // against the folders the project reads now, as a hint written into the file is.
+    // against the folders the project reads now, as a hint written into the file is. A page shows
+    // what the last scan read, so a file gone since is said to be gone before anything runs.
     void SurfaceBrowser::openSource(const PageData& from, const SourcePlace& source)
     {
-        const ShownProject* shown = resolve(from).project;
+        ShownProject* shown = resolve(from).project;
         if (!shown)
             return;
         const SourceFile& file = shown->open.surface.files()[source.place.file];
         const SourceRoots roots = shown->open.project.sourceRoots();
         if (file.root >= roots.size())
+        {
+            shown->noteGone(file, false);
             return;
+        }
         const std::filesystem::path path = (roots[file.root] / file.path).lexically_normal();
-        openInEditor(appContext(), source.language, path, source.place.line);
+        std::error_code error{};
+        if (!std::filesystem::is_regular_file(path, error))
+        {
+            shown->noteGone(file, true);
+            return;
+        }
+        m_editors.open(source.language, path, source.place.line);
     }
 
     // Said for every page as it is built, which is before anything asks for its list: a page

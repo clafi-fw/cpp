@@ -175,6 +175,15 @@ namespace ClaFi
         return &m_form;
     }
 
+    // **The content root is forgotten through Form**, which overrides this and asks the form
+    // itself; a top layer has no Form above it, so it asks here.
+    void FormControlBase::nestedControlDeleted(Control* control)
+    {
+        RichControl::nestedControlDeleted(control);
+        if (m_form.m_topLayer.get() == this)
+            m_form.forgetControl(control);
+    }
+
     // FormBase
 
     FormBase::FormBase(AppContext& appContext, WindowRole windowRole, FormControlBase& content, Control* popupTarget,
@@ -254,6 +263,24 @@ namespace ClaFi
         stateFrame();
         initPlacement();
         invalidate();
+    }
+
+    // **What the form holds of the layer going is let go first** - the press it was given and a
+    // scroll waiting on a pass. The layer is replaced before it is destroyed, so its controls are
+    // not forgotten one at a time on the way down.
+    void FormBase::setTopLayer(std::unique_ptr<FormControlBase> layer)
+    {
+        if (m_topLayer)
+        {
+            const FormControlBase& going = *m_topLayer;
+            if (m_downItem && going.containsNested(m_downItem))
+                m_downItem = nullptr;
+            std::erase_if(m_scrollIntoViewOnAlign, [&going](const Control* control) {
+                return going.containsNested(control);
+            });
+        }
+        m_topLayer = std::move(layer);
+        invalidateAlign();
     }
 
     float FormBase::contentHeight() const
@@ -515,6 +542,8 @@ namespace ClaFi
     int FormBase::execute()
     {
         const bool claimedRootLoop = appContext().claimRootLoop(*this);
+        if (claimedRootLoop)
+            appContext().events().emit<RootLoopEvent>(*this);
         show();
         m_window->doLoop();
         if (claimedRootLoop)
@@ -2020,6 +2049,8 @@ namespace ClaFi
     void FormBase::paintContent(const FloatRect& dirtyRect, const Graphics::PixelPath* contentClip)
     {
         ControlTreePainter::paint(m_content, &dirtyRect, contentClip);
+        if (m_topLayer)
+            ControlTreePainter::paint(*m_topLayer, &dirtyRect, contentClip);
     }
 
     void FormBase::reAlign(bool initPlacementMode)
@@ -2041,10 +2072,19 @@ namespace ClaFi
         const ScaledDimensions newSize = initPlacementMode ? m_calculatedSize : contentExtent();
         m_content.align(m_context, m_layoutPass, frameOrigin(), newSize);
         m_measuringPlacement = false;
+        // **In the box the root was laid out in**, and never in a pass measuring what to ask a
+        // window for: what stands over the content takes no part in what the window is sized to.
+        if (m_topLayer && !initPlacementMode)
+        {
+            m_topLayer->calculate(*this);
+            m_topLayer->align(m_context, m_layoutPass, frameOrigin(), m_content.dimensions());
+        }
         m_aligned = true;
         m_layoutInProgress = false;
         stateSizeRange();
         contentMoved(m_content);
+        if (m_topLayer)
+            contentMoved(*m_topLayer);
         // **A scroll is measured against a layout that stands.** A pass measuring what to ask a
         // window for lays the content out at its own size, and a pass a control has put back in
         // question is laid out again before the frame goes out; in either, a row that wraps once
@@ -2309,14 +2349,20 @@ namespace ClaFi
         return { &currentControl, pt0, hit.zone, overText };
     }
 
+    // **The top layer meets the pointer first.** A point it meets nothing in but itself - the open
+    // space around what stands in it - belongs to the content under it.
     SearchControlResult FormBase::controlAt(PointInForm pt)
     {
-        return controlAt(
-            m_content,
-            // conversion not needed, assuming that m_content->boundsInParent() is at {0, 0}
-            searchPoint(pt),
-            m_content.boundsInParent()
-        );
+        // conversion not needed, assuming that m_content->boundsInParent() is at {0, 0}
+        const PointInForm searched = searchPoint(pt);
+        if (m_topLayer)
+        {
+            SearchControlResult over =
+                controlAt(*m_topLayer, searched, m_topLayer->boundsInParent());
+            if (over.control && over.control != m_topLayer.get())
+                return over;
+        }
+        return controlAt(m_content, searched, m_content.boundsInParent());
     }
 
     // **A pointer pushed against a maximized window's edge meets what stands k_edgeReach in.** A

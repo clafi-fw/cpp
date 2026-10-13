@@ -311,6 +311,103 @@ that opens a window.
             workspace.createNew({}, event.stamp);
         });
 
+## openAppMenuPage
+
+Opens the application menu over the form on the page under that caption, the way the menu opens on
+the page it was left on: the caption is written where the next menu reads its page. The menu opens
+on the AppButton presenting appMenuAction in that form, as a click on the button opens it - under
+the button, closed by a click elsewhere or by Escape. A caption no page answers to opens the
+Settings page. The stamp is the press that asked, which a menu taking the pointer is weighed
+against. A notice's answer opens Settings this way.
+
+## Notices
+
+**What the application tells the user on its own time** - the answer to something that ran after the
+click that asked for it, a newer release found by a check nobody is watching. One list for the
+application, oldest first, which `notices()` answers. The main window shows it as cards over its
+content against its bottom right, the newest at the bottom - see NoticesLayer. A notice takes no
+focus, and stands until the user dismisses it, presses one of its answers, or its owner withdraws
+it.
+
+**A notice is held by a handle**, and the handle by whatever the notice speaks for. A handle gone
+takes its notice down, so a notice never outlives what it is about, and an answer never runs after
+its owner has gone: a notice that a project's source is gone is held by the project, and closing the
+project takes it down.
+
+**One notice per subject.** An owner keeps one handle and assigns each new notice to it, which takes
+the one before down - an editor run again speaks for the newest run alone.
+
+    m_notice = notices().post(Notice{
+        .icon = MessageIcon::Error,
+        .title = title,
+        .message = message,
+        .answers = {
+            NoticeAnswer{
+                .caption = L"Settings",
+                .run = [](ClickEvent& event) {
+                    openAppMenuPage(event.form, AppMenu::k_settingsPageCaption, event.stamp);
+                }
+            }
+        }
+    });
+
+## Notice
+
+What a notice says: its kind, which the icon and the stripe beside the message show, its title, its
+message, and the answers it offers, each a caption and what pressing it does.
+
+**The title names what the notice is about** - the command that ran and the file it ran on, as
+`Open in editor: Main.cpp` does - and stands in bold over the message, which says what happened. A
+notice may come long after the click that started it, on another page, and the title is what ties
+it back.
+
+An answer is something the application does about the notice - Settings, Rescan, Release page - and
+says so. Dismiss follows the answers on every notice, and is the one a notice with no answers
+offers.
+
+## NoticeAnswerHandler
+
+Takes the click that pressed the answer. Its stamp is the press behind it, which is what an answer
+asking the display server for something names - opening a page in a browser, raising a menu. Its
+form is the window the notice stands in.
+
+## NoticeHandle
+
+A notice stands while its handle does. Taking another handle into this one takes this one's notice
+down first. `standing()` answers false once the user has closed or answered the notice, and
+`withdraw()` on a notice already down does nothing. A handle belongs to an object that goes down
+with the application, never to a static, so the list is empty by the time it goes itself.
+
+## Notices::post
+
+Puts the notice up after those standing and raises NoticesChangeEvent. The handle it answers is the
+notice's lifetime, so a handle dropped on the spot takes the notice down on the spot.
+
+## Notices::answer
+
+**The notice comes down before the answer runs.** The answer may put a notice up in this one's
+place, run a loop of its own, or close the window the notice stands in, and in none of them is this
+notice still standing. An answer whose notice is already down does nothing.
+
+## notices
+
+The application's one list, made on first use and kept the way the backstage keeps its pages.
+
+## NoticeCard
+
+A notice as the main window shows it: a MessageBar in the notice's kind, its title in bold over the
+message, and its answers under the message against its right edge with Dismiss last, the way a
+dialog's buttons stand. Every button on it is MouseOnly, so a press on one leaves the focus where it
+was. As wide as the window allows, up to 440 design units, and as tall as its message at that width.
+
+## NoticesLayer
+
+The main window's top layer - see FormBase::topLayer. It holds a card for every notice standing,
+stacked from the window's bottom right with the newest at the bottom, and keeps in step with the
+list on every change. A card whose notice is down is hidden at once and deleted on a timer once no
+press on it is still running: it goes from inside its own answer's click as often as not, an answer
+may run a loop of its own, and a control is not deleted from under the click it is dispatching.
+
 ## UiElement
 
 The order is free. What is indexed by an element - `k_uiElements`, a theme's element lists,

@@ -138,6 +138,7 @@ namespace SeeDocs_App
         UiTimer m_closeTimer{};
         ScopedEventConnection m_projectShown{};
         ScopedEventConnection m_closeAsked{};
+        ScopedEventConnection m_rescanAsked{};
         // A project the new project dialog made, opened once the dialog is down.
         std::optional<Project> m_made{};
         UiTimer m_madeTimer{};

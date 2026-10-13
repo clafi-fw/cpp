@@ -83,6 +83,13 @@ namespace ClaFi
         using EventOf<FormBase>::EventOf;
     };
 
+    // A form has taken the root loop and is about to be shown. See Control-Foundation
+    export class RootLoopEvent : public EventOf<FormBase>
+    {
+    public:
+        using EventOf<FormBase>::EventOf;
+    };
+
     // The form has painted: the rect, and when the paint began and ended. See Control-Foundation
     export class FormPaintedEvent : public EventOf<FormBase>
     {
@@ -141,6 +148,8 @@ namespace ClaFi
     protected:
         using RichControl::getForm;
         FormBase* getForm() override;
+        // A control under this root is gone, and the form forgets it where this is its top layer.
+        void nestedControlDeleted(Control*) override;
     private:
         FormBase& m_form;
     };
@@ -206,6 +215,10 @@ namespace ClaFi
         // Puts it back to being drawn at the scale of the form under it - see the definition.
         void followScale();
         [[nodiscard]] Control& content() { return m_content; }
+        // Drawn over the root, inside the window and in the root's box. See Control-Foundation
+        [[nodiscard]] FormControlBase* topLayer() const { return m_topLayer.get(); }
+        // Puts a control over the root, or takes the one standing there away.
+        void setTopLayer(std::unique_ptr<FormControlBase>);
         // The control the focus goes to when this form is entered. **The root answers**, and only a
         // root that keeps a current item has anything but itself to answer with: a Stack or
         // a Grid names the item it is on, and a plain Panel names itself. The form stores
@@ -612,6 +625,8 @@ namespace ClaFi
         // press and no other; see wnd_keyDown, which raises it and clears it, and wnd_char, which
         // spends it once the popup has had its chance at the character.
         bool m_popupTookKey{};
+        // Declared after everything its controls read, so it goes down before any of it.
+        std::unique_ptr<FormControlBase> m_topLayer{};
         // **The last member, and it has to stay last.** It is a form of its own that takes this
         // form's window as its owner, so it is built once everything that window is made of is
         // standing - and it goes down before any of that, which is why ~FormBase takes it down at
