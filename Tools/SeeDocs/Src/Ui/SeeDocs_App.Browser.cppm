@@ -1,5 +1,6 @@
 export module SeeDocs_App.Browser;
 
+import SeeDocs_App.AppIcon;
 import SeeDocs_App.Editing;
 import SeeDocs_App.ExternalEditors;
 import SeeDocs_App.Icons;
@@ -24,7 +25,6 @@ import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.SearchBox;
 import ClaFi.Controls.Tree;
-import ClaFi.Icons.SideBar;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.PaintIconEvent;
@@ -488,7 +488,7 @@ namespace SeeDocs_App
         :
         BrowserControl{ params, std::forward<Args>(args)... }
     {
-        appButton().onPaintIcon(Icons::SideBar::paintPanelIcon);
+        appButton().onPaintIcon(AppIcon::paintIcon);
         createSplitter(PanelSlot::Left);
         onBarResize([this](BarResizeEvent& event) {
             storeTreeWidth(event.extent);

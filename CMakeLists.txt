@@ -495,6 +495,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     set(seedocs_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/Src")
     add_executable(SeeDocs
         "${seedocs_dir}/Ui/SeeDocs_Wayland.cpp"
+        "${seedocs_dir}/Ui/SeeDocs_App.AppIcon.cpp"
         "${seedocs_dir}/Ui/SeeDocs_App.BasesBar.cpp"
         "${seedocs_dir}/Ui/SeeDocs_App.Browser.cpp"
         "${seedocs_dir}/Ui/SeeDocs_App.Editing.cpp"
@@ -521,6 +522,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_dir}/SeeDocs_App.Search.cpp"
         "${seedocs_dir}/SeeDocs_App.Surface.cpp")
     target_sources(SeeDocs PRIVATE FILE_SET CXX_MODULES FILES
+        "${seedocs_dir}/Ui/SeeDocs_App.AppIcon.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.BasesBar.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.Browser.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.Editing.cppm"

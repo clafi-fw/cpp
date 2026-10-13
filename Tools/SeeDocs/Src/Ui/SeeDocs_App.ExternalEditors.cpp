@@ -100,7 +100,11 @@ namespace SeeDocs_App
             constexpr Suggestion gedit{ L"gedit", LR"(gedit +{line} "{file}")" };
             constexpr Suggestion emacs{ L"Emacs", LR"(emacs +{line} "{file}")" };
             constexpr Suggestion gvim{ L"gVim", LR"(gvim +{line} "{file}")" };
-            constexpr Suggestion radStudio{ L"RAD Studio", LR"(bds -pDelphi "{file}")" };
+            constexpr Suggestion defaultApp{
+                L"Default app",
+                LR"("{file}")",
+                L"Opens the file with the app set for its type, as Explorer does"
+            };
             constexpr Suggestion lazarus{ L"Lazarus", LR"(lazarus "{file}")" };
             constexpr Suggestion lazarusIde{ L"Lazarus", LR"(lazarus-ide "{file}")" };
         }
@@ -120,7 +124,7 @@ namespace SeeDocs_App
                 Editors::gvim
             };
             constexpr std::array delphi{
-                Editors::radStudio,
+                Editors::defaultApp,
                 Editors::vsCode,
                 Editors::lazarus,
                 Editors::notepadPlusPlus,

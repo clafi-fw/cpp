@@ -30,11 +30,11 @@ namespace ClaFi
 #if CLAFI_TEXT_MOVING
         DrawTextResult drawText(ControlPaintContext&, const FloatRect&, const Text&,
             TextAnchor, const EditProps* = nullptr, TextRenderMode = TextRenderMode::Static,
-            bool wrap = true, const TextFormat* = nullptr);
+            bool wrap = true, const TextFormat* = nullptr, TextRange underlinedLink = {});
 #else
         DrawTextResult drawText(ControlPaintContext&, const FloatRect&, const Text&,
             TextAnchor, const EditProps* = nullptr, bool wrap = true,
-            const TextFormat* = nullptr);
+            const TextFormat* = nullptr, TextRange underlinedLink = {});
 #endif
         // Editable belongs to the layout rather than to the caller's convenience: an editable text
         // keeps the empty paragraph a trailing newline opens, because the caret has to be able to
@@ -177,7 +177,7 @@ namespace ClaFi
 #else
         const EditProps* editProps, bool wrap,
 #endif
-        const TextFormat* format)
+        const TextFormat* format, const TextRange underlinedLink)
     {
         if (text.plainText().empty() && !editProps)
             return {};
@@ -185,6 +185,8 @@ namespace ClaFi
         TextLayout& layout = select(text, format, bounds.dimensions(), controlContext.scaleFactor(),
             editProps != nullptr, wrap, EventPhase::Paint);
         layout.setHorizontalAnchor(anchor.horizontal);
+        // Every caller drawing this text shares the layout, so each draw states its own underline.
+        layout.setHoveredLink(underlinedLink);
         const FloatPoint anchoredPos = anchoredOrigin(bounds, layout.calculatedDimensions(), anchor);
 
 #if CLAFI_TEXT_MOVING

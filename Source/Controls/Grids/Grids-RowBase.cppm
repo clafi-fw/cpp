@@ -196,6 +196,20 @@ namespace ClaFi::Controls::Grids
             const Column* column;
             std::wstring target;
         };
+        // A link found in a cell's text - what it was written with, and where it stands in it.
+        struct CellLink
+        {
+            std::wstring target;
+            TextRange range;
+        };
+        // The link under the pointer, and the column of the cell it stands in.
+        struct HoveredLink
+        {
+            const Column* column{};
+            TextRange range{};
+
+            bool operator==(const HoveredLink&) const = default;
+        };
     private:
         Column* columnAt(ScaledPosition mousePosition, ScaledPosition topLeft) const;
         // The column whose lane holds the point: a press on a blank names the cell it stands for.
@@ -225,15 +239,16 @@ namespace ClaFi::Controls::Grids
         [[nodiscard]] FloatRect cellRectInForm(const Column&) const;
         // The box the cell's text is drawn in - the steps paintOneCell and paintCell take.
         [[nodiscard]] FloatRect cellTextBounds(const Column&, const FloatRect& cellRect) const;
-        // The target of the link under the point in this row's cell in that column; nothing
-        // where no link stands there.
-        [[nodiscard]] std::optional<std::wstring> linkAt(const Column&, PointInForm);
+        // The link under the point in this row's cell in that column; nothing where none stands.
+        [[nodiscard]] std::optional<CellLink> linkAt(const Column&, PointInForm);
         // The link under the pointer, or - from the keyboard - the first in the selected cell's
         // text while this row holds the cell. Nothing where neither stands on a link.
         [[nodiscard]] std::optional<MenuLink> menuLink(const ContextPopupEvent&);
+        // Underlines the link, or none for an empty one, repainting only when that changes.
+        void hoverLink(const HoveredLink&);
     private:
         std::vector<float> m_calculatedHeight;
-        bool m_pointsAtLink{}; // the pointer stands on a link in a cell's text
+        HoveredLink m_hoveredLink{};
     };
 
     export template<typename T>

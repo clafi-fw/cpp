@@ -89,9 +89,11 @@ namespace ClaFi::Graphics::Cpu
 
                 __m256 perpDist = _mm256_sqrt_ps(perpDistSq);
                 __m256 longDist = _mm256_mul_ps(_mm256_sub_ps(vZero, dot), _mm256_set1_ps(e.invLen));
-                if (cap == StrokeCap::Square)
+                // A butt end is its own cap line: the distance past it counts from the stroke's
+                // edge, so the ramp is centred on that line as it is on the sides.
+                if (cap == StrokeCap::Butt)
                 {
-                    longDist = _mm256_sub_ps(longDist, _mm256_set1_ps(radius));
+                    longDist = _mm256_add_ps(longDist, _mm256_set1_ps(radius));
                 }
 
                 __m256 dist = _mm256_max_ps(perpDist, longDist);
@@ -111,9 +113,9 @@ namespace ClaFi::Graphics::Cpu
 
                 __m256 perpDist = _mm256_sqrt_ps(perpDistSq);
                 __m256 longDist = _mm256_sub_ps(_mm256_mul_ps(dot, _mm256_set1_ps(e.invLen)), _mm256_set1_ps(e.len));
-                if (cap == StrokeCap::Square)
+                if (cap == StrokeCap::Butt)
                 {
-                    longDist = _mm256_sub_ps(longDist, _mm256_set1_ps(radius));
+                    longDist = _mm256_add_ps(longDist, _mm256_set1_ps(radius));
                 }
 
                 __m256 dist = _mm256_max_ps(perpDist, longDist);

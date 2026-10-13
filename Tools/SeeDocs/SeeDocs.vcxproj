@@ -136,6 +136,8 @@
     <ClCompile Include="Src\SeeDocs_App.Search.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cppm" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.AppIcon.cpp" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.AppIcon.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.BasesBar.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.BasesBar.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Browser.cpp" />
@@ -168,6 +170,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Src\Ui\SeeDocs_Wayland.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SeeDocs.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="SeeDocs.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

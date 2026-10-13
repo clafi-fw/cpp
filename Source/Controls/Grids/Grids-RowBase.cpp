@@ -276,7 +276,7 @@ namespace ClaFi::Controls::Grids
 
     CursorShape RowBase::cursor() const
     {
-        return m_pointsAtLink ? CursorShape::Hand : LaneBase::cursor();
+        return m_hoveredLink.column ? CursorShape::Hand : LaneBase::cursor();
     }
 
     FloatRect RowBase::contextMenuAnchor() const
@@ -312,6 +312,9 @@ namespace ClaFi::Controls::Grids
         doGetCellText(column, text);
         const TextFormat& format = cellTextFormat(column);
         const TextAnchor anchor = { column.verticalTextAnchor(), HorizontalTextAnchor::None };
+        const TextRange underlinedLink = &column == m_hoveredLink.column
+            ? m_hoveredLink.range
+            : TextRange{};
         if (column.movingText() == MovingText::Yes)
         {
             if (text.plainText().empty())
@@ -319,6 +322,7 @@ namespace ClaFi::Controls::Grids
             TextLayout layout;
             shapeAlone(layout, paintEvent.formContext(), text, format, textBounds.dimensions(),
                 EventPhase::Paint);
+            layout.setHoveredLink(underlinedLink);
 #if CLAFI_TEXT_MOVING
             layout.draw(
                 paintEvent.controlContext(),
@@ -344,7 +348,8 @@ namespace ClaFi::Controls::Grids
             textRenderMode(),
 #endif
             true,
-            &format
+            &format,
+            underlinedLink
         );
     }
 
@@ -623,13 +628,19 @@ namespace ClaFi::Controls::Grids
     {
         Column* columnToHover = columnAt(event.posOnControl);
         setHoveredColumn(columnToHover);
-        m_pointsAtLink = columnToHover && linkAt(*columnToHover, event.posOnForm).has_value();
+        HoveredLink hovered = {};
+        if (columnToHover)
+        {
+            if (std::optional<CellLink> link = linkAt(*columnToHover, event.posOnForm))
+                hovered = { columnToHover, link->range };
+        }
+        hoverLink(hovered);
     }
 
     void RowBase::hoverLeave()
     {
         LaneBase::hoverLeave();
-        m_pointsAtLink = false;
+        hoverLink({});
         // A move names the cell it lands on, so the hover follows the pointer for as long as
         // the pointer stays on the grid. Leaving it is the one way out that no move reports,
         // and the cell has to be given up here or it stays lit with the pointer elsewhere.
@@ -679,10 +690,10 @@ namespace ClaFi::Controls::Grids
             const PointInForm clickPos = event.clickPos();
             if (const Column* column = columnAt(clickPos))
             {
-                if (std::optional<std::wstring> target = linkAt(*column, clickPos))
+                if (std::optional<CellLink> link = linkAt(*column, clickPos))
                 {
                     event.stopPropagation();
-                    CellLinkClickEvent linkEvent{ *this, *column, std::move(*target),
+                    CellLinkClickEvent linkEvent{ *this, *column, std::move(link->target),
                         event.stamp };
                     cellLinkClick(linkEvent);
                     return;
@@ -1025,7 +1036,7 @@ namespace ClaFi::Controls::Grids
     // Asked the way the cell is drawn - a moving column's cell off a layout of its own, any
     // other through the cache - and the point measured from where the column's vertical anchor
     // put the block, as paintCell puts it.
-    std::optional<std::wstring> RowBase::linkAt(const Column& column, const PointInForm point)
+    std::optional<RowBase::CellLink> RowBase::linkAt(const Column& column, const PointInForm point)
     {
         const FloatRect cellRect = cellRectInForm(column);
         if (cellRect.empty())
@@ -1061,7 +1072,7 @@ namespace ClaFi::Controls::Grids
         }
         if (!hit.has_value())
             return std::nullopt;
-        return std::wstring{ hit->link.value };
+        return CellLink{ std::wstring{ hit->link.value }, hit->link.range };
     }
 
     // The keyboard names a cell and no point in it, so the cell's first link stands for the cell.
@@ -1073,10 +1084,10 @@ namespace ClaFi::Controls::Grids
             const Column* column = columnAt(point);
             if (!column)
                 return std::nullopt;
-            std::optional<std::wstring> target = linkAt(*column, point);
-            if (!target.has_value())
+            std::optional<CellLink> link = linkAt(*column, point);
+            if (!link.has_value())
                 return std::nullopt;
-            return MenuLink{ column, std::move(*target) };
+            return MenuLink{ column, std::move(link->target) };
         }
         const Column* column = m_descriptor.selectedColumn();
         if (!column || m_descriptor.selectedRow() != this)
@@ -1089,6 +1100,14 @@ namespace ClaFi::Controls::Grids
                 return MenuLink{ column, link->target };
         }
         return std::nullopt;
+    }
+
+    void RowBase::hoverLink(const HoveredLink& link)
+    {
+        if (link == m_hoveredLink)
+            return;
+        m_hoveredLink = link;
+        invalidate();
     }
 
 }

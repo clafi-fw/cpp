@@ -271,10 +271,11 @@ for a source file and `{line}` for a line in it, kept with the application's set
 typed. The chevron at a box's end, or Down in the box, drops the editors most used for that language
 on the desktop SeeDocs runs on, each with its command as it is typed in a terminal; typing at the
 box's end narrows them to those whose name has a word, or whose command, starting with what is
-typed, and an editor picked puts its command in the box's place. RAD Studio and Lazarus have no
-switch for a line, so they are marked no line and open the file alone. Visual Studio goes to the
-line where its command starts it; one already running opens the file alone, since `/command` is
-run by the instance it starts.
+typed, and an editor picked puts its command in the box's place. On Windows, Default app is the file
+alone, opened as Explorer opens it with the app set for its type, so a RAD Studio already running
+takes a Delphi source. Default app and Lazarus reach no line, so they are marked no line and open
+the file alone. Visual Studio goes to the line where its command starts it; one already running
+opens the file alone, since `/command` is run by the instance it starts.
 
 Each open project is a node of the tree, named after the project, and the node opens its home. Under
 it stand its Project options row and a line that parts the row from the project's folders. The
