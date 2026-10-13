@@ -50,7 +50,7 @@ namespace ClaFi
 // Shared by the module's two implementation units. See Diagnostic#Options
 namespace ClaFi
 {
-    // The config section of the window's own, and what it keeps. See Diagnostic#DiagnosticLog
+    // The config section of the window's own, and what it keeps.
     constexpr std::wstring_view k_sectionName = L"Diagnostic";
     constexpr std::wstring_view k_visibleName = L"Visible";
     constexpr std::wstring_view k_tabName = L"Tab";

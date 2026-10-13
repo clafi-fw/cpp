@@ -22,7 +22,7 @@ namespace ClaFi::Controls
         using StackBase::StackBase;
         using StackBase::add;
         std::wstring_view diagnosticText() const override { return L"PageControl"; }
-        // Whether the pages nobody is looking at count towards this control's size. See Controls
+        // Whether the pages nobody is looking at count towards this control's size.
         [[nodiscard]] PageSizing pageSizing() const { return m_pageSizing; }
         void setPageSizing(PageSizing);
     protected:

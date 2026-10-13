@@ -201,7 +201,7 @@ namespace ClaFi::PlatformImplementation::Windows
         bool alignLines();
         // Where the text of a line stands, its trailing whitespace included.
         [[nodiscard]] LineExtent lineExtent(UINT32 start, UINT32 length) const;
-        // How a collapse moves every line. See Platform#fadetextrenderer
+        // How a collapse moves every line. See Platform#linemove
         void collectLineMoves(float localCollapseBaseline, float collapseXOffset, float width,
             std::vector<LineMove>&) const;
     private:
@@ -233,7 +233,7 @@ namespace ClaFi::PlatformImplementation::Windows
         DWRITE_TEXT_ALIGNMENT m_appliedAlignment{ DWRITE_TEXT_ALIGNMENT_LEADING };
     };
 
-    // A monospace face DirectWrite resolved, drawn through the layouts' run primitive. See Platform
+    // A monospace face DirectWrite resolved, drawn through the layouts' run primitive.
     class DWriteMonoFont : public INativeMonoFont
     {
     public:

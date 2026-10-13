@@ -77,7 +77,7 @@ namespace ClaFi::PlatformImplementation::Windows
 
     // Global GlyphRunCache
 
-    // One face at one size in one measuring mode: what a cached glyph is keyed on. See Platform
+    // One face at one size in one measuring mode: what a cached glyph is keyed on.
     export struct FontKey {
         IDWriteFontFace* fontFace;
         float fontSize;
@@ -127,7 +127,7 @@ namespace ClaFi::PlatformImplementation::Windows
     export [[nodiscard]] const Graphics::Cpu::GlyphCoverage& coverageOf(FontGlyphs&,
         UINT16 glyphIndex, float emSize, DWRITE_MEASURING_MODE);
 
-    // How one line of a layout that a collapse falls in is drawn. See Platform#fadetextrenderer
+    // How one line of a layout that a collapse falls in is drawn.
     export struct LineMove
     {
         float baseline{ 0.0f }; // the layout's own, from its top

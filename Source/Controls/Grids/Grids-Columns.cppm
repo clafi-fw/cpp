@@ -132,9 +132,9 @@ namespace ClaFi::Controls::Grids
     public:
         [[nodiscard]] std::size_t index() const { return m_index; }
         [[nodiscard]] const Text& text() const { return m_text; }
-        // What the column's cells are laid out over, its alignment included. See Grids#column
+        // What the column's cells are laid out over, its alignment included.
         [[nodiscard]] const TextFormat& cellTextFormat() const { return m_cellTextFormat; }
-        // What the header names the column over: the alignment alone. See Grids#column
+        // What the header names the column over: the alignment alone.
         [[nodiscard]] const TextFormat& headerTextFormat() const { return m_headerTextFormat; }
         //
         [[nodiscard]] float neededWidth() const { return m_neededWidth; }

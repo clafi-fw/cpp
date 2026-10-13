@@ -592,7 +592,7 @@ namespace ClaFi::Controls
 
     // **One hairline each way through the pixel, every pixel of it the contrast of what it
     // crosses**: a picture pixel read from the cache, the square past the picture's edge.
-    // See Controls
+    // See Controls#pictureview
     void PictureView::paintCrosshair(PaintEvent& event, const FloatRect& pictureRect,
         const IntRect& covered)
     {

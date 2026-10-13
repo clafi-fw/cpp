@@ -402,10 +402,10 @@ namespace ClaFi
     export struct Platform
     {
         using FormNames = std::initializer_list<std::wstring_view>;
-        // Names the clipboard the derived platform owns as a member. See Transfer
+        // Names the clipboard the derived platform owns as a member.
         explicit Platform(Transfer::Clipboard&);
         virtual ~Platform() = default;
-        // The one clipboard, owned by the platform built for the display server. See Transfer
+        // The one clipboard, owned by the platform built for the display server.
         [[nodiscard]] Transfer::Clipboard& clipboard() const { return m_clipboard; }
         // A form's window. The derived platform answers, holding what a window is made from.
         [[nodiscard]] virtual std::unique_ptr<IPlatformWindow> createWindow(IForm&, WindowRole,
@@ -460,7 +460,7 @@ namespace ClaFi
         // A line where a debugger shows it - the debugger's output on Win32, stderr elsewhere.
         static void debugOutput(std::wstring_view line);
         //
-        // The mode the desktop asks applications to be drawn in. See Context
+        // The mode the desktop asks applications to be drawn in.
         [[nodiscard]] static ColorMode systemColorMode();
         // Where a change of the mode the desktop asks for is announced. See Context
         [[nodiscard]] static EventDispatcher& events();

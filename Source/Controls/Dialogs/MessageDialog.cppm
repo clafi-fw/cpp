@@ -52,7 +52,7 @@ namespace ClaFi::Controls
     public:
         // An answer was given, and whether it settles the question. See Controls
         DECLARE_EVENT(DialogAnswerEvent, OnAnswer, onAnswer)
-        // A link in the message was followed. See Controls#messagedialog
+        // A link in the message was followed. See Controls#messagedialog-onlinkclick
         DECLARE_EVENT(LinkClickEvent, OnLinkClick, onLinkClick)
         /// Adds an answer to the row. They read left to right in the order they arrive.
         Button& add(DialogAnswer);

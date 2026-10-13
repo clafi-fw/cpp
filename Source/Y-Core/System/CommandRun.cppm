@@ -38,8 +38,7 @@ namespace ClaFi
         explicit CommandRun(std::wstring_view commandLine);
         CommandRun(const CommandRun&) = delete;
         CommandRun& operator=(const CommandRun&) = delete;
-        // Stops listening and leaves the line running. See UI-Types
-        ~CommandRun();
+        ~CommandRun(); // stops listening and leaves the line running
     public:
         DECLARE_EVENT(CommandRunEvent, OnDone, onDone)
     public:

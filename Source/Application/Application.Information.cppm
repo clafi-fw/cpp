@@ -19,8 +19,7 @@ namespace ClaFi
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"InformationPage"; }
     private:
-        // The row the update check answers in, and the line under it. See Application
-        void addUpdateRow();
+        void addUpdateRow(); // the row the update check answers in, and the line under it
         // The status, the line under it and the button's caption, as the check stands now.
         void stateUpdateRow();
     private:

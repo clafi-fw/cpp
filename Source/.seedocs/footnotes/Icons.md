@@ -1,52 +1,43 @@
 # Icons
 
-The words that no longer fit above a declaration.
-
-## Magnifier
-
-A magnifier - the lens and the tail hanging off its lower right.
+The words that do not fit above a declaration.
 
 ## ChannelForm
 
-Which shape the sweep is drawn as. Ring and pie are two readings of the same data, and the
-choice is a look for the whole set rather than a property of any one channel - so it is one
-switch here, not three call sites that could drift apart.
+**One switch for the whole set.** Ring and pie show the same data, so the form is a look for all
+three channel icons rather than for one. k_channelForm sets it, and drawChannelSweep reads it for
+each.
 
 ## SweepEnds::Stepped
 
-The channel runs from one end to the other. The seam is left as a hard edge so the two
-ends meet without blending - that step is what the icon is showing.
+**The seam stays a hard edge**, so the two ends meet without blending. That step is what the icon
+shows.
 
 ## GlyphSlot
 
-Each container painter - paintDisc, paintTriangle - hands one back once its fill is drawn. Its
-box is the badge's own square rather than the shape's, so one set of fractions places a glyph
-the same under the disc and under the triangle.
+paintDisc and paintTriangle hand one back once the fill is drawn.
+
+**The box is the badge's square, not the shape's**, so one set of fractions places a glyph the same
+on the disc and on the triangle.
 
 ## Halo
 
-A band of theme surface carried all the way round the outside, so that the glass reads as
-lying on top of whatever is already drawn there rather than tangled in it. The same trick the
-arrow in OpenInExplorerIcon uses - the shape stroked once wide in the surface colour, then
-again properly - and the reason an overlay needs it: without the band the ring and the
-picture's own outlines meet and neither is legible. It costs the lens some size, because the
-band is taken out of the rect rather than added outside it.
+**For a magnifier laid over another icon.** The band keeps the ring apart from the picture's own
+outlines, which would otherwise meet and leave neither legible.
 
-Off by default: an icon drawn on its own control has no picture underneath to be separated
-from, and the band would show there as a pale ring on the control's surface.
+- The band comes out of the rect, so the lens shrinks to make room.
+- Halo::No is the default. On its own control the glass has nothing beneath it, and the band would
+  show as a pale ring on the control's surface.
 
 ## WedgeJoint
 
-Whether the wedges of a pie meet, or stop short and let the backdrop through between them.
-Applies to the pie only: gapping a ring would cut its band into dashes.
+**The pie only.** A ring is always drawn sealed - gaps would cut its band into dashes.
 
 ## WedgeJoint::Spoked
 
-Wedges stop short of their boundaries, leaving the surface behind the icon showing as
-spokes. They cost nothing to theme - being the backdrop, they follow it - and they give
-the disc a hub without one having to be drawn.
+**The spokes follow the theme on their own** - they are the backdrop showing through. They also
+give the disc a hub without one being drawn.
 
 ## SweepEnds::Cyclic
 
-The channel wraps: the colour at the seam is the same from both sides, so segments run
-across it and the join disappears. Hue is the only one of the three.
+Segments run across the seam, so the join disappears. Hue is the only cyclic channel of the three.

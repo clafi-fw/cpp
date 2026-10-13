@@ -75,7 +75,7 @@ namespace ClaFi
         void storeAnswer(std::chrono::sys_seconds answeredAt, std::wstring_view newestVersion);
         // Reads the section keepIn took into the state, where it holds an answer.
         void takeRecord();
-        // The state an answer makes, raised only where it moves anything. See Context
+        // The state an answer makes, raised only where it moves anything.
         void takeAnswer(std::chrono::sys_seconds answeredAt, std::wstring_view newestVersion);
         void setState(UpdateState);
     private:

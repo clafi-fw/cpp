@@ -86,12 +86,12 @@ namespace ClaFi::Controls::Grids
         using LaneVisitor = std::function<void(const RowCell&, const FloatRect& lane)>;
         virtual ScaledDimensions calculateCellContent(ScaledCellMetrics&, const Column&, float contentBoundsW);
         ScaledDimensions calculateCell(ScaledCellMetrics&, const Column&, float boundsW);
-        // Room a row keeps at the start of a cell for a control of its own. See Grids#collapsible
+        // Room a row keeps at the start of a cell for a control of its own.
         [[nodiscard]] virtual ScaledDimensions cellLead(const Column&) const { return {}; }
         ScaledDimensions calculateContent(AlignEvent&) override;
         //
         virtual bool hasContent(const Column& column) const;
-        // Whether this row draws an empty cell in a leaf it has nothing in. See Grids#collapsible
+        // Whether this row draws an empty cell in a leaf it has nothing in.
         [[nodiscard]] virtual bool hasBlank(const Column&) const { return false; }
         // Whether this row draws both of its lines whatever GridLines the grid carries. Only the
         // header does: its cells are what states the columns, and a header that dropped its own
@@ -105,7 +105,7 @@ namespace ClaFi::Controls::Grids
         // because the columns are the grid's structure, not the row's state.
         void traverseCells(const CellVisitor& visitor) const { traverseCells({ 0.0f, 0.0f }, visitor); }
         void traverseCells(FloatPoint origin, const CellVisitor&) const;
-        // Every cell a key or a press lands on, with its lane. See Grids#collapsible
+        // Every cell a key or a press lands on, with its lane.
         void traverseLanes(FloatPoint origin, const LaneVisitor&) const;
         //
         virtual void getCellText(const Column&, Text&);
@@ -164,7 +164,7 @@ namespace ClaFi::Controls::Grids
         Column* columnAt(PointInForm) const;
         Column* columnAt(PointInControl) const;
         void selectColumnUnderMouse();
-        // What the last press was to this row's cell in that column. See Grids#picking
+        // What the last press was to this row's cell in that column.
         [[nodiscard]] CellPressKind pressOn(const Column&) const;
         void selectCellOnKeyboardEntry();
         void selectColumn(const Column& value);

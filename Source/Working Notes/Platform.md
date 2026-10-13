@@ -86,7 +86,7 @@ so a hook finding none standing is a broken order, and unreachable.
 says otherwise. Painting into the one on screen tears the frame being read. The other is
 painted into meanwhile, and they change places.
 
-## Window opacity
+## Wayland::Window alpha
 
 While the window is off the screen the multiplier waits in the surface's pending state for the
 commit that maps it, since a bare commit on an unmapped surface asks for it to be mapped.
@@ -118,6 +118,17 @@ The Platform statics alone, having no object in hand, reach it through DisplayMa
 pointer the display sets as it is built and clears as it goes; a static asked while none stands is a
 broken order, and unreachable.
 
+## DWriteMonoFont
+
+A module-private class, so SeeDocs shows no page for it. The face is the system collection's first
+match on weight and style, which is the face a layout's own matching finds, and IsMonospacedFont is
+the gate. The cell and the line come off the one-space probe layout the tab stops are measured from,
+so they are the numbers a layout of the same font comes to; a glyph is compared against the space in
+the design units the face states, so no scaled float is compared. A run is drawn by
+ID2D1RenderTarget::DrawGlyphRun with natural measuring on the Direct2D backend - the same call
+FadeTextRenderer makes for a layout's runs - and through the shared glyph cache and the compositor
+on the CPU backend.
+
 ## FontKey
 
 Keyed on one glyph rather than a whole run - keying on the run would make every distinct string a
@@ -133,6 +144,14 @@ compositor holds pointers into it for the length of a run, and a vector that gro
 point at. The face is held so the address the key carries stays this face's: a face nothing holds is
 released, and DirectWrite gives its address to the next face it creates - after a reshape, the
 regular of the same family at the italic's address, wearing the italic's glyphs.
+
+Indexed by glyph index rather than searched: hashing per glyph would put a scattered lookup in the
+middle of every run, and a font resolved once makes each glyph after that an array subscript.
+
+## Window::addToSession
+
+add_toplevel carries no timing rule, and a name the session does not know turns restore_toplevel
+into exactly that request.
 
 ## DisplayManager::awaitSessionId
 

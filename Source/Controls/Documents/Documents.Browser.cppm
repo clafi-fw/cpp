@@ -32,7 +32,7 @@ namespace ClaFi::Documents
     export template<typename T>
         concept IsDocumentPage = std::derived_from<T, DocumentPage>;
 
-    // A browser over a folder of documents; DocumentsBrowser names its pages. See Documents#browser
+    // A browser over a folder of documents; DocumentsBrowser names its pages. See Documents
     export class DocumentsBrowserBase : public BrowserControl
     {
     public:
@@ -59,16 +59,14 @@ namespace ClaFi::Documents
         // Whether a page is a document: one named with the kind's extension, unless a derived
         // browser knows others.
         [[nodiscard]] virtual bool isDocumentPage(const PageData&) const;
-        // The document file a page stands for, and an empty path where there is none the user
-        // may rename: the home page is not a file, and neither is a document whose file has gone.
-        // Asked of the disk, not of the folder's list. See Documents#browser
+        // The document file a page stands for, or an empty path where there is none to rename.
         [[nodiscard]] virtual std::filesystem::path documentFileOf(const PageData&) const;
     private:
         DocumentsFolder& m_folder;
     };
 
     export template<IsDocumentsHomePage HomePageType, IsDocumentPage DocumentPageType>
-        // The browser with its two page types named. See Documents#browser
+        // The browser with its two page types named. See Documents
         class DocumentsBrowser : public DocumentsBrowserBase
     {
     public:

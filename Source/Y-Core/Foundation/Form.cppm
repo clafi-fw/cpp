@@ -309,7 +309,7 @@ namespace ClaFi
         [[nodiscard]] CloseAction closeAction() const { return m_closeAction; }
         void setCloseAction(CloseAction value) { m_closeAction = value; }
         int execute();
-        // Whether this form's loop is the one the application stands on. See Application
+        // Whether this form's loop is the one the application stands on.
         [[nodiscard]] bool holdsRootLoop() const;
         void setPlacementRect(const FloatRect&);
         const FormPlacement placement() const { return m_placement; }

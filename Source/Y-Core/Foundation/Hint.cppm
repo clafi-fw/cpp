@@ -25,9 +25,9 @@ namespace ClaFi
         Hint(const Hint&) = delete;
         Hint& operator=(const Hint&) = delete;
     public:
-        // The widest line a hint breaks at, in design units. See Control-Foundation#hint
+        // The widest line a hint breaks at, in design units.
         static constexpr float k_lineWidth{ 480.0f };
-        // The most lines a hint shows, its last faded when cut. See Control-Foundation#hint
+        // The most lines a hint shows, its last faded when cut.
         static constexpr std::size_t k_maxLines{ 20 };
     public:
         // Puts this form's hint up about one of this form's controls, without the wait.
@@ -45,8 +45,7 @@ namespace ClaFi
         static void mouseTookOver();
         // The control is being destroyed and takes with it anything said about it.
         static void forgetControl(const Control*);
-        // The words the control's hint says have moved. See Control-Foundation#hint
-        static void controlHintChanged(Control&);
+        static void controlHintChanged(Control&); // the words the control's hint says have moved
         // The user did something. A hint waits for them to stop, and this is them starting
         // again.
         static void handleUserInput();

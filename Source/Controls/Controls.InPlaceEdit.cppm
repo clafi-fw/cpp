@@ -304,7 +304,7 @@ namespace ClaFi::Controls
         /// long for the control is read whole while it is being typed. Zero on an axis says no
         /// limit, and the monitor is then the only bound left.
         [[nodiscard]] virtual FloatPoint editorMaxTextSize(const FloatRect& textRect) const;
-        /// What the editor completes from - a combo box, its items. See Controls#suggestionlist
+        /// What the editor completes from - a combo box, its items.
         [[nodiscard]] virtual const TextItems* editorSuggestions() const;
         /// Whether the click being answered opens the editor. It is asked once per click, before
         /// anything is dispatched, and only for a press on this control itself: a press on a part

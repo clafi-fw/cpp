@@ -343,7 +343,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         }
         else
         {
-            // Two channels per multiply, rounded. See Platform#window-opacity
+            // Two channels per multiply, rounded. See Platform#window-alpha
             constexpr ColorAsUint k_evenBytes = 0x00FF00FFu;
             constexpr ColorAsUint k_half = 0x00800080u;
             for (int y = top; y < bottom; ++y)

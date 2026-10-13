@@ -1,122 +1,106 @@
 # Browser
 
-The words that no longer fit above a declaration.
+The words that do not fit above a declaration.
 
 ## FetchState
 
-How much is known about what lies under a page.
-Unfetched is the state a page is built in: whatever sub-items it has are the ones
-walked into on the way somewhere, and the browser has never been asked for the rest.
-HasChildren says the page is a list, whatever that list holds right now: a fetch that
-names nothing leaves the mark standing, and the crumb drops the list's placeholder.
-Fetched says the sub-items are the whole set.
+- `Unfetched` - the state a page is built in. Its sub-items are only those walked into on the way
+  somewhere.
+- `HasChildren` - the page is a list, even while empty. A fetch naming nothing keeps the mark, and
+  the crumb drops a list reading "No items".
+- `Fetched` - the sub-items are the whole set.
 
 ## SelectBrowserDataEvent
 
-A crumb was chosen; the browser is being asked to go to that page.
-The crumb comes with it. A browser that has to put a question before it moves - work
-that is not saved - drops that question under the crumb, which is where the user pressed.
+**The initiator is what was pressed** - a crumb, or a line of its list. A question the browser puts
+before moving, such as one about unsaved work, drops under it.
 
 ## GetPageIconSizeEvent
 
-What a page's icon is. A zero size says the page has none, and closes the slot.
-Asked of the root crumb when it is given its page, and of nothing else: the crumbs
-after it are text. A line of a crumb's list holds a slot of its own size and asks only for
-the paint.
-The view mode says how the root crumb shows the icon: LeftIcon beside its title, or IconOnly
-with the title as the crumb's hint. BrowserControl::rootCrumbViewMode is what fills it in.
+**A zero size means no icon**, and closes the slot.
+
+Only the root crumb asks, as it is given its page. A line of a crumb's list sizes its own slot
+and asks only for the paint.
+
+The view mode comes from BrowserControl::rootCrumbViewMode - `LeftIcon` beside the title, or
+`IconOnly` with the title as the hint.
 
 ## CanRenamePageEvent
 
-Whether this page's name is the user's to change.
-Asked of the crumb naming the page the browser is showing, as that crumb is given its
-page, and of no other crumb. A page nobody says can be renamed carries no editor, so the
-click that would have opened one goes on meaning what it means everywhere else on the bar.
+Asked only of the crumb for the page on screen, each time a gesture would open its editor. The
+answer is never kept. A page without a yes has no editor.
 
 ## RenamePageEvent
 
-The name typed over a crumb, on its way to whatever the page stands for.
-The name is carried by the accept event, and so is the answer: a handler that will
-not have the name calls AcceptEditEvent::refuse and says why, which keeps the editor
-standing with the reason over it and the value still there to be corrected.
+**The name and the answer travel in the accept event.** To refuse, call AcceptEditEvent::refuse
+with the reason. The editor stays open with the reason over it and the value still in it.
 
 ## FetchSubItemsEvent
 
-A crumb is about to drop its list; the browser is being asked to name the pages
-under this one.
-Raised every time a crumb's list is opened. The bar keeps no list of its own, so
-what a handler leaves in PageData::items is what the crumb shows, and whether an answer is
-worth working out again is the handler's question - PageData::fetchState is where it
-records that.
+**Raised each time a crumb's list opens.** The crumb shows what the handler leaves in
+PageData::items. Whether to fetch again is the handler's call, recorded in PageData::fetchState.
 
 ## ShowAnchorEvent
 
-A tab has arrived at a url on this page, which shows the anchor it names.
-A tab stands on a url - a page's path and an anchor inside the page, see UI-Types. goTo moves the
-current tab to one, and the browser raises this on the page once the page is on screen and the
-crumbs are laid out. It is raised when the url changed - another page, or another anchor on the
-same page - and when this show built the page, whatever the url did: a tab restored from
-settings, or a new tab opened on a url. A page just built has not been told its anchor.
-Selecting a tab whose page already stands raises nothing, so the page keeps the place it was left
-at. A goTo naming the url the tab already stands on raises nothing either.
-An empty anchor names the page itself, and what the page shows for it is the page's own choice.
-A pick inside a page that names one of its anchors goes to the browser as a url rather than being
-shown on the spot. The browser records where the tab is, and the page shows what this event
-names - so the url a tab stores is always the place its page shows.
+Raised on the page when its tab moves to a Url, once the page is shown and the crumbs are
+rebuilt:
+
+- when the url changed - another page, or another anchor;
+- when this show built the page - a restored tab, or a new tab opened on a url.
+
+Selecting a tab whose page exists raises nothing, so the page keeps its place. A goTo to the url
+the tab is already on raises nothing either. An empty anchor means the page itself.
+
+**Send a pick of one of the page's anchors through the browser** as a url, and show the anchor when
+this event names it. Then the url a tab stores always matches what its page shows.
 
 ## HistoryEntry
 
-How a move keeps the url it leaves.
-A tab keeps two stacks of urls: back, nearest last, and forward, nearest first. Push puts the url
-left on the back stack and drops the forward stack - what a move the user asked for does. Replace
-forgets the url left and keeps the forward stack. A page stepping through its own anchors a key at a
-time replaces, so a walk leaves one entry behind rather than one per anchor passed over. An entry
-that a replace leaves naming the url on screen is dropped, since a step to it would go nowhere.
-Only a move that changes the url is kept. Selecting a tab, a goTo naming the url the tab stands on
-and a move canLeavePage refused all record nothing.
-Back and Forward travel the stacks through the same move, so they ask canLeavePage and raise
-ShowAnchorEvent like any other. A right click on either button drops the stack as a list, nearest
-first; a travel of several steps carries the urls passed over to the other stack in the order they
-were visited. The back stack holds 50 urls, and the oldest go first.
-Browser::Actions::back and forward run on Alt+Left and Alt+Right, deferred as Open is. A side
-button of the mouse travels wherever the pointer stands inside the browser. A text box with a jump
-history of its own answers Alt+Left first.
-Entries are urls, so a page a fetch drops stays named by its path, and travelling back to it builds
-it again as goTo builds any path. A rename rewrites the entries at or under the renamed page, in
-every tab - reading the file of a tab not shown in this run, whose history names paths too.
-The stacks are kept in the tab's own file, and read from it the first time the tab is selected.
+A tab keeps a back stack of 50 urls at most, and a forward stack.
+
+`Replace` suits a page stepping through its anchors a key at a time, so the walk leaves one entry.
+An entry a replace leaves naming the url on screen is dropped. `Push`, the default, suits every
+other move.
+
+**Only a move that changes the url is recorded.** Selecting a tab, a goTo to the current url and a
+refused move record nothing.
+
+**Back and Forward are ordinary moves** - they ask canLeavePage and raise ShowAnchorEvent. A travel
+of several steps moves the urls passed over to the other stack, in visiting order.
+
+- Alt+Left and Alt+Right run Browser::Actions::back and forward. A text box with a jump history
+  answers Alt+Left first.
+- A mouse side button travels from anywhere inside the browser.
+- A right mouse click on Back or Forward lists its stack, nearest first.
+
+**Entries are urls**, so travelling to a page a fetch dropped builds it again. A rename rewrites
+the entries at or under the page, in every tab. The stacks live in the tab's own file, read when the
+tab is first selected.
 
 ## resetToHome
 
-Closes every tab, frees every page under home and opens one tab on the home page.
-For a browser whose whole tree has been replaced - another project opened over the same window -
-so that nothing a tab stood on is there any more. Each tab goes with its settings, its history
-with them; home is built again as initialize built it, so a browser whose home has a list to give
-is asked for it afresh. The pages under home are freed after the tabs, since a tab holds its page
-data by pointer. The one tab opened is selected, so the home page shows at once.
+**For a browser whose whole tree is replaced** - another project opened in the same window. The
+tabs go with their settings and history. Home is built again as initialize built it, so its list is
+fetched afresh, and the new tab is selected.
 
 ## BrowserSettings
 
-Where the browser's settings are kept, and when each part reaches the disk. The application config
-carries the selected tab's id and an entry per open tab - id, title and url, plus what the
-application adds to an entry - which is what is shown of a tab that has not been opened. The Themes
-app keeps what a tab's icon is drawn from there. Nothing of the page is there. What a tab keeps is
-in its own file, in the OpenTabs folder beside the config file, named by the tab's id with the
-config file's extension: the browser's history, k_tabFileSchema, and the application's tab schema
-beside it. The file is read the first time the browser or the page asks for it, which is when the
-tab is shown; a tab never shown in a run has its file neither read nor written. A tab the user opens
-starts with an empty file, and one a closed tab left under the same id is never read - the next save
-writes the new one over it. The tab files are written when the application config is -
-BrowserSettings answers the config document's SaveEvent - each one that was asked for, and every
-file in the folder that no entry names is removed then. So closing a tab changes nothing on the disk
-until the next save, and a run that ends without one leaves the files the last written entries name.
+**The application config** holds the selected tab's id and an entry per open tab - id, title, url
+and what the application adds. A tab not yet opened shows from that entry alone.
 
-## Closing
+**Each tab's own file** holds the rest - the browser's history (k_tabFileSchema) and the
+application's tab schema. It sits in the OpenTabs folder beside the config file, named by the tab's
+id with the config's extension.
 
-A page's work waits in the tab's view state for the next run - that is what the tab files are
-for - and the view state reaches the disk only where the user allowed storing, which is the
-config folder existing. A window closing with no folder would drop that work, so the browser
-answers the form's FormClosingEvent: where the folder exists it says nothing, and otherwise it
-asks every tab with a page whether it may be left, under that tab, the way the crumb, the Up
-button and a tab's close button ask - Save, Discard or Cancel, and Cancel keeps the window up.
-A page with nothing unsaved is not asked.
+- It is read when the tab is first shown, so a tab never shown is neither read nor written.
+- A new tab starts empty. The next save writes over any file a closed tab left under its id.
+
+**Tab files are saved with the application config**, and files no entry names are removed then.
+Closing a tab changes nothing on disk until that save.
+
+## BrowserControl
+
+**Closing the window asks about unsaved work when it would be lost.** A page's work waits in its
+tab's view state for the next run, and that reaches the disk only where the config folder exists.
+Where the folder is missing, the browser asks canLeavePage of every tab with a page, under that tab.
+The first no keeps the window up. DocumentsBrowserBase asks Save, Discard or Cancel.

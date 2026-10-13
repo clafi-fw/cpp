@@ -424,7 +424,7 @@ namespace ClaFi::Graphics
         void cubicTo(FloatPoint ctrl1, FloatPoint ctrl2, FloatPoint end) { m_commands.push_back({ PathCommandType::CubicTo, ctrl1, ctrl2, end }); m_currentPoint = end; }
         void cubicBy(FloatPoint dCtrl1, FloatPoint dCtrl2, FloatPoint dEnd) { m_commands.push_back({ PathCommandType::CubicBy, dCtrl1, dCtrl2, dEnd }); m_currentPoint = { m_currentPoint.x + dEnd.x, m_currentPoint.y + dEnd.y }; }
 
-        // SVG's A and a, the rotation in degrees. See Graphics-Types#arcellipse
+        // SVG's A and a, the rotation in degrees.
         void arcTo(FloatPoint radii, float rotation, ArcSize, ArcSweep, FloatPoint end);
         void arcBy(FloatPoint radii, float rotation, ArcSize, ArcSweep, FloatPoint delta);
 

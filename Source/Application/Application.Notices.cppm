@@ -103,7 +103,7 @@ namespace ClaFi
         NoticeId m_lastId{ 0 };
     };
 
-    // The application's notices, shown over its main window. See Application
+    // The application's notices, shown over its main window.
     export [[nodiscard]] Notices& notices();
 
     // Shows the notices over every form that takes the root loop, once per application.

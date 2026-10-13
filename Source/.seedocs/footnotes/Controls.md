@@ -1,1000 +1,744 @@
 # Controls
 
-The words that no longer fit above a declaration.
+What a declaration's one line has no room for.
 
 ## ReadOnly
 
-Whether the text the box shows may be changed through the box. A read-only box is a full
-text box in every other respect: it takes the focus, carries a caret, selects and copies.
-What it is not is a disabled box, which answers nothing and cannot be read out of.
+A read-only box still takes the focus, shows a caret, selects and copies. A disabled box answers
+none of that, and its text cannot be copied out.
 
 ## DropdownEvent
 
-Raised when the dropdown of a SplitButton is activated. The handler owns the popup: it
-decides what the popup contains and when it closes.
+**The handler owns the popup** - what it holds and when it closes. A SplitButton given a
+dropdownAction runs that action instead, and raises no event.
 
 ## SplitButton
 
-A button whose dropdown is a second action alongside the primary one. Everything about the
-dropdown itself - the mark, the strip, the layout, the keys - belongs to the base; what is
-left here is the primary action and handing the popup to the caller.
-
-**The dropdown is either an action or a handler.** Given an action - see
-dropdownAction - the strip shows that command and pressing it runs it, and OnDropdown is
-not raised at all; the strip is then a command of its own and stands whether or not the
-face's can be run. Given none, every press is handed to OnDropdown, which owns whatever
-popup it puts up, and the strip is half of the face's command: it greys with the face, so a
-list about a command that cannot run - the steps behind an Undo with nothing to undo - is
-never offered.
+- **Given a dropdownAction**, the strip runs that command, and OnDropdown is not raised. The strip
+  stays available whether or not the face's command can run.
+- **Given none**, the strip raises OnDropdown and greys with the face, so a list about a command
+  that cannot run - the steps behind an empty Undo - is never offered.
 
 ## ComboBox
 
-### The face is as wide as the widest item
+**A pick never changes the size.** The face is as wide as the widest text it would show for any
+item, so nothing beside the combo box moves. A window sized once - the application menu - would
+otherwise cut a face that grew.
 
-The face measures the text it would show for every item, the text it shows now included, and
-answers the widest. A pick then changes the words and never the size: nothing beside the
-combo box moves, and nothing above it has to be laid out again.
+**The list is sized by its items**, as a Menu is. A list wider than the screen is cut to the work
+area. Its window then grows by the horizontal bar, so ten rows still show ten rows. A side too short
+for the list cuts the window as well, and the vertical bar comes up - see ScrollBars::Auto.
 
-That second half is what a window sized once needs. A form that is not `AutoFit::Yes` keeps
-the window it was placed in - the application menu is one - so a face that grew inside it would
-be cut to the width it opened at, and a theme picked from the Settings page's own list would
-read "New Th".
+## ComboBox measureText
 
-The text shown now counts because a derived control may word it unlike any item: WhatsClip's
-pickers write "(Auto)" after the name they found.
-
-### The list is sized by its items
-
-The dropped list's window is `AutoFit::Yes`, as a `Menu` is: it is whatever the items came out
-as. A list too wide for the screen is cut to the work area, and the horizontal bar that cut puts
-up is room the window is asked for again, so a list of ten rows shows ten rows over the bar. A
-list laid out into the window it was first placed in would give the bar its last row instead.
-
-Where the side the list fell to has no room for the bar, the window is cut there as well and
-the vertical bar comes up beside it - see ScrollBars::Auto.
+The face measures the text it would show for every item, and its current text, and answers the
+widest. The current text counts because a derived control may word the face unlike any item -
+WhatsClip's pickers write "(Auto)" after the name they found.
 
 ## ComboBoxAcceptTextEvent
 
-The text typed over an editable combo box's face, on its way to picking an item. The application
-answers first, through the AcceptEditEvent it carries:
+Raised for a text typed over an editable face, unless it is the value the editor opened on.
 
-- a handler that **takes** the text stops the event - the Themes app reads `+0.02` and `=0.66` as
-  rules this way;
-- a handler that refuses it says why, and the editor stays up with the reason under the box;
-- a text nobody takes is looked up among the items by each item's own name, case aside: the
-  whole name first, then the first item whose name starts with the text. Nothing found is
-  refused. An empty text names the item that stands for no value - see PlaceHolderText - and
-  with no such item it changes nothing.
+- **A handler that takes the text** stops the event - the Themes app reads `+0.02` as a rule.
+- **A handler that refuses it** calls `accept.refuse`, and the editor stays up with the reason.
+- **Otherwise** the item named by the whole text is picked, ignoring case, or else the first name
+  starting with it. A text that finds none is refused.
+- **An empty text** picks the item that stands for no value, where there is one - see
+  PlaceHolderText.
 
-The editor opens on the picked item's text as AdjustItemTextEvent words it, in plain text -
-formatting and inline objects dropped. A value left as it opened names nothing new and is never
-offered.
+The editor opens on the item's text as AdjustItemTextEvent words it, in plain text.
 
 ## DropdownMaxSize
 
-How large the popup list may become. Unconstrained by default: what stops a list growing is the
-room the placement found for it, and the bar comes up for what it cut.
+By default the list grows until its placement's room stops it, and a scroll bar comes up for the
+rest.
 
 ## PlaceHolderText
 
-What a combo box item shows while its text is empty, which makes it the item that stands for no
-value. The face and the list draw the placeholder muted, the editor opens empty over it, and an
-emptied value picks it. It still names the item for a lookup, so typing its first letters finds
-it. The Themes app's No change is one: an operation cell that changes nothing has no value to
-type.
+**The item with an empty text stands for no value.** The face and the list show its placeholder,
+muted, the editor opens empty over it, and an emptied value picks it - the Themes app's No change
+is one. Typing the placeholder's first letters still finds the item.
 
-A text box takes one too. It is drawn muted while the box's text is empty, with the caret over
-it, and the box is measured to fit it.
+## TextBox placeHolderText
+
+The caret stands over the placeholder, and the box is measured to fit it while its text is empty.
 
 ## DialogAnswerEvent
 
-An answer was given, and whether it settles the question.
-A handler that **cannot act on the answer yet** calls keepOpen(), and the dialog stays
-standing with its answers where they were. A Save that has to ask where the work goes and
-is told no there is that case: the question it was answering was never settled, so putting
-it away would leave the user with nothing to answer.
-Anything a handler raises is owned by `button` and so stacks **on top** of this dialog,
-which stays on screen behind it - the question and the question about the question, both
-visible, both where they were pressed.
+**keepOpen leaves the question up**, with its answers where they were. A handler calls it when it
+cannot act on the answer yet - a Save that asks where the work goes and is told no there.
+
+A dialog raised on `button`, the answer pressed, stacks on top of this one, which stays on screen
+behind it.
 
 ## Menu
 
-A popup list of commands, owned by the control it was opened from.
-Built on the stack where it is opened, filled, then run: execute() returns once the
-menu has closed, so nothing outlives the call that raised it.
-A list built out of data states a placeholder with setPlaceHolderText(), and a menu
-holding nothing but that placeholder opens to show it. A menu with nothing to show at
-all does not open.
+**Build it on the stack**, fill it, then run it - execute returns once the menu has closed. An empty
+menu stays closed, unless setPlaceHolderText gave it a placeholder to show.
 
 ## HistoryButton
 
-A SplitButton on Undo or Redo. The face is the action. The strip asks the action's subject - the
-control that would take the face's click, found from the strip - for its IEditHistory, and drops a
-StepsMenu of its steps; the run picked is walked in one go. The strip is half of the face's
-command, so it greys with it. A subject that names no history drops nothing.
+The strip drops a StepsMenu of the IEditHistory the face's click would act on, and walks the run
+picked in one go. It greys with the face, and drops nothing where no history answers.
 
 ## TextBox history
 
-A text box is its own IEditHistory: the steps of its TextHistory, and none while it is read-only,
-so its Undo and Redo claims report disabled there. A walk of several steps puts the caret where
-the last step it crossed left it, and the box reports it as one edit. Names follow
-TextEngine-Types' step names; a CodeBox names its commands and folds the indents it makes on its
-own into the step that caused them.
+**A text box is its own IEditHistory**, with no steps while it is read-only. A walk of several
+steps leaves the caret where the last one left it, and raises one edit. Steps are named as in
+TextHistory; a CodeBox names its commands and folds its own indents into the step that caused them.
 
 ## StepsMenu
 
-A popup listing steps from the top, where the pointer picks how many to take - the list an
-undo button drops. Built on the stack like a Menu: made over the control that owns it with the
-verb the foot speaks ("Undo", "Redo"), filled with add(), the first step added standing at the
-top, then run with executeUnder(), which answers how many steps were taken from the top, or
-none where the menu was left by Escape or a click outside.
+Build it on the stack like a Menu, fill it with add, and run it with executeUnder - 0 means Escape
+or a mouse click outside.
 
-The steps are MenuItems. A step under the pointer names a run - itself and every step above
-it - and the whole run reads as hovered, so the eye sees what one click takes; the arrows
-name the run the same way through the focus. A click on a step takes its run. The pointer
-leaving the steps - for the foot, the bar, or the outside - names no run, and the foot reads
-"Cancel" and closes on a click; while a step is under the pointer the foot says what a click
-on it takes ("Undo 3 steps"). The list scrolls past 400 design units.
+**A step stands for its run** - itself and every step above it - and the pointer or the arrows
+light the whole run. The foot says what a click takes, "Undo 3 steps", or reads Cancel off the
+steps. The list scrolls past 400 design units.
 
 ## AcceptEditEvent
 
-The text the user is committing, and the sink's answer to it.
+**A sink that will not have the value calls refuse.** The editor stays open with the caret where the
+user left it.
 
-A sink that takes the value does nothing here. A sink that will not have it calls
-refuse(), and the editor stays open with the caret where the user left it - a value
-nothing would take is never lost by being committed to nowhere.
-
-The control the editor covers is **not** carried here. A sink runs while the editor is
-up, and by then that control may be gone - a list rebuilt under an open editor takes it
-with it. A sink knows what it is writing to because it was built knowing; naming the
-control again here would only be a pointer nobody is left to clear. `askedBy` is the
-other thing entirely: it lives **inside** the editor and is there for as long as the sink
-runs, which is what makes it something a sink may hang a window on.
+**A sink knows its target from how it was built.** The control the editor covers may be gone by the
+time the sink runs, so the event leaves it out. `askedBy` lives inside the editor, so a sink may
+hang a window on it.
 
 ## PromptBox
 
-A text box that can refuse the value typed into it and say why.
+The box of an in-place editor and of every MessageBoxBase dialog. It answers four things the window
+around it cannot:
 
-It answers for four things a form around it cannot: where its text starts; which characters
-belong in the text, which is none until a press has reached the box, since the press that opened
-its window has a character queued behind it; which line breaks belong, a plain Return being the
-form's and Shift+Return the box's; and why a value was refused. Every window that takes one line
-of text and may not have it wants all four, which is why this is not the in-place editor's alone.
+- where its first glyph is drawn - textOriginInForm;
+- which characters belong - none before a key press reaches it, so the press that opened its window
+  types nothing;
+- which line breaks belong - Shift+Return's, while a plain Return is the window's;
+- why a value was refused - setRefusal and showRefusal, cleared by the next key or mouse press.
 
 ## InPlaceEditForm
 
-A text box in a window of its own, placed over the text it edits.
-
-The window is a **menu**, not a dialog: it takes the pointer and holds the caret
-without taking the activation, so the form being edited stays lit behind it and gets the
-focus back when the editor closes. The caret works there because the focus is one per
-application rather than one per window - see Input.
+**The window is a menu**: it takes the pointer, never the activation, so the form being edited stays
+lit behind it and gets the focus back. The focus is one per application, so the caret works there -
+see Input.
 
 ## HexPane
 
-Which of the two byte columns the caret stands in. A press lands in the column it fell on,
-and the ring is drawn there; the keys move the caret through the bytes either way.
+A mouse press selects the column it lands in, and the ring is drawn there. The keys move through
+the bytes in either column.
 
 ## AppButton
 
-The button an application puts its own mark on. It states the icon and nothing else, so an
-app button is the same in every application and only the mark differs. It presents
-appMenuAction, so a click on it opens the application menu - see AppMenu - and nothing is wired
-by the application.
+**It needs no wiring** - it presents appMenuAction, so a click opens the AppMenu. Only the icon
+differs between applications.
 
 ## CaretMoveEvent
 
-The caret has come to rest somewhere new: an arrow key, a click, an edit, or the box
-taking or losing the focus. **Where** it stands is asked of the box - see
-TextBox::caretLineColumn - so a listener that only wants to know that it moved pays
-nothing for the answer.
+Raised for an arrow key, a mouse click, an edit, and a focus change. **Ask the box where the caret
+is** - TextBox::caretLineColumn.
 
 ## TextEditEvent
 
-The text has been changed through the box - typed, deleted, pasted, cut, undone or redone.
-Every route an edit takes ends in the same place, so one listener covers all of them. It is
-raised **last**, once the box has finished with the edit, so a listener is free to do anything
-with the text it has just been told about, the box included. A caret move that changes no
-text raises CaretMoveEvent alone.
+Covers every edit - typed, deleted, pasted, cut, undone or redone. **It is raised last**, so a
+listener may do anything with the text or the box. A caret move alone raises CaretMoveEvent.
 
 ## LinkClickEvent
 
-A link in the box's text was followed: pressed and released on it with nothing selected in
-between, in a read-only box, or with Ctrl held in one the user types into - a plain click there
-places the caret. The same two cases decide when a link is underlined and shows the hand under
-the pointer.
+**A link is live** in a read-only box, and with Ctrl held in one the user types into. A live link is
+underlined, shows the hand, and is followed by a press and release on it with nothing selected
+between.
 
-A target of # and a name is an anchor, and one the box's own text holds is followed by the box
-without raising this event - see Anchors. A name the text does not hold is raised like any
-other target, which is how a link reaches an anchor on another page.
+- `#name` the box's text holds - the box goes there itself and raises nothing. See
+  TextBox::goToAnchor.
+- Any other target raises the event, and a handler that answers it stops it.
+- What no handler stops opens through the shell, for an `http:`, `https:` or `mailto:` target alone.
 
-A handler that answers the target stops the event. What no handler stops, the box opens
-through the shell - a target starting with http:, https: or mailto:, and nothing else. A text
-can come out of a file or off the clipboard and name any target, and the shell runs a program
-it is handed. The click that followed a link goes no further up.
+The click goes no further up.
 
-## Link hints
+## GetLinkHintEvent
 
-The hint over a link in a TextBox.
+**Every link has a hint, live or not**, and it replaces the box's own while the pointer is on the
+link. It shows above the pointer's line, from where the link starts - FormPlacement::Top - and
+drops under the line where the screen has no room above.
 
-**Every link has one, live or not.** The underline says a click would follow the link, and the hint
-says where it goes, which a reader wants in a box they type into as much as in one they read. It
-stands over the line the pointer is on, from where the link starts on that line, so it covers
-neither the link nor the line it reads in - FormPlacement::Top, which drops it under the line
-where the screen has no room above. While the pointer is on a link, the link's hint stands in for
-the box's own.
+**A handler writes the whole hint**, its placement and anchor already set. Where it writes nothing,
+the box writes its own:
 
-GetLinkHintEvent is raised first, with the target, the range the link covers, and the hint's
-placement and anchor already stated. What a handler writes is the whole of the hint. Where nothing
-is written the box writes its own:
+- `#name` the box's text holds - the anchor's paragraph, formatted, cut after six lines by
+  GetHintEvent::writePreview;
+- any other target - the target as the text states it.
 
-- a target of # and a name the box's own text holds: the paragraph the anchor stands in, with its
-  formatting - in the Ledger, the clue a reference names;
-- any other target: the target as the text states it.
-
-**A preview stops after six lines.** The paragraph goes into the hint through
-GetHintEvent::writePreview, which cuts it where the sixth line ends and puts an ellipsis after what
-is left.
-
-In a box the user types into, a muted line follows saying Ctrl+click follows the link: a plain
-click there places the caret, and nothing else on screen says the link can be followed at all.
+In a box the user types into, the box's own hint ends with a muted line: Ctrl+click to follow.
 
 ## LinkContextPopupEvent
 
-The menu for a link under the pointer is being asked for. A right click on a link in the box's
-text raises this ahead of the box's own menu - the edit commands, none of which is about where
-the link goes - with the target as the text states it, the range the link covers, and the
-request itself. A handler that shows a menu stops the request, and the box raises nothing over
-it. Where no handler does, the box answers as for a click anywhere else in it: the application's
-first refusal, then the edit menu. A menu the keyboard raised stands at the caret and names no
-link, so none is asked about.
+A mouse right click on a link raises this ahead of the box's own edit menu. **A handler that shows
+a menu stops `popup`**, and the box shows nothing over it. Otherwise the box answers as anywhere
+else in it: a ContextPopupEvent handler first, then the edit menu.
 
-## Anchors
+A menu raised from the keyboard drops at the caret and raises no link event.
 
-TextBox::goToAnchor selects the text the anchor holds and brings its line to the top of the
-view, the way a browser lands on a fragment. A plain scroll into view would stop as soon as the
-line showed, which going forward is at the bottom. The request is the one the page keys make: a
-rect exactly as tall as the client area ScrollBox measures against, which fits only with its top
-against the top of that area. A far jump glides like any other scroll the box asks for. Where
-two anchors share a name, the first in the text is the one gone to.
+## TextBox goToAnchor
 
-**Every jump is remembered.** The box keeps where it stood - the selection, and the position the
-view showed at its top - before each jump, and Alt+Left goes back to it, Alt+Right forward again,
-the way a browser's history does. goToAnchor is what records a place, whether a link or the
-application called it. With nothing to go back or forward to, the key is left unhandled and
-carries on to whatever stands above the box.
+Lands on the anchor as a browser lands on a fragment, and returns false where the text holds no
+anchor of that name.
 
-**A place names positions, and an edit moves them.** An edit made through the box carries every
-place it holds by what that edit did, so going back after typing lands where the user was. An
-undo or a redo changes the text by an amount the box is not told, and drops the history. A host
-writing the text leaves it standing, and a place is clamped to the text when it is gone to.
+- Two anchors of one name - the first in the text wins.
+- A far jump glides like any scroll the box asks for.
+- A link to `#name` in the box's own text calls it.
 
-## Search
+**Every jump is remembered** for goBack, whether a link or the application made it.
 
-A text box is searched as any text is: a search result over a container it stands in reads its text,
-and its selection with it - see Control-Foundation#searchresult. The selection is where a step is
-measured from, so a click or a key moving the caret moves where the next step starts, and a match a
-step makes current is selected and brought into view. The current match is the one the selection
-lies within, ends included, so a caret standing in a match or against either end of it names that
-match; a caret where two meet names the second.
+## TextBox goBack
 
-A SearchBox is where a search is typed: a one-line box on the Page element with a placeholder, and a
-count at its right end while it holds text - "2 of 7", "? of 7" while no match is current, and "No
-results" in the red pigment. A box searching wider than it counts names what it counts over with
-setCountPlace, and says so while no match is current - "7 on page" - none found there being a count
-like any other, since the search may find more elsewhere. It knows nothing of what it searches. It
-raises SearchEvent: Search for every change to its text, emptied included; Next and Previous for
-Enter and Shift+Enter; End for Escape, which is where its owner hands the focus back to what was
-searched. **Escape never empties the box**: the search stands while what was searched is read, and
-its text goes only as it is typed away. Its text goes in and out as edits, so its own Undo walks it.
-startSearch puts the focus in the box with its text selected, replaced by a text given;
-setSearchText puts a text in as typing would, raising Search, the focus staying where it is - an
-owner showing what a search was for puts its words back so; and setResult is how the owner reports
-what was found.
+A place is the selection and the line at the top of the view. With nothing to go back or forward
+to, Alt+Left and Alt+Right go on to whatever is above the box.
 
-While the box holds text, three buttons stand after the count. Previous and Next raise what
-Shift+Enter and Enter raise, and Clear empties the box as an edit - so Undo brings the words back -
-and puts the focus in it. The buttons take mouse clicks alone and move no focus, so a step leaves
-the caret where it was. Previous and Next show dimmed while the count last given to setResult is
-zero, there being nothing to step through.
+**Edits move the places:**
 
-A box drops a list under it where its owner gives it lines - see DropList. showList states the lines
-and the one current, if any, and no lines take the list down. While the list is up, Up, Down and the
-page keys walk it - Down enters at the first line, and Up on the first line leaves the list with
-none current, the keys the text's own again. Enter on the current line raises Pick, naming the line
-and the modifiers held - so Alt+Enter can mean a new tab - and a click on any line raises it too;
-Enter with no line current takes the list down and raises Next as ever. Escape takes the list down
-and leaves the text standing, and the next one raises End. Once it has listed lines, Down drops the
-list again, raising Search so that its owner lists anew over the text as it stands. The list goes
-down with the focus, and with Tab before the focus moves on. listPlacement says where it drops:
-under the box from its left edge, or with BottomRight from its right edge, for a box at a window's
-right end. listKeptBy names the modifiers that keep the list up across a pick: a line taken with
-them held raises Pick as ever, and the list stays with its current line, so the next can be taken
-from it - SeeDocs names Alt, which opens each line in a tab behind the one shown.
+- an edit made through the box carries every place along, so going back after typing lands where
+  the user was;
+- an undo or a redo drops the history, as the box is not told what it changed;
+- a host writing the text keeps the history, and a place is clamped to the text when it is gone to.
 
-StdActions::find, findNext and findPrevious carry Ctrl+F, F3 and Shift+F3. A page holding a
-search box claims them for everything under it, so F3 steps from the searched text and from the
-box alike, and Ctrl+F fills the box from a one-line selection where the searched text holds the
-focus.
+## SearchBox
+
+A one-line box a search is typed into, with a count of what was found at its right end.
+
+**The owner does the searching.** The box raises OnSearch with what the user asked, and the owner
+answers with setResult, which sets the count. showList drops lines under the box - suggestions or
+history.
+
+- Enter and Shift+Enter raise Next and Previous.
+- Escape hides the list, or with none shown raises End - the owner hands the focus back to what
+  was searched.
+- Previous, Next and Clear appear after the count while the box holds text. They answer mouse
+  clicks only, and Previous and Next are dimmed while the count is zero.
+
+**Escape keeps the text**, so the search stays while the user reads what it found. Typing and
+Clear empty the box as edits, and Undo brings the words back.
+
+**Ctrl+F, F3 and Shift+F3** are StdActions::find, findNext and findPrevious. Claim them on the
+page holding the box, so that F3 steps from the searched text as well as from the box.
+
+## SearchBox listKeptBy
+
+A line picked with these modifiers held raises Pick as any pick does, and the list stays up on
+that line for the next one. Set to Alt, it lets Alt+Enter open line after line in tabs behind the
+one shown.
+
+## SearchBox setResult
+
+What the count reads:
+
+- `2 of 7` - a match is current.
+- `? of 7` - none is current.
+- `No results`, in red - none found.
+- `7 on page` - none current, in a box given setCountPlace(L"on page"). It counts one place of a
+  wider search, so none found there reads `0 on page`.
+
+## SearchBox showList
+
+The list is a DropList, and the caret stays in the box. While the list is up:
+
+- Up, Down and the page keys walk it. Down enters at the first line; Up on the first line leaves
+  no line current and hands the keys back to the text.
+- Enter on the current line, or a mouse click on any line, raises Pick with the modifiers held.
+- Enter with no line current hides the list and raises Next.
+- Escape, Tab and the focus leaving the box hide it.
+
+An empty set of lines hides the list. Once it is hidden, Down raises Search, so that the owner can
+list again. listPlacement says where it drops.
 
 ## ScrollBars::Auto
 
-A bar on whichever axis the content overruns, and nothing on the axis it fits.
+**A bar comes up against a ceiling** - the box's MaxSize, or the window for a root box. A box
+inside another takes its vertical bar from the slot it was laid out into.
+
+**A bar takes its strip from the other axis.** Content that fits beside no bar is measured again
+beside one that comes up, and may need the second bar too.
 
 ## PromptDialog
 
-A question with one line of text for its answer, dropped under the control that
-raised it.
-The text is the answer here, so the box is drawn as something to write in: its own
-surface, its own border, over the middle the question is written on.
-**The answer is refusable.** A handler that calls AcceptEditEvent::refuse keeps the
-dialog standing with the reason under the box, so nothing is written until a value nothing
-refuses has been given. That is the in-place editor's contract, and this is its box.
-**A handler may put a question of its own** before it answers, owned by
-AcceptEditEvent::askedBy - so it stands on top of this dialog with the name still on
-screen behind it. Told no there, it refuses with nothing to say and this dialog is left
-exactly as the user left it.
+**A handler may refuse the answer** with AcceptEditEvent::refuse, and the dialog stays up with the
+reason under the box. **It may ask a question of its own** first, owned by askedBy, so it stacks on
+top. Told no there, it refuses with no reason, and the dialog stays as the user left it.
 
 ## MessageDialog
 
-A short question and a row of answers to it, dropped under the control it was
-raised from.
-The message is the dialog's own text and not an answer to it, so the box takes no
-edits. It stays a full text box in every other respect - it takes the focus, selects and
-copies - which is what lets an error message be got out of the dialog and into a search.
+**The message is read-only**, and still takes the focus, selects and copies - an error message can
+be copied into a search.
 
-**A link in the message is the caller's to answer.** The box is the dialog's own, so the dialog
-raises the box's LinkClickEvent again as OnLinkClick, the same event object. A handler that stops it
-keeps the box from opening the target through the shell; what no handler stops is opened the way
-any box opens it - see LinkClickEvent.
+## MessageDialog OnLinkClick
+
+The dialog raises the message box's LinkClickEvent again here - the same event object. **A handler
+that stops it** keeps the box from opening the target through the shell. Otherwise the link opens
+as in any TextBox - see LinkClickEvent.
 
 ## MessageBar
 
-A question about what a page shows, and the answers to it, standing in the page as a band
-across the top of what it is about rather than over it. Nothing waits on it: an answer runs its
-handler and the page goes on, and the page hides the band once the question is settled.
+A band across the top of what it is about. **The page goes on while it shows** - an answer runs its
+handler, and the page hides the band once the question is settled.
 
-**A split button that takes no input.** The icon stands in a column of its own, centred against the
-message; the message wraps beside it; the answers are the secondary part at the right end, each as
-wide as the widest of them, the way a dialog's answers stand. The face is ButtonBase's and the
-layout SplitButtonBase's. A stripe down the left edge, in the icon's colour and following the band's
-corners, says what kind of message it is.
+The icon sits in its own column, with a stripe of its colour down the left edge. The message wraps
+beside it, and the answers sit at the right end, each as wide as the widest. Only the answers take
+input.
 
-**An answer carries its caller's caption.** A dialog's answers are one fixed set worded once,
-because they answer the dialog. A band's answer is something the page does - Read as text - and says
-so. It is a Button, and what follows the handler in addAnswer goes to that button after the band's
-own properties, so it may override them: an icon in place of the caption, or MouseOnly for a band
-whose presses are to leave the focus where it is.
+**An answer names what the page does** - Read as text. It is a Button, and the arguments after the
+handler in addAnswer override the band's own - an icon for the caption, or MouseOnly to leave the
+focus where it is.
 
 ## EditTarget
 
-What an in-place editor is placed over: the control it covers, where that
-control's text is laid out - in **screen** coordinates - how the text is anchored in that
-rect, and how far the editor may grow.
+**State `textRect` and `textAnchor` as the covered control lays its text out.** The editor takes
+the rect's width as its minimum, and the same anchor. Its glyphs then land on the covered ones, and
+nothing jumps as it opens. `textRect` is in the coordinates of the form the control is in.
 
-**The anchor and the rect travel together.** The placement puts one point of the
-editor on one point of this rect, so the two runs of glyphs only land on each other
-while both are laid out the same way. The box is given this rect's width as its **minimum**
-and this anchor, which makes the two layouts identical **as the editor opens** - nothing
-jumps when it appears, whichever end the glyphs start from.
-
-It holds at that size and not past it. The window is pinned by its top left and grows
-right and down, so text that outgrows the covered rect moves a centred or right-anchored
-run away from where the covered one sits. By then the editor is visibly its own window
-showing more than the control could, which is what it is for.
-
-**The whole rect is a minimum, height included.** Only the new text is visible while an
-edit is on, and the editor is what hides the old one - a box that shrank to what has been
-typed would let the rest of a wrapped caption show out from under it.
-
-**What was typed to open the editor replaces the value.** The value opens selected whole, so the
-keys that asked for the editor land where the next ones would - a combo box opened by typing a
-character starts its value with that character, and the value it replaced stays in the undo
-history.
-
-`suggestions` names the values the editor completes from - see SuggestionList. It is a
-pointer into the caller's list rather than a copy, and that is safe for the same reason
-`source` is a reference: the editor runs its loop inside the call that opened it, so the
-caller's list is still there for as long as the editor is.
+- **The whole rect is a minimum**, height included. The editor hides the old text, so a box that
+  shrank to what is typed would let a wrapped caption show from under it.
+- **The window grows right and down** from its top left. Text that outgrows the rect moves a
+  centred or right-anchored run away from the covered one.
+- **`typed` replaces the value**, which opens selected whole. A combo box opened by typing a
+  character starts its value with it, and the old value stays in the undo history.
+- **`suggestions` points into the caller's list**, which is safe because the editor runs its loop
+  inside the call that opened it - see SuggestionList.
 
 ## SuggestionList
 
-The list under an in-place editor of the values whose names begin with what is typed. It is
-what a combo box shows over its editor: `WithInPlaceEdit::editorSuggestions` answers a
-TextItems, and the editor lists it.
+The items whose names begin with what is typed, listed under an in-place editor - what a combo box
+shows over its editor. EditTarget::suggestions holds them, and a read-only editor lists none.
 
-**The caret stays in the box.** The list is a DropList standing on the box - see DropList - so
-nothing in it can take the focus, and its rows are reached by the pointer and by the keys the box
-hands on: Up and Down move the current row while the list is up. It is as tall as the screen lets
-it, as a combo box's list is, and scrolls past that.
+**The caret stays in the box.** The list is a DropList on the box, as tall as the screen allows.
 
-**What is listed is what the sink would take.** A row is matched by typedName, and case aside by
-startsWithFolded - the two functions ComboBox::lookUpItem matches by - against the text as
-the sink is offered it, trimmed. The list appears on the first edit and never on open, and
-goes away with no match or an empty text. F4 or Alt+Down - the keys that drop a combo box's
-list - list every item whatever is typed, the filter lifted until the next edit puts it back.
-A row shows the item's own text, or its placeholder muted while it has none, and never what a
-face adds.
+**It lists what the sink would take.** A row matches by typedName against the trimmed text,
+ignoring case, as a combo box looks up a typed value. A row shows the item's text, or its
+placeholder muted - never what a face adds.
 
-**Nothing is current until down** - UpFromFirst::Leaves. Return with no row current offers what was
-typed, as it always does: a sink taking free text with hints must not have "new" turned into
-"newfile", and a combo box's own prefix rule already lands on the first match. Down from the box
-enters at the first row, Up from the first row goes back to the box, and Down from the last row
-stays. The box keeps what was typed while the rows are walked - nothing is written into it to
-restore on Escape.
+- The list appears on the first edit, never on open, and hides when nothing matches or the text
+  is empty.
+- F4 or Alt+Down list every item. The next edit filters again.
+- Down enters at the first row, Up from the first row goes back to the box, and Down on the last
+  row stays.
+- Return on the current row, or a mouse click on any row, puts its name in the box and offers it.
+  A refusal shows under the box, with the list already down.
+- Escape hides the list and keeps the edit. The next Escape cancels it.
 
-**A pick is a pick.** Return on a current row, or a click on any row, puts its name in the box and
-offers it in the same press; a refusal then stands under the box as any refusal does, with
-the list already down. Escape with the list up takes the list down and leaves the edit
-standing; the next Escape cancels it.
+**A row is current only after Down.** Return with no row current offers what was typed, so a sink
+taking free text keeps "new" rather than "newfile". The box keeps what was typed while the rows are
+walked.
+
+## WithInPlaceEdit editorSuggestions
+
+The default answers none, and the editor lists nothing - see SuggestionList.
 
 ## DropList
 
-A list dropped under a control that keeps the focus - the one a SearchBox, a CodeBox and an in-place
-editor drop. **The caret stays in the control**: the list is a window of its own standing on it, and
-its root, its stack and its rows are all MouseOnly, so nothing in it can take the focus. The rows
-are reached by the pointer, and by the keys the control hands on: moveCurrent and moveCurrentByPage
-for the arrows and the page keys, pickCurrent for Enter. Each answers false while the list is down,
-which is how the control knows the key is still its own.
+The list a SearchBox, a CodeBox and an in-place editor drop.
 
-**The target is the control the focus is in**, the field rather than the box around it: a list
-going down hands the focus to its target, as every popup does. So a key that moves the focus on -
-Tab - takes the list down before the focus moves, or the list going down would take the step back.
+**The caret stays in the target**, the control the focus is in - the field, not the box around it.
+The list never takes the focus. The pointer reaches its rows, and the target hands on keys:
 
-**A line is a Text and a hint, and a divider under it where it asks for one**, parting it from the
-lines after - the keys pass over a divider, and the cap counts it. show states the lines, the one
-current or none, the anchor the list stands off and the placement, BottomLeft, or BottomRight from
-the anchor's right edge; no lines take the list down. A flex space in a line spans the list's width,
-so a word after one stands at the list's right edge. A line's hint stands beside the list while the
-line is current: FormPlacement::Right on a rect spanning the list, so a hint the right has no room
-for stands off the list's left edge rather than over its rows.
+- the arrows - moveCurrent;
+- the page keys - moveCurrentByPage;
+- Enter - pickCurrent.
 
-**The list goes along with its anchor.** An anchor is a control or a rect. A control - the whole box
-where the target is its field - is followed as it moves and grows, and it holds the target or is it:
-the target going down takes the list down, so the control stands for as long as the list does. A
-rect stands in the target's form and is carried with the target, moved and grown as the target is -
-the way for a rect inside it, such as the caret a CodeBox's list drops under. A box's own rect
-handed over as a rect would be carried by its field instead: a field narrowed by a count coming up
-would take the list's right edge in with it.
+Each returns false while the list is down, so the target keeps the key.
 
-**What the owner states, it states once**, in the DropListOptions it builds the list with: the lines
-that stand before the list scrolls - twelve unless stated, and none caps it - the least width, the
-clearance off the anchor, the modifiers that keep it up across a pick, and what Up does on the first
-line. The list is at least as wide as the anchor and the least width, and as tall as its lines **as
-the rows measure**: the stack reads a row's height as it lays the rows out and caps the box at that
-many, asking the pass again where the cap moved - see AlignEvent::invalidatePass - so the first list
-of a run already stands at its height. UpFromFirst::Stays keeps the first line current, as a
-CodeBox's list does; Leaves leaves no line current, the keys the target's own again, as a
-SearchBox's and an in-place editor's do.
+**Hide the list before the focus moves.** A list going down hands the focus to its target, as every
+popup does. So a key such as Tab hides the list first, or the list going down takes the step back.
 
-**Where it stands is the platform's to say.** standsAbove answers whether the list stood above its
-anchor for want of room below it, and the function setPlacedFunc gives is told after every pass that
-lays the list out, which may have moved it there - what a CodeBox puts its parameter hint on the
-free side by.
+## DropList show
 
-**A pick is told once the list is down**: the owner's function is handed the line, the modifiers
-held with the key or the click, and the stamp of the input that took it, so whatever it opens or
-takes stands with the list out of the way. A pick holding every modifier the list is kept by - the
-options' keptBy - leaves it up instead, its current line where it was.
+BottomLeft drops the list from the anchor's left edge, BottomRight from its right edge. The list is
+at least as wide as the anchor and DropListOptions::minWidth. An empty set of lines hides it.
+
+**The list follows its anchor**, a control or a rect:
+
+- **A control** is followed as it moves and grows. It must hold the target or be it - show throws
+  std::logic_error otherwise - so it lives as long as the list does.
+- **A rect** is in the target's form and moves with the target - the way to drop under a spot
+  inside it, such as the caret a CodeBox's list drops under.
+
+**Pass a box as a control, not as its rect.** A rect would move with the box's field, and a field
+narrowed by a count coming up would pull the list's right edge in.
+
+## DropList pick
+
+**A pick holding every modifier in DropListOptions::keptBy leaves the list up**, on the same line.
+Any other pick hides the list before the owner is told, so whatever the owner opens is clear of it.
+
+## DropListLine
+
+- **A flex space** in the text spans the list's width, so a word after it sits at the right edge.
+- **The hint** shows beside the list while the line is current, at its row's height - to the
+  right, or off the left edge where the right has no room, never over the rows.
+- **A divider** parts the line from the lines after. The keys pass over it, and the shownLines cap
+  makes room for it.
+
+## DropListOptions
+
+Stated once, when the list is built.
+
+- `shownLines` counts rows at the height they measure, which their text and padding set.
+- `UpFromFirst::Stays` suits a list the keys stay in, as a CodeBox's does. `Leaves` hands the keys
+  back to the target's text, as a SearchBox's and an in-place editor's lists do.
 
 ## SelectionMoveEvent
 
-The selection has come to rest somewhere new: a key, a press, a drag, Select All, or a new
-set of bytes. **What** it covers now is asked of the view - see selection and caretOffset - so
-a listener that only wants to know that it moved pays nothing for the answer.
+Raised for a key, a mouse press, a drag, Select All and new bytes. **Ask the view what is
+selected** - HexView::selection and caretOffset.
 
-**This is what a reading of the selection hangs off.** A hint cannot carry one: a form holds
-one hint, it is sized from the first words it is given and user input takes it down, so a
-reading that changes with every byte is not a thing a hint can be. A status line the host
-owns is, and this is how the host learns to rewrite it.
+**Hang a reading of the selection off this**, in a status line the host owns. A hint is sized from
+its first words, and user input hides it.
 
 ## HexView
 
-Bytes drawn as the three columns a hex dump has: the offset each line starts at, sixteen
-bytes as their digits, and those same bytes read as characters.
+Each line holds sixteen bytes.
 
-**The bytes are borrowed.** Whoever calls setBytes owns them, and they must outlive the view
-or be taken back with a setBytes of an empty span.
+**The bytes are borrowed.** Whoever calls setBytes owns them, and they must outlive the view, or be
+taken back with setBytes of an empty span.
 
 ## CodeBox
 
-A TextBox drawn as source in a language. **The text stays what was typed**: the colours are an
-overlay the box states to its layout, asked for paragraph by paragraph as the paragraphs are
-drawn - so the text carries no marker per token, a key press re-shapes one paragraph the way
-it does in any text box, and what is copied out is the text and the user's own formatting.
+**The text stays what was typed.** The colours are an overlay drawn paragraph by paragraph, so a key
+press re-shapes one paragraph, and a copy carries the user's own formatting.
 
-The language is a Syntax::Language passed by value - one of Syntax::Languages, or a caller's
-own. The inks are a Syntax::Inks, one per kind of token; a kind left in the text's own ink
-states no span at all, which is what keeps operators and punctuation from costing anything.
-WordWrap::No is stated before the caller's arguments, as HexView states it: source is lines.
-So is TextFormat{ TextStyleId::Code }: source is columns too, so a text handed to the box states
-no style to be read in the monospace font - see Control-Foundation#text-format.
+- `language` is a Syntax::Language by value - one of Syntax::Languages, or a caller's own.
+- `inks` holds one ink per kind of token. A kind left in the text's own ink costs nothing.
+- WordWrap::No and TextFormat{ TextStyleId::Code } come ahead of the caller's arguments, which may
+  override them. A text needs no style of its own to be set in the monospace font - see TextFormat.
 
-A box completes names out of a Syntax::CompletionEntries the host states through
-`completion` - named, not copied, so the host keeps it alive for as long as the box stands.
-The language's keywords join the list, and so do the names the text declares for itself,
-where the language has a reader of declarations - see Syntax#declarations. A box with no
-list stated completes nothing, and a read-only box completes nothing either. What the list
-looks like and how the keys drive it is under CompletionList. Out of the same list the box
-shows the signature of the call the caret stands in, with the argument being written marked
-- see ParameterHint.
+**Completion** draws on the Syntax::CompletionEntries set through `completion`, the keywords, and
+the names the text declares - see CompletionList. The list is named, not copied, and the host keeps
+it alive. A box with no list, or a read-only box, completes nothing. The list also feeds the
+signature hint - see CodeBox::showParameterHint.
 
-A box completes the keys and values of a title block - the comment lines a text opens with
-to state its settings - out of a Syntax::TitleBlock the host states through `titleBlock`,
-named the same way. Those lines are the one place inside a comment the list opens. See
-Syntax#titleblock for the lines and the places on them.
+**A title block** - the comment lines a text opens with to state its settings - completes out of the
+Syntax::TitleBlock set through `titleBlock`, named the same way.
 
-A box places each line as it is typed, in the language's reading of where lines stand - Enter,
-Tab, Backspace, Home, a paste and Reindent. See Indents. It draws a line down each block its
-text opens - see IndentGuides. It scrolls on until its last line is at the top - see
+The box also indents lines as they are typed, draws IndentGuides, and scrolls past its end - see
 ScrollMetrics.
+
+### Indents
+
+The box sets each line's indent as it is typed, at the column the language places it - see
+IndentRule. A read-only box does none of this.
+
+**Enter** puts the new line where the language places it.
+
+- The line left loses its trailing blanks. Where Enter finished its first word - an else, an
+  end - that word places the line first.
+- The text carried down loses its leading blanks and is placed as a line of its own.
+- A closer carried down from under its opener - `begin|end`, `{|}` - keeps an empty line between
+  the two, with the caret on it.
+- An opener left at the end of the line - begin, try, case, a class with a body, a brace - is
+  closed below it while nothing below closes it.
+
+**A finished first word places its line** - end, until, else, except, finally, a visibility word,
+a begin under a then, a section word, a closing bracket. The character after it, Enter, or a
+completion row taken finishes the word. It happens once, so a line moved by hand stays.
+
+- **Tab** with nothing selected, or a selection inside one line, puts in the blanks to the next
+  stop. A selection past a line, or holding a whole line, moves its lines - see
+  CodeBox::indentLines. **Shift+Tab** moves them back a stop.
+- **With Ctrl or Alt held, or right after Escape**, Tab moves the focus on - the way out of a box
+  that takes Tab. A read-only box never takes Tab.
+- **Backspace** in a line's indent, with nothing selected, goes back to the previous stop.
+- **Home** goes past the blanks the line opens with, then to the line's start.
+- **A paste** of several lines moves as one block. Its first whole line goes where the language
+  places it, and the rest keep their shape against it. Where the paste's first line came without
+  its indent, the line after it is placed too, and the rest follow that one.
+- **Reindent** - StdActions::reindent on the edit menu, or reindentLines - places the lines the
+  selection reaches, or every line, top down. A line of blanks is emptied, and a line running on
+  inside a comment or a string stays as written.
+
+**Each is one undo step**, after the key's own. The first undo takes back what the box did, the
+second what was typed. A step that moves lines lands the selection with them, and so does its
+redo - see TextHistory.
+
+**The unit** of one level is indentUnit, four spaces unless stated - or, with detectIndent on, what
+the text says. See DetectIndent.
+
+## CodeBox indentLines
+
+Tab's move of lines, for a command to call; outdentLines is Shift+Tab's. A line of blanks stays,
+and so does a line the selection reaches only at its start. The selection moves with the text.
 
 ## CompletionList
 
-The list under the caret of the names the word being typed can complete to. Like the in-place
-editor's SuggestionList it is a DropList standing on the box - see DropList - nothing in it able to
-take the focus, the rows reached by the pointer and by the keys the box hands on. **The caret stays
-in the box**, and every key reaches the box first - see SuggestionList for the forward chain and
-wnd_char.
+A DropList under the caret. **The caret stays in the box**, and every key reaches the box first.
 
-**When it opens.** By itself on the first character of a name typed and on a typed dot, and
-narrowing with every character after; on demand on Ctrl+Space, which lists everything the
-place can take, a name typed or not. It closes when nothing matches, when the name is
-backspaced away, on Escape, and on the caret leaving - a click, an arrow key, the focus
-going. It never opens inside a comment or a string, and never over a paste: only a typed
-character asks for it, an edit merely brings a list already up up to date. A title block's
-line is the exception to the comment: there the prefix's mark, the equals sign and a comma
-open the list too, and a place past any of them lists with nothing typed, as a dot does,
-so a blank typed after the sign keeps the list up. The request is
-answered on a 0 ms timer once the input that made it has been delivered, and one that finds
-the form's layout unsettled waits on the pass that settles it, as the SuggestionList's does.
+**It opens** on the first character of a name typed and on a typed dot, and narrows with each
+character after. Ctrl+Space lists everything the place can take, a name typed or not. Only a typed
+character opens it, so a paste does not. It stays closed inside a comment or a string, a title
+block's line aside.
 
-**What is listed.** The rows are built once per language, list and reading of the text - the text's
-own declarations, the entries and the language's keywords in one scope, every class's methods and
-properties in the other, each row keeping its class - and shown by scope, by prefix and by where the
-caret stands; see Syntax#completion for the place, the prefix rule and how the class a dot reads is
-found. After a dot only the members of that class and of its parents are shown, a member both state
-from the class itself, and where the class is not known the list does not open, Ctrl+Space included.
-The text's own names come first, the nearest scope's ahead: what the routine the caret stands in
-declares, then what the routines around it do, then the text's globals, and only then the host's
-names and the keywords - each run in name order under the language's case rule, so within a run an
-exact match stands first. A name is shown only where it is in force, so the locals of another
-routine are not listed, and a local and a global of one name both are, the local first; the host's
-name of the same spelling stands after both. The declarations are read by the language when the list
-opens, and again on Ctrl+Space with the list up; a list up keeps its reading while the keys narrow
-it. See Syntax#declarations for what is read. The first row shown is current when the list opens,
-and an exact match is that row. A row prints the name with the part typed so far in the accent ink,
-and the kind muted at the end of its line - function, procedure, class, property, keyword, variable,
-constant - the way a menu prints a key.
+**It closes** when nothing matches, when the name is backspaced away, on Escape, and when the caret
+leaves - a mouse click, an arrow key, the focus going.
 
-On a line of the title block the rows are the block's alone. Up to the sign they are its
-keys, less those the block's other lines state; past the sign they are the values of the
-key the line states, less those the line holds already, and a key that lists none opens no
-list. The kind printed is key or value.
+**What it lists:**
 
-**The hint.** The current row's signature, in the code style, and under it the hint's sentence,
-stand beside the list at the row's height - the form's hint, placed FormPlacement::Right
-on a rect spanning the list, so a hint the right has no room for stands off the list's left
-edge and not over its rows; raised right away from the pass that lays the row out and after
-a keyboard move, and on hover as any hint is. A keyword, or an entry with neither
-signature nor hint, shows none; one of the text's own names shows its declaration as
-spelled. The hint goes with the list.
+- After a dot, the members of the class the dot reads and of its parents - see
+  completionMemberClasses. Where that class is unknown the list stays closed, Ctrl+Space included.
+- Elsewhere, the text's own names first, nearest scope ahead - the caret's routine, the routines
+  around it, the globals - then the host's names and the keywords. Each run is in name order, so
+  an exact match leads it.
+- A name shows only where it is in force. A local and a global of one name both show, the local
+  first, and a host name of that spelling after both.
 
-**A pick is a pick.** Return or Tab takes the current row, a click takes any row: the name as
-typed is replaced by the row's own spelling in one edit, undone as one, with the caret
-after it and the list down - so `str` becomes `StrToInt` in a language that ignores case.
-On a title block's line the edit makes the line whole: a key taken where nothing follows
-the caret is written with ` = ` after it, and its values are listed right after; a value
-taken right after the sign or a comma is written a blank off it. So `//#Doc` becomes
-`//#DocTypes = `, and a Return on Smeta `//#DocTypes = Smeta`.
-The character a taking press queued - Return's line break, Ctrl+Space's space - does not
-reach the text: the press settles it and the character reads it, as PromptBox does for a
-Return the form takes. Up and Down walk the rows and stay at either end; Page Up and Page
-Down walk them a view at a time, less the row left current, the step any items view pages
-by, and stay at either end too.
+The text's declarations are read as the list opens, and again on Ctrl+Space - see
+DeclarationReader. The current row's signature and hint show beside the list - for the text's own
+names, the declaration as written.
 
-The list is at most ten rows tall and scrolls past that; at least 180 units wide, since the caret it
-stands under gives it no width; hidden rather than destroyed when it closes, and opened again at its
-first row with no glide, since where it was left is not on screen to travel from; and placed under
-the caret's line with its left edge at the start of the name, so the rows stand under the letters
-they complete.
+**Taking a row.** The first row is current as the list opens. Return or Tab takes the current row,
+a mouse click any row. Its spelling replaces the name typed in one edit, with the caret after it -
+`str` becomes `StrToInt` in a language that ignores case. The character the taking press queued -
+Return's line break, Ctrl+Space's space - stays out of the text. The keys walk the rows, Page Up and
+Page Down a view at a time, and stop at the ends.
+
+**On a title block's line** the rows are the block's alone:
+
+- up to the sign, its keys, less those the block's other lines state;
+- past the sign, the values of the line's key, less those the line holds.
+
+There the prefix's mark, the equals sign and a comma open the list too, with nothing typed. A key
+taken where nothing follows the caret is written with ` = ` and lists its values at once. A value
+is written a blank off the sign or the comma. So `//#Doc` becomes `//#DocTypes = `, and a Return
+on Smeta gives `//#DocTypes = Smeta`.
+
+The list is at most ten rows tall and at least 180 design units wide, its left edge at the start of
+the name.
 
 ## ParameterHint
 
-The hint over a call: the signature of the routine being called, from where its parameter
-list opens, with the name of the argument the caret stands in set in bold - the words No
-parameters for a routine that lists none - and under it the entry's hint sentence where it has
-one. A window of its own standing on the box in the
-hint's role - the pointer goes through it, it takes no focus and it takes no place as the
-popup on the box, so it stands beside the completion list, above the line while the list is
-below it. **The caret stays in the box.**
+The signature of the call the caret is in, from its opening bracket, with the entry's hint under it.
+The argument being written is bold, and a routine with no parameters reads No parameters. **The
+caret stays in the box**, and the pointer passes through the hint.
 
-**When it opens.** By itself on a typed opening bracket, round or square, after a name that
-resolves - a routine the host lists, a member through the subject before the dot, a routine
-the text declares for itself; and on demand on Ctrl+Shift+Space, wherever the caret stands
-inside a call. It never opens on a bracket inside a comment or a string. The request is
-answered on a 0 ms timer once the input that made it has been delivered, and one that finds
-the form's layout unsettled waits on the pass that settles it, as the list's does.
+It shows only in a box that has a completion list and can be typed into, in a language with a
+ParameterReader.
 
-**While it stands.** The mark follows the caret: every edit and every caret move reads the call
-again, so the mark moves with the commas typed or crossed, and past the last parameter
-nothing is marked. A call may span lines, and the hint stands above the caret's line
-wherever the call opened. See Syntax#parameters for the reading. The text's own routines are
-read as the hint opens; a hint up keeps its reading.
+- **It opens** on a typed `(` or `[` after a name that resolves - a routine the host lists, a member
+  of the subject before a dot, a routine the text declares. Ctrl+Shift+Space opens it anywhere
+  inside a call. A bracket inside a comment or a string opens nothing.
+- **The mark follows the caret** across the commas, and past the last parameter nothing is marked.
+  A call may span lines.
+- **It closes** when the caret leaves the call, when the focus leaves the box, and when the window
+  moves or loses the focus. Escape closes it too, after the completion list where both are up.
 
-**When it closes.** On the caret leaving the call - past its closing bracket, out of it by a key
-or a click, or back before its opener; on Escape, which takes the completion list down first
-where both are up and the hint on the next press; and on the focus leaving the box. A name
-nothing resolves shows nothing, and so does any name other than a routine whose signature
-names no parameter - a type or a class cast, a property with no index, a variable; a variable
-of the routine's name in force at the caret shadows it.
+A name that is no routine shows nothing - a type or a class cast, a property with no index, a
+variable. A routine shadowed at the caret by a variable of its name shows nothing too.
 
-Placed above the caret's line, its left edge at the opening bracket's, below the line when
-there is no room above - and below it while the completion list stands above the line, having
-found no room below: the hint takes the side of the line the list leaves, and comes back above
-when the list closes. It comes down when the window moves or loses the focus, as a popup does.
-Sized by what it shows, no wider than a hint's line, a long signature wrapping past that.
-Shown only in a box that has a list and can be typed into, and only in a language with a
-reader of parameters.
-
-## Indents
-
-What a CodeBox does with a line's indent as it is typed, by the language's reading of where a
-line stands - see Syntax#indent. Nothing here happens in a read-only box.
-
-**Enter.** The new line stands where the language places a line after the one left. The line left
-loses its trailing blanks, all of them where it holds nothing else; where its first word has
-just been finished, it is placed by that word first - an else, an end. The text the break
-carried down loses its leading blanks and is placed as a line of its own, and a closer carried
-down from under its opener - begin|end, {|} - keeps an empty line between the two, with the
-caret on it. An opener left at the end of the line - begin, try, case, a class with a body, a
-brace - is closed below it when nothing below closes it yet: the next line holding anything
-stands inside the block, or at the block's column placing itself there.
-
-**A finished first word places its line.** A line whose first word decides its column - end, until,
-else, except, finally, a visibility word, a begin under a then, a section word, a closing
-bracket - is realigned when that word is finished: by the character after it, by Enter, or by
-a completion row taken. Once only, so a line moved by hand afterwards stays where it was put.
-
-**Tab and Shift+Tab.** With nothing selected, or a selection inside one line, Tab puts in the
-blanks that reach the next stop. A selection reaching past a line, or holding a whole line,
-moves every line it reaches that holds more than blanks to the next stop, and a line the
-selection reaches only at its start is left alone. Shift+Tab moves the lines back to the
-previous stop - the caret's line with nothing selected. The selection moves with the text.
-With Ctrl or Alt held, or right after Escape, Tab is the form's and moves the focus on, which
-is how the focus leaves a box that takes Tab; a read-only box never takes it.
-
-**Backspace** in a line's indent, with nothing selected, takes the blanks back to the previous
-stop. **Home** goes past the blanks the line opens with, and to the line's start from there.
-
-**A paste** of several lines moves as one block. The first line it writes whole goes where the
-language places it, and the rest keep the shape they had against it - against the column the
-paste gave that line, not the blanks standing before the paste. A paste whose own first line
-came without its indent says nothing of where that line stood, so the line after it is placed
-too, and the rest keep their shape against that one.
-
-**Reindent** - StdActions::reindent, on the edit menu of a box that can be typed into, and
-reindentLines - places the lines the selection reaches, or every line with nothing selected,
-top down. A line of blanks alone is emptied, and a line running on inside a comment or a string
-is left as written. indentLines and outdentLines are Tab's and Shift+Tab's moves of lines, for
-a command to call.
-
-**One step each, and the editor's own.** Each of these is a single replacement of the text, undone
-as one. What the box does after a key - the indent after Enter, a realign after a word, the
-move after a paste - is a step of its own after the key's, so the first undo takes back what
-the box did and the second what was typed. A step that moves lines lands the selection where
-it put it, and a redo puts it back there - see TextEngine-Types#texthistory.
-
-**The unit** is what one level is written as: the indentUnit property, four spaces unless stated,
-or with detectIndent on - the default - what the text itself says. See DetectIndent.
+It stands above the caret's line, its left edge at the opening bracket. It goes below where there is
+no room above, or where the completion list is above the line. It is no wider than a hint's line,
+and a long signature wraps.
 
 ## IndentGuides
 
-Whether a CodeBox draws a line down each block its text opens - the language's reading of its
-blocks, see Syntax#blocks. Yes by default, in every CodeBox.
+Yes by default, over the blocks the language reads - see BlockReader.
 
-A guide stands at the x of the opener line's first character, taken from the layout, so it
-holds whatever the font. It runs from the line under the opener to the line over the closer,
-through blank lines, and it is left out beside a line whose text starts at or left of it - a
-private, an except, a case's else standing at the block's own column. Only the blocks crossing
-the viewport are drawn, under the text and on the layout the text is drawn from, so a
-selection band covers a guide.
-
-A guide is a solid line one device pixel wide, at any scale, standing at the middle of its pixel
-column, in the text's Faint ink. The block the caret stands in - the innermost whose opener and
-closer lie either side of the caret's line - is drawn a grade over it, in the Subtle ink.
+A guide runs at the x of the opener line's first character, from the line under the opener to the
+line over the closer. It breaks beside a line whose text starts at or left of it - a private, an
+except. It is one device pixel wide, in the Faint ink, under the text and its selection band. The
+innermost block around the caret's line is drawn in the Subtle ink.
 
 ## ScrollMetrics
 
-How the box scrolling a control carries it: the step, and whether the last step can be carried
-to the top. The body states both through Control::scrollMetrics, and its ScrollBox reads them
-once a pass, beside the height the body measured - ScrollBox::calculateChildren - and works out
-everything else itself. A body that says nothing answers ScrollMetrics{}: a step of 20 on both
-axes, and no scrolling past the end.
+A body states it through Control::scrollMetrics, and its ScrollBox works out the rest.
 
-**The step** is how far a button press or a wheel notch carries the view, in design units. The box
-scales it and hands each bar its axis alongside the range, in the same align, and the bars step by
-nothing else. It is also how deep a fade at an edge is and how much travel brings the fade in, so
-a text fades by a line. A TextBox steps down by its last line's height and across by the default.
-The height is read off the layout the measuring pass left, without syncing it to the box the body
-is about to be laid out in, which would have the fit read once more at the paint.
+**The step** is how far a button press or a wheel notch moves the view, in design units. It also
+sets how deep an edge fade is, so a text fades by a line. A TextBox steps down by its last line's
+height.
 
-**Past the end** the last step - a text's last line - is carried up to where the first stands at
-rest, a padding below the top of the view, so a line written at the end of a text is written at eye
-height rather than along the bottom edge. A CodeBox answers it while it can be typed into, at any
-length: a text shorter than the view scrolls the same way. A ReadOnly one is a reading, with
-nothing to be written past its end, and stops at its last line.
+**Past the end** lets a text's last line scroll up to the top of the view, where the first line
+rests. A line written at the end is then at eye height. A CodeBox asks for it while it can be typed
+into; a read-only one stops at its last line.
 
-**The room is laid out as part of the body.** The box lays the body out into a box taller than the
-slot - PanelBase::bodyExtent: the travel that brings the last step to the top, plus the slot.
-The body takes that height in the one align that lays it out, so nothing is resized afterwards
-and no further pass is asked for. The body's surface paints the room, a press there reaches the
-body and puts the caret on the last line, and a drag selection autoscrolls into it. The bar's
-range is the body's height, as for any body.
+- The wheel, the bar, a drag and Page Down reach the room below the text. Page Down moves the view
+  as far as the caret travels.
+- Bringing the caret into view - Ctrl+End, a line typed below the view - stops at the bottom
+  margin and never enters the room.
+- A resize keeps the last line where it is. Lines deleted at the end shrink the range, and the view
+  glides back to the new end.
+- The bottom fade ends with the text, so a last line near the bottom edge is not faded.
+- Under ScrollBars::Auto the room counts as content, so a box inside another shows its bar for any
+  text of two lines or more. A root box leaves the room out, so a text that fits it does not
+  scroll.
 
-The room is read off what the body measured and off the slot, both settled before the body is
-laid out, so a resize keeps the last line where it stands. An edit moves it with the text: lines
-deleted at the end while the view stands in the room bring the range in, and the view glides
-back to the new end.
+## Control scrollMetrics
 
-Only a box whose height is dictated - Fill, or hosted as a body - lays the room out; a box
-growing to hold its body would grow by the room instead. A body that wraps takes none, since its
-align lays it out to its text whatever box it is handed, and neither does a body aligned other
-than Fill, which keeps the height it measured.
+**The ScrollBox asks once a pass**, right after the body is measured. Answer from what that pass
+left - a TextBox reads its last line's height off that layout. The default returns ScrollMetrics{}:
+a step of 20 on both axes, and no scrolling past the end.
 
-**The bottom fade ends with the content.** It is measured to the height the body measured rather
-than to the room, so a last line near the bottom edge is not faded with nothing after it.
+## ScrollBox bodyExtent
 
-The wheel, the bar, a drag and PageDown carry the view into the room. PageDown moves the view
-by the distance the caret travels, so near the end the caret keeps its place in the view and the
-view goes on into the room after it. Bringing the caret into view - Ctrl+End, a line typed below
-the view - moves the view only until the caret is inside its bottom margin, and so never into
-the room.
+**The room past the end is part of the body.** The body is laid out into its slot plus the travel
+that brings the last step to the top.
 
-Under ScrollBars::Auto the room counts as content: a box inside another puts its bar up for any
-text of two lines or more. A root box answers its bars in the measuring pass, which knows
-nothing of the room, so a text that fits it stands still.
+- The body's surface paints the room, and a mouse press there reaches the body - a text box puts
+  the caret on its last line.
+- A drag selection autoscrolls into the room, and the bar's range takes it in.
+
+**Only a box whose height is dictated** - Fill, or hosted as a body - lays the room out. A box
+growing to hold its body would grow by the room instead. A body that wraps takes no room, nor does
+a body aligned other than Fill.
 
 ## DetectIndent
 
-Whether the box reads the indent unit off each text it is handed whole, in textTaken beside the
-language's reading; a text that says nothing leaves the indentUnit property's. Yes by default.
-A unit stated through setIndentUnit ends detection, so a unit picked by hand is not overridden
-by the next text, and switching detection on reads the text the box holds at once.
+Yes by default. A text handed over whole is read for its unit, and one that says nothing keeps
+indentUnit. **setIndentUnit ends detection**, so a unit picked by hand stays. Switching detection
+back on reads the current text at once.
 
 ## DetectLanguage
 
-Whether the box asks which language each text it is handed is in, rather than reading the
-language property. The question is DetectLanguageEvent, asked in textTaken for a text
-handed whole and never for an edit: an edit is a key press in a text whose language is
-settled, and re-reading the lines it reached in that language is all it needs. Switching to
-Yes asks at once, for the text the box holds. A language stated through setLanguage ends
-detection, so a language picked by hand is not overridden by the next text.
+**The box raises DetectLanguageEvent** for each text handed to it whole, never for an edit.
+Switching to Yes asks at once, for the text the box holds.
 
-The answer goes into the line states and nowhere else: the language property keeps the
-stated language, and what the box draws in is what the last answer said. A handler that
-answers nothing leaves a language with no name, and a text read in that stands plain.
+**setLanguage ends detection**, so the next text does not override a language picked by hand.
+
+The answer decides what the box draws in, and the language property keeps the stated language. A
+handler that answers nothing leaves the text plain.
 
 ## DetectLanguageEvent
 
-Asked with the whole text, plain, and a language to fill in. The box asks lazily, when its
-layout takes the text - the next measurement or paint, not the moment the text was set - so
-a handler reads what it needs from the event and from state it holds itself. The pass that
-asked is the pass that draws the answer, and the paint that follows draws whatever else the
-handler changed: an invalidate made inside the align pass is dropped by the form, and one made
-inside a paint asks for one more paint of what it names. A handler that can also be asked from
-outside a pass - the box switched to detection by hand - invalidates what it changed all the
-same, since that is the one route by which the change reaches the window.
+**The box asks lazily**, when its layout takes the text - at the next measurement or paint, not
+when the text was set. A handler reads what it needs from the event and from state it holds itself.
+
+The pass that asked draws the answer. A handler that changes anything else invalidates it all the
+same. A box switched to detection by hand asks from outside a pass, and there only the invalidate
+brings the change to the window.
 
 ## PixelSelectEvent
 
-The selected pixel moved. Raised for every route: a click, a notch of the wheel, a setter,
-and a new picture, which opens on its middle pixel. It carries no position, the way
-CaretMoveEvent does not: the view answers selection() and selectedColor(), and a listener
-reads what it needs from there.
+A new picture opens on its middle pixel. **Ask the view where the pixel is** -
+PictureView::selection and selectedColor.
 
 ## PixelActivateEvent
 
-The selected pixel was acted on: the second press of a double click on it. The view raises
-it only where a pixel lies under that press - a double click on the squares beside the
-picture asks for nothing. It carries no position either: the pixel it is about is the one
-the press just selected, and the view answers selection() and selectedColor() for it.
+Raised on the second press of a double click on a pixel - a double click on the squares beside the
+picture raises nothing. The pixel is the one that press selected, and PictureView::selection and
+selectedColor answer for it.
 
-**What acting on a pixel means is not the view's.** A picture read at a zoom has no command of
-its own, so the gesture is reported rather than answered: WhatsClip opens the colour
-editor on it, the same editor its corner readout opens.
+**The application decides what acting on a pixel means.** WhatsClip opens the colour editor on it.
 
 ## ZoomChangeEvent
 
-The zoom moved, by whichever route: a notch of the wheel, a setter, or the fit a new
-picture opens at - which lands once the view knows the window it is seen through, so a
-listener writing a zoom readout hears of it then and not at setPicture.
+**A new picture's fit lands at the first pass after setPicture**, once the view knows its window. A
+zoom readout hears of it then.
 
 ## PictureView
 
-A picture at a zoom, standing where the zooms and the pans put it, one pixel of it
-selected.
+**The view borrows the picture** - whoever gave it keeps it alive while it is shown.
 
-**The picture stands where it is put.** It is the size it is at its zoom, in device pixels,
-and the view is measured around it: the picture, and any strip of the window it leaves
-bare while hanging out the other side. The box the view stands in ranges its bars over
-that, so a picture larger than the window is not pulled in to cover it, and a small one is
-not held to the middle. A new picture opens in the middle; the zooms and the drags leave it
-where they put it, and a margin of it always stays in the window. The view borrows the
-picture: whoever gave it keeps it alive for as long as it is shown.
+**Zoom is in device pixels**, so 1 draws the picture one for one at any form scale. A new picture
+opens in the middle, at the zoom that shows all of it, never above one for one.
 
-**Zoom is device pixels per picture pixel**, and 1 draws the picture one for one whatever the
-form's scale. A pixel viewer answers to the pixels, not to design units.
+**The picture stays where it is put.** The zooms and the drags move it, and a margin of it always
+stays in the window. A picture larger than the window is not pulled in to cover it, nor a small one
+held to the middle. The bare part of the view shows grey squares at half brightness, lined up with
+those under the picture.
 
-**Only what is on screen is drawn, and sampled once.** The part of the picture on screen is
-sampled at the zoom into a cache, and a paint copies the cache's rows into a staging view,
-so a paint costs the size of the view and never the size of the picture or the zoom, a
-zoom costs one sampling of the view, and a pan samples only the strip it uncovers. Below
-400% a device pixel blends the four picture pixels around its centre; from 400% it takes
-the one under it, so a pixel is drawn as the block it is. A translucent pixel is laid over
-grey squares, and what leaves for the surface is opaque.
+- **A mouse press** selects the pixel under it. A press that goes on to travel pans, and that pixel
+  stays selected. The pointer passing over the picture selects nothing.
+- **A wheel notch** selects the pixel under the pointer, then zooms keeping it still.
+- **A context menu** raised by a mouse press is about the pixel under it, which the press selects
+  first. One raised from the keyboard drops at the crosshair. The view fills no menu - the
+  application builds its own from ContextPopupEvent.
 
-**The bare part of the view shows the same squares at half the brightness**, counted from the
-picture's top left pixel, so they line up across its edge and pan with it, and the edge shows even
-where the picture's margin is transparent.
+Below 400% a device pixel blends the four picture pixels around it; from 400% each picture pixel is
+drawn as a block. A translucent pixel is laid over grey squares.
 
-**The selection is a press or a notch.** A press selects the pixel under it as the button goes
-down, and the crosshair moves there; so does a notch of the wheel, which selects the pixel
-under the pointer before it zooms, so the readout lands where the zoom is going. A press
-that goes on to travel pans, and leaves selected the pixel it was taken hold of at. The
-pointer merely passing over the picture moves nothing: a value read off the corner is the
-value of a pixel that was chosen. A new picture opens on its middle pixel.
-
-**The menu is about the pixel it was raised on.** The press that raises a context menu selects
-that pixel first, exactly as a left one does, so the commands and the crosshair name the
-same pixel; one raised from the keyboard moves nothing and drops at the crosshair, which is
-what contextMenuAnchor answers and where a picture larger than the screen would otherwise
-have dropped it nowhere useful. The view fills no menu: what a picture can be asked to do
-belongs to the application, which builds its own from the ContextPopupEvent.
-
-**A zoom keeps a point still.** The wheel keeps the picture point under the pointer where it is,
-which is the pixel it just selected; setZoom and zoomBySteps keep the selected pixel, or the middle
-of the view while none is selected. It stays across the size of the window too, which is what the
-bare strip is for: a picture just wider than the window may have to hang out one side by more than
-it is wider, and the strip that leaves at the other side is scrolled off or grown over by the next
-notch.
-
-**The fit waits for the window.** A new picture opens at the zoom that shows all of it, never
-above one for one, and that needs the window the view is seen through, which the first
-pass after setPicture lays out. The fit lands then, with its ZoomChangeEvent.
-
-**The crosshair is a hairline of contrast.** One row and one column of device pixels through the
-middle of the selected pixel, reaching 24 design units each way, every pixel of them the contrast of
-what it crosses: channel by channel, near white where the channel is dark and near black where it is
-light, so the mark reads on any picture and covers nothing but the line it stands in. Past the
-picture's edge the squares are what it crosses, and they are contrasted the same way.
+**The crosshair** is one row and one column of device pixels through the selected pixel, reaching
+24 design units each way. Each of its pixels is the contrast of what it crosses, so it reads on any
+picture.
 
 ## SliderButtonMark
 
-What the buttons at the two ends of a slider show. A glass with a plus or a minus is a
-size being changed; a sign in a ring is a value being nudged. Stated at construction like
-any property, and changed after.
+- `Magnifier` - a glass with a plus or a minus, for a size being changed.
+- `PlusMinus` - a sign in a ring, for a value being nudged.
 
 ## FineAdjust
 
-Whether a context click on a slider opens a finer slider under it. The finer one spans a
-tenth of the range, centred on the value and moved inward where it would run past an end.
-It is as long as the slider it came from, so the same travel moves the value a tenth as far,
-and never shorter than 200 design units, so a short slider still gets a usable one.
+The finer slider spans a tenth of the range around the value, kept inside the ends. It is as long
+as the slider - at least 200 design units - so the same travel moves the value a tenth as far.
 
-The value moves as the finer slider moves: the slider it came from takes each position and
-reports it through its own OnChange, and while the pointer holds the finer one the owner
-answers positionHeldByPointer too. Releasing the pointer after a press on the finer slider
-raises the owner's OnSettle, closes the popup and keeps the value. Escape puts back the value
-the popup opened on; Return, or a click outside, keeps where it is.
+- The slider reports each position through its own OnChange, and answers positionHeldByPointer
+  while the pointer holds the finer one.
+- Releasing the pointer raises the slider's OnSettle, closes the popup and keeps the value.
+- Escape puts back the value the popup opened on. Return, or a mouse click outside, keeps it.
 
-An OnContextPopup handler that stops the event answers the click instead. A disabled slider
-opens nothing.
-
-A slider draws the finer one's slot through paintSlot, with the span of the range that slot
-covers, so a slot showing a ramp shows that part of it.
+A handler that stops OnContextPopup answers the click instead, and a disabled slider opens nothing.
+The finer slot is drawn through the slider's paintSlot, so a ramp shows its part.
 
 ## SliderSettleEvent
 
-The pointer has let go of a position it moved. OnChange reports every step of a drag as it
-happens, so a listener that treats a drag as one thing - an undo history recording one step
-for it, a document saving once - needs to know when the drag is over, and that is this event.
-It is raised from the press-up that ends a hold on the thumb or the slot, and carries where
-the position stood when the hold began; a hold that ends where it began raises nothing, since
-no step was reported during it and there is nothing to close. A step made by a key or the
-wheel raises no settle either: each of those stands on its own, and its OnChange is the whole
-of it. A position set from code raises OnChange as any step does, and no settle.
+**A drag is over.** OnChange reports every step of a drag, and this event closes it. It serves a
+listener that treats a drag as one thing, such as an undo step or a save.
 
-A finer slider's hold counts as its owner's - see FineAdjust - so the owner's OnSettle comes
-when the pointer lets go of the finer one.
+- Raised on the release that ends a hold on the thumb or the slot, with `pressPosition` where the
+  hold began.
+- A hold that ends where it began raises nothing.
+- A key, the wheel or a setter raises OnChange alone.
+- A finer slider's hold counts as the slider's - see FineAdjust.
 
 ## ColorSpelling
 
-**How a user wants to see a colour**, and what a copy gives another application as plain text. It is
-the user's choice, made in a presenter: a readout offers every spelling and writes the one picked,
-and a copy takes the one in use. `spell` writes the plain text, `nameOf` the words a picker lists
-it under, and `appendSpelling` the same digits into a Text with each channel's run in the theme's
-Red, Green or Blue pigment.
+**The user's choice**, made in a presenter. A readout offers every spelling and writes the one
+picked, and a copy takes the one in use. spell, nameOf and appendSpelling write it.
 
-ClaFi never reads it back. A colour going from one ClaFi consumer to another is written in the
-stable spelling of its serializer - see Dom#scalarserializer-color.
+**It is for people.** A colour passed from one ClaFi consumer to another is written by its
+serializer - see ScalarSerializer<Color>.
 
 ## ColorEditEvent
 
-The colour moved under one of the sliders. The dialog answers color() and edited() from
-there; the event carries nothing of its own.
+**Ask the dialog** - ColorEditDialog::color and edited. The event carries nothing of its own.
 
 ## ColorEditDialog
 
-A colour under three sliders, with a preview, Copy and Close.
-
-**The sliders edit one colour.** The three ColorSliders share one Hsl through a
-ColorSlidersLinker, so a move on any of them redraws the others' ramps at the colour it
-left. Each slider marks the value it was given with a notch above its slot, which is the way
-back to it.
-
-**The preview is the colour against both ends.** A run from black to white behind it, the
-colour as a ring and as a bar across the run, so a light colour is read against the black
-end and a dark one against the white.
-
-**The original stands on the bar.** Once the colour has moved, the word Original and a swatch
-are written on the bar in the colour the dialog was given, so the edit is read against it.
-They take no click, and a colour back where it started hides them.
-
-**Copy takes the clipboard.** The dialog is handed how a colour is written - a ColorSpelling -
-and puts that text on as plain text, which is what an application that has never heard of
-this dialog can take. A window showing what the clipboard holds shows that text next.
+- **The sliders edit one colour.** The three ColorSliders share one Hsl through a
+  ColorSlidersLinker, so a move on any of them redraws the others' ramps. A notch above each slot
+  marks the value it was given.
+- **The preview** shows the colour as a ring and as a bar over a run from black to white, so it
+  reads against both ends.
+- **Original** and a swatch of the given colour appear on the bar once the colour has moved, and
+  go when it is back.
+- **Copy** puts the colour on the clipboard as plain text, in the ColorSpelling the dialog was
+  handed.
 
 ## FlexSpacer
 
-**The room nobody else claimed.** It measures the size it is given and takes what its lane has over,
-so what stands after it sits at the lane's end - the commands under a strip, the answer at the
-foot of a page. Two of them either side of an item centre it, and two at one end share what is
-left evenly.
+It takes what its lane has over. Two either side of an item centre it, and two at one end share
+what is left.
 
-A lane is only as long as its stack was granted, so one in a stack that wraps, or in a stack
-nothing stretched, has nothing to take - and the size it was given is the gap that is left there.
-See `Control::fillsLane`.
+**A lane is as long as its stack was granted.** In a stack that wraps, or one nothing stretched,
+the spacer keeps the size it was given. See Control::fillsLane.
 
 ## WithInPlaceEdit
-
-Gives a control's own text an in-place editor, and the gestures that open one:
 
     class ThemeButton : public WithInPlaceEdit<Button> { ... };
     tile.onAcceptEdit([](AcceptEditEvent& event) { ... });
 
-All the host supplies is somewhere for the value to go. The geometry is read off the host,
-because a control's text is laid out inside its own bounds: the rect that says where the text is
-says how wide it wraps as well, so the editor covers it and wraps the same way without being told
-either.
+**The host supplies only a sink.** The editor covers the rect the host lays its text out in, so it
+lands on the text and wraps the same way.
 
-The gestures are F2, and a click on the text of a control the user is already on. The click that
-picks a control never edits it, or a control could never be picked without editing it, and
-neither does a click on which a control above refuses the editor - see
-Control::mayDropPopupImplicitly. The trailing click of a double click does not edit either,
-unless the editor was refused on the first one: the second is then an ordinary click.
-
-The host also answers StdActions::rename, so a menu item or a toolbar button presenting that
-command renames it with nothing written by the application.
-
-A host whose editorMode answers ReadOnly gets a reader instead: the same box over the same text,
-selected whole and refusing every change, which is how a caption is copied out of a control that
-only shows it. A reader needs no sink and claims no rename.
-
-A host that answers editorSuggestions gets a list under the box of the values whose names begin
-with what is typed - a combo box answers its items - and F4 or Alt+Down lists them all. Picking
-one, with Return or a click, puts its name in the box and offers it in the same press.
+- **F2**, or **a mouse click on the text of a control the user is already on**, opens it. The click
+  that picks a control never does, nor one a control above refuses - see
+  Control::mayDropPopupImplicitly. The second click of a double click opens it only where the first
+  was refused.
+- **StdActions::rename** is answered, so any menu item or toolbar button presenting it renames the
+  host.
+- **editorMode ReadOnly** opens a reader instead - the text selected whole, for copying. A reader
+  needs no sink and claims no rename.
+- **editorSuggestions** lists items under the box as the user types - see SuggestionList.
 
 ## Tree
 
-**Every row of a tree is one line.** Where the tree's width is given from outside - a pane the
-window sizes, a bar whose width is stated - no row's width is read, so the tree measures one
-line of body text a pass and every row answers that line without laying its own text out. A
-tree of tens of thousands of rows is laid out without shaping any of them, and the rows on
-screen are shaped as they are painted. A node's header is a `TreeNodeHeader`, which answers the
-same way.
+**Every row is one line of body text.** Where the tree's width is given from outside - a pane the
+window sizes, a bar of stated width - the tree measures that line once a pass, and a row is shaped
+only when it is painted.
 
-A row stating a `TextFormat` is measured whole, so a row whose text needs more than a line of
-body text - a larger style written into it - states the format it is set in. A tree whose
-width is its content's answer measures every row, the widest being that width: a bar fitted to
-its content, a scroll box carrying the tree across.
+- A row needing more than a line - a larger style in its text - states its TextFormat, and is
+  measured whole.
+- A tree whose width is its content's - a bar fitted to it, a scroll box carrying it across -
+  measures every row.

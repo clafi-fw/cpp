@@ -344,7 +344,7 @@ namespace ClaFi::Browser
         void connectTabActions(); // claims Browser::Actions::newTab and closeTab
         [[nodiscard]] BrowserTab* currentTab(); // nothing when no tab is selected
         // Whether the window may close now: yes where the settings will keep every page's work,
-        // and otherwise what every page with work of its own answers. See Browser#closing
+        // and otherwise what every page with work of its own answers. See Browser#browsercontrol
         [[nodiscard]] bool canCloseWindow();
         // Moves a tab to a url and answers what came of it. The history is the caller's to keep.
         TabMove moveTab(BrowserTab&, PageData&, std::wstring_view anchor, Control& initiator);

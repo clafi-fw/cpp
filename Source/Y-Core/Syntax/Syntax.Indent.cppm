@@ -11,7 +11,7 @@ namespace ClaFi::Syntax
     // The columns a tab reaches to: the layout's own tab stop.
     export constexpr std::size_t k_tabColumns = static_cast<std::size_t>(k_tabStopSpaces);
 
-    // How one level of indent is written. See Syntax#indent
+    // How one level of indent is written. See Syntax
     export struct IndentUnit
     {
         bool tabs{ false };       // a tab wherever a whole one fits, spaces for the rest
@@ -19,7 +19,7 @@ namespace ClaFi::Syntax
         bool operator==(const IndentUnit&) const = default;
     };
 
-    // One replacement an indent key makes, and the selection it leaves. See Syntax#indent
+    // One replacement an indent key makes, and the selection it leaves. See Syntax
     export struct IndentEdit
     {
         TextRange replaced{};        // in the text before the edit
@@ -28,7 +28,7 @@ namespace ClaFi::Syntax
         bool caretOnLeft{ false };   // the caret at the selection's start rather than its end
     };
 
-    // A text's lines over its line states, some restated ahead of an edit. See Syntax#indent
+    // A text's lines over its line states, some restated ahead of an edit.
     export class IndentLines : public SourceLines
     {
     public:
@@ -80,11 +80,11 @@ namespace ClaFi::Syntax
     // line inside a comment or a string the line before it left open keeps that line's column.
     export [[nodiscard]] LineIndent lineIndent(const Language&, const SourceLines&,
         std::size_t line, std::size_t width);
-    // The rule of a language that states none: a level per bracket left open. See Syntax#indent
+    // The rule of a language that states none: a level per bracket left open.
     export [[nodiscard]] LineIndent bracketIndent(const SourceLines&, std::size_t line,
         std::size_t width);
     // The blocks a text opens and closes over more than one line, in the order they open - the
-    // language's reading, or its braces and square brackets where it states none. See Syntax#blocks
+    // language's reading, or its braces and square brackets where it states none.
     export [[nodiscard]] SourceBlocks sourceBlocks(const Language&, const SourceLines&);
     // The reading of a language that states none: a brace or a square bracket closed lower down.
     export [[nodiscard]] SourceBlocks bracketBlocks(const SourceLines&);
@@ -94,20 +94,20 @@ namespace ClaFi::Syntax
         std::size_t end);
 
     // What a line break typed at the start of `line` goes on to do: the line left trimmed and
-    // realigned, the line begun placed, a block split or closed. See Syntax#indent
+    // realigned, the line begun placed, a block split or closed.
     export [[nodiscard]] std::optional<IndentEdit> breakEdit(IndentLines&, std::size_t line,
         IndentUnit);
     // The line put at the column its first word decides, where that differs from its own.
     export [[nodiscard]] std::optional<IndentEdit> realignEdit(IndentLines&, std::size_t line,
         IndentUnit, std::size_t caret);
     // Every line from first to last holding more than blanks, moved to the next stop or back to
-    // the previous one. See Syntax#indent
+    // the previous one.
     export [[nodiscard]] std::optional<IndentEdit> shiftEdit(IndentLines&, std::size_t first,
         std::size_t last, bool back, IndentUnit, TextRange selection, bool caretOnLeft);
     // Every line from first to last placed where the language places it, top down.
     export [[nodiscard]] std::optional<IndentEdit> reindentEdit(IndentLines&, std::size_t first,
         std::size_t last, IndentUnit, TextRange selection, bool caretOnLeft);
-    // The lines of a paste moved as one block to where the language places it. See Syntax#indent
+    // The lines of a paste moved as one block to where the language places it.
     export [[nodiscard]] std::optional<IndentEdit> pasteEdit(IndentLines&, TextRange pasted,
         IndentUnit);
     // The blanks Backspace takes at a caret in a line's indent: back to the previous stop.

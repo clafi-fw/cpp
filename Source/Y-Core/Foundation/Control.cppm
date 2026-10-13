@@ -72,7 +72,7 @@ namespace ClaFi
     export template<typename T>
         concept IsControl = std::derived_from<T, Control>;
 
-    // How a search reads a child of a control. See Control-Foundation#searchresult
+    // How a search reads a child of a control.
     export enum class ChildSearch
     {
         Searched,   // read while it is shown
@@ -780,9 +780,9 @@ namespace ClaFi
         // Runs the click a key asked for, which names that key rather than whatever the pointer
         // last pressed on this form.
         void animatedClick(FormBase&, InputStamp);
-        // False when the popup the click asks for is refused. See Control-Foundation#droppopupevent
+        // False when the popup the click asks for is refused.
         [[nodiscard]] bool mayDropPopup(const ClickEvent&);
-        // False when an implicit drop is refused. See Control-Foundation#droppopupevent
+        // False when an implicit drop is refused.
         [[nodiscard]] bool mayDropPopupImplicitly(const ClickEvent&);
         // The control a popup opened from this one belongs to. See Control-Foundation#popup-owner
         [[nodiscard]] virtual Control& popupOwner() { return *this; }
@@ -927,7 +927,7 @@ namespace ClaFi
         // in: the strip of every holder between it and the scrolled body, stacked - see
         // heldHeaderStrip. A holder's own header stands in that strip rather than under it.
         [[nodiscard]] float heldStackStrip() const;
-        // How the box scrolling this control carries it. See Controls#scrollmetrics
+        // How the box scrolling this control carries it. See Controls#control-scrollmetrics
         [[nodiscard]] virtual ScrollMetrics scrollMetrics() const { return {}; }
         //
         [[nodiscard]] ControlMetrics designMetrics() const;
@@ -1112,8 +1112,7 @@ namespace ClaFi
         // yes - see PanelBase. Asked through isHostedAsBody() above rather than read directly,
         // so the answer stays with the host that owns the slot.
         virtual bool isChildBody(const Control&) const { return false; }
-        // Whether this child is a part of this control - a thumb, a check mark, a strip - so that
-        // a press on it is a press on this control. See UI-Types#interactivity
+        // Whether a press on that child is this control's press. See UI-Types#control-ischildpart
         virtual bool isChildPart(const Control&) const { return false; }
         // Whether this control decides that child's width rather than reading it off the child.
         // A container that lays its children across a lane or into a slot does - which is the
@@ -1270,7 +1269,7 @@ namespace ClaFi
         // which is the whole of what the framework needs to be the same for every control.
         virtual DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&);
         virtual const EditProps* editProps() const { return nullptr; }
-        // The texts the control shows, as a search reads them. See Control-Foundation#searchresult
+        // The texts the control shows, as a search reads them.
         virtual void searchTexts(const SearchTextVisitor&);
         // Shows a match a search made current in one of the control's texts.
         virtual void showFound(std::size_t part, TextRange);

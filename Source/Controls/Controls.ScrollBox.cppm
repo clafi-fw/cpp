@@ -74,7 +74,7 @@ namespace ClaFi::Controls
         void calculateChildren(FormBase&) override;
         void adjustChildMetrics(AdjustMetricsEvent&) const override;
         void bodySlotSettled(AlignEvent&) override;
-        // The slot and, below it, the room past the body's end. See Controls#scrollmetrics
+        // The slot and, below it, the room past the body's end.
         [[nodiscard]] ScaledDimensions bodyExtent() const override;
         void adjustChildViewport(AdjustViewportEvent& event) const override;
         void adjustChildClip(const Control& child, FloatRect& clip) const override;
@@ -101,13 +101,13 @@ namespace ClaFi::Controls
         // One place the three visibilities are settled together: the corner is the square the
         // two bars leave between them, so it belongs to whether **both** are up.
         void showBars(bool vVisible, bool hVisible);
-        // Whether Auto wants the vertical bar beside content this tall. See Controls
+        // Whether Auto wants the vertical bar beside content this tall. See Controls#auto
         [[nodiscard]] bool autoVerticalBarNeeded(const AlignEvent&, float contentHeight) const;
-        // Whether Auto wants the horizontal bar beside content this wide. See Controls
+        // Whether Auto wants the horizontal bar beside content this wide. See Controls#auto
         [[nodiscard]] bool autoHorizontalBarNeeded(const AlignEvent&, float contentWidth) const;
         // Stands the bars named and measures the content again beside them.
         [[nodiscard]] ScaledDimensions remeasureWithBars(AlignEvent&, bool vVisible, bool hVisible);
-        // Answers the vertical bar from the slot the body was laid out into. See Controls
+        // Answers the vertical bar from the slot the body was laid out into. See Controls#auto
         void settleAutoVerticalBar(AlignEvent&);
         void wheelScrolled(MouseWheelEvent&, ScrollBar&, float steps);
         void startOrStopAutoScrolling(SliderBase::ScrollButton& button, float current, float boundary);
@@ -139,7 +139,7 @@ namespace ClaFi::Controls
         // The width of the body's viewport **in design units**, taken with the scale that laid it
         // out - see adjustChildMetrics, the only reader, and bodySlotSettled, the only writer.
         float m_viewportWidthInDesign{};
-        // Whether the body stood past its slot the last time one was laid out. See Controls
+        // Whether the body stood past its slot the last time one was laid out. See Controls#auto
         std::optional<bool> m_bodyOverranSlot{};
         // The height the body measured. Laid out past the end, its height holds the room as well.
         float m_bodyMeasuredHeight{};
@@ -256,7 +256,7 @@ namespace ClaFi::Controls
                 result = remeasureWithBars(event, vNeeded, hNeeded);
                 // **A bar takes its strip from the other axis**, so what fitted beside no bar is
                 // read again beside the one that came up - and only for a bar to come up.
-                // See Controls
+                // See Controls#auto
                 vNeeded = vNeeded || autoVerticalBarNeeded(event, result.y);
                 hNeeded = hNeeded || autoHorizontalBarNeeded(event, result.x);
                 if (vNeeded != m_vScrollBar.visible() || hNeeded != m_bottomBar.visible())
@@ -801,7 +801,7 @@ namespace ClaFi::Controls
     }
 
     // **The slot a box inside another got** is the one fact its maximum cannot state: a window cut
-    // short by its placement lowers the root's ceiling and no one else's. See Controls
+    // short by its placement lowers the root's ceiling and no one else's. See Controls#auto
     void ScrollBox::settleAutoVerticalBar(AlignEvent& event)
     {
         if (m_scrollBars != ScrollBars::Auto)

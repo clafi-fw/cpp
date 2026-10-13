@@ -487,6 +487,8 @@ namespace SeeDocs_App
                 nameSpace = found->nameSpace;
                 continue;
             }
+            if (found->kind == TypeKind::Defined)
+                return std::wstring{ k_unknownKind };
             if (found->kind == TypeKind::Enum)
                 return std::wstring{ k_enumKind };
 

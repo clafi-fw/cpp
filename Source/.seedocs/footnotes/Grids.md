@@ -1,11 +1,10 @@
 # Grids
 
-The words that no longer fit above a declaration.
+The words that do not fit above a declaration.
 
-## Grid
+## Dt::Grid
 
-A grid that is described rather than assembled. The design is not a separate
-object applied to a grid - it is the grid's own argument list:
+**The design is the grid's argument list:**
 
     Dt::Grid& m_grid{ parent.add<Dt::Grid>(
         themeMetrics().page,
@@ -14,345 +13,255 @@ object applied to a grid - it is the grid's own argument list:
         Header{},
         Rows{ ... }) };
 
-Properties and nodes share one pack. Properties are forwarded to Rt::Grid and
-handled there exactly as they would be on a plain grid; the nodes are picked out
-by type and applied in the constructor body, once Rt::Grid and its descriptor
-are complete.
+The properties go to Rt::Grid and work as on a plain grid. The nodes are applied once it is
+complete - columns first, then the header, then the rows, wherever each is written. Rows keep their
+order.
 
-Column nodes are always applied before row nodes, whatever order they are
-written in, because cells resolve their columns by Tag. Row nodes keep their
-relative order.
-
-The node tree dies with the constructor and no bookkeeping outlives it. Columns
-carry their Tags and rows own their cell connections, so everything the design
-produced is reachable through the grid itself - columnByTag, forEachRow.
+**The node tree dies with the constructor.** Reach what it made through the grid - columnByTag,
+forEachRow.
 
 ## RowGroupSpan
 
-A RowContainer, so its cells hold controls the way any row's do. One control here
-stands beside every row of the group, which is what a choice belonging to the group as
-a whole looks like: the cell is stretched over them, so the control is theirs jointly.
-
-In a group that folds, the span is what opens and closes it, and what stays while it is
-closed - see Collapsible.
+Its cells stretch over every row of the group, so a control in one is the group's - a choice the
+whole group shares. In a group that folds, the span opens and closes it - see Collapsible.
 
 ## RowContainer
 
-A row whose cells hold controls. Every control a row holds is MouseOnly, so the row holds the
-focus for them and hands the control in the selected cell every key the grid does not move by,
-and what is typed. The grid keeps the arrows, Home, End, PageUp, PageDown and Tab - unless Alt is
-held, which makes the key the control's: Alt+Down drops a combo box's list. A press on one of
-the controls picks its cell before the control acts on anything - see Picking.
+**The row holds the focus for its controls**, which are all MouseOnly. The control in the
+selected cell takes what is typed, and every key the grid leaves:
 
-A key the control leaves goes on as it would have. Return and Space are the exception: they press
-the control, the way FocusNavigator presses a control that has the focus, so Return on a
-check box cell toggles it and on a combo box cell drops its list or opens its editor.
+- The grid keeps the arrows, Home, End, PageUp, PageDown and Tab. With Alt held they go to the
+  control - Alt+Down drops a combo box's list.
+- Return and Space press the control where it leaves them. A check box toggles, and a combo box
+  drops its list or opens its editor.
 
-A FitContent column takes its width from its cells, so a control standing in one is as wide as
-it measured and remembers no width to break its text at - `RowContainer::isChildWidthGiven`, and
-see Item-Containers for the guard. A Fixed or Fill column hands its width out. Without that a combo
-box sized its own column: a pixel short after a scale change, "No change" broke onto two lines
-and the column shrank to its longer word.
+### Picking
 
-## Picking
+**A mouse press on a control picks its cell first.** Then:
 
-A press on a control in a cell picks the cell first. A popup a click drops implicitly - the list a
-combo box drops from its main area, an in-place editor - drops only from a press on the cell that
-was already selected, and in a grid that keeps a selection, only while its row is held as well. A
-part whose one job is its popup, a dropdown strip, drops it from the picking press too. A check
-box or a button drops nothing, and acts on the picking press.
+- A check box or a button acts on the same press.
+- A popup the control drops implicitly - a combo box's list from its main area, an in-place
+  editor - waits for a press on the cell already selected. In a `SelectionMode::Multi` grid the
+  row must be held too.
+- A part whose one job is its popup, such as a dropdown strip, drops it from the picking press.
+- Ctrl or Shift in a `SelectionMode::Multi` grid make the press a selection change alone, and the
+  cell refuses every popup.
+- A key's click - Return or Space handed to the control - is always allowed its popup.
+- A double click on a cell not yet selected picks it and opens its editor.
 
-- Ctrl or Shift in a `SelectionMode::Multi` grid make the press `Select`, and the row refuses a
-  popup to everything in the cell, strip included.
-- A click the keyboard makes - Return or Space handed to the cell's control - is never refused a
-  popup. The device is read at the click, and a key reaches the control only through the selected
-  cell.
-- A double click on a cell that was not selected picks and opens in one gesture: the row refuses
-  the editor on the first click, and the second lands on the cell it picked. `WithInPlaceEdit`
-  counts the pair as two ordinary clicks when the editor was refused on its first click.
+The click reaches the grid as a click on the row.
 
-**The click reaches the grid as a click on the row.** `RowContainer::nestedClick` retargets it the
-way `nestedControlFocusing` retargets the focus. The grid's click pass completes a pick - a Ctrl
-toggle, a plain press on a row already held - and it can make only a row current: handed the
-control, it would read the click as landing on nothing and clear the selection.
+## RowContainer isChildWidthGiven
+
+**A Fixed or Fill column gives its control its width.** A FitContent column reads the width off
+the control, so the control keeps what it measured and has no outside width to wrap at - see
+Control::isWidthGivenFromOutside.
 
 ## Selection from code
 
-`GridBase::selectCell(row, column)` puts the selection where a pick would: the row becomes the
-current item - which in a `SelectionMode::Multi` grid replaces the held set with that one row, as a
-plain pick does - and the cell in that column becomes the selected one; a null column selects the
-row with no cell, the state a control stop leaves. The focus is not moved: a pick moves it, and a
-restore of a grid that is off screen must not. A caller that wants the keyboard there calls
-`setFocus` on the row afterwards, and puts any wider held set on after that with
-`StackView::setSelection` - a focus arriving on a row the set does not hold reads as a pick.
+`selectCell` puts the selection where a pick would - in a `SelectionMode::Multi` grid, on that row
+alone. A null column selects the row with no cell.
+
+**The focus stays where it is.** To move it there, call `setFocus` on the row, then
+`StackView::setSelection` for a wider held set - a focus arriving outside the set reads as a pick.
 
 ## RowStop
 
-Where a key lands on a row that holds no cell to land on. The control is what takes the
-focus - an expander's button, which opens and closes it. The rect is what the move is
-scored against, and is the header's rather than the button's: a button sits in one corner
-of its header, and a stop the eye reads as a whole row must be reachable from any column.
+`control` takes the focus - an expander's button. `rect` is what a key move is scored against. An
+expander gives its whole header, so the stop is met from any column.
 
 ## MovingText
 
-Whether a column's cells say something different from one paint to the next. A cell's
-text is shaped through the TextEngine's cache, which is addressed by what a text says: a
-value rewritten every paint misses on every paint, takes a fresh entry each time, and
-evicts the static layouts every window draws from. The cells of a Yes column are shaped
-into a layout of their own for the one paint or measurement and discarded with it, so
-the cache never sees them. Per column, because a column is what says where a cell's text
-comes from.
+**Set `Yes` where a cell's value changes on every paint.** The TextEngine caches layouts by what a
+text says, so such values miss every time and evict the layouts every window draws from. The cells
+of a `Yes` column bypass the cache.
 
 ## MaxLines
 
-How many lines a cell of a column shows at most; zero shows every line. A cell the limit cuts is
-as tall as its first lines and fades the last of them, and its row takes that height. The cell's
-hint repeats its lines past the cut, up to Hint::k_maxLines, and the in-place reader shows the
-whole value.
+A cut cell is as tall as its first lines and fades the last of them. Its hint repeats the lines
+past the cut, up to Hint::k_maxLines, and the in-place reader shows the whole value.
 
 ## GetCellHintEvent
 
-The hint for one cell, asked while the pointer rests on it. It goes to the pair
-GetCellTextEvent goes to - the row, then the grid - and a handler writes into text(),
-which is the hint's own buffer. The hint event underneath is reachable for its
-placement and anchor: the anchor arrives set to the cell's rect, and the placement to
-the pointer. A cell nobody wrote for falls back to repeating the words its column cut.
+Asked of the row, then the grid. Write the hint into text(). The anchor arrives as the cell's rect
+and the placement as the pointer - change them through hint(). A cell nobody writes for repeats
+the words its column cut.
 
 ## CellLinkClickEvent
 
-A link in one cell's text was clicked. A cell's text carries links the way any Text does -
-PushLink round the words - and a pointer click on one of them raises this on the row, then on
-the grid, the pair GetCellTextEvent goes to. It carries the target the link was written with
-and the click's stamp. The click is the link's alone: the press before it has already picked
-the cell, and the click goes no further up, so the grid's own click pass sees nothing.
-
-The link is found the way the cell is drawn: through the engine's layout cache for an ordinary
-column, off a layout of its own for a MovingText one, the point measured from where the
-column's vertical anchor put the block. The hand shows while the pointer stands on a link. A
-click a key made lands on nothing - it has no point.
+A cell's text carries links as any Text does - PushLink around the words. Only a mouse click
+reaches one. The click goes no further up, so the grid's own click handling never sees it.
 
 ## CellLinkContextPopupEvent
 
-The menu for a link in one cell's text is being asked for. A right click on a link raises it on
-the row, then on the grid, the pair CellLinkClickEvent goes to. A menu the keyboard raised on the
-row holding the selected cell takes the first link in that cell's text, since a key names a cell
-and no point in it; that menu drops under the selected cell rather than under the row. It carries
-the target the link was written with and the request itself. A handler that shows a menu stops
-the request - the grid is asked only while none has - and the request goes no further up. Where
-no handler does, it goes on up as from a click anywhere else on the row.
+Raised from the keyboard, it is about the first link in the selected cell, and the menu drops under
+that cell.
 
-## Column
+**A handler that shows a menu stops `popup`**, and the request goes no further up. Left unstopped,
+it goes to the grid, then on up as from anywhere else on the row.
 
-Column{ Tag{ ColumnTag::Hue }, Text{ L"Hue" }, Column{ ... }, Column{ ... } }
+## Dt::Column
 
-Props are forwarded verbatim to ColumnCollection::add(), so everything that
-works there today (Tag, Text, ShowInHeader, ColumnWidthMode, widths, TextAlign,
-TextFormat) works here unchanged. Nested Column nodes become sub-columns.
+    Column{ Tag{ ColumnTag::Hue }, Text{ L"Hue" }, Column{ ... }, Column{ ... } }
 
-A column's cells are laid out over its TextFormat, with its TextAlign ahead of it - so a
-cell's writer states the value and not the look every cell of the column shares, and an
-alignment the format states stands over the TextAlign. The header takes the alignment
-alone: it names the column and holds none of its values. The format reaches a cell's hint
-and its in-place editor the way it reaches the paint, and none of it is written into the
-cell's text - see Control-Foundation#text-format.
+Properties go to ColumnCollection::add() as written. A nested Column is a sub-column.
 
-The Tag is read but not consumed: the design uses it to resolve cells and to
-check uniqueness, and add() receives it like any other property.
+**Cells find their column by Tag**, so two columns may never share one - debug builds check. A
+column with no Tag takes no cells from the design.
 
-## Columns
+## Column cellTextFormat
 
-Columns{ ... } - an anonymous group. Its children are spliced into the
-enclosing collection, so it adds nesting in the source without adding a
-level to the grid.
+**The column's TextAlign comes first, then its TextFormat**, so an alignment the format states
+wins. The format reaches the cell's paint, hint and in-place editor. The cell's text holds the
+value alone - see TextFormat.
 
-## Cell
+## Dt::Cell
 
-Cell{ tag }                          - row fills this column, text via the grid event
-Cell{ tag, [](GetCellTextEvent&){} }  - row fills this column, text from the lambda
-Cell{ tag, this, &Page::method }      - the same, bound member function
+Where the text comes from:
+
+- `Cell{ tag }` - the grid's OnGetCellText.
+- `Cell{ tag, [](GetCellTextEvent&){} }` - the lambda, then the grid's OnGetCellText unless the
+  lambda stops the event.
+- `Cell{ tag, this, &Page::method }` - the member function, as the lambda.
 
 ## CellSet
 
-CellSet{ ... } - a reusable bundle of cells. Declare once as a const
-object and reference it from every row that shares it.
+**Declare it once as a const object**, and list it among the cells of every Row that shares it.
 
-## Row
+## Dt::Row
 
-Row{ ...props..., Cell{ ... }, CellWith<T>{ ... }, someCellSet }
+    Row{ ...props..., Cell{ ... }, CellWith<T>{ ... }, someCellSet }
 
-Props are forwarded to GridBase::add<Rt::RowContainer>(), so Tag and any
-other row property still applies. The row is an ordinary RowContainer: the
-design contributes no row type of its own.
+Properties go to GridBase::add<Rt::RowContainer>().
 
 ## Expander
 
-Expander{ Header{ Text{ ... } }, ...rows... }
+    Expander{ Header{ Text{ ... } }, ...rows... }
 
-An expander's header is one text control, so its Header takes text and nothing
-else. A cell there is a mistake with its own message.
-
-Init<Rt::RowExpander>{ ... } and OnEvent{ ... } run against the expander once its header
-is written, before its rows are applied.
+The Header takes a Text alone - a cell there fails to compile. Init<Rt::RowExpander> and OnEvent
+run once the header is written, before the rows.
 
 ## Group
 
-Group{ Span{ Tag{ ... }, Cell{ ... }, CellWith<T>{ ... } }, ...rows... }
+    Group{ Collapsible::Expanded, Span{ Tag{ ... }, Cell{ ... }, CellWith<T>{ ... } }, ...rows... }
 
-A group's span is a row, sectioned by the same columns as every other row, so its
-Span takes a Tag, cells and controls, and they are applied exactly as a Row's are.
-The span's cell is stretched over the rows beside it, so a control there is the one
-the whole group answers to - a per-group choice goes here rather than in every row.
+**The Span is a row**, and takes a Tag, cells and controls as a Row does - see RowGroupSpan.
+Collapsible::Expanded or Collapsed folds the rows under it.
 
-Group{ Collapsible::Expanded, Span{ ... }, ...rows... } folds its rows away under the
-span - see Collapsible.
-
-Init<Rt::RowGroup>{ ... } and OnEvent{ ... } run against the group once its span is
-described, before its rows are applied. The folding is the span's to report, so an Init
-that follows it connects to group.span().
+Init<Rt::RowGroup> and OnEvent run once the span is described, before the rows. The span reports
+the folding, so an Init that follows it connects to group.span().
 
 ## NewItem
 
-NewItem{ PlaceHolderText{ ... } }
+    NewItem{ PlaceHolderText{ ... } }
 
-The design's new-item row - see RowNewItem. It stands last wherever it is written among
-the rows, and the text is what its one cell says.
+It adds a RowNewItem, whose one cell says the text.
 
 ## Collapsible
 
-Whether a group's rows fold away under its span, and whether the group starts open.
-Collapsible::No, the default, is a group that stays open. The span holds the open state -
-expanded(), setExpanded(), toggleExpanded() - and emits ToggleExpandedEvent, the event an
-expander's header emits, so a host answers both the same way. RowGroup answers it by
-showing and hiding its body.
+- `No`, the default - the group stays open.
+- `Expanded` - the rows fold away, and the group starts open.
+- `Collapsed` - the rows fold away, and the group starts closed.
 
-**The mark leads the span's first cell**, the first column the span fills, left to right. It
-is an ExpanderButton the size of a check mark, standing where the column puts a line of
-text, and the cell's content starts after it. RowBase::cellLead is where a row keeps that
-room, and everything that finds a cell's content box reads it: calculateCell, paintCell,
-the hint, the in-place editor and the box a hosted control is given.
+**The span holds the open state** - expanded(), setExpanded(), toggleExpanded() - and emits
+ToggleExpandedEvent as an expander's header does. Its mark, an ExpanderButton, leads the first
+cell it fills.
 
-**A closed group is its span alone**, with a blank in every leaf column no span fills - this
-span, in the leaf or in a column above it, or the span of any group this one stands in,
-whose cells stretch over it. A column nothing fills has no width and gets no blank. Rows
-that fill different columns fold into the same closed row, so a column none of them fill
-shows a blank while the group is closed and a gap while it is open.
+**A closed group is its span alone.** Each leaf column no span fills - this group's or an outer
+one's, at that leaf or above it - shows a blank. A blank stands for the span's nearest cell:
 
-**A blank is the cell's surface and lines and nothing else** - see RowBase::hasBlank. The
-walk reports it so that the lattice closes, and everything that addresses a cell steps
-over it: no text is asked for it, no editor opens on it, and no key or click lands there.
+- Up and Down land on that cell whatever column they follow.
+- A mouse press on a blank selects that cell, and a double click there opens the group.
 
-**A closed group is met in every column.** Its row reads whole, so each blank stands for the
-cell of the row nearest to it, and that cell's lane is its rect widened over the blanks it
-stands for - see RowBase::traverseLanes. Up and Down stop on the group whichever column the
-run follows and land on that cell, keeping the column for the next press. A press on a blank
-selects the same cell, and a double click there opens the group.
+**The keys are a tree node's.** On the mark's cell Right opens and Left closes. Every other key
+moves the selection as anywhere in the grid. A double click on the mark toggles twice.
 
-**The keys are a tree node's.** On the mark's cell Right opens a closed group and Left closes
-an open one. Every other press moves the selection as it moves anywhere in the grid, so
-Right from an open group's mark steps into its rows, where a tree node's Right goes too.
-The mark is MouseOnly like every control a row holds, so the row keeps the focus, and a
-double click on it toggles twice, as a double click on an expander's button does.
+## RowBase cellLead
+
+The measure, the paint, the hint, the in-place editor and a hosted control all leave this room at
+the cell's start. A group's span keeps its mark there.
+
+## RowBase hasBlank
+
+**A blank is a cell's surface and lines alone.** The cell walk reports it so the lattice closes,
+and everything that addresses a cell steps over it - text, editors, keys and mouse clicks.
+
+## RowBase traverseLanes
+
+A cell's lane is its rect, widened over the blanks it stands for - each blank goes to the cell
+nearest it across the row. The blanks themselves are left out.
 
 ## SubGrid
 
-**The body of a group or a section.** A grid only in that it holds rows: it stands inside the
-grid whose columns its rows fill, and shares that grid's descriptor.
+A grid only in that it holds rows. It shares the descriptor of the grid it is in.
 
 ## RowGroupBase
 
-**A row holding a grid of rows**, under an expander's header or beside a group's span. A span
-and the rows fill disjoint sets of columns, so the two are laid over each other rather than
-stacked and the span's cells merge down the whole group - see RowGroup::alignContent. A
-closed group is left stacked, its body hidden - see Collapsible.
+It holds a head, and a body that is a SubGrid of rows. Closed, it shows its head alone. An
+expander's header stacks above the body. A group's span lies over it, on different columns, so the
+span's cells run down the whole group.
 
-It holds no cells of its own, so it **paints nothing** - see RowBase::paintSurface. Its surface
-is still the group's colour: the span and the rows of the body inherit it, add only what
-they have of their own, and each paints it through its own cells, so a row that also holds
-the selected cell applies the rule over it a second time. This is why the group is in
-effect whenever any row inside it is - see RowBase::getControlState, which answers that for
-every row alike.
+**It paints nothing.** Its colour shows through the cells of the rows inside it, so a group is
+selected whenever one of them holds the selected cell - see UiElement::GridRow.
 
 ## RowExpander
 
-Its header is held against the top of the view while the rows of its body are scrolled
-under it, resting under the grid's own header and under the header of any expander this
-one stands in - see WithHeldHeader.
+Its header rests under the grid's header and any outer expander's - see WithHeldHeader. It is
+never selected, so the selected rule stops at the rows inside it.
 
 ## RowNewItem
 
-The row a grid keeps after its last one - GridBase::addNewItemRow, or NewItem{ ... } in a
-design. A row added later is put ahead of it, so it stays last whatever order the rows
-arrive in. A grid holds one.
+Add it with GridBase::addNewItemRow, or NewItem in a design. A grid holds one, and rows added later
+go ahead of it.
 
-Its one cell is the root column's, which spans every other, so it is drawn, hovered,
-selected and reached by the keys the way any cell is. It says the text it was given, muted
-and led by a plus. The root column opens no editor, so Return and Space go on to the focus
-navigator, which presses the row: a key and the pointer make the same click.
+**A click on its cell raises NewItemEvent** - a mouse click, or Return or Space. The cell spans
+every column and behaves as any cell, showing the text muted after a plus.
 
-The click raises NewItemEvent on the grid. The row itself never joins the selection: it is
-a command rather than an item, and a selection holding it would hand it to whatever acts on
-the selection - Delete among them.
-
-The click ends at the row. Passed on, it would reach the grid's own click, which makes the
-pressed row the current item - over the row requestNewItem has just given the focus.
+**It is a command, not an item**, so the selection never holds it - Delete and the like pass it by.
 
 ## NewItemEvent
 
-Raised on the grid when its new-item row is pressed, and by GridBase::requestNewItem. The
-handler adds the item's row, which the grid puts ahead of the new-item row. The grid then
-selects that row's leading cell and brings the row into view once it has been laid out. A
-handler that adds nothing leaves the selection where it was.
+The handler adds the item's row. The grid then selects that row's leading cell, focuses the row
+and scrolls it into view. A handler that adds nothing leaves the selection where it is.
 
 ## GridRow
 
-**The element every row of a grid wears**, a group and a section among them -
-RowBase::adjustPaint puts it on each. A row paints no rect of its own: its cells are filled
-from its surface, so every rule in its list reaches the screen through them.
+**Every row of a grid wears it**, groups and sections included. Each part draws its lines in its
+own element's stroke:
 
-The rows inside a group or a section inherit its colour and paint it for it, so a row's rules
-are applied once per level of nesting: a row inside a group applies its own over the group's.
-Selected stops short of a section, which declines the selection - see RowExpander. Hovered
-and Pressed reach only the rows: a group and a section are not interactive, and a control
-that is not reads as neither - see Control::visualState.
+- GridRow - the lines between a row's cells, raised off each cell's surface
+- GridHeader - the column header and its lines
+- SectionHeader - a section's header and the line under it
+- Divider - a divider and the line it closes with
+- Grid - the grid itself, and the frame around it
 
-The column header wears GridHeader, a section's header wears SectionHeader, and a divider
-wears Divider.
+**A row paints through its cells**, with no rect of its own. The rows inside a group or a section
+paint its colour for it, so rules apply once per level of nesting. Selected stops short of a
+section, and Hovered and Pressed reach the rows alone.
 
-Each draws its lines with its own stroke. A row's Stroke is the lines between its cells, and
-PaintEvent::strokeRgbOn raises it off each cell's own surface, which is the row's. The header
-row's lines are GridHeader's stroke, the line under a section's header is SectionHeader's, and
-the line a divider closes with is Divider's. A stroke that reaches nothing is transparent, and
-the gap left for the line stays open. The frame around the grid is Grid's own stroke and none of
-these.
+A stroke that reaches nothing is transparent, and the line's gap stays open.
 
 ## RowCell
 
-One cell of one row, as the cell walk reports it: the column it belongs to, the rect it
-fills measured from the origin the walk was given, the vertical section it sits in,
-whether it stands at the row's leading edge, and whether it is a blank - see Collapsible.
-Everything the walk knows and no more - a property of the row as a whole, such as whether
-the row is the first of the grid, is the consumer's to carry.
+- `rect` - what the cell fills, measured from the origin passed to the walk.
+- `sectionIndex` - the vertical section it sits in.
+- `isFirstColumn` - whether it is at the row's leading edge.
 
 ## GridLines
 
-Which of a grid's inner lines are drawn - the lines its cells and its dividers put between
-one another. The frame around the grid is not one of them: it is the grid's own border, and
-it stands whatever this says.
+The inner lines are those cells and dividers draw between one another. The frame around the grid
+and the header row's lines are drawn whatever this says.
 
 ## AcceptCellTextEvent
 
-The text an in-place edit was left with, on its way back to whatever supplies the cell.
-It goes to the same pair GetCellTextEvent does - the row, then the grid - so a handler
-that answers for a cell's text has one place to take the new one.
+It goes to the row, then the grid, as GetCellTextEvent does - so whatever supplies the text takes
+the new one.
 
-The text is const: the value in it is what the user typed, and this asks whether the
-cell's source will have it. A handler that will not calls refuse() and says why - the
-editor is still up, so the user is told and gets to correct it rather than losing the
-edit to a write that went nowhere.
+**To turn the text down, call refuse(why).** The editor stays open, so the user reads the reason
+and corrects the edit.
 
 ## CellWith
 
     CellWith<ComboBox>{ tag, ...ctor args..., OnEvent{ ... }, Init<ComboBox>{ ... } }
 
-Adds a live control to the cell through RowContainer::addControl. The arguments are copied into
-the node, so anything expensive or shared is wrapped in std::ref.
+The arguments are held by value - wrap anything expensive or shared in std::ref.

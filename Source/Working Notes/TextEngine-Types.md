@@ -33,6 +33,9 @@ The layout is handed it beside the text, and BakedText::rebuild reads it ahead o
 marker - so a control's own text stays named in the gather and recognised by its stamp, and nothing
 the text says is copied to put the format in front of it.
 
+The layout compares the format it is stated next against the copy it keeps. The engine's cache keys
+on the format's hash beside the text's, and confirms a hit against the entry's copy.
+
 ## Step names
 
 A run's name is written when the list asks, from the text the run holds by then, so a word typed
@@ -49,6 +52,18 @@ covered past a fifth; on Direct2D the glyphs of a hovered link are rasterized in
 the purpose. It is asked on every paint while a link is hovered and kept nowhere. On Linux a raised
 or lowered run inside a link is measured where its line places it, since a layout is told about
 scripts only when it draws.
+
+Two links that meet and name one target are joined into one span by BakedText, and the markers
+are left as they stand: a later undo is recorded against them, and a pair taken out would put a
+word back into the wrong link. The ink is k_linkInk in TextEngine.BakedText, and goes into the
+theme with the other text inks.
+
+## Anchors
+
+**A run rather than a point**, so it rides the pair machinery every other run does: an edit
+inside it moves its end, a deletion of the whole of it takes the pair out in the cleanup, and an
+undo puts it back where it stood, as it does for a link. A point would need rules of its own for
+all three.
 
 ## MonoFont
 
@@ -67,6 +82,14 @@ lineFadeSpan answers for the row's overrun.
 
 The fonts live in one table for the application, found by family, size, weight and style;
 a request is resolved once, negative answers included.
+
+## Mono paragraph
+
+What it buys is the shaping: a document of source is one pass over its characters instead of a
+native layout per paragraph, and its footprint is a paragraph record per line. The pixels are the
+ones the native layout would draw - DirectWrite's natural measuring mode places a monospace run at
+column times advance already, the tab stops are the same, and the glyphs reach the same draw
+primitive.
 
 ## Paragraph placement
 
@@ -90,6 +113,11 @@ link's underline is cut around - adds paragraphOffset. A collapse line a layout 
 leading edge is moved by the draw's origin, since the layout moves no line left of where it put it.
 
 ## Layout cache
+
+TextEngine::select holds one TextLayout per text per width it was broken at, keyed on what the
+text says - see LayoutKey - and confirmed against the copy the entry keeps. A measurement and
+the paint after it ask for the same entry: the paint's box is the measured size, which
+acceptsWidth takes for the width the lines were broken at.
 
 **What the pass asked for is kept.** Every entry is stamped with the pass it was last asked for in,
 and FormBase::reAlign starts a pass through beginPass. A sweep drops only the entries no pass

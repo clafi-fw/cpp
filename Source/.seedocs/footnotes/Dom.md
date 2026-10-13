@@ -1,41 +1,37 @@
 # Dom
 
-The words that no longer fit above a declaration.
+The words that do not fit above a declaration.
 
 ## ScalarSerializer<Color>
 
-**A colour as ClaFi writes it for ClaFi to read back**: `#` and the red, green and blue bytes as six
-hex digits for an opaque colour, with the alpha byte following as two more for any other. Upper
-case is written and either case is read. The reader takes the two forms the writer produces and
-nothing else - no bare digits, no short forms - and a string it cannot read leaves the colour as
-it was, the way an unreadable number leaves an int.
+- `#RRGGBB` - an opaque colour.
+- `#RRGGBBAA` - any other colour, alpha last.
 
-It is the one spelling a colour has between ClaFi consumers: a `color #...` tag in Fmt and in a
-document's markers, and a Color handed to Fmt's `{}`. How a user wants to see a colour, and what
-a copy gives another application, is a presenter's choice - see Controls#colorspelling.
+Upper case is written and either case is read. Any other string leaves the colour as it was.
+
+**This is the spelling between ClaFi consumers** - a `color #...` tag, in Fmt or in a document's
+markers, and a Color handed to Fmt's `{}`. How a user sees or copies a colour is a presenter's
+choice - see ColorSpelling.
 
 ## WriteDefaults
 
-Whether a saved document repeats what its layout already says. A document that states only
-what it changes reads back the same, since a key the file leaves out keeps whatever the
-layout built the tree with.
+**Set to No, a saved document holds only what differs from its layout.** It reads back the same,
+since a key the file leaves out keeps the layout's value.
 
-## Section
+## Dt::Section
 
-Section{ L"key", ...children..., OnEvent{ ... } }
+    Section{ L"key", ...children..., OnEvent{ ... } }
 
-A Section with no key is a grouping in the source only. Its children land
-in the enclosing section and its handlers connect to it, so a helper can
-return a bundle of nodes without adding a level to the document.
+**A Section with no key is a grouping in the source only.** Its children and handlers go to the
+enclosing section, so a helper can return a bundle of nodes without adding a level.
 
 ## Value
 
     Value{ L"key", defaultValue, OnEvent{ ... }, OnEvent{ ... } }
 
-Any number of handlers, each naming its own event.
+A handler can also be a bare lambda. Its parameter names the event.
 
 ## Iterators
 
-A Sequence's iterators are plain random-access iterators over the existing child nodes -
-dereferencing calls operator[], the same zero-copy path. Nothing here ever constructs or clones
-an item value; a range-for over a Sequence<Section> visits the live child Sections directly.
+**A range-for visits the live child nodes** - over a Sequence<Section>, the child Sections
+themselves. Dereferencing goes through operator[], so no item value is built or cloned.

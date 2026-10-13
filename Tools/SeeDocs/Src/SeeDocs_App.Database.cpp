@@ -928,6 +928,8 @@ namespace SeeDocs_App
             case TypeKind::Enum:
                 return L"enum";
             case TypeKind::Alias:
+                return L"alias";
+            case TypeKind::Defined:
                 return L"type";
             case TypeKind::Concept:
                 return L"concept";
@@ -998,7 +1000,8 @@ namespace SeeDocs_App
     std::optional<TypeKind> typeKindOf(const std::wstring_view word)
     {
         for (const TypeKind kind : { TypeKind::Class, TypeKind::Struct, TypeKind::Union,
-            TypeKind::Enum, TypeKind::Alias, TypeKind::Concept, TypeKind::Interface })
+            TypeKind::Enum, TypeKind::Alias, TypeKind::Defined, TypeKind::Concept,
+            TypeKind::Interface })
         {
             if (kindWord(kind) == word)
                 return kind;

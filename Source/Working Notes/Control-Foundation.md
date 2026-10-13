@@ -21,7 +21,7 @@ destructor stops them too, but by the time it runs getForm is Control's, which w
 - and a root has none - so an animation the root left running would tick on into freed memory.
 Here getForm still answers m_form, and the stop reaches the controller.
 
-## Control::animate
+## Control animate
 
 **A control going down stops what it was running**, and where it does so depends on whether it can
 still find its form. One destroyed in place - deleteControl erases it attached - stops from its
@@ -68,11 +68,32 @@ control is being destroyed - are static and reach it through s_current.
 
 Bounded by the screen alone, a long sentence ran out as one line from the pointer to the edge.
 
+**Each controller is heard alone.** The hover moves under a still pointer - a window appears under
+it, a hit-test follows a scroll - and a click lands the focus with the pointer's hint already
+standing for it, so neither is taken for the other. A list going down hands the focus back to the
+box it was dropped from, which held it all along: that is no landing, and a hint that went down with
+the list stays down.
+
+## FormBase::windowFocusedFactor
+
+The platform reports the change through `wnd_focusChanged`: `WM_SETFOCUS` and `WM_KILLFOCUS` on
+Win32, the **activated** state of a toplevel configure on Wayland. A Menu or Hint window never has
+the focus to report - `WS_EX_NOACTIVATE` on Win32, and an `xdg_popup` has no **activated** state -
+which is why `windowFocusedFactor` answers a popup's owner's factor instead.
+
 ## InputController
 
 The fades run on the application's animator, reached through the AppContext the form reporting
 the input hands in, so Input owns nothing that has to be released. Each fade is keyed on no
 control, so its slot is what tells it from the other one.
+
+The first move a form hears since the pointer came in only hit-tests and turns nothing on: Win32
+sends a window that appears under a still pointer a move, and a Wayland enter arrives as one.
+
+## AppActions
+
+The framework's own commands are declared above Core, in ClaFi.StdActions, because an action
+carries an icon and Icons sits above Core.
 
 ## appMenuAction
 
@@ -99,3 +120,19 @@ the larger of the granted and the measured width on a fill axis. The screenshots
 `ButtonBase::calculateContent` was the one place the mark and the icon were added.
 `SplitButtonBase::alignContent` guarded its part against the same loss with the larger of the
 answer and the offered box; the guard stands, since `contentAroundText` leaves the part out.
+
+## Edge reach
+
+**A pointer pushed against a maximized window's edge meets what stands k_edgeReach in** - eight
+design pixels. FormBase::searchPoint moves a point that close to the edge to that depth before
+the search, so a press against the top lands on a tab on the title and one in the corner on the
+close button, rather than on the root's border ring or the band above the tabs.
+
+The geometry is what the screen shows on both platforms - Win32 takes the overhang off it, see
+WindowFrame in Context - so the pointer reaches the edge row on both, and the search is what
+puts it inside the controls. What a maximized window gives up is the band itself: the strip
+above a title's tabs answers as the tab, so it no longer drags the window.
+
+A point outside the window is left alone. A drag carried past the edge keeps the coordinates it
+has, and the positions handed to a drag are the pointer's own - only what the pointer meets is
+moved.

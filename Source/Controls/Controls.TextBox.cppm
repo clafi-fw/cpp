@@ -64,7 +64,7 @@ namespace ClaFi::Controls
         InputStamp stamp;      // the press that followed the link
     };
 
-    // The hint of the link under the pointer is being asked for. See Controls#link-hints
+    // The hint of the link under the pointer is being asked for. See Controls
     export struct GetLinkHintEvent : public EventOf<TextBox>
     {
         GetLinkHintEvent(TextBox&, std::wstring_view target, TextRange range, GetHintEvent&);
@@ -100,7 +100,7 @@ namespace ClaFi::Controls
         DECLARE_EVENT(TextEditEvent, OnTextEdit, onTextEdit)
         // A link in the box's text was followed. See Controls
         DECLARE_EVENT(LinkClickEvent, OnLinkClick, onLinkClick)
-        // The hint of the link under the pointer is being asked for. See Controls#link-hints
+        // The hint of the link under the pointer is being asked for. See Controls
         DECLARE_EVENT(GetLinkHintEvent, OnGetLinkHint, onGetLinkHint)
         // The menu for a link under the pointer is being asked for. See Controls
         DECLARE_EVENT(LinkContextPopupEvent, OnLinkContextPopup, onLinkContextPopup)
@@ -149,12 +149,9 @@ namespace ClaFi::Controls
         [[nodiscard]] bool canUndo() const { return undoDepth() != 0; }
         [[nodiscard]] bool canRedo() const { return redoDepth() != 0; }
 
-        // Selects the text of the anchor of that name and brings its line to the top of the view,
-        // remembering where the box stood. Answers false, and moves nothing, where the text holds
-        // no such anchor. See Controls#anchors
+        // Selects the text of the anchor of that name and brings its line to the top of the view.
         bool goToAnchor(std::wstring_view name);
-        // Back to where the box stood before the last jump, and forward again - Alt+Left and
-        // Alt+Right. See Controls#anchors
+        // Back to where the box stood before the last jump, forward again - Alt+Left and Alt+Right.
         void goBack();
         void goForward();
         [[nodiscard]] bool canGoBack() const { return !m_backPlaces.empty(); }
@@ -164,7 +161,7 @@ namespace ClaFi::Controls
         [[nodiscard]] ScrollMetrics scrollMetrics() const override;
     protected:
         const EditProps* editProps() const override { return &m_editProps; }
-        // Selects the match and brings it into view. See Controls#search
+        // Selects the match and brings it into view. See Control-Foundation#searchresult-step
         void showFound(std::size_t part, TextRange) override;
         // The hand over a link the box follows, and the I-beam over the rest of the text. A box
         // that takes no input takes no caret either, so the arrow is the honest answer while it
@@ -200,8 +197,7 @@ namespace ClaFi::Controls
         // Mouse events
         void mouseMove(MouseMoveEvent&) override;
         void hoverLeave() override;
-        // The hint of the link under the pointer, where there is one, and the box's own
-        // otherwise. See Controls#link-hints
+        // The hint of the link under the pointer, where there is one, and the box's own otherwise.
         void nestedGetHint(GetHintEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         // Follows a link when the press and the release stayed on it and nothing was selected
@@ -302,7 +298,7 @@ namespace ClaFi::Controls
         void hoverLink(TextRange);
         // Records the link the pointer stands on, and has the hint asked again when it changed.
         void pointAtLink(const std::optional<LinkHit>&);
-        // What a link's hint says when no handler says it. See Controls#link-hints
+        // What a link's hint says when no handler says it. See Controls#getlinkhintevent
         void writeLinkHint(GetHintEvent&) const;
         // The line of the pointed link the pointer is on, in form coordinates.
         [[nodiscard]] FloatRect pointedLinkLine() const;
@@ -337,8 +333,7 @@ namespace ClaFi::Controls
         // it may stand anywhere among these members.
         TextHistory m_history;
         UiTimer m_caretTimer;
-        // Where the box stood before each jump, newest last, and where it stood after each step
-        // back. See Controls#anchors
+        // Where the box stood before each jump, newest last, and after each step back.
         Places m_backPlaces;
         Places m_forwardPlaces;
         PointedLink m_pointedLink;

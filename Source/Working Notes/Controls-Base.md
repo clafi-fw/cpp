@@ -18,9 +18,7 @@ way, on one theme called "New Theme (10)".
 Measured at the whole box, a caption one word longer than its room comes out a line short, and the
 paint collapses the last line onto the one above.
 
-## PanelBase
-
-### bodySlotSettled
+## PanelBase bodySlotSettled
 
 `ScrollBox` is the reason it exists. It states the viewport as a wrapping body's maximum, and it
 used to write that width after `PanelBase::alignContent` returned - after the body had been laid
@@ -35,7 +33,7 @@ lays it out. So the width reaches a filling body at once and a non-filling one o
 Maximizing with the body aligned Left was where that showed: rows still broken at the width the
 small window had, with the rest of the screen empty beside them.
 
-### createSplitter
+## PanelBase createSplitter
 
 The split is the panel's and never the bar's. A drag writing the bar's `MinSize` or
 `PreferredSize` would overwrite what the caller built it with, and nothing could say afterwards
@@ -77,3 +75,8 @@ value it stated, because `barExtent` would still read the box of the pass before
 SeeDocs keeps the width per tab, in the tab's own file beside the open nodes (`TreeWidth`, zero
 for a bar never resized): `showPage` states it or clears it as the tab's tree comes up, and the
 `OnBarResize` handler writes it under the shown page's tab.
+
+## MessageBoxBase
+
+The three bars are full bleed because a strip inset further than the window's border reads as a
+card floating on the window rather than as a band of it.

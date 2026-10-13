@@ -8,7 +8,7 @@ import ClaFi.Core.System.InkWell;
 
 namespace ClaFi
 {
-    // An icon being painted, from a control's paint or from a text run. See Context
+    // An icon being painted, from a control's paint or from a text run.
     export class PaintIconEvent : public ControlEventBase
     {
     public:

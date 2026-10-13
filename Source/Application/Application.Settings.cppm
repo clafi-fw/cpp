@@ -29,7 +29,7 @@ namespace ClaFi
     export class OptionsPage : public Stack
     {
     public:
-        // A caption and the column of options it heads, as one control. See Application
+        // A caption and the column of options it heads, as one control.
         using Section = ExpanderWith<Stack>;
     public:
         explicit OptionsPage(const CreateParams&);
@@ -38,7 +38,7 @@ namespace ClaFi
         // A caption with a column of options under it, added down the page.
         [[nodiscard]] Stack& addGroup(std::wstring_view caption)
             { return addSection(caption).body(); }
-        // The same, as the whole section - for a page that shows or hides one. See Application
+        // The same, as the whole section - for a page that shows or hides one.
         [[nodiscard]] Section& addSection(std::wstring_view caption);
     };
 
@@ -76,12 +76,9 @@ namespace ClaFi
             RowCaption(const CreateParams&, std::wstring_view caption);
         };
     private:
-        // Asks, and makes the folder where the answer allows it. See Application
-        void allowStorage();
-        // Asks, and takes the folder away where the answer allows it. See Application
-        void withdrawStorage();
-        // Writes the percent the application is drawn at into the readout. See Application
-        void writeScaleReadout();
+        void allowStorage(); // asks, and makes the folder where the answer allows it
+        void withdrawStorage(); // asks, and takes the folder away where the answer allows it
+        void writeScaleReadout(); // writes the percent the application is drawn at into the readout
 #if CLAFI_TEXT_MOVING
         // Writes the Z animation amount the application moves at into the readout.
         void writeZAnimationReadout();
@@ -137,7 +134,7 @@ namespace ClaFi
         AppPageBuilder build;
     };
 
-    // The pages applications have asked for, in the order they asked. See Application
+    // The pages applications have asked for, in the order they asked.
     export [[nodiscard]] const std::vector<AppPage>& appPages();
 
     // Adds a page of the application's own beside Settings, once per application. See Application

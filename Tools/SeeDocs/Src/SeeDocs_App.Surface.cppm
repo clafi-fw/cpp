@@ -187,6 +187,7 @@ namespace SeeDocs_App
         Union,
         Enum,
         Alias,
+        Defined,    // a Delphi type its declaration builds - a set, an array, a procedure type
         Concept,
         Interface   // a Delphi interface
     };

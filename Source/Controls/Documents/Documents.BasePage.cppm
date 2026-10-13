@@ -21,7 +21,7 @@ namespace ClaFi::Documents
 {
     using namespace Controls;
 
-    // A page of a documents browser: a tool bar, and the browser's questions. See Documents#pages
+    // A page of a documents browser: a tool bar, and the browser's questions. See Documents
     export class DocumentsBasePage : public Browser::BrowserPage
     {
     public:

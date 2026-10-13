@@ -98,10 +98,10 @@ namespace ClaFi::Controls
     protected:
         ScaledDimensions calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
-        // A row reads its items' widths off them, unless one fills the lane. See Item-Containers
+        // A row reads its items' widths off them, unless one fills the lane.
         [[nodiscard]] bool isChildWidthGiven(const Control& child) const override
             { return !lanesRunAcross() || child.fillsLane(); }
-        // A column reads its items' heights off them unless one fills the lane. See Item-Containers
+        // A column reads its items' heights off them unless one fills the lane.
         [[nodiscard]] bool isChildHeightGiven(const Control& child) const override
             { return lanesRunAcross() || child.fillsLane(); }
         NavigationWrap navigationWrap() const override;
@@ -137,7 +137,7 @@ namespace ClaFi::Controls
             std::size_t takers;
         };
     private:
-        // **Every wrapping stack, both ways round.** See Item-Containers
+        // **Every wrapping stack, both ways round.**
         void alignIntoLanes(AlignEvent&, ScaledPosition, ScaledDimensions& contentDimensions);
         // The lane beginning at begin: as many items as the lane takes, as many as fit the length
         // it is given, and never fewer than one.
@@ -159,7 +159,7 @@ namespace ClaFi::Controls
             return m_orientation == Orientation::HorizontalWrap
                 || m_orientation == Orientation::Horizontal;
         }
-        // Whether this stack was told to fill the way its lanes run. See Item-Containers
+        // Whether this stack was told to fill the way its lanes run.
         [[nodiscard]] bool fillsMain() const
         {
             return lanesRunAcross()
@@ -178,12 +178,12 @@ namespace ClaFi::Controls
             { return lanesRunAcross() ? value.y : value.x; }
         [[nodiscard]] FloatPoint lanePoint(float main, float cross) const
             { return lanesRunAcross() ? FloatPoint{ main, cross } : FloatPoint{ cross, main }; }
-        // Whether the length the lanes run along is the host's to give. See Item-Containers
+        // Whether the length the lanes run along is the host's to give.
         [[nodiscard]] bool isLaneLengthGivenFromOutside() const
             { return lanesRunAcross() ? isWidthGivenFromOutside() : isHeightGivenFromOutside(); }
-        // The remembered length at the scale measuring now, or no limit. See Item-Containers
+        // The remembered length at the scale measuring now, or no limit.
         [[nodiscard]] float wrapLengthLimit(const AlignEvent&) const;
-        // Carries the length this pass broke the lanes at to the next measure. See Item-Containers
+        // Carries the length this pass broke the lanes at to the next measure.
         void rememberWrapLength(AlignEvent&, float limitLength);
         // How many items one lane of this stack takes, which is what its count amounts to
         // read either way. Asked by the measure and the align alike, so that the lanes one

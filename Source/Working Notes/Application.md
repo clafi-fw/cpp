@@ -41,6 +41,11 @@ removes the folder and everything under it. Under `Share` no application name re
 openAppMenu, so it outlives the click whatever the handler closes. Exit closes the menu before it
 asks the root form to close, so no popup stands on a window that has gone.
 
+**The menu keeps the window it was placed in** - AutoFit::No, the form's default. A window placed
+again around its pages would move under the pointer, a section opened or closed on the Settings
+page taking the edge the pointer stands on somewhere else. The floor - k_height, the Settings page
+with every section open - holds the pages instead, so the placement never cuts the menu below that.
+
 ## OptionsPage
 
 Every section states `VerticalAlign::Top`, for the reason ThemesList states it: a wrapping panel
@@ -61,6 +66,9 @@ FlexSpacer takes what is over - see Control::fillsLane - so the slider carries a
 stated to leave the row about as wide as the themes above it are capped at. The percent stands in
 a box wide enough for the widest of them, so the slot's left edge holds still while the number
 under the pointer changes.
+
+**The slots carry no stepping buttons.** A percent is stepped by an arrow key, and an end button on
+a slot that resizes the form it sits in walks out from under the pointer holding it.
 
 ## ScaleSlider
 
@@ -84,6 +92,33 @@ reach followScale, which has nothing to let go of and does nothing.
 
 The page holds its connection to the check's event in a ScopedEventConnection, which drops with the
 page.
+
+**The page states how long its lines run.** The backstage is as wide as its widest page - see
+PageSizing::WidestPage - and a text with no maximum is measured one line per paragraph, so an
+unbounded description would widen the menu to fit it on one line. The text under the line is
+Left-aligned beside that maximum, because a maximum on a Fill axis is a caller error - see
+Control::align. The name's line and the update row are one line each and state no maximum: they
+Fill, so they span the page whatever its width. The name and the version are one paragraph, the
+version after a FlexSpace, so they share a baseline and the version stands at the line's far end,
+over the update button.
+
+## ThemesList
+
+**The view alone, with no box around it.** A box here would be a second bar inside the page's
+first, kept short by a stated height that cuts the tiles off.
+
+`ItemSizing::Equal` is what keeps a lane's surplus from piling up at the right: the row is cut into
+equal shares and each tile stands in the middle of its own, at the size it always had - a
+DocumentTile takes the share of the lane it is handed, and the share is a box rather than a size.
+The built-in theme takes the first share, so Default stands in the column the first user tile
+does.
+
+## ThemeTile
+
+**The theme a tile holds is the manager's own, by reference**, and that is load bearing: what an
+application is wearing is an address - AppContext::takeTheme compares it to tell an edit from a
+switch - so a tile's theme is what a preview names, and it stands still for as long as the list
+does.
 
 ## connectAppPage
 

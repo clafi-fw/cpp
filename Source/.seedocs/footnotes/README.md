@@ -17,8 +17,25 @@ Control-Foundation#control-text`. The `#` title at the top names the note and op
 declaration named like the note takes the `##` section of its name, and one with no such section
 takes nothing from it.
 
-`seedocs check` reports a reference to a note that does not exist, and a reference to a section
+A declaration whose comment carries no reference takes the section headed by its name in its
+folder's note. A member's heading is its owner and its name, one space apart -
+`## SearchBox listKeptBy` - so one heading reaches one declaration. A constructor takes no section
+by name, since its name heads its type's. Two headings whose slugs match collide, and a reference
+reaches only the first.
+
+`SeeDocsCli check` reports a reference to a note that does not exist, and a reference to a section
 the note does not carry.
+
+## How a section reads
+
+A reader arrives from a declaration and takes the section in at a glance. It holds what the
+declaration's one line leaves out - what the thing does and the rules a caller keeps - and nothing
+the hint or the signature already says.
+
+- One idea per paragraph, in short sentences, with a bold lead-in where it states a rule.
+- Bullets for anything that enumerates - keys, values, cases.
+- A cross reference names the declaration - see DropList - and SeeDocs links it. A note's anchor
+  written in prose shows as plain text.
 
 ## One note per subsystem
 

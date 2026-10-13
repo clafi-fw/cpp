@@ -1,133 +1,104 @@
 # Diagnostic
 
-The words that no longer fit above a declaration.
+The words that do not fit above a declaration.
 
 ## Options
 
-Diagnostic::Options holds the switches the diagnostic code stands behind, all of them at compile
-time. `enabled` is the global one. Every other option is stated in `Options::Stated` and read
-through the function of the same name - `logThemeCrossing()`, `apiErrors()` and the rest - which
-answers off, or `ApiErrors::Ignore`, while `enabled` is off. A caller asks one question and never
-checks `enabled` beside it.
+`enabled` is the global switch. Every other option is set in `Options::Stated` and read through
+its function - `logThemeCrossing()`, `apiErrors()` and the rest - which answers off, or
+`ApiErrors::Ignore`, while `enabled` is off.
 
-**A release carries no diagnostic.** A build defining `CLAFI_NO_DIAGNOSTIC` holds `enabled` off,
-whatever the source says. A Visual Studio build defines it under `-p:ClaFiNoDiagnostic=true`
-(ClaFi.vcxitems), a CMake build under `-DCLAFI_NO_DIAGNOSTIC=ON`. The release recipe passes both -
-`.github/workflows/release.yml` for Windows, `.github/release/build-linux.sh` for Linux - so an
-application published from GitHub carries none, however the source was left.
+**Off means not built**: code behind an option sits in an `if constexpr`. Turning one on is a
+rebuild.
 
-**Off means not linked**, not only not run. Code behind an option stands in an `if constexpr`, so a
-build with the option off has none of it. The diagnostic window asks for more: the controls it is
-built from - the FPS page's grids among them - must not reach an executable that never opens it.
+**A release defines `CLAFI_NO_DIAGNOSTIC`**, which holds `enabled` off whatever the source says -
+`-p:ClaFiNoDiagnostic=true` for Visual Studio, `-DCLAFI_NO_DIAGNOSTIC=ON` for CMake.
 
-The config keeps its `Diagnostic` section and the `Diagnostic` form placement with the switch
-off. createDiagnosticLogConfigSchema stands with the entry points, so a config file reads the same
-whichever build wrote it.
+## diagnosticLog
 
-## DiagnosticLog
+Writes a numbered line to the Output page of the diagnostic window and to the debugger's output.
+Lines are dropped while the pointer is over the page, which then reads Stopped.
 
-The diagnostic window is a window like any other: a title bar, the Output and FPS pages under it,
-a tab strip along the bottom with the Always on top check beside the tabs. It is built with the
-application and hidden until the application menu's Show diagnostic, which brings it to the front
-when it is already up; its close button hides it, and the application's exit takes it down.
+**The diagnostic window** holds the Output and FPS pages, with an Always on top check beside the
+tabs where the platform can keep a window on top. The application builds it at startup and shows
+it if the config says it was up. Show diagnostic in the application menu shows it, and its close
+button hides it.
 
-**What it remembers** is kept in the config in two places. Its placement stands in the Forms
-section under `Diagnostic`, the way the main form's does - always on top included where the
-platform keeps that, which is Win32. Whether it was up and which page it was on stand in a
-section of its own, `Diagnostic`, as `Visible` and `Tab`;
-createDiagnosticLogConfigSchema states that section and ApplicationBase adds it to every
-application's schema. restoreDiagnosticLogState reads both once the config is loaded, opens
-that page and shows the window where it says so. storeDiagnosticLogState writes them, and the
-placement while the window is up, from ApplicationBase::saveConfig - the window is up for as
-long as the application, so the hide that writes a placement never comes for it, and the
-config is saved before the window goes.
+## createDiagnosticLogConfigSchema
 
-**The page is kept by its tab caption** rather than by a number, so the config file says `Output` or
-`FPS` and a page added between them moves nothing. The captions are stated once and the tabs are
-built from them, so the name written and the name matched cannot come apart, and a name that matches
-neither reads as the Output page.
+The `Diagnostic` section, which ApplicationBase adds to every application's schema:
 
-The Always on top check reads the window's state on every state query and toggles it on a click,
-so it never holds a state of its own. Where IPlatformWindow::canSetAlwaysOnTop answers no the
-check is hidden.
+- `Visible` - whether the window was up.
+- `Tab` - the page it was on, `Output` or `FPS`. Any other value reads as Output.
+
+The window's placement is kept under `Diagnostic` in the Forms section, as the main form's is.
+
+**Both are in every build**, with Diagnostic::Options::enabled off as well, so a config file reads
+the same whichever build wrote it.
+
+## storeDiagnosticLogState
+
+Called by ApplicationBase::saveConfig. It writes `Tab` as well - see
+createDiagnosticLogConfigSchema.
+
+**The placement is written here while the window is up**: a form writes its placement when it
+hides, and a window that is up would otherwise be saved where it last hid.
 
 ## FrameExtent
 
-How much of what is measured a frame covered. **Every frame counts towards the rate;
-only a whole one states a paint time.** A paint of a part is an arrival like any other, but
-what it cost says nothing about what the whole costs.
+- `Whole` - counts toward the rate and states a paint time.
+- `Partial` - counts toward the rate only. What a part cost says nothing about the whole.
 
 ## FpsPage
 
-What the framework window under the pointer paints: what the window is, what a
-frame of it costs and the rate its paints arrive at, each reading against its extremes,
-and the rate charted over the last two seconds.
+It shows the window's facts and what its frames cost - paint time, draw rate, frame rate and CPU
+share - each against its extremes. A chart shows the rate over the last two seconds.
 
-**The page drives its target.** While the page is showing, a repeater asks the window
-under the pointer for a whole frame on every tick, and each paint of that window comes
-back through FormPaintedEvent and is timed. The repeater is a timer, which is the lowest
-priority message there is: a pointer streaming moves, and the paints they cause, hold it
-off for as long as the pointer keeps moving. So the whole frames are the idle thread's
-work, and a core is spent on them for as long as the page is open with a window under the
-pointer.
+**The page drives its target.** While it shows, the window under the pointer is asked for a whole
+frame whenever the thread is idle, and each paint is timed. This spends a core.
 
-**Every paint counts towards the rate; only a whole one states a paint time.** A paint
-covering less than 80% of the window is a control repainting itself - a tile the pointer
-has reached - which is an arrival like any other and says nothing about what the whole
-costs.
+- A moving pointer holds the drive off, and the paints it causes are then what is counted.
+- A paint covering under 80% of the window counts toward the rate only - see FrameExtent.
+- The target is read off the pointer on every tick. Another window starts the measurement over.
+- Over this page's own window, or over no framework window, nothing is driven and the readings
+  stay.
 
-**The target is read off the pointer on every tick** and never followed across one. Over this page's
-own window, or over no framework window, there is none: nothing is driven and the readings stand at
-their last values.
-
-**The backend row is the application's answer and not the target's.** One context builds every
-window of an application, so they all draw through the same kind and this page's own form answers
-for them - which is what lets that row stand while nothing is being measured and every other row
-reads a dash.
+**The Backend row is the application's**, the same for every window, so it shows before anything
+is measured.
 
 ## FpsChart
 
-The frame rate a benchmark measured over the last two seconds, drawn against an
-axis that names the rate.
+**Two curves**: the filled area is the rate frames arrived at, the line over it the rate the
+drawing alone would allow. They meet when the drawing limits the rate. They part when something
+after the drawing does - the rest of the form, the copy to the screen, or the display server's
+pace.
 
-**Two curves**, and the gap between them is the point. The filled one is the rate frames
-actually arrived at; the line above it is the rate the drawing alone would allow. They
-meet when the drawing is what limits the rate, and part when something after the drawing
-is - the rest of the form, the copy to the screen, or the display server's own pace.
+**The chart reads its benchmark and never runs it.** Whoever runs the benchmark repaints the chart.
 
-**The chart reads its benchmark and never runs it.** Whoever runs the benchmark says when
-the chart is repainted; the chart holds no timer and asks for no frame of its own.
-
-**Its colours are stated** where it stands over something with a palette of its own - a
-chart over a scene belongs to that scene's. Given none, it takes the theme's: the accent for
-the curve and the spot for the field, resolved on whatever it stands on at each paint, so a
-theme switch carries it across. Either way the two are full strength, and the weight each
-is drawn at is the chart's own.
+**Colours** are the theme's accent for the curve and spot for the field, read at each paint. A
+chart over something with a palette of its own states them at full strength - ChartFieldColor and
+ChartSeriesColor, or setColors. The chart sets the alpha either way.
 
 ## BenchmarkValue
 
-A running aggregate of one measured quantity - the last reading, the extremes it has
-passed through, and a mean kept without holding the readings it was taken over.
+The mean is kept without holding the readings.
 
-An aggregate that has measured nothing answers k_maxFloat for its last and its least
-reading, and a negative for its greatest. Whoever shows a reading before the first
-measurement is the one that has to say what it shows instead.
+**Before the first reading**, lastValue and minValue answer k_maxFloat and maxValue a negative.
+timesNum is zero until then, and whoever shows a reading decides what to show instead.
 
 ## CpuUsage
 
-The share of one core this process is taking, as a percentage, sampled no oftener
-than once a second.
-
-The platform answers with the CPU time the process has consumed since it started, and
-the share is the step in that time over the wall time between two samples. Nothing here
-knows how the reading is taken - see Platform::processCpuTime.
+A percentage of one core: the CPU time the process used between two samples, over the wall time
+between them. The platform takes the reading - see Platform::processCpuTime.
 
 ## FpsBucket
 
-The frames measured inside one slice of the history, held as their totals so a
-slice costs the same whatever number of frames lands in it.
+A slice is 10 ms of FpsBenchmark's history. It holds totals, so it costs the same however many
+frames land in it.
 
 ## FpsBenchmark
 
-Times a piece of work, keeping both a running aggregate of it and the last two
-seconds of it in slices - which is what a chart of the rate over time is drawn from.
+**The first frame of a run states nothing** - no interval and no paint time. It starts the clock
+the next interval is measured from.
+
+`buckets()` holds the last two seconds as slices, which is what FpsChart draws.

@@ -97,8 +97,7 @@ namespace ClaFi::Controls
         DECLARE_CREATE_BAR(createRightBar, PanelSlot::Right)
         DECLARE_CREATE_BAR(createBottomBar, PanelSlot::Bottom)
 #undef DECLARE_CREATE_BAR
-        // Puts a splitter between the bar in slotId and the body, for the pointer to resize the
-        // bar by. The bar stands already. See Controls-Base
+        // Puts a splitter between the bar in slotId and the body, for the pointer to size the bar.
         Splitter& createSplitter(PanelSlot slotId);
         // What the bar in slotId stands at - a side bar's width, a top or bottom bar's height -
         // in design units.
@@ -120,11 +119,9 @@ namespace ClaFi::Controls
         // The floor the body states, and nothing where there is no body to state one.
         [[nodiscard]] ScaledDimensions bodyMinSize() const;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions& contentSize) override;
-        // The body's slot is settled and the body has not been laid out into it yet, so anything a
-        // panel states **about** that slot reaches the body on the pass that settled it. See
-        // Controls-Base
+        // The body's slot is settled and the body has not been laid out into it yet.
         virtual void bodySlotSettled(AlignEvent&) {}
-        // The box the body is laid out into - its slot, unless stated larger. See Controls-Base
+        // The box the body is laid out into - its slot, unless stated larger.
         [[nodiscard]] virtual ScaledDimensions bodyExtent() const
             { return m_bodyRect.dimensions(); }
         const FloatRect& contentRect() const { return m_contentRect; }

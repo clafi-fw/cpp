@@ -154,6 +154,7 @@ namespace SeeDocs_App
                 case TypeKind::Enum:
                     return 3;
                 case TypeKind::Alias:
+                case TypeKind::Defined:
                     return 4;
                 case TypeKind::Concept:
                     return 5;
@@ -833,7 +834,8 @@ namespace SeeDocs_App
                 addFact(page, L"requires", { code(type.target) });
                 return;
             }
-            const std::wstring_view join = type.kind == TypeKind::Alias ? k_aliasJoin : k_baseJoin;
+            const bool equated = type.kind == TypeKind::Alias || type.kind == TypeKind::Defined;
+            const std::wstring_view join = equated ? k_aliasJoin : k_baseJoin;
             Runs line = { muted(std::wstring{ join }) };
             const Runs target = linkNames(surface, { code(type.target) }, type.nameSpace,
                 templateParameterNames(type.templateParameters));
@@ -2470,6 +2472,69 @@ namespace SeeDocs_App
                 .excerpt = excerptOf(found, surface, variable.nameSpace)
             });
         }
+
+        // Repeats
+
+        // A section the page shows in full, and the words naming where.
+        struct ShownSection
+        {
+            Reference from;
+            Runs holder;
+        };
+
+        using ShownSections = std::vector<ShownSection>;
+
+        [[nodiscard]] bool sameSection(const Reference& left, const Reference& right)
+        {
+            return left.note == right.note && left.anchor == right.anchor;
+        }
+
+        // The excerpt names the place showing its section already, or becomes that place.
+        void pointAtShown(Excerpt& excerpt, ShownSections& shown, Runs holder)
+        {
+            const auto found = std::ranges::find_if(shown, [&excerpt](const ShownSection& entry) {
+                return sameSection(entry.from, excerpt.from);
+            });
+            if (found != shown.end())
+            {
+                excerpt.shownAt = found->holder;
+                return;
+            }
+            shown.push_back({ .from = excerpt.from, .holder = std::move(holder) });
+        }
+
+        void pointAtShown(TableGroup& group, ShownSections& shown)
+        {
+            for (TableRow& row : group.rows)
+            {
+                if (row.excerpt.has_value())
+                    pointAtShown(*row.excerpt, shown, row.cells.front());
+            }
+            for (TableGroup& nested : group.groups)
+                pointAtShown(nested, shown);
+        }
+
+        // **A section stands in full once on a page.** The page's own note holds its section,
+        // else the first footnote reaching it does, and every later one names where it stands.
+        void showSectionsOnce(Page& page)
+        {
+            ShownSections shown;
+            for (const Section& section : page.sections)
+            {
+                if (section.kind == SectionKind::Note)
+                    shown.push_back({ .from = section.excerpt.from, .holder = section.heading });
+            }
+            for (Section& section : page.sections)
+            {
+                for (TableGroup& group : section.table.groups)
+                    pointAtShown(group, shown);
+                for (Signature& signature : section.signatures)
+                {
+                    if (signature.excerpt.has_value())
+                        pointAtShown(*signature.excerpt, shown, {});
+                }
+            }
+        }
     }
 
     std::size_t TableGroup::rowCount() const
@@ -2695,6 +2760,7 @@ namespace SeeDocs_App
         page.badges.push_back(muted(std::wstring{ k_folderWord }));
         addFolderPaths(page, surface, roots, path);
         addFolderContents(page, surface, notes, folders, path);
+        showSectionsOnce(page);
         return page;
     }
 
@@ -2709,6 +2775,7 @@ namespace SeeDocs_App
         page.badges.push_back(muted(std::wstring{ k_projectWord }));
         if (!folders.empty())
             addFolderContents(page, surface, notes, folders, {});
+        showSectionsOnce(page);
         return page;
     }
 
@@ -2736,6 +2803,7 @@ namespace SeeDocs_App
         }
         addRowsSection(page, L"Functions", Columns::functions, functionRows(surface, module));
         addRowsSection(page, L"Constants", Columns::fields, constantRows(surface, module));
+        showSectionsOnce(page);
         return page;
     }
 
@@ -2766,7 +2834,8 @@ namespace SeeDocs_App
         {
             addExportFacts(page, surface, overloads.front().nameSpace, module, first->place);
             addOverloads(page, surface, notes, k_functionWord, std::move(overloads));
-            return page;
+            showSectionsOnce(page);
+        return page;
         }
         for (const Variable* variable : module.constants)
         {
@@ -2776,6 +2845,7 @@ namespace SeeDocs_App
                 break;
             }
         }
+        showSectionsOnce(page);
         return page;
     }
 
@@ -2804,17 +2874,22 @@ namespace SeeDocs_App
                 kind = function.kind;
                 addSourceFact(page, fileLineOf(surface, function.place), function.place, language);
             }
+            // A constructor's name is its type's, and so is the section that name heads.
+            std::wstring heading = function.kind == FunctionKind::Constructor
+                ? std::wstring{}
+                : footnoteHeading(type.name, name);
             overloads.push_back({
                 .code = signatureRuns(surface, type, function, k_signatureJoin),
                 .holder = &commentHolder(function, above, language),
                 .nameSpace = type.nameSpace,
                 .folder = type.folder,
-                .heading = footnoteHeading(type.name, name),
+                .heading = std::move(heading),
                 .access = function.access,
                 .language = language
             });
         }
         addOverloads(page, surface, notes, methodKindWord(kind), std::move(overloads));
+        showSectionsOnce(page);
         return page;
     }
 
@@ -2898,6 +2973,7 @@ namespace SeeDocs_App
         // types beside it.
         addTypeNote(page, surface, notes, type);
         addSiblings(page, surface, type);
+        showSectionsOnce(page);
         return page;
     }
 }

@@ -48,7 +48,7 @@ namespace ClaFi
         float pressedFactor() const;
         float enabledFactor() const;
         float focusedFactor() const;
-        // How far the window this control is painted in holds the focus. See Control-Foundation
+        // How far the window this control is painted in holds the focus.
         [[nodiscard]] float windowFocusedFactor() const { return m_windowFocusedFactor; }
 
         // TODO: move disabledBlendAmount into ColorRules, so an element states its own.

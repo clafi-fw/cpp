@@ -364,7 +364,7 @@ namespace ClaFi::Syntax
 
         // Walks the words of a text once and gathers what they declare. The grammar it reads is
         // the declaring part of the language - sections, headers, blocks - and every statement
-        // between is stepped over. See Syntax#declarations
+        // between is stepped over. See Syntax#declarationreader
         class PascalReader
         {
         public:
@@ -1163,7 +1163,7 @@ namespace ClaFi::Syntax
         constexpr std::wstring_view k_pascalBlockCloser = L"end;";
 
         // Where a Pascal line stands, read back from it over the words of the lines above - the
-        // block it is in, the statement before it, the section it closes. See Syntax#indent
+        // block it is in, the statement before it, the section it closes. See Syntax#indentrule
         class PascalIndent
         {
         public:
@@ -1171,7 +1171,7 @@ namespace ClaFi::Syntax
         public:
             [[nodiscard]] LineIndent place(std::size_t line);
             // Every block an end or an until closes on a later line than it opens on, read from
-            // the text's start. See Syntax#blocks
+            // the text's start. See Syntax#blockreader
             [[nodiscard]] SourceBlocks blocks();
         private:
             // A word's place: its line, and where it stands among the line's words.

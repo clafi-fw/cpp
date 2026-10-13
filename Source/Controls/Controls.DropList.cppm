@@ -24,7 +24,7 @@ namespace ClaFi::Controls
 
     export using DropListLines = std::vector<DropListLine>;
 
-    // A line taken - Return on the current one, or a click on any - and how. See Controls#droplist
+    // A line taken - Return on the current one, or a click on any - and how.
     export struct DropListPick
     {
         std::size_t line{ 0 };
@@ -42,7 +42,7 @@ namespace ClaFi::Controls
         Leaves    // no line is current, and the keys are the target's own again
     };
 
-    // How a list stands and is walked, as its owner states it. See Controls#droplist
+    // How a list stands and is walked, as its owner states it.
     export struct DropListOptions
     {
         float shownLines{ 12.0f };   // the lines that stand before it scrolls; none caps it
@@ -61,7 +61,7 @@ namespace ClaFi::Controls
         DropListRow(const CreateParams&, DropList&, std::size_t line);
     protected:
         void getText(GetTextEvent&) const override;
-        // The line's hint beside the list, at the row's height. See Controls#droplist
+        // The line's hint beside the list, at the row's height. See Controls#droplistline
         void nestedGetHint(GetHintEvent&) override;
         void nestedClick(ClickEvent&) override;
     private:
@@ -82,7 +82,7 @@ namespace ClaFi::Controls
         // Puts the current row's hint up beside the list, or takes the hint down.
         void showCurrentHint();
     protected:
-        // Measures the rows, then caps the list at twelve of them. See Controls#droplist
+        // Measures the rows, then caps the list at twelve of them. See Controls#droplistoptions
         ScaledDimensions calculateContent(AlignEvent&) override;
         // Every row may be current: the owner moves it, and the base's answer would rule that out.
         bool defaultCanFocusItem(Control&) override;
@@ -124,7 +124,7 @@ namespace ClaFi::Controls
     {
         friend DropListStack;
     public:
-        // The target is the control the focus stays in. See Controls#droplist
+        // The target is the control the focus stays in.
         DropList(Control& target, DropListPickFunc, DropListOptions = {});
         DropList(const DropList&) = delete;
         DropList& operator=(const DropList&) = delete;
@@ -138,10 +138,10 @@ namespace ClaFi::Controls
         void setPlacedFunc(std::function<void()>);
         // The line the keys are on, while the list is up and one is.
         [[nodiscard]] std::optional<std::size_t> current();
-        // Shows the lines off a control holding the target, and follows it. See Controls#droplist
+        // Shows the lines off a control holding the target, and follows it.
         void show(DropListLines, std::optional<std::size_t> current, FormPlacement,
             const Control& anchor);
-        // Shows the lines off the anchor, a rect in the target's form. See Controls#droplist
+        // Shows the lines off the anchor, a rect in the target's form.
         void show(DropListLines, std::optional<std::size_t> current, FormPlacement,
             const FloatRect& anchor);
         void hide();
@@ -150,7 +150,7 @@ namespace ClaFi::Controls
         bool moveCurrentByPage(ScrollDirection);
         // Takes the current line as Return does; false where the list is down or no line current.
         bool pickCurrent(KeyModifiers, InputStamp);
-        // Takes the line: the list goes down first, then the owner is told. See Controls#droplist
+        // Takes the line: the list goes down first, then the owner is told.
         void pick(const DropListPick&);
     private:
         // What both overloads of show do, the list following the control given, else the target.

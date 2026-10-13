@@ -168,7 +168,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         void awaitSessionId();
         // Asks the compositor to raise and focus a toplevel, on the input that asked. See Platform
         void activate(wl_surface* target, InputStamp);
-        // Null where the compositor names no toplevel to other clients. See Platform
+        // Null where the compositor names no toplevel to other clients.
         [[nodiscard]] zxdg_exporter_v2* exporter() const { return m_exporter; }
         // The pixel formats wl_shm advertised. ARGB8888 and XRGB8888 are guaranteed by the
         // protocol; anything else is the compositor offering more.
@@ -190,7 +190,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             return m_viewporter ? m_fractionalScaleManager : nullptr;
         }
         [[nodiscard]] wp_viewporter* viewporter() const { return m_viewporter; }
-        // Null where the compositor applies no opacity. See Platform#window-opacity
+        // Null where the compositor applies no opacity.
         [[nodiscard]] wp_alpha_modifier_v1* alphaModifier() const { return m_alphaModifier; }
         //
         // **The pointer image, by name.** The compositor draws it from its own theme at its own

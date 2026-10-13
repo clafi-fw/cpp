@@ -30,7 +30,7 @@ namespace ClaFi
 
         class NoticesLayer;
 
-        // A notice as it stands over the main window. See Application
+        // A notice as it stands over the main window.
         class NoticeCard : public MessageBar
         {
         public:
@@ -54,7 +54,7 @@ namespace ClaFi
             int m_pressing{ 0 };
         };
 
-        // A card for every notice, over the main window against its bottom right. See Application
+        // A card for every notice, over the main window against its bottom right.
         class NoticesLayer : public ContainerBase
         {
         public:

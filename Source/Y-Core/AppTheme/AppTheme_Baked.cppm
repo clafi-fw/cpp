@@ -21,7 +21,7 @@ namespace ClaFi
         float multiplier{ 1.0f };
         float setTarget{};
         float setPull{};
-        // The floor this channel is read on - the theme's, k_noFloor for a saturation. See AppTheme
+        // The floor this channel is read on - the theme's, k_noFloor for a saturation.
         float luminosityFloor{};
     };
 
@@ -103,14 +103,14 @@ namespace ClaFi
         [[nodiscard]] Hsl rootText() const;
         // Black at the anchor hue, where the shadow channel starts at a form root.
         [[nodiscard]] Hsl bareShadow() const;
-        // The colour a window root casts its shadow in, before any opacity. See AppTheme
+        // The colour a window root casts its shadow in, before any opacity.
         [[nodiscard]] Hsl windowShadow(OptionalUiElement root, float windowFocusedFactor) const;
     public:
         Lightness lightness{ k_darkLightness };
         // The hue a harmony turns around, for a drawing that has to answer where a rule states
         // no hue of its own.
         float anchorHue{};
-        // Where the dark end lifts elevation 0, and what light grades stop short of. See AppTheme
+        // Where the dark end lifts elevation 0, and what light grades stop short of.
         float darkModeFloor{};
         BakedEffects effects{}; // an element's bare effect, where UiElementDescriptor names one
         // Every pigment's hue, taken off the harmony as the theme is baked, so nothing
@@ -127,7 +127,7 @@ namespace ClaFi
     export [[nodiscard]] BakedValue bake(const ColorRuleValue&, float luminosityFloor);
     export [[nodiscard]] BakedHue bake(const ColorRuleHue&, const ThemeColors&);
     export [[nodiscard]] BakedEffect bake(const ColorEffect&, const ThemeColors&);
-    // A window root's shadow rule, its elevation lifted by no floor. See AppTheme#windowshadow
+    // A window root's shadow rule, its elevation lifted by no floor.
     export [[nodiscard]] BakedEffect bakeShadow(const ColorEffect&, const ThemeColors&);
     // A shadow rule's effect is baked the way bakeShadow bakes, every other one the way bake does.
     export [[nodiscard]] BakedColorRule bake(const ColorRule&, const ThemeColors&);

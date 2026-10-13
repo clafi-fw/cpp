@@ -636,7 +636,7 @@ namespace ClaFi::Controls
         if (!completionShown() || everything)
             readDeclarations();
         // After a dot, the members of the subject's classes - and no list where they are not
-        // known. See Syntax#completion
+        // known. See Syntax#completionmemberclasses
         Syntax::CompletionClasses classes;
         if (place.member)
         {

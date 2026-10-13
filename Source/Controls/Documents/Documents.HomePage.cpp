@@ -258,7 +258,8 @@ namespace ClaFi::Documents
 
         // **One question for the whole selection, and it settles all of it.** The first line is
         // what stands to be lost - the one document by its name, several by how many of the
-        // selection they are. The second is the question itself. See Documents#questions
+        // selection they are. The second is the question itself.
+        // See Documents#documentinquestiontext
         const DocumentKind& kind = folder().kind();
         Text message{};
         if (soleEdited)

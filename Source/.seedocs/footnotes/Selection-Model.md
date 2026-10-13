@@ -1,54 +1,56 @@
 # Selection Model
 
-What StackView holds on top of the current item every Stack already tracks, and what the
-two enums that shape it mean. Referenced from `Source/Controls/StackView.cppm`.
+What StackView holds on top of the current item every Stack tracks, and the two enums that shape
+it. Referenced from `Source/Controls/Controls.StackView.cppm`.
 
 ## StackView
 
-StackView is a Stack that traps its children's focus, and that can hold several items
-selected at once when it is given `SelectionMode::Multi`.
+With `SelectionMode::Multi` it holds several items selected.
 
-The two ideas stay apart. The focused item belongs to the Stack underneath and moves with
-the keyboard and with plain clicks; the selection belongs to the view, and is spanned with
-Shift, toggled with Ctrl and a click or Ctrl+Space, and swept by dragging a rubber band across
-the items. Ctrl held over a navigation key moves the focused item alone and leaves the
-selection standing. Items sitting in panels nested inside the view are selectable too - a range
-and a rubber band both walk the whole subtree, not just the direct children.
+**The current item and the selection are separate.** The current item belongs to the Stack
+underneath, and follows the keyboard and plain mouse clicks. The selection belongs to the view:
 
-An action decides nothing on its own wherever what it means depends on the action that follows
-it - see `StackBase::appliesGesture`.
+- Shift spans a range.
+- Ctrl with a mouse click, or Ctrl+Space, toggles an item.
+- A rubber band sweeps the items it crosses.
+- Ctrl with a navigation key moves the current item alone.
 
-A set can be put on from code as well: `setSelection` holds exactly the items it is given, drops
-any the view would refuse the user (see `CanSelectItemEvent`), and does nothing on a view whose
-mode holds no set. The current item is not moved by it - a grid moves both together with
-`selectCell`, see Grids#selection-from-code.
+Ranges and rubber bands reach items in nested panels too.
+
+**A mouse press that may start a drag waits for its click:**
+
+- with Ctrl or Shift, it may become a rubber band;
+- inside the selection, it may become a drag of the selection.
+
+A plain press outside the selection selects at once.
+
+## StackView setSelection
+
+Items the view would refuse the user are left out - see CanSelectItemEvent. A view holding no set
+ignores the call.
+
+**The current item stays where it is.** A grid moves both with GridBase::selectCell.
 
 ## SelectionMode
 
-Whether a view holds a set of selected items on top of the current item that every Stack
-already tracks. A Shift range runs between the selection anchor and the current item, and the
-anchor is recorded by every pick that is not a Shift. Neither the anchor nor the current item
-is a member of the set unless something put it there. A press on a current item the set does
-not hold picks it, the same as a press on any other item.
+**A Shift range runs from the anchor to the current item**, and every pick without Shift moves the
+anchor. The anchor and the current item join the set only when something puts them there. So a
+mouse press on a current item outside the set picks it.
 
-This is the view's own axis, and the only one it has. Whether the container tracks a current
-item at all is the other, and it is not a mode: it is what makes a container an
-`Interactivity::ActiveContainer`, which a StackView always is.
+Tracking a current item at all is what `Interactivity::ActiveContainer` means, and a StackView
+always is one.
 
 ## DragMode
 
-What a drag that starts on an item does. A drag starting on the surface sweeps a selection
-rectangle in either mode.
+A drag from the surface sweeps a rectangle in either mode.
 
-`EasySelect` - an item is one more place to start a rectangle from. For a view whose items stay
-where they are and whose selection is only read.
-
-`EasyDrag` - an item is the selection's handle: the drag carries what is selected, and a
-rectangle is swept from the surface alone. For a view whose items are moved.
+- `EasySelect` - for items that stay put and a selection that is only read.
+- `EasyDrag` - for items that move. A drag from an item goes to dragSelection, where the derived
+  view carries the selection.
 
 ## CanSelectItemEvent
 
-`CanSelectItemEvent` is the view's own question, and nothing but the view asks it - a rubber
-band sweeping the subtree wants an answer for controls it never intends to make current.
-Whether an item may be the **current** one is asked separately, a level down - see
-`CanFocusItemEvent` in `StackBase`.
+**Separate from whether an item may be current**, which is CanFocusItemEvent. A rubber band needs
+answers for controls it never makes current.
+
+canSelect arrives as the view's own answer - yes for a Focusable item in a Multi view.

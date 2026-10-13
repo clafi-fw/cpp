@@ -44,7 +44,7 @@ namespace ClaFi::Controls::Grids
         Control* cellControl(const Column& column) override { return controlAtColumn(column); }
         // A hosted control and a group's mark are the row's: a press on one lands on the grid.
         bool isChildPart(const Control&) const override { return true; }
-        // A column fitted to its content reads a control's width off it. See Grids
+        // A column fitted to its content reads a control's width off it.
         [[nodiscard]] bool isChildWidthGiven(const Control&) const override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void nestedMouseMove(const MouseMoveEvent&) override;
@@ -61,7 +61,7 @@ namespace ClaFi::Controls::Grids
     private:
         // The control in the selected cell, while it stands in this row and takes input.
         [[nodiscard]] Control* selectedCellControl();
-        // Whether the press refuses the popup the event asks about. See Grids#picking
+        // Whether the press refuses the popup the event asks about.
         [[nodiscard]] bool refusesPopup(const DropPopupEvent&) const;
     private:
         ControlMap m_controlMap{};

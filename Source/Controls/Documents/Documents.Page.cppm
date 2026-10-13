@@ -39,14 +39,13 @@ namespace ClaFi::Documents
         [[nodiscard]] Dom::DomNodeBase& documentNode() const;
         // The file this page's document stands in.
         [[nodiscard]] std::filesystem::path documentFile() const;
-        // Reads the saved document into the node - what a tab arriving at this page wants, unless
-        // it was restored onto it. Answers whether it could. See Documents#restored
+        // Reads the saved document into the node, and answers whether it could.
         [[nodiscard]] bool loadDocument() const;
     protected:
         // Reads the saved side of the comparison behind hasUnsavedEdits into the node: the page's
         // own file, unless the derived page has another. Answers whether it could.
         [[nodiscard]] virtual bool readSavedDocument(Dom::DomNodeBase& into) const;
-        // Names what Undo and Redo act on wherever the focus stands. See Documents#history
+        // Names what Undo and Redo act on wherever the focus stands.
         void setEditHistory(IEditHistory&);
     protected:
         static constexpr IconSize k_toolButtonIconSize{ 18.0f };
@@ -74,7 +73,7 @@ namespace ClaFi::Documents
             Interactivity::MouseOnly
         ) };
         Divider& m_dividerAfterSave{ toolBar().add<Divider>(Padding{ 4.0f }) };
-        // The strips list the steps the history holds. See Documents#history
+        // The strips list the steps the history holds.
         HistoryButton& m_undoButton{ toolBar().add<HistoryButton>(
             HistoryDirection::Undo,
             ButtonViewMode::IconOnly,

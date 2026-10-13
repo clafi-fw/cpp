@@ -75,6 +75,8 @@ namespace SeeDocs_App
         Reference from;        // the note and the section the words are read from
         bool byName{ false };  // the section is named after the declaration, no See reaching it
         Blocks blocks;
+        // Where the page shows the section in full, named - empty for the one above; none for here.
+        std::optional<Runs> shownAt;
     };
 
     // A file and line of the sources, and the language an editor opens the file as.

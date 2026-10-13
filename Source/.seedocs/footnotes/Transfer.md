@@ -1,130 +1,115 @@
 # Transfer
 
-The words that no longer fit above a declaration.
+The words that do not fit above a declaration.
 
 ## StandardFormat
 
-**The framework's own formats, and the platform's are another thing.** Text and Picture are
-what a paste asks for; CF_UNICODETEXT, CF_TEXT, CF_DIB, CF_DIBV5, PNG, image/png are what a
-clipboard carries, each under its platform name, each with bytes of its own. A paste that
-wants a text or a picture asks for the framework format and the platform decides which of
-its formats fits - see Offer::platformFormat. A viewer of the clipboard never asks for one:
-it lists every platform format under its platform name, CF_UNICODETEXT beside CF_TEXT, and
+**A paste asks for Text or Picture**, and the platform picks which of its own formats serves it -
+see Offer::platformFormat.
+
+**A clipboard viewer lists the platform formats instead** - CF_UNICODETEXT beside CF_TEXT - and
 reads each as it is.
 
 ## Format
 
-**Which format**, at runtime. A name is a name: what separates one this framework knows how to
-deal with from one it does not is whether anything is registered against it, which is a
-question for the tables rather than for the identity.
+Made with `of` for a standard format, `custom` for a named one. **The tables say whether the
+framework knows a named format** - ByteSpellingTable and ConversionTable. The name alone says
+nothing about it.
 
-**A registered format's name is the one it was declared with**, and each platform derives its
-native spelling from that. **A platform format's name is its platform name**, that being the
-only name it has - the predefined ones spelled by the platform layer, CF_UNICODETEXT and its
-kind - so a viewer can list what is on the clipboard and read it, whether or not anything
-here understands it.
+- A registered format keeps the name it was declared with, and each platform spells it from that.
+- Any other format goes by its platform name, CF_UNICODETEXT and the like, so a viewer can list
+  and read it.
 
 ## ConversionTable
 
-**Which formats reach which**, and how. Single hop: a path of two steps is a conversion of its
-own, registered by whoever chose what it loses. Read in both directions - outward it says
-what a package can advertise beyond what it holds, inward what an offer can satisfy.
+**One step only.** A path of two steps is a conversion of its own, registered by whoever chose
+what it loses.
+
+Read outward, it says what a Source advertises beyond what it holds. Read inward, it says what an
+Offer can satisfy.
+
+**Fill it by calling registerConversion**, never at static initialisation. A static library drops
+a translation unit nothing references, so the table would be full in some builds and empty in
+others.
 
 ## ClipboardChangeEvent
 
-**The selection moved on**, and that is the whole of what it says. It carries nothing because
-neither display server offers more: the answer to what is on the clipboard now is read by
-asking, and this only says that asking again is worth it.
+It carries nothing, because neither display server says more. Ask the clipboard what it holds when
+the event arrives.
 
-**Wayland says less than Windows here**, and the difference is in the contract rather than in
-the implementation. A selection is announced only to the client holding the keyboard focus,
-and announced again as it takes the focus, so an unfocused window is told nothing - which
-costs nothing, because an unfocused window is not allowed to read the selection either.
-Windows raises it whichever window is in front.
+- **Windows** raises it whichever window is in front, once the change has been read. A change that
+  cannot be read after a few quick attempts is read a second later and announced then. Until then
+  Clipboard::offer answers the previous reading, not an empty clipboard.
+- **Wayland** tells only the client holding the keyboard focus, and tells a client again as it
+  takes the focus. An unfocused window may not read the selection either.
 
-**An application that watches the clipboard rather than pasting from it** can say so and be
-given the clipboard manager's channel, where the focus does not come into it - see
-WaylandPlatform::Params. Not every compositor offers one, so the paragraph above is still
-what this event promises rather than what it always delivers.
-
-**On Windows it is raised once the change has been read.** Every listener in the session is told
-at the same moment and one holder at a time is all the clipboard allows, so a reader can find
-it shut. A change that could not be read within a few quick attempts is read again a second
-later and announced then; until then the last reading stands, and Clipboard::offer answers
-what it answered before rather than an empty clipboard.
+**A clipboard watcher on Wayland** sets `watchesClipboard` in WaylandPlatform::Params. Where the
+compositor offers a clipboard manager's channel, the focus then does not matter. Mutter offers
+none.
 
 ## ByteSpellingTable
 
-**Which formats this application knows how to deal with**, and how. Nothing is in it until
-something puts it there - see ConversionTable, which says why that is a call rather than
-static initialisation.
+**Fill it by calling registerByteSpelling**, for the reason ConversionTable gives.
 
-A named format that states no bytes cannot cross to another process, so this is also the
-set a platform derives its native spellings for. Everything else on a clipboard is named by
-whatever the platform calls it and read as the bytes it arrived as.
+**It is also the set a platform spells natively.** A named format crosses to another process only
+with a byte spelling. Anything else keeps its platform name and is read as the bytes it arrived as.
 
 ## Source
 
-**What leaves the application**: the content captured when the user copied, cut or started a
-drag, and nothing about how any platform spells it. Built on its own and then handed to a
-context, so one package serves a copy and a drag alike.
+Handed to Clipboard::set by a copy or a cut. It holds content by framework format, and nothing of
+how a platform spells it.
 
-**Capture is eager.** A cut has taken the text out of the control before anything pastes, so
-there is nothing left to read back, and a copy goes the same way. What waits is conversion,
-not capture.
+**Capture is eager**: the content goes in at the copy or cut, since a cut leaves nothing to read
+back later. Conversion waits for the first paste that asks for it.
 
-Moved, never copied: a package can hold the whole of a document selection.
+**Moved, never copied**: a package can hold a whole document selection.
 
 ## Offer
 
-**What arrives from outside**: the formats somebody else advertises, and a way to ask for one.
-A read blocks - the content is fetched from whoever owns the selection, and no platform
-says whether it is held or about to be made - so nothing reads to answer a question about
-availability.
+**A read blocks** while the content is fetched from whoever owns the selection. To learn what is
+available, ask match or Clipboard::accepts, which read the advertised names alone.
 
-**The list is the platform's formats**, every one under its platform name, and the framework's
-own are reached through platformFormat: asked for Text or Picture, an offer answers which of
-the formats it lists would serve it, by reference into that list, or null. Windows serves
-Text from CF_UNICODETEXT, which it synthesises from CF_TEXT so it is there whenever text is,
-and a Picture from PNG where the source placed one - lossless, its alpha intact - else
-CF_DIBV5, else CF_DIB, else CF_BITMAP, a GDI handle read as the DIB its pixels make (which
-is also what its bytes are); Wayland from the text/plain names, and from image/png else
-image/bmp. A read of the framework format decodes what that platform format carries; a
-read of the platform format itself answers its bytes. This process's own package is listed
-the same way, under the names the platform would place it as - see platformFormatOf.
+**platformFormat picks the format that serves Text or Picture**, best first:
+
+- Windows - Text from CF_UNICODETEXT, which Windows synthesises from CF_TEXT, so it is there
+  whenever text is. A Picture from PNG or image/png, else CF_DIBV5, else CF_DIB, else CF_BITMAP.
+- Wayland - Text from text/plain;charset=utf-8, text/plain or UTF8_STRING. A Picture from
+  image/png, else image/bmp.
+
+**CF_BITMAP is a GDI handle.** read decodes it into a picture, readBytes answers no bytes, and
+readHandle answers the handle.
+
+This process's own copy is listed under the names the platform places it under - CF_UNICODETEXT
+and CF_DIB, or text/plain;charset=utf-8 and image/bmp.
 
 ## PlainText
 
-**One of the two formats the core ships.** Plain text is content whose type this layer can name
-without knowing anything about the framework above it. Every other format - the framework's
-own rich text included - is declared and registered by whoever owns the type it carries.
+One of the two formats the core ships, with Picture. Every other format - the framework's own rich
+text included - is declared and registered by whoever owns the type it carries.
 
 ## Picture
 
-**A picture as pixels**, a Graphics::Bitmap, which is the one picture type the layers below the
-platform agree on. The platform serves it from whichever of its formats carries one best -
-see Offer - and decodes that on the way in, a PNG through Graphics::decodePng and a DIB or
-BMP through Graphics::decodeDib, so what a reader takes is pixels and never a header.
+A Graphics::Bitmap, decoded from the format that serves it - a PNG by Graphics::decodePng, a DIB or
+BMP by Graphics::decodeDib. A reader takes pixels, never a header.
 
-**Reading only.** A package holding a picture is not spelled on the way out yet: it would go
-out as CF_DIB and as a BMP file, the platform names this framework places it under.
+**Reading only.** A Picture placed in a Source goes out with no bytes, under CF_DIB or image/bmp.
 
 ## Clipboard
 
-**The one way on and off the system clipboard**, and one object per process. The platform built for
-the display server - Win32Platform, WaylandPlatform - owns it as a member and names it to the
-Platform base it derives from, so the core reaches it through any Platform without knowing which
-one; a form's context hands it out as FormContext::clipboard, which is how a control asks for it.
+One object per process, owned by the platform. A control reaches it through
+FormContext::clipboard, the core through Platform::clipboard.
 
-**A copy is a standing offer this process serves.** Neither platform takes the bytes at copy
-time: the package is kept here and read when somebody pastes, so it lives until another
-application takes the selection. On Win32 the package is rendered onto the clipboard as the
-clipboard object goes, while this process still owns it, so a copy outlives the process; on
-Wayland leaving the process ends the offer, and a cut therefore loses its content there
-unless a clipboard manager has taken a copy of it.
+**A copy is a standing offer this process serves.** The package is kept here and read when
+somebody pastes, so it lives until another application takes the selection.
+
+- On Win32 the package is written onto the clipboard when the clipboard object is destroyed, if
+  this process still owns the selection. A copy outlives the process.
+- On Wayland the offer ends with the process. A cut loses its content there unless a clipboard
+  manager took a copy.
 
 ## Format::Kind
 
-Which vocabulary names a format: the framework's own closed set, or anything else. Both kinds have
-names; only the standard set has one this layer can state, every platform spelling the others for
-itself.
+- `Standard` - one of StandardFormat, read with standard(). Each platform spells it in formats of
+  its own.
+- `Custom` - a format known by its name, read with name(): a registered format or a platform's
+  own.

@@ -1,248 +1,213 @@
 # Graphics Types
 
-The words that no longer fit above a declaration.
+The words that do not fit above a declaration.
 
 ## TextRasterizationMode
 
-How a glyph's coverage is computed. Cached rasterization reuses one texture per glyph and is
-what every still run wants; Outline fills the glyph's beziers as geometry instead, with plain
-antialiasing that varies smoothly with position, and bypasses the cache to do it.
+- **Cached** reuses one texture per glyph - what every still run wants.
+- **Outline** fills the glyph's curves as geometry and bypasses the glyph cache. Its plain
+  antialiasing varies smoothly with position.
 
-Compiled in while CLAFI_TEXT_MOVING is 1 - see TextEngine-Types#textrendermode.
+Compiled in while CLAFI_TEXT_MOVING is 1 - see TextRenderMode.
 
 ## PathRenderMode::OuterGlow
 
-The ramp both ways from the outline, as far in as out. What covers the inward half is
-the shape drawn over it.
+The shape drawn over the glow covers its inward half.
 
 ## GlowFalloff::Linear
 
-Straight to nothing. What light wants: a lamp does not thin out, it runs out, and the
-eye reads the even ramp as a lit region with an edge.
+**What light wants.** A lamp runs out rather than thinning out, and the eye reads the even ramp
+as a lit region with an edge.
 
 ## GlowFalloff::Smooth
 
-Steep at the shape and level by the time it ends. What a shadow wants: an occluder
-takes most of the light close in and little of it further out, and the far end has to
-be too faint to find or the shadow reads as a border drawn around the shape.
+**What a shadow wants.** An occluder takes most of the light close in and little further out.
+The far end must be too faint to find, or the shadow reads as a border drawn round the shape.
 
 ## ScopedTextRaster
 
-Names the raster params one text run wants. Every run states its own, including a run that
-wants what the target already carries - deciding that costs nothing is the backend's job,
-since it is the only thing that knows what is installed. A run that stayed silent would leave
-it guessing, and no default has to be agreed on anywhere above the backend.
+**Every run states its own params**, even those the target already carries. The backend alone
+knows what is installed, so it decides when a change costs nothing.
 
-Compiled in while CLAFI_TEXT_MOVING is 1 - see TextEngine-Types#textrendermode.
+Compiled in while CLAFI_TEXT_MOVING is 1 - see TextRenderMode.
 
 ## ScanLines
 
-The lines of whole pixels a view may address, and how they sit in memory. This is the
-allocation rather than the geometry: bounds are floats, and a buffer of whole pixels
-placed at a fractional origin spans ceil - floor, one pixel more than it holds on that
-axis. Every read and every write is bounded by these counts, never by bounds.
+**The allocation, not the geometry.** Bounds are floats: at a fractional origin they span
+ceil - floor pixels, one more than the buffer holds on that axis.
+
+**Bound every read and write by these counts**, never by the bounds.
 
 ## ScopedCanvasOpacity
 
-Holds an opacity layer open for as long as it is alive. A full opacity costs nothing and
-opens no layer, so a caller with a factor that may reach 1 states it here rather than
-branching around the whole passage it guards.
+**A full opacity opens no layer** and costs nothing. A caller whose factor may reach 1 passes it
+here rather than branching round the passage it guards.
 
 ## GlyphCoverage
 
-Coverage for one glyph, rasterized at a whole pixel origin. left and top are the bearings:
-where the ink stands relative to the glyph origin, in whole pixels, y growing downwards. The
-pen position is applied when the coverage is placed, which is what lets a single coverage
-serve every occurrence of that glyph in every string.
+**left and top are the bearings** - where the ink sits relative to the glyph origin, in whole
+pixels, y down. The pen position is added at placement, so one coverage serves every occurrence
+of the glyph.
 
-Held as finished coverage in the range 0..1, whatever the rasterizer produced it from. A
-platform that averages subpixel channels does so once here rather than once per pixel per
-draw.
+**The values are finished coverage, 0 to 1.** A platform that averages subpixel channels does it
+once, here.
 
-A one pixel transparent border on every side is what makes the compositor's inner loop
-branch free: a bilinear tap at any position inside the glyph reads a 2x2 block that is
-always in bounds, so the per pixel range checks disappear. row() addresses the ink inside
-that border.
+**A clear border one pixel wide surrounds the ink.** allocate sizes and clears it, and row()
+addresses the ink inside it.
 
-A glyph that rasterizes to nothing - a space - is a coverage with no ink. It is still worth
-caching, so that it is analysed once rather than on every run that contains one.
+**A glyph with no ink** - a space - is still worth caching, so it is analysed once.
 
 ## PlacedGlyph
 
-One glyph's coverage and where its ink stands on the surface. The pointer is a view: the
-coverage must not move between place() and composite(). A cache holding every glyph of a
-face in storage sized once, at the face's glyph count, guarantees that; a cache that grows
-to admit a higher index moves what earlier placements point at.
+**The coverage must stay put between place and composite** - the pointer is a view. A glyph
+cache sized once, at the face's glyph count, guarantees it. A cache that grows to admit a higher
+index moves what earlier placements point at.
 
 ## ShadowPainter
 
-A rounded rectangle's shadow as nine tiles: four corners, four edges, and nothing in the middle,
-since what casts the shadow covers it. The tiles are baked once per Design - the ShadowParams and a
-radius per corner, in real pixels - by casting the shadow around a small rectangle on a CPU canvas
-and cutting it up, so the look is castShadow's own to the pixel. Each corner tile is cut from its
-own corner, so the corners may differ, and each is as large as the roundest corner needs. An edge
-tile is a fixed length and an edge is as many of it as fit, the last cut by the clip, so nothing in
-the cache is ever as long as the rectangle. A corner tile reaches into the rectangle past the arc
-and past the ramp's inward half, which is where the shadow along an edge stops depending on the
-corner. What casts the shadow covers its rectangle, so nothing asks for the inward part but a
-corner square.
+**The middle tile is empty** - what casts the shadow covers it.
 
-paint draws around a rectangle inside the canvas's clip and nowhere else, and reads the clip
-to skip whole tiles: a form painting one corner square costs one tile, and the margins are
-painted a strip at a time with the strip as the clip - by a form around its rectangle, by a
-shadow window around the window it shadows. A rectangle too small for its corner tiles to
-stand apart is cast directly - two corner tiles overlapping would each deny the other's arc -
-which is what hints and short menus get.
+**setDesign bakes the tiles from castShadow's own output**, so the look matches it to the pixel.
+Each corner may take its own radius.
 
-**Baked once, drawn at any opacity.** paint draws the tiles at the opacity it is given, so a shadow
-that fades in - a held header's, over the first stretch of its lift - costs one bake for its design
-rather than one for each step of the fade. A rectangle cast directly is cast with the colour's alpha
-scaled the same way. The tiles go on whole pixels, the rectangle's edges rounded to the nearest:
-every tile lands on one, and an edge between two would have the run along it and the corner past it
-both draw the column it falls in.
+**paint draws inside the canvas clip only**, and skips whole tiles the clip misses. A form
+painting one corner square pays for one tile.
 
-**A bake leaves the CPU rasterizer's clip as it found it.** The clip is one state for every canvas,
-and the canvas a bake casts on states its own; a bake runs in the middle of a paint as often as not,
-so the paint's clip is held across it.
+- The tiles go on whole pixels: the rectangle's edges round to the nearest.
+- One bake serves every opacity, so a shadow fading in costs one bake.
+- A rectangle too small for its corner tiles to stand apart is cast directly, its colour's alpha
+  scaled by the opacity.
+- A bake leaves the CPU rasterizer's clip as it found it, so setDesign is safe in the middle of a
+  paint.
 
-**A form hands them out.** A form holds the painter around its own window, which the platform
-reads. Every other shadow is drawn by a painter from FormBase::shadowPainter, one per design, so
-the cards over a window share one bake and its held headers another.
-
-A form's own design follows the focus its window holds - the colour is the window's shadow colour
-at that focus - so each step of a focus change bakes its painter again, and so does each step for
-the shadows its content casts in that colour.
+**Take a painter from FormBase::shadowPainter**, which keeps one per design: the cards over a
+window share one bake, its held headers another.
 
 ## Canvas::drawBitmap
 
-Lays the bitmap over what is already drawn, at the opacity given. **Its pixels are read
-premultiplied** - the way a CPU canvas over a clear base leaves them, which is how the
-ShadowPainter's tiles are baked, and the way Direct2D reads a bitmap. An opaque pixel is copied and
-a clear one leaves what is there; any other is laid over what is there by what it leaves uncovered,
-so on a clear surface - a window's margins - every pixel lands as it is. Opacity scales all four
-channels of a pixel alike.
+**The pixels are read premultiplied** - as a CPU canvas over a clear base leaves them, and as
+Direct2D reads a bitmap. ShadowPainter's tiles are baked that way.
+
+- An opaque pixel replaces what is there, and a clear one leaves it.
+- Any other is laid over what is there, so on a clear surface - a window's margins - it lands as
+  it is.
+- Opacity scales all four channels alike.
 
 ## GlyphCompositor
 
-Draws one run of glyphs through a single coverage mask.
+**A fractional pen position is sampled, not dropped.** Coverage sits at a whole pixel origin,
+and the compositor samples it at the fraction. Dropping the fraction would make a moving run
+stand still, then jump a whole pixel.
 
-Coverage is stored at a whole pixel origin, so the fraction of a pen position is resolved by
-sampling rather than dropped - dropping it is what makes a moving run stand still and then
-jump a whole pixel. A glyph placed on whole pixels takes an exact branch that adds the
-coverage as it is.
+A glyph placed on whole pixels takes an exact path that adds its coverage as it is.
 
 ## TextRasterizationParams
 
-Everything about rasterizing a run of text that a backend has to be told, and nothing about
-why it was asked for. Callers above decide what a control's text needs; this says only what
-the result is.
+A control states what its text needs as a TextRenderMode. These params are the answer a backend
+is given.
 
-The three flags below are one group rather than three independent settings, and they are the
-reason this struct is passed whole. Each of them makes a glyph's raster depend on where the
-run happens to sit: snapping moves the origin to a whole pixel, grid fitting pulls the glyph's
-own stems and baseline onto pixel edges, and subpixel antialiasing gives an edge a colour that
-depends on which third of a pixel it covers. Any of them changing between two draws of the
-same unmoved run changes how it looks. A caller that wants a run to survive being moved has to
-turn off all three, and has to leave them off for as long as that run can move.
+**Three of them tie the raster to where the run sits:**
 
-Compiled in while CLAFI_TEXT_MOVING is 1 - see TextEngine-Types#textrendermode.
+- snapOrigins puts the origin on a whole pixel.
+- gridFit pulls the glyph's stems and baseline onto pixel edges.
+- Subpixel antialias colours an edge by the third of a pixel it covers.
+
+**A run that can move turns all three off** for as long as it can move. Changing any of them
+between two draws of an unmoved run changes how it looks.
+
+Compiled in while CLAFI_TEXT_MOVING is 1 - see TextRenderMode.
 
 ## PathRenderMode::Shadow
 
-The shape's own coverage, solid, and the ramp outward from it: what an opaque shape
-casts, wherever the shape itself then stands.
+What an opaque shape casts. The shape's own area is solid, so the shadow is whole wherever the
+shape is then drawn.
 
 ## ArcEllipse
 
-An arc command is stated the way SVG's A states it: where it ends, the ellipse's two radii and
-its rotation in degrees, which of the two arcs joining the ends it takes, and which way it
-turns. That form is what a path stores and what an SVG writer would write back. The centre form
-is worked out from it each time the arc is drawn, by the conversion SVG's implementation notes
-give, and has no place in the path itself.
+**A path holds the endpoint form alone.** arcEllipse works this centre form out each time the arc
+is drawn, by the conversion in SVG's implementation notes.
 
-Radii too small to reach from one end to the other grow together until they just do, which makes the
-arc half the ellipse. A radius of zero makes the arc a straight line to its end, and an arc ending
-where it starts draws nothing.
+## PixelPath arcTo
 
-Under a matrix an arc stays an arc. Its end moves with the matrix, the ellipse's two axes are
-carried through its linear part and the radii and rotation read off the result, and a matrix
-that mirrors reverses the turn. Whether the arc is the larger or the smaller one does not
-change.
+**A path keeps the arc as stated** - the endpoint form of SVG's A, which an SVG writer would write
+back.
+
+- Radii too small to span the ends grow together until they span them exactly. The arc is then
+  half the ellipse.
+- A radius of zero makes the arc a straight line to its end.
+- An arc ending where it starts draws nothing.
+
+**Under a matrix an arc stays an arc.** transform moves its end with the matrix and the ellipse's
+axes with the matrix's linear part. A mirroring matrix reverses the turn. The choice of the larger
+or smaller arc stays as stated.
 
 ## RadialGradient
 
-Stop position 0 stands at the origin, `center + offset`, and position 1 on the ellipse of
-`radiusX` and `radiusY` round `center`. Each straight line from the origin to the ellipse runs
-through the stops evenly, and past the ellipse the last stop holds. That is the definition
-Direct2D gives its radial brush, and the CPU backend computes the same position.
+**Position 0 is the origin, `center + offset`, and 1 is the ellipse** of `radiusX` and `radiusY`
+round `center`.
 
-The gradient is defined for an origin inside the ellipse and radii above zero. Direct2D calls
-its gradient outside that not well-defined; on the CPU the arithmetic meets an infinity or a NaN
-there, and the ramp's clamp keeps every pixel on the ramp without saying which colour it takes.
+- Each line from the origin to the ellipse runs through the stops evenly.
+- Past the ellipse the last stop holds.
+
+This is Direct2D's definition, and the CPU backend computes the same.
+
+**Keep the origin inside the ellipse and the radii above zero.** Outside that the colour is
+undefined on both backends, though the CPU keeps every pixel on the ramp.
 
 ## IBackend
 
-Stroke alignment: every draw* here lays its stroke **inside** the bounds it is given. The
-outer edge of the stroke is the edge of the shape, so a fill and a stroke over the same
-bounds meet exactly and no fill shows past the border.
+**Every `draw*` lays its stroke inside the bounds it is given**, so a fill and a stroke over the
+same bounds meet exactly.
 
-That is not what the underlying APIs do - Direct2D strokes centred on the geometry, and so
-does any stroked path - so a backend built on one insets by half the stroke width itself.
-A caller must not pre-inset; doing both is what left a half-pixel of surface outside
-every control's border on the CPU backend.
+**The backend insets, the caller does not.** Direct2D and any stroked path centre the stroke on
+the geometry, so a backend built on one insets by half the stroke width. A caller that insets as
+well leaves half a pixel of surface outside the border.
 
 ## ScopedCanvasTransform
 
-Composes a transform onto whatever the canvas already has, for as long as it is alive, then
-puts the previous one back. An identity matrix costs nothing and touches no state.
-
-## ScopedCanvasImage
-
-Draws into the kept image at this index for as long as it is alive, and puts the surface
-back when it dies.
+**An identity matrix touches no state** and costs nothing, so a caller passes its matrix as it is.
 
 ## RoundedRectPainter
 
-The parts reaching this painter are already in buffer coordinates, bounds and radius alike -
-the CPU backend folds the canvas transform into them before calling in, so that the joint
-snapping below lands on whole device pixels. The matrix travels on to the rect and circle
-painters only to place brush coordinates, which are still stated in the caller's space.
+The CPU backend folds the canvas transform into bounds and radius, so the joints between arcs and
+edges snap to whole device pixels.
+
+**brushTransform places the brush alone** - brush coordinates stay in the caller's space. It goes
+on to the rect and circle painters for that only.
 
 ## RectPainter
 
-The rects reaching these methods are already in buffer coordinates - the CPU backend folds
-the canvas transform into the geometry before it calls in, because the span rasterizer below
-cannot express anything but axis-aligned edges. The matrix is passed along only so that brush
-coordinates, which are still stated in the caller's space, can be placed against the mapped
-geometry. Applying it to the geometry here as well would move every shape twice.
+The CPU backend folds the canvas transform into the rects, since the span rasterizer draws
+axis-aligned edges only.
+
+**brushTransform places the brush alone** - brush coordinates stay in the caller's space. Applied
+to the rect as well, it would move every shape twice.
 
 ## CirclePainter
 
-Pivots and radii reaching this painter are already in buffer coordinates - the CPU backend
-folds the canvas transform into them before calling in. The matrix is passed along only to
-place brush coordinates, which are still stated in the caller's space. Applying it to the
-geometry here as well would move every circle twice.
+The CPU backend folds the canvas transform into pivots and radii.
+
+**brushTransform places the brush alone** - brush coordinates stay in the caller's space. Applied
+to the geometry as well, it would move every circle twice.
 
 ## decodeDib
 
-A device-independent bitmap read into pixels: the block a Windows clipboard carries as
-CF_DIB or CF_DIBV5, and the same block behind the file header a .bmp starts with, which is
-what image/bmp carries and what decodeBmpFile takes.
+**What is read:**
 
-**What is read.** An info header of 40 bytes or more, the V4 and V5 headers included, or the
-12-byte core header. 1, 4 and 8 bits a pixel through the colour table, 16 and 32 through
-masks - the header's own with BI_BITFIELDS, 5-5-5 and 8-8-8 without - and 24 as the bytes
-they are. Rows bottom up unless the height is negative.
+- An info header of 40 bytes or more, V4 and V5 included, or the 12-byte core header.
+- 1, 4 and 8 bits a pixel through the colour table.
+- 16 and 32 bits through masks - the block's own under BI_BITFIELDS or BI_ALPHABITFIELDS,
+  5-5-5 and 8-8-8 under BI_RGB.
+- 24 bits as the bytes they are.
+- Rows bottom up, or top down where the height is negative.
 
-**What alpha means.** A 32-bit pixel under BI_RGB is opaque whatever its fourth byte holds:
-the byte is reserved there, and a synthesised DIB leaves whatever was in it. Only an alpha
-mask stated with BI_BITFIELDS makes a pixel translucent.
+**Alpha comes only from a stated alpha mask.** Under BI_RGB a 32-bit pixel is opaque whatever its
+fourth byte holds - the byte is reserved, and a synthesised DIB leaves whatever was in it.
 
-**Nothing for what is not pixels.** A compressed block - RLE, or a JPEG or PNG carried inside a
-DIB - and a header past the size a bitmap can be answer nothing rather than a guess: a
-reader that wants to show something shows the bytes.
+**A compressed block answers nothing** - RLE, or a JPEG or PNG inside a DIB - and so does a header
+past the size a bitmap can be. A reader that wants to show something shows the bytes.
 
 ## decodePng
 
-A PNG file read into pixels, straight alpha, whatever its depth, colour type or interlace;
-nothing for bytes that are not a PNG or for a picture past the size decodeDib holds to.
+Reads any depth, colour type and interlace. A picture larger than decodeDib accepts answers
+nothing as well.

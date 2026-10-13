@@ -1,351 +1,267 @@
 # UI Types
 
-The words that no longer fit above a declaration in `Y-Core/System/UiTypes.cppm`. Referenced
-from that file.
+The words that do not fit above a declaration in `Y-Core/System`.
 
 ## Cursor
 
-The cursor as the platform holds it - a handle on Win32, a shape number on Wayland - answered by
-`Platform::cursor` and taken back by `Platform::setCursor`. Opaque above the platform layer, and
-never made by hand.
+A handle on Win32, a shape number on Wayland. Platform::cursor returns the one shown, and
+Platform::setCursor puts it back. **Only the platform makes one.**
 
 ## InputStamp
 
-**What the user did that led here**, in whatever form the display server states it. A display server
-answers a request made on the user's behalf - moving a window by its title bar, opening a menu
-that takes the pointer, writing the clipboard - only when the request names the input event that
-asked for it, by the number the server itself put on that event. A request naming no event is
-refused.
+**A request made for the user names the input event behind it** - moving a window by its title
+bar, opening a menu that takes the pointer, writing the clipboard. A display server that asks for
+this proof refuses a request with an empty stamp. Win32 asks for none, and the stamp stays empty.
 
-It is not a timestamp. A timestamp says when; this is the server's own count of the events it
-has sent, and the two are different numbers with different rules.
-
-Nothing above the platform layer reads one, and nothing above it may invent one: a stamp is
-filled where an input event enters the framework, carried by whatever is built out of that
-event, and handed back by a call that needs it. A platform whose requests need no such proof
-fills nothing here and reads nothing.
+**Pass a stamp along unchanged.** It is filled where an input event enters the framework, and the
+call that needs it takes it back. The value is the server's serial for the event, not a timestamp.
 
 ## HitTest
 
-Hit testing is performed top-down from the parent through all nested controls. If a parent is
-set to `HitTest::Transparent`, none of its child controls will receive mouse input.
+**Transparent covers the children too.** A parent answering Transparent keeps mouse input from
+every control inside it.
 
 ## Interactivity
 
-The difference between HitTest and Interactivity. HitTest filters and reroutes mouse input based
-on the cursor position only. Interactivity determines how a control participates in keyboard
-navigation (focusable items) and how it reacts to mouse move and click events - hover and click
-animations. Interactivity is evaluated only after HitTest confirms the cursor is over the
-control.
+**HitTest comes first.** It routes mouse input by the pointer position alone. Interactivity is read
+once the pointer is over the control, and sets how it takes part in keyboard navigation and
+answers the mouse - hover and click animations.
 
-**Where a press puts the focus.** A press walks up from the control under the pointer to the first
-one that can take the focus - Focusable or ActiveContainer - and puts it there, which is how a
-press on a label inside a tile selects the tile. A MouseOnly control is pressed for itself, and
-its press moves no focus at all: a tool bar's button beside an editor keeps the caret in the
-editor, a scroll bar's press keeps it in the box it scrolls. The one exception is a part - a
-slider's thumb, a check box's mark, a split button's strip, a control hosted in a grid cell -
-where the press is the owner's and the walk goes on from the owner. The owner says so through
-Control::isChildPart, the parent-query convention isChildBody follows: ButtonBase, SliderBase
-and Grids::RowContainer answer yes for every child of theirs.
+**A mouse press focuses the first control up the chain that can take the focus** - Focusable or
+ActiveContainer. A mouse press on a label inside a tile focuses the tile.
+
+**A MouseOnly control is pressed for itself**, and leaves the focus where it is. A tool bar's
+button keeps the caret in the editor beside it. A part is the exception - see Control::isChildPart.
+
+## Control isChildPart
+
+**A part's mouse press is its owner's.** A part is a slider's thumb, a check box's mark, a split
+button's strip or a control hosted in a grid cell. The focus walk passes over a MouseOnly part and
+goes on from the owner. ButtonBase, SliderBase and Grids::RowContainer answer yes for every child.
 
 ## WindowRole
 
-What the platform layer switches on - window class, styles, activation, how it is shown.
-
-**Named at the creation site**: a form is created with the role it is meant to have, and its root
-control's `Interactivity` is a separate answer the root gives for itself. The two are about
-different things - what the **window** does with activation, and how the **control** takes part in
-focus and selection - so neither is read off the other. A popup list whose root tracks a current
-item is the case that says so: `WindowRole::Menu`, root `ActiveContainer`.
-
-## IPlatformServices
-
-**The platform, as a service standing below the context sees it**: a name and nothing else.
+**The role is given where the form is created**, and sets what the window does with activation.
+The root control's Interactivity is a separate answer, for how the control takes part in focus and
+selection. A popup list whose root tracks a current item is `WindowRole::Menu` with an
+`ActiveContainer` root.
 
 ## PresenterRole
 
-What a control does for an action it presents. Read where the action is attached - see
-`Action::attach` - and given as a construction property by a control that is not the plain case.
+Action::attach takes it, Button by default. A control built with an Action property reads the
+role from its properties too.
 
-`Button` delivers the action's click and shows nothing of the command but its face: a button, a
-toolbar item. Its hint falls back to the action's name and key, which a button has nowhere
-else to state.
-
-`Line` delivers the click and writes the name and the key itself: a menu line. Nothing is
-composed for its hint, which would say back what the pointer is already standing on.
-
-`Display` shows the command without delivering it - a split button's strip, whose press is
-routed by the button it is part of. Hint as for a Button.
+- `Button` - a button or a toolbar item. Its hint falls back to the action's name and key.
+- `Line` - a menu line, which writes the name and key itself, so the action adds no hint.
+- `Display` - a split button's strip. It shows the command, and the button it belongs to delivers
+  the click.
 
 ## ActionState
 
-What the data says about a control: whether it may be acted on, and whether it is chosen. Both
-are asked for and never stored - `Control::state` walks for the answer.
+**Asked for, never stored.** Control::state walks up the parent chain for the answer.
 
-`VisualState` is the other half, and the two must not be confused: this one is what the
-application knows, that one is what is drawn, and every field of it that shares a name here is
-an animated factor rather than a fact.
+**ActionState is what the application knows, and VisualState is what is drawn.** The drawn
+enabled and selected animate through StateFactors.
 
 ## VisualStateIndex
 
-`Current` is the one item a container hands the focus back to when it is entered again. Not the
-same idea as `Focused`: a multi-select view keeps a current item to anchor its Shift ranges on
-while the items it selected are the ones drawn `Selected`, and it keeps that item while the
-mouse rather than the keyboard drives the input.
+**Current is a separate state from Focused.** A multi-select view anchors its Shift ranges on its
+current item, and keeps it while the mouse drives the input. The items it selected are drawn
+Selected.
 
 ## HorizontalTextAnchor
 
-Where the measured text block sits across its zone. `Left`, `Center` and `Right` each make a block:
-a layout told one of them places its lines in the width the text measures - its widest line - and
-`TextAlign` aligns each line inside that block, which the anchor then moves as a whole. A centred
-paragraph in a centred block is centred in the zone; a right-aligned one anchored `Left` ends at
-the right edge of its own widest line, and a single line anchored `Left` stays at the left whatever
-its alignment.
+**Left, Center and Right make a block** as wide as the widest line. TextAlign aligns the lines
+inside the block, and the anchor moves the block as a whole. A right-aligned paragraph anchored
+Left ends at the right edge of its widest line.
 
-`None`, the default, makes no block. The lines are aligned across the whole zone and nothing moves
-them after - the answer for a page, a grid cell, and anything whose lines align to the edges of the
-box it is drawn in.
+**None, the default, makes no block.** The lines align across the whole zone, as a page or a grid
+cell needs. A stated break width is where such a text is placed - see TextLayout::setBreakWidth.
 
-A wrapped text is never placed wider than it was broken at: a line wider than that overflowed it,
-and placing the others in its width would join them. A stated break width is where a text under
-`None` is placed - see TextLayout::setBreakWidth.
+**A wrapped text's block is at most its break width**, even where a line overflows it.
 
-An over-text hint repeats an anchored text inside its block. GetHintEvent::textAnchor comes back
-`Left`, the anchor rect starts where the block was put, and the hint's label places the lines in a
-block of its own from there.
+**An over-text hint repeats an anchored text inside its block.** GetHintEvent::textAnchor comes
+back Left, and the anchor rect starts at the block.
 
 ## WordWrap
 
-Whether a text is broken to the box it is drawn in. A text that is not comes out as wide as it
-is, which is what a horizontally scrolled control needs: the scroll has to be told how wide the
-text is, and a text broken to the box can never be wider than one.
+**WordWrap::No measures the text at its full width.** A horizontally scrolled control needs that
+width, and a wrapped text is never wider than its box.
 
 ## TextAnchor
 
-Both axes together, because they answer one question: where inside its zone the text block was
-put. Every mapping between a control's coordinates and the text's own - drawing it, hit testing
-it, measuring a caret in it - is made against this, and a mapping made against one axis alone
-reports the caret where the text is not.
+**Map with both axes.** Drawing a text, hit testing it and measuring a caret in it all map through
+a TextAnchor. A mapping that reads one axis alone puts the caret where the text is not.
 
 ## FormPlacement
 
-`Default` and `ScreenRight` are the two a **toplevel** takes, and neither reads the anchor.
-`Default` is the platform's own placement, used for dialogs, and the placement rect is ignored.
-`ScreenRight` puts the window against the right edge of the work area, the full height of it, at
-the width asked for; a platform that does not place toplevels for its client answers the size
-and leaves the position to the display server - see Wayland's `Window::place`.
+**Default and ScreenRight are for a toplevel**, and ignore the placement rect. Default is the
+platform's own placement. ScreenRight takes the full height of the work area at its right edge, at
+the width asked for. Where the display server places toplevels itself, only the size is answered.
 
-Everything else applies only to child popups, and the placement rect must be in the parent
-form's coordinates. `BottomLeft` and `Top` drop the window under or over the rect, flipping to
-the other side when the side asked for has no room, the window's left edge level with the rect's;
-`BottomRight` drops it as `BottomLeft` does with the two right edges level, so it hangs from the
-rect's right end and grows leftwards. `Right` stands it beside the rect, level with
-the rect's top and off its right edge, and off its left edge when the right has no room for it -
-the hint beside a completion list's current row is placed this way, on a rect spanning the
-list, so that the left edge it flips to is the list's own. `ContextMenu` and `Mouse` hang it
-off the pointer.
+**The rest are for child popups**, against a placement rect in the parent form's coordinates.
+
+- OverText lays the window's own text over the text in the rect - an in-place editor, an
+  over-text hint.
+- Each of the others flips to the opposite side of the rect when the side asked for has no room.
+  Placed Right on a rect spanning a list, a window flips to the list's own left edge.
 
 ## AutoFit
 
-Which way a form's size and its content settle against each other.
+**Yes is for a popup that grows with what is typed into it**, No for a window the user sizes.
+Either way the placement is clamped to the monitor.
 
-`No` - the content is laid out into the window, which is right for a window the user sized.
-`Yes` - the window is placed again around whatever the content came out as, which is what a
-popup that grows with what is typed into it needs.
-
-The placement clamps to the monitor either way, and that clamp is the bound of last resort.
-
-**A dialog its content sizes is not the user's to size.** The form states its range as the one size
-the content asked for, and the platform answers a range of one size with a window that offers no
-edge to drag and no maximize, from its caption, its window menu or the system's snapping; a
-DialogTitle over it is built with `TitleButtons::Close`, so the title offers neither. Placed
-again once it is up, it keeps where it stands, wherever the user moved it, and takes the new size.
+**A dialog its content sizes leaves the user nothing to resize** - no edge to drag, no maximize.
+Build its DialogTitle with `TitleButtons::Close`. Placed again, the dialog keeps its position and
+takes the new size.
 
 ## DropdownWidth
 
-Design width of a dropdown strip standing beside the control's face - at its right, which is where
-every face without a top icon has it unless the control asks for its left. A strip below a top
-icon is as tall as the text it carries, and this width does not apply to it.
+**Under a top icon the strip sits below it** and carries the text, as tall as that text. This
+width does not apply there.
 
 ## ExpanderViewMode
 
-What an expander draws of itself, and what its header is built from. The header paints the label
-in every look, and the button shows the mark alone, so picking a header and opening it are
-separate acts on separate targets.
+**The header shows the label and the button shows the chevron**, so picking a header and opening
+it are separate targets.
 
-`Section` fills the page and its header, with the chevron at the right end of the strip: a group
-that reads as a box with a heading.
-
-`Divider` states no colours at all. The chevron keeps the right end, the label goes against the
-left edge, and a line fills what lies between them, so the heading reads as a labeled divider
-across whatever it stands on.
-
-`Ellipsis` states no colours and has no line. The label goes against the left edge and the chevron
-follows it straight away; the rest of the strip is the header's, so a held header covers the width
-of what scrolls under it. While the section is collapsed, a muted ellipsis trails the chevron on the
-label's line, set in the style the label ends in.
-
-`TreeNode` states no colours either and has no line. The chevron leads the strip and the label
-follows it, which is the shape a tree of expanders is built from: the click that opens a node is
-the button's, and the rest of the row is left to whatever picks it.
-
-## PanelSlot
-
-Where a bar sits in a panel, in the order the panel is read: across the top, then the middle row
-from left to right, then across the bottom.
+- `Section` - a filled page and header, the chevron at the right end.
+- `Divider` - paints nothing of its own. The label is at the left, the chevron at the right, and a
+  line runs between them.
+- `Ellipsis` - paints nothing of its own, and has no line. The chevron follows the label, and a
+  muted ellipsis trails it while collapsed. A held header spans the width of what scrolls under it.
+- `TreeNode` - the chevron leads and the label follows. The row shows hover, focus and pick as a
+  tool button does, and only the button opens the node.
 
 ## MessageIcon
 
-The picture a dialog leads with. One name per kind of thing a dialog is about, so two dialogs
-asking the same kind of question never lead with different pictures.
-
-`Question` and `Information` carry the same hue - a question and a notice, not two degrees of one
-thing - and their glyphs are the whole of what tells them apart.
+**Pick by what the dialog is about**, so dialogs about the same kind of thing lead with the same
+picture. Question and Information share a hue, and their glyphs alone tell them apart.
 
 ## EditorMode
 
-What an in-place editor is for, and whether one opens at all.
+**ReadOnly opens a reader** - the same box, refusing every change - so a value too long for its
+place can be read whole and copied. **An Editable value can be refused** with a reason, and the
+editor stays up for a correction.
 
-`None` - nothing opens, and the gesture goes on meaning whatever else it meant.
-`ReadOnly` - a reader: the same box over the same text, selected whole and refusing every
-change. It is how a value too long for the place it is shown in is read whole and copied out of,
-and nothing is written back.
-`Editable` - the value is typed, and offered back to its source when the edit ends. The source
-may refuse it and say why, and the editor stays up for the value to be corrected.
+**A grid states it per column**, ReadOnly by default, since a cell trims what does not fit. An
+Editable cell's text goes to RowBase::acceptCellText. A cell holding a control leaves editing to
+that control.
 
-A grid states it per **column**, because a column is what says where a cell's text comes from, and a
-value that can be typed back is a property of that source rather than of the row that happens to
-hold one. What an Editable cell is left with goes to RowBase::acceptCellText.
+**A control built on WithInPlaceEdit answers editorMode()** each time an editor would open -
+Editable while anything listens for AcceptEditEvent, None otherwise. Override it to answer None
+under conditions of the control's own. StdActions::rename is enabled by Editable alone.
 
-ReadOnly is a column's default because a cell **trims** what does not fit its column: every text
-cell therefore has a value worth being read whole and copied out of, and a column that wants
-that says nothing. Only a cell drawn as plain text opens one - a cell holding a control is that
-control's, whatever its column says.
+## ComboBox editorMode
 
-A control built on WithInPlaceEdit answers editorMode() instead, asked each time an editor would
-open, so a control with conditions of its own answers None while they hold. The default is
-Editable while anything listens for AcceptEditEvent and None otherwise. StdActions::rename is
-enabled by Editable alone - a reader shows a name and does not change it.
+The default is None. **Editable makes the face a place to type:**
 
-A combo box states it as a property, None by default. Editable makes the face where a value is
-typed: a press on the face opens the editor and the strip alone drops the list, Return opens the
-editor, and a character typed on the combo box opens it with that character in it. A combo box
-with no strip keeps the list on its face, and F4 and Alt+Down drop it from the keyboard either
-way. What the editor is left with goes to ComboBoxAcceptTextEvent - see Controls.
+- a press on the face opens the editor, and the strip drops the list;
+- Return opens the editor, and so does a typed character, which goes in.
 
-## ChevronTurn
-
-Where a mark points, as a fraction of a full turn clockwise from pointing down - which is how
-the chevron path in `Icons/Chevron.cppm` is authored.
-
-A control animating between two of these picks the pair that states the turn it wants. The mark
-travels the signed distance between them, so right to down is a quarter turn clockwise while
-down to up is a half turn the same way.
+A combo box with no strip drops the list from its face. F4 and Alt+Down drop it either way. The
+typed text goes to ComboBoxAcceptTextEvent.
 
 ## DropdownMarkTurn
 
-Where the dropdown mark points with the popup closed and with it open. The mark is animated
-between the two and travels the signed distance, so the pair states the turn it makes as well as
-the two rests.
+**The mark turns through the signed distance from closed to open**, so the pair sets the
+direction as well. The values are ChevronTurn's fractions of a turn, clockwise from pointing down:
+
+- the default, `down` to `up` - a half turn clockwise;
+- a breadcrumb crumb, `right` to `down` - a quarter turn clockwise.
+
+Override DropdownControlBase::dropdownMarkTurn to give a pair.
 
 ## ColorMode
 
-Which side of the theme something is drawn on. It is the stored fact; the sign below is
-derived from it, because a mode is what anyone chooses and a sign is only how the arithmetic
-spells it.
+**The mode is what is stored.** Where a number is needed, lightnessOf answers 0 for Dark and 1 for
+Light.
 
 ## ColorModeSetting
 
-The mode the application is drawn in, as the user chose it: Auto, which follows the desktop, or
-Dark or Light stated outright. Auto stands first and is what a config stating nothing holds. What
-is drawn is always a ColorMode - a setting is read into one where a theme is put on, see
-wornColorMode in Application - so nothing that paints ever holds Auto.
+Auto follows the desktop, and is what a config stating nothing holds. **Painting always reads a
+ColorMode** - see wornColorMode - so nothing that paints holds Auto.
 
 ## Pigment
 
-Which of the theme's semantic hues an ink is drawn from. Each is a region of the wheel
-rather than a place in an order, so a pigment carries the colour its name states whatever the
-anchor is, and one harmony fills all four.
-
-Only a hue is named here. What a pigment is drawn as - how colourful, and how light - is stated
-once per colour mode: by InkWell's tones for an ink colour, and by the painter for a pigment it
-draws directly. See InkTone.
+**Each pigment is a region of the hue wheel**, so it keeps the colour its name states whatever the
+theme's anchor hue. It sets the hue only. The tone comes from `InkWell::pigmentTones` for an ink,
+or from the painter for a pigment it draws directly.
 
 ## InkTone
 
-How colourful a colour is and where it sits. The two travel together because a hue needs a
-different amount of colour to read at one luminosity than at another, so stating either
-without the other names half a colour - which is why a mode-pair is a pair of these rather
-than a pair of luminosities.
+**Saturation and luminosity travel together.** A hue needs a different amount of colour to read at
+each luminosity, so either alone is half a colour.
 
 ## PigmentTones
 
-One colour stated once for each side of the theme, rather than one elevation the mode would
-orient. Which of the two is read is the painter's mode rather than the theme's, and a theme
-standing between the sides is drawn between the tones.
+**The painter's mode picks the tone**, not the theme's. A theme between the two sides is drawn
+between the tones.
 
 ## InkColor
 
-How an ink's grade becomes a colour. Every ink is read the same way: its grade is a share of
-the gap between the surface and an ink, and the colour names the ink at the far end - the
-chain's own, one of the palette's hues, pure black or white, or for Accent and Spot one of the
-theme's effects laid over the chain's ink. The theme owns those effects, so what is written here
-is which one and nothing about what it does.
+**The grade is a share of the gap from the surface to an ink**, and the InkColor picks the ink -
+the chain's own, a palette hue, black or white. Accent and Spot lay one of the theme's effects over
+the chain's ink.
 
-The effect goes on before the mix. An effect that sets its channels outright states where the
-colour lands, so laid over the mixed ink it would answer the same colour at every grade.
-
-The theme's effect is read at the lightness the painter stands at, so a spot run rises off the
-surface it is drawn on the way a muted run beside it does.
+**The effect goes on before the mix**, so an effect that sets its channels outright still fades
+with the grade. It is read at the painter's lightness, so a spot run rises off its surface the way
+a muted run does.
 
 ## Ink
 
-A colour named rather than stated. A text run or an icon holding one is recoloured by the
-control it lands in and by the theme in effect, which a resolved Color cannot be.
+**An Ink becomes a colour where it lands**, by the control it is drawn in and the theme in effect.
+A Color stays as it is.
 
-Nothing constructs one directly. Every colour is built from the same number - a share of the
-ladder - so a constructor could not say which was meant. InkWell holds one accessor per colour,
-each taking the grade and nothing else, and the named colours built from them.
+**Take one from InkWell** - one accessor per colour, each taking the grade alone, and the named
+colours built from them. A constructor taking a grade could not say which colour was meant.
 
 ## DirWatchChangeEvent
 
-Carries no description of what changed. Every backend may drop events under load -
-inotify reports IN_Q_OVERFLOW, Win32 truncates its buffer - so a correct handler rescans
-the directory rather than acting on a delta it cannot trust to be complete.
+**Rescan the directory in the handler.** Every backend may drop events under load - inotify's
+IN_Q_OVERFLOW, Win32's truncated buffer. Changes close together raise one event, 60 ms after the
+last.
 
 ## DirWatch
 
-Watches a directory and reports that its contents changed. The watch is not recursive:
-only entries directly inside the directory are observed.
+**Only entries directly inside the directory are watched.**
 
-A directory that does not exist cannot be watched. The watch is then not established,
-`watching()` answers false, and nothing is reported when the directory is made. `restart()`
-is what puts the watch over it once it is there, and it does so before returning: a change
-made right after `restart()` is reported.
+**A missing directory leaves the watch down** - watching() answers false, and making the directory
+reports nothing. Call restart() once it exists. The watch is up when restart returns.
 
 ## WebFetchEvent
 
-Raised once per fetch, on the UI thread, whether an answer arrived or not. status() is 0 where
-none did - no connection, a timeout, a body over the limit, a fetch the platform could not make.
+Raised once per fetch, on the UI thread. WebFetch::status() is 0 where no answer came - no
+connection, a timeout, a body over the limit, or a fetch the platform could not make.
 
 ## WebFetch
 
-One HTTPS GET. The request starts with the object and runs on a thread of its own. What it brings
-back is handed to the UI thread through a UiTimer, the way a DirWatch hands over a change, and
-WebFetchEvent is raised there. No redirect is followed, and a body over a megabyte is refused
-whole.
+**A redirect is answered as it comes**, not followed. A body over a megabyte is refused whole.
 
-Destroying a fetch that is still running cancels it and waits for its thread, so the wait is
-short - see Platform for how each backend cancels. A fetch must not be destroyed from inside its
-own WebFetchEvent handler: the event is raised by the fetch's own timer.
+**Destroy a fetch outside its own WebFetchEvent handler** - the fetch's own timer raises the event.
+
+### WebFetch on Windows
+
+WinHTTP, blocking, on the fetch's thread. It uses the system's proxy settings and TLS, so an
+application ships nothing for either. Each step may take ten seconds, and a cancel ends the call at
+once.
+
+### WebFetch on Linux
+
+libcurl, loaded with dlopen when a fetch runs - libcurl.so.4, else libcurl-gnutls.so.4, the one a
+fresh Ubuntu desktop carries. The build needs no libcurl, and a system without one answers every
+fetch with nothing.
+
+The connection may take ten seconds and the transfer thirty. A cancel takes effect within a second.
+
+## WebFetch ~WebFetch
+
+**The wait is short** - cancelling ends the request before the thread is joined.
 
 ## CommandOutcome
 
-What the desktop's shell made of a command line. A run is Running until the shell answers, and then
-one of the other five for good. NotFound and NotRunnable are what the shell says of the program the
-line names, and NotStarted is the shell itself not starting. Ended is a line that ran and exited
-with zero. Failed is every other exit code, whoever gave it - the program, or the shell for a reason
-of its own - and exitCode says which.
+**A run is Running until the shell answers**, and then one of the other five for good. Failed is
+every nonzero exit, from the program or from the shell - CommandRun::exitCode gives the code.
 
 ## CommandRunEvent
 
@@ -353,125 +269,129 @@ Raised once per run, on the UI thread, when the outcome leaves Running.
 
 ## CommandRun
 
-A command line run by the desktop's shell - ShellExecuteEx on Windows, /bin/sh on Linux - and left
-running. The run starts with the object. The program it starts stands apart from the application
-and goes on after the application ends. Its answer is handed to the UI thread through a UiTimer, the
-way a WebFetch hands over what it brought back, and CommandRunEvent is raised there.
+The shell is ShellExecuteEx on Windows and /bin/sh on Linux. The program runs apart from the
+application, and goes on after the application ends.
 
-**The object is the answer's lifetime.** Destroying it stops listening and leaves the line running,
-so whoever holds it hears the answer for as long as it holds it and no longer - an editor started
-from a page goes on after the page has gone, and nothing is raised on the page's behalf. A run must
-not be destroyed from inside its own CommandRunEvent handler: the event is raised by the run's own
-timer.
+**The answer comes at once for a program that is not found**, and when it ends for one that runs -
+which may be never in the life of the application.
 
-**A program that is not found is answered at once**, because the shell gives up on the spot. A
-program that runs is answered when it ends, which may be never in the life of the application. See
-Platform for what each shell answers.
+**The object is the answer's lifetime.** Whoever holds the run hears the answer while it holds it.
+An editor started from a page goes on after the page has gone, and nothing is raised for the page.
+
+**Destroy a run outside its own CommandRunEvent handler** - the run's own timer raises the event.
+
+### CommandRun on Windows
+
+**The line is a program and its parameters** for ShellExecuteEx, with no cmd syntax - no `&&`, pipe
+or `start`. The program is the first word, or the quoted run. The shell finds it as the Run box
+does, on the PATH or under App Paths, with environment variables expanded. A .cmd or .bat opens a
+console window.
+
+- NotFound - no program answers to the name.
+- NotRunnable - any other refusal, such as a declined elevation.
+- Ended - exit code zero, or the line went to a program already running.
+- Failed - any other exit code.
+
+### CommandRun on Linux
+
+**`/bin/sh -c` runs the line**, so shell syntax works. The program runs detached, and the
+application has no child to reap.
+
+- 0 - Ended.
+- 127 - NotFound, and 126 - NotRunnable.
+- Any other code - Failed. A program a signal killed answers 128 plus the signal's number.
+- NotStarted - the shell could not be forked.
 
 ## CommandRun::exitCode
 
-What the line exited with, as the outcome was read from it - zero while the run is Running, for
-NotStarted, and on Windows wherever the shell refused the line. On Linux a program killed by a
-signal answers 128 and the signal's number, the way a shell reports it. On Windows a program that
-crashed answers the status it went down with, such as 0xC0000005.
+**Zero** while Running, for NotStarted, and on Windows wherever the shell refused the line.
+
+- Linux: a program killed by a signal answers 128 plus the signal's number, as a shell does.
+- Windows: a program that crashed answers the status it went down with, such as 0xC0000005.
 
 ## RepeatEvent::elapsedSeconds
 
-Time since the previous repeat. An action that moves at a speed multiplies by this
-instead of counting repeats, so a machine that misses ticks covers the same ground in
-fewer, longer moves.
+**Multiply a speed by it** rather than counting repeats. A machine that misses ticks then covers
+the same ground in fewer, longer moves.
 
 ## InkGrade
 
-A shade of the ink, stated as a share of the gap between the surface an ink is drawn on and
-the ink itself: 0 lies flush with the surface and cannot be seen, 1 is the ink. Stated as a
-share rather than as a luminosity so that a theme with quiet contrast keeps it - every step
-scales with what the theme itself declared readable.
+0 is flush with the surface, and 1 is the ink. **A grade is a share, not a luminosity**, so the
+steps scale with the contrast the theme declared readable.
 
-These five are the steps the framework draws in. A caller wanting one of its own states the
-share instead; nothing rounds a stated grade to the nearest of these.
+The framework draws in the five steps. A caller can state any share, and nothing rounds it to a
+step.
 
-**A light surface counts the steps from the ink's end.** The shares in k_inkGrades are a dark
-surface's. Over a light one a grade stands at the mirror of the step as far from the ink as the
-grade is from the surface - Faint at 0.20, Subtle 0.40, Muted 0.73, Strong 0.88 - scaled by one
-less the theme's dark mode floor, so each stops short of the ink as far as the dark side's
-surface stops short of black. Strongest is the ink itself and reaches it. A share of a caller's
-own between two steps stands between theirs. Equal steps in lightness do not read as equal at the
-two ends of the axis: a step off a dark surface reads larger than the same step off a light one.
-Read this way, a white surface and a floored black one draw in the same greys, each counted from
-its own end. The reading follows the painter's lightness, so an element standing between the
-sides stands between the two readings. An Ink holds the dark side's share, and lightGradeOf
-answers the light side's.
+**A grade is stated as a dark surface reads it.** Over a light surface the painter reads it
+through lightGradeOf, and between the two sides it reads a share between the two.
+
+## lightGradeOf
+
+**A light surface counts the steps from the ink's end.** Each step lands as far from the surface as
+its mirror is from the ink - Faint mirrors Strong, Subtle mirrors Muted:
+
+- Faint at 0.20, Subtle at 0.40, Muted at 0.73, Strong at 0.88, each times
+  `1 - luminosityFloor`;
+- Strongest at 1, the ink itself;
+- a share between two steps lands between theirs.
+
+**The floor puts both sides in one set of greys.** Each step below Strongest stops short of the ink
+as far as the dark side's surface is above black.
 
 ## InkColor::Text
 
-A shade of the ink the paint chain arrived at, and the colour an Ink starts with. Both ends of
-the mix come from the chain, so a text ink owns no colour, no hue and no tone of its own.
+**An Ink starts with Text.** Both ends of the mix come from the paint chain, so a text ink has no
+colour, hue or tone of its own.
 
 ## InkColor::Accent
 
-The hue the theme's own live states are drawn from - a button under the pointer, a
-check, the band behind selected text - and so the ink for anything asking to belong to
-the controls around it.
+The theme draws its live states from it - a hovered button, a check, the band behind selected
+text. **Use it for what belongs with the controls around it.**
 
 ## InkColor::Spot
 
-The second accent, for what stands apart from the interface rather than answers to it:
-a brand mark, a run of emphasised text, the tint a hint carries. Held apart from the
-accent so that spending it sparingly is the theme's decision and not each caller's.
+**Spot is for what stands apart from the interface** - a brand mark, emphasised text, a hint's
+tint. The theme decides how sparingly it shows.
 
 ## InkColor::Yellow, Green, Blue, Red
 
-One of the palette's semantic hues, drawn at the tone InkWell's pigmentTones states for the
-colour mode the painter stands in. The grade fades it toward the surface the way it fades
-the text ink, so at Strongest the hue stands at its own tone.
+The tone is the one `InkWell::pigmentTones` states for the painter's side of the theme. Strongest
+draws the hue at that tone, and a lower grade fades it toward the surface.
 
 ## InkColor::Black, White
 
-Pure black and white - saturation 0 at luminosity 0 and 1 - the same on either side of the
-theme. The grade fades one toward the surface the way it fades the text ink.
+Saturation 0, at luminosity 0 and 1. A lower grade fades it toward the surface.
 
 ## Hsl
 
-A colour held on three channels, each a fraction of its own range, over the Oklab
-colour space. What the channels buy over an RGB cylinder is that each one means one
-thing wherever it is read:
+**Each channel means one thing wherever it is read:**
 
-- luminosity is perceptual, matching CIE L* for greys. Half way up the channel is half
-  way up to the eye, so one offset is the same visible step at every starting point and
-  under every hue, and comparing two luminosities compares what a person sees.
-- saturation is chroma as a fraction of the most the sRGB gamut holds at that hue and
-  luminosity. Every triple in the unit cube therefore names a colour that exists, which
-  is what lets a rule set a channel outright without asking whether the result can be
-  drawn.
-- hue is a fraction of a turn, and holds its appearance as the other two move. Equal
-  steps around it are equal steps to the eye, so colours picked at even spacings look
-  evenly spread.
+- luminosity is perceptual, so one offset is the same visible step from any start;
+- saturation is a share of the most chroma sRGB holds at that hue and luminosity, so every triple
+  in the unit cube can be drawn;
+- hue is a fraction of a turn, and equal steps around it look equal.
 
 ## UiTimer
 
-Class is called UiTimer, since it's WM_TIMER based,
-and no timer ticks ever happens while there are active user input messages
+**A timer fires once.** Each start arms one tick, and the timer is inactive by the time OnTick is
+raised. Start it again from the handler to repeat, or use EventRepeater.
 
 ## Url
 
-A page's path and an anchor inside the page - the place a browser tab stands on, and what a
-link names. The spelling is the path, then `#` and the anchor where there is one. The first `#`
-is where the anchor starts, so a `#` inside either part is written `%23`, and a theme file named
-`C#.clafitheme` survives being stored and read back.
-That escape is the only one `Url::parse` reads. Any other - a web address's `%20` - stays as it
-is written, so an address goes through `str()` unchanged. A name that itself holds the three
-characters `%23` reads back as `#`.
+The place a browser tab is on, spelled `path#anchor`, or `path` alone. **`%23` is the one
+escape** - str() writes a `#` inside either part as `%23`, so a theme file named `C#.clafitheme`
+survives a round trip.
+
+Url::parse reads back that escape alone. A web address's `%20` passes through as written, and a
+name holding `%23` reads back with a `#` there.
 
 ## NoInitAllocator
 
-construct() skips default construction rather than running it, so an element lands in whatever
-the last user of that allocation left there. Skipping the zeroing is the point - Color has a
-default constructor that clears all four channels, and a bitmap's worth of that is what this
-exists to avoid - so the line is not whether the type initializes itself. It is that an element
-must be safe to destroy and to overwrite having never been constructed, which is what trivially
-copyable states: a trivial destructor, and copy and assignment that read no invariant. A string,
-a vector or a unique_ptr would be destroyed through a garbage pointer.
+**An element holds whatever the memory held.** Skipping the zeroing of a bitmap's worth of Color
+is the point.
 
-The caller still owes the other half: every element the buffer reports must be written before it
-is read.
+**The type must be trivially copyable**, since an element is destroyed and overwritten without
+being constructed. A default constructor of its own is fine. A string, a vector or a unique_ptr
+would be destroyed through a garbage pointer.
+
+**Write every element before it is read.**

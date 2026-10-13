@@ -117,7 +117,7 @@ namespace ClaFi
         [[nodiscard]] const Markers& markers() const { return m_markers; }
         // The text the first anchor of that name holds, or nothing where no anchor has it. A walk
         // over the markers, since an anchor is asked for when a link to it is followed and not
-        // before. See TextEngine-Types#anchors
+        // before.
         [[nodiscard]] std::optional<TextRange> anchorRange(std::wstring_view name) const;
 
         // Edit support
@@ -267,7 +267,7 @@ namespace ClaFi
         template<typename... Args>
         explicit TextFormat(Args&&...);
     public:
-        // Each replaces what the format already holds of its kind. See TextEngine-Types#textformat
+        // Each replaces what the format already holds of its kind.
         template<IsFormatState Item>
         TextFormat& operator<<(const Item&);
         TextFormat& operator<<(Ink);

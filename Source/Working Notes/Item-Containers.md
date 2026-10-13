@@ -91,7 +91,13 @@ narrower than the items measured, and an item overrunning its share is clipped r
 a width its text was never broken at is not a width its text fits. A theme tile called "New Theme"
 lost its last letter that way while the tile beside it, called "1", left half its share empty.
 
-### A wrapping panel and the length it is given
+Filling is what makes the shares show. A `ThemeTile` told to Center came out as wide as its
+**name**, and the picture inside it, drawn at a stated size and centred, was then clipped to a tile
+narrower than itself: a theme called "1" showed a third of its picture and one called "123456789"
+showed all of it. Filling the share is what makes every tile the same width, and a name too long
+for it wraps under the picture instead of widening the tile.
+
+### A wrapping stack and the length it is given
 
 **Without a lane count** the two passes have nothing in common. The measure runs bottom-up against
 the maximum the panel states; the length the panel will be handed is settled top-down, in the
@@ -125,9 +131,35 @@ guard lets it through, and a menu taken from 165% to 227% arrives at its placeme
 viewport of 104 design units where its own page needs 374. The measure then collapses onto whatever
 MinSize the root states and the window comes out at that floor.
 
+**The box above carries its own.** `ScrollBox` states the viewport as a wrapping body's maximum, and
+it writes that width in `PanelBase::bodySlotSettled` - the moment the slot is settled and before the
+body is laid into it - so a body that **fills** breaks its lanes at this pass's viewport. A body
+that does not fill keeps the width it **measured**, and the measure ran earlier in the pass, against
+the viewport of the one before, so for that one the box asks for another pass and the pass after
+hands back the same width.
+
+**An item of a row keeps what it measured**, Fill or not: a row sizes its items from what they
+measured, and hands a width out only to an item that takes what the lane has over -
+`Stack::isChildWidthGiven`. Without that a crumb held its own width as a ceiling: a longer title
+broke onto more lines, and a scale round trip left its icon and strip, rounded per scale, a pixel
+short of the text.
+
 ### A column on a box that scrolls
 
 Cut at the viewport, the columns are ones the measure never counted. A dropdown cut short by its
 placement would show it: `ScrollBars::Auto` puts the bar up for the one column the list measured,
 the cut makes two, the body comes out exactly as tall as the viewport so the bar has nothing to
 carry, and the second column stands past the width the window was measured for, clipped at the slot.
+
+## TabStripBase::adjustMetrics
+
+`TabStripBase::adjustMetrics` hands the layout no padding across a Tab strip, and the strip lays
+the stated value out itself. `calculateContent` adds it to the cross extent and to the calculated
+minimum, the way `Control::calculate` adds a padding. `alignContent` places the tabs past it: below
+it on `HorizontalTop`, right of it on `VerticalLeft`, and on the other two the room is left at the
+far side. Everything that reads the layout's padding - the paint, the hit test, the line's origin,
+`TabbedBox::tabLineX` - finds the inner edge.
+
+The spacing across is free for the line gap because a single lane has no use for it.
+`adjustChildBox` cuts the gap off a non-tab's box on the line side, and `calculateContent` counts it
+on top of the widest of them.

@@ -25,6 +25,10 @@ namespace SeeDocs_App
     // reaches the footnote by, then the prose.
     export void writeFootnote(Text&, std::wstring_view anchor, std::wstring_view mark,
         const Runs& name, const Excerpt&);
+    // A footnote whose section the page shows in full elsewhere: the mark and the name, where it
+    // has one, then where the section stands - a link to it where a link is given.
+    export void writeShownAt(Text&, std::wstring_view anchor, std::wstring_view mark,
+        const Runs& name, const Runs& holder, std::wstring_view holderLink);
     // A declaration as code, every token in the ink its language's lexer gives it; a linked run
     // as a link where links are asked for, and in its token's ink where they are not - a hint.
     export void writeSignature(Text&, const Runs&, bool links, SourceLanguage);

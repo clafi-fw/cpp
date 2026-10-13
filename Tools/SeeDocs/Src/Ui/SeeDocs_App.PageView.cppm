@@ -210,6 +210,8 @@ namespace SeeDocs_App
         void editFootnote(const PageFootnote&);
         void addFootnote(const TableRow&, Stack& notes);
         [[nodiscard]] const PageFootnote* footnoteOf(const TableRow&) const;
+        // The anchor of the footnote showing the section in full; empty where none has one.
+        [[nodiscard]] std::wstring shownAnchorOf(const Reference&) const;
         [[nodiscard]] bool canAddFootnote(const TableRow&) const;
         // Runs the edit once the command that asked for it has unwound: a menu is still closing
         // over the control the edit takes the place of.

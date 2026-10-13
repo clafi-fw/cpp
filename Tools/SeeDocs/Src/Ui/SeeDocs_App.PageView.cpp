@@ -474,8 +474,12 @@ namespace SeeDocs_App
         }
     }
 
+    // The footnote showing the section in full comes first, then one naming where it stands.
     std::wstring PageView::anchorOf(const Reference& reference) const
     {
+        const std::wstring shown = shownAnchorOf(reference);
+        if (!shown.empty())
+            return shown;
         for (const PageFootnote& footnote : m_footnotes)
         {
             const Reference& from = footnote.excerpt->from;
@@ -1056,11 +1060,25 @@ namespace SeeDocs_App
         });
         m_renders.push_back([this, index]() {
             const PageFootnote& entry = m_footnotes[index];
+            const Excerpt& excerpt = *entry.excerpt;
             Text text;
-            if (entry.row)
-                writeFootnote(text, entry.anchor, k_mark, entry.row->cells.front(), *entry.excerpt);
+            if (excerpt.shownAt.has_value())
+            {
+                const Runs name = entry.row ? entry.row->cells.front() : Runs{};
+                const std::wstring holder = shownAnchorOf(excerpt.from);
+                const std::wstring link = holder.empty()
+                    ? std::wstring{}
+                    : std::wstring{ k_anchorPrefix } + holder;
+                writeShownAt(text, entry.anchor, k_mark, name, *excerpt.shownAt, link);
+            }
+            else if (entry.row)
+            {
+                writeFootnote(text, entry.anchor, k_mark, entry.row->cells.front(), excerpt);
+            }
             else
-                writeBlocks(text, entry.excerpt->blocks);
+            {
+                writeBlocks(text, excerpt.blocks);
+            }
             entry.slot->shown().text() = text;
         });
         return slot;
@@ -1104,6 +1122,18 @@ namespace SeeDocs_App
                 return &footnote;
         }
         return nullptr;
+    }
+
+    std::wstring PageView::shownAnchorOf(const Reference& reference) const
+    {
+        for (const PageFootnote& footnote : m_footnotes)
+        {
+            const Reference& from = footnote.excerpt->from;
+            const bool reaches = from.note == reference.note && from.anchor == reference.anchor;
+            if (reaches && !footnote.excerpt->shownAt.has_value() && !footnote.anchor.empty())
+                return footnote.anchor;
+        }
+        return {};
     }
 
     // A comment whose See reaches no section is a reference to mend by hand, not one to add to.

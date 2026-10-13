@@ -1,341 +1,268 @@
 # TextEngine Types
 
-The words that no longer fit above a declaration.
+The words that do not fit above a declaration.
 
 ## TextStamp
 
-**Which** text, and **which** state of it. Two stamps are equal only for one ControlText that has
-not been written to in between: an id is never reused, a copy being a new text with a new one,
-and a revision only moves forward. What a stamp cannot say is that two texts **say** the same
-thing - that is Text::operator==.
+**Two stamps are equal only for one ControlText with no write in between.** Whether two texts say
+the same thing is Text::operator==.
 
-An id of zero is no stamp at all: what a plain Text answers, having no earlier self to be
-told from. It matches nothing, itself included, so a reader tests named() before comparing.
+**Id zero is no stamp** - the answer for a plain Text. Two such stamps compare equal, so test
+named() first.
 
 ## EditKind::Replace
 
-A paste, or anything written over a selection. Stands on its own: the user drew the
-boundary it acted on, so it is a step of its own to take back.
+**Always a step of its own.** The user drew the boundary it acted on, so it joins no run and none
+joins it.
 
 ## EditKind::Automatic
 
-An edit the box makes on account of the one before it: the indent a line break brings, the block a
-paste is moved to, a closer word realigned. It joins the step the last edit made and is taken back
-with it, so the step the list names is what the user did. A caret move, an undo or a redo in
-between leaves it nothing to join, and it stands as a step of its own.
+The indent a line break brings, the block a paste is moved to, a closer word realigned.
+
+**It joins the step the last edit made** and is undone with it. After a caret move, an undo or a
+redo it is a step of its own.
 
 ## TextLineColumn
 
-Where a position stands in the text as a reader counts it, both numbers from one. **A line** is
-a paragraph - what the newlines cut the text into - so a line broken across several rows
-carries one number and the column is the offset along the whole of it. Which of those rows
-the position fell on is a different question, asked of the layout - see TextLayout::rowStart.
-
-## TextOp::PopScript
-
-One pop for both, because one stack holds them: a script closes the nearest script
-still open, whichever of the two opened it.
+**A line is a paragraph** - what the newlines cut the text into. A line wrapped across several rows
+has one number, and the column counts along the whole of it. For the row, see TextLayout::rowStart.
 
 ## FlexSpace
 
-A gap that takes the room its line has over, and never less than the width it states. That width
-is what shows on a line with nothing to spare, so a caller wanting the two sides held apart there
-states it here rather than writing a space beside the gap.
+**minWidth is the gap's width on a full line**, one with no room to spare. To hold the two sides
+apart there, state minWidth rather than writing a space beside the gap.
 
 ## LineFade
 
-A line its box cuts at the trailing edge, and how far it runs past that edge.
+lineFadeSpan turns `overrun` into the width of the fade.
 
-**The fade grows with the overrun.** It takes the line's colour away to nothing at the edge, over
-as much of the line as runs past it and at most over k_lineFadeWidth - a line a pixel too long
-fades over its last pixel, and one running a whole fade's width past the edge or more fades over
-all of that width.
+- **The collapse line** - the last line that fits the box's height - carries the lines below it
+  along itself. Its overrun counts all of them, drawn or not.
+- **A line its native layout trimmed** fades over the whole fade width, since the part it left out
+  was never measured.
 
-**The collapse line carries everything after it.** The lines below the last one that fits are
-carried on along that line, and its overrun counts all of them, whether the draw reaches them
-or not. A line its native layout trimmed has left out a part nobody measured, and fades
-entirely.
+## lineFadeSpan
+
+**The fade takes the line's colour to nothing at the edge.** It covers as much of the line as runs
+past the edge, up to `fadeWidth` - the draw passes k_lineFadeWidth, scaled.
 
 ## TextRenderMode
 
-What a control's text has to survive, stated as three cases rather than as raster settings.
-The settings are the answer and live in textRasterParams below; this is the question, and it
-is the only part of the decision a control is asked to make.
+The engine turns the case into raster settings - the case is all a control decides.
 
-Static is text that cannot move. It gets everything that makes a glyph crisp, because nothing
-will ever ask it to be anywhere but where it is.
+- **Static** - text that cannot move. It gets every setting that makes a glyph crisp.
+- **Movable** - text that can move, at rest. It gives up those settings for its whole life, since
+  switching them around a movement would visibly change the text as it starts and stops.
+- **Moving** - text whose position is changing. As Movable, with outlines filled as geometry
+  instead of cached glyphs. Outlines bypass the glyph cache, so only text in motion pays for them.
 
-Movable is text that can move, while it is not moving. It gives up the crispness, and it does
-so permanently rather than at the moment movement starts. Every setting that buys crispness
-buys it by letting the glyph's raster depend on sub pixel position, so turning them on and off
-around a movement makes the text visibly change at both ends of it - at rest, where nothing is
-moving to cover the change. A control whose text can move holds one appearance for its whole
-life, and that is what Movable names.
-
-Moving adds only what matters while the position is actually changing: outlines filled as
-geometry instead of a glyph rasterized afresh at every frame's sub pixel position. That is the
-expensive half - outlines bypass the glyph cache - so it is not paid by a control that is
-merely capable of moving.
+**Compiled in while CLAFI_TEXT_MOVING is 1**, in Switches.h. At 0 every run is drawn the way Static
+asks.
 
 ## ControlText
 
-A text a control keeps: written once or written often, and asked about on every measurement
-and every paint for as long as the control stands. It is a Text and is read as one; what it
-adds is a stamp, so a reader holding the last one can tell an unchanged text from a new one
-without reading either of them. A Text passed as an argument, built for one paint or read
-out of a file has no earlier self to be told from and carries none of this.
+**A Text with a stamp** - see TextStamp. A reader tells an unchanged text from a changed one
+without reading it. A copy or a move is a new text with an id of its own.
 
-**Every route that writes is here**, and each one moves the stamp on. Reached as a Text it is
-data like any other, so a caller that writes through such a reference writes behind the
-stamp's back - which is why the machinery that edits a control's text, TextHistory above
-all, takes a ControlText and not a Text.
+**Every write through ControlText moves the stamp on.** A write through a `Text&` bypasses it,
+which is why TextHistory takes a ControlText.
 
 ## TextFormat
 
-Markers alone, with no characters: what a control's text is laid out over. It is never part of the
-text.
+**It holds the values a text starts from** - a colour, a style, a size, a family, bold, italic, an
+alignment, an indent, a line spacing. A script is left out: how far it is raised depends on the
+size in force where it opens, so its order among the other values would change what is drawn.
 
-It holds the values a text runs on from: a colour, a style, a size, a family, bold, italic, an
-alignment, an indent, a line spacing. Anything that puts a character in, a pop, a link and an
-anchor do not compile, and a TextOp other than PushBold and PushItalic is refused when it is
-streamed. A script is not held: how far one is raised depends on the size in force where it opens,
-so it would be the one value whose place among the others changes what is drawn.
+**The text's own markers override it.**
 
-**One of each kind.** A value streamed in replaces what the format already holds of its kind. Along
-a chain of constructors - each class stating its own format ahead of the arguments it forwards - the
-caller's value wins for every kind it states, then the most derived class's, and so on down to the
-base. The values are kept in the order of the kinds rather than the order they were stated, so two
-formats saying the same thing are equal and share a cache entry however they were composed. Bold
-and italic, once stated, are held: nothing later in the chain can take them off.
+- A push the text makes is read after the format's.
+- A paragraph property is read at the paragraph's newline. One the text states replaces the
+  format's for its whole paragraph and every paragraph after it.
+- A pop the text has no push for leaves the format's value in force - the format is the floor of
+  every stack. For a text whose pushes and pops pair up, the format acts as if written at index 0.
 
-The text's own markers stand over it. A push the text makes is read after the format's. A
-paragraph property is read when the paragraph's newline is reached, so one the text states replaces
-the format's for the whole paragraph it stands in and for every paragraph after it.
+**It is presentation, kept apart from the text.** selectedText, the clipboard, the history and a
+document never see it. A control with a format and no text is blank.
 
-**The format is the floor of every stack.** A pop the text holds no push for leaves what the format
-opened standing. For a text whose pushes and pops pair up, that is the same as the format written
-at index 0.
+**A layout keeps a copy**, so the caller's format may change or go. An empty format and none are
+the same answer.
 
-It is how a control shows its text, not part of what the text says: selectedText, the clipboard,
-the history and a document never see it. A control with a format and no text is still blank.
+## TextFormat operator<<
 
-A layout keeps a copy and compares the one it is stated next, so a caller's format may change or
-go. The engine's cache keys on its hash beside the text's and confirms a hit against that copy. No
-format and an empty one are the same answer.
+**Values are kept in the order of their kinds**, whatever order they came in. Two formats saying
+the same thing are equal and share a cache entry.
+
+**Bold and italic stay once stated** - no later value takes them off.
+
+**Values only.** A character, a pop, a link or an anchor is refused at compile time. A TextOp
+other than PushBold or PushItalic throws std::logic_error.
 
 ## TextEdit
 
-What one edit did, stated in the coordinates of the text **before** it: the range taken out and
-how many characters went in. It is the whole of what a layout needs to tell which paragraph
-moved and by how much, which is why it carries no text of its own.
+**It is all TextLayout::applyTextEdit needs** to tell which paragraphs moved and how far, so it
+carries no text.
 
 ## EditSelection
 
-Where the caret stood, so that an undone step puts the user back where that step found
-them. This is the caret half of EditProps and no more: targetX belongs to a run of
-vertical keys and the hit list to the last search, and an undo restores neither.
+**The selection part of EditProps** - the range, caretOnLeft and affinityTrailing. targetX stays
+out: it belongs to a run of vertical keys, and an undo does not restore it.
 
 ## EditKind
 
-What made an edit, which is what decides whether it joins the one before it. A run of
-typing and a run of one delete key are each a single step to take back.
+**A run is one step to take back.** Typing, or presses of one delete key, join the open run of
+their kind. A run ends where white space and a word meet.
 
 ## TextHistory
 
-The undo history of one editable text: what each step took out, what it put in,
-and where the caret was standing.
-A record is a delta. Nothing here copies the whole text, so a step costs the size
-of the step and a long text is no dearer to edit than a short one.
-Every edit goes through apply(), and that is what makes the history whole. A text
-written to by any other route leaves every position in here naming a string that is
-gone, so this is checked rather than trusted: the plain length is compared on the way
-in, and a text that moved behind the history's back empties it instead of misplacing an
-edit. A rewrite of exactly the same length is the case that comparison does not see.
-A step may state where it lands. A redo then puts the selection there rather than collapsing
-it after what went in, and the step joins no run and is joined by none: a box moving several
-lines at once makes one step of it, and the lines stand selected again after a redo.
-A step is the change that made it and the automatic changes made on its account, in order. Undo
-takes them back newest first, and a step with automatic changes takes no more of its run, since
-a run growing past them would break that order. The bookkeeping is a StepHistory - see
-Control-Foundation - and a walk of several steps undoes or redoes each in turn.
+**A step is a delta**: what it took out, what it put in, and where the caret was. A long text costs
+no more to edit than a short one.
 
-## Step names
+**Every edit goes through apply().** Each apply, undo and redo checks the text's length, and the
+history empties itself when another route changed it. A rewrite to the same length goes unnoticed.
 
-A step its caller named - Paste, Cut, Complete [WriteLn], Indent [3 lines] - shows that name. A
-step left unnamed is called after what it did to the text: Type with what went in, or Delete with
-what came out, the quoted part in the accent. The quote is the text's first line, cut at 24
-characters, with an ellipsis where more follows. Blanks draw nothing, so they are counted
-instead - space, 4 spaces, line break, 2 tabs.
+**A step may state where it lands** - `after` on apply. A redo selects that range, and the step
+joins no run and none joins it. A box moving several lines uses it, so the lines are selected
+again after a redo.
+
+### Step names
+
+writeUndoStep and writeRedoStep write a step's name:
+
+- A step given a name in apply's `what` shows that name - Paste, Cut, Complete [WriteLn],
+  Indent [3 lines].
+- An unnamed step is Type or Delete, then what went in or came out, quoted in the accent ink.
+
+The quote is the first line of that text, cut at 24 characters, with an ellipsis where more
+follows. A step of blanks alone is counted, since blanks draw nothing - space, 4 spaces, line
+break, 2 tabs.
 
 ## ColorOverlay
 
-Colours drawn over a text's own, asked for by paragraph while the paragraph is drawn. The
-overlay answers in the paragraph's coordinates, in order, without overlap, and everything the
-answer leaves uncovered keeps the colour the text states - so an overlay that says nothing
-about a paragraph changes nothing in it.
+**Colour only, asked at draw time.** The shaping never sees the overlay, so a layout takes a new
+one without shaping again - a repaint is the cost. A weight or a face would change the shaping, so
+an overlay cannot state one.
 
-**A draw-time question alone.** The shaping never sees the overlay, which is what lets a layout
-be handed one, or a different one, without shaping again; the cost is a repaint. It is also
-what holds the overlay to colour: a weight or a face is a shaping input, and an overlay that
-could state one would have to invalidate the lines it stands over.
-
-The layout asks about the paragraphs it draws and no other, so a document taller than its
-viewport pays for the paragraphs on screen. A CodeBox is the overlay the framework ships.
+**Only drawn paragraphs are asked**, so a document taller than its viewport pays for what is on
+screen. CodeBox is the overlay the framework ships.
 
 ## Searcher
 
-**A searcher is the application's, and a search result points at it.** A SearchResult made over a
-container hands the searcher every text painted inside it, a grid's cells and a label as much as a
-text box, read-only or not, and the paint asks it for the places each paragraph holds one of its
-words, drawn on the FoundText band. The paint hands the result down: a control keeping none is
-painted with its host's, so the innermost one is in force. One searcher serves any number of
-results, a page each, and the application keeps it for as long as a result points at it. What a
-result does with the places - the count, the current match, the steps - is in
-Control-Foundation#searchresult.
+**The application keeps it** while any SearchResult points at it. One searcher can serve several
+results, one per page. The count, the current match and the steps are SearchResult's.
 
-**Its text is taken as SearchSplit says**: Words splits it at white space, a word at a time, which
-is a search over a page; Phrase takes it whole as typed, which is a find in an editor. Each word is
-folded in the user's locale once, as the text is given, so case is aside. A word is found wherever
-it stands, inside a longer word too, and places that overlap are one, so findIn answers them in text
-order and apart. A paragraph is folded as it is painted, into a buffer the searcher keeps, which
-grows only for a paragraph longer than any before; text out of view costs nothing.
+**The paint asks it.** Every text painted inside a result's container is searched a paragraph at a
+time as it is drawn, so text out of view costs nothing. The innermost result's searcher is in
+force. The places show on the FoundText band, and the text is unchanged. A hint, a window of its
+own, shows no places.
 
-**The band is drawn, and the text stays as it was**: it is measured, copied and saved as it was. The
-searcher knows nothing of the results it serves, so new words repaint nothing until whoever gave
-them invalidates what shows them. revision moves with the words, so a result reads its texts again
-when next asked. A hint is a window of its own and asks no searcher. The buffer makes findIn a const
-call that writes, so a searcher is asked from one thread.
+- The text is split as SearchSplit says, and case is folded in the user's locale.
+- A word is found anywhere, inside a longer word too.
+- Overlapping places merge into one.
+
+**New words repaint nothing.** Whoever sets them invalidates what shows them, and revision tells a
+result to read its texts again.
+
+**Ask it from one thread** - findIn is const, but folds into a buffer the searcher keeps.
 
 ## Links
 
-A link is a run of text between a PushLink and its PopLink, and the target is whatever the push
-states - a URL, a path, or a word an application answers. The tags are `[link target]` and
-`[/link]`, the target being everything after the command, spaces included. Fmt reads them like
-any other tag, so a target holding `]` cannot be written in a format string; a document and the
-clipboard carry it whole.
+A link is the text between a PushLink and its PopLink. The target is whatever the push states - a
+URL, a path, or a word the application answers.
 
-**A link does not grow at its end.** Every other run takes in what is typed at its end - a
-character typed after a bold word is bold - and a link is the exception, because a word typed
-after it is not part of where it points. Text::replaceText keeps a PopLink standing at the
-insertion point in front of what goes in, when nothing is replaced. A replaced range keeps the
-standing rule: typing over the last word of a link replaces part of the link, and the new word
-belongs to it. The start needs nothing of its own, since a push at the insertion point already
-moves behind what goes in.
+**In a format string** the tags are `[link target]` and `[/link]`. The target is everything after
+`link`, spaces included, so it cannot hold `]`. A document and the clipboard carry any target
+whole.
 
-**Two links that meet and name one target are one.** An undo puts a link's last characters back as
-a link of their own, standing against the rest of it. BakedText joins the two into one span, so
-the link is pointed at and underlined whole, and replaceText lets what is typed where they meet
-go inside, as it would anywhere else in the link. The markers are left as they stand: a later
-undo is recorded against them, and a pair taken out would put a word back into the wrong link.
+**Typing at a link's end goes outside it**, where any other run takes it in. Typing over the last
+word of a link replaces part of it, and the new word belongs to the link.
 
-**A link is drawn in the accent ink**, where no colour is pushed inside it. A colour pushed before
-the link opened gives way to that ink, and one pushed inside it is the link's own. The ink is
-k_linkInk in TextEngine.BakedText, and goes into the theme with the other text inks.
+**Two links that meet and name one target are one** - pointed at and underlined whole, and typing
+where they meet goes inside.
 
-**The underline is a hover state.** The control holding the layout names the link under the
-pointer through TextLayout::setHoveredLink, and the layout draws a line under it - one segment
-per line the link reaches, under the glyphs that line shows, in the colour the segment's first
-glyph was drawn in. It is drawn over the glyphs, so a selection band does not cover it. Its
-place under the baseline is a share of the room the line has below the baseline, and its
-thickness is the thin stroke; the font's own underline metrics are not read. It does not fade
-with the glyphs of a line cut by the box.
+**A link is drawn in the accent ink** where no colour is pushed inside it. A colour pushed before
+the link gives way to that ink, and one pushed inside it wins.
 
-**The line stands clear of the ink it would cross**, the way a browser draws an underline.
+**The underline shows on hover.** The control holding the layout names the hovered link with
+TextLayout::setHoveredLink, and the layout underlines it:
 
-**Which link is under a point** is TextLayout::linkAt. A hit test names the nearest character even
-past the end of a line, so the point is held to the box that character's glyph stands in: past
-the end of a line, between lines, or below the text there is no link.
+- one segment per line, under the glyphs that line shows, in the colour of its first glyph
+- over the glyphs and any selection band
+- with a gap wherever it would cross ink
+- unfaded on a line the box cuts
+
+**TextLayout::linkAt** names the link under a point. Past the end of a line, between lines and
+below the text there is none.
 
 ## Anchors
 
-An anchor is a run of text between a PushAnchor and its PopAnchor, named by the push, and a link
-reaches it with # and the name: `[anchor clue-17]Clue 17[/anchor]` and
-`[link #clue-17]Clue 17[/link]`. It draws nothing. Where two anchors share a name the first
-in text order is the one answered, and Text::anchorRange walks the markers to find it - an
-anchor is asked for when a link to it is followed, so nothing is kept for it in between.
+An anchor is the text between a PushAnchor and its PopAnchor, named by the push. It draws nothing.
+A link reaches it with # and the name:
 
-**A run rather than a point**, so it rides the pair machinery every other run does. An edit inside
-it moves its end, a deletion of the whole of it takes the pair out in the cleanup, and an undo
-puts it back where it stood, as it does for a link. A point would need rules of its own for all
-three. What the run also buys is text to land on: the box going to an
-anchor selects it. It grows at its end the way bold does, since what is typed there is part of
-what the anchor holds.
+    [anchor clue-17]Clue 17[/anchor]
+    [link #clue-17]Clue 17[/link]
+
+**A TextBox following the link selects the anchor's text** - see TextBox::goToAnchor. Of two
+anchors with one name, the first in text order is reached.
+
+**Edits treat it as a run**: an edit inside moves its end, deleting all of it removes it, an undo
+puts it back, and text typed at its end joins it.
 
 ## MonoFontRequest
 
-One face at one size, the size in the units a layout works in - the design size times the
-scale, which is what the native layouts are built with. The family is what the text names,
-a generic one included - the platform resolves it the way it resolves a layout's, so a
-paragraph on cells is set in the face the layout would have set it in.
+**`size` is the design size times the scale.** **`family` is what the text names**, generic
+families included, resolved as for a native layout - so a paragraph on cells gets the same face.
 
 ## INativeMonoFont
 
-What the platform answers about a monospace face at one size, and no more: the cell width,
-the height and baseline of a line set in it, the glyph a code point maps to where that glyph
-is one cell wide, and drawing a run of glyphs a cell apart from a baseline origin through a
-brush. Everything above that - which characters have a cell, where the columns fall, the tab
-stops, the colour runs, the bands, the fade - is written once in MonoFont for both platforms.
+**The platform's part of a monospace font.** Which characters have a cell, the columns, the tab
+stops, the colours, the bands and the fade are MonoFont's, written once for both platforms.
 
-The cell is the space's advance, the same number the tab stops are measured from, and a
-glyph qualifies when its advance is that number exactly: on DirectWrite compared in the
-design units the face states, on FreeType as the same scaled float from the same design
-advance. A face that is not monospaced is answered with no font at all by
-createNativeMonoFont, which the core keeps as a negative entry, so a proportional font is
-asked once and every paragraph set in it goes straight to the native layout.
+**The cell is the space's advance**, the number the tab stops are measured from. glyphOf answers
+a glyph only when its advance equals the cell exactly - on DirectWrite in the face's design units,
+on FreeType as the same scaled float from the same design advance.
+
+**A proportional face is asked once.** createNativeMonoFont answers null for it, the core keeps
+that as a negative entry, and its paragraphs go straight to the native layout.
 
 ## MonoFont
 
-A monospace font with the glyph of every code point asked so far, and the cell arithmetic of
-a line set in it. A character is a column; a tab reaches the next multiple of
-k_tabStopSpaces columns, always a whole one, as the native layouts place their stops. The
-ink width leaves out trailing spaces and tabs, which is the width a line's fit and fade are
-judged by, and the full width keeps them, which is what the paragraph measures.
+**A character is one column.** A tab moves to the next multiple of k_tabStopSpaces columns, at
+least one column on, as the native layouts place their stops.
 
-glyphOf refuses what a cmap lookup alone cannot lay out, whatever the face has for it: the controls
-and the format characters, combining marks, the right to left blocks, the scripts that reorder or
-stack, surrogates and everything past the basic plane. A refusal costs the paragraph the native
-layout and nothing else, so the list errs toward refusing.
+**extent answers two widths.** `inkWidth` leaves out trailing spaces and tabs, and judges a line's
+fit and fade. `width` keeps them, and is what the paragraph measures.
+
+**glyphOf refuses what a cmap lookup alone cannot lay out**, whatever the face holds: control and
+format characters, combining marks, the right-to-left blocks, the scripts that reorder or stack,
+surrogates and everything past the basic plane. A refusal costs the paragraph its cells and
+nothing more, so the list errs toward refusing.
 
 ## Mono paragraph
 
-A paragraph set in one monospace font over its whole range, carrying no inline object and no
-script, every character of which has a cell, is one row of columns times cell - and holds no
-native layout. shapeParagraph decides it before building anything, from the spans the walk's
-cursors already stand on: a span of family, size, weight or style that ends inside the
-paragraph makes it a paragraph in two fonts, and that is shaped natively, as is anything
-else that fails the rule. The fallback is per paragraph, so one line of Arabic in a source
-file costs that line and no other.
+**A paragraph on cells is one row of columns**, shaped in one pass over its characters with no
+native layout. A paragraph goes on cells when:
 
-A wrapping layout keeps a paragraph on cells while its ink fits the width it breaks at: a
-line that fits is never broken, so nothing about line breaking is decided here, and a line
-that does not fit is broken natively. Justified is shaped natively; Left, Center and Right
-are an offset inside the placement width, as for a native paragraph of one line - see
-Paragraph placement.
+- one monospace font covers its whole range, with no change of family, size, weight or style
+- it is plain text, with no inline object and no script
+- its alignment is Left, Center or Right
+- every character has a cell in that font, or CellFallback is MissingGlyph
+- where the layout wraps, its ink fits the width the lines break at
 
-What it buys is the shaping: a document of source is one pass over its characters instead of
-a native layout per paragraph, and its footprint is a paragraph record per line. The pixels
-are the ones the native layout would draw - DirectWrite's natural measuring mode places a
-monospace run at column times advance already, the tab stops are the same, and the glyphs
-reach the same draw primitive - with one exception: a glyph per character means a face's
-ligatures are not applied, which Consolas and DejaVu Sans Mono do not have and Cascadia Code
-does.
+Otherwise it is shaped natively. The choice is per paragraph, so one line of Arabic in a source
+file costs that line alone.
 
-**A character without a cell is the caller's to decide** - CellFallback, stated on a layout and
-through WithTextLayout::setCellFallback. Native, the standing answer, shapes that paragraph
-natively, where another font can draw the character. MissingGlyph keeps it on cells and draws
-the character as the font's missing glyph, so whatever a text holds costs one pass over its
-characters: the answer for a reading of bytes that are not text, where nearly every line holds
-one and the native path would shape millions of characters.
+**The pixels match the native layout's**, ligatures apart: a glyph per character applies none.
+Consolas and DejaVu Sans Mono have none; Cascadia Code does.
+
+**CellFallback decides a character without a cell** - set on a layout, or with
+WithTextLayout::setCellFallback.
+
+- `Native`, the default, shapes the paragraph natively, where another font can draw the character.
+- `MissingGlyph` keeps it on cells and draws the font's missing glyph, so any text costs one pass
+  over its characters - the answer for bytes that are not text.
 
 ## Paragraph placement
 
-Where a paragraph's lines stand across the width it is placed in - the box, a stated break width,
-or the block an anchor moves (see UI-Types#horizontaltextanchor). Moving them there shapes nothing
-and, but for justified lines, tells a native layout nothing.
-
-## Layout cache
-
-TextEngine::select holds one TextLayout per text per width it was broken at, keyed on what the
-text says - see LayoutKey - and confirmed against the copy the entry keeps. A measurement and
-the paint after it ask for the same entry: the paint's box is the measured size, which
-acceptsWidth takes for the width the lines were broken at.
+**Lines are placed across a width** - the box, a stated break width, or the block a
+HorizontalTextAnchor moves. Placing shapes nothing. Only a justified paragraph of several lines
+tells its native layout the new width, through setMaxWidth.

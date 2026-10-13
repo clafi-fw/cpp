@@ -69,7 +69,7 @@ namespace ClaFi
         TextRange paragraphAt(const Text& text, std::size_t pos);
 
         // A form's alignment pass starts here. What it and the pass before it ask for is held
-        // through the sweep. See TextEngine-Types#layout-cache
+        // through the sweep.
         void beginPass();
         // Drops every retained layout. For anything that changes what a build would produce without
         // being part of the key - the font table above all.
@@ -129,7 +129,7 @@ namespace ClaFi
         static void highlightTextArea(ControlPaintContext&, const FloatRect& bounds,
             const FloatRect& textArea);
     private:
-        // The entry count the first sweep runs at. See TextEngine-Types#layout-cache
+        // The entry count the first sweep runs at.
         static constexpr std::size_t k_sweepLayouts = 512;
         // The count past which a pass gives up its own entries, oldest use first.
         static constexpr std::size_t k_maxCachedLayouts = 4096;
@@ -332,7 +332,7 @@ namespace ClaFi
     }
 
     // What the pass asked for is kept, and what the pass before it asked for; past the ceiling,
-    // the most recent half by use. See TextEngine-Types#layout-cache
+    // the most recent half by use.
     void TextEngine::evict()
     {
         if (m_entryCount < m_sweepAt)

@@ -21,7 +21,7 @@ namespace ClaFi::Documents
     export template<typename T>
         concept IsDocumentsBrowser = std::derived_from<T, DocumentsBrowserBase>;
 
-    // A documents browser over the platform an entry point names. See Documents#application
+    // A documents browser over the platform an entry point names. See Documents
     export template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend,
         IsDocumentsBrowser BrowserType>
     class DocumentsApplication

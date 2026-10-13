@@ -80,7 +80,7 @@ namespace ClaFi::Dom
     public:
         using ChildNodeType = dom_node_t<ItemValueT>;
 
-        // Random-access iterators over the live child nodes, cloning nothing. See Dom#iterators
+        // Bidirectional iterators over the live child nodes, cloning nothing. See Dom#iterators
         class const_iterator
         {
         public:

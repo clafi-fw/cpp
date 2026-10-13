@@ -48,7 +48,7 @@ namespace ClaFi::Syntax
         bool operator==(const LineState&) const = default;
     };
 
-    // What a name offered for completion is. See Syntax#completion
+    // What a name offered for completion is.
     export enum class CompletionKind : std::uint8_t
     {
         Keyword,
@@ -71,7 +71,7 @@ namespace ClaFi::Syntax
     export struct CompletionEntry;
     export using CompletionEntries = std::vector<CompletionEntry>;
 
-    // A name a host offers for completion, and what a hint says about it. See Syntax#completion
+    // A name a host offers for completion, and what a hint says about it. See Syntax
     export struct CompletionEntry
     {
         std::wstring name;
@@ -85,7 +85,7 @@ namespace ClaFi::Syntax
         bool operator==(const CompletionEntry&) const = default;
     };
 
-    // A key a text's title block states, and the values it takes. See Syntax#titleblock
+    // A key a text's title block states, and the values it takes. See Syntax
     export struct TitleKey
     {
         // The key: its name, of kind Key, the line a hint shows and the hint's sentence.
@@ -97,7 +97,7 @@ namespace ClaFi::Syntax
 
     export using TitleKeys = std::vector<TitleKey>;
 
-    // The comment lines a text opens with, each stating a key and its value. See Syntax#titleblock
+    // The comment lines a text opens with, each stating a key and its value. See Syntax
     export struct TitleBlock
     {
         std::wstring prefix;   // what a key's line opens with - a comment's opener and a mark
@@ -105,7 +105,7 @@ namespace ClaFi::Syntax
         bool operator==(const TitleBlock&) const = default;
     };
 
-    // A name a text declares for itself, and where it is in force. See Syntax#declarations
+    // A name a text declares for itself, and where it is in force. See Syntax
     export struct Declaration
     {
         CompletionEntry entry;    // the name, its kind and type, and the declaration as spelled
@@ -116,10 +116,10 @@ namespace ClaFi::Syntax
 
     export using Declarations = std::vector<Declaration>;
 
-    // A language's reading of the names a text declares. See Syntax#declarations
+    // A language's reading of the names a text declares. See Syntax
     export using DeclarationReader = Declarations (*)(std::wstring_view text);
 
-    // The parameters a signature spells, and where its list opens. See Syntax#parameters
+    // The parameters a signature spells, and where its list opens.
     export struct SignatureParameters
     {
         std::size_t bracket{ 0 };      // where the list opens - the signature's size with no list
@@ -127,10 +127,10 @@ namespace ClaFi::Syntax
         bool operator==(const SignatureParameters&) const = default;
     };
 
-    // A language's reading of the parameters a signature spells. See Syntax#parameters
+    // A language's reading of the parameters a signature spells. See Syntax
     export using ParameterReader = SignatureParameters (*)(std::wstring_view signature);
 
-    // Where a language places one line of a text. See Syntax#indent
+    // Where a language places one line of a text.
     export struct LineIndent
     {
         std::size_t column{ 0 };      // where the line stands, worked out from the lines above it
@@ -138,7 +138,7 @@ namespace ClaFi::Syntax
         std::wstring_view closer{};   // what ends the block the line leaves open - empty for none
     };
 
-    // The lines of a text as a language's indent rule reads them. See Syntax#indent
+    // The lines of a text as a language's indent rule reads them.
     export class SourceLines
     {
     public:
@@ -153,7 +153,7 @@ namespace ClaFi::Syntax
         [[nodiscard]] virtual bool continues(std::size_t line) const = 0;
     };
 
-    // A language's reading of where a line stands, a level being `width` columns. See Syntax#indent
+    // A language's reading of where a line stands, a level being `width` columns. See Syntax
     export using IndentRule = LineIndent (*)(const SourceLines&, std::size_t line,
         std::size_t width);
 
@@ -167,7 +167,7 @@ namespace ClaFi::Syntax
 
     export using SourceBlocks = std::vector<SourceBlock>;
 
-    // A language's reading of the blocks a text opens and closes. See Syntax#blocks
+    // A language's reading of the blocks a text opens and closes. See Syntax
     export using BlockReader = SourceBlocks (*)(const SourceLines&);
 
     // What each kind of token is drawn in. See Syntax

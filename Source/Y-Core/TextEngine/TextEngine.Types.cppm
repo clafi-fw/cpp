@@ -209,7 +209,7 @@ namespace ClaFi
         PopItalic,
         PushSuperscript,
         PushSubscript,
-        PopScript // one pop for both, because one stack holds them. See TextEngine-Types
+        PopScript // one pop for both, because one stack holds them
     };
 
     export struct ParaIndent { float indent; bool operator==(const ParaIndent&) const = default; };
@@ -263,7 +263,7 @@ namespace ClaFi
         float overrun{ 0.0f }; // how far the line runs past the edge
     };
 
-    // How wide the fade of a line running that far past the edge is. See TextEngine-Types#linefade
+    // How wide the fade of a line running that far past the edge is.
     export [[nodiscard]] constexpr float lineFadeSpan(float overrun, float fadeWidth);
 
 #if CLAFI_TEXT_MOVING

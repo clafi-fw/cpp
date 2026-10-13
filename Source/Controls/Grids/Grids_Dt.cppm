@@ -211,7 +211,7 @@ namespace ClaFi::Controls::Grids::Dt
         void apply(ColumnBuildContext&) const override;
     };
 
-    // An anonymous group whose children are spliced into the enclosing collection. See Grids
+    // An anonymous group whose children are spliced into the enclosing collection.
     export struct Columns : public ColumnNode
     {
         ColumnNodeList children;

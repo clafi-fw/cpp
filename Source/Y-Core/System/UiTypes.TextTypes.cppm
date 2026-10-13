@@ -65,7 +65,7 @@ namespace ClaFi{
 
     export constexpr std::size_t k_inkGradesCount = static_cast<std::size_t>(InkGrade::Count);
 
-    // The named steps' shares, as a dark surface reads them. See UI-Types#inkgrade
+    // The named steps' shares, as a dark surface reads them.
     export constexpr std::array<float, k_inkGradesCount> k_inkGrades{
         0.12f,
         0.27f,
@@ -78,7 +78,7 @@ namespace ClaFi{
     // surface and the ink, not a place on the luminosity axis: elevationOf names the second.
     export [[nodiscard]] constexpr float gradeOf(InkGrade value) { return k_inkGrades[static_cast<std::size_t>(value)]; }
 
-    // A share as a light surface reads it: the steps counted from the ink. See UI-Types#inkgrade
+    // A share as a light surface reads it: the steps counted from the ink.
     export [[nodiscard]] constexpr float lightGradeOf(float grade, float luminosityFloor)
     {
         if (grade <= 0.0f || grade >= 1.0f)

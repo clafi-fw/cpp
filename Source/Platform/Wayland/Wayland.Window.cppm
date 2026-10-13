@@ -107,7 +107,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // and loses the corners; a layer surface loses both.
         [[nodiscard]] WindowFrame appliedFrame() const;
         PlacedWindow place(const WindowPlacement&) override;
-        // Applied by the compositor or by the frame. See Platform#window-opacity
+        // Applied by the compositor or by the frame. See Platform#window-alpha
         [[nodiscard]] ColorByte alpha() override { return m_alpha; }
         void setAlpha(ColorByte value) override;
         void initiateWindowDrag(IntPoint pt, InputStamp) override;
@@ -126,7 +126,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // **The name this toplevel restores by** in the application's session. Stated before the
         // first placement, which makes the toplevel and names it - see createToplevel.
         void setSessionName(std::string_view value) { m_sessionName = value; }
-        // Named to a session opened after this window was made - see Platform
+        // Named to a session opened after this window was made. See Platform
         void addToSession(std::string_view name);
         // What the config kept, asked for by the first placement and the first commit.
         void setRememberedPlacement(const RememberedPlacement& value) { m_remembered = value; }
@@ -847,7 +847,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         return { geometryPixels().toFloat() };
     }
 
-    // Zero unmaps; any other value is a commit or a repaint. See Platform#window-opacity
+    // Zero unmaps; any other value is a commit or a repaint. See Platform#window-alpha
     void Window::setAlpha(ColorByte value)
     {
         if (m_alpha == value)

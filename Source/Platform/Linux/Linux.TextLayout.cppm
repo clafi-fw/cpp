@@ -129,7 +129,7 @@ namespace ClaFi::Platform::Linux
             Graphics::Cpu::GlyphCompositor compositor;
         };
 
-        // The buffers destroyed layouts left, for the layouts made after them. See Platform
+        // The buffers destroyed layouts left, for the layouts made after them.
         struct SpareBuffers
         {
             std::vector<Buffers> buffers{};

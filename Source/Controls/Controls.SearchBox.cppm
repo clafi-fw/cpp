@@ -25,7 +25,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    // What the user asked of a search box. See Controls#search
+    // What the user asked of a search box.
     export enum class SearchRequest
     {
         Search,     // the text in the box changed, emptied included
@@ -37,7 +37,7 @@ namespace ClaFi::Controls
 
     export class SearchBox;
 
-    // The user asked a search box for something. See Controls#search
+    // The user asked a search box for something.
     export struct SearchEvent : public EventOf<SearchBox>
     {
         SearchEvent(SearchBox&, SearchRequest);
@@ -62,7 +62,7 @@ namespace ClaFi::Controls
         SearchBox& m_box;
     };
 
-    // A box a search is typed into, with how much it found. See Controls#search
+    // A box a search is typed into, with how much it found. See Controls
     export class SearchBox : public Panel
     {
     public:
@@ -71,23 +71,22 @@ namespace ClaFi::Controls
     public:
         // Where the box's list drops: under it from its left edge, or from its right (BottomRight).
         DECLARE_PROPERTY(FormPlacement, listPlacement, FormPlacement::BottomLeft)
-        // The modifiers that keep the list up across a pick - Alt, say. See Controls#search
+        // The modifiers that keep the list up across a pick - Alt, say.
         DECLARE_PROPERTY(KeyModifiers, listKeptBy, KeyModifiers{})
     public:
-        // The user asked the box for something. See Controls#search
-        DECLARE_EVENT(SearchEvent, OnSearch, onSearch)
+        DECLARE_EVENT(SearchEvent, OnSearch, onSearch) // the user asked the box for something
     public:
         std::wstring_view diagnosticText() const override { return L"SearchBox"; }
         [[nodiscard]] const std::wstring& searchText() const { return m_field.text().plainText(); }
-        // Focuses the box with its text selected, a text given replacing it. See Controls#search
+        // Focuses the box with its text selected, a text given replacing it.
         void startSearch(std::wstring_view text = {});
         // Puts the text in the box as typing would, the focus staying where it is.
         void setSearchText(std::wstring_view);
         // Counts by place - "15 on page" - in a box searching wider than it counts.
         void setCountPlace(std::wstring_view value) { m_countPlace = value; }
-        // Shows which found range is selected, and how many were found. See Controls#search
+        // Shows which found range is selected, and how many were found.
         void setResult(std::optional<std::size_t> selected, std::size_t count);
-        // Drops the lines under the box, the one given current. See Controls#search
+        // Drops the lines under the box, the one given current.
         void showList(DropListLines, std::optional<std::size_t> current);
         void hideList() { m_list.hide(); }
         [[nodiscard]] bool listShown() const { return m_list.shown(); }

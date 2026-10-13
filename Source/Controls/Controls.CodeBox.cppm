@@ -123,7 +123,7 @@ namespace ClaFi::Controls
         // What one level of indent is written as, where the text says nothing of its own.
         DECLARE_WRITABLE_PROPERTY(Syntax::IndentUnit, indentUnit, setIndentUnit,
             Syntax::IndentUnit{})
-        // Whether the unit is read off each text the box is handed. See Controls#indents
+        // Whether the unit is read off each text the box is handed. See Controls#detectindent
         DECLARE_WRITABLE_PROPERTY(DetectIndent, detectIndent, setDetectIndent, DetectIndent::Yes)
         // Whether a line runs down each block the text opens. See Controls#indentguides
         DECLARE_WRITABLE_PROPERTY(IndentGuides, indentGuides, setIndentGuides, IndentGuides::Yes)
@@ -153,8 +153,7 @@ namespace ClaFi::Controls
         [[nodiscard]] ScrollMetrics scrollMetrics() const override;
         // What the box writes a level as: what the text says where it is read, else the property.
         [[nodiscard]] Syntax::IndentUnit indentUnitInUse() const;
-        // Moves the lines the selection reaches, or the caret's, one stop on. See Controls#indents
-        void indentLines();
+        void indentLines(); // moves the lines the selection reaches, or the caret's, one stop on
         // Moves the lines the selection reaches, or the caret's, one stop back.
         void outdentLines();
         // Places the lines the selection reaches, or every line, where the language places them.
@@ -252,8 +251,7 @@ namespace ClaFi::Controls
         // Places the caret's line where its first word says, where that word has just been
         // finished - by the character before the caret, or by the caret itself.
         void realignFinishedWord(bool byCharacter);
-        // What a line break just typed goes on to do. See Syntax#indent
-        void indentAfterBreak();
+        void indentAfterBreak(); // what a line break just typed goes on to do
         // A line down each block in view, the caret's a grade stronger. See Controls#indentguides
         void paintIndentGuides(PaintEvent&, TextLayout&, FloatPoint origin);
     private:

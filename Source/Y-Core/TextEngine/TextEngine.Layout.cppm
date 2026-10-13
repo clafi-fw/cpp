@@ -166,7 +166,7 @@ namespace ClaFi
         float alignedWidth;
     };
 
-    // The paragraphs of a layout holding their native layout. See TextEngine-Types
+    // The paragraphs of a layout holding their native layout.
     class HeldLayouts
     {
     public:

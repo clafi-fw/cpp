@@ -5,36 +5,34 @@ carries, and the concepts that hold a handler to one event.
 
 ## EventParamOf
 
-The event a handler's one parameter names.
+It reads a lambda or a functor through its `operator()`, a function pointer and a member function
+pointer. `event_param_t<F>` is the event's type, const removed.
 
 ## OnEventTag
 
-A tag base rather than a template-id match, so that a caller can keep a thin named subclass for
-compatibility and still have it recognised as a handler by the routing.
+EventComponent's constructor connects every argument in its pack derived from this tag, by calling
+its `connectTo`. OnEvent and Events derive from it, and so may a thin named subclass of either.
 
 ## OnEvent
 
-Deduces the event from the handler's own parameter, so one property type connects any event on
-any emitter:
+**The parameter type chooses the event**, so one property type connects any event on any emitter:
 
     OnEvent{ [](ComboBoxChangeEvent& event) { ... } }
     OnEvent{ [this](ChangeEvent& event) { ... } }
     makeOnEvent(this, &Page::stateWanted)      // parameter read off the method
 
-One property type serves every event, so an emitter needs no named handler type per event it
-raises. The event is already written in the handler, and a name for it would only say the same
-thing twice. A generic `[](auto&)` handler names no event and is rejected: with OnEvent the
-parameter type is how the event to connect to is chosen.
+**A generic `[](auto&)` handler is rejected**, since it names no event.
 
 ## Events
 
-Several handlers as one property, so an argument list does not repeat OnEvent per handler:
+The handlers go in bare, without an OnEvent around each:
 
     Button{ params, Events{
         [](ClickEvent& event) { ... },
         [](PaintIconEvent& event) { ... },
     } }
 
-Each handler names its own event, so the list is heterogeneous and its order says nothing. An
-already wrapped handler is accepted alongside bare ones, for a call site that wants the event
-named: `Events{ Button::OnClick{ handler }, [](PaintIconEvent& event) { ... } }`.
+**The order says nothing**, since each handler names its own event. A wrapped handler mixes with
+bare ones, for a call site that wants the event named:
+
+    Events{ Button::OnClick{ handler }, [](PaintIconEvent& event) { ... } }

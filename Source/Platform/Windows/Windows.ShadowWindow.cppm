@@ -29,7 +29,7 @@ namespace ClaFi::PlatformImplementation::Windows
         bool show(bool);
     private:
         using Strips = std::array<IntRect, 4>;
-        // Grows the DIB and the canvas to hold the surface; neither ever shrinks. See Platform
+        // Grows the DIB and the canvas to hold the surface; neither ever shrinks.
         void ensureSurface(IntSize);
         void releaseSurface();
         // The margins around the hole, as four strips of the surface.

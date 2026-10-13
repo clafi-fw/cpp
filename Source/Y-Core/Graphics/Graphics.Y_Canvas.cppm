@@ -167,7 +167,7 @@ namespace ClaFi::Graphics
         Canvas* m_canvas{ nullptr };
     };
 
-    // Draws into the kept image at this index for as long as it is alive. See Graphics-Types
+    // Draws into the kept image at this index for as long as it is alive.
     export class ScopedCanvasImage
     {
     public:

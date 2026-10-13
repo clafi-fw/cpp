@@ -35,7 +35,7 @@ namespace ClaFi::Icons::Magnifier
         Yes
     };
 
-    // A magnifier filling the icon rect. See Icons#magnifier
+    // A magnifier filling the icon rect.
     export void paint(PaintIconEvent&, Lens = Lens::Empty, Tail = Tail::Yes, Halo = Halo::No);
     // The same glass in a rect of the caller's choosing, so it can sit on top of something else.
     // Pair it with FloatRect::bottomLeftSquare to badge another icon.

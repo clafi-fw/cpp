@@ -33,7 +33,7 @@ namespace ClaFi::Documents
             return false;
         // **The saved document is the other side of the comparison**, not a flag kept as edits
         // arrive. A saved side that cannot be read is work the disk does not hold.
-        // See Documents#unsaved
+        // See Documents#documentpage-hasunsavededits
         const std::unique_ptr<Dom::DomNodeBase> saved = documentNode().clone(nullptr);
         if (!readSavedDocument(*saved))
             return true;

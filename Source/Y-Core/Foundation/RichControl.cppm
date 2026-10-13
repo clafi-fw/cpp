@@ -53,7 +53,7 @@ namespace ClaFi
         ControlText& text() { return m_text; }
         const ControlText& text() const { return m_text; }
         HintText& hintText() { return m_hintText; }
-        // What the control's text is laid out over, or none. See Control-Foundation#text-format
+        // What the control's text is laid out over, or none.
         [[nodiscard]] const TextFormat* textFormat() const override;
         void setTextFormat(const TextFormat& value) { m_textFormat = value; }
         // metrics
@@ -140,7 +140,8 @@ namespace ClaFi
 
         auto appendText = [&](const auto& p) { m_text << p; };
         BIND_PROPERTY_ACTION(Text, appendText(p)); // the control's own text
-        BIND_PROPERTY_ACTION(TextFormat, m_textFormat << p); // what the text is laid out over
+        // What the text is laid out over. See Control-Foundation#richcontrol-textformat
+        BIND_PROPERTY_ACTION(TextFormat, m_textFormat << p);
         BIND_PROPERTY_ACTION(HintText, m_hintText = p); // the text the control offers as its hint
         // The control's own text, as a view.
         BIND_PROPERTY_ACTION(std::wstring_view, appendText(p));

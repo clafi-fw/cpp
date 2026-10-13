@@ -2,16 +2,14 @@
 
 The author's side of the footnote of the same name.
 
-## ComboBox
-
-### The face is as wide as the widest item
+## ComboBox measureText
 
 Every pass that measures the face measures every item, answered by the text cache after the
 first. `Control::calculateText` answers an empty text without calling `measureText`, so a face
 with nothing picked and no placeholder measures no item at all - a combo box is built standing
 on an item.
 
-## Link hints
+## GetLinkHintEvent
 
 The hint asks a control for its hint once, when the pointer comes onto it, and a link is a part of
 the box the pointer enters and leaves - so the box tells the hint when the link under the pointer
@@ -110,6 +108,11 @@ What a pass still costs over such a tree is the controls themselves: a node is f
 expander, its header, the mark, the rows stack), each measured and placed on every pass.
 
 ## PictureView
+
+**Only what is on screen is drawn, and sampled once.** The part of the picture on screen is
+sampled at the zoom into a cache, and a paint copies the cache's rows into a staging view, so a
+paint costs the size of the view and never the size of the picture or the zoom, a zoom costs one
+sampling of the view, and a pan samples only the strip it uncovers.
 
 Each strip around the picture is staged on its own, so nothing the picture drew is staged twice.
 

@@ -27,8 +27,7 @@ namespace ClaFi
         explicit WebFetch(std::wstring_view url);
         WebFetch(const WebFetch&) = delete;
         WebFetch& operator=(const WebFetch&) = delete;
-        // Cancels a request still running and waits for its thread. See UI-Types
-        ~WebFetch();
+        ~WebFetch(); // cancels a request still running and waits for its thread
     public:
         DECLARE_EVENT(WebFetchEvent, OnDone, onDone)
     public:

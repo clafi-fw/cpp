@@ -461,6 +461,7 @@ namespace SeeDocs_App
             case TypeKind::Enum:
                 return RowIcon::Enum;
             case TypeKind::Alias:
+            case TypeKind::Defined:
                 return RowIcon::Alias;
             case TypeKind::Concept:
                 return RowIcon::Concept;

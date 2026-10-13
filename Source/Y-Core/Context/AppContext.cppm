@@ -100,12 +100,12 @@ namespace ClaFi
         [[nodiscard]] const InformationParagraphs& information() const { return m_information; }
         // States a paragraph for the Information page - where a data file came from, say.
         void addInformation(std::wstring_view paragraph) { m_information.emplace_back(paragraph); }
-        // Whether a newer release is published - asked only when the user asks. See Context
+        // Whether a newer release is published - asked only when the user asks.
         [[nodiscard]] UpdateCheck& updateCheck() { return m_updateCheck; }
         [[nodiscard]] const UpdateCheck& updateCheck() const { return m_updateCheck; }
 
         // **One answer for the process**, and the only place a form can ask for a backend: the kind
-        // the application is on at that moment, so no two windows can disagree. See Context
+        // the application is on at that moment, so no two windows can disagree.
         [[nodiscard]] std::unique_ptr<Graphics::IBackend> createBackend(IPlatformWindow&, IntSize) const;
         // **Whether the application has a GPU backend at all** - whether it named one. Where it did
         // not, the CPU backend is the whole of the choice and nothing is offered to the user.
@@ -132,7 +132,6 @@ namespace ClaFi
         // **The application puts this theme on**, crossing to it over AnimationSlots::themeSwitch.
         // Baking is answered above the core - see connectAppThemes - so the set arrives already
         // made, every value of which has a half way, which is what the crossing rests on.
-        // See Context
         //
         // **Colours only**: a theme's metrics take no part, and nothing here lays anything out.
         //
@@ -166,7 +165,7 @@ namespace ClaFi
         [[nodiscard]] GpuAccelerationNode* gpuAcceleration() const { return m_gpuAcceleration; }
         // **Where the user's answer about the size is kept**, and what the Settings slider writes:
         // the node's own change is what reaches stateScale. The node is the config's state
-        // rather than this context's, so a const context hands it out. See Context
+        // rather than this context's, so a const context hands it out.
         [[nodiscard]] ScaleNode& scale() const { return m_scale; }
         // The percent every window is drawn at, inside the band below.
         [[nodiscard]] int scalePercent() const { return m_scalePercent; }
@@ -191,11 +190,11 @@ namespace ClaFi
         void ensureConfigFolder();
         // Takes that folder and everything in it away. See Context
         void deleteConfigFolder();
-        // The placement kept under this form name, given to the form's window. See Context
+        // The placement kept under this form name, given to the form's window.
         void restoreFormPlacement(std::wstring_view formName, IForm&);
-        // The form's placement, written under this name into the Forms section. See Context
+        // The form's placement, written under this name into the Forms section.
         void storeFormPlacement(std::wstring_view formName, IForm&);
-        // The form whose loop the application stands on, where one stands. See Context
+        // The form whose loop the application stands on, where one stands.
         [[nodiscard]] const IForm* rootLoopForm() const { return m_rootLoopForm; }
         // Takes the root loop where none stands - the answer is what the caller releases by.
         [[nodiscard]] bool claimRootLoop(const IForm&);
@@ -217,14 +216,13 @@ namespace ClaFi
             bool withUpdateCheck);
         // The GPU node in the Performance section, null where the schema has no such section.
         [[nodiscard]] static GpuAccelerationNode* gpuAccelerationIn(Dom::Section& config);
-        // Takes the wish the config holds and stands on the node for what follows. See Context
+        // Takes the wish the config holds and stands on the node for what follows.
         void connectGpuAcceleration();
-        // The application is on this kind from now on, and every window is told. See Context
+        // The application is on this kind from now on, and every window is told.
         void stateBackend(bool useGpu);
-        // Takes the size the config holds and stands on the node for what follows. See Context
+        // Takes the size the config holds and stands on the node for what follows.
         void connectScale();
         // The application is drawn at this percent from now on, and every window is told.
-        // See Context
         void stateScale(int percent);
         // Takes the answer the config holds and keeps every later one there. See Context
         void connectUpdateCheck();
@@ -279,7 +277,7 @@ namespace ClaFi
         bool m_bakedColorsPending{ false };
         // **What is worn**, as an address and a lightness, which is what tells an edit from a
         // crossing. Seeded with what m_theme is, so a first theme equal to it is not crossed to
-        // from itself. See Context
+        // from itself.
         const AppTheme* m_taken{ &defaultTheme() };
         Lightness m_takenLightness{ k_darkLightness };
         Dom::Document<Dom::FileFormat::ClaFi> m_config;
@@ -636,7 +634,7 @@ namespace ClaFi
     {
         // **The same theme at the same lightness stated again is an edit.** The lightness is not an
         // edit: it inverts everything a set states, so the same theme in the other mode is a
-        // crossing. See Context
+        // crossing.
         const bool edited = &theme == m_taken and colors.lightness == m_takenLightness;
         m_taken = &theme;
         m_takenLightness = colors.lightness;

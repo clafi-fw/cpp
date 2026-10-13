@@ -23,6 +23,13 @@ an alignment lays the content out inside the window that is already there and cu
 taken at the scale being left. Nothing else would ask: a popup is placed again when the control
 it stands on moves, and the form underneath is standing still by then.
 
+## PaintIconEvent
+
+Lives here rather than beside PaintEvent because an icon is painted from two places that
+cannot see each other: a control's paint, in Foundation, and a text run, in TextEngine.
+Foundation imports TextEngine, so TextEngine can never name anything Foundation owns - and
+FormContext is the subsystem both of them already share.
+
 ## Platform::pickFolder
 
 Windows answers with the common item dialog in its folder mode, on the OLE apartment the window
@@ -33,7 +40,7 @@ the loop sleeps on. The loop is the application's own, so the form paints and ta
 meanwhile: what keeps a second click from asking again is the desktop's modality, where it has
 any.
 
-## AppContext::animator
+## AppContext animator
 
 The destructor stops the crossing first: its callbacks reach back into this context.
 
@@ -48,6 +55,12 @@ surface coordinates.
 
 The call is made while the context is built, before the config is read; the stored answer arrives
 with the load - see UpdateCheck::keepIn.
+
+## UpdateCheck
+
+The question is one GET of api.github.com/repos/<repository>/git/matching-refs/tags/<tagPrefix>,
+which lists every tag that starts with the prefix - one application's tags rather than the
+repository's whole release list, about four hundred bytes each.
 
 ## UpdateCheck::keepIn
 

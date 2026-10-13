@@ -74,7 +74,7 @@ namespace ClaFi::Graphics
         // takes no part - this mixes two images, it does not composite one over the other.
         void blendSurface(const PixelView& source, const FloatPoint& destPos, float amount) const;
         // The same placement as drawSurface, each source pixel laid over what is there, read
-        // premultiplied and scaled by opacity. See Graphics-Types#drawbitmap
+        // premultiplied and scaled by opacity.
         void paintSurfaceOver(const PixelView& source, const FloatPoint& destPos,
             float opacity) const;
     private:

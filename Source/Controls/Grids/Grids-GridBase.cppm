@@ -102,7 +102,7 @@ namespace ClaFi::Controls::Grids
         // The header row, once one has been added - what a cell event's row is compared with to
         // tell a column's name cell from a data cell. nullptr before then.
         [[nodiscard]] const GridHeader* header() const { return m_header; }
-        // The row kept after the last one, whose cell asks for an item. See Grids
+        // The row kept after the last one, whose cell asks for an item.
         RowNewItem& addNewItemRow(PlaceHolderText);
         // Raises NewItemEvent, then selects the leading cell of the row a handler added.
         void requestNewItem();

@@ -15,7 +15,7 @@ namespace ClaFi::Transfer
     {
     };
 
-    // The platform's half of the clipboard, defined in the platform's own unit. See Transfer
+    // The platform's half of the clipboard, defined in the platform's own unit.
     struct NativeClipboard;
 
     // The one way on and off the system clipboard, owned by the platform. See Transfer
@@ -23,7 +23,7 @@ namespace ClaFi::Transfer
     {
         friend struct NativeClipboard;
     public:
-        // Takes the platform under the one name this can see it by. See Transfer
+        // Takes the platform under the one name this can see it by.
         explicit Clipboard(IPlatformServices&);
         ~Clipboard();
         Clipboard(const Clipboard&) = delete;

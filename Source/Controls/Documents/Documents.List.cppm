@@ -33,7 +33,7 @@ namespace ClaFi::Documents
         std::filesystem::path path;     // the file the tile stands for
     };
 
-    // A document in the list: its mark over its name, which is the file's. See Documents#tiles
+    // A document in the list: its mark over its name, which is the file's. See Documents
     export class DocumentTile : public WithInPlaceEdit<Button>
     {
     public:
@@ -63,7 +63,7 @@ namespace ClaFi::Documents
     // context popup is answered where it is raised and travels no further.
     export using DocumentMenuHandler = std::function<void(DocumentTile&, ContextPopupEvent&)>;
 
-    // What a home page works over: tiles keyed by file name, in a view. See Documents#tiles
+    // What a home page works over: tiles keyed by file name, in a view. See Documents
     export class IDocumentTiles
     {
     public:
@@ -92,7 +92,7 @@ namespace ClaFi::Documents
         IDocumentTiles& tiles;   // the tiles that were rebuilt
     };
 
-    // The documents in the folder, a tile each - the view alone, with no box. See Documents#tiles
+    // The documents in the folder, a tile each - the view alone, with no box. See Documents
     export class DocumentsList : public StackView, public DocumentsFolder::IListener,
         public IDocumentTiles
     {

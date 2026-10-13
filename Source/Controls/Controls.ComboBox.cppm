@@ -179,7 +179,7 @@ namespace ClaFi::Controls
         template <typename... Args>
         ComboBox(const CreateParams&, TextItems&&, Args&&...);
     public:
-        // Which editor the face opens, if any. See UI-Types
+        // Which editor the face opens, if any. See UI-Types#combobox-editormode
         DECLARE_PROPERTY_STORAGE(EditorMode, editorMode, EditorMode::None)
     public:
         // The combo box has settled on a different item.
@@ -202,7 +202,7 @@ namespace ClaFi::Controls
         void paintItemIcon(PaintItemIconEvent&) const;
         void paintIcon(PaintIconEvent&) override;
         void getMainText(GetTextEvent&) const override;
-        // The widest face of any item, so that a pick never changes the size. See Controls
+        // The widest face of any item, so that a pick never changes the size.
         CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
         void adjustPaint(AdjustPaintEvent&) override;
         [[nodiscard]] bool clickOpensEditor() const override;
@@ -354,7 +354,8 @@ namespace ClaFi::Controls
                 recordPreviewItem(newItem);
             }
         }
-        // Sized by its items, so a bar the list needs is room the window grows by. See Controls
+        // Sized by its items, so a bar the list needs is room the window grows by.
+        // See Controls#combobox
         params.form.setAutoFit(AutoFit::Yes);
         // **Asked of the pass that settles the form.** A pass measuring what to ask the placement
         // for is bounded by nothing, so nothing overruns and there is nothing to scroll yet.

@@ -72,8 +72,12 @@ These rules hold for every kind of text in section 1.
 ## 4. Footnotes and Working Notes
 
 - **One stem, two folders.** A subsystem's footnote and its working note share a file stem. A stem is a name: the hyphen joins words (`Item-Containers`, `UI-Types`) and never stands for a folder path.
-- **A section per declaration.** A footnote section is headed `## <Name>`, the declaration as the code spells it. SeeDocs finds a declaration's section by that heading.
-- **Bold lead-ins.** A paragraph that needs a headline opens on a bold sentence: `**The menu keeps the window it was placed in.** It is ...`.
+- **A section per declaration.** A footnote section is headed `## <Name>`, the declaration as the code spells it, and a member's `## <Owner> <member>`, one space apart - `## SearchBox listKeptBy`. SeeDocs finds a declaration's section by that heading, in its folder's note, when its comment carries no reference. A section several declarations would share is split, so each reaches words about itself.
+- **Slugs are unique in a note.** A reference reaches a section by its heading's slug - the part after the last `::`, lower case, other characters joined into one `-`. Two headings with one slug collide, and only the first is reached.
+- **Read at a glance.** A reader arrives from a declaration in a hurry. A section holds what the one-line hint leaves out - what the thing does and the rules a caller keeps - and nothing the hint or the signature already says. One idea per paragraph, in short sentences.
+- **Bold lead-ins.** A paragraph that states a rule opens on a bold sentence: `**The menu keeps the window it was placed in.** It is ...`.
+- **Bullets for what enumerates** - keys, values, cases, steps. A bullet line starts `- `, and its continuation lines start with two spaces.
+- **Cross references name the declaration** - `see DropList` - which SeeDocs links. A `Stem#anchor` written in prose shows as plain text.
 - **Lines wrap at 100 columns.** SeeDocs rewraps a paragraph edited through it at 100 on save, and leaves the paragraphs it did not touch as they are.
 
 ## 5. Manuals

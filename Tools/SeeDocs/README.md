@@ -404,13 +404,17 @@ the types beside it in its module. A property, an event, a field or a member
 whose comment references a note carries a mark in a column of its own, and the note stands as a
 footnote under the grid; the mark leads to it, as an anchor of the page's url, and its hint shows
 the footnote's first lines over the row, as a link's hint shows the paragraph of the anchor it
-leads to. A section's heading says what the section is; how many elements it holds is the
+leads to. A note's section stands in full once on a page: Details holds its own, and otherwise
+the first footnote reaching it does. A later footnote reaching it names that place -
+`* OnSearch - see listKeptBy` - linked where the place is a footnote, and an overload's reads "See
+the note above". A section's heading says what the section is; how many elements it holds is the
 heading's hint.
 A declaration whose comment references nothing takes the section named after it from its
 folder's note - the one the folder's declarations cite the most, as a new footnote's home is
 chosen below - marked as matched by name in that hint: a type's, a function's or a constant's
 heading is its name, a member's its type's name and its own - `Button onClick` - and a method's
-page shows its section under the first commented overload. Where the surface states no hint
+page shows its section under the first commented overload. A constructor takes none by name: its
+name is its type's, and so is the section that name heads. Where the surface states no hint
 the page says so, in place of the words, so what the documentation still lacks is read off the
 preview. Hints read from every recognizable comment owe nothing, and their pages leave a missing
 one empty.

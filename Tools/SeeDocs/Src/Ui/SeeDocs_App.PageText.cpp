@@ -242,6 +242,39 @@ namespace SeeDocs_App
         writeBlocks(text, excerpt.blocks);
     }
 
+    // The holder is written as plain words: the link it takes is to the footnote, not to the
+    // page its name links to elsewhere. An empty holder is the declaration above.
+    void writeShownAt(Text& text, const std::wstring_view anchor, const std::wstring_view mark,
+        const Runs& name, const Runs& holder, const std::wstring_view holderLink)
+    {
+        text << ParaIndent{ 0.0f };
+        if (!name.empty())
+        {
+            text << PushAnchor{ std::wstring{ anchor } } << InkColor::Spot << mark << PopColor{}
+                << L" ";
+            writeRuns(text, name);
+            text << PopAnchor{};
+        }
+        const std::wstring_view lead = name.empty() ? L"See " : L" - see ";
+        text << InkGrade::Muted << lead << PopColor{};
+        if (holder.empty())
+        {
+            text << InkGrade::Muted << L"the note above" << PopColor{};
+            return;
+        }
+        Runs unlinked = holder;
+        for (Run& run : unlinked)
+            run.link.clear();
+        if (holderLink.empty())
+        {
+            writeRuns(text, unlinked);
+            return;
+        }
+        text << PushLink{ std::wstring{ holderLink } };
+        writeRuns(text, unlinked);
+        text << PopLink{};
+    }
+
     // The runs are the one declaration cut round its links, and the tokens are lexed over the
     // whole of it, so a token is clipped to the run it is written in and one reaching past the
     // run's end goes on in the next.

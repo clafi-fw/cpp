@@ -66,7 +66,7 @@ namespace ClaFi
         Hint
     };
 
-    // The platform, as a service standing below the context sees it See UI-Types
+    // The platform, as a service standing below the context sees it.
     export class IPlatformServices
     {
     public:
@@ -645,7 +645,7 @@ namespace ClaFi
     };
 
 
-    // Where a mark points, as a fraction of a full turn clockwise from pointing down. See UI-Types
+    // Where a mark points, as a fraction of a full turn clockwise from pointing down.
     export namespace ChevronTurn
     {
         constexpr float down = 0.0f;
@@ -754,7 +754,7 @@ namespace ClaFi
         const std::optional<float> value;
     };
 
-    // Where a bar sits in a panel, in the order the panel is read. See UI-Types
+    // Where a bar sits in a panel, in the order the panel is read.
     export enum class PanelSlot
     {
         Top,

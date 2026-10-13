@@ -34,13 +34,13 @@ namespace ClaFi::Syntax
     Claim claFiDetector(std::wstring_view text);
     Claim textDetector(std::wstring_view text);
 
-    // The names a Pascal text declares, defined beside its hook. See Syntax#declarations
+    // The names a Pascal text declares, defined beside its hook. See Syntax#declarationreader
     [[nodiscard]] Declarations pascalDeclarations(std::wstring_view text);
-    // The parameters a Pascal signature spells, defined beside its hook. See Syntax#parameters
+    // The parameters a Pascal signature spells, defined beside its hook. See Syntax#parameterreader
     [[nodiscard]] SignatureParameters pascalParameters(std::wstring_view signature);
-    // Where a line of a Pascal text stands, defined beside its hook. See Syntax#indent
+    // Where a line of a Pascal text stands, defined beside its hook. See Syntax#indentrule
     [[nodiscard]] LineIndent pascalIndent(const SourceLines&, std::size_t line, std::size_t width);
-    // The blocks a Pascal text opens and closes, defined beside its hook. See Syntax#blocks
+    // The blocks a Pascal text opens and closes, defined beside its hook. See Syntax#blockreader
     [[nodiscard]] SourceBlocks pascalBlocks(const SourceLines&);
 
     // Every table is written in code unit order, which is what a bisection reads it in, and the

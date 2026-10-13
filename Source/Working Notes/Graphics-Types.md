@@ -2,12 +2,39 @@
 
 The author's side of the footnote of the same name.
 
+## ScopedTextRaster
+
+A run that stayed silent would leave the backend guessing what is in force. With every run
+stating its own params, no default has to be agreed on anywhere above the backend.
+
+## GlyphCoverage
+
+The one pixel transparent border is what makes the compositor's inner loop branch free: a
+bilinear tap at any position inside the glyph reads a 2x2 block that is always in bounds, so the
+per pixel range checks disappear.
+
+## ShadowPainter
+
+A form's own design follows the focus its window holds - the colour is the window's shadow colour
+at that focus - so each step of a focus change bakes its painter again, and so does each step for
+the shadows its content casts in that colour.
+
+A form holds its own painter around its window, which the platform reads. Its margins are
+painted a strip at a time with the strip as the clip - by the form around its rectangle, or by a
+shadow window around the window it shadows.
+
 ## GlyphCompositor
 
 Accumulating every glyph into one mask before compositing is not an optimisation: N
 separate blends over one pixel do not equal one blend at the combined coverage - two at 50%
 give 75%, not 100% - and glyphs do overlap under italics, tight kerning and diacritics, so
 per glyph blending would leave seams.
+
+## TextRasterizationParams
+
+snapOrigins, gridFit and subpixel antialiasing are one group rather than three independent
+settings - each ties a glyph's raster to where the run sits - and they are the reason the struct
+is passed whole.
 
 ## ArcEllipse
 

@@ -174,7 +174,7 @@ namespace ClaFi
         Divider,
         Grid,
         GridHeader,
-        GridRow,
+        GridRow, // every row of a grid wears it, groups and sections too. See Grids#gridrow
         Button,
         ToolButton,
         SelectedText,
@@ -283,7 +283,7 @@ namespace ClaFi
     {
         ColorRules shared{};
         ColorRules anyWindow{}; // what every form's root control takes, whatever it wears
-        ColorRules focusRing{}; // what an interactive control's own stroke takes. See AppTheme
+        ColorRules focusRing{}; // what an interactive control's own stroke takes
         std::array<ColorRules, k_uiElementCount> elements{}; // indexed by UiElement
         [[nodiscard]] ColorRules& of(UiElement element)
         {
@@ -308,8 +308,7 @@ namespace ClaFi
     export struct ThemeColors
     {
     public:
-        // The framework's own theme, stated in AppTheme_BuiltInColors.cpp. See AppTheme
-        ThemeColors();
+        ThemeColors(); // the framework's own theme, stated in AppTheme_BuiltInColors.cpp
     public:
         [[nodiscard]] Hsl rootSurface(ColorMode) const;
         [[nodiscard]] const ColorHarmony& harmony() const;
@@ -326,8 +325,7 @@ namespace ClaFi
         // anchor's.
         std::array<float, 3> paletteHues{};
 
-        // The luminosity elevation 0 is lifted to at the dark end. See AppTheme
-        float darkModeFloor{};
+        float darkModeFloor{}; // the luminosity elevation 0 is lifted to at the dark end
 
         // **The theme's own emphasis, and what says a thing is on** - one effect for both, because
         // the two are one colour. It is the ink anything asking for emphasis is drawn in, over the

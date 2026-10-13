@@ -80,7 +80,7 @@ namespace ClaFi::Controls::Grids
         const Column* m_column{};
     };
 
-    // What the last mouse press was to the cell it landed on. See Grids#picking
+    // What the last mouse press was to the cell it landed on.
     enum class CellPressKind
     {
         Pick,     // it moved the selection onto the cell

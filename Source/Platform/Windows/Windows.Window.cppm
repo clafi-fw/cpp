@@ -35,7 +35,7 @@ namespace ClaFi::PlatformImplementation::Windows
         [[nodiscard]] static ColorMode appsColorMode();
     private:
         static LRESULT __stdcall staticWndProc(HWND, UINT message, WPARAM, LPARAM);
-        // Announces the desktop's mode where a change of its settings has moved it. See Platform
+        // Announces the desktop's mode where a change of its settings has moved it.
         static void settingChanged(LPARAM area);
     private:
         // The desktop's mode as last read, which is what a broadcast is compared against.

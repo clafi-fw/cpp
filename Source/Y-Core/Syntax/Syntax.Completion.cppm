@@ -12,7 +12,7 @@ namespace ClaFi::Syntax
     // The kind a word names, in any case, or nothing for a word that names none.
     export [[nodiscard]] std::optional<CompletionKind> completionKindOf(std::wstring_view word);
 
-    // Where a completion on a line would go. See Syntax#completion
+    // Where a completion on a line would go.
     export struct CompletionPlace
     {
         std::size_t wordStart{ 0 };   // where the name the caret ends starts - the caret with none
@@ -38,7 +38,7 @@ namespace ClaFi::Syntax
     // where nothing is completed.
     export [[nodiscard]] bool completionBlocked(const Tokens& lineTokens, std::size_t caret);
 
-    // A link of a member's subject: a name, and whether brackets follow it. See Syntax#completion
+    // A link of a member's subject: a name, and whether brackets follow it.
     export struct CompletionLink
     {
         std::wstring_view name;
@@ -48,15 +48,15 @@ namespace ClaFi::Syntax
     export using CompletionSubject = std::vector<CompletionLink>;
     export using CompletionClasses = std::vector<const CompletionEntry*>;
 
-    // What the name before a member's dot is read through, root first. See Syntax#completion
+    // What the name before a member's dot is read through, root first.
     export [[nodiscard]] CompletionSubject completionSubject(const Language&,
         std::wstring_view line, const Tokens& lineTokens, const CompletionPlace&);
-    // The subject's class and its parents - none where its type is not known. See Syntax#completion
+    // The subject's class and its parents - none where its type is not known.
     export [[nodiscard]] CompletionClasses completionMemberClasses(const Language&,
         const CompletionEntries&, const Declarations&, const CompletionSubject&,
         std::size_t caret);
 
-    // The call the caret stands in: what is called, and which argument. See Syntax#parameters
+    // The call the caret stands in: what is called, and which argument.
     export struct CompletionCall
     {
         std::size_t line{ 0 };       // the line the call's opening bracket stands on
@@ -66,7 +66,7 @@ namespace ClaFi::Syntax
     };
 
     // The innermost call the caret stands in, or nothing where it stands in none: the walk back
-    // from the caret, over the lines above, to the bracket left open. See Syntax#parameters
+    // from the caret, over the lines above, to the bracket left open.
     export [[nodiscard]] std::optional<CompletionCall> completionCall(const Language&,
         const SourceLines&, std::size_t line, std::size_t caret);
     // The entry a call is to - a routine the text declares, in force at the caret, else one the
@@ -77,7 +77,7 @@ namespace ClaFi::Syntax
 
     export using CompletionNames = std::vector<std::wstring_view>;
 
-    // Where a completion on a line of a text's title block would go. See Syntax#titleblock
+    // Where a completion on a line of a text's title block would go.
     export struct TitlePlace
     {
         std::size_t wordStart{ 0 };       // where the key or the value being written starts
@@ -89,7 +89,7 @@ namespace ClaFi::Syntax
         [[nodiscard]] std::wstring_view typed(std::wstring_view line) const;
     };
 
-    // The place a caret on a title block's line names, if it names one. See Syntax#titleblock
+    // The place a caret on a title block's line names, if it names one.
     export [[nodiscard]] std::optional<TitlePlace> completionTitlePlace(const Language&,
         const TitleBlock&, const SourceLines&, std::size_t line, std::size_t caret);
 }

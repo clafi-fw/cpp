@@ -940,6 +940,8 @@ namespace SeeDocs_App
             [[nodiscard]] std::size_t endOfType(Words stops, std::wstring_view stopMark, Angles);
             [[nodiscard]] std::wstring textBetween(std::size_t first, std::size_t last) const;
             [[nodiscard]] std::wstring typeBetween(std::size_t first, std::size_t last) const;
+            // Whether the tokens from first to last name one type, dotted or generic.
+            [[nodiscard]] bool namesType(std::size_t first, std::size_t last) const;
             [[nodiscard]] Type newType(const Token& name, const Type* outer, Access) const;
         private:
             Surface& m_surface;
@@ -1241,8 +1243,8 @@ namespace SeeDocs_App
             }
         }
 
-        // A class, a record, an interface, an enumeration or anything else, which is an alias of
-        // what follows the equals sign. A forward declaration - class; interface; - is none.
+        // A class, a record, an interface, an enumeration or anything else, which is an alias
+        // where it names one type. A forward declaration - class; interface; - is none.
         void UnitReader::readTypeDeclaration(const Type* outer, const Access access)
         {
             const Token& nameToken = *peek();
@@ -1305,11 +1307,13 @@ namespace SeeDocs_App
                 return;
             }
 
-            // An alias: what follows the equals sign to the semicolon, a method type's calling
-            // convention after it.
+            // What follows the equals sign to the semicolon, a method type's calling convention
+            // after it; an alias where that names one type.
             const std::size_t end = endOfType(k_hintDirectives, L";", Angles::Nest);
             if (end > valueStart)
                 type.target = typeBetween(valueStart, end - 1);
+            if (end <= valueStart || !namesType(valueStart, end - 1))
+                type.kind = TypeKind::Defined;
             skipToSemicolon();
             while (isListedWord(peek(), k_callingConventions) && isMark(peek(1), L";"))
             {
@@ -2126,6 +2130,20 @@ namespace SeeDocs_App
             return result;
         }
 
+        bool UnitReader::namesType(const std::size_t first, const std::size_t last) const
+        {
+            // string is the one reserved word that names a type.
+            const Token* head = &code(first);
+            if (!isDeclaredName(head) && !isWord(head, L"string"))
+                return false;
+            std::size_t at = first + 1;
+            while (at < last && isMark(&code(at), L".") && isDeclaredName(&code(at + 1)))
+                at += 2;
+            if (at > last)
+                return true;
+            return isMark(&code(at), L"<") && isMark(&code(last), L">");
+        }
+
         Type UnitReader::newType(const Token& name, const Type* outer, const Access access) const
         {
             const std::wstring spelled{ text(name) };
@@ -2163,7 +2181,7 @@ namespace SeeDocs_App
                 const Type* type = surface.named(spelled, nameSpace);
                 if (!type)
                     return MethodType::Unknown;
-                if (type->kind != TypeKind::Alias)
+                if (type->kind != TypeKind::Alias && type->kind != TypeKind::Defined)
                     return MethodType::No;
                 const std::wstring target = lowered(type->target);
                 if (target.starts_with(L"reference to"))
