@@ -12,7 +12,7 @@ import ClaFi.StdLib;
 namespace ClaFi
 {
     // The backstage page naming the application, what it does and its framework. See Application
-    export class InformationPage : public Controls::Stack
+    export class InformationPage : public Controls::StackPanel
     {
     public:
         explicit InformationPage(const CreateParams&);

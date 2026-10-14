@@ -56,11 +56,11 @@ namespace ClaFi::Controls
             Padding{ 4.0f }
         ) };
 
-        Stack& m_list{ m_box.createBody<Stack>(
+        StackPanel& m_list{ m_box.createBody<StackPanel>(
             Orientation::Vertical
         ) };
 
-        Stack& m_footBar{ createBottomBar<Stack>(
+        StackPanel& m_footBar{ createBottomBar<StackPanel>(
             Orientation::Vertical,
             Padding{ 4.0f }
         ) };

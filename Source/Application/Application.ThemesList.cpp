@@ -78,7 +78,7 @@ namespace ClaFi
     DocumentTiles ThemesList::tiles()
     {
         DocumentTiles result{};
-        for (Stack* group : { &m_builtInTiles, &m_userTiles })
+        for (StackPanel* group : { &m_builtInTiles, &m_userTiles })
             for (ThemeTile& tile : group->controlsAs<ThemeTile>())
                 result.push_back(&tile);
         return result;
@@ -86,7 +86,7 @@ namespace ClaFi
 
     DocumentTile* ThemesList::tileByFileName(const std::wstring_view fileName)
     {
-        for (Stack* group : { &m_builtInTiles, &m_userTiles })
+        for (StackPanel* group : { &m_builtInTiles, &m_userTiles })
             for (ThemeTile& tile : group->controlsAs<ThemeTile>())
                 if (tile.fileName() == fileName)
                     return &tile;
@@ -153,7 +153,7 @@ namespace ClaFi
         emitEvent<DocumentsRebuiltEvent>(*this);
     }
 
-    ThemeTile& ThemesList::addTile(Stack& group, const AppTheme& theme,
+    ThemeTile& ThemesList::addTile(StackPanel& group, const AppTheme& theme,
         const std::filesystem::path& file, const UserTheme* userTheme)
     {
         ThemeTile& tile = group.add<ThemeTile>(

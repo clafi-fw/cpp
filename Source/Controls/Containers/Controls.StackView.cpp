@@ -215,25 +215,22 @@ namespace ClaFi::Controls
     bool StackView::isItemSelected(const Control& item) const
     {
         if (!isMultiSelect())
-            return Stack::isItemSelected(item);
+            return StackViewBase::isItemSelected(item);
 
         return m_selection.contains(&item);
     }
 
     void StackView::adjustNestedControlVisualState(const Control& control, VisualState& state) const
     {
-        Stack::adjustNestedControlVisualState(control, state);
+        StackViewBase::adjustNestedControlVisualState(control, state);
 
-        // Only a multi-select view has anything to say here. Everywhere else the focused item
-        // is the selected item and is already drawn as one, so marking it current on top of
-        // that would put a ring around every open tab and every chosen combo box entry.
         if (isMultiSelect() && currentItem() == &control)
             state.current = true;
     }
 
     void StackView::nestedControlDeleted(Control* item)
     {
-        Stack::nestedControlDeleted(item);
+        StackViewBase::nestedControlDeleted(item);
         if (m_selectionAnchor == item)
             m_selectionAnchor = nullptr;
         m_anchorSelection.erase(item);
@@ -243,7 +240,7 @@ namespace ClaFi::Controls
 
     void StackView::nestedDrag(DragEvent& event)
     {
-        Stack::nestedDrag(event);
+        StackViewBase::nestedDrag(event);
 
         if (!isMultiSelect())
             return;
@@ -288,7 +285,7 @@ namespace ClaFi::Controls
 
     void StackView::nestedPressUp(PressUpEvent& event)
     {
-        Stack::nestedPressUp(event);
+        StackViewBase::nestedPressUp(event);
         if (m_selectionOverlayRect)
         {
             invalidateSelectionOverlay();
@@ -308,7 +305,7 @@ namespace ClaFi::Controls
 
     void StackView::paintChildren(PaintEvent& event)
     {
-        Stack::paintChildren(event);
+        StackViewBase::paintChildren(event);
         // The band is the view's own paint, laid over the rows and under whatever stands in front
         // of them, and it is translucent - drawn a second time it would come out at twice its
         // opacity. Two stages can reach here, and it belongs to neither of them:

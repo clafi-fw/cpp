@@ -112,7 +112,7 @@ namespace MillScene_App
 
         // The backstage's Scene page, refilled every time that page is built: a pick repaints the
         // button it left as well as the one it took, and the stack is what the preview returns to.
-        Stack* m_themeLanes{ nullptr };
+        SingleSelectionView* m_themeLanes{ nullptr };
         std::vector<Control*> m_themeButtons{};
         // The chart draws the benchmark above; it wears the scene's own colours, which is why it
         // is held rather than added and forgotten.
@@ -147,7 +147,7 @@ namespace MillScene_App
                 m_scenePanel.invalidate();
             }, MilliSeconds{ 0 } };
 
-        Stack& m_infoBar{ m_scenePanel.createRightBar<Stack>(
+        StackPanel& m_infoBar{ m_scenePanel.createRightBar<StackPanel>(
             Orientation::Vertical
             ) };
         using MetricsReadout = WithTextLayout<Label>;
@@ -301,7 +301,7 @@ void MillSceneForm::pickSceneTheme(std::size_t index)
 
 void MillSceneForm::buildScenePage(OptionsPage& page)
 {
-    Stack& group = page.addGroup(L"Scene Theme");
+    StackPanel& group = page.addGroup(L"Scene Theme");
     // **The lanes are stated, not wrapped.** A wrapping stack's **minimum** is one lane - wrapping
     // is its promise to fit whatever width it is given - so nothing measuring this page could
     // learn that it wants three, and the third lane was laid out past the popup's edge. A row
@@ -312,11 +312,10 @@ void MillSceneForm::buildScenePage(OptionsPage& page)
     // and the walk from the pointer returns the first control it says yes to - the button,
     // through the column standing between them. That is what Stack::nestedControlHovered
     // means by a stack holding its items in groups.
-    Stack& lanes = group.add<Stack>(
+    SingleSelectionView& lanes = group.add<SingleSelectionView>(
         Orientation::Horizontal,
         Spacing{ k_themeLaneSpacing, 0.0f },
-        VerticalAlign::Top,
-        Interactivity::ActiveContainer
+        VerticalAlign::Top
     );
 
     m_themeLanes = &lanes;
@@ -338,14 +337,14 @@ void MillSceneForm::buildScenePage(OptionsPage& page)
 
     m_themeButtons.clear();
     m_themeButtons.reserve(PathArt::Themes::allThemes.size());
-    Stack* lane = nullptr;
+    StackPanel* lane = nullptr;
     std::size_t index = 0;
     for (const PathArt::SceneTheme& theme : PathArt::Themes::allThemes)
     {
         // A column every k_themeLaneSize themes, so the count follows the list rather than
         // being stated beside it.
         if (index % k_themeLaneSize == 0)
-            lane = &lanes.add<Stack>(Orientation::Vertical);
+            lane = &lanes.add<StackPanel>(Orientation::Vertical);
 
         ToolButton& item = lane->add<ToolButton>(
             Text{ theme.name },

@@ -561,7 +561,7 @@ namespace SeeDocs_App
         for (const Fact& fact : m_page.facts)
         {
             const bool hasButton = takesButton(fact);
-            Grids::Row* made = nullptr;
+            Grids::Row* made;
             if (hasButton)
             {
                 Grids::RowContainer& container = grid.addControlRow();
@@ -637,7 +637,7 @@ namespace SeeDocs_App
 
     void PageView::addProse(Expander& expander, const Section& section)
     {
-        Stack& body = expander.createBody<Stack>(
+        StackPanel& body = expander.createBody<StackPanel>(
             Orientation::Vertical,
             Padding{ 0.0f },
             Spacing{ 0.0f }
@@ -647,7 +647,7 @@ namespace SeeDocs_App
 
     void PageView::addTree(Expander& expander, const Branches& branches, const bool nodesOpen)
     {
-        Tree& tree = expander.createBody<Tree>(
+        TreeView& tree = expander.createBody<TreeView>(
             Padding{ k_treePadding },
             HorizontalAlign::Left
         );
@@ -679,7 +679,7 @@ namespace SeeDocs_App
     // writes its words back.
     void PageView::addTable(Expander& expander, const Table& table)
     {
-        Stack& body = expander.createBody<Stack>(
+        StackPanel& body = expander.createBody<StackPanel>(
             Orientation::Vertical,
             Padding{ 0.0f },
             Spacing{ 0.0f }
@@ -689,7 +689,7 @@ namespace SeeDocs_App
             UiElement::Section,
             Grids::GridLines::Horizontal
         );
-        Stack& notes = body.add<Stack>(
+        StackPanel& notes = body.add<StackPanel>(
             Orientation::Vertical,
             Padding{ 0.0f },
             Spacing{ k_footnoteGap }
@@ -753,7 +753,7 @@ namespace SeeDocs_App
     // expander: the page is the declarations.
     void PageView::addSignatures(const Section& section)
     {
-        Stack& block = m_pageBox.body().add<Stack>(
+        StackPanel& block = m_pageBox.body().add<StackPanel>(
             Orientation::Vertical,
             Padding{ 0.0f },
             Spacing{ k_signatureGap }
@@ -772,7 +772,7 @@ namespace SeeDocs_App
         const Padding indent{ indentWidth, 0.0f };
         for (const Signature& signature : section.signatures)
         {
-            Stack& entry = block.add<Stack>(
+            StackPanel& entry = block.add<StackPanel>(
                 Orientation::Vertical,
                 Padding{ 0.0f },
                 Spacing{ k_leadGap }
@@ -803,7 +803,7 @@ namespace SeeDocs_App
 
     void PageView::addCommands()
     {
-        Stack& bar = m_head.commandBar();
+        StackPanel& bar = m_head.commandBar();
         bar.setVisible(!m_page.commands.empty());
         for (const Command& command : m_page.commands)
         {
@@ -818,7 +818,7 @@ namespace SeeDocs_App
     // follow its rows inside it, each under a header of its own. A row with a command is one
     // that holds a control, its button, in the column at the end.
     void PageView::addTableRows(Expander& expander, Grids::GridBase& grid, const Table& table,
-        const TableGroup& group, Stack& notes, const TagValue hintColumn,
+        const TableGroup& group, StackPanel& notes, const TagValue hintColumn,
         Grids::Column* commandColumn, PageFootnotes& footnotes)
     {
         const bool beside = !table.groupColumn.empty();
@@ -857,7 +857,7 @@ namespace SeeDocs_App
                 anchor = footnoteAnchor(++m_footnoteCount);
                 footnotes.push_back({ .excerpt = &*row.excerpt, .anchor = *anchor, .row = &row });
             }
-            Grids::Row* made = nullptr;
+            Grids::Row* made;
             if (row.command.has_value() && commandColumn)
             {
                 Grids::RowContainer& container = target->addControlRow();
@@ -992,7 +992,7 @@ namespace SeeDocs_App
 
     // The row is the subject of its menu, so the commands are claimed and answered here; each
     // edit waits for the menu to close over the row.
-    void PageView::connectRowMenu(Grids::Row& gridRow, const TableRow& row, Stack& notes)
+    void PageView::connectRowMenu(Grids::Row& gridRow, const TableRow& row, StackPanel& notes)
     {
         gridRow.onGetActionState([this, &row](GetActionStateEvent& event) {
             const bool written = footnoteOf(row) != nullptr;
@@ -1035,7 +1035,7 @@ namespace SeeDocs_App
 
     // Every slot claims Edit footnote for the words it shows, and offers it on the box's menu
     // beside the box's own commands.
-    FootnoteSlot& PageView::addFootnoteSlot(Stack& holder, PageFootnote footnote,
+    FootnoteSlot& PageView::addFootnoteSlot(StackPanel& holder, PageFootnote footnote,
         const Padding padding)
     {
         FootnoteSlot& slot = holder.add<FootnoteSlot>(padding);
@@ -1085,7 +1085,7 @@ namespace SeeDocs_App
         return slot;
     }
 
-    void PageView::editFootnote(const PageFootnote& footnote)
+    void PageView::editFootnote(const PageFootnote& footnote) const
     {
         if (!m_writer || footnote.slot->editing())
             return;
@@ -1094,11 +1094,11 @@ namespace SeeDocs_App
 
     // **A footnote not written yet stands under the table** only while its editor does: written,
     // the page is built again with it; left, its slot goes.
-    void PageView::addFootnote(const TableRow& row, Stack& notes)
+    void PageView::addFootnote(const TableRow& row, StackPanel& notes)
     {
         if (!canAddFootnote(row))
             return;
-        FootnoteSlot* slot = nullptr;
+        FootnoteSlot* slot;
         if (const auto found = m_newFootnotes.find(&row); found != m_newFootnotes.end())
         {
             slot = found->second;

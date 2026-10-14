@@ -66,10 +66,10 @@ namespace SeeDocs_App
     // modules and types, read off the project's contents tree, which every tree shares. A node's
     // rows are made the first time it opens, so a tree costs the rows it has shown. A click on a
     // row picks what it names.
-    export class SurfaceTree : public Tree
+    export class SurfaceTree : public TreeView
     {
     public:
-        using Tree::Tree;
+        using TreeView::TreeView;
     public:
         // Connects a handler raised when a row is clicked.
         template<typename F>

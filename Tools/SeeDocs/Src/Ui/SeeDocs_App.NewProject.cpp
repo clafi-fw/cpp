@@ -80,7 +80,7 @@ namespace SeeDocs_App
             Radius{ 0.0f },
             Padding{ k_contentPadding }
         ) },
-        m_column{ m_content.createBody<Stack>(
+        m_column{ m_content.createBody<StackPanel>(
             Orientation::Vertical,
             Spacing{ k_groupSpacing },
             MinSize{ k_columnWidth, 0.0f }
@@ -115,7 +115,7 @@ namespace SeeDocs_App
             Radius{ 0.0f },
             Padding{ k_barPaddingX, k_barPaddingY }
         ) },
-        m_answers{ m_answerBar.createBody<Stack>(
+        m_answers{ m_answerBar.createBody<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_answerSpacing },
             ItemSizing::Equal
@@ -209,9 +209,9 @@ namespace SeeDocs_App
         NewProjectForm::nestedKeyDown(event);
     }
 
-    Stack& NewProjectDialog::addGroup(Stack& column)
+    StackPanel& NewProjectDialog::addGroup(StackPanel& column)
     {
-        return column.add<Stack>(Orientation::Vertical, Spacing{ k_rowSpacing }, Padding{ 0.0f });
+        return column.add<StackPanel>(Orientation::Vertical, Spacing{ k_rowSpacing }, Padding{ 0.0f });
     }
 
     std::wstring NewProjectDialog::typedName() const

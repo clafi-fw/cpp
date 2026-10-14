@@ -70,7 +70,7 @@ namespace ClaFi::Controls
     };
 
     // The rows, one per line in order, the dividers under them, and the row the keys are on.
-    class DropListStack : public Stack
+    class DropListStack : public StackPanel
     {
     public:
         DropListStack(const CreateParams&, DropList&);

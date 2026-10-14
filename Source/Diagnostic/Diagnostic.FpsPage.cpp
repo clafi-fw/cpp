@@ -189,7 +189,7 @@ namespace ClaFi::Diagnostic
                 metricRow(Metric::CpuCore)
             }
         ) },
-        m_footerBar{ body().add<Stack>(
+        m_footerBar{ body().add<StackPanel>(
             Orientation::Horizontal,
             Spacing{ 4.0f }
         ) },

@@ -93,7 +93,7 @@ namespace ClaFi::Controls
         ColorSpelling m_spelling;
         Label& m_title;
         Panel& m_content;
-        Stack& m_column;
+        StackPanel& m_column;
         Preview& m_preview;
         Label& m_originalSample;
         Row m_hue;
@@ -101,7 +101,7 @@ namespace ClaFi::Controls
         Row m_luminosity;
         ColorSlidersLinker m_linker;
         Panel& m_answerBar;
-        Stack& m_answers;
+        StackPanel& m_answers;
     };
 
 

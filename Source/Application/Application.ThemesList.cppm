@@ -96,9 +96,9 @@ namespace ClaFi
         // it needs once the width arrives - and the group holding it has to follow. A panel
         // aligned Fill has its height dictated from outside and keeps the one lane, cutting off
         // every row after the first.
-        using ThemesGroup = ExpanderWith<Stack>;
+        using ThemesGroup = ExpanderWith<StackPanel>;
     private:
-        ThemeTile& addTile(Stack& group, const AppTheme&, const std::filesystem::path& file,
+        ThemeTile& addTile(StackPanel& group, const AppTheme&, const std::filesystem::path& file,
             const UserTheme*);
     private:
         ThemesManager& m_themes;
@@ -124,7 +124,7 @@ namespace ClaFi
                 Spacing{ 4.0f }
             }
         ) };
-        Stack& m_builtInTiles{ m_builtInGroup.body() };
+        StackPanel& m_builtInTiles{ m_builtInGroup.body() };
 
         ThemesGroup& m_userGroup{ add<ThemesGroup>(
             HostProps{
@@ -140,7 +140,7 @@ namespace ClaFi
                 PlaceHolderText{ InkGrade::Subtle, L"No items" }
             }
         ) };
-        Stack& m_userTiles{ m_userGroup.body() };
+        StackPanel& m_userTiles{ m_userGroup.body() };
     };
 
 

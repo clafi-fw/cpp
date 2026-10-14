@@ -40,12 +40,12 @@ namespace ClaFi::Documents
         // page's own stands under the initiator - the crumb, the Up button, the tab being closed.
         [[nodiscard]] virtual bool saveEdits(Control& /*initiator*/) const { return true; }
     protected:
-        [[nodiscard]] Stack& toolBar() const { return m_toolBar; }
+        [[nodiscard]] StackPanel& toolBar() const { return m_toolBar; }
         // The panel the tool bar is the body of, for a page adding a bar of its own beside it.
         [[nodiscard]] Panel& topPanel() const { return m_topPanel; }
     private:
         DocumentsFolder& m_folder;
-        Stack& m_topStack{ createTopBar<Stack>(
+        StackPanel& m_topStack{ createTopBar<StackPanel>(
             Orientation::Vertical,
             UiElement::ToolBar
         ) };
@@ -56,7 +56,7 @@ namespace ClaFi::Documents
         Divider& m_topDivider{ m_topStack.add<Divider>(
             Padding{ 0.0f, 0.0f }
         ) };
-        Stack& m_toolBar{ m_topPanel.createBody<Stack>(
+        StackPanel& m_toolBar{ m_topPanel.createBody<StackPanel>(
             Orientation::Horizontal,
             Interactivity::ActiveContainer
         ) };

@@ -52,7 +52,7 @@ namespace SeeDocs_App
         void nestedKeyDown(KeyDownEvent&) override;   // Return in a box creates
     private:
         // A question's caption and its answer, one group of the column.
-        [[nodiscard]] static Stack& addGroup(Stack& column);
+        [[nodiscard]] static StackPanel& addGroup(StackPanel& column);
         [[nodiscard]] std::wstring typedName() const;
         void browse();
         void writeFolder();
@@ -74,22 +74,22 @@ namespace SeeDocs_App
         ProjectMaker m_maker;
         DialogTitle& m_title;
         Panel& m_content;
-        Stack& m_column;
-        Stack& m_nameGroup;
+        StackPanel& m_column;
+        StackPanel& m_nameGroup;
         Label& m_nameCaption;
         Panel& m_nameField;
         PromptBox& m_name;
-        Stack& m_locationGroup;
+        StackPanel& m_locationGroup;
         Label& m_locationCaption;
         Panel& m_locationRow;     // the field, and Browse at its end
         Panel& m_locationField;
         PromptBox& m_location;
-        Stack& m_folderGroup;   // the folder, and a reason it cannot be made there
+        StackPanel& m_folderGroup;   // the folder, and a reason it cannot be made there
         Label& m_folderCaption;
         Label& m_folder;
         Label& m_refusal;
         Panel& m_answerBar;
-        Stack& m_answers;
+        StackPanel& m_answers;
         Button& m_create;   // greyed while no name is typed
     };
 }

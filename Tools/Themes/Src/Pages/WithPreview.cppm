@@ -67,7 +67,7 @@ namespace Themes_App
         virtual const AppTheme* selectedTheme() { return nullptr; }
         void visibilityChanged() override;
     private:
-        Stack& m_rightToolBar{ this->topPanel().template createRightBar<Stack>(
+        StackPanel& m_rightToolBar{ this->topPanel().template createRightBar<StackPanel>(
             Orientation::Horizontal,
             Interactivity::ActiveContainer
         ) };

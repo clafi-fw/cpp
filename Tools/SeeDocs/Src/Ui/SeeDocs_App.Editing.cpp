@@ -195,7 +195,7 @@ namespace SeeDocs_App
                 return;
             }
         }
-        Stack::nestedKeyDown(event);
+        StackPanel::nestedKeyDown(event);
     }
 
     // The editor is made the first time the footnote is edited and kept: a page holds many
@@ -204,12 +204,12 @@ namespace SeeDocs_App
     {
         if (m_editor)
             return;
-        m_editor = &add<Stack>(Orientation::Vertical, Spacing{ k_editorSpacing });
+        m_editor = &add<StackPanel>(Orientation::Vertical, Spacing{ k_editorSpacing });
         m_box = &m_editor->add<TextBox>(
             TextFormat{ TextStyleId::Code },
             Padding{ k_editorPadding }
         );
-        Stack& bar = m_editor->add<Stack>(Orientation::Horizontal, Spacing{ k_barSpacing });
+        StackPanel& bar = m_editor->add<StackPanel>(Orientation::Horizontal, Spacing{ k_barSpacing });
         m_place = &bar.add<Label>(WordWrap::Yes);
         bar.add<FlexSpacer>();
         m_cancel = &bar.add<Button>(

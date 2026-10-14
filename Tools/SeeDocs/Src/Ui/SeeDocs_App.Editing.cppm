@@ -110,7 +110,7 @@ namespace SeeDocs_App
     // One footnote on a page: its words as the page shows them, and while it is edited, its
     // markdown in their place with where it goes and the ways out - Escape or Cancel leaves it,
     // Ctrl+S or Save writes it.
-    export class FootnoteSlot : public Stack
+    export class FootnoteSlot : public StackPanel
     {
     public:
         template<typename... Args>
@@ -135,7 +135,7 @@ namespace SeeDocs_App
         FootnoteDraft m_draft{};
         bool m_editing{ false };
         TextBox& m_shown{ add<TextBox>(ReadOnly::Yes, Padding{ 0.0f }) };
-        Stack* m_editor{ nullptr };
+        StackPanel* m_editor{ nullptr };
         TextBox* m_box{ nullptr };
         Label* m_place{ nullptr };
         Control* m_cancel{ nullptr };
@@ -156,7 +156,7 @@ namespace SeeDocs_App
     template<typename... Args>
     FootnoteSlot::FootnoteSlot(const CreateParams& params, Args&&... args)
         :
-        Stack{
+        StackPanel{
             params,
             Orientation::Vertical,
             Spacing{ k_editorSpacing },

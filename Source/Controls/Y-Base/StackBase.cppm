@@ -30,7 +30,7 @@ namespace ClaFi::Controls
         Control* previousItem;   // what was current before, null where nothing was
     };
 
-    // A base for Stack and PageControl, owning the current item. See Item-Containers
+    // A base for StackPanelBase and PageControl, owning the current item. See Item-Containers
     export class StackBase : public Container
     {
     public:

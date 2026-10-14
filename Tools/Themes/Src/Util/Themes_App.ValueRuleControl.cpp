@@ -141,7 +141,7 @@ namespace Themes_App
 
     // The three operations as tiles, a slider for the value, and the Clear and Close commands.
     // A value that may only be set has nothing to pick and nothing to clear: the slider and Close.
-    class ValueRulePopup : public Stack
+    class ValueRulePopup : public StackPanel
     {
     public:
         ValueRulePopup(const CreateParams&, ValueRuleControl&);
@@ -332,7 +332,7 @@ namespace Themes_App
 
     ValueRulePopup::ValueRulePopup(const CreateParams& params, ValueRuleControl& owner)
         :
-        Stack{ params,
+        StackPanel{ params,
             Orientation::Vertical,
             Interactivity::ActiveContainer,
             params.themeMetrics().secondaryWindow,
@@ -345,7 +345,7 @@ namespace Themes_App
         m_owner{ owner }
     {
         // A single tile would be a choice of one, so a value that may only be set shows none.
-        Stack* tileRow{};
+        StackPanel* tileRow{};
         if (!m_owner.setOnly())
         {
             add<LabeledDivider>(
@@ -353,7 +353,7 @@ namespace Themes_App
                 Padding{ 0.0f, k_spacing }
             );
 
-            tileRow = &add<Stack>(
+            tileRow = &add<StackPanel>(
                 Orientation::HorizontalWrap,
                 Interactivity::ActiveContainer,
                 LaneSize{ k_tileOperations.size() },
@@ -394,7 +394,7 @@ namespace Themes_App
         });
         m_stateItems.push_back(&slider);
 
-        Stack& commandBar = add<Stack>(
+        StackPanel& commandBar = add<StackPanel>(
             UiElement::Section,
             Orientation::Horizontal,
             Spacing{ 12.0f },

@@ -84,7 +84,7 @@ namespace ClaFi::Controls
         void click(ClickEvent&) override;
     };
 
-    export using BaseMenuForm = Form<ScrollBoxWith<Stack>>;
+    export using BaseMenuForm = Form<ScrollBoxWith<StackPanel>>;
 
     /// @brief What a text item does when it is chosen.
     /// @note It is handed the **item** that was pressed. A handler raising a question of its own
@@ -149,7 +149,7 @@ namespace ClaFi::Controls
     private:
         // The strip is built when something is put in it. A menu with no commands in the strip
         // has no top bar at all, and measures exactly as it did before there was one.
-        Stack* m_commandBar{ nullptr };
+        StackPanel* m_commandBar{ nullptr };
         // Held by address, which is how an action is recognised everywhere else.
         std::vector<const Action*> m_commandBarActions;
         std::size_t m_itemCount{ 0 };
@@ -266,7 +266,7 @@ namespace ClaFi::Controls
     MenuCommand& Menu::addToCommandBar(Action& action)
     {
         if (!m_commandBar)
-            m_commandBar = &createTopBar<Stack>(Orientation::Horizontal);
+            m_commandBar = &createTopBar<StackPanel>(Orientation::Horizontal);
         m_commandBarActions.push_back(&action);
         // The rule under the strip. Held like any other, so it lands only once the list has
         // something under it and never on a menu that is strip alone.

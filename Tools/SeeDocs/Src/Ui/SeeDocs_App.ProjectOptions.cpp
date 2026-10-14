@@ -81,7 +81,7 @@ namespace SeeDocs_App
         class SourceRow;
 
         // The project's folders of sources, a row each, over the stub a folder is added through.
-        class SourceList : public Stack
+        class SourceList : public StackPanel
         {
         public:
             SourceList(const CreateParams&, Workspace&, OpenProject&, Choose changed);
@@ -106,7 +106,7 @@ namespace SeeDocs_App
         };
 
         // An entry's answers; the stub carries them unseen, its field ending where an entry's does.
-        class RowAnswers : public Stack
+        class RowAnswers : public StackPanel
         {
         public:
             RowAnswers(const CreateParams&, bool shown);
@@ -170,23 +170,23 @@ namespace SeeDocs_App
         }
 
         // The column a set of choices stands in, whose answers redraw each other.
-        [[nodiscard]] Stack& addChoiceSet(Stack& group)
+        [[nodiscard]] StackPanel& addChoiceSet(StackPanel& group)
         {
-            return group.add<Stack>(Orientation::Vertical, Padding{ 0.0f });
+            return group.add<StackPanel>(Orientation::Vertical, Padding{ 0.0f });
         }
 
         // A caption in the group's own column, and under it the set of choices it names, set in
         // from it.
-        [[nodiscard]] Stack& addChoiceSet(Stack& group, const std::wstring_view caption)
+        [[nodiscard]] StackPanel& addChoiceSet(StackPanel& group, const std::wstring_view caption)
         {
             group.add<Label>(Text{ caption });
-            return group.add<Stack>(Orientation::Vertical, Padding{ k_choiceIndent, 0.0f });
+            return group.add<StackPanel>(Orientation::Vertical, Padding{ k_choiceIndent, 0.0f });
         }
 
         // One answer of a set, chosen while chosen() says so and greyed while enabled() says
         // not; a click runs choose() and redraws every answer of the set. The mark stands where
         // a label's text stands, as on the Settings page.
-        void addChoice(Stack& set, const std::wstring_view caption, const std::wstring_view hint,
+        void addChoice(StackPanel& set, const std::wstring_view caption, const std::wstring_view hint,
             Chosen chosen, Choose choose, Chosen enabled = {})
         {
             set.add<RadioButton>(
@@ -208,7 +208,7 @@ namespace SeeDocs_App
         }
 
         // A muted paragraph under a group's options, saying what they do not.
-        void addNote(Stack& group, const std::wstring_view words)
+        void addNote(StackPanel& group, const std::wstring_view words)
         {
             group.add<Label>(
                 Text{ words },
@@ -225,7 +225,7 @@ namespace SeeDocs_App
     // stand under the page's title with no group of their own; the groups follow.
     void buildProjectOptions(OptionsPage& page, Workspace& workspace, OpenProject& project)
     {
-        Stack& group = page.add<Stack>(
+        StackPanel& group = page.add<StackPanel>(
             Orientation::Vertical,
             k_headPadding,
             Spacing{ k_headSpacing }
@@ -251,7 +251,7 @@ namespace SeeDocs_App
             HintText{ L"The project's own folder: its properties, its database and its "
                 L"footnotes" }
         );
-        Stack& scanRow = group.add<Stack>(
+        StackPanel& scanRow = group.add<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_rowSpacing }
         );
@@ -276,15 +276,15 @@ namespace SeeDocs_App
             } }
         );
 
-        Stack& sources = page.addGroup(L"Sources");
+        StackPanel& sources = page.addGroup(L"Sources");
         sources.add<SourceList>(workspace, project, rescanned);
 
         // The edit choices are built after the hint choices, which grey one of them; the hints
         // reach them through this once they stand.
-        const std::shared_ptr<Stack*> editSet = std::make_shared<Stack*>(nullptr);
+        const std::shared_ptr<StackPanel*> editSet = std::make_shared<StackPanel*>(nullptr);
 
-        Stack& scan = page.addGroup(L"Scan options");
-        Stack& readAs = addChoiceSet(scan, L"Read sources as");
+        StackPanel& scan = page.addGroup(L"Scan options");
+        StackPanel& readAs = addChoiceSet(scan, L"Read sources as");
         addChoice(readAs, L"Any C++ and Delphi",
             L"Anyone's C++ - headers too - and Delphi units, with nothing checked",
             [&project]() {
@@ -304,7 +304,7 @@ namespace SeeDocs_App
                 workspace.setMode(project, ScanMode::Full);
                 rescanned();
             });
-        Stack& hints = addChoiceSet(scan, L"Hints format");
+        StackPanel& hints = addChoiceSet(scan, L"Hints format");
         const Choose hintsChanged = [rescanned, editSet]() {
             rescanned();
             if (*editSet)
@@ -330,8 +330,8 @@ namespace SeeDocs_App
                 hintsChanged();
             });
 
-        Stack& edits = page.addGroup(L"Edit hints");
-        Stack& editChoices = addChoiceSet(edits);
+        StackPanel& edits = page.addGroup(L"Edit hints");
+        StackPanel& editChoices = addChoiceSet(edits);
         *editSet = &editChoices;
         addChoice(editChoices, L"Not allowed",
             L"Hints are read, and never written",
@@ -398,7 +398,7 @@ namespace SeeDocs_App
         SourceList::SourceList(const CreateParams& params, Workspace& workspace,
             OpenProject& project, Choose changed)
             :
-            Stack{
+            StackPanel{
                 params,
                 Orientation::Vertical,
                 Padding{ 0.0f },
@@ -458,7 +458,7 @@ namespace SeeDocs_App
     {
         RowAnswers::RowAnswers(const CreateParams& params, const bool shown)
             :
-            Stack{
+            StackPanel{
                 params,
                 Orientation::Horizontal,
                 VerticalAlign::Center,
@@ -479,7 +479,7 @@ namespace SeeDocs_App
 
         void RowAnswers::getControlState(GetStateEvent& event) const
         {
-            Stack::getControlState(event);
+            StackPanel::getControlState(event);
             if (&event.control == this && !m_shown)
                 event.state.enabled = false;
         }
@@ -487,7 +487,7 @@ namespace SeeDocs_App
         void RowAnswers::hitTest(HitTestEvent& event) const
         {
             if (m_shown)
-                Stack::hitTest(event);
+                StackPanel::hitTest(event);
             else
                 event.zone = HitTest::Transparent;
         }
@@ -495,7 +495,7 @@ namespace SeeDocs_App
         void RowAnswers::paintChildren(PaintEvent& event)
         {
             if (m_shown)
-                Stack::paintChildren(event);
+                StackPanel::paintChildren(event);
         }
     }
 

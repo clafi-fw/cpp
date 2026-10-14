@@ -102,7 +102,7 @@ namespace Themes_App
     }
 
     // The outputs as radio buttons, then each of the two input sets as a column of check boxes.
-    class ApplyToPopup : public Stack
+    class ApplyToPopup : public StackPanel
     {
     public:
         ApplyToPopup(const CreateParams&, ApplyToControl&);
@@ -111,7 +111,7 @@ namespace Themes_App
         void setOutput(PaintChannel);
         void toggleInput(RuleClause, RuleInput);
     private:
-        Stack& addColumn(std::wstring_view header);
+        StackPanel& addColumn(std::wstring_view header);
         void addInputColumn(std::wstring_view header, RuleClause);
         void refreshItems();
     private:
@@ -250,7 +250,7 @@ namespace Themes_App
 
     ApplyToPopup::ApplyToPopup(const CreateParams& params, ApplyToControl& owner)
         :
-        Stack{ params,
+        StackPanel{ params,
             Orientation::Horizontal,
             Interactivity::ActiveContainer,
             params.themeMetrics().secondaryWindow,
@@ -261,7 +261,7 @@ namespace Themes_App
         },
         m_owner{ owner }
     {
-        Stack& outputs = addColumn(L"Apply to");
+        StackPanel& outputs = addColumn(L"Apply to");
         for (std::size_t i = 0ull; i != k_channelLabels.size(); ++i)
             m_items.push_back(&outputs.add<OutputItem>(*this, static_cast<PaintChannel>(i)));
         addInputColumn(L"When", &ColorRule::inputs);
@@ -280,9 +280,9 @@ namespace Themes_App
         refreshItems();
     }
 
-    Stack& ApplyToPopup::addColumn(const std::wstring_view header)
+    StackPanel& ApplyToPopup::addColumn(const std::wstring_view header)
     {
-        Stack& result = add<Stack>(
+        StackPanel& result = add<StackPanel>(
             Orientation::Vertical,
             Interactivity::ActiveContainer,
             VerticalAlign::Top
@@ -297,7 +297,7 @@ namespace Themes_App
 
     void ApplyToPopup::addInputColumn(const std::wstring_view header, const RuleClause clause)
     {
-        Stack& column = addColumn(header);
+        StackPanel& column = addColumn(header);
         for (std::size_t i = 0ull; i != k_inputLabels.size(); ++i)
             m_items.push_back(&column.add<InputItem>(*this, clause, static_cast<RuleInput>(i)));
     }

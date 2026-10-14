@@ -45,7 +45,7 @@ namespace ClaFi::Controls
         static constexpr float k_stripeWidth = 4.0f;
         static constexpr float k_answerSpacing = 8.0f;
     private:
-        Stack& m_answers;
+        StackPanel& m_answers;
         MessageIcon m_icon{ MessageIcon::None };
     };
 
@@ -68,7 +68,7 @@ namespace ClaFi::Controls
             Spacing{ k_spacing },
             std::forward<Args>(args)...
         },
-        m_answers{ createSecondaryPart<Stack>(
+        m_answers{ createSecondaryPart<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_answerSpacing },
             VerticalAlign::Center,

@@ -239,7 +239,7 @@ namespace Themes_App
     /// choice. Everything is built with the popup: a popup is sized to its content once, when it
     /// opens, so a control appearing in it afterwards would have nowhere to go, and a line of text
     /// growing in it would have no room to grow into.
-    class HueRulePopup : public Stack
+    class HueRulePopup : public StackPanel
     {
         friend HueRuleItem;
         friend HueSlider;
@@ -463,7 +463,7 @@ namespace Themes_App
 
     HueRulePopup::HueRulePopup(const CreateParams& params, HueRuleControl& owner)
         :
-        Stack{ params,
+        StackPanel{ params,
             Orientation::Vertical,
             Interactivity::ActiveContainer,
             params.themeMetrics().secondaryWindow,
@@ -494,7 +494,7 @@ namespace Themes_App
         // maps: one lane of radio marked tiles. Written out rather than looped over
         // ColorRuleHueOp, whose order leads with the palette entries so that an enumerator indexes
         // straight into paletteHues - a storage concern, not a reading one.
-        Stack& tileRow = add<Stack>(
+        StackPanel& tileRow = add<StackPanel>(
             Orientation::HorizontalWrap,
             Interactivity::ActiveContainer,
             LaneSize{ 3 },
@@ -559,7 +559,7 @@ namespace Themes_App
             m_owner.exactHueChanged(EditPhase::Settled);
             });
 
-        Stack& commandBar = add<Stack>(
+        StackPanel& commandBar = add<StackPanel>(
             UiElement::Section,
             Orientation::Horizontal,
             Spacing{ 12.0f },

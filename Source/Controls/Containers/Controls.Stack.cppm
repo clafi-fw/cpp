@@ -3,19 +3,22 @@ module;
 export module ClaFi.Controls.Stack;
 
 import ClaFi.Controls.Base.StackBase;
+import ClaFi.Controls.Base.StackPanelBase;
+
 import ClaFi.Core.AppTheme_AnimationSlots;
+import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
+
 import ClaFi.StdLib;
-import ClaFi.Core.Foundation;
 
 namespace ClaFi::Controls
 {
-    export class Stack;
+    export class StackViewBase;
 
     // Which item a stack raises its preview for. See Item-Containers
     export enum class PreviewMode
@@ -27,8 +30,8 @@ namespace ClaFi::Controls
     // The item a stack has settled on, before the user has picked anything. See Item-Containers
     export struct PreviewEvent : public Event
     {
-        PreviewEvent(Stack& itemsView, Control& item);
-        Stack& itemsView;   // the stack the preview belongs to
+        PreviewEvent(StackViewBase& itemsView, Control& item);
+        StackViewBase& itemsView;   // the stack the preview belongs to
         Control& item;      // the item being looked at, never null
     };
 
@@ -62,16 +65,16 @@ namespace ClaFi::Controls
     };
 
     // A container that places its items in lanes. See Item-Containers
-    export class Stack : public StackBase
+    export class StackPanelBase : public StackBase
     {
-    public:
+    protected:
         using StackBase::add;
         using StackBase::reserve;
         using StackBase::controls;
         using StackBase::clearControls;
     public:
         template <typename... Args>
-        explicit Stack(const CreateParams&, Args&&...);
+        explicit StackPanelBase(const CreateParams&, Args&&...);
     public:
         // Which way a lane runs, and whether the stack wraps into further lanes.
         DECLARE_WRITABLE_PROPERTY(Orientation, orientation, setOrientation, Orientation::VerticalWrap)
@@ -79,22 +82,11 @@ namespace ClaFi::Controls
         DECLARE_PROPERTY(LaneSize, laneSize, LaneSize{})
         // How a lane sizes the items in it.
         DECLARE_WRITABLE_PROPERTY(ItemSizing, itemSizing, setItemSizing, ItemSizing::Natural)
-        // Which item the stack raises its preview for.
-        DECLARE_WRITABLE_PROPERTY(PreviewMode, previewMode, setPreviewMode, PreviewMode::Focus)
-    public:
-        // Raised once the preview has settled on an item.
-        DECLARE_EVENT(PreviewEvent, OnPreview, onPreview)
     public:
         std::wstring_view diagnosticText() const override { return L"Stack"; }
         void setOrientation(Orientation);
         void setItemSizing(ItemSizing);
         TraversalOrder traversalOrder() const override;
-        void setPreviewMode(PreviewMode value) { m_previewMode = value; }
-        // The item the preview has settled on, by whichever reading PreviewMode names. Null until
-        // something has been previewed or recorded. Between an item being reached and the delay
-        // elapsing this is the item about to be raised, which is the only moment it says more
-        // than the last PreviewEvent did.
-        [[nodiscard]] Control* previewItem() const { return m_previewItem; }
     protected:
         ScaledDimensions calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
@@ -105,16 +97,6 @@ namespace ClaFi::Controls
         [[nodiscard]] bool isChildHeightGiven(const Control& child) const override
             { return lanesRunAcross() || child.fillsLane(); }
         NavigationWrap navigationWrap() const override;
-        void nestedControlHovered(Control* hovered) override;
-        void hoverLeave() override;
-        void currentItemChanged(CurrentItemChangeEvent&) override;
-        void nestedControlDeleted(Control*) override;
-        virtual void previewItemChanged(PreviewEvent&);
-        // Says the preview already stands on this item, without raising one and without the wait.
-        // For a container built around an item whose preview is what the caller is already
-        // showing - a dropdown opened on its selected item - so that reaching that item asks for
-        // nothing. Only the item: whatever a stack builds around it is the caller's to set.
-        void recordPreviewItem(Control& value) { m_previewItem = &value; }
     private:
         // What one lane holds: how many items it places, and the largest of them along the lane.
         // The two are read in one walk because an even lane needs both - the count divides it,
@@ -206,15 +188,7 @@ namespace ClaFi::Controls
         void alignEvenLane(AlignEvent&, ControlSpan::iterator laneBegin,
             ControlSpan::iterator laneEnd, std::size_t shares, ScaledPosition,
             float laneMain, float laneCross, ScaledDimensions& contentDimensions);
-        // Aims the preview at an item and waits to see whether it stays there. An item already
-        // aimed at costs nothing, which is what makes a held key one preview rather than one per
-        // repeat.
-        void startPreviewTimer(Control&);
-        void onPreviewTimer();
     private:
-        // Long enough that a pointer crossing the stack previews nothing it merely passes over,
-        // short enough to read as the answer to stopping on an item.
-        static constexpr MilliSeconds k_previewDelay{ 110 };
         // Under this two extents are the same extent: what the align laid out is compared with
         // what the measure answered, and a pass asked for on floating-point noise is a pass
         // every frame.
@@ -224,12 +198,75 @@ namespace ClaFi::Controls
         // ever been aligned reports a lane nothing can precede, and culls nothing.
         float m_maxLaneExtent{ k_maxFloat };
         float m_wrapLengthInDesign{};   // the length the lanes were last broken at, in design units
+
+    };
+
+    export class StackPanel : public StackPanelBase
+    {
+        using StackPanelBase::StackPanelBase;
+    public:
+        using StackPanelBase::add;
+        using StackPanelBase::reserve;
+        using StackPanelBase::controls;
+        using StackPanelBase::clearControls;
+    };
+
+    export class StackViewBase : public StackPanelBase
+    {
+    public:
+        using StackPanelBase::add;
+        using StackPanelBase::reserve;
+        using StackPanelBase::controls;
+        using StackPanelBase::clearControls;
+    public:
+        template <typename... Args>
+        explicit StackViewBase(const CreateParams&, Args&&...);
+    public:
+        // Which item the stack raises its preview for.
+        DECLARE_WRITABLE_PROPERTY(PreviewMode, previewMode, setPreviewMode, PreviewMode::Focus)
+    public:
+        // Raised once the preview has settled on an item.
+        DECLARE_EVENT(PreviewEvent, OnPreview, onPreview)
+    public:
+        void setPreviewMode(PreviewMode value) { m_previewMode = value; }
+        // The item the preview has settled on, by whichever reading PreviewMode names. Null until
+        // something has been previewed or recorded. Between an item being reached and the delay
+        // elapsing this is the item about to be raised, which is the only moment it says more
+        // than the last PreviewEvent did.
+        [[nodiscard]] Control* previewItem() const { return m_previewItem; }
+    protected:
+        virtual void previewItemChanged(PreviewEvent&);
+        // Says the preview already stands on this item, without raising one and without the wait.
+        // For a container built around an item whose preview is what the caller is already
+        // showing - a dropdown opened on its selected item - so that reaching that item asks for
+        // nothing. Only the item: whatever a stack builds around it is the caller's to set.
+        void recordPreviewItem(Control& value) { m_previewItem = &value; }
+        //
+        void nestedControlHovered(Control* hovered) override;
+        void hoverLeave() override;
+        void currentItemChanged(CurrentItemChangeEvent&) override;
+        void nestedControlDeleted(Control*) override;
+    private:
+        void onPreviewTimer();
+        // Aims the preview at an item and waits to see whether it stays there. An item already
+        // aimed at costs nothing, which is what makes a held key one preview rather than one per
+        // repeat.
+        void startPreviewTimer(Control&);
+    private:
+        // Long enough that a pointer crossing the stack previews nothing it merely passes over,
+        // short enough to read as the answer to stopping on an item.
+        static constexpr MilliSeconds k_previewDelay{ 110 };
         // Connected in the constructor rather than handed its handler here. The constructor is a
         // template, so a default member initializer is instantiated in whatever translation unit
         // builds a Stack, and OnEvent's deduction does not survive the trip - onTick names
         // the event and deduces nothing.
-        UiTimer m_previewTimer{};
+        UiTimer m_previewTimer;
         Control* m_previewItem{ nullptr };
+    };
+
+    export class SingleSelectionView : public StackViewBase
+    {
+        using StackViewBase::StackViewBase;
     };
 
 
@@ -238,28 +275,39 @@ namespace ClaFi::Controls
 
     // PreviewEvent
 
-    PreviewEvent::PreviewEvent(Stack& itemsView, Control& item)
+    PreviewEvent::PreviewEvent(StackViewBase& itemsView, Control& item)
         :
         itemsView{ itemsView },
         item{ item }
     {
     }
 
-    // Stack
+    // StackPanelBase
 
     template<typename ...Args>
-    Stack::Stack(const CreateParams& params, Args && ...args)
+    StackPanelBase::StackPanelBase(const CreateParams& params, Args && ...args)
         :
         StackBase{ params, std::forward<Args>(args)... },
         INIT_PROPERTY(orientation),
         INIT_PROPERTY(laneSize),
-        INIT_PROPERTY(itemSizing),
-        INIT_PROPERTY(previewMode)
+        INIT_PROPERTY(itemSizing)
     {
-        m_previewTimer.onTick([this](TimerEvent&) { onPreviewTimer(); });
     }
 
-    void Stack::setOrientation(Orientation value)
+    template <typename ... Args>
+    StackViewBase::StackViewBase(const CreateParams& params, Args&&... args)
+        :
+        StackPanelBase{
+            params,
+            Interactivity::ActiveContainer, // a view follows the user, unless the caller says not
+            std::forward<Args>(args)...
+        },
+        INIT_PROPERTY(previewMode),
+        m_previewTimer{ UiTimer::OnTick{ [this](TimerEvent&) { onPreviewTimer(); } } }
+    {
+    }
+
+    void StackPanelBase::setOrientation(Orientation value)
     {
         if (m_orientation == value)
             return;
@@ -269,7 +317,7 @@ namespace ClaFi::Controls
         invalidateFormAlign();
     }
 
-    void Stack::setItemSizing(ItemSizing value)
+    void StackPanelBase::setItemSizing(ItemSizing value)
     {
         if (m_itemSizing == value)
             return;
@@ -277,7 +325,7 @@ namespace ClaFi::Controls
         invalidateFormAlign();
     }
 
-    TraversalOrder Stack::traversalOrder() const
+    TraversalOrder StackPanelBase::traversalOrder() const
     {
         switch (m_orientation)
         {
@@ -298,7 +346,7 @@ namespace ClaFi::Controls
         return {};
     }
 
-    ScaledDimensions Stack::calculateContent(AlignEvent& event)
+    ScaledDimensions StackPanelBase::calculateContent(AlignEvent& event)
     {
         if (controls().empty())
             // placeHolderText
@@ -334,7 +382,7 @@ namespace ClaFi::Controls
         }
     }
 
-    void Stack::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& contentDimensions)
+    void StackPanelBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& contentDimensions)
     {
         ScaledDimensions calculatedContent = dimensions() - event.padding * 2;
         switch (m_orientation)
@@ -374,7 +422,7 @@ namespace ClaFi::Controls
         }
     }
 
-    NavigationWrap Stack::navigationWrap() const
+    NavigationWrap StackPanelBase::navigationWrap() const
     {
         switch (m_orientation)
         {
@@ -384,80 +432,13 @@ namespace ClaFi::Controls
         }
     }
 
-    void Stack::nestedControlHovered(Control* hovered)
-    {
-        StackBase::nestedControlHovered(hovered);
-        if (m_previewMode != PreviewMode::Hover)
-            return;
-
-        // What the pointer is on is a leaf, and the item is whatever ancestor of it this stack
-        // takes for one - the same walk a press makes. A stack holding its items in groups is
-        // told about the leaf and not about the group, which is the whole reason this is not
-        // childHoverEnter: that one names the direct child and never reaches a container standing
-        // above the group.
-        //
-        // Nothing happens where the walk finds no item - the pointer is on a caption or in the
-        // gap between two groups - so crossing one of those keeps the preview where it was rather
-        // than dropping it. Leaving the stack is what moves it, below.
-        if (Control* item = itemAt(hovered))
-            startPreviewTimer(*item);
-    }
-
-    void Stack::hoverLeave()
-    {
-        StackBase::hoverLeave();
-        if (m_previewMode != PreviewMode::Hover)
-            return;
-
-        // The pointer has left this stack whole. Moving between two items inside it does not come
-        // here: the walk that tells a control the hover has left it stops at the common parent of
-        // the two, which is the stack.
-        //
-        // What the stack stands on is its current item, so that is what the preview goes back to.
-        // A stack with none previews nothing, the same way it previewed nothing to begin with.
-        if (Control* item = currentItem())
-            startPreviewTimer(*item);
-    }
-
-    void Stack::currentItemChanged(CurrentItemChangeEvent& event)
-    {
-        StackBase::currentItemChanged(event);
-
-        // Every route the current item moves by comes through here - a key, a click, a call from
-        // code - so this is the whole of what Focus mode listens to, and the half of Hover mode a
-        // key reaches. The delay does the rest: a held arrow moves the current item once per
-        // repeat and previews once, for the item it stopped on.
-        //
-        // The current item cleared is not an item to preview. That is what a deleted current item
-        // leaves behind, and nestedControlDeleted below is what answers it.
-        if (Control* item = currentItem())
-            startPreviewTimer(*item);
-    }
-
-    void Stack::nestedControlDeleted(Control* item)
-    {
-        StackBase::nestedControlDeleted(item);
-        if (item != m_previewItem)
-            return;
-        // The list being rebuilt under the pointer is the ordinary case here, not a rare one - a
-        // rename does it. The timer goes with the item: what it was waiting to raise no longer
-        // exists, and there is nothing else it could name.
-        m_previewItem = nullptr;
-        m_previewTimer.stop();
-    }
-
-    void Stack::previewItemChanged(PreviewEvent& event)
-    {
-        emitEvent(event);
-    }
-
     // **One routine, read through main and cross.** A wrapping stack does the same four things
     // whichever way its lanes run - cut the lane on its count or on the length it was given,
     // share what the stack has over the length among the items on each lane, share what it has
     // over the thickness among the lanes, and divide an Equal lane by its count - and writing
     // that twice is how each way round came to be missing whatever the other one had. See
     // Item-Containers
-    void Stack::alignIntoLanes(AlignEvent& event, ScaledPosition position,
+    void StackPanelBase::alignIntoLanes(AlignEvent& event, ScaledPosition position,
         ScaledDimensions& contentDimensions)
     {
         // The box the parent is handing over, held to whatever maximum this stack states. Read
@@ -577,7 +558,7 @@ namespace ClaFi::Controls
         rememberWrapLength(event, limitMain);
     }
 
-    Stack::LaneCut Stack::nextLane(ControlSpan::iterator begin, const AlignEvent& event,
+    StackPanelBase::LaneCut StackPanelBase::nextLane(ControlSpan::iterator begin, const AlignEvent& event,
         const float limitMain, const std::size_t perLane)
     {
         LaneCut lane{ begin, begin, 0.0f, 0.0f, 0ull, 0ull };
@@ -622,7 +603,7 @@ namespace ClaFi::Controls
     // would be measuring against the length the last pass laid out - see wrapLengthLimit - so a
     // narrow pass would shrink what the panel asks for, a host measured from the panel would grant
     // that, and the count would walk down one pass at a time and never come back.
-    std::size_t Stack::sharesThatFit(const float largest, const float spacing,
+    std::size_t StackPanelBase::sharesThatFit(const float largest, const float spacing,
         const float limitMain) const
     {
         const std::size_t perLane = itemsPerLane();
@@ -663,7 +644,7 @@ namespace ClaFi::Controls
     //
     // **What an item does with its part is the item's to say.** One that fills takes it; one
     // aligned to an edge keeps the size it measured and stands in it - see Control::align.
-    void Stack::alignSharedLane(AlignEvent& event, const LaneCut& lane,
+    void StackPanelBase::alignSharedLane(AlignEvent& event, const LaneCut& lane,
         const ScaledPosition position, const float laneSurplus, const float laneCross,
         ScaledDimensions& contentDimensions)
     {
@@ -711,7 +692,7 @@ namespace ClaFi::Controls
 
     // Along the lane by the part it was handed, across it by the whole thickness. What the item
     // then does inside that box is its own alignment's answer - see Control::align.
-    void Stack::placeInLane(AlignEvent& event, Control& control,
+    void StackPanelBase::placeInLane(AlignEvent& event, Control& control,
         const ScaledPosition lanePosition, const float from, const float extent,
         const float laneCross)
     {
@@ -720,7 +701,7 @@ namespace ClaFi::Controls
         alignControl(&control, event, itemPosition, lanePoint(extent, laneCross));
     }
 
-    float Stack::wrapLengthLimit(const AlignEvent& event) const
+    float StackPanelBase::wrapLengthLimit(const AlignEvent& event) const
     {
         if (m_wrapLengthInDesign <= 0.0f)
             return k_maxFloat;
@@ -749,7 +730,7 @@ namespace ClaFi::Controls
     // differs by up to a whole unit for ever - every pass asks for another, and the program lays
     // itself out until it is killed. The length converges in one step because the pass that
     // measures against it hands back the same number.
-    void Stack::rememberWrapLength(AlignEvent& event, const float limitLength)
+    void StackPanelBase::rememberWrapLength(AlignEvent& event, const float limitLength)
     {
         if (!isLaneLengthGivenFromOutside())
             return;
@@ -770,7 +751,7 @@ namespace ClaFi::Controls
     // **A ceiling is spread, a count is not.** Under UpTo the items go into the fewest lanes the
     // count allows and every lane but the last is filled to the same depth, so eleven under a
     // ceiling of ten stands as six and five rather than ten and one.
-    std::size_t Stack::itemsPerLane() const
+    std::size_t StackPanelBase::itemsPerLane() const
     {
         if (m_laneSize.sizing == LaneSizing::Exact)
             return m_laneSize.value;
@@ -784,7 +765,7 @@ namespace ClaFi::Controls
 
     // A hidden item is passed over by every lane walk here, so it is not one of the items the
     // lanes are cut for.
-    std::size_t Stack::visibleItems() const
+    std::size_t StackPanelBase::visibleItems() const
     {
         std::size_t result = 0ull;
         for (const ControlPtr& item : controls())
@@ -801,7 +782,7 @@ namespace ClaFi::Controls
     // divisor without the statement: how many shares of the largest item the length has room for,
     // both of them known before a lane is cut. A stated lane is now a cap on it rather than the
     // only way to have one.
-    bool Stack::dividesEvenly() const
+    bool StackPanelBase::dividesEvenly() const
     {
         return m_itemSizing == ItemSizing::Equal;
     }
@@ -809,7 +790,7 @@ namespace ClaFi::Controls
     // **A lane with one is as long as it was granted**, not as long as it measured - there is no
     // surplus to hand out otherwise, and the item would take nothing. The same reach for the
     // granted box an even division makes, for the same reason. See Control::fillsLane
-    bool Stack::hasFillingItem() const
+    bool StackPanelBase::hasFillingItem() const
     {
         for (const ControlPtr& item : controls())
             if (item->visible() && item->fillsLane())
@@ -817,7 +798,7 @@ namespace ClaFi::Controls
         return false;
     }
 
-    Stack::LaneFill Stack::laneFill(float (Control::* extent)() const) const
+    StackPanelBase::LaneFill StackPanelBase::laneFill(float (Control::* extent)() const) const
     {
         LaneFill result{ 0ull, 0.0f };
         for (const ControlPtr& item : controls())
@@ -830,7 +811,7 @@ namespace ClaFi::Controls
         return result;
     }
 
-    float Stack::evenLaneLength(const LaneFill& fill, const float spacing)
+    float StackPanelBase::evenLaneLength(const LaneFill& fill, const float spacing)
     {
         if (!fill.count)
             return 0.0f;
@@ -842,13 +823,13 @@ namespace ClaFi::Controls
     // align pass does not, so a stack that was granted exactly what it asked for still answers a
     // fraction here - and a fraction shared out is every item moved by part of a pixel on a pass
     // that changed nothing.
-    float Stack::surplusOver(const float granted, const float taken)
+    float StackPanelBase::surplusOver(const float granted, const float taken)
     {
         const float surplus = granted - taken;
         return surplus < 1.0f ? 0.0f : surplus;
     }
 
-    void Stack::alignEvenLane(AlignEvent& event, ControlSpan::iterator laneBegin,
+    void StackPanelBase::alignEvenLane(AlignEvent& event, ControlSpan::iterator laneBegin,
         ControlSpan::iterator laneEnd, const std::size_t shares, ScaledPosition position,
         const float laneMain, const float laneCross, ScaledDimensions& contentDimensions)
     {
@@ -885,15 +866,75 @@ namespace ClaFi::Controls
         mainOf(contentDimensions) = std::max(mainOf(contentDimensions), lastEnd);
     }
 
-    void Stack::startPreviewTimer(Control& item)
+    void StackViewBase::previewItemChanged(PreviewEvent& event)
     {
-        if (m_previewItem == &item)
-            return;
-        m_previewItem = &item;
-        m_previewTimer.start(k_previewDelay);
+        emitEvent(event);
     }
 
-    void Stack::onPreviewTimer()
+    void StackViewBase::nestedControlHovered(Control* hovered)
+    {
+        StackPanelBase::nestedControlHovered(hovered);
+
+        if (m_previewMode != PreviewMode::Hover)
+            return;
+        // What the pointer is on is a leaf, and the item is whatever ancestor of it this stack
+        // takes for one - the same walk a press makes. A stack holding its items in groups is
+        // told about the leaf and not about the group, which is the whole reason this is not
+        // childHoverEnter: that one names the direct child and never reaches a container standing
+        // above the group.
+        //
+        // Nothing happens where the walk finds no item - the pointer is on a caption or in the
+        // gap between two groups - so crossing one of those keeps the preview where it was rather
+        // than dropping it. Leaving the stack is what moves it, below.
+        if (Control* item = itemAt(hovered))
+            startPreviewTimer(*item);
+    }
+
+    void StackViewBase::hoverLeave()
+    {
+        StackPanelBase::hoverLeave();
+
+        if (m_previewMode != PreviewMode::Hover)
+            return;
+        // The pointer has left this stack whole. Moving between two items inside it does not come
+        // here: the walk that tells a control the hover has left it stops at the common parent of
+        // the two, which is the stack.
+        //
+        // What the stack stands on is its current item, so that is what the preview goes back to.
+        // A stack with none previews nothing, the same way it previewed nothing to begin with.
+        if (Control* item = currentItem())
+            startPreviewTimer(*item);
+    }
+
+    void StackViewBase::currentItemChanged(CurrentItemChangeEvent& currentItemChangeEvent)
+    {
+        StackPanelBase::currentItemChanged(currentItemChangeEvent);
+
+        // Every route the current item moves by comes through here - a key, a click, a call from
+        // code - so this is the whole of what Focus mode listens to, and the half of Hover mode a
+        // key reaches. The delay does the rest: a held arrow moves the current item once per
+        // repeat and previews once, for the item it stopped on.
+        //
+        // The current item cleared is not an item to preview. That is what a deleted current item
+        // leaves behind, and nestedControlDeleted below is what answers it.
+        if (Control* item = currentItem())
+            startPreviewTimer(*item);
+    }
+
+    void StackViewBase::nestedControlDeleted(Control* control)
+    {
+        StackPanelBase::nestedControlDeleted(control);
+
+        if (control != m_previewItem)
+            return;
+        // The list being rebuilt under the pointer is the ordinary case here, not a rare one - a
+        // rename does it. The timer goes with the item: what it was waiting to raise no longer
+        // exists, and there is nothing else it could name.
+        m_previewItem = nullptr;
+        m_previewTimer.stop();
+    }
+
+    void StackViewBase::onPreviewTimer()
     {
         // **A glide is not the user looking at anything.** Content travelling under a pointer that
         // is holding still hands the hover a new item on every frame - see ScrollBox's wheel glide,
@@ -913,6 +954,14 @@ namespace ClaFi::Controls
 
         PreviewEvent event{ *this, *m_previewItem };
         previewItemChanged(event);
+    }
+
+    void StackViewBase::startPreviewTimer(Control& item)
+    {
+        if (m_previewItem == &item)
+            return;
+        m_previewItem = &item;
+        m_previewTimer.start(k_previewDelay);
     }
 
 }

@@ -81,7 +81,7 @@ namespace SeeDocs_App
     public:
         [[nodiscard]] TextBox& titleBox() { return m_title; }
         [[nodiscard]] BasesBar& basesBar() { return m_bases; }
-        [[nodiscard]] Stack& commandBar() { return m_commands; }   // hidden at first
+        [[nodiscard]] StackPanel& commandBar() { return m_commands; }   // hidden at first
         void write(const Page&);
         void write(std::optional<RowIcon>, std::wstring_view title);
         void clear();
@@ -92,14 +92,14 @@ namespace SeeDocs_App
         static constexpr float k_basesIndent = 24.0f;   // of what stands under the title
         static constexpr float k_commandGap = 10.0f;    // before and between the buttons
 
-        Stack& m_lines{ createBody<Stack>(
+        StackPanel& m_lines{ createBody<StackPanel>(
             Orientation::Vertical,
             Padding{ 0.0f },
             Spacing{ 0.0f }
         ) };
         TextBox& m_title{ m_lines.add<TextBox>(ReadOnly::Yes, Padding{ 0.0f }) };
         BasesBar& m_bases{ m_lines.add<BasesBar>(Padding{ k_basesIndent, 0.0f }) };
-        Stack& m_commands{ createRightBar<Stack>(
+        StackPanel& m_commands{ createRightBar<StackPanel>(
             Orientation::Horizontal,
             Padding{ 0.0f },
             Spacing{ k_commandGap },
@@ -194,7 +194,7 @@ namespace SeeDocs_App
         [[nodiscard]] HeaderText treeHeaderText(const Branch&) const;
         // The column at the end holding the rows' buttons; null where no row has a command.
         void addTableRows(Expander&, Grids::GridBase&, const Table&, const TableGroup&,
-            Stack& notes, TagValue hintColumn, Grids::Column* commandColumn, PageFootnotes&);
+            StackPanel& notes, TagValue hintColumn, Grids::Column* commandColumn, PageFootnotes&);
         // The button's caption and hint are written out of the command, and its click raises it.
         void connectCommand(Button&, const Command&);
         // The button opens the fact's source, greyed with a hint while no editor is set for it.
@@ -203,12 +203,12 @@ namespace SeeDocs_App
         // The row's hint cell opens on the comment's words and writes them back.
         void connectHintCell(Grids::Row&, const TableRow&, TagValue hintColumn);
         // The row's menu edits its footnote, or adds one where it has none.
-        void connectRowMenu(Grids::Row&, const TableRow&, Stack& notes);
+        void connectRowMenu(Grids::Row&, const TableRow&, StackPanel& notes);
         // The box takes edits where the page has a writer and the hint a comment to write into.
         void connectHintBox(HintBox&, const std::optional<CommentSite>&);
-        FootnoteSlot& addFootnoteSlot(Stack& holder, PageFootnote, Padding);
-        void editFootnote(const PageFootnote&);
-        void addFootnote(const TableRow&, Stack& notes);
+        FootnoteSlot& addFootnoteSlot(StackPanel& holder, PageFootnote, Padding);
+        void editFootnote(const PageFootnote&) const;
+        void addFootnote(const TableRow&, StackPanel& notes);
         [[nodiscard]] const PageFootnote* footnoteOf(const TableRow&) const;
         // The anchor of the footnote showing the section in full; empty where none has one.
         [[nodiscard]] std::wstring shownAnchorOf(const Reference&) const;
@@ -278,7 +278,7 @@ namespace SeeDocs_App
 
         PageHead& m_head{ createTopBar<PageHead>() };
 
-        ScrollBoxWith<Stack>& m_pageBox{ createBody<ScrollBoxWith<Stack>>(
+        ScrollBoxWith<StackPanel>& m_pageBox{ createBody<ScrollBoxWith<StackPanel>>(
             HostProps{
                 ScrollBars::Vertical
             },

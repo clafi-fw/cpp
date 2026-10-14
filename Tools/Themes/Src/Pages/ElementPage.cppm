@@ -120,7 +120,7 @@ namespace Themes_App
             VerticalTextAnchor::Center
         ) };
 
-        Stack& m_tools{ m_topBar.createRightBar<Stack>(
+        StackPanel& m_tools{ m_topBar.createRightBar<StackPanel>(
             Orientation::Horizontal,
             Interactivity::ActiveContainer,
             Spacing{ 4.0f }
@@ -145,7 +145,7 @@ namespace Themes_App
         // A row names its rule by the rule's place in the list, carried as the row's tag.
         Grids::Dt::Grid& m_grid{ createBody<ScrollBox>(
             ScrollBars::Vertical
-        ).createBody<Stack>(
+        ).createBody<StackPanel>(
             Orientation::Vertical,
             Padding{ 12.0f }
         ).add<Grids::Dt::Grid>(

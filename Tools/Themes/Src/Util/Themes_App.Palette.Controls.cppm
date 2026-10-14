@@ -36,7 +36,7 @@ namespace Themes_App
         void dropdown(DropdownEvent&) override;
         void paintIcon(PaintIconEvent&) override;
     private:
-        class DropDownMenu : public Stack
+        class DropDownMenu : public StackPanel
         {
         public:
             DropDownMenu(const CreateParams&, const ColorHarmonyItem&);
@@ -88,7 +88,7 @@ namespace Themes_App
 
     ColorHarmonyItem::DropDownMenu::DropDownMenu(const CreateParams& params, const ColorHarmonyItem& item)
         :
-        Stack{
+        StackPanel{
             params,
             Orientation::HorizontalWrap,
             Interactivity::ActiveContainer,
@@ -129,7 +129,7 @@ namespace Themes_App
 
     void ColorHarmonyItem::DropDownMenu::nestedClick(NestedClickEvent& event)
     {
-        Stack::nestedClick(event);
+        StackPanel::nestedClick(event);
         std::size_t tagValue = event.clickedControl.tag().value;
         m_harmony.selectMap(m_harmony.maps()[tagValue]);
         //invalidateChildrenStates();
@@ -196,7 +196,7 @@ namespace Themes_App
 
     void ColorHarmonyItem::dropdown(DropdownEvent& event)
     {
-        static_cast<Stack*>(parent())->setCurrentItem(this);
+        static_cast<StackPanel*>(parent())->setCurrentItem(this);
         event.executeDropdown<DropDownPanel>(*this);
     }
 
@@ -224,7 +224,7 @@ namespace Themes_App
 
     void ColorHarmonyItem::dropDown(Control& dropDownButton)
     {
-        static_cast<Stack*>(parent())->setCurrentItem(this);
+        static_cast<StackPanel*>(parent())->setCurrentItem(this);
 
         Form<DropDownPanel> menuForm{ form().createPopup<DropDownPanel>(&dropDownButton, *this) };
 

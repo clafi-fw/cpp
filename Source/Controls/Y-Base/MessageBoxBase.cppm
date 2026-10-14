@@ -94,7 +94,7 @@ namespace ClaFi::Controls
         Label& m_icon;
         MessageBoxBody& m_box;
         Panel& m_answerBar;
-        Stack& m_answers;
+        StackPanel& m_answers;
     };
 
 }

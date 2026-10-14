@@ -258,9 +258,9 @@ namespace Themes_App
             VerticalTextAnchor::Center,
             Text{ TextStyleId::SubTitle, nameOf(entry) }
         );
-        Stack& rows = page.createBody<ScrollBox>(
+        StackPanel& rows = page.createBody<ScrollBox>(
             ScrollBars::Vertical
-        ).createBody<Stack>(
+        ).createBody<StackPanel>(
             Orientation::Vertical,
             Padding{ 12.0f }
         );

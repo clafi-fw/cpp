@@ -19,7 +19,7 @@ namespace Themes_App
     private:
         inline static bool m_selectedRb{ true };
 
-        Stack& m_stack{ createBody<Stack>(
+        StackPanel& m_stack{ createBody<StackPanel>(
             Padding{ 12.0 },
             Spacing{ 8.0 }
         ) };

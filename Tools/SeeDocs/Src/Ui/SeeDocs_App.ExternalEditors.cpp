@@ -290,10 +290,10 @@ namespace SeeDocs_App
         }
 
         // A row: what the language is called, then its command line in a project options field.
-        void addEditorRow(Stack& group, const std::wstring_view caption,
+        void addEditorRow(StackPanel& group, const std::wstring_view caption,
             const std::wstring_view key, const Suggestions suggestions, HintText hint)
         {
-            Stack& row = group.add<Stack>(Orientation::Horizontal, Spacing{ k_captionSpacing });
+            StackPanel& row = group.add<StackPanel>(Orientation::Horizontal, Spacing{ k_captionSpacing });
             row.add<Label>(
                 Text{ caption },
                 TextFormat{ InkGrade::Strong },
@@ -327,7 +327,7 @@ namespace SeeDocs_App
 
     void buildExternalEditors(OptionsPage& page)
     {
-        Stack& group = page.addGroup(L"External editors");
+        StackPanel& group = page.addGroup(L"External editors");
         addEditorRow(group, L"C++:", EditorKey::cpp,
             onThisDesktop(WindowsSuggestions::cpp, LinuxSuggestions::cpp),
             HintText{ L"Opens a C++ source at a line - {file} and {line} are filled in" });

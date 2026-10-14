@@ -90,7 +90,7 @@ namespace Themes_App
         template<typename F>
         EventConnection onPagePick(F&& callback);
         // The Palette page's body, which the theme page fills.
-        [[nodiscard]] Stack& paletteView() { return m_paletteView; }
+        [[nodiscard]] StackPanel& paletteView() { return m_paletteView; }
         // Hands every page its list of the theme's rules, its ramps' base and what to call.
         void bind(ThemeColors&, const OnGetElementRuleBase&, const OnRulesChanged&);
         // Builds every page's rows again from the rules as they stand.
@@ -135,10 +135,10 @@ namespace Themes_App
         TreeEntries m_entries{}; // an item's tag is its place here
         const ThemeRules m_defaultRules{ ThemeColors{}.rules }; // what each page's reset puts back
 
-        Tree& m_tree{ createLeftBar<ScrollBox>(
+        TreeView& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,
             UiElement::Section
-        ).createBody<Tree>(
+        ).createBody<TreeView>(
             Padding{ 4.0f }
         ) };
 
@@ -154,9 +154,9 @@ namespace Themes_App
             Text{ TextStyleId::SubTitle, k_paletteTitle }
         ) };
 
-        Stack& m_paletteView{ m_palettePage.createBody<ScrollBox>(
+        StackPanel& m_paletteView{ m_palettePage.createBody<ScrollBox>(
             ScrollBars::Vertical
-        ).createBody<Stack>(
+        ).createBody<StackPanel>(
             Orientation::Vertical,
             Padding{ 12.0f },
             Spacing{ 8.0f }

@@ -100,7 +100,7 @@ namespace ClaFi::Controls
             Radius{ 0.0f },
             Padding{ k_contentPadding }
         ) },
-        m_column{ m_content.createBody<Stack>(
+        m_column{ m_content.createBody<StackPanel>(
             Orientation::Vertical,
             Spacing{ k_rowSpacing }
         ) },
@@ -125,7 +125,7 @@ namespace ClaFi::Controls
             Radius{ 0.0f },
             Padding{ k_barPaddingX, k_barPaddingY }
         ) },
-        m_answers{ m_answerBar.createBody<Stack>(
+        m_answers{ m_answerBar.createBody<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_answerSpacing },
             ItemSizing::Equal
@@ -200,7 +200,7 @@ namespace ClaFi::Controls
     ColorEditDialog::Row ColorEditDialog::addRow(const std::wstring_view name,
         const HslChannel channel)
     {
-        Stack& row = m_column.add<Stack>(
+        StackPanel& row = m_column.add<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_cellSpacing }
         );

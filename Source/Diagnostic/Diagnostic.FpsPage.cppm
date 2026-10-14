@@ -25,7 +25,7 @@ namespace ClaFi::Diagnostic
     using namespace Controls;
 
     // What the framework window under the pointer costs to paint. See Diagnostic
-    export class FpsPage : public ScrollBoxWith<Stack>
+    export class FpsPage : public ScrollBoxWith<StackPanel>
     {
     public:
         explicit FpsPage(const CreateParams&);
@@ -178,7 +178,7 @@ namespace ClaFi::Diagnostic
         Grid& m_windowGrid;
         Grid& m_metricsGrid;
         // The restart button and the count of what it would discard, on one line.
-        Stack& m_footerBar;
+        StackPanel& m_footerBar;
         ToolButton& m_restartButton;
         Readout& m_footer;
         FpsChart& m_chart;

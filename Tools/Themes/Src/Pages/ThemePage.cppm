@@ -86,14 +86,14 @@ namespace Themes_App
     public:
         template<typename... Args>
         explicit CodePage(const CreateParams&, Args&&...);
-        [[nodiscard]] Stack& options() { return m_options; }
-        [[nodiscard]] Stack& contentGroup() { return m_contentGroup; }
+        [[nodiscard]] StackPanel& options() { return m_options; }
+        [[nodiscard]] StackPanel& contentGroup() { return m_contentGroup; }
         [[nodiscard]] CodeBox& box() { return m_box; }
     private:
-        Stack& m_options{ createLeftBar<ScrollBox>(
+        StackPanel& m_options{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,
             UiElement::Section
-        ).createBody<Stack>(
+        ).createBody<StackPanel>(
             Orientation::Vertical,
             Padding{ 8.0f, 4.0f },
             Spacing{ 4.0f }
@@ -105,7 +105,7 @@ namespace Themes_App
 
         // One container per set of choices: a click repaints its siblings, so the group is what
         // bounds the buttons a choice excludes.
-        Stack& m_contentGroup{ m_options.add<Stack>(
+        StackPanel& m_contentGroup{ m_options.add<StackPanel>(
             Orientation::Vertical
         ) };
 
@@ -274,7 +274,7 @@ namespace Themes_App
             Text{ TextStyleId::Section, L"Scope" }
         ) };
 
-        Stack& m_cppScopeGroup{ m_cppCodePage.options().add<Stack>(
+        StackPanel& m_cppScopeGroup{ m_cppCodePage.options().add<StackPanel>(
             Orientation::Vertical
         ) };
 
@@ -323,12 +323,12 @@ namespace Themes_App
             &m_jsonTab
         };
 
-        Stack& m_paletteBody{ m_designPage.paletteView().add<Stack>(
+        StackPanel& m_paletteBody{ m_designPage.paletteView().add<StackPanel>(
             Orientation::HorizontalWrap,
             Padding{ 8.0f, 8.0f }
         ) };
 
-        Stack& m_paletteColumn1{ m_paletteBody.add<Stack>(
+        StackPanel& m_paletteColumn1{ m_paletteBody.add<StackPanel>(
             Orientation::Vertical
         ) };
 
@@ -370,7 +370,7 @@ namespace Themes_App
             Spacing{ 8.0f }
         ) };
 
-        Stack& m_harmonyStack{ m_harmonyPanel.createBody<Stack>(
+        StackPanel& m_harmonyStack{ m_harmonyPanel.createBody<StackPanel>(
             Orientation::HorizontalWrap,
             Interactivity::ActiveContainer,
             Padding{ 12.0f, 4.0f },

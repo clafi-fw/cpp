@@ -197,7 +197,7 @@ namespace ClaFi::Controls
             Radius{ 0.0f },
             Padding{ k_barPaddingX, k_barPaddingY }
         ) },
-        m_answers{ m_answerBar.createBody<Stack>(
+        m_answers{ m_answerBar.createBody<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_answerSpacing },
             // The answers divide the strip between them, so the row reads as one band of answers

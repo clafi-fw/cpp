@@ -68,11 +68,11 @@ namespace ClaFi::Controls
     };
 
     // A Stack that traps child focus and holds several items selected. See Selection-Model
-    export class StackView : public Stack
+    export class StackView : public StackViewBase
     {
         friend ItemsViewSelection;
     public:
-        using Stack::recordCurrentItem;
+        using StackViewBase::recordCurrentItem;
     public:
         template <typename... Args>
         explicit StackView(const CreateParams& params, Args&&... args);
@@ -168,9 +168,7 @@ namespace ClaFi::Controls
     template<typename ...Args>
     StackView::StackView(const CreateParams& params, Args && ...args)
         :
-        Stack{ params,
-            Interactivity::ActiveContainer, //to traps children focus on keyboard navigation
-            std::forward<Args>(args)... },
+        StackViewBase{ params, std::forward<Args>(args)... },
         INIT_PROPERTY(selectionMode),
         INIT_PROPERTY(dragMode)
     {

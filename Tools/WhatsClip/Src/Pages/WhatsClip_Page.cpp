@@ -202,11 +202,11 @@ namespace ClaFi::Tools::WhatsClip
         m_readout.setMaxSize(MaxSize{ value, k_maxFloat });
     }
 
-    Stack& RepresentationPage::cornerBars()
+    StackPanel& RepresentationPage::cornerBars()
     {
         if (!m_cornerBars)
         {
-            m_cornerBars = &m_corner.createRightBar<Stack>(
+            m_cornerBars = &m_corner.createRightBar<StackPanel>(
                 Orientation::Horizontal,
                 Padding{ 0.0f }
             );
@@ -215,11 +215,11 @@ namespace ClaFi::Tools::WhatsClip
         return *m_cornerBars;
     }
 
-    Stack& RepresentationPage::stripBars()
+    StackPanel& RepresentationPage::stripBars()
     {
         if (!m_stripBars)
         {
-            m_stripBars = &m_strip.createRightBar<Stack>(
+            m_stripBars = &m_strip.createRightBar<StackPanel>(
                 Orientation::Horizontal,
                 Padding{ 8.0f, 0.0f },
                 Spacing{ 8.0f },

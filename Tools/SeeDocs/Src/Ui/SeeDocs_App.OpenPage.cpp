@@ -46,7 +46,7 @@ namespace SeeDocs_App
         // stand on its page, under its node in the tree.
         void addProjectGroup(OptionsPage& page, Workspace& workspace)
         {
-            Stack& group = page.addGroup(L"Project");
+            StackPanel& group = page.addGroup(L"Project");
             if (!workspace.anyOpen())
                 group.add<Label>(Text{ L"No project is open" }, TextFormat{ InkGrade::Muted });
             // **The menu closes before the dialog opens**: the menu is a popup, and a popup goes
@@ -68,7 +68,7 @@ namespace SeeDocs_App
             const Workspace::Folders recent = workspace.recentFolders();
             if (recent.empty())
                 return;
-            Stack& group = page.addGroup(L"Recent");
+            StackPanel& group = page.addGroup(L"Recent");
             for (const std::filesystem::path& folder : recent)
             {
                 Text row{ rowIcon(RowIcon::Folder), Space{ k_iconGap }, nameOf(folder) };

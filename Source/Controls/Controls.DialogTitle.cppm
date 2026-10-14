@@ -74,7 +74,7 @@ namespace ClaFi::Controls
         void adjustPaint(AdjustPaintEvent&) override;
         void hitTest(HitTestEvent& event) const override { event.zone = HitTest::Title; };
     private:
-        Stack& m_sysButtons{ createRightBar<Stack>(
+        StackPanel& m_sysButtons{ createRightBar<StackPanel>(
             Interactivity::ActiveContainer,
             Orientation::Horizontal,
             Padding{ 4.0f, 4.0f }

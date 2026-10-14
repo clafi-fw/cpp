@@ -404,7 +404,7 @@ namespace ClaFi::Browser
                         << event.control().appContext().appName();
             } }
         ) };
-        Stack& m_titleBox{ m_title.createLeftBar<Stack>(
+        StackPanel& m_titleBox{ m_title.createLeftBar<StackPanel>(
             Orientation::Horizontal,
             Padding{ 4.0f, 0.0f },
             Spacing{ 4.0f, 0.0f }
@@ -433,7 +433,7 @@ namespace ClaFi::Browser
         ) };
         BreadCrumbBar& m_breadCrumbBar{ m_breadCrumbArea.createBody<BreadCrumbBar>(
         ) };
-        Stack& m_navigationBar{ m_breadCrumbArea.createLeftBar<Stack>(
+        StackPanel& m_navigationBar{ m_breadCrumbArea.createLeftBar<StackPanel>(
             Orientation::Horizontal
         ) };
         Button& m_backButton{ m_navigationBar.add<ToolButton>(

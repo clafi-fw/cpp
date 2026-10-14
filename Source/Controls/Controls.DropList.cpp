@@ -83,7 +83,7 @@ namespace ClaFi::Controls
 
     DropListStack::DropListStack(const CreateParams& params, DropList& list)
         :
-        Stack{ params,
+        StackPanel{ params,
             Orientation::Vertical,
             // **A scrolled body keeps the size it measured** - see ComboBoxDropdownStack.
             WordWrap::No
@@ -123,7 +123,7 @@ namespace ClaFi::Controls
     // above was measured against the one before. See AlignEvent::invalidatePass
     ScaledDimensions DropListStack::calculateContent(AlignEvent& event)
     {
-        const ScaledDimensions result = Stack::calculateContent(event);
+        const ScaledDimensions result = StackPanel::calculateContent(event);
         const std::vector<Control*> shown = shownRows();
         if (shown.empty())
             return result;
@@ -222,7 +222,7 @@ namespace ClaFi::Controls
 
     void DropListStack::getControlState(GetStateEvent& event) const
     {
-        Stack::getControlState(event);
+        StackPanel::getControlState(event);
         if (event.propagationStopped())
             return;
         event.state.selected = &event.control == currentItem();

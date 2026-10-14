@@ -156,7 +156,7 @@ namespace ClaFi::Browser
     // BreadCrumbBar
 
     /// @brief The path down to the page a tab is showing, one crumb per level.
-    export class BreadCrumbBar : public Stack, private IFittableList
+    export class BreadCrumbBar : public StackPanel, private IFittableList
     {
         friend BreadCrumbBarItem;
     public:
@@ -464,7 +464,7 @@ namespace ClaFi::Browser
 
     BreadCrumbBar::BreadCrumbBar(const CreateParams& params)
         :
-        Stack{ params, Interactivity::ActiveContainer }
+        StackPanel{ params, Interactivity::ActiveContainer }
     {
         const AppTheme& theme = params.theme();
         setMetrics(theme.metrics.page);
@@ -518,7 +518,7 @@ namespace ClaFi::Browser
         const float shortfall = taken - contentDimensions.x;
         if (shortfall > 0.0f)
             shrinkBy(shortfall);
-        Stack::alignContent(event, position, contentDimensions);
+        StackPanel::alignContent(event, position, contentDimensions);
     }
 
     void BreadCrumbBar::selectBrowserData(PageData& value, Control& initiator)

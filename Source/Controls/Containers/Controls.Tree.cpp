@@ -4,7 +4,7 @@ import ClaFi.Controls.Menu;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.Expander;
-import ClaFi.Controls.StackView;
+import ClaFi.Controls.Stack;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
@@ -98,7 +98,7 @@ namespace ClaFi::Controls
     CalculatedDimensions TreeNodeHeader::measureText(AlignEvent& event, ScaledDimensions asked,
         const Text& text)
     {
-        const Tree& tree = static_cast<const TreeNode*>(parent())->m_tree;
+        const TreeView& tree = static_cast<const TreeNode*>(parent())->m_tree;
         if (tree.m_rowLine.has_value() && !textFormat())
             return { 0.0f, *tree.m_rowLine };
         return ExpanderHeader::measureText(event, asked, text);
@@ -163,21 +163,21 @@ namespace ClaFi::Controls
     // Tree
 
     // By index: a node opening may fetch nodes, and they join the end of the list.
-    void Tree::expandAll()
+    void TreeView::expandAll()
     {
         for (std::size_t i = 0; i != m_nodes.size(); ++i)
             m_nodes[i]->header().setExpanded(true);
         showCurrentRow();
     }
 
-    void Tree::collapseAll()
+    void TreeView::collapseAll()
     {
         for (TreeNode* node : m_nodes)
             node->header().setExpanded(false);
         showCurrentRow();
     }
 
-    void Tree::collapseOthers()
+    void TreeView::collapseOthers()
     {
         for (TreeNode* node : m_nodes)
         {
@@ -190,7 +190,7 @@ namespace ClaFi::Controls
     // **Every row is one line**, and where the tree's width is given nothing reads a row's own,
     // so the line is measured once for all of them. A tree scrolled across is as wide as its
     // widest row. See Controls#tree
-    void Tree::calculateChildren(FormBase& form)
+    void TreeView::calculateChildren(FormBase& form)
     {
         m_rowLine.reset();
         if (isWidthGivenFromOutside() && !isScrolledByParent(ScrollAxis::Horizontal))
@@ -199,13 +199,13 @@ namespace ClaFi::Controls
             m_rowLine = textEngine().calculateText(form.context(), probe,
                 { k_maxFloat, k_maxFloat }, false, false).y;
         }
-        StackView::calculateChildren(form);
+        TreeViewBase::calculateChildren(form);
     }
 
     // A node's mark opens the node rather than standing as a row, so it is no item.
-    bool Tree::defaultCanFocusItem(Control& value)
+    bool TreeView::defaultCanFocusItem(Control& value)
     {
-        return StackView::defaultCanFocusItem(value) && isRow(value);
+        return TreeViewBase::defaultCanFocusItem(value) && isRow(value);
     }
 
     // The application has first refusal, and a handler that stops the event has replaced the
@@ -213,9 +213,9 @@ namespace ClaFi::Controls
     // behind this one. The menu stands on the row it was asked for - the one under the pointer,
     // or the current row from the keyboard - rather than on the tree, whose bounds run past the
     // window the moment it scrolls.
-    void Tree::nestedContextPopup(ContextPopupEvent& event)
+    void TreeView::nestedContextPopup(ContextPopupEvent& event)
     {
-        StackView::nestedContextPopup(event);
+        TreeViewBase::nestedContextPopup(event);
         if (event.propagationStopped() || m_nodes.empty())
             return;
         event.stopPropagation();
@@ -226,9 +226,9 @@ namespace ClaFi::Controls
         menu.execute();
     }
 
-    void Tree::nestedControlDeleted(Control* item)
+    void TreeView::nestedControlDeleted(Control* item)
     {
-        StackView::nestedControlDeleted(item);
+        TreeViewBase::nestedControlDeleted(item);
         std::erase_if(m_nodes, [item](const TreeNode* node) {
             return node == item;
         });
@@ -236,7 +236,7 @@ namespace ClaFi::Controls
 
     // Claiming says this tree is what the command acts on; what it claims says whether there is
     // anything left for it to move.
-    void Tree::connectActions()
+    void TreeView::connectActions()
     {
         onGetActionState([this](GetActionStateEvent& event) {
             if (&event.action == &m_expandAll)
@@ -259,7 +259,7 @@ namespace ClaFi::Controls
     // A node's header stands in the node, outside its rows, and the node stands in the rows of
     // another or in the tree. What stands inside the header - its mark - has the header for a
     // parent, and a header is in no rows, which is what keeps it out.
-    bool Tree::isRow(const Control& control) const
+    bool TreeView::isRow(const Control& control) const
     {
         const Control* parent = control.parent();
         if (!parent)
@@ -273,7 +273,7 @@ namespace ClaFi::Controls
         return nodeInRows && !control.isHostedAsBody() && isRow(*parent);
     }
 
-    bool Tree::holdsCurrentRow(const TreeNode& node) const
+    bool TreeView::holdsCurrentRow(const TreeNode& node) const
     {
         const Control* row = currentItem();
         if (!row)
@@ -281,14 +281,14 @@ namespace ClaFi::Controls
         return row == &node.header() || node.rows().containsNested(row);
     }
 
-    bool Tree::hasNode(const bool expanded) const
+    bool TreeView::hasNode(const bool expanded) const
     {
         return std::ranges::any_of(m_nodes, [expanded](const TreeNode* node) {
             return node->header().expanded() == expanded;
         });
     }
 
-    bool Tree::hasOtherNodeOpen() const
+    bool TreeView::hasOtherNodeOpen() const
     {
         return std::ranges::any_of(m_nodes, [this](const TreeNode* node) {
             return node->header().expanded() && !holdsCurrentRow(*node);
@@ -297,14 +297,14 @@ namespace ClaFi::Controls
 
     // A bulk collapse closes the nodes outer first, so the row ends on the outermost header over
     // it; a single node closing leaves it on that node's own.
-    void Tree::rowsFolded(TreeNode& node)
+    void TreeView::rowsFolded(TreeNode& node)
     {
         const Control* row = currentItem();
         if (row && node.rows().containsNested(row))
             setCurrentItem(node.header());
     }
 
-    void Tree::showCurrentRow()
+    void TreeView::showCurrentRow()
     {
         if (Control* row = currentItem())
             row->scrollIntoViewOnAlign();

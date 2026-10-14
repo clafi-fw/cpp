@@ -231,7 +231,7 @@ namespace ClaFi
     // page's width by the lane it stands in.
     OptionsPage::OptionsPage(const CreateParams& params)
         :
-        Stack{
+        StackPanel{
             params,
             Orientation::Vertical,
             Padding{ k_pagePadding },
@@ -318,7 +318,7 @@ namespace ClaFi
         ) },
         m_options{ m_optionsBox.body() },
         m_interfaceGroup{ m_options.addGroup(L"Interface") },
-        m_themeRow{ m_interfaceGroup.add<Stack>(
+        m_themeRow{ m_interfaceGroup.add<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
         ) },
@@ -358,7 +358,7 @@ namespace ClaFi
             VerticalAlign::Center,
             Tag{ ColorModeSetting::Light }
         ) },
-        m_scaleRow{ m_interfaceGroup.add<Stack>(
+        m_scaleRow{ m_interfaceGroup.add<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
         ) },
@@ -377,7 +377,7 @@ namespace ClaFi
             HintText{ L"Scales the UI on top of the system scale" }
         ) },
 #if CLAFI_TEXT_MOVING
-        m_zAnimationRow{ m_interfaceGroup.add<Stack>(
+        m_zAnimationRow{ m_interfaceGroup.add<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_captionSpacing }
         ) },
@@ -412,7 +412,7 @@ namespace ClaFi
             L"GPU acceleration",
             Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
         ) },
-        m_footer{ createBottomBar<Stack>(
+        m_footer{ createBottomBar<StackPanel>(
             Orientation::Vertical,
             Padding{ k_pagePadding },
             Spacing{ k_pageSpacing }

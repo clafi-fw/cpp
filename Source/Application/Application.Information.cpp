@@ -52,7 +52,7 @@ namespace ClaFi
 
     InformationPage::InformationPage(const CreateParams& params)
         :
-        Stack{
+        StackPanel{
             params,
             Orientation::Vertical,
             Padding{ k_pagePadding },
@@ -79,7 +79,7 @@ namespace ClaFi
     // status is hidden until there is something to say - see stateUpdateRow.
     void InformationPage::addUpdateRow()
     {
-        Stack& row = add<Stack>(
+        StackPanel& row = add<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_pageSpacing }
         );

@@ -114,7 +114,7 @@ namespace ClaFi::Controls
             VerticalTextAnchor::Center
         ) };
         // The count and the buttons, hidden while the box is empty so the field takes its width.
-        Stack& m_tools{ createRightBar<Stack>(
+        StackPanel& m_tools{ createRightBar<StackPanel>(
             Orientation::Horizontal,
             VerticalAlign::Center,
             Spacing{ 0.0f },
