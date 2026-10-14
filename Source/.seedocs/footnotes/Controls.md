@@ -161,14 +161,15 @@ The click goes no further up.
 link. It shows above the pointer's line, from where the link starts - FormPlacement::Top - and
 drops under the line where the screen has no room above.
 
-**A handler writes the whole hint**, its placement and anchor already set. Where it writes nothing,
-the box writes its own:
+**A handler writes the hint's words**, its placement and anchor already set. Where it writes
+nothing, the box writes its own:
 
 - `#name` the box's text holds - the anchor's paragraph, formatted, cut after six lines by
   GetHintEvent::writePreview;
 - any other target - the target as the text states it.
 
-In a box the user types into, the box's own hint ends with a muted line: Ctrl+click to follow.
+In a box the user types into, the hint ends with a muted line, whoever wrote the words: Ctrl+click
+to follow.
 
 ## LinkContextPopupEvent
 

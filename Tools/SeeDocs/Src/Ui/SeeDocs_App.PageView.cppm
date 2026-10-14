@@ -219,6 +219,8 @@ namespace SeeDocs_App
         void render();
         void connectLinks(Grids::Grid&);
         void connectLinks(TextBox&);
+        // Writes the declaration a link's type shows in a hint; false for a link naming none.
+        bool writePreview(Text&, std::wstring_view link) const;
         void connectHead();
         void open(std::wstring target);
         void ask(std::wstring target);   // raises the command the target is about

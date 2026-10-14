@@ -235,6 +235,7 @@ namespace SeeDocs_App
     export struct Page
     {
         PageKind kind{ PageKind::Member };
+        const Surface* surface{ nullptr };   // what the page is read from; null over several
         const Type* type{ nullptr };   // the type the page is about, or the method's
         Runs scope;     // before the title, in its style - a method's type and ::
         std::wstring title;
@@ -396,4 +397,15 @@ namespace SeeDocs_App
 
     // A link cut at its last ::; nothing for one holding none.
     export [[nodiscard]] std::optional<MemberLink> readMemberLink(std::wstring_view link);
+
+    // A declaration as a hint shows it: code, in the language it is written in.
+    export struct Preview
+    {
+        Runs code;
+        SourceLanguage language{ SourceLanguage::Cpp };
+    };
+
+    // What a hint over a link to a type shows: an alias's, a struct's, a union's or an enum's
+    // declaration, written as its language writes one; nothing for any other link.
+    export [[nodiscard]] std::optional<Preview> previewOf(const Surface&, std::wstring_view link);
 }

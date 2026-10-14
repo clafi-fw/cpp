@@ -21,6 +21,13 @@ second lands on the cell it picked.
 Without it a combo box sized its own column: a pixel short after a scale change, "No change" broke
 onto two lines and the column shrank to its longer word.
 
+## GetCellHintEvent
+
+The row tells the hint when the link under the pointer changes, through Hint::hoveredZoneChanged,
+as TextBox does - see the Controls note. A move tells it and a leave does not: the hover change has
+told the hint already, and telling it again would start a second wait for whatever the pointer went
+to.
+
 ## MovingText
 
 Set per column, because a column is what says where a cell's text comes from.

@@ -203,6 +203,7 @@ namespace SeeDocs_App
         std::wstring templateParameters;
         std::vector<std::wstring> bases;    // as spelled, access and virtual taken off
         std::wstring target;                // an alias's type, a concept's constraint, an enum base
+        bool scoped{ false };               // an enum declared enum class or enum struct
         bool exported{ false };
         Access access{ Access::Public };    // a nested type's, under the label it stands in
         bool isControl{ false };            // the bases reach Control or TControl, resolved later

@@ -283,6 +283,7 @@ namespace ClaFi::Controls
         emitEvent(linkEvent);
         if (event.text.empty())
             writeLinkHint(event);
+        writeFollowLine(event.text);
     }
 
     void TextBox::nestedClick(ClickEvent& event)
@@ -531,19 +532,21 @@ namespace ClaFi::Controls
         {
             out << target;
         }
+    }
 
-        // A plain click places the caret here, and nothing else on screen says a link can be
-        // followed at all. The paragraph taken above can state an indent or an alignment, which
-        // hold until a paragraph states others, so this line states its own.
-        if (m_readOnly == ReadOnly::No)
-        {
-            out << L'\n';
-            out << ParaIndent{ 0.0f };
-            out << TextAlign::Left;
-            out << InkGrade::Muted;
-            out << L"Ctrl+click to follow";
-            out << PopColor{};
-        }
+    // A plain click places the caret here, and nothing else on screen says a link can be followed
+    // at all. The words above can state an indent or an alignment, which hold until a paragraph
+    // states others, so this line states its own.
+    void TextBox::writeFollowLine(Text& out) const
+    {
+        if (m_readOnly != ReadOnly::No)
+            return;
+        out << L'\n';
+        out << ParaIndent{ 0.0f };
+        out << TextAlign::Left;
+        out << InkGrade::Muted;
+        out << L"Ctrl+click to follow";
+        out << PopColor{};
     }
 
     FloatRect TextBox::pointedLinkLine() const

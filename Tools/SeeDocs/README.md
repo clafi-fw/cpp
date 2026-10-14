@@ -205,7 +205,7 @@ The two files are meant to become one.
         =[
             Name, Namespace, Kind (class, struct, union, enum, type, concept, interface), Module,
             File, Root, Line,
-            Hint, Note, Template, Bases = [...], Target, Control, Folder,
+            Hint, Note, Template, Bases = [...], Target, Scoped, Control, Folder,
             Properties = [ =[ Name, Type, Accepts = [...], Default, Setter, Target, Form,
                               ValueKind, Optional, Access, Line, Hint, Note ] ]
             Events = [ =[ Name, Alias, Method, Access, Line, Hint, Note ] ]
@@ -230,7 +230,8 @@ takes one; its `Name` is its path under its folder of sources. `Language` is `pa
 unit, whose code a page reads and colours as Pascal, and a C++ module states none; a Delphi
 interface's `Kind` is `interface`, and a Delphi member's `Access` may be `published`.
 
-`Control` marks a type whose base chain reaches `Control`, `RichControl` or `TControl`, template
+`Scoped` marks an enum declared `enum class` or `enum struct`. `Control` marks a type whose base
+chain reaches `Control`, `RichControl` or `TControl`, template
 arguments walked as bases, which is what makes it a toolbox entry; `Folder` is its folder under its
 folder of sources. `Bases` are written as a reader can follow them: an alias the database does not
 carry - a private `using ComboBoxBaseClass = WithInPlaceEdit<DropdownControlBase>` - is replaced
@@ -382,7 +383,8 @@ first lines of the folded initializer. A module's page lists its types, its func
 constants in its crumb, and their pages stand under its url. A type's page holds the types
 derived from it as a tree and a grid per member kind: properties, events,
 public methods and protected methods, the type's own under an Own expander and each base's under
-a From expander of its own, up the whole chain of bases; fields or members; each with its hint.
+a From expander of its own, up the whole chain of bases; fields or members, a struct's or a union's
+fields ahead of its methods; each with its hint.
 A base's methods grid holds what reaches the type: its
 constructors only where the type takes them with `using Base::Base`, never its destructor, no
 method whose name a type below declares again - C++'s own hiding, by name, which a
@@ -457,7 +459,13 @@ takes the new words where it stands; a footnote added builds the page again at t
 
 A type's name on a page is a link to its page, in a grid cell as in prose: a type named in a
 hint, in a note's prose or code, or in a signature - bare or qualified, as `Control` or
-`Grids::Row` - links wherever the surface has a page for it. A right click on a link, or the menu
+`Grids::Row` - links wherever the surface has a page for it. The hint over a link to an alias, a
+struct, a union or an enum shows its declaration, coloured: in C++ an alias's `using` line, a
+struct's or a union's head and bases over its public instance fields, a line each in braces, and an
+enum's head over its members the same way; in Delphi the name and an equals sign before what an
+alias or a built type stands for, a record's public fields down to its `end`, or an enum's members
+in brackets on one line. A link to a struct holding no such field keeps the link's own hint. A
+right click on a link, or the menu
 key on a grid cell holding one, offers Open and Open in new tab, which opens behind the tab shown.
 A row of the derived types opens the type it names; a method's page picks the method's type in the
 tree. A page's trees start closed, and a node's rows are built the first time it opens.

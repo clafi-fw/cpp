@@ -87,6 +87,10 @@ Asked of the row, then the grid. Write the hint into text(). The anchor arrives 
 and the placement as the pointer - change them through hint(). A cell nobody writes for repeats
 the words its column cut.
 
+**A link has a hint of its own.** link() names the link under the pointer, as the cell's text
+states it, and is empty off a link. The hint is asked again where it stands as the pointer moves
+onto a link, off one, or from one to another.
+
 ## CellLinkClickEvent
 
 A cell's text carries links as any Text does - PushLink around the words. Only a mouse click

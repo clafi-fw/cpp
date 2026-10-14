@@ -556,7 +556,10 @@ namespace ClaFi::Controls::Grids
         // hint the same way, and the anchor is set ahead so a placement against the cell needs
         // nothing more. Only a cell nobody spoke for goes on to repeat the words its column cut.
         event.anchorRect = cellRect;
-        GetCellHintEvent cellEvent{ *this, *hoveredColumn, event };
+        const std::wstring_view link = m_hoveredLink.column == hoveredColumn
+            ? std::wstring_view{ m_hoveredLink.target }
+            : std::wstring_view{};
+        GetCellHintEvent cellEvent{ *this, *hoveredColumn, event, link };
         getCellHint(cellEvent);
         if (!event.text.empty())
             return;
@@ -632,9 +635,14 @@ namespace ClaFi::Controls::Grids
         if (columnToHover)
         {
             if (std::optional<CellLink> link = linkAt(*columnToHover, event.posOnForm))
-                hovered = { columnToHover, link->range };
+                hovered = { columnToHover, link->range, std::move(link->target) };
         }
+        if (hovered == m_hoveredLink)
+            return;
         hoverLink(hovered);
+        // **A link is a part of the cell** the pointer enters and leaves, and the cell's hint
+        // answers for it - so the hint is told the part changed, as a text box tells it of a link.
+        Hint::hoveredZoneChanged();
     }
 
     void RowBase::hoverLeave()

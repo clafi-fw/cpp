@@ -196,6 +196,7 @@ namespace SeeDocs_App
         void moveWords(Page& to, Page& from)
         {
             to.kind = from.kind;
+            to.surface = from.surface;
             to.type = from.type;
             to.scope = std::move(from.scope);
             to.title = std::move(from.title);
@@ -1167,6 +1168,14 @@ namespace SeeDocs_App
         grid.onCellLinkContextPopup([this](Grids::CellLinkContextPopupEvent& event) {
             showLinkMenu(*event.popup.control, event.target, event.popup);
         });
+        // Over the cell, as a link's hint stands over its line - where the row has not answered
+        // for the cell already, as a method's row answers with its signatures.
+        grid.onGetCellHint([this](Grids::GetCellHintEvent& event) {
+            if (event.link().empty() || !event.text().empty())
+                return;
+            if (writePreview(event.text(), event.link()))
+                event.hint().placement = FormPlacement::Top;
+        });
     }
 
     void PageView::connectLinks(TextBox& box)
@@ -1177,6 +1186,20 @@ namespace SeeDocs_App
         box.onLinkContextPopup([this](LinkContextPopupEvent& event) {
             showLinkMenu(event.sender(), event.target, event.popup);
         });
+        box.onGetLinkHint([this](GetLinkHintEvent& event) {
+            writePreview(event.hint.text, event.target);
+        });
+    }
+
+    bool PageView::writePreview(Text& text, const std::wstring_view link) const
+    {
+        if (!m_page.surface)
+            return false;
+        const std::optional<Preview> preview = previewOf(*m_page.surface, link);
+        if (!preview.has_value())
+            return false;
+        writeSignature(text, preview->code, false, preview->language);
+        return true;
     }
 
     // **A crumb's page opens once the press has unwound**: the page shown next builds the crumbs

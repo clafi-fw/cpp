@@ -40,6 +40,12 @@ with the reason. The editor stays open with the reason over it and the value sti
 **Raised each time a crumb's list opens.** The crumb shows what the handler leaves in
 PageData::items. Whether to fetch again is the handler's call, recorded in PageData::fetchState.
 
+## BreadCrumbBar
+
+**A path longer than the bar gives up room from its widest crumbs.** They come down to one common
+width, the way a tab strip's tabs do, and the next widest join them as the bar narrows further. A
+crumb's floor is no width at all, so a bar narrow enough cuts every crumb.
+
 ## ShowAnchorEvent
 
 Raised on the page when its tab moves to a Url, once the page is shown and the crumbs are

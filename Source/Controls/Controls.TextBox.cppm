@@ -300,6 +300,8 @@ namespace ClaFi::Controls
         void pointAtLink(const std::optional<LinkHit>&);
         // What a link's hint says when no handler says it. See Controls#getlinkhintevent
         void writeLinkHint(GetHintEvent&) const;
+        // Ends a link's hint, whoever wrote it, with how a link is followed in a box that types.
+        void writeFollowLine(Text&) const;
         // The line of the pointed link the pointer is on, in form coordinates.
         [[nodiscard]] FloatRect pointedLinkLine() const;
         [[nodiscard]] Place currentPlace() const;

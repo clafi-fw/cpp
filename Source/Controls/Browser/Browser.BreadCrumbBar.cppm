@@ -16,6 +16,7 @@ import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.Fit;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
@@ -106,7 +107,7 @@ namespace ClaFi::Browser
     // the crumb's own title, and the gestures that open one, come from the mixin. What is left
     // here is the page a crumb names.
     using BreadCrumbBarItemBase = WithInPlaceEdit<DropdownControlBase>;
-    class BreadCrumbBarItem : public BreadCrumbBarItemBase
+    class BreadCrumbBarItem : public BreadCrumbBarItemBase, public IFittable
     {
     public:
         explicit BreadCrumbBarItem(const CreateParams&);
@@ -117,6 +118,9 @@ namespace ClaFi::Browser
         /// strip to drop a list from, its selected look, and which line of its list names the page
         /// the user is already inside.
         void setData(PageData*, const PageData* pathSubItem);
+        [[nodiscard]] FitData fitData() const override;
+        // Off the crumb alone - the bar's width is its slot's, whatever its crumbs come to.
+        void takeOffWidth(float value) override;
     protected:
         void getMainText(GetTextEvent&) const override;
         void getEditorText(Text&) const override;
@@ -152,7 +156,7 @@ namespace ClaFi::Browser
     // BreadCrumbBar
 
     /// @brief The path down to the page a tab is showing, one crumb per level.
-    export class BreadCrumbBar : public Stack
+    export class BreadCrumbBar : public Stack, private IFittableList
     {
         friend BreadCrumbBarItem;
     public:
@@ -176,6 +180,9 @@ namespace ClaFi::Browser
         /// A null page empties the bar. Crumbs already standing are reused, so the bar keeps the
         /// controls a path shares with the one before it.
         void createItems(PageData*);
+    protected:
+        // The room a long path is short of comes off the widest crumbs. See Browser#breadcrumbbar
+        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
     private:
         void selectBrowserData(PageData&, Control& initiator);
         void fetchSubItems(PageData&);
@@ -186,6 +193,8 @@ namespace ClaFi::Browser
         // own state.
         [[nodiscard]] bool canRenamePage(PageData&) const;
         void renamePage(PageData&, AcceptEditEvent&);
+        [[nodiscard]] FitData fitData() const override { return { width() }; }
+        void traverseFittables(const FittableFunc) override;
     };
 
 
@@ -208,10 +217,13 @@ namespace ClaFi::Browser
             ShowSelectionOnSurface::Yes,
             params.themeMetrics().toolButton,
             Padding{ 4.0f },
-            // A crumb is as narrow as its own title, so a path longer than the bar narrows its
-            // crumbs instead of pushing the last of them off the end. Only the width is freed:
-            // the height stays the one every button on the bar stands at.
-            MinSize{ 0.0f, params.themeMetrics().button.minSize.y }
+            // **A crumb may be narrowed to nothing.** A path longer than the bar takes the room it
+            // is short of off its widest crumbs, down to this floor - see
+            // BreadCrumbBar::alignContent. Only the width is freed: the height stays the one
+            // every button on the bar stands at.
+            MinSize{ 0.0f, params.themeMetrics().button.minSize.y },
+            // One line, cut short where the bar narrows it.
+            WordWrap::No
         }
     {
         // **The page is read as the sink runs**, and that is sound because a crumb is given a
@@ -232,6 +244,19 @@ namespace ClaFi::Browser
         updateIconMode();
         updateDropdownMode();
         invalidateState();
+    }
+
+    FitData BreadCrumbBarItem::fitData() const
+    {
+        return {
+            .width = width(),
+            .minWidth = calculatedMinSize().x,
+        };
+    }
+
+    void BreadCrumbBarItem::takeOffWidth(const float value)
+    {
+        setWidth(width() - value);
     }
 
     void BreadCrumbBarItem::getMainText(GetTextEvent& event) const
@@ -479,6 +504,28 @@ namespace ClaFi::Browser
         }
     }
 
+    void BreadCrumbBar::alignContent(AlignEvent& event, ScaledPosition position,
+        ScaledDimensions& contentDimensions)
+    {
+        // Read off the crumbs as they stand, which is what alignSingleRow places: their titles'
+        // widths after a measure, or what an earlier align in the same pass left them.
+        float taken = 0.0f;
+        bool first = true;
+        for (const ControlPtr& control : controls())
+        {
+            if (!control->visible())
+                continue;
+            if (!first)
+                taken += event.spacing.x;
+            first = false;
+            taken += control->width();
+        }
+        const float shortfall = taken - contentDimensions.x;
+        if (shortfall > 0.0f)
+            shrinkBy(shortfall);
+        Stack::alignContent(event, position, contentDimensions);
+    }
+
     void BreadCrumbBar::selectBrowserData(PageData& value, Control& initiator)
     {
         SelectBrowserDataEvent event{ value, initiator };
@@ -513,5 +560,14 @@ namespace ClaFi::Browser
     {
         RenamePageEvent event{ value, acceptEvent };
         emitEvent(event);
+    }
+
+    void BreadCrumbBar::traverseFittables(const FittableFunc visit)
+    {
+        for (const ControlPtr& control : controls())
+        {
+            if (control->visible())
+                visit(static_cast<BreadCrumbBarItem&>(*control));
+        }
     }
 }

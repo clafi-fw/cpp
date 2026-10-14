@@ -27,6 +27,10 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_separator = L" \u00B7 ";
         constexpr std::wstring_view k_baseJoin = L": ";
         constexpr std::wstring_view k_aliasJoin = L"= ";
+        constexpr std::wstring_view k_colonJoin = L" : ";   // before a type's bases, an enum's base
+        constexpr std::wstring_view k_listJoin = L", ";
+        constexpr std::wstring_view k_cppIndent = L"    ";
+        constexpr std::wstring_view k_pascalIndent = L"  ";
         constexpr std::wstring_view k_ownLabel = L"Own";
         constexpr std::wstring_view k_fromLabel = L"From ";
         constexpr std::wstring_view k_setterPrefix = L"set";
@@ -2007,6 +2011,12 @@ namespace SeeDocs_App
             section.table.takesFootnotes = true;
         }
 
+        // Whether a type is its data - a struct or a union - whose fields lead its methods.
+        [[nodiscard]] bool leadsWithFields(const Type& type)
+        {
+            return type.kind == TypeKind::Struct || type.kind == TypeKind::Union;
+        }
+
         // The types with a property or an event of this type
 
         // Whether a property's type, or one it accepts, is the type.
@@ -2535,6 +2545,156 @@ namespace SeeDocs_App
                 }
             }
         }
+
+        // A type as a hint over a link to it shows it
+
+        using Lines = std::vector<std::wstring>;
+
+        // Whether a field is data an instance holds and a reader of its type reaches.
+        [[nodiscard]] bool showsInPreview(const Field& field)
+        {
+            if (field.isStatic)
+                return false;
+            return field.access == Access::Public || field.access == Access::Published;
+        }
+
+        // The lines as one run of code, a line end between two.
+        [[nodiscard]] Runs codeOf(const Lines& lines)
+        {
+            std::wstring text;
+            for (std::size_t i = 0; i != lines.size(); ++i)
+            {
+                if (i != 0)
+                    text += L'\n';
+                text += lines[i];
+            }
+            return { code(std::move(text)) };
+        }
+
+        // A field the way its struct declares it, the initializer kept as spelled.
+        [[nodiscard]] std::wstring cppFieldLine(const Field& field)
+        {
+            std::wstring line = field.type + L" " + field.name;
+            if (field.value.starts_with(L'{'))
+                line += field.value;
+            else if (!field.value.empty())
+                line += L" = " + field.value;
+            return line + L";";
+        }
+
+        // Ends a declaration with its body: the lines set in between braces on lines of their own.
+        void addCppBody(Lines& lines, const Lines& body)
+        {
+            lines.push_back(L"{");
+            for (const std::wstring& line : body)
+                lines.push_back(std::wstring{ k_cppIndent } + line);
+            lines.push_back(L"};");
+        }
+
+        // **The C++ way**: the template head on a line of its own where the type has one, then an
+        // alias on one line, or the head of a struct, a union or an enum with its public instance
+        // fields or its members under it in braces, a line each. A struct holding no such field
+        // shows nothing, since its body would read as empty.
+        [[nodiscard]] std::optional<Lines> cppPreview(const Type& type)
+        {
+            Lines lines;
+            if (!type.templateParameters.empty())
+            {
+                lines.push_back(std::wstring{ k_templateWord } + L"<" + type.templateParameters
+                    + L">");
+            }
+            const std::wstring name{ bareName(type.name) };
+            if (type.kind == TypeKind::Alias)
+            {
+                lines.push_back(L"using " + name + L" = " + type.target + L";");
+                return lines;
+            }
+            if (type.kind == TypeKind::Struct || type.kind == TypeKind::Union)
+            {
+                Lines body;
+                for (const Field& field : type.fields)
+                {
+                    if (showsInPreview(field))
+                        body.push_back(cppFieldLine(field));
+                }
+                if (body.empty())
+                    return std::nullopt;
+                std::wstring head = std::wstring{ kindWord(type.kind) } + L" " + name;
+                for (std::size_t i = 0; i != type.bases.size(); ++i)
+                {
+                    head += i == 0 ? k_colonJoin : k_listJoin;
+                    head += type.bases[i];
+                }
+                lines.push_back(std::move(head));
+                addCppBody(lines, body);
+                return lines;
+            }
+            if (type.kind == TypeKind::Enum)
+            {
+                std::wstring head = type.scoped ? L"enum class " + name : L"enum " + name;
+                if (!type.target.empty())
+                    head += std::wstring{ k_colonJoin } + type.target;
+                lines.push_back(std::move(head));
+                Lines body;
+                for (std::size_t i = 0; i != type.members.size(); ++i)
+                {
+                    const EnumMember& member = type.members[i];
+                    std::wstring line = member.name;
+                    if (!member.value.empty())
+                        line += L" = " + member.value;
+                    if (i + 1 != type.members.size())
+                        line += L",";
+                    body.push_back(std::move(line));
+                }
+                addCppBody(lines, body);
+                return lines;
+            }
+            return std::nullopt;
+        }
+
+        // **The Pascal way**: the name with its generic parameters and an equals sign, then what
+        // an alias or a built type stands for, a record's public fields a line each down to its
+        // end, or an enum's members in brackets, run on as Delphi lists them. A record holding no
+        // such field shows nothing.
+        [[nodiscard]] std::optional<Lines> pascalPreview(const Type& type)
+        {
+            std::wstring name{ bareName(type.name) };
+            if (!type.templateParameters.empty())
+                name += L"<" + type.templateParameters + L">";
+            const std::wstring equals = name + L" = ";
+            if (type.kind == TypeKind::Alias || type.kind == TypeKind::Defined)
+                return Lines{ equals + type.target + L";" };
+            if (type.kind == TypeKind::Struct)
+            {
+                Lines lines = { equals + L"record" };
+                for (const Field& field : type.fields)
+                {
+                    if (showsInPreview(field))
+                    {
+                        lines.push_back(std::wstring{ k_pascalIndent } + field.name + L": "
+                            + field.type + L";");
+                    }
+                }
+                if (lines.size() == 1)
+                    return std::nullopt;
+                lines.push_back(L"end;");
+                return lines;
+            }
+            if (type.kind == TypeKind::Enum)
+            {
+                std::wstring list;
+                for (const EnumMember& member : type.members)
+                {
+                    if (!list.empty())
+                        list += k_listJoin;
+                    list += member.name;
+                    if (!member.value.empty())
+                        list += L" = " + member.value;
+                }
+                return Lines{ equals + L"(" + list + L");" };
+            }
+            return std::nullopt;
+        }
     }
 
     std::size_t TableGroup::rowCount() const
@@ -2756,6 +2916,7 @@ namespace SeeDocs_App
     {
         Page page;
         page.kind = PageKind::Folder;
+        page.surface = &surface;
         page.title = folderNameOf(path);
         page.badges.push_back(muted(std::wstring{ k_folderWord }));
         addFolderPaths(page, surface, roots, path);
@@ -2771,6 +2932,7 @@ namespace SeeDocs_App
     {
         Page page;
         page.kind = PageKind::Project;
+        page.surface = &surface;
         page.title = std::wstring{ title };
         page.badges.push_back(muted(std::wstring{ k_projectWord }));
         if (!folders.empty())
@@ -2785,6 +2947,7 @@ namespace SeeDocs_App
         Page page;
         const std::wstring word{ module.header ? k_headerWord : k_moduleWord };
         page.kind = PageKind::Module;
+        page.surface = &surface;
         page.title = module.shownName;
         page.badges.push_back(muted(word));
         page.footnoteHome = folderFootnoteHome(surface, notes, folder.path);
@@ -2811,6 +2974,7 @@ namespace SeeDocs_App
         const ContentsModule& module, const std::wstring_view name)
     {
         Page page;
+        page.surface = &surface;
         page.title = std::wstring{ name };
         page.footnoteHome = folderFootnoteHome(surface, notes, folder.path);
         Overloads overloads;
@@ -2835,7 +2999,7 @@ namespace SeeDocs_App
             addExportFacts(page, surface, overloads.front().nameSpace, module, first->place);
             addOverloads(page, surface, notes, k_functionWord, std::move(overloads));
             showSectionsOnce(page);
-        return page;
+            return page;
         }
         for (const Variable* variable : module.constants)
         {
@@ -2853,6 +3017,7 @@ namespace SeeDocs_App
         const std::wstring_view name)
     {
         Page page;
+        page.surface = &surface;
         page.type = &type;
         page.scope = { { .text = type.name, .link = type.qualifiedName },
             plain(std::wstring{ k_scope }) };
@@ -2956,6 +3121,7 @@ namespace SeeDocs_App
     {
         Page page;
         page.kind = PageKind::Type;
+        page.surface = &surface;
         page.type = &type;
         addTypeHead(page, surface, type);
         page.footnoteHome = typeFootnoteHome(surface, notes, type);
@@ -2964,8 +3130,16 @@ namespace SeeDocs_App
         addDerivedTypes(page, derived, type);
         addProperties(page, surface, notes, type, bases);
         addEvents(page, surface, notes, type, bases);
-        addMethods(page, surface, type, bases);
-        addFields(page, surface, notes, type);
+        if (leadsWithFields(type))
+        {
+            addFields(page, surface, notes, type);
+            addMethods(page, surface, type, bases);
+        }
+        else
+        {
+            addMethods(page, surface, type, bases);
+            addFields(page, surface, notes, type);
+        }
         addMembers(page, surface, notes, type);
         addPropertyOf(page, surface, derived, type);
         addEventOf(page, surface, derived, type);
@@ -2975,5 +3149,19 @@ namespace SeeDocs_App
         addSiblings(page, surface, type);
         showSectionsOnce(page);
         return page;
+    }
+
+    std::optional<Preview> previewOf(const Surface& surface, const std::wstring_view link)
+    {
+        const Type* type = surface.typeNamed(link);
+        if (!type)
+            return std::nullopt;
+        const SourceLanguage language = surface.languageOf(type->module);
+        const std::optional<Lines> lines = language == SourceLanguage::Pascal
+            ? pascalPreview(*type)
+            : cppPreview(*type);
+        if (!lines.has_value())
+            return std::nullopt;
+        return Preview{ .code = codeOf(*lines), .language = language };
     }
 }

@@ -74,11 +74,14 @@ namespace ClaFi::Controls::Grids
     export class GetCellHintEvent : public CellEventBase
     {
     public:
-        GetCellHintEvent(const RowBase&, const Column&, GetHintEvent&);
+        GetCellHintEvent(const RowBase&, const Column&, GetHintEvent&, std::wstring_view link);
         [[nodiscard]] GetHintEvent& hint() { return m_hint; }
         [[nodiscard]] Text& text() { return m_hint.text; }
+        // What the link under the pointer names, as the cell's text states it; empty off a link.
+        [[nodiscard]] std::wstring_view link() const { return m_link; }
     private:
         GetHintEvent& m_hint;
+        std::wstring_view m_link;
     };
 
     // A link in one cell's text was clicked. It goes to the row, then to the grid. See Grids
@@ -149,10 +152,12 @@ namespace ClaFi::Controls::Grids
 
     // GetCellHintEvent
 
-    GetCellHintEvent::GetCellHintEvent(const RowBase& row, const Column& column, GetHintEvent& hint)
+    GetCellHintEvent::GetCellHintEvent(const RowBase& row, const Column& column, GetHintEvent& hint,
+        const std::wstring_view link)
         :
         CellEventBase{ row, column },
-        m_hint{ hint }
+        m_hint{ hint },
+        m_link{ link }
     {
     }
 

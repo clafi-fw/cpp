@@ -202,11 +202,13 @@ namespace ClaFi::Controls::Grids
             std::wstring target;
             TextRange range;
         };
-        // The link under the pointer, and the column of the cell it stands in.
+        // The link under the pointer: the column of the cell it stands in, where it stands in the
+        // cell's text, and what it names.
         struct HoveredLink
         {
             const Column* column{};
             TextRange range{};
+            std::wstring target{};
 
             bool operator==(const HoveredLink&) const = default;
         };

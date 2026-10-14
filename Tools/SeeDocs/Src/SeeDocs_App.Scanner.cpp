@@ -1768,7 +1768,9 @@ namespace SeeDocs_App
         {
             const Token& keyword = *peek();
             advance();
-            if (isName(peek(), Words::classWord) || isName(peek(), Words::structWord))
+            const bool scoped = isName(peek(), Words::classWord)
+                || isName(peek(), Words::structWord);
+            if (scoped)
                 advance();
             const std::wstring name = readQualifiedName();
             std::wstring base;
@@ -1799,6 +1801,7 @@ namespace SeeDocs_App
             type.kind = TypeKind::Enum;
             type.module = m_module ? m_module->name : std::wstring{};
             type.target = base;
+            type.scoped = scoped;
             type.exported = outer ? outer->type->exported : (prefix.exported || scopeExported());
             type.access = outer ? outer->access : Access::Public;
             type.folder = m_folder;

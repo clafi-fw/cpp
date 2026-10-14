@@ -16,6 +16,9 @@ the box the pointer enters and leaves - so the box tells the hint when the link 
 changes, through Hint::hoveredZoneChanged, the way a grid tells it its hovered cell did. A hint
 already up is asked again where it stands, and one that is not starts the usual wait.
 
+The Ctrl+click line is written after whatever answered, a handler's words included: it says how
+this box follows a link, which a handler previewing the target knows nothing about.
+
 ## ScrollBars::Auto
 
 **A root answers against its maximum**, in the measuring pass - see calculateContent. The window

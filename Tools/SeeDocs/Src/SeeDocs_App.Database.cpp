@@ -49,6 +49,7 @@ namespace SeeDocs_App
             constexpr std::wstring_view base = L"Base";
             constexpr std::wstring_view target = L"Target";
             constexpr std::wstring_view control = L"Control";
+            constexpr std::wstring_view scoped = L"Scoped";
             constexpr std::wstring_view folder = L"Folder";
             constexpr std::wstring_view properties = L"Properties";
             constexpr std::wstring_view events = L"Events";
@@ -191,6 +192,7 @@ namespace SeeDocs_App
                 Value{ Keys::templateParameters, std::wstring{} },
                 Sequence{ Keys::bases, std::wstring{} },
                 Value{ Keys::target, std::wstring{} },
+                Value{ Keys::scoped, false },
                 Value{ Keys::control, false },
                 Value{ Keys::folder, std::wstring{} },
                 Sequence{ Keys::properties, propertyLayout() },
@@ -326,6 +328,7 @@ namespace SeeDocs_App
             }
             setList(section, Keys::bases, bases);
             setText(section, Keys::target, type.target);
+            setFlag(section, Keys::scoped, type.scoped);
             setFlag(section, Keys::control, type.isControl);
             setText(section, Keys::folder, type.folder);
 
@@ -617,6 +620,7 @@ namespace SeeDocs_App
                     .templateParameters = textOf(entry, Keys::templateParameters),
                     .bases = listOf(entry, Keys::bases),
                     .target = textOf(entry, Keys::target),
+                    .scoped = flagOf(entry, Keys::scoped),
                     .exported = true,
                     .isControl = flagOf(entry, Keys::control),
                     .folder = textOf(entry, Keys::folder)
