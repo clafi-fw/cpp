@@ -163,6 +163,8 @@ namespace ClaFi::Controls
         const EditProps* editProps() const override { return &m_editProps; }
         // Selects the match and brings it into view. See Control-Foundation#searchresult-step
         void showFound(std::size_t part, TextRange) override;
+        // Collapses the selection onto the caret, where it still stands on the match.
+        void hideFound(std::size_t part, TextRange) override;
         // The hand over a link the box follows, and the I-beam over the rest of the text. A box
         // that takes no input takes no caret either, so the arrow is the honest answer while it
         // is disabled.

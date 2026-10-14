@@ -617,6 +617,10 @@ holder's showFound shows it:
 Where a body was opened, or the controls were built since the last layout, the view goes to the
 match once they are laid out.
 
+**A step takes back the match the last one showed**, where it shows one in another text. The
+holder's hideFound does it: a text box collapses its selection onto the caret, unless the
+selection has moved off the match since.
+
 ## SearchResult stepFrom
 
 **The control is read from** the selection of the first text the walk meets in it, or else that

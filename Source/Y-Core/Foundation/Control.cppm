@@ -1314,6 +1314,8 @@ namespace ClaFi
         virtual void searchTexts(const SearchTextVisitor&);
         // Shows a match a search made current in one of the control's texts.
         virtual void showFound(std::size_t part, TextRange);
+        // Takes back a match showFound showed, once the search has shown another.
+        virtual void hideFound(std::size_t, TextRange) {}
         // How a search reads that child of the control.
         [[nodiscard]] virtual ChildSearch childSearch(const Control&) const
             { return ChildSearch::Searched; }

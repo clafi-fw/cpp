@@ -68,6 +68,13 @@ namespace ClaFi
             std::size_t place{ 0 };
             TextRange range{};
         };
+        // The match a step last showed: the holder, which of its texts, and the range.
+        struct ShownPlace
+        {
+            Control* holder{ nullptr };
+            std::size_t part{ 0 };
+            TextRange range{};
+        };
         // What the last walk found, read when asked so that the questions stay const.
         struct Found
         {
@@ -94,6 +101,7 @@ namespace ClaFi
         const Searcher* m_searcher;
         Control* m_container;   // null once it is gone
         mutable Found m_found{};
+        std::optional<ShownPlace> m_shown{};   // kept apart from the reader, which a refresh moves
         mutable std::vector<TextRange> m_places{};   // what one text holds, the buffer reused
         ScopedEventConnection m_containerGone;
     };

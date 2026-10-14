@@ -198,6 +198,12 @@ namespace ClaFi::Controls
         scrollIntoView();
     }
 
+    void TextBox::hideFound(std::size_t, const TextRange range)
+    {
+        if (m_editProps.selRange == range)
+            setCaretPos(m_editProps.caretPos());
+    }
+
     CursorShape TextBox::cursor() const
     {
         if (!enabled(true))

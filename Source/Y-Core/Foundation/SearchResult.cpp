@@ -135,12 +135,14 @@ namespace ClaFi
     }
 
     // **Matched by address alone**: one the deleted control leaves may be taken by a control
-    // built after it, which the reader must not be taken to stand in.
+    // built after it, which neither the reader nor the shown match may be taken to stand in.
     void SearchResult::controlDeleted(const Control& control)
     {
         m_found.stale = true;
         if (m_found.reader && m_found.reader->holder == &control)
             m_found.reader.reset();
+        if (m_shown && m_shown->holder == &control)
+            m_shown.reset();
     }
 
     // **The reader is looked for again.** Met, it follows the selection its text keeps, and the
@@ -314,6 +316,13 @@ namespace ClaFi
         // What was hidden, or built since the last layout, is scrolled to once it is laid out.
         if (revealed || !holder.form().contentAligned())
             holder.scrollIntoViewOnAlign();
+        const std::optional<ShownPlace> previousPlace = std::exchange(m_shown,
+            ShownPlace{ &holder, part, next.range });
+        if (previousPlace && (previousPlace->holder != &holder || previousPlace->part != part))
+        {
+            previousPlace->holder->hideFound(previousPlace->part, previousPlace->range);
+            previousPlace->holder->invalidate();
+        }
         if (left && left != &holder)
             left->invalidate();
         holder.invalidate();
