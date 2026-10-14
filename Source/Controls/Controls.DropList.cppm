@@ -63,7 +63,7 @@ namespace ClaFi::Controls
         void getText(GetTextEvent&) const override;
         // The line's hint beside the list, at the row's height. See Controls#droplistline
         void nestedGetHint(GetHintEvent&) override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
     private:
         DropList& m_list;
         std::size_t m_line;

@@ -180,7 +180,7 @@ namespace ClaFi::Controls
         setControlPlacement(*part, { left, 0.0f }, { size.x, childArea.y });
     }
 
-    void DropdownControlBase::secondaryClicked(ClickEvent&)
+    void DropdownControlBase::secondaryClicked(NestedClickEvent&)
     {
         runDropdown(*shownSecondaryPart());
     }
@@ -262,16 +262,10 @@ namespace ClaFi::Controls
         }
     }
 
-    void DropdownControlBase::nestedClick(ClickEvent& event)
+    // A click refused the list goes on up, left alone here.
+    void DropdownControlBase::click(ClickEvent& event)
     {
-        // Whichever half is about to drop the list asks first. A click refused the list goes on
-        // up, left alone here.
-        const bool onStrip = pressedSecondary(event);
-        if (onStrip && !shownSecondaryPart()->mayDropPopup(event))
-            return;
-        // A press on the strip is the base's business - it stops the click and calls
-        // secondaryClicked(). What is left to decide here is a press anywhere else.
-        if (!onStrip && dropOnPrimaryPress() && canDropDown())
+        if (dropOnPrimaryPress() && canDropDown())
         {
             if (!mayDropPopupImplicitly(event))
                 return;
@@ -279,6 +273,15 @@ namespace ClaFi::Controls
             runDropdown(*this);
             return;
         }
+        SplitButtonBase::click(event);
+    }
+
+    // A press on the strip is the base's business - it stops the click and calls
+    // secondaryClicked(). The strip asks first, and a click it is refused goes on up.
+    void DropdownControlBase::nestedClick(NestedClickEvent& event)
+    {
+        if (pressedSecondary(&event.clickedControl) && !shownSecondaryPart()->mayDropPopup(event))
+            return;
         SplitButtonBase::nestedClick(event);
     }
 

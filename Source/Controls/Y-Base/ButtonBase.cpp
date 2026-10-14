@@ -28,6 +28,8 @@ namespace ClaFi::Controls
         // business moving; the mark is the part that reads as a thing being pressed. It carries no
         // text of its own, so the depth costs nothing in rasterization.
         [[nodiscard]] bool allowZAnimation() const override { return true; }
+        // A click on the mark is a click on its button, which injectCtrl reads as a toggle.
+        [[nodiscard]] bool isClickTarget() const override { return false; }
     protected:
         void nestedDoubleClick(DoubleClickEvent& event) override { event.stopPropagation(); }
     };
@@ -519,10 +521,10 @@ namespace ClaFi::Controls
         RichControl::nestedPressUp(event);
     }
 
-    void ButtonBase::nestedClick(ClickEvent& event)
+    void ButtonBase::click(ClickEvent& event)
     {
         injectCtrl(event);
-        RichControl::nestedClick(event);
+        RichControl::click(event);
     }
 
     void ButtonBase::nestedControlFocusing(FocusEvent& event)

@@ -41,7 +41,7 @@ namespace Themes_App
         public:
             DropDownMenu(const CreateParams&, const ColorHarmonyItem&);
         protected:
-            void nestedClick(ClickEvent&) override;
+            void nestedClick(NestedClickEvent&) override;
             void nestedDoubleClick(DoubleClickEvent& event) override { event.closeForm(); }
         private:
             static const TagValue kLabelTag = (std::numeric_limits<TagValue>::max)();
@@ -127,10 +127,10 @@ namespace Themes_App
         }
     }
 
-    void ColorHarmonyItem::DropDownMenu::nestedClick(ClickEvent& event)
+    void ColorHarmonyItem::DropDownMenu::nestedClick(NestedClickEvent& event)
     {
         Stack::nestedClick(event);
-        std::size_t tagValue = event.control->tag().value;
+        std::size_t tagValue = event.clickedControl.tag().value;
         m_harmony.selectMap(m_harmony.maps()[tagValue]);
         //invalidateChildrenStates();
         m_owner.mapSelected();

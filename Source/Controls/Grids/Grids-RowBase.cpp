@@ -691,9 +691,9 @@ namespace ClaFi::Controls::Grids
 
     // Only a pointer click lands on a link - one a key made has no point to land on. The press
     // has already picked the cell, and the click is the link's alone.
-    void RowBase::nestedClick(ClickEvent& event)
+    void RowBase::click(ClickEvent& event)
     {
-        if (event.control == this && Input::mouse().active())
+        if (Input::mouse().active())
         {
             const PointInForm clickPos = event.clickPos();
             if (const Column* column = columnAt(clickPos))
@@ -708,7 +708,7 @@ namespace ClaFi::Controls::Grids
                 }
             }
         }
-        LaneBase::nestedClick(event);
+        LaneBase::click(event);
     }
 
     // **A link is what the menu is about** where one stands under the pointer or, from the

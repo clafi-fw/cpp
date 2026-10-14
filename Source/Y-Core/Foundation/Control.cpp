@@ -365,6 +365,16 @@ namespace ClaFi
         return form.appContext();
     }
 
+    // NestedClickEvent
+
+    NestedClickEvent::NestedClickEvent(const ClickEvent& click)
+        :
+        ClickEventBase{ *click.control, click.form, click.stamp },
+        clickedControl{ *click.control }
+    {
+        modifiers = click.modifiers;
+    }
+
     // GetStateEvent
 
     GetStateEvent::GetStateEvent(const Control& control)
@@ -956,6 +966,11 @@ namespace ClaFi
         }
     }
 
+    bool Control::isClickTarget() const
+    {
+        return respondsToPointer();
+    }
+
     bool Control::canTakeFocus() const
     {
         if (!enabled(true))
@@ -1002,14 +1017,14 @@ namespace ClaFi
         doClick(event);
     }
 
-    bool Control::mayDropPopup(const ClickEvent& click)
+    bool Control::mayDropPopup(const ClickEventBase& click)
     {
         DropPopupEvent event{ *this, click.form, click.stamp };
         nestedControlDroppingPopup(event);
         return !event.propagationStopped();
     }
 
-    bool Control::mayDropPopupImplicitly(const ClickEvent& click)
+    bool Control::mayDropPopupImplicitly(const ClickEventBase& click)
     {
         DropPopupEvent event{ *this, click.form, click.stamp };
         event.implicit = true;
@@ -1713,7 +1728,12 @@ namespace ClaFi
         emitEvent(event);
     }
 
-    void Control::nestedClick(ClickEvent& event)
+    void Control::click(ClickEvent& event)
+    {
+        emitEvent(event);
+    }
+
+    void Control::nestedClick(NestedClickEvent& event)
     {
         emitEvent(event);
     }
@@ -2633,13 +2653,23 @@ namespace ClaFi
         Control::invalidateStateUp(this, nullptr, InvalidateEvent::PressDown);
     }
 
-    void Control::doClick(ClickEvent& params)
+    // **A click hook that deletes its control stops the event.** The walk reads each control's
+    // parent after its hook has run, and a stopped event is what keeps it off a deleted one.
+    void Control::doClick(ClickEvent& event)
     {
         invalidateState();
+        click(event);
+        if (event.propagationStopped())
+            return;
+
+        NestedClickEvent nested{ event };
         Control* control = this;
-        do control->nestedClick(params);
-        while (!params.propagationStopped() && ((control = control->m_parent)));
-        // don't place code here - we may be killed inside the nestedClick()
+        do
+        {
+            nested.control = control;
+            control->nestedClick(nested);
+        }
+        while (!nested.propagationStopped() && ((control = control->m_parent)));
     }
 
     void Control::doDoubleClick(DoubleClickEvent& event, PointInForm)
@@ -2656,6 +2686,14 @@ namespace ClaFi
         do control->nestedTripleClick(event);
         while (!event.propagationStopped() && ((control = control->m_parent)));
         // don't place code here - we may be killed inside the nestedClick()
+    }
+
+    Control& Control::clickTarget()
+    {
+        Control* control = this;
+        while (control && !control->isClickTarget())
+            control = control->m_parent;
+        return control ? *control : *this;
     }
 
     void Control::doHoverEnter()

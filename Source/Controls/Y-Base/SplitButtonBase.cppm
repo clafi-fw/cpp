@@ -82,10 +82,10 @@ namespace ClaFi::Controls
         virtual void placeSecondaryPart(ScaledDimensions childArea);
         /// What a press on the part does. Called only when there is a part, so a control that
         /// creates one has to answer here.
-        virtual void secondaryClicked(ClickEvent&);
+        virtual void secondaryClicked(NestedClickEvent&);
 
-        /// Whether the event landed on the part rather than on the control itself.
-        [[nodiscard]] bool pressedSecondary(const ClickEventBase&) const;
+        /// Whether the control pressed is the part or lies inside it.
+        [[nodiscard]] bool pressedSecondary(const Control* pressed) const;
         /// How much of the content box the part takes, on the axis it sits on.
         [[nodiscard]] ScaledDimensions secondaryExtent(const FormContext&, ScaledPadding, ScaledSpacing) const;
 
@@ -97,7 +97,7 @@ namespace ClaFi::Controls
         FloatRect iconRect(const PaintEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
-        void nestedClick(ClickEvent&) override;
+        void nestedClick(NestedClickEvent&) override;
     private:
         // Owned by ButtonBase, which holds the one child slot a button has.
         Control* m_secondaryPart{ nullptr };

@@ -216,6 +216,8 @@ Converting a tab-indented file is safe only after confirming no tab appears outs
     - Never name a variable by appending a digit to distinguish it from another (`cellFrame2`, `width2`). Name the difference instead.
     - Never use snake_case for a local (`r_bound`). If a short name collides with something, lengthen it into a real word.
 
+- **[MUST] Object Names Are Nouns:** A variable, member or parameter that holds or refers to an object is named with a noun phrase for that object (`clickedControl`, `targetRow`). A bare participle or adjective (`clicked`, `selected`, `maximized`) reads as a flag, and is kept for a `bool`.
+
 - **[MUST] Functions/Methods:** camelCase (e.g., `writeIndent`, `childValue`).
 
 - **[MUST] Argument Naming in Declarations:** In separated function declarations:

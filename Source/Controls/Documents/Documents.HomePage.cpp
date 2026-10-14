@@ -71,9 +71,9 @@ namespace ClaFi::Documents
         // and Space on the tile the keyboard stands on arrive as an ordinary click, so the mouse's
         // single click and the keyboard's press are one event, and the form is what tells them
         // apart. A modifier makes the press a selection command rather than an activation.
-        view.onClick([this](ClickEvent& event) {
+        view.onNestedClick([this](NestedClickEvent& event) {
             DocumentTile* tile = m_tiles->currentTile();
-            if (!tile || tile != event.control)
+            if (!tile || tile != &event.clickedControl)
                 return;
             if (!event.form.isKeyboardClick() || event.modifiers.ctrl || event.modifiers.shift)
                 return;

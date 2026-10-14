@@ -2,6 +2,21 @@
 
 The author's side of the footnote of the same name.
 
+## ClickEvent
+
+ClickEvent reaches the target alone and NestedClickEvent walks up from it. One bubbling ClickEvent
+served both before, and every handler on a container had to tell its own clicks from its
+children's by `event.control`.
+
+**The target skips ActiveContainer** because isClickTarget defaults to respondsToPointer: a press
+on a label inside a plain panel inside a stack is a click on the label, not on the stack.
+
+**`clickedControl` is never rewritten.** RowContainer and ButtonBase used to set `event.control` to
+themselves on the way up, so the stack above would pick the row or the button. The stack now
+finds its item with itemAt from `clickedControl`, and the indicator is no click target at all.
+The one behaviour this moved: a mouse click on a MouseOnly control inside a stack item picks that
+item, where it used to read as a click on nothing.
+
 ## RichControl
 
 Its metrics properties - `ControlMetrics`, `MinSize`, `PreferredSize`, `MaxSize`, `Padding`,

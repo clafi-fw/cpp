@@ -202,7 +202,7 @@ namespace ClaFi::Controls
         void nestedPressDown(PressDownEvent&) override;
         // Follows a link when the press and the release stayed on it and nothing was selected
         // between them. Defined in TextBox.cpp, with the rest of what a link does.
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
         void nestedDoubleClick(DoubleClickEvent&) override;
         void nestedTripleClick(TripleClickEvent&) override;
         // Defined in TextBox.cpp: the standard edit menu is built there, and the menu pulls in

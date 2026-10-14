@@ -205,7 +205,7 @@ namespace Themes_App
         void getText(GetTextEvent&) const override;
         void nestedGetHint(GetHintEvent&) override;
         void getControlState(GetStateEvent&) const override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
     private:
         HueRulePopup& m_popup;
@@ -428,7 +428,7 @@ namespace Themes_App
         event.stopPropagation();
     }
 
-    void HueRuleItem::nestedClick(ClickEvent&)
+    void HueRuleItem::click(ClickEvent&)
     {
         m_popup.pick(m_operation);
     }

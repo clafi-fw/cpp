@@ -161,6 +161,39 @@ that axis, never both.
 `laneExtent` is zero for a single lane. A wrapping container states its widest lane, since items in
 one lane end at different offsets.
 
+## ClickEvent
+
+**Raised once, on the control the click is on.** A key's press is on the focused control. A mouse
+click is on the control under the pointer, or on the nearest click target above it - see Control
+isClickTarget. A mouse click on a label inside a tile is a click on the tile.
+
+**NestedClickEvent follows it**, from the same control up to the root. A handler that stops the
+ClickEvent spends the whole click, and no NestedClickEvent is raised.
+
+**A handler that deletes its control stops the event**, or the walk that follows reaches the deleted
+control.
+
+## NestedClickEvent
+
+**Raised on the control the click is on, then on each parent in turn**, after ClickEvent.
+OnNestedClick hears a click on its own control and on every control inside it.
+
+- `control` is the control raising the event, whose handlers run.
+- `clickedControl` is the control the click is on, the same at every step.
+
+**Any control on the way may stop it**, and the controls above hear nothing. A stack picks its
+current item from it - the item `clickedControl` stands in - so stopping it below a stack keeps that
+stack's current item where it was.
+
+## Control isClickTarget
+
+**True for a control the pointer addresses** - MouseOnly or Focusable - unless the control says
+otherwise. A mouse click on a control that is not a target is a click on the nearest target above
+it, or on the control itself when there is none.
+
+**A part that stands for its host answers false.** A button's selection indicator does: a click on
+the mark is a click on the button, read as a toggle.
+
 ## TripleClickEvent
 
 **The platform window counts the run**, since Windows reports every press after a double click as

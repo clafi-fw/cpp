@@ -138,14 +138,15 @@ namespace ClaFi::Controls
         // padding there with it.
         [[nodiscard]] bool secondaryReachesEdge() const override { return true; }
         void placeSecondaryPart(ScaledDimensions childArea) override;
-        void secondaryClicked(ClickEvent&) override;
+        void secondaryClicked(NestedClickEvent&) override;
 
         void adjustChildInset(AdjustChildInsetEvent&) const override;
         void getText(GetTextEvent&) const override;
         void calculateChildren(FormBase&) override;
         void adjustChildMetrics(AdjustMetricsEvent&) const override;
         void adjustChildPaint(AdjustPaintEvent&) override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
+        void nestedClick(NestedClickEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
     private:
         template <typename... Args>

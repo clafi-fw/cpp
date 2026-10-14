@@ -323,7 +323,8 @@ namespace ClaFi::Controls
         [[nodiscard]] virtual bool clickOpensEditor() const;
         void nestedKeyDown(KeyDownEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
+        void nestedClick(NestedClickEvent&) override;
         void nestedDoubleClick(DoubleClickEvent&) override;
     private:
         /// Claims StdActions::rename for this control and answers it. Connected from the
@@ -344,7 +345,7 @@ namespace ClaFi::Controls
         std::wstring m_typed{};
         // Recorded as the press happens, because nothing afterwards can answer it:
         // Input::setMouseDown moves the focus **before** it dispatches the press, so by
-        // nestedClick() the control reads focused whichever way the click went.
+        // click() the control reads focused whichever way the click went.
         bool m_wasCurrentBeforePress{ false };
         // The trailing release of a double click raises an ordinary click of its own,
         // indistinguishable from a lone one, and that pair means whatever double clicking means
@@ -504,19 +505,32 @@ namespace ClaFi::Controls
     }
 
     template <IsControl HostClass>
-    void WithInPlaceEdit<HostClass>::nestedClick(ClickEvent& event)
+    void WithInPlaceEdit<HostClass>::click(ClickEvent& event)
     {
         // Read and cleared before anything else runs: the base may take the focus somewhere and
         // come back, and the editor below pumps messages of its own.
-        const bool wouldOpen = event.control == this && !m_doubleClicked && clickOpensEditor();
+        const bool wouldOpen = !m_doubleClicked && clickOpensEditor();
         const bool opensEditor = wouldOpen && this->mayDropPopupImplicitly(event);
         m_editorRefused = wouldOpen && !opensEditor;
         m_wasCurrentBeforePress = false;
         m_doubleClicked = false;
 
-        HostClass::nestedClick(event);
+        HostClass::click(event);
         if (opensEditor)
             openEditor();
+    }
+
+    // A click on a part of the control ends the run of presses the flags describe, as one on the
+    // control itself does in click().
+    template <IsControl HostClass>
+    void WithInPlaceEdit<HostClass>::nestedClick(NestedClickEvent& event)
+    {
+        if (&event.clickedControl != this)
+        {
+            m_wasCurrentBeforePress = false;
+            m_doubleClicked = false;
+        }
+        HostClass::nestedClick(event);
     }
 
     template <IsControl HostClass>

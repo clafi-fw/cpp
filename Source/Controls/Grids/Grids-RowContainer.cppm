@@ -51,8 +51,6 @@ namespace ClaFi::Controls::Grids
         void nestedControlFocusing(FocusEvent&) override;
         // Refuses a popup on a press that picks a cell or changes the selection.
         void nestedControlDroppingPopup(DropPopupEvent&) override;
-        // A click on a cell's control reaches the grid as a click on this row, as the focus does.
-        void nestedClick(ClickEvent&) override;
         // The row holds the focus for its cells' controls and hands them the keys the grid leaves.
         void nestedKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;

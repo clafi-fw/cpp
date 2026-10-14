@@ -286,7 +286,7 @@ namespace ClaFi::Controls
         writeFollowLine(event.text);
     }
 
-    void TextBox::nestedClick(ClickEvent& event)
+    void TextBox::click(ClickEvent& event)
     {
         // A press that ended in a selection was a drag, and a drag does not follow the link it
         // started on. The caret the press placed stands where the release did when the two are
@@ -299,7 +299,7 @@ namespace ClaFi::Controls
         }
         if (!link.has_value())
         {
-            Label::nestedClick(event);
+            Label::click(event);
             return;
         }
 

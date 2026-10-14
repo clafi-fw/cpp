@@ -33,7 +33,7 @@ namespace ClaFi::Controls
         using SysMenuButton::SysMenuButton;
     protected:
         void paintIcon(PaintIconEvent&) override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
     };
 
     // The title bar's button that maximizes the window, and restores it.
@@ -44,7 +44,7 @@ namespace ClaFi::Controls
     protected:
         void hitTest(HitTestEvent& event) const override { event.zone = HitTest::MaxButton; }
         void paintIcon(PaintIconEvent&) override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
     };
 
     // The title bar's button that closes the window.
@@ -54,7 +54,7 @@ namespace ClaFi::Controls
         using SysMenuButton::SysMenuButton;
     protected:
         void paintIcon(PaintIconEvent&) override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
     };
 
     // Which buttons a title bar carries beside the window's name.
@@ -122,7 +122,7 @@ namespace ClaFi::Controls
             );
     }
 
-    void MinimizeButton::nestedClick(ClickEvent& event)
+    void MinimizeButton::click(ClickEvent& event)
     {
         event.form.minimize();
     }
@@ -156,7 +156,7 @@ namespace ClaFi::Controls
         event.canvas().drawRoundedRectangle(rect, radius, radius, strokeColor, strokeWidth);
     }
 
-    void MaximizeButton::nestedClick(ClickEvent& event)
+    void MaximizeButton::click(ClickEvent& event)
     {
         if (event.form.isMaximized())
             event.form.restore();
@@ -172,7 +172,7 @@ namespace ClaFi::Controls
     }
 
     // Asked, not done: the form answers with readyToClose. The press does nothing else either.
-    void CloseButton::nestedClick(ClickEvent& event)
+    void CloseButton::click(ClickEvent& event)
     {
         event.form.requestClose();
         event.stopPropagation();

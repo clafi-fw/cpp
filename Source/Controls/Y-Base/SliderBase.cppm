@@ -76,7 +76,7 @@ namespace ClaFi::Controls
         protected:
             void adjustMetrics(AdjustMetricsEvent& event) const override { parent()->adjustButtonMetrics(event); }
             void adjustPaint(AdjustPaintEvent&) override;
-            void nestedClick(ClickEvent&) override;
+            void click(ClickEvent&) override;
             void nestedPressDown(PressDownEvent&) override;
             void nestedPressUp(PressUpEvent&) override;
             // 'lockHoveredControl' prevents the hovered control from switching

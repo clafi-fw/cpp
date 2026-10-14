@@ -891,11 +891,14 @@ namespace ClaFi
                 }
 
                 if (!handled.preventClick)
-                    if (searhResult.control->canClick())
+                {
+                    Control& target = searhResult.control->clickTarget();
+                    if (target.canClick())
                     {
-                        ClickEvent clickParams{ *searhResult.control, *this };
-                        searhResult.control->doClick(clickParams);
+                        ClickEvent clickParams{ target, *this };
+                        target.doClick(clickParams);
                     }
+                }
             }
         }
         // do not place any code here because this may be killed in the nestedClick()

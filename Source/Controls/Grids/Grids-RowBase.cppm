@@ -157,7 +157,7 @@ namespace ClaFi::Controls::Grids
         void nestedControlFocusing(FocusEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         // A pointer click on a link in a cell's text follows the link and goes no further up.
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
         // A link under the pointer, or in the selected cell from the keyboard, takes the menu.
         void nestedContextPopup(ContextPopupEvent&) override;
         //

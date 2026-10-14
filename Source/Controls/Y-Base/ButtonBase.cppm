@@ -74,7 +74,7 @@ namespace ClaFi::Controls
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void nestedPressDown(PressDownEvent&) override;
         void nestedPressUp(PressUpEvent&) override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;
         // A button's children are its parts, and there is room for two - see addChild.
         bool isChildPart(const Control&) const override { return true; }

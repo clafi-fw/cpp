@@ -141,13 +141,15 @@ namespace ClaFi::Controls
         return m_currentItem ? m_currentItem : this;
     }
 
-    void StackBase::nestedClick(ClickEvent& event)
+    // A click inside an item picks that item - on a grid, the row a cell's control stands in.
+    void StackBase::nestedClick(NestedClickEvent& event)
     {
         //if (!Input::mouse().active())
         {
             // SetFocus handles this on mouse clicks
             bool handled{};
-            autoSelectItem(*event.control, event.modifiers, handled);
+            Control* item = itemAt(&event.clickedControl);
+            autoSelectItem(item ? *item : event.clickedControl, event.modifiers, handled);
         }
         Container::nestedClick(event);
     }

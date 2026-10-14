@@ -61,7 +61,7 @@ namespace ClaFi::Controls
         std::wstring_view diagnosticText() const override { return L"MenuItem"; }
     protected:
         void getText(GetTextEvent&) const override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
     };
 
     /// @brief One command in the strip across the top of a menu.
@@ -81,7 +81,7 @@ namespace ClaFi::Controls
         std::wstring_view diagnosticText() const override { return L"MenuCommand"; }
     protected:
         void nestedGetHint(GetHintEvent&) override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
     };
 
     export using BaseMenuForm = Form<ScrollBoxWith<Stack>>;
@@ -391,9 +391,9 @@ namespace ClaFi::Controls
         event.text << InkWell::textInk(InkGrade::Muted) << shortcutText;
     }
 
-    void MenuItem::nestedClick(ClickEvent& event)
+    void MenuItem::click(ClickEvent& event)
     {
-        MenuItemBase::nestedClick(event);
+        MenuItemBase::click(event);
         closeBehindCommand(event);
     }
 
@@ -457,9 +457,9 @@ namespace ClaFi::Controls
         event.text << L" (" << shortcutText << L")";
     }
 
-    void MenuCommand::nestedClick(ClickEvent& event)
+    void MenuCommand::click(ClickEvent& event)
     {
-        MenuCommandBase::nestedClick(event);
+        MenuCommandBase::click(event);
         closeBehindCommand(event);
     }
 

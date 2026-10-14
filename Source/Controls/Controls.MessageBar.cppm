@@ -32,7 +32,7 @@ namespace ClaFi::Controls
         // The rule set the band wears.
         static constexpr UiElement k_colorRules{ UiElement::Hint };
     protected:
-        void secondaryClicked(ClickEvent&) override {} // an answer acts on its own click
+        void secondaryClicked(NestedClickEvent&) override {} // an answer acts on its own click
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void paintIcon(PaintIconEvent&) override;
         void adjustPaint(AdjustPaintEvent&) override;

@@ -51,7 +51,7 @@ namespace SeeDocs_App
         void getMainText(GetTextEvent&) const override;
         void showDropdown(Control& initiator) override;
         void adjustPaint(AdjustPaintEvent&) override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
         // The mark sits on the crumb's face, as a path crumb's does.
         [[nodiscard]] Ink dropdownMarkInk() const override { return InkWell::textInk(); }
         // The mark points back toward the type the way up came from, and turns down into its list.
@@ -59,6 +59,11 @@ namespace SeeDocs_App
     private:
         BasesBar& m_bar;
         const BaseNode& m_node;
+    };
+
+    export class BasesTreeView : public ContainerBase
+    {
+        
     };
 
     // A class's bases as reversed crumbs, the ways up running right and parting where they fork.

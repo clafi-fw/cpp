@@ -44,15 +44,15 @@ namespace ClaFi::Controls
         setControlPlacement(*part, { left, (childArea.y - size.y) / 2.0f }, size);
     }
 
-    void SplitButtonBase::secondaryClicked(ClickEvent&)
+    void SplitButtonBase::secondaryClicked(NestedClickEvent&)
     {
         noReach("a secondary part was pressed, and the control that made it answers nothing");
     }
 
-    bool SplitButtonBase::pressedSecondary(const ClickEventBase& event) const
+    bool SplitButtonBase::pressedSecondary(const Control* pressed) const
     {
         const Control* part = shownSecondaryPart();
-        return part && part->containsNested(event.control);
+        return part && part->containsNested(pressed);
     }
 
     ScaledDimensions SplitButtonBase::secondaryExtent(
@@ -234,7 +234,7 @@ namespace ClaFi::Controls
 
     void SplitButtonBase::nestedPressDown(PressDownEvent& event)
     {
-        if (!secondaryPressPropagates() && pressedSecondary(event))
+        if (!secondaryPressPropagates() && pressedSecondary(event.control))
         {
             // The part is its own target, and the press stops here rather than reading as a press
             // on the control. A tab must not become the current one because its close button was
@@ -245,12 +245,12 @@ namespace ClaFi::Controls
         ButtonBase::nestedPressDown(event);
     }
 
-    void SplitButtonBase::nestedClick(ClickEvent& event)
+    void SplitButtonBase::nestedClick(NestedClickEvent& event)
     {
-        if (pressedSecondary(event))
+        if (pressedSecondary(&event.clickedControl))
         {
-            // The part is never the primary action, so the click stops here instead of reaching
-            // the control's own OnClick handlers.
+            // The part is never the primary action, so nothing above reads its click as one on
+            // this control.
             event.stopPropagation();
             secondaryClicked(event);
             return;

@@ -84,7 +84,7 @@ namespace ClaFi::Controls
         parent()->adjustButtonPaint(event);
     }
 
-    void SliderBase::ScrollButton::nestedClick(ClickEvent&)
+    void SliderBase::ScrollButton::click(ClickEvent&)
     {
         if (!Input::mouse().active())
             doIt(); // mouse clicks handled in nestedPressDown

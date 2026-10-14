@@ -53,7 +53,7 @@ namespace Themes_App
         const AppTheme& theme() { return m_theme; }
         const std::wstring& pagePath() { return m_pagePath; }
     protected:
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
         void nestedDoubleClick(DoubleClickEvent&) override;
         [[nodiscard]] EditorMode editorMode() const override;
         void nestedContextPopup(ContextPopupEvent&) override;
@@ -138,12 +138,12 @@ namespace Themes_App
     //
     // The event travels on: the container above reads it for the selection, and what it settles
     // there is the same whether or not a theme is opening.
-    void ThemeButton::nestedClick(ClickEvent& event)
+    void ThemeButton::click(ClickEvent& event)
     {
         const bool opensTheme = event.form.isKeyboardClick()
             && !event.modifiers.ctrl
             && !event.modifiers.shift;
-        Base::nestedClick(event);
+        Base::click(event);
         if (opensTheme)
             openTheme(event.stamp);
     }

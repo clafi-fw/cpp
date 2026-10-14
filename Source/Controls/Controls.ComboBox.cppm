@@ -134,7 +134,7 @@ namespace ClaFi::Controls
         void paintIcon(PaintIconEvent&) override;
         void getText(GetTextEvent&) const override;
         void nestedGetHint(GetHintEvent&) override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
         ScaledDimensions calculateContent(AlignEvent& event) override {
             return Button::calculateContent(event);
         }
@@ -320,7 +320,7 @@ namespace ClaFi::Controls
         Button::nestedGetHint(event);
     }
 
-    void ComboBoxItemControl::nestedClick(ClickEvent& event)
+    void ComboBoxItemControl::click(ClickEvent& event)
     {
         m_comboBox.setItemIndex(m_itemIndex);
         event.closeForm();

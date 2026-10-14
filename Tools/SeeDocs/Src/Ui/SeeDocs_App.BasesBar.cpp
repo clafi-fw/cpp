@@ -142,14 +142,13 @@ namespace SeeDocs_App
         event.setColorRules(UiElement::ToolButton);
     }
 
-    // A press on the strip is the base's, which drops the list; what is left is a press on the
-    // crumb's face, which opens the page of the base it names.
-    void BaseCrumb::nestedClick(ClickEvent& event)
+    // A click on the crumb's face opens the page of the base it names. A click on the strip is a
+    // nested one, and the base drops the list from it.
+    void BaseCrumb::click(ClickEvent& event)
     {
-        const bool pressedStrip = pressedSecondary(event);
-        DropdownControlBase::nestedClick(event);
+        DropdownControlBase::click(event);
         const std::wstring_view target = targetOf(m_node);
-        if (pressedStrip || target.empty())
+        if (target.empty())
             return;
         m_bar.choose(std::wstring{ target });
     }

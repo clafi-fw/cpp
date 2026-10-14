@@ -47,14 +47,6 @@ namespace ClaFi::Controls::Grids
         Row::nestedControlDroppingPopup(event);
     }
 
-    // The grid completes a pick in the click pass, and it can make only a row current - handed
-    // the control, it would read the click as landing on nothing and drop the selection.
-    void RowContainer::nestedClick(ClickEvent& event)
-    {
-        event.control = this;
-        Row::nestedClick(event);
-    }
-
     void RowContainer::nestedKeyDown(KeyDownEvent& event)
     {
         Control* control = gridMovesBy(event) ? nullptr : selectedCellControl();

@@ -105,7 +105,7 @@ namespace ClaFi::Browser
         void nestedGetHint(GetHintEvent&) override;
         void getText(GetTextEvent&) const override;
         void paintIcon(PaintIconEvent&) override;
-        void secondaryClicked(ClickEvent&) override;
+        void secondaryClicked(NestedClickEvent&) override;
     private:
         // Keeps the url this tab has just moved from, the way the move asked.
         void recordLeft(const Url& left, HistoryEntry);

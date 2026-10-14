@@ -218,7 +218,7 @@ namespace ClaFi::Browser
         }
     }
 
-    void BrowserTab::secondaryClicked(ClickEvent&)
+    void BrowserTab::secondaryClicked(NestedClickEvent&)
     {
         m_browserControl->closeTab(*this);
     }

@@ -194,11 +194,20 @@ namespace ClaFi
         InputStamp stamp;
     };
 
-    // The control was clicked.
+    // A click on the control it is raised on, and on no other. See Control-Foundation
     export class ClickEvent : public ClickEventBase
     {
     public:
         using ClickEventBase::ClickEventBase;
+    };
+
+    // A click on the control it is raised on or on any control inside it. See Control-Foundation
+    export class NestedClickEvent : public ClickEventBase
+    {
+    public:
+        explicit NestedClickEvent(const ClickEvent&);
+    public:
+        Control& clickedControl;   // the control the click is on
     };
 
     // The second press of one run of clicks.
@@ -592,6 +601,8 @@ namespace ClaFi
         DECLARE_PROPERTY_STORAGE(Tag, tag, Tag{})
     public:
         DECLARE_EVENT(ClickEvent, OnClick, onClick)   // a click on this control
+        // A click on this control or on any control inside it.
+        DECLARE_EVENT(NestedClickEvent, OnNestedClick, onNestedClick)
         // The second press of a run of clicks.
         DECLARE_EVENT(DoubleClickEvent, OnDoubleClick, onDoubleClick)
         // The third press of a run of clicks.
@@ -735,6 +746,8 @@ namespace ClaFi
         // that walks up from the pressed control, and the scroll a release asks for - so a click on
         // a label neither lights the host it stands in nor moves the view under it.
         [[nodiscard]] bool respondsToPointer() const;
+        // Whether a mouse click landing here is this control's. See Control-Foundation
+        [[nodiscard]] virtual bool isClickTarget() const;
         // The pointer shape over this control. It stands for what a press here would do, so a
         // control that takes text answers IBeam and everything else keeps the arrow. Asked of the
         // control the pointer is actually over - the deepest one hit - so a child answers for
@@ -781,9 +794,9 @@ namespace ClaFi
         // last pressed on this form.
         void animatedClick(FormBase&, InputStamp);
         // False when the popup the click asks for is refused.
-        [[nodiscard]] bool mayDropPopup(const ClickEvent&);
+        [[nodiscard]] bool mayDropPopup(const ClickEventBase&);
         // False when an implicit drop is refused.
-        [[nodiscard]] bool mayDropPopupImplicitly(const ClickEvent&);
+        [[nodiscard]] bool mayDropPopupImplicitly(const ClickEventBase&);
         // The control a popup opened from this one belongs to. See Control-Foundation#popup-owner
         [[nodiscard]] virtual Control& popupOwner() { return *this; }
         //
@@ -1210,7 +1223,8 @@ namespace ClaFi
         //virtual void mouseDown(const MouseDownEvent&) {}
         virtual void nestedPressDown(PressDownEvent&);
         virtual void nestedPressUp(PressUpEvent&) {}
-        virtual void nestedClick(ClickEvent&);
+        virtual void click(ClickEvent&);
+        virtual void nestedClick(NestedClickEvent&);
         virtual void nestedDoubleClick(DoubleClickEvent&);
         virtual void nestedTripleClick(TripleClickEvent&);
         //
@@ -1424,6 +1438,8 @@ namespace ClaFi
         void doDoubleClick(DoubleClickEvent&, PointInForm mousePos);
         void doTripleClick(TripleClickEvent&, PointInForm mousePos);
         [[nodiscard]] bool canClick() { return enabled(true); }
+        // The nearest isClickTarget at or above this control, or this control when none is.
+        [[nodiscard]] Control& clickTarget();
         void doHoverEnter();
         void doHoverLeave();
         void doContextPopup(ContextPopupEvent&);

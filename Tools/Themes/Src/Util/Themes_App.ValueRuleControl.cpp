@@ -168,7 +168,7 @@ namespace Themes_App
         void paintIcon(PaintIconEvent&) override;
         void nestedGetHint(GetHintEvent&) override;
         void getControlState(GetStateEvent&) const override;
-        void nestedClick(ClickEvent&) override;
+        void click(ClickEvent&) override;
     private:
         ValueRulePopup& m_popup;
         ColorRuleOp m_operation;
@@ -499,7 +499,7 @@ namespace Themes_App
         event.stopPropagation();
     }
 
-    void OperationItem::nestedClick(ClickEvent&)
+    void OperationItem::click(ClickEvent&)
     {
         m_popup.pick(m_operation);
     }

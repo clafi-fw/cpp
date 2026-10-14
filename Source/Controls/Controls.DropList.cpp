@@ -74,7 +74,7 @@ namespace ClaFi::Controls
         event.text << hint;
     }
 
-    void DropListRow::nestedClick(ClickEvent& event)
+    void DropListRow::click(ClickEvent& event)
     {
         m_list.pick({ .line = m_line, .modifiers = event.modifiers, .stamp = event.stamp });
     }
