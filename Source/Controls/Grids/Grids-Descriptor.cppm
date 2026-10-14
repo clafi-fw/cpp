@@ -118,7 +118,7 @@ namespace ClaFi::Controls::Grids
         ScaledCellMetrics& scaledCellMetrics() { return m_scaledCellMetrics; }
         ScaledPadding scaledCellPadding() const { return m_scaledCellMetrics.padding; }
         float scaledBorderWidth() const { return m_scaledCellMetrics.border; }
-        // Where a cell's content stands - half a border in from each side, the room its lines take.
+        // Where a cell's content stands: in from each side by the room the cell's lines take there.
         [[nodiscard]] FloatRect cellInnerRect(const FloatRect& cellRect) const;
         const ControlMetrics& designCellMetrics() const { return m_designCellMetrics; }
         Thickness designBorder() const { return m_designCellMetrics.border; }
@@ -149,6 +149,8 @@ namespace ClaFi::Controls::Grids
     private:
         const PaintEvent& gridPaintEvent() const { return *m_gridPaintEvent; } // use only during the paint stage
         void setPaintGridEvent(const PaintEvent& value) { m_gridPaintEvent = &value; }
+        // 1 for an odd line width: its middle pixel stands past the edge, painted from both sides.
+        [[nodiscard]] float sharedLinePixel() const;
         // The line a cell move keeps returning to, in the owning grid's own space: a vertical
         // move keeps the x, a horizontal move keeps the y, and each writes the other. A row
         // that does not carry the column, or a cell tall enough to span several rows, therefore
@@ -177,6 +179,7 @@ namespace ClaFi::Controls::Grids
         // Taken by the row a press lands in, before the press moves the selection.
         void recordPress(const Control& row, const Column*, CellPressKind);
         [[nodiscard]] const CellPress& lastPress() const { return m_press; }
+        void scaleStrokeAndRadius();
     private:
         //
         static constexpr std::size_t k_maxHoverHighlights{ 16 };

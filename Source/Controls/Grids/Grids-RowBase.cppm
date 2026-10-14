@@ -141,6 +141,10 @@ namespace ClaFi::Controls::Grids
         // it has to stop short of the band its closing grid line stands in.
         void paintSurface(PaintEvent&) override {}
         void paintOneCell(PaintEvent&, const RowCell&, bool isFirstRow);
+        // Paints the line pixels a cell shares: its own in full, the ones above and left at half.
+        void paintSharedLinePixels(PaintEvent&, const FloatRect& bounds, RectSides sides,
+            Color lineColor, Color surfaceColor) const;
+        [[nodiscard]] float sharedLinePixel() const { return m_descriptor.sharedLinePixel(); }
         void doPaintColumns(PaintEvent&);
         void paintText(PaintEvent&) override {}
         // A row's texts are its cells', each named by its place in the cell walk.
@@ -151,6 +155,8 @@ namespace ClaFi::Controls::Grids
         //
         void getControlState(GetStateEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;
+        // Covers the line pixels shared with the rows above and below, which both rows paint.
+        void adjustViewPort(AdjustViewportEvent&) const override;
         //
         void mouseMove(MouseMoveEvent&) override;
         void hoverLeave() override;

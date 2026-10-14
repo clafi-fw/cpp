@@ -38,18 +38,23 @@ namespace ClaFi::Controls::Grids
         // ask for, and the gap is what a divider carrying no line looks like. Raised off the
         // surface rather than read from strokeRgb(), which carries the focus ring.
         const Color lineColor = event.strokeRgbOn(event.surfaceHsl());
-        if (lineColor.alpha)
+        // A line of odd width has its middle pixel on this row's last, which the bottom half stops
+        // short of.
+        const float shared = sharedLinePixel();
+        const float strokeWidth = (descriptor().scaledBorderWidth() - shared) / 2.0f;
+        if (lineColor.alpha && strokeWidth > 0.0f)
         {
             FloatRect lineRect = fillRect;
-            const float strokeWidth = descriptor().scaledBorderWidth() / 2;
             // Top
             lineRect.bottom = lineRect.top + strokeWidth;
             event.canvas().fillRectangle(lineRect, lineColor);
             // Bottom
-            lineRect.bottom = fillRect.bottom;
+            lineRect.bottom = fillRect.bottom - shared;
             lineRect.top = lineRect.bottom - strokeWidth;
             event.canvas().fillRectangle(lineRect, lineColor);
         }
+        const RectSides sides = { .top = true, .right = false, .bottom = true, .left = false };
+        paintSharedLinePixels(event, fillRect, sides, lineColor, event.surfaceHsl().toColor());
     }
 
 }

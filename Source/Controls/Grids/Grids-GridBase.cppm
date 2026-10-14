@@ -122,6 +122,8 @@ namespace ClaFi::Controls::Grids
         // outer line of the lattice: the cells leave their outermost strokes to it and draw only
         // the interior ones, each in its row's stroke.
         void adjustPaint(AdjustPaintEvent&) override;
+        // A nested grid lets its rows reach the line pixels they share with the rows around it.
+        void adjustViewPort(AdjustViewportEvent&) const override;
         // The header row, for as long as it heads a row - see Control::heldHeader.
         [[nodiscard]] const Control* heldHeader() const override;
         // Where the header is drawn: held on its rest line while a row it heads is still under it,

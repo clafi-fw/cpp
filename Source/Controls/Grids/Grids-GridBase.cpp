@@ -146,6 +146,15 @@ namespace ClaFi::Controls::Grids
         event.setColorRules(UiElement::Grid);
     }
 
+    void GridBase::adjustViewPort(AdjustViewportEvent& event) const
+    {
+        if (this == &m_descriptor.owner())
+            return;
+        const float shared = m_descriptor.sharedLinePixel();
+        event.viewport.top -= shared;
+        event.viewport.bottom += shared;
+    }
+
     const Control* GridBase::heldHeader() const
     {
         if (!m_header || !m_header->visible())

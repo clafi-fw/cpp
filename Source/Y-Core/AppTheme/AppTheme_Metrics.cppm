@@ -105,6 +105,7 @@ namespace ClaFi
         ControlMetrics page;
         ControlMetrics checkMark;
         ControlMetrics listItem;
+        ControlMetrics gridCell;
         ControlMetrics scrollButton;
         ControlMetrics scrollThumb;
         ControlMetrics tab;
@@ -192,6 +193,13 @@ namespace ClaFi
         listItem.spacing = { 4.0f, 4.0f }; // as Button
         listItem.border = border /* borderWidth needed for focus rect */;
         listItem.zDepthFactor = 1.0f;
+
+        // gridCell
+        gridCell.radius = 4.0f;
+        gridCell.padding = { 5.0f, 3.0f };
+        gridCell.spacing = { 4.0f, 4.0f }; // as Button
+        gridCell.border = Thickness::Hairline;
+        gridCell.zDepthFactor = 1.0f;
 
         // scrollButton
         scrollButton.radius = 3.0f;

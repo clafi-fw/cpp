@@ -69,7 +69,7 @@ namespace ClaFi::Controls::Grids
         m_owner{ owner },
         m_viewMode{ viewMode },
         m_gridLines{ gridLines },
-        m_designCellMetrics{ m_owner.themeMetrics().listItem },
+        m_designCellMetrics{ m_owner.themeMetrics().gridCell },
         m_scaledCellMetrics{
             m_owner.formContext(),
             m_owner.form().layoutPass(),
@@ -78,8 +78,7 @@ namespace ClaFi::Controls::Grids
         // Cannot be a default member initialiser: capturing `this` there does not compile.
         m_onCellAnimate{ [this](AnimateParams& params) { onCellAnimated(params); } }
     {
-        m_scaledCellMetrics.border = m_scaledCellMetrics.scaler().scaledStrokeWidth(m_designCellMetrics.border);
-        m_scaledCellMetrics.radius = m_scaledCellMetrics.scaler().scaleF(m_designCellMetrics.radius);
+        scaleStrokeAndRadius();
     }
 
     // The fades run under the cells of the two rings, not under a control, so Control's teardown
@@ -118,9 +117,7 @@ namespace ClaFi::Controls::Grids
 
         m_scaledCellMetrics.calculateScaledMetrics(m_designCellMetrics);
 
-        // TODO: move these two into an overloaded rescale.
-        m_scaledCellMetrics.border = m_scaledCellMetrics.scaledStrokeWidth(m_designCellMetrics.border);
-        m_scaledCellMetrics.radius = m_scaledCellMetrics.scaleF(m_designCellMetrics.radius);
+        scaleStrokeAndRadius();
 
         // recursively
         m_rootColumn.preCalcRows(m_owner);
@@ -180,7 +177,19 @@ namespace ClaFi::Controls::Grids
 
     FloatRect GridDescriptor::cellInnerRect(const FloatRect& cellRect) const
     {
-        return cellRect.inflated(-m_scaledCellMetrics.border / 2.0f);
+        // Every cell gives up the pixel an odd width shares on its bottom and right: a line's or,
+        // in the last row and column, the frame's.
+        const float shared = sharedLinePixel();
+        FloatRect result = cellRect.inflated(-(m_scaledCellMetrics.border - shared) / 2.0f);
+        result.right -= shared;
+        result.bottom -= shared;
+        return result;
+    }
+
+    float GridDescriptor::sharedLinePixel() const
+    {
+        // The scaler hands out stroke widths in whole pixels, so the width is odd or even.
+        return static_cast<int>(m_scaledCellMetrics.border) % 2 ? 1.0f : 0.0f;
     }
 
     void GridDescriptor::setHoveredCell(Control* row, const Column* column, bool initiateHint)
@@ -283,6 +292,13 @@ namespace ClaFi::Controls::Grids
         const CellPressKind cellPressKind)
     {
         m_press = { &row, column, cellPressKind };
+    }
+
+    void GridDescriptor::scaleStrokeAndRadius()
+    {
+        // TODO: move these two into an overloaded rescale.
+        m_scaledCellMetrics.border = m_scaledCellMetrics.scaledStrokeWidth(m_designCellMetrics.border);
+        m_scaledCellMetrics.radius = m_scaledCellMetrics.scaleF(m_designCellMetrics.radius);
     }
 
 }

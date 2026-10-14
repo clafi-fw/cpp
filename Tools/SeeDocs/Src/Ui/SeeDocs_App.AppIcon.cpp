@@ -98,7 +98,7 @@ namespace SeeDocs_App::AppIcon
         constexpr Color k_paperBack{ 0xFFE9EEF6 };
         constexpr Color k_paperFront{ 0xFFF7FAFD };
         constexpr Color k_paperEdge{ 0xFF9DA9C0 };
-        constexpr Color k_frameColor{ 0xFF3A3A44 };
+        constexpr Color k_frameColor = 0xFF'4220A1;//{ 0xFF3A3A44 };
         constexpr Color k_frameEdgeColor{ 0xFFF4F5F8 };
         constexpr Color k_rimShade{ 0x291E1432 };
         constexpr Color k_highlight{ 0xB8FFFFFF };
@@ -215,11 +215,18 @@ namespace SeeDocs_App::AppIcon
         });
 
         // Each starts under the ring where a line of the paper meets the rim, as wide as that line.
+        
+        constexpr Color k_StrandColor1 = 0xFF'FAA9D0;
+        constexpr Color k_StrandColor2 = 0xFF'D46AF1;
+        constexpr Color k_StrandColor3 = 0xFF'F189E1;
+
+        constexpr Color k_StrandColor4 = 0xFF'B456F6; // Top Left
+
         constexpr std::array<Strand, 4> k_strands{
-            Strand{ .points = k_skyRun, .color = k_sky, .startWidth = 0.063f },
-            Strand{ .points = k_periwinkleRun, .color = k_periwinkle, .startWidth = 0.063f },
-            Strand{ .points = k_amberRun, .color = k_amber, .startWidth = 0.063f },
-            Strand{ .points = k_backSkyRun, .color = k_sky, .startWidth = 0.061f }
+            Strand{ .points = k_skyRun, .color = k_StrandColor1, .startWidth = 0.063f },
+            Strand{ .points = k_periwinkleRun, .color = k_StrandColor2, .startWidth = 0.063f },
+            Strand{ .points = k_amberRun, .color = k_StrandColor3, .startWidth = 0.063f },
+            Strand{ .points = k_backSkyRun, .color = k_StrandColor4, .startWidth = 0.061f }
         };
 
         [[nodiscard]] FloatPoint mix(FloatPoint from, FloatPoint to, float amount);

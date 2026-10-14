@@ -359,7 +359,12 @@ namespace ClaFi::Controls::Grids
         const ScaledCellMetrics& cellLt = m_descriptor.scaledCellMetrics();
         const PaintEvent& gridEvent = m_descriptor.gridPaintEvent();
         RoundedRectangleParts cellFrame;
+        // On whole pixels, so lines of whole pixels land crisp. A cell ending the row ends with it:
+        // its sections are measured, and the row is laid out rounded up.
         cellFrame.bounds = cellRect;
+        if (event.controlBounds().bottom - cellFrame.bounds.bottom < 1.0f)
+            cellFrame.bounds.bottom = event.controlBounds().bottom;
+        cellFrame.bounds = cellFrame.bounds.rounded().toFloat();
         const CornerRadii gridRadii = GridDescriptor::cornerRadiiOf(gridEvent);
 
         const float snapThreshhold = gridEvent.radius();
@@ -416,13 +421,24 @@ namespace ClaFi::Controls::Grids
         // of its own, and a fill made conditional on the **row** having moved the surface would
         // drop exactly that case.
         const Hsl bgHsl = event.surfaceHsl();
-        event.canvas().fillPartialRoundedRectangle(cellFrame, bgHsl.toColor());
+        const Color surfaceColor = bgHsl.toColor();
+        event.canvas().fillPartialRoundedRectangle(cellFrame, surfaceColor);
+        // A line of odd width has its middle pixel on the last of the cell above or to the left of
+        // it, which that cell's own half and its highlight both stop short of.
+        const float shared = m_descriptor.sharedLinePixel();
+        RoundedRectangleParts ownFrame = cellFrame;
+        if (cellFrame.sides.bottom)
+            ownFrame.bounds.bottom -= shared;
+        if (cellFrame.sides.right)
+            ownFrame.bounds.right -= shared;
         // Each side drawn is half a line, inside the bounds, and the cell across the edge draws
         // the other half. Each half is raised off its own cell's surface, which is what lets a
         // line between two differently coloured cells follow both colours.
-        if (cellFrame.sides != RectSides::none())
-            event.canvas().drawPartialRoundedRectangle(cellFrame, event.strokeRgbOn(bgHsl),
-                cellLt.border / 2.0f);
+        const Color lineColor = event.strokeRgbOn(bgHsl);
+        const float halfWidth = (cellLt.border - shared) / 2.0f;
+        if (halfWidth > 0.0f && cellFrame.sides != RectSides::none())
+            event.canvas().drawPartialRoundedRectangle(ownFrame, lineColor, halfWidth);
+        paintSharedLinePixels(event, cellFrame.bounds, cellFrame.sides, lineColor, surfaceColor);
 
         // A blank is the surface and the lines alone: nothing is written in it, and nothing
         // lands on it for a highlight to show.
@@ -463,7 +479,7 @@ namespace ClaFi::Controls::Grids
         else if (highlightMode != CellHighlightMode::None)
         {
             // highlight inner rect (hovered/selected)
-            cellFrame.sides = RectSides::all();
+            ownFrame.sides = RectSides::all();
             float hlOpacity = StateFactors::compose(hotFactor * 0.25f, selFactor * 0.5f);
             if (hlOpacity)
             {
@@ -474,12 +490,69 @@ namespace ClaFi::Controls::Grids
                 // the line's own width, whichever cell in the row holds the selection.
                 const float strokeWidth = cellLt.border
                     + event.scaleF(event.focusedFactor() * selFactor);
-                cellFrame.bounds.inflate(-event.scaleF(event.pressedFactor()));
-                event.canvas().drawPartialRoundedRectangle(cellFrame, borderColor.withOpacity(hlOpacity), strokeWidth);
+                ownFrame.bounds.inflate(-event.scaleF(event.pressedFactor()));
+                event.canvas().drawPartialRoundedRectangle(ownFrame, borderColor.withOpacity(hlOpacity), strokeWidth);
             }
         }
         // Paint cell content;
         paintCell(event, m_descriptor.cellInnerRect(cellRect), cell.column);
+    }
+
+    void RowBase::paintSharedLinePixels(PaintEvent& event, const FloatRect& bounds, RectSides sides,
+        Color lineColor, Color surfaceColor) const
+    {
+        const float shared = m_descriptor.sharedLinePixel();
+        if (shared == 0.0f || !lineColor.alpha)
+            return;
+        // The pixel is the last of the cell above or to the left, which paints it first and in
+        // full. The other cell paints over it at half, so it comes out as the mean of the two
+        // halves - each the line standing on its own cell's surface. A cell whose line the theme
+        // leaves out paints nothing here, and its fill stands for its half.
+        const float lineOpacity = lineColor.alpha / 255.0f;
+        const Color pixelColor = Color::blend(surfaceColor, lineColor.fullyOpaque(), lineOpacity)
+            .fullyOpaque();
+        const Color overColor = pixelColor.withOpacity(0.5f);
+        if (sides.right)
+        {
+            const FloatRect strip = {
+                bounds.right - shared,
+                bounds.top,
+                bounds.right,
+                bounds.bottom
+            };
+            event.canvas().fillRectangle(strip, pixelColor);
+        }
+        if (sides.bottom)
+        {
+            const FloatRect strip = {
+                bounds.left,
+                bounds.bottom - shared,
+                bounds.right,
+                bounds.bottom
+            };
+            event.canvas().fillRectangle(strip, pixelColor);
+        }
+        if (sides.top)
+        {
+            const FloatRect strip = {
+                bounds.left,
+                bounds.top - shared,
+                bounds.right,
+                bounds.top
+            };
+            event.canvas().fillRectangle(strip, overColor);
+        }
+        if (sides.left)
+        {
+            // Short of the crossing at the bottom, where the cell below the left one lays its half.
+            const FloatRect strip = {
+                bounds.left - shared,
+                bounds.top,
+                bounds.left,
+                sides.bottom ? bounds.bottom - shared : bounds.bottom
+            };
+            event.canvas().fillRectangle(strip, overColor);
+        }
     }
 
     void RowBase::doPaintColumns(PaintEvent& event)
@@ -631,6 +704,15 @@ namespace ClaFi::Controls::Grids
     {
         // Groups and sections wear it too. See Grids#gridrow
         event.setColorRules(UiElement::GridRow);
+    }
+
+    void RowBase::adjustViewPort(AdjustViewportEvent& event) const
+    {
+        const float shared = m_descriptor.sharedLinePixel();
+        // The grid's first row has the frame above it, which shares no pixel with it.
+        if (parent() != &m_descriptor.owner() || !isFirstInParent())
+            event.viewport.top -= shared;
+        event.viewport.bottom += shared;
     }
 
     void RowBase::mouseMove(MouseMoveEvent& event)
