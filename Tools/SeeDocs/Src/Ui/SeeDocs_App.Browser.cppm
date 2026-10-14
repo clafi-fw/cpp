@@ -232,7 +232,7 @@ namespace SeeDocs_App
             std::wstring search{};              // what a search page searches for
             std::size_t depth{ 0 };   // segments of the path
             bool projectOptions{ false };   // the project's options page
-            bool searching{ false };   // a search page - the project's, or the root's for none
+            bool searching{ false };   // a search page - a folder's, a project's, or the root's
             [[nodiscard]] bool isRoot() const { return depth == 0; }
             [[nodiscard]] bool isHome() const { return project && depth == 1; }
             [[nodiscard]] bool isFolder() const { return project && depth == folderDepth + 1; }
@@ -283,13 +283,22 @@ namespace SeeDocs_App
             SurfaceTree* tree{ nullptr };
         };
         using TabTrees = std::vector<TabTree>;
-        // A line of the search box's list: a name and the project it stands in, or the search.
+        // A line of the search box's list: a name and the project it stands in, or a search.
         struct ListedLine
         {
-            const ShownProject* project{ nullptr };   // null for the search
+            const ShownProject* project{ nullptr };   // null for a search
             const NamedEntry* entry{ nullptr };
+            std::wstring searchPath{};   // the page a search's line opens
         };
         using ListedLines = std::vector<ListedLine>;
+        // A place the search box's list offers to search: a folder, a project, or the root's.
+        struct SearchPlace
+        {
+            const ShownProject* project{ nullptr };   // null for the root's
+            std::wstring folder{};   // empty for the whole project
+            std::wstring name{};   // what the search's line calls it
+        };
+        using SearchPlaces = std::vector<SearchPlace>;
         using ShownProjects = std::vector<const ShownProject*>;
     private:
         [[nodiscard]] Target resolve(const PageData&) const;
@@ -364,11 +373,16 @@ namespace SeeDocs_App
         [[nodiscard]] ShownProjects searchedProjects() const;
         // The projects a search page searches: its own, or all from the root.
         [[nodiscard]] ShownProjects searchedProjects(const Target&) const;
-        // Search "row" in ClaFi - the search's list line, and the name of its page.
+        // Search "row" in ClaFi - a search's list line, and the name of its page.
         [[nodiscard]] static std::wstring searchTitle(std::wstring_view typed,
-            const ShownProjects&);
-        // The path of a search's page: the query after the project's segment, or after the root.
-        [[nodiscard]] static std::wstring searchPath(const ShownProject*, std::wstring_view query);
+            std::wstring_view place);
+        // Where the root's search searches: the one project open, all projects, or none named.
+        [[nodiscard]] std::wstring rootSearchPlace() const;
+        // Where a search page searches: its folder, its project, or the root's place.
+        [[nodiscard]] std::wstring searchPlaceOf(const Target&) const;
+        // A search page's path: the query after its folder's path, its project's, or the root.
+        [[nodiscard]] static std::wstring searchPath(const ShownProject*, std::wstring_view folder,
+            std::wstring_view query);
         [[nodiscard]] Page searchPageOf(const Target&) const;
         // The box's requests, Ctrl+F putting the focus in it, and F3 and Shift+F3 stepping.
         void connectSearch();
@@ -384,17 +398,19 @@ namespace SeeDocs_App
         // The focus onto the shown page's current match, else back where it came into the box
         // from while that is shown, else onto the page.
         void handBackFocus();
-        // Drops the names holding what the box holds under it, the search among them. See README
+        // Drops the searches and the names holding what the box holds under it. See README
         void listMatches();
+        // The places the list offers to search, the narrowest first. See README
+        [[nodiscard]] SearchPlaces searchPlaces();
         [[nodiscard]] DropListLine lineOf(const ListedLine&, const NameHit&,
             bool namesProject) const;
-        // The search's own line, naming where it searches, a divider under it.
+        // A search's line, naming where it searches.
         [[nodiscard]] static DropListLine searchLine(std::wstring_view typed,
-            const ShownProjects&);
+            std::wstring_view place);
         // Opens what a line of the list stands for, in a new tab where Alt was held.
         void openListed(std::size_t line, KeyModifiers);
-        // Opens the page of what the box holds, in a new tab where Alt was held.
-        void openSearch(KeyModifiers);
+        // Opens a search's page, in a new tab where Alt was held.
+        void openSearch(const Url&, KeyModifiers);
         void dropListed();   // the list down and its lines forgotten, a surface being read again
     private:
         static constexpr float k_treeWidth = 300.0f;   // where the trees' bar starts

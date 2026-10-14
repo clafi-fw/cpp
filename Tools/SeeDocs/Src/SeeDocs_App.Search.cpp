@@ -126,6 +126,18 @@ namespace SeeDocs_App
             return path.substr(0, cut);
         }
 
+        // In the folder or one under it - a folder is not in itself; the empty folder holds all.
+        [[nodiscard]] bool standsIn(const NamedEntry& entry, const std::wstring_view folder)
+        {
+            if (folder.empty())
+                return true;
+            const std::wstring_view path = entry.folder;
+            if (path == folder)
+                return entry.kind != NameKind::Folder;
+            return path.size() > folder.size() && path.starts_with(folder)
+                && path[folder.size()] == k_folderSeparator;
+        }
+
         [[nodiscard]] std::wstring citeKey(const std::wstring_view note,
             const std::wstring_view anchor)
         {
@@ -459,6 +471,8 @@ namespace SeeDocs_App
             {
                 if (!entry.comment || named.contains(&entry))
                     continue;
+                if (!standsIn(entry, project.folder))
+                    continue;
                 if (!findRead(entry.comment->text, searcher))
                     continue;
                 TableRow row;
@@ -483,6 +497,14 @@ namespace SeeDocs_App
                     continue;
                 for (const NoteSection& noteSection : note->sections)
                 {
+                    // A section stands where its declaration does, and one with none in the
+                    // project alone.
+                    const NamedEntry* owner = project.index->ownerOf(note->stem, noteSection);
+                    const bool searched = owner
+                        ? standsIn(*owner, project.folder)
+                        : project.folder.empty();
+                    if (!searched)
+                        continue;
                     const bool headingHolds = findRead(noteSection.heading, searcher).has_value();
                     const std::optional<std::wstring> words = wordsOf(noteSection, searcher,
                         headingHolds);
@@ -491,7 +513,7 @@ namespace SeeDocs_App
                     Runs where = { muted(note->stem + std::wstring{ k_noteJoin }), Run{
                         .text = noteSection.heading,
                         .style = RunStyle::Plain,
-                        .link = project.index->ownerOf(note->stem, noteSection)
+                        .link = owner ? owner->link : std::wstring{}
                     } };
                     TableRow row;
                     row.cells.push_back(std::move(where));
@@ -541,9 +563,12 @@ namespace SeeDocs_App
 
         [[nodiscard]] std::wstring placeWords(const SearchedProjects& projects)
         {
-            if (projects.size() == 1)
-                return std::wstring{ projects.front().name };
-            return L"the projects open";
+            if (projects.size() != 1)
+                return L"the projects open";
+            const SearchedProject& project = projects.front();
+            if (!project.folder.empty())
+                return folderNameOf(project.folder);
+            return std::wstring{ project.name };
         }
     }
 
@@ -679,16 +704,16 @@ namespace SeeDocs_App
         return result;
     }
 
-    std::wstring SearchIndex::ownerOf(const std::wstring_view note,
+    const NamedEntry* SearchIndex::ownerOf(const std::wstring_view note,
         const NoteSection& section) const
     {
         const SectionOwners::const_iterator named = m_named.find(section.heading);
         if (named != m_named.end())
-            return named->second;
+            return &m_entries[named->second];
         const SectionOwners::const_iterator cited = m_cited.find(citeKey(note, section.anchor));
         if (cited != m_cited.end())
-            return cited->second;
-        return {};
+            return &m_entries[cited->second];
+        return nullptr;
     }
 
     // Every folder on the way to one with modules is a folder, whether or not it holds modules of
@@ -890,13 +915,13 @@ namespace SeeDocs_App
 
     void SearchIndex::add(NamedEntry entry)
     {
-        addOwner(entry);
+        addOwner(entry, m_entries.size());
         m_entries.push_back(std::move(entry));
     }
 
     // A section a See reaches is the first such declaration's; one found by name is the
     // declaration's its heading spells - an event's by its struct, as a page finds it.
-    void SearchIndex::addOwner(const NamedEntry& entry)
+    void SearchIndex::addOwner(const NamedEntry& entry, const std::size_t index)
     {
         if (!entry.comment)
             return;
@@ -908,13 +933,13 @@ namespace SeeDocs_App
             const std::wstring anchor = reference->anchor.empty()
                 ? slug(citedName)
                 : reference->anchor;
-            m_cited.try_emplace(citeKey(reference->note, anchor), entry.link);
+            m_cited.try_emplace(citeKey(reference->note, anchor), index);
         }
         const bool isMember = entry.type && entry.kind != NameKind::Type;
         const std::wstring heading = isMember
             ? footnoteHeading(entry.type->name, citedName)
             : std::wstring{ citedName };
-        m_named.try_emplace(heading, entry.link);
+        m_named.try_emplace(heading, index);
     }
 
     std::unordered_set<const Type*> SearchIndex::typesUnder(const Searcher& owner) const
@@ -954,7 +979,10 @@ namespace SeeDocs_App
         for (std::size_t i = 0; i != count && !whole.empty(); ++i)
         {
             const SearchedProject& project = projects[i];
-            const NameHits hits = project.index->find(typed);
+            NameHits hits = project.index->find(typed);
+            std::erase_if(hits, [&project](const NameHit& hit) {
+                return !standsIn(*hit.entry, project.folder);
+            });
             gatherNames(sections, project, i, hits, spell);
             gatherHints(hints, project, i, hits, whole, spell);
             gatherFootnotes(footnotes, project, i, whole, spell);

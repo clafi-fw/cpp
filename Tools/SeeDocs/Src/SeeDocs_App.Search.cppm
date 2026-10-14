@@ -67,8 +67,8 @@ namespace SeeDocs_App
 
     export using NameHits = std::vector<NameHit>;
 
-    // A declaration a footnote section belongs to, by the link a page gives it.
-    using SectionOwners = std::unordered_map<std::wstring, std::wstring>;
+    // The declaration a footnote section belongs to, by its place among the index's entries.
+    using SectionOwners = std::unordered_map<std::wstring, std::size_t>;
 
     // Every name a search can find in a project - its folders, modules, types and their members,
     // functions and constants - in the tree's own order, and what each footnote section belongs to.
@@ -82,16 +82,14 @@ namespace SeeDocs_App
         // The names holding the query, best first, as many as the limit takes. See README
         [[nodiscard]] NameHits find(std::wstring_view query,
             std::size_t limit = std::numeric_limits<std::size_t>::max()) const;
-        // The link of the declaration the section belongs to: the one its heading names, else the
-        // first whose See reaches it; empty for none.
-        [[nodiscard]] std::wstring ownerOf(std::wstring_view note,
-            const NoteSection&) const;
+        // The declaration the section's heading names, else the first whose See reaches it.
+        [[nodiscard]] const NamedEntry* ownerOf(std::wstring_view note, const NoteSection&) const;
     private:
         void addFolders(const ContentsFolders&);
         void addModule(const Surface&, const ContentsFolder&, const ContentsModule&);
         void addType(const Surface&, const ContentsFolder&, const ContentsModule&, const Type&);
         void add(NamedEntry);
-        void addOwner(const NamedEntry&);
+        void addOwner(const NamedEntry&, std::size_t index);
         // The types named exactly so, and every type they stand on, as far as the surface reads.
         [[nodiscard]] std::unordered_set<const Type*> typesUnder(
             const ClaFi::Searcher& owner) const;
@@ -102,13 +100,14 @@ namespace SeeDocs_App
         SectionOwners m_named{};   // by the heading a footnote found by name is written under
     };
 
-    // A project searched: what its name is, and what is read in it.
+    // A project searched: what its name is, what is read in it, and the folder searched.
     export struct SearchedProject
     {
         std::wstring_view name;
         const Surface* surface{ nullptr };
         Notes* notes{ nullptr };
         const SearchIndex* index{ nullptr };
+        std::wstring_view folder;   // with every folder under it; empty for the whole project
     };
 
     export using SearchedProjects = std::vector<SearchedProject>;

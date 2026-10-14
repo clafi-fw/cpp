@@ -756,7 +756,7 @@ namespace SeeDocs_App
             tree.setCurrentItem(nullptr);
         else if (target.projectOptions)
             tree.followOptions(target.project->id);
-        else if (target.isHome() || target.isGone() || target.searching)
+        else if (target.isHome() || target.isGone() || (target.searching && target.folder.empty()))
             tree.followHome(target.project->id);
         else
             tree.follow(target.project->id, target.folder, target.module, target.type);
@@ -812,9 +812,9 @@ namespace SeeDocs_App
     }
 
     // The project is taken by its segment, the folders as far as the segments after it spell
-    // folders its surface has, and what follows is looked up by its spelling and held to the one
-    // above it, so a module's name under the wrong folder resolves to nothing, as a path no
-    // project carries does.
+    // folders its surface has, and what follows is a search's segment or is looked up by its
+    // spelling and held to the one above it, so a module's name under the wrong folder resolves to
+    // nothing, as a path no project carries does.
     SurfaceBrowser::Target SurfaceBrowser::resolve(const PageData& data) const
     {
         const std::vector<std::wstring_view> segments = segmentsOf(data);
@@ -836,12 +836,6 @@ namespace SeeDocs_App
             result.projectOptions = true;
             return result;
         }
-        if (segments.size() == 2 && segments[1].starts_with(k_searchPrefix))
-        {
-            result.searching = true;
-            result.search = unescapedQuery(segments[1].substr(k_searchPrefix.size()));
-            return result;
-        }
 
         std::size_t next = 1;
         while (next < segments.size())
@@ -853,6 +847,12 @@ namespace SeeDocs_App
             ++next;
         }
         result.folderDepth = next - 1;
+        if (next + 1 == segments.size() && segments[next].starts_with(k_searchPrefix))
+        {
+            result.searching = true;
+            result.search = unescapedQuery(segments[next].substr(k_searchPrefix.size()));
+            return result;
+        }
         const Folders::const_iterator folder = project->folders.find(result.folder);
         if (folder != project->folders.end())
             result.contents = folder->second;
@@ -1134,7 +1134,7 @@ namespace SeeDocs_App
         if (target.isRoot())
             return appContext().appName().plainText();
         if (target.searching)
-            return searchTitle(target.search, searchedProjects(target));
+            return searchTitle(target.search, searchPlaceOf(target));
         if (!target.project)
             return data.name;
         if (target.isHome())
@@ -1549,9 +1549,11 @@ namespace SeeDocs_App
     }
 
     std::wstring SurfaceBrowser::searchPath(const ShownProject* project,
-        const std::wstring_view query)
+        const std::wstring_view folder, const std::wstring_view query)
     {
-        std::wstring result = project ? homePath(*project) : std::wstring{};
+        std::wstring result = project
+            ? pathOf(*project, folder, nullptr, nullptr)
+            : std::wstring{};
         result.append(1, ConfigNames::pathSeparator);
         result.append(k_searchPrefix);
         result.append(escapedQuery(query));
@@ -1571,18 +1573,34 @@ namespace SeeDocs_App
         return result;
     }
 
-    // The project searched by its name, or all of them from the root; none open names no place.
     std::wstring SurfaceBrowser::searchTitle(const std::wstring_view typed,
-        const ShownProjects& projects)
+        const std::wstring_view place)
     {
         std::wstring result = L"Search \"";
         result.append(typed);
         result.append(L"\"");
-        if (projects.size() == 1)
-            result.append(L" in ").append(projects.front()->open.project.name);
-        else if (!projects.empty())
-            result.append(L" in all projects");
+        if (!place.empty())
+            result.append(L" in ").append(place);
         return result;
+    }
+
+    std::wstring SurfaceBrowser::rootSearchPlace() const
+    {
+        if (m_projects.size() == 1)
+            return m_projects.front()->open.project.name;
+        if (m_projects.empty())
+            return {};
+        return L"all projects";
+    }
+
+    // A folder is named as its own crumb is, by its last segment.
+    std::wstring SurfaceBrowser::searchPlaceOf(const Target& target) const
+    {
+        if (!target.project)
+            return rootSearchPlace();
+        if (!target.folder.empty())
+            return folderNameOf(target.folder);
+        return target.project->open.project.name;
     }
 
     // A project's search page links in the project, as its other pages do; the root's by url,
@@ -1597,7 +1615,8 @@ namespace SeeDocs_App
                 .name = project->open.project.name,
                 .surface = &project->open.surface,
                 .notes = &project->open.notes,
-                .index = &project->index
+                .index = &project->index,
+                .folder = target.folder
             });
         }
         const bool rooted = !target.project;
@@ -1777,10 +1796,10 @@ namespace SeeDocs_App
         BrowserControl::nestedControlDeleted(value);
     }
 
-    // **The search's own line leads**, a divider under it, and the names follow. No line is
-    // current until the keys go down the list, so Enter steps through the page's matches. The
-    // best names of each project searched are merged by how they hold the words, and a line names
-    // its project where several are searched.
+    // **The searches lead**, a divider under the last, and the names follow. No line is current
+    // until the keys go down the list, so Enter steps through the page's matches. The best names of
+    // each project searched are merged by how they hold the words, and a line names its project
+    // where several are searched.
     void SurfaceBrowser::listMatches()
     {
         m_listed.clear();
@@ -1813,14 +1832,55 @@ namespace SeeDocs_App
 
         const bool namesProject = projects.size() > 1;
         DropListLines lines;
-        m_listed.push_back({ .project = nullptr, .entry = nullptr });
-        lines.push_back(searchLine(typed, projects));
+        for (const SearchPlace& place : searchPlaces())
+        {
+            m_listed.push_back({
+                .project = nullptr,
+                .entry = nullptr,
+                .searchPath = searchPath(place.project, place.folder, typed)
+            });
+            lines.push_back(searchLine(typed, place.name));
+        }
+        lines.back().dividerBelow = true;
         for (const Found& each : found)
         {
-            m_listed.push_back({ .project = each.project, .entry = each.hit.entry });
+            m_listed.push_back({
+                .project = each.project,
+                .entry = each.hit.entry,
+                .searchPath = {}
+            });
             lines.push_back(lineOf(m_listed.back(), each.hit, namesProject));
         }
         m_search.showList(std::move(lines), std::nullopt);
+    }
+
+    // **The narrowest place first**: the folder the shown page stands in, its project, then all
+    // projects. A place that searches what the one before it does is left out - the home's folder
+    // is its project, and one project open is all of them - and the root offers its own search.
+    SurfaceBrowser::SearchPlaces SurfaceBrowser::searchPlaces()
+    {
+        const BrowserPage* page = currentPage();
+        const Target target = page ? resolve(page->pageData()) : Target{};
+        SearchPlaces result;
+        if (target.project)
+        {
+            if (!target.folder.empty())
+            {
+                result.push_back({
+                    .project = target.project,
+                    .folder = target.folder,
+                    .name = folderNameOf(target.folder)
+                });
+            }
+            result.push_back({
+                .project = target.project,
+                .folder = {},
+                .name = target.project->open.project.name
+            });
+        }
+        if (!target.project || m_projects.size() > 1)
+            result.push_back({ .project = nullptr, .folder = {}, .name = rootSearchPlace() });
+        return result;
     }
 
     // The mark of what the name is - a member's line keeps the room blank - a member's type muted
@@ -1879,11 +1939,10 @@ namespace SeeDocs_App
     }
 
     DropListLine SurfaceBrowser::searchLine(const std::wstring_view typed,
-        const ShownProjects& projects)
+        const std::wstring_view place)
     {
         DropListLine line;
-        line.text << rowIcon(RowIcon::Search) << Space{ k_iconGap } << searchTitle(typed, projects);
-        line.dividerBelow = true;
+        line.text << rowIcon(RowIcon::Search) << Space{ k_iconGap } << searchTitle(typed, place);
         return line;
     }
 
@@ -1894,7 +1953,7 @@ namespace SeeDocs_App
         const ListedLine& listed = m_listed[line];
         if (!listed.entry)
         {
-            openSearch(modifiers);
+            openSearch(Url{ listed.searchPath }, modifiers);
             return;
         }
         const std::optional<Url> url = urlIn(*listed.project, listed.entry->link);
@@ -1909,14 +1968,8 @@ namespace SeeDocs_App
         goTo(*url);
     }
 
-    // The search page of the project the shown tab stands in, or the root's.
-    void SurfaceBrowser::openSearch(const KeyModifiers modifiers)
+    void SurfaceBrowser::openSearch(const Url& url, const KeyModifiers modifiers)
     {
-        const std::wstring_view typed = trimmed(m_search.searchText());
-        if (typed.empty())
-            return;
-        const ShownProject* project = m_shownProject ? projectOf(*m_shownProject) : nullptr;
-        const Url url{ searchPath(project, typed) };
         if (modifiers.alt)
             addTab(url, SelectTab::No);
         else
