@@ -194,7 +194,7 @@ namespace ClaFi::Graphics
         const FloatPoint pBR_H = { r_bound - radii.bottomRight, b };
         const FloatPoint pBL_H = { l + radii.bottomLeft, b };
         const FloatPoint pBL_V = { l, b - radii.bottomLeft };
-        const FloatPoint pTL_V = { l, t + radii.bottomLeft };
+        const FloatPoint pTL_V = { l, t + radii.topLeft };
 
         struct Seg
         {

@@ -397,9 +397,15 @@ namespace ClaFi::Controls::Grids
         cellFrame.radii.bottomLeft = std::max(0.0f, cellFrame.radii.bottomLeft - cellLt.border);
 
         const bool alwaysDrawLines = alwaysDrawGridLines();
-        const bool drawsVertical = (alwaysDrawLines || m_descriptor.drawsVerticalLines()) && !snapToRight;
-        const bool drawsHorizontal = (alwaysDrawLines || m_descriptor.drawsHorizontalLines()) && !snapToBottom;
-        cellFrame.sides = { drawsHorizontal, drawsVertical, drawsHorizontal, drawsVertical };
+        const bool drawsVertical = alwaysDrawLines || m_descriptor.drawsVerticalLines();
+        const bool drawsHorizontal = alwaysDrawLines || m_descriptor.drawsHorizontalLines();
+        // A side on the grid's frame is the frame's to draw.
+        cellFrame.sides = {
+            .top = drawsHorizontal && !isfirstVisibleSection,
+            .right = drawsVertical && !snapToRight,
+            .bottom = drawsHorizontal && !snapToBottom,
+            .left = drawsVertical && !cell.isFirstColumn
+        };
         // **A row paints no surface of its own, so its cells are it**, and the fill is
         // unconditional. What a cell stands on is the row's surface: what the row inherited from
         // whatever holds it, with the row's own rules over that - GridRow's Selected rule among
@@ -414,7 +420,7 @@ namespace ClaFi::Controls::Grids
         // Each side drawn is half a line, inside the bounds, and the cell across the edge draws
         // the other half. Each half is raised off its own cell's surface, which is what lets a
         // line between two differently coloured cells follow both colours.
-        if (drawsVertical || drawsHorizontal)
+        if (cellFrame.sides != RectSides::none())
             event.canvas().drawPartialRoundedRectangle(cellFrame, event.strokeRgbOn(bgHsl),
                 cellLt.border / 2.0f);
 
