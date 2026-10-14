@@ -54,7 +54,7 @@ namespace Themes_App
         const std::wstring& pagePath() { return m_pagePath; }
     protected:
         void click(ClickEvent&) override;
-        void nestedDoubleClick(DoubleClickEvent&) override;
+        void doubleClick(DoubleClickEvent&) override;
         [[nodiscard]] EditorMode editorMode() const override;
         void nestedContextPopup(ContextPopupEvent&) override;
         void paintIcon(PaintIconEvent&) override;
@@ -148,11 +148,13 @@ namespace Themes_App
             openTheme(event.stamp);
     }
 
-    // A double click on the check mark never arrives here: the indicator answers that one itself
-    // and stops it, which is what keeps taking a tile into the selection from opening it.
-    void ThemeButton::nestedDoubleClick(DoubleClickEvent& event)
+    // A double click on the check mark is spent by ButtonBase, which is what keeps taking a tile
+    // into the selection from opening it.
+    void ThemeButton::doubleClick(DoubleClickEvent& event)
     {
-        Base::nestedDoubleClick(event);
+        Base::doubleClick(event);
+        if (event.propagationStopped())
+            return;
         // **The gesture is spent here.** A double click that nothing stopped is read by the form as
         // the press it also is, and that press would act on a tile the navigation is about to
         // take down. Said before the command runs, because the command owns what happens next and

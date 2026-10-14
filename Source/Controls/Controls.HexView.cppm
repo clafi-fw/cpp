@@ -95,8 +95,8 @@ namespace ClaFi::Controls
         [[nodiscard]] ScaledDimensions calculateContent(AlignEvent&) override;
         void paintSurface(PaintEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
-        void nestedDoubleClick(DoubleClickEvent&) override;
-        void nestedTripleClick(TripleClickEvent&) override;
+        void doubleClick(DoubleClickEvent&) override;
+        void tripleClick(TripleClickEvent&) override;
         void nestedDrag(DragEvent&) override;
         void mouseMove(MouseMoveEvent&) override;
         void hoverLeave() override;

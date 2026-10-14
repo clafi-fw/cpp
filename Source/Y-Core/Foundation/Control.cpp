@@ -365,9 +365,9 @@ namespace ClaFi
         return form.appContext();
     }
 
-    // NestedClickEvent
+    // NestedClickEventBase
 
-    NestedClickEvent::NestedClickEvent(const ClickEvent& click)
+    NestedClickEventBase::NestedClickEventBase(const ClickEventBase& click)
         :
         ClickEventBase{ *click.control, click.form, click.stamp },
         clickedControl{ *click.control }
@@ -1738,12 +1738,22 @@ namespace ClaFi
         emitEvent(event);
     }
 
-    void Control::nestedDoubleClick(DoubleClickEvent& event)
+    void Control::doubleClick(DoubleClickEvent& event)
     {
         emitEvent(event);
     }
 
-    void Control::nestedTripleClick(TripleClickEvent& event)
+    void Control::nestedDoubleClick(NestedDoubleClickEvent& event)
+    {
+        emitEvent(event);
+    }
+
+    void Control::tripleClick(TripleClickEvent& event)
+    {
+        emitEvent(event);
+    }
+
+    void Control::nestedTripleClick(NestedTripleClickEvent& event)
     {
         emitEvent(event);
     }
@@ -2655,37 +2665,39 @@ namespace ClaFi
 
     // **A click hook that deletes its control stops the event.** The walk reads each control's
     // parent after its hook has run, and a stopped event is what keeps it off a deleted one.
-    void Control::doClick(ClickEvent& event)
+    template <typename OwnEvent, typename NestedEvent>
+    bool Control::raiseClick(OwnEvent& event, void (Control::*own)(OwnEvent&),
+        void (Control::*nested)(NestedEvent&))
     {
-        invalidateState();
-        click(event);
+        (this->*own)(event);
         if (event.propagationStopped())
-            return;
+            return true;
 
-        NestedClickEvent nested{ event };
+        NestedEvent nestedEvent{ event };
         Control* control = this;
         do
         {
-            nested.control = control;
-            control->nestedClick(nested);
+            nestedEvent.control = control;
+            (control->*nested)(nestedEvent);
         }
-        while (!nested.propagationStopped() && ((control = control->m_parent)));
+        while (!nestedEvent.propagationStopped() && ((control = control->m_parent)));
+        return nestedEvent.propagationStopped();
     }
 
-    void Control::doDoubleClick(DoubleClickEvent& event, PointInForm)
+    void Control::doClick(ClickEvent& event)
     {
-        Control* control = this;
-        do control->nestedDoubleClick(event);
-        while (!event.propagationStopped() && ((control = control->m_parent)));
-        // don't place code here - we may be killed inside the nestedClick()
+        invalidateState();
+        raiseClick(event, &Control::click, &Control::nestedClick);
     }
 
-    void Control::doTripleClick(TripleClickEvent& event, PointInForm)
+    bool Control::doDoubleClick(DoubleClickEvent& event)
     {
-        Control* control = this;
-        do control->nestedTripleClick(event);
-        while (!event.propagationStopped() && ((control = control->m_parent)));
-        // don't place code here - we may be killed inside the nestedClick()
+        return raiseClick(event, &Control::doubleClick, &Control::nestedDoubleClick);
+    }
+
+    bool Control::doTripleClick(TripleClickEvent& event)
+    {
+        return raiseClick(event, &Control::tripleClick, &Control::nestedTripleClick);
     }
 
     Control& Control::clickTarget()

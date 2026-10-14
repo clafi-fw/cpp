@@ -144,7 +144,7 @@ namespace ClaFi::Controls::Grids
         // pointer hit and climbs, so the grid sees every one of them, and the grid is what holds
         // the selected cell the edit is for. The first click of the pair has already put the
         // selection on the cell under the pointer.
-        void nestedDoubleClick(DoubleClickEvent&) override;
+        void nestedDoubleClick(NestedDoubleClickEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
         // Puts a row added after the new-item row ahead of it, and notes it for requestNewItem.
         void controlAdded(Control&) override;

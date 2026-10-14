@@ -93,9 +93,11 @@ namespace ClaFi::Controls
         // The shape a held header is laid on: its rect with the corners it paints. See
         // PaintEvent::paintHeldBackdrop.
         [[nodiscard]] RoundedRectangleParts silhouette(const PaintEvent& hostEvent, const FloatRect& headerRect) const;
+        // The strip answers a double click in every look, so a press on it is the header's own.
+        [[nodiscard]] bool isClickTarget() const override { return true; }
     protected:
         void adjustPaint(AdjustPaintEvent&) override;
-        void nestedDoubleClick(DoubleClickEvent&) override;
+        void nestedDoubleClick(NestedDoubleClickEvent&) override;
         ScaledDimensions calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
@@ -260,7 +262,7 @@ namespace ClaFi::Controls
     // click, so the whole header answers one. A double click landing on the button toggles twice
     // over - once from the click inside it, once from here - and lands back where it started,
     // which is what a double click on a chevron already means.
-    void ExpanderHeader::nestedDoubleClick(DoubleClickEvent& event)
+    void ExpanderHeader::nestedDoubleClick(NestedDoubleClickEvent& event)
     {
         PanelBase::nestedDoubleClick(event);
         toggleExpanded();

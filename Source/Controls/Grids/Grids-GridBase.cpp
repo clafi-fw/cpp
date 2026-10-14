@@ -210,7 +210,7 @@ namespace ClaFi::Controls::Grids
         m_descriptor.endCellSelection();
     }
 
-    void GridBase::nestedDoubleClick(DoubleClickEvent& event)
+    void GridBase::nestedDoubleClick(NestedDoubleClickEvent& event)
     {
         if (editSelectedCell())
         {

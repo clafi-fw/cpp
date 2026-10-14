@@ -189,9 +189,9 @@ namespace ClaFi::Controls
     // The second press on a pixel asks for it to be acted on - the colour editor, where this
     // viewer hangs one. A double click on the squares beside the picture names no pixel and asks
     // for nothing.
-    void PictureView::nestedDoubleClick(DoubleClickEvent& event)
+    void PictureView::doubleClick(DoubleClickEvent& event)
     {
-        Control::nestedDoubleClick(event);
+        Control::doubleClick(event);
         if (event.propagationStopped())
             return;
 

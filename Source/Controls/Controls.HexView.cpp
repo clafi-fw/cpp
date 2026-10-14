@@ -212,9 +212,9 @@ namespace ClaFi::Controls
         takeHit(pointInControl(event.clickPos()), event.modifiers.shift);
     }
 
-    void HexView::nestedDoubleClick(DoubleClickEvent& event)
+    void HexView::doubleClick(DoubleClickEvent& event)
     {
-        Control::nestedDoubleClick(event);
+        Control::doubleClick(event);
         if (event.propagationStopped())
             return;
 
@@ -225,9 +225,9 @@ namespace ClaFi::Controls
             event.stopPropagation();
     }
 
-    void HexView::nestedTripleClick(TripleClickEvent& event)
+    void HexView::tripleClick(TripleClickEvent& event)
     {
-        Control::nestedTripleClick(event);
+        Control::tripleClick(event);
         if (event.propagationStopped())
             return;
 

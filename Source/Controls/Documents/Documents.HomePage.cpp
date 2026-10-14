@@ -79,9 +79,9 @@ namespace ClaFi::Documents
                 return;
             openDocument(*tile, event.stamp);
         });
-        view.onDoubleClick([this](DoubleClickEvent& event) {
+        view.onNestedDoubleClick([this](NestedDoubleClickEvent& event) {
             DocumentTile* tile = m_tiles->currentTile();
-            if (!tile || tile != event.control)
+            if (!tile || tile != &event.clickedControl)
                 return;
             // **The gesture is spent here.** A double click that nothing stopped is read by the
             // form as the press it also is, and that press would act on a tile the navigation is

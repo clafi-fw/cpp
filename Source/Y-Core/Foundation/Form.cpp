@@ -918,11 +918,14 @@ namespace ClaFi
 
         bool handled = false;
         if (SearchControlResult searhResult = controlAt(pt))
-            if ((searhResult.control == Input::hoveredControl()) && (searhResult.control->enabled(true)))
+            if (searhResult.control == Input::hoveredControl())
             {
-                DoubleClickEvent event{ *searhResult.control, *this };
-                searhResult.control->doDoubleClick(event, pt);
-                handled = event.propagationStopped();
+                Control& target = searhResult.control->clickTarget();
+                if (target.canClick())
+                {
+                    DoubleClickEvent event{ target, *this };
+                    handled = target.doDoubleClick(event);
+                }
             }
         if (!handled)
             wnd_mouseDown(pt, stamp, handled);
@@ -941,11 +944,14 @@ namespace ClaFi
 
         bool handled = false;
         if (SearchControlResult searhResult = controlAt(pt))
-            if ((searhResult.control == Input::hoveredControl()) && (searhResult.control->enabled(true)))
+            if (searhResult.control == Input::hoveredControl())
             {
-                TripleClickEvent event{ *searhResult.control, *this };
-                searhResult.control->doTripleClick(event, pt);
-                handled = event.propagationStopped();
+                Control& target = searhResult.control->clickTarget();
+                if (target.canClick())
+                {
+                    TripleClickEvent event{ target, *this };
+                    handled = target.doTripleClick(event);
+                }
             }
         // Most controls have nothing to say about a third press, and one that does not read it
         // gets the press it also is - so a run of clicks on a button is a run of clicks.

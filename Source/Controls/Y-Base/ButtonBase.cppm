@@ -75,6 +75,7 @@ namespace ClaFi::Controls
         void nestedPressDown(PressDownEvent&) override;
         void nestedPressUp(PressUpEvent&) override;
         void click(ClickEvent&) override;
+        void doubleClick(DoubleClickEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;
         // A button's children are its parts, and there is room for two - see addChild.
         bool isChildPart(const Control&) const override { return true; }
@@ -86,6 +87,8 @@ namespace ClaFi::Controls
         Control& insertIndicator();
         void applyIndicatorVisibility();
         void injectCtrl(ClickEventBase&);
+        // Whether the mouse is over the indicator, which is what tells a press on it apart.
+        [[nodiscard]] bool indicatorPointedAt() const;
         void adjustForIndicator(ScaledSpacing spacing, FloatRect& rect) const;
         // Takes the indicator and a left icon off the box the text stands in, with their gaps.
         void adjustForSideParts(ScaledSpacing spacing, float iconWidth, FloatRect& rect) const;

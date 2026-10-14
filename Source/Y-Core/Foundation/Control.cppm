@@ -201,27 +201,48 @@ namespace ClaFi
         using ClickEventBase::ClickEventBase;
     };
 
-    // A click on the control it is raised on or on any control inside it. See Control-Foundation
-    export class NestedClickEvent : public ClickEventBase
+    // What every nested click event carries besides the click. See Control-Foundation
+    export class NestedClickEventBase : public ClickEventBase
     {
     public:
-        explicit NestedClickEvent(const ClickEvent&);
+        explicit NestedClickEventBase(const ClickEventBase&);
     public:
         Control& clickedControl;   // the control the click is on
     };
 
-    // The second press of one run of clicks.
+    // A click on the control it is raised on or on any control inside it. See Control-Foundation
+    export class NestedClickEvent : public NestedClickEventBase
+    {
+    public:
+        using NestedClickEventBase::NestedClickEventBase;
+    };
+
+    // The second press of one run of clicks, on the control it is raised on. See Control-Foundation
     export class DoubleClickEvent : public ClickEventBase
     {
     public:
         using ClickEventBase::ClickEventBase;
     };
 
-    // The third press of one run of clicks. See Control-Foundation
+    // A double click on the control it is raised on or on any control inside it.
+    export class NestedDoubleClickEvent : public NestedClickEventBase
+    {
+    public:
+        using NestedClickEventBase::NestedClickEventBase;
+    };
+
+    // The third press of one run of clicks, on the control it is raised on. See Control-Foundation
     export class TripleClickEvent : public ClickEventBase
     {
     public:
         using ClickEventBase::ClickEventBase;
+    };
+
+    // A triple click on the control it is raised on or on any control inside it.
+    export class NestedTripleClickEvent : public NestedClickEventBase
+    {
+    public:
+        using NestedClickEventBase::NestedClickEventBase;
     };
 
     // Asked what state the control is in, so that whatever draws or reads it agrees.
@@ -603,10 +624,14 @@ namespace ClaFi
         DECLARE_EVENT(ClickEvent, OnClick, onClick)   // a click on this control
         // A click on this control or on any control inside it.
         DECLARE_EVENT(NestedClickEvent, OnNestedClick, onNestedClick)
-        // The second press of a run of clicks.
+        // The second press of a run of clicks on this control.
         DECLARE_EVENT(DoubleClickEvent, OnDoubleClick, onDoubleClick)
-        // The third press of a run of clicks.
+        // A double click on this control or on any control inside it.
+        DECLARE_EVENT(NestedDoubleClickEvent, OnNestedDoubleClick, onNestedDoubleClick)
+        // The third press of a run of clicks on this control.
         DECLARE_EVENT(TripleClickEvent, OnTripleClick, onTripleClick)
+        // A triple click on this control or on any control inside it.
+        DECLARE_EVENT(NestedTripleClickEvent, OnNestedTripleClick, onNestedTripleClick)
         // A button going down on this control.
         DECLARE_EVENT(PressDownEvent, OnPressDown, onPressDown)
         // The pointer entering this control.
@@ -1225,8 +1250,10 @@ namespace ClaFi
         virtual void nestedPressUp(PressUpEvent&) {}
         virtual void click(ClickEvent&);
         virtual void nestedClick(NestedClickEvent&);
-        virtual void nestedDoubleClick(DoubleClickEvent&);
-        virtual void nestedTripleClick(TripleClickEvent&);
+        virtual void doubleClick(DoubleClickEvent&);
+        virtual void nestedDoubleClick(NestedDoubleClickEvent&);
+        virtual void tripleClick(TripleClickEvent&);
+        virtual void nestedTripleClick(NestedTripleClickEvent&);
         //
         virtual void hoverEnter();
         virtual void hoverLeave();
@@ -1434,9 +1461,15 @@ namespace ClaFi
         void noteChildVisibility(const Control& child);
         void doPressUp(PressUpEvent&);
         void doPressDown(PressDownEvent&);
+        // Runs own on this control, then nested from here up. True when either was stopped.
+        template <typename OwnEvent, typename NestedEvent>
+        bool raiseClick(OwnEvent&, void (Control::*own)(OwnEvent&),
+            void (Control::*nested)(NestedEvent&));
         void doClick(ClickEvent&);
-        void doDoubleClick(DoubleClickEvent&, PointInForm mousePos);
-        void doTripleClick(TripleClickEvent&, PointInForm mousePos);
+        // True when the press was spent - see FormBase::wnd_doubleClick.
+        [[nodiscard]] bool doDoubleClick(DoubleClickEvent&);
+        // True when the press was spent - see FormBase::wnd_tripleClick.
+        [[nodiscard]] bool doTripleClick(TripleClickEvent&);
         [[nodiscard]] bool canClick() { return enabled(true); }
         // The nearest isClickTarget at or above this control, or this control when none is.
         [[nodiscard]] Control& clickTarget();

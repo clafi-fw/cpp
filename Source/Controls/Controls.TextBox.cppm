@@ -203,8 +203,8 @@ namespace ClaFi::Controls
         // Follows a link when the press and the release stayed on it and nothing was selected
         // between them. Defined in TextBox.cpp, with the rest of what a link does.
         void click(ClickEvent&) override;
-        void nestedDoubleClick(DoubleClickEvent&) override;
-        void nestedTripleClick(TripleClickEvent&) override;
+        void doubleClick(DoubleClickEvent&) override;
+        void tripleClick(TripleClickEvent&) override;
         // Defined in TextBox.cpp: the standard edit menu is built there, and the menu pulls in
         // the Grid the whole of it is built on. Nothing that merely uses a text box should have
         // to import that.
@@ -594,9 +594,9 @@ namespace ClaFi::Controls
         Label::nestedPressDown(event);
     }
 
-    void TextBox::nestedDoubleClick(DoubleClickEvent& event)
+    void TextBox::doubleClick(DoubleClickEvent& event)
     {
-        Label::nestedDoubleClick(event);
+        Label::doubleClick(event);
         if (event.propagationStopped())
             return;
         const FormContext& formContext = this->formContext();
@@ -610,9 +610,9 @@ namespace ClaFi::Controls
         event.stopPropagation(); // to prevent nestedPressDown()
     }
 
-    void TextBox::nestedTripleClick(TripleClickEvent& event)
+    void TextBox::tripleClick(TripleClickEvent& event)
     {
-        Label::nestedTripleClick(event);
+        Label::tripleClick(event);
         if (event.propagationStopped())
             return;
         const FormContext& formContext = this->formContext();

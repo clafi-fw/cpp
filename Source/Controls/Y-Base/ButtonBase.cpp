@@ -30,8 +30,6 @@ namespace ClaFi::Controls
         [[nodiscard]] bool allowZAnimation() const override { return true; }
         // A click on the mark is a click on its button, which injectCtrl reads as a toggle.
         [[nodiscard]] bool isClickTarget() const override { return false; }
-    protected:
-        void nestedDoubleClick(DoubleClickEvent& event) override { event.stopPropagation(); }
     };
 
     // ButtonBase
@@ -527,6 +525,18 @@ namespace ClaFi::Controls
         RichControl::click(event);
     }
 
+    // A double click on the mark is two toggles. It is spent here, which keeps a host that opens
+    // on a double click from opening when its mark is pressed twice.
+    void ButtonBase::doubleClick(DoubleClickEvent& event)
+    {
+        if (indicatorPointedAt())
+        {
+            event.stopPropagation();
+            return;
+        }
+        RichControl::doubleClick(event);
+    }
+
     void ButtonBase::nestedControlFocusing(FocusEvent& event)
     {
         injectCtrl(event);
@@ -594,14 +604,18 @@ namespace ClaFi::Controls
         // is what still tells the two apart while the mouse is what acted - a key reaching the
         // button leaves the pointer wherever it rests. A hidden indicator cannot be hovered, so
         // the test needs no separate visibility check.
-        const bool pointedAt = Input::mouse().active() && m_indicator->isHovered();
-        if (event.control != m_indicator && !pointedAt)
+        if (event.control != m_indicator && !indicatorPointedAt())
             return;
 
         // affects multi-selection behavior (StackView)
         event.modifiers.ctrl = true;
         // actual control to select
         event.control = this;
+    }
+
+    bool ButtonBase::indicatorPointedAt() const
+    {
+        return m_indicator && Input::mouse().active() && m_indicator->isHovered();
     }
 
     void ButtonBase::adjustForIndicator(ScaledSpacing spacing, FloatRect& rect) const

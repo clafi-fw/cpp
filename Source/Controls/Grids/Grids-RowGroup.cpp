@@ -128,11 +128,11 @@ namespace ClaFi::Controls::Grids
         RowContainer::nestedKeyDown(event);
     }
 
-    void RowGroupSpan::nestedDoubleClick(DoubleClickEvent& event)
+    void RowGroupSpan::nestedDoubleClick(NestedDoubleClickEvent& event)
     {
-        const bool onMark = event.control == m_mark;
+        const bool onMark = &event.clickedControl == m_mark;
         // The span takes a press only on its cells and its blanks, so no cell there is a blank.
-        const bool onBlank = event.control == this && !columnAt(event.clickPos());
+        const bool onBlank = &event.clickedControl == this && !columnAt(event.clickPos());
         if (!onMark && !onBlank)
         {
             RowContainer::nestedDoubleClick(event);

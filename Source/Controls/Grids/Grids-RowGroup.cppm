@@ -47,7 +47,7 @@ namespace ClaFi::Controls::Grids
         // On the mark's cell Right opens the group and Left closes it, as on a tree node.
         void nestedKeyDown(KeyDownEvent&) override;
         // A double click on the mark is two presses of it, and one on a blank opens the group.
-        void nestedDoubleClick(DoubleClickEvent&) override;
+        void nestedDoubleClick(NestedDoubleClickEvent&) override;
     private:
         void createMark();
         // The cell the mark leads: the first column this span fills, left to right.

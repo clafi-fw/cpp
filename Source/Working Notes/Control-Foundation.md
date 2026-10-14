@@ -17,6 +17,13 @@ finds its item with itemAt from `clickedControl`, and the indicator is no click 
 The one behaviour this moved: a mouse click on a MouseOnly control inside a stack item picks that
 item, where it used to read as a click on nothing.
 
+**DoubleClickEvent and TripleClickEvent split the same way**, through Control::raiseClick, which
+holds the one walk all three use. Two things moved with them. The indicator stopped its own double
+click so a tile would not open from its mark; being no target, it never sees one, and
+ButtonBase::doubleClick spends it instead. ExpanderHeader is None in three of its looks and toggles
+on a double click anywhere on its strip, so it claims isClickTarget - without that, a target above
+it would take the double click and the walk would start past the header.
+
 ## RichControl
 
 Its metrics properties - `ControlMetrics`, `MinSize`, `PreferredSize`, `MaxSize`, `Padding`,

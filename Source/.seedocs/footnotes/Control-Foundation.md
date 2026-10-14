@@ -173,17 +173,22 @@ ClickEvent spends the whole click, and no NestedClickEvent is raised.
 **A handler that deletes its control stops the event**, or the walk that follows reaches the deleted
 control.
 
+## NestedClickEventBase
+
+**What NestedClickEvent, NestedDoubleClickEvent and NestedTripleClickEvent carry** besides the
+click itself:
+
+- `control` is the control raising the event, whose handlers run.
+- `clickedControl` is the control the click is on, the same at every step.
+
 ## NestedClickEvent
 
 **Raised on the control the click is on, then on each parent in turn**, after ClickEvent.
 OnNestedClick hears a click on its own control and on every control inside it.
 
-- `control` is the control raising the event, whose handlers run.
-- `clickedControl` is the control the click is on, the same at every step.
-
 **Any control on the way may stop it**, and the controls above hear nothing. A stack picks its
-current item from it - the item `clickedControl` stands in - so stopping it below a stack keeps that
-stack's current item where it was.
+current item from it - the item `clickedControl` stands in - so stopping it below a stack keeps
+that stack's current item where it was.
 
 ## Control isClickTarget
 
@@ -192,9 +197,23 @@ otherwise. A mouse click on a control that is not a target is a click on the nea
 it, or on the control itself when there is none.
 
 **A part that stands for its host answers false.** A button's selection indicator does: a click on
-the mark is a click on the button, read as a toggle.
+the mark is a click on the button, read as a toggle, and a double click on it is spent by the
+button.
+
+**A control that answers the pointer without taking input answers true.** An expander header does,
+in every look: a double click anywhere on its strip toggles it.
+
+## DoubleClickEvent
+
+**Raised the way ClickEvent is**, on the control the click is on, and NestedDoubleClickEvent
+follows it up from there.
+
+**A double click is also a press.** The form reads it as one unless a handler stopped either event,
+so a control that acts on a double click stops it.
 
 ## TripleClickEvent
+
+**Raised the way DoubleClickEvent is**, and read as a press on the same terms.
 
 **The platform window counts the run**, since Windows reports every press after a double click as
 a plain press. A third press nobody handles arrives as that plain press, so ignoring this event

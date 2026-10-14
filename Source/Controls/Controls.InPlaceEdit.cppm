@@ -325,7 +325,7 @@ namespace ClaFi::Controls
         void nestedControlFocusing(FocusEvent&) override;
         void click(ClickEvent&) override;
         void nestedClick(NestedClickEvent&) override;
-        void nestedDoubleClick(DoubleClickEvent&) override;
+        void doubleClick(DoubleClickEvent&) override;
     private:
         /// Claims StdActions::rename for this control and answers it. Connected from the
         /// constructor, the way TextBox connects the edit actions.
@@ -534,12 +534,12 @@ namespace ClaFi::Controls
     }
 
     template <IsControl HostClass>
-    void WithInPlaceEdit<HostClass>::nestedDoubleClick(DoubleClickEvent& event)
+    void WithInPlaceEdit<HostClass>::doubleClick(DoubleClickEvent& event)
     {
         // A pair whose first click was refused the editor is two ordinary clicks, and the second
         // edits the way one does.
         m_doubleClicked = !m_editorRefused;
-        HostClass::nestedDoubleClick(event);
+        HostClass::doubleClick(event);
     }
 
     template <IsControl HostClass>

@@ -32,7 +32,7 @@ namespace ClaFi::Controls
         ScaledDimensions calculateContent(AlignEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         void nestedDrag(DragEvent&) override;
-        void nestedDoubleClick(DoubleClickEvent&) override;
+        void doubleClick(DoubleClickEvent&) override;
     private:
         [[nodiscard]] PanelBase& panel() const;
     private:

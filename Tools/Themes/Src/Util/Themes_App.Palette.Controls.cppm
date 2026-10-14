@@ -42,7 +42,7 @@ namespace Themes_App
             DropDownMenu(const CreateParams&, const ColorHarmonyItem&);
         protected:
             void nestedClick(NestedClickEvent&) override;
-            void nestedDoubleClick(DoubleClickEvent& event) override { event.closeForm(); }
+            void nestedDoubleClick(NestedDoubleClickEvent& event) override { event.closeForm(); }
         private:
             static const TagValue kLabelTag = (std::numeric_limits<TagValue>::max)();
         private:

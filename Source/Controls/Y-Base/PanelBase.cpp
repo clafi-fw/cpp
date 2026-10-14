@@ -74,7 +74,7 @@ namespace ClaFi::Controls
     }
 
     // Stopping the event keeps the second press from starting a drag over the fit.
-    void Splitter::nestedDoubleClick(DoubleClickEvent& event)
+    void Splitter::doubleClick(DoubleClickEvent& event)
     {
         event.stopPropagation();
         panel().fitBarToContent(m_bar);
