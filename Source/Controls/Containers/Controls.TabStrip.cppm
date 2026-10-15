@@ -561,9 +561,9 @@ namespace ClaFi::Controls
     template<typename ...Args>
     TabStripBase::TabStripBase(const CreateParams& params, Args && ...args)
         :
-        // ActiveContainer is what makes a strip keep a current item at all - see
-        // StackBase::followsUser - and the open tab is that item. Load-bearing and quiet:
-        // drop it and everything still compiles, the tabs just stop answering to a click.
+        // ActiveContainer is what makes a strip keep a current item at all, and the open tab is
+        // that item. Load-bearing and quiet: drop it and everything still compiles, the tabs just
+        // stop answering to a click.
         StackPanel{ params, Interactivity::ActiveContainer, std::forward<Args>(args)... },
         INIT_PROPERTY(tabViewMode)
     {

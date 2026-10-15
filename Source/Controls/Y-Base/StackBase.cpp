@@ -98,12 +98,12 @@ namespace ClaFi::Controls
     {
     }
 
-    // A container that does not move its current item itself has none to offer, and inside one
-    // that does, an item is a control the user can land on rather than a caption or a panel
-    // sitting between them.
+    // Inside an ActiveContainer an item is a control the user can land on, rather than a caption
+    // or a panel sitting between them. A container of any other kind has no current item to offer.
     bool StackBase::defaultCanFocusItem(Control& value)
     {
-        return followsUser() && value.interactivity() == Interactivity::Focusable;
+        return interactivity() == Interactivity::ActiveContainer
+            && value.interactivity() == Interactivity::Focusable;
     }
 
     bool StackBase::isItemSelected(const Control& item) const
@@ -127,9 +127,9 @@ namespace ClaFi::Controls
         if (event.propagationStopped())
             return;
 
-        // The container that moves the current item is the one that answers for which item is
-        // selected. One that does not leaves the state to whoever does.
-        if (!followsUser())
+        // An ActiveContainer answers for which of its items is selected. A container of any other
+        // kind leaves the state to whoever does.
+        if (interactivity() != Interactivity::ActiveContainer)
             return;
 
         event.state.selected = isItemSelected(event.control);
@@ -175,14 +175,9 @@ namespace ClaFi::Controls
         Container::nestedControlFocusing(event);
     }
 
-    bool StackBase::followsUser() const
-    {
-        return interactivity() == Interactivity::ActiveContainer;
-    }
-
     void StackBase::autoSelectItem(Control& item, KeyModifiers modifiers, bool& handled, bool applyGesture)
     {
-        if (!followsUser())
+        if (interactivity() != Interactivity::ActiveContainer)
             return;
 
         // Nothing is recorded when the user reaches something that cannot be current, so the

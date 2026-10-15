@@ -407,7 +407,7 @@ namespace ClaFi::Controls
         :
         StackPanelBase{
             params,
-            Interactivity::ActiveContainer, // a view follows the user, unless the caller says not
+            Interactivity::ActiveContainer, // keeps a current item unless the caller says not
             std::forward<Args>(args)...
         },
         INIT_PROPERTY(previewMode),
@@ -1029,7 +1029,8 @@ namespace ClaFi::Controls
         Control* child = &event.control();
         while (child && child->parent() != this)
             child = child->parent();
-        if (!child || (followsUser() && itemAt(&event.control()) != child))
+        if (!child || (interactivity() == Interactivity::ActiveContainer
+            && itemAt(&event.control()) != child))
             return;
         if (canMoveItem(*child))
             beginCarry(*child, event);

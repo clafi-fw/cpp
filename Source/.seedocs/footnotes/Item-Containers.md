@@ -21,6 +21,12 @@ Each paint walks a hosting container's children twice.
 **One current item.** A PageControl shows its page through it, and a TabStrip its open tab. For
 several items selected at once, see StackView.
 
+**An ActiveContainer moves the current item itself**, following whatever the user acts on - a
+click, or the focus arriving from the keyboard - and answers for which of its items is selected.
+That is the one switch for it: a container that tracks nothing is not one, and a container whose
+current item is settled elsewhere is not one either. PageControl's is whichever page was made
+visible, and the tab strip is what makes one visible.
+
 ## CanFocusItemEvent
 
 Asked of every item that could become current. `canFocus` starts as the container's answer, and a

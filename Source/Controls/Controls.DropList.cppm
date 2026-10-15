@@ -86,7 +86,7 @@ namespace ClaFi::Controls
         ScaledSize calculateContent(AlignEvent&) override;
         // Every row may be current: the owner moves it, and the base's answer would rule that out.
         bool defaultCanFocusItem(Control&) override;
-        // The current row reads selected - the base says so only for a stack that follows the user.
+        // The current row reads selected - the base says so only for an ActiveContainer.
         void getControlState(GetStateEvent&) const override;
     private:
         [[nodiscard]] std::vector<Control*> shownRows() const;
