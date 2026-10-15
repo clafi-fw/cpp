@@ -1,5 +1,6 @@
 module;
 #include <immintrin.h>
+#include "Graphics.Cpu_Simd.h"
 module ClaFi.Core.Graphics.Cpu_Painter_Circle;
 
 import ClaFi.Core.Graphics.Cpu_Rasterizer;
@@ -238,7 +239,7 @@ namespace ClaFi::Graphics::Cpu
                         __m256 vBgAlphaF = _mm256_max_ps(_mm256_min_ps(alpha, vOne), vZero);
                         vBgAlphaF = _mm256_mul_ps(vBgAlphaScale, vBgAlphaF);
                         __m256i vAlphaI = _mm256_cvtps_epi32(_mm256_mul_ps(vBgAlphaF, v256));
-                        vResult = Color::blend8(vResult, vBgColorSimd, vAlphaI);
+                        vResult = blend8(vResult, vBgColorSimd, vAlphaI);
                     }
 
                     if (hasBorder)
@@ -249,7 +250,7 @@ namespace ClaFi::Graphics::Cpu
 
                         vRingAlphaF = _mm256_mul_ps(vBorderAlphaScale, vRingAlphaF);
                         __m256i vAlphaI = _mm256_cvtps_epi32(_mm256_mul_ps(vRingAlphaF, v256));
-                        vResult = Color::blend8(vResult, vBorderColorSimd, vAlphaI);
+                        vResult = blend8(vResult, vBorderColorSimd, vAlphaI);
                     }
 
                     _mm256_maskstore_epi32(reinterpret_cast<int*>(pixel), vMask, vResult);

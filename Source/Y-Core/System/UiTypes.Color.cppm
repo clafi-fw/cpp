@@ -1,5 +1,3 @@
-module;
-#include <immintrin.h>
 export module ClaFi.Core.System.UiTypes :Color;
 
 import ClaFi.StdLib;
@@ -164,34 +162,6 @@ namespace ClaFi
         }
 
         static constexpr Color blend(Color c1, Color c2, float k2);
-
-        // SIMD 8-pixel blend
-        static inline __m256i blend8(__m256i dest, __m256i src, __m256i alpha) {
-            const __m256i rb_mask = _mm256_set1_epi32(0x00FF00FF);
-            const __m256i ga_mask = _mm256_set1_epi32(0xFF00FF00);
-
-            // 1. Prepare differences for both passes at once
-            __m256i d_rb = _mm256_and_si256(dest, rb_mask);
-            __m256i s_rb = _mm256_and_si256(src, rb_mask);
-            __m256i diff_rb = _mm256_sub_epi32(s_rb, d_rb);
-
-            __m256i d_ga = _mm256_and_si256(_mm256_srli_epi32(dest, 8), rb_mask);
-            __m256i s_ga = _mm256_and_si256(_mm256_srli_epi32(src, 8), rb_mask);
-            __m256i diff_ga = _mm256_sub_epi32(s_ga, d_ga);
-
-            // 2. Fire both multiplications
-            // Modern CPUs can often pipeline these two independent mullo instructions
-            __m256i prod_rb = _mm256_mullo_epi32(diff_rb, alpha);
-            __m256i prod_ga = _mm256_mullo_epi32(diff_ga, alpha);
-
-            // 3. Shift and reconstruct
-            __m256i res_rb = _mm256_and_si256(_mm256_add_epi32(d_rb, _mm256_srai_epi32(prod_rb, 8)), rb_mask);
-            __m256i res_ga = _mm256_slli_epi32(_mm256_add_epi32(d_ga, _mm256_srai_epi32(prod_ga, 8)), 8);
-
-            // Blend using the ga_mask to finalize the combine
-            // This is often faster than a separate final mask + **or**
-            return _mm256_blendv_epi8(res_rb, res_ga, ga_mask);
-        }
 
         void setOpacity(Opacity value) { alpha = static_cast<ColorByte>(255 * value); }
 

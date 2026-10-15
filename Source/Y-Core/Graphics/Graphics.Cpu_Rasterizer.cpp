@@ -1,5 +1,6 @@
 module;
 #include <immintrin.h>
+#include "Graphics.Cpu_Simd.h"
 module ClaFi.Core.Graphics.Cpu_Rasterizer;
 
 import ClaFi.Core.Graphics.Types;
@@ -154,7 +155,7 @@ namespace ClaFi::Graphics::Cpu
         }
 
         __m256i vDest = _mm256_maskload_epi32(reinterpret_cast<int*>(dest), vLoadMask);
-        _mm256_maskstore_epi32(reinterpret_cast<int*>(dest), vLoadMask, Color::blend8(vDest, vSrcColor, vAlphaI));
+        _mm256_maskstore_epi32(reinterpret_cast<int*>(dest), vLoadMask, blend8(vDest, vSrcColor, vAlphaI));
     }
 
     [[nodiscard]] static __m256 calcGlowDist(__m256 vDx, __m256 vDyNorm, __m256 vDySq, __m256 vDyQuad, GlowShape shape)
@@ -731,7 +732,7 @@ namespace ClaFi::Graphics::Cpu
                 {
                     __m256i vDest = _mm256_maskload_epi32(reinterpret_cast<const int*>(pixelRow), vLoadMask);
                     __m256i vBlendColors = _mm256_or_si256(vSrcColors, vOpaqueMask);
-                    _mm256_maskstore_epi32(reinterpret_cast<int*>(pixelRow), vLoadMask, Color::blend8(vDest, vBlendColors, vWeightI));
+                    _mm256_maskstore_epi32(reinterpret_cast<int*>(pixelRow), vLoadMask, blend8(vDest, vBlendColors, vWeightI));
                 }
 
                 pixelRow += 8;

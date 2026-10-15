@@ -95,6 +95,7 @@ namespace ClaFi::Documents
         // Puts the watch over a directory that was made after the watch was set up.
         void watchDirectory();
         void update();
+        void readFiles();
         void notifyListeners();
     private:
         std::filesystem::path m_directory;

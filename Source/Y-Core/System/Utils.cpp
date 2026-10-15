@@ -1,5 +1,3 @@
-module;
-#include <immintrin.h>
 module ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;

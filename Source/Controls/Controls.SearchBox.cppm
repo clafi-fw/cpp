@@ -150,7 +150,12 @@ namespace ClaFi::Controls
             ButtonBase::OnPaintIcon{ Icons::XMark::paint },
             L"Clear"
         ) };
-        DropList m_list;
+        // The field keeps the focus, and Up on the list's first line gives the keys back to it.
+        DropList m_list{
+            m_field,
+            std::bind_front(&SearchBox::pick, this),
+            DropListOptions{ .keptBy = m_listKeptBy, .upFromFirst = UpFromFirst::Leaves }
+        };
         std::wstring m_countPlace{};   // what the count is taken over; empty for all of it
         std::size_t m_foundCount{ 0 };   // the count setResult was last given
     };
@@ -183,12 +188,7 @@ namespace ClaFi::Controls
             std::forward<Args>(args)...
         },
         INIT_PROPERTY(listPlacement),
-        INIT_PROPERTY(listKeptBy),
-        // The field keeps the focus, and the list going down hands it back there. Up on the first
-        // line hands the keys back to the text.
-        m_list{ m_field, [this](const DropListPick& picked) {
-            pick(picked);
-        }, DropListOptions{ .keptBy = m_listKeptBy, .upFromFirst = UpFromFirst::Leaves } }
+        INIT_PROPERTY(listKeptBy)
     {
         connectParts();
     }

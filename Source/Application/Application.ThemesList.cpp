@@ -40,14 +40,14 @@ namespace ClaFi
 
     void ThemeTile::paintIcon(PaintIconEvent& event)
     {
-        paintThemeIconOnly(event.canvas(), event.iconRect(), false,
+        paintThemeIconOnly(event.canvas(), event.iconRect(),
             ThemeSampleColors{ m_linkedTheme.colors, colorModeOf(event.lightness()) }
             );
     }
 
     void ThemeTile::paintSurface(PaintEvent& event)
     {
-        FloatRect rect = event.controlBounds();
+        const FloatRect rect = event.controlBounds();
         paintThemeBackground(event.canvas(), rect, event.scaleF(4.0f),
             ThemeSampleColors{ m_linkedTheme.colors, colorModeOf(event.lightness()) },
             event.scaledStrokeWidth(Thickness::Thin)

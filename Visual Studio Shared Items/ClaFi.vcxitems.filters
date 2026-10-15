@@ -1287,6 +1287,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Headers.h">
       <Filter>Platform\Windows</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Simd.h">
+      <Filter>Y_Core\Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\EventBindings.h">
       <Filter>Y_Core\System</Filter>
     </ClInclude>

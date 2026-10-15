@@ -466,6 +466,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Headers.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Simd.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\EventBindings.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Switches.h" />
   </ItemGroup>

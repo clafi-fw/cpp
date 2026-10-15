@@ -1,5 +1,3 @@
-module;
-#include <immintrin.h>
 export module ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
@@ -88,12 +86,6 @@ namespace ClaFi
     bool operator==(const NoInitAllocator<T>&, const NoInitAllocator<U>&) noexcept { return true; }
 
     export using NoAllocFloatVector = std::vector<float, NoInitAllocator<float>>;
-
-    export inline __m256 mm256_abs_ps(__m256 v) {
-        // 0x7FFFFFFF mask clears the sign bit of a 32-bit float
-        const __m256 mask = _mm256_castsi256_ps(_mm256_set1_epi32(0x7fffffff));
-        return _mm256_and_ps(v, mask);
-    }
 
     export template <typename T>
         void memzero(T& ref)

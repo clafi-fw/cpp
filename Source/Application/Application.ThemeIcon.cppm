@@ -56,7 +56,7 @@ namespace ClaFi
     export void paintThemeBackground(Graphics::Canvas& canvas, const FloatRect& rect,
         float cornerRadius, const ThemeSampleColors& sample, float borderWidth);
     export void paintThemeIconOnly(Graphics::Canvas& canvas, const FloatRect& iconRect,
-        bool isSmall, const ThemeSampleColors& sample);
+        const ThemeSampleColors& sample);
 
 
     //-----------------------------------------------------------------------------
@@ -167,14 +167,14 @@ namespace ClaFi
             sample.border, borderWidth);
     }
 
-    void paintThemeIconOnly(Graphics::Canvas& canvas, const FloatRect& iconRect, bool isSmall, const ThemeSampleColors& sample )
+    void paintThemeIconOnly(Graphics::Canvas& canvas, const FloatRect& iconRect, const ThemeSampleColors& sample )
     {
         // Rows
         {
             const std::array rowColors{ sample.mutedText, sample.accent, sample.spot };
 
             float rowSize = iconRect.height() / 6.0f;
-            float rowMargin = rowSize / 2.0;
+            float rowMargin = rowSize / 2.0f;
             float rowPadding = 0.25f;
             float x = iconRect.relativeX(rowPadding);
             float x2 = iconRect.relativeX(1.0f - rowPadding);
@@ -208,14 +208,13 @@ namespace ClaFi
     void paintThemeIcon(PaintIconEvent& event, const ThemeIconColors& colors)
     {
         const FloatRect backgroundRect = event.iconRect();
-        const float iconSize = backgroundRect.width();
         const float cornersRadius = backgroundRect.height() / 8.0f;
         const ColorMode mode = colorModeOf(event.lightness());
         const ThemeSampleColors& sample = colors.sample(mode);
         paintThemeBackground(event.canvas(), backgroundRect, cornersRadius, sample,
             event.scaledStrokeWidth(Thickness::Thin));
         
-        paintThemeIconOnly(event.canvas(), backgroundRect, true, sample);
+        paintThemeIconOnly(event.canvas(), backgroundRect, sample);
     }
 
 }

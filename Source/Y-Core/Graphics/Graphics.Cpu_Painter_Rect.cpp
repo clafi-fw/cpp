@@ -1,5 +1,6 @@
 module;
 #include <immintrin.h>
+#include "Graphics.Cpu_Simd.h"
 module ClaFi.Core.Graphics.Cpu_Painter_Rect;
 
 import ClaFi.Core.Graphics.Cpu_Rasterizer;
@@ -85,7 +86,7 @@ namespace ClaFi::Graphics::Cpu
                         : _mm256_loadu_si256(reinterpret_cast<const __m256i*>(g_maskTableMiddlePtr - remaining));
 
                     __m256i vResult = _mm256_maskload_epi32(reinterpret_cast<const int*>(pixel), vMask);
-                    vResult = Color::blend8(vResult, vColorSimd, vAlphaI);
+                    vResult = blend8(vResult, vColorSimd, vAlphaI);
                     _mm256_maskstore_epi32(reinterpret_cast<int*>(pixel), vMask, vResult);
                     pixel += 8;
                 }
@@ -170,7 +171,7 @@ namespace ClaFi::Graphics::Cpu
                     __m256i vAlphaI = _mm256_cvtps_epi32(_mm256_mul_ps(vAlphaF, v256));
 
                     __m256i vResult = _mm256_maskload_epi32(reinterpret_cast<const int*>(pixel), vMask);
-                    vResult = Color::blend8(vResult, vColorSimd, vAlphaI);
+                    vResult = blend8(vResult, vColorSimd, vAlphaI);
                     _mm256_maskstore_epi32(reinterpret_cast<int*>(pixel), vMask, vResult);
                     pixel += 8;
                 }

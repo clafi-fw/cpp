@@ -49,8 +49,7 @@ namespace ClaFi::Documents
 
     const FilePaths& DocumentsFolder::files()
     {
-        watchDirectory();
-        update();
+        readFiles();
         return m_files;
     }
 
@@ -225,6 +224,12 @@ namespace ClaFi::Documents
         }
         // A directory that is not there reads as no files, and that is told too.
         filesRead(m_files);
+    }
+
+    void DocumentsFolder::readFiles()
+    {
+        watchDirectory();
+        update();
     }
 
     void DocumentsFolder::notifyListeners()
