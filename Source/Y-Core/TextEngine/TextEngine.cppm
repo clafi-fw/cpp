@@ -41,7 +41,7 @@ namespace ClaFi
         // stand on it. Measured as not editable, that row is missing from the size the control is
         // given, and the paint then places it past the control's own bottom edge where the clip
         // removes it - along with any caret standing on it.
-        CalculatedDimensions calculateText(const FormContext&, const Text&,
+        ScaledSize calculateText(const FormContext&, const Text&,
             MaxSize = { k_maxFloat, k_maxFloat }, bool editable = false, bool wrap = true,
             const TextFormat* = nullptr);
         // The height of a text's first count lines in a box that wide, or the whole text's.
@@ -203,7 +203,7 @@ namespace ClaFi
         return result;
     }
 
-    CalculatedDimensions TextEngine::calculateText(const FormContext& formContext, const Text& text,
+    ScaledSize TextEngine::calculateText(const FormContext& formContext, const Text& text,
         MaxSize maxDimensions, bool editable, bool wrap, const TextFormat* format)
     {
         return select(text, format, maxDimensions, formContext.scaleFactor(), editable, wrap,

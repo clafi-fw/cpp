@@ -80,7 +80,7 @@ namespace ClaFi::PathArt
         SceneTheme m_prevTheme{};
         const SceneTheme* m_nextTheme{};
         Bitmap m_background{};
-        ScaledDimensions m_backgroundDimensions{};
+        ScaledSize m_backgroundDimensions{};
         FloatPoint m_sunPos;
         float m_sunRadius;
         FloatPoint m_offset;
@@ -130,7 +130,7 @@ namespace ClaFi::PathArt
         m_sunPos = { w * 0.75f, h * 0.15f };
         m_sunRadius = 35.0f * m_objectsScale;
 
-        ScaledDimensions newBackgroundDimensions = bounds.dimensions();
+        ScaledSize newBackgroundDimensions = bounds.dimensions();
         if (m_backgroundDimensions != newBackgroundDimensions)
         {
             m_backgroundDimensions = newBackgroundDimensions;

@@ -121,13 +121,13 @@ namespace ClaFi::Controls
     // **Measured, not assumed**: a row is as tall as its text and padding make it, which a tool
     // button's least height says nothing of. A cap that moved asks for the pass again - the box
     // above was measured against the one before. See AlignEvent::invalidatePass
-    ScaledDimensions DropListStack::calculateContent(AlignEvent& event)
+    ScaledSize DropListStack::calculateContent(AlignEvent& event)
     {
-        const ScaledDimensions result = StackPanel::calculateContent(event);
+        const ScaledSize result = StackPanel::calculateContent(event);
         const std::vector<Control*> shown = shownRows();
         if (shown.empty())
             return result;
-        const float rowHeight = shown.front()->dimensions().y / event.scaleFactor();
+        const float rowHeight = shown.front()->scaledSize().y / event.scaleFactor();
         if (m_list.fitShownLines(rowHeight, cappedDividers(event.scaleFactor())))
             event.invalidatePass();
         return result;
@@ -270,7 +270,7 @@ namespace ClaFi::Controls
                 break;
             const Divider* divider = m_dividers[i];
             if (divider && divider->visible())
-                result += divider->dimensions().y / scaleFactor + spacing().y;
+                result += divider->scaledSize().y / scaleFactor + spacing().y;
         }
         return result;
     }

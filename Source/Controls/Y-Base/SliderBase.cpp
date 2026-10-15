@@ -41,7 +41,7 @@ namespace ClaFi::Controls
     {
     }
 
-    ScaledDimensions SliderBase::ChildItem::calculateContent(AlignEvent& event)
+    ScaledSize SliderBase::ChildItem::calculateContent(AlignEvent& event)
     {
         float sz = event.scale(parent()->buttonSize(event.theme()));
         return { sz, sz };
@@ -147,7 +147,7 @@ namespace ClaFi::Controls
         // TODO: add the form environment to the event, so the scaler does not have to be
         // reached through the control.
         if (event.state.enabled)
-            if (height() < scaler().scaled4)
+            if (scaledHeight() < scaler().scaled4)
                 event.state.enabled = false;
     }
 
@@ -197,7 +197,7 @@ namespace ClaFi::Controls
         if (parent()->m_axis == ScrollAxis::Vertical)
         {
             delta = dp.currentPos().y - dp.startPos().y;
-            myHeight = height();
+            myHeight = scaledHeight();
             areaHeight = area.height();
             areaTop = area.top;
             areaBottom = area.bottom;
@@ -206,7 +206,7 @@ namespace ClaFi::Controls
         else
         {
             delta = dp.currentPos().x - dp.startPos().x;
-            myHeight = width();
+            myHeight = scaledWidth();
             areaHeight = area.width();
             areaTop = area.left;
             areaBottom = area.right;
@@ -412,7 +412,7 @@ namespace ClaFi::Controls
         }
     }
 
-    void SliderBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& contentSize)
+    void SliderBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& contentSize)
     {
         SliderBaseClass::alignContent(event, position, contentSize);
         setControlDimensions(m_bodySpacer, { 0, 0 });
@@ -465,9 +465,9 @@ namespace ClaFi::Controls
             ? ScaledPosition{ area.centerX() - crossSize / 2.0f, thumbStart }
         : ScaledPosition{ thumbStart, area.centerY() - crossSize / 2.0f };
 
-        const ScaledDimensions dimensions = isVertical
-            ? ScaledDimensions{ crossSize, thumbSize }
-        : ScaledDimensions{ thumbSize, crossSize };
+        const ScaledSize dimensions = isVertical
+            ? ScaledSize{ crossSize, thumbSize }
+        : ScaledSize{ thumbSize, crossSize };
 
         // This handles all old/new invalidations safely and returns early if unmoved
         Control::setControlPlacement(m_thumb, position, dimensions);
@@ -569,7 +569,7 @@ namespace ClaFi::Controls
         switch (m_axis)
         {
             case ScrollAxis::Vertical:
-                area.inflate(0.0f, -m_thumb.height() / 2.0f);
+                area.inflate(0.0f, -m_thumb.scaledHeight() / 2.0f);
                 travel = area.height();
                 travelStart = area.top;
                 pointOnAxis = point.y;
@@ -577,7 +577,7 @@ namespace ClaFi::Controls
                 break;
             case ScrollAxis::Horizontal:
             default:
-                area.inflate(-m_thumb.width() / 2.0f, 0.0f);
+                area.inflate(-m_thumb.scaledWidth() / 2.0f, 0.0f);
                 travel = area.width();
                 travelStart = area.left;
                 pointOnAxis = point.x;

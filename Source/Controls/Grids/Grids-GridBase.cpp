@@ -127,9 +127,9 @@ namespace ClaFi::Controls::Grids
             m_descriptor.setSelectedCell(&row, nullptr);
     }
 
-    ScaledDimensions GridBase::calculateContent(AlignEvent& event)
+    ScaledSize GridBase::calculateContent(AlignEvent& event)
     {
-        ScaledDimensions result = StackView::calculateContent(event);
+        ScaledSize result = StackView::calculateContent(event);
         result.x = m_descriptor.m_rootColumn.calculatedSubColumnsWidth2();
         return result;
     }
@@ -191,7 +191,7 @@ namespace ClaFi::Controls::Grids
         {
             const FloatRect rect = FloatRect::fromDimensions(
                 event.contentPosition() + m_header->topLeft() + FloatPoint{ 0.0f, travel },
-                m_header->dimensions());
+                m_header->scaledSize());
             event.paintHeldBackdrop(m_header->silhouette(event, rect), travel);
         }
         event.paintChild(*m_header);
@@ -222,7 +222,7 @@ namespace ClaFi::Controls::Grids
     // The click that picks a cell never edits it, and a press that became a drag raises no click.
     void GridBase::nestedClick(NestedClickEvent& event)
     {
-        if (clickEditsCell(event) && editSelectedCell())
+        if (clickEditsCell(event) && editSelectedCell(event.scaler()))
         {
             // The walk reads this once this returns, so stopping it here is what keeps the
             // controls above from being handed a gesture on the far side of the editor's own
@@ -258,7 +258,7 @@ namespace ClaFi::Controls::Grids
         case Keys::Right:
         case Keys::Up:
         case Keys::Down:
-            if (moveCellSelection(event.key))
+            if (moveCellSelection(event))
             {
                 event.handled = true;
                 return;
@@ -280,7 +280,7 @@ namespace ClaFi::Controls::Grids
                     : ScrollDirection::ToEnd;
                 const bool moved = event.modifiers.ctrl
                     ? moveCellToGridEdge(edge)
-                    : moveCellToLineEdge(edge);
+                    : moveCellToLineEdge(event.scaler(), edge);
                 if (moved)
                 {
                     event.handled = true;
@@ -294,7 +294,7 @@ namespace ClaFi::Controls::Grids
                 const ScrollDirection direction = event.key == Keys::Next
                     ? ScrollDirection::ToEnd
                     : ScrollDirection::ToBegin;
-                if (moveCellByPage(direction))
+                if (moveCellByPage(event.scaler(), direction))
                 {
                     event.handled = true;
                     return;
@@ -313,7 +313,7 @@ namespace ClaFi::Controls::Grids
             {
                 if (event.key == Keys::Return && followSelectedCellLink(event))
                     return;
-                if (editSelectedCell())
+                if (editSelectedCell(event.scaler()))
                 {
                     event.handled = true;
                     return;
@@ -343,13 +343,13 @@ namespace ClaFi::Controls::Grids
             && StackView::defaultCanMoveItem(value);
     }
 
-    bool GridBase::editSelectedCell()
+    bool GridBase::editSelectedCell(const Scaler& scaler)
     {
         if (!cellKeysApply())
             return false;
 
         FieldStops stops;
-        const std::size_t sourceIndex = collectField(stops);
+        const std::size_t sourceIndex = collectField(scaler, stops);
         // The selection is outside the collected window, so there is no rect to place an editor
         // over. Nothing else in this grid answers F2 either, so the key travels on.
         if (sourceIndex == k_maxSize)
@@ -383,7 +383,7 @@ namespace ClaFi::Controls::Grids
         // insets it by, in this form's coordinates, which is the space a placement rect is stated
         // in.
         FloatRect textRect = m_descriptor.cellInnerRect(stop.rect);
-        textRect.inflate(-m_descriptor.scaledCellMetrics().padding.toFloat());
+        textRect.inflate(-m_descriptor.scaledCellMetrics().padding);
         textRect.left += row->cellLead(*column).x;
 
         // A cell may show more than its value - a mark, words beside it - so a source that
@@ -453,12 +453,12 @@ namespace ClaFi::Controls::Grids
 
     // The field is collected as editSelectedCell collects it, so the two keys agree on which cell
     // the selection names.
-    bool GridBase::followSelectedCellLink(KeyDownEvent& event)
+    bool GridBase::followSelectedCellLink(const KeyDownEvent& event)
     {
         if (!cellKeysApply())
             return false;
         FieldStops stops;
-        const std::size_t sourceIndex = collectField(stops);
+        const std::size_t sourceIndex = collectField(event.scaler(), stops);
         if (sourceIndex == k_maxSize)
             return false;
         const FieldStop& stop = stops[sourceIndex];
@@ -469,13 +469,13 @@ namespace ClaFi::Controls::Grids
         return stop.row->followSelectedCellLink(event);
     }
 
-    bool GridBase::moveCellSelection(KeyCode key)
+    bool GridBase::moveCellSelection(const KeyDownEvent& event)
     {
         if (!cellKeysApply())
             return false;
 
         FieldStops stops;
-        const std::size_t sourceIndex = collectField(stops);
+        const std::size_t sourceIndex = collectField(event.scaler(), stops);
         // The selection is out of view, so there is no position in the field to move from. The
         // navigator takes over, walking around the selected row rather than the viewport, and
         // the row it lands on is scrolled back into view.
@@ -484,12 +484,12 @@ namespace ClaFi::Controls::Grids
 
         const FloatRect sourceRect = stops[sourceIndex].rect;
         const FloatPoint band = cellBand(sourceRect);
-        const bool horizontal = key == Keys::Left || key == Keys::Right;
+        const bool horizontal = event.key == Keys::Left || event.key == Keys::Right;
         const std::size_t bestIndex = searchField(
             stops,
-            OrientedRect::orient(sourceRect, key),
-            OrientedRect::orient(band, key),
-            key,
+            OrientedRect::orient(sourceRect, event.key),
+            OrientedRect::orient(band, event.key),
+            event.key,
             sourceIndex,
             FieldReach::Nearest
         );
@@ -511,7 +511,7 @@ namespace ClaFi::Controls::Grids
         return true;
     }
 
-    bool GridBase::moveCellToLineEdge(ScrollDirection edge)
+    bool GridBase::moveCellToLineEdge(const Scaler& scaler, ScrollDirection edge)
     {
         if (!cellKeysApply())
             return false;
@@ -522,7 +522,7 @@ namespace ClaFi::Controls::Grids
             return false;
 
         FieldStops stops;
-        const std::size_t sourceIndex = collectField(stops);
+        const std::size_t sourceIndex = collectField(scaler, stops);
         if (sourceIndex == k_maxSize)
             return false;
 
@@ -619,7 +619,7 @@ namespace ClaFi::Controls::Grids
         return true;
     }
 
-    bool GridBase::moveCellByPage(ScrollDirection direction)
+    bool GridBase::moveCellByPage(const Scaler& scaler, ScrollDirection direction)
     {
         if (!cellKeysApply())
             return false;
@@ -638,7 +638,7 @@ namespace ClaFi::Controls::Grids
         viewport.offset(viewTravelRemaining());
 
         FieldStops stops;
-        const std::size_t sourceIndex = collectField(stops, viewport.height());
+        const std::size_t sourceIndex = collectField(scaler, stops, viewport.height());
         if (sourceIndex == k_maxSize)
             return false;
 
@@ -687,7 +687,7 @@ namespace ClaFi::Controls::Grids
         const FieldStop& next = stops[nextIndex];
         FloatRect arriving = viewport;
         arriving.top = forward
-            ? next.rect.top - next.row->heldStackStrip() - scaler().scaled8
+            ? next.rect.top - next.row->heldStackStrip() - scaler.scaled8
             : next.rect.bottom - viewport.height();
         arriving.bottom = arriving.top + viewport.height();
 
@@ -724,7 +724,7 @@ namespace ClaFi::Controls::Grids
         return this == &m_descriptor.owner();
     }
 
-    std::size_t GridBase::collectField(FieldStops& stops, float lookAhead)
+    std::size_t GridBase::collectField(const Scaler& scaler, FieldStops& stops, float lookAhead)
     {
         // The selection is a cell of a row, or the control a row that has no cells stands behind
         // - an expander button. Either can be the place a move starts from.
@@ -738,7 +738,7 @@ namespace ClaFi::Controls::Grids
         // whole form: a row scrolled out of the box holding the grid is as far out of reach as
         // one past the end of the grid.
         FloatRect window = visibleRectInForm();
-        window.inflate(m_descriptor.scaler().scaled48 + lookAhead);
+        window.inflate(scaler.scaled48 + lookAhead);
         traverseRows(window, [&](RowBase& row, FloatPoint rowOrigin){
             row.traverseLanes(rowOrigin, [&](const RowCell& cell, const FloatRect& lane){
                 if (sourceColumn && &row == sourceStop && &cell.column == sourceColumn)

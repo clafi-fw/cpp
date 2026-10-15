@@ -81,7 +81,7 @@ namespace ClaFi::Controls
         // the part of its owner the commands are about, and here that is the pixel the crosshair
         // stands on rather than a picture that may be larger than the screen.
         [[nodiscard]] FloatRect contextMenuAnchor() const override;
-        [[nodiscard]] ScaledDimensions calculateContent(AlignEvent&) override;
+        [[nodiscard]] ScaledSize calculateContent(AlignEvent&) override;
         void paintSurface(PaintEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         void doubleClick(DoubleClickEvent&) override;

@@ -146,7 +146,7 @@ namespace ClaFi::Controls
         return pixel;
     }
 
-    ScaledDimensions PictureView::calculateContent(AlignEvent&)
+    ScaledSize PictureView::calculateContent(AlignEvent&)
     {
         return m_content;
     }

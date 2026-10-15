@@ -404,7 +404,7 @@ namespace ClaFi
         void wnd_mouseHWheel(PointInForm, float wheelDelta) override;
         void mouseWheelOrHwheel(PointInForm, float wheelDelta, bool h);
         void wnd_sideButton(PointInForm, SideButton, InputStamp) override;
-        void wnd_keyDown(KeyDownEvent&) override;
+        void wnd_keyDown(KeyCode, KeyModifiers, bool isRepeat, bool& handled, InputStamp) override;
         void wnd_keyUp() override;
         void wnd_char(wchar_t value) override;
         // Whether a form is this form's popup or one nested on it at any depth.
@@ -466,7 +466,7 @@ namespace ClaFi
         [[nodiscard]] ScaledPosition frameOrigin() const;
         // What the root is laid out into: the window, cut to what the content measured on a form
         // sized by its content - a grant past that is the platform's rounding.
-        [[nodiscard]] ScaledDimensions contentExtent() const;
+        [[nodiscard]] ScaledSize contentExtent() const;
         // Where the root stands in the surface, which is what the shadow is cast around.
         [[nodiscard]] FloatRect rootRect() const;
         // Everything one wnd_paint paints: the dirty rect, and the corner squares it touches
@@ -575,15 +575,15 @@ namespace ClaFi
         bool m_measuringPlacement{};
         // What the content measured in the last pass, before it was laid out into anything - see
         // initPlacement and contentExtent, which read it.
-        ScaledDimensions m_calculatedSize{};
+        ScaledSize m_calculatedSize{};
         // Which axes the placement gave less on than the content asked for. Only those are a
         // bound on a form whose window came from its content - see adjustRootMetrics.
         bool m_placedShortX{};
         bool m_placedShortY{};
         // The range last given to the window. Negative until one has been, so the first
         // measurement states it whatever it comes to.
-        ScaledDimensions m_statedMinSize{ -1.0f, -1.0f };
-        ScaledDimensions m_statedMaxSize{ -1.0f, -1.0f };
+        ScaledSize m_statedMinSize{ -1.0f, -1.0f };
+        ScaledSize m_statedMaxSize{ -1.0f, -1.0f };
         AutoFit m_autoFit{ AutoFit::No };
         bool m_visible{};
         float m_windowFocusedFactor{ 0.0f };

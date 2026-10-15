@@ -186,7 +186,7 @@ namespace ClaFi::Controls
         // The placeholder while the text is empty, and the box's own layout over it for the caret.
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
         // Room for the placeholder while the text is empty, and a flex space at its floor.
-        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
         // What the layout is told when the box's text has moved. An edit reaches a paragraph or
         // two, and the rest of the document keeps the shaping it has - which is what the base's
         // answer, stating the whole text, cannot do.
@@ -1012,7 +1012,7 @@ namespace ClaFi::Controls
 
     FloatRect TextBox::textBoundsInControl() const
     {
-        return textBounds(formContext(), FloatRect::fromDimensions({ 0.0f, 0.0f }, dimensions()));
+        return textBounds(formContext(), FloatRect::fromDimensions({ 0.0f, 0.0f }, scaledSize()));
     }
 
     CaretHit TextBox::caretHitAt(const FormContext& formContext, const FloatRect& textBounds,

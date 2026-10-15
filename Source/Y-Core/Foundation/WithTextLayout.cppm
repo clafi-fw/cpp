@@ -31,7 +31,7 @@ namespace ClaFi
         /// The two seams a control holding a layout of its own overrides. They are a pair:
         /// override one and the control measures on one layout and draws on another.
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
-        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
 
         /// @brief The layout, brought up to date with the text it draws, the rect it draws in and
         /// the scale, and returned ready to answer.
@@ -78,7 +78,7 @@ namespace ClaFi
         struct Measurement
         {
             TextStamp text{};
-            ScaledDimensions asked{ 0.0f, 0.0f };
+            ScaledSize asked{ 0.0f, 0.0f };
             ScaleFactor scaleFactor{ 0.0f };
             float breakWidth{ 0.0f };
             bool wrap{ false };
@@ -97,7 +97,7 @@ namespace ClaFi
         // it. A text with no life of its own stamps nothing and is compared instead.
         mutable TextStamp m_layoutStamp{};
         Measurement m_measurement{};
-        CalculatedDimensions m_measured{};
+        ScaledSize m_measured{};
         TextFormat m_measuredFormat{}; // what the last measurement was laid out over
         // The engine generation the layout was built at. invalidateLayouts drops the cache and
         // moves that number on for anything a key does not carry - the font table above all - and
@@ -154,8 +154,8 @@ namespace ClaFi
     // hash, so a control whose text moved misses on every measurement, shapes it again to answer
     // one question, and leaves the entry for the evictor to sweep.
     template <IsControl HostClass>
-    CalculatedDimensions WithTextLayout<HostClass>::measureText(AlignEvent& event,
-        ScaledDimensions asked, const Text& text)
+    ScaledSize WithTextLayout<HostClass>::measureText(AlignEvent& event,
+        ScaledSize asked, const Text& text)
     {
         const Measurement measurement{
             .text = stampOf(text),

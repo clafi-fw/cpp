@@ -84,8 +84,8 @@ namespace SeeDocs_App
         void setBases(const BaseNodes&);
         void clearBases();
     protected:
-        ScaledDimensions calculateContent(AlignEvent&) override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         // A crumb's width is read off it and narrowed here, as a row reads its items' widths.
         [[nodiscard]] bool isChildWidthGiven(const Control&) const override { return false; }
     private:

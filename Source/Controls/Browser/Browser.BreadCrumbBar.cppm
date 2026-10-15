@@ -182,7 +182,7 @@ namespace ClaFi::Browser
         void createItems(PageData*);
     protected:
         // The room a long path is short of comes off the widest crumbs. See Browser#breadcrumbbar
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
     private:
         void selectBrowserData(PageData&, Control& initiator);
         void fetchSubItems(PageData&);
@@ -193,7 +193,7 @@ namespace ClaFi::Browser
         // own state.
         [[nodiscard]] bool canRenamePage(PageData&) const;
         void renamePage(PageData&, AcceptEditEvent&);
-        [[nodiscard]] FitData fitData() const override { return { width() }; }
+        [[nodiscard]] FitData fitData() const override { return { scaledWidth() }; }
         void traverseFittables(const FittableFunc) override;
     };
 
@@ -249,14 +249,14 @@ namespace ClaFi::Browser
     FitData BreadCrumbBarItem::fitData() const
     {
         return {
-            .width = width(),
-            .minWidth = calculatedMinSize().x,
+            .width = scaledWidth(),
+            .minWidth = scaledMinSize().x,
         };
     }
 
     void BreadCrumbBarItem::takeOffWidth(const float value)
     {
-        setWidth(width() - value);
+        setWidth(scaledWidth() - value);
     }
 
     void BreadCrumbBarItem::getMainText(GetTextEvent& event) const
@@ -491,7 +491,7 @@ namespace ClaFi::Browser
     }
 
     void BreadCrumbBar::alignContent(AlignEvent& event, ScaledPosition position,
-        ScaledDimensions& contentDimensions)
+        ScaledSize& contentDimensions)
     {
         // Read off the crumbs as they stand, which is what alignSingleRow places: their titles'
         // widths after a measure, or what an earlier align in the same pass left them.
@@ -502,9 +502,9 @@ namespace ClaFi::Browser
             if (!control->visible())
                 continue;
             if (!first)
-                taken += event.spacing.x;
+                taken += event.scaledSpacingX();
             first = false;
-            taken += control->width();
+            taken += control->scaledWidth();
         }
         const float shortfall = taken - contentDimensions.x;
         if (shortfall > 0.0f)

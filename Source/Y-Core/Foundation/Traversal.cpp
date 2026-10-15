@@ -35,7 +35,7 @@ namespace ClaFi
         // own geometry. See Control::floatOffset.
         m_controlBounds = FloatRect::fromDimensions(
             m_control.topLeft() + m_control.floatOffset() + parentContentPosition,
-            m_control.dimensions());
+            m_control.scaledSize());
 
         // The padding is what the control's own text and icons are inset by; the child padding is
         // where its children start. They are the same value unless the control separates them.

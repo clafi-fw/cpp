@@ -135,7 +135,7 @@ namespace ClaFi::Controls
         void getText(GetTextEvent&) const override;
         void nestedGetHint(GetHintEvent&) override;
         void click(ClickEvent&) override;
-        ScaledDimensions calculateContent(AlignEvent& event) override {
+        ScaledSize calculateContent(AlignEvent& event) override {
             return Button::calculateContent(event);
         }
     private:
@@ -203,7 +203,7 @@ namespace ClaFi::Controls
         void paintIcon(PaintIconEvent&) override;
         void getMainText(GetTextEvent&) const override;
         // The widest face of any item, so that a pick never changes the size.
-        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
         void adjustPaint(AdjustPaintEvent&) override;
         [[nodiscard]] bool clickOpensEditor() const override;
         void getEditorText(Text&) const override;
@@ -463,17 +463,16 @@ namespace ClaFi::Controls
             event.text << m_placeHolderText;
     }
 
-    CalculatedDimensions ComboBox::measureText(AlignEvent& event, ScaledDimensions asked,
+    ScaledSize ComboBox::measureText(AlignEvent& event, ScaledSize asked,
         const Text& text)
     {
         // The face as it reads now counts too - a derived control may word it unlike any item.
-        CalculatedDimensions result = ComboBoxBaseClass::measureText(event, asked, text);
+        ScaledSize result = ComboBoxBaseClass::measureText(event, asked, text);
         for (const TextItem& item : items())
         {
             Text face{};
             itemFaceText(item, face, EventPhase::Calculate);
-            const CalculatedDimensions faceSize =
-                ComboBoxBaseClass::measureText(event, asked, face);
+            const ScaledSize faceSize = ComboBoxBaseClass::measureText(event, asked, face);
             result.x = std::max(result.x, faceSize.x);
             result.y = std::max(result.y, faceSize.y);
         }

@@ -41,9 +41,9 @@ namespace ClaFi::Controls::Grids
         // Its cells and its blanks take the press; elsewhere the rows showing through it do.
         void hitTest(HitTestEvent& event) const override;
         [[nodiscard]] bool hasBlank(const Column&) const override;
-        [[nodiscard]] ScaledDimensions cellLead(const Column&) const override;
+        [[nodiscard]] ScaledSize cellLead(const Column&) const override;
         void adjustChildMetrics(AdjustMetricsEvent&) const override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         // On the mark's cell Right opens the group and Left closes it, as on a tree node.
         void nestedKeyDown(KeyDownEvent&) override;
         // A double click on the mark is two presses of it, and one on a blank opens the group.
@@ -65,7 +65,7 @@ namespace ClaFi::Controls::Grids
         friend RowGroupSpan;
     public:
         template<typename ...Args>
-        RowGroup(const CreateParams& params, GridDescriptor& descriptor, Args&&... args);
+        RowGroup(const CreateParams&, GridDescriptor&, Args&&...);
         [[nodiscard]] RowGroupSpan& span() { return static_cast<RowGroupSpan&>(*m_controls[k_head]); }
         [[nodiscard]] const RowGroupSpan& span() const { return static_cast<RowGroupSpan&>(*m_controls[k_head]); }
     protected:
@@ -73,9 +73,9 @@ namespace ClaFi::Controls::Grids
         // is part of the same field they are. An expander's header is a panel, not a row, which
         // is why this answers for the group only.
         RowBase* spanRow() override { return &span(); }
-        void preCalcColumn(Column& column) override;
-        ScaledDimensions calculateContent(AlignEvent& event) override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void preCalcColumn(const FormContext&, Column&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         // The rows are read folded or open, and the group opens to show a match in them.
         [[nodiscard]] ChildSearch childSearch(const Control&) const override;
         void revealChild(Control&) override;

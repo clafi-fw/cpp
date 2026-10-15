@@ -2,19 +2,16 @@ module;
 #include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Controls.Grids :Columns;
 
-
-import ClaFi.Core.System.Props;
-
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation.Fit;
 import ClaFi.Core.Foundation;
-
 import ClaFi.Core.TextEngine.Types;
-
+import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.System.Scaler;
+import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
-
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
-import ClaFi.Core.TextEngine.Text;
 
 
 namespace ClaFi::Controls::Grids
@@ -168,7 +165,7 @@ namespace ClaFi::Controls::Grids
         [[nodiscard]] float fillRatio() const { return m_designWidth > 0.0f ? m_designWidth : 1.0f; }
         //
         void clearCalculatedWidth();
-        void preCalcRows(GridBase&);
+        void preCalcRows(const FormContext& formContext, GridBase&);
         void finishCalcStage1();
         void stretchStretched(const float boundsW);
         void calcLeft(float left);

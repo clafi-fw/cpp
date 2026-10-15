@@ -125,8 +125,8 @@ namespace ClaFi::Controls
         // Puts items, given in their order, at `to` and after. See Item-Containers
         void moveItems(std::span<Control* const> items, std::size_t to);
     protected:
-        ScaledDimensions calculateContent(AlignEvent&) override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         // A row reads its items' widths off them, unless one fills the lane.
         [[nodiscard]] bool isChildWidthGiven(const Control& child) const override
             { return !lanesRunAcross() || child.fillsLane(); }
@@ -181,7 +181,7 @@ namespace ClaFi::Controls
         [[nodiscard]] float leadingOf(const Control& child) const
             { return mainOf(child.topLeft()); }
         [[nodiscard]] float extentOf(const Control& child) const
-            { return mainOf(child.dimensions()); }
+            { return mainOf(child.scaledSize()); }
     private:
         // What one lane holds: how many items it places, and the largest of them along the lane.
         // The two are read in one walk because an even lane needs both - the count divides it,
@@ -205,7 +205,7 @@ namespace ClaFi::Controls
         };
     private:
         // **Every wrapping stack, both ways round.**
-        void alignIntoLanes(AlignEvent&, ScaledPosition, ScaledDimensions& contentDimensions);
+        void alignIntoLanes(AlignEvent&, ScaledPosition, ScaledSize& contentDimensions);
         // The lane beginning at begin: as many items as the lane takes, as many as fit the length
         // it is given, and never fewer than one.
         [[nodiscard]] LaneCut nextLane(ControlSpan::iterator begin, const AlignEvent&,
@@ -216,7 +216,7 @@ namespace ClaFi::Controls
         // A lane with what the **stack** was given over what it measured divided among the items on
         // it - or among the items that asked for it, where any did. See Item-Containers
         void alignSharedLane(AlignEvent&, const LaneCut&, ScaledPosition, float laneSurplus,
-            float laneCross, ScaledDimensions& contentDimensions);
+            float laneCross, ScaledSize& contentDimensions);
         // One item in the part of a lane it was given.
         void placeInLane(AlignEvent&, Control&, ScaledPosition lanePosition, float from,
             float extent, float laneCross);
@@ -272,7 +272,7 @@ namespace ClaFi::Controls
         // equal to the pixel and the last one ends exactly on the lane's own edge.
         void alignEvenLane(AlignEvent&, ControlSpan::iterator laneBegin,
             ControlSpan::iterator laneEnd, std::size_t shares, ScaledPosition,
-            float laneMain, float laneCross, ScaledDimensions& contentDimensions);
+            float laneMain, float laneCross, ScaledSize& contentDimensions);
     private:
         // Under this two extents are the same extent: what the align laid out is compared with
         // what the measure answered, and a pass asked for on floating-point noise is a pass
@@ -454,7 +454,7 @@ namespace ClaFi::Controls
         return {};
     }
 
-    ScaledDimensions StackPanelBase::calculateContent(AlignEvent& event)
+    ScaledSize StackPanelBase::calculateContent(AlignEvent& event)
     {
         if (controls().empty())
             // placeHolderText
@@ -469,7 +469,7 @@ namespace ClaFi::Controls
             return calculateRows(event, controls(), true, itemsPerLane(), wrapLengthLimit(event));
         case Orientation::Vertical:
         {
-            ScaledDimensions result = calculateColumns(event, controls(), false);
+            ScaledSize result = calculateColumns(event, controls(), false);
             // The lane's own length is restated, and only the length: the cross extent is still
             // the largest item, which an even division says nothing about.
             //
@@ -477,22 +477,22 @@ namespace ClaFi::Controls
             // measures nothing across the lane, and a lane length standing over a cross extent of
             // zero is a panel claiming a size in one direction and none in the other.
             if (dividesEvenly() && result.x)
-                result.y = evenLaneLength(laneFill(&Control::height), event.spacing.y);
+                result.y = evenLaneLength(laneFill(&Control::scaledHeight), event.scaledSpacingY());
             return result;
         }
         default: // warn fix
         {
-            ScaledDimensions result = calculateRows(event, controls(), false);
+            ScaledSize result = calculateRows(event, controls(), false);
             if (dividesEvenly() && result.y)
-                result.x = evenLaneLength(laneFill(&Control::width), event.spacing.x);
+                result.x = evenLaneLength(laneFill(&Control::scaledWidth), event.scaledSpacingX());
             return result;
         }
         }
     }
 
-    void StackPanelBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& contentDimensions)
+    void StackPanelBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& contentDimensions)
     {
-        ScaledDimensions calculatedContent = dimensions() - event.padding * 2;
+        ScaledSize calculatedContent = scaledSize() - event.scaledPadding() * 2;
         switch (m_orientation)
         {
         case Orientation::HorizontalWrap:
@@ -511,7 +511,7 @@ namespace ClaFi::Controls
             contentDimensions = { 0, 0 };
             if (dividesEvenly())
                 return alignEvenLane(event, controls().begin(), controls().end(),
-                                     laneFill(&Control::width).count, position,
+                                     laneFill(&Control::scaledWidth).count, position,
                                      calculatedContent.x, calculatedContent.y, contentDimensions);
             return alignSingleRow(event, controls().begin(), controls().end(),
                                   position, calculatedContent, contentDimensions);
@@ -523,7 +523,7 @@ namespace ClaFi::Controls
             contentDimensions = { 0, 0 };
             if (dividesEvenly())
                 return alignEvenLane(event, controls().begin(), controls().end(),
-                                     laneFill(&Control::height).count, position,
+                                     laneFill(&Control::scaledHeight).count, position,
                                      calculatedContent.y, calculatedContent.x, contentDimensions);
             return alignSingleColumn(event, controls().begin(), controls().end(),
                                      position, calculatedContent, contentDimensions);
@@ -547,18 +547,18 @@ namespace ClaFi::Controls
     // that twice is how each way round came to be missing whatever the other one had. See
     // Item-Containers
     void StackPanelBase::alignIntoLanes(AlignEvent& event, ScaledPosition position,
-        ScaledDimensions& contentDimensions)
+        ScaledSize& contentDimensions)
     {
         // The box the parent is handing over, held to whatever maximum this stack states. Read
         // main-first from here on, so that neither half of the pair can drift from the other.
-        ScaledDimensions granted = {
+        ScaledSize granted = {
             std::min(contentDimensions.x, event.maxContentWidth()),
             std::min(contentDimensions.y, event.maxContentHeight()) };
         // **A column is not broken at a height its host scrolls.** The measure breaks it at this
         // stack's own maximum alone, and a scroll box hands its body the viewport - so a cut
         // there makes lanes nobody measured. See Item-Containers
         if (!lanesRunAcross() && isScrolledByParent(ScrollAxis::Vertical))
-            granted.y = std::max(granted.y, height() - event.padding.y * 2);
+            granted.y = std::max(granted.y, scaledHeight() - event.scaledPaddingY() * 2);
         const float limitMain = mainOf(granted);
         const float limitCross = crossOf(granted);
         contentDimensions = { 0.0f, 0.0f };
@@ -574,9 +574,9 @@ namespace ClaFi::Controls
         // calculateChildren re-measures every child before the parent's own calculateContent, and
         // Control::calculate always writes what it came to.
         const bool even = dividesEvenly();
-        const float spacingMain = mainOf(event.spacing);
+        const float spacingMain = mainOf(event.scaledSpacing());
         const std::size_t perLane = even
-            ? sharesThatFit(laneFill(lanesRunAcross() ? &Control::width : &Control::height).largest,
+            ? sharesThatFit(laneFill(lanesRunAcross() ? &Control::scaledWidth : &Control::scaledHeight).largest,
                 spacingMain, limitMain)
             : itemsPerLane();
 
@@ -622,7 +622,7 @@ namespace ClaFi::Controls
         // the stack was granted where it fills.
         const float evenMain = fillsMain() ? std::max(longestLane, limitMain) : longestLane;
 
-        const float crossSpacing = crossOf(event.spacing);
+        const float crossSpacing = crossOf(event.scaledSpacing());
         const float crossSlack = surplusOver(limitCross, crossTotal + (lanesRunAcross()
             ? event.totalSpacingY(laneCount) : event.totalSpacingX(laneCount)));
         const float lanes = static_cast<float>(laneCount);
@@ -670,7 +670,7 @@ namespace ClaFi::Controls
         const float limitMain, const std::size_t perLane)
     {
         LaneCut lane{ begin, begin, 0.0f, 0.0f, 0ull, 0ull };
-        const float spacingMain = mainOf(event.spacing);
+        const float spacingMain = mainOf(event.scaledSpacing());
         for (ControlSpan::iterator it = begin; it != controls().end(); ++it)
         {
             const Control& item = **it;
@@ -682,7 +682,7 @@ namespace ClaFi::Controls
                 lane.end = std::next(it);
                 continue;
             }
-            const ScaledDimensions size = item.dimensions();
+            const ScaledSize size = item.scaledSize();
             float reach = mainOf(size);
             if (lane.count)
                 reach += spacingMain;
@@ -754,7 +754,7 @@ namespace ClaFi::Controls
     // aligned to an edge keeps the size it measured and stands in it - see Control::align.
     void StackPanelBase::alignSharedLane(AlignEvent& event, const LaneCut& lane,
         const ScaledPosition position, const float laneSurplus, const float laneCross,
-        ScaledDimensions& contentDimensions)
+        ScaledSize& contentDimensions)
     {
         crossOf(contentDimensions) = std::max(crossOf(contentDimensions),
             crossOf(position) + laneCross);
@@ -766,7 +766,7 @@ namespace ClaFi::Controls
 
         // The items that asked, or every item where none did.
         const float sharers = static_cast<float>(lane.takers ? lane.takers : lane.count);
-        const float spacingMain = mainOf(event.spacing);
+        const float spacingMain = mainOf(event.scaledSpacing());
         // Each share is measured from the whole rather than accumulated, so a rounding is never
         // carried into the next one and the last item ends on the edge the lane was given.
         float handed = 0.0f;
@@ -778,7 +778,7 @@ namespace ClaFi::Controls
             Control& control = **it;
             if (!control.visible())
                 continue;
-            const ScaledDimensions size = control.dimensions();
+            const ScaledSize size = control.scaledSize();
             float handedNext = handed;
             if (!lane.takers || control.fillsLane())
             {
@@ -939,7 +939,7 @@ namespace ClaFi::Controls
 
     void StackPanelBase::alignEvenLane(AlignEvent& event, ControlSpan::iterator laneBegin,
         ControlSpan::iterator laneEnd, const std::size_t shares, ScaledPosition position,
-        const float laneMain, const float laneCross, ScaledDimensions& contentDimensions)
+        const float laneMain, const float laneCross, ScaledSize& contentDimensions)
     {
         crossOf(contentDimensions) = std::max(crossOf(contentDimensions),
             crossOf(position) + laneCross);
@@ -954,7 +954,7 @@ namespace ClaFi::Controls
         // is measured from the lane's own start rather than accumulated, so a rounding is never
         // carried into the next share - no two differ by more than a pixel, and the last one lands
         // on the edge the lane was given.
-        const float spacingMain = mainOf(event.spacing);
+        const float spacingMain = mainOf(event.scaledSpacing());
         const float step = (laneMain + spacingMain) / static_cast<float>(shares);
         float lastEnd = mainOf(position);
         std::size_t index = 0ull;

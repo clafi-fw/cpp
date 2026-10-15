@@ -40,12 +40,12 @@ namespace ClaFi::Controls
     {
         const float line = event.scaledStrokeWidth(k_thickness);
         const float lead = upright()
-            ? event.unScale((width() - line) / 2.0f)
-            : event.unScale((height() - line) / 2.0f);
+            ? event.unScale((scaledWidth() - line) / 2.0f)
+            : event.unScale((scaledHeight() - line) / 2.0f);
         event.defaultPaintSurface(upright() ? FloatPoint{ lead, 0.0f } : FloatPoint{ 0.0f, lead });
     }
 
-    ScaledDimensions Splitter::calculateContent(AlignEvent& event)
+    ScaledSize Splitter::calculateContent(AlignEvent& event)
     {
         const float line = event.scaledStrokeWidth(k_thickness);
         return { line, line };
@@ -120,7 +120,7 @@ namespace ClaFi::Controls
         const Control* bar = slot(slotId);
         if (!bar)
             return 0.0f;
-        return scaler().unScale(isSideBar(slotId) ? bar->width() : bar->height());
+        return scaler().unScale(isSideBar(slotId) ? bar->scaledWidth() : bar->scaledHeight());
     }
 
     void PanelBase::setBarExtent(const PanelSlot slotId, const float extent)
@@ -152,13 +152,13 @@ namespace ClaFi::Controls
         invalidateFormAlign();
     }
 
-    ScaledDimensions PanelBase::calculateContent(AlignEvent& event)
+    ScaledSize PanelBase::calculateContent(AlignEvent& event)
     {
         keepFittedExtents();
         m_textSize = Container::calculateContent(event).toFloat();
         if (m_fixedTextWidth.has_value())
             m_textSize.x = event.scale(m_fixedTextWidth.value());
-        ScaledDimensions result{ 0, 0 };
+        ScaledSize result{ 0, 0 };
 
         switch (m_textPlacement)
         {
@@ -172,10 +172,10 @@ namespace ClaFi::Controls
 
         if (isNotNullAndVisible(topBar()))
         {
-            result.x = std::max(result.x, topBar()->width());
+            result.x = std::max(result.x, topBar()->scaledWidth());
             if (result.y)
-                result.y += event.spacing.y;
-            result.y += topBar()->height();
+                result.y += event.scaledSpacingY();
+            result.y += topBar()->scaledHeight();
         }
 
         float lrcWidth = 0.0f;
@@ -183,8 +183,8 @@ namespace ClaFi::Controls
 
         if (isNotNullAndVisible(leftBar()))
         {
-            lrcWidth = leftBar()->width();
-            lrcHeight = leftBar()->height();
+            lrcWidth = leftBar()->scaledWidth();
+            lrcHeight = leftBar()->scaledHeight();
         }
 
         m_bodyRect.clear();
@@ -200,14 +200,14 @@ namespace ClaFi::Controls
 
         if (isNotNullAndVisible(body()))
         {
-            m_bodyRect.right = std::max(m_bodyRect.right, body()->width());
-            m_bodyRect.bottom = std::max(m_bodyRect.bottom, body()->height());
+            m_bodyRect.right = std::max(m_bodyRect.right, body()->scaledWidth());
+            m_bodyRect.bottom = std::max(m_bodyRect.bottom, body()->scaledHeight());
         }
 
         if (m_bodyRect.right)
         {
             if (lrcWidth)
-                lrcWidth += splitterGap(PanelSlot::Left, event.spacing.x);
+                lrcWidth += splitterGap(PanelSlot::Left, event.scaledSpacingX());
             lrcWidth += m_bodyRect.right;
         }
         if (m_bodyRect.bottom)
@@ -216,15 +216,15 @@ namespace ClaFi::Controls
         if (isNotNullAndVisible(rightBar()))
         {
             if (lrcWidth)
-                lrcWidth += splitterGap(PanelSlot::Right, event.spacing.x);
-            lrcWidth += rightBar()->width();
-            lrcHeight = std::max(lrcHeight, rightBar()->height());
+                lrcWidth += splitterGap(PanelSlot::Right, event.scaledSpacingX());
+            lrcWidth += rightBar()->scaledWidth();
+            lrcHeight = std::max(lrcHeight, rightBar()->scaledHeight());
         }
 
         if (lrcHeight)
         {
             if (result.y)
-                result.y += splitterGap(PanelSlot::Top, event.spacing.y);
+                result.y += splitterGap(PanelSlot::Top, event.scaledSpacingY());
             result.y += lrcHeight;
         }
         result.x = std::max(result.x, lrcWidth);
@@ -232,16 +232,16 @@ namespace ClaFi::Controls
         if (isNotNullAndVisible(bottomBar()))
         {
             if (result.y)
-                result.y += splitterGap(PanelSlot::Bottom, event.spacing.y);
-            result.y += bottomBar()->height();
-            result.x = std::max(result.x, bottomBar()->width());
+                result.y += splitterGap(PanelSlot::Bottom, event.scaledSpacingY());
+            result.y += bottomBar()->scaledHeight();
+            result.x = std::max(result.x, bottomBar()->scaledWidth());
         }
 
         switch (m_textPlacement)
         {
         case TextPlacement::Left:
             if (result.x && m_textSize.x)
-                result.x += event.spacing.x;
+                result.x += event.scaledSpacingX();
             result.x += m_textSize.x;
             result.y = std::max(result.y, m_textSize.y);
             break;
@@ -250,57 +250,63 @@ namespace ClaFi::Controls
             break;
         }
 
-        event.calculatedMinSize = composeMinSize(event, bodyMinSize());
+        event.composedMinSize = composeMinSize(event, bodyMinSize());
 
         return result;
     }
 
-    ScaledDimensions PanelBase::composeMinSize(const AlignEvent& event, ScaledDimensions bodyMin) const
+    ScaledSize PanelBase::composeMinSize(const AlignEvent& event, ScaledSize bodyMin) const
     {
-        const ScaledDimensions topMin = isNotNullAndVisible(topBar())
-            ? topBar()->calculatedMinSize()
-            : ScaledDimensions{ 0.0f, 0.0f };
-        const ScaledDimensions leftMin = isNotNullAndVisible(leftBar())
-            ? leftBar()->calculatedMinSize()
-            : ScaledDimensions{ 0.0f, 0.0f };
-        const ScaledDimensions rightMin = isNotNullAndVisible(rightBar())
-            ? rightBar()->calculatedMinSize()
-            : ScaledDimensions{ 0.0f, 0.0f };
-        const ScaledDimensions bottomMin = isNotNullAndVisible(bottomBar())
-            ? bottomBar()->calculatedMinSize()
-            : ScaledDimensions{ 0.0f, 0.0f };
+        const ScaledSize topMin = isNotNullAndVisible(topBar())
+            ? topBar()->scaledMinSize()
+            : ScaledSize{ 0.0f, 0.0f };
+        const ScaledSize leftMin = isNotNullAndVisible(leftBar())
+            ? leftBar()->scaledMinSize()
+            : ScaledSize{ 0.0f, 0.0f };
+        const ScaledSize rightMin = isNotNullAndVisible(rightBar())
+            ? rightBar()->scaledMinSize()
+            : ScaledSize{ 0.0f, 0.0f };
+        const ScaledSize bottomMin = isNotNullAndVisible(bottomBar())
+            ? bottomBar()->scaledMinSize()
+            : ScaledSize{ 0.0f, 0.0f };
 
         float middleWidth = 0.0f;
-        addAlongLane(middleWidth, leftMin.x, event.spacing.x);
-        addAlongLane(middleWidth, bodyMin.x, event.spacing.x);
-        addAlongLane(middleWidth, rightMin.x, event.spacing.x);
+        {
+            const float spacingX = event.scaledSpacingX();
+            addAlongLane(middleWidth, leftMin.x, spacingX);
+            addAlongLane(middleWidth, bodyMin.x, spacingX);
+            addAlongLane(middleWidth, rightMin.x, spacingX);
+        }
         const float middleHeight = std::max(leftMin.y, std::max(bodyMin.y, rightMin.y));
 
-        ScaledDimensions result = { 0.0f, 0.0f };
-        addAlongLane(result.y, topMin.y, event.spacing.y);
-        addAlongLane(result.y, middleHeight, event.spacing.y);
-        addAlongLane(result.y, bottomMin.y, event.spacing.y);
+        ScaledSize result = { 0.0f, 0.0f };
+        {
+            const float spacingY = event.scaledSpacingY();
+            addAlongLane(result.y, topMin.y, spacingY);
+            addAlongLane(result.y, middleHeight, spacingY);
+            addAlongLane(result.y, bottomMin.y, spacingY);
+        }
         result.x = std::max(topMin.x, std::max(middleWidth, bottomMin.x));
         return result;
     }
 
-    ScaledDimensions PanelBase::bodyMinSize() const
+    ScaledSize PanelBase::bodyMinSize() const
     {
         if (!isNotNullAndVisible(body()))
             return { 0.0f, 0.0f };
-        return body()->calculatedMinSize();
+        return body()->scaledMinSize();
     }
 
-    void PanelBase::alignContent(AlignEvent& event, ScaledPosition, ScaledDimensions& contentSize)
+    void PanelBase::alignContent(AlignEvent& event, ScaledPosition, ScaledSize& contentSize)
     {
         m_contentRect = { 0, 0, contentSize.x, contentSize.y };
         switch (m_textPlacement)
         {
         case TextPlacement::Top:
         {
-            CalculatedDimensions newTextSize = calculateText(event, contentSize);
+            const ScaledSize newTextSize = calculateText(event, contentSize);
             m_contentRect.top += newTextSize.y;
-            float delta = newTextSize.y - m_textSize.y;
+            const float delta = newTextSize.y - m_textSize.y;
             m_contentRect.bottom += delta;
             contentSize.y += delta;
             m_textSize = newTextSize;
@@ -309,7 +315,7 @@ namespace ClaFi::Controls
         case TextPlacement::Left:
             m_contentRect.left += m_textSize.x;
             if (m_contentRect.left)
-                m_contentRect.left += event.spacing.x;
+                m_contentRect.left += event.scaledSpacingX();
             break;
         case TextPlacement::Body:
             break;
@@ -318,34 +324,34 @@ namespace ClaFi::Controls
         if (isNotNullAndVisible(topBar()))
         {
             if (m_contentRect.top)
-                m_contentRect.top += event.spacing.y;
+                m_contentRect.top += event.scaledSpacingY();
             alignControl(
                 topBar(),
                 event,
                 m_contentRect.topLeft(),
-                { m_contentRect.width(), topBar()->height() }
+                { m_contentRect.width(), topBar()->scaledHeight() }
             );
-            m_bodyRect.top = m_contentRect.top + topBar()->height();
+            m_bodyRect.top = m_contentRect.top + topBar()->scaledHeight();
         }
         if (m_bodyRect.top)
         {
-            const float gap = splitterGap(PanelSlot::Top, event.spacing.y);
+            const float gap = splitterGap(PanelSlot::Top, event.scaledSpacingY());
             placeSplitter(PanelSlot::Top, event, m_bodyRect.top, gap);
             m_bodyRect.top += gap;
         }
         if (isNotNullAndVisible(bottomBar()))
         {
             FloatRect itsRect = m_contentRect;
-            m_bodyRect.bottom = m_contentRect.bottom - bottomBar()->height();
+            m_bodyRect.bottom = m_contentRect.bottom - bottomBar()->scaledHeight();
             alignControl(
                 bottomBar(),
                 event,
                 { m_contentRect.left, m_bodyRect.bottom },
-                { m_contentRect.right, bottomBar()->height() }
+                { m_contentRect.right, bottomBar()->scaledHeight() }
             );
-            if (bottomBar()->height())
+            if (bottomBar()->scaledHeight())
             {
-                const float gap = splitterGap(PanelSlot::Bottom, event.spacing.y);
+                const float gap = splitterGap(PanelSlot::Bottom, event.scaledSpacingY());
                 m_bodyRect.bottom -= gap;
                 placeSplitter(PanelSlot::Bottom, event, m_bodyRect.bottom, gap);
             }
@@ -356,12 +362,12 @@ namespace ClaFi::Controls
                 leftBar(),
                 event,
                 m_bodyRect.topLeft(),
-                { leftBar()->width(), m_bodyRect.height() }
+                { leftBar()->scaledWidth(), m_bodyRect.height() }
             );
-            m_bodyRect.left += leftBar()->width();
-            if (leftBar()->width())
+            m_bodyRect.left += leftBar()->scaledWidth();
+            if (leftBar()->scaledWidth())
             {
-                const float gap = splitterGap(PanelSlot::Left, event.spacing.x);
+                const float gap = splitterGap(PanelSlot::Left, event.scaledSpacingX());
                 placeSplitter(PanelSlot::Left, event, m_bodyRect.left, gap);
                 m_bodyRect.left += gap;
             }
@@ -373,14 +379,14 @@ namespace ClaFi::Controls
                 rightBar(),
                 event,
                 { m_bodyRect.right, m_bodyRect.top },
-                { rightBar()->width(), m_bodyRect.height() }
+                { rightBar()->scaledWidth(), m_bodyRect.height() }
             );
-            float w = rightBar()->width();
+            float w = rightBar()->scaledWidth();
             if (w)
             {
                 offsetControl(rightBar(), { -w, 0.0f });
                 m_bodyRect.right -= w;
-                const float gap = splitterGap(PanelSlot::Right, event.spacing.x);
+                const float gap = splitterGap(PanelSlot::Right, event.scaledSpacingX());
                 m_bodyRect.right -= gap;
                 placeSplitter(PanelSlot::Right, event, m_bodyRect.right, gap);
             }
@@ -408,10 +414,10 @@ namespace ClaFi::Controls
             // So only a dictated panel lays its body out past the slot: a growing one would grow
             // by whatever bodyExtent states.
             bool sizeComesFromOutside = verticalAlign() == VerticalAlign::Fill || isHostedAsBody();
-            float delta = body()->height();
+            float delta = body()->scaledHeight();
             alignControl(body(), event, m_bodyRect.topLeft(),
                 sizeComesFromOutside ? bodyExtent() : m_bodyRect.dimensions());
-            delta = body()->height() - delta;
+            delta = body()->scaledHeight() - delta;
 
             bool needExpand = (delta > 0.0f) && !sizeComesFromOutside;
             if (needExpand)
@@ -521,7 +527,7 @@ namespace ClaFi::Controls
         const Splitter* splitter = shownSplitter(slotId);
         if (!splitter)
             return spacing;
-        const float line = isSideBar(slotId) ? splitter->width() : splitter->height();
+        const float line = isSideBar(slotId) ? splitter->scaledWidth() : splitter->scaledHeight();
         return std::max(spacing, line);
     }
 
@@ -535,7 +541,7 @@ namespace ClaFi::Controls
         if (!splitter)
             return;
         const bool upright = isSideBar(slotId);
-        const float line = upright ? splitter->width() : splitter->height();
+        const float line = upright ? splitter->scaledWidth() : splitter->scaledHeight();
         const float band = std::max(event.scale(Splitter::k_grabWidth), line);
         const float lead = std::floor((band - line) / 2.0f);
         const float bandStart = gapStart + std::floor((gap - line) / 2.0f) - lead;
@@ -559,9 +565,9 @@ namespace ClaFi::Controls
         if (!bar)
             return {};
         const bool upright = isSideBar(slotId);
-        const ScaledDimensions barMin = bar->calculatedMinSize();
-        const ScaledDimensions bodyMin = bodyMinSize();
-        const float shown = upright ? bar->width() : bar->height();
+        const ScaledSize barMin = bar->scaledMinSize();
+        const ScaledSize bodyMin = bodyMinSize();
+        const float shown = upright ? bar->scaledWidth() : bar->scaledHeight();
         const float bodyRoom = upright
             ? m_bodyRect.width() - bodyMin.x
             : m_bodyRect.height() - bodyMin.y;

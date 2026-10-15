@@ -51,11 +51,11 @@ namespace ClaFi::Controls
     // **The answers are laid out in the box the band placed them in.** SplitButtonBase places its
     // part without aligning it, and this part is a stack holding a button per answer.
     void MessageBar::alignContent(AlignEvent& event, const ScaledPosition position,
-        ScaledDimensions& dimensions)
+        ScaledSize& dimensions)
     {
         SplitButtonBase::alignContent(event, position, dimensions);
         if (shownSecondaryPart())
-            alignControl(&m_answers, event, m_answers.topLeft(), m_answers.dimensions());
+            alignControl(&m_answers, event, m_answers.topLeft(), m_answers.scaledSize());
     }
 
     void MessageBar::paintIcon(PaintIconEvent& event)

@@ -44,7 +44,7 @@ namespace ClaFi
         protected:
             [[nodiscard]] SecondaryPartPlacement secondaryPartPlacement() const override
                 { return SecondaryPartPlacement::Bottom; }
-            void placeSecondaryPart(ScaledDimensions childArea) override;
+            void placeSecondaryPart(ScaledSize childArea) override;
         private:
             // Runs what a press on one of the buttons does, the card standing until it has run.
             void press(const std::function<void()>& action);
@@ -65,7 +65,7 @@ namespace ClaFi
             // Deletes the cards whose notices are down once the click being dispatched has unwound.
             void collectGoneCards();
         protected:
-            void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+            void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
             // The cards' shadows, under the cards.
             void paintChildren(PaintEvent&) override;
         private:
@@ -249,10 +249,10 @@ namespace ClaFi
 
         // **The answers end the card**, under the message and against its right edge, the way a
         // dialog's buttons stand.
-        void NoticeCard::placeSecondaryPart(const ScaledDimensions childArea)
+        void NoticeCard::placeSecondaryPart(const ScaledSize childArea)
         {
             Control& part = *shownSecondaryPart();
-            const ScaledDimensions size = part.dimensions();
+            const ScaledSize size = part.scaledSize();
             setControlPlacement(part, { childArea.x - size.x, childArea.y - size.y }, size);
         }
 
@@ -293,7 +293,7 @@ namespace ClaFi
         // that width, the stack climbing from the window's bottom right. A window too narrow for a
         // card gives it what it has inside the margins.
         void NoticesLayer::alignContent(AlignEvent& event, ScaledPosition,
-            ScaledDimensions& contentDimensions)
+            ScaledSize& contentDimensions)
         {
             const float margin = scaler().scale(k_margin);
             const float spacing = scaler().scale(k_spacing);
@@ -306,7 +306,7 @@ namespace ClaFi
             for (NoticeCard* card : m_cards | std::views::reverse)
             {
                 alignControl(card, event, { left, 0.0f }, { width, std::max(bottom, 0.0f) });
-                bottom -= card->height();
+                bottom -= card->scaledHeight();
                 setControlTop(*card, bottom);
                 bottom -= spacing;
             }
@@ -328,7 +328,7 @@ namespace ClaFi
                 for (const NoticeCard* card : m_cards)
                 {
                     const FloatRect rect = FloatRect::fromDimensions(
-                        event.contentPosition() + card->topLeft(), card->dimensions());
+                        event.contentPosition() + card->topLeft(), card->scaledSize());
                     painter.paint(event.canvas(), rect);
                 }
             }

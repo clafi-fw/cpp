@@ -247,7 +247,7 @@ namespace ClaFi::Controls
         setPlacement(placement, control.boundsInForm());
         // And at least as wide as it - a list narrower than the face it fell from reads as
         // belonging to something else. In design units, which a popup shares with its parent.
-        setMinWidth(control.width() / scaler().factor());
+        setMinWidth(control.scaledWidth() / scaler().factor());
         return BaseMenuForm::execute();
     }
 

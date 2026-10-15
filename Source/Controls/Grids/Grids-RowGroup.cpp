@@ -58,13 +58,13 @@ namespace ClaFi::Controls::Grids
         return !parentAs<RowGroup>().outerSpanFills(column);
     }
 
-    ScaledDimensions RowGroupSpan::cellLead(const Column& column) const
+    ScaledSize RowGroupSpan::cellLead(const Column& column) const
     {
         if (!m_mark || &column != markColumn())
             return {};
         // The cell's padding stands between the mark and what the cell holds, as it stands
         // between the cell's edge and the mark.
-        const ScaledDimensions markDimensions = m_mark->dimensions();
+        const ScaledSize markDimensions = m_mark->scaledSize();
         return {
             markDimensions.x + descriptor().scaledCellMetrics().padding.x,
             markDimensions.y,
@@ -83,7 +83,7 @@ namespace ClaFi::Controls::Grids
     }
 
     void RowGroupSpan::alignContent(AlignEvent& event, ScaledPosition position,
-        ScaledDimensions& dimensions)
+        ScaledSize& dimensions)
     {
         RowContainer::alignContent(event, position, dimensions);
         if (!m_mark)
@@ -104,8 +104,8 @@ namespace ClaFi::Controls::Grids
         });
         const ScaledCellMetrics& cellMetrics = descriptor().scaledCellMetrics();
         contentRect = descriptor().cellInnerRect(contentRect);
-        contentRect.inflate(-cellMetrics.padding.toFloat());
-        const ScaledDimensions markDimensions = m_mark->dimensions();
+        contentRect.inflate(-cellMetrics.padding);
+        const ScaledSize markDimensions = m_mark->scaledSize();
         const TextAnchor anchor = { column->verticalTextAnchor(), HorizontalTextAnchor::Left };
         const ScaledPosition markPosition = anchoredOrigin(contentRect, markDimensions, anchor);
         alignControl(m_mark, event, markPosition, markDimensions);
@@ -176,13 +176,13 @@ namespace ClaFi::Controls::Grids
 
     // RowGroup
 
-    void RowGroup::preCalcColumn(Column& column)
+    void RowGroup::preCalcColumn(const FormContext& formContext, Column& column)
     {
-        RowGroupBase::preCalcColumn(column);
-        span().preCalcColumn(column);
+        RowGroupBase::preCalcColumn(formContext, column);
+        span().preCalcColumn(formContext, column);
     }
 
-    ScaledDimensions RowGroup::calculateContent(AlignEvent& event)
+    ScaledSize RowGroup::calculateContent(AlignEvent& event)
     {
         // Closed, the group is its span alone, which is what the base makes of a hidden body.
         if (!span().expanded())
@@ -190,7 +190,7 @@ namespace ClaFi::Controls::Grids
         // The body alone states the group's size. The span is drawn across its rows rather
         // than above them, and alignContent stretches it to their height, so a cell of the
         // span is as tall as the body whatever that cell holds.
-        ScaledDimensions bodyDimensions = Control::calculateColumns(event, body().controls(), false);
+        ScaledSize bodyDimensions = Control::calculateColumns(event, body().controls(), false);
         // The span may not have been sectioned yet (no column with content).
         auto& spanHeights = span().calculatedHeight();
         if (spanHeights.empty())
@@ -200,7 +200,7 @@ namespace ClaFi::Controls::Grids
         return bodyDimensions;
     }
 
-    void RowGroup::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& dimensions)
+    void RowGroup::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& dimensions)
     {
         // A group overlaps its body rather than sitting above it: the two fill disjoint
         // sets of columns, so the group's own cells merge vertically across the body.
@@ -210,9 +210,9 @@ namespace ClaFi::Controls::Grids
         if (!span().expanded())
             return;
         // Read before setControlHeight() below overwrites it.
-        const float stackedSpanHeight = span().height();
+        const float stackedSpanHeight = span().scaledHeight();
         setControlTop(body(), span().top());
-        setControlHeight(span(), body().height());
+        setControlHeight(span(), body().scaledHeight());
         dimensions.y -= stackedSpanHeight;
     }
 

@@ -1,13 +1,12 @@
 export module ClaFi.Controls.Grids :Cell;
 
 import :Columns;
-
 import ClaFi.Controls.InPlaceEdit;
-
-import ClaFi.Core.System.Events;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
@@ -115,9 +114,9 @@ namespace ClaFi::Controls::Grids
     export using CellContentFunc = std::function<void(CellContentEvent&)>;
     export using AcceptCellTextFunc = std::function<void(AcceptCellTextEvent&)>;
 
-    export struct ScaledCellMetrics : public AlignEvent
+    export struct ScaledCellMetrics : public ScaledControlMetrics
     {
-        using AlignEvent::AlignEvent;
+        ScaledCellMetrics(const ControlMetrics&, const Scaler&);
         float border;
         float radius;
     };
@@ -183,6 +182,14 @@ namespace ClaFi::Controls::Grids
         CellEventBase{ row, column },
         target{ std::move(linkTarget) },
         popup{ popup }
+    {
+    }
+
+    ScaledCellMetrics::ScaledCellMetrics(const ControlMetrics& desighMetrics, const Scaler& scaler)
+        :
+        ScaledControlMetrics{ desighMetrics, scaler },
+        border{ scaler.scaledStrokeWidth(desighMetrics.border) },
+        radius{ scaler.scaledStrokeWidth(desighMetrics.border) }
     {
     }
 

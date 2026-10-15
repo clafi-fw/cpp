@@ -137,7 +137,7 @@ namespace ClaFi::Controls
         // The strip is the control's own edge on the side it sits on, so it takes the content
         // padding there with it.
         [[nodiscard]] bool secondaryReachesEdge() const override { return true; }
-        void placeSecondaryPart(ScaledDimensions childArea) override;
+        void placeSecondaryPart(ScaledSize childArea) override;
         void secondaryClicked(NestedClickEvent&) override;
 
         void adjustChildInset(AdjustChildInsetEvent&) const override;
@@ -207,7 +207,7 @@ namespace ClaFi::Controls
         popup.setPlacement(FormPlacement::BottomLeft, boundsInForm());
         // And at least as wide as it - a list narrower than the face it fell from reads as
         // belonging to something else. In design units, which a popup shares with its parent.
-        popup.setMinWidth(width() / form.scaler().factor());
+        popup.setMinWidth(scaledWidth() / form.scaler().factor());
         return popup.execute();
     }
 

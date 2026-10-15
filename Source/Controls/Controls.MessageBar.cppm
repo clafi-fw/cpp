@@ -33,7 +33,7 @@ namespace ClaFi::Controls
         static constexpr UiElement k_colorRules{ UiElement::Hint };
     protected:
         void secondaryClicked(NestedClickEvent&) override {} // an answer acts on its own click
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void paintIcon(PaintIconEvent&) override;
         void adjustPaint(AdjustPaintEvent&) override;
         void paintSurface(PaintEvent&) override;

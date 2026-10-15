@@ -52,7 +52,7 @@ namespace ClaFi
     namespace
     {
         template <typename MainSize, typename CrossSize, typename AssignMain, typename AccumulateCross, typename TotalSpacingCross>
-        ScaledDimensions calculateLanes(
+        ScaledSize calculateLanes(
             ControlSpan controls,
             const bool autoWrap,
             std::size_t wrapCount,
@@ -64,7 +64,7 @@ namespace ClaFi
             AccumulateCross accumulateCross,
             TotalSpacingCross totalSpacingCross)
         {
-            ScaledDimensions result{ 0.0f, 0.0f };
+            ScaledSize result{ 0.0f, 0.0f };
             std::size_t lineCount = 0;
 
             float currentLineCross = 0.0f;
@@ -191,7 +191,7 @@ namespace ClaFi
     // **Spacing counts only between items that state a floor.** An item cut to nothing takes the
     // gap beside it with it, and a lane of items that all give way gives way whole - which is what
     // keeps a count of items from standing as a minimum nobody set.
-    static ScaledDimensions composeLaneMinSize(ControlSpan controls, const LaneAxis axis,
+    static ScaledSize composeLaneMinSize(ControlSpan controls, const LaneAxis axis,
                                                const bool autoWrap, float mainSpacing)
     {
         const bool mainIsX = axis == LaneAxis::Horizontal;
@@ -202,7 +202,7 @@ namespace ClaFi
         {
             if (!item->visible())
                 continue;
-            const ScaledDimensions itemMin = item->calculatedMinSize();
+            const ScaledSize itemMin = item->scaledMinSize();
             const float itemMain = mainIsX ? itemMin.x : itemMin.y;
             const float itemCross = mainIsX ? itemMin.y : itemMin.x;
             cross = std::max(cross, itemCross);
@@ -253,9 +253,10 @@ namespace ClaFi
         const ControlMetrics& designMetrics)
         :
         ControlEventBase{ formContext },
-        m_pass{ pass }
+        m_pass{ pass },
+        m_scaledMetrics{ designMetrics, formContext.scaler() }
     {
-        calculateScaledMetrics(designMetrics);
+        scaleMetrics(designMetrics);
     }
 
     AlignEvent::AlignEvent(AlignEvent& parentEvent, const ControlMetrics& designMetrics)
@@ -264,51 +265,43 @@ namespace ClaFi
     {
     }
 
-    void AlignEvent::calculateScaledMetrics(const ControlMetrics& designMetrics)
+    void AlignEvent::scaleMetrics(const ControlMetrics& designMetrics)
     {
-        spacing = scale(designMetrics.spacing);
-        padding = scale(designMetrics.padding);
-        minSize = scale(designMetrics.minSize);
-        preferredSize = scale(designMetrics.preferredSize);
-        // No limit is k_maxFloat in both spaces: Scaler::scale hands it straight back, so a
-        // maximum nothing stated stays the sentinel here rather than arriving as a number the
-        // layout would take for a width. A padding subtracted from it is still it, and every
-        // reader either compares it or tests it against k_maxFloat.
-        maxSize = scale(designMetrics.maxSize);
+        m_scaledMetrics = ScaledControlMetrics{ designMetrics, scaler() };
     }
 
     float AlignEvent::minContentWidth() const
     {
-        return std::max(0.0f, minSize.x - padding.x * 2.0f);
+        return std::max(0.0f, m_scaledMetrics.minSize.x - m_scaledMetrics.padding.x * 2.0f);
     }
 
     float AlignEvent::minContentHeight() const
     {
-        return std::max(0.0f, minSize.y - padding.y * 2.0f);
+        return std::max(0.0f, m_scaledMetrics.minSize.y - m_scaledMetrics.padding.y * 2.0f);
     }
 
     float AlignEvent::maxContentWidth() const
     {
-        return maxSize.x - padding.x * 2.0f;
+        return m_scaledMetrics.maxSize.x - m_scaledMetrics.padding.x * 2.0f;
     }
 
     float AlignEvent::maxContentHeight() const
     {
-        return maxSize.y - padding.y * 2.0f;
+        return m_scaledMetrics.maxSize.y - m_scaledMetrics.padding.y * 2.0f;
     }
 
     float AlignEvent::totalSpacingX(std::size_t itemsNum) const
     {
-        if (itemsNum > 0)
-            return spacing.x * (itemsNum - 1);
-        return 0;
+        if (itemsNum == 0)
+            return 0;
+        return m_scaledMetrics.spacing.x * (itemsNum - 1);
     }
 
     float AlignEvent::totalSpacingY(std::size_t itemsNum) const
     {
-        if (itemsNum > 0)
-            return spacing.y * (itemsNum - 1);
-        return 0;
+        if (itemsNum == 0)
+            return 0;
+        return m_scaledMetrics.spacing.y * (itemsNum - 1);
     }
 
     // HoverEnterEvent
@@ -348,6 +341,11 @@ namespace ClaFi
     {
         form.close();
         stopPropagation();
+    }
+
+    const Scaler& ClickEventBase::scaler() const
+    {
+        return form.scaler();
     }
 
     float ClickEventBase::scaleFactor() const
@@ -1052,7 +1050,7 @@ namespace ClaFi
 
     void Control::scrollIntoView()
     {
-        if (m_parent && m_dimensions.y && m_dimensions.x)
+        if (m_parent && m_scaledSize.y && m_scaledSize.x)
             scrollIntoView(scrollHotspot());
     }
 
@@ -1526,7 +1524,7 @@ namespace ClaFi
     {
         const float restLine = restLineInForm() - header.parentContentOrigin().y;
         const float home = header.top();
-        const float lastStand = std::max(home, headedBottom - header.height());
+        const float lastStand = std::max(home, headedBottom - header.scaledHeight());
         return { 0.0f, std::clamp(restLine, home, lastStand) - home };
     }
 
@@ -1540,11 +1538,11 @@ namespace ClaFi
         for (Control* control = const_cast<Control*>(this); control->m_parent; control = control->m_parent)
         {
             if (control->m_parent->heldHeader())
-                return header->height();
+                return header->scaledHeight();
             if (control->m_parent->controlIsOnScrollBox(*control))
                 break;
         }
-        return scrollContentInset().y + header->height();
+        return scrollContentInset().y + header->scaledHeight();
     }
 
     Control* Control::heldHeaderHost()
@@ -1645,11 +1643,11 @@ namespace ClaFi
         m_topLeft = { x, y };
     }
 
-    void Control::setDimensions(const ScaledDimensions value)
+    void Control::setDimensions(const ScaledSize value)
     {
-        if (value != m_dimensions)
+        if (value != m_scaledSize)
         {
-            m_dimensions = value;
+            m_scaledSize = value;
             sizeChanged();
         }
     }
@@ -1674,19 +1672,19 @@ namespace ClaFi
 
     void Control::setWidth(float value)
     {
-        if (m_dimensions.x == value)
+        if (m_scaledSize.x == value)
             return;
         invalidate();
-        m_dimensions.x = value;
+        m_scaledSize.x = value;
         invalidate();
     }
 
     void Control::setHeight(float value)
     {
-        if (m_dimensions.y == value)
+        if (m_scaledSize.y == value)
             return;
         invalidate();
-        m_dimensions.y = value;
+        m_scaledSize.y = value;
         invalidate();
     }
 
@@ -1716,7 +1714,7 @@ namespace ClaFi
 
     FloatRect Control::scrollHotspot() const
     {
-        return FloatRect::fromDimensions({ 0.0f, 0.0f }, m_dimensions);
+        return FloatRect::fromDimensions({ 0.0f, 0.0f }, m_scaledSize);
     }
 
     void Control::mouseMove(MouseMoveEvent& event)
@@ -1840,7 +1838,7 @@ namespace ClaFi
             // The width is the box's, which is the width the lines were broken at and what
             // HintForm breaks its own at.
             const FloatRect textRect = textBounds(event.formContext(), boundsInForm());
-            const CalculatedDimensions drawn = s_textEngine.calculateText(
+            const ScaledSize drawn = s_textEngine.calculateText(
                 event.formContext(),
                 event.text,
                 textRect.dimensions(),
@@ -2008,8 +2006,8 @@ namespace ClaFi
 
         if (fixedSize)
         {
-            m_dimensions = form.scaler().scale(designMetrics.minSize);
-            m_minDimensions = m_dimensions;
+            m_scaledSize = form.scaler().scale(designMetrics.minSize);
+            m_scaledMinSize = m_scaledSize;
         }
         else
         {
@@ -2019,21 +2017,21 @@ namespace ClaFi
             //
             // TODO: ceiling, padding and the min clamp run only on this calculated-content path,
             // not on the fixed-minSize one above. Should they apply to both?
-            ScaledDimensions measured = calculateContent(event);
+            ScaledSize measured = calculateContent(event);
             if (measured.x != k_maxFloat)
             {
                 measured.x = std::ceil(measured.x);
-                measured.x += event.padding.x * 2.0f;
-                measured.x = std::max(measured.x, event.minSize.x);
+                measured.x += event.scaledPaddingX() * 2.0f;
+                measured.x = std::max(measured.x, event.scaledMinWidth());
             }
-            measured.x = std::min(measured.x, event.maxSize.x);
+            measured.x = std::min(measured.x, event.scaledMaxWidth());
             if (measured.y != k_maxFloat)
             {
                 measured.y = std::ceil(measured.y);
-                measured.y += event.padding.y * 2.0f;
-                measured.y = std::max(measured.y, event.minSize.y);
+                measured.y += event.scaledPaddingY() * 2.0f;
+                measured.y = std::max(measured.y, event.scaledMinHeight());
             }
-            measured.y = std::min(measured.y, event.maxSize.y);
+            measured.y = std::min(measured.y, event.scaledMaxHeight());
 
             // **A stated preference stands in place of the measurement, on its own axis.** The
             // content is measured either way - a control preferring a width still finds its height
@@ -2041,11 +2039,11 @@ namespace ClaFi
             // states is the whole box, so the padding the measured value is grown by is already
             // inside it. The minimum still holds it up and the maximum still holds it down: a
             // preference is what the control would like, not what it is owed.
-            m_dimensions.x = event.preferredSize.x > 0.0f
-                ? std::min(std::max(event.preferredSize.x, event.minSize.x), event.maxSize.x)
+            m_scaledSize.x = event.scaledPreferredWidth() > 0.0f
+                ? std::min(std::max(event.scaledPreferredWidth(), event.scaledMinWidth()), event.scaledMaxWidth())
                 : measured.x;
-            m_dimensions.y = event.preferredSize.y > 0.0f
-                ? std::min(std::max(event.preferredSize.y, event.minSize.y), event.maxSize.y)
+            m_scaledSize.y = event.scaledPreferredHeight() > 0.0f
+                ? std::min(std::max(event.scaledPreferredHeight(), event.scaledMinHeight()), event.scaledMaxHeight())
                 : measured.y;
 
             // **What somebody set, here or below - neither the measurement nor the preference.** A
@@ -2061,25 +2059,25 @@ namespace ClaFi
             //
             // The content's floor carries this control's padding, the way the measured box does.
             // A floor of zero carries nothing: content that gives way whole leaves no box to pad.
-            ScaledDimensions contentMin = event.calculatedMinSize;
+            ScaledSize contentMin = event.composedMinSize;
             if (contentMin.x > 0.0f)
             {
                 contentMin.x = std::ceil(contentMin.x);
-                contentMin.x += event.padding.x * 2.0f;
+                contentMin.x += event.scaledPaddingX() * 2.0f;
             }
             if (contentMin.y > 0.0f)
             {
                 contentMin.y = std::ceil(contentMin.y);
-                contentMin.y += event.padding.y * 2.0f;
+                contentMin.y += event.scaledPaddingY() * 2.0f;
             }
-            m_minDimensions.x = std::max(contentMin.x, event.minSize.x);
-            m_minDimensions.y = std::max(contentMin.y, event.minSize.y);
-            m_minDimensions.x = std::min(m_minDimensions.x, m_dimensions.x);
-            m_minDimensions.y = std::min(m_minDimensions.y, m_dimensions.y);
+            m_scaledMinSize.x = std::max(contentMin.x, event.scaledMinWidth());
+            m_scaledMinSize.y = std::max(contentMin.y, event.scaledMinHeight());
+            m_scaledMinSize.x = std::min(m_scaledMinSize.x, m_scaledSize.x);
+            m_scaledMinSize.y = std::min(m_scaledMinSize.y, m_scaledSize.y);
         }
     }
 
-    ScaledDimensions Control::calculateText(AlignEvent& event, ScaledDimensions constraints)
+    ScaledSize Control::calculateText(AlignEvent& event, ScaledSize constraints)
     {
         Text text;
         const Text& gathered = doGetText(event.formContext(), text, EventPhase::Calculate);
@@ -2088,17 +2086,17 @@ namespace ClaFi
         // A text that does not wrap is measured against no width at all. What a horizontal scroll
         // has to be told is how wide the text is, and a width to break at is the one thing that
         // would stop it saying so.
-        const ScaledDimensions asked = wordWrap()
+        const ScaledSize asked = wordWrap()
             ? constraints
-            : ScaledDimensions{ k_maxFloat, constraints.y };
-        ScaledDimensions result = measureText(event, asked, gathered);
+            : ScaledSize{ k_maxFloat, constraints.y };
+        ScaledSize result = measureText(event, asked, gathered);
         return {
             result.x,
-            std::min(result.y, event.maxSize.y)
+            std::min(result.y, event.scaledMaxHeight())
         };
     }
 
-    CalculatedDimensions Control::measureText(AlignEvent& event, ScaledDimensions asked,
+    ScaledSize Control::measureText(AlignEvent& event, ScaledSize asked,
         const Text& text)
     {
         return s_textEngine.calculateText(
@@ -2152,19 +2150,19 @@ namespace ClaFi
         calculateChildrenSequentially(form);
     }
 
-    ScaledDimensions Control::calculateContent(AlignEvent& event)
+    ScaledSize Control::calculateContent(AlignEvent& event)
     {
-        const ScaledDimensions text =
+        const ScaledSize text =
             calculateText(event, { textWidthLimit(event), event.maxContentHeight() });
         return contentAroundText(event, text);
     }
 
-    ScaledDimensions Control::contentAroundText(AlignEvent&, const ScaledDimensions text) const
+    ScaledSize Control::contentAroundText(AlignEvent&, const ScaledSize text) const
     {
         return text;
     }
 
-    void Control::alignContent(AlignEvent& event, ScaledPosition, ScaledDimensions& newDimensions)
+    void Control::alignContent(AlignEvent& event, ScaledPosition, ScaledSize& newDimensions)
     {
         // A wrapping text answers a different width with a different height, in both directions:
         // a narrower box breaks more lines out of a paragraph and a wider one joins them, and the
@@ -2181,7 +2179,7 @@ namespace ClaFi
             // whose minimum and maximum agree is that size whatever its text comes to, so the
             // measurement below would be made and thrown away - and for a list of a million
             // fixed items it is a million shapings the cache cannot hold, on every pass.
-            if (event.maxSize == event.minSize)
+            if (event.scaledMaxSize() == event.scaledMinSize())
                 return;
 
             // **An empty measurement is not a size.** calculateText answers {0, 0} for a control
@@ -2193,7 +2191,7 @@ namespace ClaFi
             // A control with no text reaches here because a calculated size is **ceiled** while the
             // size it is then given is not, so a box measured at a fractional width arrives a
             // fraction of a pixel narrower than the width it was measured at.
-            const ScaledDimensions measuredText = calculateText(event, { newDimensions.x, k_maxFloat });
+            const ScaledSize measuredText = calculateText(event, { newDimensions.x, k_maxFloat });
             if (measuredText.x || measuredText.y)
             {
                 rememberTextWidth(event, newDimensions.x);
@@ -2205,13 +2203,13 @@ namespace ClaFi
             // A scrolled body keeps what it measured. The align pass cuts a control to the slot
             // it was given, and the slot here is the viewport - so a box scrolls to its content
             // only if the content states the size it came to and holds it.
-            float calculatedContentHeight = m_dimensions.y - event.padding.y * 2;
+            float calculatedContentHeight = m_scaledSize.y - event.scaledPaddingY() * 2;
             newDimensions.y = std::max(calculatedContentHeight, newDimensions.y);
             // The width the same way, for a text that is not broken to its box: it is as wide as
             // it is, and a viewport narrower than that is what the horizontal bar is for.
             if (!wordWrap())
             {
-                float calculatedContentWidth = m_dimensions.x - event.padding.x * 2;
+                float calculatedContentWidth = m_scaledSize.x - event.scaledPaddingX() * 2;
                 newDimensions.x = std::max(calculatedContentWidth, newDimensions.x);
             }
         }
@@ -2219,7 +2217,7 @@ namespace ClaFi
     }
 
     void Control::align(FormContext& formContext, LayoutPass& pass, ScaledPosition position,
-        ScaledDimensions newDimensions)
+        ScaledSize newDimensions)
     {
         ControlMetrics designMetrics;
         {
@@ -2233,8 +2231,8 @@ namespace ClaFi
         bool wasStretchX = adjustedAlignModeX == HorizontalAlign::Fill;
         bool wasStretchY = adjustedAlignModeY == VerticalAlign::Fill;
 
-        bool fitX = width() < newDimensions.x;
-        bool fitY = height() < newDimensions.y;
+        bool fitX = scaledWidth() < newDimensions.x;
+        bool fitY = scaledHeight() < newDimensions.y;
         bool onScroll = isOnScrollBox();
         if (onScroll)
         {
@@ -2249,17 +2247,17 @@ namespace ClaFi
         bool needSecondAlignX = (alignModeX != HorizontalAlign::Fill) && axisX && fitX;
         bool needSecondAlignY = (alignModeY != VerticalAlign::Fill) && axisY && fitY;
 
-        ScaledDimensions alignedDimensions = newDimensions;
+        ScaledSize alignedDimensions = newDimensions;
         if (needSecondAlignX)
-            alignedDimensions.x = m_dimensions.x;
+            alignedDimensions.x = m_scaledSize.x;
         if (needSecondAlignY)
-            alignedDimensions.y = m_dimensions.y;
+            alignedDimensions.y = m_scaledSize.y;
 
-        ScaledPadding doublePadding = event.padding * 2;
+        const ScaledPadding doublePadding = event.scaledPadding() * 2;
         alignedDimensions -= doublePadding;
         // Children are positioned against the child padding, so alignContent is told where the
         // content box begins in that space. It is {0, 0} unless the control separates the two.
-        ScaledPosition contentOrigin = event.padding - childInset(event.formContext(), event.padding);
+        const ScaledPosition contentOrigin = event.scaledPadding() - childInset(event.formContext(), event.scaledPadding());
         alignContent(event, contentOrigin, alignedDimensions);
         // Rounded the way Control::calculate rounds what **it** measures, and at the same point: on
         // the content, before the padding goes back on. These are the two routes to one number,
@@ -2320,18 +2318,18 @@ namespace ClaFi
         m_topLeft = position + FloatPoint{ x, y };
         setDimensions(alignedDimensions);
 
-        adjustPlacement(event.scaler(), m_topLeft, m_dimensions);
+        adjustPlacement(event.scaler(), m_topLeft, m_scaledSize);
     }
 
-    ScaledDimensions Control::calculateRows(AlignEvent& event, ControlSpan controls, const bool autoWrap,
+    ScaledSize Control::calculateRows(AlignEvent& event, ControlSpan controls, const bool autoWrap,
         std::size_t wrapCount, const float maxContentWidth)
     {
-        event.calculatedMinSize = composeLaneMinSize(controls, LaneAxis::Horizontal, autoWrap, event.spacing.x);
+        event.composedMinSize = composeLaneMinSize(controls, LaneAxis::Horizontal, autoWrap, event.scaledSpacingX());
         return calculateLanes(
             controls, autoWrap, wrapCount,
-            [](const auto& item) { return item->width(); },
-            [](const auto& item) { return item->height(); },
-            event.spacing.x,
+            [](const auto& item) { return item->scaledWidth(); },
+            [](const auto& item) { return item->scaledHeight(); },
+            event.scaledSpacingX(),
             std::min(event.maxContentWidth(), maxContentWidth),
             [](auto& res, float val) { res.x = std::max(res.x, val); },
             [](auto& res, float val) { res.y += val; },
@@ -2339,15 +2337,15 @@ namespace ClaFi
         );
     }
 
-    ScaledDimensions Control::calculateColumns(AlignEvent& event, ControlSpan controls, const bool autoWrap,
+    ScaledSize Control::calculateColumns(AlignEvent& event, ControlSpan controls, const bool autoWrap,
         std::size_t wrapCount, const float maxContentHeight)
     {
-        event.calculatedMinSize = composeLaneMinSize(controls, LaneAxis::Vertical, autoWrap, event.spacing.y);
+        event.composedMinSize = composeLaneMinSize(controls, LaneAxis::Vertical, autoWrap, event.scaledSpacingY());
         return calculateLanes(
             controls, autoWrap, wrapCount,
-            [](const auto& item) { return item->height(); },
-            [](const auto& item) { return item->width(); },
-            event.spacing.y,
+            [](const auto& item) { return item->scaledHeight(); },
+            [](const auto& item) { return item->scaledWidth(); },
+            event.scaledSpacingY(),
             std::min(event.maxContentHeight(), maxContentHeight),
             [](auto& res, float val) { res.y = std::max(res.y, val); },
             [](auto& res, float val) { res.x += val; },
@@ -2355,7 +2353,7 @@ namespace ClaFi
         );
     }
 
-    void Control::alignControl(Control* control, AlignEvent& parentEvent, ScaledPosition position, ScaledDimensions newDimensions)
+    void Control::alignControl(Control* control, AlignEvent& parentEvent, ScaledPosition position, ScaledSize newDimensions)
     {
         if (const Control* parent = control->m_parent)
             parent->adjustChildBox(parentEvent, *control, position, newDimensions);
@@ -2391,7 +2389,7 @@ namespace ClaFi
     }
 
     void Control::alignSingleRow(AlignEvent& event, ControlSpan::iterator rowBegin, ControlSpan::iterator rowEnd,
-                                     ScaledPosition position, ScaledDimensions rowSize, ScaledDimensions& contentDimensions)
+                                     ScaledPosition position, ScaledSize rowSize, ScaledSize& contentDimensions)
     {
         // Both extents are read off the placement, never off a total accumulated beside it.
         // A row's bottom edge is where this row was put plus the height it was given, and the
@@ -2406,25 +2404,25 @@ namespace ClaFi
         // (width + spacing) to its running total while this adds the two separately, so
         // the results drift apart as the row grows. Reporting the larger of the two - as
         // taking rowSize.x here would - leaves a scroll range the last item never reaches.
-        const float share = laneSurplusShare(rowBegin, rowEnd, rowSize.x, event.spacing.x,
-            &Control::width);
+        const float share = laneSurplusShare(rowBegin, rowEnd, rowSize.x, event.scaledSpacingX(),
+            &Control::scaledWidth);
         float lastRight = position.x;
         for (ControlSpan::iterator it2 = rowBegin; it2 != rowEnd; ++it2)
         {
             Control& control = **it2;
             if (!control.visible())
                 continue;
-            const float width = control.width() + (control.fillsLane() ? share : 0.0f);
+            const float width = control.scaledWidth() + (control.fillsLane() ? share : 0.0f);
             FloatRect itemRect = { position.x, position.y, position.x + width, position.y + rowSize.y };
             alignControl(&control, event, itemRect.topLeft(), itemRect.dimensions());
             lastRight = itemRect.right;
-            position.x = itemRect.right + event.spacing.x;
+            position.x = itemRect.right + event.scaledSpacingX();
         }
         contentDimensions.x = std::max(contentDimensions.x, lastRight);
     }
 
     void Control::alignSingleColumn(AlignEvent& event, ControlSpan::iterator colBegin, ControlSpan::iterator colEnd,
-                                        ScaledPosition position, ScaledDimensions colSize, ScaledDimensions& contentDimensions)
+                                        ScaledPosition position, ScaledSize colSize, ScaledSize& contentDimensions)
     {
         // The right edge of this column, rather than a running total of column widths - see
         // alignSingleRow for why the two separate. The caller advances to the next column from
@@ -2435,19 +2433,19 @@ namespace ClaFi
         // expression than the one placing items here, and over a long column the two no
         // longer agree - taking the larger hands the scroll bar a range that runs past the
         // last item. position.y carries a trailing spacing that nothing occupies.
-        const float share = laneSurplusShare(colBegin, colEnd, colSize.y, event.spacing.y,
-            &Control::height);
+        const float share = laneSurplusShare(colBegin, colEnd, colSize.y, event.scaledSpacingY(),
+            &Control::scaledHeight);
         float lastBottom = position.y;
         for (ControlSpan::iterator it2 = colBegin; it2 != colEnd; ++it2)
         {
             Control& control = **it2;
             if (!control.visible())
                 continue;
-            const float height = control.height() + (control.fillsLane() ? share : 0.0f);
+            const float height = control.scaledHeight() + (control.fillsLane() ? share : 0.0f);
             FloatRect itemRect = { position.x, position.y, position.x + colSize.x, position.y + height };
             Control::alignControl(&control, event, itemRect.topLeft(), itemRect.dimensions());
             lastBottom = control.bottom();
-            position.y = lastBottom + event.spacing.y;
+            position.y = lastBottom + event.scaledSpacingY();
         }
         contentDimensions.y = std::max(contentDimensions.y, lastBottom);
     }
@@ -2464,13 +2462,13 @@ namespace ClaFi
         control.setTop(boundsTop + std::max(delta, 0.0f));
     }
 
-    void Control::setControlPlacement(Control& control, ScaledPosition topLeft, ScaledDimensions dimensions)
+    void Control::setControlPlacement(Control& control, ScaledPosition topLeft, ScaledSize dimensions)
     {
-        if (control.m_topLeft == topLeft && control.m_dimensions == dimensions)
+        if (control.m_topLeft == topLeft && control.m_scaledSize == dimensions)
             return;
         control.invalidate();
         control.m_topLeft = topLeft;
-        control.m_dimensions = dimensions;
+        control.m_scaledSize = dimensions;
         control.invalidate();
     }
 

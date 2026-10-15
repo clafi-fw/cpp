@@ -83,7 +83,7 @@ namespace ClaFi::Controls
         void showCurrentHint();
     protected:
         // Measures the rows, then caps the list at twelve of them. See Controls#droplistoptions
-        ScaledDimensions calculateContent(AlignEvent&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
         // Every row may be current: the owner moves it, and the base's answer would rule that out.
         bool defaultCanFocusItem(Control&) override;
         // The current row reads selected - the base says so only for a stack that follows the user.

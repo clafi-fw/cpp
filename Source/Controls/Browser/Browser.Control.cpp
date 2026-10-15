@@ -13,7 +13,6 @@ import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Menu;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
-import ClaFi.Controls.Stack;
 import ClaFi.Controls.TabStrip;
 
 import ClaFi.Core.DomEngine;
@@ -501,14 +500,6 @@ namespace ClaFi::Browser
         (tabEntry / ConfigNames::path).set(tab.url().str());
     }
 
-    void BrowserControl::storeTabOrder() const
-    {
-        std::vector<std::wstring_view> tabIds{};
-        for (const BrowserTab& tab : tabs())
-            tabIds.push_back(tab.id());
-        m_settings->orderTabEntries(tabIds);
-    }
-
     // The view state is saved while the entry it writes to is still listed.
     void BrowserControl::deleteTabSettings(BrowserTab& tab)
     {
@@ -520,7 +511,7 @@ namespace ClaFi::Browser
         m_settings->deleteTabEntry(tab.id());
     }
 
-    void BrowserControl::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& newDimensions)
+    void BrowserControl::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& newDimensions)
     {
         Panel::alignContent(event, position, newDimensions);
 
@@ -534,14 +525,14 @@ namespace ClaFi::Browser
                 BrowserTab& tab = static_cast<BrowserTab&>(*ptr);
                 if (!tab.selected())
                 {
-                    if (tab.width() > event.scale(48.f))
+                    if (tab.scaledWidth() > event.scale(48.f))
                         break;
                     setControlWidth(tab.closeButton(), 0);
                 }
             }
-            setControlWidth(m_titleBox, m_titleBox.width() - delta);
+            setControlWidth(m_titleBox, m_titleBox.scaledWidth() - delta);
             // The title bar alone. A page aligned twice reads the sizes its first align handed out.
-            alignControl(&m_title, event, m_title.topLeft(), m_title.dimensions());
+            alignControl(&m_title, event, m_title.topLeft(), m_title.scaledSize());
         }
     }
 
@@ -576,10 +567,6 @@ namespace ClaFi::Browser
 
         m_tabs.onCurrentItemChange([this](CurrentItemChangeEvent&) {
             handleTabSelect();
-        });
-
-        m_tabs.onItemsMove([this](ItemsMoveEvent&) {
-            storeTabOrder();
         });
 
         m_breadCrumbBar.onSelectBrowserData([this](SelectBrowserDataEvent& event) {

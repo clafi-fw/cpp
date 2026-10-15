@@ -25,10 +25,10 @@ namespace ClaFi::Controls::Grids
         Interactivity interactivity() const override { return Interactivity::None; }
         ControlSpan controls() override { return { m_controls }; }
         bool hasContent(const Column&) const override { return false; }
-        void preCalcColumn(Column& column) override;
+        void preCalcColumn(const FormContext& formContext, Column& column) override;
         GridBase* subGrid() override;
-        ScaledDimensions calculateContent(AlignEvent& event) override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        ScaledSize calculateContent(AlignEvent& event) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
     protected:
         // Head first, body second, in one array so that controls() can hand them out as a range.
         static constexpr std::size_t k_head{ 0 };

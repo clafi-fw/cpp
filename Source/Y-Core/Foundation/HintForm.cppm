@@ -36,8 +36,8 @@ namespace ClaFi
         [[nodiscard]] const TextFormat* textFormat() const override;
         [[nodiscard]] float lineBreakWidth() const override { return m_breakWidth; }
         // Held to Hint::k_maxLines, and to k_lineWidth unless it repeats lines broken elsewhere.
-        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
-        ScaledDimensions calculateContent(AlignEvent& event) override { return FormControlBase::calculateContent(event); }
+        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
+        ScaledSize calculateContent(AlignEvent& event) override { return FormControlBase::calculateContent(event); }
     private:
         Control* m_control{ nullptr };
         // The width the words this hint repeats were broken at, and zero for a hint repeating
@@ -142,7 +142,7 @@ namespace ClaFi
         return m_format.empty() ? nullptr : &m_format;
     }
 
-    CalculatedDimensions HintLabel::measureText(AlignEvent& event, ScaledDimensions asked,
+    ScaledSize HintLabel::measureText(AlignEvent& event, ScaledSize asked,
         const Text& text)
     {
         // A hint the screen alone bounds runs a long sentence out as one line from the pointer to

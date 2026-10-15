@@ -48,9 +48,9 @@ namespace ClaFi::Controls
         template<typename... Args>
         explicit TreeItem(const CreateParams&, TreeView& tree, std::size_t level, Args&&...);
     protected:
-        ScaledDimensions calculateContent(AlignEvent&) override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
-        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
         FloatRect iconRect(const PaintEvent&) const override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
     private:
@@ -67,7 +67,7 @@ namespace ClaFi::Controls
         template<typename... Args>
         explicit TreeDivider(const CreateParams&, std::size_t level, Args&&...);
     protected:
-        ScaledDimensions calculateContent(AlignEvent&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
         void paintSurface(PaintEvent&) override;
     private:
         [[nodiscard]] float lead() const; // how far the line stands in past the padding
@@ -81,7 +81,7 @@ namespace ClaFi::Controls
     public:
         using ExpanderHeader::ExpanderHeader;
     protected:
-        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
     };
 
     // A branch of a tree: a header that is a row of its own, and under it the rows its mark opens.

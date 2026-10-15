@@ -118,7 +118,7 @@ namespace ClaFi::Controls
         DECLARE_PROPERTY(TabViewMode, tabViewMode, TabViewMode::Tab)
     public:
         std::wstring_view diagnosticText() const override { return L"TabStripBase"; }
-        FitData fitData() const override { return { width() }; }
+        FitData fitData() const override { return { scaledWidth() }; }
         void traverseFittables(const FittableFunc func) override;
         template<typename...Args>
         Tab& addTab(Args&&... args) { return add<Tab>(std::forward<Args>(args)...); }
@@ -134,10 +134,10 @@ namespace ClaFi::Controls
         using StackPanel::setOrientation;
         // Tab mode pads the outer side only and keeps non-tabs off the line. See Item-Containers
         void adjustMetrics(AdjustMetricsEvent&) const override;
-        ScaledDimensions calculateContent(AlignEvent&) override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void adjustChildBox(const AlignEvent&, const Control& child, ScaledPosition& position,
-            ScaledDimensions& dimensions) const override;
+            ScaledSize& dimensions) const override;
         void nestedControlDeleted(Control*) override;
         void childHoverEnter(Control&) override;
         void paintChildren(PaintEvent&) override;
@@ -217,16 +217,16 @@ namespace ClaFi::Controls
     FitData Tab::fitData() const
     {
         return {
-            width(),
+            scaledWidth(),
             selected() ? form().scaler().scale(48.8f) : 0
         };
     }
 
     void Tab::takeOffWidth(float value)
     {
-        setWidth(width() - value);
+        setWidth(scaledWidth() - value);
         Control& strip = *TabBaseClass::parent();
-        setControlWidth(strip, strip.width() - value);
+        setControlWidth(strip, strip.scaledWidth() - value);
     }
 
     void Tab::setPage(RichControl* page)
@@ -452,7 +452,7 @@ namespace ClaFi::Controls
             m_profile.tabEnd = tabRect.right - tabMargin;
             headerStart = outEvent->left() - pt.x;
             headerEnd = outEvent->right() - pt.x;
-            m_profile.tabProtrusion = height() - tabMargin;
+            m_profile.tabProtrusion = scaledHeight() - tabMargin;
             break;
 
         case TabsOrientation::HorizontalBottom:
@@ -461,7 +461,7 @@ namespace ClaFi::Controls
             m_profile.tabEnd = tabRect.right - tabMargin;
             headerStart = outEvent->left() - pt.x;
             headerEnd = outEvent->right() - pt.x;
-            m_profile.tabProtrusion = height() - tabMargin;
+            m_profile.tabProtrusion = scaledHeight() - tabMargin;
             break;
 
         case TabsOrientation::VerticalLeft:
@@ -475,7 +475,7 @@ namespace ClaFi::Controls
                 + pageCornerInset(Corner::TopLeft);
             headerEnd = outEvent->bottom() - outEvent->padding().y - pt.y
                 - pageCornerInset(Corner::BottomLeft);
-            m_profile.tabProtrusion = width() - tabMargin;
+            m_profile.tabProtrusion = scaledWidth() - tabMargin;
             break;
 
         case TabsOrientation::VerticalRight:
@@ -484,7 +484,7 @@ namespace ClaFi::Controls
             m_profile.tabEnd = tabRect.bottom - tabMargin;
             headerStart = outEvent->top() + outEvent->cornerRadii().topRight - pt.y;
             headerEnd = outEvent->bottom() - outEvent->cornerRadii().bottomRight - pt.y;
-            m_profile.tabProtrusion = width() - tabMargin;
+            m_profile.tabProtrusion = scaledWidth() - tabMargin;
             break;
 
         default: noReach();
@@ -640,12 +640,12 @@ namespace ClaFi::Controls
 
     // The room is carried the way Control::calculate carries a padding: not onto an extent with no
     // bound, and not onto a floor of zero.
-    ScaledDimensions TabStripBase::calculateContent(AlignEvent& event)
+    ScaledSize TabStripBase::calculateContent(AlignEvent& event)
     {
-        ScaledDimensions result = StackPanel::calculateContent(event);
+        ScaledSize result = StackPanel::calculateContent(event);
         const bool horizontal = orientation() == Orientation::Horizontal;
         float& extent = horizontal ? result.y : result.x;
-        float& minExtent = horizontal ? event.calculatedMinSize.y : event.calculatedMinSize.x;
+        float& minExtent = horizontal ? event.composedMinSize.y : event.composedMinSize.x;
 
         if (const float gap = lineGap(event); gap > 0.0f)
         {
@@ -653,8 +653,8 @@ namespace ClaFi::Controls
             {
                 if (!item->visible() || isTab(*item))
                     continue;
-                const float itemExtent = horizontal ? item->height() : item->width();
-                const ScaledDimensions itemMin = item->calculatedMinSize();
+                const float itemExtent = horizontal ? item->scaledHeight() : item->scaledWidth();
+                const ScaledSize itemMin = item->scaledMinSize();
                 const float itemMinExtent = horizontal ? itemMin.y : itemMin.x;
                 if (extent != k_maxFloat)
                     extent = std::max(extent, itemExtent + gap);
@@ -672,7 +672,7 @@ namespace ClaFi::Controls
     }
 
     void TabStripBase::alignContent(AlignEvent& event, ScaledPosition position,
-                                    ScaledDimensions& contentDimensions)
+                                    ScaledSize& contentDimensions)
     {
         const float room = event.scale(outerPadding());
         FloatPoint roomBefore{};
@@ -705,7 +705,7 @@ namespace ClaFi::Controls
     }
 
     void TabStripBase::adjustChildBox(const AlignEvent& event, const Control& child,
-        ScaledPosition& position, ScaledDimensions& dimensions) const
+        ScaledPosition& position, ScaledSize& dimensions) const
     {
         const float gap = lineGap(event);
         if (gap <= 0.0f || isTab(child))
@@ -799,7 +799,7 @@ namespace ClaFi::Controls
         const float restTop = restLineInForm() - origin;
         const float restBottom = footLineInForm() - origin;
         const float home = child.top();
-        const float drawnTop = std::max(restTop, std::min(home, restBottom - child.height()));
+        const float drawnTop = std::max(restTop, std::min(home, restBottom - child.scaledHeight()));
         return { 0.0f, drawnTop - home };
     }
 
@@ -859,7 +859,7 @@ namespace ClaFi::Controls
     {
         if (m_tabViewMode == TabViewMode::ToolButton)
             return 0.0f;
-        return orientation() == Orientation::Horizontal ? event.spacing.y : event.spacing.x;
+        return orientation() == Orientation::Horizontal ? event.scaledSpacingY() : event.scaledPaddingX();
     }
 
     // The set is keyed by the pointers it was handed, and a lookup changes nothing.

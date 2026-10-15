@@ -26,7 +26,7 @@ namespace ClaFi::Controls
         void adjustMetrics(AdjustMetricsEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;
         void paintSurface(PaintEvent&) override;
-        ScaledDimensions calculateContent(AlignEvent&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
     };
 
 
@@ -63,7 +63,7 @@ namespace ClaFi::Controls
         event.defaultPaintSurface(m_padding);
     }
 
-    ScaledDimensions Divider::calculateContent(AlignEvent& event)
+    ScaledSize Divider::calculateContent(AlignEvent& event)
     {
         const float scaledW = event.scaledStrokeWidth(m_thickness);
         return { scaledW, scaledW };

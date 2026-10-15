@@ -519,8 +519,8 @@ namespace ClaFi::Controls
     {
         const float factor = owner.scaler().factor();
         if (owner.axis() == ScrollAxis::Vertical)
-            return MinSize{ 0.0f, std::max(owner.height() / factor, k_minLength) };
-        return MinSize{ std::max(owner.width() / factor, k_minLength), 0.0f };
+            return MinSize{ 0.0f, std::max(owner.scaledHeight() / factor, k_minLength) };
+        return MinSize{ std::max(owner.scaledWidth() / factor, k_minLength), 0.0f };
     }
 
     // FineSliderPopup

@@ -34,8 +34,8 @@ namespace ClaFi::Controls
         bool defaultCanFocusItem(Control&) override;
         void currentItemChanged(CurrentItemChangeEvent&) override;
         void calculateChildren(FormBase&) override;
-        ScaledDimensions calculateContent(AlignEvent&) override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
     private:
         PageSizing m_pageSizing{ PageSizing::CurrentPage };
         // The scale the hidden pages were last measured at. Unset until they have been, and unset
@@ -135,37 +135,37 @@ namespace ClaFi::Controls
     // **The floor is the page's floor**, by the same rule: what the page cannot be cut below, this
     // control cannot be either - a scroll box's bars, a MinSize the page states. Under WidestPage
     // it is the largest of them, since any of the pages may be the one showing.
-    ScaledDimensions PageControl::calculateContent(AlignEvent& event)
+    ScaledSize PageControl::calculateContent(AlignEvent& event)
     {
-        ScaledDimensions result = StackBase::calculateContent(event);
+        ScaledSize result = StackBase::calculateContent(event);
         if (m_pageSizing == PageSizing::CurrentPage)
         {
             if (const Control* page = currentItem(); page && page->visible())
             {
-                result.x = std::max(result.x, page->dimensions().x);
-                result.y = std::max(result.y, page->dimensions().y);
-                event.calculatedMinSize = page->calculatedMinSize();
+                result.x = std::max(result.x, page->scaledSize().x);
+                result.y = std::max(result.y, page->scaledSize().y);
+                event.composedMinSize = page->scaledMinSize();
             }
             return result;
         }
 
         for (const ControlPtr& page : controls())
         {
-            result.x = std::max(result.x, page->dimensions().x);
-            result.y = std::max(result.y, page->dimensions().y);
-            const ScaledDimensions pageMin = page->calculatedMinSize();
-            event.calculatedMinSize.x = std::max(event.calculatedMinSize.x, pageMin.x);
-            event.calculatedMinSize.y = std::max(event.calculatedMinSize.y, pageMin.y);
+            result.x = std::max(result.x, page->scaledSize().x);
+            result.y = std::max(result.y, page->scaledSize().y);
+            const ScaledSize pageMin = page->scaledMinSize();
+            event.composedMinSize.x = std::max(event.composedMinSize.x, pageMin.x);
+            event.composedMinSize.y = std::max(event.composedMinSize.y, pageMin.y);
         }
         return result;
     }
 
-    void PageControl::alignContent(AlignEvent& event, ScaledPosition, ScaledDimensions& contentDimensions)
+    void PageControl::alignContent(AlignEvent& event, ScaledPosition, ScaledSize& contentDimensions)
     {
         if (currentItem())
         {
             alignControl(currentItem(), event, { 0, 0 }, contentDimensions);
-            contentDimensions = currentItem()->dimensions();
+            contentDimensions = currentItem()->scaledSize();
         }
     }
 }

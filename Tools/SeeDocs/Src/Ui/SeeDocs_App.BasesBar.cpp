@@ -179,17 +179,17 @@ namespace SeeDocs_App
 
     // **What a crumb measured is kept here**, where it is still its measurement: the align pass
     // writes the width a crumb is given over it.
-    ScaledDimensions BasesBar::calculateContent(AlignEvent&)
+    ScaledSize BasesBar::calculateContent(AlignEvent&)
     {
         for (std::size_t i = 0; i != m_crumbs.size(); ++i)
-            m_fullWidths[i] = m_crumbs[i]->width();
+            m_fullWidths[i] = m_crumbs[i]->scaledWidth();
         std::size_t crumb = 0;
         const RunExtent whole = runExtent(m_bases, crumb, k_maxFloat);
         return { whole.width, whole.height };
     }
 
     void BasesBar::alignContent(AlignEvent& event, ScaledPosition position,
-        ScaledDimensions& contentDimensions)
+        ScaledSize& contentDimensions)
     {
         const float cap = capFor(contentDimensions.x, event.scale(k_leastCrumb));
         std::size_t crumb = 0;
@@ -217,7 +217,7 @@ namespace SeeDocs_App
         while (bases.size() == 1)
         {
             run.width += crumbWidth(crumb, cap);
-            run.height = std::max(run.height, m_crumbs[crumb]->height());
+            run.height = std::max(run.height, m_crumbs[crumb]->scaledHeight());
             ++crumb;
             bases = bases.front().bases;
         }

@@ -282,7 +282,7 @@ namespace ClaFi::Controls
         float contentBottom = result.bottom;
         adjustForIndicator(event.spacing(), result);
         FloatPoint contentBounds = result.dimensions();
-        ScaledDimensions scaledSize = event.scaleF(m_iconSize);
+        ScaledSize scaledSize = event.scaleF(m_iconSize);
         result.setDimensions(scaledSize);
         switch (m_viewMode)
         {
@@ -368,7 +368,7 @@ namespace ClaFi::Controls
     // wrapping text against the box the control was granted and takes that answer as its content:
     // a button measuring words it never shows comes out as tall as they are wrapped in its own
     // width - three lines for a three-word hint - and spills out of the bar it stands in.
-    CalculatedDimensions ButtonBase::measureText(AlignEvent& event, ScaledDimensions asked,
+    ScaledSize ButtonBase::measureText(AlignEvent& event, ScaledSize asked,
         const Text& text)
     {
         if (m_viewMode == ButtonViewMode::IconOnly)
@@ -381,7 +381,7 @@ namespace ClaFi::Controls
         if (wordWrap())
         {
             FloatRect box = FloatRect::fromDimensions({ 0.0f, 0.0f }, asked.toFloat());
-            adjustForSideParts(event.spacing, iconWidth, box);
+            adjustForSideParts(event.scaledSpacing(), iconWidth, box);
             asked.x = std::max(box.width(), 0.0f);
         }
 
@@ -412,7 +412,7 @@ namespace ClaFi::Controls
     }
 
     // An icon-only button lays no text out, so its icon stands where the text would.
-    ScaledDimensions ButtonBase::calculateContent(AlignEvent& event)
+    ScaledSize ButtonBase::calculateContent(AlignEvent& event)
     {
         if (m_viewMode == ButtonViewMode::IconOnly)
             return contentAroundText(event, event.scale(m_iconSize));
@@ -421,11 +421,11 @@ namespace ClaFi::Controls
 
     // **The icon and the indicator around the words**, in the measuring pass and the align pass
     // alike. See Controls-Base
-    ScaledDimensions ButtonBase::contentAroundText(AlignEvent& event,
-        const ScaledDimensions text) const
+    ScaledSize ButtonBase::contentAroundText(AlignEvent& event,
+        const ScaledSize text) const
     {
-        const ScaledDimensions scaledIconSize = event.scale(m_iconSize);
-        ScaledDimensions result = text;
+        const ScaledSize scaledIconSize = event.scale(m_iconSize);
+        ScaledSize result = text;
 
         // Icon
         switch (m_viewMode)
@@ -433,7 +433,7 @@ namespace ClaFi::Controls
             case ButtonViewMode::LeftIcon:
             {
                 if (result.x)
-                    result.x += event.spacing.x;
+                    result.x += event.scaledSpacingX();
 
                 result.x += scaledIconSize.x;
                 result.y = std::max(result.y, scaledIconSize.y);
@@ -444,7 +444,7 @@ namespace ClaFi::Controls
             case ButtonViewMode::BottomIcon:
             {
                 if (result.y)
-                    result.y += event.spacing.y;
+                    result.y += event.scaledSpacingY();
 
                 result.y += scaledIconSize.y;
                 result.x = std::max(result.x, scaledIconSize.x);
@@ -458,13 +458,13 @@ namespace ClaFi::Controls
         // Indicator
         if (m_indicatorVisibility != IndicatorVisibility::None)
         {
-            ScaledDimensions indicatorSize = m_indicator->width();
+            ScaledSize indicatorSize = m_indicator->scaledWidth();
             switch (m_indicatorPlacement)
             {
                 case IndicatorPlacement::LeftCenter:
                 case IndicatorPlacement::TopLeft:
                     if (result.x)
-                        result.x += event.spacing.x;
+                        result.x += event.scaledSpacingX();
 
                     result.x += indicatorSize.x;
                     break;
@@ -477,7 +477,7 @@ namespace ClaFi::Controls
         return result;
     }
 
-    void ButtonBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& dimensions)
+    void ButtonBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& dimensions)
     {
         if (m_indicator && m_indicator->visible())
         {
@@ -487,11 +487,11 @@ namespace ClaFi::Controls
                     // The content box does not begin at {0, 0} when the control separates its child
                     // padding from its content padding, so the indicator follows the given position
                     // rather than the placeholder placement calculateChildren() left it at.
-                    setControlPlacement(*m_indicator, { position.x, m_indicator->top() }, m_indicator->dimensions());
+                    setControlPlacement(*m_indicator, { position.x, m_indicator->top() }, m_indicator->scaledSize());
                     placeControlToVerticalCenter(*m_indicator, position.y, position.y + dimensions.y);
-                    position.x += m_indicator->width();
+                    position.x += m_indicator->scaledWidth();
                     if (dimensions.x)
-                        position.x += event.spacing.x;
+                        position.x += event.scaledSpacingX();
 
                     break;
                 case IndicatorPlacement::TopLeft:
@@ -629,7 +629,7 @@ namespace ClaFi::Controls
                 {
                     case IndicatorPlacement::LeftCenter:
                     case IndicatorPlacement::TopLeft:
-                        rect.left += m_indicator->width();
+                        rect.left += m_indicator->scaledWidth();
                         if (rect.width() > 0)
                             rect.left += spacing.x;
                         break;

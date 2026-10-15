@@ -322,7 +322,7 @@ namespace ClaFi::Browser
         virtual void paintPageIcon(PageData&, PaintIconEvent&) {}
         // How the root crumb shows its icon: beside its title, or alone with the title as its hint.
         virtual ButtonViewMode rootCrumbViewMode() const { return ButtonViewMode::LeftIcon; }
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void nestedSideClick(SideClickEvent&) override;
         bool tabsRestoring() const { return m_tabsRestoring; }
     private:

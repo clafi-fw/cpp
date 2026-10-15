@@ -45,7 +45,7 @@ namespace ClaFi::Controls
         TabStripBase& strip() const { return m_strip; }
         PageControl& pageControl() const { return m_pageControl; }
     protected:
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void adjustChildPaint(AdjustPaintEvent&) override;
         void paintChildSurface(PaintEvent&) override;
         void paintChildren(PaintEvent&) override;
@@ -152,7 +152,7 @@ namespace ClaFi::Controls
     }
 
     void TabbedBox::alignContent(AlignEvent& alignEvent, ScaledPosition scaledPosition,
-                                 ScaledDimensions& scaledDimensions)
+                                 ScaledSize& scaledDimensions)
     {
         PanelBase::alignContent(alignEvent, scaledPosition, scaledDimensions);
         if (m_tabViewMode == TabViewMode::ToolButton)

@@ -67,11 +67,11 @@ namespace ClaFi::Controls
         void adjustTextRect(AdjustTextRectEvent&) const override;
         void getText(GetTextEvent&) const override;
         void nestedGetHint(GetHintEvent&) override;
-        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
         void calculateChildren(FormBase& form) override;
-        ScaledDimensions calculateContent(AlignEvent&) override;
-        ScaledDimensions contentAroundText(AlignEvent&, ScaledDimensions text) const override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
+        ScaledSize contentAroundText(AlignEvent&, ScaledSize text) const override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void nestedPressDown(PressDownEvent&) override;
         void nestedPressUp(PressUpEvent&) override;
         void click(ClickEvent&) override;

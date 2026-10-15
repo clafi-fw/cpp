@@ -1,4 +1,4 @@
-﻿module;
+module;
 #include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Controls.Grids :Grid;
 
@@ -55,8 +55,8 @@ namespace ClaFi::Controls::Grids
         virtual void getHeaderCellText(const Cell&, Text&);
         //
         void calculateChildren(FormBase&) override;
-        ScaledDimensions calculateContent(AlignEvent&) override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void paintChildren(PaintEvent&) override;
     private:
         GridDescriptor m_descriptor;
@@ -130,26 +130,26 @@ namespace ClaFi::Controls::Grids
 
     void Grid::calculateChildren(FormBase& form)
     {
-        m_descriptor.calculateGrid(0 /*scrollBarWidthAndSpacing*/, m_calculateLimit);
+        m_descriptor.calculateGrid(form.context(), 0 /*scrollBarWidthAndSpacing*/, m_calculateLimit);
         GridBase::calculateChildren(form);
     }
 
-    ScaledDimensions Grid::calculateContent(AlignEvent& event)
+    ScaledSize Grid::calculateContent(AlignEvent& event)
     {
-        ScaledDimensions result = GridBase::calculateContent(event);
+        ScaledSize result = GridBase::calculateContent(event);
         float border = m_descriptor.scaledCellMetrics().border;
         result.x += border;
         result.y += border;
         // The border stands outside the cells, so a floor the rows state carries it too. A floor
         // of zero carries nothing: a grid nothing inside holds up gives way whole.
-        if (event.calculatedMinSize.x > 0.0f)
-            event.calculatedMinSize.x += border;
-        if (event.calculatedMinSize.y > 0.0f)
-            event.calculatedMinSize.y += border;
+        if (event.composedMinSize.x > 0.0f)
+            event.composedMinSize.x += border;
+        if (event.composedMinSize.y > 0.0f)
+            event.composedMinSize.y += border;
         return result;
     }
 
-    void Grid::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& contentSize)
+    void Grid::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& contentSize)
     {
         // TODO: only if calculated width > contentSize.x
         float tmp = event.maxContentWidth();

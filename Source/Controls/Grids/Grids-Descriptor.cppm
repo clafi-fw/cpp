@@ -131,8 +131,7 @@ namespace ClaFi::Controls::Grids
         // cell reads both of them for every cell it draws.
         [[nodiscard]] bool drawsVerticalLines() const;
         [[nodiscard]] bool drawsHorizontalLines() const;
-        const Scaler& scaler() const { return m_scaledCellMetrics.scaler(); }
-        float calculateGrid(float rightPadding, float boundsW);
+        float calculateGrid(const FormContext& formContext, float rightPadding, float boundsW);
         const Column* hoveredColumn() const { return m_hoverChannel.column(); }
         [[nodiscard]] const Control* hoveredRow() const { return m_hoverChannel.row(); }
         bool isColumnHovered(const Column&) const;
@@ -179,7 +178,6 @@ namespace ClaFi::Controls::Grids
         // Taken by the row a press lands in, before the press moves the selection.
         void recordPress(const Control& row, const Column*, CellPressKind);
         [[nodiscard]] const CellPress& lastPress() const { return m_press; }
-        void scaleStrokeAndRadius();
     private:
         //
         static constexpr std::size_t k_maxHoverHighlights{ 16 };

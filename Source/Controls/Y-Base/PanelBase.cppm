@@ -29,7 +29,7 @@ namespace ClaFi::Controls
     protected:
         void adjustPaint(AdjustPaintEvent&) override;
         void paintSurface(PaintEvent&) override;
-        ScaledDimensions calculateContent(AlignEvent&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         void nestedDrag(DragEvent&) override;
         void doubleClick(DoubleClickEvent&) override;
@@ -108,21 +108,21 @@ namespace ClaFi::Controls
         void resetBarExtent(PanelSlot slotId);
         // Sizes the bar in slotId to what its content measures, and keeps that as its extent.
         void fitBarToContent(PanelSlot slotId);
-        ScaledDimensions calculateContent(AlignEvent&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
         // **What the parts of this panel can be cut to**, composed by the panel's own arrangement:
         // a strip above, a strip below, and a body between two side bars. The panel's text is no
         // part of it - a floor is a MinSize somebody set, and a text carries none.
         //
         // The body's floor is handed in rather than read off the body, because a panel that
         // scrolls its body answers for it differently - see ScrollBox::stateSizeGivenWay.
-        [[nodiscard]] ScaledDimensions composeMinSize(const AlignEvent&, ScaledDimensions bodyMin) const;
+        [[nodiscard]] ScaledSize composeMinSize(const AlignEvent&, ScaledSize bodyMin) const;
         // The floor the body states, and nothing where there is no body to state one.
-        [[nodiscard]] ScaledDimensions bodyMinSize() const;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions& contentSize) override;
+        [[nodiscard]] ScaledSize bodyMinSize() const;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize& contentSize) override;
         // The body's slot is settled and the body has not been laid out into it yet.
         virtual void bodySlotSettled(AlignEvent&) {}
         // The box the body is laid out into - its slot, unless stated larger.
-        [[nodiscard]] virtual ScaledDimensions bodyExtent() const
+        [[nodiscard]] virtual ScaledSize bodyExtent() const
             { return m_bodyRect.dimensions(); }
         const FloatRect& contentRect() const { return m_contentRect; }
         void adjustTextRect(AdjustTextRectEvent&) const override;

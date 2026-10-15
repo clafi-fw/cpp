@@ -80,7 +80,7 @@ namespace ClaFi
         restateFrame(ringBefore);
     }
 
-    void FormWindow::setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize)
+    void FormWindow::setSizeRange(ScaledSize minSize, ScaledSize maxSize)
     {
         const FrameMargins ringBefore = ring();
         Window::setSizeRange(minSize, maxSize);
@@ -552,12 +552,13 @@ namespace ClaFi
             // Bit 30 of lParam is the previous key state: set means the key was already down,
             // which is the system repeating it rather than the user pressing it again.
             constexpr LPARAM k_previousKeyDown = 1 << 30;
-            KeyDownEvent event{
-                LOWORD(msg.wParam),
-                Platform::keyModifiers(),
-                (msg.lParam & k_previousKeyDown) != 0,
-                msg.handled };
-            m_form.wnd_keyDown(event);
+            m_form.wnd_keyDown(
+                LOWORD(msg.wParam),                     // key kode
+                Platform::keyModifiers(),               // modifiers
+                (msg.lParam & k_previousKeyDown) != 0,  // is repeat
+                msg.handled,                            // handled
+                {}                                      // Input stamp
+            );
             m_keyDownHandled = msg.handled;
             break;
         }

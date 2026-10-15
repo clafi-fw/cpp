@@ -162,13 +162,13 @@ namespace ClaFi::Controls
         return m_config.placement;
     }
 
-    void DropdownControlBase::placeSecondaryPart(ScaledDimensions childArea)
+    void DropdownControlBase::placeSecondaryPart(ScaledSize childArea)
     {
         // The strip spans the whole of the cross axis rather than sitting at its own size on it:
         // it is one half of the control's face, and a gap along either side of it would read as
         // two controls that happen to touch.
         Control* part = shownSecondaryPart();
-        ScaledDimensions size = part->dimensions();
+        ScaledSize size = part->scaledSize();
         if (m_config.placement == SecondaryPartPlacement::Bottom)
         {
             setControlPlacement(*part, { 0.0f, childArea.y - size.y }, { childArea.x, size.y });
@@ -216,7 +216,7 @@ namespace ClaFi::Controls
         // A strip at either side is as wide as the caller asked for. Its own content would only
         // size it to the mark.
         float zoneWidth = form.scaler().scale(m_config.dropdownWidth);
-        setControlPlacement(*part, part->topLeft(), { zoneWidth, part->height() });
+        setControlPlacement(*part, part->topLeft(), { zoneWidth, part->scaledHeight() });
     }
 
     void DropdownControlBase::adjustChildMetrics(AdjustMetricsEvent& event) const

@@ -39,14 +39,14 @@ namespace ClaFi::Controls::Grids
         template <IsControl ControlClass, typename... Args>
         ControlClass& addOwnControl(Args&&... args);
         ControlSpan controls() override { return { m_controls }; }
-        ScaledDimensions calculateCellContent(ScaledCellMetrics&, const Column&, float boundW) override;
+        ScaledSize calculateCellContent(const FormContext&, const ScaledCellMetrics&, const Column&, float boundW) override;
         RowContainer* asRowContainer() override { return this; }
         Control* cellControl(const Column& column) override { return controlAtColumn(column); }
         // A hosted control and a group's mark are the row's: a press on one lands on the grid.
         bool isChildPart(const Control&) const override { return true; }
         // A column fitted to its content reads a control's width off it.
         [[nodiscard]] bool isChildWidthGiven(const Control&) const override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void nestedMouseMove(const MouseMoveEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;
         // Refuses a popup on a press that picks a cell or changes the selection.
@@ -130,14 +130,15 @@ namespace ClaFi::Controls::Grids
         return false;
     }
 
-    ScaledDimensions RowContainer::calculateCellContent(ScaledCellMetrics& cellMetrics, const Column& column, float boundW)
+    ScaledSize RowContainer::calculateCellContent(const FormContext& formContext, const ScaledCellMetrics& cellMetrics,
+        const Column& column, float boundW)
     {
-        if (Control* control = controlAtColumn(column))
-            return control->dimensions() - cellMetrics.padding * 2.0f;
-        return Row::calculateCellContent(cellMetrics, column, boundW);
+        if (const Control* control = controlAtColumn(column))
+            return control->scaledSize() - cellMetrics.padding * 2.0f;
+        return Row::calculateCellContent(formContext, cellMetrics, column, boundW);
     }
 
-    void RowContainer::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& dimensions)
+    void RowContainer::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& dimensions)
     {
         Row::alignContent(event, position, dimensions);
 
@@ -169,7 +170,7 @@ namespace ClaFi::Controls::Grids
                         { column->calculatedWidth(), dimensions.y }
                     );
                     const FloatRect innerRect = descriptor().cellInnerRect(cellRect);
-                    ScaledDimensions controlDimensions = {
+                    ScaledSize controlDimensions = {
                         innerRect.width() - lead,
                         innerRect.height(),
                     };

@@ -116,7 +116,7 @@ namespace ClaFi::Controls::Grids
         using StackView::setSpacing;
         using StackView::setPadding;
 
-        ScaledDimensions calculateContent(AlignEvent&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
         void currentItemChanged(CurrentItemChangeEvent&)  override;
         // Puts the theme's grid element on the grid, whose stroke is the grid's own border - the
         // outer line of the lattice: the cells leave their outermost strokes to it and draw only
@@ -183,23 +183,23 @@ namespace ClaFi::Controls::Grids
         // re-checked against the selection before the accepted text is handed over. The **grid** is
         // not re-checked and cannot be: this call is on the stack of the grid's own key walk, so
         // a grid that does not survive the edit has already taken the caller with it.
-        bool editSelectedCell();
+        bool editSelectedCell(const Scaler& scaler);
         // Return follows the selected cell's link where the column opens no editor on it, and
         // Ctrl+Return where it does. False where there is no link to follow, so the key goes on.
-        bool followSelectedCellLink(KeyDownEvent&);
+        bool followSelectedCellLink(const KeyDownEvent& event);
         // Whether this click is the one that opens the selected cell's editor: a mouse click,
         // released on the cell the press landed on, that press having found the user on it.
         [[nodiscard]] bool clickEditsCell(const NestedClickEvent&) const;
         // Moves the selected cell one step the way the key points, over the cells of every row
         // the window reaches. False when the field holds none that way, which is what lets the
         // key travel on to the grid that holds this one, and out of the grid altogether.
-        bool moveCellSelection(KeyCode);
+        bool moveCellSelection(const KeyDownEvent& event);
         // Home and End: the first or last stop of the line the selection sits on.
-        bool moveCellToLineEdge(ScrollDirection edge);
+        bool moveCellToLineEdge(const Scaler&, ScrollDirection edge);
         // Ctrl with Home or End: the first or last cell of the whole grid.
         bool moveCellToGridEdge(ScrollDirection edge);
         // PageUp and PageDown: one screenful along the field, keeping the line the run follows.
-        bool moveCellByPage(ScrollDirection direction);
+        bool moveCellByPage(const Scaler&, ScrollDirection direction);
         // Whether the selection is what the keyboard is driving. A grid also carries controls
         // that answer their own keys - a control hosted in a cell - and those keys are theirs.
         [[nodiscard]] bool cellKeysApply() const;
@@ -213,7 +213,7 @@ namespace ClaFi::Controls::Grids
         // lookAhead widens the window past the viewport edge margin. A key that reaches further
         // than one step must pass the distance it crosses, since nothing further out is
         // collected and no stop there can be scored.
-        std::size_t collectField(FieldStops&, float lookAhead = 0.0f);
+        std::size_t collectField(const Scaler& scaler, FieldStops&, float lookAhead = 0.0f);
         // The stop a move from `source` lands on: the one ahead of it that `reach` names, with a
         // stop the line runs through taken over one merely nearer.
         [[nodiscard]] std::size_t searchField(const FieldStops&, const OrientedRect& source,

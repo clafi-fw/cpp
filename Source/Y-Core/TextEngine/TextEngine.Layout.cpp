@@ -371,7 +371,7 @@ namespace ClaFi
     }
 #endif
 
-    FloatPoint anchoredOrigin(const FloatRect& bounds, const CalculatedDimensions calculated,
+    FloatPoint anchoredOrigin(const FloatRect& bounds, const ScaledSize calculated,
         const TextAnchor anchor)
     {
         FloatPoint origin = bounds.topLeft();
@@ -1084,7 +1084,7 @@ namespace ClaFi
         return result;
     }
 
-    CalculatedDimensions TextLayout::calculatedDimensions()
+    ScaledSize TextLayout::calculatedDimensions()
     {
         ensureLayout();
         return { m_calcWidth, m_calcHeight };

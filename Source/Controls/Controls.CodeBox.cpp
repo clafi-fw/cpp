@@ -176,7 +176,7 @@ namespace ClaFi::Controls
         event.text = m_text;
     }
 
-    CalculatedDimensions ParameterHint::measureText(AlignEvent& event, ScaledDimensions asked,
+    ScaledSize ParameterHint::measureText(AlignEvent& event, ScaledSize asked,
         const Text& text)
     {
         asked.x = std::min(asked.x, Hint::k_lineWidth * event.scaleFactor());

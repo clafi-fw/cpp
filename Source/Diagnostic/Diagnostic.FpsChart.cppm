@@ -51,7 +51,7 @@ namespace ClaFi::Diagnostic
         void setColors(Color field, Color series);
     protected:
         void paintSurface(PaintEvent&) override;
-        ScaledDimensions calculateContent(AlignEvent&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
     private:
         // A gathered series: one rate per bucket, in the order the buckets stand.
         using FloatValues = std::vector<float>;
@@ -167,7 +167,7 @@ namespace ClaFi::Diagnostic
         paintAxis(event, plot, topLineValue);
     }
 
-    ScaledDimensions FpsChart::calculateContent(AlignEvent& event)
+    ScaledSize FpsChart::calculateContent(AlignEvent& event)
     {
         // The height is the plot plus one reading: half of the top reading stands above the plot
         // and half of the bottom one below it.

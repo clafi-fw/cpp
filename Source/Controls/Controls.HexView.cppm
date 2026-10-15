@@ -92,7 +92,7 @@ namespace ClaFi::Controls
         // that is one byte rather than the whole dump.
         [[nodiscard]] FloatRect contextMenuAnchor() const override;
         void adjustMetrics(AdjustMetricsEvent&) const override;
-        [[nodiscard]] ScaledDimensions calculateContent(AlignEvent&) override;
+        [[nodiscard]] ScaledSize calculateContent(AlignEvent&) override;
         void paintSurface(PaintEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         void doubleClick(DoubleClickEvent&) override;

@@ -105,8 +105,7 @@ namespace ClaFi
     // whole of what says where in the caller's rect that box was put - so this is the one
     // translation between the two spaces. Drawing and measuring both make it here, which is what
     // keeps a caret on the glyph it stands before.
-    export [[nodiscard]] FloatPoint anchoredOrigin(const FloatRect& bounds, CalculatedDimensions,
-        TextAnchor);
+    export [[nodiscard]] FloatPoint anchoredOrigin(const FloatRect& bounds, ScaledSize, TextAnchor);
 
     // What a paragraph is drawn from, held across draws so that stating it allocates nothing. One
     // set for the application, the way the rasterizer's masks are.
@@ -263,7 +262,7 @@ namespace ClaFi
 #else
         DrawTextResult draw(ControlPaintContext&, FloatPoint, const EditProps* = nullptr);
 #endif
-        CalculatedDimensions calculatedDimensions();
+        ScaledSize calculatedDimensions();
         // The height of the text's last line, from the shaping alone - the box is not asked.
         [[nodiscard]] float lastLineHeight();
         // How tall the first count lines stand, or the whole text where it has no more lines.

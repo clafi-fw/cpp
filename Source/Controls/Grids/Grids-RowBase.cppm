@@ -84,11 +84,11 @@ namespace ClaFi::Controls::Grids
     protected:
         using CellVisitor = std::function<void(const RowCell&)>;
         using LaneVisitor = std::function<void(const RowCell&, const FloatRect& lane)>;
-        virtual ScaledDimensions calculateCellContent(ScaledCellMetrics&, const Column&, float contentBoundsW);
-        ScaledDimensions calculateCell(ScaledCellMetrics&, const Column&, float boundsW);
+        virtual ScaledSize calculateCellContent(const FormContext&, const ScaledCellMetrics&, const Column&, float contentBoundsW);
+        ScaledSize calculateCell(const FormContext&, const ScaledCellMetrics&, const Column&, float boundsW);
         // Room a row keeps at the start of a cell for a control of its own.
-        [[nodiscard]] virtual ScaledDimensions cellLead(const Column&) const { return {}; }
-        ScaledDimensions calculateContent(AlignEvent&) override;
+        [[nodiscard]] virtual ScaledSize cellLead(const Column&) const { return {}; }
+        ScaledSize calculateContent(AlignEvent&) override;
         //
         virtual bool hasContent(const Column& column) const;
         // Whether this row draws an empty cell in a leaf it has nothing in.
@@ -177,7 +177,7 @@ namespace ClaFi::Controls::Grids
         void scrollCellIntoView(const FloatRect& cellRect);
         void setHoveredColumn(const Column* value, bool initiateHint = true);
         //
-        virtual void preCalcColumn(Column& column);
+        virtual void preCalcColumn(const FormContext& formContext, Column& column);
 
         // The control this row shows in `column`, or nullptr when the cell is plain
         // text. A row that holds no controls leaves this alone, which is what keeps its
@@ -232,7 +232,7 @@ namespace ClaFi::Controls::Grids
         // holding it: rows sit at different depths and the grid scrolls under them, so that
         // space is the one that holds still.
         float rowLocalX(float gridX) const;
-        void calculateSectionHeight(const Column&, std::size_t sectionIndex);
+        void calculateSectionHeight(const FormContext& formContext, const Column&, std::size_t sectionIndex);
         // Fills `list` in pre-order, one hasContent() call per column. Returns true when `column`
         // or any of its descendants holds a cell, and `covered` says whether a column above does.
         bool buildCellFlags(const Column&, bool covered, CellFlagsList&) const;
@@ -241,7 +241,7 @@ namespace ClaFi::Controls::Grids
         // column's cell off a layout of its own, any other through the cache. `drawn` is the
         // block that box came to, which is what the column's vertical anchor places inside it.
         [[nodiscard]] bool isCellTextTrimmed(const FormContext&, const Column&, const Text&,
-            MaxSize bounds, CalculatedDimensions& drawn);
+            MaxSize bounds, ScaledSize& drawn);
         // Where this row's cell in that column is, in form space; empty for a column this row
         // holds no cell in.
         [[nodiscard]] FloatRect cellRectInForm(const Column&) const;
@@ -252,7 +252,7 @@ namespace ClaFi::Controls::Grids
         // The first link in the selected cell's text while this row holds the cell, or nothing.
         [[nodiscard]] std::optional<LinkTarget> selectedCellLink();
         // Follows the selected cell's link, the key handled first; false where the cell holds none.
-        bool followSelectedCellLink(KeyDownEvent&);
+        bool followSelectedCellLink(const KeyDownEvent& event);
         // The link under the pointer, or the selected cell's from the keyboard; nothing off both.
         [[nodiscard]] std::optional<LinkTarget> menuLink(const ContextPopupEvent&);
         // Underlines the link, or none for an empty one, repainting only when that changes.

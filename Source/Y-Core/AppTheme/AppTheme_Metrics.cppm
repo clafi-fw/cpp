@@ -3,6 +3,7 @@ export module ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
+import ClaFi.Core.System.Scaler;
 
 namespace ClaFi
 {
@@ -46,6 +47,18 @@ namespace ClaFi
         float zDepthFactor{};
         // The size the surface arrives from as it appears, a fraction of the size it settles at.
         float surfaceGrowInScale{ 1.0f };
+    };
+
+    export struct ScaledControlMetrics
+    {
+        ScaledControlMetrics(const ControlMetrics& designMetrics, const Scaler&);
+        ScaledControlMetrics& operator=(const ScaledControlMetrics&) = default;
+        ScaledPadding padding;
+        ScaledSpacing spacing;
+        ScaledSize minSize;
+        // Zero on an axis means the content decides it - see ControlMetrics::preferredSize.
+        ScaledSize preferredSize; // Stated
+        ScaledSize maxSize;
     };
 
     // The shadow a window casts, in logical pixels. See AppTheme
@@ -114,6 +127,20 @@ namespace ClaFi
 
     //-------------------------------------------------------------------------
 
+
+    // ScaledControlMetrics
+
+    ScaledControlMetrics::ScaledControlMetrics(const ControlMetrics& designMetrics, const Scaler& scaler)
+        :
+        padding{        scaler.scale(designMetrics.padding) },
+        spacing{        scaler.scale(designMetrics.spacing) },
+        minSize{        scaler.scale(designMetrics.minSize) },
+        preferredSize{  scaler.scale(designMetrics.preferredSize) },
+        maxSize{        scaler.scale(designMetrics.maxSize) }
+    {
+    }
+
+    // ThemeMetrics
 
     ThemeMetrics::ThemeMetrics()
     {

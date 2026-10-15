@@ -25,7 +25,7 @@ namespace ClaFi::PlatformImplementation::Windows
         void update() override;
         void setFrame(const WindowFrame&) override;
         // A dialog the user stops sizing loses its ring, and gets it back with a range to size in.
-        void setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize) override;
+        void setSizeRange(ScaledSize minSize, ScaledSize maxSize) override;
         void invalidateRect(const IntRect*) override;
         ColorByte alpha() override;
         void setAlpha(ColorByte) override;

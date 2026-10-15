@@ -137,7 +137,7 @@ namespace ClaFi::PlatformImplementation::Windows
         void invalidateRect(const IntRect*) override;
         void setTitle(const std::wstring_view value) override { setText(value); }
         void update() override { ::UpdateWindow(handle()); }
-        void setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize) override;
+        void setSizeRange(ScaledSize minSize, ScaledSize maxSize) override;
         // Whether the user sizes this window: a dialog whose range is more than one size.
         [[nodiscard]] bool userSized() const { return m_Role == WindowRole::Dialog && m_userSized; }
         void setFrame(const WindowFrame& value) override { m_frameDesign = value; }
@@ -564,7 +564,7 @@ namespace ClaFi::PlatformImplementation::Windows
             ::InvalidateRect(wnd, reinterpret_cast<const RECT*>(value), false);
     }
 
-    void Window::setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize)
+    void Window::setSizeRange(ScaledSize minSize, ScaledSize maxSize)
     {
         m_minTrackSize = minSize.toInt();
         // No maximum is the sentinel rather than a number, and zero here says the same thing to

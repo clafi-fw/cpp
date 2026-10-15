@@ -53,6 +53,7 @@ namespace ClaFi
         //
         const Scaler& scaler() const {  return *m_scaler; }
         const Scaler& scaler() { return *m_scaler; }
+        float scale(float value) const { return m_scaler->scale(value); }
         FloatPoint scale(FloatPoint value) const { return m_scaler->scale(value); }
         FloatPoint scaleF(FloatPoint value) const { return m_scaler->scaleF(value); }
         float scaleF(float value) const { return m_scaler->scaleF(value); }
@@ -128,9 +129,9 @@ namespace ClaFi
 
     export struct KeyDownEvent : public Event
     {
-        KeyDownEvent(KeyCode key, KeyModifiers modifiers, bool isRepeat, bool& handled,
-            InputStamp stamp = {})
+        KeyDownEvent(const FormContext& formContext, KeyCode key, KeyModifiers modifiers, bool isRepeat, bool& handled, InputStamp stamp = {})
             :
+            m_formContext{ formContext },
             key{ key },
             modifiers{ modifiers },
             isRepeat{ isRepeat },
@@ -138,6 +139,12 @@ namespace ClaFi
             stamp{ stamp }
         {
         }
+    private:
+        const FormContext& m_formContext;
+    public:
+        const FormContext& formContext() const { return m_formContext; }
+        const Scaler& scaler() const { return m_formContext.scaler(); }
+    public:
         KeyCode key;
         KeyModifiers modifiers;
         bool isRepeat; // the key was already down and the system is repeating it. See Context
@@ -196,7 +203,7 @@ namespace ClaFi
         virtual void wnd_mouseWheel(PointInForm, float wheelDelta) = 0;
         virtual void wnd_mouseHWheel(PointInForm, float wheelDelta) = 0;
         virtual void wnd_sideButton(PointInForm, SideButton, InputStamp) = 0; // a side press
-        virtual void wnd_keyDown(KeyDownEvent& key) = 0;
+        virtual void wnd_keyDown(KeyCode, KeyModifiers, bool isRepeat, bool& handled, InputStamp) = 0;
         virtual void wnd_keyUp() = 0;
         virtual void wnd_char(wchar_t value) = 0;
         // **The surface the bitmap covers**, and the frame the platform is applying inside it. The
@@ -224,15 +231,15 @@ namespace ClaFi
         FloatRect anchorRect{};
         // What the window is asking for: the preferred size where its root states one, and what
         // the content came to where it does not - see ControlMetrics::preferredSize.
-        ScaledDimensions size{};
+        ScaledSize size{};
         // The bounds it will accept. minSize is the floor the window's content states - the
         // MinSize set on its root or anywhere below it, composed up the tree, and zero where
         // nobody set one. A window that would rather stand over what it is placed on than lose
         // what falls past a cut says so with a MinSize. maxSize is what it may ever be grown to:
         // nothing in the arithmetic here reads it, and it is what a platform that states a
         // window's range to the system - xdg_toplevel::set_max_size - says.
-        ScaledDimensions minSize{};
-        ScaledDimensions maxSize{};
+        ScaledSize minSize{};
+        ScaledSize maxSize{};
         // How far an anchored window stands clear of what it drops from. Zero for a window on
         // the pointer, which hangs off the point itself.
         float clearance{};
@@ -250,7 +257,7 @@ namespace ClaFi
     {
         // What the window got. Shorter than what was asked for only when the window said it may
         // be made shorter, or when the work area could not hold what it asked for.
-        ScaledDimensions size{};
+        ScaledSize size{};
     };
 
     export class IPlatformWindow
@@ -296,7 +303,7 @@ namespace ClaFi
         // **A range of one size is a window the user does not size**, which is what a form its
         // content sizes states. A dialog given one offers no edge to drag and no maximize, and
         // gets both back with a range the user can move in.
-        virtual void setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize) = 0;
+        virtual void setSizeRange(ScaledSize minSize, ScaledSize maxSize) = 0;
         // **The frame the form wants**, from its theme and scale. The platform keeps it and answers
         // with the frame it applies on every resize; a platform that cannot composite a frame
         // answers zero and the form paints none.

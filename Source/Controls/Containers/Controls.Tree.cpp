@@ -19,9 +19,9 @@ namespace ClaFi::Controls
 {
     // TreeItem
 
-    ScaledDimensions TreeItem::calculateContent(AlignEvent& event)
+    ScaledSize TreeItem::calculateContent(AlignEvent& event)
     {
-        ScaledDimensions result = ToolButton::calculateContent(event);
+        ScaledSize result = ToolButton::calculateContent(event);
         result.x += textLead(event.scaler());
         return result;
     }
@@ -29,7 +29,7 @@ namespace ClaFi::Controls
     // The text is measured in the width the lead leaves, the box it is painted in; measured in
     // the whole width, a wrapping text that fits that and not the box comes out a line short.
     void TreeItem::alignContent(AlignEvent& event, ScaledPosition position,
-        ScaledDimensions& contentSize)
+        ScaledSize& contentSize)
     {
         const float lead = textLead(event.scaler());
         contentSize.x = std::max(0.0f, contentSize.x - lead);
@@ -39,7 +39,7 @@ namespace ClaFi::Controls
     }
 
     // A row stating a format of its own is measured whole: the tree's line is one of body text.
-    CalculatedDimensions TreeItem::measureText(AlignEvent& event, ScaledDimensions asked,
+    ScaledSize TreeItem::measureText(AlignEvent& event, ScaledSize asked,
         const Text& text)
     {
         if (m_tree.m_rowLine.has_value() && !textFormat())
@@ -73,9 +73,9 @@ namespace ClaFi::Controls
     // TreeDivider
 
     // Counted in the width as a row's lead is, so the line never ends before it starts.
-    ScaledDimensions TreeDivider::calculateContent(AlignEvent& event)
+    ScaledSize TreeDivider::calculateContent(AlignEvent& event)
     {
-        ScaledDimensions result = Divider::calculateContent(event);
+        ScaledSize result = Divider::calculateContent(event);
         result.x += event.scale(lead());
         return result;
     }
@@ -95,7 +95,7 @@ namespace ClaFi::Controls
     // TreeNodeHeader
 
     // A tree node builds its header and holds it, so the parent is that node.
-    CalculatedDimensions TreeNodeHeader::measureText(AlignEvent& event, ScaledDimensions asked,
+    ScaledSize TreeNodeHeader::measureText(AlignEvent& event, ScaledSize asked,
         const Text& text)
     {
         const TreeView& tree = static_cast<const TreeNode*>(parent())->m_tree;

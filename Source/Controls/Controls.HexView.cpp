@@ -162,7 +162,7 @@ namespace ClaFi::Controls
         event.metrics.padding = m_padding;
     }
 
-    ScaledDimensions HexView::calculateContent(AlignEvent& event)
+    ScaledSize HexView::calculateContent(AlignEvent& event)
     {
         measureCharacterCell(event.formContext());
 
@@ -378,7 +378,7 @@ namespace ClaFi::Controls
         m_lineText.clear();
         m_lineText << k_measuredRun;
 
-        const CalculatedDimensions measured = textEngine().calculateText(formContext, m_lineText,
+        const ScaledSize measured = textEngine().calculateText(formContext, m_lineText,
             { k_maxFloat, k_maxFloat }, false, false, &s_lineFormat);
         m_charWidth = measured.x / static_cast<float>(k_measuredRun.size());
         m_lineHeight = measured.y;
@@ -524,7 +524,7 @@ namespace ClaFi::Controls
 
     FloatRect HexView::contentRectInControl() const
     {
-        return contentRect({ 0.0f, 0.0f, width(), height() }, scaledPadding());
+        return contentRect({ 0.0f, 0.0f, scaledWidth(), scaledHeight() }, scaledPadding());
     }
 
     FloatRect HexView::contentRectInForm() const

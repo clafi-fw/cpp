@@ -58,13 +58,13 @@ namespace ClaFi::Controls
         void setBarSurface(std::optional<Hsl> value) { m_barSurface = value; }
         ScrollBar& vScrollBar() const { return m_vScrollBar; }
         [[nodiscard]] FloatRect viewPort(FormBase&) const override;
-        [[nodiscard]] FloatPoint scrollTravelRemaining() const override;
     protected:
+        [[nodiscard]] FloatPoint scrollTravelRemaining() const override;
         void scrollBy(FloatPoint) override;
-        ScaledDimensions calculateContent(AlignEvent&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
         // States what this box can be cut to, into the event the measuring pass carries.
         void stateSizeGivenWay(AlignEvent&) const;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         bool controlIsOnScrollBox(Control&) override;
         [[nodiscard]] bool scrollsChild(const Control&, ScrollAxis) const override;
         // The body's height is its own while the box scrolls it. See Item-Containers
@@ -75,7 +75,7 @@ namespace ClaFi::Controls
         void adjustChildMetrics(AdjustMetricsEvent&) const override;
         void bodySlotSettled(AlignEvent&) override;
         // The slot and, below it, the room past the body's end.
-        [[nodiscard]] ScaledDimensions bodyExtent() const override;
+        [[nodiscard]] ScaledSize bodyExtent() const override;
         void adjustChildViewport(AdjustViewportEvent& event) const override;
         void adjustChildClip(const Control& child, FloatRect& clip) const override;
         void adjustChildPaint(AdjustPaintEvent&) override;
@@ -100,13 +100,13 @@ namespace ClaFi::Controls
         [[nodiscard]] bool givesWay(ScrollAxis) const;
         // One place the three visibilities are settled together: the corner is the square the
         // two bars leave between them, so it belongs to whether **both** are up.
-        void showBars(bool vVisible, bool hVisible);
+        void showBars(bool vVisible, bool hVisible) const;
         // Whether Auto wants the vertical bar beside content this tall. See Controls#auto
         [[nodiscard]] bool autoVerticalBarNeeded(const AlignEvent&, float contentHeight) const;
         // Whether Auto wants the horizontal bar beside content this wide. See Controls#auto
         [[nodiscard]] bool autoHorizontalBarNeeded(const AlignEvent&, float contentWidth) const;
         // Stands the bars named and measures the content again beside them.
-        [[nodiscard]] ScaledDimensions remeasureWithBars(AlignEvent&, bool vVisible, bool hVisible);
+        [[nodiscard]] ScaledSize remeasureWithBars(AlignEvent&, bool vVisible, bool hVisible);
         // Answers the vertical bar from the slot the body was laid out into. See Controls#auto
         void settleAutoVerticalBar(AlignEvent&);
         void wheelScrolled(MouseWheelEvent&, ScrollBar&, float steps);
@@ -229,9 +229,9 @@ namespace ClaFi::Controls
             m_vScrollBar.setPosition(m_vScrollBar.position() + delta.y);
     }
 
-    ScaledDimensions ScrollBox::calculateContent(AlignEvent& event)
+    ScaledSize ScrollBox::calculateContent(AlignEvent& event)
     {
-        ScaledDimensions result = PanelBase::calculateContent(event);
+        ScaledSize result = PanelBase::calculateContent(event);
         if (m_scrollBars == ScrollBars::Auto)
         {
             // Against the content maximum rather than the box's: what comes back from here is the
@@ -279,15 +279,15 @@ namespace ClaFi::Controls
         // The panel's arrangement is composed again with the body giving way, rather than the
         // body's size being taken off what the panel came to, so a side bar taller than the body
         // states its own height here.
-        ScaledDimensions bodyMin = bodyMinSize();
+        ScaledSize bodyMin = bodyMinSize();
         if (givesWay(ScrollAxis::Vertical))
             bodyMin.y = 0.0f;
         if (givesWay(ScrollAxis::Horizontal))
             bodyMin.x = 0.0f;
-        event.calculatedMinSize = composeMinSize(event, bodyMin);
+        event.composedMinSize = composeMinSize(event, bodyMin);
     }
 
-    void ScrollBox::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& contentSize)
+    void ScrollBox::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& contentSize)
     {
         PanelBase::alignContent(event, position, contentSize);
 
@@ -301,7 +301,7 @@ namespace ClaFi::Controls
             {
                 ScrollInfo scrollInfo{
                     .page = bodyRect().width(),
-                    .max = control->width()
+                    .max = control->scaledWidth()
                 };
                 m_hScrollBar.setScrollInfo(scrollInfo);
             }
@@ -309,7 +309,7 @@ namespace ClaFi::Controls
             // vScroll
             m_vScrollBar.setScrollInfo({
                     .page = bodyRect().height(),
-                    .max = control->height()
+                    .max = control->scaledHeight()
                 });
 
             offsetControl(control, { -m_hScrollBar.position(), -m_vScrollBar.position() });
@@ -339,7 +339,7 @@ namespace ClaFi::Controls
     {
         PanelBase::calculateChildren(form);
         const Control* content = body();
-        m_bodyMeasuredHeight = content ? content->height() : 0.0f;
+        m_bodyMeasuredHeight = content ? content->scaledHeight() : 0.0f;
         m_bodyScroll = content ? content->scrollMetrics() : ScrollMetrics{};
     }
 
@@ -459,9 +459,9 @@ namespace ClaFi::Controls
     // surface paints the room and a press there reaches it. At the end of the travel the last
     // step of the content - a text's last line - stands where the first stands at its start, a
     // padding below the top of the slot.
-    ScaledDimensions ScrollBox::bodyExtent() const
+    ScaledSize ScrollBox::bodyExtent() const
     {
-        ScaledDimensions result = PanelBase::bodyExtent();
+        ScaledSize result = PanelBase::bodyExtent();
         const Control* content = body();
         if (!content || !m_bodyScroll.pastEnd || !givesWay(ScrollAxis::Vertical))
             return result;
@@ -763,7 +763,7 @@ namespace ClaFi::Controls
             : m_scrollBars == ScrollBars::Horizontal;
     }
 
-    void ScrollBox::showBars(bool vVisible, bool hVisible)
+    void ScrollBox::showBars(bool vVisible, bool hVisible) const
     {
         m_vScrollBar.setVisible(vVisible);
         m_bottomBar.setVisible(hVisible);
@@ -776,7 +776,7 @@ namespace ClaFi::Controls
     {
         if (m_bodyOverranSlot)
             return *m_bodyOverranSlot;
-        if (event.maxSize.y != k_maxFloat)
+        if (event.scaledMaxHeight() != k_maxFloat)
             return contentHeight > event.maxContentHeight();
         return m_vScrollBar.visible();
     }
@@ -784,12 +784,12 @@ namespace ClaFi::Controls
     bool ScrollBox::autoHorizontalBarNeeded(const AlignEvent& event,
         const float contentWidth) const
     {
-        if (event.maxSize.x != k_maxFloat)
+        if (event.scaledMaxWidth() != k_maxFloat)
             return contentWidth > event.maxContentWidth();
         return m_bottomBar.visible();
     }
 
-    ScaledDimensions ScrollBox::remeasureWithBars(AlignEvent& event, const bool vVisible,
+    ScaledSize ScrollBox::remeasureWithBars(AlignEvent& event, const bool vVisible,
         const bool hVisible)
     {
         showBars(vVisible, hVisible);
@@ -816,7 +816,7 @@ namespace ClaFi::Controls
         const Control* content = body();
         const bool overran = content
             && content->visible()
-            && content->height() > bodyRect().height() + k_overrunTolerance;
+            && content->scaledHeight() > bodyRect().height() + k_overrunTolerance;
         m_bodyOverranSlot = overran;
         // The pass this asks for stands the bar the answer names, and the body it lays out gives
         // the same answer: a body laid out narrower is never shorter, nor a wider one taller.

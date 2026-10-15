@@ -98,8 +98,8 @@ namespace ClaFi::Controls
     protected:
         void adjustPaint(AdjustPaintEvent&) override;
         void nestedDoubleClick(NestedDoubleClickEvent&) override;
-        ScaledDimensions calculateContent(AlignEvent&) override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
         void paintText(PaintEvent&) override;
         void paintSurface(PaintEvent& event) override
@@ -269,19 +269,19 @@ namespace ClaFi::Controls
     }
 
     // Counted in the floor only where there is one, the way the padding is.
-    ScaledDimensions ExpanderHeader::calculateContent(AlignEvent& event)
+    ScaledSize ExpanderHeader::calculateContent(AlignEvent& event)
     {
-        ScaledDimensions result = PanelBase::calculateContent(event);
+        ScaledSize result = PanelBase::calculateContent(event);
         const float lead = event.scale(m_lead);
         result.x += lead;
-        if (event.calculatedMinSize.x > 0.0f)
-            event.calculatedMinSize.x += lead;
+        if (event.composedMinSize.x > 0.0f)
+            event.composedMinSize.x += lead;
         return result;
     }
 
     // The parts are laid out in the width the lead leaves, then carried past it.
     void ExpanderHeader::alignContent(AlignEvent& event, ScaledPosition position,
-        ScaledDimensions& contentSize)
+        ScaledSize& contentSize)
     {
         const float lead = event.scale(m_lead);
         const float width = contentSize.x;
@@ -464,7 +464,7 @@ namespace ClaFi::Controls
         {
             const FloatRect rect = FloatRect::fromDimensions(
                 event.contentPosition() + m_heldHeader->topLeft() + FloatPoint{ 0.0f, travel },
-                m_heldHeader->dimensions());
+                m_heldHeader->scaledSize());
             event.paintHeldBackdrop(m_heldHeader->silhouette(event, rect), travel);
         }
         event.paintChild(*m_heldHeader);

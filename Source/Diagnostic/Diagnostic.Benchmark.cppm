@@ -118,8 +118,8 @@ namespace ClaFi::Diagnostic
     public:
         /// @brief The size of the scene being measured. A new size resets the aggregates: a frame
         /// time taken at one size says nothing about another.
-        void setDimensions(ScaledDimensions value);
-        [[nodiscard]] ScaledDimensions dimensions() const { return m_dimensions; }
+        void setDimensions(ScaledSize value);
+        [[nodiscard]] ScaledSize dimensions() const { return m_dimensions; }
         /// @brief What the measured work cost. **This is not a frame rate** - see frameInterval.
         [[nodiscard]] const BenchmarkValue& paintTime() const { return m_paintTime; }
         /// @brief From one frame's start to the next one's, which is the rate anything is
@@ -165,7 +165,7 @@ namespace ClaFi::Diagnostic
         static constexpr std::size_t k_bucketCount{ static_cast<std::size_t>(k_historySpan / k_bucketDuration) };
     private:
         FpsBuckets m_buckets{ k_bucketCount };
-        ScaledDimensions m_dimensions{ 0.0f, 0.0f };
+        ScaledSize m_dimensions{ 0.0f, 0.0f };
         BenchmarkValue m_paintTime{};
         BenchmarkValue m_frameInterval{};
         // When the previous frame started, and whether there has been one. An interval is between
@@ -267,7 +267,7 @@ namespace ClaFi::Diagnostic
         m_cpuUsage.start();
     }
 
-    void FpsBenchmark::setDimensions(ScaledDimensions value)
+    void FpsBenchmark::setDimensions(ScaledSize value)
     {
         if (m_dimensions == value)
             return;

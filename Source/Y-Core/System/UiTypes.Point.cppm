@@ -126,8 +126,7 @@ namespace ClaFi
     export using FloatSize = FloatPoint;
 
     export using ScaledPosition = FloatPoint;
-    export using ScaledDimensions = FloatPoint;
-    export using CalculatedDimensions = FloatPoint;
+    export using ScaledSize = FloatPoint;
     export using ScaledMaxSize = FloatPoint;
     export using ScaledPadding = FloatPoint;
     export using ScaledSpacing = FloatPoint;

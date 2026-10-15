@@ -90,7 +90,7 @@ namespace ClaFi::Controls::Grids
         m_descriptor.forgetRow(this);
     }
 
-    ScaledDimensions RowBase::calculateCellContent(ScaledCellMetrics& cellMetrics, const Column& column, float contentBoundsW)
+    ScaledSize RowBase::calculateCellContent(const FormContext& formContext, const ScaledCellMetrics&, const Column& column, float contentBoundsW)
     {
         Text cellText{};
         doGetCellText(column, cellText);
@@ -100,51 +100,52 @@ namespace ClaFi::Controls::Grids
         if (column.movingText() == MovingText::Yes)
         {
             TextLayout layout;
-            shapeAlone(layout, cellMetrics.formContext(), cellText, format, maxSize,
+            shapeAlone(layout, formContext, cellText, format, maxSize,
                 EventPhase::Calculate);
-            ScaledDimensions result = layout.calculatedDimensions();
+            ScaledSize result = layout.calculatedDimensions();
             if (maxLines != 0)
                 result.y = std::min(result.y, layout.linesHeight(maxLines));
             return result;
         }
-        ScaledDimensions result = textEngine().calculateText(cellMetrics.formContext(), cellText,
+        ScaledSize result = textEngine().calculateText(formContext, cellText,
             maxSize, false, true, &format);
         if (maxLines != 0)
         {
-            const float linesHeight = textEngine().linesHeight(cellMetrics.formContext(), cellText,
+            const float linesHeight = textEngine().linesHeight(formContext, cellText,
                 maxSize, maxLines, true, &format);
             result.y = std::min(result.y, linesHeight);
         }
         return result;
     }
 
-    ScaledDimensions RowBase::calculateCell(ScaledCellMetrics& cellMetrics, const Column& column, float boundsW)
+    ScaledSize RowBase::calculateCell(const FormContext& formContext, const ScaledCellMetrics& cellMetrics,
+        const Column& column, float boundsW)
     {
         ScaledPadding fullPadding = cellMetrics.padding * 2.0f;
         fullPadding += cellMetrics.border;
         // The lead is room the content starts after, so the cell grows by it as it does by padding.
-        const ScaledDimensions lead = cellLead(column);
+        const ScaledSize lead = cellLead(column);
         fullPadding.x += lead.x;
         if (boundsW <= fullPadding.x)
             return fullPadding;
         if (boundsW != k_maxFloat)
             boundsW -= fullPadding.x;
-        ScaledDimensions contentDimensions = calculateCellContent(cellMetrics, column, boundsW);
+        ScaledSize contentDimensions = calculateCellContent(formContext, cellMetrics, column, boundsW);
         contentDimensions.y = std::max(contentDimensions.y, lead.y);
         return contentDimensions + fullPadding;
     }
 
-    ScaledDimensions RowBase::calculateContent(AlignEvent& event)
+    ScaledSize RowBase::calculateContent(AlignEvent& event)
     {
-        ScaledDimensions result;
+        ScaledSize result;
 
         // calculate width
-        result.x = m_descriptor.rootColumn().finalWidth() - event.padding.x * 2.0f; // ***
+        result.x = m_descriptor.rootColumn().finalWidth() - event.scaledPadding().x * 2.0f; // ***
 
         // calculate height
         m_calculatedHeight.clear();
 
-        calculateSectionHeight(m_descriptor.rootColumn(), 0);
+        calculateSectionHeight(event.formContext(), m_descriptor.rootColumn(), 0);
 
         result.y = 0;
         for (float h : m_calculatedHeight)
@@ -306,7 +307,7 @@ namespace ClaFi::Controls::Grids
     {
         FloatRect textBounds = cellRect.toFloat();
         const ScaledCellMetrics& cellMetrics = descriptor().scaledCellMetrics();
-        textBounds.inflate(-cellMetrics.padding.toFloat());
+        textBounds.inflate(-cellMetrics.padding);
         textBounds.left += cellLead(column).x;
         Text text;
         doGetCellText(column, text);
@@ -651,7 +652,7 @@ namespace ClaFi::Controls::Grids
 
         Text cellText;
         doGetCellText(*hoveredColumn, cellText);
-        CalculatedDimensions drawn{};
+        ScaledSize drawn{};
         const bool trimmed = isCellTextTrimmed(event.formContext(), *hoveredColumn, cellText,
             textBounds.dimensions(), drawn);
         if (!trimmed)
@@ -893,12 +894,12 @@ namespace ClaFi::Controls::Grids
         descriptor().setHoveredCell(this, value, initiateHint);
     }
 
-    void RowBase::preCalcColumn(Column& column)
+    void RowBase::preCalcColumn(const FormContext& formContext, Column& column)
     {
         if (!hasContent(column))
             return;
         ScaledCellMetrics& cellMetrics = m_descriptor.scaledCellMetrics();
-        float w = calculateCell(cellMetrics, column, k_maxFloat).x;
+        float w = calculateCell(formContext, cellMetrics, column, k_maxFloat).x;
         column.addNeededWidth(w);
     }
 
@@ -1035,7 +1036,7 @@ namespace ClaFi::Controls::Grids
         return gridX + m_descriptor.owner().boundsInForm().left - boundsInForm().left;
     }
 
-    void RowBase::calculateSectionHeight(const Column& column, std::size_t sectionIndex)
+    void RowBase::calculateSectionHeight(const FormContext& formContext, const Column& column, std::size_t sectionIndex)
     {
         ScaledCellMetrics& cellLt = m_descriptor.scaledCellMetrics();
 
@@ -1049,14 +1050,14 @@ namespace ClaFi::Controls::Grids
         if (hasColContent)
         {
             float cellW = column.calculatedWidth();
-            float cellH = calculateCell(cellLt, column, cellW).y;
+            float cellH = calculateCell(formContext, cellLt, column, cellW).y;
             setSectionHeight(sectionIndex, cellH);
             ++sectionIndex;
         }
 
         if (column.subColumns())
             for (const Column* subColumn : *column.subColumns())
-                calculateSectionHeight(*subColumn, sectionIndex);
+                calculateSectionHeight(formContext, *subColumn, sectionIndex);
     }
 
     bool RowBase::buildCellFlags(const Column& column, bool covered, CellFlagsList& list) const
@@ -1090,7 +1091,7 @@ namespace ClaFi::Controls::Grids
     }
 
     bool RowBase::isCellTextTrimmed(const FormContext& formContext, const Column& column,
-        const Text& text, MaxSize bounds, CalculatedDimensions& drawn)
+        const Text& text, MaxSize bounds, ScaledSize& drawn)
     {
         const TextFormat& format = cellTextFormat(column);
         if (column.movingText() == MovingText::No)
@@ -1125,7 +1126,7 @@ namespace ClaFi::Controls::Grids
     {
         const ScaledCellMetrics& cellMetrics = m_descriptor.scaledCellMetrics();
         FloatRect textBounds = m_descriptor.cellInnerRect(cellRect);
-        textBounds.inflate(-cellMetrics.padding.toFloat());
+        textBounds.inflate(-cellMetrics.padding);
         textBounds.left += cellLead(column).x;
         return textBounds;
     }
@@ -1153,7 +1154,7 @@ namespace ClaFi::Controls::Grids
         std::optional<LinkHit> hit;
         if (column.movingText() == MovingText::No)
         {
-            const CalculatedDimensions drawn = textEngine().calculateText(formContext, cellText,
+            const ScaledSize drawn = textEngine().calculateText(formContext, cellText,
                 bounds, false, true, &format);
             const FloatPoint origin = anchoredOrigin(textBounds, drawn, anchor);
             hit = textEngine().linkAt(formContext, cellText, bounds, point - origin, true,
@@ -1189,7 +1190,7 @@ namespace ClaFi::Controls::Grids
     }
 
     // Handled before the follow, which may open a page this row does not outlive.
-    bool RowBase::followSelectedCellLink(KeyDownEvent& event)
+    bool RowBase::followSelectedCellLink(const KeyDownEvent& event)
     {
         std::optional<LinkTarget> link = selectedCellLink();
         if (!link.has_value())

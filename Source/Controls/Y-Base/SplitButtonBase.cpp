@@ -25,10 +25,10 @@ namespace ClaFi::Controls
         return SecondaryPartPlacement::Right;
     }
 
-    void SplitButtonBase::placeSecondaryPart(ScaledDimensions childArea)
+    void SplitButtonBase::placeSecondaryPart(ScaledSize childArea)
     {
         Control* part = shownSecondaryPart();
-        ScaledDimensions size = part->dimensions();
+        ScaledSize size = part->scaledSize();
         if (secondaryPartPlacement() == SecondaryPartPlacement::Bottom)
         {
             setControlPlacement(
@@ -55,8 +55,8 @@ namespace ClaFi::Controls
         return part && part->containsNested(pressed);
     }
 
-    ScaledDimensions SplitButtonBase::secondaryExtent(
-        const FormContext& formContext, ScaledPadding padding, ScaledSpacing spacing) const
+    ScaledSize SplitButtonBase::secondaryExtent(const FormContext& formContext,
+        ScaledPadding padding, ScaledSpacing spacing) const
     {
         const Control* part = shownSecondaryPart();
         if (!part)
@@ -73,7 +73,7 @@ namespace ClaFi::Controls
         // way to buy room back - see BrowserControl::alignContent - and a gap where it used to be
         // would defeat that. An edge part holds its axis either way, being structure.
         bool collapses = !secondaryReachesEdge();
-        ScaledDimensions size = part->dimensions();
+        ScaledSize size = part->scaledSize();
         if (secondaryPartPlacement() == SecondaryPartPlacement::Bottom)
         {
             if (collapses && !size.y)
@@ -89,13 +89,15 @@ namespace ClaFi::Controls
 
     // A part at either side stands beside a wrapping text, so its room comes off the box the text
     // is broken in - the way adjustTextRect takes it off the box the text is drawn in.
-    CalculatedDimensions SplitButtonBase::measureText(AlignEvent& event, ScaledDimensions asked,
+    ScaledSize SplitButtonBase::measureText(AlignEvent& event, ScaledSize asked,
         const Text& text)
     {
         if (wordWrap())
         {
-            const ScaledDimensions extent = secondaryExtent(event.formContext(), event.padding,
-                event.spacing);
+            const ScaledSize extent = secondaryExtent(
+                event.formContext(),
+                event.scaledPadding(),
+                event.scaledSpacing());
             asked.x = std::max(asked.x - extent.x, 0.0f);
         }
         return ButtonBase::measureText(event, asked, text);
@@ -116,27 +118,27 @@ namespace ClaFi::Controls
         calculateControl(*part, form);
     }
 
-    ScaledDimensions SplitButtonBase::calculateContent(AlignEvent& event)
+    ScaledSize SplitButtonBase::calculateContent(AlignEvent& event)
     {
-        ScaledDimensions result = ButtonBase::calculateContent(event);
+        ScaledSize result = ButtonBase::calculateContent(event);
         const Control* part = shownSecondaryPart();
         if (!part)
             return result;
 
-        ScaledDimensions extent = secondaryExtent(event.formContext(), event.padding, event.spacing);
-        ScaledDimensions size = part->dimensions();
+        ScaledSize extent = secondaryExtent(event.formContext(), event.scaledPadding(), event.scaledSpacing());
+        ScaledSize size = part->scaledSize();
         if (secondaryPartPlacement() == SecondaryPartPlacement::Bottom)
         {
             result.y += extent.y;
-            result.x = std::max(result.x, size.x - event.padding.x * 2.0f);
+            result.x = std::max(result.x, size.x - event.scaledPaddingX() * 2.0f);
             return result;
         }
         result.x += extent.x;
-        result.y = std::max(result.y, size.y - event.padding.y * 2.0f);
+        result.y = std::max(result.y, size.y - event.scaledPaddingY() * 2.0f);
         return result;
     }
 
-    void SplitButtonBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& dimensions)
+    void SplitButtonBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& dimensions)
     {
         if (!shownSecondaryPart())
         {
@@ -147,9 +149,9 @@ namespace ClaFi::Controls
         // centres in the half it belongs to instead of straddling the seam. Only the part's own
         // axis is taken away: measureText takes a part at the side off the width already, and
         // taking it off here as well would break the text narrower than it is drawn.
-        ScaledDimensions offered = dimensions;
-        ScaledDimensions extent = secondaryExtent(event.formContext(), event.padding, event.spacing);
-        ScaledDimensions mainBox = { dimensions.x, std::max(dimensions.y - extent.y, 0.0f) };
+        ScaledSize offered = dimensions;
+        ScaledSize extent = secondaryExtent(event.formContext(), event.scaledPadding(), event.scaledSpacing());
+        ScaledSize mainBox = { dimensions.x, std::max(dimensions.y - extent.y, 0.0f) };
         ButtonBase::alignContent(event, position, mainBox);
         dimensions.x = mainBox.x;
         dimensions.y = mainBox.y + extent.y;
@@ -166,16 +168,16 @@ namespace ClaFi::Controls
         // Child coordinates start at the child inset, not at the control's top left, so the part
         // is placed inside the box that inset leaves. Measuring it against the whole control would
         // push it past the far edge by the inset, and the parent's clip would trim it there.
-        ScaledPadding inset = childInset(event.formContext(), event.padding);
-        ScaledDimensions childArea = dimensions;
-        childArea += event.padding * 2;
+        const ScaledPadding inset = childInset(event.formContext(), event.scaledPadding());
+        ScaledSize childArea = dimensions;
+        childArea += event.scaledPadding() * 2;
         childArea -= inset * 2;
         placeSecondaryPart(childArea);
     }
 
     void SplitButtonBase::adjustTextRect(AdjustTextRectEvent& event) const
     {
-        ScaledDimensions extent = secondaryExtent(event.formContext(), event.padding, event.spacing);
+        ScaledSize extent = secondaryExtent(event.formContext(), event.padding, event.spacing);
         if (secondaryPartPlacement() == SecondaryPartPlacement::Left)
             event.textBounds.left += extent.x;
         else
@@ -187,7 +189,7 @@ namespace ClaFi::Controls
     FloatRect SplitButtonBase::iconRect(const PaintEvent& event) const
     {
         FloatRect result = ButtonBase::iconRect(event);
-        ScaledDimensions extent = secondaryExtent(event.formContext(), event.padding(), event.spacing());
+        ScaledSize extent = secondaryExtent(event.formContext(), event.padding(), event.spacing());
         // The base anchored the icon against the whole content box, which still includes the part.
         // A part on the left pushes every icon along by what it took, and a centred one by half.
         if (secondaryPartPlacement() == SecondaryPartPlacement::Left)

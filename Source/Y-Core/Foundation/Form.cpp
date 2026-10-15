@@ -285,7 +285,7 @@ namespace ClaFi
 
     float FormBase::contentHeight() const
     {
-        return m_content.height();;
+        return m_content.scaledHeight();;
     }
 
     float FormBase::windowFocusedFactor() const
@@ -397,7 +397,7 @@ namespace ClaFi
 
     FloatRect FormBase::rectOfControl(const Control* control, bool clipIntoParents) const
     {
-        FloatRect outRect = FloatRect::fromDimensions(boundsOriginOfControl(control), control->dimensions());
+        FloatRect outRect = FloatRect::fromDimensions(boundsOriginOfControl(control), control->scaledSize());
 
         // Clamping reads each parent's box in form space rather than in that parent's own
         // coordinates. The two say the same thing - a shift applies to a bound and to the value
@@ -412,8 +412,8 @@ namespace ClaFi
                 const FloatPoint origin = boundsOriginOfControl(controlParent);
                 outRect.left = std::max(outRect.left, origin.x);
                 outRect.top = std::max(outRect.top, origin.y);
-                outRect.right = std::min(outRect.right, origin.x + controlParent->width());
-                outRect.bottom = std::min(outRect.bottom, origin.y + controlParent->height());
+                outRect.right = std::min(outRect.right, origin.x + controlParent->scaledWidth());
+                outRect.bottom = std::min(outRect.bottom, origin.y + controlParent->scaledHeight());
             }
         }
         return outRect;
@@ -1106,7 +1106,7 @@ namespace ClaFi
         }
     }
 
-    void FormBase::wnd_keyDown(KeyDownEvent& event)
+    void FormBase::wnd_keyDown(KeyCode key, KeyModifiers modifiers, bool isRepeat, bool& handled, InputStamp stamp)
     {
         // Cleared first, and unconditionally. The flag stands for one press; a press the system
         // translates to no character at all would otherwise leave it standing for the next one,
@@ -1132,9 +1132,11 @@ namespace ClaFi
             // the character to a popup that is still up, and the next press clears it at the top
             // of this function.
             m_popupTookKey = true;
-            m_activePopup->wnd_keyDown(event);
+            m_activePopup->wnd_keyDown(key, modifiers, isRepeat, handled, stamp);
             return;
         }
+
+        KeyDownEvent event{ m_context, key, modifiers, isRepeat, handled, stamp };
 
         // A held key carries the animations this form is running, the same way a pointer move
         // carries them in mouseTick. UiTimer is WM_TIMER, the lowest priority message there
@@ -1368,7 +1370,7 @@ namespace ClaFi
     {
         // The overhang is taken off like the margins: the content is laid out on the screen.
         const IntSize taken = frame.margins.total() + frame.overhang.total();
-        const ScaledDimensions placed =
+        const ScaledSize placed =
             IntSize{ surface.x - taken.x, surface.y - taken.y }.toFloat();
 
         // **A resize that moved nothing is not a resize.** A window's position is stated whether or
@@ -1663,11 +1665,11 @@ namespace ClaFi
             // longer fits stands past it.
             m_aligned = false;
             updateAlign(true);
-            request.size = m_content.dimensions();
+            request.size = m_content.scaledSize();
             // **The floor the content states** - the MinSize set on the root or anywhere below it,
             // composed up the tree, and zero where nobody set one. The placement reads it instead
             // of asking whether this form may be shortened.
-            request.minSize = m_content.calculatedMinSize();
+            request.minSize = m_content.scaledMinSize();
             request.maxSize = scaler().scale(m_content.maxSize());
             request.textOrigin = m_content.textOrigin();
             request.clearance = onPointer ? 0.0f : scaler().scale(m_dropdownClearance);
@@ -1783,7 +1785,7 @@ namespace ClaFi
 
         FocusNavigator focusNavigator{ *this };
         bool dummy{};
-        KeyDownEvent emulatedEvent{ Keys::Tab, {}, false, dummy };
+        KeyDownEvent emulatedEvent{ m_context, Keys::Tab, {}, false, dummy };
         focusNavigator.formKeyDown(emulatedEvent);
     }
 
@@ -1890,7 +1892,7 @@ namespace ClaFi
         };
     }
 
-    ScaledDimensions FormBase::contentExtent() const
+    ScaledSize FormBase::contentExtent() const
     {
         if (m_autoFit == AutoFit::No)
             return m_placed.size;
@@ -1902,7 +1904,7 @@ namespace ClaFi
 
     FloatRect FormBase::rootRect() const
     {
-        return FloatRect::fromDimensions(frameOrigin(), m_content.dimensions());
+        return FloatRect::fromDimensions(frameOrigin(), m_content.scaledSize());
     }
 
     // **A corner is painted twice.** A paint clears the rect it covers, and a rect reaching into a
@@ -2126,8 +2128,8 @@ namespace ClaFi
         // calculate() must be **always** called – the align() implementations depend on it.
         m_content.calculate(*this);
         // What the content **asked for**, taken before the align gives it its extent instead.
-        m_calculatedSize = m_content.dimensions();
-        const ScaledDimensions newSize = initPlacementMode ? m_calculatedSize : contentExtent();
+        m_calculatedSize = m_content.scaledSize();
+        const ScaledSize newSize = initPlacementMode ? m_calculatedSize : contentExtent();
         m_content.align(m_context, m_layoutPass, frameOrigin(), newSize);
         m_measuringPlacement = false;
         // **In the box the root was laid out in**, and never in a pass measuring what to ask a
@@ -2135,7 +2137,7 @@ namespace ClaFi
         if (m_topLayer && !initPlacementMode)
         {
             m_topLayer->calculate(*this);
-            m_topLayer->align(m_context, m_layoutPass, frameOrigin(), m_content.dimensions());
+            m_topLayer->align(m_context, m_layoutPass, frameOrigin(), m_content.scaledSize());
         }
         m_aligned = true;
         m_layoutInProgress = false;
@@ -2232,10 +2234,10 @@ namespace ClaFi
         // is the one size the content asked for, and a platform answers a range of one size with
         // a window that has no edge to take hold of and no maximize. See UI-Types#autofit
         const bool contentSized = m_autoFit == AutoFit::Yes;
-        const ScaledDimensions minSize = contentSized
+        const ScaledSize minSize = contentSized
             ? m_calculatedSize
-            : m_content.calculatedMinSize();
-        const ScaledDimensions maxSize = contentSized
+            : m_content.scaledMinSize();
+        const ScaledSize maxSize = contentSized
             ? m_calculatedSize
             : scaler().scale(m_content.maxSize());
         if (minSize == m_statedMinSize && maxSize == m_statedMaxSize)

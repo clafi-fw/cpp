@@ -408,7 +408,7 @@ namespace ClaFi::Diagnostic
 
     void FpsPage::writeSize(Text& text) const
     {
-        const ScaledDimensions dimensions = m_benchmark.dimensions();
+        const ScaledSize dimensions = m_benchmark.dimensions();
         if (dimensions.x <= 0.0f)
         {
             text << Fmt{ L"[code]{}", k_noReading };

@@ -79,7 +79,7 @@ namespace ClaFi::Controls
         ///
         /// Called only where there is a part and it is shown, so an override may take
         /// shownSecondaryPart() as the part it places.
-        virtual void placeSecondaryPart(ScaledDimensions childArea);
+        virtual void placeSecondaryPart(ScaledSize childArea);
         /// What a press on the part does. Called only when there is a part, so a control that
         /// creates one has to answer here.
         virtual void secondaryClicked(NestedClickEvent&);
@@ -87,12 +87,12 @@ namespace ClaFi::Controls
         /// Whether the control pressed is the part or lies inside it.
         [[nodiscard]] bool pressedSecondary(const Control* pressed) const;
         /// How much of the content box the part takes, on the axis it sits on.
-        [[nodiscard]] ScaledDimensions secondaryExtent(const FormContext&, ScaledPadding, ScaledSpacing) const;
+        [[nodiscard]] ScaledSize secondaryExtent(const FormContext&, ScaledPadding, ScaledSpacing) const;
 
-        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
         void calculateChildren(FormBase&) override;
-        ScaledDimensions calculateContent(AlignEvent&) override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        ScaledSize calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
         FloatRect iconRect(const PaintEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;

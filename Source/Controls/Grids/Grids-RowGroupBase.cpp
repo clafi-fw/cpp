@@ -1,4 +1,4 @@
-﻿module ClaFi.Controls.Grids;
+module ClaFi.Controls.Grids;
 
 import :RowBase;
 import :SubGrid;
@@ -19,10 +19,10 @@ namespace ClaFi::Controls::Grids
         return static_cast<SubGrid&>(*m_controls[k_body]);
     }
 
-    void RowGroupBase::preCalcColumn(Column& column)
+    void RowGroupBase::preCalcColumn(const FormContext& formContext, Column& column)
     {
         for (RowBase& row : body().controlsAs<RowBase>())
-            row.preCalcColumn(column);
+            row.preCalcColumn(formContext, column);
     }
 
     GridBase* RowGroupBase::subGrid()
@@ -30,14 +30,14 @@ namespace ClaFi::Controls::Grids
         return &body();
     }
 
-    ScaledDimensions RowGroupBase::calculateContent(AlignEvent& event)
+    ScaledSize RowGroupBase::calculateContent(AlignEvent& event)
     {
         return Control::calculateColumns(event, controls(), false);
     }
 
-    void RowGroupBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledDimensions& contentDimensions)
+    void RowGroupBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& contentDimensions)
     {
-        ScaledDimensions calculatedContent = dimensions() - event.padding * 2;
+        ScaledSize calculatedContent = scaledSize() - event.scaledPadding() * 2;
         calculatedContent.x = contentDimensions.x;// std::max(calculatedContent.x, contentDimensions.x);
         contentDimensions = { 0, 0 };
         return Control::alignSingleColumn(event, controls().begin(), controls().end(),

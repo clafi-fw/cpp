@@ -67,7 +67,7 @@ namespace ClaFi
     protected:
         void hoverEnter() override;
         void hoverLeave() override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void nestedContextPopup(ContextPopupEvent&) override;
     private:
         void copyRows(const Control* single, InputStamp);
@@ -266,7 +266,7 @@ namespace ClaFi
         ScrollBox::hoverLeave();
     }
 
-    void OutputPage::alignContent(AlignEvent& event, ScaledPosition pt1, ScaledDimensions& pt2)
+    void OutputPage::alignContent(AlignEvent& event, ScaledPosition pt1, ScaledSize& pt2)
     {
         ScrollBox::alignContent(event, pt1, pt2);
         if (m_itemToSelect)

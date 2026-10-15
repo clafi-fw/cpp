@@ -91,22 +91,22 @@ namespace ClaFi::Controls::Grids
         // Invalidation belongs at the mutation site: ColumnCollection::invalidateLayout().
     }
 
-    void Column::preCalcRows(GridBase& grid)
+    void Column::preCalcRows(const FormContext& formContext, GridBase& grid)
     {
         clearCalculatedWidth();
 
         if (m_subColumns)
             for (Column* column : *m_subColumns)
-                column->preCalcRows(grid);
+                column->preCalcRows(formContext, grid);
 
         // The mode decides, not whether a designWidth happens to be set. FitContent
         // ignores designWidth outright, and for Fill it is a stretch ratio spent in
         // stretchStretched() - never a width, so it must not be scaled as one.
         if (m_calcMode == ColumnWidthMode::Fixed)
-            m_neededWidth = m_descriptor.scaler().scale(m_designWidth);
+            m_neededWidth = formContext.scale(m_designWidth);
         else
             for (RowBase& row : grid.controlsAs<RowBase>())
-                row.preCalcColumn(*this);
+                row.preCalcColumn(formContext, *this);
 
         if (m_calcMode != ColumnWidthMode::Fixed)
             addNeededWidth(subColumnsNeededWidth());

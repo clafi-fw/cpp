@@ -70,15 +70,10 @@ namespace ClaFi::Controls::Grids
         m_viewMode{ viewMode },
         m_gridLines{ gridLines },
         m_designCellMetrics{ m_owner.themeMetrics().gridCell },
-        m_scaledCellMetrics{
-            m_owner.formContext(),
-            m_owner.form().layoutPass(),
-            m_designCellMetrics
-        },
+        m_scaledCellMetrics{ m_designCellMetrics, m_owner.scaler() },
         // Cannot be a default member initialiser: capturing `this` there does not compile.
         m_onCellAnimate{ [this](AnimateParams& params) { onCellAnimated(params); } }
     {
-        scaleStrokeAndRadius();
     }
 
     // The fades run under the cells of the two rings, not under a control, so Control's teardown
@@ -108,19 +103,17 @@ namespace ClaFi::Controls::Grids
         return m_gridLines == GridLines::Both || m_gridLines == GridLines::Horizontal;
     }
 
-    float GridDescriptor::calculateGrid(float rightPadding, float boundsW)
+    float GridDescriptor::calculateGrid(const FormContext& formContext, float rightPadding, float boundsW)
     {
         m_scrollBarWidthAndSpacing = rightPadding;
         if (m_lastBoundaryWidth == boundsW)
             return m_rootColumn.finalWidth();
         m_lastBoundaryWidth = boundsW;
 
-        m_scaledCellMetrics.calculateScaledMetrics(m_designCellMetrics);
-
-        scaleStrokeAndRadius();
+        m_scaledCellMetrics = ScaledCellMetrics{ m_designCellMetrics, formContext.scaler() };
 
         // recursively
-        m_rootColumn.preCalcRows(m_owner);
+        m_rootColumn.preCalcRows(formContext, m_owner);
         if (boundsW != k_maxFloat)
         {
             boundsW = std::max(0.0f, boundsW);
@@ -292,13 +285,6 @@ namespace ClaFi::Controls::Grids
         const CellPressKind cellPressKind)
     {
         m_press = { &row, column, cellPressKind };
-    }
-
-    void GridDescriptor::scaleStrokeAndRadius()
-    {
-        // TODO: move these two into an overloaded rescale.
-        m_scaledCellMetrics.border = m_scaledCellMetrics.scaledStrokeWidth(m_designCellMetrics.border);
-        m_scaledCellMetrics.radius = m_scaledCellMetrics.scaleF(m_designCellMetrics.radius);
     }
 
 }

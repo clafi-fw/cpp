@@ -94,7 +94,7 @@ namespace ClaFi::Controls
     protected:
         void getText(GetTextEvent&) const override;
         // Asked no wider than a hint's line, so a long signature wraps rather than runs.
-        CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked,
+        ScaledSize measureText(AlignEvent&, ScaledSize asked,
             const Text&) override;
     private:
         Text m_text{};

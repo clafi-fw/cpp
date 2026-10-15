@@ -48,7 +48,7 @@ namespace ClaFi::Controls
         public:
             explicit ChildItem(const CreateParams& params);
             SliderBase* parent() const { return static_cast<SliderBase*>(Control::parent()); }
-            ScaledDimensions calculateContent(AlignEvent&) override;
+            ScaledSize calculateContent(AlignEvent&) override;
         protected:
             void adjustPaint(AdjustPaintEvent&) override;
         };
@@ -217,7 +217,7 @@ namespace ClaFi::Controls
         virtual void getThumbHint(GetHintEvent&) {}
         virtual void thumbPressDown() {}
         void controlFeedBack();
-        void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void alignThumb() const;
         void getControlState(GetStateEvent&) const override;
         void nestedPressDown(PressDownEvent&) override;

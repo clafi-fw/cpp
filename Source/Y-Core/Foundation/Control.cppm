@@ -125,15 +125,33 @@ namespace ClaFi
         AlignEvent(FormContext&, LayoutPass&, const ControlMetrics&);
         AlignEvent(AlignEvent&, const ControlMetrics&);
     public:
-        void calculateScaledMetrics(const ControlMetrics&);
+        void scaleMetrics(const ControlMetrics&);
     public:
         // Says this pass laid a control out at a size it never measured. See Control-Foundation
-        void invalidatePass() { m_pass.invalidate(); }
+        void invalidatePass() const { m_pass.invalidate(); }
         // Whether nothing has said that yet.
         [[nodiscard]] bool passValid() const { return m_pass.valid(); }
         // The pass this event belongs to, for an event built out of this one.
-        [[nodiscard]] LayoutPass& pass() { return m_pass; }
+        [[nodiscard]] LayoutPass& pass() const { return m_pass; }
     public:
+        const ScaledControlMetrics& scaledMetrics() const { return m_scaledMetrics; } // Stated
+        ScaledPadding scaledPadding() const { return m_scaledMetrics.padding; }
+        float scaledPaddingX() const { return m_scaledMetrics.padding.x; }
+        float scaledPaddingY() const { return m_scaledMetrics.padding.y; }
+        ScaledSpacing scaledSpacing() const { return m_scaledMetrics.spacing; }
+        float scaledSpacingX() const { return m_scaledMetrics.spacing.x; }
+        float scaledSpacingY() const { return m_scaledMetrics.spacing.y; }
+        ScaledSize scaledMinSize() const { return m_scaledMetrics.minSize; }
+        float scaledMinWidth() const { return m_scaledMetrics.minSize.x; }
+        float scaledMinHeight() const { return m_scaledMetrics.minSize.y; }
+        // Zero on an axis means the content decides it - see ControlMetrics::preferredSize.
+        ScaledSize scaledPreferredSize() const { return m_scaledMetrics.preferredSize; }
+        float scaledPreferredWidth() const { return m_scaledMetrics.preferredSize.x; }
+        float scaledPreferredHeight() const { return m_scaledMetrics.preferredSize.y; }
+        ScaledSize scaledMaxSize() const { return m_scaledMetrics.maxSize; };
+        float scaledMaxWidth() const { return m_scaledMetrics.maxSize.x; }
+        float scaledMaxHeight() const { return m_scaledMetrics.maxSize.y; }
+
         float minContentWidth() const;
         float minContentHeight() const;
         float maxContentWidth() const;
@@ -141,20 +159,12 @@ namespace ClaFi
         float totalSpacingX(std::size_t itemsNum) const;
         float totalSpacingY(std::size_t itemsNum) const;
     public:
-        ScaledPadding padding;
-        ScaledSpacing spacing;
-        ScaledDimensions minSize;
-        // Zero on an axis means the content decides it - see ControlMetrics::preferredSize.
-        ScaledDimensions preferredSize;
-        ScaledDimensions maxSize;
-        // **What the content of this control needs**, written by whoever composes that content out
-        // of what its children answered, by the same rule their sizes were composed by. Zero says
-        // nothing inside states a floor, and the control is then held up by its own MinSize
-        // alone. **What the content measured is no part of this** - see Control::calculatedMinSize.
-        ScaledDimensions calculatedMinSize{ 0.0f, 0.0f };
+        // composed from this and the children's stated values.
+        ScaledSize composedMinSize{ 0.0f, 0.0f };
     private:
         // Borrowed - the form owns the pass and outlives every event raised inside it.
         LayoutPass& m_pass;
+        ScaledControlMetrics m_scaledMetrics; // Stated
     };
 
     // The pointer has entered the control.
@@ -182,6 +192,7 @@ namespace ClaFi
         ClickEventBase(Control&, FormBase&);
         ClickEventBase(Control&, FormBase&, InputStamp);
         void closeForm();
+        const Scaler& scaler() const;
         float scaleFactor() const;
         PointInForm clickPos() const;
         const AppContext& appContext() const;
@@ -879,9 +890,9 @@ namespace ClaFi
         [[nodiscard]] float left() const { return m_topLeft.x; }
         [[nodiscard]] float top()   const { return m_topLeft.y; }
         [[nodiscard]] FloatPoint topLeft() const { return m_topLeft; }
-        [[nodiscard]] float width() const { return m_dimensions.x; }
-        [[nodiscard]] float height() const { return m_dimensions.y; }
-        [[nodiscard]] ScaledDimensions dimensions() const { return m_dimensions; }
+        [[nodiscard]] float scaledWidth() const { return m_scaledSize.x; }
+        [[nodiscard]] float scaledHeight() const { return m_scaledSize.y; }
+        [[nodiscard]] ScaledSize scaledSize() const { return m_scaledSize; }
         // **The least this control may be made.** Answered by the measuring pass beside the size
         // itself, out of the MinSize this control was given and the floor its content composed
         // from its children's. Never larger than the size it came to.
@@ -894,11 +905,11 @@ namespace ClaFi
         //
         // What reads it is whoever divides space and has less of it than was asked for - today
         // the placement, which cuts a window to the room its side has and no further than this.
-        [[nodiscard]] ScaledDimensions calculatedMinSize() const { return m_minDimensions; }
+        [[nodiscard]] ScaledSize scaledMinSize() const { return m_scaledMinSize; }
 
-        [[nodiscard]] float right() const { return m_topLeft.x + m_dimensions.x; }
-        [[nodiscard]] float bottom() const { return m_topLeft.y + m_dimensions.y; }
-        [[nodiscard]] FloatPoint bottomRight() const { return m_topLeft + m_dimensions; }
+        [[nodiscard]] float right() const { return m_topLeft.x + m_scaledSize.x; }
+        [[nodiscard]] float bottom() const { return m_topLeft.y + m_scaledSize.y; }
+        [[nodiscard]] FloatPoint bottomRight() const { return m_topLeft + m_scaledSize; }
         //
         [[nodiscard]] FloatRect boundsInParent() const { return { m_topLeft.x, m_topLeft.y, right(), bottom() }; }
         // How far this control is drawn from where it was laid out. Zero unless its parent
@@ -1073,7 +1084,7 @@ namespace ClaFi
         virtual void adjustChildClip(const Control&, FloatRect&) const {}
         // May narrow the box a child is handed to align in. The event is this control's own.
         virtual void adjustChildBox(const AlignEvent&, const Control&, ScaledPosition&,
-            ScaledDimensions&) const {}
+            ScaledSize&) const {}
         virtual void adjustChildPaint(AdjustPaintEvent& event);
 
         bool hasOverlayControls() const;
@@ -1216,7 +1227,7 @@ namespace ClaFi
         virtual void focusChanged() {}
         virtual void sizeChanged();
         void setTopLeft(float x, float y);
-        void setDimensions(const ScaledDimensions);
+        void setDimensions(const ScaledSize);
         void setTop(float value);
         void setLeft(float value);
         void setWidth(float value);
@@ -1337,31 +1348,31 @@ namespace ClaFi
         [[nodiscard]] virtual const TextFormat* textFormat() const { return nullptr; }
         //
         void calculate(FormBase&);
-        ScaledDimensions calculateText(AlignEvent&, ScaledDimensions);
+        ScaledSize calculateText(AlignEvent&, ScaledSize);
         // The measurement itself, split off so a control holding a layout of its own replaces this
         // and nothing else: the gather, the width a run that does not wrap is measured against and
         // the clamp to the box stay with calculateText, which is the whole of what the framework
         // needs to be the same for every control. The mirror of drawText above - a control that
         // overrides one and not the other measures on one layout and draws on another.
-        virtual CalculatedDimensions measureText(AlignEvent&, ScaledDimensions asked, const Text&);
+        virtual ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&);
         // The width the own text is measured at. See Control-Foundation#remembered-text-width
         [[nodiscard]] float textWidthLimit(const AlignEvent&) const;
         // Keeps the width an align broke the own text at, and asks for a pass where it changed.
         void rememberTextWidth(AlignEvent&, float width);
         void calculateChildrenSequentially(FormBase&);
         virtual void calculateChildren(FormBase&);
-        virtual ScaledDimensions calculateContent(AlignEvent&);
+        virtual ScaledSize calculateContent(AlignEvent&);
         // The content a text measured at this size comes to. See Control-Foundation
-        [[nodiscard]] virtual ScaledDimensions contentAroundText(AlignEvent&,
-            ScaledDimensions text) const;
-        virtual void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&);
-        virtual void adjustPlacement(const Scaler&, ScaledPosition&, ScaledDimensions&) {}
-        void align(FormContext&, LayoutPass&, ScaledPosition, ScaledDimensions);
+        [[nodiscard]] virtual ScaledSize contentAroundText(AlignEvent&,
+            ScaledSize text) const;
+        virtual void alignContent(AlignEvent&, ScaledPosition, ScaledSize&);
+        virtual void adjustPlacement(const Scaler&, ScaledPosition&, ScaledSize&) {}
+        void align(FormContext&, LayoutPass&, ScaledPosition, ScaledSize);
         //
     protected:
         //
         // helpers to control children from within a derived class
-        static void setControlDimensions(Control& control, ScaledDimensions dimensions) { control.setDimensions(dimensions); }
+        static void setControlDimensions(Control& control, ScaledSize dimensions) { control.setDimensions(dimensions); }
         static void setControlWidth(Control& control, float value) { control.setWidth(value); };
         static void setControlHeight(Control& control, float value) { control.setHeight(value); };
         static void setControlTop(Control& control, float value) { control.setTop(value); };
@@ -1379,23 +1390,23 @@ namespace ClaFi
         static void forwardContextPopup(Control& control, ContextPopupEvent& event) { control.nestedContextPopup(event); }
 
         // A lane breaks on its count, or past the stated maximum or the length handed in here.
-        static ScaledDimensions calculateRows(AlignEvent&, ControlSpan, const bool autoWrap,
+        static ScaledSize calculateRows(AlignEvent&, ControlSpan, const bool autoWrap,
             std::size_t wrapCount = k_maxSize, float maxContentWidth = k_maxFloat);
-        static ScaledDimensions calculateColumns(AlignEvent&, ControlSpan, const bool autoWrap,
+        static ScaledSize calculateColumns(AlignEvent&, ControlSpan, const bool autoWrap,
             std::size_t wrapCount = k_maxSize, float maxContentHeight = k_maxFloat);
 
-        static void alignControl(Control*, AlignEvent& parentEvent, ScaledPosition, ScaledDimensions);
+        static void alignControl(Control*, AlignEvent& parentEvent, ScaledPosition, ScaledSize);
         // What a lane has over what its items measured, divided among those that asked for it.
         static float laneSurplusShare(ControlSpan::iterator begin, ControlSpan::iterator end,
             float laneExtent, float spacing, float (Control::*extent)() const);
         static void alignSingleRow(AlignEvent&, ControlSpan::iterator rowBegin, ControlSpan::iterator rowEnd,
-            ScaledPosition, ScaledDimensions rowSize, ScaledDimensions& contentDimensions);
+            ScaledPosition, ScaledSize rowSize, ScaledSize& contentDimensions);
         static void alignSingleColumn(AlignEvent&, ControlSpan::iterator colBegin, ControlSpan::iterator colEnd,
-            ScaledPosition, ScaledDimensions colSize, ScaledDimensions& contentDimensions);
+            ScaledPosition, ScaledSize colSize, ScaledSize& contentDimensions);
 
         static void placeControlToHorizontalCenter(Control&, float boundsLeft, float boundsRight);
         static void placeControlToVerticalCenter(Control&, float boundsTop, float boundsBottom);
-        static void setControlPlacement(Control&, ScaledPosition, ScaledDimensions);
+        static void setControlPlacement(Control&, ScaledPosition, ScaledSize);
         static void offsetControl(Control*, FloatPoint);
         static void setControlParent(Control& control, Control* newParent) { control.m_parent = newParent; }
 
@@ -1507,8 +1518,8 @@ namespace ClaFi
         ControlFlags2 m_flags2{ cfDefaultFlags2 };
         float m_textWidthInDesign{}; // the width the last align broke the own text at, zero before
         FloatPoint m_topLeft{};
-        ScaledDimensions m_dimensions{};
-        ScaledDimensions m_minDimensions{};
+        ScaledSize m_scaledSize{};
+        ScaledSize m_scaledMinSize{};
     };
 
 
