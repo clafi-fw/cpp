@@ -35,6 +35,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_fromLabel = L"From ";
         constexpr std::wstring_view k_setterPrefix = L"set";
         constexpr std::wstring_view k_constWord = L"const";
+        constexpr std::wstring_view k_fixedWord = L"fixed";
         constexpr std::wstring_view k_sourceJoin = L" \u203A ";
         constexpr std::wstring_view k_publicMethods = L"Public methods";
         constexpr std::wstring_view k_protectedMethods = L"Protected methods";
@@ -1424,9 +1425,92 @@ namespace SeeDocs_App
             return !filter.hidden || !filter.hidden->contains(lowered(name));
         }
 
-        // A type's own properties, one row each, those the filter takes.
+        // The types standing on a base on the page's way up to it, the page's own type first;
+        // none for the type's own members.
+        using TypesBelow = std::vector<const Type*>;
+
+        [[nodiscard]] TypesBelow typesBelow(const Type& type, const ReachedBases& bases,
+            const ReachedBase* reached)
+        {
+            TypesBelow below;
+            if (!reached)
+                return below;
+            below.push_back(&type);
+            for (const ReachedBase& base : bases)
+            {
+                if (&base == reached)
+                    break;
+                below.push_back(base.type);
+            }
+            return below;
+        }
+
+        // Whether a value a type hands its base is of the property's type, by bare name, the
+        // further spellings the property accepts counted.
+        [[nodiscard]] bool restates(const Restatement& restatement, const Property& property)
+        {
+            const auto bare = [](const std::wstring& spelled) {
+                return bareName(plainType(withoutArguments(spelled)));
+            };
+            const std::wstring_view type = bare(restatement.type);
+            if (type == bare(property.type))
+                return true;
+            return std::ranges::any_of(property.accepts, [&](const std::wstring& accepted) {
+                return type == bare(accepted);
+            });
+        }
+
+        // A value a type below hands the base for the property, and the type handing it.
+        struct RestatedDefault
+        {
+            const Restatement* restatement{ nullptr };
+            const Type* by{ nullptr };
+        };
+
+        // What the property starts at on the page, by the pack's own rule: the nearest type's
+        // value, unless one stands fixed after the pack, when the furthest fixed one wins.
+        [[nodiscard]] RestatedDefault restatedDefault(const Property& property,
+            const TypesBelow& below)
+        {
+            RestatedDefault nearest;
+            RestatedDefault fixed;
+            for (const Type* type : below)
+            {
+                RestatedDefault own;
+                for (const Restatement& restatement : type->restatements)
+                {
+                    if (!restates(restatement, property))
+                        continue;
+                    if (restatement.fixed)
+                        fixed = { &restatement, type };
+                    else
+                        own = { &restatement, type };
+                }
+                if (!nearest.restatement)
+                    nearest = own;
+            }
+            return fixed.restatement ? fixed : nearest;
+        }
+
+        // A restated value cell: the value, the type handing it, and fixed where the caller's own
+        // value loses to it.
+        [[nodiscard]] Runs restatedCell(const RestatedDefault& restated)
+        {
+            Runs runs = valueCell(restated.restatement->value);
+            runs.push_back(muted(std::wstring{ k_separator }));
+            runs.push_back(nameRun(*restated.by));
+            if (restated.restatement->fixed)
+            {
+                runs.push_back(muted(std::wstring{ k_separator }));
+                runs.push_back(muted(std::wstring{ k_fixedWord }));
+            }
+            return runs;
+        }
+
+        // A type's own properties, one row each, those the filter takes; a base's take the value
+        // a type below hands it for their default.
         [[nodiscard]] TableRows propertyRows(const Surface& surface, Notes& notes,
-            const Type& type, const MemberFilter& filter)
+            const Type& type, const MemberFilter& filter, const TypesBelow& below)
         {
             TableRows rows;
             for (const Property& property : type.properties)
@@ -1436,6 +1520,11 @@ namespace SeeDocs_App
                 Runs value = valueCell(property.defaultValue);
                 if (property.form == PropertyForm::Required)
                     value = { muted(L"required") };
+                if (const RestatedDefault restated = restatedDefault(property, below);
+                    restated.restatement)
+                {
+                    value = restatedCell(restated);
+                }
                 Runs spelled = { typeRun(surface, property.type, type.nameSpace) };
                 for (const std::wstring& accepted : property.accepts)
                 {
@@ -1817,8 +1906,10 @@ namespace SeeDocs_App
             if (surface.languageOf(type.module) != SourceLanguage::Pascal)
             {
                 addMemberSection(page, std::wstring{ heading }, columnSet, type, bases,
-                    [&](const Type& owner, const ReachedBase*) {
-                        return TableGroup{ .rows = rowsOf(owner, MemberFilter{}) };
+                    [&](const Type& owner, const ReachedBase* reached) {
+                        return TableGroup{
+                            .rows = rowsOf(owner, MemberFilter{}, typesBelow(type, bases, reached))
+                        };
                     }, true);
                 return;
             }
@@ -1835,7 +1926,9 @@ namespace SeeDocs_App
                                 static_cast<std::size_t>(reached - bases.data());
                             filter.hidden = &below[index];
                         }
-                        return TableGroup{ .rows = rowsOf(owner, filter) };
+                        return TableGroup{
+                            .rows = rowsOf(owner, filter, typesBelow(type, bases, reached))
+                        };
                     }, true);
             }
         }
@@ -1844,8 +1937,8 @@ namespace SeeDocs_App
             const ReachedBases& bases)
         {
             addPartedSections(page, surface, L"Properties", Columns::properties, type, bases,
-                [&](const Type& owner, const MemberFilter& filter) {
-                    return propertyRows(surface, notes, owner, filter);
+                [&](const Type& owner, const MemberFilter& filter, const TypesBelow& below) {
+                    return propertyRows(surface, notes, owner, filter, below);
                 });
         }
 
@@ -1853,7 +1946,7 @@ namespace SeeDocs_App
             const ReachedBases& bases)
         {
             addPartedSections(page, surface, L"Events", Columns::events, type, bases,
-                [&](const Type& owner, const MemberFilter& filter) {
+                [&](const Type& owner, const MemberFilter& filter, const TypesBelow&) {
                     return eventRows(surface, notes, owner, filter);
                 });
         }

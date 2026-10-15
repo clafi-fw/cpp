@@ -41,6 +41,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_textMacro = L"DERIVED_TEXT_CLASS";
         constexpr std::wstring_view k_textBase = L"Text";
         constexpr std::wstring_view k_memberPrefix = L"m_";
+        constexpr std::wstring_view k_ellipsis = L"...";   // ends the pack handed on to a base
 
         enum class TokenType
         {
@@ -978,6 +979,11 @@ namespace SeeDocs_App
             constexpr std::wstring_view declareEvent = L"DECLARE_EVENT";
         }
 
+        // A value handed to a base that is of no property type.
+        constexpr auto k_valueWords = std::to_array<std::wstring_view>({
+            L"this", L"nullptr", L"true", L"false"
+        });
+
         // The name a property takes from its type: the type's own spelling stripped of
         // qualifiers and what wraps it, so a BrowserTab* is the property BrowserTab.
         [[nodiscard]] std::wstring propertyNameOf(const std::wstring_view type)
@@ -994,6 +1000,35 @@ namespace SeeDocs_App
             }
             return std::wstring{ bareName(trimmed(bare)) };
         }
+
+        // The names of a parameter list's parameters, as spelled between its brackets: each
+        // one's last name, its default argument cut off; a parameter with no name gives none.
+        [[nodiscard]] Names parameterNamesOf(const std::wstring_view parameters)
+        {
+            Names names;
+            for (const std::wstring& parameter : splitArguments(parameters))
+            {
+                std::wstring_view spelled = parameter;
+                const std::size_t equals = spelled.find(L'=');
+                if (equals != std::wstring_view::npos)
+                    spelled = spelled.substr(0, equals);
+                spelled = trimmed(spelled);
+                std::size_t nameStart = spelled.size();
+                while (nameStart > 0 && isNameChar(spelled[nameStart - 1]))
+                    --nameStart;
+                if (nameStart < spelled.size())
+                    names.emplace_back(spelled.substr(nameStart));
+            }
+            return names;
+        }
+
+        // A constructor's parameters, which what it hands a base is read against: the names an
+        // argument is the caller's own by, and whether a pack carries the caller's values on.
+        struct ConstructorParameters
+        {
+            Names names;
+            bool packed{ false };
+        };
 
         // A macro of the routine, and what it declares.
         struct MacroForm
@@ -1154,7 +1189,21 @@ namespace SeeDocs_App
                 std::wstring name, std::size_t parenAt);
             void readVariable(const Prefix&, const Token& start, std::size_t nameAt,
                 std::size_t end);
-            void skipBody(Type* owner, Access, bool initializers);
+            // The parameters are a constructor's, whose initializer list is read for what it
+            // hands the bases; null for any other body.
+            void skipBody(Type* owner, Access, bool initializers, const ConstructorParameters*);
+            // Where the current token opens an initializer naming a base of the owner, what it
+            // hands the base goes to the owner's restatements, argument by argument. See README
+            void readBaseInitializer(Type& owner, const ConstructorParameters&);
+            // The restatement an argument spells, from its first token to its last: a construction,
+            // a qualified name, or a bare constant. Nothing for the caller's own values, a literal
+            // or an expression.
+            [[nodiscard]] std::optional<Restatement> restatementOf(std::size_t first,
+                std::size_t last, const Names& parameters) const;
+            // The index past the bracket matching the one at the index - a round, square or curly
+            // one - and past the angle matching the < there; the end where none matches.
+            [[nodiscard]] std::size_t pastMatching(std::size_t open) const;
+            [[nodiscard]] std::size_t pastAngles(std::size_t open) const;
             void skipBalanced(std::wstring_view open, std::wstring_view close);
             void skipAngles();
             // Whether the token at the index has the punctuator written right after it, or
@@ -1181,6 +1230,8 @@ namespace SeeDocs_App
             std::size_t m_at{ 0 };
             std::vector<Scope> m_scopes;
             std::optional<Module> m_module;
+            // The file's own constants by name, which type a bare one handed to a base.
+            std::unordered_map<std::wstring, std::wstring> m_localTypes;
         };
 
         FileReader::FileReader(Surface& surface, const std::size_t file, const SourceText& text,
@@ -2404,6 +2455,16 @@ namespace SeeDocs_App
             else if (scope)
                 owner = scope->type.get();
 
+            // A constructor's initializer list is read for what it hands the bases.
+            const bool constructs = owner && !function.name.starts_with(L'~')
+                && function.name == bareName(owner->name);
+            ConstructorParameters parameters;
+            if (constructs)
+            {
+                parameters.names = parameterNamesOf(function.parameters);
+                parameters.packed = function.parameters.find(k_ellipsis) != std::wstring::npos;
+            }
+
             if (!qualified)
             {
                 if (scope)
@@ -2430,7 +2491,10 @@ namespace SeeDocs_App
                 }
             }
             if (opensBody)
-                skipBody(owner, scope ? scope->access : Access::Public, isPunctuator(peek(), L":"));
+            {
+                skipBody(owner, scope ? scope->access : Access::Public, isPunctuator(peek(), L":"),
+                    constructs ? &parameters : nullptr);
+            }
         }
 
         void FileReader::readVariable(const Prefix& prefix, const Token& start,
@@ -2508,6 +2572,8 @@ namespace SeeDocs_App
             const Token& last = tokens[m_at - 1];
 
             Scope* scope = typeScope();
+            if (!scope)
+                m_localTypes[field.name] = std::wstring{ plainType(field.type) };
             if (scope)
             {
                 field.access = scope->access;
@@ -2529,9 +2595,11 @@ namespace SeeDocs_App
 
         // A body, from the initializer list or the opening brace to the closing one, read for the
         // binds written in it: the property binds and reads go to the owner, the constructor's
-        // initialisers and hand-written Props::get calls to the surface. In an initializer list a
-        // brace after a name is an initializer; the body's brace follows a bracket or a brace.
-        void FileReader::skipBody(Type* owner, const Access access, const bool initializers)
+        // initialisers and hand-written Props::get calls to the surface, and what a constructor
+        // hands a base to the owner's restatements. In an initializer list a brace after a name is
+        // an initializer; the body's brace follows a bracket or a brace.
+        void FileReader::skipBody(Type* owner, const Access access, const bool initializers,
+            const ConstructorParameters* parameters)
         {
             const TokenList& tokens = m_text.tokens();
             int depth = 0;
@@ -2594,10 +2662,183 @@ namespace SeeDocs_App
                     {
                         m_surface.addPropsRead(placeOf(*token));
                     }
+                    // A qualified base is read once, from its first name.
+                    const bool heads = !inBody && depth == 0 && !isPunctuator(previous, L"::");
+                    if (parameters && owner && heads)
+                        readBaseInitializer(*owner, *parameters);
                 }
                 previous = token;
                 advance();
             }
+        }
+
+        void FileReader::readBaseInitializer(Type& owner, const ConstructorParameters& parameters)
+        {
+            const TokenList& tokens = m_text.tokens();
+            std::size_t nameEnd = m_at;
+            while (nameEnd + 2 < tokens.size() && isPunctuator(&tokens[nameEnd + 1], L"::")
+                && tokens[nameEnd + 2].type == TokenType::Name)
+            {
+                nameEnd += 2;
+            }
+            std::size_t open = nameEnd + 1;
+            if (open < tokens.size() && isPunctuator(&tokens[open], L"<"))
+                open = pastAngles(open);
+            if (open >= tokens.size())
+                return;
+            if (!isPunctuator(&tokens[open], L"{") && !isPunctuator(&tokens[open], L"("))
+                return;
+            const std::wstring_view spelled = text(tokens[nameEnd]);
+            const bool base = std::ranges::any_of(owner.bases, [&](const std::wstring& candidate) {
+                return bareName(withoutArguments(candidate)) == spelled;
+            });
+            if (!base)
+                return;
+
+            // The arguments, cut at the commas of the initializer's own level. Past the pack, a
+            // value stands after the caller's and wins over them; a constructor taking no pack
+            // leaves the caller no say at all.
+            std::size_t first = open + 1;
+            std::size_t lastCode = open;
+            int depth = 0;
+            int angle = 0;
+            bool fixed = !parameters.packed;
+            const Token* previous = nullptr;
+            for (std::size_t i = open + 1; i < tokens.size(); ++i)
+            {
+                const Token& token = tokens[i];
+                if (token.type == TokenType::Comment)
+                    continue;
+                bool closes = false;
+                bool parts = false;
+                if (token.type == TokenType::Punctuator)
+                {
+                    const std::wstring_view mark = text(token);
+                    if (mark == L"(" || mark == L"[" || mark == L"{")
+                    {
+                        ++depth;
+                    }
+                    else if (mark == L")" || mark == L"]" || mark == L"}")
+                    {
+                        closes = depth == 0;
+                        if (!closes)
+                            --depth;
+                    }
+                    else if (mark == L"<" && previous
+                        && (previous->type == TokenType::Name || isPunctuator(previous, L">")))
+                    {
+                        ++angle;
+                    }
+                    else if (mark == L">" && angle > 0)
+                    {
+                        --angle;
+                    }
+                    else if (mark == L"," && depth == 0 && angle == 0)
+                    {
+                        parts = true;
+                    }
+                }
+                if (closes || parts)
+                {
+                    if (lastCode >= first)
+                    {
+                        std::optional<Restatement> restatement;
+                        if (textBetween(first, lastCode).ends_with(k_ellipsis))
+                            fixed = true;
+                        else
+                            restatement = restatementOf(first, lastCode, parameters.names);
+                        if (restatement)
+                        {
+                            restatement->fixed = fixed;
+                            restatement->place = placeOf(tokens[first]);
+                            owner.restatements.push_back(std::move(*restatement));
+                        }
+                    }
+                    if (closes)
+                        return;
+                    first = i + 1;
+                }
+                lastCode = i;
+                previous = &token;
+            }
+        }
+
+        std::optional<Restatement> FileReader::restatementOf(const std::size_t first,
+            const std::size_t last, const Names& parameters) const
+        {
+            const TokenList& tokens = m_text.tokens();
+            const Token& head = tokens[first];
+            if (head.type != TokenType::Name)
+                return std::nullopt;
+            const std::wstring_view word = text(head);
+            const bool callers = std::ranges::any_of(parameters, [&](const std::wstring& name) {
+                return name == word;
+            });
+            if (callers || isListed(k_valueWords, word))
+                return std::nullopt;
+
+            std::size_t nameEnd = first;
+            while (nameEnd + 2 <= last && isPunctuator(&tokens[nameEnd + 1], L"::")
+                && tokens[nameEnd + 2].type == TokenType::Name)
+            {
+                nameEnd += 2;
+            }
+            std::size_t next = nameEnd + 1;
+            if (next <= last && isPunctuator(&tokens[next], L"<"))
+                next = pastAngles(next);
+            Restatement restatement{ .value = textBetween(first, last) };
+            const std::wstring name = textBetween(first, nameEnd);
+            if (next > last)
+            {
+                const std::size_t scope = name.rfind(k_scope);
+                if (scope != std::wstring::npos)
+                    restatement.type = name.substr(0, scope);
+                else if (const auto local = m_localTypes.find(name); local != m_localTypes.end())
+                    restatement.type = local->second;
+                return restatement;
+            }
+            const bool opens = isPunctuator(&tokens[next], L"{")
+                || isPunctuator(&tokens[next], L"(");
+            if (!opens || pastMatching(next) != last + 1)
+                return std::nullopt;
+            restatement.type = name;
+            return restatement;
+        }
+
+        std::size_t FileReader::pastMatching(const std::size_t open) const
+        {
+            const TokenList& tokens = m_text.tokens();
+            int depth = 0;
+            for (std::size_t i = open; i < tokens.size(); ++i)
+            {
+                const Token& token = tokens[i];
+                if (token.type != TokenType::Punctuator)
+                    continue;
+                const std::wstring_view mark = text(token);
+                if (mark == L"(" || mark == L"[" || mark == L"{")
+                    ++depth;
+                if (mark == L")" || mark == L"]" || mark == L"}")
+                    --depth;
+                if (depth <= 0)
+                    return i + 1;
+            }
+            return tokens.size();
+        }
+
+        std::size_t FileReader::pastAngles(const std::size_t open) const
+        {
+            const TokenList& tokens = m_text.tokens();
+            int depth = 0;
+            for (std::size_t i = open; i < tokens.size(); ++i)
+            {
+                if (isPunctuator(&tokens[i], L"<"))
+                    ++depth;
+                if (isPunctuator(&tokens[i], L">"))
+                    --depth;
+                if (depth <= 0)
+                    return i + 1;
+            }
+            return tokens.size();
         }
 
         // From the opening bracket at the current token to past its match.

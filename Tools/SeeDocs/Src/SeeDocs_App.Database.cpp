@@ -57,6 +57,8 @@ namespace SeeDocs_App
             constexpr std::wstring_view usings = L"Usings";
             constexpr std::wstring_view fields = L"Fields";
             constexpr std::wstring_view members = L"Members";
+            constexpr std::wstring_view restates = L"Restates";
+            constexpr std::wstring_view fixed = L"Fixed";
             constexpr std::wstring_view type = L"Type";
             constexpr std::wstring_view accepts = L"Accepts";
             constexpr std::wstring_view defaultValue = L"Default";
@@ -170,6 +172,17 @@ namespace SeeDocs_App
             };
         }
 
+        [[nodiscard]] Dom::Dt::Section restatementLayout()
+        {
+            using namespace Dom::Dt;
+            return {
+                Value{ Keys::type, std::wstring{} },
+                Value{ Keys::value, std::wstring{} },
+                Value{ Keys::fixed, false },
+                Value{ Keys::line, std::size_t{ 0 } }
+            };
+        }
+
         // What an entry at namespace scope states beyond a member.
         [[nodiscard]] Dom::Dt::Section scopedEntry()
         {
@@ -200,7 +213,8 @@ namespace SeeDocs_App
                 Sequence{ Keys::methods, functionLayout() },
                 Sequence{ Keys::usings, usingLayout() },
                 Sequence{ Keys::fields, fieldLayout() },
-                Sequence{ Keys::members, enumMemberLayout() }
+                Sequence{ Keys::members, enumMemberLayout() },
+                Sequence{ Keys::restates, restatementLayout() }
             };
         }
 
@@ -395,6 +409,16 @@ namespace SeeDocs_App
                 Dom::Section& entry = members.add();
                 setPlaced(entry, member.name, member.place, member.comment);
                 setText(entry, Keys::value, member.value);
+            }
+
+            Sections& restates = (section / Keys::restates).as<Sections>();
+            for (const Restatement& restatement : type.restatements)
+            {
+                Dom::Section& entry = restates.add();
+                setText(entry, Keys::type, restatement.type);
+                setText(entry, Keys::value, restatement.value);
+                setFlag(entry, Keys::fixed, restatement.fixed);
+                setNumber(entry, Keys::line, restatement.place.line);
             }
         }
 
@@ -679,6 +703,15 @@ namespace SeeDocs_App
                         .value = textOf(item, Keys::value),
                         .place = placeOf(item, file),
                         .comment = commentOf(item)
+                    });
+                }
+                for (const Dom::Section& item : (entry / Keys::restates).as<Sections>())
+                {
+                    type.restatements.push_back({
+                        .type = textOf(item, Keys::type),
+                        .value = textOf(item, Keys::value),
+                        .fixed = flagOf(item, Keys::fixed),
+                        .place = placeOf(item, file)
                     });
                 }
                 m_surface.addType(std::move(type));

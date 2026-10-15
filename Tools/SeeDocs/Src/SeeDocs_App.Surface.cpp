@@ -569,6 +569,9 @@ namespace SeeDocs_App
             type.isControl = reachesControl(type);
             for (Property& property : type.properties)
                 property.valueKind = valueKindOf(property.type, type.nameSpace, property.optional);
+            std::erase_if(type.restatements, [&](Restatement& restatement) {
+                return !settleRestatement(restatement, type.nameSpace);
+            });
         }
     }
 
@@ -727,6 +730,11 @@ namespace SeeDocs_App
             return false;
         };
         visitDeclarations(m_types, m_functions, m_variables, move);
+        for (Type& type : m_types)
+        {
+            for (Restatement& restatement : type.restatements)
+                shiftPlace(restatement.place);
+        }
         for (Binding& binding : m_bindings)
             shiftPlace(binding.place);
         for (Place& place : m_propsReads)
@@ -780,6 +788,46 @@ namespace SeeDocs_App
             }
         }
         return nearest;
+    }
+
+    // A construction - Padding{ 4.0f } - is of the type it opens with. A qualified name alone is
+    // an enum's member, of the enum, or a class's constant, of the constant's declared type. A
+    // bare name alone is a constant: one of the file's own the scanner has typed already, else one
+    // the tree exports, of its declared type.
+    bool Surface::settleRestatement(Restatement& restatement,
+        const std::wstring_view nameSpace) const
+    {
+        const std::wstring& value = restatement.value;
+        if (value.ends_with(L'}') || value.ends_with(L')'))
+            return named(restatement.type, nameSpace) != nullptr;
+        const std::size_t scope = value.rfind(k_scope);
+        if (scope == std::wstring::npos)
+        {
+            if (!restatement.type.empty())
+                return named(restatement.type, nameSpace) != nullptr;
+            for (const Variable& variable : m_variables)
+            {
+                if (variable.field.name != value)
+                    continue;
+                restatement.type = std::wstring{ plainType(variable.field.type) };
+                return named(restatement.type, variable.nameSpace) != nullptr;
+            }
+            return false;
+        }
+        const Type* owner = resolve(restatement.type, nameSpace);
+        if (!owner)
+            return false;
+        if (owner->kind == TypeKind::Enum)
+            return true;
+        const std::wstring member = value.substr(scope + k_scope.size());
+        for (const Field& field : owner->fields)
+        {
+            if (!field.isStatic || field.name != member)
+                continue;
+            restatement.type = std::wstring{ plainType(field.type) };
+            return named(restatement.type, owner->nameSpace) != nullptr;
+        }
+        return false;
     }
 
     // Looked up as C++ looks a using-declaration's name up: in the namespace it stands in, then

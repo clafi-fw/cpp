@@ -65,8 +65,21 @@ name starts with a dot - `.seedocs`, `.git`, `.vs` - is skipped with everything 
 expanded and nothing is compiled: a macro of the declaration routine - `DECLARE_PROPERTY`,
 `DECLARE_EVENT`, `BIND_PROPERTY_*`, `READ_PROPERTY`, `REQUIRE_PROPERTY` - is read as the
 declaration it stands for, and a function body is skipped, read only for the binds a
-constructor writes (`INIT_PROPERTY`, `BIND_MEMBER` and its kind) and for a `Props::get` written
-by hand.
+constructor writes (`INIT_PROPERTY`, `BIND_MEMBER` and its kind), for a `Props::get` written
+by hand, and for what a constructor hands its bases.
+
+**A constructor restates a base's property by handing the base a value for it.** A pack reads
+its last value of a type, so a value the initializer puts before the pack it forwards -
+`Button{ params, Interactivity::Focusable, std::forward<Args>(args)... }` - is the default the
+type gives that property, which the caller's own value overrides, and one put after the pack is
+fixed: the caller's loses to it, as every value does that a constructor taking no pack hands on.
+The scanner reads each initializer naming a base of the type, argument by argument, and keeps the
+arguments whose type it can tell from their spelling: a construction, `Padding{ 4.0f }`, is of
+the type it opens with; a qualified name alone, `Interactivity::Focusable`, an enum's member or a
+class's constant; a bare name alone, a constant the file or the tree declares, of its declared
+type. The caller's own values - `params`, any parameter of the constructor - are passed on, not
+restated, and an expression such as `params.themeMetrics().toolButton` cannot be typed without
+compiling, so it is left out.
 
 What is harvested: every exported type - class, struct, union, enum, alias, concept - with its
 public and protected members (properties, events, functions, data members, enum members), every
@@ -214,6 +227,7 @@ The two files are meant to become one.
             Usings = [ =[ Name, Base, Access, Line, Hint, Note ] ]
             Fields = [ =[ Name, Type, Value, Static, Constant, Access, Line, Hint, Note ] ]
             Members = [ =[ Name, Value, Line, Hint, Note ] ]
+            Restates = [ =[ Type, Value, Fixed, Line ] ]
         ]
     ]
     Functions = [ =[ Name, Namespace, Kind, Signature, Type, Template, Module, File, Root, Line,
@@ -246,7 +260,12 @@ wired the way an event is) or `unknown`. A `std::optional` of a kind is that kin
 under `Accepts`. An event's `Name` is its struct, whose payload is that struct's own `Fields`
 entry. A `Usings` entry is a using-declaration naming a base's member, `Base` as spelled before
 the last `::`: `Base::Base` makes the base's constructors the type's own, any other name
-republishes that member under the entry's `Access`. A constant's `Value` is its initializer
+republishes that member under the entry's `Access`. A `Restates` entry is a value the type's
+constructor hands a base, as How it reads has it: `Type` the property type it is of, `Value` as
+spelled, folded onto one line, and `Fixed` where it stands after the pack. A reader applies it to
+the base's property of that type, the further spellings under `Accepts` counted, by the pack's own
+rule: the nearest type's value wins, unless a fixed one stands anywhere on the chain, when the
+furthest fixed one does. A constant's `Value` is its initializer
 folded onto one line, comments taken out; its `Declaration` is the whole declaration as written,
 from its first specifier to the semicolon, lines, indents and comments kept, each line after the
 first set back by the first one's indent.
@@ -390,7 +409,10 @@ A base's methods grid holds what reaches the type: its
 constructors only where the type takes them with `using Base::Base`, never its destructor, no
 method whose name a type below declares again - C++'s own hiding, by name, which a
 `using Base::name` undoes - and a republished method under the access that using-declaration
-gives it. A property's getter and setter stand in no methods grid, since the property's row
+gives it. A base's property whose default a type below restates shows that value in its Default
+cell, then the type handing it, linked, and `fixed` where the caller's own value loses to it; the
+declared default stays on the declaring type's own page. A property's getter and setter stand in
+no methods grid, since the property's row
 says it; a method with no comment of its own - an override, as a rule - takes the hint and the
 footnote of the method of the same name and parameter count in the nearest base that has one.
 A method's row carries its name alone, one row per name, with every overload's signature as

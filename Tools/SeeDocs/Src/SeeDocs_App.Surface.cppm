@@ -113,6 +113,15 @@ namespace SeeDocs_App
         Comment comment;
     };
 
+    // A value a type's constructor hands a base for a property the base declares. See README
+    export struct Restatement
+    {
+        std::wstring type;     // the property's type, as the value's spelling names it
+        std::wstring value;    // as spelled
+        bool fixed{ false };   // stands after the pack, so the caller's own value loses to it
+        Place place;
+    };
+
     // An event a class raises, as DECLARE_EVENT spells it.
     export struct Event
     {
@@ -214,6 +223,7 @@ namespace SeeDocs_App
         std::vector<Using> usings;
         std::vector<Field> fields;
         std::vector<EnumMember> members;
+        std::vector<Restatement> restatements;   // what its constructors hand its bases
         Place place;
         Comment comment;
         [[nodiscard]] bool opensScope() const;
@@ -307,6 +317,7 @@ namespace SeeDocs_App
     };
 
     export using Properties = std::vector<Property>;
+    export using Restatements = std::vector<Restatement>;
     export using Events = std::vector<Event>;
     export using Functions = std::vector<Function>;
     export using Usings = std::vector<Using>;
@@ -390,7 +401,8 @@ namespace SeeDocs_App
         // A type's properties with one entry per place a value lands: several bindings on one
         // target are one property accepting several spellings.
         [[nodiscard]] Properties mergedProperties(const Type&) const;
-        // Fills in what the scan leaves to the whole: control marks and value kinds.
+        // Fills in what the scan leaves to the whole: control marks, value kinds, and the types
+        // of the restatements, those naming none dropped.
         void resolveAll();
         // Puts what a header declares into the namespace it is included from inside. See README
         void encloseIncludes();
@@ -408,6 +420,9 @@ namespace SeeDocs_App
         void shiftLines(std::size_t file, std::size_t fromLine, std::ptrdiff_t count);
     private:
         [[nodiscard]] const Type* lookUp(std::wstring_view bare, std::wstring_view nameSpace) const;
+        // Whether the restatement's spelling names a type the surface holds, which is then its
+        // type: a construction's, an enum's member's, a constant's declared one.
+        [[nodiscard]] bool settleRestatement(Restatement&, std::wstring_view nameSpace) const;
         // Answers the namespace the declaration a re-publication names stands in, and moves the
         // declaration into the re-publication's own; nothing where the surface holds none.
         std::optional<std::wstring> moveRepublished(const Republication&);
