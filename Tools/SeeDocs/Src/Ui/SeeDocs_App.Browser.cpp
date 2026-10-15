@@ -195,6 +195,15 @@ namespace SeeDocs_App
     {
     }
 
+    // OrderProjectsEvent
+
+    OrderProjectsEvent::OrderProjectsEvent(std::vector<OpenProject*> ordered)
+        :
+        ::ClaFi::Event{},
+        projects{ std::move(ordered) }
+    {
+    }
+
     // RescanProjectEvent
 
     RescanProjectEvent::RescanProjectEvent(OpenProject& rescanned)
@@ -240,6 +249,11 @@ namespace SeeDocs_App
     void SurfacePage::runCommand(const std::wstring_view target)
     {
         browser().answerCommand(target);
+    }
+
+    void SurfacePage::orderRows(const std::span<const std::wstring> targets)
+    {
+        browser().answerOrder(targets);
     }
 
     void SurfacePage::openSource(const SourcePlace& source)
@@ -582,6 +596,46 @@ namespace SeeDocs_App
         rebuildPages(nullptr, nullptr);
     }
 
+    // **The page the rows were carried on stands**: its rows are in the order asked already, and
+    // the carry that asked is still unwinding on it. Every other root page is built again.
+    void SurfaceBrowser::orderProjects(const std::span<OpenProject* const> order)
+    {
+        Projects ordered{};
+        ordered.reserve(m_projects.size());
+        std::vector<ProjectId> ids{};
+        for (OpenProject* open : order)
+        {
+            const Projects::iterator found = std::ranges::find_if(m_projects,
+                [open](const std::unique_ptr<ShownProject>& shown) {
+                    return &shown->open == open;
+                });
+            if (found == m_projects.end())
+                continue;
+            ids.push_back((*found)->id);
+            ordered.push_back(std::move(*found));
+            m_projects.erase(found);
+        }
+        for (std::unique_ptr<ShownProject>& shown : m_projects)
+        {
+            ids.push_back(shown->id);
+            ordered.push_back(std::move(shown));
+        }
+        m_projects = std::move(ordered);
+        for (const TabTree& entry : m_tabTrees)
+            entry.tree->orderProjects(ids);
+        refreshPageTree();
+        const BrowserPage* keep = nullptr;
+        for (BrowserTab& tab : tabs())
+        {
+            if (!tab.selected() || !tab.page())
+                continue;
+            const BrowserPage& page = static_cast<const BrowserPage&>(*tab.page());
+            if (resolve(page.pageData()).isRoot())
+                keep = &page;
+        }
+        rebuildPages(nullptr, keep);
+    }
+
     void SurfaceBrowser::showWords(const Text& words)
     {
         m_words = words;
@@ -617,6 +671,22 @@ namespace SeeDocs_App
         if (!shown)
             return;
         CloseProjectEvent event{ shown->open };
+        emitEvent(event);
+    }
+
+    void SurfaceBrowser::answerOrder(const std::span<const std::wstring> targets)
+    {
+        std::vector<OpenProject*> projects{};
+        for (const std::wstring& target : targets)
+        {
+            if (!target.starts_with(ConfigNames::pathSeparator))
+                continue;
+            if (ShownProject* shown = projectOf(std::wstring_view{ target }.substr(1)))
+                projects.push_back(&shown->open);
+        }
+        if (projects.empty())
+            return;
+        OrderProjectsEvent event{ std::move(projects) };
         emitEvent(event);
     }
 
@@ -1251,6 +1321,7 @@ namespace SeeDocs_App
             TableColumn{ .name = L"Folder", .fills = true }
         };
         section.table.header = false;
+        section.table.rearrangeable = true;
         section.table.groups.push_back(std::move(projects));
 
         Page page;

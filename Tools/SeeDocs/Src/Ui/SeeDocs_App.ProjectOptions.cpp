@@ -11,6 +11,7 @@ import ClaFi.App.Settings;
 
 import ClaFi.Controls.Button;
 import ClaFi.Controls.CheckBox;
+import ClaFi.Controls.Grids;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.RadioButton;
@@ -24,6 +25,7 @@ import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
@@ -42,10 +44,8 @@ namespace SeeDocs_App
         constexpr float k_pathWidth = 440.0f;
         constexpr float k_rowSpacing = 10.0f;    // between the parts of a row
         constexpr float k_fieldWidth = 440.0f;   // the narrowest a field stands
-        constexpr float k_listSpacing = 2.0f;    // between the rows of the sources
         constexpr float k_noteWidth = 520.0f;    // the widest a note under a group runs
         constexpr float k_choiceIndent = 20.0f;  // a set of choices in from its caption
-        constexpr float k_browseGap = 4.0f;      // between a source's box and its browse button
         constexpr float k_browsePadding = 6.0f;  // the browse button's sides
         constexpr float k_removeSize = 20.0f;
         constexpr float k_removeMark = 8.0f;
@@ -53,12 +53,7 @@ namespace SeeDocs_App
         // spaced as its rows are.
         constexpr Padding k_headPadding{ 12.0f, 0.0f };
         constexpr float k_headSpacing = 6.0f;
-        // What an empty source box shows: the stub's, and an entry's emptied.
-        namespace SourcePlaceHolder
-        {
-            constexpr std::wstring_view stub = L"Add source";
-            constexpr std::wstring_view entry = L"A folder on this computer";
-        }
+        constexpr std::wstring_view k_stubText = L"Add source";   // what the stub's cell reads
         constexpr std::wstring_view k_browseText = L"\u2026";
         constexpr std::wstring_view k_pickTitle = L"Pick a folder of sources";
 
@@ -80,81 +75,71 @@ namespace SeeDocs_App
 
         class SourceRow;
 
-        // The project's folders of sources, a row each, over the stub a folder is added through.
-        class SourceList : public StackPanel
+        // The folders of sources in a grid, a row each, over the stub a folder is added through.
+        class SourceList : public Grids::Grid
         {
         public:
             SourceList(const CreateParams&, Workspace&, OpenProject&, Choose changed);
         public:
+            // The grid's columns, as their tags name them.
+            enum class SourceColumn : TagValue
+            {
+                Folder,   // named in the header over the path and its browse button
+                Path,
+                Browse,
+                Subfolders,
+                Remove
+            };
+        public:
             [[nodiscard]] Workspace& workspace() { return m_workspace; }
             [[nodiscard]] OpenProject& project() { return m_project; }
+            [[nodiscard]] Grids::Column& column(SourceColumn tag)
+                { return columnByTag(Tag{ tag }); }
             [[nodiscard]] bool readsSubfolders(std::wstring_view source) const;
             void changed() const { m_changed(); }   // after a change has been read back
             void addStub();
-            // Hides an entry's row and hands its focus on; the row is deleted at the next change.
-            void remove(SourceRow&);
+            // Stops reading the row's folder and takes the row out on the next tick, outside the
+            // edit or the click that asked; the selection lands on the row under it.
+            void removeLater(SourceRow&);
+        protected:
+            bool defaultCanMoveItem(Control&) override;   // the stub stays under the folders
+            void itemsMoved(ItemsMoveEvent&) override;    // the folders are read in the rows' order
         private:
             using Rows = std::vector<SourceRow*>;
         private:
-            void deleteGoneRows();
+            void removePending();
         private:
             Workspace& m_workspace;
             OpenProject& m_project;
             Choose m_changed;
-            Rows m_rows{};                        // the rows standing, the stub last
-            std::vector<Control*> m_goneRows{};   // each may hold the control that hid it
-        };
-
-        // An entry's answers; the stub carries them unseen, its field ending where an entry's does.
-        class RowAnswers : public StackPanel
-        {
-        public:
-            RowAnswers(const CreateParams&, bool shown);
-        public:
-            void reveal();
-        protected:
-            void getControlState(GetStateEvent&) const override;   // unseen, no focus reaches them
-            void hitTest(HitTestEvent&) const override;            // unseen, the pointer passes
-            void paintChildren(PaintEvent&) override;
-        private:
-            bool m_shown;
-        };
-
-        // A source's box: the folder read while it is left, and the words written while edited.
-        class SourceBox : public FolderBox<WordsBox>
-        {
-        public:
-            SourceBox(const CreateParams&, SourceRow&, OpenProject&);
-        public:
-            void showSource();
-        protected:
-            [[nodiscard]] std::wstring writeWords(std::wstring_view words) override;
-            void focusChanged() override;
-        private:
-            SourceRow& m_row;
-            OpenProject& m_project;
+            Rows m_rows{};      // the rows standing, the stub last
+            Rows m_pending{};   // the rows asked to go
+            UiTimer m_removeTimer{};
         };
 
         // One folder of sources, or the stub under them: a row with no folder yet. See README
-        class SourceRow : public Panel
+        class SourceRow : public Grids::RowContainer
         {
         public:
-            SourceRow(const CreateParams&, SourceList&, std::wstring source);
+            SourceRow(const CreateParams&, Grids::GridDescriptor&, SourceList&,
+                std::wstring source);
         public:
             [[nodiscard]] const std::wstring& source() const { return m_source; }
             [[nodiscard]] bool isStub() const { return m_source.empty(); }
-            [[nodiscard]] SourceBox& box() { return m_box; }
             // Writes the source in the row's place, or as one more; the reason where refused.
             [[nodiscard]] std::wstring take(std::wstring_view written);
-            void remove();   // the project stops reading the folder, and the row goes
+        protected:
+            void getCellText(const Grids::Column&, Text&) override;   // the folder read, in full
+            void getCellEditorText(Grids::GetCellEditorTextEvent&) override;   // the words written
         private:
+            void addAnswers();   // the check and the cross, which the stub has not got
+            void accept(Grids::AcceptCellTextEvent&);
             void browse();
+            [[nodiscard]] bool isPath(const Grids::Column&) const;
         private:
             SourceList& m_list;
             std::wstring m_source;   // as written, empty on the stub
-            Panel& m_field;
-            SourceBox& m_box;
-            RowAnswers& m_answers;
+            FolderSuggester m_folders{};   // what the path's editor completes from
         };
 
         // **The age is worked out when the page is built**, and after a rescan. It does not tick
@@ -395,19 +380,38 @@ namespace SeeDocs_App
 
     namespace
     {
+        // The path and its browse button stand under one name in the header, so a row fills the
+        // two columns and not the one over them.
         SourceList::SourceList(const CreateParams& params, Workspace& workspace,
             OpenProject& project, Choose changed)
             :
-            StackPanel{
+            Grids::Grid{
                 params,
-                Orientation::Vertical,
-                Padding{ 0.0f },
-                Spacing{ k_listSpacing }
+                params.themeMetrics().page,
+                UiElement::Section,
+                Grids::GridLines::Horizontal,
+                ItemsOrder::Rearrangeable
             },
             m_workspace{ workspace },
             m_project{ project },
             m_changed{ std::move(changed) }
         {
+            Grids::Column& folder = columns().add(Tag{ SourceColumn::Folder }, Text{ L"Folder" },
+                Grids::ColumnWidthMode::Fill);
+            Grids::ColumnCollection& under = folder.createSubColumns();
+            under.add(Tag{ SourceColumn::Path }, Grids::ColumnWidthMode::Fill,
+                Grids::ShowInHeader::No, EditorMode::Editable);
+            under.add(Tag{ SourceColumn::Browse }, Grids::ShowInHeader::No);
+            columns().add(Tag{ SourceColumn::Subfolders }, Text{ L"Include subfolders" });
+            columns().add(Tag{ SourceColumn::Remove });   // headed, with nothing to say
+            onCellContent([](Grids::CellContentEvent& event) {
+                const TagValue folderTag = static_cast<TagValue>(SourceColumn::Folder);
+                event.hasContent = event.column().tag().value != folderTag;
+            });
+            addHeader();
+            m_removeTimer.onTick([this](TimerEvent&) {
+                removePending();
+            });
             for (const ProjectSource& source : m_project.project.sources)
                 m_rows.push_back(&add<SourceRow>(*this, source.written));
             m_rows.push_back(&add<SourceRow>(*this, std::wstring{}));
@@ -425,138 +429,63 @@ namespace SeeDocs_App
 
         void SourceList::addStub()
         {
-            deleteGoneRows();
             m_rows.push_back(&add<SourceRow>(*this, std::wstring{}));
             invalidateFormAlign();
         }
 
-        void SourceList::remove(SourceRow& row)
+        void SourceList::removeLater(SourceRow& row)
         {
-            deleteGoneRows();
-            const bool heldFocus = row.containsNested(Input::focusedControl());
-            row.box().showWords(Text{});   // or the focus leaving it writes what it holds
-            row.setVisible(false);
-            m_goneRows.push_back(&row);
-            const Rows::iterator next = m_rows.erase(std::ranges::find(m_rows, &row));
-            // The stub is never removed, so an entry always has a row under it.
-            if (heldFocus)
-                (*next)->box().setFocus();
-            invalidateFormAlign();
+            if (std::ranges::find(m_pending, &row) != m_pending.end())
+                return;
+            m_pending.push_back(&row);
+            m_removeTimer.start(MilliSeconds{ 0u });
         }
 
-        void SourceList::deleteGoneRows()
+        // The stub is never removed, so a row always has one under it to land on.
+        void SourceList::removePending()
         {
-            for (Control* row : m_goneRows)
-                row->deleteSelf();
-            m_goneRows.clear();
-        }
-    }
-
-    // RowAnswers
-
-    namespace
-    {
-        RowAnswers::RowAnswers(const CreateParams& params, const bool shown)
-            :
-            StackPanel{
-                params,
-                Orientation::Horizontal,
-                VerticalAlign::Center,
-                Spacing{ k_rowSpacing },
-                Padding{ 0.0f }
-            },
-            m_shown{ shown }
-        {
-        }
-
-        void RowAnswers::reveal()
-        {
-            m_shown = true;
-            invalidateState();
-            invalidateChildrenStates();
-            invalidate();
-        }
-
-        void RowAnswers::getControlState(GetStateEvent& event) const
-        {
-            StackPanel::getControlState(event);
-            if (&event.control == this && !m_shown)
-                event.state.enabled = false;
-        }
-
-        void RowAnswers::hitTest(HitTestEvent& event) const
-        {
-            if (m_shown)
-                StackPanel::hitTest(event);
-            else
-                event.zone = HitTest::Transparent;
-        }
-
-        void RowAnswers::paintChildren(PaintEvent& event)
-        {
-            if (m_shown)
-                StackPanel::paintChildren(event);
-        }
-    }
-
-    // SourceBox
-
-    namespace
-    {
-        // Set as the new project dialog's boxes are.
-        SourceBox::SourceBox(const CreateParams& params, SourceRow& row, OpenProject& project)
-            :
-            FolderBox<WordsBox>{
-                params,
-                Interactivity::Focusable,
-                WordWrap::No,
-                Padding{ 0.0f },
-                VerticalTextAnchor::Center,
-                PlaceHolderText{ row.isStub() ? SourcePlaceHolder::stub : SourcePlaceHolder::entry }
-            },
-            m_row{ row },
-            m_project{ project }
-        {
-            setBaseFolder(m_project.project.folder);
-        }
-
-        // **The words are replaced only where they differ**, so a menu opened over a selection in
-        // the box keeps the selection.
-        void SourceBox::showSource()
-        {
-            std::wstring shown;
-            if (!m_row.isStub())
+            Rows going{};
+            std::swap(going, m_pending);
+            for (SourceRow* row : going)
             {
-                const bool left = !isFocused() && !isDroppedDown();
-                shown = left
-                    ? m_project.project.readSource(m_row.source()).wstring()
-                    : m_row.source();
+                m_workspace.removeSource(m_project, row->source());
+                const Rows::iterator next = m_rows.erase(std::ranges::find(m_rows, row));
+                const bool held = row->containsNested(Input::focusedControl())
+                    || descriptor().selectedRow() == row;
+                row->deleteSelf();
+                if (held)
+                    selectCell(**next, &column(SourceColumn::Path));
             }
-            if (edited() || text().plainText() != shown)
-                showWords(Text{ shown });
+            invalidateFormAlign();
+            changed();
         }
 
-        std::wstring SourceBox::writeWords(const std::wstring_view words)
+        bool SourceList::defaultCanMoveItem(Control& item)
         {
-            if (!edited())
-                return {};
-            const std::wstring typed{ trimmed(words) };
-            if (!typed.empty())
-                return m_row.take(typed);
-            if (m_row.isStub())
-                showWords(Text{});
-            else
-                m_row.remove();
-            return {};
+            if (!Grids::Grid::defaultCanMoveItem(item))
+                return false;
+            return !static_cast<const SourceRow&>(item).isStub();
         }
 
-        // Leaving writes what was typed. An edit written, or none, shows the folder again, and
-        // one refused keeps the words typed.
-        void SourceBox::focusChanged()
+        void SourceList::itemsMoved(ItemsMoveEvent&)
         {
-            FolderBox<WordsBox>::focusChanged();
-            if (!edited())
-                showSource();
+            Rows rows{};
+            std::vector<std::wstring_view> order{};
+            for (ControlPtr& control : controls())
+            {
+                const Rows::iterator found = std::ranges::find_if(m_rows,
+                    [&control](const SourceRow* row) {
+                        return row == &*control;
+                    });
+                if (found == m_rows.end())
+                    continue;
+                rows.push_back(*found);
+                if (!(*found)->isStub())
+                    order.push_back((*found)->source());
+            }
+            m_rows = std::move(rows);
+            m_workspace.orderSources(m_project, order);
+            changed();
         }
     }
 
@@ -564,26 +493,16 @@ namespace SeeDocs_App
 
     namespace
     {
-        // The field is the new project dialog's, as the name's is.
-        SourceRow::SourceRow(const CreateParams& params, SourceList& list,
-            std::wstring source)
+        SourceRow::SourceRow(const CreateParams& params, Grids::GridDescriptor& descriptor,
+            SourceList& list, std::wstring source)
             :
-            Panel{ params, Spacing{ k_rowSpacing } },
+            Grids::RowContainer{ params, descriptor },
             m_list{ list },
-            m_source{ std::move(source) },
-            m_field{ createBody<Panel>(
-                UiElement::Section,
-                Radius{ themeMetrics().button.radius },
-                themeMetrics().button.padding,
-                Spacing{ k_browseGap },
-                MinSize{ k_fieldWidth, 0.0f }
-            ) },
-            m_box{ m_field.createBody<SourceBox>(*this, list.project()) },
-            m_answers{ createRightBar<RowAnswers>(!isStub()) }
+            m_source{ std::move(source) }
         {
-            m_field.setBorder(themeMetrics().button.border);
-            // As tall as the line it ends, so the field stands as high as the name's.
-            m_field.createRightBar<ToolButton>(
+            m_folders.setBase(m_list.project().project.folder);
+            addControl<ToolButton>(
+                m_list.column(SourceList::SourceColumn::Browse),
                 k_browseText,
                 VerticalAlign::Center,
                 HorizontalTextAnchor::Center,
@@ -596,8 +515,18 @@ namespace SeeDocs_App
                     browse();
                 } }
             );
-            m_answers.add<CheckBox>(
-                L"Include subfolders",
+            onAcceptCellText([this](Grids::AcceptCellTextEvent& event) {
+                accept(event);
+            });
+            if (!isStub())
+                addAnswers();
+        }
+
+        void SourceRow::addAnswers()
+        {
+            addControl<CheckBox>(
+                m_list.column(SourceList::SourceColumn::Subfolders),
+                HorizontalAlign::Center,
                 VerticalAlign::Center,
                 HintText{ L"Reads the folders under this one too" },
                 Padding{ 0.0f, themeMetrics().listItem.padding.y },
@@ -611,7 +540,8 @@ namespace SeeDocs_App
                     m_list.changed();
                 } }
             );
-            m_answers.add<ToolButton>(
+            addControl<ToolButton>(
+                m_list.column(SourceList::SourceColumn::Remove),
                 L"Remove",
                 FixedSize{ k_removeSize },
                 ButtonViewMode::IconOnly,
@@ -621,10 +551,58 @@ namespace SeeDocs_App
                 ButtonBase::OnPaintIcon{ Icons::XMark::paint },
                 HintText{ L"Stops reading this folder" },
                 Button::OnClick{ [this](ClickEvent&) {
-                    remove();
+                    m_list.removeLater(*this);
                 } }
             );
-            m_box.showSource();
+            invalidateFormAlign();
+        }
+
+        bool SourceRow::isPath(const Grids::Column& column) const
+        {
+            return column.tag().value == static_cast<TagValue>(SourceList::SourceColumn::Path);
+        }
+
+        void SourceRow::getCellText(const Grids::Column& column, Text& text)
+        {
+            if (!isPath(column))
+            {
+                Grids::RowContainer::getCellText(column, text);
+                return;
+            }
+            if (isStub())
+                text << InkGrade::Muted << k_stubText;
+            else
+                text << m_list.project().project.readSource(m_source).wstring();
+        }
+
+        void SourceRow::getCellEditorText(Grids::GetCellEditorTextEvent& event)
+        {
+            if (!isPath(event.column()))
+            {
+                Grids::RowContainer::getCellEditorText(event);
+                return;
+            }
+            event.text = Text{ m_source };
+            event.suggester = &m_folders;
+            event.stopPropagation();
+        }
+
+        // An edit emptied stops reading the folder; the stub emptied stays the stub.
+        void SourceRow::accept(Grids::AcceptCellTextEvent& event)
+        {
+            if (!isPath(event.column()))
+                return;
+            event.stopPropagation();
+            const std::wstring typed{ trimmed(event.text().plainText()) };
+            if (typed.empty())
+            {
+                if (!isStub())
+                    m_list.removeLater(*this);
+                return;
+            }
+            const std::wstring refusal = take(typed);
+            if (!refusal.empty())
+                event.refuse(refusal);
         }
 
         std::wstring SourceRow::take(const std::wstring_view written)
@@ -638,30 +616,23 @@ namespace SeeDocs_App
             if (!refusal.empty())
                 return refusal;
             m_source = written;
-            m_box.showSource();
+            invalidate();
             if (stub)
             {
-                m_answers.reveal();
+                addAnswers();
                 m_list.addStub();
             }
             m_list.changed();
             return {};
         }
 
-        void SourceRow::remove()
-        {
-            m_list.workspace().removeSource(m_list.project(), m_source);
-            m_list.remove(*this);
-            m_list.changed();
-        }
-
+        // A folder refused - one read already - is said at the row, the way a box would say it.
         void SourceRow::browse()
         {
             const Project& project = m_list.project().project;
-            const std::wstring typed{ trimmed(m_box.text().plainText()) };
             std::filesystem::path start = project.folder;
-            if (!typed.empty())
-                start = project.readSource(typed);
+            if (!isStub())
+                start = project.readSource(m_source);
             else if (!project.sources.empty())
                 start = project.readSource(project.sources.back().written);
             std::error_code error;
@@ -676,13 +647,9 @@ namespace SeeDocs_App
                 Platform::pickFolder(&form(), k_pickTitle, start);
             if (!picked)
                 return;
-            const std::wstring written = project.writtenSource(*picked);
-            const std::wstring refusal = take(written);
-            if (refusal.empty())
-                return;
-            m_box.text() = Text{ written };
-            m_box.setRefusal(refusal);
-            m_box.showRefusal();
+            const std::wstring refusal = take(project.writtenSource(*picked));
+            if (!refusal.empty())
+                ContextMessage::show(*this, Text{ refusal });
         }
     }
 }

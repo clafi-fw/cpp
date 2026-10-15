@@ -299,6 +299,15 @@ namespace SeeDocs_App
     {
     }
 
+    // PageOrderEvent
+
+    PageOrderEvent::PageOrderEvent(std::vector<std::wstring> rowTargets)
+        :
+        ::ClaFi::Event{},
+        targets{ std::move(rowTargets) }
+    {
+    }
+
     // PageSourceEvent
 
     PageSourceEvent::PageSourceEvent(const SourcePlace& sourcePlace)
@@ -687,8 +696,15 @@ namespace SeeDocs_App
         Grids::Grid& grid = body.add<Grids::Grid>(
             themeMetrics().page,
             UiElement::Section,
-            Grids::GridLines::Horizontal
+            Grids::GridLines::Horizontal,
+            table.rearrangeable ? ItemsOrder::Rearrangeable : ItemsOrder::Fixed
         );
+        if (table.rearrangeable)
+        {
+            grid.onItemsMove([this, &grid](ItemsMoveEvent&) {
+                reportOrder(grid);
+            });
+        }
         StackPanel& notes = body.add<StackPanel>(
             Orientation::Vertical,
             Padding{ 0.0f },
@@ -869,6 +885,9 @@ namespace SeeDocs_App
                 made = &target->addRow();
             }
             Grids::Row& gridRow = *made;
+            // A carried row is told apart by the table row it was built from.
+            if (table.rearrangeable)
+                gridRow.setTag(Tag{ &row });
             if (!m_firstRow)
                 m_firstRow = &gridRow;
             if (!row.anchor.empty())
@@ -925,6 +944,31 @@ namespace SeeDocs_App
             addTableRows(expander, *target, table, nested, notes, hintColumn, commandColumn,
                 footnotes);
         }
+    }
+
+    void PageView::reportOrder(Grids::Grid& grid)
+    {
+        std::vector<std::wstring> targets{};
+        for (ControlPtr& control : grid.controls())
+        {
+            const TableRow* row = control->tag().get<const TableRow*>();
+            if (!row)
+                continue;
+            std::wstring target{};
+            if (!row->cells.empty())
+            {
+                for (const Run& run : row->cells.front())
+                {
+                    if (run.link.empty())
+                        continue;
+                    target = run.link;
+                    break;
+                }
+            }
+            targets.push_back(std::move(target));
+        }
+        PageOrderEvent event{ std::move(targets) };
+        emitEvent(event);
     }
 
     void PageView::connectCommand(Button& button, const Command& command)

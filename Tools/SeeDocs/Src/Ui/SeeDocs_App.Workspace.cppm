@@ -65,6 +65,8 @@ namespace SeeDocs_App
         void removeSource(OpenProject&, std::wstring_view source);
         // Whether the folders under the source are read too; scans the project again.
         void setSubfolders(OpenProject&, std::wstring_view source, bool);
+        // Reads the sources in this order, one not named after those that are; scans again.
+        void orderSources(OpenProject&, std::span<const std::wstring_view> sources);
         // How the sources are read and how their comments give the hints - each scans the
         // project again so read.
         void setMode(OpenProject&, ScanMode);
@@ -104,6 +106,8 @@ namespace SeeDocs_App
         // The open project the folder stands for, by its own folder.
         [[nodiscard]] OpenProject* openFor(const std::filesystem::path& folder) const;
         void close(OpenProject&);
+        // Keeps the projects in this order, which the browser shows and the next start reads.
+        void orderProjects(std::span<OpenProject* const>);
         // Asks whether to make a project that reads a folder that stands for none.
         [[nodiscard]] bool confirmMaking(const std::filesystem::path& folder);
         void refuse(std::wstring_view title, const Text& message);
@@ -138,6 +142,7 @@ namespace SeeDocs_App
         UiTimer m_closeTimer{};
         ScopedEventConnection m_projectShown{};
         ScopedEventConnection m_closeAsked{};
+        ScopedEventConnection m_orderAsked{};
         ScopedEventConnection m_rescanAsked{};
         // A project the new project dialog made, opened once the dialog is down.
         std::optional<Project> m_made{};

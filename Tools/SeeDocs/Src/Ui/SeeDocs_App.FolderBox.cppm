@@ -1,6 +1,7 @@
 export module SeeDocs_App.FolderBox;
 
 import ClaFi.Controls.DropList;
+import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.TextBox;
 
 import ClaFi.Core.Context.FormContext;
@@ -17,6 +18,21 @@ namespace SeeDocs_App
 
     using FolderNames = std::vector<std::wstring>;
 
+    // The folders under what is typed, a line each; a folder picked is walked into. See README
+    export class FolderSuggester : public Suggester
+    {
+    public:
+        // Where a path typed relative starts from; with none, only a path from a root lists.
+        void setBase(std::filesystem::path);
+        [[nodiscard]] DropListLines suggest(std::wstring_view typed) override;
+        [[nodiscard]] std::wstring pick(std::size_t line) override;
+        [[nodiscard]] bool pickAccepts() const override { return false; }
+    private:
+        std::filesystem::path m_base{};
+        std::wstring m_typed{};   // what the lines were listed for
+        FolderNames m_names{};    // the folders listed, a line each
+    };
+
     // The folders the text of a box names, dropped under the box and walked from it.
     export class FolderList
     {
@@ -24,7 +40,7 @@ namespace SeeDocs_App
         explicit FolderList(TextBox&);
     public:
         // Where a path typed relative starts from; with none, only a path from a root lists.
-        void setBase(std::filesystem::path);
+        void setBase(std::filesystem::path base) { m_folders.setBase(std::move(base)); }
         // An edit leaving the caret at the text's end lists what the text names; any other, none.
         void textEdited();
         // Takes the keys that walk, pick and drop the list, marking the event handled.
@@ -35,8 +51,7 @@ namespace SeeDocs_App
         void take(std::size_t line);
     private:
         TextBox& m_box;
-        std::filesystem::path m_base{};
-        FolderNames m_names{};   // the folders listed, a line each
+        FolderSuggester m_folders{};
         DropList m_list;
     };
 

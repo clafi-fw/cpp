@@ -158,6 +158,7 @@ namespace SeeDocs_App
         std::wstring groupColumn;   // where a group's label stands beside its rows; empty for above
         bool header{ true };        // whether the columns are named over the rows
         bool takesFootnotes{ false };   // a row may be given a footnote, set under the table
+        bool rearrangeable{ false };    // the rows may be carried about; the page says their order
         TableGroups groups;
         [[nodiscard]] std::size_t rowCount() const;   // at every level
     };

@@ -2,6 +2,8 @@ export module ClaFi.Controls.Grids :Cell;
 
 import :Columns;
 
+import ClaFi.Controls.InPlaceEdit;
+
 import ClaFi.Core.System.Events;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
@@ -47,6 +49,7 @@ namespace ClaFi::Controls::Grids
     public:
         using CellEventBase::CellEventBase;
         std::optional<Text> text{};   // left empty, the editor opens on what the cell shows
+        Suggester* suggester{ nullptr };   // what the editor completes from, where the cell has one
     };
 
     // The text an in-place edit was left with, on its way back to the cell's source. See Grids

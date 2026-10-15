@@ -113,6 +113,42 @@ namespace SeeDocs_App
         }
     }
 
+    // The heavy line stands over every node but the first, so the lines follow the nodes about.
+    void SurfaceTree::orderProjects(const std::span<const ProjectId> ids)
+    {
+        Projects ordered{};
+        ordered.reserve(m_projects.size());
+        for (const ProjectId id : ids)
+        {
+            const Projects::iterator found = std::ranges::find_if(m_projects,
+                [id](const std::unique_ptr<ProjectRows>& rows) {
+                    return rows->id == id;
+                });
+            if (found == m_projects.end())
+                continue;
+            ordered.push_back(std::move(*found));
+            m_projects.erase(found);
+        }
+        for (std::unique_ptr<ProjectRows>& rows : m_projects)
+            ordered.push_back(std::move(rows));
+        m_projects = std::move(ordered);
+        std::size_t place = 0ull;
+        for (std::size_t i = 0ull; i != m_projects.size(); ++i)
+        {
+            ProjectRows& rows = *m_projects[i];
+            if (i == 0ull && rows.above)
+            {
+                rows.above->deleteSelf();
+                rows.above = nullptr;
+            }
+            if (i != 0ull && !rows.above)
+                rows.above = &addDivider(Thickness::Heavy);
+            if (rows.above)
+                moveControl(*rows.above, place++);
+            moveControl(*rows.node, place++);
+        }
+    }
+
     // Opened from the row up, so the row stands in the tree before it is made current.
     void SurfaceTree::follow(const ProjectId id, const std::wstring_view folder,
         const ContentsModule* module, const Type* type)

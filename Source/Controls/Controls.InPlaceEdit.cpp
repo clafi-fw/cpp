@@ -25,6 +25,58 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
+    namespace
+    {
+        // The items whose typed names begin with what is typed. See Controls#suggestionlist
+        class ItemsSuggester : public Suggester
+        {
+        public:
+            explicit ItemsSuggester(const TextItems&);
+        public:
+            [[nodiscard]] DropListLines suggest(std::wstring_view typed) override;
+            [[nodiscard]] std::wstring pick(std::size_t line) override;
+        private:
+            const TextItems& m_items;
+            std::vector<std::wstring> m_names{};   // what each item is matched by, settled once
+            std::vector<std::size_t> m_listed{};   // the item each line stands for
+        };
+
+        ItemsSuggester::ItemsSuggester(const TextItems& items)
+            :
+            m_items{ items }
+        {
+            for (const TextItem& item : m_items)
+                m_names.push_back(typedName(item));
+        }
+
+        // A line shows the item's own text, or its placeholder muted while it has none - what a
+        // combo box face shows for it, without what a face adds.
+        DropListLines ItemsSuggester::suggest(const std::wstring_view typed)
+        {
+            m_listed.clear();
+            DropListLines lines;
+            for (std::size_t i = 0; i != m_names.size(); ++i)
+            {
+                if (!startsWithFolded(m_names[i], typed))
+                    continue;
+                const TextItem& item = m_items[i];
+                Text text;
+                if (item.text().empty())
+                    text << InkGrade::Muted << item.placeHolderText() << PopColor{};
+                else
+                    text << item.text();
+                m_listed.push_back(i);
+                lines.push_back({ .text = std::move(text) });
+            }
+            return lines;
+        }
+
+        std::wstring ItemsSuggester::pick(const std::size_t line)
+        {
+            return typedName(m_items[m_listed[line]]);
+        }
+    }
+
     // AcceptEditEvent
 
     AcceptEditEvent::AcceptEditEvent(Control& askedBy, const Text& text)
@@ -183,19 +235,20 @@ namespace ClaFi::Controls
         // **A reader has nothing to complete**, and an editor with nothing listed has no list.
         // Built before the value is written below: the keys that opened the editor are its first
         // edit, and that edit is what first asks for the list.
-        const bool lists = target.readOnly == ReadOnly::No
-            && target.suggestions
-            && !target.suggestions->empty();
+        const bool listsItems = target.suggestions && !target.suggestions->empty();
+        const bool lists = target.readOnly == ReadOnly::No && (target.suggester || listsItems);
         if (lists)
         {
-            m_suggestions = target.suggestions;
-            m_suggestionNames.clear();
-            for (const TextItem& item : *m_suggestions)
-                m_suggestionNames.push_back(typedName(item));
+            m_suggester = target.suggester;
+            if (!m_suggester)
+            {
+                m_itemsSuggester = std::make_unique<ItemsSuggester>(*target.suggestions);
+                m_suggester = m_itemsSuggester.get();
+            }
             // As long as the screen lets it, as a combo box's list is, and walked from the box:
             // nothing is current until Down, and Up from the first line goes back to the box.
             m_list.emplace(box, [this](const DropListPick& picked) {
-                takeSuggestion(m_listed[picked.line]);
+                takeSuggestion(picked.line);
             }, DropListOptions{
                 .shownLines = 0.0f,
                 .clearance = 1.0f,
@@ -292,11 +345,15 @@ namespace ClaFi::Controls
         offerText();
     }
 
-    void InPlaceEditRoot::takeSuggestion(const std::size_t itemIndex)
+    void InPlaceEditRoot::takeSuggestion(const std::size_t line)
     {
         PromptBox& box = body();
+        const std::wstring taken = m_suggester->pick(line);
         box.selectAll();
-        box.replaceSelectedText(typedName((*m_suggestions)[itemIndex]));
+        box.replaceSelectedText(taken);
+        // The edit goes on from what was picked, and the list follows it as it follows any edit.
+        if (!m_suggester->pickAccepts())
+            return;
         // Down before the offer, and after the edit that would have asked for it again: the
         // reason a refusal shows goes under the box, where the list stands.
         hideSuggestions();
@@ -456,26 +513,11 @@ namespace ClaFi::Controls
         showSuggestions({});
     }
 
-    // A line shows the item's own text, or its placeholder muted while it has none - what a combo
-    // box face shows for it, without what a face adds. Under the box and at least as wide, both
-    // read now rather than once, since the box grows with what is typed; none current.
+    // Under the box and at least as wide, both read now rather than once, since the box grows
+    // with what is typed; none current.
     void InPlaceEditRoot::showSuggestions(const std::wstring_view typed)
     {
-        m_listed.clear();
-        DropListLines lines;
-        for (std::size_t i = 0; i != m_suggestionNames.size(); ++i)
-        {
-            if (!startsWithFolded(m_suggestionNames[i], typed))
-                continue;
-            const TextItem& item = (*m_suggestions)[i];
-            Text text;
-            if (item.text().empty())
-                text << InkGrade::Muted << item.placeHolderText() << PopColor{};
-            else
-                text << item.text();
-            m_listed.push_back(i);
-            lines.push_back({ .text = std::move(text) });
-        }
+        DropListLines lines = m_suggester->suggest(typed);
         if (lines.empty())
         {
             hideSuggestions();

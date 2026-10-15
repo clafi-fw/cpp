@@ -302,54 +302,59 @@ it stand its Project options row and a line that parts the row from the project'
 options page is titled as every page is, and under the title holds the project's name, in heading
 type, in a box that renames it - Return or leaving the box keeps the name, Escape puts it back, and
 an emptied box gives the project its folder's name - then its folder, and how long ago it was
-scanned with a Rescan button that reads the sources again. Under Sources stand the folders it reads,
-a row each: the folder in a box with a browse button at its end, Include subfolders, and a cross
-that stops reading it. A box shows the folder it reads in full while the box is left, and while it
-is edited the words `Sources` writes, which are the words typed (`..` for a tree's own folder from
-its `.seedocs`); an edit refused keeps the words typed. A folder typed or browsed over it is read in
-its place, one typed relative read from the project's folder, and an emptied box stops reading it;
-the same folder typed another way is kept as typed, with no scan. Under the folders stands an empty
-box reading Add source, always there: a folder typed or browsed into it is read as one more, and its
-row becomes that folder's with a new empty box under it. The empty box's row keeps the room of a
-folder's answers, so the two boxes end at one edge. A folder that does not exist or is read already
-is refused with the reason under the box. Under Scan options, the page asks whether the sources are
-read as any C++ and Delphi or as ClaFi modules, and whether hints come from every recognizable
-comment or follow the strict ClaFi rules - a new project starts on the first of each; under Edit
-hints, whether a hint edited on a page is not written at all or written directly into the source,
-with no undo. Every change reads the sources again, but the last, which builds the pages again. The
-page stays where it stands while the sources are read again. Its url is the project's with
-`/.project` after it: the scanner passes over names that start with a dot, so no folder can take it.
+scanned with a Rescan button that reads the sources again. Under Sources stand the folders it reads
+in a grid, a row each: the folder, in full, with a browse button beside it, the two under one
+heading, whether the folders under it are read, and a cross that stops reading it. A row dragged
+moves among the others, and the sources are read in the order the rows stand in. A click on the
+folder of the row already picked edits it in place, on the words `Sources` writes, which are the
+words typed (`..` for a tree's own folder from its `.seedocs`); an edit refused keeps the editor
+open with the reason. A folder typed or browsed over it is read in its place, one typed relative
+read from the project's folder, and an edit emptied stops reading it; the same folder typed another
+way is kept as typed, with no scan. Under the folders stands a row reading Add source, always there:
+a folder typed or browsed into it is read as one more, and the row becomes that folder's with a new
+Add source row under it. A folder that does not exist or is read already is refused with the reason
+at the editor, or at the row when it was browsed. Under Scan options, the page asks whether the
+sources are read as any C++ and Delphi or as ClaFi modules, and whether hints come from every
+recognizable comment or follow the strict ClaFi rules - a new project starts on the first of each;
+under Edit hints, whether a hint edited on a page is not written at all or written directly into the
+source, with no undo. Every change reads the sources again, but the last, which builds the pages
+again. The page stays where it stands while the sources are read again. Its url is the project's
+with `/.project` after it: the scanner passes over names that start with a dot, so no folder can
+take it.
 
-**A folder typed lists the folders under it.** A source's box, and the New project window's box for
-where to store the project, list as they are typed at their end the folders in the folder the text
-names up to its last separator whose names start with what follows it - case aside, by name, at most
-200, and those starting with a dot only once a dot is typed - each marked as the tree marks a
-folder, the letters typed in the accent. A source's box reads a path typed relative from the
-project's folder, while the New project window's lists only a path from a root; a server named
-alone, as `\\server\` is, lists nothing, its shares being looked up over the network. Down or
-Alt+Down drops the list over the text as it stands. Down, Up, Page Up and Page Down walk it, nothing
-current until Down, and Up from the first line goes back to the box. Return or a click on a line
-takes that folder into the box with a separator after it, and the folders under it are listed in
+**A folder typed lists the folders under it.** A source's editor, and the New project window's box
+for where to store the project, list as they are typed the folders in the folder the text names up
+to its last separator whose names start with what follows it - case aside, by name, at most 200,
+and those starting with a dot only once a dot is typed - each marked as the tree marks a folder,
+the letters typed in the accent. A source's editor reads a path typed relative from the project's
+folder, while the New project window's box lists only a path from a root; a server named alone, as
+`\\server\` is, lists nothing, its shares being looked up over the network. Down or Alt+Down drops
+the list over the box's text as it stands; F4 or Alt+Down over the editor list the folders under
+the project's folder, whatever is typed. Down, Up, Page Up and Page Down walk the list, nothing
+current until Down, and Up from the first line goes back to the text. Return or a click on a line
+takes that folder into the text with a separator after it, and the folders under it are listed in
 turn; Return with no line current takes what is typed, as it does with no list. Escape takes the
-list down, as Tab and leaving the box do, and an edit further in than the text's end lists nothing.
+list down, as Tab and leaving the box do. The box lists only on an edit at its text's end; the
+editor lists on every edit.
 
-SeeDocs is a browser of the framework's own kind: tabs across the top, under them the crumbs of
-the page shown with a list dropping from each, Back, Forward and Up beside them, and a search box at
-the bar's end - see Search. Every page has
-a url - `/project/folder/module/type/method`, the project named by its name - so a tab goes back
-and forward through the pages it has visited (Alt+Left and Alt+Right, the side buttons of the
-mouse, or a right click on either button for the list), a type's crumb lists its methods, and Up
-climbs the path. The root, `/`, lists the projects open, each with a Close button that closes the
-project and every tab on it. A home page opens each project: a link to its Project options page,
-then the folders under the root as the tree lists them, with what each holds at every depth; a
-Close project button stands at the page's top right. A project with nothing to document has the same
-home, saying why under its title. Modules standing in a source folder's own folder are home's: they
-stand in the project's node under its folders, and the home page carries what they export, by
-module, as a folder's page does. Renaming a project takes every url under it along, in the tabs and
-in their histories alike, and a second project open under a name already taken goes by that name
-with a number after it. Where a tab stands, the tabs open and each one's history are kept with the
-settings, so a run starts where the last one left off. A url no project open carries - a project
-closed, or a type gone since the sources were scanned - shows a page saying so.
+SeeDocs is a browser of the framework's own kind: tabs across the top, under them the crumbs of the
+page shown with a list dropping from each, Back, Forward and Up beside them, and a search box at the
+bar's end - see Search. Every page has a url - `/project/folder/module/type/method`, the project
+named by its name - so a tab goes back and forward through the pages it has visited (Alt+Left and
+Alt+Right, the side buttons of the mouse, or a right click on either button for the list), a type's
+crumb lists its methods, and Up climbs the path. The root, `/`, lists the projects open, each with a
+Close button that closes the project and every tab on it; a row dragged to another place puts the
+projects in that order, which the tree and the next start follow. A home page opens each project: a
+link to its Project options page, then the folders under the root as the tree lists them, with what
+each holds at every depth; a Close project button stands at the page's top right. A project with
+nothing to document has the same home, saying why under its title. Modules standing in a source
+folder's own folder are home's: they stand in the project's node under its folders, and the home
+page carries what they export, by module, as a folder's page does. Renaming a project takes every
+url under it along, in the tabs and in their histories alike, and a second project open under a name
+already taken goes by that name with a number after it. Where a tab stands, the tabs open and each
+one's history are kept with the settings, so a run starts where the last one left off. A url no
+project open carries - a project closed, or a type gone since the sources were scanned - shows a
+page saying so.
 
 The pages: down the left, under each project's node, a tree of the sources' folders, named as
 they stand on disk, each holding the folders under it and then its modules by their full names,

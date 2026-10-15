@@ -3,6 +3,7 @@ module SeeDocs_App.FolderBox;
 import SeeDocs_App.Icons;
 
 import ClaFi.Controls.DropList;
+import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.TextBox;
 import ClaFi.Controls.TextItems;
 
@@ -97,6 +98,56 @@ namespace SeeDocs_App
         }
     }
 
+    // FolderSuggester
+
+    void FolderSuggester::setBase(std::filesystem::path base)
+    {
+        m_base = std::move(base);
+    }
+
+    // **The text names a folder and the start of a name in it**: what stands up to the last
+    // separator, read from the base where it is relative, and what follows.
+    DropListLines FolderSuggester::suggest(const std::wstring_view typed)
+    {
+        m_typed = typed;
+        const std::size_t start = leafStart(typed);
+        std::wstring_view parent = typed.substr(0, start);
+        trimLeft(parent);
+        const std::wstring_view leaf = typed.substr(start);
+        const std::filesystem::path written{ std::wstring{ parent } };
+        const std::filesystem::path folder = m_base / written;
+        if ((!written.is_absolute() && m_base.empty()) || namesServerOnly(folder))
+        {
+            m_names.clear();
+            return {};
+        }
+        m_names = subfolders(folder, leaf);
+        DropListLines lines;
+        for (const std::wstring_view name : m_names)
+        {
+            DropListLine line;
+            line.text << rowIcon(RowIcon::Folder) << Space{ k_iconGap };
+            if (!leaf.empty())
+                line.text << InkWell::accentInk() << name.substr(0, leaf.size()) << PopColor{};
+            line.text << name.substr(leaf.size());
+            lines.push_back(std::move(line));
+        }
+        return lines;
+    }
+
+    // **A folder picked is walked into**: it closes with a separator, and the folders under it are
+    // listed in turn.
+    std::wstring FolderSuggester::pick(const std::size_t line)
+    {
+        if (line >= m_names.size())
+            return m_typed;
+        const std::size_t start = leafStart(m_typed);
+        std::wstring taken = m_typed.substr(0, start);
+        taken.append(m_names[line]);
+        taken.push_back(separatorAfter(std::wstring_view{ m_typed }.substr(0, start)));
+        return taken;
+    }
+
     // FolderList
 
     // Walked as a combo box's list is: nothing is current until Down, and Up from the first line
@@ -112,11 +163,6 @@ namespace SeeDocs_App
             DropListOptions{ .upFromFirst = UpFromFirst::Leaves }
         }
     {
-    }
-
-    void FolderList::setBase(std::filesystem::path base)
-    {
-        m_base = std::move(base);
     }
 
     // **Typing at the end lists**, as an address bar does. An edit further in corrects what stands,
@@ -203,51 +249,23 @@ namespace SeeDocs_App
         m_list.hide();
     }
 
-    // **The text names a folder and the start of a name in it**: what stands up to the last
-    // separator, read from the base where it is relative, and what follows. The list stands off
-    // the field the box fills, where it fills one, and is at least as wide.
+    // The list stands off the field the box fills, where it fills one, and is at least as wide.
     void FolderList::show()
     {
-        const std::wstring typed = m_box.text().plainText();
-        const std::size_t start = leafStart(typed);
-        std::wstring_view parent = std::wstring_view{ typed }.substr(0, start);
-        trimLeft(parent);
-        const std::wstring_view leaf = std::wstring_view{ typed }.substr(start);
-        const std::filesystem::path written{ std::wstring{ parent } };
-        const std::filesystem::path folder = m_base / written;
-        if ((!written.is_absolute() && m_base.empty()) || namesServerOnly(folder))
+        DropListLines lines = m_folders.suggest(m_box.text().plainText());
+        if (lines.empty())
         {
-            m_names.clear();
             hide();
             return;
-        }
-
-        m_names = subfolders(folder, leaf);
-        DropListLines lines;
-        for (const std::wstring_view name : m_names)
-        {
-            DropListLine line;
-            line.text << rowIcon(RowIcon::Folder) << Space{ k_iconGap };
-            if (!leaf.empty())
-                line.text << InkWell::accentInk() << name.substr(0, leaf.size()) << PopColor{};
-            line.text << name.substr(leaf.size());
-            lines.push_back(std::move(line));
         }
         const Control& anchor = m_box.isHostedAsBody() ? *m_box.parent() : m_box;
         m_list.show(std::move(lines), std::nullopt, FormPlacement::BottomLeft, anchor);
     }
 
-    // **A folder picked is walked into**: it goes into the box closed with a separator, and the
-    // folders under it are listed in turn. An edit as typing is, so Ctrl+Z takes it back.
+    // An edit as typing is, so Ctrl+Z takes it back.
     void FolderList::take(const std::size_t line)
     {
-        if (line >= m_names.size())
-            return;
-        const std::wstring typed = m_box.text().plainText();
-        const std::size_t start = leafStart(typed);
-        std::wstring taken = typed.substr(0, start);
-        taken.append(m_names[line]);
-        taken.push_back(separatorAfter(std::wstring_view{ typed }.substr(0, start)));
+        const std::wstring taken = m_folders.pick(line);
         m_box.selectAll();
         m_box.replaceSelectedText(taken);
     }

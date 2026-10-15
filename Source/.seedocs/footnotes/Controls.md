@@ -306,22 +306,27 @@ nothing jumps as it opens. `textRect` is in the coordinates of the form the cont
 
 ## SuggestionList
 
-The items whose names begin with what is typed, listed under an in-place editor - what a combo box
-shows over its editor. EditTarget::suggestions holds them, and a read-only editor lists none.
+What goes with what is typed, listed under an in-place editor - what a combo box shows over its
+editor. A Suggester answers the lines for the typed text, and what a picked line puts in the box;
+EditTarget::suggester names one, or EditTarget::suggestions holds items the editor lists itself. A
+read-only editor lists none.
 
 **The caret stays in the box.** The list is a DropList on the box, as tall as the screen allows.
 
-**It lists what the sink would take.** A row matches by typedName against the trimmed text,
+**Items list what the sink would take.** A row matches by typedName against the trimmed text,
 ignoring case, as a combo box looks up a typed value. A row shows the item's text, or its
 placeholder muted - never what a face adds.
 
 - The list appears on the first edit, never on open, and hides when nothing matches or the text
   is empty.
-- F4 or Alt+Down list every item. The next edit filters again.
+- F4 or Alt+Down list everything - the suggester is asked for an empty text. The next edit filters
+  again.
 - Down enters at the first row, Up from the first row goes back to the box, and Down on the last
   row stays.
-- Return on the current row, or a mouse click on any row, puts its name in the box and offers it.
-  A refusal shows under the box, with the list already down.
+- Return on the current row, or a mouse click on any row, puts what the suggester answers in the
+  box and offers it. A refusal shows under the box, with the list already down.
+- A suggester whose pickAccepts says no keeps the edit going from what it put in the box, as a
+  folder picked from a path is walked into, and the list follows that edit as any other.
 - Escape hides the list and keeps the edit. The next Escape cancels it.
 
 **A row is current only after Down.** Return with no row current offers what was typed, so a sink

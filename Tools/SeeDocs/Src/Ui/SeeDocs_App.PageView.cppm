@@ -57,6 +57,16 @@ namespace SeeDocs_App
         const std::wstring target;   // what the command is about, as the page was given it
     };
 
+    // The rows of a rearrangeable table were carried to another order. The surface has an Event
+    // of its own.
+    export class PageOrderEvent : public ::ClaFi::Event
+    {
+    public:
+        explicit PageOrderEvent(std::vector<std::wstring> targets);
+    public:
+        const std::vector<std::wstring> targets;   // the rows' first links, as the rows stand
+    };
+
     // A fact's Open in editor button was clicked. The surface has an Event of its own.
     export class PageSourceEvent : public ::ClaFi::Event
     {
@@ -125,6 +135,9 @@ namespace SeeDocs_App
         // Connects a handler raised when a command's button on the page is clicked.
         template<typename F>
         EventConnection onPageCommand(F&& callback);
+        // Connects a handler raised when a rearrangeable table's rows were carried about.
+        template<typename F>
+        EventConnection onPageOrder(F&& callback);
         // Connects a handler raised when a fact's Open in editor button is clicked.
         template<typename F>
         EventConnection onPageSource(F&& callback);
@@ -197,6 +210,8 @@ namespace SeeDocs_App
             StackPanel& notes, TagValue hintColumn, Grids::Column* commandColumn, PageFootnotes&);
         // The button's caption and hint are written out of the command, and its click raises it.
         void connectCommand(Button&, const Command&);
+        // Raises PageOrderEvent with the rows' first links, in the order the rows stand in now.
+        void reportOrder(Grids::Grid&);
         // The button opens the fact's source, greyed with a hint while no editor is set for it.
         void connectSource(Button&, const Fact&);
         void connectFolder(Button&, const Fact&);   // its click opens the fact's folder
@@ -337,6 +352,12 @@ namespace SeeDocs_App
     EventConnection PageView::onPageCommand(F&& callback)
     {
         return connectEvent<PageCommandEvent>(std::forward<F>(callback));
+    }
+
+    template<typename F>
+    EventConnection PageView::onPageOrder(F&& callback)
+    {
+        return connectEvent<PageOrderEvent>(std::forward<F>(callback));
     }
 
     template<typename F>

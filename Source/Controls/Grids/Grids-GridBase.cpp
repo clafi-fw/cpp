@@ -219,9 +219,10 @@ namespace ClaFi::Controls::Grids
         m_descriptor.endCellSelection();
     }
 
-    void GridBase::nestedDoubleClick(NestedDoubleClickEvent& event)
+    // The click that picks a cell never edits it, and a press that became a drag raises no click.
+    void GridBase::nestedClick(NestedClickEvent& event)
     {
-        if (editSelectedCell())
+        if (clickEditsCell(event) && editSelectedCell())
         {
             // The walk reads this once this returns, so stopping it here is what keeps the
             // controls above from being handed a gesture on the far side of the editor's own
@@ -229,7 +230,18 @@ namespace ClaFi::Controls::Grids
             event.stopPropagation();
             return;
         }
-        StackView::nestedDoubleClick(event);
+        StackView::nestedClick(event);
+    }
+
+    bool GridBase::clickEditsCell(const NestedClickEvent& event) const
+    {
+        if (!Input::mouse().active())
+            return false;
+        const CellPress& press = m_descriptor.lastPress();
+        if (press.kind != CellPressKind::Act || !press.column || press.row != &event.clickedControl)
+            return false;
+        const RowBase& row = static_cast<const RowBase&>(event.clickedControl);
+        return row.laneColumnAt(event.clickPos()) == press.column;
     }
 
     void GridBase::nestedKeyDown(KeyDownEvent& event)
@@ -394,6 +406,7 @@ namespace ClaFi::Controls::Grids
             // window wider than the grid it belongs to is not.
             .maxTextSize = { visibleRectInForm().width(), 0.0f },
             .readOnly = readOnly ? ReadOnly::Yes : ReadOnly::No,
+            .suggester = editorText.suggester,
             .textFormat = &row->cellTextFormat(*column),
         };
         InPlaceEdit::run(target, text, [this, row, column](AcceptEditEvent& event){

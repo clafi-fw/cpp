@@ -54,6 +54,20 @@ namespace ClaFi::Controls
 
     export using AcceptEditFunc = std::function<void(AcceptEditEvent&)>;
 
+    // What an editor lists under its box for the text typed, and what a pick puts in the box.
+    // See Controls#suggestionlist
+    export class Suggester
+    {
+    public:
+        virtual ~Suggester() = default;
+        // The lines for this text, none taking the list down; empty text asks for every line.
+        [[nodiscard]] virtual DropListLines suggest(std::wstring_view typed) = 0;
+        // What the box reads once the line is picked.
+        [[nodiscard]] virtual std::wstring pick(std::size_t line) = 0;
+        // Whether a pick ends the edit with what it put in the box.
+        [[nodiscard]] virtual bool pickAccepts() const { return true; }
+    };
+
     // What an in-place editor is placed over, and how far it may grow. See Controls
     export struct EditTarget
     {
@@ -87,6 +101,8 @@ namespace ClaFi::Controls
         std::wstring_view typed{};
         // What the editor completes from, **named** rather than copied. See Controls#suggestionlist
         const TextItems* suggestions{ nullptr };
+        // What the editor completes from as the text changes, where a list does not say it.
+        Suggester* suggester{ nullptr };
         // What the covered text is laid out over, or none. The editor lays its own out the same.
         const TextFormat* textFormat{ nullptr };
     };
@@ -173,8 +189,8 @@ namespace ClaFi::Controls
         // Lists the items the text names, or takes the list down while none is.
         void showSuggestions(std::wstring_view typed);
         void hideSuggestions();
-        // Puts the item's name in the box and offers it - a pick is a pick, however it was made.
-        void takeSuggestion(std::size_t itemIndex);
+        // Puts what the line picked names in the box and offers it where a pick ends the edit.
+        void takeSuggestion(std::size_t line);
     private:
         AcceptEditFunc m_accept{};
         // Cancelled until something says otherwise: an edit nobody took is an edit that did not
@@ -185,12 +201,11 @@ namespace ClaFi::Controls
         // tidy-up offer running a sink that has already refused.
         bool m_settled{ false };
         bool m_asked{ false };
-        const TextItems* m_suggestions{ nullptr };
-        // What each item is matched by - its typed name, settled once. See Controls#suggestionlist
-        std::vector<std::wstring> m_suggestionNames{};
+        // What the list is filled from: the target's own, or one made over the items it named.
+        std::unique_ptr<Suggester> m_itemsSuggester{};
+        Suggester* m_suggester{ nullptr };
         // The list on the box, shown and hidden as what is typed changes. See Controls#droplist
         std::optional<DropList> m_list{};
-        std::vector<std::size_t> m_listed{};   // the item each line of the list stands for
         // The list asked for on an edit, answered once the input that made it has been delivered.
         UiTimer m_suggestionsRequest{};
         // Whether a request found the layout unsettled and waits on the pass that settles it.
@@ -408,14 +423,14 @@ namespace ClaFi::Controls
 
         const FloatRect textRect = this->textBounds(this->formContext(), this->boundsInForm());
         const EditTarget target{
-            *this,
-            textRect,
-            this->horizontalTextAnchor(),
-            editorMaxTextSize(textRect),
-            mode == EditorMode::ReadOnly ? ReadOnly::Yes : ReadOnly::No,
-            typed,
-            editorSuggestions(),
-            this->textFormat()
+            .control = *this,
+            .textRect = textRect,
+            .textAnchor = this->horizontalTextAnchor(),
+            .maxTextSize = editorMaxTextSize(textRect),
+            .readOnly = mode == EditorMode::ReadOnly ? ReadOnly::Yes : ReadOnly::No,
+            .typed = typed,
+            .suggestions = editorSuggestions(),
+            .textFormat = this->textFormat()
         };
         // The call below runs a message loop and returns only once the editor is gone, so a local
         // outlives every read of it.

@@ -86,6 +86,8 @@ namespace SeeDocs_App
         void renameProject(ProjectId, std::wstring_view name);
         // Takes the project's node out, with every row under it.
         void removeProject(ProjectId);
+        // Puts the projects' nodes in this order, one not named after those that are.
+        void orderProjects(std::span<const ProjectId>);
         // Makes the row of the folder, the module or the type - the nearest one named - the
         // current row, the nodes over it opened, and scrolls it into view. Nothing named makes the
         // project's own node current. Raises no pick.

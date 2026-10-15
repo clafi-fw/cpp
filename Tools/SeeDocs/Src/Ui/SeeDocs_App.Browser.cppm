@@ -84,6 +84,15 @@ namespace SeeDocs_App
         OpenProject& project;
     };
 
+    // The root page's rows were carried into another order. The surface has an Event of its own.
+    export class OrderProjectsEvent : public ::ClaFi::Event
+    {
+    public:
+        explicit OrderProjectsEvent(std::vector<OpenProject*>);
+    public:
+        const std::vector<OpenProject*> projects;   // in the order the rows stand
+    };
+
     // A notice asked for a project to be scanned again. The surface has an Event of its own.
     export class RescanProjectEvent : public ::ClaFi::Event
     {
@@ -113,6 +122,7 @@ namespace SeeDocs_App
         // anything else names a page of the surface.
         void followLink(std::wstring_view target);
         void runCommand(std::wstring_view target);   // hands a command's click to the browser
+        void orderRows(std::span<const std::wstring> targets);   // hands a carry to the browser
         void openSource(const SourcePlace&);   // hands a source button's click to the browser
         // Shows the anchor the tab arrived at, and tells the browser where the page opens.
         void arrive(const Url&);
@@ -162,6 +172,9 @@ namespace SeeDocs_App
         // Connects a handler raised when a page asks for a project to be closed.
         template<typename F>
         EventConnection onCloseProject(F&& callback);
+        // Connects a handler raised when the root page's rows were carried into another order.
+        template<typename F>
+        EventConnection onOrderProjects(F&& callback);
         // Connects a handler raised when a notice asks for a project to be scanned again.
         template<typename F>
         EventConnection onRescanProject(F&& callback);
@@ -179,6 +192,8 @@ namespace SeeDocs_App
         // Takes the project out, its node and every tab standing in it. A tab is left, on the root
         // where no other stands.
         void removeProject(OpenProject&);
+        // Shows the projects in this order: the nodes of every tree, the root's rows and lists.
+        void orderProjects(std::span<OpenProject* const>);
         void showWords(const Text&);   // what the root shows while no project is open
         // What a project's options page is filled with, each time one is built.
         void connectProjectPage(ProjectPageBuilder);
@@ -189,6 +204,9 @@ namespace SeeDocs_App
         // A page's command was clicked: the project whose home the target names is asked to be
         // closed, the one command a page has.
         void answerCommand(std::wstring_view target);
+        // The root's rows were carried about: the projects their home paths name are asked to be
+        // put in that order.
+        void answerOrder(std::span<const std::wstring> targets);
         // Opens a source a page names in the editor Settings keeps for its language. See README
         void openSource(const PageData& from, const SourcePlace&);
         [[nodiscard]] const Searcher& searcher() const { return m_searcher; }   // the box's words
@@ -473,6 +491,9 @@ namespace SeeDocs_App
         m_view.onPageCommand([this](PageCommandEvent& event) {
             runCommand(event.target);
         });
+        m_view.onPageOrder([this](PageOrderEvent& event) {
+            orderRows(event.targets);
+        });
         m_view.onPageSource([this](PageSourceEvent& event) {
             openSource(event.source);
         });
@@ -525,6 +546,12 @@ namespace SeeDocs_App
     EventConnection SurfaceBrowser::onCloseProject(F&& callback)
     {
         return connectEvent<CloseProjectEvent>(std::forward<F>(callback));
+    }
+
+    template<typename F>
+    EventConnection SurfaceBrowser::onOrderProjects(F&& callback)
+    {
+        return connectEvent<OrderProjectsEvent>(std::forward<F>(callback));
     }
 
     template<typename F>

@@ -109,6 +109,9 @@ namespace SeeDocs_App
         m_closeAsked = m_browser.onCloseProject([this](CloseProjectEvent& event) {
             closeLater(event.project);
         });
+        m_orderAsked = m_browser.onOrderProjects([this](OrderProjectsEvent& event) {
+            orderProjects(event.projects);
+        });
         m_rescanAsked = m_browser.onRescanProject([this](RescanProjectEvent& event) {
             rescan(event.project);
         });
@@ -360,6 +363,29 @@ namespace SeeDocs_App
         }, Reread::Sources);
     }
 
+    void Workspace::orderSources(OpenProject& open,
+        const std::span<const std::wstring_view> sources)
+    {
+        change(open, [sources](Project& project) {
+            ProjectSources ordered{};
+            ordered.reserve(project.sources.size());
+            for (const std::wstring_view source : sources)
+            {
+                const ProjectSources::iterator found = std::ranges::find_if(project.sources,
+                    [source](const ProjectSource& entry) {
+                        return entry.written == source;
+                    });
+                if (found == project.sources.end())
+                    continue;
+                ordered.push_back(std::move(*found));
+                project.sources.erase(found);
+            }
+            for (ProjectSource& entry : project.sources)
+                ordered.push_back(std::move(entry));
+            project.sources = std::move(ordered);
+        }, Reread::Sources);
+    }
+
     void Workspace::setMode(OpenProject& open, const ScanMode mode)
     {
         if (open.project.mode == mode)
@@ -443,6 +469,28 @@ namespace SeeDocs_App
                 return open.get();
         }
         return nullptr;
+    }
+
+    void Workspace::orderProjects(const std::span<OpenProject* const> order)
+    {
+        Projects ordered{};
+        ordered.reserve(m_projects.size());
+        for (OpenProject* open : order)
+        {
+            const Projects::iterator found = std::ranges::find_if(m_projects,
+                [open](const std::unique_ptr<OpenProject>& project) {
+                    return project.get() == open;
+                });
+            if (found == m_projects.end())
+                continue;
+            ordered.push_back(std::move(*found));
+            m_projects.erase(found);
+        }
+        for (std::unique_ptr<OpenProject>& project : m_projects)
+            ordered.push_back(std::move(project));
+        m_projects = std::move(ordered);
+        storeOpen();
+        m_browser.orderProjects(order);
     }
 
     // The browser lets go of the project before it is dropped.

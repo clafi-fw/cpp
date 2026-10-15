@@ -47,9 +47,15 @@ selected cell takes what is typed, and every key the grid leaves:
 - Ctrl or Shift in a `SelectionMode::Multi` grid make the press a selection change alone, and the
   cell refuses every popup.
 - A key's click - Return or Space handed to the control - is always allowed its popup.
-- A double click on a cell not yet selected picks it and opens its editor.
 
 The click reaches the grid as a click on the row.
+
+## Editing a cell
+
+**A click on the cell the user is already on opens its editor**, as it does on a tile: the first
+click picks the cell, the next edits it. The editor opens on the release, so a press that becomes
+a drag - a carry of the row - opens nothing. F2 and Return open it from the keyboard. A cell
+holding a control is that control's, and its popup waits for the same second click.
 
 ## RowContainer isChildWidthGiven
 

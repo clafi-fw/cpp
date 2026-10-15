@@ -142,11 +142,10 @@ namespace ClaFi::Controls::Grids
         // Control::heldHeaderStrip.
         void scrollChildIntoView(Control&, FloatRect) override;
         void nestedPressDown(PressDownEvent&) override;
-        // Answered **here** and not on the row. The double-click walk starts at the control the
-        // pointer hit and climbs, so the grid sees every one of them, and the grid is what holds
-        // the selected cell the edit is for. The first click of the pair has already put the
-        // selection on the cell under the pointer.
-        void nestedDoubleClick(NestedDoubleClickEvent&) override;
+        // Answered **here** and not on the row. The click walk starts at the control the pointer
+        // hit and climbs, so the grid sees every one of them, and the grid is what holds the
+        // selected cell the edit is for. See Grids#editing-a-cell
+        void nestedClick(NestedClickEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
         // Puts a row added after the new-item row ahead of it, and notes it for requestNewItem.
         void controlAdded(Control&) override;
@@ -185,6 +184,9 @@ namespace ClaFi::Controls::Grids
         // not re-checked and cannot be: this call is on the stack of the grid's own key walk, so
         // a grid that does not survive the edit has already taken the caller with it.
         bool editSelectedCell();
+        // Whether this click is the one that opens the selected cell's editor: a mouse click,
+        // released on the cell the press landed on, that press having found the user on it.
+        [[nodiscard]] bool clickEditsCell(const NestedClickEvent&) const;
         // Moves the selected cell one step the way the key points, over the cells of every row
         // the window reaches. False when the field holds none that way, which is what lets the
         // key travel on to the grid that holds this one, and out of the grid altogether.
