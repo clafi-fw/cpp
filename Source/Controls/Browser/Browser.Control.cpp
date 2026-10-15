@@ -520,7 +520,7 @@ namespace ClaFi::Browser
         {
             const float delta = -spareWidth;
             m_tabs.fitTabs(delta);
-            for (ControlPtr& ptr : m_tabs.controls())
+            for (const ControlPtr& ptr : m_tabs.controls())
             {
                 BrowserTab& tab = static_cast<BrowserTab&>(*ptr);
                 if (!tab.selected())
@@ -932,7 +932,7 @@ namespace ClaFi::Browser
         if (!canLeavePage(tab, tab))
             return;
 
-        ControlSpan tabControls = m_tabs.controls();
+        ControlSpanC tabControls = m_tabs.controls();
         if (tabControls.size() == 1ull) // is last remaining tab
         {
             // so the tab remains selected and will be reselected on the next initialization

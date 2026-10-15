@@ -106,10 +106,15 @@ namespace ClaFi::Controls
         ScopedEventConnection m_pageConnection{};
     };
 
+    using TabStripBaseClass = StackPanelBase;
+
     // A row of tabs, sharing the room between them.
-    export class TabStripBase : public StackPanel, public IFittableList
+    export class TabStripBase : public TabStripBaseClass, public IFittableList
     {
         friend Tab;
+    public:
+        using TabStripBaseClass::add;
+        ControlSpanC controls() const { return TabStripBaseClass::controls(); }; // restated because of ICE in MSVC
     public:
         template <typename... Args>
         explicit TabStripBase(const CreateParams&, Args&&...);
@@ -130,8 +135,8 @@ namespace ClaFi::Controls
         void fitTabs(float delta);
         void tabCreated(Tab*);
     protected:
-        using StackPanel::orientation;
-        using StackPanel::setOrientation;
+        using TabStripBaseClass::orientation;
+        using TabStripBaseClass::setOrientation;
         // Tab mode pads the outer side only and keeps non-tabs off the line. See Item-Containers
         void adjustMetrics(AdjustMetricsEvent&) const override;
         ScaledSize calculateContent(AlignEvent&) override;
@@ -564,7 +569,7 @@ namespace ClaFi::Controls
         // ActiveContainer is what makes a strip keep a current item at all, and the open tab is
         // that item. Load-bearing and quiet: drop it and everything still compiles, the tabs just
         // stop answering to a click.
-        StackPanel{ params, Interactivity::ActiveContainer, std::forward<Args>(args)... },
+        TabStripBaseClass{ params, Interactivity::ActiveContainer, std::forward<Args>(args)... },
         INIT_PROPERTY(tabViewMode)
     {
         // Which edge of the box the tabs run along.
@@ -629,7 +634,7 @@ namespace ClaFi::Controls
 
     void TabStripBase::adjustMetrics(AdjustMetricsEvent& event) const
     {
-        StackPanel::adjustMetrics(event);
+        TabStripBaseClass::adjustMetrics(event);
         if (m_tabViewMode == TabViewMode::ToolButton)
             return;
         if (orientation() == Orientation::Horizontal)
@@ -642,7 +647,7 @@ namespace ClaFi::Controls
     // bound, and not onto a floor of zero.
     ScaledSize TabStripBase::calculateContent(AlignEvent& event)
     {
-        ScaledSize result = StackPanel::calculateContent(event);
+        ScaledSize result = TabStripBaseClass::calculateContent(event);
         const bool horizontal = orientation() == Orientation::Horizontal;
         float& extent = horizontal ? result.y : result.x;
         float& minExtent = horizontal ? event.composedMinSize.y : event.composedMinSize.x;
@@ -697,7 +702,7 @@ namespace ClaFi::Controls
         position.y += roomBefore.y;
         contentDimensions.x = std::max(contentDimensions.x - roomBefore.x - roomAfter.x, 0.0f);
         contentDimensions.y = std::max(contentDimensions.y - roomBefore.y - roomAfter.y, 0.0f);
-        StackPanel::alignContent(event, position, contentDimensions);
+        TabStripBaseClass::alignContent(event, position, contentDimensions);
         // The content answers where it ends, counted from the origin, so the room before the tabs
         // is in that answer already and only the room after them is added.
         contentDimensions.x += roomAfter.x;
@@ -732,7 +737,7 @@ namespace ClaFi::Controls
 
     void TabStripBase::nestedControlDeleted(Control* control)
     {
-        StackPanel::nestedControlDeleted(control);
+        TabStripBaseClass::nestedControlDeleted(control);
 
         auto it = std::find(m_hotTabs.begin(), m_hotTabs.end(), control);
         if (it != m_hotTabs.end())
@@ -742,7 +747,7 @@ namespace ClaFi::Controls
 
     void TabStripBase::childHoverEnter(Control& control)
     {
-        StackPanel::childHoverEnter(control);
+        TabStripBaseClass::childHoverEnter(control);
 
         auto it = std::find(m_hotTabs.begin(), m_hotTabs.end(), &control);
         if (it != m_hotTabs.end())
@@ -753,12 +758,12 @@ namespace ClaFi::Controls
     {
         if (!m_overlayHost)
         {
-            StackPanel::paintChildren(event);
+            TabStripBaseClass::paintChildren(event);
             return;
         }
         Control* selItem = currentItem();
 
-        for (ControlPtr& control : controls())
+        for (const ControlPtr& control : controls())
             if (!m_allTabs.contains(&*control))
                 event.paintChild(*control);
 
@@ -777,7 +782,7 @@ namespace ClaFi::Controls
 
     void TabStripBase::paintSurface(PaintEvent& pp)
     {
-        StackPanel::paintSurface(pp);
+        TabStripBaseClass::paintSurface(pp);
         if (!currentItem())
         {
             // Optional: Draw line fallback when there is no active selection
@@ -789,7 +794,7 @@ namespace ClaFi::Controls
     FloatPoint TabStripBase::overlayChildOffset(const Control& child) const
     {
         // A carried tab is drawn where the pointer holds it.
-        const FloatPoint carried = StackPanel::overlayChildOffset(child);
+        const FloatPoint carried = TabStripBaseClass::overlayChildOffset(child);
         if (carried != FloatPoint{})
             return carried;
         // Only a lifted tab is held. One painted in its place would slide under the tabs after it.
@@ -810,7 +815,7 @@ namespace ClaFi::Controls
     {
         if (m_overlayHost && orientation() == Orientation::Vertical)
             controlRect.inflate(0.0f, scrollContentInset().y);
-        StackPanel::scrollChildIntoView(control, controlRect);
+        TabStripBaseClass::scrollChildIntoView(control, controlRect);
     }
 
     bool TabStripBase::defaultCanFocusItem(Control& item)
@@ -833,7 +838,7 @@ namespace ClaFi::Controls
                     if (prevPage != newPage)
                         prevPage->hide();
         }
-        StackPanel::currentItemChanged(event);
+        TabStripBaseClass::currentItemChanged(event);
         if (m_overlayHost)
         {
             if (event.previousItem)
