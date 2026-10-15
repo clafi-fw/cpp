@@ -70,6 +70,12 @@ counts as a reach for the keyboard.
 
 **Empty on a key nobody pressed** - a shortcut the framework raised for itself.
 
+## KeyDownEvent during a drag
+
+**The pressed control's chain is told first**, from the control the mouse went down on up to the
+root, and the focused chain after it - what the first walk reached is not told twice. Escape
+cancels a carry this way whichever control holds the focus.
+
 ## WindowFrame
 
 **The form states the design through IPlatformWindow::setFrame**, and the platform answers with

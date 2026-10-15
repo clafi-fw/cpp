@@ -6,6 +6,7 @@ import Themes_App.RuleSlider;
 import Themes_App.ValueRuleControl;
 
 import ClaFi.Controls.Grids;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 
 import ClaFi.Core.AppTheme_Colors;
@@ -163,17 +164,61 @@ namespace Themes_App
         rulesChanged(EditPhase::Settled, what, at);
     }
 
+    // **The rows stand in their new order and the rules follow them.** Each row's tag still names
+    // the rule it was built for, so the list is read off the rows and the tags restated as the
+    // places the rules stand at now. The step is made on the rows as they stand.
+    void ElementPage::rulesMoved(const ItemsMoveEvent& event)
+    {
+        ColorRules rules{};
+        rules.reserve(m_rules->size());
+        RuleRows rows{};
+        rows.reserve(m_ruleRows.size());
+        for (ControlPtr& control : m_grid.controls())
+        {
+            const RuleRows::iterator row = std::ranges::find_if(m_ruleRows,
+                [&control](const Grids::RowContainer* candidate) {
+                    return candidate == &*control;
+                });
+            if (row == m_ruleRows.end())
+                continue;
+            rules.push_back((*m_rules)[(*row)->tag().value]);
+            rows.push_back(*row);
+        }
+        *m_rules = std::move(rules);
+        m_ruleRows = std::move(rows);
+        for (std::size_t i = 0ull; i != m_ruleRows.size(); ++i)
+        {
+            m_ruleRows[i]->setTag(Tag{ i });
+            bindEditors(*m_ruleRows[i]);
+        }
+        Text what{};
+        what << L"Move " << InkWell::accentInk();
+        if (event.items.size() == 1ull)
+        {
+            // The place is read off the rows: the grid counts its header among its children.
+            const RuleRows::iterator moved = std::ranges::find_if(m_ruleRows,
+                [&event](const Grids::RowContainer* candidate) {
+                    return candidate == event.items.front();
+                });
+            const std::size_t place = static_cast<std::size_t>(moved - m_ruleRows.begin());
+            what << L"rule " << (place + 1ull);
+        }
+        else
+            what << event.items.size() << L" rules";
+        what << PopColor{} << L" in " << InkWell::accentInk() << m_name << PopColor{};
+        rulesChanged(EditPhase::Settled, what, selection());
+    }
+
     // Every cell of a rule's row holds its editor.
     void ElementPage::addRow(const std::size_t index)
     {
         Grids::RowContainer& row = m_grid.addControlRow(Tag{ index });
         const Padding padding = themeMetrics().listItem.padding;
-        ApplyToControl& applyTo = row.addControl<ApplyToControl>(
+        row.addControl<ApplyToControl>(
             column(RuleColumn::ApplyTo),
             padding,
             VerticalAlign::Fill
         );
-        applyTo.bind(*m_rules, index, m_outputs, m_onCellEdit, ruleStepName(index, L"Apply to"));
         row.addControl<HueRuleControl>(
             column(RuleColumn::Hue),
             padding,
@@ -199,6 +244,8 @@ namespace Themes_App
     {
         const std::size_t index = row.tag().value;
         ColorEffect& effect = (*m_rules)[index].effect;
+        row.controlAtColumnAs<ApplyToControl>(column(RuleColumn::ApplyTo))
+            .bind(*m_rules, index, m_outputs, m_onCellEdit, ruleStepName(index, L"Apply to"));
         row.controlAtColumnAs<HueRuleControl>(column(RuleColumn::Hue))
             .bind(effect.hue, *m_colors, m_onCellEdit, true, ruleStepName(index, L"Hue"));
         row.controlAtColumnAs<ValueRuleControl>(column(RuleColumn::Saturation)).bind(

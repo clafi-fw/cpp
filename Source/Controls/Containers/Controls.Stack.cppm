@@ -6,6 +6,7 @@ import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.Base.StackPanelBase;
 
 import ClaFi.Core.AppTheme_AnimationSlots;
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.System.Events;
@@ -64,6 +65,33 @@ namespace ClaFi::Controls
         Equal      // the lane divided evenly, every item handed the same share of it
     };
 
+    // Whether the user may carry an item to another place among its siblings. See Item-Containers
+    export enum class ItemsOrder
+    {
+        Fixed,
+        Rearrangeable
+    };
+
+    export class StackPanelBase;
+
+    // May this item be carried to another place? See Item-Containers
+    export struct CanMoveItemEvent : public Event
+    {
+        CanMoveItemEvent(StackPanelBase&, const Control&, bool canMove);
+        StackPanelBase& itemsView;   // the stack asking
+        const Control& item;         // the item the answer is about
+        bool canMove;                // the answer, as the stack gave it before any handler
+    };
+
+    // Items standing at another place among their siblings now. See Item-Containers
+    export struct ItemsMoveEvent : public Event
+    {
+        ItemsMoveEvent(StackPanelBase&, std::span<Control* const> items, std::size_t to);
+        StackPanelBase& itemsView;         // the stack the items belong to
+        std::span<Control* const> items;   // in the order they stand, which they kept
+        std::size_t to;                    // the place the first of them stands at
+    };
+
     // A container that places its items in lanes. See Item-Containers
     export class StackPanelBase : public StackBase
     {
@@ -82,11 +110,20 @@ namespace ClaFi::Controls
         DECLARE_PROPERTY(LaneSize, laneSize, LaneSize{})
         // How a lane sizes the items in it.
         DECLARE_WRITABLE_PROPERTY(ItemSizing, itemSizing, setItemSizing, ItemSizing::Natural)
+        // Whether the user may carry an item to another place among its siblings.
+        DECLARE_PROPERTY(ItemsOrder, itemsOrder, ItemsOrder::Fixed)
+    public:
+        // Asked before an item is carried.
+        DECLARE_EVENT(CanMoveItemEvent, OnCanMoveItem, onCanMoveItem)
+        // Raised after items were put at another place, by a carry or by moveItems.
+        DECLARE_EVENT(ItemsMoveEvent, OnItemsMove, onItemsMove)
     public:
         std::wstring_view diagnosticText() const override { return L"Stack"; }
         void setOrientation(Orientation);
         void setItemSizing(ItemSizing);
         TraversalOrder traversalOrder() const override;
+        // Puts items, given in their order, at `to` and after. See Item-Containers
+        void moveItems(std::span<Control* const> items, std::size_t to);
     protected:
         ScaledDimensions calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledDimensions&) override;
@@ -97,6 +134,54 @@ namespace ClaFi::Controls
         [[nodiscard]] bool isChildHeightGiven(const Control& child) const override
             { return lanesRunAcross() || child.fillsLane(); }
         NavigationWrap navigationWrap() const override;
+        // The answer after the handlers have had it.
+        [[nodiscard]] bool canMoveItem(Control&);
+        // The answer before any handler sees it: a visible item of a rearrangeable stack.
+        virtual bool defaultCanMoveItem(Control&);
+        // What a drag from this item carries, in their order; nothing says the drag is no carry.
+        [[nodiscard]] virtual std::vector<Control*> carriedItems(Control& item);
+        virtual void itemsMoved(ItemsMoveEvent&) {}
+        void nestedDrag(DragEvent&) override;
+        void nestedPressUp(PressUpEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
+        void nestedControlDeleted(Control*) override;
+        [[nodiscard]] FloatPoint overlayChildOffset(const Control&) const override;
+    private:
+        // A carry under way: what the pointer holds, the run of siblings it may land among, and
+        // the order to put back if it is cancelled. See Item-Containers
+        struct Carry
+        {
+            std::vector<Control*> items;      // in their order; one block once gathered
+            std::vector<Control*> lifted;     // the items this stack lists as overlays
+            std::vector<Control*> original;   // the run as it stood before the carry
+            Control* anchor;                  // the item the press landed on
+            std::size_t first;                // the run's first child index
+            std::size_t last;                 // the run's last child index
+            float grab;                       // the pointer past the anchor's leading edge
+            float spacing;                    // between two neighbours along the lane
+            FloatPoint pointer;               // where the pointer last was, in form space
+            bool cancelled;                   // Escape put the run back; ends with the press
+        };
+    private:
+        void beginCarry(Control& item, DragEvent&);
+        void continueCarry(DragEvent&);
+        // The press ended: the run stands as the carry left it, and ItemsMoveEvent says so.
+        void endCarry();
+        void dropCarry();   // lets the items go, with no event
+        // The block put at `to`, the run's other items keeping their order around it.
+        void placeBlock(std::size_t to);
+        // The children from `from` on put in this order, moving only those standing elsewhere.
+        void placeChildren(std::span<Control* const> order, std::size_t from);
+        // Where the block lands among the run's other items, drawn with this leading edge.
+        [[nodiscard]] std::size_t carryIndex(float drawnLeading) const;
+        // How far along the lane the block is drawn from where it is laid out.
+        [[nodiscard]] float carriedBlockOffset() const;
+        [[nodiscard]] bool isCarried(const Control&) const;
+        [[nodiscard]] std::size_t indexOf(const Control&) const;
+        [[nodiscard]] float leadingOf(const Control& child) const
+            { return mainOf(child.topLeft()); }
+        [[nodiscard]] float extentOf(const Control& child) const
+            { return mainOf(child.dimensions()); }
     private:
         // What one lane holds: how many items it places, and the largest of them along the lane.
         // The two are read in one walk because an even lane needs both - the count divides it,
@@ -198,7 +283,7 @@ namespace ClaFi::Controls
         // ever been aligned reports a lane nothing can precede, and culls nothing.
         float m_maxLaneExtent{ k_maxFloat };
         float m_wrapLengthInDesign{};   // the length the lanes were last broken at, in design units
-
+        std::optional<Carry> m_carry{};
     };
 
     export class StackPanel : public StackPanelBase
@@ -282,6 +367,28 @@ namespace ClaFi::Controls
     {
     }
 
+    // CanMoveItemEvent
+
+    CanMoveItemEvent::CanMoveItemEvent(StackPanelBase& itemsView, const Control& item,
+        const bool canMove)
+        :
+        itemsView{ itemsView },
+        item{ item },
+        canMove{ canMove }
+    {
+    }
+
+    // ItemsMoveEvent
+
+    ItemsMoveEvent::ItemsMoveEvent(StackPanelBase& itemsView, const std::span<Control* const> items,
+        const std::size_t to)
+        :
+        itemsView{ itemsView },
+        items{ items },
+        to{ to }
+    {
+    }
+
     // StackPanelBase
 
     template<typename ...Args>
@@ -290,7 +397,8 @@ namespace ClaFi::Controls
         StackBase{ params, std::forward<Args>(args)... },
         INIT_PROPERTY(orientation),
         INIT_PROPERTY(laneSize),
-        INIT_PROPERTY(itemSizing)
+        INIT_PROPERTY(itemSizing),
+        INIT_PROPERTY(itemsOrder)
     {
     }
 
@@ -864,6 +972,295 @@ namespace ClaFi::Controls
             ++index;
         }
         mainOf(contentDimensions) = std::max(mainOf(contentDimensions), lastEnd);
+    }
+
+    void StackPanelBase::moveItems(const std::span<Control* const> items, const std::size_t to)
+    {
+        ControlSpan children = controls();
+        if (items.empty() || to + items.size() > children.size())
+            return;
+        for (const Control* item : items)
+            if (!item || item->parent() != this)
+                return;
+        std::vector<Control*> order{};
+        order.reserve(children.size());
+        for (ControlPtr& child : children)
+            if (std::ranges::find(items, &*child) == items.end())
+                order.push_back(&*child);
+        order.insert(order.begin() + static_cast<std::ptrdiff_t>(to), items.begin(), items.end());
+        placeChildren(order, 0ull);
+        ItemsMoveEvent event{ *this, items, to };
+        itemsMoved(event);
+        emitEvent(event);
+    }
+
+    bool StackPanelBase::canMoveItem(Control& item)
+    {
+        CanMoveItemEvent event{ *this, item, defaultCanMoveItem(item) };
+        emitEvent(event);
+        return event.canMove;
+    }
+
+    bool StackPanelBase::defaultCanMoveItem(Control& item)
+    {
+        return m_itemsOrder == ItemsOrder::Rearrangeable && item.visible();
+    }
+
+    std::vector<Control*> StackPanelBase::carriedItems(Control& item)
+    {
+        return { &item };
+    }
+
+    // The child the press landed in is what a carry takes - and in a stack following the user it
+    // has to be the item the press names, so an item inside a group moves nothing here. A drag
+    // some control inside the child has taken for its own is no carry either.
+    void StackPanelBase::nestedDrag(DragEvent& event)
+    {
+        StackBase::nestedDrag(event);
+        if (m_carry)
+        {
+            if (!m_carry->cancelled)
+                continueCarry(event);
+            return;
+        }
+        if (m_itemsOrder != ItemsOrder::Rearrangeable || event.hoveredControlLocked()
+            || !event.pastThreshold())
+            return;
+        Control* child = &event.control();
+        while (child && child->parent() != this)
+            child = child->parent();
+        if (!child || (followsUser() && itemAt(&event.control()) != child))
+            return;
+        if (canMoveItem(*child))
+            beginCarry(*child, event);
+    }
+
+    void StackPanelBase::nestedPressUp(PressUpEvent& event)
+    {
+        StackBase::nestedPressUp(event);
+        if (!m_carry)
+            return;
+        // A release ending a carry is the gesture's end, not a click on what it lands on.
+        event.handled.preventClick = true;
+        endCarry();
+    }
+
+    void StackPanelBase::nestedKeyDown(KeyDownEvent& event)
+    {
+        if (m_carry && !m_carry->cancelled && event.key == Keys::Escape)
+        {
+            // The run goes back as it stood, and the press still down starts nothing more.
+            Carry& carry = *m_carry;
+            placeChildren(carry.original, carry.first);
+            for (Control* lifted : carry.lifted)
+                removeOverlayControl(*lifted);
+            carry.lifted.clear();
+            carry.cancelled = true;
+            event.handled = true;
+            invalidate();
+            return;
+        }
+        StackBase::nestedKeyDown(event);
+    }
+
+    void StackPanelBase::nestedControlDeleted(Control* control)
+    {
+        StackBase::nestedControlDeleted(control);
+        if (m_carry && std::ranges::find(m_carry->original, control) != m_carry->original.end())
+            dropCarry();
+    }
+
+    FloatPoint StackPanelBase::overlayChildOffset(const Control& child) const
+    {
+        if (!m_carry || m_carry->cancelled || !isCarried(child))
+            return StackBase::overlayChildOffset(child);
+        return lanePoint(carriedBlockOffset(), 0.0f);
+    }
+
+    // One lane only: a stack wrapping its items has no one line to carry them along.
+    void StackPanelBase::beginCarry(Control& item, DragEvent& event)
+    {
+        if (m_orientation != Orientation::Horizontal && m_orientation != Orientation::Vertical)
+            return;
+        std::vector<Control*> items = carriedItems(item);
+        if (items.empty())
+            return;
+        ControlSpan children = controls();
+        // The run of siblings the carry may land among: as far as the movable ones reach on
+        // either side of the pressed item. Items outside it stay where they are.
+        const std::size_t pressed = indexOf(item);
+        std::size_t first = pressed;
+        while (first > 0ull && canMoveItem(*children[first - 1ull]))
+            --first;
+        std::size_t last = pressed;
+        while (last + 1ull < children.size() && canMoveItem(*children[last + 1ull]))
+            ++last;
+        std::erase_if(items, [&](const Control* carried) {
+            const std::size_t index = indexOf(*carried);
+            return index < first || index > last;
+        });
+        if (std::ranges::find(items, &item) == items.end())
+            return;
+        Carry carry{
+            .items = std::move(items),
+            .anchor = &item,
+            .first = first,
+            .last = last,
+            .grab = mainOf(event.currentPos() - item.parentContentOrigin()) - leadingOf(item),
+            .pointer = event.currentPos()
+        };
+        for (std::size_t i = first; i <= last; ++i)
+            carry.original.push_back(&*children[i]);
+        if (first < last)
+        {
+            const Control& leader = *children[first];
+            const float leaderTrailing = leadingOf(leader) + extentOf(leader);
+            carry.spacing = leadingOf(*children[first + 1ull]) - leaderTrailing;
+        }
+        // Drawn over the siblings it passes, unless some host already draws it so.
+        for (Control* carried : carry.items)
+        {
+            bool lifted = false;
+            for (const Control* host = parent(); host && !lifted; host = host->parent())
+                lifted = host->hasInOverlayControls(*carried);
+            if (!lifted && addOverlayControl(*carried, ClippingMode::Standard))
+                carry.lifted.push_back(carried);
+        }
+        m_carry = std::move(carry);
+        // Gathered into one block around the pressed item, which keeps its place.
+        std::size_t before = 0ull;
+        for (const Control* carried : m_carry->items)
+            if (indexOf(*carried) < pressed)
+                ++before;
+        placeBlock(pressed - before);
+        event.lockHoveredControl();
+        invalidate();
+    }
+
+    void StackPanelBase::continueCarry(DragEvent& event)
+    {
+        Carry& carry = *m_carry;
+        carry.pointer = event.currentPos();
+        event.lockHoveredControl();
+        const float drawnLeading = leadingOf(*carry.items.front()) + carriedBlockOffset();
+        const std::size_t to = carryIndex(drawnLeading);
+        if (to != indexOf(*carry.items.front()))
+            placeBlock(to);
+        invalidate();
+    }
+
+    void StackPanelBase::endCarry()
+    {
+        Carry carry = std::move(*m_carry);
+        m_carry.reset();
+        for (Control* lifted : carry.lifted)
+            removeOverlayControl(*lifted);
+        invalidate();
+        if (carry.cancelled)
+            return;
+        ControlSpan children = controls();
+        bool moved = false;
+        for (std::size_t i = 0ull; i != carry.original.size() && !moved; ++i)
+            moved = &*children[carry.first + i] != carry.original[i];
+        if (!moved)
+            return;
+        ItemsMoveEvent event{ *this, carry.items, indexOf(*carry.items.front()) };
+        itemsMoved(event);
+        emitEvent(event);
+    }
+
+    void StackPanelBase::dropCarry()
+    {
+        for (Control* lifted : m_carry->lifted)
+            removeOverlayControl(*lifted);
+        m_carry.reset();
+    }
+
+    void StackPanelBase::placeBlock(const std::size_t to)
+    {
+        const Carry& carry = *m_carry;
+        ControlSpan children = controls();
+        std::vector<Control*> order{};
+        order.reserve(carry.last - carry.first + 1ull);
+        for (std::size_t i = carry.first; i <= carry.last; ++i)
+            if (!isCarried(*children[i]))
+                order.push_back(&*children[i]);
+        order.insert(order.begin() + static_cast<std::ptrdiff_t>(to - carry.first),
+            carry.items.begin(), carry.items.end());
+        placeChildren(order, carry.first);
+    }
+
+    void StackPanelBase::placeChildren(const std::span<Control* const> order,
+        const std::size_t from)
+    {
+        ControlSpan children = controls();
+        for (std::size_t i = 0ull; i != order.size(); ++i)
+            if (&*children[from + i] != order[i])
+                moveControl(*order[i], from + i);
+    }
+
+    // The block takes the slot nearest its leading edge among the slots the run's other items
+    // leave, measured with the block taken out of the lane: it goes before the first item whose
+    // middle, so measured, lies past that edge. Moving either way, the swap comes at the same
+    // place.
+    std::size_t StackPanelBase::carryIndex(const float drawnLeading) const
+    {
+        const Carry& carry = *m_carry;
+        ControlSpanC children = controls();
+        float shift = 0.0f;   // what taking the block out moves the items after it by
+        std::size_t passed = 0ull;
+        for (std::size_t i = carry.first; i <= carry.last; ++i)
+        {
+            const Control& child = *children[i];
+            if (isCarried(child))
+            {
+                shift += i < carry.last
+                    ? leadingOf(*children[i + 1ull]) - leadingOf(child)
+                    : extentOf(child) + carry.spacing;
+                continue;
+            }
+            const float slot = extentOf(child) + carry.spacing;
+            const float middle = leadingOf(child) - shift + slot / 2.0f;
+            if (middle >= drawnLeading)
+                break;
+            ++passed;
+        }
+        return carry.first + passed;
+    }
+
+    // The anchor stays under the pointer where it was pressed, and the block is kept within the
+    // run.
+    float StackPanelBase::carriedBlockOffset() const
+    {
+        const Carry& carry = *m_carry;
+        ControlSpanC children = controls();
+        const Control& block = *carry.items.front();
+        const Control& blockEnd = *carry.items.back();
+        const Control& runEnd = *children[carry.last];
+        const float blockLeading = leadingOf(block);
+        const float pointer = mainOf(carry.pointer - block.parentContentOrigin());
+        const float runLeading = leadingOf(*children[carry.first]);
+        const float runTrailing = leadingOf(runEnd) + extentOf(runEnd);
+        const float blockExtent = leadingOf(blockEnd) + extentOf(blockEnd) - blockLeading;
+        const float drawn = std::clamp(
+            pointer - carry.grab - (leadingOf(*carry.anchor) - blockLeading),
+            runLeading,
+            std::max(runLeading, runTrailing - blockExtent));
+        return drawn - blockLeading;
+    }
+
+    bool StackPanelBase::isCarried(const Control& child) const
+    {
+        return m_carry && std::ranges::find(m_carry->items, &child) != m_carry->items.end();
+    }
+
+    std::size_t StackPanelBase::indexOf(const Control& child) const
+    {
+        ControlSpanC children = controls();
+        for (std::size_t i = 0ull; i != children.size(); ++i)
+            if (&*children[i] == &child)
+                return i;
+        return children.size();
     }
 
     void StackViewBase::previewItemChanged(PreviewEvent& event)

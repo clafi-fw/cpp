@@ -99,7 +99,6 @@ namespace ClaFi::Controls
         Control* focusDelegate() override;
         void nestedClick(NestedClickEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;
-    private:
         // Whether this container moves its current item itself, following whatever the user acts
         // on - a click, or the focus arriving from the keyboard - and so also answers for which
         // of its items is selected. That is what Interactivity::ActiveContainer means, in its
@@ -110,6 +109,7 @@ namespace ClaFi::Controls
         // A container whose current item is settled elsewhere is not one: PageControl's is
         // whichever page was made visible, and the tab strip is what makes one visible.
         [[nodiscard]] bool followsUser() const;
+    private:
         void autoSelectItem(Control&, KeyModifiers, bool& handled, bool applyGesture = true);
         void doCurrentItemChanged(Control* previous);
     private:

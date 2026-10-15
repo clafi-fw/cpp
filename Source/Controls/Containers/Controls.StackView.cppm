@@ -93,9 +93,8 @@ namespace ClaFi::Controls
         void setSelection(std::span<Control* const>);
     protected:
         void toggleItemSelection(Control*, bool keepSelection = false);
-        // A drag that started on an item, under DragMode::EasyDrag. Called on every move of
-        // that drag, so it both begins the carry and continues it.
-        virtual void dragSelection(DragEvent&) {}
+        // The selection, in a Multi view under EasyDrag where the press landed in it.
+        [[nodiscard]] std::vector<Control*> carriedItems(Control& item) override;
         void selectRange(Control* anchor, Control* item, bool keepSelection = false);
         virtual void selectionChanged() {}
         // The answer after the handlers have had it; nullptr answers no, there being nothing
@@ -134,9 +133,6 @@ namespace ClaFi::Controls
         // from the constructor, the way TextBox connects the edit actions.
         void connectSelectionActions();
         void invalidateSelectionOverlay();
-    private:
-        // TODO: move the drag threshold to the application accessibility settings
-        static constexpr float k_dragThreshold = 16.0f;
     private:
         const inline static ItemsViewSelection::UnorderedSet s_emptySelectionBuffer{};
         inline static ItemsViewSelection::UnorderedSet s_tempSelectionBuffer{};

@@ -452,6 +452,8 @@ namespace ClaFi
         // the first item when it is on none. Called as the window is shown, for every role that
         // takes the focus at all.
         void focusEntryPoint();
+        // Walks nestedKeyDown from `from` up to `until`, exclusive, while the key is unhandled.
+        void dispatchKey(Control* from, const Control* until, KeyDownEvent&);
         // The frame this form asks for: the root's, at the scale the form is drawn at. Stated to
         // the window whenever either changes; the window answers through wnd_resize.
         [[nodiscard]] WindowFrame designFrame() const;

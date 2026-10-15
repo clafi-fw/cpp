@@ -45,8 +45,8 @@ always is one.
 A drag from the surface sweeps a rectangle in either mode.
 
 - `EasySelect` - for items that stay put and a selection that is only read.
-- `EasyDrag` - for items that move. A drag from an item goes to dragSelection, where the derived
-  view carries the selection.
+- `EasyDrag` - for items that move. A drag from a selected item carries the selection - see
+  ItemsOrder - and from any other item carries that item alone.
 
 ## CanSelectItemEvent
 

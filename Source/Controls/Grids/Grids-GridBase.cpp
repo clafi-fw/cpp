@@ -168,7 +168,7 @@ namespace ClaFi::Controls::Grids
     FloatPoint GridBase::overlayChildOffset(const Control& child) const
     {
         if (&child != heldHeader())
-            return {};
+            return StackView::overlayChildOffset(child);
         // Every row of a grid shares one content origin, so the last row's bottom is measured in
         // the space the header's own topLeft is.
         return heldHeaderOffset(*m_header, controls().back()->bottom());
@@ -320,6 +320,12 @@ namespace ClaFi::Controls::Grids
     bool GridBase::defaultCanSelectItem(Control& value)
     {
         return &value != m_newItemRow && StackView::defaultCanSelectItem(value);
+    }
+
+    bool GridBase::defaultCanMoveItem(Control& value)
+    {
+        return &value != m_header && &value != m_newItemRow
+            && StackView::defaultCanMoveItem(value);
     }
 
     bool GridBase::editSelectedCell()

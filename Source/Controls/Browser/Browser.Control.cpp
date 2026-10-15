@@ -13,6 +13,7 @@ import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Menu;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.TabStrip;
 
 import ClaFi.Core.DomEngine;
@@ -500,6 +501,14 @@ namespace ClaFi::Browser
         (tabEntry / ConfigNames::path).set(tab.url().str());
     }
 
+    void BrowserControl::storeTabOrder() const
+    {
+        std::vector<std::wstring_view> tabIds{};
+        for (const BrowserTab& tab : tabs())
+            tabIds.push_back(tab.id());
+        m_settings->orderTabEntries(tabIds);
+    }
+
     // The view state is saved while the entry it writes to is still listed.
     void BrowserControl::deleteTabSettings(BrowserTab& tab)
     {
@@ -567,6 +576,10 @@ namespace ClaFi::Browser
 
         m_tabs.onCurrentItemChange([this](CurrentItemChangeEvent&) {
             handleTabSelect();
+        });
+
+        m_tabs.onItemsMove([this](ItemsMoveEvent&) {
+            storeTabOrder();
         });
 
         m_breadCrumbBar.onSelectBrowserData([this](SelectBrowserDataEvent& event) {

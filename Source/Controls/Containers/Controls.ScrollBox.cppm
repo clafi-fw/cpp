@@ -692,8 +692,7 @@ namespace ClaFi::Controls
         const Control* content = body();
         if (!content || !content->containsNested(event.control(), CheckSelf::Yes))
             return;
-        constexpr float autoscrollDragThreshhold = 16.0f;
-        if (event.unscaledDistance() < autoscrollDragThreshhold)
+        if (!event.pastThreshold())
             return;
 
         m_autoScrollZone = event.form().scaler().scale(k_autoScrollZone);

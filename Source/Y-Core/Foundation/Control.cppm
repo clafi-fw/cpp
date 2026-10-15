@@ -534,6 +534,8 @@ namespace ClaFi
         [[nodiscard]] InputStamp stamp() const { return m_stamp; }
         float scaledDistance() const;
         float unscaledDistance() const;
+        // Whether the pointer has left the slack a click is allowed, which is where a drag begins.
+        [[nodiscard]] bool pastThreshold() const;
         void offsetStartPos(FloatPoint) const;
         void lockHoveredControl() { m_hoveredControlLocked = true; }
         bool hoveredControlLocked() const {return m_hoveredControlLocked; }
@@ -544,6 +546,8 @@ namespace ClaFi
         const PointInForm m_currentPos;
         const InputStamp m_stamp;
         bool m_hoveredControlLocked{};
+        // TODO: move the drag threshold to the application accessibility settings
+        static constexpr float k_threshold{ 16.0f };
     };
 
     // Whether a change animates or takes effect at once.
@@ -680,6 +684,8 @@ namespace ClaFi
         // entry buys, and Control::floatOffset for what it deliberately does not.
         virtual bool addOverlayControl(const Control&, ClippingMode) { return false; }
         virtual void removeOverlayControl(const Control&) {}
+        // Whether this control's overlay list names `control`.
+        bool hasInOverlayControls(const Control&) const;
     public:
         Control* parent() const { return m_parent; }
         template <IsControl ControlClass>
@@ -1074,7 +1080,6 @@ namespace ClaFi
         // Whether any overlay control here is allowed to paint outside its own bounds. What that
         // costs is stated on Control::invalidate, which is the one caller.
         [[nodiscard]] bool hasUnboundedOverlayControls() const;
-        bool hasInOverlayControls(const Control&) const;
         ClippingMode getOverlayClippingMode(const Control&) const;
         virtual std::span<const OverlayEntry> overlayControls() const { return {}; }
         // The control an entry names. OverlayEntry keeps the pointer typed away because UiTypes

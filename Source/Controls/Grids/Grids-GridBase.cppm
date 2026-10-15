@@ -152,6 +152,8 @@ namespace ClaFi::Controls::Grids
         void controlAdded(Control&) override;
         // The new-item row is a command rather than an item, so no selection holds it.
         bool defaultCanSelectItem(Control&) override;
+        // The header and the new-item row keep their places.
+        bool defaultCanMoveItem(Control&) override;
     private:
         // A place a key can land: a cell of a row, or the control a row that has no cells of its
         // own stands behind. The origin is the row's own top left in form space, which is what

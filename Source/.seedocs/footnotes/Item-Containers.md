@@ -29,6 +29,36 @@ handler that knows more can change it.
 **Selection is a separate question** - see CanSelectItemEvent. A rubber band asks only that one,
 and a container with no selection asks only this one.
 
+## ItemsOrder
+
+Under `Rearrangeable` a drag from an item carries it along the lane, and the other items make
+room as it passes: the order shown is the order the release leaves. Escape puts the run back.
+
+**The item is the stack's own child** the press landed in. In a stack following the user it has
+to be the item the press names, so an item inside a group moves nothing. A drag some control
+inside the item has taken for its own - a text box selecting - is no carry.
+
+- A `Horizontal` or `Vertical` stack only. A wrapping stack carries nothing.
+- An item lands among the movable items around it. One the stack or a handler keeps in place -
+  a grid's header, its new-item row - bounds the run.
+- A StackView under SelectionMode::Multi and DragMode::EasyDrag carries the selection, as one
+  block - see DragMode.
+
+## CanMoveItemEvent
+
+Asked of the pressed item and of every sibling around it, so a handler that keeps one item in
+place also bounds where the others may go. `canMove` starts as the stack's answer.
+
+## ItemsMoveEvent
+
+**The stack has moved its children**; whoever keeps the order they show is told where the items
+stand now, and reads the rest off the children. Raised as the press ends, inside the release, so
+a handler that would delete the items defers that.
+
+## StackPanelBase::moveItems
+
+The items go in the order given, as one block from `to` on. ItemsMoveEvent follows.
+
 ## Stack
 
 **LaneSize breaks the lane**, in the measure and in the align alike. A stack of four to a lane

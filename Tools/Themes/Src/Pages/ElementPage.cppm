@@ -92,6 +92,7 @@ namespace Themes_App
         void deleteSelectedRules();
         void deletePendingRules();
         void resetRules();
+        void rulesMoved(const ItemsMoveEvent&);
         void addRow(std::size_t index);
         void bindEditors(Grids::RowContainer&);
         [[nodiscard]] Grids::Column& column(RuleColumn);
@@ -153,6 +154,8 @@ namespace Themes_App
             UiElement::Section,
             Grids::GridLines::Horizontal,
             SelectionMode::Multi,
+            DragMode::EasyDrag,
+            ItemsOrder::Rearrangeable,
             Grids::Dt::Columns{
                 Grids::Dt::Column{ Tag{ RuleColumn::ApplyTo },
                     Text{ L"Apply to" },
@@ -191,6 +194,9 @@ namespace Themes_App
         m_title.text() << TextStyleId::SubTitle << title;
         m_grid.onNewItem([this](Grids::NewItemEvent&) {
             addRule();
+        });
+        m_grid.onItemsMove([this](ItemsMoveEvent& event) {
+            rulesMoved(event);
         });
         m_deleteTimer.onTick([this](TimerEvent&) {
             deletePendingRules();

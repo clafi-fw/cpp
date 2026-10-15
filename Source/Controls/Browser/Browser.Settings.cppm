@@ -54,6 +54,8 @@ namespace ClaFi::Browser
         Dom::Section& addTabEntry(std::wstring_view tabId);
         // Unlists a tab. Its file, where it has one, goes with the next save.
         void deleteTabEntry(std::wstring_view tabId);
+        // Lists the tabs in this order. One not named keeps its place after those that are.
+        void orderTabEntries(std::span<const std::wstring_view> tabIds);
     private:
         using TabDocument = Dom::Document<Dom::FileFormat::ClaFi>;
         using TabDocuments = std::map<std::wstring, std::unique_ptr<TabDocument>, std::less<>>;
@@ -145,6 +147,25 @@ namespace ClaFi::Browser
         const TabDocuments::iterator document = m_tabDocuments.find(tabId);
         if (document != m_tabDocuments.end())
             m_tabDocuments.erase(document);
+    }
+
+    void BrowserSettings::orderTabEntries(const std::span<const std::wstring_view> tabIds)
+    {
+        using Entries = std::vector<std::unique_ptr<Dom::DomNodeBase>>;
+        Entries& entries = m_openTabs.children();
+        std::size_t placed = 0ull;
+        for (const std::wstring_view tabId : tabIds)
+        {
+            const Dom::Section* entry = m_openTabs.childWhere(ConfigNames::id, tabId);
+            const Entries::iterator found = std::ranges::find_if(entries,
+                [entry](const std::unique_ptr<Dom::DomNodeBase>& candidate) {
+                    return candidate.get() == entry;
+                });
+            if (!entry || found == entries.end())
+                continue;
+            std::rotate(entries.begin() + static_cast<std::ptrdiff_t>(placed), found, found + 1);
+            ++placed;
+        }
     }
 
     void BrowserSettings::save()

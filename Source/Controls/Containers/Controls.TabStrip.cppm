@@ -788,6 +788,10 @@ namespace ClaFi::Controls
     // would and stacks under one held above it. A view too short for the tab holds it at the top.
     FloatPoint TabStripBase::overlayChildOffset(const Control& child) const
     {
+        // A carried tab is drawn where the pointer holds it.
+        const FloatPoint carried = StackPanel::overlayChildOffset(child);
+        if (carried != FloatPoint{})
+            return carried;
         // Only a lifted tab is held. One painted in its place would slide under the tabs after it.
         if (!m_overlayHost || &child != currentItem() || orientation() != Orientation::Vertical)
             return {};

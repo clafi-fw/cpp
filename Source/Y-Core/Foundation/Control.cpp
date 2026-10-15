@@ -647,6 +647,11 @@ namespace ClaFi
         return scaledDistance() / m_form.scaler().factor();
     }
 
+    bool DragEvent::pastThreshold() const
+    {
+        return unscaledDistance() >= k_threshold;
+    }
+
     void DragEvent::offsetStartPos(FloatPoint value) const
     {
         m_form.offsetMouseDownPos(value);

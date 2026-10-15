@@ -265,6 +265,7 @@ namespace ClaFi::Browser
         virtual void saveViewState(BrowserTab&) {};
         void storeSelectedTab(const BrowserTab*) const;
         void storeTabSettings(const BrowserTab&) const;
+        void storeTabOrder() const;   // the strip's order, as the tabs come back in
         void deleteTabSettings(BrowserTab&);
         // Closes every tab, frees every page under home and opens one tab on home. See Browser
         void resetToHome();
@@ -413,7 +414,8 @@ namespace ClaFi::Browser
             VerticalAlign::Center
         ) };
         TabStrip& m_tabs{ m_titleBox.add<TabStrip>(
-            Padding{ 0.0f, 4.0f }
+            Padding{ 0.0f, 4.0f },
+            ItemsOrder::Rearrangeable
         ) };
         //Separator& m_plusButtonSeparator{ m_titleBox.add<Separator>(Padding{ 0.0f, 8.0f }) };
         ToolButton& m_plusButton{ m_titleBox.add<ToolButton>(

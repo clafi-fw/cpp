@@ -249,13 +249,13 @@ namespace ClaFi::Controls
         // threshold, and it is a band rather than a carry.
         if (!m_selectionOverlayRect.has_value())
         {
-            if (event.unscaledDistance() < k_dragThreshold)
+            if (!event.pastThreshold())
                 return;
 
             // What the press landed on says which drag this is, and it says the same on every
-            // move of the same drag, so the answer needs no keeping.
+            // move of the same drag, so the answer needs no keeping. A carry is the base's.
             if (m_dragMode == DragMode::EasyDrag && pressedItem(&event.control()))
-                return dragSelection(event);
+                return;
         }
 
         // TODO: move the modifiers onto the event and drop the global keyModifiers().
@@ -350,6 +350,23 @@ namespace ClaFi::Controls
     Control* StackView::pressedItem(Control* control)
     {
         return itemAt(control);
+    }
+
+    // A drag from an item is a band under EasySelect. Under EasyDrag it carries the selection the
+    // press landed in, in the order the items stand, else the one item.
+    std::vector<Control*> StackView::carriedItems(Control& item)
+    {
+        if (!isMultiSelect())
+            return StackViewBase::carriedItems(item);
+        if (m_dragMode == DragMode::EasySelect)
+            return {};
+        if (!m_selection.contains(&item))
+            return StackViewBase::carriedItems(item);
+        std::vector<Control*> result{};
+        for (ControlPtr& control : controls())
+            if (m_selection.contains(&*control) && canMoveItem(*control))
+                result.push_back(&*control);
+        return result;
     }
 
     void StackView::selectItemsInRect(FloatRect& selectionRect, KeyModifiers modifiers)

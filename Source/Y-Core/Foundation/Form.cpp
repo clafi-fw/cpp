@@ -1086,6 +1086,26 @@ namespace ClaFi
         }
     }
 
+    void FormBase::dispatchKey(Control* from, const Control* until, KeyDownEvent& event)
+    {
+        Control* control = from;
+        while (control && control != until && !event.handled)
+        {
+            // The next step is read **before** the handler runs. A key handler is allowed to do
+            // something that outlives the press - open a menu, run an in-place editor - and
+            // whatever it opens pumps messages, so the control the walk is standing on may
+            // be deleted before it returns. Reading its parent afterwards would be reading a
+            // control that has gone.
+            //
+            // TODO: the parent may go the same way, and this walk has no answer for that.
+            // Should a handler that opens something modal be run after the walk unwinds
+            // instead of inside it?
+            Control* nextControl = control->parent();
+            control->nestedKeyDown(event);
+            control = nextControl;
+        }
+    }
+
     void FormBase::wnd_keyDown(KeyDownEvent& event)
     {
         // Cleared first, and unconditionally. The flag stands for one press; a press the system
@@ -1174,6 +1194,13 @@ namespace ClaFi
         // editor showing why a value was refused is exactly that state, and cancelling took two
         // presses.
 
+        // **A key pressed during a drag goes along the pressed control's chain first.** The
+        // gesture is what the key is aimed at - Escape cancels a carry - whichever control holds
+        // the focus. What that walk reached is not told a second time.
+        const bool dragging = Input::isMouseDown() && m_downItem;
+        if (!event.handled && dragging)
+            dispatchKey(m_downItem, nullptr, event);
+
         // processing focused item
         if (!event.handled)
         {
@@ -1182,21 +1209,14 @@ namespace ClaFi
                 control = &m_content;
             if (control)
                 control = control->focusDelegate();
-            while (control && !event.handled)
+            Control* until = nullptr;
+            if (dragging && m_downItem)
             {
-                // The next step is read **before** the handler runs. A key handler is allowed to do
-                // something that outlives the press - open a menu, run an in-place editor - and
-                // whatever it opens pumps messages, so the control the walk is standing on may
-                // be deleted before it returns. Reading its parent afterwards would be reading a
-                // control that has gone.
-                //
-                // TODO: the parent may go the same way, and this walk has no answer for that.
-                // Should a handler that opens something modal be run after the walk unwinds
-                // instead of inside it?
-                Control* nextControl = control->parent();
-                control->nestedKeyDown(event);
-                control = nextControl;
-            };
+                until = control;
+                while (until && !until->containsNested(m_downItem))
+                    until = until->parent();
+            }
+            dispatchKey(control, until, event);
         }
 
         if (!event.handled)
