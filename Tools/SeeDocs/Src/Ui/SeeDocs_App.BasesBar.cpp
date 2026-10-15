@@ -107,13 +107,13 @@ namespace SeeDocs_App
         {
             const RowIcon icon = rowIconOf(*type);
             MenuItem& line = menu.add(
-                type->name,
-                [icon](PaintIconEvent& event) {
+                Text{ type->name },
+                MenuItem::OnPaintIcon{ [icon](PaintIconEvent& event) {
                     paintRowIcon(event, icon);
-                },
-                [this, type](ClickEvent&) {
+                } },
+                MenuItem::OnClick{ [this, type](ClickEvent&) {
                     m_bar.choose(type->qualifiedName);
-                }
+                } }
             );
             if (type != m_node.from)
                 continue;

@@ -340,21 +340,12 @@ namespace ClaFi::Browser
             PageData* target = subItem.get();
             MenuItem& line = menu.add(
                 target->displayTitle(),
-                [&bar, target](PaintIconEvent& event){
+                MenuItem::OnPaintIcon{ [&bar, target](PaintIconEvent& event) {
                     bar.paintPageIcon(*target, event);
-                },
-                // **Gone to from inside the menu**, and owned by the line that was pressed. A
-                // browser with a question to put before it moves - work that is not saved - stands
-                // that question on top of this menu rather than in place of it, so what is being
-                // left is still on screen while it is answered.
-                //
-                // **This crumb is still standing afterwards**: every page in the list is under the
-                // page it names, so the path the bar rebuilds reaches at least as far as this
-                // crumb, and createItems drops only the crumbs past the end of the new path. That
-                // is what lets the going happen here rather than after the menu has closed.
-                [&bar, target](ClickEvent& event){
+                } },
+                MenuItem::OnClick{ [&bar, target](const ClickEvent& event) {
                     bar.selectBrowserData(*target, *event.control);
-                }
+                } }
             );
             if (target != m_pathSubItem)
                 continue;
