@@ -786,8 +786,8 @@ namespace ClaFi::Browser
                 [this, &pageData](PaintIconEvent& event) {
                     paintPageIcon(pageData, event);
                 },
-                [this, offset](Control& item) {
-                    travel(offset, item);
+                [this, offset](ClickEvent& event) {
+                    travel(offset, *event.control);
                 }
             );
             offset += direction;

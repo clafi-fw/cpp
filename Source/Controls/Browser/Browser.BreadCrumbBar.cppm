@@ -352,8 +352,8 @@ namespace ClaFi::Browser
                 // page it names, so the path the bar rebuilds reaches at least as far as this
                 // crumb, and createItems drops only the crumbs past the end of the new path. That
                 // is what lets the going happen here rather than after the menu has closed.
-                [&bar, target](Control& item){
-                    bar.selectBrowserData(*target, item);
+                [&bar, target](ClickEvent& event){
+                    bar.selectBrowserData(*target, *event.control);
                 }
             );
             if (target != m_pathSubItem)

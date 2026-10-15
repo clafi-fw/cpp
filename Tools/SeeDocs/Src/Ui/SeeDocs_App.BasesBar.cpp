@@ -111,7 +111,7 @@ namespace SeeDocs_App
                 [icon](PaintIconEvent& event) {
                     paintRowIcon(event, icon);
                 },
-                [this, type](Control&) {
+                [this, type](ClickEvent&) {
                     m_bar.choose(type->qualifiedName);
                 }
             );

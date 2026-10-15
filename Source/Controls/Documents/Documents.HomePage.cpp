@@ -196,7 +196,7 @@ namespace ClaFi::Documents
         Menu menu{ event.button() };
         for (const DocumentTemplate& documentTemplate : folder().templates())
         {
-            menu.add(documentTemplate.name, [this, &documentTemplate](Control&) {
+            menu.add(documentTemplate.name, [this, &documentTemplate](ClickEvent&) {
                 createNewFile(&documentTemplate);
             });
         }

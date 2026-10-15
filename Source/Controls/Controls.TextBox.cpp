@@ -393,7 +393,7 @@ namespace ClaFi::Controls
                 menu.addToCommandBar(*command);
         }
         // The list is handed over whole. Menu::add leaves out whatever the strip shows.
-        menu.add(items);
+        menu.addActions(items);
         menu.execute();
     }
 

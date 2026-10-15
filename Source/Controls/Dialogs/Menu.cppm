@@ -43,14 +43,15 @@ namespace ClaFi::Controls
         constexpr float k_keyGap = 4.0f;
     }
 
-    /// @brief One command in a menu.
-    /// @note A button, and deliberately: the icon, the text, the enabled and selected states and
-    /// the press all belong to a button already. What a menu adds is the key printed at the
-    /// right-hand end of the line, and closing behind the command it ran.
-    // Button for its z animation - the press depth that allowZAnimation() turns on - with a tool
-    // button's element and metrics, which the item names itself. **Not** ToolButton: a line of a
-    // menu is not a tool, and all it wanted from that class was the look.
-    using MenuItemBase = Button;
+    export class MenuItemBase: public Button
+    {
+    public:
+        template<typename ...Args>
+        explicit MenuItemBase(const CreateParams&, Args&&...);
+    protected:
+        void click(ClickEvent&) override;
+    };
+
     // One line of a menu.
     export class MenuItem : public MenuItemBase
     {
@@ -61,18 +62,10 @@ namespace ClaFi::Controls
         std::wstring_view diagnosticText() const override { return L"MenuItem"; }
     protected:
         void getText(GetTextEvent&) const override;
-        void click(ClickEvent&) override;
     };
 
-    /// @brief One command in the strip across the top of a menu.
-    /// @note A large icon with the command's name under it. A command belongs up here when its
-    /// picture says what it does at a glance, which is what buys the strip its width: four of
-    /// them stand side by side in what the list would have spent on two lines.
-    /// @note There is no room beside the name for the key, so the hint states both.
-    // The same base as an item, for the same reasons.
-    using MenuCommandBase = Button;
-    // A menu line that runs an action, showing its name and its key.
-    export class MenuCommand : public MenuCommandBase
+    // A menu item in TopIcon mode on the top bar.
+    export class MenuCommand : public MenuItemBase
     {
     public:
         template<typename ...Args>
@@ -81,19 +74,9 @@ namespace ClaFi::Controls
         std::wstring_view diagnosticText() const override { return L"MenuCommand"; }
     protected:
         void nestedGetHint(GetHintEvent&) override;
-        void click(ClickEvent&) override;
     };
 
     export using BaseMenuForm = Form<ScrollBoxWith<StackPanel>>;
-
-    /// @brief What a text item does when it is chosen.
-    /// @note It is handed the **item** that was pressed. A handler raising a question of its own
-    /// owns it by that: the question then stands on top of this menu, which stays on screen behind
-    /// it, rather than replacing the thing the user was reading.
-    export using MenuItemCallback = std::function<void(Control& item)>;
-
-    /// @brief What a text item paints in its icon slot.
-    export using MenuItemIcon = std::function<void(PaintIconEvent&)>;
 
     // A popup list of commands, owned by the control it was opened from. See Controls
     export class Menu : public BaseMenuForm
@@ -101,51 +84,30 @@ namespace ClaFi::Controls
     public:
         explicit Menu(Control& owner);
     public:
-        /// Takes an action as an item. The item shows the action's text and icon, prints its
-        /// shortcut, and closes the menu when it is chosen.
-        MenuItem& add(Action&);
-        /// Takes a list of them. A null entry is a separator, and one that would lead, trail or
-        /// double up is dropped - so a list an application has adjusted needs no tidying. An
-        /// action the strip already shows is passed over, so a list naming every command a
-        /// control answers can be handed over whole whatever went up into the strip.
-        void add(const ActionList&);
-        /// Takes a line of text as an item, with what to do when it is chosen. This is for a
-        /// list built out of data - the pages under a breadcrumb, a set of recent files - where
-        /// each line stands for something that exists only while the menu is up. A command an
-        /// application answers from more than one place is an Action, and goes through the
-        /// overload above.
-        MenuItem& add(std::wstring_view text, MenuItemCallback callback);
-        /// The same, with a picture beside the line. Every item reserves the icon slot whether or
-        /// not it fills one, so items with and without a picture still share a left edge.
-        MenuItem& add(std::wstring_view text, MenuItemIcon icon, MenuItemCallback callback);
+        void addActions(const ActionList&);
         void addSeparator();
-        /// Takes an action as a button in the strip across the top: its icon with its name under
-        /// it, and the name and key in the hint. The strip appears with the first command put
-        /// in it and reads left to right in the order they arrive.
         MenuCommand& addToCommandBar(Action&);
         /// Whether the strip already shows this command.
         [[nodiscard]] bool onCommandBar(const Action&) const;
         [[nodiscard]] bool empty() const { return !m_itemCount && m_commandBarActions.empty(); }
-        /// States what the list shows while it holds no item, and lets a menu with none open to
-        /// show it. For a list built out of data that has nothing in it right now.
         void setPlaceHolderText(const Text&);
-        /// Drops the menu at the pointer, or under the part of its owner the commands are about
-        /// when the keyboard raised it, and runs it. Answers once it has closed. A menu with
-        /// nothing to show does not open.
         int execute();
         /// Drops the menu under a control the way a dropdown list falls, and runs it. This is for
         /// a menu that belongs to a control's outline rather than to the point that was clicked.
         /// BottomLeft hangs it from the control's left end, BottomRight from its right end.
         /// Answers once it has closed, and a menu with nothing to show does not open.
         int executeUnder(const Control&, FormPlacement placement = FormPlacement::BottomLeft);
+    protected:
+        void nestedClick(NestedClickEvent&) override;
     private:
         // Nothing in it, and no placeholder to stand in for the nothing.
-        [[nodiscard]] bool nothingToShow() const { return empty() && !m_showsPlaceHolder; }
+        [[nodiscard]] bool nothingToShow() const { return empty() && body().placeholderText().empty(); }
+    public:
         // One place for what every item shares: the separator waiting on it, and the count that
         // says the menu has something in it. What differs between an action item and a text item
         // is only what the button is built from.
         template<typename... Args>
-        MenuItem& addItem(Args&&...);
+        MenuItem& add(Args&&...);
     private:
         // The strip is built when something is put in it. A menu with no commands in the strip
         // has no top bar at all, and measures exactly as it did before there was one.
@@ -155,7 +117,6 @@ namespace ClaFi::Controls
         std::size_t m_itemCount{ 0 };
         // A separator waits for an item to follow it, so one asked for at the end never lands.
         bool m_separatorPending{ false };
-        bool m_showsPlaceHolder{ false }; // a placeholder is stated, and the menu opens on it alone
     };
 
 
@@ -218,32 +179,7 @@ namespace ClaFi::Controls
         setAutoFit(AutoFit::Yes);
     }
 
-    MenuItem& Menu::add(Action& action)
-    {
-        return addItem(action);
-    }
-
-    MenuItem& Menu::add(const std::wstring_view text, MenuItemCallback callback)
-    {
-        return addItem(text, OnEvent{ [callback = std::move(callback)](ClickEvent& event){
-            callback(*event.control);
-        } });
-    }
-
-    MenuItem& Menu::add(const std::wstring_view text, MenuItemIcon icon, MenuItemCallback callback)
-    {
-        return addItem(
-            text,
-            MenuItem::OnPaintIcon{ [icon = std::move(icon)](PaintIconEvent& event){
-                icon(event);
-            } },
-            OnEvent{ [callback = std::move(callback)](ClickEvent& event){
-                callback(*event.control);
-            } }
-        );
-    }
-
-    void Menu::add(const ActionList& actions)
+    void Menu::addActions(const ActionList& actions)
     {
         for (Action* action : actions)
         {
@@ -282,7 +218,6 @@ namespace ClaFi::Controls
     void Menu::setPlaceHolderText(const Text& value)
     {
         body().setPlaceHolderText(value);
-        m_showsPlaceHolder = true;
     }
 
     int Menu::execute()
@@ -296,7 +231,7 @@ namespace ClaFi::Controls
         // The owner is tested rather than assumed: the constructor takes one, but FormBase
         // accepts a popup with no target at all, and a menu built over a control that went away
         // while it was being filled is that.
-        if (Control* owner = popupTarget())
+        if (const Control* owner = popupTarget())
             setPlacement(FormPlacement::ContextMenu, owner->contextMenuAnchor());
         else
             setPlacement(FormPlacement::ContextMenu);
@@ -316,8 +251,14 @@ namespace ClaFi::Controls
         return BaseMenuForm::execute();
     }
 
+    void Menu::nestedClick(NestedClickEvent& nestedClickEvent)
+    {
+        Form<ScrollBoxWith<StackPanel>>::nestedClick(nestedClickEvent);
+        Platform::beep();
+    }
+
     template<typename ...Args>
-    MenuItem& Menu::addItem(Args&&... args)
+    MenuItem& Menu::add(Args&&... args)
     {
         if (m_separatorPending)
         {
@@ -333,16 +274,25 @@ namespace ClaFi::Controls
 
     // MenuItem
 
+    template <typename ... Args>
+    MenuItemBase::MenuItemBase(const CreateParams& params, Args&&... args)
+        :
+        Button{
+            params,
+            Interactivity::Focusable,
+            params.themeMetrics().toolButton,
+            UiElement::ToolButton,
+            std::forward<Args>(args)...
+        }
+    {
+        
+    }
+
     template<typename ...Args>
     MenuItem::MenuItem(const CreateParams& params, Args&& ...args)
         :
         MenuItemBase{
             params,
-            Interactivity::Focusable,
-            // Not a tool, so not a ToolButton - but it wears the same look, and the element and
-            // the metrics are the whole of that look.
-            params.themeMetrics().toolButton,
-            UiElement::ToolButton,
             // The icon slot is kept whether or not this item has one, which is what puts every
             // item's text on the same left edge.
             ButtonViewMode::LeftIcon,
@@ -368,6 +318,12 @@ namespace ClaFi::Controls
     {
     }
 
+    void MenuItemBase::click(ClickEvent& clickEvent)
+    {
+        Button::click(clickEvent);
+        closeBehindCommand(clickEvent);
+    }
+
     void MenuItem::getText(GetTextEvent& event) const
     {
         MenuItemBase::getText(event);
@@ -391,12 +347,6 @@ namespace ClaFi::Controls
         event.text << InkWell::textInk(InkGrade::Muted) << shortcutText;
     }
 
-    void MenuItem::click(ClickEvent& event)
-    {
-        MenuItemBase::click(event);
-        closeBehindCommand(event);
-    }
-
 
 
     //-----------------------------------------------------------------------------
@@ -407,13 +357,8 @@ namespace ClaFi::Controls
     template<typename ...Args>
     MenuCommand::MenuCommand(const CreateParams& params, Args&& ...args)
         :
-        MenuCommandBase{
+        MenuItemBase{
             params,
-            Interactivity::Focusable,
-            // Not a tool, so not a ToolButton - but it wears the same look, and the element and
-            // the metrics are the whole of that look.
-            params.themeMetrics().toolButton,
-            UiElement::ToolButton,
             // The icon over the name rather than beside it, which is what stands a row of
             // commands in the width one of them would take as a line.
             ButtonViewMode::TopCenterIcon,
@@ -436,7 +381,7 @@ namespace ClaFi::Controls
 
     void MenuCommand::nestedGetHint(GetHintEvent& event)
     {
-        MenuCommandBase::nestedGetHint(event);
+        MenuItemBase::nestedGetHint(event);
         // An action says its own name and key - see Action::getHint - and this is what a
         // command with none says instead. The strip writes the name under each icon and has
         // nowhere to put the key beside it, so this is where the two are said together.
@@ -455,12 +400,6 @@ namespace ClaFi::Controls
         if (shortcutText.empty())
             return;
         event.text << L" (" << shortcutText << L")";
-    }
-
-    void MenuCommand::click(ClickEvent& event)
-    {
-        MenuCommandBase::click(event);
-        closeBehindCommand(event);
     }
 
 }

@@ -201,6 +201,9 @@ namespace ClaFi
         using ClickEventBase::ClickEventBase;
     };
 
+    export using ClickFunc = std::function<void(ClickEvent&)>;
+
+
     // What every nested click event carries besides the click. See Control-Foundation
     export class NestedClickEventBase : public ClickEventBase
     {

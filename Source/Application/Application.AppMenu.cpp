@@ -30,10 +30,11 @@ import ClaFi.Core.DomEngine_Dt;
 // Dom::Value<std::wstring> picks its specialization off the scalar serializer declared here.
 import ClaFi.Core.Dom_StdSerializers;
 
-import ClaFi.Core.System.UiTypes;
-import ClaFi.StdLib;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.UiTypes;
+
+import ClaFi.StdLib;
 
 namespace ClaFi
 {
@@ -47,7 +48,7 @@ namespace ClaFi
         std::wstring caption;
         PaintIconFunc paintIcon;
         EndIcon endIcon{ EndIcon::None };
-        AppCommandHandler run;
+        ClickFunc run;
     };
 
     // The commands applications have asked for, in the order they asked.
@@ -55,7 +56,7 @@ namespace ClaFi
 
     // A command in the strip, doing whatever its handler does with the click that chose it.
     static void addCommand(TabStripBase& strip, const Text& caption,
-        const PaintIconFunc& paintIcon, EndIcon, const AppCommandHandler& run);
+        const PaintIconFunc& paintIcon, EndIcon, const ClickFunc& run);
     // Closes the menu, then asks the application's window to close as its close button does.
     static void closeApplication(ClickEvent&);
 
@@ -91,10 +92,15 @@ namespace ClaFi
     }
 
     void connectAppCommand(const std::wstring_view caption, PaintIconFunc paintIcon,
-        const EndIcon endIcon, AppCommandHandler run)
+        const EndIcon endIcon, ClickFunc run)
     {
         appCommands().push_back(
-            AppCommand{ std::wstring{ caption }, std::move(paintIcon), endIcon, std::move(run) });
+            AppCommand{
+                .caption = std::wstring{ caption },
+                .paintIcon = std::move(paintIcon),
+                .endIcon = endIcon,
+                .run = std::move(run)
+        });
     }
 
     // openAppMenuPage
@@ -127,7 +133,7 @@ namespace ClaFi
     // addCommand
 
     void addCommand(TabStripBase& strip, const Text& caption, const PaintIconFunc& paintIcon,
-        const EndIcon endIcon, const AppCommandHandler& run)
+        const EndIcon endIcon, const ClickFunc& run)
     {
         strip.add<ToolButton>(
             caption,

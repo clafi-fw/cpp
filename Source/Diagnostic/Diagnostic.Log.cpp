@@ -289,7 +289,7 @@ namespace ClaFi
             &m_copyRows,
         };
         Menu menu{ *this };
-        menu.add(items);
+        menu.addActions(items);
         menu.execute();
     }
 

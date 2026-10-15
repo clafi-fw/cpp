@@ -307,7 +307,7 @@ namespace ClaFi::Controls
         // icons, and two commands have nothing to compress - see TextBox::nestedContextPopup, which
         // has seven.
         Menu menu{ *this };
-        menu.add(items);
+        menu.addActions(items);
         menu.execute();
     }
 

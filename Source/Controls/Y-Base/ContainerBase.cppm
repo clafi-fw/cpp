@@ -1,3 +1,5 @@
+module;
+#include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Controls.Base.Container;
 
 import ClaFi.Core.Foundation;
@@ -28,6 +30,7 @@ namespace ClaFi::Controls
         explicit ContainerBase(const CreateParams&, Args&&...);
         ~ContainerBase() override;
     public:
+        const Text& placeholderText() const { return m_placeHolderText; }
         void setPlaceHolderText(const Text& value);
         // addOverlayControl only affects painting order and clipping:
         // Overlay controls are painted in a second pass on top of other controls
@@ -103,9 +106,7 @@ namespace ClaFi::Controls
         :
         FormControlBase{ params, std::forward<Args>(args)... }
     {
-        Props::ifThereIs<PlaceHolderText>([&](const auto& value) {
-            setPlaceHolderText(value);
-            }, std::forward<Args>(args)...);
+        BIND_PROPERTY_ACTION(PlaceHolderText, setPlaceHolderText(p));
     }
 
 
