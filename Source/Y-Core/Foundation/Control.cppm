@@ -148,7 +148,7 @@ namespace ClaFi
         ScaledSize scaledPreferredSize() const { return m_scaledMetrics.preferredSize; }
         float scaledPreferredWidth() const { return m_scaledMetrics.preferredSize.x; }
         float scaledPreferredHeight() const { return m_scaledMetrics.preferredSize.y; }
-        ScaledSize scaledMaxSize() const { return m_scaledMetrics.maxSize; };
+        ScaledSize scaledMaxSize() const { return m_scaledMetrics.maxSize; }
         float scaledMaxWidth() const { return m_scaledMetrics.maxSize.x; }
         float scaledMaxHeight() const { return m_scaledMetrics.maxSize.y; }
 
@@ -159,7 +159,7 @@ namespace ClaFi
         float totalSpacingX(std::size_t itemsNum) const;
         float totalSpacingY(std::size_t itemsNum) const;
     public:
-        // composed from this and the children's stated values.
+        // The content's floor, composed out of the children's composedMinSize values.
         ScaledSize composedMinSize{ 0.0f, 0.0f };
     private:
         // Borrowed - the form owns the pass and outlives every event raised inside it.
@@ -905,7 +905,7 @@ namespace ClaFi
         //
         // What reads it is whoever divides space and has less of it than was asked for - today
         // the placement, which cuts a window to the room its side has and no further than this.
-        [[nodiscard]] ScaledSize scaledMinSize() const { return m_scaledMinSize; }
+        [[nodiscard]] ScaledSize composedMinSize() const { return m_composedMinSize; }
 
         [[nodiscard]] float right() const { return m_topLeft.x + m_scaledSize.x; }
         [[nodiscard]] float bottom() const { return m_topLeft.y + m_scaledSize.y; }
@@ -1519,7 +1519,7 @@ namespace ClaFi
         float m_textWidthInDesign{}; // the width the last align broke the own text at, zero before
         FloatPoint m_topLeft{};
         ScaledSize m_scaledSize{};
-        ScaledSize m_scaledMinSize{};
+        ScaledSize m_composedMinSize{};
     };
 
 

@@ -258,16 +258,16 @@ namespace ClaFi::Controls
     ScaledSize PanelBase::composeMinSize(const AlignEvent& event, ScaledSize bodyMin) const
     {
         const ScaledSize topMin = isNotNullAndVisible(topBar())
-            ? topBar()->scaledMinSize()
+            ? topBar()->composedMinSize()
             : ScaledSize{ 0.0f, 0.0f };
         const ScaledSize leftMin = isNotNullAndVisible(leftBar())
-            ? leftBar()->scaledMinSize()
+            ? leftBar()->composedMinSize()
             : ScaledSize{ 0.0f, 0.0f };
         const ScaledSize rightMin = isNotNullAndVisible(rightBar())
-            ? rightBar()->scaledMinSize()
+            ? rightBar()->composedMinSize()
             : ScaledSize{ 0.0f, 0.0f };
         const ScaledSize bottomMin = isNotNullAndVisible(bottomBar())
-            ? bottomBar()->scaledMinSize()
+            ? bottomBar()->composedMinSize()
             : ScaledSize{ 0.0f, 0.0f };
 
         float middleWidth = 0.0f;
@@ -294,7 +294,7 @@ namespace ClaFi::Controls
     {
         if (!isNotNullAndVisible(body()))
             return { 0.0f, 0.0f };
-        return body()->scaledMinSize();
+        return body()->composedMinSize();
     }
 
     void PanelBase::alignContent(AlignEvent& event, ScaledPosition, ScaledSize& contentSize)
@@ -565,7 +565,7 @@ namespace ClaFi::Controls
         if (!bar)
             return {};
         const bool upright = isSideBar(slotId);
-        const ScaledSize barMin = bar->scaledMinSize();
+        const ScaledSize barMin = bar->composedMinSize();
         const ScaledSize bodyMin = bodyMinSize();
         const float shown = upright ? bar->scaledWidth() : bar->scaledHeight();
         const float bodyRoom = upright

@@ -274,7 +274,7 @@ namespace ClaFi::Controls
         // and still show everything it holds, because what falls past the edge is reached by
         // scrolling. That is the whole of how a menu says it would rather be short than stand
         // over the button it dropped from: nobody asks it, it states it. See
-        // Control::calculatedMinSize.
+        // Control::composedMinSize.
         //
         // The panel's arrangement is composed again with the body giving way, rather than the
         // body's size being taken off what the panel came to, so a side bar taller than the body

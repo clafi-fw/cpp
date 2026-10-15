@@ -250,7 +250,7 @@ namespace ClaFi::Browser
     {
         return {
             .width = scaledWidth(),
-            .minWidth = scaledMinSize().x,
+            .minWidth = composedMinSize().x,
         };
     }
 

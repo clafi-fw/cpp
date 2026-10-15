@@ -100,7 +100,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         void invalidateRect(const IntRect*) override;
         void setTitle(const std::wstring_view) override;
         void update() override;
-        void setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize) override;
+        void setSizeRange(ScaledSize minSize, ScaledSize maxSize) override;
         void setFrame(const WindowFrame&) override;
         // **The frame this window applies**, in real pixels: the design, less what the window's
         // state takes away. Maximized and fullscreen wear no frame at all; tiled keeps the shadow
@@ -237,7 +237,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // The geometry's size in real pixels - what the form is placed at.
         [[nodiscard]] IntSize geometryPixels() const;
         // The surface size a size asked for in real pixels is stated as - see toSurfaceHolding.
-        [[nodiscard]] IntSize surfaceSizeFor(ScaledDimensions asked) const;
+        [[nodiscard]] IntSize surfaceSizeFor(ScaledSize asked) const;
         // Where the window stands in its surface, what of the surface is solid, and what of it
         // takes the pointer. Double-buffered state, applied by the commit that carries the frame.
         void stateGeometry();
@@ -292,8 +292,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         int m_layerWidth{ 0 };
         // **The range stated before there was a toplevel to state it to.** A form measures before
         // it is placed, and the role is made at the placement; what it said is said again then.
-        ScaledDimensions m_pendingMinSize{};
-        ScaledDimensions m_pendingMaxSize{ k_maxFloat, k_maxFloat };
+        ScaledSize m_pendingMinSize{};
+        ScaledSize m_pendingMaxSize{ k_maxFloat, k_maxFloat };
         // **The last placement this window was given**, which is the only one worth building a
         // positioner from - see onIdle.
         WindowPlacement m_placement{};
@@ -708,7 +708,7 @@ namespace ClaFi::PlatformImplementation::Wayland
     // enforced here: the window is sized by whoever drags its edge, and the only way to be held
     // up is to have said where the floor is. Zero on an axis says there is no limit, which is
     // what k_maxFloat means on the way in.
-    void Window::setSizeRange(ScaledDimensions minSize, ScaledDimensions maxSize)
+    void Window::setSizeRange(ScaledSize minSize, ScaledSize maxSize)
     {
         // **Kept for the toplevel still to be made** - see createToplevel, which states it then. A
         // layer surface has no range: the compositor sizes it between its anchors.
@@ -1113,7 +1113,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         };
     }
 
-    IntSize Window::surfaceSizeFor(ScaledDimensions asked) const
+    IntSize Window::surfaceSizeFor(ScaledSize asked) const
     {
         const FrameMargins margins = surfaceMargins();
         return {

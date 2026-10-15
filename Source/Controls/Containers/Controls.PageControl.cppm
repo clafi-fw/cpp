@@ -124,7 +124,7 @@ namespace ClaFi::Controls
     }
 
     // **The box a page came to, not the floor it can be cut to.** Control::calculate keeps both:
-    // the measurement in its dimensions and the content's floor in calculatedMinSize, and a floor
+    // the measurement in its scaledSize and the content's floor in composedMinSize, and a floor
     // is what a page survives being squeezed to - a button's text ellipsizes long before its page
     // runs out of room. What this control has to be is the measurement.
     //
@@ -144,7 +144,7 @@ namespace ClaFi::Controls
             {
                 result.x = std::max(result.x, page->scaledSize().x);
                 result.y = std::max(result.y, page->scaledSize().y);
-                event.composedMinSize = page->scaledMinSize();
+                event.composedMinSize = page->composedMinSize();
             }
             return result;
         }
@@ -153,7 +153,7 @@ namespace ClaFi::Controls
         {
             result.x = std::max(result.x, page->scaledSize().x);
             result.y = std::max(result.y, page->scaledSize().y);
-            const ScaledSize pageMin = page->scaledMinSize();
+            const ScaledSize pageMin = page->composedMinSize();
             event.composedMinSize.x = std::max(event.composedMinSize.x, pageMin.x);
             event.composedMinSize.y = std::max(event.composedMinSize.y, pageMin.y);
         }

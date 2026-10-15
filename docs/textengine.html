@@ -449,7 +449,7 @@ and where in that rectangle the text block belongs:</p>
     <span class="tp">TextAnchor</span>, <span class="kw">const</span> <span class="tp">EditProps</span>* = <span class="kw">nullptr</span>, <span class="kw">bool</span> wrap = <span class="kw">true</span>,
     <span class="kw">const</span> <span class="tp">TextFormat</span>* = <span class="kw">nullptr</span>);
 
-<span class="tp">CalculatedDimensions</span> <span class="fn">calculateText</span>(<span class="kw">const</span> <span class="tp">FormContext</span>&amp;, <span class="kw">const</span> <span class="tp">Text</span>&amp;,
+<span class="tp">ScaledSize</span> <span class="fn">calculateText</span>(<span class="kw">const</span> <span class="tp">FormContext</span>&amp;, <span class="kw">const</span> <span class="tp">Text</span>&amp;,
     <span class="tp">MaxSize</span> = { k_maxFloat, k_maxFloat }, <span class="kw">bool</span> editable = <span class="kw">false</span>, <span class="kw">bool</span> wrap = <span class="kw">true</span>,
     <span class="kw">const</span> <span class="tp">TextFormat</span>* = <span class="kw">nullptr</span>);</code></pre>
 
@@ -532,7 +532,7 @@ paint and the caret have to read one build.</p>
 <strong>pair</strong>:</p>
 
 <pre><code><span class="kw">virtual</span> <span class="tp">DrawTextResult</span> <span class="fn">drawText</span>(<span class="tp">PaintEvent</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp; textBounds, <span class="kw">const</span> <span class="tp">Text</span>&amp;);
-<span class="kw">virtual</span> <span class="tp">CalculatedDimensions</span> <span class="fn">measureText</span>(<span class="tp">AlignEvent</span>&amp;, <span class="tp">ScaledDimensions</span> asked, <span class="kw">const</span> <span class="tp">Text</span>&amp;);</code></pre>
+<span class="kw">virtual</span> <span class="tp">ScaledSize</span> <span class="fn">measureText</span>(<span class="tp">AlignEvent</span>&amp;, <span class="tp">ScaledSize</span> asked, <span class="kw">const</span> <span class="tp">Text</span>&amp;);</code></pre>
 
 <p>Everything around them stays with the framework. <code>paintText</code> keeps the rect, the
 gather and the flags the result raises; <code>calculateText</code> keeps the gather, the rule that a

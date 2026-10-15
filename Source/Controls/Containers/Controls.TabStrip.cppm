@@ -654,7 +654,7 @@ namespace ClaFi::Controls
                 if (!item->visible() || isTab(*item))
                     continue;
                 const float itemExtent = horizontal ? item->scaledHeight() : item->scaledWidth();
-                const ScaledSize itemMin = item->scaledMinSize();
+                const ScaledSize itemMin = item->composedMinSize();
                 const float itemMinExtent = horizontal ? itemMin.y : itemMin.x;
                 if (extent != k_maxFloat)
                     extent = std::max(extent, itemExtent + gap);

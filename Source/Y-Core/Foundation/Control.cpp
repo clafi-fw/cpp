@@ -202,7 +202,7 @@ namespace ClaFi
         {
             if (!item->visible())
                 continue;
-            const ScaledSize itemMin = item->scaledMinSize();
+            const ScaledSize itemMin = item->composedMinSize();
             const float itemMain = mainIsX ? itemMin.x : itemMin.y;
             const float itemCross = mainIsX ? itemMin.y : itemMin.x;
             cross = std::max(cross, itemCross);
@@ -2007,7 +2007,7 @@ namespace ClaFi
         if (fixedSize)
         {
             m_scaledSize = form.scaler().scale(designMetrics.minSize);
-            m_scaledMinSize = m_scaledSize;
+            m_composedMinSize = m_scaledSize;
         }
         else
         {
@@ -2070,10 +2070,10 @@ namespace ClaFi
                 contentMin.y = std::ceil(contentMin.y);
                 contentMin.y += event.scaledPaddingY() * 2.0f;
             }
-            m_scaledMinSize.x = std::max(contentMin.x, event.scaledMinWidth());
-            m_scaledMinSize.y = std::max(contentMin.y, event.scaledMinHeight());
-            m_scaledMinSize.x = std::min(m_scaledMinSize.x, m_scaledSize.x);
-            m_scaledMinSize.y = std::min(m_scaledMinSize.y, m_scaledSize.y);
+            m_composedMinSize.x = std::max(contentMin.x, event.scaledMinWidth());
+            m_composedMinSize.y = std::max(contentMin.y, event.scaledMinHeight());
+            m_composedMinSize.x = std::min(m_composedMinSize.x, m_scaledSize.x);
+            m_composedMinSize.y = std::min(m_composedMinSize.y, m_scaledSize.y);
         }
     }
 

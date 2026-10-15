@@ -201,7 +201,7 @@ namespace Themes_App
                     return candidate == event.items.front();
                 });
             const std::size_t place = static_cast<std::size_t>(moved - m_ruleRows.begin());
-            what << L"rule " << (place + 1ull);
+            what << L"rule " << (place + 1);
         }
         else
             what << event.items.size() << L" rules";

@@ -1669,7 +1669,7 @@ namespace ClaFi
             // **The floor the content states** - the MinSize set on the root or anywhere below it,
             // composed up the tree, and zero where nobody set one. The placement reads it instead
             // of asking whether this form may be shortened.
-            request.minSize = m_content.scaledMinSize();
+            request.minSize = m_content.composedMinSize();
             request.maxSize = scaler().scale(m_content.maxSize());
             request.textOrigin = m_content.textOrigin();
             request.clearance = onPointer ? 0.0f : scaler().scale(m_dropdownClearance);
@@ -2236,7 +2236,7 @@ namespace ClaFi
         const bool contentSized = m_autoFit == AutoFit::Yes;
         const ScaledSize minSize = contentSized
             ? m_calculatedSize
-            : m_content.scaledMinSize();
+            : m_content.composedMinSize();
         const ScaledSize maxSize = contentSized
             ? m_calculatedSize
             : scaler().scale(m_content.maxSize());

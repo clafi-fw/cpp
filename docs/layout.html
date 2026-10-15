@@ -315,8 +315,8 @@ somewhere in it.</li>
   <path class="lp-ab" marker-end="url(#ab)" d="M120,130 L120,110"/>
   <path class="lp-ab" marker-end="url(#ab)" d="M90,80 L90,60"/>
   <text class="lp-m" x="250" y="50">children first, then the control itself</text>
-  <text class="lp-m" x="250" y="72">every control writes its own dimensions()</text>
-  <text class="lp-m" x="250" y="94">and its calculatedMinSize()</text>
+  <text class="lp-m" x="250" y="72">every control writes its own scaledSize()</text>
+  <text class="lp-m" x="250" y="94">and its composedMinSize()</text>
   <text class="lp-m" x="250" y="116">nobody knows yet what room they will get</text>
 
   <text class="lp-th" x="10" y="228">2 &middot; The align - align()</text>
@@ -332,7 +332,7 @@ somewhere in it.</li>
 
 <p><strong>The measure runs bottom-up.</strong> <code>Control::calculate</code> walks the
 children first, then asks the control what its content came to -
-<code>calculateContent</code> - and writes the answer into <code>dimensions()</code>. Nothing
+<code>calculateContent</code> - and writes the answer into <code>scaledSize()</code>. Nothing
 in the tree knows yet how much room it will be given. A stack of buttons measures the widest
 button; a panel measures its bars and its body; a label measures its text.</p>
 
@@ -345,7 +345,7 @@ measured either takes it or gives it back, and that is what the alignment decide
 else in the framework makes that choice.</p>
 
 <div class="info">
-A control's <code>width()</code> and <code>height()</code> hold the measure's answer between
+A control's <code>scaledWidth()</code> and <code>scaledHeight()</code> hold the measure's answer between
 the two passes and the align's answer after them. Reading either from outside a pass is
 reading the last completed layout, which is normally what you want. Reading one while a pass
 is running - from inside a handler the pass raised - may be reading the half of it that has
@@ -567,7 +567,7 @@ ignores the cap. State one or the other.
 <h3 id="minsize">What a control can be cut to</h3>
 
 <p>Beside the size it came to, the measure writes a second number:
-<code>calculatedMinSize()</code> - the least the control may be made. It is composed the same
+<code>composedMinSize()</code> - the least the control may be made. It is composed the same
 way the size is, out of the <code>MinSize</code> this control was given and the floor its
 content built from its children's.</p>
 
@@ -1395,7 +1395,7 @@ connection. The root is an ordinary control in every other way - it has padding,
 <ul>
 <li><strong>The window is a ceiling, not a setting.</strong> What the root may grow to is the
 window it has.</li>
-<li><strong>The floor is the root's <code>calculatedMinSize()</code>.</strong> That is what a
+<li><strong>The floor is the root's <code>composedMinSize()</code>.</strong> That is what a
 placement cuts a window down to and no further, and it is composed from the
 <code>MinSize</code> values set in the tree - never from what anything measured.</li>
 <li><strong><code>AutoFit::Yes</code> turns the relationship round.</strong> Every alignment
@@ -1875,7 +1875,7 @@ slot it was offered.</li>
 <li><code>MinSize</code> used as "the size it should be".</li>
 <li>Scale anything by hand.</li>
 <li>Lay out from inside a layout pass - ask for one.</li>
-<li>Read <code>width()</code> of something that has not been laid out yet and expect an
+<li>Read <code>scaledWidth()</code> of something that has not been laid out yet and expect an
 answer. Use <code>scrollIntoViewOnAlign()</code> and <code>OnAligned</code> for work that
 needs a finished layout.</li>
 <li>Give a scrolled body a maximum that comes from the box scrolling it. That is a ratchet -
@@ -1950,11 +1950,11 @@ gives it its parent and its form.
 
 <table>
 <tr><th>Member</th><th>Answers</th></tr>
-<tr><td><code>width()</code>, <code>height()</code>, <code>dimensions()</code></td><td>the size the last pass gave it</td></tr>
+<tr><td><code>scaledWidth()</code>, <code>scaledHeight()</code>, <code>scaledSize()</code></td><td>the size the last pass gave it</td></tr>
 <tr><td><code>left()</code>, <code>top()</code>, <code>topLeft()</code>, <code>boundsInParent()</code></td><td>where it sits in its parent's content space</td></tr>
 <tr><td><code>boundsInForm()</code></td><td>the same, in form coordinates</td></tr>
 <tr><td><code>visibleRectInForm()</code></td><td>what of it lies inside every viewport above it</td></tr>
-<tr><td><code>calculatedMinSize()</code></td><td>the least it may be made</td></tr>
+<tr><td><code>composedMinSize()</code></td><td>the least it may be made</td></tr>
 <tr><td><code>isHostedAsBody()</code></td><td>whether its size is its host's to give</td></tr>
 <tr><td><code>isWidthGivenByParent()</code></td><td>whether its width is decided above it or by what it holds</td></tr>
 <tr><td><code>scrollIntoView()</code>, <code>scrollIntoViewOnAlign()</code></td><td>bring it into view now, or once the pass it is waiting for has run</td></tr>

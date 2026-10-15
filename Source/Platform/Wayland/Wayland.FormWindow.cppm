@@ -234,8 +234,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // reads it: a compositor has already taken the keys that are its own before this client
         // is told anything, so there is no DefWindowProc to hand the rest to.
         bool handled = false;
-        KeyDownEvent event{ press.key, press.modifiers, press.isRepeat, handled, press.stamp };
-        m_form.wnd_keyDown(event);
+        m_form.wnd_keyDown(press.key, press.modifiers, press.isRepeat, handled, press.stamp);
     }
 
     void FormWindow::character(wchar_t value)
