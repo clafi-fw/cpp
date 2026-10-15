@@ -302,18 +302,9 @@ void MillSceneForm::pickSceneTheme(std::size_t index)
 void MillSceneForm::buildScenePage(OptionsPage& page)
 {
     StackPanel& group = page.addGroup(L"Scene Theme");
-    // **The lanes are stated, not wrapped.** A wrapping stack's **minimum** is one lane - wrapping
-    // is its promise to fit whatever width it is given - so nothing measuring this page could
-    // learn that it wants three, and the third lane was laid out past the popup's edge. A row
-    // of columns has the width of its columns for a minimum, which is the truth.
-    //
-    // **The row owns the buttons**, not the columns: a container answers canFocusItem only where
-    // it follows the user (Interactivity::ActiveContainer, see StackBase::followsUser),
-    // and the walk from the pointer returns the first control it says yes to - the button,
-    // through the column standing between them. That is what Stack::nestedControlHovered
-    // means by a stack holding its items in groups.
     SingleSelectionView& lanes = group.add<SingleSelectionView>(
-        Orientation::Horizontal,
+        Orientation::VerticalWrap,
+        LaneSize{ k_themeLaneSize },
         Spacing{ k_themeLaneSpacing, 0.0f },
         VerticalAlign::Top
     );
@@ -337,16 +328,10 @@ void MillSceneForm::buildScenePage(OptionsPage& page)
 
     m_themeButtons.clear();
     m_themeButtons.reserve(PathArt::Themes::allThemes.size());
-    StackPanel* lane = nullptr;
     std::size_t index = 0;
     for (const PathArt::SceneTheme& theme : PathArt::Themes::allThemes)
     {
-        // A column every k_themeLaneSize themes, so the count follows the list rather than
-        // being stated beside it.
-        if (index % k_themeLaneSize == 0)
-            lane = &lanes.add<StackPanel>(Orientation::Vertical);
-
-        ToolButton& item = lane->add<ToolButton>(
+        ToolButton& item = lanes.add<ToolButton>(
             Text{ theme.name },
             Tag{ index },
             ButtonViewMode::LeftIcon,
