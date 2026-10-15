@@ -119,6 +119,8 @@ namespace ClaFi
         // over the markers, since an anchor is asked for when a link to it is followed and not
         // before.
         [[nodiscard]] std::optional<TextRange> anchorRange(std::wstring_view name) const;
+        // The link a caret at that position stands in, its ends included; nothing off every link.
+        [[nodiscard]] std::optional<LinkSpan> linkAtCaret(std::size_t caretPos) const;
 
         // Edit support
         void replaceText(const TextRange&, const std::wstring_view = {});

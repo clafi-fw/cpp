@@ -40,7 +40,7 @@ namespace ClaFi
         Color spot{};
     };
 
-    // What a theme's icon is drawn from - three palette hues, and the surface and window per mode.
+    // Two samples of the theme colors - one for dark and one for light mode
     export struct ThemeIconColors
     {
         ThemeIconColors() = default;

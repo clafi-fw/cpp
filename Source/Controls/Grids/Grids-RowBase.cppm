@@ -196,8 +196,8 @@ namespace ClaFi::Controls::Grids
         virtual RowBase* spanRow() { return nullptr; }
 
     private:
-        // The link a menu is about, and the column of the cell it stands in.
-        struct MenuLink
+        // A link a request is about - what it names, and the column of the cell it stands in.
+        struct LinkTarget
         {
             const Column* column;
             std::wstring target;
@@ -249,9 +249,12 @@ namespace ClaFi::Controls::Grids
         [[nodiscard]] FloatRect cellTextBounds(const Column&, const FloatRect& cellRect) const;
         // The link under the point in this row's cell in that column; nothing where none stands.
         [[nodiscard]] std::optional<CellLink> linkAt(const Column&, PointInForm);
-        // The link under the pointer, or - from the keyboard - the first in the selected cell's
-        // text while this row holds the cell. Nothing where neither stands on a link.
-        [[nodiscard]] std::optional<MenuLink> menuLink(const ContextPopupEvent&);
+        // The first link in the selected cell's text while this row holds the cell, or nothing.
+        [[nodiscard]] std::optional<LinkTarget> selectedCellLink();
+        // Follows the selected cell's link, the key handled first; false where the cell holds none.
+        bool followSelectedCellLink(KeyDownEvent&);
+        // The link under the pointer, or the selected cell's from the keyboard; nothing off both.
+        [[nodiscard]] std::optional<LinkTarget> menuLink(const ContextPopupEvent&);
         // Underlines the link, or none for an empty one, repainting only when that changes.
         void hoverLink(const HoveredLink&);
     private:

@@ -301,15 +301,18 @@ namespace ClaFi::Controls::Grids
                 }
                 break;
             }
-        // Both mean the same thing, and a cell answers them whenever its column opens an editor
-        // at all - which every text column does, since EditorMode::ReadOnly is the default. So
-        // Return reaches the panel underneath from a cell holding a control, and from a column
-        // that says EditorMode::None, and nowhere else. Nothing is taken from it here:
-        // Control::nestedKeyDown does nothing with Return, and the form's keyboard-click flag is a
-        // visual pressed state rather than a click.
+        // Return follows the selected cell's link first, and both keys open the editor otherwise.
+        // A cell answers them whenever its column opens an editor at all - which every text column
+        // does, since EditorMode::ReadOnly is the default. So Return reaches the panel underneath
+        // from a cell holding a control, and from a column that says EditorMode::None and holds no
+        // link, and nowhere else. Nothing is taken from it here: Control::nestedKeyDown does
+        // nothing with Return, and the form's keyboard-click flag is a visual pressed state rather
+        // than a click.
         case Keys::F2:
         case Keys::Return:
             {
+                if (event.key == Keys::Return && followSelectedCellLink(event))
+                    return;
                 if (editSelectedCell())
                 {
                     event.handled = true;
@@ -446,6 +449,24 @@ namespace ClaFi::Controls::Grids
         if (!Input::mouse().active())
             form().mouseTick(false);
         return true;
+    }
+
+    // The field is collected as editSelectedCell collects it, so the two keys agree on which cell
+    // the selection names.
+    bool GridBase::followSelectedCellLink(KeyDownEvent& event)
+    {
+        if (!cellKeysApply())
+            return false;
+        FieldStops stops;
+        const std::size_t sourceIndex = collectField(stops);
+        if (sourceIndex == k_maxSize)
+            return false;
+        const FieldStop& stop = stops[sourceIndex];
+        if (!stop.row || !stop.column)
+            return false;
+        if (stop.column->editorMode() == EditorMode::Editable && !event.modifiers.ctrl)
+            return false;
+        return stop.row->followSelectedCellLink(event);
     }
 
     bool GridBase::moveCellSelection(KeyCode key)

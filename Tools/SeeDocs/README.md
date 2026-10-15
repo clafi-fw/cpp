@@ -493,8 +493,10 @@ struct's or a union's head and bases over its public instance fields, a line eac
 enum's head over its members the same way; in Delphi the name and an equals sign before what an
 alias or a built type stands for, a record's public fields down to its `end`, or an enum's members
 in brackets on one line. A link to a struct holding no such field keeps the link's own hint. A
-right click on a link, or the menu
-key on a grid cell holding one, offers Open and Open in new tab, which opens behind the tab shown.
+mouse click follows a link, and so does Return on the grid cell holding it or with the caret
+standing in it - Ctrl+Return in a hint box that edits, where Return breaks the line. A right click
+on a link, or the menu key on a grid cell holding one or with the caret in one, offers Open and
+Open in new tab, which opens behind the tab shown.
 A row of the derived types opens the type it names; a method's page picks the method's type in the
 tree. A page's trees start closed, and a node's rows are built the first time it opens.
 The pages are built by

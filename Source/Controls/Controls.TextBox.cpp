@@ -292,13 +292,16 @@ namespace ClaFi::Controls
         writeFollowLine(event.text);
     }
 
+    // Only a pointer click lands on a link - one a key made has no point to land on, and Return
+    // answers for the caret in nestedKeyDown. A press that ended in a selection was a drag, and a
+    // drag does not follow the link it started on. The caret the press placed stands where the
+    // release did when the two are one place.
     void TextBox::click(ClickEvent& event)
     {
-        // A press that ended in a selection was a drag, and a drag does not follow the link it
-        // started on. The caret the press placed stands where the release did when the two are
-        // one place.
         std::optional<LinkSpan> link{};
-        if (followsLinks(event.modifiers) && m_editProps.selRange.length == 0)
+        const bool pointerFollows = Input::mouse().active() && followsLinks(event.modifiers)
+            && m_editProps.selRange.length == 0;
+        if (pointerFollows)
         {
             if (const std::optional<LinkHit> hit = linkAt(event.clickPos()))
                 link = hit->link;
@@ -308,26 +311,9 @@ namespace ClaFi::Controls
             Label::click(event);
             return;
         }
-
-        // An anchor in the box's own text is the box's to go to, and nobody is told about it: the
-        // caret move that follows says where the box went. A name the text does not hold goes on
-        // to OnLinkClick like any other target - a link to another page's anchor, say.
-        if (link->value.starts_with(L'#') && goToAnchor(link->value.substr(1)))
-        {
-            event.stopPropagation();
-            return;
-        }
-
-        // Copied out before anyone is told: a handler is free to rewrite the text the target
-        // stands in, or to take the box down, and nothing below reaches the box or its form. No
-        // form is named to the shell for that reason - it would only own the shell's own message
-        // if the target cannot be opened.
-        LinkClickEvent linkEvent{ *this, std::wstring{ link->value }, event.stamp };
         // The click was the link's, and goes no further up.
         event.stopPropagation();
-        emitEvent(linkEvent);
-        if (!linkEvent.propagationStopped() && opensByDefault(linkEvent.target))
-            Platform::shellExecute(nullptr, linkEvent.target);
+        followLink(*link, event.stamp);
     }
 
     void TextBox::nestedContextPopup(ContextPopupEvent& event)
@@ -338,21 +324,24 @@ namespace ClaFi::Controls
         if (!mousePosInSelection())
             setCaretPosFromMouse();
 
-        // **A link under the pointer is what the menu is about**, ahead of the box: the box's menu
-        // is its edit commands, and none of them is about where the link goes. The target is copied
-        // out before anyone is told, as a click's is. A handler that has shown the link's menu
-        // stops the request, and the box raises nothing over it; one that has not leaves the
-        // box to answer as for a click anywhere else in it.
-        if (event.mousePos)
+        // **A link is what the menu is about** where one stands under the pointer or, from the
+        // keyboard, at the caret - ahead of the box: the box's menu is its edit commands, and none
+        // of them is about where the link goes. The target is copied out before anyone is told, as
+        // a click's is. A handler that has shown the link's menu stops the request, and the box
+        // raises nothing over it; one that has not leaves the box to answer as for a click
+        // anywhere else in it.
+        std::optional<LinkSpan> link{};
+        if (!event.mousePos)
+            link = linkAtCaret();
+        else if (const std::optional<LinkHit> hit = linkAt(*event.mousePos))
+            link = hit->link;
+        if (link.has_value())
         {
-            if (const std::optional<LinkHit> hit = linkAt(*event.mousePos))
-            {
-                LinkContextPopupEvent linkEvent{ *this, std::wstring{ hit->link.value },
-                    hit->link.range, event };
-                emitEvent(linkEvent);
-                if (event.propagationStopped())
-                    return;
-            }
+            LinkContextPopupEvent linkEvent{ *this, std::wstring{ link->value }, link->range,
+                event };
+            emitEvent(linkEvent);
+            if (event.propagationStopped())
+                return;
         }
 
         // The application gets first refusal, and a handler that stops the event has replaced
@@ -488,6 +477,44 @@ namespace ClaFi::Controls
         const FloatPoint origin = anchoredOrigin(textBounds, layout.calculatedDimensions(),
             textAnchor());
         return layout.linkAt(pt - origin);
+    }
+
+    std::optional<LinkSpan> TextBox::linkAtCaret() const
+    {
+        if (m_editProps.selRange.start == k_maxSize)
+            return std::nullopt;
+        return text().linkAtCaret(m_editProps.caretPos());
+    }
+
+    // Handled before the follow, which may take the box down with the page it opens.
+    bool TextBox::followLinkAtCaret(KeyDownEvent& event)
+    {
+        if (!followsLinks(event.modifiers))
+            return false;
+        const std::optional<LinkSpan> link = linkAtCaret();
+        if (!link.has_value())
+            return false;
+        event.handled = true;
+        followLink(*link, event.stamp);
+        return true;
+    }
+
+    // An anchor in the box's own text is the box's to go to, and nobody is told about it: the caret
+    // move that follows says where the box went. A name the text does not hold goes on to
+    // OnLinkClick like any other target - a link to another page's anchor, say.
+    void TextBox::followLink(const LinkSpan& link, const InputStamp stamp)
+    {
+        if (link.value.starts_with(L'#') && goToAnchor(link.value.substr(1)))
+            return;
+
+        // Copied out before anyone is told: a handler is free to rewrite the text the target
+        // stands in, or to take the box down, and nothing below reaches the box or its form. No
+        // form is named to the shell for that reason - it would only own the shell's own message
+        // if the target cannot be opened.
+        LinkClickEvent linkEvent{ *this, std::wstring{ link.value }, stamp };
+        emitEvent(linkEvent);
+        if (!linkEvent.propagationStopped() && opensByDefault(linkEvent.target))
+            Platform::shellExecute(nullptr, linkEvent.target);
     }
 
     void TextBox::hoverLink(TextRange link)

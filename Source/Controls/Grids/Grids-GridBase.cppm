@@ -184,6 +184,9 @@ namespace ClaFi::Controls::Grids
         // not re-checked and cannot be: this call is on the stack of the grid's own key walk, so
         // a grid that does not survive the edit has already taken the caller with it.
         bool editSelectedCell();
+        // Return follows the selected cell's link where the column opens no editor on it, and
+        // Ctrl+Return where it does. False where there is no link to follow, so the key goes on.
+        bool followSelectedCellLink(KeyDownEvent&);
         // Whether this click is the one that opens the selected cell's editor: a mouse click,
         // released on the cell the press landed on, that press having found the user on it.
         [[nodiscard]] bool clickEditsCell(const NestedClickEvent&) const;

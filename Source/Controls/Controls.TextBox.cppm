@@ -296,6 +296,12 @@ namespace ClaFi::Controls
         [[nodiscard]] bool followsLinks(KeyModifiers) const;
         // The link under a point in form space, or nothing.
         [[nodiscard]] std::optional<LinkHit> linkAt(PointInForm) const;
+        // The link the caret stands in, or nothing - a caret not yet placed stands in none.
+        [[nodiscard]] std::optional<LinkSpan> linkAtCaret() const;
+        // Return on a caret standing in a live link follows it; false leaves the key to go on.
+        bool followLinkAtCaret(KeyDownEvent&);
+        // Goes to the anchor, or raises LinkClickEvent and opens what no handler took.
+        void followLink(const LinkSpan&, InputStamp);
         // Underlines a link, or none for an empty range, repainting only when that changes.
         void hoverLink(TextRange);
         // Records the link the pointer stands on, and has the hint asked again when it changed.
@@ -795,6 +801,12 @@ namespace ClaFi::Controls
         case Keys::End:
             if ((!event.modifiers.shift && !event.modifiers.ctrl) || !m_editProps.selRange.length)
                 m_editProps.caretOnLeft = toLeft;
+            break;
+
+        case Keys::Return:
+            if (followLinkAtCaret(event))
+                return;
+            event.handled = false;
             break;
 
         default:

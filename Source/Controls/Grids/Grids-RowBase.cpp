@@ -777,8 +777,9 @@ namespace ClaFi::Controls::Grids
         m_descriptor.endCellSelection();
     }
 
-    // Only a pointer click lands on a link - one a key made has no point to land on. The press
-    // has already picked the cell, and the click is the link's alone.
+    // Only a pointer click lands on a link - one a key made has no point to land on, and Return
+    // answers for the selected cell in GridBase::nestedKeyDown. The press has already picked the
+    // cell, and the click is the link's alone.
     void RowBase::click(ClickEvent& event)
     {
         if (Input::mouse().active())
@@ -807,7 +808,7 @@ namespace ClaFi::Controls::Grids
     {
         if (event.control == this)
         {
-            if (std::optional<MenuLink> link = menuLink(event))
+            if (std::optional<LinkTarget> link = menuLink(event))
             {
                 CellLinkContextPopupEvent linkEvent{ *this, *link->column, std::move(link->target),
                     event };
@@ -1172,19 +1173,8 @@ namespace ClaFi::Controls::Grids
     }
 
     // The keyboard names a cell and no point in it, so the cell's first link stands for the cell.
-    std::optional<RowBase::MenuLink> RowBase::menuLink(const ContextPopupEvent& event)
+    std::optional<RowBase::LinkTarget> RowBase::selectedCellLink()
     {
-        if (event.mousePos)
-        {
-            const PointInForm point = *event.mousePos;
-            const Column* column = columnAt(point);
-            if (!column)
-                return std::nullopt;
-            std::optional<CellLink> link = linkAt(*column, point);
-            if (!link.has_value())
-                return std::nullopt;
-            return MenuLink{ column, std::move(link->target) };
-        }
         const Column* column = m_descriptor.selectedColumn();
         if (!column || m_descriptor.selectedRow() != this)
             return std::nullopt;
@@ -1193,9 +1183,35 @@ namespace ClaFi::Controls::Grids
         for (const Text::Marker& marker : cellText.markers())
         {
             if (const PushLink* link = std::get_if<PushLink>(&marker.second))
-                return MenuLink{ column, link->target };
+                return LinkTarget{ column, link->target };
         }
         return std::nullopt;
+    }
+
+    // Handled before the follow, which may open a page this row does not outlive.
+    bool RowBase::followSelectedCellLink(KeyDownEvent& event)
+    {
+        std::optional<LinkTarget> link = selectedCellLink();
+        if (!link.has_value())
+            return false;
+        event.handled = true;
+        CellLinkClickEvent linkEvent{ *this, *link->column, std::move(link->target), event.stamp };
+        cellLinkClick(linkEvent);
+        return true;
+    }
+
+    std::optional<RowBase::LinkTarget> RowBase::menuLink(const ContextPopupEvent& event)
+    {
+        if (!event.mousePos)
+            return selectedCellLink();
+        const PointInForm point = *event.mousePos;
+        const Column* column = columnAt(point);
+        if (!column)
+            return std::nullopt;
+        std::optional<CellLink> link = linkAt(*column, point);
+        if (!link.has_value())
+            return std::nullopt;
+        return LinkTarget{ column, std::move(link->target) };
     }
 
     void RowBase::hoverLink(const HoveredLink& link)

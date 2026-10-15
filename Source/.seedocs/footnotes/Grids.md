@@ -99,8 +99,10 @@ onto a link, off one, or from one to another.
 
 ## CellLinkClickEvent
 
-A cell's text carries links as any Text does - PushLink around the words. Only a mouse click
-reaches one. The click goes no further up, so the grid's own click handling never sees it.
+A cell's text carries links as any Text does - PushLink around the words. A mouse click on one
+follows it. Return follows the selected cell's first link, which stands for the cell, in a column
+that opens no editor; a column that edits keeps Return for the editor and follows on Ctrl+Return.
+The click goes no further up, so the grid's own click handling never sees it.
 
 ## CellLinkContextPopupEvent
 

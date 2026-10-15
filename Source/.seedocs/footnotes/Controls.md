@@ -146,7 +146,7 @@ listener may do anything with the text or the box. A caret move alone raises Car
 
 **A link is live** in a read-only box, and with Ctrl held in one the user types into. A live link is
 underlined, shows the hand, and is followed by a press and release on it with nothing selected
-between.
+between. Return follows the live link the caret stands in, a caret at either end of it included.
 
 - `#name` the box's text holds - the box goes there itself and raises nothing. See
   TextBox::goToAnchor.
@@ -173,11 +173,12 @@ to follow.
 
 ## LinkContextPopupEvent
 
-A mouse right click on a link raises this ahead of the box's own edit menu. **A handler that shows
-a menu stops `popup`**, and the box shows nothing over it. Otherwise the box answers as anywhere
-else in it: a ContextPopupEvent handler first, then the edit menu.
+A mouse right click on a link raises this ahead of the box's own edit menu, as does a menu asked
+for from the keyboard while the caret stands in a link. **A handler that shows a menu stops
+`popup`**, and the box shows nothing over it. Otherwise the box answers as anywhere else in it: a
+ContextPopupEvent handler first, then the edit menu.
 
-A menu raised from the keyboard drops at the caret and raises no link event.
+A menu raised from the keyboard drops at the caret.
 
 ## TextBox goToAnchor
 

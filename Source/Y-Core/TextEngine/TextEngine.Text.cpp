@@ -687,6 +687,43 @@ namespace ClaFi
         // An anchor left open holds the rest of the text.
         return TextRange{ start, m_plainText.size() - start };
     }
+
+    // Markers stand in text order, so the first link closed at or past the position and opened at
+    // or before it is the first the caret touches - the ending one where two meet at the caret.
+    std::optional<LinkSpan> Text::linkAtCaret(const std::size_t caretPos) const
+    {
+        std::vector<const Marker*> openLinks;
+        for (const Marker& marker : m_markers)
+        {
+            if (marker.first > caretPos && openLinks.empty())
+                break;
+            if (std::holds_alternative<PushLink>(marker.second))
+            {
+                openLinks.push_back(&marker);
+                continue;
+            }
+            if (!std::holds_alternative<PopLink>(marker.second) || openLinks.empty())
+                continue;
+            const Marker& push = *openLinks.back();
+            openLinks.pop_back();
+            if (push.first <= caretPos && caretPos <= marker.first)
+            {
+                const TextRange range = { push.first, marker.first - push.first };
+                return LinkSpan{ range, std::get<PushLink>(push.second).target };
+            }
+        }
+
+        // A link left open runs to the end of the text.
+        for (const Marker* push : openLinks)
+        {
+            if (push->first <= caretPos)
+            {
+                const TextRange range = { push->first, m_plainText.size() - push->first };
+                return LinkSpan{ range, std::get<PushLink>(push->second).target };
+            }
+        }
+        return std::nullopt;
+    }
     void Text::replaceText(const TextRange& range, const std::wstring_view str) {
         std::size_t start = std::min(range.start, m_plainText.size());
         std::size_t length = std::min(range.length, m_plainText.size() - start);
