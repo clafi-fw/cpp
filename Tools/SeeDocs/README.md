@@ -395,9 +395,12 @@ each source holding it, with an Open folder button that shows it in the desktop'
 says what it holds at every depth,
 leads with the folders directly under
 its own, as the tree lists them, each with what it holds at every depth, and where the folder
-holds modules of its own goes on with a grid of their types with their kinds and hints, then
-their functions and their constants, each grid by module, the module's name beside its rows and
-linked to its page; a module's page holds the same grids of its own exports. A function's row
+holds modules of its own goes on with its Content: one grid holding a row per module, closed, the
+module's name linked to its page, and under it the module's types, its functions and its
+constants, each run beside its word - Types, Functions, Constants - and each row with its hint,
+which runs over the cells its row leaves empty before it. A module's page holds a grid of its own
+per kind of export. A type's row carries its kind at the end of its name's cell, as a tree row
+does. A function's row
 carries its name alone, one row per name, every overload's signature in the name's hint; the
 name links to the function's page,
 which carries the hint under its title - the first commented overload's, as the row does - and

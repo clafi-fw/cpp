@@ -177,12 +177,13 @@ namespace ClaFi::Controls
         showCurrentRow();
     }
 
+    // By index, as expandAll: the current row's own node may fetch nodes as it opens.
     void TreeView::collapseOthers()
     {
-        for (TreeNode* node : m_nodes)
+        for (std::size_t i = 0; i != m_nodes.size(); ++i)
         {
-            if (!holdsCurrentRow(*node))
-                node->header().setExpanded(false);
+            TreeNode& node = *m_nodes[i];
+            node.header().setExpanded(holdsCurrentRow(node));
         }
         showCurrentRow();
     }
@@ -244,7 +245,7 @@ namespace ClaFi::Controls
             else if (&event.action == &m_collapseAll)
                 event.claim({ .enabled = hasNode(true) });
             else if (&event.action == &m_collapseOthers)
-                event.claim({ .enabled = hasOtherNodeOpen() });
+                event.claim({});
         });
         onActionClick([this](ActionClickEvent& event) {
             if (&event.action == &m_expandAll)
@@ -285,13 +286,6 @@ namespace ClaFi::Controls
     {
         return std::ranges::any_of(m_nodes, [expanded](const TreeNode* node) {
             return node->header().expanded() == expanded;
-        });
-    }
-
-    bool TreeView::hasOtherNodeOpen() const
-    {
-        return std::ranges::any_of(m_nodes, [this](const TreeNode* node) {
-            return node->header().expanded() && !holdsCurrentRow(*node);
         });
     }
 

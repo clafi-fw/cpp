@@ -145,7 +145,7 @@ namespace ClaFi::Controls
         void expandAll();
         // Closes every node; a current row folded away moves to the outermost header over it.
         void collapseAll();
-        // Closes every node but the current row's own and the ones it stands under.
+        // Opens the current row's own node and the ones it stands under, and closes every other.
         void collapseOthers();
     protected:
         void calculateChildren(FormBase&) override;
@@ -165,7 +165,6 @@ namespace ClaFi::Controls
         // Whether the node is the current row's own, or holds the current row in its rows.
         [[nodiscard]] bool holdsCurrentRow(const TreeNode&) const;
         [[nodiscard]] bool hasNode(bool expanded) const;
-        [[nodiscard]] bool hasOtherNodeOpen() const;
         // The node has closed; a current row folded away under it moves to its header.
         void rowsFolded(TreeNode&);
         // Brings the current row back after the nodes have moved.

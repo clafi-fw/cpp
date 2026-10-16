@@ -124,7 +124,10 @@ namespace ClaFi::Controls::Grids
             // recursively
             m_rootColumn.stretchStretched(boundsW);
             if (needToShrink > 0.0f)
+            {
                 m_rootColumn.shrinkBy(needToShrink);
+                m_rootColumn.spanSubColumns();
+            }
             m_rootColumn.calcLeft(0.0f);
         }
         return m_rootColumn.finalWidth();

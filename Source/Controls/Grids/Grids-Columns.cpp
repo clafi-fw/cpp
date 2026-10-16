@@ -109,7 +109,10 @@ namespace ClaFi::Controls::Grids
                 row.preCalcColumn(formContext, *this);
 
         if (m_calcMode != ColumnWidthMode::Fixed)
+        {
+            handDownOwnWidth();
             addNeededWidth(subColumnsNeededWidth());
+        }
         m_calculatedWidth = m_neededWidth;
     }
 
@@ -186,6 +189,57 @@ namespace ClaFi::Controls::Grids
                 column->calcLeft(left);
                 left += column->m_calculatedWidth;
             }
+    }
+
+    // **A parent's cell spans its sub-columns**, and only a leaf's width is something a fit can
+    // take off. Kept by the parent, a hint wider than the columns under it would hold the whole
+    // grid at that width while the fit narrowed the leaves for it. A parent with no Fill sub-column
+    // keeps it, as the slack a stretch hands it.
+    void Column::handDownOwnWidth()
+    {
+        const float excess = m_neededWidth - subColumnsNeededWidth();
+        if (excess <= 0.0f)
+            return;
+        if (Column* fill = lastFillSubColumn())
+            fill->widenBy(excess);
+    }
+
+    void Column::widenBy(const float value)
+    {
+        m_neededWidth += value;
+        m_calculatedWidth = m_neededWidth;
+        if (Column* fill = lastFillSubColumn())
+            fill->widenBy(value);
+    }
+
+    // The leaves are what a fit narrows, and each parent above them, the root aside, is as wide as
+    // the columns under it come to.
+    void Column::spanSubColumns()
+    {
+        if (!hasSubColumns())
+            return;
+        float width = 0.0f;
+        for (Column* column : *m_subColumns)
+        {
+            column->spanSubColumns();
+            width += column->m_calculatedWidth;
+        }
+        if (m_parent)
+            m_calculatedWidth = width;
+    }
+
+    Column* Column::lastFillSubColumn() const
+    {
+        Column* result = nullptr;
+        if (m_subColumns)
+        {
+            for (Column* column : *m_subColumns)
+            {
+                if (column->m_calcMode == ColumnWidthMode::Fill)
+                    result = column;
+            }
+        }
+        return result;
     }
 
     // ColumnCollection

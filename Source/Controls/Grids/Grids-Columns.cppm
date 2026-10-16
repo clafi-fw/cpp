@@ -169,6 +169,12 @@ namespace ClaFi::Controls::Grids
         void finishCalcStage1();
         void stretchStretched(const float boundsW);
         void calcLeft(float left);
+        // Gives what the column's own cells need past its sub-columns to its last Fill one.
+        void handDownOwnWidth();
+        void widenBy(float value);   // passed on down the same way
+        // A parent spans the columns under it once a fit has narrowed them.
+        void spanSubColumns();
+        [[nodiscard]] Column* lastFillSubColumn() const;
     private:
         // initialize
         GridDescriptor& m_descriptor;

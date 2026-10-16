@@ -17,6 +17,7 @@ import ClaFi.Core.System.Events;
 namespace ClaFi::Controls::Grids
 {
     export class RowContainer;
+    export class RowExpander;
 
     // Per-column content state for **one** row, laid out in pre-order.
     // Built once per walk with exactly one hasContent() call per column, so a walk never
@@ -186,6 +187,7 @@ namespace ClaFi::Controls::Grids
 
         // Do we need them both? May be return span?
         virtual RowContainer* asRowContainer() { return nullptr; }
+        virtual RowExpander* asRowExpander() { return nullptr; }
         virtual GridBase* subGrid() { return nullptr; }
         // Where a move lands on this row when it holds no cells of its own. Empty for a row
         // whose cells already answer.

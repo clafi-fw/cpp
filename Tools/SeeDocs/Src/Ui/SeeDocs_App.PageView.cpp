@@ -58,9 +58,21 @@ namespace SeeDocs_App
             return true;
         }
 
+        // A hint running over the empty cells before it was given its cells as the row was built.
+        [[nodiscard]] bool sameCellsEmpty(const TableRow& left, const TableRow& right)
+        {
+            for (std::size_t i = 0; i != left.cells.size(); ++i)
+            {
+                if (left.cells[i].empty() != right.cells[i].empty())
+                    return false;
+            }
+            return true;
+        }
+
         [[nodiscard]] bool sameShape(const TableRow& left, const TableRow& right)
         {
             return left.cells.size() == right.cells.size()
+                && sameCellsEmpty(left, right)
                 && left.type == right.type
                 && left.pageKind == right.pageKind
                 && left.hint.empty() == right.hint.empty()
@@ -73,7 +85,8 @@ namespace SeeDocs_App
         {
             const bool counts = left.rows.size() == right.rows.size()
                 && left.groups.size() == right.groups.size()
-                && left.label.empty() == right.label.empty();
+                && left.label.empty() == right.label.empty()
+                && left.placement == right.placement;
             if (!counts)
                 return false;
             for (std::size_t i = 0; i != left.rows.size(); ++i)
@@ -96,6 +109,7 @@ namespace SeeDocs_App
             const bool counts = left.kind == right.kind
                 && leftTable.columns.size() == rightTable.columns.size()
                 && leftTable.groupColumn == rightTable.groupColumn
+                && leftTable.hintTakesEmptyCells == rightTable.hintTakesEmptyCells
                 && leftTable.header == rightTable.header
                 && leftTable.groups.size() == rightTable.groups.size()
                 && left.signatures.size() == right.signatures.size();
@@ -716,6 +730,10 @@ namespace SeeDocs_App
         const bool editable = std::ranges::any_of(table.groups, [this](const TableGroup& group) {
             return writesHints(group);
         });
+        const bool spans = table.hintTakesEmptyCells;
+        // A hint that runs over cells is written in a parent that would cover the marks too.
+        const bool marksUnderHint = footnoted && !spans;
+        const std::size_t lastColumn = table.columns.size() - 1;
         Grids::ColumnCollection* into = &grid.columns();
         TagValue hintColumn = k_noColumn;
         for (std::size_t i = 0; i != table.columns.size(); ++i)
@@ -726,8 +744,20 @@ namespace SeeDocs_App
                 : Grids::ColumnWidthMode::FitContent;
             const Grids::MaxLines maxLines{ column.maxLines };
             Grids::ShowInHeader named = Grids::ShowInHeader::Yes;
+            // A parent over this column and the ones after it, which a hint running over the
+            // empty cells from here on is written in.
+            if (spans && i != 0 && i != lastColumn)
+            {
+                Grids::Column& across = into->add(
+                    Tag{ acrossColumn(i) },
+                    Grids::ColumnWidthMode::Fill,
+                    Grids::ShowInHeader::No,
+                    editable ? EditorMode::Editable : EditorMode::ReadOnly
+                );
+                into = &across.createSubColumns();
+            }
             // The last column's name stands over its cells and the marks.
-            if (footnoted && i + 1 == table.columns.size())
+            if (marksUnderHint && i == lastColumn)
             {
                 Grids::Column& parent = into->add(Tag{ k_markParentColumn }, Text{ column.name },
                     width);
@@ -743,14 +773,19 @@ namespace SeeDocs_App
             into->add(Tag{ i }, Text{ column.name }, width, maxLines, named, editor);
         }
         if (footnoted)
-            into->add(Tag{ k_markColumn }, Grids::ShowInHeader::No);
+        {
+            Grids::ColumnCollection& marks = marksUnderHint ? *into : grid.columns();
+            marks.add(Tag{ k_markColumn }, Grids::ShowInHeader::No);
+        }
         Grids::Column* commandColumn = nullptr;
         if (hasCommands(table))
             commandColumn = &grid.columns().add(Tag{ k_commandColumn }, Grids::ShowInHeader::No);
-        // A row fills neither the group column nor the parent over the marks.
+        // A row fills neither the group column nor the parent over the marks, and a parent a hint
+        // runs over only where it says so.
         grid.onCellContent([](Grids::CellContentEvent& event) {
             const TagValue column = event.column().tag().value;
-            event.hasContent = column != k_groupColumn && column != k_markParentColumn;
+            event.hasContent = column != k_groupColumn && column != k_markParentColumn
+                && !isAcrossColumn(column);
         });
         if (table.header)
             grid.addHeader();
@@ -830,26 +865,29 @@ namespace SeeDocs_App
     }
 
     // A labelled group stands beside its label in the group column, folding under it, or under
-    // a held expander row of the label where the table has no such column; the groups it holds
-    // follow its rows inside it, each under a header of its own. A row with a command is one
-    // that holds a control, its button, in the column at the end.
+    // a held expander row of the label, where its links are followed as a cell's are; the groups
+    // it holds follow its rows inside it, each under a label of its own. A row with a command is
+    // one that holds a control, its button, in the column at the end.
     void PageView::addTableRows(Expander& expander, Grids::GridBase& grid, const Table& table,
         const TableGroup& group, StackPanel& notes, const TagValue hintColumn,
         Grids::Column* commandColumn, PageFootnotes& footnotes)
     {
-        const bool beside = !table.groupColumn.empty();
+        const bool beside = group.placement == LabelPlacement::Beside
+            && !table.groupColumn.empty();
         Grids::GridBase* target = &grid;
         if (!group.label.empty() && beside)
         {
-            Grids::RowGroup& groupRow = grid.addGroup(Grids::Collapsible::Expanded);
+            const Grids::Collapsible collapsible = group.folded
+                ? Grids::Collapsible::Collapsed
+                : Grids::Collapsible::Expanded;
+            Grids::RowGroup& groupRow = grid.addGroup(collapsible);
             Grids::RowGroupSpan& span = groupRow.span();
             span.onCellContent([](Grids::CellContentEvent& event) {
                 event.hasContent = event.column().tag().value == k_groupColumn;
                 event.stopPropagation();
             });
             span.onGetCellText([&group](Grids::GetCellTextEvent& event) {
-                event.text() << rowIcon(RowIcon::Module) << Space{ k_iconGap };
-                writeRuns(event.text(), group.label);
+                writeLabel(event.text(), group);
             });
             if (!group.hint.empty())
             {
@@ -862,7 +900,19 @@ namespace SeeDocs_App
         else if (!group.label.empty())
         {
             Grids::RowExpander& groupExpander = grid.addExpander();
-            groupExpander.header().setHeaderText(textOf(group.label));
+            ExpanderHeader& header = groupExpander.header();
+            Text label;
+            writeLabel(label, group);
+            header.setHeaderText(label);
+            if (!group.hint.empty())
+            {
+                header.onGetHint([&group](GetHintEvent& event) {
+                    writeRuns(event.text, group.hint);
+                });
+            }
+            connectLinks(header);
+            if (group.folded)
+                header.setExpanded(false);
             target = &groupExpander.body();
         }
         for (const TableRow& row : group.rows)
@@ -910,8 +960,25 @@ namespace SeeDocs_App
                     hint.writePreview(textOf(row.excerpt->blocks));
                 });
             }
-            gridRow.onGetCellText([&row, anchor](Grids::GetCellTextEvent& event) {
-                const TagValue column = event.column().tag().value;
+            // **A hint running over the empty cells before it** is written in the parent over
+            // them, and the cells under that parent are its.
+            const TagValue spanColumn = hintSpanColumn(row, table.hintTakesEmptyCells);
+            if (spanColumn != k_noColumn)
+            {
+                const std::size_t hintFrom = spanColumn - k_acrossColumn;
+                gridRow.onCellContent([spanColumn, hintFrom](Grids::CellContentEvent& event) {
+                    const TagValue column = event.column().tag().value;
+                    if (isAcrossColumn(column))
+                        event.hasContent = column == spanColumn;
+                    else if (column >= hintFrom && column < k_acrossColumn)
+                        event.hasContent = false;
+                    else
+                        return;
+                    event.stopPropagation();
+                });
+            }
+            gridRow.onGetCellText([&row, anchor, spanColumn](Grids::GetCellTextEvent& event) {
+                TagValue column = event.column().tag().value;
                 if (column == k_markColumn)
                 {
                     if (anchor.has_value())
@@ -921,20 +988,34 @@ namespace SeeDocs_App
                     }
                     return;
                 }
+                if (column == spanColumn)
+                    column = row.cells.size() - 1;
                 if (column >= row.cells.size())
                     return;
                 if (column == 0)
                 {
                     const std::optional<RowIcon> icon = iconOf(row);
                     if (icon.has_value())
-                        event.text() << rowIcon(*icon) << Space{ k_iconGap };
+                        event.text() << rowIcon(*icon) << k_cellIconGap;
                 }
                 writeRuns(event.text(), row.cells[column]);
+                // The qualifier stands at the cell's end, as a tree row's kind word does.
+                if (column == 0 && !row.qualifier.empty())
+                {
+                    event.text() << FlexSpace{ k_kindGap } << TextStyleId::SubBody;
+                    writeRuns(event.text(), row.qualifier);
+                    event.text() << PopTextStyle{};
+                }
             });
             if (row.site.has_value() && m_writer)
             {
                 if (hintColumn != k_noColumn && writesHint(row.site))
-                    connectHintCell(gridRow, row, hintColumn);
+                {
+                    const TagValue editedColumn = spanColumn == k_noColumn
+                        ? hintColumn
+                        : spanColumn;
+                    connectHintCell(gridRow, row, editedColumn);
+                }
                 if (table.takesFootnotes)
                     connectRowMenu(gridRow, row, notes);
             }
@@ -1235,6 +1316,16 @@ namespace SeeDocs_App
         });
     }
 
+    void PageView::connectLinks(ExpanderHeader& header)
+    {
+        header.onLinkClick([this](HeaderLinkClickEvent& event) {
+            open(event.target);
+        });
+        header.onLinkContextPopup([this](HeaderLinkContextPopupEvent& event) {
+            showLinkMenu(event.sender(), event.target, event.popup);
+        });
+    }
+
     bool PageView::writePreview(Text& text, const std::wstring_view link) const
     {
         if (!m_page.surface)
@@ -1347,5 +1438,41 @@ namespace SeeDocs_App
     std::wstring PageView::footnoteAnchor(const std::size_t index)
     {
         return L"n" + std::to_wstring(index);
+    }
+
+    void PageView::writeLabel(Text& text, const TableGroup& group)
+    {
+        if (group.pageKind.has_value())
+        {
+            const std::optional<RowIcon> icon = iconOf(*group.pageKind, nullptr);
+            if (icon.has_value())
+                text << rowIcon(*icon) << k_cellIconGap;
+        }
+        writeRuns(text, group.label);
+    }
+
+    // The empty cells a hint takes are the ones right before it, and never the first column,
+    // which names the row.
+    TagValue PageView::hintSpanColumn(const TableRow& row, const bool takesEmptyCells)
+    {
+        if (!takesEmptyCells || row.cells.size() < 3)
+            return k_noColumn;
+        const std::size_t lastCell = row.cells.size() - 1;
+        std::size_t from = lastCell;
+        while (from > 1 && row.cells[from - 1].empty())
+            --from;
+        if (from == lastCell)
+            return k_noColumn;
+        return acrossColumn(from);
+    }
+
+    TagValue PageView::acrossColumn(const std::size_t from)
+    {
+        return k_acrossColumn + from;
+    }
+
+    bool PageView::isAcrossColumn(const TagValue column)
+    {
+        return column > k_acrossColumn && column < k_commandColumn;
     }
 }

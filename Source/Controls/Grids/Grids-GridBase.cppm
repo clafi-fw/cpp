@@ -82,6 +82,9 @@ namespace ClaFi::Controls::Grids
         }
         template <std::invocable<RowContainer&> Func>
         void forEachRow(Func&& func);
+        // Every expander row, at every depth, each before the ones in its body.
+        template <std::invocable<RowExpander&> Func>
+        void forEachExpander(Func&& func);
 
         // Every row that can matter to a key press: the ones the window reaches, plus the
         // header and the rows of any group among them. The origin handed over is the row's own
@@ -309,6 +312,18 @@ namespace ClaFi::Controls::Grids
             {
                 nested->forEachRow(func);
             }
+        }
+    }
+
+    template <std::invocable<RowExpander&> Func>
+    void GridBase::forEachExpander(Func&& func)
+    {
+        for (RowBase& row : controlsAs<RowBase>())
+        {
+            if (RowExpander* expander = row.asRowExpander())
+                func(*expander);
+            if (GridBase* nested = row.subGrid())
+                nested->forEachExpander(func);
         }
     }
 }

@@ -234,6 +234,7 @@ namespace SeeDocs_App
         void render();
         void connectLinks(Grids::Grid&);
         void connectLinks(TextBox&);
+        void connectLinks(ExpanderHeader&);
         // Writes the declaration a link's type shows in a hint; false for a link naming none.
         bool writePreview(Text&, std::wstring_view link) const;
         void connectHead();
@@ -249,6 +250,12 @@ namespace SeeDocs_App
         [[nodiscard]] bool writesHints(const TableGroup&) const;
         [[nodiscard]] bool writesHint(const std::optional<CommentSite>&) const;
         [[nodiscard]] static std::wstring footnoteAnchor(std::size_t index);
+        // A group's label, led by the mark of the page it opens where it opens one.
+        static void writeLabel(Text&, const TableGroup&);
+        // The parent a row's hint runs over empty cells in; no column where it stands in its own.
+        [[nodiscard]] static TagValue hintSpanColumn(const TableRow&, bool takesEmptyCells);
+        [[nodiscard]] static TagValue acrossColumn(std::size_t from);   // over it and those after
+        [[nodiscard]] static bool isAcrossColumn(TagValue);
     private:
         // The look of every section's expander at the root of a page.
         static constexpr ExpanderViewMode k_expanderViewMode = ExpanderViewMode::Ellipsis;
@@ -261,8 +268,9 @@ namespace SeeDocs_App
         static constexpr float k_leadGap = 6.0f;           // between a declaration's parts
         static constexpr float k_signatureIndent = 18.0f;  // of the declarations under their label
         static constexpr float k_treePadding = 4.0f;
-        static constexpr float k_kindGap = 12.0f;   // the least room before a tree row's kind word
+        static constexpr float k_kindGap = 12.0f;   // the least room before a row's kind word
         static constexpr float k_iconGap = 5.0f;    // between a tree row's icon and its text
+        static constexpr wchar_t k_cellIconGap = L'\u00A0';   // no-break: an icon keeps to its name
         static constexpr TagValue k_factLabel = 0;
         static constexpr TagValue k_factValue = 1;
         static constexpr TagValue k_factButton = 2;
@@ -272,6 +280,8 @@ namespace SeeDocs_App
         static constexpr TagValue k_noColumn = k_markColumn - 2;
         static constexpr TagValue k_markParentColumn = k_markColumn - 3;
         static constexpr TagValue k_commandColumn = k_markColumn - 4;
+        // The parents a hint runs over cells in are tagged this plus the column each starts at.
+        static constexpr TagValue k_acrossColumn = std::numeric_limits<TagValue>::max() / 2;
         static constexpr std::wstring_view k_mark = L"*";
         static constexpr std::wstring_view k_openFolder = L"Open folder";
 

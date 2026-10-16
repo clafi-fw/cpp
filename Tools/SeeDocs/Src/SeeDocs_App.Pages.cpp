@@ -44,7 +44,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_methodWord = L"method";
         constexpr std::wstring_view k_accessMark = L":";
         constexpr std::wstring_view k_overloadNoun = L"overload";
-        constexpr std::wstring_view k_moduleColumn = L"Module";
+        constexpr std::wstring_view k_exportsColumn = L"Exports";
         constexpr std::wstring_view k_projectWord = L"project";
         constexpr std::wstring_view k_folderWord = L"folder";
         constexpr std::wstring_view k_moduleWord = L"module";
@@ -68,7 +68,7 @@ namespace SeeDocs_App
         namespace Columns
         {
             const ColumnSet types = {
-                .columns = { { L"Name" }, { L"Kind" }, { L"Hint", true, true } },
+                .columns = { { L"Name" }, { L"Hint", true, true } },
                 .header = false
             };
             const ColumnSet properties = {
@@ -105,6 +105,14 @@ namespace SeeDocs_App
                 .columns = {
                     { L"Folder", true }, { L"Modules" }, { L"Types" }, { L"Controls" }
                 }
+            };
+            // A folder's types, functions and constants, under the constants' columns.
+            const ColumnSet contents = {
+                .columns = {
+                    { L"Name" }, { L"Type" }, { .name = L"Value", .maxLines = k_valueLines },
+                    { L"Hint", true, true }
+                },
+                .header = false
             };
         }
 
@@ -394,8 +402,8 @@ namespace SeeDocs_App
             return { muted(L"= " + value) };
         }
 
-        // The kind a type reads as in a table - a control before anything else it is.
-        [[nodiscard]] Runs kindCell(const Type& type)
+        // The kind a type reads as in a table, after its name - a control before anything else.
+        [[nodiscard]] Runs qualifierOf(const Type& type)
         {
             if (type.isControl)
                 return { muted(std::wstring{ k_controlWord }) };
@@ -2189,8 +2197,9 @@ namespace SeeDocs_App
             for (const Type* type : types)
             {
                 rows.push_back({
-                    .cells = { { nameRun(*type) }, kindCell(*type),
+                    .cells = { { nameRun(*type) },
                         hintRuns(surface, type->comment, type->nameSpace) },
+                    .qualifier = qualifierOf(*type),
                     .type = type,
                     .site = siteOf(*type)
                 });
@@ -2359,50 +2368,61 @@ namespace SeeDocs_App
             addTableSection(page, std::move(heading), columnSet, std::move(groups));
         }
 
-        // A module's rows under its name, which links to its page; nothing where it has none.
-        void addModuleGroup(TableGroups& groups, const ContentsModule& module, TableRows rows)
+        // The rows with empty cells put in at that column, so they stand under a table of more
+        // columns.
+        [[nodiscard]] TableRows withEmptyCells(TableRows rows, const std::size_t column,
+            const std::size_t count)
+        {
+            const std::ptrdiff_t at = static_cast<std::ptrdiff_t>(column);
+            for (TableRow& row : rows)
+                row.cells.insert(row.cells.begin() + at, count, Runs{});
+            return rows;
+        }
+
+        // A module's rows of one kind beside the kind's word; nothing where it has none.
+        void addKindGroup(TableGroups& groups, const std::wstring_view kind, TableRows rows)
         {
             if (rows.empty())
                 return;
-            TableGroup group{
-                .label = { { .text = module.shownName, .link = module.name } },
+            groups.push_back({
+                .label = { plain(std::wstring{ kind }) },
+                .placement = LabelPlacement::Beside,
                 .rows = std::move(rows)
-            };
-            if (module.header)
-                group.hint = { plain(module.name) };
-            groups.push_back(std::move(group));
+            });
         }
 
-        // A folder's table: each module's rows beside its name in the Module column, the modules
-        // counted with the rows in the heading's hint; nothing where no module has a row.
-        void addByModule(Page& page, std::wstring heading, const ColumnSet& columnSet,
-            TableGroups groups)
+        // A folder's contents as one table: each module folded under its name, linked to its page,
+        // and in it its types, functions and constants beside the word for each, under the
+        // constants' columns. The modules are counted with the rows in the heading's hint; nothing
+        // where no module has a row.
+        void addContents(Page& page, const Surface& surface, const ContentsFolder& folder)
         {
-            if (groups.empty())
-                return;
-            const std::size_t modules = groups.size();
-            Section& section = addTableSection(page, std::move(heading), columnSet,
-                std::move(groups));
-            section.table.groupColumn = k_moduleColumn;
-            section.hint += L" in " + countOf(modules, L"module");
-        }
-
-        // A folder's tables: its modules' types, functions and constants, each module's beside
-        // its name.
-        void addModuleTables(Page& page, const Surface& surface, const ContentsFolder& folder)
-        {
-            TableGroups typeGroups;
-            TableGroups functionGroups;
-            TableGroups constantGroups;
+            TableGroups modules;
             for (const ContentsModule& module : folder.modules)
             {
-                addModuleGroup(typeGroups, module, typeRows(surface, module.types));
-                addModuleGroup(functionGroups, module, functionRows(surface, module));
-                addModuleGroup(constantGroups, module, constantRows(surface, module));
+                TableGroup group{
+                    .label = { { .text = module.shownName, .link = module.name } },
+                    .pageKind = PageKind::Module,
+                    .folded = true
+                };
+                if (module.header)
+                    group.hint = { plain(module.name) };
+                addKindGroup(group.groups, L"Types",
+                    withEmptyCells(typeRows(surface, module.types), 1, 2));
+                addKindGroup(group.groups, L"Functions",
+                    withEmptyCells(functionRows(surface, module), 1, 2));
+                addKindGroup(group.groups, L"Constants", constantRows(surface, module));
+                if (!group.groups.empty())
+                    modules.push_back(std::move(group));
             }
-            addByModule(page, L"Types", Columns::types, std::move(typeGroups));
-            addByModule(page, L"Functions", Columns::functions, std::move(functionGroups));
-            addByModule(page, L"Constants", Columns::fields, std::move(constantGroups));
+            if (modules.empty())
+                return;
+            const std::size_t moduleCount = modules.size();
+            Section& section = addTableSection(page, L"Content", Columns::contents,
+                std::move(modules));
+            section.table.groupColumn = k_exportsColumn;
+            section.table.hintTakesEmptyCells = true;
+            section.hint += L" in " + countOf(moduleCount, k_moduleWord);
         }
 
         // What stands under a path at every depth, counted: controls, types, modules, the folders
@@ -2475,7 +2495,7 @@ namespace SeeDocs_App
             if (own == folders.end())
                 return;
             page.footnoteHome = folderFootnoteHome(surface, notes, path);
-            addModuleTables(page, surface, *own);
+            addContents(page, surface, *own);
         }
 
         // The pages of a module's functions and constants

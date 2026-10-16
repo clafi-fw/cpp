@@ -11,6 +11,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.Animation;
@@ -70,12 +71,35 @@ namespace ClaFi::Controls
         bool m_expanded;
     };
 
+    export class ExpanderHeader;
+
+    // A link in a header's label was followed.
+    export struct HeaderLinkClickEvent : public EventOf<ExpanderHeader>
+    {
+        HeaderLinkClickEvent(ExpanderHeader&, std::wstring target, InputStamp);
+        std::wstring target;   // what the link names, as the label states it
+        InputStamp stamp;      // the press that followed the link
+    };
+
+    // The menu for a link in a header's label is being asked for.
+    export struct HeaderLinkContextPopupEvent : public EventOf<ExpanderHeader>
+    {
+        HeaderLinkContextPopupEvent(ExpanderHeader&, std::wstring target, ContextPopupEvent&);
+        const std::wstring target;   // what the link names, as the label states it
+        ContextPopupEvent& popup;    // the request; a handler that has shown a menu stops it
+    };
+
     // The strip an expander is picked and opened by.
     export class ExpanderHeader : public PanelBase
     {
     public:
         template<typename... Args>
         explicit ExpanderHeader(const CreateParams& params, Args&&...);
+    public:
+        // A link in the label was followed: a mouse click on it, or Ctrl+Return from the header.
+        DECLARE_EVENT(HeaderLinkClickEvent, OnLinkClick, onLinkClick)
+        // The menu for a link in the label is being asked for.
+        DECLARE_EVENT(HeaderLinkContextPopupEvent, OnLinkContextPopup, onLinkContextPopup)
     public:
         void invalidateChevron() const { m_button.invalidate(); }
         void toggleExpanded() { setExpanded(!expanded()); }
@@ -95,16 +119,33 @@ namespace ClaFi::Controls
         [[nodiscard]] RoundedRectangleParts silhouette(const PaintEvent& hostEvent, const FloatRect& headerRect) const;
         // The strip answers a double click in every look, so a press on it is the header's own.
         [[nodiscard]] bool isClickTarget() const override { return true; }
+        // The hand while the pointer stands on a link in the label.
+        [[nodiscard]] CursorShape cursor() const override;
     protected:
         void adjustPaint(AdjustPaintEvent&) override;
+        void mouseMove(MouseMoveEvent&) override;
+        void hoverLeave() override;
+        // A mouse click on a link in the label follows the link and goes no further up.
+        void click(ClickEvent&) override;
         void nestedDoubleClick(NestedDoubleClickEvent&) override;
+        void nestedContextPopup(ContextPopupEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
         ScaledSize calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
         void paintText(PaintEvent&) override;
+        // The label, with the link under the pointer underlined.
+        DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
         void paintSurface(PaintEvent& event) override
         {
             PanelBase::paintSurface(event);
+        };
+    private:
+        // A link found in the label: what it names, and the text it covers.
+        struct LabelLink
+        {
+            std::wstring target;
+            TextRange range;
         };
     private:
         [[nodiscard]] static ControlMetrics metricsFor(const CreateParams&, ExpanderViewMode);
@@ -116,11 +157,18 @@ namespace ClaFi::Controls
         void paintButton(PaintIconEvent&) const;
         void scrollSectionIntoView() const;
         [[nodiscard]] bool squaresBottomCorners() const;
+        // The link under the point, as the label is drawn; nothing where none stands.
+        [[nodiscard]] std::optional<LabelLink> linkAt(PointInForm) const;
+        // The label's first link, which the keyboard names, since it names no point in the label.
+        [[nodiscard]] std::optional<std::wstring> firstLink() const;
+        // Underlines the range, or nothing for an empty one, repainting only when that changes.
+        void hoverLink(TextRange);
     private:
         static constexpr std::wstring_view k_ellipsis = L"\u2026";
         bool m_expanded{ true };
         float m_expandedFactor{ 1.0f };
         float m_lead{};
+        TextRange m_hoveredLink{};   // the link under the pointer; empty for none
         // Declared before the button: the look names the slot the button is built into, and a
         // member initializer runs in declaration order.
         ExpanderViewMode m_viewMode;
@@ -315,7 +363,8 @@ namespace ClaFi::Controls
         FloatRect bounds = textBounds(event);
         bounds.left = content.left + m_button.boundsInParent().right + event.spacing().x;
         bounds.right = content.right;
-        drawText(event, bounds, ellipsis);
+        // The base's draw: the hovered link is a range of the label, not of this text.
+        PanelBase::drawText(event, bounds, ellipsis);
     }
 
     // The tree look's header is a tool button in metrics as in paint, being a row of the tree.

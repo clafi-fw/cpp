@@ -126,6 +126,7 @@ namespace SeeDocs_App
     export struct TableRow
     {
         Cells cells;
+        Runs qualifier;   // what the first cell names is - a type's kind - set at the cell's end
         const Type* type{ nullptr };
         // The kind of page the first cell opens, which marks the cell where no type does.
         std::optional<PageKind> pageKind;
@@ -139,12 +140,22 @@ namespace SeeDocs_App
 
     export using TableRows = std::vector<TableRow>;
 
+    // Where a group's label stands: over its rows, or beside them in the table's group column.
+    export enum class LabelPlacement
+    {
+        Above,
+        Beside
+    };
+
     // Rows under one label, which heads them or stands beside them in the table's group column;
     // a group with no label is the table's plain run of rows.
     export struct TableGroup
     {
         Runs label;
         Runs hint;   // the label in full, where the label is short for it
+        std::optional<PageKind> pageKind;   // the kind of page the label opens, which marks it
+        LabelPlacement placement{ LabelPlacement::Above };
+        bool folded{ false };   // the rows start folded away under the label
         TableRows rows;
         std::vector<TableGroup> groups;   // under the rows, each headed by its own label
         [[nodiscard]] std::size_t rowCount() const;   // the rows under it at every level
@@ -155,10 +166,11 @@ namespace SeeDocs_App
     export struct Table
     {
         TableColumns columns;
-        std::wstring groupColumn;   // where a group's label stands beside its rows; empty for above
+        std::wstring groupColumn;   // where a label placed beside its rows stands; empty for none
         bool header{ true };        // whether the columns are named over the rows
         bool takesFootnotes{ false };   // a row may be given a footnote, set under the table
         bool rearrangeable{ false };    // the rows may be carried about; the page says their order
+        bool hintTakesEmptyCells{ false };   // a row's hint runs over the empty cells before it
         TableGroups groups;
         [[nodiscard]] std::size_t rowCount() const;   // at every level
     };

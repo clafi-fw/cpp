@@ -125,6 +125,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Descriptor.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Descriptor.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Facade.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Grid.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-Grid.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-GridBase.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Grids\Grids-GridBase.cppm" />
@@ -176,6 +177,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\ContainerBase.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\DropdownControlBase.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\DropdownControlBase.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\ExpanderBase.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\ExpanderBase.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\MessageBoxBase.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\MessageBoxBase.cppm" />

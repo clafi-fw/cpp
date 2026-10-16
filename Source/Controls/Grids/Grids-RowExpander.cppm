@@ -38,6 +38,7 @@ namespace ClaFi::Controls::Grids
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"RowExpander"; }
     protected:
         [[nodiscard]] const Control* headedBody() const override { return m_controls[k_body].get(); }
+        RowExpander* asRowExpander() override { return this; }
         RowStop navigationStop() override;
         // declines selection
         void getControlState(GetStateEvent&) const override;

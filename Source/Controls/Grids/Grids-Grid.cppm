@@ -58,9 +58,25 @@ namespace ClaFi::Controls::Grids
         ScaledSize calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void paintChildren(PaintEvent&) override;
+        // Expand all, Collapse all and Collapse others, where the grid holds an expander row.
+        void nestedContextPopup(ContextPopupEvent&) override;
+    private:
+        void connectActions();
+        void expandAll();
+        void collapseAll();
+        // Opens the expander rows the menu's control stands in, and closes every other.
+        void collapseOthers();
+        [[nodiscard]] bool holdsExpander();
+        [[nodiscard]] bool hasExpander(bool expanded);
+        // Brings the menu's control back into view, or the outermost expander folded over it.
+        void showMenuControl();
     private:
         GridDescriptor m_descriptor;
         float m_calculateLimit{ k_maxFloat };
+        Control* m_menuControl{ nullptr };   // what the expander menu is up on; null while none is
+        Action m_expandAll{ Text{ L"Expand all" } };
+        Action m_collapseAll{ Text{ L"Collapse all" } };
+        Action m_collapseOthers{ Text{ L"Collapse others" } };
     };
 
 
@@ -80,6 +96,7 @@ namespace ClaFi::Controls::Grids
             READ_PROPERTY(ViewMode, ViewMode::Sheet), // how the grid lays its rows out
             READ_PROPERTY(GridLines, GridLines::Both) } // which of the grid's inner lines are drawn
     {
+        connectActions();
     }
 
 
