@@ -12,6 +12,8 @@ namespace SeeDocs_App
 {
     // Reads the folders as they stand, into one surface - the interfaces first, then the
     // implementation units, or in a limited read the headers - a file under the folder of
-    // its place in its source, so that a folder of one name under two sources is one.
-    export [[nodiscard]] Surface scanSources(const SourceFolders&, ScanMode, HintRules);
+    // its place in its source, so that a folder of one name under two sources is one. The
+    // steps, where a list is handed in, say how long each took.
+    export [[nodiscard]] Surface scanSources(const SourceFolders&, ScanMode, HintRules,
+        ScanSteps* steps = nullptr);
 }

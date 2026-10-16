@@ -3084,6 +3084,44 @@ namespace SeeDocs_App
             return text;
         }
 
+        // The steps of a scan, as its times name them.
+        namespace Steps
+        {
+            constexpr std::wstring_view listFiles = L"list files";
+            constexpr std::wstring_view readFiles = L"read files";
+            constexpr std::wstring_view lexSources = L"lex sources";
+            constexpr std::wstring_view gatherMacros = L"gather macros";
+            constexpr std::wstring_view gatherSymbols = L"gather symbols";
+            constexpr std::wstring_view expandSources = L"expand sources";
+            constexpr std::wstring_view readSources = L"read sources";
+            constexpr std::wstring_view readUnits = L"read units";
+            constexpr std::wstring_view mergeUnits = L"merge units";
+            constexpr std::wstring_view encloseIncludes = L"enclose includes";
+            constexpr std::wstring_view republish = L"republish";
+            constexpr std::wstring_view dropRedeclarations = L"drop redeclarations";
+            constexpr std::wstring_view settlePascal = L"settle pascal";
+            constexpr std::wstring_view resolveAll = L"resolve all";
+        }
+
+        using IndexTask = std::function<void(std::size_t)>;
+
+        // Runs the task for every index below the count, on as many threads as the hardware has.
+        void forEachIndex(const std::size_t count, const IndexTask& task)
+        {
+            const std::size_t hardware = std::thread::hardware_concurrency();
+            const std::size_t threads = std::min(count, std::max<std::size_t>(hardware, 1));
+            std::atomic<std::size_t> next{ 0 };
+            std::vector<std::jthread> workers;
+            workers.reserve(threads);
+            for (std::size_t i = 0; i != threads; ++i)
+            {
+                workers.emplace_back([&]() {
+                    for (std::size_t index = next++; index < count; index = next++)
+                        task(index);
+                });
+            }
+        }
+
         // What a file of the tree is to a read.
         enum class FileRole
         {
@@ -3246,51 +3284,52 @@ namespace SeeDocs_App
             return gathering.files();
         }
 
+        // Where a file stands in the surface: its record's index, and the folder it is read as.
+        struct FilePlace
+        {
+            std::size_t file{ 0 };
+            std::wstring folder;
+        };
+
         // The file's record in the surface, and the folder it stands in, as a path under its
         // source's root - so that folders of one name under two sources are one.
-        [[nodiscard]] std::size_t addSourceFile(Surface& surface, const SourceFolders& sources,
-            const TreeFile& file, std::wstring& folder)
+        [[nodiscard]] FilePlace addSourceFile(Surface& surface, const SourceFolders& sources,
+            const TreeFile& file)
         {
             const std::filesystem::path& root = sources[file.root].path;
             SourceFile record;
             record.path = file.path;
             record.relative = posixRelative(file.path, root);
             record.root = file.root;
-            folder = posixRelative(file.path.parent_path(), root);
+            std::wstring folder = posixRelative(file.path.parent_path(), root);
             if (folder == L".")
                 folder.clear();
-            return surface.addFile(std::move(record));
+            return { .file = surface.addFile(std::move(record)), .folder = std::move(folder) };
         }
 
-        void readSource(Surface& surface, const SourceFolders& sources, const TreeFile& file,
+        void readSource(Surface& surface, const FilePlace& place, const TreeFile& file,
             const SourceText& source, const ScanMode mode, const HintRules rules)
         {
-            std::wstring folder;
-            const std::size_t index = addSourceFile(surface, sources, file, folder);
             const bool header = file.role == FileRole::Header;
-            FileReader reader{ surface, index, source, folder, mode, rules, header };
+            FileReader reader{ surface, place.file, source, place.folder, mode, rules, header };
             reader.read();
-        }
-
-        void readUnit(Surface& surface, const SourceFolders& sources, const TreeFile& file,
-            const std::wstring_view text, const PascalSymbols& symbols, const HintRules rules)
-        {
-            std::wstring folder;
-            const std::size_t index = addSourceFile(surface, sources, file, folder);
-            readPascalUnit(surface, index, text, folder, symbols, rules);
         }
 
         // A file that cannot be read is left out.
         void readFull(Surface& surface, const SourceFolders& sources, const TreeFiles& files,
-            const HintRules rules)
+            const HintRules rules, StepClock& clock)
         {
             for (const TreeFile& file : files)
             {
                 const std::optional<std::wstring> text = Documents::readTextFile(file.path);
+                clock.lap(Steps::readFiles);
                 if (!text)
                     continue;
                 const SourceText source{ *text, rules };
-                readSource(surface, sources, file, source, ScanMode::Full, rules);
+                clock.lap(Steps::lexSources);
+                const FilePlace place = addSourceFile(surface, sources, file);
+                readSource(surface, place, file, source, ScanMode::Full, rules);
+                clock.lap(Steps::readSources);
             }
         }
 
@@ -3301,20 +3340,27 @@ namespace SeeDocs_App
 
         // **Every file is gathered from before any is read**, a macro being used far from the
         // header that defines it and a Delphi symbol far from the unit testing it; each is read
-        // from disk once, for both passes. A Delphi include file is gathered from only.
+        // from disk once, for both passes. A Delphi include file is gathered from only. The units
+        // are read on every thread the hardware has, each into a surface of its own, and taken
+        // into the one surface in file order, so its records stand as one thread would put them.
         void readLimited(Surface& surface, const SourceFolders& sources, const TreeFiles& files,
-            const HintRules rules)
+            const HintRules rules, StepClock& clock)
         {
-            std::vector<std::optional<std::wstring>> texts;
-            texts.reserve(files.size());
+            std::vector<std::optional<std::wstring>> texts(files.size());
+            forEachIndex(files.size(), [&](const std::size_t i) {
+                texts[i] = Documents::readTextFile(files[i].path);
+            });
+            clock.lap(Steps::readFiles);
+
             Macros macros;
-            for (const TreeFile& file : files)
+            for (std::size_t i = 0; i != files.size(); ++i)
             {
-                texts.push_back(Documents::readTextFile(file.path));
-                if (!texts.back() || isPascal(file))
+                if (!texts[i] || isPascal(files[i]))
                     continue;
-                const SourceText gathered{ *texts.back(), rules, Preprocess::Gather, &macros };
+                const SourceText gathered{ *texts[i], rules, Preprocess::Gather, &macros };
             }
+            clock.lap(Steps::gatherMacros);
+
             std::vector<std::wstring_view> pascalTexts;
             for (std::size_t i = 0; i != files.size(); ++i)
             {
@@ -3322,36 +3368,65 @@ namespace SeeDocs_App
                     pascalTexts.emplace_back(*texts[i]);
             }
             const PascalSymbols symbols = pascalSymbolsOf(pascalTexts);
+            clock.lap(Steps::gatherSymbols);
+
+            // The records come first, so that a unit read on a worker knows its file's index.
+            std::vector<std::optional<FilePlace>> places(files.size());
             for (std::size_t i = 0; i != files.size(); ++i)
             {
-                if (!texts[i] || files[i].role == FileRole::PascalInclude)
+                if (texts[i] && files[i].role != FileRole::PascalInclude)
+                    places[i] = addSourceFile(surface, sources, files[i]);
+            }
+            std::vector<Surface> fragments(files.size());
+            forEachIndex(files.size(), [&](const std::size_t i) {
+                if (!places[i] || files[i].role != FileRole::PascalUnit)
+                    return;
+                readPascalUnit(fragments[i], places[i]->file, *texts[i], places[i]->folder,
+                    symbols, rules);
+            });
+            clock.lap(Steps::readUnits);
+
+            for (std::size_t i = 0; i != files.size(); ++i)
+            {
+                if (!places[i])
                     continue;
                 if (files[i].role == FileRole::PascalUnit)
                 {
-                    readUnit(surface, sources, files[i], *texts[i], symbols, rules);
+                    surface.append(std::move(fragments[i]));
+                    clock.lap(Steps::mergeUnits);
                     continue;
                 }
                 const SourceText source{ *texts[i], rules, Preprocess::Expand, &macros };
-                readSource(surface, sources, files[i], source, ScanMode::Limited, rules);
+                clock.lap(Steps::expandSources);
+                readSource(surface, *places[i], files[i], source, ScanMode::Limited, rules);
+                clock.lap(Steps::readSources);
             }
             surface.encloseIncludes();
+            clock.lap(Steps::encloseIncludes);
             surface.republish();
+            clock.lap(Steps::republish);
             surface.dropRedeclarations();
+            clock.lap(Steps::dropRedeclarations);
             settlePascal(surface);
+            clock.lap(Steps::settlePascal);
         }
     }
 
-    Surface scanSources(const SourceFolders& sources, const ScanMode mode, const HintRules rules)
+    Surface scanSources(const SourceFolders& sources, const ScanMode mode, const HintRules rules,
+        ScanSteps* steps)
     {
+        StepClock clock{ steps };
         Surface surface;
         surface.setMode(mode);
         surface.setHintRules(rules);
         const TreeFiles files = filesOf(sources, mode);
+        clock.lap(Steps::listFiles);
         if (mode == ScanMode::Limited)
-            readLimited(surface, sources, files, rules);
+            readLimited(surface, sources, files, rules, clock);
         else
-            readFull(surface, sources, files, rules);
+            readFull(surface, sources, files, rules, clock);
         surface.resolveAll();
+        clock.lap(Steps::resolveAll);
         surface.setScanned(std::chrono::floor<std::chrono::seconds>(
             std::chrono::system_clock::now()));
         return surface;

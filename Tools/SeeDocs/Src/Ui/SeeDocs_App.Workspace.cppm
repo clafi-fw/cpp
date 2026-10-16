@@ -113,8 +113,9 @@ namespace SeeDocs_App
         void refuse(std::wstring_view title, const Text& message);
         // Writes the properties as the edit leaves them, reads them back, and rereads as asked.
         void change(OpenProject&, const std::function<void(Project&)>& edit, Reread);
-        // Writes the database of the project's sources, so that it has one to open.
-        void scan(const Project&);
+        // Scans the project's sources and writes its database; the surface as written, and
+        // nothing where the file could not be written.
+        [[nodiscard]] std::optional<Surface> scan(const Project&);
         void remember(const Project&);   // first among the recent, and among those open
         void forget(const std::filesystem::path& folder);
         [[nodiscard]] Names storedRecent() const;

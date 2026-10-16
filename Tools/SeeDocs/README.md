@@ -6,14 +6,16 @@ what it finds into one database and holds the sources to the declaration routine
 window over that database showing the surface as the reference it is to become - the part of the
 documentation that is generated; the rest is written.
 
-    SeeDocsCli scan [folder] [--out file]  writes the database, the project's Surface.cfg by default
-    SeeDocsCli check [folder]              reports deviations, exit code 1 if any are errors
-    SeeDocs [folder]                       opens the project the folder stands for
+    SeeDocsCli scan [folder] [--out file] [--time]  writes the database, the project's Surface.cfg
+    SeeDocsCli check [folder]                       reports deviations, exit code 1 on errors
+    SeeDocs [folder]                                opens the project the folder stands for
 
 The folder is a project's own, or a tree with a `.seedocs` project in it - for the framework, its
 `Source/` folder; for SeeDocsCli it is the working directory when left out. A scan with `--out`
-takes any folder, read as the one folder of sources of a project of ClaFi modules. The report
-reads `file:line: level: text`, one line per finding, in file and line order.
+takes any folder, read as the one folder of sources of a project of ClaFi modules; one with
+`--time` prints how long each step of the scan took, then the write of the database and the read
+of it SeeDocs shows a scan from. The report reads `file:line: level: text`, one line per finding,
+in file and line order.
 
 The sources are read as ClaFi modules or as any C++ and Delphi. As ClaFi modules, they are written
 to the declaration routine: their modules are read, their macros of the routine harvested, and
@@ -198,11 +200,12 @@ adding nothing to a page, `automated` reading as public.
 
 ## The database
 
-`Surface.cfg` is a document in the framework's own configuration format, written through the
-Dom with the layout `SeeDocs_App::databaseLayout()` states, and read back through the same
-layout by `readDatabase`, which answers the surface the scanner would have filled. An entry
-states only what it has - a key at its default is left out - so a reader applies the layout and
-takes the rest from the file.
+`Surface.cfg` is a document in the framework's own configuration format, built through the Dom
+with the layout `SeeDocs_App::databaseLayout()` states and written by `Database`, which also
+answers the surface the document states - what SeeDocs shows after a scan, with no read of the
+file. `readDatabase` reads the file through the same layout and the same reader. An entry
+states only what it has - a key at its default is left out - so the reader answers the default
+itself and takes the rest from the document.
 
 Where an entry says the same thing a `Language.cfg` completion entry says, it uses the same key:
 `Name`, `Kind`, `Signature`, `Hint`, `Type`, and a class's `Methods` and `Properties` as two lists.

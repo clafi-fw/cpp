@@ -244,6 +244,31 @@ namespace SeeDocs_App
         }
     }
 
+    StepClock::StepClock(ScanSteps* steps)
+        :
+        m_steps{ steps },
+        m_last{ std::chrono::steady_clock::now() }
+    {
+    }
+
+    void StepClock::lap(const std::wstring_view step)
+    {
+        if (!m_steps)
+            return;
+        const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        const std::chrono::steady_clock::duration took = now - m_last;
+        m_last = now;
+        for (ScanStep& known : *m_steps)
+        {
+            if (known.name == step)
+            {
+                known.took += took;
+                return;
+            }
+        }
+        m_steps->push_back({ .name = std::wstring{ step }, .took = took });
+    }
+
     bool Type::opensScope() const
     {
         return kind == TypeKind::Class || kind == TypeKind::Struct || kind == TypeKind::Union
@@ -304,6 +329,28 @@ namespace SeeDocs_App
     void Surface::addEnclosedInclude(EnclosedInclude include)
     {
         m_enclosedIncludes.push_back(std::move(include));
+    }
+
+    void Surface::append(Surface&& other)
+    {
+        for (Module& module : other.m_modules)
+            addModule(std::move(module));
+        for (Type& type : other.m_types)
+            addType(std::move(type));
+        for (FreeFunction& function : other.m_functions)
+            addFunction(std::move(function));
+        for (Variable& variable : other.m_variables)
+            addVariable(std::move(variable));
+        for (Binding& binding : other.m_bindings)
+            addBinding(std::move(binding));
+        for (const Place place : other.m_propsReads)
+            addPropsRead(place);
+        for (Problem& problem : other.m_problems)
+            addProblem(std::move(problem));
+        for (Republication& republication : other.m_republications)
+            addRepublication(std::move(republication));
+        for (EnclosedInclude& include : other.m_enclosedIncludes)
+            addEnclosedInclude(std::move(include));
     }
 
     const Type* Surface::typeNamed(const std::wstring_view qualifiedName) const

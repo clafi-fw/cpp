@@ -9,6 +9,7 @@ import ClaFi.Core.DomEngine_Document;
 import ClaFi.Core.DomEngine_Dt;
 // The std::wstring serializer: without it a node's set reads a string as a sequence.
 import ClaFi.Core.Dom_StdSerializers;
+import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
@@ -20,6 +21,15 @@ namespace SeeDocs_App
     {
         // What a module's Language key says of a Delphi unit; a C++ module states none.
         constexpr std::wstring_view k_pascalWord = L"pascal";
+
+        // The steps of a write, as its times name them.
+        namespace Steps
+        {
+            constexpr std::wstring_view fillDocument = L"fill document";
+            constexpr std::wstring_view saveDatabase = L"save database";
+            constexpr std::wstring_view loadDatabase = L"load database";
+            constexpr std::wstring_view readDocument = L"read document";
+        }
 
         namespace Keys
         {
@@ -233,34 +243,160 @@ namespace SeeDocs_App
             };
         }
 
-        void setText(Dom::Section& section, const std::wstring_view key,
-            const std::wstring_view text)
+        using KeyOrder = std::vector<std::wstring>;
+        using Items = std::vector<std::unique_ptr<Dom::Section>>;
+        using TextNode = Dom::Value<std::wstring>;
+        using FlagNode = Dom::Value<bool>;
+        using NumberNode = Dom::Value<std::size_t>;
+
+        // The keys of a fresh entry of the layout, in the order it lists them.
+        [[nodiscard]] KeyOrder keyOrderOf(const Dom::Section& model)
         {
-            (section / key).set(std::wstring{ text });
+            KeyOrder order;
+            for (const std::wstring_view key : model.getKeys())
+                order.emplace_back(key);
+            return order;
         }
 
-        void setFlag(Dom::Section& section, const std::wstring_view key, const bool value)
+        // The key order of every kind of entry, read off a fresh entry of the layout for each.
+        struct KeyOrders
         {
-            (section / key).set(value);
+            KeyOrder root;
+            KeyOrder module;
+            KeyOrder type;
+            KeyOrder property;
+            KeyOrder event;
+            KeyOrder method;
+            KeyOrder usingDeclaration;
+            KeyOrder field;
+            KeyOrder member;
+            KeyOrder restatement;
+            KeyOrder function;
+            KeyOrder constant;
+        };
+
+        [[nodiscard]] KeyOrders keyOrdersOf(Dom::Section& layout)
+        {
+            Dom::Section& type = (layout / Keys::types).as<Sections>().add();
+            return {
+                .root = keyOrderOf(layout),
+                .module = keyOrderOf((layout / Keys::modules).as<Sections>().add()),
+                .type = keyOrderOf(type),
+                .property = keyOrderOf((type / Keys::properties).as<Sections>().add()),
+                .event = keyOrderOf((type / Keys::events).as<Sections>().add()),
+                .method = keyOrderOf((type / Keys::methods).as<Sections>().add()),
+                .usingDeclaration = keyOrderOf((type / Keys::usings).as<Sections>().add()),
+                .field = keyOrderOf((type / Keys::fields).as<Sections>().add()),
+                .member = keyOrderOf((type / Keys::members).as<Sections>().add()),
+                .restatement = keyOrderOf((type / Keys::restates).as<Sections>().add()),
+                .function = keyOrderOf((layout / Keys::functions).as<Sections>().add()),
+                .constant = keyOrderOf((layout / Keys::constants).as<Sections>().add())
+            };
         }
 
-        void setNumber(Dom::Section& section, const std::wstring_view key, const std::size_t value)
+        // An entry holding what differs from the layout alone, its keys in a fresh entry's order.
+        class Entry
         {
-            (section / key).set(value);
+        public:
+            explicit Entry(const KeyOrder&);
+            void setText(std::wstring_view key, std::wstring_view text);   // kept while not empty
+            void setFlag(std::wstring_view key, bool value);               // kept while true
+            void setNumber(std::wstring_view key, std::size_t value);      // kept while not zero
+            void setList(std::wstring_view key, const Names&);             // kept while not empty
+            void setItems(std::wstring_view key, Items);                   // kept while not empty
+            [[nodiscard]] std::unique_ptr<Dom::Section> finish();
+        private:
+            struct Stated
+            {
+                std::wstring_view key;
+                std::size_t rank{ 0 };
+                std::unique_ptr<Dom::DomNodeBase> node;
+            };
+        private:
+            void state(std::wstring_view key, std::unique_ptr<Dom::DomNodeBase>);
+        private:
+            const KeyOrder& m_order;
+            std::vector<Stated> m_stated;
+        };
+
+        Entry::Entry(const KeyOrder& order)
+            :
+            m_order{ order }
+        {
         }
 
-        void setList(Dom::Section& section, const std::wstring_view key, const Names& names)
+        void Entry::setText(const std::wstring_view key, const std::wstring_view text)
         {
-            Strings& list = (section / key).as<Strings>();
+            if (!text.empty())
+                state(key, std::make_unique<TextNode>(nullptr, std::wstring{ text }));
+        }
+
+        void Entry::setFlag(const std::wstring_view key, const bool value)
+        {
+            if (value)
+                state(key, std::make_unique<FlagNode>(nullptr, value));
+        }
+
+        void Entry::setNumber(const std::wstring_view key, const std::size_t value)
+        {
+            if (value != 0)
+                state(key, std::make_unique<NumberNode>(nullptr, value));
+        }
+
+        void Entry::setList(const std::wstring_view key, const Names& names)
+        {
+            if (names.empty())
+                return;
+            std::unique_ptr<Strings> list = std::make_unique<Strings>(nullptr, std::wstring{});
             for (const std::wstring& name : names)
-                list.add().set(name);
+                list->children().push_back(std::make_unique<TextNode>(list.get(), name));
+            state(key, std::move(list));
+        }
+
+        void Entry::setItems(const std::wstring_view key, Items items)
+        {
+            if (items.empty())
+                return;
+            std::unique_ptr<Sections> list =
+                std::make_unique<Sections>(nullptr, Dom::Section{ nullptr });
+            for (std::unique_ptr<Dom::Section>& item : items)
+            {
+                item->setParent(list.get());
+                list->children().push_back(std::move(item));
+            }
+            state(key, std::move(list));
+        }
+
+        // The keys go into the section by rank, so its map lists them as a fresh entry's does.
+        std::unique_ptr<Dom::Section> Entry::finish()
+        {
+            std::ranges::stable_sort(m_stated, {}, &Stated::rank);
+            std::unique_ptr<Dom::Section> section = std::make_unique<Dom::Section>(nullptr);
+            for (Stated& stated : m_stated)
+            {
+                stated.node->setParent(section.get());
+                section->setChild(stated.key, std::move(stated.node));
+            }
+            return section;
+        }
+
+        void Entry::state(const std::wstring_view key, std::unique_ptr<Dom::DomNodeBase> node)
+        {
+            for (std::size_t rank = 0; rank != m_order.size(); ++rank)
+            {
+                if (m_order[rank] != key)
+                    continue;
+                m_stated.push_back({ .key = key, .rank = rank, .node = std::move(node) });
+                return;
+            }
+            noReach("SeeDocs: the database layout has no key " + toUtf8(key));
         }
 
         // A file as an entry names it: its path under its root, and the root.
-        void setFile(Dom::Section& section, const SourceFile& file)
+        void setFile(Entry& entry, const SourceFile& file)
         {
-            setText(section, Keys::file, file.relative);
-            setNumber(section, Keys::root, file.root);
+            entry.setText(Keys::file, file.relative);
+            entry.setNumber(Keys::root, file.root);
         }
 
         // A stamp as the database writes it, UTC to the second - 2026-10-09T03:12:45Z.
@@ -287,52 +423,54 @@ namespace SeeDocs_App
             return comment.reference->note + L"#" + comment.reference->anchor;
         }
 
-        void setPlaced(Dom::Section& section, const std::wstring_view name, const Place& place,
+        void setPlaced(Entry& entry, const std::wstring_view name, const Place& place,
             const Comment& comment)
         {
-            setText(section, Keys::name, name);
-            setNumber(section, Keys::line, place.line);
-            setText(section, Keys::hint, comment.text);
-            setText(section, Keys::note, noteText(comment));
+            entry.setText(Keys::name, name);
+            entry.setNumber(Keys::line, place.line);
+            entry.setText(Keys::hint, comment.text);
+            entry.setText(Keys::note, noteText(comment));
         }
 
-        void setScoped(Dom::Section& section, const Surface& surface,
-            const std::wstring_view nameSpace, const std::wstring_view module, const Place& place)
+        void setScoped(Entry& entry, const Surface& surface, const std::wstring_view nameSpace,
+            const std::wstring_view module, const Place& place)
         {
-            setText(section, Keys::nameSpace, nameSpace);
-            setText(section, Keys::module, module);
-            setFile(section, surface.files()[place.file]);
+            entry.setText(Keys::nameSpace, nameSpace);
+            entry.setText(Keys::module, module);
+            setFile(entry, surface.files()[place.file]);
         }
 
-        void setFunction(Dom::Section& section, const Function& function)
+        void setFunction(Entry& entry, const Function& function)
         {
-            setPlaced(section, function.name, function.place, function.comment);
-            setText(section, Keys::access, accessWord(function.access));
-            setText(section, Keys::kind, kindWord(function.kind));
-            setText(section, Keys::signature, function.signature);
-            setText(section, Keys::type, function.returnType);
-            setText(section, Keys::templateParameters, function.templateParameters);
-            setFlag(section, Keys::isStatic, function.isStatic);
-            setFlag(section, Keys::isVirtual, function.isVirtual);
-            setFlag(section, Keys::isDeleted, function.isDeleted);
+            setPlaced(entry, function.name, function.place, function.comment);
+            entry.setText(Keys::access, accessWord(function.access));
+            entry.setText(Keys::kind, kindWord(function.kind));
+            entry.setText(Keys::signature, function.signature);
+            entry.setText(Keys::type, function.returnType);
+            entry.setText(Keys::templateParameters, function.templateParameters);
+            entry.setFlag(Keys::isStatic, function.isStatic);
+            entry.setFlag(Keys::isVirtual, function.isVirtual);
+            entry.setFlag(Keys::isDeleted, function.isDeleted);
         }
 
-        void setField(Dom::Section& section, const Field& field)
+        void setField(Entry& entry, const Field& field)
         {
-            setPlaced(section, field.name, field.place, field.comment);
-            setText(section, Keys::access, accessWord(field.access));
-            setText(section, Keys::type, field.type);
-            setText(section, Keys::value, field.value);
-            setFlag(section, Keys::isStatic, field.isStatic);
-            setFlag(section, Keys::isConstant, field.isConstant);
+            setPlaced(entry, field.name, field.place, field.comment);
+            entry.setText(Keys::access, accessWord(field.access));
+            entry.setText(Keys::type, field.type);
+            entry.setText(Keys::value, field.value);
+            entry.setFlag(Keys::isStatic, field.isStatic);
+            entry.setFlag(Keys::isConstant, field.isConstant);
         }
 
-        void writeType(Dom::Section& section, const Surface& surface, const Type& type)
+        [[nodiscard]] std::unique_ptr<Dom::Section> typeEntry(const KeyOrders& orders,
+            const Surface& surface, const Type& type)
         {
-            setPlaced(section, type.name, type.place, type.comment);
-            setScoped(section, surface, type.nameSpace, type.module, type.place);
-            setText(section, Keys::kind, kindWord(type.kind));
-            setText(section, Keys::templateParameters, type.templateParameters);
+            Entry entry{ orders.type };
+            setPlaced(entry, type.name, type.place, type.comment);
+            setScoped(entry, surface, type.nameSpace, type.module, type.place);
+            entry.setText(Keys::kind, kindWord(type.kind));
+            entry.setText(Keys::templateParameters, type.templateParameters);
             Names bases;
             for (const std::wstring& base : type.bases)
             {
@@ -340,200 +478,162 @@ namespace SeeDocs_App
                     ? base
                     : surface.resolvedBase(base, type.nameSpace));
             }
-            setList(section, Keys::bases, bases);
-            setText(section, Keys::target, type.target);
-            setFlag(section, Keys::scoped, type.scoped);
-            setFlag(section, Keys::control, type.isControl);
-            setText(section, Keys::folder, type.folder);
+            entry.setList(Keys::bases, bases);
+            entry.setText(Keys::target, type.target);
+            entry.setFlag(Keys::scoped, type.scoped);
+            entry.setFlag(Keys::control, type.isControl);
+            entry.setText(Keys::folder, type.folder);
 
-            Sections& properties = (section / Keys::properties).as<Sections>();
+            Items properties;
             for (const Property& property : surface.mergedProperties(type))
             {
                 if (property.access == Access::Private)
                     continue;
-                Dom::Section& entry = properties.add();
-                setPlaced(entry, property.name, property.place, property.comment);
-                setText(entry, Keys::access, accessWord(property.access));
-                setText(entry, Keys::type, property.type);
-                setList(entry, Keys::accepts, property.accepts);
-                setText(entry, Keys::defaultValue, property.defaultValue);
-                setText(entry, Keys::setter, property.setter);
-                setText(entry, Keys::target, property.target);
-                setText(entry, Keys::form, formWord(property.form));
-                setText(entry, Keys::valueKind, property.valueKind);
-                setFlag(entry, Keys::optional, property.optional);
+                Entry item{ orders.property };
+                setPlaced(item, property.name, property.place, property.comment);
+                item.setText(Keys::access, accessWord(property.access));
+                item.setText(Keys::type, property.type);
+                item.setList(Keys::accepts, property.accepts);
+                item.setText(Keys::defaultValue, property.defaultValue);
+                item.setText(Keys::setter, property.setter);
+                item.setText(Keys::target, property.target);
+                item.setText(Keys::form, formWord(property.form));
+                item.setText(Keys::valueKind, property.valueKind);
+                item.setFlag(Keys::optional, property.optional);
+                properties.push_back(item.finish());
             }
+            entry.setItems(Keys::properties, std::move(properties));
 
-            Sections& events = (section / Keys::events).as<Sections>();
+            Items events;
             for (const Event& event : type.events)
             {
                 if (event.access == Access::Private)
                     continue;
-                Dom::Section& entry = events.add();
-                setPlaced(entry, event.type, event.place, event.comment);
-                setText(entry, Keys::access, accessWord(event.access));
-                setText(entry, Keys::alias, event.alias);
-                setText(entry, Keys::method, event.method);
+                Entry item{ orders.event };
+                setPlaced(item, event.type, event.place, event.comment);
+                item.setText(Keys::access, accessWord(event.access));
+                item.setText(Keys::alias, event.alias);
+                item.setText(Keys::method, event.method);
+                events.push_back(item.finish());
             }
+            entry.setItems(Keys::events, std::move(events));
 
-            Sections& methods = (section / Keys::methods).as<Sections>();
+            Items methods;
             for (const Function& function : type.functions)
             {
                 if (function.access == Access::Private)
                     continue;
-                setFunction(methods.add(), function);
+                Entry item{ orders.method };
+                setFunction(item, function);
+                methods.push_back(item.finish());
             }
+            entry.setItems(Keys::methods, std::move(methods));
 
-            Sections& usings = (section / Keys::usings).as<Sections>();
+            Items usings;
             for (const Using& declaration : type.usings)
             {
                 if (declaration.access == Access::Private)
                     continue;
-                Dom::Section& entry = usings.add();
-                setPlaced(entry, declaration.name, declaration.place, declaration.comment);
-                setText(entry, Keys::access, accessWord(declaration.access));
-                setText(entry, Keys::base, declaration.base);
+                Entry item{ orders.usingDeclaration };
+                setPlaced(item, declaration.name, declaration.place, declaration.comment);
+                item.setText(Keys::access, accessWord(declaration.access));
+                item.setText(Keys::base, declaration.base);
+                usings.push_back(item.finish());
             }
+            entry.setItems(Keys::usings, std::move(usings));
 
-            Sections& fields = (section / Keys::fields).as<Sections>();
+            Items fields;
             for (const Field& field : type.fields)
             {
                 if (field.access == Access::Private)
                     continue;
-                setField(fields.add(), field);
+                Entry item{ orders.field };
+                setField(item, field);
+                fields.push_back(item.finish());
             }
+            entry.setItems(Keys::fields, std::move(fields));
 
-            Sections& members = (section / Keys::members).as<Sections>();
+            Items members;
             for (const EnumMember& member : type.members)
             {
-                Dom::Section& entry = members.add();
-                setPlaced(entry, member.name, member.place, member.comment);
-                setText(entry, Keys::value, member.value);
+                Entry item{ orders.member };
+                setPlaced(item, member.name, member.place, member.comment);
+                item.setText(Keys::value, member.value);
+                members.push_back(item.finish());
             }
+            entry.setItems(Keys::members, std::move(members));
 
-            Sections& restates = (section / Keys::restates).as<Sections>();
+            Items restates;
             for (const Restatement& restatement : type.restatements)
             {
-                Dom::Section& entry = restates.add();
-                setText(entry, Keys::type, restatement.type);
-                setText(entry, Keys::value, restatement.value);
-                setFlag(entry, Keys::fixed, restatement.fixed);
-                setNumber(entry, Keys::line, restatement.place.line);
+                Entry item{ orders.restatement };
+                item.setText(Keys::type, restatement.type);
+                item.setText(Keys::value, restatement.value);
+                item.setFlag(Keys::fixed, restatement.fixed);
+                item.setNumber(Keys::line, restatement.place.line);
+                restates.push_back(item.finish());
             }
+            entry.setItems(Keys::restates, std::move(restates));
+            return entry.finish();
         }
 
-        void writeModule(Dom::Section& section, const Surface& surface, const Module& module)
+        [[nodiscard]] std::unique_ptr<Dom::Section> moduleEntry(const KeyOrders& orders,
+            const Surface& surface, const Module& module)
         {
-            setText(section, Keys::name, module.name);
-            setFile(section, surface.files()[module.file]);
-            setFlag(section, Keys::interface, module.isInterface);
-            setFlag(section, Keys::header, module.isHeader);
+            Entry entry{ orders.module };
+            entry.setText(Keys::name, module.name);
+            setFile(entry, surface.files()[module.file]);
+            entry.setFlag(Keys::interface, module.isInterface);
+            entry.setFlag(Keys::header, module.isHeader);
             if (module.language == SourceLanguage::Pascal)
-                setText(section, Keys::language, k_pascalWord);
+                entry.setText(Keys::language, k_pascalWord);
             Names imports;
             Names exported;
             for (const Import& import : module.imports)
                 (import.exported ? exported : imports).push_back(import.name);
-            setList(section, Keys::imports, imports);
-            setList(section, Keys::exportedImports, exported);
+            entry.setList(Keys::imports, imports);
+            entry.setList(Keys::exportedImports, exported);
+            return entry.finish();
         }
 
-        [[nodiscard]] bool isSectionLike(const Dom::DomNodeType type)
+        // **A key an entry does not hold is at the layout's default** - the file leaves such a key
+        // out, and a document built from a surface never makes one - so each reader answers that
+        // default itself, and reads a document from either source alike.
+        [[nodiscard]] std::wstring textOf(const Dom::Section& entry, const std::wstring_view key)
         {
-            return type == Dom::DomNodeType::Section || type == Dom::DomNodeType::CompositeValue;
+            const Dom::DomNodeBase* child = entry.child(key);
+            return child ? child->get<std::wstring>() : std::wstring{};
         }
 
-        std::unique_ptr<Dom::Section> compacted(const Dom::Section&, const Dom::Section&);
-
-        // The items of a sequence, each compacted against the fresh item the layout makes.
-        [[nodiscard]] std::unique_ptr<Dom::DomNodeBase> compactedSequence(
-            const Dom::SequenceBase& sequence, const Dom::SequenceBase& layout)
+        [[nodiscard]] bool flagOf(const Dom::Section& entry, const std::wstring_view key)
         {
-            std::unique_ptr<Dom::DomNodeBase> blueprintHolder = layout.clone(nullptr);
-            const Dom::DomNodeBase& blueprint = blueprintHolder->as<Dom::SequenceBase>().addNode();
-
-            // The layout's sequence is empty and makes the same items, so its clone is the start.
-            std::unique_ptr<Dom::DomNodeBase> copy = layout.clone(nullptr);
-            Dom::SequenceBase& target = copy->as<Dom::SequenceBase>();
-            for (std::size_t i = 0; i != sequence.size(); ++i)
-            {
-                const Dom::DomNodeBase& item = *sequence.child(i);
-                std::unique_ptr<Dom::DomNodeBase> itemCopy;
-                if (isSectionLike(item.type()) && isSectionLike(blueprint.type()))
-                {
-                    itemCopy = compacted(static_cast<const Dom::Section&>(item),
-                        static_cast<const Dom::Section&>(blueprint));
-                }
-                else
-                {
-                    itemCopy = item.clone(&target);
-                }
-                itemCopy->setParent(&target);
-                target.children().push_back(std::move(itemCopy));
-            }
-            return copy;
+            const Dom::DomNodeBase* child = entry.child(key);
+            return child ? child->get<bool>() : false;
         }
 
-        // A copy of the section carrying only what differs from the layout, at every depth - the
-        // items of a sequence included, which withoutDefaults copies whole.
-        std::unique_ptr<Dom::Section> compacted(const Dom::Section& section,
-            const Dom::Section& layout)
+        [[nodiscard]] std::size_t numberOf(const Dom::Section& entry, const std::wstring_view key)
         {
-            std::unique_ptr<Dom::Section> result = std::make_unique<Dom::Section>(nullptr);
-            for (const std::wstring_view key : section.getKeys())
-            {
-                const Dom::DomNodeBase& child = *section.child(key);
-                const Dom::DomNodeBase* layoutChild = layout.child(key);
-                if (layoutChild && Dom::sameValue(child, *layoutChild))
-                    continue;
-
-                std::unique_ptr<Dom::DomNodeBase> copy;
-                const bool sections = layoutChild && isSectionLike(child.type())
-                    && isSectionLike(layoutChild->type());
-                const bool sequences = layoutChild && child.type() == Dom::DomNodeType::Sequence
-                    && layoutChild->type() == Dom::DomNodeType::Sequence;
-                if (sections)
-                {
-                    copy = compacted(static_cast<const Dom::Section&>(child),
-                        static_cast<const Dom::Section&>(*layoutChild));
-                }
-                else if (sequences)
-                {
-                    copy = compactedSequence(static_cast<const Dom::SequenceBase&>(child),
-                        static_cast<const Dom::SequenceBase&>(*layoutChild));
-                }
-                else
-                {
-                    copy = child.clone(result.get());
-                }
-                copy->setParent(result.get());
-                result->setChild(key, std::move(copy));
-            }
-            return result;
+            const Dom::DomNodeBase* child = entry.child(key);
+            return child ? child->get<std::size_t>() : 0;
         }
 
-        [[nodiscard]] std::wstring textOf(const Dom::DomNodeBase& entry, const std::wstring_view key)
-        {
-            return (entry / key).get<std::wstring>();
-        }
-
-        [[nodiscard]] bool flagOf(const Dom::DomNodeBase& entry, const std::wstring_view key)
-        {
-            return (entry / key).get<bool>();
-        }
-
-        [[nodiscard]] std::size_t numberOf(const Dom::DomNodeBase& entry,
-            const std::wstring_view key)
-        {
-            return (entry / key).get<std::size_t>();
-        }
-
-        [[nodiscard]] Names listOf(const Dom::DomNodeBase& entry, const std::wstring_view key)
+        [[nodiscard]] Names listOf(const Dom::Section& entry, const std::wstring_view key)
         {
             Names names;
-            for (const std::wstring& name : (entry / key).as<Strings>().get())
+            const Dom::DomNodeBase* child = entry.child(key);
+            if (!child)
+                return names;
+            for (const std::wstring& name : child->as<Strings>().get())
                 names.push_back(name);
             return names;
+        }
+
+        [[nodiscard]] const Sections& itemsOf(const Dom::Section& entry,
+            const std::wstring_view key)
+        {
+            static const Sections s_none{ nullptr, Dom::Section{ nullptr } };
+            const Dom::DomNodeBase* child = entry.child(key);
+            return child ? child->as<Sections>() : s_none;
         }
 
         // The stamp a text spells; nothing for a text the database would not write.
@@ -584,10 +684,10 @@ namespace SeeDocs_App
         {
         public:
             explicit Reader(Surface&);
-            void readModules(const Dom::DomNodeBase& list);
-            void readTypes(const Dom::DomNodeBase& list);
-            void readFunctions(const Dom::DomNodeBase& list);
-            void readConstants(const Dom::DomNodeBase& list);
+            void readModules(const Sections& list);
+            void readTypes(const Sections& list);
+            void readFunctions(const Sections& list);
+            void readConstants(const Sections& list);
         private:
             // The file the entry names, by its path and its root.
             [[nodiscard]] std::size_t fileOf(const Dom::Section& entry, const std::wstring& module);
@@ -611,9 +711,9 @@ namespace SeeDocs_App
         {
         }
 
-        void Reader::readModules(const Dom::DomNodeBase& list)
+        void Reader::readModules(const Sections& list)
         {
-            for (const Dom::Section& entry : list.as<Sections>())
+            for (const Dom::Section& entry : list)
             {
                 Module module{
                     .name = textOf(entry, Keys::name),
@@ -632,9 +732,9 @@ namespace SeeDocs_App
             }
         }
 
-        void Reader::readTypes(const Dom::DomNodeBase& list)
+        void Reader::readTypes(const Sections& list)
         {
-            for (const Dom::Section& entry : list.as<Sections>())
+            for (const Dom::Section& entry : list)
             {
                 Type type{
                     .name = textOf(entry, Keys::name),
@@ -654,7 +754,7 @@ namespace SeeDocs_App
                 type.place = placeOf(entry, file);
                 type.comment = commentOf(entry);
 
-                for (const Dom::Section& item : (entry / Keys::properties).as<Sections>())
+                for (const Dom::Section& item : itemsOf(entry, Keys::properties))
                 {
                     type.properties.push_back({
                         .name = textOf(item, Keys::name),
@@ -671,7 +771,7 @@ namespace SeeDocs_App
                         .comment = commentOf(item)
                     });
                 }
-                for (const Dom::Section& item : (entry / Keys::events).as<Sections>())
+                for (const Dom::Section& item : itemsOf(entry, Keys::events))
                 {
                     type.events.push_back({
                         .type = textOf(item, Keys::name),
@@ -682,9 +782,9 @@ namespace SeeDocs_App
                         .comment = commentOf(item)
                     });
                 }
-                for (const Dom::Section& item : (entry / Keys::methods).as<Sections>())
+                for (const Dom::Section& item : itemsOf(entry, Keys::methods))
                     type.functions.push_back(functionOf(item, file, true));
-                for (const Dom::Section& item : (entry / Keys::usings).as<Sections>())
+                for (const Dom::Section& item : itemsOf(entry, Keys::usings))
                 {
                     type.usings.push_back({
                         .base = textOf(item, Keys::base),
@@ -694,9 +794,9 @@ namespace SeeDocs_App
                         .comment = commentOf(item)
                     });
                 }
-                for (const Dom::Section& item : (entry / Keys::fields).as<Sections>())
+                for (const Dom::Section& item : itemsOf(entry, Keys::fields))
                     type.fields.push_back(fieldOf(item, file, true));
-                for (const Dom::Section& item : (entry / Keys::members).as<Sections>())
+                for (const Dom::Section& item : itemsOf(entry, Keys::members))
                 {
                     type.members.push_back({
                         .name = textOf(item, Keys::name),
@@ -705,7 +805,7 @@ namespace SeeDocs_App
                         .comment = commentOf(item)
                     });
                 }
-                for (const Dom::Section& item : (entry / Keys::restates).as<Sections>())
+                for (const Dom::Section& item : itemsOf(entry, Keys::restates))
                 {
                     type.restatements.push_back({
                         .type = textOf(item, Keys::type),
@@ -718,9 +818,9 @@ namespace SeeDocs_App
             }
         }
 
-        void Reader::readFunctions(const Dom::DomNodeBase& list)
+        void Reader::readFunctions(const Sections& list)
         {
-            for (const Dom::Section& entry : list.as<Sections>())
+            for (const Dom::Section& entry : list)
             {
                 FreeFunction free{
                     .nameSpace = textOf(entry, Keys::nameSpace),
@@ -733,9 +833,9 @@ namespace SeeDocs_App
             }
         }
 
-        void Reader::readConstants(const Dom::DomNodeBase& list)
+        void Reader::readConstants(const Sections& list)
         {
-            for (const Dom::Section& entry : list.as<Sections>())
+            for (const Dom::Section& entry : list)
             {
                 Variable variable{
                     .nameSpace = textOf(entry, Keys::nameSpace),
@@ -829,6 +929,23 @@ namespace SeeDocs_App
             }
             return field;
         }
+
+        // The surface a document states, read the one way whether it was loaded or just built.
+        [[nodiscard]] Surface surfaceOf(const Dom::Section& root)
+        {
+            Surface surface;
+            surface.setScanned(stampOf(textOf(root, Keys::scanned)));
+            surface.setMode(flagOf(root, Keys::limited) ? ScanMode::Limited : ScanMode::Full);
+            surface.setHintRules(flagOf(root, Keys::looseHints)
+                ? HintRules::Loose
+                : HintRules::Strict);
+            Reader reader{ surface };
+            reader.readModules(itemsOf(root, Keys::modules));
+            reader.readTypes(itemsOf(root, Keys::types));
+            reader.readFunctions(itemsOf(root, Keys::functions));
+            reader.readConstants(itemsOf(root, Keys::constants));
+            return surface;
+        }
     }
 
     Dom::Dt::Section databaseLayout()
@@ -869,66 +986,96 @@ namespace SeeDocs_App
         };
     }
 
-    void writeDatabase(const Surface& surface, const std::filesystem::path& path)
+    // **Every entry is built out of what it states alone**, a key at its default never made, so
+    // the document goes to the file as built, with nothing cloned or compared after the fact.
+    Database::Database(const Surface& surface, ScanSteps* steps)
+        :
+        m_steps{ steps }
     {
-        Dom::Document<Dom::FileFormat::ClaFi> document{
-            path,
-            Dom::AutoSave::No,
-            databaseLayout(),
-            Dom::WriteDefaults::Yes
-        };
-        // The layout, applied once more and left untouched, is what every entry is compared with.
-        const Dom::Document<Dom::FileFormat::ClaFi> layout{
-            path,
-            Dom::AutoSave::No,
-            databaseLayout(),
-            Dom::WriteDefaults::Yes
-        };
+        StepClock clock{ m_steps };
+        Dom::Section layout{ nullptr };
+        databaseLayout().apply(layout);
+        const KeyOrders orders = keyOrdersOf(layout);
 
-        (document / Keys::scanned).set(stampText(surface.scanned()));
-        (document / Keys::limited).set(surface.mode() == ScanMode::Limited);
-        (document / Keys::looseHints).set(surface.hintRules() == HintRules::Loose);
+        Entry root{ orders.root };
+        root.setText(Keys::scanned, stampText(surface.scanned()));
+        root.setFlag(Keys::limited, surface.mode() == ScanMode::Limited);
+        root.setFlag(Keys::looseHints, surface.hintRules() == HintRules::Loose);
 
-        Sections& modules = (document / Keys::modules).as<Sections>();
+        Items modules;
         for (const Module& module : surface.modules())
-            writeModule(modules.add(), surface, module);
+            modules.push_back(moduleEntry(orders, surface, module));
+        root.setItems(Keys::modules, std::move(modules));
 
-        Sections& types = (document / Keys::types).as<Sections>();
+        Items types;
         for (const Type& type : surface.types())
         {
             if (type.isPublic())
-                writeType(types.add(), surface, type);
+                types.push_back(typeEntry(orders, surface, type));
         }
+        root.setItems(Keys::types, std::move(types));
 
-        Sections& functions = (document / Keys::functions).as<Sections>();
+        Items functions;
         for (const FreeFunction& free : surface.functions())
         {
-            Dom::Section& entry = functions.add();
+            Entry entry{ orders.function };
             setPlaced(entry, free.function.name, free.function.place, free.function.comment);
             setScoped(entry, surface, free.nameSpace, free.module, free.function.place);
-            setText(entry, Keys::kind, kindWord(free.function.kind));
-            setText(entry, Keys::signature, free.function.signature);
-            setText(entry, Keys::type, free.function.returnType);
-            setText(entry, Keys::templateParameters, free.function.templateParameters);
+            entry.setText(Keys::kind, kindWord(free.function.kind));
+            entry.setText(Keys::signature, free.function.signature);
+            entry.setText(Keys::type, free.function.returnType);
+            entry.setText(Keys::templateParameters, free.function.templateParameters);
+            functions.push_back(entry.finish());
         }
+        root.setItems(Keys::functions, std::move(functions));
 
-        Sections& constants = (document / Keys::constants).as<Sections>();
+        Items constants;
         for (const Variable& variable : surface.variables())
         {
-            Dom::Section& entry = constants.add();
+            Entry entry{ orders.constant };
             setPlaced(entry, variable.field.name, variable.field.place, variable.field.comment);
             setScoped(entry, surface, variable.nameSpace, variable.module, variable.field.place);
-            setText(entry, Keys::type, variable.field.type);
-            setText(entry, Keys::value, variable.field.value);
-            setFlag(entry, Keys::isConstant, variable.field.isConstant);
-            setText(entry, Keys::declaration, variable.declaration);
+            entry.setText(Keys::type, variable.field.type);
+            entry.setText(Keys::value, variable.field.value);
+            entry.setFlag(Keys::isConstant, variable.field.isConstant);
+            entry.setText(Keys::declaration, variable.declaration);
+            constants.push_back(entry.finish());
         }
+        root.setItems(Keys::constants, std::move(constants));
 
-        document.format().saveSectionToFile(*compacted(document, layout), path);
+        m_root = root.finish();
+        clock.lap(Steps::fillDocument);
     }
 
-    std::optional<Surface> readDatabase(const std::filesystem::path& path)
+    Database::~Database() = default;
+
+    bool Database::save(const std::filesystem::path& path) const
     {
+        StepClock clock{ m_steps };
+        const Dom::FileFormat::ClaFi format{};
+        const bool written = format.saveSectionToFile(*m_root, path);
+        clock.lap(Steps::saveDatabase);
+        return written;
+    }
+
+    Surface Database::surface() const
+    {
+        StepClock clock{ m_steps };
+        Surface surface = surfaceOf(*m_root);
+        clock.lap(Steps::readDocument);
+        return surface;
+    }
+
+    bool writeDatabase(const Surface& surface, const std::filesystem::path& path,
+        ScanSteps* steps)
+    {
+        const Database database{ surface, steps };
+        return database.save(path);
+    }
+
+    std::optional<Surface> readDatabase(const std::filesystem::path& path, ScanSteps* steps)
+    {
+        StepClock clock{ steps };
         Dom::Document<Dom::FileFormat::ClaFi> document{
             path,
             Dom::AutoSave::No,
@@ -937,18 +1084,9 @@ namespace SeeDocs_App
         };
         if (!document.load())
             return std::nullopt;
-
-        Surface surface;
-        surface.setScanned(stampOf((document / Keys::scanned).get<std::wstring>()));
-        const bool limited = (document / Keys::limited).get<bool>();
-        surface.setMode(limited ? ScanMode::Limited : ScanMode::Full);
-        const bool loose = (document / Keys::looseHints).get<bool>();
-        surface.setHintRules(loose ? HintRules::Loose : HintRules::Strict);
-        Reader reader{ surface };
-        reader.readModules(document / Keys::modules);
-        reader.readTypes(document / Keys::types);
-        reader.readFunctions(document / Keys::functions);
-        reader.readConstants(document / Keys::constants);
+        clock.lap(Steps::loadDatabase);
+        Surface surface = surfaceOf(document);
+        clock.lap(Steps::readDocument);
         return surface;
     }
 

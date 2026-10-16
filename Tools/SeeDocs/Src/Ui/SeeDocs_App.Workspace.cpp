@@ -286,13 +286,12 @@ namespace SeeDocs_App
         return open.project.name;
     }
 
-    // **The database is read back before anything is let go of**, so a scan that could not be
-    // written leaves the project as it was last read.
+    // **The surface shown is the database as written**, read off the document the file was
+    // written from, so a scan that could not be written leaves the project as it was last read.
     void Workspace::rescan(OpenProject& open)
     {
         ScopedWaitCursor wait{};
-        scan(open.project);
-        std::optional<Surface> surface = readDatabase(open.project.databasePath());
+        std::optional<Surface> surface = scan(open.project);
         if (!surface)
         {
             Text reason;
@@ -430,8 +429,9 @@ namespace SeeDocs_App
 
     // **The database is read before anything is shown**, so a project that cannot be opened leaves
     // the window as it was. A project with no database is scanned first, and so is one whose
-    // database was read otherwise than the project now asks; what is shown is always what was
-    // read back from the file, one path for a fresh scan and an old one alike.
+    // database was read otherwise than the project now asks; what is shown is always the
+    // database, read off the document a fresh scan writes and off the file otherwise, by the
+    // one reader.
     bool Workspace::openProject(Project project, Text& reason, const HomeTab homeTab)
     {
         ScopedWaitCursor wait{};
@@ -439,10 +439,7 @@ namespace SeeDocs_App
         if (surface && (surface->mode() != project.mode || surface->hintRules() != project.hints))
             surface.reset();
         if (!surface)
-        {
-            scan(project);
-            surface = readDatabase(project.databasePath());
-        }
+            surface = scan(project);
         if (!surface)
         {
             reason << L"The database could not be written to";
@@ -541,10 +538,14 @@ namespace SeeDocs_App
             m_browser.rebindProject(open);
     }
 
-    void Workspace::scan(const Project& project)
+    std::optional<Surface> Workspace::scan(const Project& project)
     {
-        writeDatabase(scanSources(project.sourceFolders(), project.mode, project.hints),
-            project.databasePath());
+        const Database database{
+            scanSources(project.sourceFolders(), project.mode, project.hints)
+        };
+        if (!database.save(project.databasePath()))
+            return std::nullopt;
+        return database.surface();
     }
 
     // An entry naming the same project another way - a tree, where its project folder is kept

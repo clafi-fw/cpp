@@ -21,6 +21,25 @@ namespace SeeDocs_App
         Loose     // every recognizable comment: the brief of a doc comment, its lines run on
     };
 
+    // One step of a scan and how long it took; a scan's steps stand in the order they ran.
+    export struct ScanStep
+    {
+        std::wstring name;
+        std::chrono::steady_clock::duration took{};
+    };
+    export using ScanSteps = std::vector<ScanStep>;
+
+    // Adds the time since its last lap to the step named; a step named again accumulates.
+    export class StepClock
+    {
+    public:
+        explicit StepClock(ScanSteps*);
+        void lap(std::wstring_view step);
+    private:
+        ScanSteps* m_steps;
+        std::chrono::steady_clock::time_point m_last;
+    };
+
     // The language a module is written in, which its code on a page is read and coloured as.
     export enum class SourceLanguage
     {
@@ -374,6 +393,8 @@ namespace SeeDocs_App
         void addProblem(Problem);
         void addRepublication(Republication);
         void addEnclosedInclude(EnclosedInclude);
+        // Takes the other's records over as they stand; their file indexes are this surface's.
+        void append(Surface&&);
 
         [[nodiscard]] const Type* typeNamed(std::wstring_view qualifiedName) const;
         [[nodiscard]] Type* typeNamed(std::wstring_view qualifiedName);

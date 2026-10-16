@@ -18,7 +18,8 @@ namespace ClaFi::Dom
         virtual void readHeader(std::wistream&) const {}
         virtual void loadSectionFromStream(Section&, std::wistream&) const = 0;
         virtual void saveSectionToStream(const Section&, std::wostream&) const = 0;
-        void saveSectionToFile(const Section&, const std::filesystem::path&) const;
+        // Answers whether the file was written whole.
+        bool saveSectionToFile(const Section&, const std::filesystem::path&) const;
         // Answers whether there was a file to read.
         bool loadSectionFromFile(Section&, const std::filesystem::path&) const;
     };
@@ -100,7 +101,7 @@ namespace ClaFi::Dom
 {
     // --- DocumentBase ---
 
-    void FileFormatBase::saveSectionToFile(const Section& section, const std::filesystem::path& filePath) const
+    bool FileFormatBase::saveSectionToFile(const Section& section, const std::filesystem::path& filePath) const
     {
         auto directory = filePath.parent_path();
         if (!std::filesystem::exists(directory))
@@ -120,6 +121,7 @@ namespace ClaFi::Dom
         const std::string utf8 = toUtf8(text.str());
         std::ofstream file{ filePath };
         file.write(utf8.data(), static_cast<std::streamsize>(utf8.size()));
+        return file.good();
     }
 
     bool FileFormatBase::loadSectionFromFile(Section& section, const std::filesystem::path& path) const

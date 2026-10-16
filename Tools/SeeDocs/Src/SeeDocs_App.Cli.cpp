@@ -19,6 +19,8 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_scanCommand = L"scan";
         constexpr std::wstring_view k_checkCommand = L"check";
         constexpr std::wstring_view k_outOption = L"--out";
+        constexpr std::wstring_view k_timeOption = L"--time";
+        constexpr std::wstring_view k_totalLabel = L"total";
         constexpr int k_ok = 0;
         constexpr int k_failed = 1;
         constexpr int k_misused = 2;
@@ -26,13 +28,17 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_usage =
             L"SeeDocsCli - reads the design surface out of a project's sources.\n"
             L"\n"
-            L"    SeeDocsCli scan [folder] [--out file] writes the project's Surface.cfg\n"
-            L"    SeeDocsCli check [folder]             reports deviations, exit code 1 on errors\n"
+            L"    SeeDocsCli scan [folder] [--out file] [--time] "
+            L"writes the project's Surface.cfg\n"
+            L"    SeeDocsCli check [folder]                      "
+            L"reports deviations, exit code 1 on errors\n"
             L"\n"
             L"The folder is a project's own, or a tree with a .seedocs project in it; the working\n"
             L"directory when left out. A project reads the folders of sources its Project.cfg\n"
             L"names, as it says; one reading any C++ and Delphi - Limited = true - is not\n"
-            L"checked. A scan with --out takes any other folder too, read as ClaFi modules.\n";
+            L"checked. A scan with --out takes any other folder too, read as ClaFi modules; one\n"
+            L"with --time prints how long each step of the scan took, then the write of the\n"
+            L"database and the read of it SeeDocs shows a scan from.\n";
 
         // The process's text goes out as UTF-8, whichever platform the console belongs to.
         void print(const std::wstring_view text)
@@ -47,6 +53,7 @@ namespace SeeDocs_App
         {
             std::filesystem::path folder;
             std::filesystem::path output;
+            bool timed{ false };
             bool valid{ true };
         };
 
@@ -66,6 +73,8 @@ namespace SeeDocs_App
                     options.output = arguments[i + 1];
                     ++i;
                 }
+                else if (argument == k_timeOption)
+                    options.timed = true;
                 else if (options.folder.empty())
                     options.folder = argument;
                 else
@@ -77,6 +86,28 @@ namespace SeeDocs_App
             if (!options.output.empty())
                 options.output = std::filesystem::absolute(options.output, error);
             return options;
+        }
+
+        [[nodiscard]] double seconds(const std::chrono::steady_clock::duration took)
+        {
+            return std::chrono::duration<double>{ took }.count();
+        }
+
+        // A line per step with the seconds aligned, and their total last.
+        [[nodiscard]] std::wstring stepsText(const ScanSteps& steps)
+        {
+            std::size_t width = k_totalLabel.size();
+            for (const ScanStep& step : steps)
+                width = std::max(width, step.name.size());
+            std::wstring text;
+            std::chrono::steady_clock::duration total{};
+            for (const ScanStep& step : steps)
+            {
+                text += std::format(L"{:<{}}  {:>8.3f} s\n", step.name, width, seconds(step.took));
+                total += step.took;
+            }
+            text += std::format(L"{:<{}}  {:>8.3f} s\n", k_totalLabel, width, seconds(total));
+            return text;
         }
 
         [[nodiscard]] std::size_t classCount(const Surface& surface)
@@ -112,13 +143,25 @@ namespace SeeDocs_App
             }
             if (output.empty())
                 output = project.databasePath();
+            ScanSteps steps;
+            ScanSteps* timedSteps = options.timed ? &steps : nullptr;
             const Surface surface = scanSources(project.sourceFolders(), project.mode,
-                project.hints);
-            writeDatabase(surface, output);
+                project.hints, timedSteps);
+            const Database database{ surface, timedSteps };
+            if (!database.save(output))
+            {
+                print(L"The database could not be written to " + output.wstring() + L"\n");
+                return k_failed;
+            }
             print(std::to_wstring(classCount(surface)) + L" classes, "
                 + std::to_wstring(surface.types().size()) + L" types, "
                 + std::to_wstring(surface.functions().size()) + L" functions -> "
                 + output.wstring() + L"\n");
+            if (options.timed)
+            {
+                const Surface shown = database.surface();
+                print(stepsText(steps));
+            }
             return k_ok;
         }
 
