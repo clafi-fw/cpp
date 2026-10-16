@@ -12,6 +12,7 @@ apps=(
     "WhatsClip Tools/WhatsClip"
     "Themes Tools/Themes"
     "PascalScripts Tools/PascalScripts Language.cfg"
+    "SeeDocs Tools/SeeDocs"
 )
 
 plan='[]'

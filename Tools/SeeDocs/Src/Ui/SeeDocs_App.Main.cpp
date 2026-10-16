@@ -40,7 +40,8 @@ namespace SeeDocs_App
             .description = Text{
                 L"Shows the design surface the scanner read out of the tree, "
                 L"as the documentation it is to become."
-            }
+            },
+            .version = CLAFI_APP_VERSION
         };
     }
 

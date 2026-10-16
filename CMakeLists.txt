@@ -550,6 +550,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_dir}/SeeDocs_App.Surface.cppm")
     target_link_libraries(SeeDocs PRIVATE ClaFi)
     target_compile_options(SeeDocs PRIVATE ${clafi_compile_options})
+    clafi_app_version(SeeDocs "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/version.txt")
 
     # **Themes**, the browser the themes are made in, laid out the same way: the Main module and
     # every page and control under it know nothing of any platform, and the entry point is one file
