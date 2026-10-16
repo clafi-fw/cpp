@@ -92,16 +92,22 @@ namespace SeeDocs_App::AppIcon
 
         constexpr float k_epsilon{ 0.0001f };
 
-        constexpr Color k_sky{ 0xFF4FA8D8 };
+        constexpr Color k_sky = 0xFF'A079C1; // { 0xFF4FA8D8 };
         constexpr Color k_periwinkle{ 0xFF7C8FE3 };
-        constexpr Color k_amber{ 0xFFE5813C };
+        constexpr Color k_amber = 0xFF'F189E1;// { 0xFFE5813C };
         constexpr Color k_paperBack{ 0xFFE9EEF6 };
         constexpr Color k_paperFront{ 0xFFF7FAFD };
         constexpr Color k_paperEdge{ 0xFF9DA9C0 };
-        constexpr Color k_frameColor = 0xFF'4220A1;//{ 0xFF3A3A44 };
-        constexpr Color k_frameEdgeColor{ 0xFFF4F5F8 };
+        constexpr Color k_frameColor = 0xFF'38365C; //{ 0xFF3A3A44 };
+        constexpr Color k_frameEdgeColor = 0xFF'CAC2D3; // { 0xFFF4F5F8 };
         constexpr Color k_rimShade{ 0x291E1432 };
         constexpr Color k_highlight{ 0xB8FFFFFF };
+
+        constexpr Color k_StrandColor1 = 0xFF'B456F6; // FAA9D0;
+        constexpr Color k_StrandColor2 = 0xFF'D46AF1;
+        constexpr Color k_StrandColor3 = 0xFF'F189E1;
+        constexpr Color k_StrandColor4 = 0xFF'B456F6; // Top Left
+
 
         // WhatsClip's box, tail included, so the glass lands on the same pixels in both marks.
         constexpr Extent k_markBox{ .left = 0.033f, .top = 0.055f, .width = 0.936f, .height = 0.8834f };
@@ -215,12 +221,6 @@ namespace SeeDocs_App::AppIcon
         });
 
         // Each starts under the ring where a line of the paper meets the rim, as wide as that line.
-        
-        constexpr Color k_StrandColor1 = 0xFF'FAA9D0;
-        constexpr Color k_StrandColor2 = 0xFF'D46AF1;
-        constexpr Color k_StrandColor3 = 0xFF'F189E1;
-
-        constexpr Color k_StrandColor4 = 0xFF'B456F6; // Top Left
 
         constexpr std::array<Strand, 4> k_strands{
             Strand{ .points = k_skyRun, .color = k_StrandColor1, .startWidth = 0.063f },
