@@ -13,6 +13,7 @@ import ClaFi.App.Settings;
 import ClaFi.App.Application;
 
 import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
@@ -41,7 +42,11 @@ namespace SeeDocs_App
                 L"Shows the design surface the scanner read out of the tree, "
                 L"as the documentation it is to become."
             },
-            .version = CLAFI_APP_VERSION
+            .version = CLAFI_APP_VERSION,
+            .updates = UpdateSource{
+                .repository = L"clafi-fw/cpp",
+                .tagPrefix = L"SeeDocs-v"
+            }
         };
     }
 
