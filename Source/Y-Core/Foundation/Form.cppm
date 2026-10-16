@@ -8,7 +8,7 @@ import :Control;
 import :RichControl;
 import :Action;
 import :PaintEvent;
-import :Hint;
+import :Tooltip;
 
 import ClaFi.Core.Context.FormContext;
 
@@ -172,9 +172,9 @@ namespace ClaFi
         // ActiveContainer - and neither value can be inferred from the other.
         FormBase(AppContext&, WindowRole, FormControlBase&, Control* popupTarget, FormPlacement);
         // The form this one's window is **owned by**, named outright rather than read off a
-        // control. A popup stands on a control and its form is whatever holds that control; a hint
-        // is a member of the form it belongs to and is built with it, before it is about any
-        // control at all - so it has a form to name and no control to name it through.
+        // control. A popup stands on a control and its form is whatever holds that control; a
+        // tooltip is a member of the form it belongs to and is built with it, before it is about
+        // any control at all - so it has a form to name and no control to name it through.
         FormBase(AppContext&, WindowRole, FormControlBase&, FormBase& ownerForm, FormPlacement);
         ~FormBase() override;
     public:
@@ -247,10 +247,10 @@ namespace ClaFi
         // What kind of window this is. It says nothing about the root control, which answers for
         // itself with Control::interactivity().
         [[nodiscard]] WindowRole windowRole() const { return m_windowRole; }
-        // This form's hint. A control raises one about itself through the form it is in -
-        // control.form().hint().showRightNow(control) - because the window a hint shows in is
+        // This form's tooltip. A control raises one about itself through the form it is in -
+        // control.form().tooltip().showRightNow(control) - because the window a tooltip shows in is
         // owned by the window holding the control, and the form is what knows which that is.
-        [[nodiscard]] Hint& hint() { return m_hint; }
+        [[nodiscard]] Tooltip& tooltip() { return m_tooltip; }
         void invalidateAlign();
         // Brings a control into view once the alignment it is waiting for has run. A control
         // that has just been shown, or one whose host has just grown, still measures as it did
@@ -428,7 +428,7 @@ namespace ClaFi
         // not fit?
         virtual float monitorHeightShare() { return 1.0f; }
         void updatePlacement();
-        virtual void updateVisibility(); // overriden in HintForm for alpha animation
+        virtual void updateVisibility(); // overriden in TooltipForm for alpha animation
         void clearPopupTarget() { m_popupTarget = nullptr; }
         // The control this form is placed on, and moves along with - see followPopupTarget2.
         [[nodiscard]] virtual const Control* placementTarget() const { return m_popupTarget; }
@@ -645,7 +645,7 @@ namespace ClaFi
         // form's window as its owner, so it is built once everything that window is made of is
         // standing - and it goes down before any of that, which is why ~FormBase takes it down at
         // the top of its body rather than leaving it to the teardown that follows.
-        Hint m_hint{ *this };
+        Tooltip m_tooltip{ *this };
     };
 
     // A form called like the control it hosts - its root is a base. See Control-Foundation#form

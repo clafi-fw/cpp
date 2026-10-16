@@ -22,7 +22,8 @@ Control returns none - see TextFormat.
 - WithTextLayout states it to the layout it holds.
 - A TextBox lays its placeholder out over it.
 - An in-place editor lays its text out over the format of the control it covers.
-- An over-text hint repeats it - GetHintEvent::format carries it, and HintLabel answers with it.
+- An over-text tooltip repeats it - GetTooltipEvent::format carries it, and TooltipLabel answers
+  with it.
 
 ## RichControl textFormat
 
@@ -307,9 +308,9 @@ gives - `Button` unless it states another.
 
 ## Shortcut
 
-**An empty shortcut matches no key** and adds nothing to a hint.
+**An empty shortcut matches no key** and adds nothing to a tooltip.
 
-**An action holds any number, and each one runs it.** A menu line and a hint show the first.
+**An action holds any number, and each one runs it.** A menu line and a tooltip show the first.
 
 - Each `Shortcut` property adds one, in the order stated.
 - `addShortcut` adds one after those.
@@ -337,48 +338,48 @@ its menu is closed.
 **Visits every control in the subtree**, in view or not, in the order its containers hold them. For
 a walk in document order rather than over what is on screen.
 
-## Hint
+## Tooltip
 
-**The framework drives it**, asking a control for its hint through nestedGetHint. A control that
-must show its hint at once calls `form().hint().showRightNow(control)`.
+**The framework drives it**, asking a control for its tooltip through nestedGetTooltip. A control
+that must show its tooltip at once calls `form().tooltip().showRightNow(control)`.
 
-**What a hint is about follows the controller:**
+**What a tooltip is about follows the controller:**
 
-- While the mouse drives, the control under the pointer. A hover move hides the hint and starts the
-  wait for the next.
+- While the mouse drives, the control under the pointer. A hover move hides the tooltip and starts
+  the wait for the next.
 - While the keyboard alone drives, the item the focus is on - a container holds the focus for its
   current item. The focus moving to another item does the same.
 - When the mouse takes over, the hover counts at once, unless the pointer is on the focused item.
 
-**A hint stays up while it is still the answer.** Moving onto a child with no hint of its own keeps
-the hint of the control the child is in. One hint is in play at a time, in the form of the control
-pointed at.
+**A tooltip stays up while it is still the answer.** Moving onto a child with no tooltip of its own
+keeps the tooltip of the control the child is in. One tooltip is in play at a time, in the form of
+the control pointed at.
 
-**A hint is placed where its control comes to rest.** For a control still gliding, the hint goes
-where the glide ends and waits there. Later it moves with the control when the form is laid out
-again, as a popup does. A control scrolled out of view leaves the hint where it is.
+**A tooltip is placed where its control comes to rest.** For a control still gliding, the tooltip
+goes where the glide ends and waits there. Later it moves with the control when the form is laid out
+again, as a popup does. A control scrolled out of view leaves the tooltip where it is.
 
 **Its size:**
 
 - Lines break at k_lineWidth, 480 design units, and the window is as wide as the widest line.
-- A hint over text repeats the lines the control broke, at the width the control broke them.
+- A tooltip over text repeats the lines the control broke, at the width the control broke them.
 - At most k_maxLines lines show, 20, and the last fades when the text runs on.
 
-## Control invalidateHint
+## Control invalidateTooltip
 
-**A hint keeps the words it was shown with.** A control that changes its hint's words while the hint
-may be up calls this - a hint spelling out what the typed text means does.
+**A tooltip keeps the words it was shown with.** A control that changes its tooltip's words while
+the tooltip may be up calls this - a tooltip spelling out what the typed text means does.
 
-A hint up about this control is then asked again and placed afresh. A hint about another control
-stays as it is.
+A tooltip up about this control is then asked again and placed afresh. A tooltip about another
+control stays as it is.
 
-## GetHintEvent::writePreview
+## GetTooltipEvent::writePreview
 
-**For a hint previewing a longer text**, such as the paragraph an anchor link leads to. The preview
-goes after what the hint holds.
+**For a tooltip previewing a longer text**, such as the paragraph an anchor link leads to. The
+preview goes after what the tooltip holds.
 
-**A preview stops after six lines** at Hint::k_lineWidth, ended by an ellipsis in the styles still
-open there. A word the ellipsis would push onto a seventh line goes too.
+**A preview stops after six lines** at Tooltip::k_lineWidth, ended by an ellipsis in the styles
+still open there. A word the ellipsis would push onto a seventh line goes too.
 
 An indent or alignment the preview states holds after it, so a line added after a preview states
 its own.
@@ -419,12 +420,12 @@ crossfade, and each step repaints every window - see InputSwitchEvent.
 ## ContextMessage
 
 **Says something once, about what the user did** - why a typed value was refused, that a file
-was written. It shows in the hint window under its control, since the pointer may be anywhere.
+was written. It shows in the tooltip window under its control, since the pointer may be anywhere.
 
 **It lasts as long as that window.** Moving the pointer to another control, or any user action,
 hides and forgets it, with no timer. A second message replaces the first.
 
-**What a control says every time it is asked belongs in its nestedGetHint** - see PromptBox.
+**What a control says every time it is asked belongs in its nestedGetTooltip** - see PromptBox.
 
 ## GetShortcutEvent
 
@@ -471,8 +472,8 @@ close included.
 **The form animates it** on `AnimationSlots::windowFocused` whenever its window takes or loses the
 focus. A form not painted yet takes the value at once.
 
-**A popup reads the window it opens over.** A Menu or Hint window never takes the focus, so a popup
-returns its owner's factor, up to the first Dialog. A Dialog returns its own, owned or not. A
+**A popup reads the window it opens over.** A Menu or Tooltip window never takes the focus, so a
+popup returns its owner's factor, up to the first Dialog. A Dialog returns its own, owned or not. A
 Wayland layer-shell Dialog, placed `ScreenRight`, gets no activated state and reads 0.
 
 What reads it:
@@ -499,7 +500,7 @@ animation repaints the whole window, since the form cannot know which controls r
 window holds.
 
 The window's own shadow uses its root's rule set. A control over the content passes its own - the
-notices layer passes Hint, so a card casts a hint window's shadow.
+notices layer passes Tooltip, so a card casts a tooltip window's shadow.
 
 ## FormBase::shadowPainter
 

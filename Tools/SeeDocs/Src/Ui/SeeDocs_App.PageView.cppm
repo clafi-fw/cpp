@@ -208,11 +208,11 @@ namespace SeeDocs_App
         // The column at the end holding the rows' buttons; null where no row has a command.
         void addTableRows(Expander&, Grids::GridBase&, const Table&, const TableGroup&,
             StackPanel& notes, TagValue hintColumn, Grids::Column* commandColumn, PageFootnotes&);
-        // The button's caption and hint are written out of the command, and its click raises it.
+        // The button's caption and tooltip are written out of the command, and its click raises it.
         void connectCommand(Button&, const Command&);
         // Raises PageOrderEvent with the rows' first links, in the order the rows stand in now.
         void reportOrder(Grids::Grid&);
-        // The button opens the fact's source, greyed with a hint while no editor is set for it.
+        // The button opens the fact's source, greyed with a tooltip while no editor is set for it.
         void connectSource(Button&, const Fact&);
         void connectFolder(Button&, const Fact&);   // its click opens the fact's folder
         // The row's hint cell opens on the comment's words and writes them back.
@@ -235,7 +235,7 @@ namespace SeeDocs_App
         void connectLinks(Grids::Grid&);
         void connectLinks(TextBox&);
         void connectLinks(ExpanderHeader&);
-        // Writes the declaration a link's type shows in a hint; false for a link naming none.
+        // Writes the declaration a link's type shows in a tooltip; false for a link naming none.
         bool writePreview(Text&, std::wstring_view link) const;
         void connectHead();
         void open(std::wstring target);

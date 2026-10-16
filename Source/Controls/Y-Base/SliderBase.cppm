@@ -117,7 +117,7 @@ namespace ClaFi::Controls
             void adjustPaint(AdjustPaintEvent&) override;
             void paintSurface(PaintEvent&) override;
             void paintFrame(PaintEvent&) override;
-            void nestedGetHint(GetHintEvent&) override;
+            void nestedGetTooltip(GetTooltipEvent&) override;
             void nestedPressDown(PressDownEvent&) override;
             void nestedDrag(DragEvent&) override;
         private:
@@ -218,7 +218,7 @@ namespace ClaFi::Controls
         virtual void paintThumb(PaintEvent&) = 0;
         // The thumb's outline, which a slider draws only where it wants one.
         virtual void paintThumbFrame(PaintEvent&) {}
-        virtual void getThumbHint(GetHintEvent&) {}
+        virtual void getThumbTooltip(GetTooltipEvent&) {}
         virtual void thumbPressDown() {}
         void controlFeedBack();
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;

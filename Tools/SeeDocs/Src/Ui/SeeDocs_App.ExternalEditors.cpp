@@ -63,7 +63,7 @@ namespace SeeDocs_App
         constexpr float k_dropMarkBox = 12.0f;  // the box a combo box's mark is drawn in
         constexpr float k_commandColumn = 130.0f;   // where a listed command starts
         constexpr float k_noLineGap = 16.0f;        // the least room before the no line mark
-        constexpr std::wstring_view k_noLineHint =
+        constexpr std::wstring_view k_noLineTooltip =
             L"Opens the file without going to the line - the editor has no switch for one";
 
         // An editor a box suggests: what it is called, and the command that opens a source in it.
@@ -71,7 +71,7 @@ namespace SeeDocs_App
         {
             std::wstring_view name;
             std::wstring_view command;
-            std::wstring_view note{};   // the hint beside its line, where it has one to give
+            std::wstring_view note{};   // the tooltip beside its line, where it has one to give
         };
 
         using Suggestions = std::span<const Suggestion>;
@@ -164,7 +164,7 @@ namespace SeeDocs_App
         class CommandBox : public TextBox
         {
         public:
-            CommandBox(const CreateParams&, std::wstring_view key, Suggestions, HintText);
+            CommandBox(const CreateParams&, std::wstring_view key, Suggestions, TooltipText);
         public:
             // Every suggestion under the field, the one the box holds current.
             void dropSuggestions() { list(Listing::Every); }
@@ -283,15 +283,15 @@ namespace SeeDocs_App
                 line.text << InkGrade::Muted << L"no line" << PopColor{};
             }
             if (!suggestion.note.empty())
-                line.hint = Text{ suggestion.note };
+                line.tooltip = Text{ suggestion.note };
             else if (!reachesLine)
-                line.hint = Text{ k_noLineHint };
+                line.tooltip = Text{ k_noLineTooltip };
             return line;
         }
 
         // A row: what the language is called, then its command line in a project options field.
         void addEditorRow(StackPanel& group, const std::wstring_view caption,
-            const std::wstring_view key, const Suggestions suggestions, HintText hint)
+            const std::wstring_view key, const Suggestions suggestions, TooltipText tooltip)
         {
             StackPanel& row = group.add<StackPanel>(Orientation::Horizontal, Spacing{ k_captionSpacing });
             row.add<Label>(
@@ -311,7 +311,7 @@ namespace SeeDocs_App
                 MaxSize{ k_fieldWidth, k_maxFloat }
             );
             field.setBorder(row.themeMetrics().button.border);
-            CommandBox& box = field.createBody<CommandBox>(key, suggestions, std::move(hint));
+            CommandBox& box = field.createBody<CommandBox>(key, suggestions, std::move(tooltip));
             field.createRightBar<DropButton>(box);
         }
     }
@@ -330,10 +330,10 @@ namespace SeeDocs_App
         StackPanel& group = page.addGroup(L"External editors");
         addEditorRow(group, L"C++:", EditorKey::cpp,
             onThisDesktop(WindowsSuggestions::cpp, LinuxSuggestions::cpp),
-            HintText{ L"Opens a C++ source at a line - {file} and {line} are filled in" });
+            TooltipText{ L"Opens a C++ source at a line - {file} and {line} are filled in" });
         addEditorRow(group, L"Delphi:", EditorKey::delphi,
             onThisDesktop(WindowsSuggestions::delphi, LinuxSuggestions::delphi),
-            HintText{ L"Opens a Delphi source at a line - {file} and {line} are filled in" });
+            TooltipText{ L"Opens a Delphi source at a line - {file} and {line} are filled in" });
     }
 
     bool hasEditorCommand(AppContext& context, const SourceLanguage language)
@@ -456,7 +456,7 @@ namespace SeeDocs_App
         // Set as the project options' fields are. The list is walked as a folder box's is:
         // nothing is current until Down, and Up from the first line goes back to the box.
         CommandBox::CommandBox(const CreateParams& params, const std::wstring_view key,
-            const Suggestions suggestions, HintText hint)
+            const Suggestions suggestions, TooltipText tooltip)
             :
             TextBox{
                 params,
@@ -465,7 +465,7 @@ namespace SeeDocs_App
                 Padding{ 0.0f },
                 VerticalTextAnchor::Center,
                 PlaceHolderText{ k_commandPlaceHolder },
-                std::move(hint)
+                std::move(tooltip)
             },
             m_key{ key },
             m_suggestions{ suggestions },

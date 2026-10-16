@@ -13,7 +13,7 @@ keeps its caption whole.
 caption breaks at the icon's width. Set `WordWrap::No` to keep the caption on one line at its own
 width, as MenuCommand does. At the icon's width, a long word would be cut.
 
-`IconOnly` lays no text out, and its words serve as the hint where none is set.
+`IconOnly` lays no text out, and its words serve as the tooltip where none is set.
 
 ## PanelBase
 

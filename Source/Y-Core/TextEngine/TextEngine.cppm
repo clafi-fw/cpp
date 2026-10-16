@@ -49,7 +49,7 @@ namespace ClaFi
             std::size_t count, bool wrap = true, const TextFormat* = nullptr);
         // Whether a box of that size cuts this text. calculatedDimensions is clamped to the box
         // it was measured against, so a measurement cannot answer this and the fit is asked for
-        // outright - which is what a hint standing in for words a control has cut has to know
+        // outright - which is what a tooltip standing in for words a control has cut has to know
         // before it is shown. Keyed the way drawText keys it, so a box a paint has already drawn
         // this text in costs the lookup and no shaping.
         [[nodiscard]] bool isTextTrimmed(const FormContext&, const Text&, MaxSize,

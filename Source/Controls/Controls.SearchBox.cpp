@@ -22,8 +22,8 @@ namespace ClaFi::Controls
 {
     namespace
     {
-        // A button's name and the key doing the same, as an action's hint reads.
-        void writeHint(GetHintEvent& event, const wchar_t* name, const Shortcut& shortcut)
+        // A button's name and the key doing the same, as an action's tooltip reads.
+        void writeTooltip(GetTooltipEvent& event, const wchar_t* name, const Shortcut& shortcut)
         {
             if (!event.text.empty())
                 return;
@@ -243,11 +243,11 @@ namespace ClaFi::Controls
         };
         m_previous.onGetState(foundAny);
         m_next.onGetState(foundAny);
-        m_previous.onGetHint([](GetHintEvent& event){
-            writeHint(event, L"Previous", { Keys::Return, { .shift = true } });
+        m_previous.onGetTooltip([](GetTooltipEvent& event){
+            writeTooltip(event, L"Previous", { Keys::Return, { .shift = true } });
         });
-        m_next.onGetHint([](GetHintEvent& event){
-            writeHint(event, L"Next", { Keys::Return });
+        m_next.onGetTooltip([](GetTooltipEvent& event){
+            writeTooltip(event, L"Next", { Keys::Return });
         });
     }
 

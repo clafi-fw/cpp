@@ -52,7 +52,7 @@ namespace Themes_App
     }
 
     // Every floor is spelled in the same four cells, so the text measured is the text shown.
-    void FloorSlider::writeValueHint(Text& text, EventPhase) const
+    void FloorSlider::writeValueTooltip(Text& text, EventPhase) const
     {
         text << TextStyleId::Code << Fmt{ L"{:.2f}", position() };
     }

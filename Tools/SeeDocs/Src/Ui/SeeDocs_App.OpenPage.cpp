@@ -27,7 +27,7 @@ namespace SeeDocs_App
     {
         // **The widest a path may make the page.** The menu is measured from its pages, so a long
         // path left to itself would widen the whole backstage; past this it is trimmed, and the
-        // hint over it shows the rest.
+        // tooltip over it shows the rest.
         constexpr float k_pathWidth = 440.0f;
         constexpr float k_iconGap = 5.0f;   // between a row's icon and its text
         constexpr float k_nameGap = 12.0f;  // between a row's name and its folder
@@ -55,7 +55,7 @@ namespace SeeDocs_App
                 L"Browse",
                 EndIcon::OpensWindow,
                 HorizontalAlign::Left,
-                HintText{ L"Opens a project's folder, or a tree that keeps one" },
+                TooltipText{ L"Opens a project's folder, or a tree that keeps one" },
                 Button::OnClick{ [&workspace](ClickEvent& event) {
                     event.closeForm();
                     workspace.browse();

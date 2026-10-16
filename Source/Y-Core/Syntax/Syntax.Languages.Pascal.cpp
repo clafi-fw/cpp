@@ -428,7 +428,7 @@ namespace ClaFi::Syntax
             [[nodiscard]] std::wstring spelled(std::size_t from,
                 std::size_t limit = k_spelledLimit) const;
         private:
-            // A hint's line is cut past this many characters.
+            // A tooltip's line is cut past this many characters.
             static constexpr std::size_t k_spelledLimit{ 100 };
             std::wstring_view m_text;
             const PascalWords& m_words;
@@ -631,7 +631,7 @@ namespace ClaFi::Syntax
             }
             while (!atEnd() && !currentIsMark(L";") && !endsSection())
                 ++m_at;
-            // The header whole: a hint marks its parameters, so none of them is cut away.
+            // The header whole: a tooltip marks its parameters, so none of them is cut away.
             if (routine)
             {
                 m_out[*routine].entry.signature = spelled(headerWord, std::wstring::npos);

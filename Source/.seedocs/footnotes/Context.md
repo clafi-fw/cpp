@@ -163,7 +163,7 @@ scopes nest, and a drag keeps its arrow.
 
 ## AppContext animator
 
-**One controller steps every animation** - control state fades, glides, a hint's alpha, the theme
+**One controller steps every animation** - control state fades, glides, a tooltip's alpha, the theme
 crossing - on one UiTimer. A control runs its own through Control::animate.
 
 ## AppContext createBackend

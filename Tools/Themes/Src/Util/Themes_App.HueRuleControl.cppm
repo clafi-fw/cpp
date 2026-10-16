@@ -55,7 +55,7 @@ namespace Themes_App
     constexpr MinSize k_indicatorSize{ 16.0f };
 
     // What sits on a blob. One character, because the blob is the size of one and the name it
-    // stands for is in the hint.
+    // stands for is in the tooltip.
     constexpr std::array<std::wstring_view, 3> k_paletteDigits{ L"1", L"2", L"3" };
     // The exact hue is set outright, and is marked with the character the operation combo boxes
     // already give ColorRuleOp::Set.
@@ -78,7 +78,7 @@ namespace Themes_App
     // No change says so in words, there being no colour to show, and says it in the subdued
     // style the operation combo boxes give their own No change item - which is what makes the
     // two dropdowns read alike. Everything else writes its one character, which the control's
-    // text anchors centre for it. Every descriptive name is the hint's.
+    // text anchors centre for it. Every descriptive name is the tooltip's.
     void writeHueOpContent(Text& text, ColorRuleHueOp value, bool onBlob)
     {
         if (value == ColorRuleHueOp::NoChange)
@@ -173,7 +173,7 @@ namespace Themes_App
         [[nodiscard]] bool dropOnPrimaryPress() const override { return true; }
         void showDropdown(Control&) override;
         void getMainText(GetTextEvent&) const override;
-        void nestedGetHint(GetHintEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
     private:
         void setOperation(ColorRuleHueOp);
@@ -203,7 +203,7 @@ namespace Themes_App
     protected:
         [[nodiscard]] MinSize indicatorSize(const AppTheme&) const override { return k_indicatorSize; }
         void getText(GetTextEvent&) const override;
-        void nestedGetHint(GetHintEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
         void getControlState(GetStateEvent&) const override;
         void click(ClickEvent&) override;
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
@@ -347,11 +347,11 @@ namespace Themes_App
         writeHueOpContent(event.text, shown, true);
     }
 
-    void HueRuleControl::nestedGetHint(GetHintEvent& event)
+    void HueRuleControl::nestedGetTooltip(GetTooltipEvent& event)
     {
         if (bound())
             event.text << k_hueOpNames[static_cast<std::size_t>(operation())];
-        DropdownControlBase::nestedGetHint(event);
+        DropdownControlBase::nestedGetTooltip(event);
     }
 
     DrawTextResult HueRuleControl::drawText(PaintEvent& event, const FloatRect& textBounds, const Text& text)
@@ -411,10 +411,10 @@ namespace Themes_App
         writeHueOpContent(event.text, m_operation, m_view == HueItemView::Tile);
     }
 
-    void HueRuleItem::nestedGetHint(GetHintEvent& event)
+    void HueRuleItem::nestedGetTooltip(GetTooltipEvent& event)
     {
         event.text << k_hueOpNames[static_cast<std::size_t>(m_operation)];
-        Button::nestedGetHint(event);
+        Button::nestedGetTooltip(event);
     }
 
     void HueRuleItem::getControlState(GetStateEvent& event) const
@@ -515,7 +515,7 @@ namespace Themes_App
         // The custom hue stands beside the slider rather than in the tile row above it: the slider
         // is what states the colour, so the item that says it is the chosen one belongs next to it.
         // It is an item like the other three - the same mark, the same glyph, picked and given its
-        // hint by the same code - and drops only the blob, which would say what the slider a few
+        // tooltip by the same code - and drops only the blob, which would say what the slider a few
         // pixels away is already saying.
         Panel& sliderRow = static_cast<Panel&>(record(add<Panel>(
             HorizontalAlign::Fill,
@@ -538,7 +538,7 @@ namespace Themes_App
             Padding{ 4.0f }
         );
         // The thumb starts on the hue the rule already holds. Nothing is propagated from it:
-        // the popup is only being opened, and a change would raise the thumb's hint.
+        // the popup is only being opened, and a change would raise the thumb's tooltip.
         m_slider->trackingValueChanged(false);
         // Moving the slider is a statement that the hue is this one, so it settles the operation
         // as well as the value: the user takes hold of the slider and the rule follows, rather

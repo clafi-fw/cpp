@@ -103,7 +103,7 @@ namespace ClaFi::Documents
         DocumentsBasePage{ params, std::forward<Args>(args)... }
     {
         // The second half of the button **is** Save as: behind the strip the command names itself
-        // in the strip's hint and runs off one press.
+        // in the strip's tooltip and runs off one press.
         m_saveButton.dropdownAction(StdActions::saveAs);
 
         onGetActionState([this](GetActionStateEvent& event) {

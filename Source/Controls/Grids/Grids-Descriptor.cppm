@@ -163,7 +163,7 @@ namespace ClaFi::Controls::Grids
         [[nodiscard]] ScrollDirection cellEntryEdge() const { return m_cellEntryEdge; }
         void setCellEntryEdge(ScrollDirection value) { m_cellEntryEdge = value; }
         //
-        void setHoveredCell(Control* row, const Column*, bool initiateHint = true);
+        void setHoveredCell(Control* row, const Column*, bool initiateTooltip = true);
         void setSelectedCell(Control* row, const Column*);
         void beginCellSelection();
         void endCellSelection();

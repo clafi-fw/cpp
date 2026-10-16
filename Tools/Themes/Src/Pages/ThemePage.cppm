@@ -415,7 +415,7 @@ namespace Themes_App
             VerticalTextAnchor::Center,
             Padding{ 0.0f, 4.0f },
             Text{ k_labelPush, L"Other pigments:", m_labelsMargin, k_labelPop },
-            HintText{ L"Pigments safe to use in small doses" }
+            TooltipText{ L"Pigments safe to use in small doses" }
         ) };
 
         Spacer& m_floorSpacer{ m_paletteColumn1.add<Spacer>(16.0f) };

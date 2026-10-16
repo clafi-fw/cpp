@@ -173,7 +173,7 @@ A box lists these ahead of the host's names - a script's variables, constants an
 before the library it is written against.
 
 - `entry.type` is set where one name spells the type, and empty for `array of Integer`.
-- `entry.signature` is the declaration as spelled for the hint, its blanks collapsed and cut past
+- `entry.signature` is the declaration as spelled for the tooltip, its blanks collapsed and cut past
   a hundred characters.
 - A global's `scope` is the whole text, and its `depth` is zero.
 
@@ -208,7 +208,7 @@ The Pascal reader passes over:
 
 ## ParameterReader
 
-A box marks the parameter being written in the hint over a call.
+A box marks the parameter being written in the tooltip over a call.
 
 **The Pascal reader** takes the first bracket outside a comment or a string, round or square - an
 indexed property's list is square - and reads the list up to its closer.

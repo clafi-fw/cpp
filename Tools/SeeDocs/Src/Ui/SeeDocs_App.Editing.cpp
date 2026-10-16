@@ -214,14 +214,14 @@ namespace SeeDocs_App
         bar.add<FlexSpacer>();
         m_cancel = &bar.add<Button>(
             L"Cancel",
-            HintText{ L"Leaves the footnote as it was - Escape" },
+            TooltipText{ L"Leaves the footnote as it was - Escape" },
             Button::OnClick{ [this](ClickEvent&) {
                 finish(false);
             } }
         );
         m_save = &bar.add<Button>(
             L"Save",
-            HintText{ L"Writes the footnote into its note - Ctrl+S" },
+            TooltipText{ L"Writes the footnote into its note - Ctrl+S" },
             Button::OnClick{ [this](ClickEvent&) {
                 finish(true);
             } }

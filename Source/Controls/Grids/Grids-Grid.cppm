@@ -48,7 +48,7 @@ namespace ClaFi::Controls::Grids
         virtual void hasCellContent(CellContentEvent&) const;
         virtual void getCellText(GetCellTextEvent&);
         virtual void acceptCellText(AcceptCellTextEvent&);
-        virtual void getCellHint(GetCellHintEvent&);
+        virtual void getCellTooltip(GetCellTooltipEvent&);
         virtual void getCellEditorText(GetCellEditorTextEvent&);
         virtual void cellLinkClick(CellLinkClickEvent&);
         virtual void cellLinkContextPopup(CellLinkContextPopupEvent&);
@@ -120,7 +120,7 @@ namespace ClaFi::Controls::Grids
         emitEvent(event);
     }
 
-    void Grid::getCellHint(GetCellHintEvent& event)
+    void Grid::getCellTooltip(GetCellTooltipEvent& event)
     {
         emitEvent(event);
     }

@@ -84,17 +84,17 @@ of a `Yes` column bypass the cache.
 
 ## MaxLines
 
-A cut cell is as tall as its first lines and fades the last of them. Its hint repeats the lines
-past the cut, up to Hint::k_maxLines, and the in-place reader shows the whole value.
+A cut cell is as tall as its first lines and fades the last of them. Its tooltip repeats the lines
+past the cut, up to Tooltip::k_maxLines, and the in-place reader shows the whole value.
 
-## GetCellHintEvent
+## GetCellTooltipEvent
 
-Asked of the row, then the grid. Write the hint into text(). The anchor arrives as the cell's rect
-and the placement as the pointer - change them through hint(). A cell nobody writes for repeats
-the words its column cut.
+Asked of the row, then the grid. Write the tooltip into text(). The anchor arrives as the cell's
+rect and the placement as the pointer - change them through tooltip(). A cell nobody writes for
+repeats the words its column cut.
 
-**A link has a hint of its own.** link() names the link under the pointer, as the cell's text
-states it, and is empty off a link. The hint is asked again where it stands as the pointer moves
+**A link has a tooltip of its own.** link() names the link under the pointer, as the cell's text
+states it, and is empty off a link. The tooltip is asked again where it stands as the pointer moves
 onto a link, off one, or from one to another.
 
 ## CellLinkClickEvent
@@ -124,7 +124,7 @@ column with no Tag takes no cells from the design.
 ## Column cellTextFormat
 
 **The column's TextAlign comes first, then its TextFormat**, so an alignment the format states
-wins. The format reaches the cell's paint, hint and in-place editor. The cell's text holds the
+wins. The format reaches the cell's paint, tooltip and in-place editor. The cell's text holds the
 value alone - see TextFormat.
 
 ## Dt::Cell
@@ -190,7 +190,7 @@ moves the selection as anywhere in the grid. A double click on the mark toggles 
 
 ## RowBase cellLead
 
-The measure, the paint, the hint, the in-place editor and a hosted control all leave this room at
+The measure, the paint, the tooltip, the in-place editor and a hosted control all leave this room at
 the cell's start. A group's span keeps its mark there.
 
 ## RowBase hasBlank

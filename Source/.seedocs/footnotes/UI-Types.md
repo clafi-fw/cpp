@@ -51,8 +51,8 @@ selection. A popup list whose root tracks a current item is `WindowRole::Menu` w
 Action::attach takes it, Button by default. A control built with an Action property reads the
 role from its properties too.
 
-- `Button` - a button or a toolbar item. Its hint falls back to the action's name and key.
-- `Line` - a menu line, which writes the name and key itself, so the action adds no hint.
+- `Button` - a button or a toolbar item. Its tooltip falls back to the action's name and key.
+- `Line` - a menu line, which writes the name and key itself, so the action adds no tooltip.
 - `Display` - a split button's strip. It shows the command, and the button it belongs to delivers
   the click.
 
@@ -80,8 +80,8 @@ cell needs. A stated break width is where such a text is placed - see TextLayout
 
 **A wrapped text's block is at most its break width**, even where a line overflows it.
 
-**An over-text hint repeats an anchored text inside its block.** GetHintEvent::textAnchor comes
-back Left, and the anchor rect starts at the block.
+**An over-text tooltip repeats an anchored text inside its block.** GetTooltipEvent::textAnchor
+comes back Left, and the anchor rect starts at the block.
 
 ## WordWrap
 
@@ -102,7 +102,7 @@ the width asked for. Where the display server places toplevels itself, only the 
 **The rest are for child popups**, against a placement rect in the parent form's coordinates.
 
 - OverText lays the window's own text over the text in the rect - an in-place editor, an
-  over-text hint.
+  over-text tooltip.
 - Each of the others flips to the opposite side of the rect when the side asked for has no room.
   Placed Right on a rect spanning a list, a window flips to the list's own left edge.
 
@@ -357,7 +357,7 @@ text. **Use it for what belongs with the controls around it.**
 
 ## InkColor::Spot
 
-**Spot is for what stands apart from the interface** - a brand mark, emphasised text, a hint's
+**Spot is for what stands apart from the interface** - a brand mark, emphasised text, a tooltip's
 tint. The theme decides how sparingly it shows.
 
 ## InkColor::Yellow, Green, Blue, Red

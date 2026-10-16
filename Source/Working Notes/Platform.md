@@ -201,10 +201,10 @@ of its own and a bus killed mid-wait each settle in one or two passes.
 
 ## WindowsManager::settingChanged
 
-WM_SETTINGCHANGE **is a broadcast**, sent to every top-level window - a form, a menu, a hint - and
-to no message-only window at all, which is why it is read in the manager's window procedure rather
-than by a listener window of its own. The mode is read again on `ImmersiveColorSet` and announced
-only where it differs from the last one read, so one change of mode raises one
+WM_SETTINGCHANGE **is a broadcast**, sent to every top-level window - a form, a menu, a tooltip -
+and to no message-only window at all, which is why it is read in the manager's window procedure
+rather than by a listener window of its own. The mode is read again on `ImmersiveColorSet` and
+announced only where it differs from the last one read, so one change of mode raises one
 SystemColorModeEvent however many windows were told, and a change of the accent colour, which
 names the same area, raises none.
 

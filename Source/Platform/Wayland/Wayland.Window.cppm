@@ -41,11 +41,11 @@ namespace ClaFi::PlatformImplementation::Wayland
         Window& operator=(const Window&) = delete;
     public:
         [[nodiscard]] WindowRole role() const { return m_role; }
-        // **A menu or a hint**: a window that stands on another one and is placed by a positioner
-        // against it. A dialog is a toplevel and is placed by the compositor's own rule.
+        // **A menu or a tooltip**: a window that stands on another one and is placed by a
+        // positioner against it. A dialog is a toplevel and is placed by the compositor's own rule.
         [[nodiscard]] bool isPopupRole() const
         {
-            return m_role == WindowRole::Menu || m_role == WindowRole::Hint;
+            return m_role == WindowRole::Menu || m_role == WindowRole::Tooltip;
         }
         // **A window on the screen's edge**: a layer surface rather than a toplevel, anchored by
         // the compositor to the edges it named and sized between them. It is what a Dialog placed
@@ -404,8 +404,8 @@ namespace ClaFi::PlatformImplementation::Wayland
             return "dialog";
         case WindowRole::Menu:
             return "menu";
-        case WindowRole::Hint:
-            return "hint";
+        case WindowRole::Tooltip:
+            return "tooltip";
         }
         return "?";
     }
@@ -430,16 +430,16 @@ namespace ClaFi::PlatformImplementation::Wayland
         m_surface = ::wl_compositor_create_surface(manager.compositor());
         ::wl_surface_add_listener(m_surface, &k_surfaceEventListener, this);
 
-        // **A hint is not something the pointer can reach.** It stands over the very control it
+        // **A tooltip is not something the pointer can reach.** It stands over the very control it
         // is about, so a pointer that entered it would leave that control - and the form the
-        // hint belongs to is the hint's own, whose hint is where the recursion stops and
+        // tooltip belongs to is the tooltip's own, whose tooltip is where the recursion stops and
         // has no form at all. An **empty** input region tells the compositor to deliver the
         // pointer to whatever is underneath instead. Win32 says the same with
         // WS_EX_TRANSPARENT, which is why this never had to be said before.
         //
         // **A menu is the opposite** and states nothing here: it is exactly what the pointer is
         // meant to reach, and its region is its geometry, stated with it - see stateGeometry.
-        if (m_role == WindowRole::Hint)
+        if (m_role == WindowRole::Tooltip)
         {
             wl_region* inputRegion = ::wl_compositor_create_region(manager.compositor());
             ::wl_surface_set_input_region(m_surface, inputRegion);
@@ -467,15 +467,15 @@ namespace ClaFi::PlatformImplementation::Wayland
             m_alphaModifier = ::wp_alpha_modifier_v1_get_surface(alphaModifier, m_surface);
 
         // **A popup is drawn at its parent's scale and takes none of its own** - see placePopup,
-        // which reads it. **Not here**: a hint's window is a member of the form it belongs to and
-        // is built with it, which is before that form's own window has been configured and so
+        // which reads it. **Not here**: a tooltip's window is a member of the form it belongs to
+        // and is built with it, which is before that form's own window has been configured and so
         // before the parent knows what scale it is drawn at. Copied here it would be the default
         // for the life of the application.
 
-        // **A hint fades**, so its frames need a channel to fade in. Stated for every popup rather
-        // than for the hint alone: a menu is small, its frames are written the same way, and one
-        // rule about which windows carry alpha beats two. A toplevel's answer comes with its frame
-        // - see setFrame, which restates this while no frame has been cut.
+        // **A tooltip fades**, so its frames need a channel to fade in. Stated for every popup
+        // rather than for the tooltip alone: a menu is small, its frames are written the same way,
+        // and one rule about which windows carry alpha beats two. A toplevel's answer comes with
+        // its frame - see setFrame, which restates this while no frame has been cut.
         m_buffers.useAlphaChannel(isTranslucent());
 
         // **Registered with its surface**, because that is what a pointer event names. The surface
@@ -484,7 +484,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         m_registered = true;
 
         // **No role yet.** A surface takes one role and keeps it, and which one this window wants
-        // is not known here: a menu or a hint stands on something and is placed against it by a
+        // is not known here: a menu or a tooltip stands on something and is placed against it by a
         // positioner, a dialog is a toplevel unless its placement names a screen edge - and the
         // form states its placement after the window is built, at its first placement. So every
         // role is made there: the popups in placePopup, the rest in place(). Until then the
@@ -531,19 +531,19 @@ namespace ClaFi::PlatformImplementation::Wayland
     {
         m_visible = false;
 
-        // **Nothing with no role is on screen to be taken off it.** A hint's window is a member of
-        // the form it belongs to, so it is built with that form and told its alpha is zero at
+        // **Nothing with no role is on screen to be taken off it.** A tooltip's window is a member
+        // of the form it belongs to, so it is built with that form and told its alpha is zero at
         // once - before anything has placed it and before the form's own window has been mapped.
         // A commit on a bare surface says nothing the protocol defines, and it is the moment a
         // compositor first hears that this surface exists: on a display server that gives every
-        // surface a window of its own and orders them by age, it buys the hint a place at the
+        // surface a window of its own and orders them by age, it buys the tooltip a place at the
         // bottom of the stack for the life of the application.
         if (!m_surface || !hasRole())
             return;
 
         // **An unmapped popup is finished.** The protocol has no way to map one a second time, so
-        // hiding a menu or a hint destroys its role and the next placement builds another - which
-        // is what placePopup does whenever it finds none. The wl_surface itself stands: it is
+        // hiding a menu or a tooltip destroys its role and the next placement builds another -
+        // which is what placePopup does whenever it finds none. The wl_surface itself stands: it is
         // what the sink is registered against, and what the next popup is made from. Taking the
         // buffer off goes with the role and lives in there, so that **every** caller gets it.
         if (isPopupRole())
@@ -1043,7 +1043,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             return;
 
         // **The buffer comes off before the role does, and it is done here** so that every caller
-        // gets it - hiding a hint, the compositor dismissing one, and a placement that moved far
+        // gets it - hiding a tooltip, the compositor dismissing one, and a placement that moved far
         // enough to want a new positioner all arrive at this one function. A fresh xdg_surface
         // may not be made from a surface that still has a buffer attached, because the initial
         // commit of the next popup has to be bufferless: get_xdg_surface answers that with
@@ -1129,7 +1129,7 @@ namespace ClaFi::PlatformImplementation::Wayland
     // pixel on the edge is made of a solid buffer pixel and a shadow one, and claimed solid it
     // would be shown unblended. A window at less than full opacity states none. **The input region
     // is the geometry**, reaching k_resizeGrab into the shadow on a window the user may size; a
-    // hint keeps the empty region its constructor gave it and takes no pointer at all.
+    // tooltip keeps the empty region its constructor gave it and takes no pointer at all.
     void Window::stateGeometry()
     {
         if (!m_surface || !hasRole() || m_geometrySize.x <= 0 || m_geometrySize.y <= 0)
@@ -1167,7 +1167,7 @@ namespace ClaFi::PlatformImplementation::Wayland
                 ::wl_region_destroy(opaque);
         }
 
-        if (m_role != WindowRole::Hint)
+        if (m_role != WindowRole::Tooltip)
         {
             IntRect input = geometry;
             // A layer surface is not sized by the user, so there is no grab to reach for.
@@ -1294,8 +1294,8 @@ namespace ClaFi::PlatformImplementation::Wayland
     }
 
     // **A popup's role is made here, not in** place(). **A form is placed more than once before it
-    // is shown**: initPlacement runs its passes, and a hint is placed again afterwards when the
-    // control it is about hands over the rect it stands on - Hint::showOrHide calls show()
+    // is shown**: initPlacement runs its passes, and a tooltip is placed again afterwards when the
+    // control it is about hands over the rect it stands on - Tooltip::showOrHide calls show()
     // first and updatePosition second, so **the first placement carries an anchor the form has not
     // filled in yet**, an empty rect at the origin. A positioner is read once, when the popup is
     // made from it, and a compositor without xdg_popup.reposition will never hear a correction -
@@ -1303,11 +1303,11 @@ namespace ClaFi::PlatformImplementation::Wayland
     // placing is over and a frame is wanted, which is exactly that moment.
     void Window::onIdle()
     {
-        // **The alpha is part of the question**, not decoration on it. HintForm::updateVisibility
-        // calls window().show() **unconditionally** - on the way out as well as the way in - so
-        // m_visible goes true again after the fade has already reached zero and taken the role
-        // down. Without the alpha in this condition the next idle builds the popup straight back
-        // and the hint never leaves the screen.
+        // **The alpha is part of the question**, not decoration on it.
+        // TooltipForm::updateVisibility calls window().show() **unconditionally** - on the way out
+        // as well as the way in - so m_visible goes true again after the fade has already reached
+        // zero and taken the role down. Without the alpha in this condition the next idle builds
+        // the popup straight back and the tooltip never leaves the screen.
         if (isPopupRole() && !m_popup && m_visible && m_alpha)
             createPopup();
 
@@ -1415,9 +1415,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         // **The parent's scale, read at every placement.** A popup is drawn at what its parent is
         // drawn at and never at what its output says - the framework states the same rule, a popup
         // form sharing its parent's Scaler outright. Read here rather than at construction because
-        // a hint is built with its form, long before that form's window has been configured: taken
-        // then it is 120 for ever, the surface size is turned back into a buffer half as big as it
-        // should be, and the form lays out at 200% into a canvas meant for 100%.
+        // a tooltip is built with its form, long before that form's window has been configured:
+        // taken then it is 120 for ever, the surface size is turned back into a buffer half as big
+        // as it should be, and the form lays out at 200% into a canvas meant for 100%.
         const bool scaleMoved = m_scale120 != parentScale120();
         if (scaleMoved)
         {
@@ -1425,10 +1425,10 @@ namespace ClaFi::PlatformImplementation::Wayland
             m_pendingScale120 = m_scale120;
         }
 
-        // **A hint is one window for the whole form**, shown about a different control every time
-        // and asked for a new size and a new anchor each time - see Control-Foundation#hint. So a
-        // popup already on screen being asked for something else is the **ordinary** case here, not
-        // an edge of one, and the question every time is whether what is being asked for has moved.
+        // **A tooltip is one window for the whole form**, shown about another control each time and
+        // asked for a new size and a new anchor - see Control-Foundation#tooltip. So a popup
+        // already on screen being asked for something else is the **ordinary** case here, not an
+        // edge of one, and the question every time is whether what is being asked for has moved.
         const IntSize askedSurface = surfaceSizeFor(placement.size);
         const bool changed = scaleMoved
             || askedSurface != surfaceSizeFor(m_placement.size)
@@ -1439,9 +1439,9 @@ namespace ClaFi::PlatformImplementation::Wayland
 
         // **The asked size stands until a configure answers.** That answer is asynchronous and this
         // call is not, which is the same bargain the toplevel path makes. Recomputed whenever the
-        // ask moves and **not** only before the first configure: held to that, the first hint of a
-        // session fixes the window's size for the rest of it and every later ask is answered with
-        // the size of a button's hint.
+        // ask moves and **not** only before the first configure: held to that, the first tooltip of
+        // a session fixes the window's size for the rest of it and every later ask is answered with
+        // the size of a button's tooltip.
         const IntSize sizeBefore = m_size;
         if (changed || !m_configured)
         {
@@ -1913,7 +1913,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // record of a window closed maximized holds the maximized rect, and a window restored
         // from it is un-maximized into that rect - the size it already fills, with the state of
         // an ordinary window. Outside the maximized, fullscreen and tiled states the named size
-        // is a hint, and this window's own memory is the size to come back to.
+        // is a tooltip, and this window's own memory is the size to come back to.
         const IntSize named = { width, height };
         const bool unMaximizedInPlace = window.m_maximized && !window.m_pendingMaximized
             && !window.m_pendingFullscreen && !window.m_pendingTiled
@@ -1960,7 +1960,7 @@ namespace ClaFi::PlatformImplementation::Wayland
     // parent unmapped, this popup unmapped, or a grab broken. There is nothing here to refuse.
     //
     // **The role goes and the window stays.** Closing outright would destroy the wl_surface and
-    // unregister the sink, which is unrecoverable - and a hint is **one** window per form, shown
+    // unregister the sink, which is unrecoverable - and a tooltip is **one** window per form, shown
     // and hidden for the life of the application. It is the same teardown hide() does, and the
     // next placement builds a new popup on the surface that is still standing.
     void Window::onPopupDone(void* data, xdg_popup*)

@@ -63,7 +63,7 @@ namespace ClaFi
     export enum class WindowRole {
         Dialog,
         Menu,       // menus, dropdowns, date pickers
-        Hint
+        Tooltip
     };
 
     // The platform, as a service standing below the context sees it.
@@ -479,7 +479,7 @@ namespace ClaFi
         ContextMenu,    // right where the mouse pointer is, or BottomLeft using keyboard
         Mouse           // under the mouse cursor
     };
-    export using HintPlacement = FormPlacement;
+    export using TooltipPlacement = FormPlacement;
 
     // Which way a form's size and its content settle against each other. See UI-Types
     export enum class AutoFit

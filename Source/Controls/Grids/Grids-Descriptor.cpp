@@ -188,14 +188,14 @@ namespace ClaFi::Controls::Grids
         return static_cast<int>(m_scaledCellMetrics.border) % 2 ? 1.0f : 0.0f;
     }
 
-    void GridDescriptor::setHoveredCell(Control* row, const Column* column, bool initiateHint)
+    void GridDescriptor::setHoveredCell(Control* row, const Column* column, bool initiateTooltip)
     {
         if (!setHighlightedCell(m_hoverChannel, row, column))
             return;
-        if (initiateHint)
+        if (initiateTooltip)
         {
-            Hint::stopAndHide();
-            Hint::hoveredControlChanged();
+            Tooltip::stopAndHide();
+            Tooltip::hoveredControlChanged();
         }
     }
 

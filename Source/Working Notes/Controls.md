@@ -9,12 +9,12 @@ first. `Control::calculateText` answers an empty text without calling `measureTe
 with nothing picked and no placeholder measures no item at all - a combo box is built standing
 on an item.
 
-## GetLinkHintEvent
+## GetLinkTooltipEvent
 
-The hint asks a control for its hint once, when the pointer comes onto it, and a link is a part of
-the box the pointer enters and leaves - so the box tells the hint when the link under the pointer
-changes, through Hint::hoveredZoneChanged, the way a grid tells it its hovered cell did. A hint
-already up is asked again where it stands, and one that is not starts the usual wait.
+The tooltip asks a control for its tooltip once, when the pointer comes onto it, and a link is a
+part of the box the pointer enters and leaves - so the box tells the tooltip when the link under the
+pointer changes, through Tooltip::hoveredZoneChanged, the way a grid tells it its hovered cell did.
+A tooltip already up is asked again where it stands, and one that is not starts the usual wait.
 
 The Ctrl+click line is written after whatever answered, a handler's words included: it says how
 this box follows a link, which a handler previewing the target knows nothing about.

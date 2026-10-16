@@ -3,7 +3,7 @@ module ClaFi.Core.Foundation;
 import :Input;
 import :Control;
 import :Form;
-import :Hint;
+import :Tooltip;
 
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.AppTheme_AnimationSlots;
@@ -66,9 +66,9 @@ namespace ClaFi
             value->invalidateState();
         }
         if (controlChanged)
-            Hint::hoveredControlChanged();
+            Tooltip::hoveredControlChanged();
         else
-            Hint::hoveredZoneChanged();
+            Tooltip::hoveredZoneChanged();
     }
 
     void Input::setFocusedControl(Control* value)
@@ -108,7 +108,7 @@ namespace ClaFi
         if (!mouseTurnedOn && !keyboardTurnedOff)
             return;
         if (mouseTurnedOn)
-            Hint::mouseTookOver();
+            Tooltip::mouseTookOver();
         // The animations repaint from their first tick onwards; this is the frame before the first.
         invalidateForControllers(s_hoveredControl);
     }
@@ -119,8 +119,8 @@ namespace ClaFi
         const bool keyboardTurnedOn = s_keyboard.setActive(appContext, true);
         if (!mouseTurnedOff && !keyboardTurnedOn)
             return;
-        // The user is doing something, which is all the hint waits for.
-        Hint::handleUserInput();
+        // The user is doing something, which is all the tooltip waits for.
+        Tooltip::handleUserInput();
         invalidateForControllers(s_hoveredControl);
     }
 
@@ -128,7 +128,7 @@ namespace ClaFi
     {
         if (!s_keyboard.setActive(appContext, true))
             return;
-        Hint::handleUserInput();
+        Tooltip::handleUserInput();
         invalidateForControllers(s_hoveredControl);
     }
 

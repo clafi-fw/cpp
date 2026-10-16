@@ -79,12 +79,12 @@ Connecting only inserts into the dispatcher this control has already contributed
 part being unbuilt does not matter, and nothing asks the control what it is until its first state
 query.
 
-## Hint
+## Tooltip
 
-**One per form, built with it.** The window a hint shows in stands over the window whose control
-the hint is about, and it is **owned** by that window - which is what keeps it above that window
+**One per form, built with it.** The window a tooltip shows in stands over the window whose control
+the tooltip is about, and it is **owned** by that window - which is what keeps it above that window
 without being told anything about the rest of the screen. A form is the one thing that knows
-which window that is, so a form is what a hint is a member of.
+which window that is, so a form is what a tooltip is a member of.
 
 The calls that are about whatever is on screen rather than about a form - the user pressed a key, a
 control is being destroyed - are static and reach it through s_current.
@@ -92,17 +92,17 @@ control is being destroyed - are static and reach it through s_current.
 Bounded by the screen alone, a long sentence ran out as one line from the pointer to the edge.
 
 **Each controller is heard alone.** The hover moves under a still pointer - a window appears under
-it, a hit-test follows a scroll - and a click lands the focus with the pointer's hint already
+it, a hit-test follows a scroll - and a click lands the focus with the pointer's tooltip already
 standing for it, so neither is taken for the other. A list going down hands the focus back to the
-box it was dropped from, which held it all along: that is no landing, and a hint that went down with
-the list stays down.
+box it was dropped from, which held it all along: that is no landing, and a tooltip that went down
+with the list stays down.
 
 ## FormBase::windowFocusedFactor
 
 The platform reports the change through `wnd_focusChanged`: `WM_SETFOCUS` and `WM_KILLFOCUS` on
-Win32, the **activated** state of a toplevel configure on Wayland. A Menu or Hint window never has
-the focus to report - `WS_EX_NOACTIVATE` on Win32, and an `xdg_popup` has no **activated** state -
-which is why `windowFocusedFactor` answers a popup's owner's factor instead.
+Win32, the **activated** state of a toplevel configure on Wayland. A Menu or Tooltip window never
+has the focus to report - `WS_EX_NOACTIVATE` on Win32, and an `xdg_popup` has no **activated**
+state - which is why `windowFocusedFactor` answers a popup's owner's factor instead.
 
 ## InputController
 

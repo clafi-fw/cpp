@@ -14,11 +14,11 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    // One line of a drop list: its words, and the hint beside the list while it is current.
+    // One line of a drop list: its words, and the tooltip beside the list while it is current.
     export struct DropListLine
     {
         Text text;
-        Text hint;   // empty for none
+        Text tooltip;   // empty for none
         bool dividerBelow{ false };   // parts it from the lines after
     };
 
@@ -61,8 +61,8 @@ namespace ClaFi::Controls
         DropListRow(const CreateParams&, DropList&, std::size_t line);
     protected:
         void getText(GetTextEvent&) const override;
-        // The line's hint beside the list, at the row's height. See Controls#droplistline
-        void nestedGetHint(GetHintEvent&) override;
+        // The line's tooltip beside the list, at the row's height. See Controls#droplistline
+        void nestedGetTooltip(GetTooltipEvent&) override;
         void click(ClickEvent&) override;
     private:
         DropList& m_list;
@@ -79,8 +79,8 @@ namespace ClaFi::Controls
         [[nodiscard]] std::optional<std::size_t> current() const;
         void moveCurrent(ScrollDirection);         // a row on, to the ends - see UpFromFirst
         void moveCurrentByPage(ScrollDirection);   // as many rows as the view holds
-        // Puts the current row's hint up beside the list, or takes the hint down.
-        void showCurrentHint();
+        // Puts the current row's tooltip up beside the list, or takes the tooltip down.
+        void showCurrentTooltip();
     protected:
         // Measures the rows, then caps the list at twelve of them. See Controls#droplistoptions
         ScaledSize calculateContent(AlignEvent&) override;

@@ -177,7 +177,7 @@
                 <ul>
                     <li><a href="#links-following">Following a link</a></li>
                     <li><a href="#links-history">Back and forward</a></li>
-                    <li><a href="#links-hints">Link hints</a></li>
+                    <li><a href="#links-tooltips">Link tooltips</a></li>
                     <li><a href="#links-layout">Links on a held layout</a></li>
                 </ul>
             </li>
@@ -230,7 +230,7 @@ a type of its own, so a control tells which one it was handed by the type alone:
 <table>
 <tr><th>Property</th><th>Read and written through</th><th>Holds</th></tr>
 <tr><td><code>Text</code>, a string</td><td><code>text()</code></td><td>The control's own text. Several in one argument list are appended in order.</td></tr>
-<tr><td><code>HintText</code></td><td><code>hintText()</code></td><td>What the control offers as its hint.</td></tr>
+<tr><td><code>TooltipText</code></td><td><code>tooltipText()</code></td><td>What the control offers as its tooltip.</td></tr>
 <tr><td><code>PlaceHolderText</code></td><td>-</td><td>On a <code>TextBox</code> and a combo box item: what is drawn, muted, while the text is empty. The box is measured to fit it.</td></tr>
 <tr><td><code>TextFormat</code></td><td><code>textFormat()</code>, <code>setTextFormat</code></td><td>What the text is laid out over - see <a href="#format">Text Format</a>.</td></tr>
 <tr><td><code>WordWrap</code></td><td><code>wordWrap()</code>, <code>setWordWrap</code></td><td>Whether the text is broken to its box - see the <a href="layout.html#text">Layout manual</a>.</td></tr>
@@ -239,7 +239,7 @@ a type of its own, so a control tells which one it was handed by the type alone:
 
 <pre><code><span class="tp">Label</span>&amp; m_status{ m_strip.<span class="fn">createBody</span>&lt;<span class="tp">Label</span>&gt;(
     <span class="tp">Text</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"Ready"</span> },
-    <span class="tp">HintText</span>{ <span class="st">L"What the page is showing"</span> },
+    <span class="tp">TooltipText</span>{ <span class="st">L"What the page is showing"</span> },
     <span class="tp">TextFormat</span>{ <span class="tp">TextStyleId</span>::SubBody }
 ) };</code></pre>
 
@@ -306,10 +306,10 @@ holding it:</p>
 <tr><th>Event</th><th>On</th><th>Raised</th></tr>
 <tr><td><code>OnGetText</code><br><code>GetTextEvent</code></td><td>Every control</td><td>When the control's text is gathered. A handler streams into <code>event.text</code>, after the control's own text.</td></tr>
 <tr><td><code>OnGetChildText</code><br><code>GetChildTextEvent</code></td><td>A parent</td><td>When a child's text is gathered. The child answers first, and the parent's handlers stream after it into the same text.</td></tr>
-<tr><td><code>OnGetHint</code><br><code>GetHintEvent</code></td><td>Every control</td><td>When a hint is about to stand over the control. The <code>HintText</code> is written first and the handlers after it; where neither wrote anything and the control's own text is cut, the hint repeats that text over it.</td></tr>
+<tr><td><code>OnGetTooltip</code><br><code>GetTooltipEvent</code></td><td>Every control</td><td>When a tooltip is about to stand over the control. The <code>TooltipText</code> is written first and the handlers after it; where neither wrote anything and the control's own text is cut, the tooltip repeats that text over it.</td></tr>
 <tr><td><code>OnCaretMove</code><br><code>CaretMoveEvent</code></td><td><code>TextBox</code></td><td>The caret came to rest somewhere new. Where it stands is asked of the box, through <code>caretLineColumn()</code>.</td></tr>
 <tr><td><code>OnTextEdit</code><br><code>TextEditEvent</code></td><td><code>TextBox</code></td><td>The text was changed through the box - typed, deleted, pasted, cut, undone or redone. Raised last, once the box is done with the edit.</td></tr>
-<tr><td><code>OnLinkClick</code>, <code>OnGetLinkHint</code></td><td><code>TextBox</code></td><td>A link was followed, or its hint is about to show - see <a href="#links">Links in a TextBox</a>.</td></tr>
+<tr><td><code>OnLinkClick</code>, <code>OnGetLinkTooltip</code></td><td><code>TextBox</code></td><td>A link was followed, or its tooltip is about to show - see <a href="#links">Links in a TextBox</a>.</td></tr>
 </table>
 
 <p>A gather is asked in one of two phases, and <code>event.phase()</code> says which:
@@ -398,8 +398,8 @@ caller's properties were bound, and the call replaces them.
 </div>
 
 <p>The format reaches everything that lays the control's text out: the paint and the measurement, a
-<code>TextBox</code>'s placeholder, the hint that repeats a cut text over it
-(<code>GetHintEvent::format</code>), and an in-place editor, which lays its own text out over the
+<code>TextBox</code>'s placeholder, the tooltip that repeats a cut text over it
+(<code>GetTooltipEvent::format</code>), and an in-place editor, which lays its own text out over the
 covered control's (<code>EditTarget::textFormat</code>). A grid column states one for all of its
 cells - see the <a href="grids.html#cells">Grid manual</a>.</p>
 
@@ -435,8 +435,8 @@ wraps inside the block:</p>
 <pre><code><span class="tp">HorizontalTextAnchor</span>::Center,
 <span class="tp">TextFormat</span>{ <span class="tp">TextAlign</span>::Center },</code></pre>
 
-<p>A hint that repeats an anchored control's cut text repeats the block, starting where the control
-put it. The engine is told the anchor with every <code>drawText</code>, and a control that
+<p>A tooltip that repeats an anchored control's cut text repeats the block, starting where the
+control put it. The engine is told the anchor with every <code>drawText</code>, and a control that
 <a href="#own-layout">holds its own layout</a> tells it to the layout with
 <code>setHorizontalAnchor</code>.</p>
 
@@ -710,18 +710,18 @@ forward to, the key is left unhandled and reaches whatever stands above the box.
 typing lands where the user was. An undo or a redo drops the history. A text the host writes leaves
 it standing, and a place past the end of that text is held to its end when it is gone to.</p>
 
-<h3 id="links-hints">Link hints</h3>
+<h3 id="links-tooltips">Link tooltips</h3>
 
-<p>Every link has a hint, whether a click would follow it or not: the underline says a click would,
-and the hint says where it goes, which a reader wants in a box they type into as much as in one they
-read. It stands over the line the pointer is on, starting where the link starts on that line, so it
+<p>Every link has a tooltip, whether a click would follow it or not: the underline says a click
+would, and the tooltip says where it goes, which a reader wants in a box they type into as much as
+in one they read. It stands over the line the pointer is on, from where the link starts on it, so it
 covers neither the link nor the words around it. Where the screen has no room above the line, it
-stands under it. While the pointer is on a link, the link's hint stands in for the box's own.</p>
+stands under it. While the pointer is on a link, its tooltip stands in for the box's own.</p>
 
 <p>What the box writes when nothing else does:</p>
 
 <table>
-<tr><th>Target</th><th>Hint</th></tr>
+<tr><th>Target</th><th>Tooltip</th></tr>
 <tr><td><code>#name</code>, held by the box's text</td><td>The paragraph the anchor stands in, with its formatting - in the Ledger, the clue a reference names. A paragraph longer than six lines is cut at the end of the sixth and ends in an ellipsis, in the styles still open where it stands.</td></tr>
 <tr><td>Any other target</td><td>The target as the text states it.</td></tr>
 </table>
@@ -729,21 +729,21 @@ stands under it. While the pointer is on a link, the link's hint stands in for t
 <p>In a box the user types into, a muted line follows: <em>Ctrl+click to follow</em>. A plain click
 there places the caret, and nothing else on screen says the link can be followed at all.</p>
 
-<p><code>OnGetLinkHint</code> is raised first. Its event carries <code>target</code>,
-<code>range</code> - the text the link covers - and <code>hint</code>, the hint itself with its
-placement and anchor already stated. What a handler writes into <code>hint.text</code> is the
-whole of the hint, and the box then writes nothing.</p>
+<p><code>OnGetLinkTooltip</code> is raised first. Its event carries <code>target</code>,
+<code>range</code> - the text the link covers - and <code>tooltip</code>, the tooltip itself with
+its placement and anchor already stated. What a handler writes into <code>tooltip.text</code> is the
+whole of the tooltip, and the box then writes nothing.</p>
 
-<pre><code>box.<span class="fn">onGetLinkHint</span>([](<span class="tp">GetLinkHintEvent</span>&amp; event) {
+<pre><code>box.<span class="fn">onGetLinkTooltip</span>([](<span class="tp">GetLinkTooltipEvent</span>&amp; event) {
     <span class="kw">if</span> (event.target.<span class="fn">starts_with</span>(<span class="st">L"clafi:"</span>))
-        event.hint.text &lt;&lt; <span class="st">L"Opens the "</span> &lt;&lt; event.target.<span class="fn">substr</span>(6) &lt;&lt; <span class="st">L" page"</span>;
+        event.tooltip.text &lt;&lt; <span class="st">L"Opens the "</span> &lt;&lt; event.target.<span class="fn">substr</span>(6) &lt;&lt; <span class="st">L" page"</span>;
     });</code></pre>
 
 <div class="info">
-<strong>A hint breaks its lines at 480 design pixels</strong>, and its window is sized to the widest
-line it came to - so a short hint stays short, and a long one wraps rather than running out to the
-edge of the screen. That holds for every hint in the framework except one standing over a control's
-own text, which repeats the lines that control broke. A preview is cut at six lines of that width.
+<strong>A tooltip breaks its lines at 480 design pixels</strong>, and its window is sized to the
+widest line it came to - so a short tooltip stays short, and a long one wraps rather than running
+out to the edge of the screen. That holds for every tooltip except one standing over a control's own
+text, which repeats the lines that control broke. A preview is cut at six lines of that width.
 </div>
 
 <h3 id="links-layout">Links on a held layout</h3>

@@ -4,7 +4,7 @@ module;
 module ClaFi.Core.Foundation;
 
 import :Form;
-import :Hint;
+import :Tooltip;
 import :Input;
 import :Action;
 import :SearchResult;
@@ -138,13 +138,13 @@ namespace ClaFi
             return end;
         }
 
-        // Cuts a preview to the lines a hint shows, broken at the width the hint breaks at. The
-        // ellipsis ending it takes the styles still open where it stands.
+        // Cuts a preview to the lines a tooltip shows, broken at the width the tooltip breaks at.
+        // The ellipsis ending it takes the styles still open where it stands.
         void cutPreview(Text& preview, ScaleFactor scale)
         {
             TextLayout layout;
             layout.setWrap(true);
-            layout.setBoundsAndScale({ Hint::k_lineWidth * scale, k_maxFloat }, scale);
+            layout.setBoundsAndScale({ Tooltip::k_lineWidth * scale, k_maxFloat }, scale);
             layout.setText(preview);
             const std::size_t length = preview.plainText().size();
             std::size_t cut = linesEnd(layout, k_previewLines);
@@ -512,9 +512,9 @@ namespace ClaFi
         m_buffer = std::move(combined);
     }
 
-    // GetHintEvent
+    // GetTooltipEvent
 
-    GetHintEvent::GetHintEvent(const FormContext& formContext, const Control& control, Text& text, EventPhase phase)
+    GetTooltipEvent::GetTooltipEvent(const FormContext& formContext, const Control& control, Text& text, EventPhase phase)
         :
         ControlEventBaseC{ formContext },
         control{ control },
@@ -524,7 +524,7 @@ namespace ClaFi
     {
     }
 
-    void GetHintEvent::writePreview(Text preview)
+    void GetTooltipEvent::writePreview(Text preview)
     {
         cutPreview(preview, formContext().scaleFactor());
         text << preview;
@@ -712,7 +712,7 @@ namespace ClaFi
                 invalidateFormAlign();
         }
 
-        Hint::forgetControl(this);
+        Tooltip::forgetControl(this);
     }
 
     void Control::deleteSelf()
@@ -938,9 +938,9 @@ namespace ClaFi
         getForm()->invalidateAlign();
     }
 
-    void Control::invalidateHint()
+    void Control::invalidateTooltip()
     {
-        Hint::controlHintChanged(*this);
+        Tooltip::controlTooltipChanged(*this);
     }
 
     // The innermost search over the control is the one reading it, as it is the one it is
@@ -1002,14 +1002,14 @@ namespace ClaFi
         if (event.control != this)
             invalidateState();
         // Read after the walk, so that a container has recorded the item it now answers for. A
-        // control a key lands on is what a hint is about while the keyboard drives, the way the
+        // control a key lands on is what a tooltip is about while the keyboard drives, the way the
         // one under the pointer is while the mouse does.
         //
-        // **The hint hears a landing only where the item changed.** A list going down hands the
-        // focus back to the box it was dropped from, which held it all along, and a hint that
+        // **The tooltip hears a landing only where the item changed.** A list going down hands the
+        // focus back to the box it was dropped from, which held it all along, and a tooltip that
         // went down with the list stays down.
         if (focusedItem() != previousItem)
-            Hint::focusedControlChanged();
+            Tooltip::focusedControlChanged();
     }
 
     void Control::animatedClick(FormBase& form, const InputStamp stamp)
@@ -1796,7 +1796,7 @@ namespace ClaFi
         switch (event.key)
         {
         case Keys::Escape:
-            Hint::handleUserInput();
+            Tooltip::handleUserInput();
             break;
 
         case Keys::Return:
@@ -1809,17 +1809,17 @@ namespace ClaFi
         emitEvent(event);
     }
 
-    void Control::nestedGetHint(GetHintEvent& event)
+    void Control::nestedGetTooltip(GetTooltipEvent& event)
     {
         emitEvent(event);
         // A handler that produced text wins over the trimmed-text fallback below.
         if (!event.text.empty())
             return;
         // The fallback stands in for text this control has cut, so it starts where that text
-        // is and nowhere else. A hint given to the control is about the control and starts
+        // is and nowhere else. A tooltip given to the control is about the control and starts
         // anywhere inside it, which is why the pointer test guards this branch alone.
         // isTextHovered names **this** control, so a parent reached by the walk up from the hovered
-        // one answers with a hint of its own or with nothing.
+        // one answers with a tooltip of its own or with nothing.
         //
         // A scroll body is left out of it. Its text is reached by scrolling rather than
         // withheld, and one row cut against the body's width would be answered with the whole
@@ -1833,15 +1833,15 @@ namespace ClaFi
             // The rect below starts at the block an anchor moved, and the lines stand in it.
             if (horizontalTextAnchor() != HorizontalTextAnchor::None)
                 event.textAnchor = HorizontalTextAnchor::Left;
-            // The hint reads its own text, so a named answer is put into it. Assigning what
+            // The tooltip reads its own text, so a named answer is put into it. Assigning what
             // the buffer already holds to itself is the gather having built one, and costs the
             // comparison in Text::operator= and nothing else.
             event.text = doGetText(event.formContext(), event.text, EventPhase::Paint);
-            // **The hint stands on the glyphs, not on the box they were given.** An anchor moves
+            // **The tooltip stands on the glyphs, not on the box they were given.** An anchor moves
             // the block inside that box - a line centred in a title bar sits half the band below
-            // its top - and the placement lands the hint's own first glyph on this rect's top left.
-            // The width is the box's, which is the width the lines were broken at and what
-            // HintForm breaks its own at.
+            // its top - and the placement lands the tooltip's own first glyph on this rect's top
+            // left. The width is the box's, which is the width the lines were broken at and what
+            // TooltipForm breaks its own at.
             const FloatRect textRect = textBounds(event.formContext(), boundsInForm());
             const ScaledSize drawn = s_textEngine.calculateText(
                 event.formContext(),
@@ -2510,7 +2510,7 @@ namespace ClaFi
 
         // A grid expander depends on this: it wears GridRow and holds its section's rows,
         // so read as hovered it would light the whole section.
-        // Only the visual state is gated - a hint still asks isHovered().
+        // Only the visual state is gated - a tooltip still asks isHovered().
         const bool interactive = interactivity() != Interactivity::None;
 
         VisualState result{

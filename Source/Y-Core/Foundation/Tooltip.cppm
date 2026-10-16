@@ -1,4 +1,4 @@
-﻿export module ClaFi.Core.Foundation :Hint;
+﻿export module ClaFi.Core.Foundation :Tooltip;
 
 import :Control;
 
@@ -11,29 +11,29 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    export class HintForm;
+    export class TooltipForm;
 
-    // TODO: remove Hint from the facade.
-    // One per form, built with it: the window a hint shows in. See Control-Foundation
-    export class Hint
+    // TODO: remove Tooltip from the facade.
+    // One per form, built with it: the window a tooltip shows in. See Control-Foundation
+    export class Tooltip
     {
         // Builds this with itself, and takes its window down at the top of ~FormBase.
         friend FormBase;
     public:
-        explicit Hint(FormBase& ownerForm);
-        ~Hint();
-        Hint(const Hint&) = delete;
-        Hint& operator=(const Hint&) = delete;
+        explicit Tooltip(FormBase& ownerForm);
+        ~Tooltip();
+        Tooltip(const Tooltip&) = delete;
+        Tooltip& operator=(const Tooltip&) = delete;
     public:
-        // The widest line a hint breaks at, in design units.
+        // The widest line a tooltip breaks at, in design units.
         static constexpr float k_lineWidth{ 480.0f };
-        // The most lines a hint shows, its last faded when cut.
+        // The most lines a tooltip shows, its last faded when cut.
         static constexpr std::size_t k_maxLines{ 20 };
     public:
-        // Puts this form's hint up about one of this form's controls, without the wait.
+        // Puts this form's tooltip up about one of this form's controls, without the wait.
         void showRightNow(Control&);
     public:
-        // The pointer went somewhere. Heard while the mouse drives. The hint coming down
+        // The pointer went somewhere. Heard while the mouse drives. The tooltip coming down
         // belongs to the form the pointer was in, which is not always the form it has arrived
         // in, so this is static.
         static void hoveredControlChanged();
@@ -45,38 +45,38 @@ namespace ClaFi
         static void mouseTookOver();
         // The control is being destroyed and takes with it anything said about it.
         static void forgetControl(const Control*);
-        static void controlHintChanged(Control&); // the words the control's hint says have moved
-        // The user did something. A hint waits for them to stop, and this is them starting
+        static void controlTooltipChanged(Control&); // the words its tooltip says have moved
+        // The user did something. A tooltip waits for them to stop, and this is them starting
         // again.
         static void handleUserInput();
         // Takes down whatever is up, wherever it is, and answers whether there was anything to
         // take down - Escape is handled by having dismissed one.
         static bool stopAndHide();
-        // The control the hint on screen is about, or nullptr while none is on screen.
+        // The control the tooltip on screen is about, or nullptr while none is on screen.
         [[nodiscard]] static Control* control();
     private:
-        // The control a hint is asked of: the hovered one while the mouse drives, the item the
-        // focus rests on while the keyboard alone does. See Control-Foundation#hint
+        // The control a tooltip is asked of: the hovered one while the mouse drives, the item the
+        // focus rests on while the keyboard alone does. See Control-Foundation#tooltip
         [[nodiscard]] static Control* pointedControl();
-        // The control a hint is about has changed - to pointedControl(), or to nothing.
+        // The control a tooltip is about has changed - to pointedControl(), or to nothing.
         static void pointedControlChanged();
-        // Whether a hint up about a control this one stands in is still the answer this one gets.
+        // Whether a tooltip up about a control this one stands in still answers for this one.
         [[nodiscard]] static bool answersFor(Control&);
         void showOrHide(Control* = nullptr);
         void startWaiting(MilliSeconds);
         void updatePosition(const FloatRect& anchorRect, bool forceRepaint);
-        // The rect the control states for its hint - its bounds unless it names another.
+        // The rect the control states for its tooltip - its bounds unless it names another.
         [[nodiscard]] FloatRect anchorOf(Control&) const;
         [[nodiscard]] bool stillVisible() const;
         void destroyForm();
     private:
-        // The hint waiting or showing, and nothing while neither is happening.
-        inline static Hint* s_current{ nullptr };
+        // The tooltip waiting or showing, and nothing while neither is happening.
+        inline static Tooltip* s_current{ nullptr };
         FormBase& m_ownerForm;
-        // **A hint has no hint of its own**: this is null on the one form whose role is Hint,
-        // and that is where the recursion of every form building one ends. Nothing asks for it
-        // there - a hint window takes no pointer and holds nothing that can be hovered.
-        std::unique_ptr<HintForm> m_form;
+        // **A tooltip has no tooltip of its own**: this is null on the one form whose role is
+        // Tooltip, and that is where the recursion of every form building one ends. Nothing asks
+        // for it there - a tooltip window takes no pointer and holds nothing that can be hovered.
+        std::unique_ptr<TooltipForm> m_form;
         // The handler is given in the constructor rather than here: MSVC will not deduce OnEvent
         // from a lambda written in a default member initializer.
         UiTimer m_timer;

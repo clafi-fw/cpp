@@ -122,7 +122,7 @@ acceptsWidth takes for the width the lines were broken at.
 **What the pass asked for is kept.** Every entry is stamped with the pass it was last asked for in,
 and FormBase::reAlign starts a pass through beginPass. A sweep drops only the entries no pass
 since the one before the current asked for: the measurement and the paint that draws it are
-one pass, and a hint or a popup laying out between them is a pass of its own, which the
+one pass, and a tooltip or a popup laying out between them is a pass of its own, which the
 second generation covers. A cache swept by use alone lost the top of a page before its first
 paint - a SeeDocs page measures the surface tree and every cell on the page before it paints,
 many more than the sweep kept, and the rows a window shows are the first a pass measures. The

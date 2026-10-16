@@ -53,7 +53,7 @@ namespace Themes_App
         constexpr auto k_windowRoots = std::to_array<CategoryEntry>({
             UiElement::Dialog,
             UiElement::Menu,
-            UiElement::Hint
+            UiElement::Tooltip
         });
 
         constexpr auto k_surfaces = std::to_array<CategoryEntry>({

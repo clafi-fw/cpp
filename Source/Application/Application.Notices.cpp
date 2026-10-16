@@ -312,9 +312,9 @@ namespace ClaFi
             }
         }
 
-        // **Every card casts its own shadow**, coloured by the rule set it wears as a hint window's
-        // is, at the theme's secondary window shadow and around its corners. The cards are one
-        // design, so one painter draws them all.
+        // **Every card casts its own shadow**, coloured by the rule set it wears as a tooltip
+        // window's is, at the theme's secondary window shadow and around its corners. The cards are
+        // one design, so one painter draws them all.
         void NoticesLayer::paintChildren(PaintEvent& event)
         {
             if (!m_cards.empty())

@@ -3,7 +3,7 @@ module ClaFi.Core.Foundation;
 import :ContextMessage;
 import :Control;
 import :Form;
-import :Hint;
+import :Tooltip;
 
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.TextEngine.Text;
@@ -22,13 +22,13 @@ namespace ClaFi
         s_text = std::move(text);
         s_raisedAt = Clock::now();
 
-        // Taken down before it is put up, rather than moved onto the new words: a hint already
+        // Taken down before it is put up, rather than moved onto the new words: a tooltip already
         // standing about this control was measured and placed from what the control says for
         // itself, and a message is a different answer in a different place. Nothing on this path
         // ends the message being raised - what ends one is the pointer moving on and the user
         // acting, and neither of those is happening inside this call.
-        Hint::stopAndHide();
-        about.form().hint().showRightNow(about);
+        Tooltip::stopAndHide();
+        about.form().tooltip().showRightNow(about);
     }
 
     bool ContextMessage::justRaised()
@@ -36,7 +36,7 @@ namespace ClaFi
         return s_control && Clock::now() - s_raisedAt < k_movesIgnoredFor;
     }
 
-    bool ContextMessage::answer(const Control& about, GetHintEvent& event)
+    bool ContextMessage::answer(const Control& about, GetTooltipEvent& event)
     {
         if (s_control != &about)
             return false;

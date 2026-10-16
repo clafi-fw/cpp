@@ -173,7 +173,7 @@ commit, with no paint and no new buffer, and an opaque window fades too.
 **Elsewhere the frame carries it.** FormWindow::paint writes every pixel at the opacity, and a
 change repaints the window.
 
-**Zero unmaps the window** on either path - that is how a hint says it is not there.
+**Zero unmaps the window** on either path - that is how a tooltip says it is not there.
 
 ## INativeEventSink
 

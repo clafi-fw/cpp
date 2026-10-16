@@ -52,7 +52,7 @@ namespace ClaFi::Controls
     protected:
         void paintSlot(PaintEvent&, const FloatRect&, SlotSpan) override;
         Color thumbColor(PaintEvent&, FloatPoint&) override;
-        void writeValueHint(Text&, EventPhase) const override;
+        void writeValueTooltip(Text&, EventPhase) const override;
         void changed(SliderChangeEvent&) override;
         void sizeChanged() override;
     private:
@@ -240,7 +240,7 @@ namespace ClaFi::Controls
         return tmp.toColor();
     }
 
-    void ColorSlider::writeValueHint(Text& text, EventPhase phase) const
+    void ColorSlider::writeValueTooltip(Text& text, EventPhase phase) const
     {
         paintValue(text, phase);
     }

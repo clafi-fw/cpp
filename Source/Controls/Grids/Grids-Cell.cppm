@@ -72,17 +72,18 @@ namespace ClaFi::Controls::Grids
         bool hasContent{ true };
     };
 
-    // The hint for one cell, asked while the pointer rests on it. See Grids
-    export class GetCellHintEvent : public CellEventBase
+    // The tooltip for one cell, asked while the pointer rests on it. See Grids
+    export class GetCellTooltipEvent : public CellEventBase
     {
     public:
-        GetCellHintEvent(const RowBase&, const Column&, GetHintEvent&, std::wstring_view link);
-        [[nodiscard]] GetHintEvent& hint() { return m_hint; }
-        [[nodiscard]] Text& text() { return m_hint.text; }
+        GetCellTooltipEvent(const RowBase&, const Column&, GetTooltipEvent&,
+            std::wstring_view link);
+        [[nodiscard]] GetTooltipEvent& tooltip() { return m_tooltip; }
+        [[nodiscard]] Text& text() { return m_tooltip.text; }
         // What the link under the pointer names, as the cell's text states it; empty off a link.
         [[nodiscard]] std::wstring_view link() const { return m_link; }
     private:
-        GetHintEvent& m_hint;
+        GetTooltipEvent& m_tooltip;
         std::wstring_view m_link;
     };
 
@@ -152,13 +153,13 @@ namespace ClaFi::Controls::Grids
     {
     }
 
-    // GetCellHintEvent
+    // GetCellTooltipEvent
 
-    GetCellHintEvent::GetCellHintEvent(const RowBase& row, const Column& column, GetHintEvent& hint,
-        const std::wstring_view link)
+    GetCellTooltipEvent::GetCellTooltipEvent(const RowBase& row, const Column& column,
+        GetTooltipEvent& tooltip, const std::wstring_view link)
         :
         CellEventBase{ row, column },
-        m_hint{ hint },
+        m_tooltip{ tooltip },
         m_link{ link }
     {
     }

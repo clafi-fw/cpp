@@ -71,7 +71,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_unnamedSegment = L"Project";   // for a name that gives none
         constexpr std::wstring_view k_closeProjectCaption = L"Close project";   // on a home
         constexpr std::wstring_view k_closeCaption = L"Close";   // on a row of the root
-        constexpr std::wstring_view k_closeHint = L"Closes the project and every tab on it";
+        constexpr std::wstring_view k_closeTooltip = L"Closes the project and every tab on it";
         // What a tab's file keeps its tree's open nodes under, an entry per project.
         constexpr std::wstring_view k_treeNodeName = L"Tree";
         // What a tab's file keeps the trees' bar's width under; zero is a bar never resized.
@@ -1315,7 +1315,7 @@ namespace SeeDocs_App
         Section section;
         section.kind = SectionKind::Table;
         section.heading = { Run{ .text = L"Open projects" } };
-        section.hint = std::to_wstring(count) + (count == 1 ? L" element" : L" elements");
+        section.tooltip = std::to_wstring(count) + (count == 1 ? L" element" : L" elements");
         section.table.columns = {
             TableColumn{ .name = L"Project" },
             TableColumn{ .name = L"Folder", .fills = true }
@@ -1336,7 +1336,7 @@ namespace SeeDocs_App
     {
         return {
             .text = std::move(text),
-            .hint = std::wstring{ k_closeHint },
+            .tooltip = std::wstring{ k_closeTooltip },
             .target = homePath(project)
         };
     }
@@ -1955,7 +1955,7 @@ namespace SeeDocs_App
     }
 
     // The mark of what the name is - a member's line keeps the room blank - a member's type muted
-    // before it, the typed words in the accent and the kind at the line's end; the hint is the
+    // before it, the typed words in the accent and the kind at the line's end; the tooltip is the
     // declaration's words and where it stands.
     DropListLine SurfaceBrowser::lineOf(const ListedLine& listed, const NameHit& hit,
         const bool namesProject) const
@@ -1992,9 +1992,9 @@ namespace SeeDocs_App
 
         if (entry.comment && !entry.comment->text.empty())
         {
-            writeRuns(line.hint, hintRunsOf(listed.project->open.surface, *entry.comment,
+            writeRuns(line.tooltip, hintRunsOf(listed.project->open.surface, *entry.comment,
                 entry.nameSpace));
-            line.hint << k_endLine;
+            line.tooltip << k_endLine;
         }
         std::wstring place = entry.folder;
         if (entry.module && entry.kind != NameKind::Module)
@@ -2005,7 +2005,7 @@ namespace SeeDocs_App
         }
         if (place.empty())
             place = listed.project->open.project.name;
-        line.hint << InkGrade::Muted << place << PopColor{};
+        line.tooltip << InkGrade::Muted << place << PopColor{};
         return line;
     }
 

@@ -40,8 +40,8 @@ namespace ClaFi
         m_form{ form }
     {
         dwmEnableDarkMode();
-        // **Made before any other window this one owns**, so it stands lowest among them: a hint or
-        // a menu raised later stands above the shadow rather than under it.
+        // **Made before any other window this one owns**, so it stands lowest among them: a tooltip
+        // or a menu raised later stands above the shadow rather than under it.
         m_shadow = std::make_unique<ShadowWindow>(
             owner.appHandle(), WindowsManager::shadowClassName(), handle());
     }
@@ -382,12 +382,12 @@ namespace ClaFi
 
         case WM_NCHITTEST:
         {
-            // **A hint takes no pointer**, and this is where it says so. WS_EX_TRANSPARENT says the
-            // same thing and one more besides - it holds the window's own painting back until
-            // every sibling beneath it has been painted, which starves a hint standing over a
+            // **A tooltip takes no pointer**, and this is where it says so. WS_EX_TRANSPARENT says
+            // the same thing and one more besides - it holds the window's own painting back until
+            // every sibling beneath it has been painted, which starves a tooltip standing over a
             // form that is repainting under a drag. Said here, the pointer falls through and the
             // painting is the window's own business.
-            if (role() == WindowRole::Hint)
+            if (role() == WindowRole::Tooltip)
             {
                 msg.result = HTTRANSPARENT;
                 msg.handled = true;
@@ -683,7 +683,7 @@ namespace ClaFi
         {
         case WindowRole::Dialog:
         case WindowRole::Menu:
-        case WindowRole::Hint:
+        case WindowRole::Tooltip:
             HWND h = handle();
             BOOL trueBool = TRUE;
             ::DwmSetWindowAttribute(h, DWMWA_USE_IMMERSIVE_DARK_MODE, &trueBool, sizeof BOOL);
@@ -784,7 +784,7 @@ namespace ClaFi
         const IntPoint origin = surfaceOrigin();
         m_shadow->moveTo({ rect.left - origin.x, rect.top - origin.y });
         // **Shown right above its owner.** Showing puts a window at the top of the owner's group,
-        // over a hint or a menu standing in the shadow's band; it is put back under them.
+        // over a tooltip or a menu standing in the shadow's band; it is put back under them.
         if (m_shadow->show(true))
             ::SetWindowPos(m_shadow->handle(), wnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     }

@@ -376,9 +376,9 @@ project, a folder, a module, a function, a constant, a type's kind - and its hin
 a grid of facts - namespace, module, source - and then a section per expander. The source is the
 file and line a type, a method, a function or a constant stands at, and a module's interface file;
 an Open in editor button at its row's end runs the command line Settings keeps for the file's
-language, and stands greyed, its hint naming Settings, while there is none. What goes wrong is said
-in a notice over the window's bottom right, headed with Open in editor and the file's name, since a
-page may be gone by the time the answer comes. A
+language, and stands greyed, its tooltip naming Settings, while there is none. What goes wrong is
+said in a notice over the window's bottom right, headed with Open in editor and the file's name,
+since a page may be gone by the time the answer comes. A
 file the last scan read and that is no longer on disk, or that stands in a folder the project no
 longer reads, is said to be gone before anything runs, with Rescan as the answer; the notice is held
 by the project and goes when it closes. A command line whose program the shell does not find, or
@@ -406,7 +406,7 @@ constants, each run beside its word - Types, Functions, Constants - and each row
 which runs over the cells its row leaves empty before it. A module's page holds a grid of its own
 per kind of export. A type's row carries its kind at the end of its name's cell, as a tree row
 does. A function's row
-carries its name alone, one row per name, every overload's signature in the name's hint; the
+carries its name alone, one row per name, every overload's signature in the name's tooltip; the
 name links to the function's page,
 which carries the hint under its title - the first commented overload's, as the row does - and
 holds every overload of the name, coloured, with its note and, where it differs, its own hint. A
@@ -429,7 +429,7 @@ no methods grid, since the property's row
 says it; a method with no comment of its own - an override, as a rule - takes the hint and the
 footnote of the method of the same name and parameter count in the nearest base that has one.
 A method's row carries its name alone, one row per name, with every overload's signature as
-the name's hint, a line each; the name is a
+the name's tooltip, a line each; the name is a
 link to the method's page, titled `Type::name` with the type linked. It is built as a function's
 page is, the type and the access labels being what a method adds: the hint under the title - the
 first commented overload's - then every overload of the name under its access label written the
@@ -438,19 +438,19 @@ its own hint where the title's is another overload's, and the note the comment r
 After them, the types with a property of this type and
 the types with an event of it, two trees, each type with the types derived from it under it,
 closed; then, as the page's footnote headed Details, the note the type's comment references as
-prose, its file and section in the heading's hint; then
+prose, its file and section in the heading's tooltip; then
 the types beside it in its module. A property, an event, a field or a member
 whose comment references a note carries a mark in a column of its own, and the note stands as a
-footnote under the grid; the mark leads to it, as an anchor of the page's url, and its hint shows
-the footnote's first lines over the row, as a link's hint shows the paragraph of the anchor it
+footnote under the grid; the mark leads to it, as an anchor of the page's url, and its tooltip shows
+the footnote's first lines over the row, as a link's tooltip shows the paragraph of the anchor it
 leads to. A note's section stands in full once on a page: Details holds its own, and otherwise
 the first footnote reaching it does. A later footnote reaching it names that place -
 `* OnSearch - see listKeptBy` - linked where the place is a footnote, and an overload's reads "See
 the note above". A section's heading says what the section is; how many elements it holds is the
-heading's hint.
+heading's tooltip.
 A declaration whose comment references nothing takes the section named after it from its
 folder's note - the one the folder's declarations cite the most, as a new footnote's home is
-chosen below - marked as matched by name in that hint: a type's, a function's or a constant's
+chosen below - marked as matched by name in that tooltip: a type's, a function's or a constant's
 heading is its name, a member's its type's name and its own - `Button onClick` - and a method's
 page shows its section under the first commented overload. A constructor takes none by name: its
 name is its type's, and so is the section that name heads. Where the surface states no hint
@@ -495,12 +495,12 @@ takes the new words where it stands; a footnote added builds the page again at t
 
 A type's name on a page is a link to its page, in a grid cell as in prose: a type named in a
 hint, in a note's prose or code, or in a signature - bare or qualified, as `Control` or
-`Grids::Row` - links wherever the surface has a page for it. The hint over a link to an alias, a
+`Grids::Row` - links wherever the surface has a page for it. The tooltip over a link to an alias, a
 struct, a union or an enum shows its declaration, coloured: in C++ an alias's `using` line, a
 struct's or a union's head and bases over its public instance fields, a line each in braces, and an
 enum's head over its members the same way; in Delphi the name and an equals sign before what an
 alias or a built type stands for, a record's public fields down to its `end`, or an enum's members
-in brackets on one line. A link to a struct holding no such field keeps the link's own hint. A
+in brackets on one line. A link to a struct holding no such field keeps the link's own tooltip. A
 mouse click follows a link, and so does Return on the grid cell or the header holding it or with
 the caret standing in it - Ctrl+Return in a hint box that edits, where Return breaks the line. A
 right click on a link, or the menu key on a grid cell holding one or with the caret in one, offers
@@ -542,16 +542,16 @@ The box drops a list as it is typed into: first the searches, the narrowest firs
 Grids, the folder the shown page stands in, with the folders under it; Search "row" in ClaFi, its
 project; Search "row" in all projects - and under a divider the ten best names, each with the mark
 of what it is - a member's line leaves the mark's room blank - a member's type muted before it, the
-words typed in the accent and its kind at the line's end; while a line is current, its hint and
-where it stands are beside the list. A search that would search what the one above it does is left
-out: a project's home and its options page offer no folder, one project open offers no all projects,
-and the root offers its own search alone - all projects, or the one open. **No line is current as
-the list drops**, so Enter steps through the page's matches; Down enters the list at the first
-search's line, and Up on it leaves the list again. Enter on a line opens that name's page, or that
-search's. Alt+Enter or an Alt+click opens a line in a new tab behind the one shown, and the list
-stays up so that more lines can be opened. A member with no page of its own opens its type's page at
-its row: the url's anchor names the row by the member's name, and the row's section opens and the
-row is selected.
+words typed in the accent and its kind at the line's end; while a line is current, a tooltip beside
+the list holds its hint and where it stands. A search that would search what the one above it does
+is left out: a project's home and its options page offer no folder, one project open offers no all
+projects, and the root offers its own search alone - all projects, or the one open. **No line is
+current as the list drops**, so Enter steps through the page's matches; Down enters the list at the
+first search's line, and Up on it leaves the list again. Enter on a line opens that name's page, or
+that search's. Alt+Enter or an Alt+click opens a line in a new tab behind the one shown, and the
+list stays up so that more lines can be opened. A member with no page of its own opens its type's
+page at its row: the url's anchor names the row by the member's name, and the row's section opens
+and the row is selected.
 
 **The box searches the page shown as well.** Each word in it stands on the found band an editor's
 own search paints with, wherever the page shows it, case aside - the two parts of a query of two
@@ -584,7 +584,7 @@ names do not; then In footnotes, every footnote section holding them, named by i
 heading and linked to the declaration it belongs to - the one its heading names, else the first
 whose See reaches it - with the sentence the words stand in. Hints and footnotes are searched as
 they read, their code and bold marks taken out, and a section's words are its own, up to the first
-heading under it. A section lists its first 200 rows, and its heading's hint says how many there
+heading under it. A section lists its first 200 rows, and its heading's tooltip says how many there
 are. **A folder's search holds what stands in the folder and in the folders under it**: their
 folders, modules and what the modules declare, and the footnote sections whose declaration stands
 there - a section that belongs to no declaration is found by the searches of whole projects alone.

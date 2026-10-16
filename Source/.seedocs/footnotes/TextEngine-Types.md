@@ -152,7 +152,7 @@ results, one per page. The count, the current match and the steps are SearchResu
 
 **The paint asks it.** Every text painted inside a result's container is searched a paragraph at a
 time as it is drawn, so text out of view costs nothing. The innermost result's searcher is in
-force. The places show on the FoundText band, and the text is unchanged. A hint, a window of its
+force. The places show on the FoundText band, and the text is unchanged. A tooltip, a window of its
 own, shows no places.
 
 - The text is split as SearchSplit says, and case is folded in the user's locale.

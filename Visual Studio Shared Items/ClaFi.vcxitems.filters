@@ -769,13 +769,13 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Form.cppm">
       <Filter>Y_Core\Foundation</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Hint.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Tooltip.cpp">
       <Filter>Y_Core\Foundation</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Hint.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Tooltip.cppm">
       <Filter>Y_Core\Foundation</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\HintForm.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\TooltipForm.cppm">
       <Filter>Y_Core\Foundation</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Input.cpp">

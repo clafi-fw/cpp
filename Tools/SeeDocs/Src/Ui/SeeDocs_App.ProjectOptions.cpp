@@ -40,7 +40,7 @@ namespace SeeDocs_App
     {
         // **The widest a path may make the page.** The column is as wide as what it holds, so a
         // long path left to itself would stretch every row under it; past this it is trimmed, and
-        // the hint over it shows the rest.
+        // the tooltip over it shows the rest.
         constexpr float k_pathWidth = 440.0f;
         constexpr float k_rowSpacing = 10.0f;    // between the parts of a row
         constexpr float k_fieldWidth = 440.0f;   // the narrowest a field stands
@@ -169,12 +169,12 @@ namespace SeeDocs_App
         // One answer of a set, chosen while chosen() says so and greyed while enabled() says
         // not; a click runs choose() and redraws every answer of the set. The mark stands where
         // a label's text stands, as on the Settings page.
-        void addChoice(StackPanel& set, const std::wstring_view caption, const std::wstring_view hint,
+        void addChoice(StackPanel& set, const std::wstring_view caption, const std::wstring_view tooltip,
             Chosen chosen, Choose choose, Chosen enabled = {})
         {
             set.add<RadioButton>(
                 caption,
-                HintText{ hint },
+                TooltipText{ tooltip },
                 Padding{ 0.0f, set.themeMetrics().listItem.padding.y },
                 HorizontalAlign::Left,
                 RadioButton::OnGetState{ [chosen, enabled](GetStateEvent& event) {
@@ -231,7 +231,7 @@ namespace SeeDocs_App
             TextFormat{ InkGrade::Muted },
             WordWrap::No,
             MaxSize{ k_pathWidth, k_maxFloat },
-            HintText{ L"The project's own folder: its properties, its database and its "
+            TooltipText{ L"The project's own folder: its properties, its database and its "
                 L"footnotes" }
         );
         StackPanel& scanRow = group.add<StackPanel>(
@@ -252,7 +252,7 @@ namespace SeeDocs_App
         scanRow.add<Button>(
             L"Rescan",
             VerticalAlign::Center,
-            HintText{ L"Reads the folders of sources again" },
+            TooltipText{ L"Reads the folders of sources again" },
             Button::OnClick{ [&workspace, &project, rescanned](ClickEvent&) {
                 workspace.rescan(project);
                 rescanned();
@@ -357,7 +357,7 @@ namespace SeeDocs_App
                 Padding{ 0.0f },
                 VerticalTextAnchor::Center,
                 std::move(folderName),
-                HintText{ L"Renames the project - left empty, it takes the folder's name" }
+                TooltipText{ L"Renames the project - left empty, it takes the folder's name" }
             },
             m_workspace{ workspace },
             m_project{ project }
@@ -496,7 +496,7 @@ namespace SeeDocs_App
                 HorizontalTextAnchor::Center,
                 VerticalTextAnchor::Center,
                 Interactivity::MouseOnly,
-                HintText{ L"Picks the folder in the desktop's own dialog" },
+                TooltipText{ L"Picks the folder in the desktop's own dialog" },
                 Button::OnClick{ [this](ClickEvent&) {
                     browse();
                 } }
@@ -514,7 +514,7 @@ namespace SeeDocs_App
                 m_list.column(SourceList::SourceColumn::Subfolders),
                 L"Include subfolders",
                 VerticalAlign::Center,
-                HintText{ L"Reads the folders under this one too" },
+                TooltipText{ L"Reads the folders under this one too" },
                 themeMetrics().listItem.padding,
                 CheckBox::OnGetState{ [this](GetStateEvent& event) {
                     event.state.selected = m_list.readsSubfolders(m_source);
@@ -535,7 +535,7 @@ namespace SeeDocs_App
                 VerticalAlign::Center,
                 Interactivity::MouseOnly,
                 ButtonBase::OnPaintIcon{ Icons::XMark::paint },
-                HintText{ L"Stops reading this folder" },
+                TooltipText{ L"Stops reading this folder" },
                 Button::OnClick{ [this](ClickEvent&) {
                     m_list.removeLater(*this);
                 } }

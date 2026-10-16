@@ -155,21 +155,21 @@ between. Return follows the live link the caret stands in, a caret at either end
 
 The click goes no further up.
 
-## GetLinkHintEvent
+## GetLinkTooltipEvent
 
-**Every link has a hint, live or not**, and it replaces the box's own while the pointer is on the
+**Every link has a tooltip, live or not**, and it replaces the box's own while the pointer is on the
 link. It shows above the pointer's line, from where the link starts - FormPlacement::Top - and
 drops under the line where the screen has no room above.
 
-**A handler writes the hint's words**, its placement and anchor already set. Where it writes
+**A handler writes the tooltip's words**, its placement and anchor already set. Where it writes
 nothing, the box writes its own:
 
 - `#name` the box's text holds - the anchor's paragraph, formatted, cut after six lines by
-  GetHintEvent::writePreview;
+  GetTooltipEvent::writePreview;
 - any other target - the target as the text states it.
 
-In a box the user types into, the hint ends with a muted line, whoever wrote the words: Ctrl+click
-to follow.
+In a box the user types into, the tooltip ends with a muted line, whoever wrote the words:
+Ctrl+click to follow.
 
 ## LinkContextPopupEvent
 
@@ -377,7 +377,7 @@ Any other pick hides the list before the owner is told, so whatever the owner op
 ## DropListLine
 
 - **A flex space** in the text spans the list's width, so a word after it sits at the right edge.
-- **The hint** shows beside the list while the line is current, at its row's height - to the
+- **The tooltip** shows beside the list while the line is current, at its row's height - to the
   right, or off the left edge where the right has no room, never over the rows.
 - **A divider** parts the line from the lines after. The keys pass over it, and the shownLines cap
   makes room for it.
@@ -395,8 +395,8 @@ Stated once, when the list is built.
 Raised for a key, a mouse press, a drag, Select All and new bytes. **Ask the view what is
 selected** - HexView::selection and caretOffset.
 
-**Hang a reading of the selection off this**, in a status line the host owns. A hint is sized from
-its first words, and user input hides it.
+**Hang a reading of the selection off this**, in a status line the host owns. A tooltip is sized
+from its first words, and user input hides it.
 
 ## HexView
 
@@ -418,7 +418,7 @@ press re-shapes one paragraph, and a copy carries the user's own formatting.
 **Completion** draws on the Syntax::CompletionEntries set through `completion`, the keywords, and
 the names the text declares - see CompletionList. The list is named, not copied, and the host keeps
 it alive. A box with no list, or a read-only box, completes nothing. The list also feeds the
-signature hint - see CodeBox::showParameterHint.
+signature tooltip - see CodeBox::showParameterTooltip.
 
 **A title block** - the comment lines a text opens with to state its settings - completes out of the
 Syntax::TitleBlock set through `titleBlock`, named the same way.
@@ -516,11 +516,11 @@ on Smeta gives `//#DocTypes = Smeta`.
 The list is at most ten rows tall and at least 180 design units wide, its left edge at the start of
 the name.
 
-## ParameterHint
+## ParameterTooltip
 
 The signature of the call the caret is in, from its opening bracket, with the entry's hint under it.
 The argument being written is bold, and a routine with no parameters reads No parameters. **The
-caret stays in the box**, and the pointer passes through the hint.
+caret stays in the box**, and the pointer passes through the tooltip.
 
 It shows only in a box that has a completion list and can be typed into, in a language with a
 ParameterReader.
@@ -537,7 +537,7 @@ A name that is no routine shows nothing - a type or a class cast, a property wit
 variable. A routine shadowed at the caret by a variable of its name shows nothing too.
 
 It stands above the caret's line, its left edge at the opening bracket. It goes below where there is
-no room above, or where the completion list is above the line. It is no wider than a hint's line,
+no room above, or where the completion list is above the line. It is no wider than a tooltip's line,
 and a long signature wraps.
 
 ## IndentGuides

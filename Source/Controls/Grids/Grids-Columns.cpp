@@ -192,7 +192,7 @@ namespace ClaFi::Controls::Grids
     }
 
     // **A parent's cell spans its sub-columns**, and only a leaf's width is something a fit can
-    // take off. Kept by the parent, a hint wider than the columns under it would hold the whole
+    // take off. Kept by the parent, a tooltip wider than the columns under it would hold the whole
     // grid at that width while the fit narrowed the leaves for it. A parent with no Fill sub-column
     // keeps it, as the slack a stretch hands it.
     void Column::handDownOwnWidth()

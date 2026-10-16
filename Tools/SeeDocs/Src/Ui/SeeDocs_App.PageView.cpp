@@ -75,7 +75,7 @@ namespace SeeDocs_App
                 && sameCellsEmpty(left, right)
                 && left.type == right.type
                 && left.pageKind == right.pageKind
-                && left.hint.empty() == right.hint.empty()
+                && left.tooltip.empty() == right.tooltip.empty()
                 && left.excerpt.has_value() == right.excerpt.has_value()
                 && left.site.has_value() == right.site.has_value()
                 && left.command.has_value() == right.command.has_value();
@@ -186,7 +186,7 @@ namespace SeeDocs_App
         void moveWords(TableGroup& to, TableGroup& from)
         {
             to.label = std::move(from.label);
-            to.hint = std::move(from.hint);
+            to.tooltip = std::move(from.tooltip);
             for (std::size_t i = 0; i != to.rows.size(); ++i)
                 to.rows[i] = std::move(from.rows[i]);
             for (std::size_t i = 0; i != to.groups.size(); ++i)
@@ -196,7 +196,7 @@ namespace SeeDocs_App
         void moveWords(Section& to, Section& from)
         {
             to.heading = std::move(from.heading);
-            to.hint = std::move(from.hint);
+            to.tooltip = std::move(from.tooltip);
             to.excerpt = std::move(from.excerpt);
             moveWords(to.branches, from.branches);
             to.treeOpen = from.treeOpen;
@@ -638,7 +638,7 @@ namespace SeeDocs_App
     }
 
     // An expander in the page's look - the section's heading as its label, its count in the
-    // label's hint - holding its body without room round it.
+    // label's tooltip - holding its body without room round it.
     Expander& PageView::addSection(const Section& section)
     {
         HeaderText header;
@@ -652,8 +652,8 @@ namespace SeeDocs_App
             Spacing{ k_headerSpacing },
             std::move(header)
         );
-        if (!section.hint.empty())
-            expander.header().hintText() << section.hint;
+        if (!section.tooltip.empty())
+            expander.header().tooltipText() << section.tooltip;
         m_parts.push_back(&expander);
         return expander;
     }
@@ -889,10 +889,10 @@ namespace SeeDocs_App
             span.onGetCellText([&group](Grids::GetCellTextEvent& event) {
                 writeLabel(event.text(), group);
             });
-            if (!group.hint.empty())
+            if (!group.tooltip.empty())
             {
-                span.onGetCellHint([&group](Grids::GetCellHintEvent& event) {
-                    writeRuns(event.text(), group.hint);
+                span.onGetCellTooltip([&group](Grids::GetCellTooltipEvent& event) {
+                    writeRuns(event.text(), group.tooltip);
                 });
             }
             target = &groupRow.body();
@@ -904,10 +904,10 @@ namespace SeeDocs_App
             Text label;
             writeLabel(label, group);
             header.setHeaderText(label);
-            if (!group.hint.empty())
+            if (!group.tooltip.empty())
             {
-                header.onGetHint([&group](GetHintEvent& event) {
-                    writeRuns(event.text, group.hint);
+                header.onGetTooltip([&group](GetTooltipEvent& event) {
+                    writeRuns(event.text, group.tooltip);
                 });
             }
             connectLinks(header);
@@ -942,22 +942,22 @@ namespace SeeDocs_App
                 m_firstRow = &gridRow;
             if (!row.anchor.empty())
                 m_rowAnchors.try_emplace(row.anchor, RowAnchor{ &expander, target, &gridRow });
-            if (!row.hint.empty())
+            if (!row.tooltip.empty())
             {
-                gridRow.onGetCellHint([&row](Grids::GetCellHintEvent& event) {
+                gridRow.onGetCellTooltip([&row](Grids::GetCellTooltipEvent& event) {
                     if (event.column().tag().value == 0)
-                        writeSignature(event.text(), row.hint, false, row.language);
+                        writeSignature(event.text(), row.tooltip, false, row.language);
                 });
             }
             // The mark previews its footnote over the row, as a link previews its anchor.
             if (anchor.has_value())
             {
-                gridRow.onGetCellHint([&row](Grids::GetCellHintEvent& event) {
+                gridRow.onGetCellTooltip([&row](Grids::GetCellTooltipEvent& event) {
                     if (event.column().tag().value != k_markColumn)
                         return;
-                    GetHintEvent& hint = event.hint();
-                    hint.placement = FormPlacement::Top;
-                    hint.writePreview(textOf(row.excerpt->blocks));
+                    GetTooltipEvent& tooltip = event.tooltip();
+                    tooltip.placement = FormPlacement::Top;
+                    tooltip.writePreview(textOf(row.excerpt->blocks));
                 });
             }
             // **A hint running over the empty cells before it** is written in the parent over
@@ -1059,7 +1059,7 @@ namespace SeeDocs_App
         });
         m_renders.push_back([&button, &command]() {
             button.text() = Text{ command.text };
-            button.hintText() = HintText{ command.hint };
+            button.tooltipText() = TooltipText{ command.tooltip };
         });
     }
 
@@ -1071,7 +1071,7 @@ namespace SeeDocs_App
         button.onGetState([this, &fact](GetStateEvent& event) {
             event.state.enabled = hasEditorCommand(appContext(), fact.source->language);
         });
-        button.onGetHint([this, &fact](GetHintEvent& event) {
+        button.onGetTooltip([this, &fact](GetTooltipEvent& event) {
             const SourceLanguage language = fact.source->language;
             if (hasEditorCommand(appContext(), language))
                 return;
@@ -1293,13 +1293,13 @@ namespace SeeDocs_App
         grid.onCellLinkContextPopup([this](Grids::CellLinkContextPopupEvent& event) {
             showLinkMenu(*event.popup.control, event.target, event.popup);
         });
-        // Over the cell, as a link's hint stands over its line - where the row has not answered
+        // Over the cell, as a link's tooltip stands over its line - where the row has not answered
         // for the cell already, as a method's row answers with its signatures.
-        grid.onGetCellHint([this](Grids::GetCellHintEvent& event) {
+        grid.onGetCellTooltip([this](Grids::GetCellTooltipEvent& event) {
             if (event.link().empty() || !event.text().empty())
                 return;
             if (writePreview(event.text(), event.link()))
-                event.hint().placement = FormPlacement::Top;
+                event.tooltip().placement = FormPlacement::Top;
         });
     }
 
@@ -1311,8 +1311,8 @@ namespace SeeDocs_App
         box.onLinkContextPopup([this](LinkContextPopupEvent& event) {
             showLinkMenu(event.sender(), event.target, event.popup);
         });
-        box.onGetLinkHint([this](GetLinkHintEvent& event) {
-            writePreview(event.hint.text, event.target);
+        box.onGetLinkTooltip([this](GetLinkTooltipEvent& event) {
+            writePreview(event.tooltip.text, event.target);
         });
     }
 

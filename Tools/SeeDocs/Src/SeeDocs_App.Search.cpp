@@ -557,7 +557,7 @@ namespace SeeDocs_App
             }
             if (kept == 0)
                 return;
-            section.hint = countWords(kept, total);
+            section.tooltip = countWords(kept, total);
             page.sections.push_back(std::move(section));
         }
 

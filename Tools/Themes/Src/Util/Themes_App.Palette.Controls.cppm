@@ -31,7 +31,7 @@ namespace Themes_App
         explicit ColorHarmonyItem(const CreateParams&, Args&&...);
         ColorHarmony& harmony() const { return m_harmony; }
     protected:
-        void nestedGetHint(GetHintEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
         void dropdown(DropdownEvent&) override;
         void paintIcon(PaintIconEvent&) override;
@@ -173,7 +173,7 @@ namespace Themes_App
         //  });
     }
 
-    void ColorHarmonyItem::nestedGetHint(GetHintEvent& event)
+    void ColorHarmonyItem::nestedGetTooltip(GetTooltipEvent& event)
     {
         event.placement = FormPlacement::BottomLeft;
         event.text << m_harmony.name();

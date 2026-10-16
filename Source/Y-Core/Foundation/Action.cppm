@@ -26,7 +26,7 @@ namespace ClaFi
         KeyModifiers modifiers{};
         [[nodiscard]] bool empty() const { return key == 0; }
         [[nodiscard]] bool matches(const KeyDownEvent&) const;
-        // "Ctrl+S", for a menu's shortcut column and for the hint line. Empty for a key with
+        // "Ctrl+S", for a menu's shortcut column and for the tooltip line. Empty for a key with
         // no name of its own, so that a caller never shows a modifier with nothing after it.
         [[nodiscard]] std::wstring text() const;
     };
@@ -112,14 +112,14 @@ namespace ClaFi
     public:
         [[nodiscard]] Text& text() { return m_text; }
         [[nodiscard]] const Text& text() const { return m_text; }
-        [[nodiscard]] HintText& hintText() { return m_hintText; }
-        [[nodiscard]] const HintText& hintText() const { return m_hintText; }
-        // Writes what this action says of itself into a hint, and does nothing to one that
+        [[nodiscard]] TooltipText& tooltipText() { return m_tooltipText; }
+        [[nodiscard]] const TooltipText& tooltipText() const { return m_tooltipText; }
+        // Writes what this action says of itself into a tooltip, and does nothing to one that
         // already says something. Every presenter is given it; a caller showing the command
         // somewhere the action is not attached - a line drawn by hand - asks for it here.
-        void getHint(GetHintEvent&) const;
+        void getTooltip(GetTooltipEvent&) const;
         //
-        [[nodiscard]] Shortcut shortcut() const; // the key shown on a menu line and in the hint
+        [[nodiscard]] Shortcut shortcut() const; // the key shown on a menu line and in the tooltip
         // Every key that runs it, the one shown first.
         [[nodiscard]] const ShortcutCollection& shortcuts() const { return m_shortcuts; }
         void setShortcut(Shortcut); // makes this the only key, and an empty one leaves none
@@ -199,7 +199,7 @@ namespace ClaFi
         static constexpr std::size_t k_presenterChannels = 7;
     private:
         Text m_text{};
-        HintText m_hintText{};
+        TooltipText m_tooltipText{};
         ShortcutCollection m_shortcuts{};
         AttachmentCollection m_attachments{};
     };
@@ -278,8 +278,8 @@ namespace ClaFi
         Props::ifThereIs<Shortcut>([&](const Shortcut& p) {
             addShortcut(p);
         }, args...);
-        Props::ifThereIs<HintText>([&](const HintText& p) {
-            m_hintText = p;
+        Props::ifThereIs<TooltipText>([&](const TooltipText& p) {
+            m_tooltipText = p;
         }, std::forward<Args>(args)...);
     }
 

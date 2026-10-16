@@ -144,7 +144,7 @@ namespace SeeDocs_App
             L"Browse",
             EndIcon::OpensWindow,
             VerticalAlign::Center,
-            HintText{ L"Picks the folder in the desktop's own dialog" },
+            TooltipText{ L"Picks the folder in the desktop's own dialog" },
             Button::OnClick{ [this](ClickEvent&) {
                 browse();
             } }

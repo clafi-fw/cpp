@@ -26,7 +26,7 @@ namespace ClaFi
     //export class MouseMoveEvent;
     //export class GetTextEvent;
     //export class GetChildTextEvent;
-    //export class GetHintEvent;
+    //export class GetTooltipEvent;
     //export class DoubleClickEvent;
     //export class PressDownEvent;
     //export struct CreateParams;
@@ -52,7 +52,7 @@ namespace ClaFi
         // The control's own text, handed out live. See Control-Foundation#control-text
         ControlText& text() { return m_text; }
         const ControlText& text() const { return m_text; }
-        HintText& hintText() { return m_hintText; }
+        TooltipText& tooltipText() { return m_tooltipText; }
         // What the control's text is laid out over, or none.
         [[nodiscard]] const TextFormat* textFormat() const override;
         void setTextFormat(const TextFormat& value) { m_textFormat = value; }
@@ -100,13 +100,13 @@ namespace ClaFi
         void adjustMetrics(AdjustMetricsEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;
         void getText(GetTextEvent&) const override;
-        void nestedGetHint(GetHintEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
     private:
         ControlMetrics m_metrics{};
         OptionalUiElement m_colorRules{};
         ControlText m_text{};
         TextFormat m_textFormat{};
-        HintText m_hintText{};
+        TooltipText m_tooltipText{};
     };
 
 
@@ -142,7 +142,7 @@ namespace ClaFi
         BIND_PROPERTY_ACTION(Text, appendText(p)); // the control's own text
         // What the text is laid out over. See Control-Foundation#richcontrol-textformat
         BIND_PROPERTY_ACTION(TextFormat, m_textFormat << p);
-        BIND_PROPERTY_ACTION(HintText, m_hintText = p); // the text the control offers as its hint
+        BIND_PROPERTY_ACTION(TooltipText, m_tooltipText = p); // the control's own tooltip
         // The control's own text, as a view.
         BIND_PROPERTY_ACTION(std::wstring_view, appendText(p));
         // The control's own text, as a literal.

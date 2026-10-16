@@ -7,7 +7,7 @@ export import :WithTextLayout;
 export import :Action;
 export import :Form;
 export import :PaintEvent;
-export import :Hint;
+export import :Tooltip;
 export import :SearchResult;
 export import :ContextMessage;
 export import :Traversal;

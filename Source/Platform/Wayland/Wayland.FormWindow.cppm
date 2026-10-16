@@ -50,8 +50,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         [[nodiscard]] int takeClickCount(IntPoint, std::uint32_t time);
         // **Which edge or corner this point sizes the window from**, as an xdg_toplevel resize
         // edge, or zero for a point that sizes nothing. Only a window the user is allowed to size
-        // has any: a menu and a hint are whatever their content came to, and a maximized window is
-        // what the compositor holds it to.
+        // has any: a menu and a tooltip are whatever their content came to, and a maximized window
+        // is what the compositor holds it to.
         [[nodiscard]] std::uint32_t borderResizeEdges(IntPoint);
         // A length stated at 100%, in the real pixels this window is drawn in.
         [[nodiscard]] int scaledLength(int length) const

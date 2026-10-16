@@ -1441,7 +1441,7 @@ namespace ClaFi
         m_builtBoundsX = breakAt;
         // A wrapping text broken at its box in the paint phase is one the calculate pass measured
         // and the paint could not find - unless it carries flex space, which shapes differently
-        // in the two phases, or is broken at a stated width, which an over-text hint is.
+        // in the two phases, or is broken at a stated width, which an over-text tooltip is.
         if constexpr (Diagnostic::Options::logTextLayout())
         {
             if (m_eventPhase == EventPhase::Paint && m_wrap && breakAt != k_maxFloat

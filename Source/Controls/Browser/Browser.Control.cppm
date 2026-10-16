@@ -102,7 +102,7 @@ namespace ClaFi::Browser
         [[nodiscard]] bool isOnRestoredPage() const { return m_onRestoredPage; }
     protected:
         virtual RichControl* visualPage(RichControl*) override;
-        void nestedGetHint(GetHintEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
         void getText(GetTextEvent&) const override;
         void paintIcon(PaintIconEvent&) override;
         void secondaryClicked(NestedClickEvent&) override;
@@ -320,7 +320,7 @@ namespace ClaFi::Browser
         // page with no icon there is one paintPageIcon leaves blank.
         virtual IconSize pageIconSize(PageData&) { return IconSize{ 0.0f }; }
         virtual void paintPageIcon(PageData&, PaintIconEvent&) {}
-        // How the root crumb shows its icon: beside its title, or alone with the title as its hint.
+        // How the root crumb shows its icon: by its title, or alone with the title as its tooltip.
         virtual ButtonViewMode rootCrumbViewMode() const { return ButtonViewMode::LeftIcon; }
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void nestedSideClick(SideClickEvent&) override;

@@ -312,8 +312,8 @@ namespace ClaFi::Controls
     void DropdownControlBase::getDropdownPartText(GetTextEvent& event) const
     {
         // **A strip that carries no text states none.** Its mark is its icon, and ButtonBase asks
-        // an icon-only control for its text to fill an empty hint - a chevron is not what a
-        // hint says.
+        // an icon-only control for its text to fill an empty tooltip - a chevron is not what a
+        // tooltip says.
         if (!m_config.textOnDropdown)
             return;
 

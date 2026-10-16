@@ -41,7 +41,7 @@ namespace ClaFi::Diagnostic
         using Grid = Controls::Grids::Dt::Grid;
         using CellSet = Controls::Grids::Dt::CellSet;
         using GetCellTextEvent = Controls::Grids::GetCellTextEvent;
-        using GetCellHintEvent = Controls::Grids::GetCellHintEvent;
+        using GetCellTooltipEvent = Controls::Grids::GetCellTooltipEvent;
         // The columns of the window grid, as their Tags.
         enum class WindowColumn
         {
@@ -114,12 +114,12 @@ namespace ClaFi::Diagnostic
         void writeBackend(Text&) const;
         void writeReading(GetCellTextEvent&) const;
         void writeFooter(GetTextEvent&) const;
-        // The hints: one per cell of each grid, the method on the caption, the curves on the
+        // The tooltips: one per cell of each grid, the method on the caption, the curves on the
         // chart.
-        void writeWindowHint(GetCellHintEvent&) const;
-        void writeReadingHint(GetCellHintEvent&) const;
-        static void writeMethodHint(GetHintEvent&);
-        static void writeChartHint(GetHintEvent&);
+        void writeWindowTooltip(GetCellTooltipEvent&) const;
+        void writeReadingTooltip(GetCellTooltipEvent&) const;
+        static void writeMethodTooltip(GetTooltipEvent&);
+        static void writeChartTooltip(GetTooltipEvent&);
         // The readings themselves. A metric that has measured nothing answers none.
         [[nodiscard]] std::optional<double> readingOf(Metric, Reading) const;
         [[nodiscard]] std::optional<double> paintTimeOf(Reading) const;
@@ -152,7 +152,7 @@ namespace ClaFi::Diagnostic
         static constexpr std::array<std::wstring_view, 4> k_windowRoleNames{
             L"Dialog",
             L"Menu",
-            L"Hint",
+            L"Tooltip",
             L"Timer"
         };
         static constexpr std::array<MetricSpec, 4> k_metricSpecs{ {

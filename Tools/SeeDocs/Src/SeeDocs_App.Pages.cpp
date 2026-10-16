@@ -53,7 +53,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_constantWord = L"constant";
         constexpr std::wstring_view k_variableWord = L"variable";
         constexpr std::wstring_view k_signatureJoin = L"\n";   // after the template head
-        constexpr std::wstring_view k_hintJoin = L" ";         // the same on a hint's one line
+        constexpr std::wstring_view k_tooltipJoin = L" ";      // the same on a tooltip's one line
         constexpr std::size_t k_maxTreeDepth = 16;   // what a base chain is followed to
         constexpr std::size_t k_valueLines = 3;      // a value cell's height, in lines
 
@@ -730,17 +730,17 @@ namespace SeeDocs_App
         // Sections
 
         Section& addSection(Page& page, const SectionKind kind, Runs heading,
-            std::wstring hint = {})
+            std::wstring tooltip = {})
         {
             page.sections.push_back({
                 .kind = kind,
                 .heading = std::move(heading),
-                .hint = std::move(hint)
+                .tooltip = std::move(tooltip)
             });
             return page.sections.back();
         }
 
-        // A table of rows under one heading or none, counted in the heading's hint.
+        // A table of rows under one heading or none, counted in the heading's tooltip.
         Section& addTableSection(Page& page, std::wstring heading, const ColumnSet& columnSet,
             TableGroups groups)
         {
@@ -748,7 +748,7 @@ namespace SeeDocs_App
             section.table.columns = columnSet.columns;
             section.table.header = columnSet.header;
             section.table.groups = std::move(groups);
-            section.hint = countOf(section.table.rowCount(), L"element");
+            section.tooltip = countOf(section.table.rowCount(), L"element");
             return section;
         }
 
@@ -1750,7 +1750,7 @@ namespace SeeDocs_App
         };
 
         // One owner's methods of one access as a group's rows, one per name: the name linked to
-        // the method's page, every overload's signature in the name's hint a line each, and the
+        // the method's page, every overload's signature in the name's tooltip a line each, and the
         // comment of the first overload that has one beside it.
         [[nodiscard]] TableGroup methodGroup(const Surface& surface, const Type& owner,
             const ReachedBase* reached, const std::span<const ReachedBase> above,
@@ -1767,7 +1767,7 @@ namespace SeeDocs_App
                     continue;
                 const Function& holder = commentHolder(function, above, language);
                 const Comment& comment = holder.comment;
-                Runs signature = signatureRuns(surface, owner, function, k_hintJoin);
+                Runs signature = signatureRuns(surface, owner, function, k_tooltipJoin);
                 const auto known = rowByName.find(function.name);
                 if (known == rowByName.end())
                 {
@@ -1778,15 +1778,15 @@ namespace SeeDocs_App
                     group.rows.push_back({
                         .cells = { { code(function.name, memberLink(owner, function.name)) },
                             hintRuns(surface, comment, owner.nameSpace) },
-                        .hint = std::move(signature),
+                        .tooltip = std::move(signature),
                         .language = language,
                         .site = siteOf(holder)
                     });
                     continue;
                 }
                 TableRow& row = group.rows[known->second.index];
-                row.hint.push_back(code(std::wstring{ k_signatureJoin }));
-                row.hint.insert(row.hint.end(), std::make_move_iterator(signature.begin()),
+                row.tooltip.push_back(code(std::wstring{ k_signatureJoin }));
+                row.tooltip.insert(row.tooltip.end(), std::make_move_iterator(signature.begin()),
                     std::make_move_iterator(signature.end()));
                 if (!known->second.commented && !comment.text.empty())
                 {
@@ -1848,7 +1848,7 @@ namespace SeeDocs_App
                 + std::wstring{ k_separator } + std::to_wstring(inherited) + L" inherited";
         }
 
-        // A member table over the type and its bases, its hint telling the own rows apart; its
+        // A member table over the type and its bases, its tooltip telling the own rows apart; its
         // rows take footnotes as asked. Nothing where neither the type nor a base has a member.
         template<typename GroupOf>
         void addMemberSection(Page& page, std::wstring heading, const ColumnSet& columnSet,
@@ -1860,7 +1860,7 @@ namespace SeeDocs_App
                 return;
             Section& section = addTableSection(page, std::move(heading), columnSet,
                 std::move(groups.groups));
-            section.hint = memberCount(groups.own, section.table.rowCount() - groups.own);
+            section.tooltip = memberCount(groups.own, section.table.rowCount() - groups.own);
             section.table.takesFootnotes = takesFootnotes;
         }
 
@@ -2300,8 +2300,8 @@ namespace SeeDocs_App
         }
 
         // A module's functions as rows, one per name: the name linked to the function's page,
-        // every overload's signature in the name's hint a line each, and the comment of the first
-        // overload that has one beside it.
+        // every overload's signature in the name's tooltip a line each, and the comment of the
+        // first overload that has one beside it.
         [[nodiscard]] TableRows functionRows(const Surface& surface, const ContentsModule& module)
         {
             TableRows rows;
@@ -2309,7 +2309,7 @@ namespace SeeDocs_App
             for (const FreeFunction* free : module.functions)
             {
                 const Function& function = free->function;
-                Runs signature = signatureRuns(surface, *free, k_hintJoin);
+                Runs signature = signatureRuns(surface, *free, k_tooltipJoin);
                 const auto known = rowByName.find(function.name);
                 if (known == rowByName.end())
                 {
@@ -2320,15 +2320,15 @@ namespace SeeDocs_App
                     rows.push_back({
                         .cells = { { code(function.name, exportLink(module, function.name)) },
                             hintRuns(surface, function.comment, free->nameSpace) },
-                        .hint = std::move(signature),
+                        .tooltip = std::move(signature),
                         .language = surface.languageOf(free->module),
                         .site = siteOf(function)
                     });
                     continue;
                 }
                 TableRow& row = rows[known->second.index];
-                row.hint.push_back(code(std::wstring{ k_signatureJoin }));
-                row.hint.insert(row.hint.end(), std::make_move_iterator(signature.begin()),
+                row.tooltip.push_back(code(std::wstring{ k_signatureJoin }));
+                row.tooltip.insert(row.tooltip.end(), std::make_move_iterator(signature.begin()),
                     std::make_move_iterator(signature.end()));
                 if (!known->second.commented && !function.comment.text.empty())
                 {
@@ -2394,8 +2394,8 @@ namespace SeeDocs_App
 
         // A folder's contents as one table: each module folded under its name, linked to its page,
         // and in it its types, functions and constants beside the word for each, under the
-        // constants' columns. The modules are counted with the rows in the heading's hint; nothing
-        // where no module has a row.
+        // constants' columns. The modules are counted with the rows in the heading's tooltip;
+        // nothing where no module has a row.
         void addContents(Page& page, const Surface& surface, const ContentsFolder& folder)
         {
             TableGroups modules;
@@ -2407,7 +2407,7 @@ namespace SeeDocs_App
                     .folded = true
                 };
                 if (module.header)
-                    group.hint = { plain(module.name) };
+                    group.tooltip = { plain(module.name) };
                 addKindGroup(group.groups, L"Types",
                     withEmptyCells(typeRows(surface, module.types), 1, 2));
                 addKindGroup(group.groups, L"Functions",
@@ -2423,7 +2423,7 @@ namespace SeeDocs_App
                 std::move(modules));
             section.table.groupColumn = k_exportsColumn;
             section.table.hintTakesEmptyCells = true;
-            section.hint += L" in " + countOf(moduleCount, k_moduleWord);
+            section.tooltip += L" in " + countOf(moduleCount, k_moduleWord);
         }
 
         // What stands under a path at every depth, counted: controls, types, modules, the folders
@@ -2660,7 +2660,7 @@ namespace SeeDocs_App
             }
         }
 
-        // A type as a hint over a link to it shows it
+        // A type as a tooltip over a link to it shows it
 
         using Lines = std::vector<std::wstring>;
 

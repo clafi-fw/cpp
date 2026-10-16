@@ -73,7 +73,7 @@ namespace ClaFi::Controls
     public:
         std::wstring_view diagnosticText() const override { return L"MenuCommand"; }
     protected:
-        void nestedGetHint(GetHintEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
     };
 
     export using BaseMenuForm = Form<ScrollBoxWith<StackPanel>>;
@@ -311,7 +311,7 @@ namespace ClaFi::Controls
             // icon leaves?
             MaxSize{ k_maxItemWidth, k_maxFloat },
             // An item writes the command's name and its key into its own line - see getText -
-            // so an action attached here says nothing further in a hint.
+            // so an action attached here says nothing further in a tooltip.
             PresenterRole::Line,
             std::forward<Args>(args)...
         }
@@ -379,10 +379,10 @@ namespace ClaFi::Controls
     {
     }
 
-    void MenuCommand::nestedGetHint(GetHintEvent& event)
+    void MenuCommand::nestedGetTooltip(GetTooltipEvent& event)
     {
-        MenuItemBase::nestedGetHint(event);
-        // An action says its own name and key - see Action::getHint - and this is what a
+        MenuItemBase::nestedGetTooltip(event);
+        // An action says its own name and key - see Action::getTooltip - and this is what a
         // command with none says instead. The strip writes the name under each icon and has
         // nowhere to put the key beside it, so this is where the two are said together.
         if (!event.text.empty())
@@ -390,7 +390,7 @@ namespace ClaFi::Controls
 
         GetTextEvent textEvent{ event.formContext(), *this, event.text, EventPhase::Paint };
         getText(textEvent);
-        // The hint reads the buffer rather than the answer, so a named text is put in it.
+        // The tooltip reads the buffer rather than the answer, so a named text is put in it.
         textEvent.materialise();
         if (event.text.empty())
             return;

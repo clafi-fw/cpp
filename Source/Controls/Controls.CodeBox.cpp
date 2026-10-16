@@ -139,9 +139,9 @@ namespace ClaFi::Controls
         return range.start <= pos && pos <= range.end();
     }
 
-    // ParameterHint
+    // ParameterTooltip
 
-    void ParameterHint::setCall(const Syntax::CompletionEntry& entry,
+    void ParameterTooltip::setCall(const Syntax::CompletionEntry& entry,
         const Syntax::SignatureParameters& parameters, const std::size_t argument)
     {
         m_text.clear();
@@ -153,7 +153,7 @@ namespace ClaFi::Controls
         {
             const std::wstring_view signature = entry.signature;
             m_text << TextStyleId::Code;
-            // A caret past the last parameter marks none, and the hint stands as it is.
+            // A caret past the last parameter marks none, and the tooltip stands as it is.
             std::size_t at = parameters.bracket;
             if (argument < parameters.names.size())
             {
@@ -171,15 +171,15 @@ namespace ClaFi::Controls
         invalidateFormAlign();
     }
 
-    void ParameterHint::getText(GetTextEvent& event) const
+    void ParameterTooltip::getText(GetTextEvent& event) const
     {
         event.text = m_text;
     }
 
-    ScaledSize ParameterHint::measureText(AlignEvent& event, ScaledSize asked,
+    ScaledSize ParameterTooltip::measureText(AlignEvent& event, ScaledSize asked,
         const Text& text)
     {
-        asked.x = std::min(asked.x, Hint::k_lineWidth * event.scaleFactor());
+        asked.x = std::min(asked.x, Tooltip::k_lineWidth * event.scaleFactor());
         return WithTextLayout<FormControlBase>::measureText(event, asked, text);
     }
 
@@ -207,7 +207,7 @@ namespace ClaFi::Controls
         m_completion = entries;
         m_completionRowsStale = true;
         hideCompletion();
-        hideParameterHint();
+        hideParameterTooltip();
     }
 
     void CodeBox::setTitleBlock(const Syntax::TitleBlock* block)
@@ -223,9 +223,9 @@ namespace ClaFi::Controls
         requestCompletion(true);
     }
 
-    void CodeBox::showParameterHint()
+    void CodeBox::showParameterTooltip()
     {
-        requestParameterHint(true);
+        requestParameterTooltip(true);
     }
 
     void CodeBox::setIndentUnit(const Syntax::IndentUnit& value)
@@ -315,9 +315,9 @@ namespace ClaFi::Controls
         // edit it does not follow: the list has just come down for it.
         if (completionShown() && !m_takingCompletion)
             requestCompletion(false);
-        // A hint up is about the call as it stood before the edit.
-        if (parameterHintShown())
-            requestParameterHint(false);
+        // A tooltip up is about the call as it stood before the edit.
+        if (parameterTooltipShown())
+            requestParameterTooltip(false);
     }
 
     void CodeBox::caretMoved()
@@ -328,14 +328,14 @@ namespace ClaFi::Controls
         StdActions::reindent.invalidateState();
         // The caret has left the name the list was about - a click, an arrow key, the focus going.
         hideCompletion();
-        // The hint follows the caret through the call and comes down where it leaves it - and
+        // The tooltip follows the caret through the call and comes down where it leaves it - and
         // where the focus leaves the box, whatever the caret stands in.
-        if (parameterHintShown())
+        if (parameterTooltipShown())
         {
             if (isFocused())
-                requestParameterHint(false);
+                requestParameterTooltip(false);
             else
-                hideParameterHint();
+                hideParameterTooltip();
         }
     }
 
@@ -354,20 +354,20 @@ namespace ClaFi::Controls
         switch (event.key)
         {
         case Keys::Space:
-            // Ctrl+Space is the list's and Ctrl+Shift+Space the hint's, only in a box that has
+            // Ctrl+Space is the list's and Ctrl+Shift+Space the tooltip's, only in a box that has
             // one: elsewhere each is a space.
             if (event.modifiers.ctrl && !event.modifiers.alt && writable)
             {
-                const bool hint = event.modifiers.shift;
-                const bool answered = hint
+                const bool tooltip = event.modifiers.shift;
+                const bool answered = tooltip
                     ? m_completion && m_lines.language().parameters
                     : m_completion || m_titleBlock;
                 if (answered)
                 {
                     event.handled = true;
                     m_completionTakesChar = false;
-                    if (hint)
-                        showParameterHint();
+                    if (tooltip)
+                        showParameterTooltip();
                     else
                         showCompletion();
                     return;
@@ -402,17 +402,17 @@ namespace ClaFi::Controls
             break;
 
         case Keys::Escape:
-            // The list first, then the hint: each press takes one window down.
+            // The list first, then the tooltip: each press takes one window down.
             if (shown)
             {
                 event.handled = true;
                 hideCompletion();
                 return;
             }
-            if (parameterHintShown())
+            if (parameterTooltipShown())
             {
                 event.handled = true;
-                hideParameterHint();
+                hideParameterTooltip();
                 return;
             }
             m_tabLeaves = true;
@@ -484,7 +484,7 @@ namespace ClaFi::Controls
             requestCompletion(true);
         // A bracket opened is what shows a call's signature by itself.
         if (character == L'(' || character == L'[')
-            requestParameterHint(true);
+            requestParameterTooltip(true);
     }
 
     std::size_t CodeBox::rowHome(const CaretHit caretHit) const
@@ -689,9 +689,9 @@ namespace ClaFi::Controls
         FloatRect anchor = caretRectInForm(line.start + line.caret);
         anchor.left = caretRectInForm(line.start + wordStart).left;
         m_completionList->show(std::move(lines), 0, FormPlacement::BottomLeft, anchor);
-        // The hint takes the side of the line the list has left - see updateParameterHint.
-        if (parameterHintShown())
-            requestParameterHint(false);
+        // The tooltip takes the side of the line the list has left - see updateParameterTooltip.
+        if (parameterTooltipShown())
+            requestParameterTooltip(false);
     }
 
     void CodeBox::buildCompletionItems(const Syntax::Language& language)
@@ -814,7 +814,7 @@ namespace ClaFi::Controls
     }
 
     // The part typed so far in the accent, the rest in the text's own ink, and the kind muted at
-    // the end of the line - a flex space lands every kind on the list's right edge. The hint is
+    // the end of the line - a flex space lands every kind on the list's right edge. The tooltip is
     // the signature in the code style and the sentence under it; a keyword, or an entry that says
     // no more than its name, has none.
     DropListLine CodeBox::completionLine(const CompletionItem& item, const std::size_t typed)
@@ -831,9 +831,9 @@ namespace ClaFi::Controls
         if (!entry || (entry->signature.empty() && entry->hint.empty()))
             return line;
         const std::wstring& signature = entry->signature.empty() ? entry->name : entry->signature;
-        line.hint << TextStyleId::Code << signature << PopTextStyle{};
+        line.tooltip << TextStyleId::Code << signature << PopTextStyle{};
         if (!entry->hint.empty())
-            line.hint << L"\n" << InkGrade::Muted << entry->hint << PopColor{};
+            line.tooltip << L"\n" << InkGrade::Muted << entry->hint << PopColor{};
         return line;
     }
 
@@ -856,13 +856,13 @@ namespace ClaFi::Controls
         m_completionOpening = false;
         m_completionExplicit = false;
         m_completionWaitsOnAlign = false;
-        // The hint beside the current row goes with the list - see DropList::hide.
+        // The tooltip beside the current row goes with the list - see DropList::hide.
         if (m_completionList.has_value())
             m_completionList->hide();
-        // And the hint over the call comes back to its own side of the line - asked even of a
+        // And the tooltip over the call comes back to its own side of the line - asked even of a
         // list already down, as one a click took a line from is. See DropList::pick
-        if (parameterHintShown())
-            requestParameterHint(false);
+        if (parameterTooltipShown())
+            requestParameterTooltip(false);
     }
 
     void CodeBox::ensureCompletionList()
@@ -879,8 +879,8 @@ namespace ClaFi::Controls
         });
         // A pass that sized the list again may have moved it to the other side of the line.
         m_completionList->setPlacedFunc([this]() {
-            if (parameterHintShown())
-                requestParameterHint(false);
+            if (parameterTooltipShown())
+                requestParameterTooltip(false);
         });
     }
 
@@ -937,31 +937,31 @@ namespace ClaFi::Controls
             realignFinishedWord(false);
     }
 
-    bool CodeBox::parameterHintShown() const
+    bool CodeBox::parameterTooltipShown() const
     {
-        return m_parameterHint.has_value() && m_parameterHint->visible();
+        return m_parameterTooltip.has_value() && m_parameterTooltip->visible();
     }
 
-    void CodeBox::requestParameterHint(const bool opening)
+    void CodeBox::requestParameterTooltip(const bool opening)
     {
-        // The hint reads the list's signatures in the language's own way: a box with no list,
+        // The tooltip reads the list's signatures in the language's own way: a box with no list,
         // one nothing can be typed into, or a language that reads no signature, shows none.
         if (!m_completion || readOnly() == ReadOnly::Yes || !m_lines.language().parameters)
             return;
-        m_parameterHintOpening = m_parameterHintOpening || opening;
-        m_parameterHintRequest.start(MilliSeconds{ 0u });
+        m_parameterTooltipOpening = m_parameterTooltipOpening || opening;
+        m_parameterTooltipRequest.start(MilliSeconds{ 0u });
     }
 
-    void CodeBox::updateParameterHint()
+    void CodeBox::updateParameterTooltip()
     {
-        // **The hint stands on a box that has been laid out** - see updateCompletion.
+        // **The tooltip stands on a box that has been laid out** - see updateCompletion.
         if (!form().contentAligned())
         {
-            m_parameterHintWaitsOnAlign = true;
+            m_parameterTooltipWaitsOnAlign = true;
             return;
         }
-        const bool opening = std::exchange(m_parameterHintOpening, false);
-        if (!opening && !parameterHintShown())
+        const bool opening = std::exchange(m_parameterTooltipOpening, false);
+        if (!opening && !parameterTooltipShown())
             return;
 
         const Syntax::Language& language = m_lines.language();
@@ -969,27 +969,27 @@ namespace ClaFi::Controls
         const CaretLine line = caretLine();
         // A bracket typed inside a comment or a string opens no call.
         m_lines.tokensOf(line.index, line.text, m_tokens);
-        if (!parameterHintShown() && Syntax::completionBlocked(m_tokens, line.caret))
+        if (!parameterTooltipShown() && Syntax::completionBlocked(m_tokens, line.caret))
         {
-            hideParameterHint();
+            hideParameterTooltip();
             return;
         }
         const std::optional<Syntax::CompletionCall> call =
             Syntax::completionCall(language, lines, line.index, line.caret);
         if (!call)
         {
-            hideParameterHint();
+            hideParameterTooltip();
             return;
         }
-        // The text's own routines are read as the hint opens; a hint up keeps its reading.
-        if (!parameterHintShown())
+        // The text's own routines are read as the tooltip opens; a tooltip up keeps its reading.
+        if (!parameterTooltipShown())
             readDeclarations();
         const std::size_t caret = line.start + line.caret;
         const Syntax::CompletionEntry* entry = Syntax::completionCallee(language, *m_completion,
             m_declarations, call->callee, caret);
         if (!entry)
         {
-            hideParameterHint();
+            hideParameterTooltip();
             return;
         }
         // A routine with no parameters says so. Any other name whose signature lists none - a type
@@ -999,54 +999,54 @@ namespace ClaFi::Controls
             || entry->kind == Syntax::CompletionKind::Procedure;
         if (parameters.names.empty() && !routine)
         {
-            hideParameterHint();
+            hideParameterTooltip();
             return;
         }
 
-        ensureParameterHint();
-        m_parameterHint->content().setCall(*entry, parameters, call->argument);
+        ensureParameterTooltip();
+        m_parameterTooltip->content().setCall(*entry, parameters, call->argument);
         // Above the caret's line, from where the call's bracket stands - on that line, which
         // may be one above. In the form's coordinates, which a placement is stated in. A list
-        // that stands above the line, for want of room below it, leaves the hint the side below.
+        // that stands above the line, for want of room below it, leaves the tooltip the side below.
         FloatRect anchor = caretRectInForm(caret);
         anchor.left = caretRectInForm(lines.start(call->line) + call->bracket).left;
         const bool listAbove = m_completionList.has_value() && m_completionList->standsAbove();
-        m_parameterHint->setPlacement(listAbove ? FormPlacement::BottomLeft : FormPlacement::Top,
+        m_parameterTooltip->setPlacement(listAbove ? FormPlacement::BottomLeft : FormPlacement::Top,
             anchor);
-        if (!parameterHintShown())
-            m_parameterHint->show();
+        if (!parameterTooltipShown())
+            m_parameterTooltip->show();
     }
 
-    void CodeBox::hideParameterHint()
+    void CodeBox::hideParameterTooltip()
     {
-        // A request still pending would put the hint back up after it was taken down.
-        m_parameterHintRequest.stop();
-        m_parameterHintOpening = false;
-        m_parameterHintWaitsOnAlign = false;
-        if (parameterHintShown())
-            m_parameterHint->hide();
+        // A request still pending would put the tooltip back up after it was taken down.
+        m_parameterTooltipRequest.stop();
+        m_parameterTooltipOpening = false;
+        m_parameterTooltipWaitsOnAlign = false;
+        if (parameterTooltipShown())
+            m_parameterTooltip->hide();
     }
 
-    void CodeBox::ensureParameterHint()
+    void CodeBox::ensureParameterTooltip()
     {
-        if (m_parameterHint.has_value())
+        if (m_parameterTooltip.has_value())
             return;
         const ThemeMetrics& metrics = themeMetrics();
-        m_parameterHint.emplace(
+        m_parameterTooltip.emplace(
             appContext(),
             // A window the pointer goes through, standing beside the list's own without taking
             // its place as the popup on the box - which one window at a time is.
-            WindowRole::Hint,
+            WindowRole::Tooltip,
             this,
             Interactivity::None,
-            UiElement::Hint,
+            UiElement::Tooltip,
             WordWrap::Yes,
             metrics.secondaryWindow,
             metrics.secondaryWindowShadow
         );
         // Sized by the signature it shows, which changes under it as the caret moves.
-        m_parameterHint->setAutoFit(AutoFit::Yes);
-        m_parameterHint->setDropdownClearance(2.0f);
+        m_parameterTooltip->setAutoFit(AutoFit::Yes);
+        m_parameterTooltip->setDropdownClearance(2.0f);
     }
 
     CodeBox::CaretLine CodeBox::caretLine() const

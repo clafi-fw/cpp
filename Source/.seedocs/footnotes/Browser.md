@@ -23,7 +23,7 @@ Only the root crumb asks, as it is given its page. A line of a crumb's list size
 and asks only for the paint.
 
 The view mode comes from BrowserControl::rootCrumbViewMode - `LeftIcon` beside the title, or
-`IconOnly` with the title as the hint.
+`IconOnly` with the title as the tooltip.
 
 ## CanRenamePageEvent
 

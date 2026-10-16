@@ -30,7 +30,7 @@ namespace ClaFi::Controls
         template<typename Handler, typename... Args>
         Button& addAnswer(std::wstring_view caption, Handler&& onClick, Args&&... args);
         // The rule set the band wears.
-        static constexpr UiElement k_colorRules{ UiElement::Hint };
+        static constexpr UiElement k_colorRules{ UiElement::Tooltip };
     protected:
         void secondaryClicked(NestedClickEvent&) override {} // an answer acts on its own click
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;

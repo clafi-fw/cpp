@@ -72,7 +72,7 @@ namespace ClaFi
     {
         enum class FolderDisplayPurpose
         {
-            ToDisplay,    // a hint, which takes no click
+            ToDisplay,    // a tooltip, which takes no click
             ToCreate,     // the folder is still to be made, and only the system's part stands
             ToDelete      // the folder is asking to be deleted
         };
@@ -332,7 +332,7 @@ namespace ClaFi
         ) },
         m_autoButton{ m_themeRow.add<ToolButton>(
             L"Auto",
-            HintText{ L"Follow system" },
+            TooltipText{ L"Follow system" },
             ButtonViewMode::IconOnly,
             k_themeIconSize,
             OnPaintIcon{ Icons::SunMoonIcon::paint },
@@ -374,7 +374,7 @@ namespace ClaFi
             MinSize{ k_sliderWidth, 0.0f },
             MaxSize{ k_sliderWidth, k_maxFloat },
             ScrollButtons::No,
-            HintText{ L"Scales the UI on top of the system scale" }
+            TooltipText{ L"Scales the UI on top of the system scale" }
         ) },
 #if CLAFI_TEXT_MOVING
         m_zAnimationRow{ m_interfaceGroup.add<StackPanel>(
@@ -394,7 +394,7 @@ namespace ClaFi
             MaxSize{ k_sliderWidth, k_maxFloat },
             ScrollButtons::No,
             FineAdjust::No,
-            HintText{ L"How far controls move in depth under the pointer" }
+            TooltipText{ L"How far controls move in depth under the pointer" }
         ) },
 #endif
         // **No room at the sides**, so the box stands where a label's text stands. A check box is
@@ -403,7 +403,7 @@ namespace ClaFi
         // above and below is the theme's, which is what holds the row's height.
         m_alwaysOnTop{ m_interfaceGroup.add<CheckBox>(
             L"Always on top",
-            HintText{ L"Keep above others" },
+            TooltipText{ L"Keep above others" },
             Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
         ) },
         m_performanceSection{ m_options.addSection(L"Performance / Display") },
@@ -482,7 +482,7 @@ namespace ClaFi
             appContext().gpuAcceleration()->set(!appContext().usingGpu());
             m_gpuAcceleration.invalidateState();
         });
-        m_gpuAcceleration.onGetHint([](GetHintEvent& event) {
+        m_gpuAcceleration.onGetTooltip([](GetTooltipEvent& event) {
             event.text << Fmt{
                 L"[b]On[/b][tabto 26] The windows are drawn through the graphics card\n"
                 L"[b]Off[/b][tabto 26] They are drawn on the CPU instead"
@@ -510,7 +510,7 @@ namespace ClaFi
             m_keepSettings.invalidateState();
         });
         // Unticked, what the answer is for. Ticked, where the settings are kept.
-        m_keepSettings.onGetHint([this](GetHintEvent& event) {
+        m_keepSettings.onGetTooltip([this](GetTooltipEvent& event) {
             if (appContext().configFolderExists())
             {
                 event.text << L"Settings are stored in";

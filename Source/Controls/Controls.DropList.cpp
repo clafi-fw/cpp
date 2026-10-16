@@ -21,7 +21,7 @@ namespace ClaFi::Controls
 {
     namespace
     {
-        constexpr float k_hintGap = 6.0f;   // how far the hint stands off the list's edge
+        constexpr float k_tooltipGap = 6.0f;   // how far the tooltip stands off the list's edge
 
         // Whether every modifier named is held, where any is named.
         [[nodiscard]] bool holdsAll(const KeyModifiers held, const KeyModifiers named)
@@ -59,19 +59,19 @@ namespace ClaFi::Controls
         event.text << m_list.lines()[m_line].text;
     }
 
-    void DropListRow::nestedGetHint(GetHintEvent& event)
+    void DropListRow::nestedGetTooltip(GetTooltipEvent& event)
     {
-        const Text& hint = m_list.lines()[m_line].hint;
-        if (hint.empty())
+        const Text& tooltip = m_list.lines()[m_line].tooltip;
+        if (tooltip.empty())
             return;
         // Beside the list at this row's height, on a rect spanning it so either side stands clear
         // of the rows. In the list form's coordinates, which the row's own bounds are in.
         const FloatRect listBounds = form().content().boundsInForm();
-        const float gap = scaler().scale(k_hintGap);
+        const float gap = scaler().scale(k_tooltipGap);
         const FloatRect row = boundsInForm();
         event.anchorRect = { listBounds.left - gap, row.top, listBounds.right + gap, row.bottom };
         event.placement = FormPlacement::Right;
-        event.text << hint;
+        event.text << tooltip;
     }
 
     void DropListRow::click(ClickEvent& event)
@@ -204,15 +204,15 @@ namespace ClaFi::Controls
         setCurrentRow(shown[target]);
     }
 
-    void DropListStack::showCurrentHint()
+    void DropListStack::showCurrentTooltip()
     {
         // A pass over a list that is down places nothing anyone can see.
         if (!form().visible())
             return;
         if (Control* row = currentItem())
-            form().hint().showRightNow(*row);
+            form().tooltip().showRightNow(*row);
         else
-            Hint::stopAndHide();
+            Tooltip::stopAndHide();
     }
 
     bool DropListStack::defaultCanFocusItem(Control& value)
@@ -278,8 +278,8 @@ namespace ClaFi::Controls
     void DropListStack::setCurrentRow(Control* row)
     {
         setCurrentItem(row);
-        // Into view on the pass that follows, which is also the pass the hint is put up from, or
-        // taken down from with no row - the hint is placed off the row's bounds, and those are
+        // Into view on the pass that follows, which is also the pass the tooltip is put up from, or
+        // taken down from with no row - the tooltip is placed off the row's bounds, and those are
         // the pass's to give.
         if (row)
             row->scrollIntoViewOnAlign();
@@ -347,8 +347,8 @@ namespace ClaFi::Controls
     {
         if (!shown())
             return;
-        // The hint beside the current row goes with the list.
-        Hint::stopAndHide();
+        // The tooltip beside the current row goes with the list.
+        Tooltip::stopAndHide();
         m_form->close();
     }
 
@@ -469,10 +469,10 @@ namespace ClaFi::Controls
         m_form->setAutoFit(AutoFit::Yes);
         m_form->setCloseAction(CloseAction::Hide);
         m_form->setDropdownClearance(m_options.clearance);
-        // The hint is placed off the current row's bounds, which the pass that lays the rows out
+        // The tooltip is placed off the current row's bounds, which the pass that lays the rows out
         // gives, so it is put up from that pass - and the owner told where the list now stands.
         m_aligned = m_form->onAligned([this](FormAlignedEvent&){
-            m_form->content().body().showCurrentHint();
+            m_form->content().body().showCurrentTooltip();
             if (m_placed)
                 m_placed();
         });

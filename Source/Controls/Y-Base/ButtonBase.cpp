@@ -358,24 +358,24 @@ namespace ClaFi::Controls
         event.text << FlexSpace{ k_endIconGap } << mark;
     }
 
-    void ButtonBase::nestedGetHint(GetHintEvent& event)
+    void ButtonBase::nestedGetTooltip(GetTooltipEvent& event)
     {
-        RichControl::nestedGetHint(event);
+        RichControl::nestedGetTooltip(event);
         if (event.text.empty() && m_viewMode == ButtonViewMode::IconOnly)
         {
             GetTextEvent textEvent(event.formContext(), *this, event.text, EventPhase::Paint);
             getText(textEvent);
-            // The hint reads the buffer rather than the answer, so a named text is put in it.
+            // The tooltip reads the buffer rather than the answer, so a named text is put in it.
             textEvent.materialise();
         }
     }
 
-    // **An icon-only button does not lay its text out.** Its words are what the hint says - see
-    // nestedGetHint - and paintText draws none of them, so they take no space in either pass.
+    // **An icon-only button does not lay its text out.** Its words are what the tooltip says - see
+    // nestedGetTooltip - and paintText draws none of them, so they take no space in either pass.
     // calculateContent answers for that mode with the icon alone, and the align pass re-measures a
     // wrapping text against the box the control was granted and takes that answer as its content:
     // a button measuring words it never shows comes out as tall as they are wrapped in its own
-    // width - three lines for a three-word hint - and spills out of the bar it stands in.
+    // width - three lines for a three-word tooltip - and spills out of the bar it stands in.
     ScaledSize ButtonBase::measureText(AlignEvent& event, ScaledSize asked,
         const Text& text)
     {

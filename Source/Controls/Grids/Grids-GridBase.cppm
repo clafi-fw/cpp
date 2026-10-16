@@ -46,8 +46,8 @@ namespace ClaFi::Controls::Grids
         DECLARE_EVENT(GetCellEditorTextEvent, OnGetCellEditorText, onGetCellEditorText)
         // The text an in-place edit was left with, on its way back to the cell's source. See Grids
         DECLARE_EVENT(AcceptCellTextEvent, OnAcceptCellText, onAcceptCellText)
-        // The hint for one cell, asked while the pointer rests on it. See Grids
-        DECLARE_EVENT(GetCellHintEvent, OnGetCellHint, onGetCellHint)
+        // The tooltip for one cell, asked while the pointer rests on it. See Grids
+        DECLARE_EVENT(GetCellTooltipEvent, OnGetCellTooltip, onGetCellTooltip)
         // A link in one cell's text was clicked, and no row listener took it. See Grids
         DECLARE_EVENT(CellLinkClickEvent, OnCellLinkClick, onCellLinkClick)
         // The menu for a link in one cell is asked for, and no row listener showed one. See Grids

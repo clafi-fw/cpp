@@ -243,12 +243,12 @@ namespace ClaFi::Controls::Grids
         return column.cellTextFormat();
     }
 
-    void RowBase::getCellHint(GetCellHintEvent& event)
+    void RowBase::getCellTooltip(GetCellTooltipEvent& event)
     {
         emitEvent(event);
         if (!event.propagationStopped())
         {
-            m_descriptor.m_owner.getCellHint(event);
+            m_descriptor.m_owner.getCellTooltip(event);
         }
     }
 
@@ -609,12 +609,12 @@ namespace ClaFi::Controls::Grids
         scrollCellIntoView(cellRect);
     }
 
-    // **A cell says what its column is too narrow to show**, which is the over-text hint
-    // Control::nestedGetHint offers for a control's own text - see that one for the shape of the
+    // **A cell says what its column is too narrow to show**, which is the over-text tooltip
+    // Control::nestedGetTooltip offers for a control's own text - see that one for the shape of the
     // answer. A row draws its cells rather than holding a control per cell, so the question is
     // asked of the row about one of its cells, and every part of the answer is worked out here
     // rather than read off what a paint recorded.
-    void RowBase::nestedGetHint(GetHintEvent& event)
+    void RowBase::nestedGetTooltip(GetTooltipEvent& event)
     {
         // **Only the row the hover names answers.** The walk that asks this climbs from the control
         // under the pointer, so a row holding the hovered one is asked in its turn - and the
@@ -632,20 +632,20 @@ namespace ClaFi::Controls::Grids
         if (cellRect.empty())
             return;
 
-        // **The cell's own hint first.** Whoever answers for the cell's text may answer for its
-        // hint the same way, and the anchor is set ahead so a placement against the cell needs
+        // **The cell's own tooltip first.** Whoever answers for the cell's text may answer for its
+        // tooltip the same way, and the anchor is set ahead so a placement against the cell needs
         // nothing more. Only a cell nobody spoke for goes on to repeat the words its column cut.
         event.anchorRect = cellRect;
         const std::wstring_view link = m_hoveredLink.column == hoveredColumn
             ? std::wstring_view{ m_hoveredLink.target }
             : std::wstring_view{};
-        GetCellHintEvent cellEvent{ *this, *hoveredColumn, event, link };
-        getCellHint(cellEvent);
+        GetCellTooltipEvent cellEvent{ *this, *hoveredColumn, event, link };
+        getCellTooltip(cellEvent);
         if (!event.text.empty())
             return;
 
         // The fit and the placement are both stated over the box the text is drawn in, so the
-        // hint stands on the words it repeats and appears exactly when they are cut.
+        // tooltip stands on the words it repeats and appears exactly when they are cut.
         const FloatRect textBounds = cellTextBounds(*hoveredColumn, cellRect);
         if (textBounds.empty())
             return;
@@ -658,15 +658,15 @@ namespace ClaFi::Controls::Grids
         if (!trimmed)
             return;
 
-        // Gathered into the hint's own buffer rather than copied into it: a Text holding an
+        // Gathered into the tooltip's own buffer rather than copied into it: a Text holding an
         // lvalue item list shares that list by reference, and this one's would be the local
-        // above. Reached only once a hint is going up, so the second gather costs a hover.
+        // above. Reached only once a tooltip is going up, so the second gather costs a hover.
         doGetCellText(*hoveredColumn, event.text);
         event.format = cellTextFormat(*hoveredColumn);
-        // **The hint stands on the glyphs, not on the box they were given.** The column's vertical
-        // anchor moves the block inside that box - paintCell states the same anchor - and the
-        // placement lands the hint's own first glyph on this rect's top left. The width is the
-        // box's, which is the width the lines were broken at.
+        // **The tooltip stands on the glyphs, not on the box they were given.** The column's
+        // vertical anchor moves the block inside that box - paintCell states the same anchor - and
+        // the placement lands the tooltip's own first glyph on this rect's top left. The width is
+        // the box's, which is the width the lines were broken at.
         const TextAnchor anchor = {
             hoveredColumn->verticalTextAnchor(),
             HorizontalTextAnchor::None,
@@ -729,9 +729,9 @@ namespace ClaFi::Controls::Grids
         if (hovered == m_hoveredLink)
             return;
         hoverLink(hovered);
-        // **A link is a part of the cell** the pointer enters and leaves, and the cell's hint
-        // answers for it - so the hint is told the part changed, as a text box tells it of a link.
-        Hint::hoveredZoneChanged();
+        // **A link is a part of the cell** the pointer enters and leaves, and the cell's tooltip
+        // answers for it - so the tooltip is told the part changed, as a text box does for a link.
+        Tooltip::hoveredZoneChanged();
     }
 
     void RowBase::hoverLeave()
@@ -887,11 +887,11 @@ namespace ClaFi::Controls::Grids
         scrollIntoView(cellRect);
     }
 
-    void RowBase::setHoveredColumn(const Column* value, bool initiateHint)
+    void RowBase::setHoveredColumn(const Column* value, bool initiateTooltip)
     {
         // The row half of the cell identity. This is the only place both halves are
         // known, which is why hover routes through the row rather than the descriptor.
-        descriptor().setHoveredCell(this, value, initiateHint);
+        descriptor().setHoveredCell(this, value, initiateTooltip);
     }
 
     void RowBase::preCalcColumn(const FormContext& formContext, Column& column)

@@ -95,7 +95,7 @@ namespace ClaFi::Controls
         void nestedKeyDown(KeyDownEvent&) override;
         void thumbPressDown() override;
         void changed(SliderChangeEvent&) override;
-        void getThumbHint(GetHintEvent&) override;
+        void getThumbTooltip(GetTooltipEvent&) override;
         float stepSize() override { return 1.0f; }
         float buttonSize(const AppTheme&) override { return 24.0f; }
 
@@ -115,13 +115,13 @@ namespace ClaFi::Controls
         virtual Color thumbColor(PaintEvent&, FloatPoint&);
         // Draws the slot over the part of the range the span names.
         virtual void paintSlot(PaintEvent&, const FloatRect&, SlotSpan);
-        // The value the thumb's hint states. A slider that writes none shows no hint.
-        virtual void writeValueHint(Text&, EventPhase) const {}
+        // The value the thumb's tooltip states. A slider that writes none shows no tooltip.
+        virtual void writeValueTooltip(Text&, EventPhase) const {}
     private:
         // Opens the finer slider under this one and runs it until it closes.
         void showFineSlider();
-        // Puts the hint up at once, where the slider writes a value.
-        void showValueHint();
+        // Puts the tooltip up at once, where the slider writes a value.
+        void showValueTooltip();
     private:
         // The share of the range a finer slider spans.
         static constexpr float k_fineShare = 0.1f;
@@ -232,28 +232,28 @@ namespace ClaFi::Controls
     {
         SliderBase::nestedKeyDown(event);
         if (event.handled)
-            showValueHint();
+            showValueTooltip();
     }
 
     void Slider::thumbPressDown()
     {
-        showValueHint();
+        showValueTooltip();
     }
 
     void Slider::changed(SliderChangeEvent& event)
     {
-        showValueHint();
+        showValueTooltip();
         SliderBase::changed(event);
     }
 
     // The alignment is a marker, so a slider writing no value still answers an empty text, and
-    // the hint goes on to ask the slider's parents.
-    void Slider::getThumbHint(GetHintEvent& event)
+    // the tooltip goes on to ask the slider's parents.
+    void Slider::getThumbTooltip(GetTooltipEvent& event)
     {
         event.placement = FormPlacement::Top;
         event.hideOnUserInput = false;
         event.text << TextAlign::Center;
-        writeValueHint(event.text, event.phase);
+        writeValueTooltip(event.text, event.phase);
     }
 
     void Slider::adjustButtonPaint(AdjustPaintEvent& event)
@@ -462,14 +462,14 @@ namespace ClaFi::Controls
         popup.execute();
     }
 
-    // A thumb answering no text hands the hint on to its parents, so raising it on a slider
-    // that writes no value would put up whatever hint the slider stands in.
-    void Slider::showValueHint()
+    // A thumb answering no text hands the tooltip on to its parents, so raising it on a slider
+    // that writes no value would put up whatever tooltip the slider stands in.
+    void Slider::showValueTooltip()
     {
         Text value{};
-        writeValueHint(value, EventPhase::Calculate);
+        writeValueTooltip(value, EventPhase::Calculate);
         if (!value.empty())
-            form().hint().showRightNow(thumb());
+            form().tooltip().showRightNow(thumb());
     }
 
     // FineSlider

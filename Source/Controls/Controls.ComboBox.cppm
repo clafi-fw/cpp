@@ -133,7 +133,7 @@ namespace ClaFi::Controls
     protected:
         void paintIcon(PaintIconEvent&) override;
         void getText(GetTextEvent&) const override;
-        void nestedGetHint(GetHintEvent&) override;
+        void nestedGetTooltip(GetTooltipEvent&) override;
         void click(ClickEvent&) override;
         ScaledSize calculateContent(AlignEvent& event) override {
             return Button::calculateContent(event);
@@ -314,10 +314,10 @@ namespace ClaFi::Controls
         m_comboBox.itemFaceText(m_comboBox.items()[m_itemIndex], event.text, event.phase());
     }
 
-    void ComboBoxItemControl::nestedGetHint(GetHintEvent& event)
+    void ComboBoxItemControl::nestedGetTooltip(GetTooltipEvent& event)
     {
-        event.text << m_comboBox.items()[m_itemIndex].hintText();
-        Button::nestedGetHint(event);
+        event.text << m_comboBox.items()[m_itemIndex].tooltipText();
+        Button::nestedGetTooltip(event);
     }
 
     void ComboBoxItemControl::click(ClickEvent& event)

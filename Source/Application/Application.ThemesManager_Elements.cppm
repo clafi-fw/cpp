@@ -45,9 +45,9 @@ namespace ClaFi
 
     // Indexed by UiElement, so it and this table must stay in step.
     export constexpr std::array<UiElementDescriptor, static_cast<std::size_t>(UiElement::Count)> k_uiElements{
-        // **A window root.** Menu and Hint are the other two, and the three carry the same pair -
-        // the surface the window is filled with and the ink everything in it starts from - and
-        // the window's frame: the stroke around it and the shadow it casts. Nothing is under a
+        // **A window root.** Menu and Tooltip are the other two, and the three carry the same
+        // pair - the surface the window is filled with and the ink everything in it starts from -
+        // and the window's frame: the stroke around it and the shadow it casts. Nothing is under a
         // root, so this one has no base - it stands on the bare colour of the mode.
         UiElementDescriptor{
             .name = L"Dialog",
@@ -101,9 +101,9 @@ namespace ClaFi
             .isWindowRoot = true
         },
         UiElementDescriptor{
-            .name = L"Hint",
-            .codeName = L"hint",
-            .token = L"Hint",
+            .name = L"Tooltip",
+            .codeName = L"tooltip",
+            .token = L"Tooltip",
             .isWindowRoot = true
         },
         // Its stroke is the line a divider row of a grid carries.

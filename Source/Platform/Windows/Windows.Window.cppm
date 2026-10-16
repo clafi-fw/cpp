@@ -488,7 +488,7 @@ namespace ClaFi::PlatformImplementation::Windows
         DWORD flags = 0;
         switch (m_Role)
         {
-        case WindowRole::Hint:
+        case WindowRole::Tooltip:
             [[fallthrough]];
         case WindowRole::Menu:
             flags = SW_SHOWNA;
@@ -1165,20 +1165,20 @@ namespace ClaFi::PlatformImplementation::Windows
             className = k_popupClassName;
             exStyle |= WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW;
             break;
-        case WindowRole::Hint:
+        case WindowRole::Tooltip:
             className = k_popupClassName;
-            // **Not topmost.** A hint window is **owned** by the window whose control it is about -
-            // every form builds one - and an owned popup always stands above its owner, which is
-            // the whole of what a hint needs. Topmost is what an unowned window needed instead,
-            // and it put the hint over every other application on the screen as well.
+            // **Not topmost.** A tooltip window is **owned** by the window whose control it is
+            // about - every form builds one - and an owned popup always stands above its owner,
+            // which is the whole of what a tooltip needs. Topmost is what an unowned window needed
+            // instead, and it put the tooltip over every other application on the screen as well.
             //
             // **And not** WS_EX_TRANSPARENT. That style is two things at once: the pointer falls
             // through the window, and the window is not painted until every sibling beneath it
-            // that this thread made has been painted. The second is what a hint cannot have - it
+            // that this thread made has been painted. The second is what a tooltip cannot have - it
             // stands over a form that repaints continuously while a slider is dragged under it,
             // and its own paint is held back for as long as that lasts, however often it is
             // invalidated and updated. The pointer falls through by the hit test instead, which
-            // is the half of it a hint wanted - see FormWindow's WM_NCHITTEST. Its fade goes
+            // is the half of it a tooltip wanted - see FormWindow's WM_NCHITTEST. Its fade goes
             // through the composition visual - see FormWindow::setAlpha.
             exStyle |= WS_EX_NOACTIVATE;
             break;

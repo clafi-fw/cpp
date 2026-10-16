@@ -71,12 +71,12 @@ namespace ClaFi::Syntax
     export struct CompletionEntry;
     export using CompletionEntries = std::vector<CompletionEntry>;
 
-    // A name a host offers for completion, and what a hint says about it. See Syntax
+    // A name a host offers for completion, and what a tooltip says about it. See Syntax
     export struct CompletionEntry
     {
         std::wstring name;
         CompletionKind kind{ CompletionKind::Variable };
-        std::wstring signature;        // the line a hint shows - empty where the name is all of it
+        std::wstring signature;        // the tooltip's line - empty where the name is all of it
         std::wstring hint;             // what it does, in a sentence
         std::wstring type;             // the type it holds or a function answers - empty for none
         std::wstring parent;           // the class this one derives from - empty for none
@@ -88,7 +88,7 @@ namespace ClaFi::Syntax
     // A key a text's title block states, and the values it takes. See Syntax
     export struct TitleKey
     {
-        // The key: its name, of kind Key, the line a hint shows and the hint's sentence.
+        // The key: its name, of kind Key, the line a tooltip shows and its hint.
         CompletionEntry entry;
         bool list{ false };          // whether it takes several values, a comma between each
         CompletionEntries values;    // what it takes, each of kind Value - empty for any text

@@ -34,11 +34,11 @@ namespace SeeDocs_App
     export using Cells = std::vector<Runs>;
 
     // What a page offers whoever shows it - SeeDocs as a button, a generator not at all: the
-    // button's caption, its hint, and what it is about, which the shower spelled and reads back.
+    // button's caption, its tooltip, and what it is about, which the shower spelled and reads back.
     export struct Command
     {
         std::wstring text;
-        std::wstring hint;
+        std::wstring tooltip;
         std::wstring target;
     };
 
@@ -121,7 +121,7 @@ namespace SeeDocs_App
     };
 
     // A row of a table: its cells, the type it stands for where it does, what the first cell's
-    // hint shows where it has one, the note the declaration's comment references, the comment
+    // tooltip shows where it has one, the note the declaration's comment references, the comment
     // the row's hint is read from, and what the row offers at its end.
     export struct TableRow
     {
@@ -130,8 +130,8 @@ namespace SeeDocs_App
         const Type* type{ nullptr };
         // The kind of page the first cell opens, which marks the cell where no type does.
         std::optional<PageKind> pageKind;
-        Runs hint;   // a method's signature, set as code
-        SourceLanguage language{ SourceLanguage::Cpp };   // what the hint's code is written in
+        Runs tooltip;   // a method's signature, set as code
+        SourceLanguage language{ SourceLanguage::Cpp };   // what the tooltip's code is written in
         std::optional<Excerpt> excerpt;
         std::optional<CommentSite> site;
         std::optional<Command> command;
@@ -152,7 +152,7 @@ namespace SeeDocs_App
     export struct TableGroup
     {
         Runs label;
-        Runs hint;   // the label in full, where the label is short for it
+        Runs tooltip;   // the label in full, where the label is short for it
         std::optional<PageKind> pageKind;   // the kind of page the label opens, which marks it
         LabelPlacement placement{ LabelPlacement::Above };
         bool folded{ false };   // the rows start folded away under the label
@@ -212,7 +212,7 @@ namespace SeeDocs_App
     {
         SectionKind kind{ SectionKind::Table };
         Runs heading;
-        std::wstring hint;   // the heading's hint: what the section holds, counted; empty for none
+        std::wstring tooltip;   // over the heading: what the section holds, counted; empty for none
         Excerpt excerpt;
         Branches branches;
         bool treeOpen{ false };   // whether the tree's nodes start open
@@ -411,14 +411,14 @@ namespace SeeDocs_App
     // A link cut at its last ::; nothing for one holding none.
     export [[nodiscard]] std::optional<MemberLink> readMemberLink(std::wstring_view link);
 
-    // A declaration as a hint shows it: code, in the language it is written in.
+    // A declaration as a tooltip shows it: code, in the language it is written in.
     export struct Preview
     {
         Runs code;
         SourceLanguage language{ SourceLanguage::Cpp };
     };
 
-    // What a hint over a link to a type shows: an alias's, a struct's, a union's or an enum's
+    // What a tooltip over a link to a type shows: an alias's, a struct's, a union's or an enum's
     // declaration, written as its language writes one; nothing for any other link.
     export [[nodiscard]] std::optional<Preview> previewOf(const Surface&, std::wstring_view link);
 }

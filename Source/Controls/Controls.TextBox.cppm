@@ -64,13 +64,13 @@ namespace ClaFi::Controls
         InputStamp stamp;      // the press that followed the link
     };
 
-    // The hint of the link under the pointer is being asked for. See Controls
-    export struct GetLinkHintEvent : public EventOf<TextBox>
+    // The tooltip of the link under the pointer is being asked for. See Controls
+    export struct GetLinkTooltipEvent : public EventOf<TextBox>
     {
-        GetLinkHintEvent(TextBox&, std::wstring_view target, TextRange range, GetHintEvent&);
+        GetLinkTooltipEvent(TextBox&, std::wstring_view target, TextRange range, GetTooltipEvent&);
         std::wstring_view target;   // what the link names, as the text states it
         TextRange range;            // the text the link covers
-        GetHintEvent& hint;         // the hint itself: its text, placement and anchor
+        GetTooltipEvent& tooltip;   // the tooltip itself: its text, placement and anchor
     };
 
     // The menu for a link under the pointer is being asked for. See Controls
@@ -100,8 +100,8 @@ namespace ClaFi::Controls
         DECLARE_EVENT(TextEditEvent, OnTextEdit, onTextEdit)
         // A link in the box's text was followed. See Controls
         DECLARE_EVENT(LinkClickEvent, OnLinkClick, onLinkClick)
-        // The hint of the link under the pointer is being asked for. See Controls
-        DECLARE_EVENT(GetLinkHintEvent, OnGetLinkHint, onGetLinkHint)
+        // The tooltip of the link under the pointer is being asked for. See Controls
+        DECLARE_EVENT(GetLinkTooltipEvent, OnGetLinkTooltip, onGetLinkTooltip)
         // The menu for a link under the pointer is being asked for. See Controls
         DECLARE_EVENT(LinkContextPopupEvent, OnLinkContextPopup, onLinkContextPopup)
     public:
@@ -199,8 +199,8 @@ namespace ClaFi::Controls
         // Mouse events
         void mouseMove(MouseMoveEvent&) override;
         void hoverLeave() override;
-        // The hint of the link under the pointer, where there is one, and the box's own otherwise.
-        void nestedGetHint(GetHintEvent&) override;
+        // The tooltip of the link under the pointer, where there is one, else the box's own.
+        void nestedGetTooltip(GetTooltipEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         // Follows a link when the press and the release stayed on it and nothing was selected
         // between them. Defined in TextBox.cpp, with the rest of what a link does.
@@ -256,12 +256,12 @@ namespace ClaFi::Controls
             CaretHit hit;
             FloatRect page;
         };
-        // The link the pointer stands on, live or not: what its hint is about.
+        // The link the pointer stands on, live or not: what its tooltip is about.
         struct PointedLink
         {
             TextRange range{};
             std::wstring target{};
-            // The character under the pointer, which names the line the hint stands under.
+            // The character under the pointer, which names the line the tooltip stands under.
             std::size_t pos{ 0 };
         };
         // Where the box stands: what is selected, and the position the view shows at its top.
@@ -304,11 +304,11 @@ namespace ClaFi::Controls
         void followLink(const LinkSpan&, InputStamp);
         // Underlines a link, or none for an empty range, repainting only when that changes.
         void hoverLink(TextRange);
-        // Records the link the pointer stands on, and has the hint asked again when it changed.
+        // Records the link the pointer stands on, and has the tooltip asked again when it changed.
         void pointAtLink(const std::optional<LinkHit>&);
-        // What a link's hint says when no handler says it. See Controls#getlinkhintevent
-        void writeLinkHint(GetHintEvent&) const;
-        // Ends a link's hint, whoever wrote it, with how a link is followed in a box that types.
+        // What a link's tooltip says when no handler says it. See Controls#getlinktooltipevent
+        void writeLinkTooltip(GetTooltipEvent&) const;
+        // Ends a link's tooltip, whoever wrote it, with how a link is followed in a box that types.
         void writeFollowLine(Text&) const;
         // The line of the pointed link the pointer is on, in form coordinates.
         [[nodiscard]] FloatRect pointedLinkLine() const;
@@ -521,7 +521,7 @@ namespace ClaFi::Controls
 
         // Measured in **form** space by handing the form rect in: textBounds and caretRect both
         // answer in whatever space the rect they are given is in, so nothing is converted
-        // afterwards. Same route Control::nestedGetHint takes for an OverText anchor.
+        // afterwards. Same route Control::nestedGetTooltip takes for an OverText anchor.
         const FloatRect textBounds = this->textBounds(formContext(), boundsInForm());
         return caretRect(textBounds, { m_editProps.caretPos(), m_editProps.affinityTrailing });
     }

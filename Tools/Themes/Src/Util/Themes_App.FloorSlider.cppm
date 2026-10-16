@@ -27,7 +27,7 @@ namespace Themes_App
     protected:
         void paintSlot(PaintEvent&, const FloatRect&, SlotSpan) override;
         Color thumbColor(PaintEvent&, FloatPoint&) override;
-        void writeValueHint(Text&, EventPhase) const override;
+        void writeValueTooltip(Text&, EventPhase) const override;
     private:
         // The base at elevation 0 in dark mode, on the floor a relative position stands for.
         [[nodiscard]] Color sampleAt(float position, const Hsl& base) const;
