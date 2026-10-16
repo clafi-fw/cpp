@@ -306,8 +306,9 @@ options page is titled as every page is, and under the title holds the project's
 type, in a box that renames it - Return or leaving the box keeps the name, Escape puts it back, and
 an emptied box gives the project its folder's name - then its folder, and how long ago it was
 scanned with a Rescan button that reads the sources again. Under Sources stand the folders it reads
-in a grid, a row each: the folder, in full, with a browse button beside it, the two under one
-heading, whether the folders under it are read, and a cross that stops reading it. A row dragged
+in a grid with no header, a row each: the folder, in full, with a browse button beside it, an
+Include subfolders box that says whether the folders under it are read, and a cross that stops
+reading it. A row dragged
 moves among the others, and the sources are read in the order the rows stand in. A click on the
 folder of the row already picked edits it in place, on the words `Sources` writes, which are the
 words typed (`..` for a tree's own folder from its `.seedocs`); an edit refused keeps the editor
@@ -397,8 +398,9 @@ an enum's its underlying type after a colon. A folder's page gives its path on d
 each source holding it, with an Open folder button that shows it in the desktop's file manager -
 says what it holds at every depth,
 leads with the folders directly under
-its own, as the tree lists them, each with what it holds at every depth, and where the folder
-holds modules of its own goes on with its Content: one grid holding a row per module, closed, the
+its own, as the tree lists and marks them, each with what it holds at every depth,
+and where the folder
+holds modules of its own goes on with its Modules: one grid holding a row per module, closed, the
 module's name linked to its page, and under it the module's types, its functions and its
 constants, each run beside its word - Types, Functions, Constants - and each row with its hint,
 which runs over the cells its row leaves empty before it. A module's page holds a grid of its own

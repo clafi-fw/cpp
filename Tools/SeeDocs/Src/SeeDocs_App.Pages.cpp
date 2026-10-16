@@ -2272,7 +2272,8 @@ namespace SeeDocs_App
                         { plain(std::to_wstring(child.modules)) },
                         { plain(std::to_wstring(child.types)) },
                         { plain(std::to_wstring(child.controls)) }
-                    }
+                    },
+                    .pageKind = PageKind::Folder
                 });
             }
             TableGroups groups;
@@ -2418,7 +2419,7 @@ namespace SeeDocs_App
             if (modules.empty())
                 return;
             const std::size_t moduleCount = modules.size();
-            Section& section = addTableSection(page, L"Content", Columns::contents,
+            Section& section = addTableSection(page, L"Modules", Columns::contents,
                 std::move(modules));
             section.table.groupColumn = k_exportsColumn;
             section.table.hintTakesEmptyCells = true;

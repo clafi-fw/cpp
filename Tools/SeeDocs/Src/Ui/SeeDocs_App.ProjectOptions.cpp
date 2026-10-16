@@ -46,7 +46,6 @@ namespace SeeDocs_App
         constexpr float k_fieldWidth = 440.0f;   // the narrowest a field stands
         constexpr float k_noteWidth = 520.0f;    // the widest a note under a group runs
         constexpr float k_choiceIndent = 20.0f;  // a set of choices in from its caption
-        constexpr float k_browsePadding = 6.0f;  // the browse button's sides
         constexpr float k_removeSize = 20.0f;
         constexpr float k_removeMark = 8.0f;
         // The project's own rows stand at the top as a group's body does: set in by as much, and
@@ -84,7 +83,6 @@ namespace SeeDocs_App
             // The grid's columns, as their tags name them.
             enum class SourceColumn : TagValue
             {
-                Folder,   // named in the header over the path and its browse button
                 Path,
                 Browse,
                 Subfolders,
@@ -380,8 +378,6 @@ namespace SeeDocs_App
 
     namespace
     {
-        // The path and its browse button stand under one name in the header, so a row fills the
-        // two columns and not the one over them.
         SourceList::SourceList(const CreateParams& params, Workspace& workspace,
             OpenProject& project, Choose changed)
             :
@@ -396,19 +392,11 @@ namespace SeeDocs_App
             m_project{ project },
             m_changed{ std::move(changed) }
         {
-            Grids::Column& folder = columns().add(Tag{ SourceColumn::Folder }, Text{ L"Folder" },
-                Grids::ColumnWidthMode::Fill);
-            Grids::ColumnCollection& under = folder.createSubColumns();
-            under.add(Tag{ SourceColumn::Path }, Grids::ColumnWidthMode::Fill,
-                Grids::ShowInHeader::No, EditorMode::Editable);
-            under.add(Tag{ SourceColumn::Browse }, Grids::ShowInHeader::No);
-            columns().add(Tag{ SourceColumn::Subfolders }, Text{ L"Include subfolders" });
-            columns().add(Tag{ SourceColumn::Remove });   // headed, with nothing to say
-            onCellContent([](Grids::CellContentEvent& event) {
-                const TagValue folderTag = static_cast<TagValue>(SourceColumn::Folder);
-                event.hasContent = event.column().tag().value != folderTag;
-            });
-            addHeader();
+            columns().add(Tag{ SourceColumn::Path }, Grids::ColumnWidthMode::Fill,
+                EditorMode::Editable);
+            columns().add(Tag{ SourceColumn::Browse }, Grids::CellHighlightMode::Control);
+            columns().add(Tag{ SourceColumn::Subfolders });
+            columns().add(Tag{ SourceColumn::Remove });
             m_removeTimer.onTick([this](TimerEvent&) {
                 removePending();
             });
@@ -501,14 +489,12 @@ namespace SeeDocs_App
             m_source{ std::move(source) }
         {
             m_folders.setBase(m_list.project().project.folder);
-            addControl<ToolButton>(
+            addControl<Button>(
                 m_list.column(SourceList::SourceColumn::Browse),
                 k_browseText,
                 VerticalAlign::Center,
                 HorizontalTextAnchor::Center,
                 VerticalTextAnchor::Center,
-                Padding{ k_browsePadding, 0.0f },
-                MinSize{ 0.0f },
                 Interactivity::MouseOnly,
                 HintText{ L"Picks the folder in the desktop's own dialog" },
                 Button::OnClick{ [this](ClickEvent&) {
@@ -526,7 +512,7 @@ namespace SeeDocs_App
         {
             addControl<CheckBox>(
                 m_list.column(SourceList::SourceColumn::Subfolders),
-                HorizontalAlign::Center,
+                L"Include subfolders",
                 VerticalAlign::Center,
                 HintText{ L"Reads the folders under this one too" },
                 Padding{ 0.0f, themeMetrics().listItem.padding.y },
