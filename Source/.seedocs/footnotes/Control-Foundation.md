@@ -200,8 +200,8 @@ it, or on the control itself when there is none.
 the mark is a click on the button, read as a toggle, and a double click on it is spent by the
 button.
 
-**A control that answers the pointer without taking input answers true.** An expander header does,
-in every look: a double click anywhere on its strip toggles it.
+**A control that answers the pointer without taking input answers true**, so a double click on it
+is its own rather than that of a target above it.
 
 ## DoubleClickEvent
 

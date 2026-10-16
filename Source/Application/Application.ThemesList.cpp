@@ -53,7 +53,6 @@ namespace ClaFi
             event.scaledStrokeWidth(Thickness::Thin)
             );
         paintIconLayer(event);
-        event.defaultPaintSurface(0.0f, true);
     }
 
     // The mark stands on the title band paintSurface fills, not on the surface the tile's rules

@@ -125,13 +125,20 @@ width does not apply there.
 **The header shows the label and the button shows the chevron**, so picking a header and opening
 it are separate targets.
 
+**The header takes the focus, and the chevron answers the mouse alone.** On a focused header Right
+opens and Left closes, and a press with nothing to open or close goes no further. `TreeNode` hands
+that press to its tree, which climbs on Left and steps into the rows on Right.
+
+**Return follows the label's first link** where the label has one. Otherwise Return and Space
+toggle the header in every look but `TreeNode`, where they pick the row as a mouse click on it does.
+
 - `Section` - a filled page and header, the chevron at the right end.
 - `Divider` - paints nothing of its own. The label is at the left, the chevron at the right, and a
   line runs between them.
 - `Ellipsis` - paints nothing of its own, and has no line. The chevron follows the label, and a
   muted ellipsis trails it while collapsed. A held header spans the width of what scrolls under it.
 - `TreeNode` - the chevron leads and the label follows. The row shows hover, focus and pick as a
-  tool button does, and only the button opens the node.
+  tool button does, and a mouse click opens the node on the chevron alone.
 
 ## MessageIcon
 

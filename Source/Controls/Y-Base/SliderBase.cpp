@@ -107,6 +107,11 @@ namespace ClaFi::Controls
         parent()->paintButton(*this, event);
     }
 
+    void SliderBase::ScrollButton::paintFrame(PaintEvent& event)
+    {
+        event.defaultPaintFrame(parent()->buttonInset());
+    }
+
     // A step is a step, so a click and a held button both move by one. Only a drag near an edge
     // asks for a speed, and that goes to autoScroll.
     void SliderBase::ScrollButton::doIt()
@@ -160,6 +165,11 @@ namespace ClaFi::Controls
     void SliderBase::Thumb::paintSurface(PaintEvent& params)
     {
         parent()->paintThumb(params);
+    }
+
+    void SliderBase::Thumb::paintFrame(PaintEvent& event)
+    {
+        parent()->paintThumbFrame(event);
     }
 
     void SliderBase::Thumb::nestedGetHint(GetHintEvent& event)

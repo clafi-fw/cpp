@@ -129,12 +129,14 @@ namespace ClaFi
         Color applyDisabledFactor(Color) const;
         void paintChildren() const;
         void paintChild(Control&) const;
-        // The inset is stated here rather than left on the event for this call to find. It is a
-        // design value and is scaled on the way in.
-        void defaultPaintSurface(FloatPoint inset = {}, bool onlyStroke = false);
+        // The fill, inset by a design value that is scaled on the way in.
+        void defaultPaintSurface(FloatPoint inset = {});
         // The same, with the left and top edges inset apart from the right and bottom ones.
-        void defaultPaintSurface(FloatPoint topLeftInset, FloatPoint bottomRightInset,
-            bool onlyStroke = false);
+        void defaultPaintSurface(FloatPoint topLeftInset, FloatPoint bottomRightInset);
+        // The stroke along the shape the fill takes at the same inset.
+        void defaultPaintFrame(FloatPoint inset = {});
+        // The same, with the left and top edges inset apart from the right and bottom ones.
+        void defaultPaintFrame(FloatPoint topLeftInset, FloatPoint bottomRightInset);
         bool overlayStage() const { return m_overlayStage; }
         const Control* overlayHost() const { return m_overlayHost; }
         // Whether this is the stage that paints the control itself. The surface, the text and
@@ -272,15 +274,13 @@ namespace ClaFi
         float m_radius{};
         CornerRadii m_cornerRadii{};
         ScaledSpacing m_spacing;
-        // **A root's ring is drawn over its content.** Its children stand right inside the ring and
-        // turn its corners, so a stroke drawn under them would have its inner edge painted over
-        // along every arc. The stroke is held until the content is painted, and the content is
+        // **A root's frame is drawn over its content.** Its children stand right inside the ring
+        // and turn its corners, so a stroke drawn under them would have its inner edge painted
+        // over along every arc. The frame waits until the content is painted, and the content is
         // painted under the clip a corner pass hands the root, so that clip cuts what stands
         // inside the ring and never the ring's own edge.
         const Graphics::PixelPath* m_contentClip{};
-        bool m_strokeOverContent{};
-        bool m_strokeHeld{};
-        SurfaceInset m_heldStrokeInset{};
+        bool m_frameOverContent{};
         // Colors
         // The lightness every rule and every ink on this control is read at. Filled from the
         // parent event before the control adjusts its paint, so a control asking for it during

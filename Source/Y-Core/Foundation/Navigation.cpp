@@ -385,19 +385,10 @@ namespace ClaFi
             // whole makes the container win or lose the match by its scroll position.
             // The walk also visits controls that are entirely outside the viewport; their
             // viewport is empty, and their own bounds are what places them ahead of the source.
-            // A control that acts for a whole strip is placed by the strip instead, so it is
-            // met from anywhere along it rather than from the corner it occupies.
-            FloatRect candidateRect;
-            const Control* extent = candidate.navigationExtent();
-            if (extent)
-                candidateRect = extent->visibleRectInForm(m_form);
-            else
-            {
-                candidateRect = context.viewport();
-                if (candidateRect.empty())
-                    candidateRect = context.controlBounds();
-            }
-            candidateRect.offset(-holdOffset(extent ? *extent : candidate));
+            FloatRect candidateRect = context.viewport();
+            if (candidateRect.empty())
+                candidateRect = context.controlBounds();
+            candidateRect.offset(-holdOffset(candidate));
             const OrientedRect candidateBounds = OrientedRect::orient(candidateRect, key);
 
             if (candidateBounds == src)
@@ -487,14 +478,10 @@ namespace ClaFi
 
     OrientedRect FocusNavigator::orientedRect(Control* control, KeyCode key)
     {
-        // The strip a control acts for is where a move away from it starts, the same rect a move
-        // towards it is scored against. A held control starts where it was laid out: a hold draws
-        // it elsewhere, and the row after it is the row laid out after it, not the one drawn
-        // under it.
-        const Control* extent = control->navigationExtent();
-        const Control& placed = extent ? *extent : *control;
-        FloatRect rect = placed.visibleRectInForm(m_form);
-        rect.offset(-holdOffset(placed));
+        // A held control starts where it was laid out: a hold draws it elsewhere, and the row
+        // after it is the row laid out after it, not the one drawn under it.
+        FloatRect rect = control->visibleRectInForm(m_form);
+        rect.offset(-holdOffset(*control));
         return OrientedRect::orient(rect, key);
     }
 }

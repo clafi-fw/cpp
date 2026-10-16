@@ -94,7 +94,7 @@ namespace ClaFi::Controls
     {
         // The header owns whether the section is open; the body is the host's to show. One
         // answer to the toggle keeps the two in step however the header was worked - the
-        // button, a double click on the header, or setExpanded from code.
+        // button, a key, a double click on the header, or setExpanded from code.
         m_header.connectEvent<ToggleExpandedEvent>([this](ToggleExpandedEvent& event) {
             body()->setVisible(event.expanded());
         });

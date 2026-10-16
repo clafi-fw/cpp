@@ -26,6 +26,7 @@ namespace ClaFi::Controls
         void adjustMetrics(AdjustMetricsEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;
         void paintSurface(PaintEvent&) override;
+        void paintFrame(PaintEvent&) override;
         ScaledSize calculateContent(AlignEvent&) override;
     };
 
@@ -61,6 +62,11 @@ namespace ClaFi::Controls
     void Divider::paintSurface(PaintEvent& event)
     {
         event.defaultPaintSurface(m_padding);
+    }
+
+    void Divider::paintFrame(PaintEvent& event)
+    {
+        event.defaultPaintFrame(m_padding);
     }
 
     ScaledSize Divider::calculateContent(AlignEvent& event)

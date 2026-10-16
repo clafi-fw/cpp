@@ -20,9 +20,10 @@ item, where it used to read as a click on nothing.
 **DoubleClickEvent and TripleClickEvent split the same way**, through Control::raiseClick, which
 holds the one walk all three use. Two things moved with them. The indicator stopped its own double
 click so a tile would not open from its mark; being no target, it never sees one, and
-ButtonBase::doubleClick spends it instead. ExpanderHeader is None in three of its looks and toggles
-on a double click anywhere on its strip, so it claims isClickTarget - without that, a target above
-it would take the double click and the walk would start past the header.
+ButtonBase::doubleClick spends it instead. ExpanderHeader, None in three of its looks then, claimed
+isClickTarget so that a double click anywhere on its strip toggled it - without that, a target
+above it would take the double click and the walk would start past the header. Since 2026-10-16
+the header is Focusable in every look, which makes it a target with no override.
 
 ## RichControl
 

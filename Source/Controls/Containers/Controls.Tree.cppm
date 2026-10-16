@@ -69,8 +69,11 @@ namespace ClaFi::Controls
     protected:
         ScaledSize calculateContent(AlignEvent&) override;
         void paintSurface(PaintEvent&) override;
+        void paintFrame(PaintEvent&) override;
     private:
         [[nodiscard]] float lead() const; // how far the line stands in past the padding
+        // The padding on the top and on the left, the lead added to the left.
+        [[nodiscard]] FloatPoint leadingInset() const;
     private:
         std::size_t m_level;
     };
@@ -112,8 +115,6 @@ namespace ClaFi::Controls
     private:
         // Lays the header out the way a TreeItem is laid out, so the two texts share a column.
         void layOutHeader(const ControlMetrics& buttonMetrics);
-        // Takes a key that opens, closes or leaves this node; false leaves it to what holds it.
-        [[nodiscard]] bool answerTreeKey(KeyCode);
     private:
         TreeView& m_tree;
         std::size_t m_level;

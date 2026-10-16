@@ -34,15 +34,14 @@ namespace ClaFi::Controls
         event.setColorRules(UiElement::Divider);
     }
 
-    // The line is drawn in the middle of the band, which is laid out as the line plus the same
-    // lead either side - so the lead is read back off the box rather than computed again.
     void Splitter::paintSurface(PaintEvent& event)
     {
-        const float line = event.scaledStrokeWidth(k_thickness);
-        const float lead = upright()
-            ? event.unScale((scaledWidth() - line) / 2.0f)
-            : event.unScale((scaledHeight() - line) / 2.0f);
-        event.defaultPaintSurface(upright() ? FloatPoint{ lead, 0.0f } : FloatPoint{ 0.0f, lead });
+        event.defaultPaintSurface(lineInset(event));
+    }
+
+    void Splitter::paintFrame(PaintEvent& event)
+    {
+        event.defaultPaintFrame(lineInset(event));
     }
 
     ScaledSize Splitter::calculateContent(AlignEvent& event)
@@ -83,6 +82,17 @@ namespace ClaFi::Controls
     PanelBase& Splitter::panel() const
     {
         return *static_cast<PanelBase*>(parent());
+    }
+
+    // The line is drawn in the middle of the band, which is laid out as the line plus the same
+    // lead either side - so the lead is read back off the box rather than computed again.
+    FloatPoint Splitter::lineInset(const PaintEvent& event) const
+    {
+        const float line = event.scaledStrokeWidth(k_thickness);
+        const float lead = upright()
+            ? event.unScale((scaledWidth() - line) / 2.0f)
+            : event.unScale((scaledHeight() - line) / 2.0f);
+        return upright() ? FloatPoint{ lead, 0.0f } : FloatPoint{ 0.0f, lead };
     }
 
     // BarResizeEvent

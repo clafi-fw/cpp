@@ -515,7 +515,7 @@ namespace SeeDocs_App
                 L"Include subfolders",
                 VerticalAlign::Center,
                 HintText{ L"Reads the folders under this one too" },
-                Padding{ 0.0f, themeMetrics().listItem.padding.y },
+                themeMetrics().listItem.padding,
                 CheckBox::OnGetState{ [this](GetStateEvent& event) {
                     event.state.selected = m_list.readsSubfolders(m_source);
                 } },

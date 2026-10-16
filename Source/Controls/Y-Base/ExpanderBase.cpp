@@ -71,8 +71,10 @@ namespace ClaFi::Controls
         hoverLink({});
     }
 
-    // Only a pointer click lands on a link - a key names no point in the label, and Ctrl+Return
-    // answers for the keyboard in nestedKeyDown. A click anywhere else is the header's as before.
+    // Only a mouse click lands on a link - a key names no point in the label, and Return answers
+    // for the keyboard in nestedKeyDown. **A click from a key toggles the section**, as a
+    // mouse click on the chevron does; a mouse click on the strip leaves that to the chevron and
+    // to a double click. A tree node's click is its row's pick from either, and toggles nothing.
     void ExpanderHeader::click(ClickEvent& event)
     {
         if (Input::mouse().active())
@@ -86,13 +88,17 @@ namespace ClaFi::Controls
                 return;
             }
         }
+        else if (m_viewMode != ExpanderViewMode::TreeNode)
+        {
+            toggleExpanded();
+        }
         PanelBase::click(event);
     }
 
     // **A link is what the menu is about** where one stands under the pointer or, from the
-    // keyboard, where the focus is on the header or its button - the label's first link then. A
-    // handler that has shown the link's menu stops the request; one that has not leaves it to go
-    // on up as from anywhere else on the header.
+    // keyboard, where the focus is on the header - the label's first link then. A handler that
+    // has shown the link's menu stops the request; one that has not leaves it to go on up as from
+    // anywhere else on the header.
     void ExpanderHeader::nestedContextPopup(ContextPopupEvent& event)
     {
         std::optional<std::wstring> target;
@@ -102,7 +108,7 @@ namespace ClaFi::Controls
             if (link.has_value())
                 target = std::move(link->target);
         }
-        else if (event.control == this || event.control == &m_button)
+        else if (event.control == this)
         {
             target = firstLink();
         }
@@ -116,12 +122,16 @@ namespace ClaFi::Controls
         PanelBase::nestedContextPopup(event);
     }
 
-    // **Return is the header's own** - its button opens and closes it - so the label's first link
-    // is followed on Ctrl+Return, as a grid cell that edits follows its link. Handled before the
+    // **Return follows the label's first link** where the label has one, as Return on a grid cell
+    // follows the cell's, and is the header's own click where it has none. Handled before the
     // follow, which may take down the page the header stands on.
+    //
+    // **Right opens the header and Left closes it**, as on a tree node, and the header keeps both
+    // keys when there is nothing to open or close. A tree node leaves those to the tree, where
+    // Left climbs to the node above and Right steps into the rows.
     void ExpanderHeader::nestedKeyDown(KeyDownEvent& event)
     {
-        if (event.key == Keys::Return && event.modifiers.ctrl)
+        if (event.key == Keys::Return)
         {
             std::optional<std::wstring> target = firstLink();
             if (target.has_value())
@@ -129,6 +139,19 @@ namespace ClaFi::Controls
                 event.handled = true;
                 HeaderLinkClickEvent linkEvent{ *this, std::move(*target), event.stamp };
                 emitEvent(linkEvent);
+                return;
+            }
+        }
+        const bool arrow = event.key == Keys::Left || event.key == Keys::Right;
+        if (arrow && event.modifiers.empty())
+        {
+            const bool opens = event.key == Keys::Right;
+            const bool acts = opens != m_expanded;
+            if (acts)
+                setExpanded(opens);
+            if (acts || m_viewMode != ExpanderViewMode::TreeNode)
+            {
+                event.handled = true;
                 return;
             }
         }

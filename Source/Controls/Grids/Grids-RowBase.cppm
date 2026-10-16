@@ -141,6 +141,7 @@ namespace ClaFi::Controls::Grids
         // RowGroupBase, and RowDivider, which is the one row that draws a fill of its own because
         // it has to stop short of the band its closing grid line stands in.
         void paintSurface(PaintEvent&) override {}
+        void paintFrame(PaintEvent&) override {} // the row's focus is drawn on its selected cell
         void paintOneCell(PaintEvent&, const RowCell&, bool isFirstRow);
         // Paints the line pixels a cell shares: its own in full, the ones above and left at half.
         void paintSharedLinePixels(PaintEvent&, const FloatRect& bounds, RectSides sides,

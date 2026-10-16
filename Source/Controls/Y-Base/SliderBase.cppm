@@ -85,6 +85,7 @@ namespace ClaFi::Controls
             // Otherwise the click repeater stucks in the active state
             void nestedDrag(DragEvent& event) override { event.lockHoveredControl(); }
             void paintSurface(PaintEvent&) override;
+            void paintFrame(PaintEvent&) override;
         private:
             void doIt();
             void repeat(RepeatEvent&);
@@ -115,6 +116,7 @@ namespace ClaFi::Controls
             void getControlState(GetStateEvent&) const override;
             void adjustPaint(AdjustPaintEvent&) override;
             void paintSurface(PaintEvent&) override;
+            void paintFrame(PaintEvent&) override;
             void nestedGetHint(GetHintEvent&) override;
             void nestedPressDown(PressDownEvent&) override;
             void nestedDrag(DragEvent&) override;
@@ -214,6 +216,8 @@ namespace ClaFi::Controls
         virtual void adjustThumbPaint(AdjustPaintEvent&) = 0;
         virtual void paintButtonMark(PaintEvent&, float size, ScrollDirection) = 0;
         virtual void paintThumb(PaintEvent&) = 0;
+        // The thumb's outline, which a slider draws only where it wants one.
+        virtual void paintThumbFrame(PaintEvent&) {}
         virtual void getThumbHint(GetHintEvent&) {}
         virtual void thumbPressDown() {}
         void controlFeedBack();

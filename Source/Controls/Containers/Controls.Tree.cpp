@@ -83,13 +83,23 @@ namespace ClaFi::Controls
     // The lead is on the left alone: the line starts where the rows of its level do.
     void TreeDivider::paintSurface(PaintEvent& event)
     {
-        const Padding room = padding();
-        event.defaultPaintSurface({ room.x + lead(), room.y }, room);
+        event.defaultPaintSurface(leadingInset(), padding());
+    }
+
+    void TreeDivider::paintFrame(PaintEvent& event)
+    {
+        event.defaultPaintFrame(leadingInset(), padding());
     }
 
     float TreeDivider::lead() const
     {
         return static_cast<float>(m_level) * TreeRows::step;
+    }
+
+    FloatPoint TreeDivider::leadingInset() const
+    {
+        const Padding room = padding();
+        return { room.x + lead(), room.y };
     }
 
     // TreeNodeHeader
@@ -106,10 +116,16 @@ namespace ClaFi::Controls
 
     // TreeNode
 
+    // **Left from a row inside the node goes to its header.** The header opens on Right and closes
+    // on Left by itself, and leaves Left on a closed node to the node holding this one, so a run
+    // of presses climbs the tree a level at a time.
     void TreeNode::nestedKeyDown(KeyDownEvent& event)
     {
-        if (event.modifiers.empty() && answerTreeKey(event.key))
+        ExpanderHeader& strip = header();
+        if (event.key == Keys::Left && event.modifiers.empty() && !strip.isFocused())
         {
+            strip.setFocus();
+            strip.scrollIntoView();
             event.handled = true;
             return;
         }
@@ -129,35 +145,6 @@ namespace ClaFi::Controls
         // No padding across, so the mark never makes the row taller than its text does.
         mark.setPadding(TreeRows::markPadding, 0.0f);
         mark.setMinSize(0.0f);
-    }
-
-    // Right opens a closed node from its header and Left closes an open one. Left from a row
-    // inside the node goes to the header, and from a closed header it is left to the node
-    // holding this one, so a run of presses climbs the tree a level at a time.
-    bool TreeNode::answerTreeKey(const KeyCode key)
-    {
-        ExpanderHeader& strip = header();
-        const bool onHeader = strip.isFocused();
-        switch (key)
-        {
-            case Keys::Right:
-                if (!onHeader || strip.expanded())
-                    return false;
-                strip.setExpanded(true);
-                return true;
-            case Keys::Left:
-                if (!onHeader)
-                {
-                    strip.setFocus();
-                    strip.scrollIntoView();
-                    return true;
-                }
-                if (!strip.expanded())
-                    return false;
-                strip.setExpanded(false);
-                return true;
-        }
-        return false;
     }
 
     // Tree

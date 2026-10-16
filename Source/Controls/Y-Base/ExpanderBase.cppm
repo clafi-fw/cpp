@@ -34,19 +34,12 @@ namespace ClaFi::Controls
         return std::nullopt;
     }
 
-    // The chevron a header carries, whose click is what opens the expander.
+    // The chevron a header carries, for the mouse alone - the keyboard works the header.
     export class ExpanderButton : public ToolButton
     {
     public:
         template<typename... Args>
         explicit ExpanderButton(const CreateParams&, Args&&...);
-    protected:
-        // The button opens and closes the section its header heads, so it acts for the whole
-        // header: a key meets it from anywhere along that strip rather than from the corner it
-        // occupies, and a key leaving it starts from the same strip. It is built as the header's
-        // own bar, so the header is its parent; a button given no header answers with its own
-        // rect.
-        [[nodiscard]] const Control* navigationExtent() const override { return parent(); }
     };
 
     template<typename ...Args>
@@ -54,6 +47,7 @@ namespace ClaFi::Controls
         :
         ToolButton{
             params,
+            Interactivity::MouseOnly,
             ButtonViewMode::IconOnly,
             IconSize{ 12.0f },
             ShowSelectionOnSurface::No, // visible in grids
@@ -96,7 +90,7 @@ namespace ClaFi::Controls
         template<typename... Args>
         explicit ExpanderHeader(const CreateParams& params, Args&&...);
     public:
-        // A link in the label was followed: a mouse click on it, or Ctrl+Return from the header.
+        // A link in the label was followed: a mouse click on it, or Return from the header.
         DECLARE_EVENT(HeaderLinkClickEvent, OnLinkClick, onLinkClick)
         // The menu for a link in the label is being asked for.
         DECLARE_EVENT(HeaderLinkContextPopupEvent, OnLinkContextPopup, onLinkContextPopup)
@@ -117,15 +111,13 @@ namespace ClaFi::Controls
         // The shape a held header is laid on: its rect with the corners it paints. See
         // PaintEvent::paintHeldBackdrop.
         [[nodiscard]] RoundedRectangleParts silhouette(const PaintEvent& hostEvent, const FloatRect& headerRect) const;
-        // The strip answers a double click in every look, so a press on it is the header's own.
-        [[nodiscard]] bool isClickTarget() const override { return true; }
         // The hand while the pointer stands on a link in the label.
         [[nodiscard]] CursorShape cursor() const override;
     protected:
         void adjustPaint(AdjustPaintEvent&) override;
         void mouseMove(MouseMoveEvent&) override;
         void hoverLeave() override;
-        // A mouse click on a link in the label follows the link and goes no further up.
+        // A mouse click on a link follows it, and a key's click toggles all looks but TreeNode.
         void click(ClickEvent&) override;
         void nestedDoubleClick(NestedDoubleClickEvent&) override;
         void nestedContextPopup(ContextPopupEvent&) override;
@@ -149,7 +141,6 @@ namespace ClaFi::Controls
         };
     private:
         [[nodiscard]] static ControlMetrics metricsFor(const CreateParams&, ExpanderViewMode);
-        [[nodiscard]] static Interactivity interactivityFor(ExpanderViewMode);
         [[nodiscard]] static TextPlacement textPlacementFor(ExpanderViewMode);
         [[nodiscard]] static OptionalUiElement colorRulesFor(ExpanderViewMode);
         ExpanderButton& createChevronButton();
@@ -216,12 +207,11 @@ namespace ClaFi::Controls
         :
         PanelBase{
             params,
+            Interactivity::Focusable,
             // What the expander draws of itself, which is what the header is measured by.
             metricsFor(params, READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
             Padding{ 4.0f },
             Spacing{ 4.0f },
-            // The same, which is what puts the header in the keyboard's order or leaves it out.
-            interactivityFor(READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
             // The same, which is what places its text.
             textPlacementFor(READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
             // The same, for the colour rules the header paints from.
@@ -376,15 +366,6 @@ namespace ClaFi::Controls
         return {};
     }
 
-    // Only the tree look's header takes the keyboard, being the row that stands for its node.
-    // Elsewhere the button is the key's target and the header is the strip it sits on.
-    Interactivity ExpanderHeader::interactivityFor(ExpanderViewMode viewMode)
-    {
-        if (viewMode == ExpanderViewMode::TreeNode)
-            return Interactivity::Focusable;
-        return Interactivity::None;
-    }
-
     // A panel sets a Left label at its left edge, before the left bar, and a body label after the
     // left bar. The divider look holds its label Left to free the body slot for the line, and the
     // ellipsis look to have the button in its left bar follow the label. A section and a tree
@@ -397,8 +378,8 @@ namespace ClaFi::Controls
     }
 
     // A section's header is a filled strip, and the tree look's a tool button that shows its
-    // hover, its focus and its pick. A divider's header and an ellipsis's name nothing and so
-    // paint nothing.
+    // hover, its focus and its pick. A divider's header and an ellipsis's name nothing, and paint
+    // only the focus ring.
     OptionalUiElement ExpanderHeader::colorRulesFor(ExpanderViewMode viewMode)
     {
         switch (viewMode)
@@ -418,8 +399,7 @@ namespace ClaFi::Controls
     // the header. TreeNode leads the strip with the button and Ellipsis sets it straight after
     // the label; the other two put it at the far end, past the label and past whatever the header
     // carries between them. On a header that paints nothing - a divider's or an ellipsis's - the
-    // button wears a button's look, with a surface at rest; elsewhere a tool button's. In the
-    // tree look the header is the row the keyboard lands on, so the button is the mouse's alone.
+    // button wears a button's look, with a surface at rest; elsewhere a tool button's.
     ExpanderButton& ExpanderHeader::createChevronButton()
     {
         if (m_viewMode == ExpanderViewMode::Divider)
@@ -427,7 +407,7 @@ namespace ClaFi::Controls
         if (m_viewMode == ExpanderViewMode::Ellipsis)
             return createLeftBar<ExpanderButton>(UiElement::Button, themeMetrics().button);
         if (m_viewMode == ExpanderViewMode::TreeNode)
-            return createLeftBar<ExpanderButton>(Interactivity::MouseOnly);
+            return createLeftBar<ExpanderButton>();
         return createRightBar<ExpanderButton>();
     }
 

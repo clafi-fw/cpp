@@ -78,6 +78,7 @@ namespace ClaFi::Controls
         [[nodiscard]] bool secondaryPressPropagates() const override { return false; }
         void adjustPaint(AdjustPaintEvent&) override;
         void paintSurface(PaintEvent&) override;
+        void paintFrame(PaintEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         void nestedDrag(DragEvent&) override;
     private:
@@ -361,6 +362,13 @@ namespace ClaFi::Controls
         // The silhouette stands in for the surface the base would have painted, so the icon
         // layer is asked for on its own rather than arriving with that surface.
         paintIconLayer(event);
+    }
+
+    // A tab drawn as a tab draws its outline with its silhouette.
+    void Tab::paintFrame(PaintEvent& event)
+    {
+        if (drawnAsToolButton())
+            TabBaseClass::paintFrame(event);
     }
 
     void Tab::nestedPressDown(PressDownEvent& event)

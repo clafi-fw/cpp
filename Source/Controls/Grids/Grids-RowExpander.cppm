@@ -25,7 +25,12 @@ namespace ClaFi::Controls::Grids
         template <typename... Args>
         RowExpanderHeader(const CreateParams&, Args&&... args);
     protected:
+        // A corner standing at the grid's turns the grid's corner, as a cell's does there.
+        void adjustPaint(AdjustPaintEvent&) override;
         void paintSurface(PaintEvent&) override;
+    private:
+        // The sides standing on the grid's frame, measured the way a cell's are.
+        [[nodiscard]] RectSides sidesOnGridFrame(const PaintEvent&) const;
     };
 
     // A row whose header is held at the top of the view while its body scrolls under. See Grids
@@ -60,17 +65,6 @@ namespace ClaFi::Controls::Grids
     {
     }
 
-    void RowExpanderHeader::paintSurface(PaintEvent& event)
-    {
-        ExpanderHeader::paintSurface(event);
-        GridDescriptor& descriptor = parentAs<RowExpander>().descriptor();
-        if (!descriptor.drawsHorizontalLines())
-            return;
-        FloatRect bottomBorderRect = event.controlBounds();
-        bottomBorderRect.top = bottomBorderRect.bottom - descriptor.scaledBorderWidth() - event.scale(1.0f - expandedFactor());
-        // Raised off the surface rather than read from strokeRgb(), which carries the focus ring.
-        event.canvas().fillRectangle(bottomBorderRect, event.strokeRgbOn(event.surfaceHsl()));
-    }
 
     // RowExpander
 
@@ -101,10 +95,9 @@ namespace ClaFi::Controls::Grids
     RowStop RowExpander::navigationStop()
     {
         // The header carries no cells, so a walk over cells alone steps straight over the
-        // expander. The button is what a stop here is for - it opens and closes the section -
-        // and the header's rect is what places it, so it is met from whichever column the walk
-        // is following.
-        return { &header().button(), header().boundsInForm() };
+        // expander. The header is the stop, and its rect spans every column, so it is met from
+        // whichever column the walk is following.
+        return { &header(), header().boundsInForm() };
     }
 
 }

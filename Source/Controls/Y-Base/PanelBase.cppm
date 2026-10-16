@@ -29,12 +29,15 @@ namespace ClaFi::Controls
     protected:
         void adjustPaint(AdjustPaintEvent&) override;
         void paintSurface(PaintEvent&) override;
+        void paintFrame(PaintEvent&) override;
         ScaledSize calculateContent(AlignEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         void nestedDrag(DragEvent&) override;
         void doubleClick(DoubleClickEvent&) override;
     private:
         [[nodiscard]] PanelBase& panel() const;
+        // How far the line stands in from the band's edges across it, in design units.
+        [[nodiscard]] FloatPoint lineInset(const PaintEvent&) const;
     private:
         static constexpr Thickness k_thickness = Thickness::Thin;
         // The band the pointer takes the line by, in design units.

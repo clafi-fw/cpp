@@ -1560,6 +1560,11 @@ namespace ClaFi
         event.control().paintSurface(event);
     }
 
+    void Control::paintChildFrame(PaintEvent& event)
+    {
+        event.control().paintFrame(event);
+    }
+
     void Control::scrollChildIntoView(Control& control, FloatRect controlRect)
     {
         // The rect is measured from where this control was laid out, whatever hold draws it
@@ -1928,6 +1933,11 @@ namespace ClaFi
             }
         }
         emitEvent(event);
+    }
+
+    void Control::paintFrame(PaintEvent& event)
+    {
+        event.defaultPaintFrame();
     }
 
     void Control::paintChildren(PaintEvent& event)
@@ -2797,6 +2807,14 @@ namespace ClaFi
             m_parent->paintChildSurface(event);
         else
             paintSurface(event);
+    }
+
+    void Control::doPaintFrame(PaintEvent& event)
+    {
+        if (m_parent)
+            m_parent->paintChildFrame(event);
+        else
+            paintFrame(event);
     }
 
     void Control::doPainted(PaintEvent& event) const

@@ -54,6 +54,7 @@ namespace ClaFi::Controls
         void adjustChildMetrics(AdjustMetricsEvent& event) const override;
         void adjustChildPaint(AdjustPaintEvent&) override;
         void paintChildSurface(PaintEvent&) override;
+        void paintChildFrame(PaintEvent&) override;
         void adjustPaint(AdjustPaintEvent&) override;
         void paintSurface(PaintEvent&) override;
         // Draws the icon over whatever the surface left behind. It is reachable on its own so

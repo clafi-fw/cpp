@@ -357,7 +357,7 @@ namespace ClaFi::Controls::Grids
 
         const FieldStop& stop = stops[sourceIndex];
         // A stop with no column is the control a row without cells stands behind - an expander's
-        // button - and that control answers its own keys.
+        // header - and that control answers its own keys.
         if (!stop.column || stop.column->editorMode() == EditorMode::None)
             return false;
 
@@ -499,8 +499,8 @@ namespace ClaFi::Controls::Grids
             // the end of the line rests there. Letting one travel on hands it to the focus
             // navigator, whose source is the whole **row**: everything ahead of the row's centre
             // scores, so a press at the last column lands on whatever control stands further
-            // right on some other row, an expander's button among them. Up and Down do travel
-            // on, which is how a move leaves the grid at all.
+            // right on some other row. Up and Down do travel on, which is how a move leaves the
+            // grid at all.
             return horizontal && isFieldRoot();
 
         // The line is written before anything scrolls: a stop rect and the grid origin it is
@@ -727,7 +727,7 @@ namespace ClaFi::Controls::Grids
     std::size_t GridBase::collectField(const Scaler& scaler, FieldStops& stops, float lookAhead)
     {
         // The selection is a cell of a row, or the control a row that has no cells stands behind
-        // - an expander button. Either can be the place a move starts from.
+        // - an expander's header. Either can be the place a move starts from.
         const Control* sourceStop = m_descriptor.selectedRow();
         const Column* sourceColumn = m_descriptor.selectedColumn();
         std::size_t result = k_maxSize;

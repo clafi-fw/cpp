@@ -68,7 +68,7 @@ namespace ClaFi
             context.parent() ? static_cast<PaintEvent*>(context.parent()->visitorData()) : nullptr
         },
         m_interactivity{ context.control().interactivity() },
-        m_strokeOverContent{ m_parentEvent == nullptr }
+        m_frameOverContent{ m_parentEvent == nullptr }
     {
         if (m_parentEvent)
         {
@@ -474,27 +474,28 @@ namespace ClaFi
         childContext.traverse();
     }
 
-    void PaintEvent::defaultPaintSurface(FloatPoint inset, bool onlyStroke)
+    void PaintEvent::defaultPaintSurface(FloatPoint inset)
     {
-        defaultPaintSurface(inset, inset, onlyStroke);
+        defaultPaintSurface(inset, inset);
     }
 
-    void PaintEvent::defaultPaintSurface(FloatPoint topLeftInset, FloatPoint bottomRightInset,
-        bool onlyStroke)
+    void PaintEvent::defaultPaintSurface(FloatPoint topLeftInset, FloatPoint bottomRightInset)
     {
-        const SurfaceInset inset = { topLeftInset, bottomRightInset };
-        const SurfaceShape shape = surfaceShape(inset);
-        if (shape.rect.empty())
-            return;
-        if (!onlyStroke)
+        const SurfaceShape shape = surfaceShape({ topLeftInset, bottomRightInset });
+        if (!shape.rect.empty())
             paintFill(shape);
-        if (m_strokeOverContent)
-        {
-            m_strokeHeld = true;
-            m_heldStrokeInset = inset;
-            return;
-        }
-        paintStroke(shape);
+    }
+
+    void PaintEvent::defaultPaintFrame(FloatPoint inset)
+    {
+        defaultPaintFrame(inset, inset);
+    }
+
+    void PaintEvent::defaultPaintFrame(FloatPoint topLeftInset, FloatPoint bottomRightInset)
+    {
+        const SurfaceShape shape = surfaceShape({ topLeftInset, bottomRightInset });
+        if (!shape.rect.empty())
+            paintStroke(shape);
     }
 
     // Every event on the way to the root carries it, because which one reads it is not the
@@ -812,7 +813,11 @@ namespace ClaFi
             Graphics::ScopedCanvasTransform pressScaleTransform{ canvas(), pressTransform };
 
             if (m_paintsSelf)
+            {
                 control.doPaintSurface(*this);
+                if (!m_frameOverContent)
+                    control.doPaintFrame(*this);
+            }
             if (m_contentClip)
                 canvas().pushClip(*m_contentClip);
             {
@@ -869,8 +874,8 @@ namespace ClaFi
                 }
 #endif
                 control.doPainted(*this);
-                if (m_strokeHeld)
-                    paintStroke(surfaceShape(m_heldStrokeInset));
+                if (m_frameOverContent)
+                    control.doPaintFrame(*this);
             }
         }
 

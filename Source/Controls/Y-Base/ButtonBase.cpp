@@ -173,9 +173,17 @@ namespace ClaFi::Controls
 
     void ButtonBase::paintChildSurface(PaintEvent& event)
     {
+        if (&event.control() == m_indicator && m_indicatorStyle == IndicatorStyle::Custom)
+            return;
+        RichControl::paintChildSurface(event);
+    }
+
+    // The mark goes over the box's ring, so it is drawn after the frame.
+    void ButtonBase::paintChildFrame(PaintEvent& event)
+    {
         if (&event.control() != m_indicator)
         {
-            RichControl::paintChildSurface(event);
+            RichControl::paintChildFrame(event);
             return;
         }
 
@@ -183,7 +191,7 @@ namespace ClaFi::Controls
         {
             case IndicatorStyle::Check:
             {
-                RichControl::paintChildSurface(event);
+                RichControl::paintChildFrame(event);
 
                 // The mark draws as geometry rather than staged pixels. Staging is free on the
                 // CPU backend, which hands back a window onto the back buffer, but on a GPU one
@@ -206,7 +214,7 @@ namespace ClaFi::Controls
             }
             case IndicatorStyle::Radio:
             {
-                RichControl::paintChildSurface(event);
+                RichControl::paintChildFrame(event);
                 // We already adjusted original surface radius to make it look like a circle,
                 // so surface and border are already perfect as they are so now it acts as an
                 // outer ring. Now we only need to paint the hole in the "donut".

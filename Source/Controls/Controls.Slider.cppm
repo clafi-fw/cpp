@@ -107,7 +107,9 @@ namespace ClaFi::Controls
 
         void paintButtonMark(PaintEvent&, float size, ScrollDirection) override;
         void paintThumb(PaintEvent& pp) override;
+        void paintThumbFrame(PaintEvent&) override;
         void paintSurface(PaintEvent&) override;
+        void paintFrame(PaintEvent&) override {} // a slider draws its slot and no outline
         void paintSlotBorder(PaintEvent&, FloatRect, float radius);
 
         virtual Color thumbColor(PaintEvent&, FloatPoint&);
@@ -342,6 +344,11 @@ namespace ClaFi::Controls
         const float thisHotFactor = hoveredFactor();
         const float innerRadius = event.scaleF(4.0f + thisHotFactor + event.hoveredFactor() - pressedFactor() * 2.0f);
         event.canvas().fillCircle(pt, innerRadius, innerColor);
+    }
+
+    void Slider::paintThumbFrame(PaintEvent& event)
+    {
+        event.defaultPaintFrame();
     }
 
     void Slider::paintSurface(PaintEvent& pp)

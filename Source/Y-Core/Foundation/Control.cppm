@@ -1160,6 +1160,7 @@ namespace ClaFi
 
         // TODO: are both of these needed?
         virtual void paintChildSurface(PaintEvent& event);
+        virtual void paintChildFrame(PaintEvent& event);
         virtual void childPainted(PaintEvent&) {}
 
         virtual void scrollChildIntoView(Control&, FloatRect);
@@ -1241,12 +1242,6 @@ namespace ClaFi
         // own text is a separate answer - see Control::isTextHovered.
         virtual void hitTest(HitTestEvent&) const {}
         virtual NavigationWrap navigationWrap() const;
-        // The control whose rect places this one for a directional key, when that is not this
-        // control itself. A control that acts for a whole strip - an expander's button, which
-        // opens and closes the section its header heads - is met from anywhere along that strip
-        // rather than from the corner it occupies, so it answers with the strip. It stays the
-        // control that takes the focus; only what scores it changes. Nullptr is its own rect.
-        [[nodiscard]] virtual const Control* navigationExtent() const { return nullptr; }
         // The part of this control a scroll has to show, in this control's own coordinates. The
         // whole of it, unless something smaller inside it is what the scroll is for: a control
         // larger than the viewport is fully visible the moment any part of it is, so a request to
@@ -1322,6 +1317,8 @@ namespace ClaFi
         // no connection, just the vtable slot it already has.
         virtual void paintIcon(PaintIconEvent&);
         virtual void paintSurface(PaintEvent&);
+        // The outline over the surface, under the children; a form's root draws it over them.
+        virtual void paintFrame(PaintEvent&);
         virtual void paintChildren(PaintEvent&);
         virtual void paintText(PaintEvent&);
         // The draw itself, split off so a control holding a layout of its own replaces this and
@@ -1504,6 +1501,7 @@ namespace ClaFi
         void doAdjustViewport(AdjustViewportEvent&) const;
         void doAdjustPaint(AdjustPaintEvent&);
         void doPaintSurface(PaintEvent&);
+        void doPaintFrame(PaintEvent&);
         void doPainted(PaintEvent&) const;
         bool isOnScrollBox();
     private:

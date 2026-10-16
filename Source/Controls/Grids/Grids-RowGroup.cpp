@@ -146,8 +146,7 @@ namespace ClaFi::Controls::Grids
 
     void RowGroupSpan::createMark()
     {
-        // MouseOnly, as every control a row holds is: the row keeps the focus and takes the keys.
-        m_mark = &addOwnControl<ExpanderButton>(Interactivity::MouseOnly);
+        m_mark = &addOwnControl<ExpanderButton>();
         m_mark->connectEvent<PaintIconEvent>([this](PaintIconEvent& event) {
             Icons::ExpanderMark::paint(event, m_expandedFactor);
         });

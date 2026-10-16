@@ -73,7 +73,7 @@ alone. A null column selects the row with no cell.
 
 ## RowStop
 
-`control` takes the focus - an expander's button. `rect` is what a key move is scored against. An
+`control` takes the focus - an expander's header. `rect` is what a key move is scored against. An
 expander gives its whole header, so the stop is met from any column.
 
 ## MovingText
