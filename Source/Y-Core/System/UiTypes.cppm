@@ -375,7 +375,7 @@ namespace ClaFi
         constexpr Tag(Ts... args) : value(0) {
             constexpr std::size_t count = sizeof...(Ts);
             constexpr std::size_t bits = (sizeof(std::uintptr_t) * 8) / count;
-            constexpr std::uintptr_t mask = (std::uintptr_t(1) << bits) - 1;
+            constexpr std::uintptr_t mask = (static_cast<std::uintptr_t>(1) << bits) - 1;
 
             std::size_t shift = 0;
             // Fold expression: packs args from right to left (or left to right)
@@ -406,7 +406,7 @@ namespace ClaFi
             requires (Total > 0 && N < Total)
         T get() const {
             constexpr std::size_t bits = (sizeof(std::uintptr_t) * 8) / Total;
-            constexpr std::uintptr_t mask = (std::uintptr_t(1) << bits) - 1;
+            constexpr std::uintptr_t mask = (static_cast<std::uintptr_t>(1) << bits) - 1;
             return static_cast<T>((value >> (N * bits)) & mask);
         }
 
@@ -447,7 +447,7 @@ namespace ClaFi
 
         // Post-increment: t++
         Tag operator++(int) {
-            Tag temp = static_cast<Tag&>(*this);
+            const Tag temp = static_cast<Tag&>(*this);
             ++value;
             return temp;
         }

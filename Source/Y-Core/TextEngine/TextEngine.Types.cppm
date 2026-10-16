@@ -152,9 +152,9 @@ namespace ClaFi
 
     export class InTextIcon {
     public:
-        InTextIcon(float designWidth, float designHeight, float designBaseline, const PaintIconFunc&, Tag = 0);
-        InTextIcon(float designWidth, float designHeight, const PaintIconFunc&, Tag = 0);
-        InTextIcon(float designWidth, const PaintIconFunc&, Tag = 0);
+        InTextIcon(float designWidth, float designHeight, float designBaseline, const PaintIconFunc&, Tag = {});
+        InTextIcon(float designWidth, float designHeight, const PaintIconFunc&, Tag = {});
+        InTextIcon(float designWidth, const PaintIconFunc&, Tag = {});
     public:
         float designWidth;
         float designHeight;
