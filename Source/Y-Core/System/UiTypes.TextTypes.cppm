@@ -167,6 +167,15 @@ namespace ClaFi{
         bool operator==(const TextRange&) const = default;
     };
 
+    // What one edit did, in the coordinates of the text before it. See TextEngine-Types
+    export struct TextEdit
+    {
+        TextRange replacedRange;
+        std::size_t insertedLength{ 0 };
+
+        static TextEdit merged(const TextEdit& first, const TextEdit& second);
+    };
+
     // How far apart the tab stops of a paragraph stand, in spaces of the font it starts in - so in
     // a monospace font a tab reaches the next multiple of this many columns.
     export constexpr float k_tabStopSpaces = 4.0f;
@@ -193,4 +202,49 @@ namespace ClaFi
             return {};
         return { from, to - from };
     }
+
+    TextEdit TextEdit::merged(const TextEdit& first, const TextEdit& second)
+    {
+        // Two edits as one, the second stated in the coordinates the first left behind and the answer
+        // in the coordinates before either. Key repeat outruns the paint loop, so several edits reach
+        // the text before anything asks the layout about it, and one record has to carry all of them.
+        //
+        // The answer is the **hull** of the two, which can name text neither of them touched - a
+        // position inside what the first edit inserted has no place in the coordinates before it, and
+        // the edge of what that edit replaced stands for it. Widening is the safe direction: a hull too
+        // wide re-shapes a paragraph that did not have to move, or is refused for crossing a boundary,
+        // and both of those are answers the caller already handles.
+
+        const std::size_t firstEnd = first.replacedRange.start + first.replacedRange.length;
+        const std::ptrdiff_t firstDelta = static_cast<std::ptrdiff_t>(first.insertedLength)
+            - static_cast<std::ptrdiff_t>(first.replacedRange.length);
+
+        // A position in the text the first edit left behind, carried back to where it stood before
+        // that edit. What the first edit inserted has no such place, so the far edge of what it
+        // replaced stands for anything inside it.
+        auto toBefore = [&](std::size_t position) {
+            if (position <= first.replacedRange.start)
+                return position;
+            if (position >= first.replacedRange.start + first.insertedLength)
+                return static_cast<std::size_t>(static_cast<std::ptrdiff_t>(position) - firstDelta);
+
+            return firstEnd;
+            };
+
+        const std::size_t start = std::min(first.replacedRange.start, toBefore(second.replacedRange.start));
+        const std::size_t end = std::max(firstEnd,
+            toBefore(second.replacedRange.start + second.replacedRange.length));
+
+        const std::ptrdiff_t secondDelta = static_cast<std::ptrdiff_t>(second.insertedLength)
+            - static_cast<std::ptrdiff_t>(second.replacedRange.length);
+
+        // What the two did to the length is what the one has to do to it, whatever the hull came
+        // to - which is the property the caller checks the record against.
+        return {
+            .replacedRange = {.start = start, .length = end - start },
+            .insertedLength = static_cast<std::size_t>(
+                static_cast<std::ptrdiff_t>(end - start) + firstDelta + secondDelta),
+        };
+    }
+
 }

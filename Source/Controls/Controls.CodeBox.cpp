@@ -302,7 +302,7 @@ namespace ClaFi::Controls
         m_declarationsStale = true;
         m_blocksStale = true;
         if (edit)
-            m_lines.applyEdit(text.plainText(), edit->replaced, edit->insertedLength);
+            m_lines.applyEdit(text.plainText(), *edit);
         else
             readWhole(text.plainText());
     }

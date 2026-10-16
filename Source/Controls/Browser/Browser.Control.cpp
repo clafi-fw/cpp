@@ -29,6 +29,7 @@ import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Url;
 
 import ClaFi.StdLib;
+import ClaFi.Core.TextEngine.Text;
 
 namespace ClaFi::Browser
 {
@@ -778,9 +779,11 @@ namespace ClaFi::Browser
         while (const Url* url = tab->historyUrl(offset))
         {
             PageData& pageData = *findPageData(url->path());
-            std::wstring line{ pageData.displayTitle() };
+            Text line{ pageData.displayTitle() };
             if (!url->anchor().empty())
-                line.append(L" - ").append(url->anchor());
+            {
+                line << InkGrade::Muted << L" - " << url->anchor();
+            }
             menu.add(
                 line,
                 [this, &pageData](PaintIconEvent& event) {

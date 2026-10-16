@@ -195,24 +195,6 @@ namespace ClaFi
         bool m_drawing{ false };
     };
 
-    // What one edit did, in the coordinates of the text before it. See TextEngine-Types
-    export struct TextEdit
-    {
-        TextRange replaced;
-        std::size_t insertedLength{ 0 };
-    };
-
-    // Two edits as one, the second stated in the coordinates the first left behind and the answer
-    // in the coordinates before either. Key repeat outruns the paint loop, so several edits reach
-    // the text before anything asks the layout about it, and one record has to carry all of them.
-    //
-    // The answer is the **hull** of the two, which can name text neither of them touched - a
-    // position inside what the first edit inserted has no place in the coordinates before it, and
-    // the edge of what that edit replaced stands for it. Widening is the safe direction: a hull too
-    // wide re-shapes a paragraph that did not have to move, or is refused for crossing a boundary,
-    // and both of those are answers the caller already handles.
-    export [[nodiscard]] TextEdit mergedEdits(TextEdit first, TextEdit second);
-
     export class TextLayout
     {
     public:

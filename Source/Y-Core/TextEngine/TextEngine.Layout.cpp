@@ -404,40 +404,6 @@ namespace ClaFi
         return origin;
     }
 
-    TextEdit mergedEdits(TextEdit first, TextEdit second)
-    {
-        const std::size_t firstEnd = first.replaced.start + first.replaced.length;
-        const std::ptrdiff_t firstDelta = static_cast<std::ptrdiff_t>(first.insertedLength)
-            - static_cast<std::ptrdiff_t>(first.replaced.length);
-
-        // A position in the text the first edit left behind, carried back to where it stood before
-        // that edit. What the first edit inserted has no such place, so the far edge of what it
-        // replaced stands for anything inside it.
-        auto toBefore = [&](std::size_t position){
-            if (position <= first.replaced.start)
-                return position;
-            if (position >= first.replaced.start + first.insertedLength)
-                return static_cast<std::size_t>(static_cast<std::ptrdiff_t>(position) - firstDelta);
-
-            return firstEnd;
-        };
-
-        const std::size_t start = std::min(first.replaced.start, toBefore(second.replaced.start));
-        const std::size_t end = std::max(firstEnd,
-            toBefore(second.replaced.start + second.replaced.length));
-
-        const std::ptrdiff_t secondDelta = static_cast<std::ptrdiff_t>(second.insertedLength)
-            - static_cast<std::ptrdiff_t>(second.replaced.length);
-
-        // What the two did to the length is what the one has to do to it, whatever the hull came
-        // to - which is the property the caller checks the record against.
-        return {
-            .replaced = { start, end - start },
-            .insertedLength = static_cast<std::size_t>(
-                static_cast<std::ptrdiff_t>(end - start) + firstDelta + secondDelta),
-        };
-    }
-
     // HeldLayouts
 
     void HeldLayouts::clear()
@@ -567,7 +533,7 @@ namespace ClaFi
     {
         m_hoveredLink = {};
         // Nothing shaped is nothing to keep, and a first build is what setText is for.
-        if (!m_layoutValid || m_paragraphs.empty() || edit.replaced.start == k_maxSize)
+        if (!m_layoutValid || m_paragraphs.empty() || edit.replacedRange.start == k_maxSize)
             return false;
 
         // The paragraphs the edit reaches, looked for in the list as it still stands - which is
@@ -577,12 +543,12 @@ namespace ClaFi
         // that takes it reaches into the paragraph after. So the first paragraph is the first
         // whose end is not before the edit, and the last is the first whose end is not before
         // the edit's - the ends are in order, so each is a binary search.
-        const std::size_t editEnd = edit.replaced.start + edit.replaced.length;
+        const std::size_t editEnd = edit.replacedRange.start + edit.replacedRange.length;
         auto endsBefore = [](const ParagraphLayoutState& paragraph, std::size_t position){
             return paragraph.textStart + paragraph.textLength < position;
         };
         const auto firstReached = std::lower_bound(m_paragraphs.begin(), m_paragraphs.end(),
-            edit.replaced.start, endsBefore);
+            edit.replacedRange.start, endsBefore);
         if (firstReached == m_paragraphs.end())
             return false;
         const std::size_t firstIndex = static_cast<std::size_t>(
@@ -691,7 +657,7 @@ namespace ClaFi
 
         const float heightDelta = sliceBottom - oldBottom;
         const std::ptrdiff_t textDelta = static_cast<std::ptrdiff_t>(edit.insertedLength)
-            - static_cast<std::ptrdiff_t>(edit.replaced.length);
+            - static_cast<std::ptrdiff_t>(edit.replacedRange.length);
 
         // Everything after keeps its shaping and moves: its characters begin later or earlier by
         // what the edit added or took away, its lines stand lower or higher by what the slice

@@ -657,13 +657,13 @@ namespace ClaFi::Controls
     {
         // A position in what went collapses onto where it went from, and one after it moves by
         // what the text gained or lost.
-        const std::size_t end = edit.replaced.end();
+        const std::size_t end = edit.replacedRange.end();
         const auto carried = [&edit, end](std::size_t pos){
-            if (pos == k_maxSize || pos <= edit.replaced.start)
+            if (pos == k_maxSize || pos <= edit.replacedRange.start)
                 return pos;
             if (pos < end)
-                return edit.replaced.start;
-            return pos - edit.replaced.length + edit.insertedLength;
+                return edit.replacedRange.start;
+            return pos - edit.replacedRange.length + edit.insertedLength;
         };
 
         for (Places* places : { &m_backPlaces, &m_forwardPlaces })

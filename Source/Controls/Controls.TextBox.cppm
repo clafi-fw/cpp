@@ -566,7 +566,7 @@ namespace ClaFi::Controls
         {
             const std::ptrdiff_t expected = static_cast<std::ptrdiff_t>(m_layoutText.plainText().size())
                 + static_cast<std::ptrdiff_t>(m_pendingEdit.value().insertedLength)
-                - static_cast<std::ptrdiff_t>(m_pendingEdit.value().replaced.length);
+                - static_cast<std::ptrdiff_t>(m_pendingEdit.value().replacedRange.length);
             incremental = expected == static_cast<std::ptrdiff_t>(text.plainText().size());
         }
 
@@ -988,7 +988,10 @@ namespace ClaFi::Controls
         const std::size_t textSize = text().plainText().size();
         const std::size_t editStart = std::min(range.start, textSize);
         const TextEdit thisEdit{
-            .replaced = { editStart, std::min(range.length, textSize - editStart) },
+            .replacedRange = {
+                .start = editStart,
+                .length = std::min(range.length, textSize - editStart)
+            },
             .insertedLength = inserted.plainText().size(),
         };
         // Merged rather than replaced: a held key delivers characters faster than the paint loop
@@ -997,7 +1000,7 @@ namespace ClaFi::Controls
         // make, and syncedLayout would then state the whole text - which is the freeze a run of
         // typing used to end in.
         m_pendingEdit = m_pendingEdit.has_value()
-            ? mergedEdits(m_pendingEdit.value(), thisEdit)
+            ? TextEdit::merged(m_pendingEdit.value(), thisEdit)
             : thisEdit;
         carryPlaces(thisEdit);
 

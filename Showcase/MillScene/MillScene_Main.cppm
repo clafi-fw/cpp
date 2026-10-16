@@ -91,7 +91,7 @@ namespace MillScene_App
         // The application's own page of the backstage: the theme picker. See MillScene_Showcase
         void pickSceneTheme(std::size_t index);
 
-        void buildScenePage(OptionsPage&);
+        void buildScenePage(AppMenuPage&);
 
         void restoreSceneTheme();
         void storeSceneTheme();
@@ -186,7 +186,7 @@ namespace MillScene_App
         restoreSceneTheme();
 
 
-        connectAppPage(L"Scene", Icons::DotMark::paint, [this](OptionsPage& page) {
+        connectAppPage(L"Scene", Icons::DotMark::paint, [this](AppMenuPage& page) {
             buildScenePage(page);
             });
         applySceneColors();
@@ -299,7 +299,7 @@ void MillSceneForm::pickSceneTheme(std::size_t index)
     m_themeButtons[index]->invalidateState();
 }
 
-void MillSceneForm::buildScenePage(OptionsPage& page)
+void MillSceneForm::buildScenePage(AppMenuPage& page)
 {
     StackPanel& group = page.addGroup(L"Scene Theme");
     SingleSelectionView& lanes = group.add<SingleSelectionView>(

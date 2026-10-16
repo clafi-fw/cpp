@@ -16,8 +16,7 @@ namespace ClaFi::Syntax
         // Re-lexes from the first line the edit reached, and on until a line starts in the state
         // it already had. The edit is stated in the coordinates of the text **before** it, the text
         // given is the one after, and the two have to agree on the length that leaves.
-        void applyEdit(std::wstring_view textAfter, const TextRange& replaced,
-            std::size_t insertedLength);
+        void applyEdit(std::wstring_view textAfter, const TextEdit& edit);
         [[nodiscard]] std::size_t lineCount() const { return m_starts.size(); }
         [[nodiscard]] const Language& language() const { return m_language; }
         // Where the line starts in the text.

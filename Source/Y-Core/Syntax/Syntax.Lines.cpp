@@ -24,18 +24,17 @@ namespace ClaFi::Syntax
         relexFrom(text, 0, lineCount());
     }
 
-    void LineStates::applyEdit(const std::wstring_view textAfter, const TextRange& replaced,
-        const std::size_t insertedLength)
+    void LineStates::applyEdit(const std::wstring_view textAfter, const TextEdit& edit)
     {
-        if (m_textLength - replaced.length + insertedLength != textAfter.size())
+        if (m_textLength - edit.replacedRange.length + edit.insertedLength != textAfter.size())
             noReach("An edit applied to the line states describes a text they do not hold.");
 
-        const std::size_t firstLine = lineAt(replaced.start);
-        const std::size_t lastLine = lineAt(replaced.end());
+        const std::size_t firstLine = lineAt(edit.replacedRange.start);
+        const std::size_t lastLine = lineAt(edit.replacedRange.end());
 
         // The lines the edit reached become one line plus one per newline the edit put in: every
         // newline those lines held stood inside the replaced range, and went with it.
-        const std::wstring_view inserted = textAfter.substr(replaced.start, insertedLength);
+        const std::wstring_view inserted = textAfter.substr(edit.replacedRange.start, edit.insertedLength);
         const std::size_t insertedNewlines
             = static_cast<std::size_t>(std::ranges::count(inserted, L'\n'));
 
@@ -48,13 +47,13 @@ namespace ClaFi::Syntax
         for (std::size_t newline = inserted.find(L'\n'); newline != std::wstring_view::npos;
             newline = inserted.find(L'\n', newline + 1))
         {
-            m_starts[line] = replaced.start + newline + 1;
+            m_starts[line] = edit.replacedRange.start + newline + 1;
             ++line;
         }
 
         // Everything past the edit moved by what the edit changed the length by, and nothing else.
-        const std::ptrdiff_t delta = static_cast<std::ptrdiff_t>(insertedLength)
-            - static_cast<std::ptrdiff_t>(replaced.length);
+        const std::ptrdiff_t delta = static_cast<std::ptrdiff_t>(edit.insertedLength)
+            - static_cast<std::ptrdiff_t>(edit.replacedRange.length);
         for (std::size_t i = line; i != m_starts.size(); ++i)
         {
             const std::ptrdiff_t moved = static_cast<std::ptrdiff_t>(m_starts[i]) + delta;
