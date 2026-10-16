@@ -44,7 +44,7 @@ namespace SeeDocs_App
         // The button that opens a project in a new tab, under a line saying none is open while
         // none is. A new one is made by the menu's own command, and an open project's options
         // stand on its page, under its node in the tree.
-        void addProjectGroup(OptionsPage& page, Workspace& workspace)
+        void addProjectGroup(AppMenuPage& page, Workspace& workspace)
         {
             StackPanel& group = page.addGroup(L"Project");
             if (!workspace.anyOpen())
@@ -63,7 +63,7 @@ namespace SeeDocs_App
             );
         }
 
-        void addRecentGroup(OptionsPage& page, Workspace& workspace)
+        void addRecentGroup(AppMenuPage& page, Workspace& workspace)
         {
             const Workspace::Folders recent = workspace.recentFolders();
             if (recent.empty())
@@ -87,7 +87,7 @@ namespace SeeDocs_App
         }
     }
 
-    void buildOpenPage(OptionsPage& page, Workspace& workspace)
+    void buildOpenPage(AppMenuPage& page, Workspace& workspace)
     {
         addProjectGroup(page, workspace);
         addRecentGroup(page, workspace);

@@ -17,7 +17,7 @@ namespace SeeDocs_App
     // What the config keeps the external editors' command lines under, one per language.
     export [[nodiscard]] ClaFi::Dom::Dt::Section createExternalEditorsSchema();
     // Fills the Settings page's External editors group: a command line each for C++ and Delphi.
-    export void buildExternalEditors(ClaFi::OptionsPage&);
+    export void buildExternalEditors(ClaFi::AppMenuPage&);
     // Whether Settings holds a command line for the language's sources.
     export [[nodiscard]] bool hasEditorCommand(ClaFi::AppContext&, SourceLanguage);
     // What the Settings page calls the language: C++ or Delphi.

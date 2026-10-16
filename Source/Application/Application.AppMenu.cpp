@@ -183,9 +183,9 @@ namespace ClaFi
         // the framework's two pages. The application is named where the eye goes first, one click
         // reaches any of its pages, and a page is free to be a list where the Settings page is a
         // column of small answers.
-        for (const AppPage& page : appPages())
+        for (const AppMenuPageDescriptor& page : appPages())
         {
-            OptionsPage& appPage = pageControl().add<OptionsPage>();
+            AppMenuPage& appPage = pageControl().add<AppMenuPage>();
             page.build(appPage);
             addPageTab(page.caption, appPage, page.paintIcon);
         }

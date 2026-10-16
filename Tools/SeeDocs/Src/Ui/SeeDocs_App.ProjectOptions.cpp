@@ -26,6 +26,7 @@ import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Timer;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
@@ -52,13 +53,19 @@ namespace SeeDocs_App
         // spaced as its rows are.
         constexpr Padding k_headPadding{ 12.0f, 0.0f };
         constexpr float k_headSpacing = 6.0f;
-        constexpr std::wstring_view k_stubText = L"Add source";   // what the stub's cell reads
-        constexpr std::wstring_view k_browseText = L"\u2026";
+        constexpr std::wstring_view k_stubText = L"e.g. C:\\My Code";   // what the stub's cell reads
+        constexpr std::wstring_view k_browseText = L"\u2026"; // Tree dots
+        constexpr std::wstring_view k_browseTooltip = L"Browse";
         constexpr std::wstring_view k_pickTitle = L"Pick a folder of sources";
 
         // What a choice's state is read from, and what a click on it does.
-        using Chosen = std::function<bool()>;
-        using Choose = std::function<void()>;
+        using GetStateFunc = std::function<bool()>;
+        using ChooseFunc = std::function<void()>;
+
+        class SourceChangeEvent : public ::ClaFi::Event
+        {
+            //using Event::Event;
+        };
 
         // The project's name, typed into where it stands and kept in the project's folder.
         class NameBox : public WordsBox
@@ -78,7 +85,7 @@ namespace SeeDocs_App
         class SourceList : public Grids::Grid
         {
         public:
-            SourceList(const CreateParams&, Workspace&, OpenProject&, Choose changed);
+            SourceList(const CreateParams&, Workspace&, OpenProject&);
         public:
             // The grid's columns, as their tags name them.
             enum class SourceColumn : TagValue
@@ -94,7 +101,11 @@ namespace SeeDocs_App
             [[nodiscard]] Grids::Column& column(SourceColumn tag)
                 { return columnByTag(Tag{ tag }); }
             [[nodiscard]] bool readsSubfolders(std::wstring_view source) const;
-            void changed() const { m_changed(); }   // after a change has been read back
+            void changed() const
+            {
+                auto event = SourceChangeEvent{};
+                emitEvent(event);
+            }
             void addStub();
             // Stops reading the row's folder and takes the row out on the next tick, outside the
             // edit or the click that asked; the selection lands on the row under it.
@@ -109,7 +120,6 @@ namespace SeeDocs_App
         private:
             Workspace& m_workspace;
             OpenProject& m_project;
-            Choose m_changed;
             Rows m_rows{};      // the rows standing, the stub last
             Rows m_pending{};   // the rows asked to go
             UiTimer m_removeTimer{};
@@ -119,8 +129,7 @@ namespace SeeDocs_App
         class SourceRow : public Grids::RowContainer
         {
         public:
-            SourceRow(const CreateParams&, Grids::GridDescriptor&, SourceList&,
-                std::wstring source);
+            SourceRow(const CreateParams&, Grids::GridDescriptor&,  SourceList&, std::wstring source);
         public:
             [[nodiscard]] const std::wstring& source() const { return m_source; }
             [[nodiscard]] bool isStub() const { return m_source.empty(); }
@@ -170,21 +179,21 @@ namespace SeeDocs_App
         // not; a click runs choose() and redraws every answer of the set. The mark stands where
         // a label's text stands, as on the Settings page.
         void addChoice(StackPanel& set, const std::wstring_view caption, const std::wstring_view tooltip,
-            Chosen chosen, Choose choose, Chosen enabled = {})
+            GetStateFunc isSelectedFunc, ChooseFunc selectFunc, GetStateFunc isEnabledFunc = {})
         {
             set.add<RadioButton>(
                 caption,
                 TooltipText{ tooltip },
                 Padding{ 0.0f, set.themeMetrics().listItem.padding.y },
                 HorizontalAlign::Left,
-                RadioButton::OnGetState{ [chosen, enabled](GetStateEvent& event) {
-                    event.state.selected = chosen();
-                    if (enabled)
-                        event.state.enabled = enabled();
+                RadioButton::OnGetState{ [isSelectedFunc, isEnabledFunc](GetStateEvent& event) {
+                    event.state.selected = isSelectedFunc();
+                    if (isEnabledFunc)
+                        event.state.enabled = isEnabledFunc();
                 } },
-                RadioButton::OnClick{ [chosen, choose](ClickEvent& event) {
-                    if (!chosen())
-                        choose();
+                RadioButton::OnClick{ [isSelectedFunc, selectFunc](ClickEvent& event) {
+                    if (!isSelectedFunc())
+                        selectFunc();
                     event.control->invalidateSiblingStates();
                 } }
             );
@@ -206,35 +215,34 @@ namespace SeeDocs_App
     // browser keeps the selected tab's options page while it does - see SurfaceBrowser - so a
     // button writes what came of it onto the page once the work is done. The project's own rows
     // stand under the page's title with no group of their own; the groups follow.
-    void buildProjectOptions(OptionsPage& page, Workspace& workspace, OpenProject& project)
+    void buildProjectOptions(AppMenuPage& page, Workspace& workspace, OpenProject& project)
     {
-        StackPanel& group = page.add<StackPanel>(
-            Orientation::Vertical,
-            k_headPadding,
-            Spacing{ k_headSpacing }
-        );
-        Panel& nameField = group.add<Panel>(
-            UiElement::Section,
-            Radius{ group.themeMetrics().button.radius },
-            group.themeMetrics().button.padding,
-            MinSize{ k_fieldWidth, 0.0f }
-        );
-        nameField.setBorder(group.themeMetrics().button.border);
-        NameBox& name = nameField.createBody<NameBox>(
+        StackPanel& group = page.addGroup(L"Project name");
+        //StackPanel& group = page.add<StackPanel>(
+        //    Orientation::Vertical,
+        //    k_headPadding,
+        //    Spacing{ k_headSpacing }
+        //);
+        NameBox& name = group.add<NameBox>(
             workspace,
             project,
             PlaceHolderText{ project.project.folderName() }
         );
+        name.setBorder(group.themeMetrics().button.border);
         name.showWords(Text{ project.project.name });
         group.add<Label>(
             Text{ project.project.folder.wstring() },
             TextFormat{ InkGrade::Muted },
             WordWrap::No,
             MaxSize{ k_pathWidth, k_maxFloat },
-            TooltipText{ L"The project's own folder: its properties, its database and its "
-                L"footnotes" }
+            TooltipText{ L"The project's own folder: its properties and data" }
         );
-        StackPanel& scanRow = group.add<StackPanel>(
+
+        StackPanel& sourcesSection = page.addGroup(L"Sources");
+        auto& sources = sourcesSection.add<SourceList>(workspace, project);
+
+        // Scan row
+        StackPanel& scanRow = sourcesSection.add<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_rowSpacing }
         );
@@ -244,23 +252,26 @@ namespace SeeDocs_App
             VerticalAlign::Center
         );
         // What every change that reads the sources again ends with.
-        const Choose rescanned = [&project, &scanLine]() {
+        const ChooseFunc rescanned = [&project, &scanLine]() {
             scanLine.text() = scanText(project);
             scanLine.invalidateFormAlign();
-        };
+            };
+
         scanRow.add<FlexSpacer>();
         scanRow.add<Button>(
             L"Rescan",
             VerticalAlign::Center,
-            TooltipText{ L"Reads the folders of sources again" },
+            TooltipText{ L"Scan the source folders for changes" },
             Button::OnClick{ [&workspace, &project, rescanned](ClickEvent&) {
                 workspace.rescan(project);
                 rescanned();
             } }
         );
 
-        StackPanel& sources = page.addGroup(L"Sources");
-        sources.add<SourceList>(workspace, project, rescanned);
+        sources.connectEvent([rescanned](SourceChangeEvent&) {
+            rescanned();
+        });
+
 
         // The edit choices are built after the hint choices, which grey one of them; the hints
         // reach them through this once they stand.
@@ -269,7 +280,7 @@ namespace SeeDocs_App
         StackPanel& scan = page.addGroup(L"Scan options");
         StackPanel& readAs = addChoiceSet(scan, L"Read sources as");
         addChoice(readAs, L"Any C++ and Delphi",
-            L"Anyone's C++ - headers too - and Delphi units, with nothing checked",
+            L"Anyone's C++ and Delphi files",
             [&project]() {
                 return project.project.mode == ScanMode::Limited;
             },
@@ -278,8 +289,7 @@ namespace SeeDocs_App
                 rescanned();
             });
         addChoice(readAs, L"ClaFi modules",
-            L"Module interfaces and their implementation units, written to the declaration "
-                L"routine and checked against it",
+            L"Module interfaces and implementation units that adhere ClaFi declaration routines",
             [&project]() {
                 return project.project.mode == ScanMode::Full;
             },
@@ -288,13 +298,13 @@ namespace SeeDocs_App
                 rescanned();
             });
         StackPanel& hints = addChoiceSet(scan, L"Hints format");
-        const Choose hintsChanged = [rescanned, editSet]() {
+        const ChooseFunc hintsChanged = [rescanned, editSet]() {
             rescanned();
             if (*editSet)
                 (*editSet)->invalidateChildrenStates();
         };
         addChoice(hints, L"Every recognizable comment",
-            L"A hint is the brief of whatever comment a declaration carries; none is owed",
+            L"Includes a brief summary of declarations as a hint",
             [&project]() {
                 return project.project.hints == HintRules::Loose;
             },
@@ -303,8 +313,7 @@ namespace SeeDocs_App
                 hintsChanged();
             });
         addChoice(hints, L"Strict ClaFi rules",
-            L"A hint is the comment on its declaration's line, else the first line above it; "
-                L"a declaration with none is marked",
+            L"Uses the comment on the declaration line as the hint; or the first line above it.",
             [&project]() {
                 return project.project.hints == HintRules::Strict;
             },
@@ -317,7 +326,7 @@ namespace SeeDocs_App
         StackPanel& editChoices = addChoiceSet(edits);
         *editSet = &editChoices;
         addChoice(editChoices, L"Not allowed",
-            L"Hints are read, and never written",
+            L"Hints are read, and never written back",
             [&project]() {
                 return project.project.edits == HintEdits::None;
             },
@@ -335,9 +344,10 @@ namespace SeeDocs_App
             [&project]() {
                 return project.project.hints == HintRules::Strict;
             });
-        addNote(edits, L"A hint is written back only where hints follow the strict ClaFi rules, "
-            L"and only into C++ sources. Footnotes are always editable, and are kept in the "
-            L"project's folder.");
+        addNote(
+            edits,
+            L"Hints are only modified if they adhere to strict ClaFi rules and are written into C++ sources."
+            );
     }
 
     // NameBox
@@ -351,13 +361,18 @@ namespace SeeDocs_App
             :
             WordsBox{
                 params,
+
+                UiElement::Section,
+                Radius{ params.themeMetrics().button.radius },
+                params.themeMetrics().button.padding,
+                MinSize{ k_fieldWidth, 0.0f },
+
                 Interactivity::Focusable,
                 TextFormat{ TextStyleId::Heading },
                 WordWrap::No,
-                Padding{ 0.0f },
                 VerticalTextAnchor::Center,
                 std::move(folderName),
-                TooltipText{ L"Renames the project - left empty, it takes the folder's name" }
+                TooltipText{ L"Name of the project. If left empty, the folder name is used" }
             },
             m_workspace{ workspace },
             m_project{ project }
@@ -379,7 +394,7 @@ namespace SeeDocs_App
     namespace
     {
         SourceList::SourceList(const CreateParams& params, Workspace& workspace,
-            OpenProject& project, Choose changed)
+            OpenProject& project)
             :
             Grids::Grid{
                 params,
@@ -389,8 +404,7 @@ namespace SeeDocs_App
                 ItemsOrder::Rearrangeable
             },
             m_workspace{ workspace },
-            m_project{ project },
-            m_changed{ std::move(changed) }
+            m_project{ project }
         {
             columns().add(Tag{ SourceColumn::Path }, Grids::ColumnWidthMode::Fill,
                 EditorMode::Editable);
@@ -496,7 +510,7 @@ namespace SeeDocs_App
                 HorizontalTextAnchor::Center,
                 VerticalTextAnchor::Center,
                 Interactivity::MouseOnly,
-                TooltipText{ L"Picks the folder in the desktop's own dialog" },
+                TooltipText{ k_browseTooltip },
                 Button::OnClick{ [this](ClickEvent&) {
                     browse();
                 } }
@@ -514,7 +528,7 @@ namespace SeeDocs_App
                 m_list.column(SourceList::SourceColumn::Subfolders),
                 L"Include subfolders",
                 VerticalAlign::Center,
-                TooltipText{ L"Reads the folders under this one too" },
+                TooltipText{ L"Scans this folder recursively" },
                 themeMetrics().listItem.padding,
                 CheckBox::OnGetState{ [this](GetStateEvent& event) {
                     event.state.selected = m_list.readsSubfolders(m_source);
@@ -535,7 +549,7 @@ namespace SeeDocs_App
                 VerticalAlign::Center,
                 Interactivity::MouseOnly,
                 ButtonBase::OnPaintIcon{ Icons::XMark::paint },
-                TooltipText{ L"Stops reading this folder" },
+                TooltipText{ L"Remove source" },
                 Button::OnClick{ [this](ClickEvent&) {
                     m_list.removeLater(*this);
                 } }

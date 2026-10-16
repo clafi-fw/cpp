@@ -26,13 +26,13 @@ namespace ClaFi
     using namespace Controls;
 
     // A page of captioned option groups - the shape the backstage's pages share. See Application
-    export class OptionsPage : public StackPanel
+    export class AppMenuPage : public StackPanel
     {
     public:
         // A caption and the column of options it heads, as one control.
         using Section = ExpanderWith<StackPanel>;
     public:
-        explicit OptionsPage(const CreateParams&);
+        explicit AppMenuPage(const CreateParams&);
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"OptionsPage"; }
         // A caption with a column of options under it, added down the page.
@@ -87,8 +87,8 @@ namespace ClaFi
         // **Every option the page holds, on one box that scrolls.** The sections are expanders on
         // this column and nothing inside it scrolls on its own, so a group opened past the foot
         // of the menu is reached by scrolling the page rather than through a bar of its own.
-        ScrollBoxWith<OptionsPage>& m_optionsBox;
-        OptionsPage& m_options;
+        ScrollBoxWith<AppMenuPage>& m_optionsBox;
+        AppMenuPage& m_options;
         StackPanel& m_interfaceGroup;
         // The theme and the mode it is worn in, as one row.
         StackPanel& m_themeRow;
@@ -113,7 +113,7 @@ namespace ClaFi
 #endif
         CheckBox& m_alwaysOnTop;
         // Held whole: all of it goes where the application named no GPU backend.
-        OptionsPage::Section& m_performanceSection;
+        AppMenuPage::Section& m_performanceSection;
         StackPanel& m_performanceGroup;
         CheckBox& m_gpuAcceleration;
         // The foot of the page, outside the box: the answer here is about the page as a whole,
@@ -124,25 +124,25 @@ namespace ClaFi
     };
 
     // What an application puts on a page of the backstage, its own or Settings. See Application
-    export using AppPageBuilder = std::function<void(OptionsPage&)>;
+    export using AppMenuPageBuilder = std::function<void(AppMenuPage&)>;
 
     // A page an application asked for, as it stated it.
-    export struct AppPage
+    export struct AppMenuPageDescriptor
     {
         std::wstring caption;
         PaintIconFunc paintIcon;
-        AppPageBuilder build;
+        AppMenuPageBuilder build;
     };
 
     // The pages applications have asked for, in the order they asked.
-    export [[nodiscard]] const std::vector<AppPage>& appPages();
+    export [[nodiscard]] const std::vector<AppMenuPageDescriptor>& appPages();
 
     // Adds a page of the application's own beside Settings, once per application. See Application
     export void connectAppPage(std::wstring_view caption, PaintIconFunc paintIcon,
-        AppPageBuilder);
+        AppMenuPageBuilder);
 
     // Adds the application's own groups to Settings, under the common ones. See Application
-    export void connectAppSettings(AppPageBuilder);
+    export void connectAppSettings(AppMenuPageBuilder);
 
 
     //-------------------------------------------------------------------------

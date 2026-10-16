@@ -53,9 +53,9 @@ namespace ClaFi
     // The pages applications have asked for, as they last stated them. A function-local static
     // rather than a member of anything: the backstage is built afresh every time it opens, and
     // what an application put in it outlives each of those.
-    static std::vector<AppPage>& mutableAppPages();
+    static std::vector<AppMenuPageDescriptor>& mutableAppPages();
 
-    using SettingsBuilders = std::vector<AppPageBuilder>;
+    using SettingsBuilders = std::vector<AppMenuPageBuilder>;
     // The groups applications add to the Settings page, kept the way the pages are.
     static SettingsBuilders& mutableAppSettings();
 
@@ -194,22 +194,22 @@ namespace ClaFi
 
     // connectAppPage
 
-    std::vector<AppPage>& mutableAppPages()
+    std::vector<AppMenuPageDescriptor>& mutableAppPages()
     {
-        static std::vector<AppPage> pages{};
+        static std::vector<AppMenuPageDescriptor> pages{};
         return pages;
     }
 
-    const std::vector<AppPage>& appPages()
+    const std::vector<AppMenuPageDescriptor>& appPages()
     {
         return mutableAppPages();
     }
 
     void connectAppPage(const std::wstring_view caption, PaintIconFunc paintIcon,
-        AppPageBuilder build)
+        AppMenuPageBuilder build)
     {
         mutableAppPages().push_back(
-            AppPage{ std::wstring{ caption }, std::move(paintIcon), std::move(build) });
+            AppMenuPageDescriptor{ std::wstring{ caption }, std::move(paintIcon), std::move(build) });
     }
 
     // connectAppSettings
@@ -220,7 +220,7 @@ namespace ClaFi
         return builders;
     }
 
-    void connectAppSettings(AppPageBuilder build)
+    void connectAppSettings(AppMenuPageBuilder build)
     {
         mutableAppSettings().push_back(std::move(build));
     }
@@ -229,7 +229,7 @@ namespace ClaFi
 
     // **The page is the stack.** One column down the page, a group at a time, each item handed the
     // page's width by the lane it stands in.
-    OptionsPage::OptionsPage(const CreateParams& params)
+    AppMenuPage::AppMenuPage(const CreateParams& params)
         :
         StackPanel{
             params,
@@ -248,7 +248,7 @@ namespace ClaFi
     // VerticalAlign::Top **is what lets a section grow**, the same as it is there: a wrapping panel
     // deeper in measures one lane and wraps into as many as it needs once the width arrives, and
     // every group between it and the page has to follow.
-    OptionsPage::Section& OptionsPage::addSection(const std::wstring_view caption)
+    AppMenuPage::Section& AppMenuPage::addSection(const std::wstring_view caption)
     {
         return add<Section>(
             HostProps{
@@ -309,7 +309,7 @@ namespace ClaFi
         // the foot, so the panel between them adds nothing of its own.
         Panel{ params, Padding{ 0.0f }, Spacing{ 0.0f } },
         // The bar always stands, so a section opening or closing moves nothing. See Application
-        m_optionsBox{ createBody<ScrollBoxWith<OptionsPage>>(
+        m_optionsBox{ createBody<ScrollBoxWith<AppMenuPage>>(
             HostProps{
                 ScrollBars::Vertical,
                 MaxSize{ k_maxFloat, k_optionsHeight }
@@ -494,7 +494,7 @@ namespace ClaFi
             m_performanceSection.setVisible(false);
 
         // Under the common options, so those stand in one place in every application.
-        for (const AppPageBuilder& build : mutableAppSettings())
+        for (const AppMenuPageBuilder& build : mutableAppSettings())
             build(m_options);
 
         // **The folder is the permission.** Nothing is stored until one exists, so the check reads

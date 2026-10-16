@@ -8,5 +8,5 @@ namespace SeeDocs_App
 {
     // Fills the application menu's Open page: Browse, and the projects opened before, each
     // opening a project in a new tab. Built afresh as the menu opens.
-    export void buildOpenPage(ClaFi::OptionsPage&, Workspace&);
+    export void buildOpenPage(ClaFi::AppMenuPage&, Workspace&);
 }

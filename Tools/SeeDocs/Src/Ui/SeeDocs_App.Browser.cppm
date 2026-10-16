@@ -138,10 +138,10 @@ namespace SeeDocs_App
         template<typename... Args>
         explicit ProjectPage(const CreateParams&, Args&&...);
     public:
-        [[nodiscard]] OptionsPage& options() { return m_optionsBox.body(); }
+        [[nodiscard]] AppMenuPage& options() { return m_optionsBox.body(); }
     private:
         PageHead& m_head{ createTopBar<PageHead>() };
-        ScrollBoxWith<OptionsPage>& m_optionsBox{ createBody<ScrollBoxWith<OptionsPage>>(
+        ScrollBoxWith<AppMenuPage>& m_optionsBox{ createBody<ScrollBoxWith<AppMenuPage>>(
             HostProps{
                 ScrollBars::Vertical
             },
@@ -150,7 +150,7 @@ namespace SeeDocs_App
     };
 
     // What a project's options page is filled with.
-    export using ProjectPageBuilder = std::function<void(OptionsPage&, OpenProject&)>;
+    export using ProjectPageBuilder = std::function<void(AppMenuPage&, OpenProject&)>;
 
     // The browser over the open projects: down the left the tab's own tree, a node per project,
     // and a page per url on the right - /project/folder/.../module/type/method, the folders as

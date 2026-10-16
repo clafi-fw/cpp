@@ -76,7 +76,7 @@ namespace SeeDocs_App
         const std::filesystem::path& stated)
     {
         Workspace workspace{ application, form, form.content() };
-        connectAppPage(k_openPageCaption, paintOpenIcon, [&workspace](OptionsPage& page) {
+        connectAppPage(k_openPageCaption, paintOpenIcon, [&workspace](AppMenuPage& page) {
             buildOpenPage(page, workspace);
         });
         connectAppCommand(k_newProjectCaption, paintNewProjectIcon, EndIcon::OpensWindow,
@@ -85,7 +85,7 @@ namespace SeeDocs_App
                 workspace.createNew({}, event.stamp);
             });
         connectAppSettings(buildExternalEditors);
-        form.content().connectProjectPage([&workspace](OptionsPage& page, OpenProject& project) {
+        form.content().connectProjectPage([&workspace](AppMenuPage& page, OpenProject& project) {
             buildProjectOptions(page, workspace, project);
         });
         workspace.start(stated);

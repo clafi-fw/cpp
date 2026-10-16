@@ -325,7 +325,7 @@ namespace SeeDocs_App
         };
     }
 
-    void buildExternalEditors(OptionsPage& page)
+    void buildExternalEditors(AppMenuPage& page)
     {
         StackPanel& group = page.addGroup(L"External editors");
         addEditorRow(group, L"C++:", EditorKey::cpp,
