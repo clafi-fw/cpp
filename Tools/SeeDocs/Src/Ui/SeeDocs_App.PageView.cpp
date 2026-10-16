@@ -564,7 +564,8 @@ namespace SeeDocs_App
         Grids::Grid& grid = m_pageBox.body().add<Grids::Grid>(
             themeMetrics().page,
             UiElement::Section,
-            Grids::GridLines::Horizontal
+            Grids::GridLines::Horizontal,
+            Interactivity::None // the page is the container; the rows are its items
         );
         grid.columns().add(Tag{ k_factLabel }, TextFormat{ InkGrade::Muted });
         const bool opens = std::ranges::any_of(m_page.facts, takesButton);
@@ -672,7 +673,8 @@ namespace SeeDocs_App
     {
         TreeView& tree = expander.createBody<TreeView>(
             Padding{ k_treePadding },
-            HorizontalAlign::Left
+            HorizontalAlign::Left,
+            Interactivity::None // the page is the container; the rows are its items
         );
         addTreeRows(tree, branches, nodesOpen);
     }
@@ -711,6 +713,7 @@ namespace SeeDocs_App
             themeMetrics().page,
             UiElement::Section,
             Grids::GridLines::Horizontal,
+            Interactivity::None, // the page is the container; the rows are its items
             table.rearrangeable ? ItemsOrder::Rearrangeable : ItemsOrder::Fixed
         );
         if (table.rearrangeable)

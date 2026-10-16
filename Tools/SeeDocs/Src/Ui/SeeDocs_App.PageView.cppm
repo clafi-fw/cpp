@@ -309,6 +309,7 @@ namespace SeeDocs_App
             },
             BodyProps{
                 Orientation::Vertical,
+                Interactivity::ActiveContainer, // the page holds the one selected item
                 Padding{ k_pagePadding, k_headPadding },
                 Spacing{ k_sectionSpacing }
             }

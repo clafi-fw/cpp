@@ -176,6 +176,7 @@ namespace ClaFi::Controls::Grids
         [[nodiscard]] CellPressKind pressOn(const Column&) const;
         void selectCellOnKeyboardEntry();
         void selectColumn(const Column& value);
+        void selectNavigationStop(); // the selection on the row's stop, with no cell
         void scrollCellIntoView(const FloatRect& cellRect);
         void setHoveredColumn(const Column* value, bool initiateTooltip = true);
         //

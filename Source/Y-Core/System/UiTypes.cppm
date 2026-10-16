@@ -160,16 +160,20 @@ namespace ClaFi
     export struct StateFactors
     {
         StateFactors() = default;
-        StateFactors(const VisualState&);
+        explicit StateFactors(const VisualState&);
         float hoveredOrSelected(float kSel = 1.0f) const { return compose(hovered(), selected() * kSel); }
         float hoveredOrSelected(float kHover, float kSel) const { return compose(hovered() * kHover, selected() * kSel); }
-        static float compose(std::initializer_list<float> factors) {
-            float inverse_product = 1.0f;
-            for (float f : factors) {
-                inverse_product *= (1.0f - std::clamp(f, 0.0f, 1.0f));
+
+        static float compose(std::initializer_list<float> factors)
+        {
+            float inverseProduct = 1.0f;
+            for (float f : factors)
+            {
+                inverseProduct *= (1.0f - std::clamp(f, 0.0f, 1.0f));
             }
-            return 1.0f - inverse_product;
+            return 1.0f - inverseProduct;
         }
+
         static float compose(const float f1, const float f2) { return compose({ f1, f2 }); }
         static float compose(const float f1, const float f2, const float f3) { return compose({ f1, f2, f3 }); }
         //static float composeZeros(const float f1, const float f2) { return 1.0f - compose(1.0f - f1, 1.0f - f2); }
@@ -177,6 +181,7 @@ namespace ClaFi
         float operator[](std::size_t index) const { return (&m_hovered)[index] / 255.0f; }
         void set(std::size_t index, float value) { (&m_hovered)[index] = toByte(value); }
     public:
+
         float hovered() const { return m_hovered / 255.0f; }
         float pressed() const { return m_pressed / 255.0f; }
         float focused() const { return m_focused / 255.0f; }
@@ -184,6 +189,7 @@ namespace ClaFi
         float enabled() const { return m_enabled / 255.0f; }
         float textHovered() const { return m_textHovered / 255.0f; }
         float current() const { return m_current / 255.0f; }
+
         void setHovered(float value) { m_hovered = toByte(value); }
         void setPressed(float value) { m_pressed = toByte(value); }
         void setFocused(float value) { m_focused = toByte(value); }

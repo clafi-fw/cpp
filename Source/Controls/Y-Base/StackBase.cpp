@@ -60,6 +60,8 @@ namespace ClaFi::Controls
         if (m_currentItem)
             m_currentItem->invalidateState();
 
+        // A grid standing in this container drops its selected cell on it.
+        raiseCurrentItemChange(previousValue, m_currentItem);
         doCurrentItemChanged(previousValue);
     }
 
@@ -139,6 +141,17 @@ namespace ClaFi::Controls
     Control* StackBase::focusDelegate()
     {
         return m_currentItem ? m_currentItem : this;
+    }
+
+    // An ActiveContainer is the one asked, and it answers yes for an item it cannot make current
+    // too: nothing above it is the container that item is in.
+    bool StackBase::takeCurrentItem(Control& item)
+    {
+        if (interactivity() != Interactivity::ActiveContainer)
+            return false;
+        if (canFocusItem(&item))
+            setCurrentItem(&item);
+        return true;
     }
 
     // A click inside an item picks that item - on a grid, the row a cell's control stands in.

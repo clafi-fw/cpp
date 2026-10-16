@@ -45,6 +45,8 @@ namespace ClaFi::Controls
         [[nodiscard]] ChildSearch childSearch(const Control&) const override;
         void revealChild(Control&) override;
     private:
+        void bodyToggled(ToggleExpandedEvent&);
+    private:
         ExpanderHeader& m_header;
     };
 
@@ -96,7 +98,7 @@ namespace ClaFi::Controls
         // answer to the toggle keeps the two in step however the header was worked - the
         // button, a key, a double click on the header, or setExpanded from code.
         m_header.connectEvent<ToggleExpandedEvent>([this](ToggleExpandedEvent& event) {
-            body()->setVisible(event.expanded());
+            bodyToggled(event);
         });
         // A tree row keeps the tool button's radius it was given. The other looks turn the page's
         // corner, less the padding that stands between the header and the page's edge.
@@ -118,6 +120,16 @@ namespace ClaFi::Controls
     void Expander::revealChild(Control&)
     {
         m_header.setExpanded(true);
+    }
+
+    // A section shut over the container's current item leaves its header standing for it.
+    void Expander::bodyToggled(ToggleExpandedEvent& event)
+    {
+        body()->setVisible(event.expanded());
+        if (event.expanded())
+            return;
+        if (body()->containsNested(containerCurrentItem(CheckSelf::No)))
+            m_header.makeCurrentItem();
     }
 
 }

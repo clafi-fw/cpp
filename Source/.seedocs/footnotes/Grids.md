@@ -20,6 +20,15 @@ order.
 **The node tree dies with the constructor.** Reach what it made through the grid - columnByTag,
 forEachRow.
 
+## Grid
+
+**A grid follows the user as a container of its own**, keeping the selected cell and answering
+the keys inside it: the arrows, Home, End, PageUp and PageDown. Built with Interactivity::None it
+stands in the container above it instead - a page holding the one selected item: its rows are
+that container's items, the selection goes where the container's item goes, the four keys that
+address a container are the container's, and Up and Down travel on past the first and the last
+row into the rest of it - see StackBase.
+
 ## RowGroupSpan
 
 Its cells stretch over every row of the group, so a control in one is the group's - a choice the
@@ -66,7 +75,9 @@ Control::isWidthGivenFromOutside.
 ## Selection from code
 
 `selectCell` puts the selection where a pick would - in a `SelectionMode::Multi` grid, on that row
-alone. A null column selects the row with no cell.
+alone. A null column selects the row with no cell. The row is made the current item of whichever
+container keeps one - the grid, or the container a grid built with Interactivity::None stands in -
+see Control makeCurrentItem.
 
 **The focus stays where it is.** To move it there, call `setFocus` on the row, then
 `StackView::setSelection` for a wider held set - a focus arriving outside the set reads as a pick.
@@ -220,6 +231,9 @@ selected whenever one of them holds the selected cell - see UiElement::GridRow.
 
 Its header rests under the grid's header and any outer expander's - see WithHeldHeader. It is
 never selected, so the selected rule stops at the rows inside it.
+
+**Shut over the selected cell, its header stands for the cell** - the stop the next key moves on
+from, and the current item of the container the grid stands in.
 
 ## RowNewItem
 

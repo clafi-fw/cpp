@@ -1012,6 +1012,15 @@ namespace ClaFi
             Tooltip::focusedControlChanged();
     }
 
+    // The first container up the chain that keeps a current item answers, whether or not it took
+    // this control - a container that refuses it is still the one the question was for.
+    void Control::makeCurrentItem()
+    {
+        Control* container = m_parent;
+        while (container && !container->takeCurrentItem(*this))
+            container = container->m_parent;
+    }
+
     void Control::animatedClick(FormBase& form, const InputStamp stamp)
     {
         if (!canClick())
@@ -1617,6 +1626,27 @@ namespace ClaFi
     Control* Control::focusDelegate()
     {
         return this;
+    }
+
+    // The item itself hears it first. The walk ends under this control, which is the container
+    // that moved the item and so holds the new one.
+    void Control::raiseCurrentItemChange(Control* previousItem, Control* currentItem)
+    {
+        Control* left = previousItem;
+        while (left && left != this && !left->containsNested(currentItem))
+        {
+            left->nestedCurrentItemChange(currentItem);
+            left = left->m_parent;
+        }
+    }
+
+    Control* Control::containerCurrentItem(const CheckSelf checkSelf)
+    {
+        Control* container = navigationContainer(checkSelf);
+        if (!container)
+            return nullptr;
+        Control* item = container->focusDelegate();
+        return item != container ? item : nullptr;
     }
 
     void Control::nestedControlFocusing(FocusEvent& event)

@@ -120,7 +120,7 @@ namespace ClaFi::Controls::Grids
     // The focus is left to the caller: a pick moves it, a restore of a grid off screen does not.
     void GridBase::selectCell(RowBase& row, const Column* column)
     {
-        setCurrentItem(row);
+        row.makeCurrentItem();
         if (column)
             row.selectColumn(*column);
         else
@@ -138,6 +138,14 @@ namespace ClaFi::Controls::Grids
     {
         StackView::currentItemChanged(params);
         m_descriptor.setSelectedRow(currentItem());
+    }
+
+    // Only a grid that is not a container of its own. One that follows the user keeps its selection
+    // whatever a container above does with the row.
+    void GridBase::nestedCurrentItemChange(Control*)
+    {
+        if (interactivity() != Interactivity::ActiveContainer && isFieldRoot())
+            m_descriptor.setSelectedCell(nullptr, nullptr);
     }
 
     void GridBase::adjustPaint(AdjustPaintEvent& event)
@@ -275,6 +283,10 @@ namespace ClaFi::Controls::Grids
         case Keys::Home:
         case Keys::End:
             {
+                // Home, End and the page keys address a container. A grid standing in one leaves
+                // them to it, and the selection leaves the grid with them.
+                if (interactivity() != Interactivity::ActiveContainer)
+                    break;
                 const ScrollDirection edge = event.key == Keys::Home
                     ? ScrollDirection::ToBegin
                     : ScrollDirection::ToEnd;
@@ -291,6 +303,8 @@ namespace ClaFi::Controls::Grids
         case Keys::Prior:
         case Keys::Next:
             {
+                if (interactivity() != Interactivity::ActiveContainer)
+                    break;
                 const ScrollDirection direction = event.key == Keys::Next
                     ? ScrollDirection::ToEnd
                     : ScrollDirection::ToBegin;

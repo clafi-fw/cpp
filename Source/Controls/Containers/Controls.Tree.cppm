@@ -163,11 +163,11 @@ namespace ClaFi::Controls
         // Whether the control stands in this tree, in the rows of a node that does, or is the
         // header of such a node.
         [[nodiscard]] bool isRow(const Control&) const;
+        // The current row, kept by this tree or by the container above it; null while elsewhere.
+        [[nodiscard]] Control* currentRow();
         // Whether the node is the current row's own, or holds the current row in its rows.
-        [[nodiscard]] bool holdsCurrentRow(const TreeNode&) const;
+        [[nodiscard]] bool holdsCurrentRow(const TreeNode&);
         [[nodiscard]] bool hasNode(bool expanded) const;
-        // The node has closed; a current row folded away under it moves to its header.
-        void rowsFolded(TreeNode&);
         // Brings the current row back after the nodes have moved.
         void showCurrentRow();
     private:
@@ -236,12 +236,9 @@ namespace ClaFi::Controls
         m_rows{ createBody<StackPanel>(Orientation::Vertical) }
     {
         layOutHeader(params.themeMetrics().button);
-        // Closing over the current row folds it away, and the header is where it went. Opening
-        // with no rows asks for them.
+        // Opening with no rows asks for them.
         header().connectEvent<ToggleExpandedEvent>([this](ToggleExpandedEvent& event) {
-            if (!event.expanded())
-                m_tree.rowsFolded(*this);
-            else if (m_rows.controls().empty())
+            if (event.expanded() && m_rows.controls().empty())
                 emitEvent<FetchRowsEvent>(*this);
         });
     }

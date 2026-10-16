@@ -5,6 +5,7 @@ import :RowGroupBase;
 import :Columns;
 import :Descriptor;
 
+import ClaFi.Controls.Base.ExpanderBase;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -109,6 +110,18 @@ namespace ClaFi::Controls::Grids
     void RowExpander::revealChild(Control&)
     {
         header().setExpanded(true);
+    }
+
+    // A section shut over the selected cell leaves its header standing for it: the stop the next
+    // key moves on from, and the item the container holds.
+    void RowExpander::bodyToggled(ToggleExpandedEvent& event)
+    {
+        Control& body = *m_controls[k_body];
+        body.setVisible(event.expanded());
+        if (event.expanded() || !body.containsNested(m_descriptor.selectedRow()))
+            return;
+        selectNavigationStop();
+        header().makeCurrentItem();
     }
 
 }

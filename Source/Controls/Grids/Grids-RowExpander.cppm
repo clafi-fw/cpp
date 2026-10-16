@@ -50,6 +50,8 @@ namespace ClaFi::Controls::Grids
         // The body is read shut or open, and opened to show a match in it.
         [[nodiscard]] ChildSearch childSearch(const Control&) const override;
         void revealChild(Control&) override;
+    private:
+        void bodyToggled(ToggleExpandedEvent&);
     };
 
 
@@ -85,9 +87,8 @@ namespace ClaFi::Controls::Grids
             }, std::forward<Args>(args)...);
 
         RowExpanderHeader& hdr = static_cast<RowExpanderHeader&>(*m_controls[k_head]);
-        hdr.connectEvent<ToggleExpandedEvent>([this](ToggleExpandedEvent& event)
-        {
-                m_controls[k_body]->setVisible(event.expanded());
+        hdr.connectEvent<ToggleExpandedEvent>([this](ToggleExpandedEvent& event) {
+            bodyToggled(event);
         });
         holdHeader(hdr);
     }

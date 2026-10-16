@@ -749,3 +749,8 @@ only when it is painted.
   measured whole.
 - A tree whose width is its content's - a bar fitted to it, a scroll box carrying it across -
   measures every row.
+
+**A tree follows the user as a container of its own**, keeping the current row. Built with
+Interactivity::None it stands in the container above it instead, as a grid does - see Grid: its
+rows are that container's items, and Up, Down, Home, End and the page keys travel out of it.
+A node shut over the current row makes its header the row either way - see Expander.

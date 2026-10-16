@@ -834,6 +834,8 @@ namespace ClaFi
         // Asks for the focus. Every ancestor gets to redirect it on the way up - see
         // adjustFocus - so the control that ends up focused may not be this one.
         void setFocus();
+        // Makes this control the current item of the container above it. The focus stays put.
+        void makeCurrentItem();
         //
         // Runs the click a key asked for, which names that key rather than whatever the pointer
         // last pressed on this form.
@@ -1199,6 +1201,14 @@ namespace ClaFi
         // item inside it; everything else answers with itself, which is the default. It is what
         // isFocused() is tested against, so a container that delegates does not read as focused.
         virtual Control* focusDelegate();
+        // makeCurrentItem's question: a container keeping a current item takes it and answers yes.
+        [[nodiscard]] virtual bool takeCurrentItem(Control& /*item*/) { return false; }
+        // A container above moved its current item out of here, to currentItem (null where none).
+        virtual void nestedCurrentItemChange(Control* /*currentItem*/) {}
+        // Tells what the item left, from previousItem up to the first control holding currentItem.
+        void raiseCurrentItemChange(Control* previousItem, Control* currentItem);
+        // The nearest container's current item, else nullptr; CheckSelf::Yes counts this control.
+        [[nodiscard]] Control* containerCurrentItem(CheckSelf);
         // The focus is on its way to event.control. This walks from the target up to the root,
         // and any control on that path may retarget the event - a container that owns its items
         // points it at itself - so the write at the end of the walk is what settles it. Acting on

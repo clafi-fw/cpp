@@ -108,6 +108,24 @@ a grid cell selected before the grid shows, takes this route.
 stopAnimation and stopAnimations take the same route. GridDescriptor::animateCell does the same for
 a cell.
 
+## Control makeCurrentItem
+
+**The nearest container above that keeps a current item answers**, whether or not it takes the
+control - see Control takeCurrentItem. The focus stays where it is; a container that holds the
+focus shows the new item through its focusDelegate.
+
+## Control takeCurrentItem
+
+Asked up the chain by makeCurrentItem. A container that keeps a current item answers yes, and
+takes the control where it can be an item of that container - StackBase does. Every other
+control answers no, and the question goes on up.
+
+## Control nestedCurrentItemChange
+
+**Told to what the item left.** When a container's current item moves, every control from the item
+that was current up to the first one still holding the new item hears it, the item itself first. A
+grid standing in a container drops its selected cell on it - see Grid.
+
 ## LayoutPass
 
 The form owns it, and a control reaches it through its AlignEvent.

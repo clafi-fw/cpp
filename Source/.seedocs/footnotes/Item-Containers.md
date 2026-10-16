@@ -27,6 +27,21 @@ That is the one switch for it: a container that tracks nothing is not one, and a
 current item is settled elsewhere is not one either. PageControl's is whichever page was made
 visible, and the tab strip is what makes one visible.
 
+**A container standing in an ActiveContainer is not one of its own.** A grid on a page that keeps
+the current item is built with Interactivity::None: its rows are the page's items, one selection
+stands on the whole page, and the arrows and the page keys travel over every item the page
+holds - see Grid. Code that picks an item calls Control::makeCurrentItem on it, which reaches
+whichever container keeps the current item.
+
+**What the current item leaves is told** - see Control nestedCurrentItemChange - so a grid the
+item has left drops its selected cell.
+
+## Expander
+
+**Shut over the container's current item, its header stands for the item.** A section on a page
+that keeps the current item is shut from a row inside it, and the header is what the next key
+moves on from.
+
 ## CanFocusItemEvent
 
 Asked of every item that could become current. `canFocus` starts as the container's answer, and a

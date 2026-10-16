@@ -121,6 +121,8 @@ namespace ClaFi::Controls::Grids
 
         ScaledSize calculateContent(AlignEvent&) override;
         void currentItemChanged(CurrentItemChangeEvent&)  override;
+        // A grid standing in a container drops its selected cell when the container's item leaves.
+        void nestedCurrentItemChange(Control* currentItem) override;
         // Puts the theme's grid element on the grid, whose stroke is the grid's own border - the
         // outer line of the lattice: the cells leave their outermost strokes to it and draw only
         // the interior ones, each in its row's stroke.

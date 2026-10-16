@@ -505,6 +505,12 @@ mouse click follows a link, and so does Return on the grid cell or the header ho
 the caret standing in it - Ctrl+Return in a hint box that edits, where Return breaks the line. A
 right click on a link, or the menu key on a grid cell holding one or with the caret in one, offers
 Open and Open in new tab, which opens behind the tab shown.
+A page holds one selected item - a row of one of its grids, a section's header or a box of text -
+and the keys walk the page as one: Up and Down move over rows, headers and boxes alike, from one
+section into the next; Home and End go to the page's first and last item, PageUp and PageDown a
+screenful on; Tab leaves the page as a whole. Left and Right stay on the row, the header or the
+caret. A box of text keeps the keys while the caret stands in it. A section or a tree's node shut
+over the selected row selects its header.
 A row of the derived types opens the type it names; a method's page picks the method's type in the
 tree. A page's trees start closed, and a node's rows are built the first time it opens.
 The pages are built by

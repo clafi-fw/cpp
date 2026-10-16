@@ -97,6 +97,7 @@ namespace ClaFi::Controls
         void nestedControlDeleted(Control*) override;
         void getControlState(GetStateEvent&) const override;
         Control* focusDelegate() override;
+        bool takeCurrentItem(Control&) override;
         void nestedClick(NestedClickEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;
     private:

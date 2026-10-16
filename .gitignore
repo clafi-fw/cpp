@@ -9,6 +9,7 @@ out/
 
 # Scratch and generated
 _to_delete/
+enc_temp_folder/
 *.log
 *.mp4
 *.nativecodeanalysis.xml

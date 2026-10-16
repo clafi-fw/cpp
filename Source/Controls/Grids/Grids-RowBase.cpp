@@ -602,6 +602,8 @@ namespace ClaFi::Controls::Grids
         if (!column)
             return;
         selectColumn(*column);
+        // The match is the selection, and the selection is the current item wherever that is kept.
+        makeCurrentItem();
         const FloatPoint rowOrigin = boundsInForm().topLeft();
         const FloatPoint gridOrigin = m_descriptor.owner().boundsInForm().topLeft();
         m_descriptor.setDesiredCellX(rowOrigin.x + cellRect.centerX() - gridOrigin.x);
@@ -878,6 +880,13 @@ namespace ClaFi::Controls::Grids
     {
         m_descriptor.setSelectedCell(this, &value);
         invalidate();
+    }
+
+    void RowBase::selectNavigationStop()
+    {
+        const RowStop stop = navigationStop();
+        if (stop.control)
+            m_descriptor.setSelectedCell(stop.control, nullptr);
     }
 
     void RowBase::scrollCellIntoView(const FloatRect& cellRect)

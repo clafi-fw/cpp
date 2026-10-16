@@ -261,9 +261,15 @@ namespace ClaFi::Controls
         return nodeInRows && !control.isHostedAsBody() && isRow(*parent);
     }
 
-    bool TreeView::holdsCurrentRow(const TreeNode& node) const
+    Control* TreeView::currentRow()
     {
-        const Control* row = currentItem();
+        Control* item = containerCurrentItem(CheckSelf::Yes);
+        return item && containsNested(item, CheckSelf::No) ? item : nullptr;
+    }
+
+    bool TreeView::holdsCurrentRow(const TreeNode& node)
+    {
+        const Control* row = currentRow();
         if (!row)
             return false;
         return row == &node.header() || node.rows().containsNested(row);
@@ -276,18 +282,9 @@ namespace ClaFi::Controls
         });
     }
 
-    // A bulk collapse closes the nodes outer first, so the row ends on the outermost header over
-    // it; a single node closing leaves it on that node's own.
-    void TreeView::rowsFolded(TreeNode& node)
-    {
-        const Control* row = currentItem();
-        if (row && node.rows().containsNested(row))
-            setCurrentItem(node.header());
-    }
-
     void TreeView::showCurrentRow()
     {
-        if (Control* row = currentItem())
+        if (Control* row = currentRow())
             row->scrollIntoViewOnAlign();
     }
 
