@@ -5,6 +5,7 @@ import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
 import ClaFi.Controls.InPlaceEdit;
+import ClaFi.Controls.Base.WithEditMode;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
@@ -80,8 +81,7 @@ namespace SeeDocs_App
         // The words a write hands on, read off what the box holds.
         [[nodiscard]] virtual std::wstring wordsOf(const Text&) const;
         [[nodiscard]] bool edited() const;
-        void focusChanged() override;   // leaving writes, but not for a popup opened on the box
-        void nestedKeyDown(KeyDownEvent&) override;
+        void editModeLeft(bool accepted) override;   // leaving writes, Escape puts back
         void charPress(CharPressEvent&) override;   // one line, and Return writes it
     private:
         void write();
@@ -134,7 +134,7 @@ namespace SeeDocs_App
         IPageWriter* m_writer{ nullptr };
         FootnoteDraft m_draft{};
         bool m_editing{ false };
-        TextBox& m_shown{ add<TextBox>(ReadOnly::Yes, Padding{ 0.0f }) };
+        TextBox& m_shown{ add<TextBox>(ReadOnly::Yes, EditModeSwitching::Yes, Padding{ 0.0f }) };
         StackPanel* m_editor{ nullptr };
         TextBox* m_box{ nullptr };
         Label* m_place{ nullptr };
@@ -149,7 +149,7 @@ namespace SeeDocs_App
     template<typename... Args>
     WordsBox::WordsBox(const CreateParams& params, Args&&... args)
         :
-        PromptBox{ params, std::forward<Args>(args)... }
+        PromptBox{ params, EditModeSwitching::Yes, std::forward<Args>(args)... }
     {
     }
 

@@ -44,6 +44,9 @@ namespace ClaFi
         [[nodiscard]] static const InputController& mouse() { return s_mouse; }
         [[nodiscard]] static const InputController& keyboard() { return s_keyboard; }
         [[nodiscard]] static bool isMouseDown() { return s_isMouseDown; }
+        // A container holding the focus moved it between its items, and both items are told.
+        static void focusMovedWithin(const Control& container, Control* previousItem,
+            Control* currentItem);
     private:
         // The single write to the focus holder. Both sides of the change are told afterwards -
         // see Control::focusChanged.

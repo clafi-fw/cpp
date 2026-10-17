@@ -98,7 +98,8 @@ namespace ClaFi::Controls
         
         void nestedKeyDown(KeyDownEvent&) override;
         void editModeKeyDown(KeyDownEvent&) override;
-
+        void editModeEntered() override;   // keeps the position Escape puts back
+        void editModeLeft(bool accepted) override;
         void thumbPressDown() override;
         void changed(SliderChangeEvent&) override;
         void getThumbTooltip(GetTooltipEvent&) override;
@@ -134,6 +135,7 @@ namespace ClaFi::Controls
         static constexpr float k_fineShare = 0.1f;
         ScrollInfo m_scrollInfo{ .page = 0, .max = 100 };
         bool m_paintTails{ false };
+        float m_positionAtEntry{ 0.0f };
     };
 
     // A slider over part of another's range, moving that one as it moves.
@@ -180,7 +182,14 @@ namespace ClaFi::Controls
     template<typename ...Args>
     Slider::Slider(const CreateParams& params, Args&&... args)
         :
-        EditableSlider{ params, SliderViewMode::Slider, ScrollAxis::Horizontal, Interactivity::Focusable, std::forward<Args>(args)... },
+        EditableSlider{
+            params,
+            SliderViewMode::Slider,
+            ScrollAxis::Horizontal,
+            Interactivity::Focusable,
+            EditModeSwitching::Yes, // an item until Return; before the caller, who may say No
+            std::forward<Args>(args)...
+        },
         INIT_PROPERTY(buttonMark),
         INIT_PROPERTY(fineAdjust)
     {
@@ -252,7 +261,7 @@ namespace ClaFi::Controls
             steps = -1.0f;
             break;
         case Keys::Right:
-            steps = -1.0f;
+            steps = 1.0f;
             break;
         default:
             break;
@@ -260,8 +269,19 @@ namespace ClaFi::Controls
         if (steps)
         {
             offsetPositionBySteps(steps);
-            event.stopPropagation();
+            event.handled = true;
         }
+    }
+
+    void Slider::editModeEntered()
+    {
+        m_positionAtEntry = position();
+    }
+
+    void Slider::editModeLeft(const bool accepted)
+    {
+        if (!accepted)
+            setPosition(m_positionAtEntry);
     }
 
     void Slider::thumbPressDown()
@@ -505,7 +525,14 @@ namespace ClaFi::Controls
 
     FineSlider::FineSlider(const CreateParams& params, Slider& owner, SlotSpan span)
         :
-        Slider{ params, owner.axis(), FineAdjust::No, ScrollButtons::No, trackLengthOf(owner) },
+        Slider{
+            params,
+            owner.axis(),
+            FineAdjust::No,
+            ScrollButtons::No,
+            EditModeSwitching::No, // opened to be moved, in its own popup
+            trackLengthOf(owner)
+        },
         m_owner{ owner },
         m_span{ span }
     {

@@ -4,6 +4,7 @@ module;
 module ClaFi.Controls.TextBox;
 
 import ClaFi.Controls.Menu;
+import ClaFi.Controls.Base.WithEditMode;
 import ClaFi.StdActions;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.EditHistory;
@@ -193,9 +194,13 @@ namespace ClaFi::Controls
         return nullptr;
     }
 
-    // The view moves last, once the selection is written - the order nestedKeyDown keeps.
+    // The view moves last, once the selection is written - the order nestedKeyDown keeps. The
+    // match is the selection, so the box is in edit mode and the current item wherever that is
+    // kept.
     void TextBox::showFound(std::size_t, const TextRange range)
     {
+        setEditMode(EditMode::Yes);
+        makeCurrentItem();
         m_editProps.targetX.reset();
         setSelection(range.start, range.end());
         scrollIntoView();
@@ -203,8 +208,10 @@ namespace ClaFi::Controls
 
     void TextBox::hideFound(std::size_t, const TextRange range)
     {
-        if (m_editProps.selRange == range)
-            setCaretPos(m_editProps.caretPos());
+        if (m_editProps.selRange != range)
+            return;
+        setCaretPos(m_editProps.caretPos());
+        setEditMode(EditMode::No);
     }
 
     CursorShape TextBox::cursor() const
@@ -321,6 +328,9 @@ namespace ClaFi::Controls
 
     void TextBox::nestedContextPopup(ContextPopupEvent& event)
     {
+        // The menu is about the caret or the selection, which the mode shows - ahead of the link
+        // menu below, which answers before the base is reached.
+        setEditMode(EditMode::Yes);
         // Outside the selection the click states a new caret, as a left one does. Inside it, the
         // click is aimed at the selection the menu's Copy and Cut act on, and placing a caret
         // there would collapse the range before the menu is even up.
@@ -635,6 +645,23 @@ namespace ClaFi::Controls
             else
                 scrollIntoView();
         }
+    }
+
+    // A read-only box has nothing to put back, and a prose box's text is not copied for nothing.
+    void TextBox::editModeEntered()
+    {
+        if (readOnly() == ReadOnly::No)
+            m_textAtEntry = text();
+    }
+
+    // An edit of the box's own, so Ctrl+Z brings the words typed back.
+    void TextBox::editModeLeft(const bool accepted)
+    {
+        const bool putsBack = !accepted && readOnly() == ReadOnly::No
+            && text().plainText() != m_textAtEntry.plainText();
+        if (putsBack)
+            applyEdit({ 0, text().plainText().size() }, m_textAtEntry, EditKind::Replace);
+        m_textAtEntry = {};
     }
 
     void TextBox::connectEditActions()

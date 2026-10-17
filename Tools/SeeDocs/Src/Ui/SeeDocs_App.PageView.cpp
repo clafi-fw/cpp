@@ -20,6 +20,7 @@ import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 import ClaFi.Controls.Tree;
 import ClaFi.Controls.Base.ExpanderBase;
+import ClaFi.Controls.Base.WithEditMode;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -442,7 +443,7 @@ namespace SeeDocs_App
         m_head.clear();
         m_page = {};
         m_head.setVisible(false);
-        TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes);
+        TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes, EditModeSwitching::Yes);
         box.text() = text;
         m_parts.push_back(&box);
         invalidateFormAlign();
@@ -630,7 +631,11 @@ namespace SeeDocs_App
     {
         if (m_page.links.empty())
             return;
-        TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes, Padding{ 0.0f });
+        TextBox& box = m_pageBox.body().add<TextBox>(
+            ReadOnly::Yes,
+            EditModeSwitching::Yes,
+            Padding{ 0.0f }
+        );
         connectLinks(box);
         m_parts.push_back(&box);
         m_renders.push_back([this, &box]() {
@@ -815,7 +820,11 @@ namespace SeeDocs_App
         const bool labelled = !section.heading.empty();
         if (labelled)
         {
-            TextBox& label = block.add<TextBox>(ReadOnly::Yes, Padding{ 0.0f });
+            TextBox& label = block.add<TextBox>(
+                ReadOnly::Yes,
+                EditModeSwitching::Yes,
+                Padding{ 0.0f }
+            );
             m_renders.push_back([&label, &section]() {
                 Text text;
                 writeSignature(text, section.heading, false, SourceLanguage::Cpp);
@@ -831,7 +840,7 @@ namespace SeeDocs_App
                 Padding{ 0.0f },
                 Spacing{ k_leadGap }
             );
-            TextBox& code = entry.add<TextBox>(ReadOnly::Yes, indent);
+            TextBox& code = entry.add<TextBox>(ReadOnly::Yes, EditModeSwitching::Yes, indent);
             connectLinks(code);
             m_renders.push_back([&code, &signature]() {
                 Text text;

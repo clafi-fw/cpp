@@ -101,6 +101,23 @@ namespace ClaFi
         notifyFocusChange(s_focusedControl);
     }
 
+    // The holder has not changed, so the write above does not run - and its delegate has, which
+    // is what the two items are the sides of.
+    void Input::focusMovedWithin(const Control& container, Control* previousItem,
+        Control* currentItem)
+    {
+        if (s_focusedControl != &container)
+            return;
+        auto tell = [](Control* item) {
+            if (!item)
+                return;
+            item->invalidateState();
+            item->focusChanged();
+        };
+        tell(previousItem);
+        tell(currentItem);
+    }
+
     void Input::mouseActed(AppContext& appContext)
     {
         const bool mouseTurnedOn = s_mouse.setActive(appContext, true);

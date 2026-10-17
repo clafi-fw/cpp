@@ -508,9 +508,11 @@ Open and Open in new tab, which opens behind the tab shown.
 A page holds one selected item - a row of one of its grids, a section's header or a box of text -
 and the keys walk the page as one: Up and Down move over rows, headers and boxes alike, from one
 section into the next; Home and End go to the page's first and last item, PageUp and PageDown a
-screenful on; Tab leaves the page as a whole. Left and Right stay on the row, the header or the
-caret. A box of text keeps the keys while the caret stands in it. A section or a tree's node shut
-over the selected row selects its header.
+screenful on; Tab leaves the page as a whole. Left and Right stay on the row or the header. A box
+of text is walked past like a row until Return or a click opens it for the caret - the arrows then
+move the caret, Return follows the link it stands in - and Escape closes it again. A hint box
+typed into writes its words on Return and on leaving, and Escape puts the words back. A section
+or a tree's node shut over the selected row selects its header.
 A row of the derived types opens the type it names; a method's page picks the method's type in the
 tree. A page's trees start closed, and a node's rows are built the first time it opens.
 The pages are built by

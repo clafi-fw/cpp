@@ -111,3 +111,37 @@ Form<ControlClass> differs: its content is the whole client area, and the form i
 control tree.
 
 **Each props bag holds a prop type once**, since props route by type.
+
+## WithEditMode
+
+**Outside the mode the control is an item of the page it stands on.** The keys travel past it to
+the page - the arrows, Home, End, the page keys - and the mode's own look is off. Return, with no
+modifier, a press or a menu asked on the control turns the mode on; Escape and the focus leaving
+turn it off, and so does EditMode::No from code. A popup opened on the control - an edit menu, a
+link's menu - takes the focus for a while and keeps the mode up.
+
+**In the mode the host's keys apply**, through editModeKeyDown, and they are asked first: Return
+on a link at the caret is the box's before it is the mode's. What the host leaves, the mode
+answers: Return accepts and turns the mode off, Escape rejects and turns it off. A wrapping box
+takes Return as a line of its own, so the mode leaves it alone there. The character the Return
+that turned the mode on leaves behind is not typing.
+
+**Accepting and rejecting are the host's**, through editModeEntered and editModeLeft. A box typed
+into keeps the text the mode opened on and puts it back on Escape, as an edit of its own; a slider
+keeps its position. A read-only box has nothing to put back: its mode is a caret mode - arrows to
+a link, Return to follow it, Escape out.
+
+**A search showing a match in a box turns the mode on**, so the match stands selected, and takes
+it off again as the search moves on.
+
+## EditMode
+
+The mode as it stands. Under EditModeSwitching::No it is Yes from construction and stays so.
+
+## EditModeSwitching
+
+- `No` - the control is in edit mode throughout: a box in a dialog, a code editor, a search
+  field. The default for a box.
+- `Yes` - the user turns the mode on and off - see WithEditMode. A box on a page walked with the
+  keys, and every Slider unless the caller says No: a slider stands among other controls, and
+  its arrows are the page's until Return.

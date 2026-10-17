@@ -25,6 +25,7 @@ namespace Themes_App
         // Where the ramp takes its hue and saturation from, bound before the first paint.
         void bind(OnGetFloorBase);
     protected:
+        float stepSize() override { return k_step; }
         void paintSlot(PaintEvent&, const FloatRect&, SlotSpan) override;
         Color thumbColor(PaintEvent&, FloatPoint&) override;
         void writeValueTooltip(Text&, EventPhase) const override;
@@ -34,6 +35,7 @@ namespace Themes_App
     private:
         // Enough to follow an HSL to RGB curve, as a rule ramp's stops do.
         static constexpr std::size_t k_stopCount{ 9ull };
+        static constexpr float k_step{ 0.01f }; // an arrow press, as the tooltip reads
         OnGetFloorBase m_base{};
     };
 

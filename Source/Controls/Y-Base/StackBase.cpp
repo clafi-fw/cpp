@@ -60,7 +60,9 @@ namespace ClaFi::Controls
         if (m_currentItem)
             m_currentItem->invalidateState();
 
-        // A grid standing in this container drops its selected cell on it.
+        // The focus this container holds moves with its item; then what the item left is told,
+        // and a grid standing in this container drops its selected cell on it.
+        Input::focusMovedWithin(*this, previousValue, m_currentItem);
         raiseCurrentItemChange(previousValue, m_currentItem);
         doCurrentItemChanged(previousValue);
     }

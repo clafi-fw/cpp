@@ -219,6 +219,8 @@ namespace ClaFi::Controls
         // Keyboard events
         void editModeKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
+        void editModeEntered() override;   // a box typed into keeps the text it opened on
+        void editModeLeft(bool accepted) override;   // Escape puts that text back
         // The tail every edit shares. The caret is asked for after the pass rather than now: an
         // edit can add or drop a row, and the box's height and the scroll range that follows it
         // are the alignment's to give - see Control::scrollHotspot. A box that keeps something
@@ -343,6 +345,7 @@ namespace ClaFi::Controls
         void blinkCaret();
     private:
         EditProps m_editProps;
+        Text m_textAtEntry{};   // what Escape puts back, held while a typing box is in edit mode
         // Deltas, not snapshots - see TextHistory. It holds no reference to the box's text, so
         // it may stand anywhere among these members.
         TextHistory m_history;
@@ -510,7 +513,7 @@ namespace ClaFi::Controls
     {
         // Placed or not is the range's start: a whole-text selection holds k_maxSize as its length.
         if (m_editProps.selRange.start == k_maxSize)
-            return Label::scrollHotspot();
+            return TextBoxBase::scrollHotspot();
 
         const FloatRect textBounds = textBoundsInControl();
         FloatRect result = caretRect(textBounds, { m_editProps.caretPos(), m_editProps.affinityTrailing });
@@ -525,7 +528,7 @@ namespace ClaFi::Controls
         // A box that was never given a caret has no place inside itself to name, and the whole
         // box is then the honest answer - the same test scrollHotspot makes above.
         if (m_editProps.selRange.start == k_maxSize)
-            return Label::contextMenuAnchor();
+            return TextBoxBase::contextMenuAnchor();
 
         // Measured in **form** space by handing the form rect in: textBounds and caretRect both
         // answer in whatever space the rect they are given is in, so nothing is converted
@@ -560,7 +563,7 @@ namespace ClaFi::Controls
         m_editProps.caretVisible = m_caretOn
             && visualState().focused
             && event.windowFocusedFactor() >= 1.0f;
-        Label::paintText(event);
+        TextBoxBase::paintText(event);
     }
 
     // The whole text only when this box cannot say what changed. An edit was measured against
@@ -594,7 +597,7 @@ namespace ClaFi::Controls
 
     void TextBox::focusChanged()
     {
-        Label::focusChanged();
+        TextBoxBase::focusChanged();
         // A box holding the focus is where typing goes, so it shows a caret whether or not one was
         // ever placed in it - otherwise a box reached by Tab has nothing to blink. Leaving the box
         // takes the same route: restartCaretBlink schedules nothing while the focus is elsewhere,
@@ -607,12 +610,12 @@ namespace ClaFi::Controls
     void TextBox::nestedPressDown(PressDownEvent& event)
     {
         setCaretPosFromMouse();
-        Label::nestedPressDown(event);
+        TextBoxBase::nestedPressDown(event);
     }
 
     void TextBox::doubleClick(DoubleClickEvent& event)
     {
-        Label::doubleClick(event);
+        TextBoxBase::doubleClick(event);
         if (event.propagationStopped())
             return;
         const FormContext& formContext = this->formContext();
@@ -628,7 +631,7 @@ namespace ClaFi::Controls
 
     void TextBox::tripleClick(TripleClickEvent& event)
     {
-        Label::tripleClick(event);
+        TextBoxBase::tripleClick(event);
         if (event.propagationStopped())
             return;
         const FormContext& formContext = this->formContext();
@@ -644,7 +647,7 @@ namespace ClaFi::Controls
 
     void TextBox::nestedDrag(DragEvent& event)
     {
-        Label::nestedDrag(event);
+        TextBoxBase::nestedDrag(event);
 
         if (event.propagationStopped())
             return;

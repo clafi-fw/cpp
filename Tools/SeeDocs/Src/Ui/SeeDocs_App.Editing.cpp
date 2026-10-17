@@ -74,30 +74,15 @@ namespace SeeDocs_App
         return text().plainText() != m_shown.plainText();
     }
 
-    // A popup opened on the box - its edit menu, a link's menu - takes the focus while the edit
-    // goes on.
-    void WordsBox::focusChanged()
+    void WordsBox::editModeLeft(const bool accepted)
     {
-        PromptBox::focusChanged();
-        if (!isFocused() && !isDroppedDown())
-            write();
-    }
-
-    void WordsBox::nestedKeyDown(KeyDownEvent& event)
-    {
-        PromptBox::nestedKeyDown(event);
-        if (event.handled || readOnly() == ReadOnly::Yes)
+        PromptBox::editModeLeft(accepted);
+        if (readOnly() == ReadOnly::Yes)
             return;
-        if (event.key == Keys::Return)
-        {
-            event.handled = true;
+        if (accepted)
             write();
-        }
-        else if (event.key == Keys::Escape && edited())
-        {
-            event.handled = true;
+        else if (edited())
             putBack();
-        }
     }
 
     void WordsBox::charPress(CharPressEvent& event)

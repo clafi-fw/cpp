@@ -68,6 +68,7 @@ namespace Themes_App
         /// says which rule that column stands for.
         void bind(const ColorRuleValue&, RuleChannel, OnGetRuleBase);
     protected:
+        float stepSize() override { return k_step; }
         void paintSlot(PaintEvent&, const FloatRect&, SlotSpan) override;
         Color thumbColor(PaintEvent&, FloatPoint&) override;
     private:
@@ -80,6 +81,8 @@ namespace Themes_App
         // stop has to follow is a single channel's response, and nine points leave no step a reader
         // can find at the widths a grid column runs to.
         inline static constexpr std::size_t k_stopCount{ 9ull };
+        // An arrow press over the range of 1, which is the two decimals the rule shows.
+        inline static constexpr float k_step{ 0.01f };
         // The band a saturation sweep is legible in. Everything is white above it and black
         // below, whatever the saturation, so a ramp drawn outside it shows one flat colour.
         inline static constexpr float k_minShownLuminosity{ 0.25f };
