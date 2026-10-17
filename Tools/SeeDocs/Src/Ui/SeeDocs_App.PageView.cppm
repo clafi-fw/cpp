@@ -169,11 +169,13 @@ namespace SeeDocs_App
         // Shows SeeDocs' own words in place of a page.
         void showText(const Text&);
         // Selects what the anchor names - a footnote, else an item of the page, whatever hides it
-        // opened - and scrolls there; given a scroll, the page is set to it once laid out instead.
-        // Answers where the page opens: what the anchor names, else the page itself.
-        Control& showAnchor(std::wstring_view anchor, std::optional<float> scroll);
-        // How far the page is scrolled, unscaled - where a glide under way ends.
-        [[nodiscard]] float scrollPosition() const;
+        // opened - and scrolls there; given a position, the page is put back to it once laid out
+        // instead. Answers where the page opens: what the anchor names, else the page itself.
+        Control& showAnchor(std::wstring_view anchor, std::optional<float> position);
+        // Where the page stands in view, unscaled, measured where a glide under way ends: the
+        // top of the item the page's anchor names below the viewport's, else how far the page is
+        // scrolled. See README
+        [[nodiscard]] float viewPosition() const;
         // The anchor of the footnote that section's words stand in; empty where none on the page.
         [[nodiscard]] std::wstring anchorOf(const Reference&) const;
         // Focuses the current match's control, where it takes the focus; false where none does.
@@ -194,18 +196,30 @@ namespace SeeDocs_App
             std::wstring anchor{};
             const TableRow* row{ nullptr };
         };
-        // An item an anchor names, and the grid it is a row of where it is one.
+        // An item an anchor names, the grid it is a row of where it is one, and the branch it
+        // stands for where it is a tree's row - built as its node opens, the control null before.
         struct Anchored
         {
             Control* control{ nullptr };
             Grids::GridBase* grid{ nullptr };
             Grids::Row* row{ nullptr };
+            const Branch* branch{ nullptr };
+        };
+        // A branch of one of the page's trees: its anchor, the branch over it, and once its node
+        // has opened its row - the item, or the node whose header is the row.
+        struct BranchRow
+        {
+            std::wstring anchor;
+            const Branch* parent{ nullptr };
+            Control* control{ nullptr };
+            Controls::TreeNode* node{ nullptr };
         };
         // Writes one box's words out of the page again.
         using Render = std::function<void()>;
         using PageFootnotes = std::vector<PageFootnote>;
         using Anchors = std::map<std::wstring, Anchored, std::less<>>;
         using AnchorsOf = std::unordered_map<const Control*, std::wstring>;
+        using BranchRows = std::unordered_map<const Branch*, BranchRow>;
     private:
         void clear();
         void addHead();
@@ -222,6 +236,13 @@ namespace SeeDocs_App
         // a node whose rows are built as it opens; a click on either opens the type it names.
         template<typename Holder>
         void addTreeRows(Holder&, const Branches&, bool nodesOpen);
+        // Anchors every branch of a tree ahead of its rows, in the tree's order, so a row built
+        // as its node opens is named the same whatever opened first.
+        void anchorBranches(const Branches&, const Branch* parent);
+        // The branch's row stands: the item, or the node and its header.
+        void rowBuilt(const Branch&, Control& row, Controls::TreeNode*);
+        // The branch's row, the nodes over it opened in turn until it stands; null where none can.
+        Control* buildBranchRow(const Branch&);
         [[nodiscard]] Text treeRowText(const Branch&) const;
         [[nodiscard]] HeaderText treeHeaderText(const Branch&) const;
         // The column at the end holding the rows' buttons; null where no row has a command. The
@@ -235,7 +256,12 @@ namespace SeeDocs_App
         void anchorRow(std::wstring name, std::wstring_view owner, Grids::GridBase&, Grids::Row&);
         void anchorAs(std::wstring name, std::wstring_view owner, Anchored);
         [[nodiscard]] std::wstring freeAnchor(std::wstring name, std::wstring_view owner) const;
-        // Raises PageAnchorEvent with the selected item's anchor, the nearest one up from it.
+        // The anchored control the selected item is or stands in; null for none. A button in a
+        // row's command column is the row's.
+        [[nodiscard]] const Control* selectedAnchored() const;
+        // The item's top in the scrolled body, scaled, which the scroll takes nothing off.
+        [[nodiscard]] float topInBody(const Control& item) const;
+        // Raises PageAnchorEvent with the selected item's anchor, empty for none.
         void reportAnchor();
         // The button's caption and tooltip are written out of the command, and its click raises it.
         void connectCommand(Button&, const Command&);
@@ -326,10 +352,14 @@ namespace SeeDocs_App
         PageFootnotes m_footnotes{};
         Anchors m_anchors{};
         AnchorsOf m_anchorsOf{};
+        BranchRows m_branchRows{};
         Grids::Row* m_firstRow{ nullptr };      // the first row a table of the page holds
         Grids::Row* m_anchoredRow{ nullptr };   // the row the anchor shown selected
-        std::optional<float> m_pendingScroll{};   // set once the page is laid out
-        ScopedEventConnection m_aligned{};        // the form's, which applies the scroll
+        std::optional<float> m_pendingPosition{};   // put back once the page is laid out
+        // The anchor the page stands at - the one shown, or the selected item's since - which is
+        // what the tab's url names, and what the position is measured from.
+        std::wstring m_shownAnchor{};
+        ScopedEventConnection m_aligned{};   // the form's, which puts the position back
         // A footnote not written yet, by the row it is for, while its editor stands.
         std::map<const TableRow*, FootnoteSlot*> m_newFootnotes{};
         std::size_t m_footnoteCount{ 0 };   // numbered through the page, so an anchor names one
@@ -391,12 +421,17 @@ namespace SeeDocs_App
         m_pageBox.body().onCurrentItemChange([this](CurrentItemChangeEvent&) {
             reportAnchor();
         });
-        // Kept connected: the handler runs inside the emit, where the connection cannot go.
+        // Kept connected: the handler runs inside the emit, where the connection cannot go. The
+        // item is looked up by its anchor here, so a page built again in between places nothing.
         m_aligned = params.form.onAligned([this](FormAlignedEvent&) {
-            if (!m_pendingScroll.has_value())
+            if (!m_pendingPosition.has_value())
                 return;
-            const float scroll = *std::exchange(m_pendingScroll, std::nullopt);
-            m_pageBox.vScrollBar().setPosition(scaler().scale(scroll));
+            const float position = scaler().scale(*std::exchange(m_pendingPosition, std::nullopt));
+            const Anchors::const_iterator found = m_anchors.find(m_shownAnchor);
+            if (found == m_anchors.end() || !found->second.control)
+                m_pageBox.vScrollBar().setPosition(position);
+            else
+                m_pageBox.vScrollBar().setPosition(topInBody(*found->second.control) - position);
         });
     }
 
@@ -430,19 +465,12 @@ namespace SeeDocs_App
         return connectEvent<PageAnchorEvent>(std::forward<F>(callback));
     }
 
-    // A row is anchored by the type's name, or by its words where it names no type.
     template<typename Holder>
     void PageView::addTreeRows(Holder& holder, const Branches& branches, const bool nodesOpen)
     {
         for (const Branch& branch : branches)
         {
             const Type* type = branch.type;
-            std::wstring name = type ? type->name : std::wstring{};
-            if (name.empty())
-            {
-                for (const Run& run : branch.text)
-                    name.append(run.text);
-            }
             if (branch.children.empty())
             {
                 TreeItem& item = holder.addItem(treeRowText(branch));
@@ -450,7 +478,7 @@ namespace SeeDocs_App
                     if (type)
                         open(type->qualifiedName);
                 });
-                anchorItem(std::move(name), {}, item);
+                rowBuilt(branch, item, nullptr);
                 continue;
             }
             Controls::TreeNode& node = holder.addNode(treeHeaderText(branch));
@@ -458,7 +486,7 @@ namespace SeeDocs_App
                 if (type)
                     open(type->qualifiedName);
             });
-            anchorItem(std::move(name), {}, node.header());
+            rowBuilt(branch, node.header(), &node);
             if (nodesOpen)
             {
                 addTreeRows(node, branch.children, true);

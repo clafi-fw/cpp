@@ -62,19 +62,19 @@ namespace ClaFi::Browser
         Yes
     };
 
-    // One step of a tab's history: the url, and how far its page stood scrolled as the tab left
-    // it. See Browser
+    // One step of a tab's history: the url, and where its page stood in view as the tab left it.
+    // See Browser
     export struct Visit
     {
         Url url{};
-        float scroll{ 0.0f };   // the page's scrollPosition()
+        float position{ 0.0f };   // the page's viewPosition()
     };
 
     // One tab of the browser, standing for a page it can return to.
     export class BrowserTab : public Tab
     {
         // The browser is what makes a tab and what shows a page on one, so it is what sets
-        // m_anchor, m_scroll and the history, and sets and spends m_onRestoredPage.
+        // m_anchor, m_position and the history, and sets and spends m_onRestoredPage.
         friend BrowserControl;
     public:
         using Visits = std::vector<Visit>;
@@ -132,9 +132,9 @@ namespace ClaFi::Browser
         std::wstring m_id{};
         PageData* m_pageData{};
         std::wstring m_anchor{};
-        // The page's scroll as last known - restored with the tab, or read off a page as it went -
-        // standing for the page while none is built; none on a first arrival.
-        std::optional<float> m_scroll{};
+        // The page's position as last known - restored with the tab, or read off a page as it
+        // went - standing for the page while none is built; none on a first arrival.
+        std::optional<float> m_position{};
         Visits m_backVisits{};
         Visits m_forwardVisits{};
         bool m_historyRead{ false }; // the stacks hold what the tab's file had
@@ -159,15 +159,15 @@ namespace ClaFi::Browser
     };
 
     // A tab has arrived at a url on this page, which shows the anchor it names and stands at the
-    // scroll it carries. See Browser
+    // position it carries. See Browser
     export class ShowAnchorEvent : public Event
     {
     public:
-        ShowAnchorEvent(const Url& url, std::optional<float> scroll);
+        ShowAnchorEvent(const Url& url, std::optional<float> position);
         const Url& url;
-        // How far the page stood scrolled when the tab last left this visit; none on a first
+        // Where the page stood in view when the tab last left this visit; none on a first
         // arrival, which shows the anchor instead.
-        const std::optional<float> scroll;
+        const std::optional<float> position;
     };
 
     // One page of the browser: what it shows, and the crumbs that lead to it.
@@ -190,9 +190,9 @@ namespace ClaFi::Browser
         // The page's selection moved to what this anchor names: the tab's url names it from now
         // on. Nothing travels and nothing is recorded. See Browser
         void setAnchor(std::wstring_view anchor) const;
-        // How far the page stands scrolled, unscaled, which the browser keeps with the page's url
-        // and hands back on arrival. A page that scrolls answers it. See Browser
-        [[nodiscard]] virtual float scrollPosition() const { return 0.0f; }
+        // Where the page stands in view, in a measure of its own, which the browser keeps with
+        // the page's url and hands back on arrival. A page that scrolls answers it. See Browser
+        [[nodiscard]] virtual float viewPosition() const { return 0.0f; }
         // What the user has picked inside this page, as the path a browser would open. Empty
         // where nothing is picked, which is what leaves Open and Open in new tab disabled.
         //
@@ -295,7 +295,8 @@ namespace ClaFi::Browser
         void deleteTabSettings(BrowserTab&);
         // Closes every tab, frees every page under home and opens one tab on home. See Browser
         void resetToHome();
-        // Builds the tab's page again at the url and the scroll it stands at; nothing is recorded.
+        // Builds the tab's page again at the url and the position it stands at; nothing is
+        // recorded.
         // A tab not selected gets its page as it is selected. See Browser
         void rebuildPage(BrowserTab&);
         // Gives a page itself a new name - what it stands for is renamePage's business - and puts
@@ -377,13 +378,14 @@ namespace ClaFi::Browser
         // and otherwise what every page with work of its own answers. See Browser#browsercontrol
         [[nodiscard]] bool canCloseWindow();
         // Moves a tab to a url and answers what came of it. The history is the caller's to keep.
-        // The scroll is where the page stood when this visit was left, none for a first arrival.
+        // The position is where the page stood when this visit was left, none for a first
+        // arrival.
         TabMove moveTab(BrowserTab&, PageData&, std::wstring_view anchor, Control& initiator,
-            std::optional<float> scroll);
-        // The tab's url with its page's scroll - what the history keeps of where the tab stands.
+            std::optional<float> position);
+        // The tab's url with its page's position - what the history keeps of where the tab stands.
         [[nodiscard]] Visit visitOf(const BrowserTab&) const;
-        // The page's scroll where one stands, else the tab's as last known, else the top.
-        [[nodiscard]] float pageScroll(const BrowserTab&) const;
+        // The page's position where one stands, else the tab's as last known, else the top.
+        [[nodiscard]] float pagePosition(const BrowserTab&) const;
         // Gives the tab's url this anchor, for the page the tab shows: one going down with its
         // tab already off it speaks for nothing.
         void setTabAnchor(BrowserTab&, const BrowserPage&, std::wstring_view anchor);
@@ -402,8 +404,8 @@ namespace ClaFi::Browser
         // Whether a page **is** the one named or stands under it - which is every page whose path a
         // rename of that page has just changed.
         [[nodiscard]] static bool isPageUnder(const PageData&, const PageData& ancestor);
-        void selectPage(BrowserTab*, bool urlChanged, std::optional<float> scroll);
-        void showAnchor(BrowserTab&, std::optional<float> scroll); // ShowAnchorEvent on the page
+        void selectPage(BrowserTab*, bool urlChanged, std::optional<float> position);
+        void showAnchor(BrowserTab&, std::optional<float> position); // ShowAnchorEvent on the page
         void handleTabSelect();
         void closeTab(BrowserTab&); // closes the window instead when it is the only tab
         void tabClosing(BrowserTab&);

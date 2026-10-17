@@ -23,14 +23,14 @@ namespace ClaFi::Browser
         Value{ ConfigNames::id, L"" },
         Value{ ConfigNames::title, ConfigNames::untitledPage },
         Value{ ConfigNames::path, L"" },
-        Value{ ConfigNames::scroll, 0.0f }
+        Value{ ConfigNames::position, 0.0f }
     };
 
-    // One visit of a tab's history: the url, and how far its page stood scrolled.
+    // One visit of a tab's history: the url, and where its page stood in view.
     export const Section k_visitSchema
     {
         Value{ ConfigNames::url, L"" },
-        Value{ ConfigNames::scroll, 0.0f }
+        Value{ ConfigNames::position, 0.0f }
     };
 
     // What the browser keeps in a tab's own file; the application's tab schema is added to it.

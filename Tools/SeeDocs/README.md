@@ -521,10 +521,13 @@ standing twice on one page is spelled apart: a member inherited from a base whos
 already goes by `Base::name`, as `RichControl::Padding` under From RichControl, and any other
 repeat is numbered, `Padding.2`. Selecting an item puts its anchor into the tab's url - a move on
 the page, which the history does not step over - so the url a link leaves from names the row it was
-followed from. Back, Forward and a tab restored at the next start select that item again, the
-section or group holding it opened, and put the page back where it was scrolled; a page built again
-in place, after a rescan or an edit, keeps its scroll too. A link to a member with no page of its
-own arrives at the member's row with the row scrolled into view, as every first arrival does.
+followed from. Back, Forward and a tab restored at the next start select that item again - the
+section or group holding it opened, a tree's nodes opened down to it and its rows built on the
+way - and put it back where it stood in view. The page is measured from the item, so a window of
+another size, with the text wrapped anew, still shows the item at the same height; a page with no
+item selected comes back where it was scrolled. A page built again in place, after a rescan or an
+edit, keeps its place the same way. A link to a member with no page of its own arrives at the
+member's row with the row scrolled into view, as every first arrival does.
 A row of the derived types opens the type it names; a method's page picks the method's type in the
 tree. A page's trees start closed, and a node's rows are built the first time it opens.
 The pages are built by

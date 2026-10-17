@@ -57,9 +57,9 @@ rebuilt:
 Selecting a tab whose page exists raises nothing, so the page keeps its place. A goTo to the url
 the tab is already on raises nothing either. An empty anchor means the page itself.
 
-**The scroll says whether the tab has stood here before.** Back, Forward, a tab restored from the
-settings and a page built again (see BrowserControl rebuildPage) carry the scroll the page stood
-at, and the page is put back there once it is laid out. A first arrival - a link followed, a
+**The position says whether the tab has stood here before.** Back, Forward, a tab restored from
+the settings and a page built again (see BrowserControl rebuildPage) carry the position the page
+stood at, and the page is put back there once it is laid out. A first arrival - a link followed, a
 tab opened on a url - carries none, and the page shows the anchor.
 
 **Send a pick of one of the page's anchors through the browser** as a url, and show the anchor when
@@ -68,9 +68,9 @@ selection on the page rather than a move goes through BrowserPage setAnchor.
 
 ## Visit
 
-What a tab's history holds per step: the url, and how far the page stood scrolled as the tab left
-it, read through BrowserPage scrollPosition. The tab's entry in the settings holds the same of
-where the tab stands.
+What a tab's history holds per step: the url, and where the page stood in view as the tab left
+it, read through BrowserPage viewPosition. The tab's entry in the settings holds the same of where
+the tab stands.
 
 ## BrowserPage setAnchor
 
@@ -82,19 +82,25 @@ the url a tab leaves by a link carries the item the user was on, and Back brings
 A page going down with its tab already off it is not heard: what a dying page says of its
 selection is not the tab's.
 
-## BrowserPage scrollPosition
+## BrowserPage viewPosition
+
+**The measure is the page's own.** The browser keeps the number and hands it back; what it
+measures is for the page to decide, and the page reads it back as it was given. How far the page
+is scrolled is one measure. SeeDocs measures from the item the url's anchor names - its top below
+the viewport's top - so a page laid out at another width or height puts that item back where it
+stood, and falls back to the scroll where the url names nothing.
 
 Answered unscaled, so a value written by one run reads the same at another scale. Asked as the tab
 leaves the page, as the tab's entry is stored, and in the browser's destructor for every page still
-standing - a scroll made after the last move reaches the settings that way. A page that scrolls
-nothing leaves the default.
+standing - a move in view after the last move between pages reaches the settings that way. A page
+that scrolls nothing leaves the default.
 
 ## BrowserControl rebuildPage
 
-**For a page whose source changed under it.** The page's scroll is read, the page goes, and the
-selected tab's page is built again at the url and the scroll - an ordinary ShowAnchorEvent with the
-scroll carried. Nothing is recorded. A tab not selected only loses its page, and gets it back, at
-that scroll, as it is selected.
+**For a page whose source changed under it.** The page's position is read, the page goes, and the
+selected tab's page is built again at the url and the position - an ordinary ShowAnchorEvent with
+the position carried. Nothing is recorded. A tab not selected only loses its page, and gets it
+back, at that position, as it is selected.
 
 ## HistoryEntry
 
@@ -128,7 +134,7 @@ fetched afresh, and the new tab is selected.
 ## BrowserSettings
 
 **The application config** holds the selected tab's id and an entry per open tab - id, title, url,
-the scroll its page stands at and what the application adds. A tab not yet opened shows from that
+where its page stands in view and what the application adds. A tab not yet opened shows from that
 entry alone.
 
 **Each tab's own file** holds the rest - the browser's history (k_tabFileSchema) and the

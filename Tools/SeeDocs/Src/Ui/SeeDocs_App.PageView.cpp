@@ -490,12 +490,15 @@ namespace SeeDocs_App
     }
 
     // The footnote the anchor names stands in one of the slots; each is asked until one has it.
-    // The scroll waits for the layout: a page just built has no height to be scrolled through,
-    // and a row selected as the page is built would be scrolled to by the pass otherwise.
+    // The position waits for the layout: a page just built has no height to be scrolled through,
+    // and a row selected as the page is built would be scrolled to by the pass otherwise. It is
+    // measured from the item where the anchor names one, so a page laid out at another width
+    // shows the item where it stood.
     Control& PageView::showAnchor(const std::wstring_view anchor,
-        const std::optional<float> scroll)
+        const std::optional<float> position)
     {
-        m_pendingScroll = scroll;
+        m_pendingPosition = position;
+        m_shownAnchor = m_anchors.contains(anchor) ? std::wstring{ anchor } : std::wstring{};
         if (anchor.empty())
             return *this;
         for (const PageFootnote& footnote : m_footnotes)
@@ -508,6 +511,10 @@ namespace SeeDocs_App
         if (found == m_anchors.end())
             return *this;
         const Anchored& named = found->second;
+        if (!named.control && named.branch)
+            buildBranchRow(*named.branch);
+        if (!named.control)
+            return *this;
         Control& item = *named.control;
         item.reveal(m_pageBox.body());
         if (named.grid)
@@ -519,14 +526,18 @@ namespace SeeDocs_App
         {
             m_pageBox.body().setCurrentItem(item);
         }
-        if (!scroll.has_value())
+        if (!position.has_value())
             item.scrollIntoViewOnAlign();
         return item;
     }
 
-    float PageView::scrollPosition() const
+    float PageView::viewPosition() const
     {
-        return scaler().unScale(m_pageBox.vScrollBar().positionTarget());
+        const float scrolled = m_pageBox.vScrollBar().positionTarget();
+        const Anchors::const_iterator found = m_anchors.find(m_shownAnchor);
+        if (found == m_anchors.end() || !found->second.control)
+            return scaler().unScale(scrolled);
+        return scaler().unScale(topInBody(*found->second.control) - scrolled);
     }
 
     // A match whose section was shut since stands hidden, and is passed over.
@@ -582,9 +593,11 @@ namespace SeeDocs_App
         m_footnotes.clear();
         m_anchors.clear();
         m_anchorsOf.clear();
+        m_branchRows.clear();
         m_firstRow = nullptr;
         m_anchoredRow = nullptr;
-        m_pendingScroll.reset();
+        m_pendingPosition.reset();
+        m_shownAnchor.clear();
         m_newFootnotes.clear();
         m_footnoteCount = 0;
         m_pending = {};
@@ -746,7 +759,64 @@ namespace SeeDocs_App
             HorizontalAlign::Left,
             Interactivity::None // the page is the container; the rows are its items
         );
+        anchorBranches(branches, nullptr);
         addTreeRows(tree, branches, nodesOpen);
+    }
+
+    // A branch is anchored by its type's name, or by its words where it names no type.
+    void PageView::anchorBranches(const Branches& branches, const Branch* parent)
+    {
+        for (const Branch& branch : branches)
+        {
+            std::wstring name = branch.type ? branch.type->name : std::wstring{};
+            if (name.empty())
+                name = wordsOf(branch.text);
+            const std::wstring anchor = freeAnchor(std::move(name), {});
+            m_anchors.insert_or_assign(anchor, Anchored{
+                .control = nullptr,
+                .grid = nullptr,
+                .row = nullptr,
+                .branch = &branch
+            });
+            m_branchRows.insert_or_assign(&branch, BranchRow{
+                .anchor = anchor,
+                .parent = parent,
+                .control = nullptr,
+                .node = nullptr
+            });
+            anchorBranches(branch.children, &branch);
+        }
+    }
+
+    void PageView::rowBuilt(const Branch& branch, Control& row, Controls::TreeNode* node)
+    {
+        const BranchRows::iterator found = m_branchRows.find(&branch);
+        if (found == m_branchRows.end())
+            return;
+        BranchRow& branchRow = found->second;
+        branchRow.control = &row;
+        branchRow.node = node;
+        m_anchorsOf.insert_or_assign(&row, branchRow.anchor);
+        const Anchors::iterator anchored = m_anchors.find(branchRow.anchor);
+        if (anchored != m_anchors.end())
+            anchored->second.control = &row;
+    }
+
+    // Opening a node builds the rows under it at once, so the branch's row stands by the time
+    // the node over it has been opened; a branch at the top of its tree stands with the tree.
+    Control* PageView::buildBranchRow(const Branch& branch)
+    {
+        const BranchRows::iterator found = m_branchRows.find(&branch);
+        if (found == m_branchRows.end())
+            return nullptr;
+        if (found->second.control || !found->second.parent)
+            return found->second.control;
+        buildBranchRow(*found->second.parent);
+        const BranchRows::iterator parentFound = m_branchRows.find(found->second.parent);
+        if (parentFound == m_branchRows.end() || !parentFound->second.node)
+            return nullptr;
+        parentFound->second.node->header().setExpanded(true);
+        return found->second.control;
     }
 
     // A row leads with the mark of the type's kind where it names one, and ends with its kind word.
@@ -1119,13 +1189,15 @@ namespace SeeDocs_App
     // its table, so no row takes it.
     void PageView::anchorItem(std::wstring name, const std::wstring_view owner, Control& item)
     {
-        anchorAs(std::move(name), owner, { .control = &item, .grid = nullptr, .row = nullptr });
+        anchorAs(std::move(name), owner,
+            { .control = &item, .grid = nullptr, .row = nullptr, .branch = nullptr });
     }
 
     void PageView::anchorRow(std::wstring name, const std::wstring_view owner,
         Grids::GridBase& grid, Grids::Row& row)
     {
-        anchorAs(std::move(name), owner, { .control = &row, .grid = &grid, .row = &row });
+        anchorAs(std::move(name), owner,
+            { .control = &row, .grid = &grid, .row = &row, .branch = nullptr });
     }
 
     void PageView::anchorAs(std::wstring name, const std::wstring_view owner, const Anchored item)
@@ -1159,22 +1231,31 @@ namespace SeeDocs_App
         }
     }
 
-    // The item is the selected control or stands over it: a button in a row's command column
-    // is the row's. Nothing selected, or an item nothing anchors, is the empty anchor.
-    void PageView::reportAnchor()
+    const Control* PageView::selectedAnchored() const
     {
-        std::wstring anchor;
         const StackPanel& host = m_pageBox.body();
         for (const Control* item = host.currentItem(); item && item != &host;
             item = item->parent())
         {
-            const AnchorsOf::const_iterator found = m_anchorsOf.find(item);
-            if (found == m_anchorsOf.end())
-                continue;
-            anchor = found->second;
-            break;
+            if (m_anchorsOf.contains(item))
+                return item;
         }
-        PageAnchorEvent event{ std::move(anchor) };
+        return nullptr;
+    }
+
+    // The body stands in the box at its slot's top less the scroll, so the difference of the two
+    // tops is the item's place in the content, however far the page is scrolled.
+    float PageView::topInBody(const Control& item) const
+    {
+        return item.boundsInForm().top - m_pageBox.body().boundsInForm().top;
+    }
+
+    void PageView::reportAnchor()
+    {
+        m_shownAnchor.clear();
+        if (const Control* item = selectedAnchored())
+            m_shownAnchor = m_anchorsOf.find(item)->second;
+        PageAnchorEvent event{ m_shownAnchor };
         emitEvent(event);
     }
 

@@ -261,9 +261,9 @@ namespace SeeDocs_App
         browser().openSource(pageData(), source);
     }
 
-    void SurfacePage::arrive(const Url& url, const std::optional<float> scroll)
+    void SurfacePage::arrive(const Url& url, const std::optional<float> position)
     {
-        const Control& opening = m_view.showAnchor(url.anchor(), scroll);
+        const Control& opening = m_view.showAnchor(url.anchor(), position);
         browser().pageArrived(*this, opening);
     }
 
