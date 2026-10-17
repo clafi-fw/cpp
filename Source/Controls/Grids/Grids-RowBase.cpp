@@ -1020,22 +1020,22 @@ namespace ClaFi::Controls::Grids
         const bool fromTop = m_descriptor.cellEntryEdge() == ScrollDirection::ToBegin;
 
         Column* result = nullptr;
-        Score bestScore;
+        float nearest = k_maxFloat;
+        float nearestEdge = k_maxFloat;
         traverseCells([&](const RowCell& cell){
             if (cell.blank)
                 return;
             // x decides and the band breaks the tie, not the other way round: a band may hold
             // no cell at that x at all, and a cell in the next one down is still the cell the
             // move was aiming at.
-            Score score;
-            score.primary = AxisSpan{ cell.rect.left, cell.rect.right }.distanceTo(bandX);
-            score.secondary = fromTop ? cell.rect.top : -cell.rect.bottom;
-            if (score.isBetterThan(bestScore))
-            {
-                bestScore = score;
-                result = &cell.column;
-                cellRect = cell.rect;
-            }
+            const float distance = AxisSpan{ cell.rect.left, cell.rect.right }.distanceTo(bandX);
+            const float edge = fromTop ? cell.rect.top : -cell.rect.bottom;
+            if (distance > nearest || (distance == nearest && edge >= nearestEdge))
+                return;
+            nearest = distance;
+            nearestEdge = edge;
+            result = &cell.column;
+            cellRect = cell.rect;
         });
         return result;
     }

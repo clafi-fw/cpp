@@ -181,6 +181,40 @@ namespace ClaFi::Controls::Grids
             Nearest,
             Furthest
         };
+        // A run of table indices, both ends included.
+        struct IndexSpan
+        {
+            std::size_t first{};
+            std::size_t last{};
+        };
+        using Edges = std::vector<float>;
+        // The field's stops on the lines their edges share - bands down, columns across.
+        struct FieldTable
+        {
+            explicit FieldTable(const FieldStops&);
+            Edges bandEdges{};                  // every distinct top and bottom, ascending
+            Edges columnEdges{};                // every distinct left and right of a lane
+            std::vector<std::size_t> cells{};   // the stop on each band and column, band by band
+            [[nodiscard]] std::size_t bands() const;
+            [[nodiscard]] std::size_t columns() const;
+            // The stop covering a band and a column, k_maxSize where none does.
+            [[nodiscard]] std::size_t stopAt(std::size_t band, std::size_t column) const;
+            // The band holding y, or the nearest one.
+            [[nodiscard]] std::size_t bandAt(float y) const;
+            // The column holding x, or the nearest one.
+            [[nodiscard]] std::size_t columnAt(float x) const;
+            [[nodiscard]] IndexSpan bandsOf(const FieldStop&) const;
+            [[nodiscard]] IndexSpan columnsOf(const FieldStop&) const;
+            // The first or the last stop of a band, in column order.
+            [[nodiscard]] std::size_t endStop(std::size_t band, bool atStart) const;
+            // The line a value is on.
+            [[nodiscard]] static std::size_t edgeAt(const Edges&, float value);
+            // The span holding a value, or the one at the end it is past.
+            [[nodiscard]] static std::size_t spanAt(const Edges&, float value);
+            // The spans from the line one value is on to the line the other is on.
+            [[nodiscard]] static IndexSpan spansBetween(const Edges&, float from, float to);
+            static void mergeEdges(Edges&);   // sorted, and edges within the tolerance made one
+        };
     private:
         // Runs an in-place editor over the selected cell and gives the row what it comes back
         // with. False when there is nothing here to edit - no cell selected, a cell holding a
@@ -198,9 +232,7 @@ namespace ClaFi::Controls::Grids
         // Whether this click is the one that opens the selected cell's editor: a mouse click,
         // released on the cell the press landed on, that press having found the user on it.
         [[nodiscard]] bool clickEditsCell(const NestedClickEvent&) const;
-        // Moves the selected cell one step the way the key points, over the cells of every row
-        // the window reaches. False when the field holds none that way, which is what lets the
-        // key travel on to the grid that holds this one, and out of the grid altogether.
+        // One step of the selected cell, answered by the field root; false lets Up and Down leave.
         bool moveCellSelection(const KeyDownEvent& event);
         // Home and End: the first or last stop of the line the selection sits on.
         bool moveCellToLineEdge(const Scaler&, ScrollDirection edge);
@@ -216,16 +248,15 @@ namespace ClaFi::Controls::Grids
         // only its own rows, and an edge or a page measured over those is measured over part of
         // the answer.
         [[nodiscard]] bool isFieldRoot() const;
-        // Every place a key can land, and where the selection stands among them - k_maxSize when
-        // the selection is outside the window, which is when the navigator takes over.
-        // lookAhead widens the window past the viewport edge margin. A key that reaches further
-        // than one step must pass the distance it crosses, since nothing further out is
-        // collected and no stop there can be scored.
+        // Every place a key can land in the view and lookAhead past it, and the selection's index.
         std::size_t collectField(const Scaler& scaler, FieldStops&, float lookAhead = 0.0f);
-        // The stop a move from `source` lands on: the one ahead of it that `reach` names, with a
-        // stop the line runs through taken over one merely nearer.
-        [[nodiscard]] std::size_t searchField(const FieldStops&, const OrientedRect& source,
-            const OrientedRect& line, KeyCode, std::size_t sourceIndex, FieldReach) const;
+        // The same a viewport each way around the selection, for one scrolled out of view.
+        std::size_t collectFieldAroundSelection(FieldStops&);
+        // Every place a key can land inside window, and the selection's index, k_maxSize off it.
+        std::size_t collectFieldIn(const FloatRect& window, FieldStops&);
+        // The stop a step from the source lands on, along bands or columns and keeping `line`.
+        [[nodiscard]] static std::size_t stopAlong(const FieldTable&, const FieldStops&,
+            std::size_t sourceIndex, std::size_t line, bool vertical, bool forward, FieldReach);
         // The point the two remembered lines cross, in form space. The first move of a run
         // adopts the position it starts from, so every later one measures against the same pair.
         FloatPoint cellBand(const FloatRect& sourceRect);
@@ -248,10 +279,9 @@ namespace ClaFi::Controls::Grids
         // the stop whole: inside it, and under every header held over the stop's row. A stop half
         // on screen or behind a header is not one the eye has read.
         [[nodiscard]] static bool showsWhole(const FloatRect& within, const FieldStop&);
-        // The stop furthest along the key's direction among those the line runs through and
-        // `within` shows whole - see showsWhole.
-        [[nodiscard]] std::size_t lastWholeInBand(const FieldStops&, const FloatRect& within,
-            const OrientedRect& line, KeyCode) const;
+        // The stop furthest down or up a column that `within` shows whole - see showsWhole.
+        [[nodiscard]] static std::size_t lastWholeInColumn(const FieldTable&, const FieldStops&,
+            const FloatRect& within, std::size_t column, bool forward);
         // The first or last row of this grid that paints a cell, in the order the eye reads
         // them. Structural rather than geometric: the far end of a grid is normally off screen,
         // where the walk that answers the arrow keys does not reach.
@@ -271,6 +301,7 @@ namespace ClaFi::Controls::Grids
         // already where it belongs. Either row may be null, which is a path to nowhere.
         void selectedRowChanged(Control* from, Control* to);
     private:
+        static constexpr float k_edgeTolerance{ 0.5f };   // edges nearer than this are one line
         GridDescriptor& m_descriptor;
         // The header row, once one has been added.
         GridHeader* m_header{};

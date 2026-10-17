@@ -32,6 +32,27 @@ wait for whatever the pointer went to.
 
 Set per column, because a column is what says where a cell's text comes from.
 
+## GridBase moveCellSelection
+
+2026-10-17. The field was searched by score: every stop scored by its distance ahead of the
+source and by how far its lane stood from the kept line, on OrientedRect and Score. It now reads
+the stops into a table first - GridBase::FieldTable, bands from the distinct tops and bottoms and
+columns from the distinct lane edges, edges within half a pixel made one - and every key is index
+arithmetic over it. The rule is the scoring's: on the line beats nearer, and off the line the
+nearest band ahead, then the nearest column. Oj picked the table over a structural address - leaf
+columns from the column tree and rows from the row order plus sections and span rules - because
+that would restate the layout rules the cell walk keeps in one place.
+
+Two things moved with it:
+
+- Every arrow is answered at the field root. Up and Down used to start at the innermost grid and
+  travel outward, which held only while nearest over part of the field was nearest over all of
+  it. With the line winning over distance, a sub-grid's nearest stop on the line can stand where
+  the whole field has a nearer one past the sub-grid's rows.
+- A selection scrolled out of view is read around itself, a viewport each way. The focus
+  navigator once took such a key and searched around the selected row; it now hands a grid's
+  arrows back as nothing - see GridBase navigationNeighbour.
+
 ## RowCell
 
 Everything the walk knows of one cell and no more. A property of the row as a whole - whether the

@@ -29,6 +29,18 @@ that container's items, the selection goes where the container's item goes, the 
 address a container are the container's, and Up and Down travel on past the first and the last
 row into the rest of it - see StackBase.
 
+**The arrows read the cells as a table.** The edges the cells share are its lines - bands down,
+columns across - and a merged cell, a group's span or an expander's header covers more than one
+of either. A step goes to the first cell on the line the run keeps that lies past the whole of
+the selected one, so a run of Down keeps its column across rows with nothing in it, and a step
+back always returns where it came from. Where nothing ahead stands on the line, the step goes to
+the nearest band ahead holding anything, at the column nearest the line.
+
+- Left and Right rest at the ends of a line. Up and Down hand the key on past the first and the
+  last row.
+- Home and End go to the ends of the band the selected cell is on.
+- A selection scrolled out of view is still where a key moves from.
+
 ## RowGroupSpan
 
 Its cells stretch over every row of the group, so a control in one is the group's - a choice the

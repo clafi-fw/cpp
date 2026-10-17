@@ -271,10 +271,10 @@ namespace ClaFi::Controls::Grids
                 event.handled = true;
                 return;
             }
-            // Nothing that way in this grid. The key travels on: to the grid holding this one,
-            // whose field is wider, and past it to the focus navigator, which leaves the grid.
-            // Which band a row is entered at belongs to the move rather than to the row, so the
-            // descriptor carries it to whichever row the navigator lands on.
+            // Nothing that way in the field, or this grid is not the root that answers for the
+            // whole of it. The key travels on: to the root, and past it to the focus navigator,
+            // which leaves the grid. Which band a row is entered at belongs to the move rather than
+            // to the row, so the descriptor carries it to whichever row the navigator lands on.
             if (event.key == Keys::Up || event.key == Keys::Down)
                 m_descriptor.setCellEntryEdge(event.key == Keys::Down
                     ? ScrollDirection::ToBegin
@@ -338,10 +338,10 @@ namespace ClaFi::Controls::Grids
         StackView::nestedKeyDown(event);
     }
 
-    // An arrow press reaches the focus navigator only once moveCellSelection has found nothing
-    // that way in the field, which is wider than these rows - a row this stack would step to is
-    // one the field already passed over. The steps a page press is made of are the navigator's
-    // own, and walk the rows like any stack's.
+    // An arrow press reaches the focus navigator only once the field root has found nothing that
+    // way in the whole field - a row this stack would step to is one the field already passed
+    // over. The steps a page press is made of are the navigator's own, and walk the rows like any
+    // stack's.
     Control* GridBase::navigationNeighbour(const Control& child, const NavigationStep& step)
     {
         if (step.source == NavigationSource::Key)
@@ -494,39 +494,39 @@ namespace ClaFi::Controls::Grids
         return stop.row->followSelectedCellLink(event);
     }
 
+    // **The field root answers every arrow**, over the whole field. A nested grid holds part of
+    // it, and the line a run keeps wins over distance - so the nearest stop on the line inside a
+    // sub-grid is not the nearest on it in the field, which may stand past the sub-grid's rows.
     bool GridBase::moveCellSelection(const KeyDownEvent& event)
     {
-        if (!cellKeysApply())
+        if (!cellKeysApply() || !isFieldRoot())
             return false;
 
         FieldStops stops;
-        const std::size_t sourceIndex = collectField(event.scaler(), stops);
-        // The selection is out of view, so there is no position in the field to move from. The
-        // navigator takes over, walking around the selected row rather than the viewport, and
-        // the row it lands on is scrolled back into view.
+        std::size_t sourceIndex = collectField(event.scaler(), stops);
+        // Scrolled out of view, the selection is still where a key moves from: the field is read
+        // around it instead, and the stop landed on is scrolled into view.
         if (sourceIndex == k_maxSize)
-            return false;
+        {
+            stops.clear();
+            sourceIndex = collectFieldAroundSelection(stops);
+            if (sourceIndex == k_maxSize)
+                return false;
+        }
 
+        const FieldTable table{ stops };
         const FloatRect sourceRect = stops[sourceIndex].rect;
         const FloatPoint band = cellBand(sourceRect);
         const bool horizontal = event.key == Keys::Left || event.key == Keys::Right;
-        const std::size_t bestIndex = searchField(
-            stops,
-            OrientedRect::orient(sourceRect, event.key),
-            OrientedRect::orient(band, event.key),
-            event.key,
-            sourceIndex,
-            FieldReach::Nearest
-        );
+        const bool forward = event.key == Keys::Right || event.key == Keys::Down;
+        const std::size_t line = horizontal ? table.bandAt(band.y) : table.columnAt(band.x);
+        const std::size_t bestIndex = stopAlong(table, stops, sourceIndex, line, !horizontal,
+            forward, FieldReach::Nearest);
         if (bestIndex == k_maxSize)
-            // Left and Right are the field's own axis - the columns are what they address - so
-            // the field root answers them whenever the selection is in its field, and a press at
-            // the end of the line rests there. Letting one travel on hands it to the focus
-            // navigator, whose source is the whole **row**: everything ahead of the row's centre
-            // scores, so a press at the last column lands on whatever control stands further
-            // right on some other row. Up and Down do travel on, which is how a move leaves the
-            // grid at all.
-            return horizontal && isFieldRoot();
+            // Left and Right are the field's own axis, the columns being what they address, so a
+            // press at the end of a line rests there rather than leaving the grid sideways. Up
+            // and Down travel on, which is how a move leaves the grid at all.
+            return horizontal;
 
         // The line is written before anything scrolls: a stop rect and the grid origin it is
         // measured against were read from one snapshot, and a scroll moves both.
@@ -551,6 +551,7 @@ namespace ClaFi::Controls::Grids
         if (sourceIndex == k_maxSize)
             return false;
 
+        const FieldTable table{ stops };
         const FloatRect sourceRect = stops[sourceIndex].rect;
         // The line these keys read runs through the stop the selection sits on. A step sideways
         // that found nothing on the line landed beside it, and an edge is measured from where
@@ -558,28 +559,11 @@ namespace ClaFi::Controls::Grids
         const AxisSpan sourceSpan = { sourceRect.top, sourceRect.bottom };
         const float line = sourceSpan.clampInto(cellBand(sourceRect).y);
         const bool toBegin = edge == ScrollDirection::ToBegin;
-
-        std::size_t bestIndex = sourceIndex;
-        for (std::size_t i = 0; i != stops.size(); ++i)
-        {
-            const FloatRect& rect = stops[i].rect;
-            if (!AxisSpan{ rect.top, rect.bottom }.contains(line))
-                continue;
-            const FloatRect& best = stops[bestIndex].rect;
-            // Reading order: the stop furthest towards the edge, and the one highest up among
-            // those a column hierarchy stacks at the same distance.
-            const bool further = toBegin
-                ? rect.left < best.left
-                    || (rect.left == best.left && rect.top < best.top)
-                : rect.right > best.right
-                    || (rect.right == best.right && rect.bottom > best.bottom);
-            if (further)
-                bestIndex = i;
-        }
+        const std::size_t bestIndex = table.endStop(table.bandAt(line), toBegin);
         // The outermost grid answers these keys whenever the selection is in its field, so a
         // press at the edge of the line rests there. Letting it travel on hands it to the focus
         // navigator, which answers with the first or last row of the grid.
-        if (bestIndex == sourceIndex)
+        if (bestIndex == sourceIndex || bestIndex == k_maxSize)
             return true;
 
         const FloatRect& targetRect = stops[bestIndex].rect;
@@ -667,11 +651,11 @@ namespace ClaFi::Controls::Grids
         if (sourceIndex == k_maxSize)
             return false;
 
+        const FieldTable table{ stops };
         const FloatRect sourceRect = stops[sourceIndex].rect;
         const FloatPoint band = cellBand(sourceRect);
         const bool forward = direction == ScrollDirection::ToEnd;
-        const KeyCode key = forward ? Keys::Down : Keys::Up;
-        const OrientedRect line = OrientedRect::orient(band, key);
+        const std::size_t column = table.columnAt(band.x);
 
         // Where the page being left behind ends. That is the selection: a press moves the
         // selection by a page, so the page it crosses starts where the selection stands, whether
@@ -682,22 +666,22 @@ namespace ClaFi::Controls::Grids
         std::size_t lastSeenIndex = sourceIndex;
         if (!showsWhole(viewport, stops[sourceIndex]))
         {
-            const std::size_t seenIndex = lastWholeInBand(stops, viewport, line, key);
+            const std::size_t seenIndex = lastWholeInColumn(table, stops, viewport, column,
+                forward);
             if (seenIndex != k_maxSize)
                 lastSeenIndex = seenIndex;
         }
 
         // The next page begins on the stop after it, so nothing is crossed twice and nothing
         // between the two pages is stepped over.
-        const std::size_t nextIndex = searchField(stops,
-            OrientedRect::orient(stops[lastSeenIndex].rect, key),
-            line, key, lastSeenIndex, FieldReach::Nearest);
+        const std::size_t nextIndex = stopAlong(table, stops, lastSeenIndex, column, true, forward,
+            FieldReach::Nearest);
         if (nextIndex == k_maxSize)
         {
             // The field ends inside this page, so the press comes to rest where a run of arrow
             // presses would: on the last stop this way.
-            const std::size_t endIndex = searchField(stops, OrientedRect::orient(sourceRect, key),
-                line, key, sourceIndex, FieldReach::Furthest);
+            const std::size_t endIndex = stopAlong(table, stops, sourceIndex, column, true, forward,
+                FieldReach::Furthest);
             if (endIndex == k_maxSize)
                 return true;
             rememberCellLine(stops[endIndex].rect, band.y, false);
@@ -719,7 +703,7 @@ namespace ClaFi::Controls::Grids
         // The selection lands at the **far** edge of that view rather than at its start: the press
         // moves the view by a page and leaves the selection against the edge it travelled to,
         // which is where the next press measures its own page from.
-        std::size_t bestIndex = lastWholeInBand(stops, arriving, line, key);
+        std::size_t bestIndex = lastWholeInColumn(table, stops, arriving, column, forward);
         if (bestIndex == k_maxSize)
             bestIndex = nextIndex;
 
@@ -749,21 +733,37 @@ namespace ClaFi::Controls::Grids
         return this == &m_descriptor.owner();
     }
 
+    // **What is on screen is what a key can move to.** A row further out than this is one the walk
+    // would have to reach for and the eye cannot follow, and the count of rows a grid may hold has
+    // no upper bound. The window is the grid's own visible part rather than the whole form: a row
+    // scrolled out of the box holding the grid is as far out of reach as one past the end of the
+    // grid. A key that reaches further than one step passes the distance it crosses as lookAhead,
+    // since nothing further out is collected and no stop there can be landed on.
     std::size_t GridBase::collectField(const Scaler& scaler, FieldStops& stops, float lookAhead)
+    {
+        FloatRect window = visibleRectInForm();
+        window.inflate(scaler.scaled48 + lookAhead);
+        return collectFieldIn(window, stops);
+    }
+
+    std::size_t GridBase::collectFieldAroundSelection(FieldStops& stops)
+    {
+        const Control* sourceStop = m_descriptor.selectedRow();
+        if (!sourceStop)
+            return k_maxSize;
+        const FloatRect viewport = visibleRectInForm();
+        FloatRect window = sourceStop->boundsInForm();
+        window.inflate(viewport.width(), viewport.height());
+        return collectFieldIn(window, stops);
+    }
+
+    std::size_t GridBase::collectFieldIn(const FloatRect& window, FieldStops& stops)
     {
         // The selection is a cell of a row, or the control a row that has no cells stands behind
         // - an expander's header. Either can be the place a move starts from.
         const Control* sourceStop = m_descriptor.selectedRow();
         const Column* sourceColumn = m_descriptor.selectedColumn();
         std::size_t result = k_maxSize;
-
-        // What is on screen is what a key can move to. A row further out than this is one the
-        // walk would have to reach for and the eye cannot follow, and the count of rows a grid
-        // may hold has no upper bound. The window is the grid's own visible part rather than the
-        // whole form: a row scrolled out of the box holding the grid is as far out of reach as
-        // one past the end of the grid.
-        FloatRect window = visibleRectInForm();
-        window.inflate(scaler.scaled48 + lookAhead);
         traverseRows(window, [&](RowBase& row, FloatPoint rowOrigin){
             row.traverseLanes(rowOrigin, [&](const RowCell& cell, const FloatRect& lane){
                 if (sourceColumn && &row == sourceStop && &cell.column == sourceColumn)
@@ -793,34 +793,65 @@ namespace ClaFi::Controls::Grids
         return result;
     }
 
-    std::size_t GridBase::searchField(const FieldStops& stops, const OrientedRect& source,
-        const OrientedRect& line, KeyCode key, std::size_t sourceIndex, FieldReach reach) const
+    // **On the line first, however far**: a run of Down keeps its column across rows that hold
+    // nothing in it. Only where nothing ahead stands on the line does the step take the nearest
+    // place ahead holding anything, at the line nearest the kept one - and a step back along the
+    // kept line still finds the source, since nothing between the two stands on it. A stop is
+    // ahead only when it starts past the whole of the source, so a span standing beside the
+    // source is never a step down from it.
+    std::size_t GridBase::stopAlong(const FieldTable& table, const FieldStops& stops,
+        const std::size_t sourceIndex, const std::size_t line, const bool vertical,
+        const bool forward, const FieldReach reach)
     {
-        std::size_t result = k_maxSize;
-        Score bestScore;
-        for (std::size_t i = 0; i != stops.size(); ++i)
+        const auto spanOf = [&](const std::size_t index) {
+            return vertical ? table.bandsOf(stops[index]) : table.columnsOf(stops[index]);
+        };
+        const auto cellAt = [&](const std::size_t along, const std::size_t across) {
+            return vertical ? table.stopAt(along, across) : table.stopAt(across, along);
+        };
+        const IndexSpan source = spanOf(sourceIndex);
+        const std::size_t count = vertical ? table.bands() : table.columns();
+        const std::size_t lines = vertical ? table.columns() : table.bands();
+        // The places ahead of the source, first included and end not.
+        const std::size_t first = forward ? source.last + 1 : 0;
+        const std::size_t end = forward ? count : source.first;
+        if (first >= end)
+            return k_maxSize;
+        const bool fromFirst = forward == (reach == FieldReach::Nearest);
+        const auto placeAt = [&](const std::size_t step) {
+            return fromFirst ? first + step : end - 1 - step;
+        };
+        const auto isAhead = [&](const std::size_t index) {
+            const IndexSpan span = spanOf(index);
+            return forward ? span.first > source.last : span.last < source.first;
+        };
+
+        for (std::size_t step = 0; step != end - first; ++step)
         {
-            if (i == sourceIndex)
-                continue;
-            const OrientedRect candidate = OrientedRect::orient(stops[i].rect, key);
-            Score score;
-            score.primary = candidate.primary.start - source.primary.end;
-            if (score.primary < 0.0f)
-                continue;
-            // Reversing the sign leaves the lane test and the tie-break where they are, and
-            // turns the nearest stop ahead into the furthest one.
-            if (reach == FieldReach::Furthest)
-                score.primary = -score.primary;
-            const OrientedRect lane = OrientedRect::orient(stops[i].lane, key);
-            score.secondary = lane.secondary.distanceTo(line.secondary.start);
-            score.inLane = score.secondary == 0.0f;
-            if (score.isBetterThan(bestScore))
-            {
-                bestScore = score;
-                result = i;
-            }
+            const std::size_t stop = cellAt(placeAt(step), line);
+            if (stop != k_maxSize && isAhead(stop))
+                return stop;
         }
-        return result;
+        for (std::size_t step = 0; step != end - first; ++step)
+        {
+            std::size_t result = k_maxSize;
+            std::size_t nearest = k_maxSize;
+            for (std::size_t across = 0; across != lines; ++across)
+            {
+                const std::size_t stop = cellAt(placeAt(step), across);
+                if (stop == k_maxSize || !isAhead(stop))
+                    continue;
+                const std::size_t distance = across > line ? across - line : line - across;
+                if (distance < nearest)
+                {
+                    nearest = distance;
+                    result = stop;
+                }
+            }
+            if (result != k_maxSize)
+                return result;
+        }
+        return k_maxSize;
     }
 
     FloatPoint GridBase::cellBand(const FloatRect& sourceRect)
@@ -903,25 +934,17 @@ namespace ClaFi::Controls::Grids
         return shown.covers({ stop.rect.top, stop.rect.bottom });
     }
 
-    std::size_t GridBase::lastWholeInBand(const FieldStops& stops, const FloatRect& within,
-        const OrientedRect& line, KeyCode key) const
+    std::size_t GridBase::lastWholeInColumn(const FieldTable& table, const FieldStops& stops,
+        const FloatRect& within, const std::size_t column, const bool forward)
     {
-        std::size_t result = k_maxSize;
-        float bestReach = -k_maxFloat;
-        for (std::size_t i = 0; i != stops.size(); ++i)
+        const std::size_t bands = table.bands();
+        for (std::size_t i = 0; i != bands; ++i)
         {
-            if (!showsWhole(within, stops[i]))
-                continue;
-            const OrientedRect lane = OrientedRect::orient(stops[i].lane, key);
-            if (lane.secondary.distanceTo(line.secondary.start) != 0.0f)
-                continue;
-            const OrientedRect candidate = OrientedRect::orient(stops[i].rect, key);
-            if (candidate.primary.end <= bestReach)
-                continue;
-            bestReach = candidate.primary.end;
-            result = i;
+            const std::size_t stop = table.stopAt(forward ? bands - 1 - i : i, column);
+            if (stop != k_maxSize && showsWhole(within, stops[stop]))
+                return stop;
         }
-        return result;
+        return k_maxSize;
     }
 
     RowBase* GridBase::edgeRow(ScrollDirection edge)
@@ -1000,6 +1023,130 @@ namespace ClaFi::Controls::Grids
         // twice costs nothing and telling it never is unrecoverable.
         invalidateStateUp(from, this, InvalidateEvent::None);
         invalidateStateUp(to, this, InvalidateEvent::None);
+    }
+
+    // GridBase::FieldTable
+
+    // **The edges the stops share are the lines of the field.** Cells tile it, so a stop's top is
+    // the bottom of the one above, and each edge that meets another is one line. Edges within the
+    // tolerance are one: a group's span is as tall as its rows by a sum of its own.
+    GridBase::FieldTable::FieldTable(const FieldStops& stops)
+    {
+        for (const FieldStop& stop : stops)
+        {
+            bandEdges.push_back(stop.rect.top);
+            bandEdges.push_back(stop.rect.bottom);
+            columnEdges.push_back(stop.lane.left);
+            columnEdges.push_back(stop.lane.right);
+        }
+        mergeEdges(bandEdges);
+        mergeEdges(columnEdges);
+        cells.assign(bands() * columns(), k_maxSize);
+        if (cells.empty())
+            return;
+        for (std::size_t index = 0; index != stops.size(); ++index)
+        {
+            const IndexSpan stopBands = bandsOf(stops[index]);
+            const IndexSpan stopColumns = columnsOf(stops[index]);
+            for (std::size_t band = stopBands.first; band <= stopBands.last; ++band)
+            {
+                for (std::size_t column = stopColumns.first; column <= stopColumns.last; ++column)
+                {
+                    std::size_t& cell = cells[band * columns() + column];
+                    if (cell == k_maxSize)
+                        cell = index;
+                }
+            }
+        }
+    }
+
+    std::size_t GridBase::FieldTable::bands() const
+    {
+        return bandEdges.size() < 2 ? 0 : bandEdges.size() - 1;
+    }
+
+    std::size_t GridBase::FieldTable::columns() const
+    {
+        return columnEdges.size() < 2 ? 0 : columnEdges.size() - 1;
+    }
+
+    std::size_t GridBase::FieldTable::stopAt(const std::size_t band, const std::size_t column) const
+    {
+        if (band >= bands() || column >= columns())
+            return k_maxSize;
+        return cells[band * columns() + column];
+    }
+
+    std::size_t GridBase::FieldTable::bandAt(const float y) const
+    {
+        return spanAt(bandEdges, y);
+    }
+
+    std::size_t GridBase::FieldTable::columnAt(const float x) const
+    {
+        return spanAt(columnEdges, x);
+    }
+
+    GridBase::IndexSpan GridBase::FieldTable::bandsOf(const FieldStop& stop) const
+    {
+        return spansBetween(bandEdges, stop.rect.top, stop.rect.bottom);
+    }
+
+    // The lane, not the rect: a blank is answered for by the cell nearest it.
+    GridBase::IndexSpan GridBase::FieldTable::columnsOf(const FieldStop& stop) const
+    {
+        return spansBetween(columnEdges, stop.lane.left, stop.lane.right);
+    }
+
+    std::size_t GridBase::FieldTable::endStop(const std::size_t band, const bool atStart) const
+    {
+        const std::size_t count = columns();
+        for (std::size_t i = 0; i != count; ++i)
+        {
+            const std::size_t stop = stopAt(band, atStart ? i : count - 1 - i);
+            if (stop != k_maxSize)
+                return stop;
+        }
+        return k_maxSize;
+    }
+
+    std::size_t GridBase::FieldTable::edgeAt(const Edges& edges, const float value)
+    {
+        const auto found = std::ranges::lower_bound(edges, value - k_edgeTolerance);
+        return static_cast<std::size_t>(found - edges.begin());
+    }
+
+    // A value past either end is held by the span at that end.
+    std::size_t GridBase::FieldTable::spanAt(const Edges& edges, const float value)
+    {
+        if (edges.size() < 2)
+            return 0;
+        const auto above = std::ranges::upper_bound(edges, value);
+        const std::size_t index = static_cast<std::size_t>(above - edges.begin());
+        return index == 0 ? 0 : std::min(index - 1, edges.size() - 2);
+    }
+
+    GridBase::IndexSpan GridBase::FieldTable::spansBetween(const Edges& edges, const float from,
+        const float to)
+    {
+        if (edges.size() < 2)
+            return {};
+        const std::size_t spans = edges.size() - 1;
+        const std::size_t first = std::min(edgeAt(edges, from), spans - 1);
+        const std::size_t end = std::min(edgeAt(edges, to), spans);
+        return { first, end > first ? end - 1 : first };
+    }
+
+    void GridBase::FieldTable::mergeEdges(Edges& edges)
+    {
+        std::ranges::sort(edges);
+        Edges merged;
+        for (const float edge : edges)
+        {
+            if (merged.empty() || edge - merged.back() > k_edgeTolerance)
+                merged.push_back(edge);
+        }
+        edges = std::move(merged);
     }
 
 }

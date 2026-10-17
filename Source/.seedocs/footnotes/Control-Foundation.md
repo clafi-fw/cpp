@@ -462,10 +462,6 @@ such child in reading order, whichever way the step comes.
 - PanelBase - from above or below, the first row from that edge holding a stop. From a side, the
   row nearest the line, from that side.
 
-## Score
-
-**A candidate on the lane the move keeps beats one merely ahead of it**, however much nearer the
-second is.
 
 ## Input
 
@@ -527,12 +523,6 @@ to the application menu, through connectAppMenu.
 - `Auto` - ControlTreeWalker calls `traverseChildren()`, and each child's visit runs in its own
   stack frame.
 
-## OrientedRect
-
-**Turned so one comparison answers for every arrow key**: a candidate is ahead when its primary span
-starts past the source's, and on the lane when the secondary spans meet.
-
-Left and Up are negated, so only differences between two oriented rectangles mean anything.
 
 ## FormBase::configName
 
