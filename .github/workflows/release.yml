@@ -156,6 +156,7 @@ jobs:
           - **Linux** - unpack the archive and run $app. It needs glibc 2.35 or newer, a Wayland session and a processor with AVX2 and FMA. Supported-Distros.md inside lists the desktops, and clafi-check.sh answers whether a machine can run it."
             case "$app" in
               WhatsClip) site="https://whatsclip.app" ;;
+              SeeDocs) site="https://seedocs.app" ;;
               *) site="" ;;
             esac
             if [ -n "$site" ]; then
