@@ -872,7 +872,7 @@ namespace ClaFi::Controls
     {
         if (m_tabViewMode == TabViewMode::ToolButton)
             return 0.0f;
-        return orientation() == Orientation::Horizontal ? event.scaledSpacingY() : event.scaledPaddingX();
+        return orientation() == Orientation::Horizontal ? event.scaledSpacingY() : event.scaledSpacingX();
     }
 
     // The set is keyed by the pointers it was handed, and a lookup changes nothing.
