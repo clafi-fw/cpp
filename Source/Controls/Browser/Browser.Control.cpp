@@ -883,11 +883,13 @@ namespace ClaFi::Browser
             }
             menu.add(
                 line,
-                [this, &pageData](PaintIconEvent& event) {
-                    paintPageIcon(pageData, event);
-                },
-                [this, offset](ClickEvent& event) {
-                    travel(offset, *event.control);
+                Events{
+                    [this, &pageData](PaintIconEvent& event) {
+                        paintPageIcon(pageData, event);
+                    },
+                    [this, offset](const ClickEvent& event) {
+                        travel(offset, *event.control);
+                    }
                 }
             );
             offset += direction;
