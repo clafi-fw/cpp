@@ -291,7 +291,6 @@ namespace ClaFi::Browser
         virtual void saveViewState(BrowserTab&) {};
         void storeSelectedTab(const BrowserTab*) const;
         void storeTabSettings(const BrowserTab&) const;
-        void storeTabOrder() const;   // the strip's order, as the tabs come back in
         void deleteTabSettings(BrowserTab&);
         // Closes every tab, frees every page under home and opens one tab on home. See Browser
         void resetToHome();
@@ -395,7 +394,7 @@ namespace ClaFi::Browser
         void travelLater(std::ptrdiff_t offset);
         // Drops the current tab's history one way, as a list under the button for that way.
         void showHistoryMenu(std::ptrdiff_t direction);
-        [[nodiscard]] Button& historyButton(std::ptrdiff_t offset); // Back for a negative offset
+        [[nodiscard]] Button& historyButton(std::ptrdiff_t offset) const; // Back for a negative offset
         // Reads a tab's history from its file, once - goTo asks it of every tab it selects.
         void readHistory(BrowserTab&);
         void storeHistory(const BrowserTab&) const; // into the document of the tab's file

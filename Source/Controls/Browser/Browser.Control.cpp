@@ -897,7 +897,7 @@ namespace ClaFi::Browser
         menu.executeUnder(button);
     }
 
-    Button& BrowserControl::historyButton(const std::ptrdiff_t offset)
+    Button& BrowserControl::historyButton(const std::ptrdiff_t offset) const
     {
         return offset < 0 ? m_backButton : m_forwardButton;
     }
