@@ -38,11 +38,9 @@ namespace SeeDocs_App
         return {
             .name = Text{ k_appName },
             .publisher = k_publisher,
-            .description = Text{
-                L"Shows the design surface the scanner read out of the tree, "
-                L"as the documentation it is to become."
-            },
+            .description = Text{ L"A code documentation tool" },
             .version = CLAFI_APP_VERSION,
+            .site = L"https://seedocs.app",
             .updates = UpdateSource{
                 .repository = L"clafi-fw/cpp",
                 .tagPrefix = L"SeeDocs-v"
