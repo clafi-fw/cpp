@@ -216,7 +216,6 @@ namespace ClaFi::Browser
     public:
         template<typename... Args>
         explicit BrowserControl(const CreateParams&, Args&&...);
-        ~BrowserControl() override;   // stores every tab's entry while its page still stands
     public:
         void initialize(BrowserSettings&);
         DialogTitle& title() const { return m_title; }

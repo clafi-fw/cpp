@@ -343,20 +343,6 @@ namespace ClaFi::Browser
 
     // BrowserControl
 
-    // Written while the pages still stand; the base takes them down after this. The entries are
-    // what the next run restores the tabs from, and a move in view since the last move between
-    // pages is read off the page here.
-    BrowserControl::~BrowserControl()
-    {
-        if (!m_settings)
-            return;
-        for (const BrowserTab& tab : tabs())
-        {
-            if (tab.page())
-                storeTabSettings(tab);
-        }
-    }
-
     void BrowserControl::initialize(BrowserSettings& settings)
     {
         m_settings = &settings;
@@ -365,6 +351,18 @@ namespace ClaFi::Browser
         form().onClosing([this](FormClosingEvent& event) {
             if (!canCloseWindow())
                 event.refuse();
+        });
+
+        // Written on close, while every page still stands - a derived browser takes its pages down
+        // in its own destructor, which runs before BrowserControl's. The entries are what the next
+        // run restores the tabs from, and a move in view since the last move between pages is read
+        // off the page here.
+        form().onClose([this](FormCloseEvent&) {
+            for (const BrowserTab& tab : tabs())
+            {
+                if (tab.page())
+                    storeTabSettings(tab);
+            }
         });
 
         initPageData(m_homePageData);

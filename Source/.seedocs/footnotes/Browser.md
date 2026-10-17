@@ -91,9 +91,9 @@ the viewport's top - so a page laid out at another width or height puts that ite
 stood, and falls back to the scroll where the url names nothing.
 
 Answered unscaled, so a value written by one run reads the same at another scale. Asked as the tab
-leaves the page, as the tab's entry is stored, and in the browser's destructor for every page still
-standing - a move in view after the last move between pages reaches the settings that way. A page
-that scrolls nothing leaves the default.
+leaves the page, as the tab's entry is stored, and for every page when the browser's form closes -
+a move in view after the last move between pages reaches the settings that way. A page that
+scrolls nothing leaves the default.
 
 ## BrowserControl rebuildPage
 
