@@ -338,6 +338,17 @@ namespace ClaFi::Controls::Grids
         StackView::nestedKeyDown(event);
     }
 
+    // An arrow press reaches the focus navigator only once moveCellSelection has found nothing
+    // that way in the field, which is wider than these rows - a row this stack would step to is
+    // one the field already passed over. The steps a page press is made of are the navigator's
+    // own, and walk the rows like any stack's.
+    Control* GridBase::navigationNeighbour(const Control& child, const NavigationStep& step)
+    {
+        if (step.source == NavigationSource::Key)
+            return nullptr;
+        return StackView::navigationNeighbour(child, step);
+    }
+
     void GridBase::controlAdded(Control& control)
     {
         StackView::controlAdded(control);

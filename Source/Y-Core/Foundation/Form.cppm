@@ -163,6 +163,8 @@ namespace ClaFi
     {
         // The root control reports itself as the content while it is being constructed.
         friend FormControlBase;
+        // Keeps the line a run of arrow presses holds - see m_navigationLine.
+        friend class FocusNavigator;
     public:
         // The role is what kind of window this is, and it is named by whoever builds the form.
         // Nothing about the root is read to arrive at it: what the **window** does with activation
@@ -438,6 +440,12 @@ namespace ClaFi
         void rememberPlacementTarget();
     private:
         using ShadowPainters = std::vector<std::unique_ptr<Graphics::ShadowPainter>>;
+        // The line a run of arrow presses keeps, as an offset from the stop it was written on.
+        struct NavigationLine
+        {
+            const Control* holder{ nullptr };   // the stop, compared and never read
+            FloatPoint offset{};
+        };
     private:
         // What both of the above delegate to. They differ in nothing but how the owner form was
         // arrived at - through the control the popup stands on, or named outright.
@@ -632,6 +640,8 @@ namespace ClaFi
         InputStamp m_mouseDownStamp{};
         Control* m_downItem{};
         bool m_isKeyboardClick{};
+        // What the next arrow press reads. See Control-Foundation#navigationstep
+        NavigationLine m_navigationLine{};
         // A press this form handed to a popup. **The character of a press is queued before the
         // press is answered** - TranslateMessage runs ahead of the dispatch - so if that popup goes
         // down on the press, its character still arrives here, at the control the focus has just

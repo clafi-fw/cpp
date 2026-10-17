@@ -133,7 +133,9 @@ namespace ClaFi::Controls
         // A column reads its items' heights off them unless one fills the lane.
         [[nodiscard]] bool isChildHeightGiven(const Control& child) const override
             { return lanesRunAcross() || child.fillsLane(); }
-        NavigationWrap navigationWrap() const override;
+        [[nodiscard]] Control* navigationNeighbour(const Control& child,
+            const NavigationStep&) override;
+        [[nodiscard]] Control* navigationEntry(const NavigationStep&) override;
         // The answer after the handlers have had it.
         [[nodiscard]] bool canMoveItem(Control&);
         // The answer before any handler sees it: a visible item of a rearrangeable stack.
@@ -273,6 +275,34 @@ namespace ClaFi::Controls
         void alignEvenLane(AlignEvent&, ControlSpan::iterator laneBegin,
             ControlSpan::iterator laneEnd, std::size_t shares, ScaledPosition,
             float laneMain, float laneCross, ScaledSize& contentDimensions);
+        // Whether the stack breaks its items into more than one lane.
+        [[nodiscard]] bool wraps() const
+        {
+            return m_orientation == Orientation::HorizontalWrap
+                || m_orientation == Orientation::VerticalWrap;
+        }
+        // Whether a step runs the way the lanes do.
+        [[nodiscard]] bool runsAlongLanes(const NavigationStep& step) const
+            { return step.vertical() != lanesRunAcross(); }
+        // A step's line in the coordinates the items are laid out in.
+        [[nodiscard]] FloatPoint lineAmongItems(const NavigationStep&) const;
+        [[nodiscard]] AxisSpan mainSpanOf(const Control& item) const;
+        [[nodiscard]] AxisSpan crossSpanOf(const Control& item) const;
+        // Whether item, shown next after previous, starts a lane of its own.
+        [[nodiscard]] bool startsLane(const Control& previous, const Control& item) const;
+        // The index of child, read first at the item the last step landed on.
+        [[nodiscard]] std::size_t navigationIndexOf(const Control& child) const;
+        // The next item past index holding a stop, the way forward says.
+        [[nodiscard]] std::size_t adjacentStop(std::size_t index, bool forward) const;
+        // The first or the last item holding a stop.
+        [[nodiscard]] std::size_t endStop(bool atStart) const;
+        // The stop nearest the line along the lanes, in the first lane past the skipped ones.
+        [[nodiscard]] std::size_t stopNearLine(std::size_t from, bool forward, float line,
+            std::size_t lanesToSkip) const;
+        // The first or the last stop of the lane nearest the line across the lanes.
+        [[nodiscard]] std::size_t laneEndNearLine(bool atStart, float line) const;
+        // The item at index as the answer to a step, null past the end.
+        [[nodiscard]] Control* answerStep(std::size_t index);
     private:
         // Under this two extents are the same extent: what the align laid out is compared with
         // what the measure answered, and a pass asked for on floating-point noise is a pass
@@ -283,6 +313,7 @@ namespace ClaFi::Controls
         // ever been aligned reports a lane nothing can precede, and culls nothing.
         float m_maxLaneExtent{ k_maxFloat };
         float m_wrapLengthInDesign{};   // the length the lanes were last broken at, in design units
+        std::size_t m_navigationIndex{};   // the item the last step landed on
         std::optional<Carry> m_carry{};
     };
 
@@ -530,14 +561,35 @@ namespace ClaFi::Controls
         }
     }
 
-    NavigationWrap StackPanelBase::navigationWrap() const
+    // **A step along the lanes goes to the next item in the order**, from the end of one lane on
+    // to the start of the next. A step across them goes to the item of the next lane nearest the
+    // line, and leaves a stack of one lane. See Item-Containers#navigation
+    Control* StackPanelBase::navigationNeighbour(const Control& child, const NavigationStep& step)
     {
-        switch (m_orientation)
-        {
-        case Orientation::VerticalWrap: return { false, true };
-        case Orientation::HorizontalWrap: return { true, false };
-        default: return { false, false };
-        }
+        const std::size_t index = navigationIndexOf(child);
+        if (index == controls().size())
+            return nullptr;
+        if (runsAlongLanes(step))
+            return answerStep(adjacentStop(index, step.forward()));
+        if (!wraps())
+            return nullptr;
+        const FloatPoint line = lineAmongItems(step);
+        return answerStep(stopNearLine(index, step.forward(), mainOf(line), 1ull));
+    }
+
+    // Entered along the lanes, a stack is entered at the near end of the lane nearest the line;
+    // entered across them, at the item of the near lane nearest the line.
+    Control* StackPanelBase::navigationEntry(const NavigationStep& step)
+    {
+        const ControlSpanC children = controls();
+        if (children.empty())
+            return nullptr;
+        const FloatPoint line = lineAmongItems(step);
+        const bool forward = step.forward();
+        if (runsAlongLanes(step))
+            return answerStep(wraps() ? laneEndNearLine(forward, crossOf(line)) : endStop(forward));
+        const std::size_t from = forward ? 0ull : children.size() - 1ull;
+        return answerStep(stopNearLine(from, forward, mainOf(line), 0ull));
     }
 
     // **One routine, read through main and cross.** A wrapping stack does the same four things
@@ -972,6 +1024,177 @@ namespace ClaFi::Controls
             ++index;
         }
         mainOf(contentDimensions) = std::max(mainOf(contentDimensions), lastEnd);
+    }
+
+    FloatPoint StackPanelBase::lineAmongItems(const NavigationStep& step) const
+    {
+        return step.line - form().contentOriginOfControl(this);
+    }
+
+    AxisSpan StackPanelBase::mainSpanOf(const Control& item) const
+    {
+        const FloatPoint at = item.topLeft();
+        const ScaledSize size = item.scaledSize();
+        return { mainOf(at), mainOf(at) + mainOf(size) };
+    }
+
+    AxisSpan StackPanelBase::crossSpanOf(const Control& item) const
+    {
+        const FloatPoint at = item.topLeft();
+        const ScaledSize size = item.scaledSize();
+        return { crossOf(at), crossOf(at) + crossOf(size) };
+    }
+
+    // **Read off where the align put the items**, which says it exactly: inside a lane an item
+    // starts past the start of the one before it, and every item of the next lane stands past the
+    // whole of this one across the lanes - see traversalOrder. A hidden item keeps wherever it
+    // last stood, so it is never compared.
+    bool StackPanelBase::startsLane(const Control& previous, const Control& item) const
+    {
+        return wraps()
+            && mainSpanOf(item).start <= mainSpanOf(previous).start
+            && crossSpanOf(item).start >= crossSpanOf(previous).end;
+    }
+
+    // A page press steps on from the item the last step landed on, and a run of them would walk a
+    // million items for every step without this.
+    std::size_t StackPanelBase::navigationIndexOf(const Control& child) const
+    {
+        const ControlSpanC children = controls();
+        if (m_navigationIndex < children.size() && children[m_navigationIndex].get() == &child)
+            return m_navigationIndex;
+        return indexOf(child);
+    }
+
+    std::size_t StackPanelBase::adjacentStop(const std::size_t index, const bool forward) const
+    {
+        const ControlSpanC children = controls();
+        std::size_t at = index;
+        while (forward ? at + 1ull < children.size() : at > 0ull)
+        {
+            at = forward ? at + 1ull : at - 1ull;
+            if (children[at]->holdsNavigationStop())
+                return at;
+        }
+        return children.size();
+    }
+
+    std::size_t StackPanelBase::endStop(const bool atStart) const
+    {
+        const ControlSpanC children = controls();
+        for (std::size_t i = 0ull; i != children.size(); ++i)
+        {
+            const std::size_t at = atStart ? i : children.size() - 1ull - i;
+            if (children[at]->holdsNavigationStop())
+                return at;
+        }
+        return children.size();
+    }
+
+    // Walks from `from` the way forward says, past the lanes it is told to skip - the one a step
+    // starts in - and answers in the first lane after them that holds a stop. The items of a lane
+    // run in order along it, so the first stop further from the line than one already found ends
+    // the walk.
+    std::size_t StackPanelBase::stopNearLine(const std::size_t from, const bool forward,
+        const float line, std::size_t lanesToSkip) const
+    {
+        const ControlSpanC children = controls();
+        const std::size_t count = forward ? children.size() - from : from + 1ull;
+        std::size_t result = children.size();
+        float nearest = k_maxFloat;
+        const Control* previousShown = nullptr;
+        for (std::size_t i = 0ull; i != count; ++i)
+        {
+            const std::size_t at = forward ? from + i : from - i;
+            const Control& item = *children[at];
+            if (!item.visible())
+                continue;
+            const bool lanePassed = previousShown && (forward
+                ? startsLane(*previousShown, item)
+                : startsLane(item, *previousShown));
+            previousShown = &item;
+            if (lanePassed)
+            {
+                if (result != children.size())
+                    return result;
+                if (lanesToSkip)
+                    --lanesToSkip;
+            }
+            if (lanesToSkip || !item.holdsNavigationStop())
+                continue;
+            const float distance = mainSpanOf(item).distanceTo(line);
+            if (result != children.size() && distance > nearest)
+                return result;
+            // Of two as near, the earlier in the order, whichever way the walk runs.
+            if (forward ? distance < nearest : distance <= nearest)
+            {
+                nearest = distance;
+                result = at;
+            }
+        }
+        return result;
+    }
+
+    std::size_t StackPanelBase::laneEndNearLine(const bool atStart, const float line) const
+    {
+        // A lane as the walk has read it so far.
+        struct Lane
+        {
+            AxisSpan cross;          // how far its items reach across the lanes
+            std::size_t firstStop;   // the first item holding a stop, the end where none does
+            std::size_t lastStop;    // the last such item
+        };
+        const ControlSpanC children = controls();
+        const std::size_t none = children.size();
+        std::size_t result = none;
+        float nearest = k_maxFloat;
+        Lane lane = { {}, none, none };
+        const auto closeLane = [&]() {
+            if (lane.firstStop == none)
+                return;
+            const float distance = lane.cross.distanceTo(line);
+            if (distance < nearest)
+            {
+                nearest = distance;
+                result = atStart ? lane.firstStop : lane.lastStop;
+            }
+        };
+
+        const Control* previousShown = nullptr;
+        for (std::size_t at = 0ull; at != children.size(); ++at)
+        {
+            const Control& item = *children[at];
+            if (!item.visible())
+                continue;
+            const AxisSpan cross = crossSpanOf(item);
+            if (!previousShown || startsLane(*previousShown, item))
+            {
+                closeLane();
+                lane = { cross, none, none };
+            }
+            else
+            {
+                lane.cross.start = std::min(lane.cross.start, cross.start);
+                lane.cross.end = std::max(lane.cross.end, cross.end);
+            }
+            previousShown = &item;
+            if (!item.holdsNavigationStop())
+                continue;
+            if (lane.firstStop == none)
+                lane.firstStop = at;
+            lane.lastStop = at;
+        }
+        closeLane();
+        return result;
+    }
+
+    Control* StackPanelBase::answerStep(const std::size_t index)
+    {
+        const ControlSpan children = controls();
+        if (index >= children.size())
+            return nullptr;
+        m_navigationIndex = index;
+        return children[index].get();
     }
 
     void StackPanelBase::moveItems(const std::span<Control* const> items, const std::size_t to)

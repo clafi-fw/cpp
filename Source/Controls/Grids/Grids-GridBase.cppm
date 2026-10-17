@@ -152,6 +152,9 @@ namespace ClaFi::Controls::Grids
         // selected cell the edit is for. See Grids#editing-a-cell
         void nestedClick(NestedClickEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
+        // An arrow reaching here has already been walked over the field, and leaves the grid.
+        [[nodiscard]] Control* navigationNeighbour(const Control& child,
+            const NavigationStep&) override;
         // Puts a row added after the new-item row ahead of it, and notes it for requestNewItem.
         void controlAdded(Control&) override;
         // The new-item row is a command rather than an item, so no selection holds it.

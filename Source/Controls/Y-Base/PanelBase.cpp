@@ -6,10 +6,14 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Scaler;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
+    // The slots of the middle row, left to right.
+    static constexpr std::array k_middleRow{ PanelSlot::Left, PanelSlot::Body, PanelSlot::Right };
+
     // Splitter
 
     Splitter::Splitter(const CreateParams& params, const PanelSlot bar)
@@ -505,6 +509,70 @@ namespace ClaFi::Controls
         form().invalidateAlign();
     }
 
+    // **The slots stand in three rows** - the top bar, the side bars with the body between them,
+    // the bottom bar. A step up or down goes to the next row holding a stop, at the slot nearest
+    // the line in the middle one; a step sideways runs along the middle row and leaves the others.
+    Control* PanelBase::navigationNeighbour(const Control& child, const NavigationStep& step)
+    {
+        const std::optional<PanelSlot> from = slotOf(child);
+        if (!from)
+            return nullptr;
+        if (!step.vertical())
+            return rowOf(*from) == 1ull ? middleStopBeside(*from, step.forward()) : nullptr;
+
+        const float lineX = (step.line - form().contentOriginOfControl(this)).x;
+        std::size_t row = rowOf(*from);
+        while (step.forward() ? row < 2ull : row > 0ull)
+        {
+            row = step.forward() ? row + 1ull : row - 1ull;
+            if (Control* stop = rowStop(row, lineX))
+                return stop;
+        }
+        return nullptr;
+    }
+
+    // Entered from above or below, a panel is entered at the first row from that edge holding a
+    // stop. Entered from a side, it is entered at the row nearest the line, from that side.
+    Control* PanelBase::navigationEntry(const NavigationStep& step)
+    {
+        const FloatPoint line = step.line - form().contentOriginOfControl(this);
+        if (step.vertical())
+        {
+            for (std::size_t i = 0ull; i != 3ull; ++i)
+            {
+                if (Control* stop = rowStop(step.forward() ? i : 2ull - i, line.x))
+                    return stop;
+            }
+            return nullptr;
+        }
+
+        std::optional<std::size_t> nearestRow{};
+        float nearest = k_maxFloat;
+        for (std::size_t row = 0ull; row != 3ull; ++row)
+        {
+            const std::optional<AxisSpan> span = rowSpan(row);
+            if (!span)
+                continue;
+            const float distance = span->distanceTo(line.y);
+            if (distance < nearest)
+            {
+                nearest = distance;
+                nearestRow = row;
+            }
+        }
+        if (!nearestRow)
+            return nullptr;
+        if (*nearestRow != 1ull)
+            return rowStop(*nearestRow, line.x);
+        for (std::size_t i = 0ull; i != k_middleRow.size(); ++i)
+        {
+            Control* part = slot(k_middleRow[step.forward() ? i : k_middleRow.size() - 1ull - i]);
+            if (part && part->holdsNavigationStop())
+                return part;
+        }
+        return nullptr;
+    }
+
     void PanelBase::addAlongLane(float& lane, float part, float spacing)
     {
         if (part <= 0.0f)
@@ -613,6 +681,78 @@ namespace ClaFi::Controls
             BarResizeEvent event{ *this, slotId, *sizing.extent };
             emitEvent(event);
         }
+    }
+
+    std::size_t PanelBase::rowOf(const PanelSlot value)
+    {
+        switch (value)
+        {
+        case PanelSlot::Top:
+            return 0ull;
+        case PanelSlot::Bottom:
+            return 2ull;
+        default:
+            return 1ull;
+        }
+    }
+
+    Control* PanelBase::rowStop(const std::size_t row, const float lineX) const
+    {
+        if (row != 1ull)
+        {
+            Control* bar = slot(row == 0ull ? PanelSlot::Top : PanelSlot::Bottom);
+            return bar && bar->holdsNavigationStop() ? bar : nullptr;
+        }
+        Control* result = nullptr;
+        float nearest = k_maxFloat;
+        for (const PanelSlot slotId : k_middleRow)
+        {
+            Control* part = slot(slotId);
+            if (!part || !part->holdsNavigationStop())
+                continue;
+            const FloatRect rect = part->boundsInParent();
+            const float distance = AxisSpan{ rect.left, rect.right }.distanceTo(lineX);
+            if (distance < nearest)
+            {
+                nearest = distance;
+                result = part;
+            }
+        }
+        return result;
+    }
+
+    std::optional<AxisSpan> PanelBase::rowSpan(const std::size_t row) const
+    {
+        std::optional<AxisSpan> result{};
+        for (std::size_t i = 0ull; i != m_slots.size(); ++i)
+        {
+            const Control* part = m_slots[i];
+            if (!part || rowOf(static_cast<PanelSlot>(i)) != row || !part->holdsNavigationStop())
+                continue;
+            const FloatRect rect = part->boundsInParent();
+            if (!result)
+            {
+                result = AxisSpan{ rect.top, rect.bottom };
+                continue;
+            }
+            result->start = std::min(result->start, rect.top);
+            result->end = std::max(result->end, rect.bottom);
+        }
+        return result;
+    }
+
+    Control* PanelBase::middleStopBeside(const PanelSlot from, const bool forward) const
+    {
+        const auto found = std::ranges::find(k_middleRow, from);
+        std::size_t at = static_cast<std::size_t>(found - k_middleRow.begin());
+        while (forward ? at + 1ull < k_middleRow.size() : at > 0ull)
+        {
+            at = forward ? at + 1ull : at - 1ull;
+            Control* part = slot(k_middleRow[at]);
+            if (part && part->holdsNavigationStop())
+                return part;
+        }
+        return nullptr;
     }
 
 }

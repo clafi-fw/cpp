@@ -69,6 +69,32 @@ namespace ClaFi
         float laneExtent{};
     };
 
+    // Which way a navigation step travels.
+    export enum class NavigationDirection
+    {
+        Left,
+        Right,
+        Up,
+        Down
+    };
+
+    // What a navigation step stands for.
+    export enum class NavigationSource
+    {
+        Key,   // an arrow press, which every control on the focus path has had first
+        Page   // one of the steps a page press is made of
+    };
+
+    // A step of the focus along an arrow, as a container reads it. See Control-Foundation
+    export struct NavigationStep
+    {
+        NavigationDirection direction{};
+        NavigationSource source{};
+        FloatPoint line{};   // in form space; a vertical step reads x, a horizontal one y
+        [[nodiscard]] bool vertical() const;
+        [[nodiscard]] bool forward() const;   // to the right or down
+    };
+
     export template<typename T>
         concept IsControl = std::derived_from<T, Control>;
 
@@ -814,6 +840,8 @@ namespace ClaFi
         // how a disabled control gets to say why it is disabled, and tooltips follow hover rather
         // than focus. See also canClick, which answers the same way for the same reason.
         [[nodiscard]] bool canTakeFocus() const;
+        // Whether the focus can land on this control or on something inside it.
+        [[nodiscard]] bool holdsNavigationStop() const;
         // Whether this control moves in Z - towards the viewer as the pointer arrives, away from it
         // while held. It is one answer with two consequences, and they must not be given separately:
         // whether the press scale is applied at all, and whether the control's text is rasterized in
@@ -1071,6 +1099,11 @@ namespace ClaFi
         // order is whichever order the code building the container happened to ask for them in.
         // A slot may be unfilled, so an entry may be null.
         [[nodiscard]] virtual ControlSlots navigationSlots() const { return {}; }
+        // The child a step from `child` lands in, null where it leaves. See Control-Foundation
+        [[nodiscard]] virtual Control* navigationNeighbour(const Control& child,
+            const NavigationStep&);
+        // The child a step entering this control lands in, null where none. See Control-Foundation
+        [[nodiscard]] virtual Control* navigationEntry(const NavigationStep&);
         virtual void nestedControlDeleted(Control*) {};
         virtual void childVisibilityChanged(Control&) {}
         virtual void adjustNestedControlVisualState(const Control&, VisualState&) const {}
@@ -1251,7 +1284,6 @@ namespace ClaFi
         // What the platform does with a press here. Whether the pointer stands on the control's
         // own text is a separate answer - see Control::isTextHovered.
         virtual void hitTest(HitTestEvent&) const {}
-        virtual NavigationWrap navigationWrap() const;
         // The part of this control a scroll has to show, in this control's own coordinates. The
         // whole of it, unless something smaller inside it is what the scroll is for: a control
         // larger than the viewport is fully visible the moment any part of it is, so a request to
@@ -1514,6 +1546,12 @@ namespace ClaFi
         void doPaintFrame(PaintEvent&);
         void doPainted(PaintEvent&) const;
         bool isOnScrollBox();
+        // How many children navigation reads - see navigationSlots.
+        [[nodiscard]] std::size_t navigationCount() const;
+        // The child at a place in that order, null for an unfilled slot.
+        [[nodiscard]] Control* navigationChild(std::size_t index);
+        [[nodiscard]] const Control* navigationChild(std::size_t index) const
+            { return const_cast<Control*>(this)->navigationChild(index); }
     private:
         inline static TextEngine s_textEngine{};
         static OnAnimate s_onAnimateState;

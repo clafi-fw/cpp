@@ -81,12 +81,6 @@ namespace ClaFi
         Display   // shows the command without delivering it
     };
 
-    // Whether arrow navigation runs off one edge of a container and back on at the other.
-    export struct NavigationWrap
-    {
-        bool horizontal{};
-        bool vertical{};
-    };
 
     export using ScaleFactor = float;
 

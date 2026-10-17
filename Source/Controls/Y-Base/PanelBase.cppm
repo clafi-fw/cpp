@@ -143,6 +143,9 @@ namespace ClaFi::Controls
         [[nodiscard]] bool isChildHeightGiven(const Control& child) const override
             { return &child != topBar() && &child != bottomBar(); }
         [[nodiscard]] ControlSlots navigationSlots() const override { return m_slots; }
+        [[nodiscard]] Control* navigationNeighbour(const Control& child,
+            const NavigationStep&) override;
+        [[nodiscard]] Control* navigationEntry(const NavigationStep&) override;
     private:
         template<typename T>
         using PerSlot = std::array<T, static_cast<std::size_t>(PanelSlot::Count)>;
@@ -185,6 +188,14 @@ namespace ClaFi::Controls
         void dragBarTo(PanelSlot slotId, float extent);
         // A bar measured from its content on a fit's behalf keeps that measurement as its extent.
         void keepFittedExtents();
+        // The row a slot stands in: 0 the top bar, 1 the side bars with the body, 2 the bottom bar.
+        [[nodiscard]] static std::size_t rowOf(PanelSlot);
+        // The slot of a row holding a stop that is nearest the line along the row.
+        [[nodiscard]] Control* rowStop(std::size_t row, float lineX) const;
+        // How far down a row's slots holding a stop reach, none where no slot holds one.
+        [[nodiscard]] std::optional<AxisSpan> rowSpan(std::size_t row) const;
+        // The next slot of the middle row past `from` holding a stop, the way forward says.
+        [[nodiscard]] Control* middleStopBeside(PanelSlot from, bool forward) const;
     private:
         // Every child a panel has, each in the slot it was given. That is the order they are
         // laid out in and the order navigation reads them in, and it is not the order they were

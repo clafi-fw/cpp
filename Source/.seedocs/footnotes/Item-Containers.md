@@ -149,6 +149,17 @@ sideways.
 - A stack of rows takes none of this: rows break at the width by design, and the measure already
   runs against it.
 
+### Navigation
+
+**A step along the lanes goes to the next item in the order**, so in a wrapping stack it runs on
+from the end of one lane to the start of the next. **A step across them goes to the item of the
+next lane nearest the line** - see NavigationStep. A stack of one lane hands a step across it to
+its host.
+
+**The lanes are read off where the align put the items.** An item starts a lane where it goes back
+along the lanes and stands past the whole of the item before it across them. Hidden items are not
+read.
+
 ## PreviewMode
 
 - `Focus` - the current item, whatever moved it. A pointer crossing the stack previews nothing.

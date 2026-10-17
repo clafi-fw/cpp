@@ -7,7 +7,6 @@ import :Control;
 import :Input;
 import :Form;
 import :Spatial;
-import :Traversal;
 
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.System.UiTypes;
@@ -15,15 +14,36 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // How far a control is drawn from where it was laid out, by a hold on it or on anything
-    // holding it: the hold reaches everything inside the control held, the way
-    // Control::scrollChildIntoView climbs. Zero for a control drawn where it was laid out.
-    [[nodiscard]] static FloatPoint holdOffset(const Control& control)
+    // Where a control was laid out, in form space - the place a container reads its children at.
+    // A hold draws a control elsewhere, and the row after a held header is still the row laid out
+    // after it.
+    [[nodiscard]] static FloatRect laidOutRect(const Control& control)
     {
-        FloatPoint result;
-        for (const Control* item = &control; item; item = item->parent())
-            result += item->floatOffset();
-        return result;
+        return FloatRect::fromDimensions(control.parentContentOrigin() + control.topLeft(),
+            control.scaledSize());
+    }
+
+    // The part of a rect a step travels over.
+    [[nodiscard]] static AxisSpan spanAlong(const FloatRect& rect, const NavigationStep& step)
+    {
+        if (step.vertical())
+            return { rect.top, rect.bottom };
+        return { rect.left, rect.right };
+    }
+
+    [[nodiscard]] static NavigationDirection directionOf(const KeyCode key)
+    {
+        switch (key)
+        {
+        case Keys::Left:
+            return NavigationDirection::Left;
+        case Keys::Right:
+            return NavigationDirection::Right;
+        case Keys::Up:
+            return NavigationDirection::Up;
+        default:
+            return NavigationDirection::Down;
+        }
     }
 
     void FocusNavigator::formKeyDown(KeyDownEvent& event)
@@ -32,16 +52,15 @@ namespace ClaFi
         // application rather than one per form - so a form that has not taken it sees a control
         // in another window. Starting there searches a tree this form has nothing to do with:
         // a menu shown over a text box is opened with the focus still on the box, and its very
-        // first move - the emulated Tab that gives the menu its first item - walked the form
-        // **behind** it and focused whatever stood after the box there. It reached the menu at all
-        // only when that walk found nothing and fell through to the wrap.
+        // first move - the emulated Tab that gives the menu its first item - would walk the form
+        // **behind** it.
         //
         // The same case as no focus at all, and it has the same answer. Nothing has been focused
         // yet, or whatever held the focus has been deleted - the pointer is dropped without a
         // replacement being named, and navigation would have nowhere to start from for the rest
         // of the form's life. The form is the container this navigation belongs to, and it
-        // answers with its current item or with itself, which is the entry the search needs
-        // either way.
+        // answers with its current item or with itself, which is the start a walk needs either
+        // way.
         Control* focusHolder = Input::focusedControl();
         if (focusHolder && &focusHolder->form() != &m_form)
             focusHolder = nullptr;
@@ -52,123 +71,49 @@ namespace ClaFi
         if (!focusedItem)
             focusedItem = focusHolder;
 
-        KeyCode key = event.key;
-
-        if (key == Keys::Return || key == Keys::Space) {
+        const KeyCode key = event.key;
+        if (key == Keys::Return || key == Keys::Space)
+        {
             focusedItem->animatedClick(m_form, event.stamp);
             return;
         }
 
-        // The container the search starts inside, and the one Tab steps out of as a whole. It is
-        // also what tells an item reached by moving within the container from an item reached by
-        // entering the container from outside - see entryPoint.
+        // **The nearest container keeping a current item is the scope.** Tab steps out of it as a
+        // whole, the arrows and the page keys move inside it, and Home and End go to its ends.
         Control* sourceContainer = focusedItem->navigationContainer(CheckSelf::Yes);
 
-        // Which end of a container the focus lands on when navigation enters one holding nothing
-        // selected. Travel forward enters at the first item and travel back at the last, so the
-        // item taking the focus is the one nearest the edge that was crossed. Home, End and the
-        // page keys name the end they head for themselves.
-        ScrollDirection entryEdge = ScrollDirection::ToBegin;
-
-        Control* bestCandidate = nullptr;
-        if (key == Keys::Tab)
+        switch (key)
         {
-            bool isReverse = event.modifiers.shift;
-            key = isReverse ? Keys::Left : Keys::Right;
-            entryEdge = isReverse ? ScrollDirection::ToEnd : ScrollDirection::ToBegin;
-
-            // Tab leaves a container as a whole, so the walk starts **at** the container rather
-            // than at the item inside it - a grid or a list is one stop, not one stop per cell.
-            //
-            // The form is a container too, and it is the one that cannot be left: there is
-            // nothing outside it to step out to, and starting the walk there excludes the whole
-            // tree as the source's own subtree, which leaves Tab with nothing but the wrap. An
-            // item whose nearest container is the form starts the walk at itself.
-            Control* startNode = sourceContainer && !isFormRoot(sourceContainer)
-                ? sourceContainer
-                : focusedItem;
-
-            while (startNode && !bestCandidate)
-            {
-                Control* outerScope = startNode->parent();
-                bestCandidate = structuralSearch(
-                    key,
-                    entryEdge,
-                    orientedRect(startNode, key),
-                    outerScope,
-                    startNode
-                );
-                startNode = outerScope;
-            }
-
-            // Nothing ahead anywhere: the walk has run out of form and starts again at the end it
-            // came round to, which is where entering the form from outside would have put it.
-            if (!bestCandidate)
-                bestCandidate = edgeItem(m_form.content(), entryEdge);
+        case Keys::Tab:
+            if (Control* stop = tabStop(*focusedItem, sourceContainer, event.modifiers.shift))
+                land(*stop);
+            return;
+        case Keys::Left:
+        case Keys::Right:
+        case Keys::Up:
+        case Keys::Down:
+        {
+            const NavigationStep step = stepFrom(*focusedItem, directionOf(key),
+                NavigationSource::Key);
+            // The scope holding the focus itself, with no item current, is entered - and so is
+            // the form, when nothing in it holds the focus.
+            const bool entersItem = focusedItem == sourceContainer || isFormRoot(focusedItem);
+            Control* stop = entersItem
+                ? enter(*focusedItem, step)
+                : arrowStop(*focusedItem, step, sourceContainer);
+            if (stop && stop != focusedItem)
+                land(*stop, step);
+            return;
         }
-        else // Arrows
-            if (key == Keys::Left
-            || key == Keys::Right
-            || key == Keys::Up
-            || key == Keys::Down)
-        {
-            entryEdge = key == Keys::Left || key == Keys::Up
-                ? ScrollDirection::ToEnd
-                : ScrollDirection::ToBegin;
-
-            OrientedRect rect = orientedRect(focusedItem, key);
-            if (sourceContainer == focusedItem)
-                rect.implode();
-
-            NavigationWrap navigationWrap = focusedItem->navigationWrap();
-            SearchMethod searchMethod = SearchMethod::Spatial;
-            switch (key)
-            {
-            case Keys::Up:
-            case Keys::Down:
-                if (navigationWrap.vertical)
-                    searchMethod = SearchMethod::WrapLanes;
-                break;
-            default:
-                if (navigationWrap.horizontal)
-                    searchMethod = SearchMethod::WrapLanes;
-                break;
-            }
-
-            bestCandidate = spatialSearch(
-                key,
-                rect,
-                sourceContainer,
-                nullptr,
-                searchMethod,
-                SearchFilter::Focusable
-            );
-        }
-        else if (key == Keys::Home
-            || key == Keys::End
-            || key == Keys::Prior
-            || key == Keys::Next)
-        {
+        case Keys::Home:
+        case Keys::End:
+        case Keys::Prior:
+        case Keys::Next:
             // These four address a container. With none in scope there is nothing for them to
             // move within, and the focus stays where it is.
             if (sourceContainer)
-            {
-                const ScrollDirection direction = key == Keys::Home || key == Keys::Prior
-                    ? ScrollDirection::ToBegin
-                    : ScrollDirection::ToEnd;
-                entryEdge = direction;
-
-                bestCandidate = key == Keys::Home || key == Keys::End
-                    ? edgeItem(*sourceContainer, direction)
-                    : pageItem(*sourceContainer, *focusedItem, direction);
-            }
-        }
-
-        if (bestCandidate)
-        {
-            bestCandidate = entryPoint(bestCandidate, sourceContainer, entryEdge);
-            bestCandidate->scrollIntoView();
-            bestCandidate->setFocus();
+                moveInContainer(*sourceContainer, *focusedItem, key);
+            return;
         }
     }
 
@@ -177,311 +122,236 @@ namespace ClaFi
         return control == &m_form.content();
     }
 
-    // An active container answers for the item it holds. A search that arrives from outside the
-    // container has matched the container's own bounds, and the item takes the focus on that
-    // match alone: where the item sits, and whether the container is scrolled far away from it,
-    // decide nothing. scrollIntoView then brings the item back into the viewport.
-    //
-    // A container holding nothing selected takes the item at entryEdge, and selects it the way it
-    // selects any item the keyboard puts the focus on, so a container is never left focused with
-    // no item of its own. A search that matched an item inside keeps that item: the geometry
-    // named it, which is more than the edge rule knows. An empty container has nothing to hand
-    // the focus to and keeps it.
-    Control* FocusNavigator::entryPoint(Control* candidate, const Control* sourceContainer,
-        ScrollDirection entryEdge)
+    // **Each container answers for its own children**, from what its layout already says about
+    // them, and the first one up the parents that has a child the step lands in names it. A
+    // container with nothing that way leaves the step to the one holding it. The walk stops at
+    // the boundary, which is asked last.
+    Control* FocusNavigator::arrowStop(Control& item, const NavigationStep& step,
+        const Control* boundary)
     {
-        Control* container = candidate->navigationContainer(CheckSelf::Yes);
-        // The form is not entered - the search was already inside it. Answering with its current
-        // item here sends every move that lands on a form-level control straight back to wherever
-        // the focus already was, which is a Tab that never leaves the first thing it reaches.
-        if (!container || container == sourceContainer || isFormRoot(container))
-            return candidate;
-
-        Control* focusedItem = container->focusDelegate();
-        if (focusedItem && focusedItem != container)
-            return focusedItem;
-
-        if (candidate != container)
-            return candidate;
-
-        Control* item = edgeItem(*container, entryEdge);
-        return item ? item : candidate;
-    }
-
-    // The control at one end of a container that can take the focus, in the order navigation
-    // reads the container in, descending through the ones that cannot. That order is the only
-    // thing consulted, and geometry none of it: the item at the edge of a container worth paging
-    // through sits outside the viewport, and the walker never visits what is off screen.
-    Control* FocusNavigator::edgeItem(Control& container, ScrollDirection edge)
-    {
-        // A container that keeps no slots holds its children in reading order already.
-        const ControlSlots slots = container.navigationSlots();
-        const ControlSpanC controls = container.controls();
-        const bool bySlot = !slots.empty();
-        const std::size_t count = bySlot ? slots.size() : controls.size();
-
-        for (std::size_t i = 0; i != count; ++i)
+        for (Control* child = &item; child != boundary; )
         {
-            const std::size_t index = edge == ScrollDirection::ToBegin ? i : count - 1 - i;
-            // Null is an unfilled slot.
-            Control* child = bySlot ? slots[index] : controls[index].get();
-            if (!child || !child->visible() || !child->enabled(true))
-                continue;
-            if (child->canTakeFocus())
-                return child;
-            if (Control* nested = edgeItem(*child, edge))
-                return nested;
+            Control* container = child->parent();
+            if (!container)
+                return nullptr;
+            if (Control* neighbour = container->navigationNeighbour(*child, step))
+            {
+                if (Control* stop = enter(*neighbour, step))
+                    return stop;
+            }
+            child = container;
         }
         return nullptr;
     }
 
-    // The item one screenful away along the axis the container scrolls on. The page is the
-    // container's own visible span, so what the user sees is what one press crosses, and the item
-    // currently at the far edge is the one landed on - it stays on screen as the anchor the new
-    // page is read against. A container that overflows on neither axis has no page to cross, and
-    // a page that reaches past the content ends at the edge item.
-    Control* FocusNavigator::pageItem(Control& container, Control& focusedItem, ScrollDirection direction)
+    // **An active container answers for the item it holds.** A step entering it lands on its
+    // current item, wherever that is and however far it is scrolled away; scrollIntoView brings
+    // it back. A container with nothing current is entered the way any container is, and one with
+    // nothing to hand the focus to keeps it.
+    Control* FocusNavigator::enter(Control& control, const NavigationStep& step)
     {
-        const FloatRect containerBounds = m_form.rectOfControl(&container);
-        const FloatRect containerViewport = container.visibleRectInForm(m_form);
+        if (control.interactivity() == Interactivity::ActiveContainer)
+        {
+            Control* currentItem = control.focusDelegate();
+            if (currentItem != &control && currentItem->canTakeFocus())
+                return currentItem;
+        }
+        else if (control.canTakeFocus())
+            return &control;
+
+        if (Control* child = control.navigationEntry(step))
+        {
+            if (Control* stop = enter(*child, step))
+                return stop;
+        }
+        return control.canTakeFocus() ? &control : nullptr;
+    }
+
+    Control* FocusNavigator::tabStop(Control& item, Control* sourceContainer, const bool reverse)
+    {
+        // A container met on the way is entered at the end the walk arrives from.
+        const ScrollDirection entryEdge = reverse
+            ? ScrollDirection::ToEnd
+            : ScrollDirection::ToBegin;
+
+        // **Tab leaves a container as a whole**, so the walk starts at the container rather than
+        // at the item inside it - a grid or a list is one stop, not one stop per cell. The form is
+        // the one container with nothing outside it to step out to, and an item whose nearest
+        // container is the form starts the walk at itself.
+        Control* child = sourceContainer && !isFormRoot(sourceContainer)
+            ? sourceContainer
+            : &item;
+        while (!isFormRoot(child) && child->parent())
+        {
+            Control& parent = *child->parent();
+            const std::size_t count = parent.navigationCount();
+            std::size_t index = 0;
+            while (index != count && parent.navigationChild(index) != child)
+                ++index;
+            // A child the container keeps out of its reading order has no siblings in it, and the
+            // walk carries on from the container.
+            const std::size_t siblings = index == count ? 0 : (reverse ? index : count - 1 - index);
+            for (std::size_t i = 1; i <= siblings; ++i)
+            {
+                Control* sibling = parent.navigationChild(reverse ? index - i : index + i);
+                if (!sibling)
+                    continue;
+                if (Control* stop = readingEntry(*sibling, entryEdge))
+                    return stop;
+            }
+            child = &parent;
+        }
+
+        // Nothing past it anywhere: the walk comes round to the end it started from, which is
+        // where entering the form from outside would have put it.
+        return edgeStop(m_form.content(), entryEdge);
+    }
+
+    // **Reading order is the only thing consulted**, never geometry: the item at the end of a
+    // container worth paging through sits outside the viewport, and the container's own order
+    // is already the order its layout reads in.
+    Control* FocusNavigator::edgeStop(Control& container, const ScrollDirection edge)
+    {
+        const std::size_t count = container.navigationCount();
+        for (std::size_t i = 0; i != count; ++i)
+        {
+            Control* child = container.navigationChild(edge == ScrollDirection::ToBegin
+                ? i
+                : count - 1 - i);
+            if (!child)
+                continue;
+            if (Control* stop = readingEntry(*child, edge))
+                return stop;
+        }
+        return nullptr;
+    }
+
+    // The active container rule of enter, read in order rather than by a step.
+    Control* FocusNavigator::readingEntry(Control& control, const ScrollDirection edge)
+    {
+        if (!control.holdsNavigationStop())
+            return nullptr;
+        if (control.interactivity() == Interactivity::ActiveContainer)
+        {
+            Control* currentItem = control.focusDelegate();
+            if (currentItem != &control && currentItem->canTakeFocus())
+                return currentItem;
+            Control* stop = edgeStop(control, edge);
+            return stop ? stop : &control;
+        }
+        if (control.canTakeFocus())
+            return &control;
+        return edgeStop(control, edge);
+    }
+
+    // **A page is as many steps as fit in the container's viewport**, along the axis it scrolls
+    // on, so a page press lands where a run of arrow presses would have. A container that holds
+    // a single screenful has no page to cross, and a press goes to its end.
+    void FocusNavigator::moveInContainer(Control& container, Control& item, const KeyCode key)
+    {
+        const ScrollDirection edge = key == Keys::Home || key == Keys::Prior
+            ? ScrollDirection::ToBegin
+            : ScrollDirection::ToEnd;
+        const bool pages = key == Keys::Prior || key == Keys::Next;
+        const std::optional<NavigationDirection> pageWay = pages
+            ? pageDirection(container, edge)
+            : std::nullopt;
+        if (!pageWay)
+        {
+            if (Control* stop = edgeStop(container, edge))
+                land(*stop);
+            return;
+        }
+
+        const NavigationStep step = stepFrom(item, *pageWay, NavigationSource::Page);
+        Control* stop = pageStop(container, item, step);
+        if (!stop)
+            stop = edgeStop(container, edge);
+        if (stop)
+            land(*stop, step);
+    }
+
+    std::optional<NavigationDirection> FocusNavigator::pageDirection(Control& container,
+        const ScrollDirection direction) const
+    {
+        const FloatRect bounds = m_form.rectOfControl(&container);
+        const FloatRect viewport = container.visibleRectInForm(m_form);
 
         // The axis carrying the greater overflow is the one the container scrolls on. Which axis
         // overflows at all is not enough to tell them apart: a wrapping layout wraps at the
         // viewport extent rather than at a whole item, so it spills a few pixels onto the axis it
-        // fills, and a container is free to overflow an axis whose scroll bar is hidden. Reading
-        // either as the scrolling axis pages along an axis that holds a single screenful, where
-        // the search finds nothing ahead and every press ends at the edge item.
-        const float verticalOverflow = containerBounds.height() - containerViewport.height();
-        const float horizontalOverflow = containerBounds.width() - containerViewport.width();
-        const bool scrollsVertically = verticalOverflow >= horizontalOverflow;
-
-        const float overflow = scrollsVertically ? verticalOverflow : horizontalOverflow;
-        if (overflow <= m_form.scaler().scaled8)
-            return edgeItem(container, direction);
+        // fills, and a container is free to overflow an axis whose scroll bar is hidden.
+        const float verticalOverflow = bounds.height() - viewport.height();
+        const float horizontalOverflow = bounds.width() - viewport.width();
+        const bool vertical = verticalOverflow >= horizontalOverflow;
+        if ((vertical ? verticalOverflow : horizontalOverflow) <= m_form.scaler().scaled8)
+            return std::nullopt;
 
         const bool forward = direction == ScrollDirection::ToEnd;
-        const KeyCode key = scrollsVertically
-            ? (forward ? Keys::Down : Keys::Up)
-            : (forward ? Keys::Right : Keys::Left);
-
-        OrientedRect rect = orientedRect(&focusedItem, key);
-        if (&container == &focusedItem)
-            rect.implode();
-
-        const OrientedRect pageRect = OrientedRect::orient(containerViewport, key);
-        const float pageExtent = pageRect.primary.end - pageRect.primary.start;
-        const float itemExtent = rect.primary.end - rect.primary.start;
-        const float overlap = itemExtent < pageExtent ? itemExtent : 0.0f;
-
-        // Orienting has already turned the direction of travel into the ascending primary axis,
-        // so a page forward is a step up the primary axis whichever key it came from.
-        if (FloatRect::intersection(m_form.rectOfControl(&focusedItem), containerViewport).empty())
-        {
-            // Scrolling has carried the focused item outside the viewport. The page to cross is
-            // then the one on screen, the rule the grid's page walk keeps as well, rather than
-            // the one around an item a hundred pages away.
-            rect.primary.end = pageRect.primary.end - overlap;
-            rect.primary.start = rect.primary.end - itemExtent;
-        }
-        else
-        {
-            const float step = pageExtent - overlap;
-            rect.primary.start += step;
-            rect.primary.end += step;
-        }
-
-        Control* result = spatialSearch(
-            key,
-            rect,
-            &container,
-            nullptr,
-            SearchMethod::Spatial,
-            SearchFilter::Focusable
-        );
-
-        return result ? result : edgeItem(container, direction);
+        if (vertical)
+            return forward ? NavigationDirection::Down : NavigationDirection::Up;
+        return forward ? NavigationDirection::Right : NavigationDirection::Left;
     }
 
-    // One step along the container the focus is in, and into whatever that step reaches. The
-    // step itself is geometry - what sits next along the direction of travel - but a container
-    // met on the way is entered by its own reading order rather than by where its children sit,
-    // because that is what Tab moves in.
-    Control* FocusNavigator::structuralSearch(
-        KeyCode key,
-        ScrollDirection entryEdge,
-        OrientedRect rect,
-        Control* searchRoot,
-        Control* current
-        )
+    // What a page crosses includes the item it starts from, so that item is still in sight at the
+    // far edge of the page that follows. The first step is taken whatever it crosses: a stop
+    // longer than the viewport is still the next one.
+    Control* FocusNavigator::pageStop(Control& container, Control& item, const NavigationStep& step)
     {
+        const FloatRect viewport = container.visibleRectInForm(m_form);
+        const float page = step.vertical() ? viewport.height() : viewport.width();
+        const AxisSpan source = spanAlong(laidOutRect(item), step);
+
         Control* result = nullptr;
-        do
+        for (Control* next = arrowStop(item, step, &container);
+             next;
+             next = arrowStop(*next, step, &container))
         {
-            Control* nextSibling = spatialSearch(
-                key,
-                rect,
-                searchRoot,
-                current,
-                SearchMethod::WrapLanes,
-                SearchFilter::DirectChildren
-            );
-            current = nullptr;
-
-            if (nextSibling)
-            {
-                Control* item = nextSibling->canTakeFocus()
-                    ? nextSibling
-                    : edgeItem(*nextSibling, entryEdge);
-                if (item)
-                    result = item;
-                else
-                {
-                    // A container with nothing in it the focus can go to. The step carries on
-                    // from where that container sits, so the next one along is tried.
-                    current = nextSibling;
-                    rect = orientedRect(current, key);
-                }
-            }
-        } while (current && !result);
-
+            const AxisSpan reached = spanAlong(laidOutRect(*next), step);
+            const float crossed = step.forward()
+                ? reached.end - source.start
+                : source.end - reached.start;
+            if (result && crossed > page)
+                break;
+            result = next;
+        }
         return result;
     }
 
-    Control* FocusNavigator::spatialSearch(
-        KeyCode key, const OrientedRect& src,
-        Control* searchRoot, Control* excludeSubtree,
-        SearchMethod searchMethod, SearchFilter filter)
+    // **A run of steps one way keeps its line**, and the first step of a run seeds it from the
+    // middle of the item it starts at. Any other move of the focus starts a new run, because the
+    // line is kept against the stop it was written on.
+    NavigationStep FocusNavigator::stepFrom(const Control& item,
+        const NavigationDirection direction, const NavigationSource source) const
     {
-        Control* bestCandidate = nullptr;
-        Score bestScore;
-
-        // **The walk is around the source, not the viewport, and in the space the controls were
-        // laid out in.** A source the scroll has carried off the screen still has its neighbours,
-        // and they are what a key from it reaches - the row after the first, not the first row
-        // the screen happens to show. A screenful each way reaches the next stop from any source,
-        // and a page press, whose source is the rect it projected, the stop past that. A held
-        // control is scored where it was laid out, the way the source is placed - see
-        // orientedRect - so a header held over the rows of its body is the stop before the first
-        // of them and not a stop between two of them, and one pushed away past the view is the
-        // stop it was before the hold.
-        //
-        // Rooted at the container searched, whose own bounds span everything it scrolls. The
-        // walk culls a subtree by its bounds against the reach, and the box scrolling the
-        // container is no wider than its slot: rooted above the container, a reach standing
-        // outside the window would be culled at the box with the container inside it.
-        FloatRect reach = src.unorient(key);
-        const FloatRect viewport = m_form.content().visibleRectInForm(m_form);
-        reach.inflate(viewport.width(), viewport.height());
-
-        Control& walkRoot = searchRoot ? *searchRoot : m_form.content();
-        ControlTreeWalker controlTreeWalker{ walkRoot, TraversalMode::Auto, &reach };
-        controlTreeWalker.setClipMode(ClipMode::SystemClipOnly);
-        controlTreeWalker.traverse([&](TraversalContext& context) {
-            Control& candidate = context.control();
-
-            // A control reaching past its viewport is judged by the part of it that is on
-            // screen. The center of a container taller or wider than its viewport sits
-            // somewhere the user cannot see, and it slides with every scroll, so scoring it
-            // whole makes the container win or lose the match by its scroll position.
-            // The walk also visits controls that are entirely outside the viewport; their
-            // viewport is empty, and their own bounds are what places them ahead of the source.
-            FloatRect candidateRect = context.viewport();
-            if (candidateRect.empty())
-                candidateRect = context.controlBounds();
-            candidateRect.offset(-holdOffset(candidate));
-            const OrientedRect candidateBounds = OrientedRect::orient(candidateRect, key);
-
-            if (candidateBounds == src)
-                return;
-            // The form is where the search happens, not something it can land on. The walker
-            // visits its own root before descending, and the root takes the focus like any other
-            // ActiveContainer, so it arrives here as an ordinary candidate. Every search in use
-            // keeps it out by other means - searchRoot excludes itself, and a DirectChildren
-            // search wants a parent the root has not got - and this says so outright rather than
-            // resting on that.
-            if (isFormRoot(&candidate))
-                return;
-            // Ahead of the filter switch, so it holds for every search - canTakeFocus asks the
-            // same question again for the focusable one, which costs a walk and keeps the two
-            // filters from disagreeing about what a disabled subtree contains.
-            if (!candidate.enabled(true))
-                return;
-
-            switch (filter)
-            {
-            case SearchFilter::Focusable:
-                if (!candidate.canTakeFocus())
-                    return;
-                break;
-            case SearchFilter::DirectChildren:
-                break;
-            }
-
-            if (searchRoot)
-            {
-                if (filter == SearchFilter::DirectChildren)
-                {
-                    if (searchRoot != candidate.parent())
-                        return;
-                }
-                else if (searchRoot && !searchRoot->containsNested(&candidate, CheckSelf::No))
-                    return;
-            }
-            if (excludeSubtree && excludeSubtree->containsNested(&candidate, CheckSelf::Yes))
-                return;
-
-            Score currentScore;
-
-            bool wrap = searchMethod == SearchMethod::WrapLanes;
-            bool sameLane = candidateBounds.secondary.covers(src.secondary)
-                || src.secondary.covers(candidateBounds.secondary);
-
-            // 2. Is it in the next "Lane"? (e.g. Below if moving Right)
-            bool nextLane = wrap && candidateBounds.secondary.start > src.secondary.start
-                && candidateBounds.secondary.end > src.secondary.end;
-
-            float primaryJump = candidateBounds.primary.center() - src.primary.center();
-            if (sameLane)
-            {
-                // Must be strictly ahead in the primary direction
-                if (primaryJump <= 0)
-                    return;
-                currentScore.inLane = true;
-                currentScore.primary = primaryJump;
-                currentScore.secondary = std::abs(candidateBounds.secondary.center() - src.secondary.center());
-            }
-            else if (nextLane)
-            {
-                // Wrapping logic
-                currentScore.inLane = false;
-                currentScore.primary = candidateBounds.secondary.start - src.secondary.end;
-                currentScore.secondary = candidateBounds.primary.center();
-            }
-            else if (primaryJump > 0 && searchMethod == SearchMethod::Spatial)
-            {
-                currentScore.inLane = false;
-                currentScore.primary = primaryJump;
-                currentScore.secondary = std::abs(candidateBounds.secondary.center() - src.secondary.center());
-            }
-            else
-                return; // Behind or in a previous lane
-
-            if (currentScore.isBetterThan(bestScore)) {
-                bestScore = currentScore;
-                bestCandidate = &candidate;
-            }
-
-            });
-
-        return bestCandidate;
+        const FloatRect rect = laidOutRect(item);
+        const FormBase::NavigationLine& kept = m_form.m_navigationLine;
+        const FloatPoint line = kept.holder == &item
+            ? rect.topLeft() + kept.offset
+            : rect.center();
+        return { direction, source, line };
     }
 
-    OrientedRect FocusNavigator::orientedRect(Control* control, KeyCode key)
+    // **A step writes only the line across it**, brought into the stop it landed on - at the edge
+    // the step crossed, which is where the eye is - and leaves the line along it as it was. Kept
+    // as an offset from the stop, so a scroll carrying the stop away carries the line with it.
+    void FocusNavigator::land(Control& stop, const NavigationStep& step)
     {
-        // A held control starts where it was laid out: a hold draws it elsewhere, and the row
-        // after it is the row laid out after it, not the one drawn under it.
-        FloatRect rect = control->visibleRectInForm(m_form);
-        rect.offset(-holdOffset(*control));
-        return OrientedRect::orient(rect, key);
+        const FloatRect rect = laidOutRect(stop);
+        FloatPoint line = step.line;
+        if (step.vertical())
+            line.y = AxisSpan{ rect.top, rect.bottom }.clampInto(line.y);
+        else
+            line.x = AxisSpan{ rect.left, rect.right }.clampInto(line.x);
+        m_form.m_navigationLine = { &stop, line - rect.topLeft() };
+        stop.scrollIntoView();
+        stop.setFocus();
+    }
+
+    void FocusNavigator::land(Control& stop)
+    {
+        m_form.m_navigationLine = {};
+        stop.scrollIntoView();
+        stop.setFocus();
     }
 }

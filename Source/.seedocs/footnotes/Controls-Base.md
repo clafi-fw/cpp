@@ -20,6 +20,11 @@ width, as MenuCommand does. At the icon's width, a long word would be cut.
 **A panel's own text in the body slot** - `TextPlacement::Body` - wraps at the slot's width. That
 is the width it remembers for the next measure - see Control::textWidthLimit.
 
+**A step moves between three rows** - the top bar, the side bars with the body between them, the
+bottom bar - and sideways only along the middle one. The middle row is read at the step's line,
+so Down from a top bar lands on whichever of the three stands under the item it left. A splitter
+is no stop.
+
 ## PanelBase bodySlotSettled
 
 **State what the body needs about its slot here** - it reaches the body on the same pass. The

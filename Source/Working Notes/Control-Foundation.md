@@ -104,6 +104,32 @@ Win32, the **activated** state of a toplevel configure on Wayland. A Menu or Too
 has the focus to report - `WS_EX_NOACTIVATE` on Win32, and an `xdg_popup` has no **activated**
 state - which is why `windowFocusedFactor` answers a popup's owner's factor instead.
 
+## FocusNavigator
+
+2026-10-17. The arrows and the page keys were a spatial search: every focusable control within a
+screenful of the source scored by the distance between centres, on rects clipped to the
+viewport, with a source container shrunk to a point and held headers moved back. Oj called it
+prone to bugs and overengineered, and the way back often differed from the way forward - centres
+of rects of different sizes score differently each way. Tab used the same search to pick the next
+sibling.
+
+The framework has two container families and a grid, and each layout already says who its
+neighbours are, so each container answers for its own children - Control navigationNeighbour and
+navigationEntry - and the navigator only walks up the parents. Decided with Oj:
+
+- A container with nothing current is entered by the line rule, not at its first or last item:
+  the first rule lands on a toolbar's last button when the focus comes up into it from below.
+- Tab reads the containers' order and nothing else.
+- The grid keeps its own field walk for now. It is scored spatially too, but inside its own
+  field; walking columns and rows by address is a separate step.
+
+The line pair is the grid's desiredCellX/Y made general. Without it, Up from a full-width row
+back into a toolbar picks the button under the row's centre instead of the one the run left.
+
+What changed for a user: a page press counts from the focused item even after the wheel has
+scrolled it away - it used to page from the screen in that case - and a diagonal jump into
+another panel is gone.
+
 ## InputController
 
 The fades run on the application's animator, reached through the AppContext the form reporting

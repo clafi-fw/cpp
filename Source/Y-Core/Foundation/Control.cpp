@@ -223,6 +223,18 @@ namespace ClaFi
         return { cross, main };
     }
 
+    // NavigationStep
+
+    bool NavigationStep::vertical() const
+    {
+        return direction == NavigationDirection::Up || direction == NavigationDirection::Down;
+    }
+
+    bool NavigationStep::forward() const
+    {
+        return direction == NavigationDirection::Right || direction == NavigationDirection::Down;
+    }
+
     // AdjustMetricsEvent
 
     AdjustMetricsEvent::AdjustMetricsEvent(const FormContext& env,
@@ -988,6 +1000,24 @@ namespace ClaFi
         }
     }
 
+    // Read through the same order navigation enters in, so a container that answers yes always has
+    // a child its navigationEntry can name.
+    bool Control::holdsNavigationStop() const
+    {
+        if (!visible() || !enabled(true))
+            return false;
+        if (canTakeFocus())
+            return true;
+        const std::size_t count = navigationCount();
+        for (std::size_t index = 0; index != count; ++index)
+        {
+            const Control* child = navigationChild(index);
+            if (child && child->holdsNavigationStop())
+                return true;
+        }
+        return false;
+    }
+
     void Control::setFocus()
     {
         auto focusedItem = []() -> const Control* {
@@ -1615,6 +1645,26 @@ namespace ClaFi
         return const_cast<Control*>(this)->getForm();
     }
 
+    // Only a container that states how its children are placed moves a step among them. Every
+    // other control hands the step on to the one holding it.
+    Control* Control::navigationNeighbour(const Control& /*child*/, const NavigationStep&)
+    {
+        return nullptr;
+    }
+
+    // Such a control is entered at its first stop in reading order, whichever way the step comes.
+    Control* Control::navigationEntry(const NavigationStep&)
+    {
+        const std::size_t count = navigationCount();
+        for (std::size_t index = 0; index != count; ++index)
+        {
+            Control* child = navigationChild(index);
+            if (child && child->holdsNavigationStop())
+                return child;
+        }
+        return nullptr;
+    }
+
     Control* Control::navigationContainer(CheckSelf checkSelf)
     {
         Control* control = checkSelf == CheckSelf::Yes ? this : m_parent;
@@ -1737,14 +1787,6 @@ namespace ClaFi
         // button's selected **is** its dot, and no container has any business turning it off.
         if (hasEventListeners<GetStateEvent>())
             event.stopPropagation();
-    }
-
-    NavigationWrap Control::navigationWrap() const
-    {
-        if (Control* parent = this->parent())
-            return parent->navigationWrap();
-        else
-            return { false, false };
     }
 
     FloatRect Control::scrollHotspot() const
@@ -2858,6 +2900,18 @@ namespace ClaFi
     bool Control::isOnScrollBox()
     {
         return m_parent && m_parent->controlIsOnScrollBox(*this);
+    }
+
+    std::size_t Control::navigationCount() const
+    {
+        const ControlSlots slots = navigationSlots();
+        return slots.empty() ? controls().size() : slots.size();
+    }
+
+    Control* Control::navigationChild(const std::size_t index)
+    {
+        const ControlSlots slots = navigationSlots();
+        return slots.empty() ? controls()[index].get() : slots[index];
     }
 
     OnAnimate Control::s_onAnimateState{

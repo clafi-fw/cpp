@@ -402,6 +402,66 @@ still open there. A word the ellipsis would push onto a seventh line goes too.
 An indent or alignment the preview states holds after it, so a line added after a preview states
 its own.
 
+## FocusNavigator
+
+**It takes the keys no control on the focus path took**, after the form's shortcuts and the
+application's: Return and Space, Tab, the arrows, Home, End and the page keys.
+
+**The nearest ActiveContainer is the scope.** Tab steps out of it as a whole, the arrows and the
+page keys move inside it, and Home and End go to its first and last stop.
+
+- **An arrow** asks the focused item's parent for the child the step lands in - see
+  Control navigationNeighbour. A parent with none hands the step to its own parent, up to the
+  scope. The child named is entered down to a stop - see Control navigationEntry.
+- **Tab** reads the order the containers keep their children in: the collection, or
+  Control::navigationSlots where a container keeps one. Shift+Tab walks the same order back, and
+  past the last stop the walk comes round to the first.
+- **A page press** is as many arrow steps along the axis the scope scrolls on as fit in its
+  viewport, the item it starts from counted. Where nothing overflows, it goes to the end.
+
+**Entering an ActiveContainer lands on its current item**, whichever way the focus comes in.
+
+## NavigationStep
+
+**The line is what makes the way back the way forward.** A run of steps one way keeps one
+coordinate: a vertical run keeps x, a horizontal run keeps y. Each step writes the other
+coordinate into the stop it landed on, at the edge it crossed. Down from a button and Up again
+come back to that button, however wide the item between them.
+
+**Any other move of the focus starts a new run**, from the middle of the item it lands on.
+
+**A container reads the line among its own children** - FormBase::contentOriginOfControl gives
+their origin - against where they were laid out, never where a hold draws them.
+
+## Control holdsNavigationStop
+
+**Shown, enabled, and able to take the focus or holding a child that holds a stop**, read in the
+order navigation reads the children in. Every child a container's navigation answers with holds
+one.
+
+## Control navigationNeighbour
+
+**`child` is the child the focus is in, and the answer is another child**, holding a stop. Null
+hands the step to the parent. The default answers null: a control has to say how its children
+are placed before a step moves among them.
+
+- StackPanelBase - along the lanes, the next item in the order. Across them, the item of the next
+  lane nearest the line - see Stack.
+- PanelBase - up and down from row to row, sideways along the middle row - see PanelBase.
+- GridBase - null for an arrow, which the grid has walked over its field already. The steps of a
+  page press walk the rows.
+- TreeNode - Right from the header of an open node goes to its rows.
+
+## Control navigationEntry
+
+**The answer is the child a step from outside lands in**, holding a stop. The default is the first
+such child in reading order, whichever way the step comes.
+
+- StackPanelBase - entered along the lanes, the near end of the lane nearest the line. Entered
+  across them, the item of the near lane nearest the line.
+- PanelBase - from above or below, the first row from that edge holding a stop. From a side, the
+  row nearest the line, from that side.
+
 ## Score
 
 **A candidate on the lane the move keeps beats one merely ahead of it**, however much nearer the
