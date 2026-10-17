@@ -47,6 +47,8 @@ namespace ClaFi::Controls
         virtual void editModeEntered() {}
         // The mode has turned off; accepted is false for Escape alone.
         virtual void editModeLeft(bool /*accepted*/) {}
+        // Whether Return is a line break the host types, which the mode then leaves to it.
+        [[nodiscard]] virtual bool takesLineBreaks() const { return false; }
         void adjustPaint(AdjustPaintEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
@@ -101,7 +103,7 @@ namespace ClaFi::Controls
     }
 
     // The host answers first, so Return on a link at the caret is the host's before it is the
-    // mode's. A wrapping box takes Return as a line of its own, and the mode leaves it alone.
+    // mode's. A host that takes line breaks types Return as one, and the mode leaves it alone.
     template <IsControl HostClass>
     void WithEditMode<HostClass>::nestedKeyDown(KeyDownEvent& event)
     {
@@ -127,7 +129,7 @@ namespace ClaFi::Controls
         switch (event.key)
         {
         case Keys::Return:
-            if (HostClass::wordWrap())
+            if (takesLineBreaks())
                 break;
             leaveEditMode(true);
             event.handled = true;

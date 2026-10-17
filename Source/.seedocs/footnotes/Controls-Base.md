@@ -127,17 +127,23 @@ link's menu - takes the focus for a while and keeps the mode up.
 
 **In the mode the host's keys apply**, through editModeKeyDown, and they are asked first: Return
 on a link at the caret is the box's before it is the mode's. What the host leaves, the mode
-answers: Return accepts and turns the mode off, Escape rejects and turns it off. A wrapping box
-takes Return as a line of its own, so the mode leaves it alone there. The character the Return
-that turned the mode on leaves behind is not typing.
+answers: Return accepts and turns the mode off, Escape rejects and turns it off. A host that
+takes line breaks - see WithEditMode takesLineBreaks - types Return as one, so the mode leaves it
+alone there. The character the Return that turned the mode on leaves behind is not typing.
 
 **Accepting and rejecting are the host's**, through editModeEntered and editModeLeft. A box typed
 into keeps the text the mode opened on and puts it back on Escape, as an edit of its own; a slider
 keeps its position. A read-only box has nothing to put back: its mode is a caret mode - arrows to
-a link, Return to follow it, Escape out.
+a link and Return to follow it, Return off a link or Escape to leave.
 
 **A search showing a match in a box turns the mode on**, so the match stands selected, and takes
 it off again as the search moves on.
+
+## WithEditMode takesLineBreaks
+
+**Its own answer, not wrapping.** A box wraps the words it is given whether or not it lets the
+user type a line break, so the host says outright. The default is no: in every control the mode
+switches, Return accepts.
 
 ## EditMode
 
