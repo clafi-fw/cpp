@@ -4,6 +4,7 @@ module;
 export module ClaFi.Controls.Slider;
 
 import ClaFi.Controls.Base.SliderBase;
+import ClaFi.Controls.Base.WithEditMode;
 import ClaFi.Controls.Panel;
 import ClaFi.Icons.Magnifier;
 import ClaFi.Icons.PlusMark;
@@ -68,8 +69,10 @@ namespace ClaFi::Controls
 
     class FineSlider;
 
+    using EditableSlider = WithEditMode<SliderBase>;
+
     // A control moved along a track to pick a value.
-    export class Slider : public SliderBase
+    export class Slider : public EditableSlider
     {
         friend FineSlider;
     public:
@@ -92,12 +95,16 @@ namespace ClaFi::Controls
         ScrollInfo controlScrollInfo() const override { return m_scrollInfo; }
         void nestedMouseWheel(MouseWheelEvent&) override;
         void nestedContextPopup(ContextPopupEvent&) override;
+        
         void nestedKeyDown(KeyDownEvent&) override;
+        void editModeKeyDown(KeyDownEvent&) override;
+
         void thumbPressDown() override;
         void changed(SliderChangeEvent&) override;
         void getThumbTooltip(GetTooltipEvent&) override;
         float stepSize() override { return 1.0f; }
         float buttonSize(const AppTheme&) override { return 24.0f; }
+
 
         void adjustButtonMetrics(AdjustMetricsEvent& event) const override { event.metrics = event.themeMetrics().toolButton; }
         void adjustButtonPaint(AdjustPaintEvent&) override;
@@ -173,7 +180,7 @@ namespace ClaFi::Controls
     template<typename ...Args>
     Slider::Slider(const CreateParams& params, Args&&... args)
         :
-        SliderBase{ params, SliderViewMode::Slider, ScrollAxis::Horizontal, Interactivity::Focusable, std::forward<Args>(args)... },
+        EditableSlider{ params, SliderViewMode::Slider, ScrollAxis::Horizontal, Interactivity::Focusable, std::forward<Args>(args)... },
         INIT_PROPERTY(buttonMark),
         INIT_PROPERTY(fineAdjust)
     {
@@ -219,7 +226,7 @@ namespace ClaFi::Controls
     // slider outright.
     void Slider::nestedContextPopup(ContextPopupEvent& event)
     {
-        SliderBase::nestedContextPopup(event);
+        EditableSlider::nestedContextPopup(event);
         if (event.propagationStopped())
             return;
         if (m_fineAdjust == FineAdjust::No || !enabled(true) || maxPosition() <= 0.0f)
@@ -230,9 +237,31 @@ namespace ClaFi::Controls
 
     void Slider::nestedKeyDown(KeyDownEvent& event)
     {
-        SliderBase::nestedKeyDown(event);
+        EditableSlider::nestedKeyDown(event);
         if (event.handled)
             showValueTooltip();
+    }
+
+    void Slider::editModeKeyDown(KeyDownEvent& event)
+    {
+        EditableSlider::editModeKeyDown(event);
+        float steps = 0.0f;
+        switch (event.key)
+        {
+        case Keys::Left:
+            steps = -1.0f;
+            break;
+        case Keys::Right:
+            steps = -1.0f;
+            break;
+        default:
+            break;
+        }
+        if (steps)
+        {
+            offsetPositionBySteps(steps);
+            event.stopPropagation();
+        }
     }
 
     void Slider::thumbPressDown()
@@ -243,7 +272,7 @@ namespace ClaFi::Controls
     void Slider::changed(SliderChangeEvent& event)
     {
         showValueTooltip();
-        SliderBase::changed(event);
+        EditableSlider::changed(event);
     }
 
     // The alignment is a marker, so a slider writing no value still answers an empty text, and
@@ -275,7 +304,7 @@ namespace ClaFi::Controls
 
     void Slider::adjustPaint(AdjustPaintEvent& event)
     {
-        PanelBase::adjustPaint(event);
+        EditableSlider::adjustPaint(event);
         // The slot's border and nothing else. A slider paints a slot and its parts, never a
         // surface of its own, so it carries no rule that would describe one: a surface rule
         // left here moves m_surfaceHsl, and every colour downstream then answers to a

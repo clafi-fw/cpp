@@ -191,6 +191,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackBase.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackBase.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackPanelBase.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\WithEditMode.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\WithTextLayout.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_Facade.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_StdSerializers.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_TextSerializers.cppm" />
@@ -244,7 +246,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Form.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\RichControl.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\RichControl.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\WithTextLayout.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Foundation-WithTextLayout.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Input.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Input.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Navigation.cpp" />

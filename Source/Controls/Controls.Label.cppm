@@ -6,7 +6,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    // Text drawn where it stands, taking no click.
+    // A text label.
     export class Label : public ButtonBase
     {
     public:
@@ -14,6 +14,10 @@ namespace ClaFi::Controls
         Label(const CreateParams& params, Args&&...);
     };
 
+    export class LabelWithTextLayout : public WithTextLayout<Label>
+    {
+        using WithTextLayout::WithTextLayout;
+    };
 
     //-------------------------------------------------------------------------
 

@@ -89,10 +89,6 @@ namespace ClaFi::Controls
         if (value == m_readOnly)
             return;
         m_readOnly = value;
-        // Nothing the box draws turns on the mode: the caret, the selection band and the focus
-        // ring are the same either way. What the mode changes is the answer the edit actions
-        // give, and a presenter keeps the answer it was last given until it is asked again -
-        // see connectEditActions.
         invalidateEditActions();
     }
 
@@ -190,6 +186,13 @@ namespace ClaFi::Controls
         return result;
     }
 
+    const EditProps* TextBox::editProps() const
+    {
+        if (isInEditMode())
+            return &m_editProps;
+        return nullptr;
+    }
+
     // The view moves last, once the selection is written - the order nestedKeyDown keeps.
     void TextBox::showFound(std::size_t, const TextRange range)
     {
@@ -218,7 +221,7 @@ namespace ClaFi::Controls
     {
         if (text.plainText().empty() && !m_placeHolderText.empty())
         {
-            const Text shown{ InkWell::textInk(InkGrade::Muted), m_placeHolderText };
+            const Text shown{ InkGrade::Muted, m_placeHolderText };
 #if CLAFI_TEXT_MOVING
             textEngine().drawText(event.controlContext(), textBounds, shown, textAnchor(), nullptr,
                 textRenderMode(), wordWrap(), textFormat());
@@ -227,7 +230,7 @@ namespace ClaFi::Controls
                 wordWrap(), textFormat());
 #endif
         }
-        return WithTextLayout<Label>::drawText(event, textBounds, text);
+        return TextBoxBase::drawText(event, textBounds, text);
     }
 
     // **A flex space is measured at its floor**, in the Calculate phase the engine measures a
@@ -240,7 +243,7 @@ namespace ClaFi::Controls
         const ScaledSize measured = text.hasFlexSpace()
             ? textEngine().calculateText(event.formContext(), text, asked, true, wordWrap(),
                 textFormat())
-            : WithTextLayout<Label>::measureText(event, asked, text);
+            : TextBoxBase::measureText(event, asked, text);
         if (!text.plainText().empty() || m_placeHolderText.empty())
             return measured;
 
@@ -254,7 +257,7 @@ namespace ClaFi::Controls
 
     void TextBox::mouseMove(MouseMoveEvent& event)
     {
-        Label::mouseMove(event);
+        TextBoxBase::mouseMove(event);
 
         // The tooltip is about any link, and the underline only about one a click would follow.
         const std::optional<LinkHit> hit = linkAt(event.posOnForm);
@@ -265,7 +268,7 @@ namespace ClaFi::Controls
 
     void TextBox::hoverLeave()
     {
-        Label::hoverLeave();
+        TextBoxBase::hoverLeave();
         // The tooltip has heard about the pointer leaving from the hover change itself, and
         // telling it again would start a second wait for whatever the pointer went to.
         m_pointedLink = {};
@@ -276,7 +279,7 @@ namespace ClaFi::Controls
     {
         if (!m_pointedLink.range.length)
         {
-            Label::nestedGetTooltip(event);
+            TextBoxBase::nestedGetTooltip(event);
             return;
         }
 
@@ -308,7 +311,7 @@ namespace ClaFi::Controls
         }
         if (!link.has_value())
         {
-            Label::click(event);
+            TextBoxBase::click(event);
             return;
         }
         // The click was the link's, and goes no further up.
@@ -346,7 +349,7 @@ namespace ClaFi::Controls
 
         // The application gets first refusal, and a handler that stops the event has replaced
         // the menu outright.
-        Label::nestedContextPopup(event);
+        TextBoxBase::nestedContextPopup(event);
         if (event.propagationStopped())
             return;
 
@@ -384,6 +387,254 @@ namespace ClaFi::Controls
         // The list is handed over whole. Menu::add leaves out whatever the strip shows.
         menu.addActions(items);
         menu.execute();
+    }
+
+    void TextBox::editModeKeyDown(KeyDownEvent& event)
+    {
+        TextBoxBase::editModeKeyDown(event);
+
+        // The jump history. With nothing to go back or forward to the key is left unhandled, so
+        // it carries on to whatever stands above the box.
+        const bool historyKey = event.modifiers.alt && !event.modifiers.ctrl
+            && !event.modifiers.shift && (event.key == Keys::Left || event.key == Keys::Right);
+        if (historyKey)
+        {
+            const bool back = event.key == Keys::Left;
+            if (back ? !canGoBack() : !canGoForward())
+                return;
+            if (back)
+                goBack();
+            else
+                goForward();
+            event.handled = true;
+            return;
+        }
+
+        ensureCaret();
+
+        // don't know, why I still have that handled member there
+        event.handled = true;
+        bool toLeft = false;
+
+        // The remembered x is what holds a run of vertical presses to one column. Every other key
+        // states a new column, including the ones that turn out to move nothing.
+        const bool verticalKey = event.key == Keys::Up
+            || event.key == Keys::Down
+            || event.key == Keys::Prior
+            || event.key == Keys::Next;
+        if (!verticalKey)
+            m_editProps.targetX.reset();
+
+        // Both keys change the text, which a read-only box does not, so it leaves them unhandled
+        // rather than swallowing them: they carry on to the form's shortcut scopes, where
+        // StdActions::del is bound to Delete and something standing above the box may be what the
+        // key is about. The box claims that action and reports it disabled, so the scope walk
+        // passes it by - see connectEditActions.
+        if (m_readOnly == ReadOnly::Yes && (event.key == Keys::Delete || event.key == Keys::BackSpace))
+        {
+            event.handled = false;
+            return;
+        }
+
+        switch (event.key)
+        {
+
+        case Keys::Delete:
+        {
+            // Shift+Delete is Cut, an action like Ctrl+X - see connectEditActions.
+            if (event.modifiers.shift && !event.modifiers.ctrl)
+            {
+                event.handled = false;
+                return;
+            }
+            // The key is answered here rather than left to the Delete action, which removes
+            // the selection and only that. With nothing selected this key deletes forward, by
+            // a character or by a word, and that is a meaning of its own - the action is what
+            // a menu item and a toolbar button reach, and it lands on applyEdit either way.
+            //
+            // Removing a selection is a step of its own to undo, because the user drew the
+            // boundary it acted on. A run of the bare key is one step.
+            //
+            // The range the key names is a local, and the selection is left alone: undoing
+            // the key puts the caret back where the user had it, and that is where it still
+            // stands rather than around what the key is about to take out.
+            TextRange range = m_editProps.selRange;
+            EditKind kind = EditKind::Replace;
+            if (!range.length)
+            {
+                kind = EditKind::DeletingForward;
+                const std::size_t from = range.start;
+                const std::size_t to = event.modifiers.ctrl
+                    ? textEngine().nextWord(text(), from)
+                    : from + 1;
+                range.length = std::min(to, text().plainText().size()) - from;
+            }
+            // A caret at the end of the text names nothing to remove, and an edit of no
+            // characters would still take a place in the history.
+            if (!range.length)
+                return;
+            applyEdit(range, Text{}, kind);
+            return;
+        }
+
+        case Keys::BackSpace:
+        {
+            TextRange range = m_editProps.selRange;
+            EditKind kind = EditKind::Replace;
+            if (!range.length)
+            {
+                kind = EditKind::DeletingBack;
+                const std::size_t to = range.start;
+                if (!to)
+                    return;
+                const std::size_t from = event.modifiers.ctrl
+                    ? textEngine().prevWord(text(), to)
+                    : to - 1;
+                range = { from, to - from };
+            }
+            if (!range.length)
+                return;
+            applyEdit(range, Text{}, kind);
+            return;
+        }
+
+        // The edit actions are answered as actions rather than here, so that a shortcut and a
+        // menu item carrying the same action reach one implementation - see connectEditActions.
+        // Left unhandled, the key carries on to the form's shortcut scopes, which resolve the
+        // subject back to this control. These labels state that; `default` below would leave
+        // them unhandled anyway.
+        case 'A':
+        case 'C':
+        case 'X':
+        case 'V':
+        case 'Y':
+        case 'Z':
+        case Keys::Insert:
+            event.handled = false;
+            return;
+
+        case Keys::Left:
+        case Keys::Up:
+        case Keys::Prior:
+        case Keys::Home:
+            toLeft = true;
+            [[fallthrough]];
+        case Keys::Right:
+        case Keys::Down:
+        case Keys::Next:
+        case Keys::End:
+            if ((!event.modifiers.shift && !event.modifiers.ctrl) || !m_editProps.selRange.length)
+                m_editProps.caretOnLeft = toLeft;
+            break;
+
+        case Keys::Return:
+            if (followLinkAtCaret(event))
+                return;
+            event.handled = false;
+            break;
+
+        default:
+            event.handled = false;
+        }
+        if (event.handled)
+        {
+            std::size_t otherPos = m_editProps.selRange.end();
+            std::size_t caretPos;
+            if (m_editProps.caretOnLeft)
+                caretPos = m_editProps.selRange.start;
+            else
+            {
+                caretPos = std::min(otherPos, text().plainText().size());
+                otherPos = m_editProps.selRange.start;
+            }
+
+            const FormContext& formContext = this->formContext();
+            const FloatRect textBounds = textBoundsInControl();
+            // A page press names the screenful the view is moved by, which is more than the rect
+            // the caret alone would ask for. Every other key leaves this empty and the caret
+            // answers for itself.
+            std::optional<FloatRect> pageRect;
+
+            switch (event.key)
+            {
+            case Keys::Left:
+                if (event.modifiers.ctrl)
+                    caretPos = textEngine().prevWord(text(), caretPos);
+                else if (caretPos && (event.modifiers.shift || !m_editProps.selRange.length))
+                    --caretPos;
+                m_editProps.affinityTrailing = false;
+                break;
+
+            case Keys::Right:
+                if (event.modifiers.ctrl)
+                    caretPos = textEngine().nextWord(text(), caretPos);
+                else if (event.modifiers.shift || !m_editProps.selRange.length)
+                    ++caretPos;
+                m_editProps.affinityTrailing = false;
+                break;
+
+            case Keys::Home:
+                if (event.modifiers.ctrl)
+                    caretPos = 0;
+                else
+                    caretPos = rowHome({ caretPos, m_editProps.affinityTrailing });
+                m_editProps.affinityTrailing = false; // Home **always** snaps to start of line
+                break;
+
+            case Keys::End:
+                if (event.modifiers.ctrl)
+                    caretPos = text().plainText().size();
+                else
+                    caretPos = syncedLayout(formContext, textBounds).rowEnd(
+                        { caretPos, m_editProps.affinityTrailing });
+                m_editProps.affinityTrailing = true; // End **always** snaps to end of line
+                break;
+
+            case Keys::Up:
+            case Keys::Down:
+            {
+                rememberTargetX(textBounds, caretPos);
+                const ScrollDirection dir = event.key == Keys::Up
+                    ? ScrollDirection::ToBegin
+                    : ScrollDirection::ToEnd;
+                const CaretHit hit = posOnNextRow(textBounds,
+                    { caretPos, m_editProps.affinityTrailing }, dir);
+
+                caretPos = hit.pos;
+                m_editProps.affinityTrailing = hit.trailing;
+                break;
+            }
+
+            case Keys::Prior:
+            case Keys::Next:
+            {
+                rememberTargetX(textBounds, caretPos);
+                const ScrollDirection dir = event.key == Keys::Prior
+                    ? ScrollDirection::ToBegin
+                    : ScrollDirection::ToEnd;
+                const PageMove move = posOnNextPage(textBounds,
+                    { caretPos, m_editProps.affinityTrailing }, dir);
+
+                caretPos = move.hit.pos;
+                m_editProps.affinityTrailing = move.hit.trailing;
+                pageRect = move.page;
+                break;
+            }
+            }
+
+            caretPos = std::min(caretPos, text().plainText().size());
+            if (!event.modifiers.shift)
+                otherPos = caretPos;
+
+            setSelection(otherPos, caretPos);
+
+            // Everything read out of the layout has been written back, so the view may move now.
+            // A scroll changes where the caret sits on the form, and nothing below reads it.
+            if (pageRect.has_value())
+                scrollIntoView(pageRect.value());
+            else
+                scrollIntoView();
+        }
     }
 
     void TextBox::connectEditActions()

@@ -820,7 +820,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Traversal.cppm">
       <Filter>Y_Core\Foundation</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\WithTextLayout.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Foundation-WithTextLayout.cppm">
       <Filter>Y_Core\Foundation</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Cpu_Backend.cpp">
@@ -1286,6 +1286,12 @@
       <Filter>Controls\Containers</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackPanelBase.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\WithEditMode.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\WithTextLayout.cppm">
       <Filter>Controls\Y-Base</Filter>
     </ClCompile>
   </ItemGroup>

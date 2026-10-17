@@ -16,7 +16,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    /// A control that shapes its own text in place, for a text that changes. See Control-Foundation
+    /// A control that shapes its own text in place, for a text that changes
     export template <IsControl HostClass>
     class WithTextLayout : public HostClass
     {
@@ -28,8 +28,6 @@ namespace ClaFi
         [[nodiscard]] CellFallback cellFallback() const { return m_cellFallback; }
         void setCellFallback(CellFallback);
     protected:
-        /// The two seams a control holding a layout of its own overrides. They are a pair:
-        /// override one and the control measures on one layout and draws on another.
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
         ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
 
