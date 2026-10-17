@@ -898,6 +898,9 @@ namespace ClaFi
         // just been shown, or one whose host has just grown, still measures as it did before, so
         // asking now would scroll to a rect that no longer applies.
         void scrollIntoViewOnAlign();
+        // Opens every holder between this control and the host that hides it, as a search shows
+        // a match; answers whether one was opened. See Control-Foundation
+        bool reveal(const Control& host);
         //
         // data driven states
         //

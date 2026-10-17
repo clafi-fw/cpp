@@ -13,8 +13,10 @@ namespace ClaFi::Browser::ConfigNames
     export constexpr std::wstring_view id{ L"Id" };
     export constexpr std::wstring_view path{ L"Path" };
     export constexpr std::wstring_view title{ L"Title" };
-    export constexpr std::wstring_view backUrls{ L"Back" };
-    export constexpr std::wstring_view forwardUrls{ L"Forward" };
+    export constexpr std::wstring_view scroll{ L"Scroll" };
+    export constexpr std::wstring_view url{ L"Url" };
+    export constexpr std::wstring_view backVisits{ L"BackVisits" };
+    export constexpr std::wstring_view forwardVisits{ L"ForwardVisits" };
 
     export constexpr std::wstring_view untitledPage{ L"Untitled" };
 

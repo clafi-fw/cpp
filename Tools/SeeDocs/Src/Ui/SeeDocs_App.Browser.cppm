@@ -113,6 +113,7 @@ namespace SeeDocs_App
         explicit SurfacePage(const CreateParams&, Args&&...);
     public:
         [[nodiscard]] PageView& view() const { return m_view; }
+        float scrollPosition() const override { return m_view.scrollPosition(); }
     protected:
         std::wstring pathToOpen() override;
     private:
@@ -124,8 +125,9 @@ namespace SeeDocs_App
         void runCommand(std::wstring_view target);   // hands a command's click to the browser
         void orderRows(std::span<const std::wstring> targets);   // hands a carry to the browser
         void openSource(const SourcePlace&);   // hands a source button's click to the browser
-        // Shows the anchor the tab arrived at, and tells the browser where the page opens.
-        void arrive(const Url&);
+        // Shows the anchor the tab arrived at, the page at the scroll where one is given, and
+        // tells the browser where the page opens.
+        void arrive(const Url&, std::optional<float> scroll);
     private:
         PageView& m_view;
     };
@@ -497,8 +499,11 @@ namespace SeeDocs_App
         m_view.onPageSource([this](PageSourceEvent& event) {
             openSource(event.source);
         });
+        m_view.onPageAnchor([this](PageAnchorEvent& event) {
+            setAnchor(event.anchor);
+        });
         onShowAnchor([this](ShowAnchorEvent& event) {
-            arrive(event.url);
+            arrive(event.url, event.scroll);
         });
     }
 

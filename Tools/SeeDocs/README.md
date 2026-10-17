@@ -513,6 +513,18 @@ of text is walked past like a row until Return or a click opens it for the caret
 move the caret, Return follows the link it stands in - and Escape closes it again. A hint box
 typed into writes its words on Return and on leaving, and Escape puts the words back. A section
 or a tree's node shut over the selected row selects its header.
+**Every item of a page has an anchor**, which the tab's url names it by after the `#`: a row by
+its name - a member's, a method's, a type's, a folder's, a module's, a project's, a fact's label -
+a section's header or a group's by its heading, a tree's row by its type, a footnote by its mark's
+anchor, the lead by `lead`, and a declaration box on a method's page by its access label. A name
+standing twice on one page is spelled apart: a member inherited from a base whose name the page has
+already goes by `Base::name`, as `RichControl::Padding` under From RichControl, and any other
+repeat is numbered, `Padding.2`. Selecting an item puts its anchor into the tab's url - a move on
+the page, which the history does not step over - so the url a link leaves from names the row it was
+followed from. Back, Forward and a tab restored at the next start select that item again, the
+section or group holding it opened, and put the page back where it was scrolled; a page built again
+in place, after a rescan or an edit, keeps its scroll too. A link to a member with no page of its
+own arrives at the member's row with the row scrolled into view, as every first arrival does.
 A row of the derived types opens the type it names; a method's page picks the method's type in the
 tree. A page's trees start closed, and a node's rows are built the first time it opens.
 The pages are built by

@@ -15,11 +15,14 @@ import ClaFi.Controls.Expander;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Menu;
 import ClaFi.Controls.Panel;
+import ClaFi.Controls.ScrollBar;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 import ClaFi.Controls.Tree;
 import ClaFi.Controls.Base.ExpanderBase;
+import ClaFi.Controls.Base.SliderBase;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.Base.WithEditMode;
 
 import ClaFi.Core.AppTheme_Colors;
@@ -30,6 +33,7 @@ import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
+import ClaFi.Core.System.Scaler;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 
@@ -284,6 +288,32 @@ namespace SeeDocs_App
                 return iconOf(*row.pageKind, nullptr);
             return std::nullopt;
         }
+
+        // The runs' words as one, which anchors an item that has no name of its own.
+        [[nodiscard]] std::wstring wordsOf(const Runs& runs)
+        {
+            std::wstring result;
+            for (const Run& run : runs)
+                result.append(run.text);
+            return result;
+        }
+
+        // The name a row is anchored by: its own, else its first cell's words.
+        [[nodiscard]] std::wstring anchorNameOf(const TableRow& row)
+        {
+            if (!row.anchor.empty())
+                return row.anchor;
+            return row.cells.empty() ? std::wstring{} : wordsOf(row.cells.front());
+        }
+
+        // An access label as an anchor is the word without its colon.
+        [[nodiscard]] std::wstring labelNameOf(const Runs& heading)
+        {
+            std::wstring result = wordsOf(heading);
+            if (result.ends_with(L':'))
+                result.pop_back();
+            return result;
+        }
     }
 
     bool shownWithin(const Control& control, const Control& host)
@@ -329,6 +359,15 @@ namespace SeeDocs_App
         :
         ::ClaFi::Event{},
         source{ sourcePlace }
+    {
+    }
+
+    // PageAnchorEvent
+
+    PageAnchorEvent::PageAnchorEvent(std::wstring itemAnchor)
+        :
+        ::ClaFi::Event{},
+        anchor{ std::move(itemAnchor) }
     {
     }
 
@@ -451,8 +490,12 @@ namespace SeeDocs_App
     }
 
     // The footnote the anchor names stands in one of the slots; each is asked until one has it.
-    Control& PageView::showAnchor(const std::wstring_view anchor)
+    // The scroll waits for the layout: a page just built has no height to be scrolled through,
+    // and a row selected as the page is built would be scrolled to by the pass otherwise.
+    Control& PageView::showAnchor(const std::wstring_view anchor,
+        const std::optional<float> scroll)
     {
+        m_pendingScroll = scroll;
         if (anchor.empty())
             return *this;
         for (const PageFootnote& footnote : m_footnotes)
@@ -461,15 +504,29 @@ namespace SeeDocs_App
             if (shown.goToAnchor(anchor))
                 return shown;
         }
-        const RowAnchors::const_iterator found = m_rowAnchors.find(anchor);
-        if (found == m_rowAnchors.end())
+        const Anchors::const_iterator found = m_anchors.find(anchor);
+        if (found == m_anchors.end())
             return *this;
-        const RowAnchor& named = found->second;
-        named.expander->header().setExpanded(true);
-        named.grid->selectCell(*named.row, named.grid->findColumnByTag(Tag{ 0 }));
-        named.row->scrollIntoViewOnAlign();
-        m_anchoredRow = named.row;
-        return *named.row;
+        const Anchored& named = found->second;
+        Control& item = *named.control;
+        item.reveal(m_pageBox.body());
+        if (named.grid)
+        {
+            named.grid->selectCell(*named.row, named.grid->findColumnByTag(Tag{ 0 }));
+            m_anchoredRow = named.row;
+        }
+        else
+        {
+            m_pageBox.body().setCurrentItem(item);
+        }
+        if (!scroll.has_value())
+            item.scrollIntoViewOnAlign();
+        return item;
+    }
+
+    float PageView::scrollPosition() const
+    {
+        return scaler().unScale(m_pageBox.vScrollBar().positionTarget());
     }
 
     // A match whose section was shut since stands hidden, and is passed over.
@@ -523,9 +580,11 @@ namespace SeeDocs_App
         m_parts.clear();
         m_renders.clear();
         m_footnotes.clear();
-        m_rowAnchors.clear();
+        m_anchors.clear();
+        m_anchorsOf.clear();
         m_firstRow = nullptr;
         m_anchoredRow = nullptr;
+        m_pendingScroll.reset();
         m_newFootnotes.clear();
         m_footnoteCount = 0;
         m_pending = {};
@@ -551,6 +610,7 @@ namespace SeeDocs_App
         connectLinks(box);
         connectHintBox(box, m_page.leadSite);
         m_parts.push_back(&box);
+        anchorItem(std::wstring{ k_leadAnchor }, {}, box);
         m_renders.push_back([this, &box]() {
             box.showWords(hintWords(m_page.lead));
         });
@@ -604,6 +664,7 @@ namespace SeeDocs_App
             Grids::Row& row = *made;
             if (!m_firstRow)
                 m_firstRow = &row;
+            anchorRow(fact.label, {}, grid, row);
             if (opens)
             {
                 row.onCellContent([hasButton](Grids::CellContentEvent& event) {
@@ -638,6 +699,7 @@ namespace SeeDocs_App
         );
         connectLinks(box);
         m_parts.push_back(&box);
+        anchorItem(std::wstring{ k_linksAnchor }, {}, box);
         m_renders.push_back([this, &box]() {
             box.text() = textOf(m_page.links);
         });
@@ -661,6 +723,7 @@ namespace SeeDocs_App
         if (!section.tooltip.empty())
             expander.header().tooltipText() << section.tooltip;
         m_parts.push_back(&expander);
+        anchorItem(wordsOf(section.heading), {}, expander.header());
         return expander;
     }
 
@@ -671,7 +734,9 @@ namespace SeeDocs_App
             Padding{ 0.0f },
             Spacing{ 0.0f }
         );
-        addFootnoteSlot(body, { .excerpt = &section.excerpt }, Padding{ k_prosePadding });
+        FootnoteSlot& slot = addFootnoteSlot(body, { .excerpt = &section.excerpt },
+            Padding{ k_prosePadding });
+        anchorItem(wordsOf(section.heading), {}, slot.shown());
     }
 
     void PageView::addTree(Expander& expander, const Branches& branches, const bool nodesOpen)
@@ -800,7 +865,7 @@ namespace SeeDocs_App
 
         PageFootnotes footnotes;
         for (const TableGroup& group : table.groups)
-            addTableRows(expander, grid, table, group, notes, hintColumn, commandColumn, footnotes);
+            addTableRows(grid, table, group, {}, notes, hintColumn, commandColumn, footnotes);
         const Padding footnotePadding{ k_prosePadding, k_footnotePadding };
         for (PageFootnote& footnote : footnotes)
             addFootnoteSlot(notes, std::move(footnote), footnotePadding);
@@ -818,6 +883,10 @@ namespace SeeDocs_App
             Spacing{ k_signatureGap }
         );
         const bool labelled = !section.heading.empty();
+        // Every box of the block is anchored by the label, numbered down the block.
+        const std::wstring name = labelled
+            ? labelNameOf(section.heading)
+            : std::wstring{ k_signatureAnchor };
         if (labelled)
         {
             TextBox& label = block.add<TextBox>(
@@ -825,6 +894,7 @@ namespace SeeDocs_App
                 EditModeSwitching::Yes,
                 Padding{ 0.0f }
             );
+            anchorItem(name, {}, label);
             m_renders.push_back([&label, &section]() {
                 Text text;
                 writeSignature(text, section.heading, false, SourceLanguage::Cpp);
@@ -842,6 +912,7 @@ namespace SeeDocs_App
             );
             TextBox& code = entry.add<TextBox>(ReadOnly::Yes, EditModeSwitching::Yes, indent);
             connectLinks(code);
+            anchorItem(name, {}, code);
             m_renders.push_back([&code, &signature]() {
                 Text text;
                 writeSignature(text, signature.code, true, signature.language);
@@ -852,13 +923,16 @@ namespace SeeDocs_App
                 HintBox& lead = entry.add<HintBox>(ReadOnly::Yes, noHintText(), indent);
                 connectLinks(lead);
                 connectHintBox(lead, signature.site);
+                anchorItem(name, {}, lead);
                 m_renders.push_back([&lead, &signature]() {
                     lead.showWords(hintWords(signature.lead));
                 });
             }
             if (signature.excerpt.has_value())
             {
-                addFootnoteSlot(entry, { .excerpt = &*signature.excerpt }, indent);
+                FootnoteSlot& slot = addFootnoteSlot(entry, { .excerpt = &*signature.excerpt },
+                    indent);
+                anchorItem(name, {}, slot.shown());
             }
         }
         m_parts.push_back(&block);
@@ -880,12 +954,13 @@ namespace SeeDocs_App
     // a held expander row of the label, where its links are followed as a cell's are; the groups
     // it holds follow its rows inside it, each under a label of its own. A row with a command is
     // one that holds a control, its button, in the column at the end.
-    void PageView::addTableRows(Expander& expander, Grids::GridBase& grid, const Table& table,
-        const TableGroup& group, StackPanel& notes, const TagValue hintColumn,
-        Grids::Column* commandColumn, PageFootnotes& footnotes)
+    void PageView::addTableRows(Grids::GridBase& grid, const Table& table,
+        const TableGroup& group, const std::wstring_view owner, StackPanel& notes,
+        const TagValue hintColumn, Grids::Column* commandColumn, PageFootnotes& footnotes)
     {
         const bool beside = group.placement == LabelPlacement::Beside
             && !table.groupColumn.empty();
+        const std::wstring_view rowsOwner = group.owner.empty() ? owner : group.owner;
         Grids::GridBase* target = &grid;
         if (!group.label.empty() && beside)
         {
@@ -925,6 +1000,7 @@ namespace SeeDocs_App
             connectLinks(header);
             if (group.folded)
                 header.setExpanded(false);
+            anchorItem(wordsOf(group.label), {}, header);
             target = &groupExpander.body();
         }
         for (const TableRow& row : group.rows)
@@ -952,8 +1028,7 @@ namespace SeeDocs_App
                 gridRow.setTag(Tag{ &row });
             if (!m_firstRow)
                 m_firstRow = &gridRow;
-            if (!row.anchor.empty())
-                m_rowAnchors.try_emplace(row.anchor, RowAnchor{ &expander, target, &gridRow });
+            anchorRow(anchorNameOf(row), rowsOwner, *target, gridRow);
             if (!row.tooltip.empty())
             {
                 gridRow.onGetCellTooltip([&row](Grids::GetCellTooltipEvent& event) {
@@ -1034,9 +1109,73 @@ namespace SeeDocs_App
         }
         for (const TableGroup& nested : group.groups)
         {
-            addTableRows(expander, *target, table, nested, notes, hintColumn, commandColumn,
+            addTableRows(*target, table, nested, rowsOwner, notes, hintColumn, commandColumn,
                 footnotes);
         }
+    }
+
+    // Every anchor is spelled apart from the others on the page, so a url names one item. A
+    // footnote's anchor is the one its mark links to, and a footnote is made after the rows of
+    // its table, so no row takes it.
+    void PageView::anchorItem(std::wstring name, const std::wstring_view owner, Control& item)
+    {
+        anchorAs(std::move(name), owner, { .control = &item, .grid = nullptr, .row = nullptr });
+    }
+
+    void PageView::anchorRow(std::wstring name, const std::wstring_view owner,
+        Grids::GridBase& grid, Grids::Row& row)
+    {
+        anchorAs(std::move(name), owner, { .control = &row, .grid = &grid, .row = &row });
+    }
+
+    void PageView::anchorAs(std::wstring name, const std::wstring_view owner, const Anchored item)
+    {
+        if (name.empty())
+            return;
+        const std::wstring anchor = freeAnchor(std::move(name), owner);
+        m_anchorsOf.insert_or_assign(item.control, anchor);
+        m_anchors.insert_or_assign(anchor, item);
+    }
+
+    std::wstring PageView::freeAnchor(std::wstring name, const std::wstring_view owner) const
+    {
+        if (!m_anchors.contains(name))
+            return name;
+        if (!owner.empty())
+        {
+            std::wstring owned{ owner };
+            owned.append(k_ownerJoin);
+            owned.append(name);
+            if (!m_anchors.contains(owned))
+                return owned;
+        }
+        for (std::size_t ordinal = 2;; ++ordinal)
+        {
+            std::wstring numbered = name;
+            numbered.push_back(k_ordinalMark);
+            numbered.append(std::to_wstring(ordinal));
+            if (!m_anchors.contains(numbered))
+                return numbered;
+        }
+    }
+
+    // The item is the selected control or stands over it: a button in a row's command column
+    // is the row's. Nothing selected, or an item nothing anchors, is the empty anchor.
+    void PageView::reportAnchor()
+    {
+        std::wstring anchor;
+        const StackPanel& host = m_pageBox.body();
+        for (const Control* item = host.currentItem(); item && item != &host;
+            item = item->parent())
+        {
+            const AnchorsOf::const_iterator found = m_anchorsOf.find(item);
+            if (found == m_anchorsOf.end())
+                continue;
+            anchor = found->second;
+            break;
+        }
+        PageAnchorEvent event{ std::move(anchor) };
+        emitEvent(event);
     }
 
     void PageView::reportOrder(Grids::Grid& grid)
@@ -1178,9 +1317,12 @@ namespace SeeDocs_App
         FootnoteSlot& slot = holder.add<FootnoteSlot>(padding);
         footnote.slot = &slot;
         const std::size_t index = m_footnotes.size();
+        const std::wstring anchor = footnote.anchor;
         m_footnotes.push_back(std::move(footnote));
         TextBox& shown = slot.shown();
         connectLinks(shown);
+        if (!anchor.empty())
+            anchorItem(anchor, {}, shown);
         shown.onGetActionState([this](GetActionStateEvent& event) {
             if (&event.action == &Actions::editFootnote)
                 event.claim({ .enabled = m_writer != nullptr });

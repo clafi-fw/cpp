@@ -22,14 +22,22 @@ namespace ClaFi::Browser
     {
         Value{ ConfigNames::id, L"" },
         Value{ ConfigNames::title, ConfigNames::untitledPage },
-        Value{ ConfigNames::path, L"" }
+        Value{ ConfigNames::path, L"" },
+        Value{ ConfigNames::scroll, 0.0f }
+    };
+
+    // One visit of a tab's history: the url, and how far its page stood scrolled.
+    export const Section k_visitSchema
+    {
+        Value{ ConfigNames::url, L"" },
+        Value{ ConfigNames::scroll, 0.0f }
     };
 
     // What the browser keeps in a tab's own file; the application's tab schema is added to it.
     export const Section k_tabFileSchema
     {
-        Sequence{ ConfigNames::backUrls, std::wstring{} },
-        Sequence{ ConfigNames::forwardUrls, std::wstring{} }
+        Sequence{ ConfigNames::backVisits, k_visitSchema },
+        Sequence{ ConfigNames::forwardVisits, k_visitSchema }
     };
 
     // The browser's part of the application config - the selected tab and an entry per open tab.
@@ -37,6 +45,7 @@ namespace ClaFi::Browser
     Section createBrowserSettingsSchema(TTabEntrySchema&& tabEntrySchema);
 
     export using TabEntries = Dom::Sequence<Dom::Section>;
+    export using VisitEntries = Dom::Sequence<Dom::Section>;
 
     // The tab entries in the application config, and a file per shown page. See Browser
     export class BrowserSettings

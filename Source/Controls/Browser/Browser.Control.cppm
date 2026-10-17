@@ -62,14 +62,22 @@ namespace ClaFi::Browser
         Yes
     };
 
+    // One step of a tab's history: the url, and how far its page stood scrolled as the tab left
+    // it. See Browser
+    export struct Visit
+    {
+        Url url{};
+        float scroll{ 0.0f };   // the page's scrollPosition()
+    };
+
     // One tab of the browser, standing for a page it can return to.
     export class BrowserTab : public Tab
     {
         // The browser is what makes a tab and what shows a page on one, so it is what sets
-        // m_anchor and the history, and sets and spends m_onRestoredPage.
+        // m_anchor, m_scroll and the history, and sets and spends m_onRestoredPage.
         friend BrowserControl;
     public:
-        using Urls = std::vector<Url>;
+        using Visits = std::vector<Visit>;
     public:
         explicit BrowserTab(const CreateParams&);
     public:
@@ -80,10 +88,11 @@ namespace ClaFi::Browser
         PageData* pageData() const { return m_pageData; }
         [[nodiscard]] const std::wstring& anchor() const { return m_anchor; } // empty for none
         [[nodiscard]] Url url() const; // the page's path with this tab's anchor
-        [[nodiscard]] const Urls& backUrls() const { return m_backUrls; } // nearest last
-        [[nodiscard]] const Urls& forwardUrls() const { return m_forwardUrls; } // nearest first
-        // The url this many steps through the history, back for a negative count, or nothing.
-        [[nodiscard]] const Url* historyUrl(std::ptrdiff_t offset) const;
+        [[nodiscard]] const Visits& backVisits() const { return m_backVisits; } // nearest last
+        // Nearest first.
+        [[nodiscard]] const Visits& forwardVisits() const { return m_forwardVisits; }
+        // The visit this many steps through the history, back for a negative count, or nothing.
+        [[nodiscard]] const Visit* historyVisit(std::ptrdiff_t offset) const;
         void setPageData(PageData*);
         // Asks the browser what this tab's icon is now and opens or closes the icon slot to match.
         // setPageData does this on its own; a browser calls it again when the answer changes
@@ -107,10 +116,13 @@ namespace ClaFi::Browser
         void paintIcon(PaintIconEvent&) override;
         void secondaryClicked(NestedClickEvent&) override;
     private:
-        // Keeps the url this tab has just moved from, the way the move asked.
-        void recordLeft(const Url& left, HistoryEntry);
-        // Moves the stacks past a travel of this many steps from the url this tab has just left.
-        void recordTravel(const Url& left, std::ptrdiff_t offset);
+        // Keeps the visit this tab has just moved from, the way the move asked.
+        void recordLeft(const Visit& left, HistoryEntry);
+        // Moves the stacks past a travel of this many steps from the visit this tab has just left.
+        void recordTravel(const Visit& left, std::ptrdiff_t offset);
+        // Drops the nearest entry of either stack naming the url on screen - a step that would go
+        // nowhere. Answers whether one went.
+        bool dropStepsToHere();
         void trimHistory(); // drops the oldest entries past k_historyDepth
         // Points every entry at or under a renamed page to its new path. Answers whether one moved.
         bool renameInHistory(std::wstring_view oldPath, std::wstring_view newPath);
@@ -120,8 +132,11 @@ namespace ClaFi::Browser
         std::wstring m_id{};
         PageData* m_pageData{};
         std::wstring m_anchor{};
-        Urls m_backUrls{};
-        Urls m_forwardUrls{};
+        // The page's scroll as last known - restored with the tab, or read off a page as it went -
+        // standing for the page while none is built; none on a first arrival.
+        std::optional<float> m_scroll{};
+        Visits m_backVisits{};
+        Visits m_forwardVisits{};
         bool m_historyRead{ false }; // the stacks hold what the tab's file had
         // False for a tab the user opened, which is every tab but the ones a run starts with.
         bool m_onRestoredPage{ false };
@@ -143,12 +158,16 @@ namespace ClaFi::Browser
         );
     };
 
-    // A tab has arrived at a url on this page, which shows the anchor it names. See Browser
+    // A tab has arrived at a url on this page, which shows the anchor it names and stands at the
+    // scroll it carries. See Browser
     export class ShowAnchorEvent : public Event
     {
     public:
-        explicit ShowAnchorEvent(const Url& url) : url{ url } {}
+        ShowAnchorEvent(const Url& url, std::optional<float> scroll);
         const Url& url;
+        // How far the page stood scrolled when the tab last left this visit; none on a first
+        // arrival, which shows the anchor instead.
+        const std::optional<float> scroll;
     };
 
     // One page of the browser: what it shows, and the crumbs that lead to it.
@@ -168,6 +187,12 @@ namespace ClaFi::Browser
         std::wstring_view tabId() const { return m_tab.id(); }
         const PageData& pageData() const { return m_pageData; }
         void setPath(std::wstring_view) const;
+        // The page's selection moved to what this anchor names: the tab's url names it from now
+        // on. Nothing travels and nothing is recorded. See Browser
+        void setAnchor(std::wstring_view anchor) const;
+        // How far the page stands scrolled, unscaled, which the browser keeps with the page's url
+        // and hands back on arrival. A page that scrolls answers it. See Browser
+        [[nodiscard]] virtual float scrollPosition() const { return 0.0f; }
         // What the user has picked inside this page, as the path a browser would open. Empty
         // where nothing is picked, which is what leaves Open and Open in new tab disabled.
         //
@@ -191,6 +216,7 @@ namespace ClaFi::Browser
     public:
         template<typename... Args>
         explicit BrowserControl(const CreateParams&, Args&&...);
+        ~BrowserControl() override;   // stores every tab's entry while its page still stands
     public:
         void initialize(BrowserSettings&);
         DialogTitle& title() const { return m_title; }
@@ -205,7 +231,7 @@ namespace ClaFi::Browser
         // behind the one shown, whose page stays on screen.
         void addTab(PageData&, std::wstring_view anchor = {}, SelectTab = SelectTab::Yes);
         void addTab(const Url&, SelectTab = SelectTab::Yes);
-        BrowserTab* restoreTab(std::wstring_view id, const Url&);
+        BrowserTab* restoreTab(std::wstring_view id, const Visit&);
         void goUp();
         void goTo(std::wstring_view path, std::wstring_view subPath);
         void goTo(const Url&, HistoryEntry = HistoryEntry::Push);
@@ -269,6 +295,9 @@ namespace ClaFi::Browser
         void deleteTabSettings(BrowserTab&);
         // Closes every tab, frees every page under home and opens one tab on home. See Browser
         void resetToHome();
+        // Builds the tab's page again at the url and the scroll it stands at; nothing is recorded.
+        // A tab not selected gets its page as it is selected. See Browser
+        void rebuildPage(BrowserTab&);
         // Gives a page itself a new name - what it stands for is renamePage's business - and puts
         // the tree right: every tab and history entry at or under it follows to the new path.
         void renamePageData(PageData&, std::wstring_view newName);
@@ -348,7 +377,16 @@ namespace ClaFi::Browser
         // and otherwise what every page with work of its own answers. See Browser#browsercontrol
         [[nodiscard]] bool canCloseWindow();
         // Moves a tab to a url and answers what came of it. The history is the caller's to keep.
-        TabMove moveTab(BrowserTab&, PageData&, std::wstring_view anchor, Control& initiator);
+        // The scroll is where the page stood when this visit was left, none for a first arrival.
+        TabMove moveTab(BrowserTab&, PageData&, std::wstring_view anchor, Control& initiator,
+            std::optional<float> scroll);
+        // The tab's url with its page's scroll - what the history keeps of where the tab stands.
+        [[nodiscard]] Visit visitOf(const BrowserTab&) const;
+        // The page's scroll where one stands, else the tab's as last known, else the top.
+        [[nodiscard]] float pageScroll(const BrowserTab&) const;
+        // Gives the tab's url this anchor, for the page the tab shows: one going down with its
+        // tab already off it speaks for nothing.
+        void setTabAnchor(BrowserTab&, const BrowserPage&, std::wstring_view anchor);
         // Moves the current tab this many steps through its history, back for a negative count.
         void travel(std::ptrdiff_t offset, Control& initiator);
         // Travels once the press that asked for it has unwound, for the reason goToLater waits.
@@ -364,8 +402,8 @@ namespace ClaFi::Browser
         // Whether a page **is** the one named or stands under it - which is every page whose path a
         // rename of that page has just changed.
         [[nodiscard]] static bool isPageUnder(const PageData&, const PageData& ancestor);
-        void selectPage(BrowserTab*, bool urlChanged);
-        void showAnchor(BrowserTab&); // raises ShowAnchorEvent on the tab's page
+        void selectPage(BrowserTab*, bool urlChanged, std::optional<float> scroll);
+        void showAnchor(BrowserTab&, std::optional<float> scroll); // ShowAnchorEvent on the page
         void handleTabSelect();
         void closeTab(BrowserTab&); // closes the window instead when it is the only tab
         void tabClosing(BrowserTab&);

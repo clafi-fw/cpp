@@ -261,9 +261,9 @@ namespace SeeDocs_App
         browser().openSource(pageData(), source);
     }
 
-    void SurfacePage::arrive(const Url& url)
+    void SurfacePage::arrive(const Url& url, const std::optional<float> scroll)
     {
-        const Control& opening = m_view.showAnchor(url.anchor());
+        const Control& opening = m_view.showAnchor(url.anchor(), scroll);
         browser().pageArrived(*this, opening);
     }
 
@@ -786,10 +786,11 @@ namespace SeeDocs_App
         data.title = titleOf(data, target);
 
         BrowserPage* page = static_cast<BrowserPage*>(tab.page());
+        // The tab is taken off the page before the page goes, as the browser takes it.
         if (page && &page->pageData() != &data)
         {
-            page->deleteSelf();
             tab.setPage(nullptr);
+            page->deleteSelf();
             page = nullptr;
         }
         if (!page)
@@ -1395,26 +1396,20 @@ namespace SeeDocs_App
         return project && target.project == project;
     }
 
-    // The selected tab is sent to the url it stands on, which builds its page again where it
-    // went; any other tab's page is built when the tab is selected.
+    // The selected tab's page is built again where it stands; any other tab's page is built
+    // when the tab is selected.
     //
     // **A page a project reaches was built since the project was added** - adding one drops every
     // page on its paths - so the target a standing page resolves to says which kind of page it is.
     void SurfaceBrowser::rebuildPages(const ShownProject* project, const BrowserPage* keep)
     {
-        BrowserTab* selected = nullptr;
         for (BrowserTab& tab : tabs())
         {
-            if (tab.selected())
-                selected = &tab;
             const BrowserPage* page = static_cast<const BrowserPage*>(tab.page());
             if (!page || page == keep || !reaches(resolve(page->pageData()), project))
                 continue;
-            tab.page()->deleteSelf();
-            tab.setPage(nullptr);
+            rebuildPage(tab);
         }
-        if (selected && selected->pageData())
-            goTo(*selected->pageData(), selected->anchor(), *selected);
     }
 
     // **The edit that asked stands on the selected tab's page**, so that page takes the new words
@@ -1435,8 +1430,7 @@ namespace SeeDocs_App
                 continue;
             if (!tab.selected())
             {
-                standing->deleteSelf();
-                tab.setPage(nullptr);
+                rebuildPage(tab);
                 continue;
             }
             if (target.projectOptions)
@@ -1464,12 +1458,7 @@ namespace SeeDocs_App
         }
         if (!tab || !tab->pageData())
             return;
-        if (tab->page())
-        {
-            tab->page()->deleteSelf();
-            tab->setPage(nullptr);
-        }
-        goTo(*tab->pageData(), tab->anchor(), *tab);
+        rebuildPage(*tab);
         if (!show || !tab->page() || resolve(*tab->pageData()).projectOptions)
             return;
         const SurfacePage& page = static_cast<const SurfacePage&>(*tab->page());

@@ -126,6 +126,13 @@ control answers no, and the question goes on up.
 that was current up to the first one still holding the new item hears it, the item itself first. A
 grid standing in a container drops its selected cell on it - see Grid.
 
+## Control reveal
+
+**Opened from the host down**, so an outer body is opened ahead of one inside it. A holder says
+through childSearch which of its children it hides and shows on request - an expander's body, a
+grid section's rows - and opens one through revealChild. The control itself and the host are left
+as they are. A search reveals a match this way; a page reveals a row a url names.
+
 ## LayoutPass
 
 The form owns it, and a control reaches it through its AlignEvent.

@@ -95,8 +95,6 @@ namespace ClaFi
         // The text among the found ones a step lands in, and the place in it.
         [[nodiscard]] CurrentMatch targetOf(FindTarget) const;
         bool makeCurrent(CurrentMatch);   // and shows it
-        // Opens what hides the control below the container; true where anything was opened.
-        bool reveal(Control&);
     private:
         const Searcher* m_searcher;
         Control* m_container;   // null once it is gone

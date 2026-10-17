@@ -65,34 +65,41 @@ namespace ClaFi::Browser
             PageData*& m_fetchingPage;
         };
 
-        using UrlSpellings = std::vector<std::wstring>;
-
-        [[nodiscard]] BrowserTab::Urls urlsIn(const Dom::Section& tabEntry,
+        [[nodiscard]] BrowserTab::Visits visitsIn(const Dom::Section& tabConfig,
             const std::wstring_view key)
         {
-            BrowserTab::Urls result{};
-            for (const std::wstring& spelling : (tabEntry / key).get<UrlSpellings>())
-                result.push_back(Url::parse(spelling));
+            BrowserTab::Visits result{};
+            for (const Dom::Section& entry : (tabConfig / key).as<VisitEntries>())
+            {
+                result.push_back({
+                    .url = Url::parse((entry / ConfigNames::url).get<std::wstring>()),
+                    .scroll = (entry / ConfigNames::scroll).get<float>()
+                });
+            }
             return result;
         }
 
-        void storeUrls(Dom::Section& tabEntry, const std::wstring_view key,
-            const BrowserTab::Urls& urls)
+        void storeVisits(Dom::Section& tabConfig, const std::wstring_view key,
+            const BrowserTab::Visits& visits)
         {
-            UrlSpellings spellings{};
-            spellings.reserve(urls.size());
-            for (const Url& url : urls)
-                spellings.push_back(url.str());
-            (tabEntry / key).set(spellings);
+            VisitEntries& entries = (tabConfig / key).as<VisitEntries>();
+            entries.clear();
+            for (const Visit& visit : visits)
+            {
+                Dom::Section& entry = entries.add();
+                (entry / ConfigNames::url).set(visit.url.str());
+                (entry / ConfigNames::scroll).set(visit.scroll);
+            }
         }
 
-        // Points each url at or under oldPath to newPath, and answers whether one moved.
-        [[nodiscard]] bool renameUnder(BrowserTab::Urls& urls, const std::wstring_view oldPath,
-            const std::wstring_view newPath)
+        // Points each visit at or under oldPath to newPath, and answers whether one moved.
+        [[nodiscard]] bool renameUnder(BrowserTab::Visits& visits,
+            const std::wstring_view oldPath, const std::wstring_view newPath)
         {
             bool renamed = false;
-            for (Url& url : urls)
+            for (Visit& visit : visits)
             {
+                Url& url = visit.url;
                 const std::wstring& path = url.path();
                 const bool under = path.starts_with(oldPath)
                     && (path.size() == oldPath.size()
@@ -153,15 +160,19 @@ namespace ClaFi::Browser
         return Url{ m_pageData->path(), m_anchor };
     }
 
-    const Url* BrowserTab::historyUrl(const std::ptrdiff_t offset) const
+    const Visit* BrowserTab::historyVisit(const std::ptrdiff_t offset) const
     {
         if (offset < 0)
         {
             const std::size_t steps = static_cast<std::size_t>(-offset);
-            return steps <= m_backUrls.size() ? &m_backUrls[m_backUrls.size() - steps] : nullptr;
+            return steps <= m_backVisits.size()
+                ? &m_backVisits[m_backVisits.size() - steps]
+                : nullptr;
         }
         const std::size_t steps = static_cast<std::size_t>(offset);
-        return steps != 0 && steps <= m_forwardUrls.size() ? &m_forwardUrls[steps - 1] : nullptr;
+        return steps != 0 && steps <= m_forwardVisits.size()
+            ? &m_forwardVisits[steps - 1]
+            : nullptr;
     }
 
     void BrowserTab::setPageData(PageData* value)
@@ -224,60 +235,82 @@ namespace ClaFi::Browser
         m_browserControl->closeTab(*this);
     }
 
-    void BrowserTab::recordLeft(const Url& left, const HistoryEntry entry)
+    void BrowserTab::recordLeft(const Visit& left, const HistoryEntry entry)
     {
         if (entry == HistoryEntry::Push)
         {
-            m_backUrls.push_back(left);
-            m_forwardUrls.clear();
+            m_backVisits.push_back(left);
+            m_forwardVisits.clear();
             trimHistory();
             return;
         }
 
-        // A replace may land on the url beside it, and an entry naming the url on screen is a
-        // step that goes nowhere.
-        const Url here = url();
-        if (!m_backUrls.empty() && m_backUrls.back() == here)
-            m_backUrls.pop_back();
-        if (!m_forwardUrls.empty() && m_forwardUrls.front() == here)
-            m_forwardUrls.erase(m_forwardUrls.begin());
+        // A replace may land on the url beside it.
+        dropStepsToHere();
     }
 
-    // The urls passed over change sides along with the url left, keeping the order they were
+    // The visits passed over change sides along with the visit left, keeping the order they were
     // visited in.
-    void BrowserTab::recordTravel(const Url& left, const std::ptrdiff_t offset)
+    void BrowserTab::recordTravel(const Visit& left, const std::ptrdiff_t offset)
     {
         if (offset < 0)
         {
-            const Urls::iterator target = m_backUrls.end() + offset;
-            m_forwardUrls.insert(m_forwardUrls.begin(), left);
-            m_forwardUrls.insert(m_forwardUrls.begin(), target + 1, m_backUrls.end());
-            m_backUrls.erase(target, m_backUrls.end());
+            const Visits::iterator target = m_backVisits.end() + offset;
+            m_forwardVisits.insert(m_forwardVisits.begin(), left);
+            m_forwardVisits.insert(m_forwardVisits.begin(), target + 1, m_backVisits.end());
+            m_backVisits.erase(target, m_backVisits.end());
             return;
         }
 
-        const Urls::iterator target = m_forwardUrls.begin() + (offset - 1);
-        m_backUrls.push_back(left);
-        m_backUrls.insert(m_backUrls.end(), m_forwardUrls.begin(), target);
-        m_forwardUrls.erase(m_forwardUrls.begin(), target + 1);
+        const Visits::iterator target = m_forwardVisits.begin() + (offset - 1);
+        m_backVisits.push_back(left);
+        m_backVisits.insert(m_backVisits.end(), m_forwardVisits.begin(), target);
+        m_forwardVisits.erase(m_forwardVisits.begin(), target + 1);
         trimHistory();
+    }
+
+    bool BrowserTab::dropStepsToHere()
+    {
+        const Url here = url();
+        bool dropped = false;
+        if (!m_backVisits.empty() && m_backVisits.back().url == here)
+        {
+            m_backVisits.pop_back();
+            dropped = true;
+        }
+        if (!m_forwardVisits.empty() && m_forwardVisits.front().url == here)
+        {
+            m_forwardVisits.erase(m_forwardVisits.begin());
+            dropped = true;
+        }
+        return dropped;
     }
 
     void BrowserTab::trimHistory()
     {
-        if (m_backUrls.size() <= k_historyDepth)
+        if (m_backVisits.size() <= k_historyDepth)
             return;
 
-        const auto excess = static_cast<Urls::difference_type>(m_backUrls.size() - k_historyDepth);
-        m_backUrls.erase(m_backUrls.begin(), m_backUrls.begin() + excess);
+        const auto excess = static_cast<Visits::difference_type>(
+            m_backVisits.size() - k_historyDepth);
+        m_backVisits.erase(m_backVisits.begin(), m_backVisits.begin() + excess);
     }
 
     bool BrowserTab::renameInHistory(const std::wstring_view oldPath,
         const std::wstring_view newPath)
     {
-        const bool backRenamed = renameUnder(m_backUrls, oldPath, newPath);
-        const bool forwardRenamed = renameUnder(m_forwardUrls, oldPath, newPath);
+        const bool backRenamed = renameUnder(m_backVisits, oldPath, newPath);
+        const bool forwardRenamed = renameUnder(m_forwardVisits, oldPath, newPath);
         return backRenamed || forwardRenamed;
+    }
+
+    // ShowAnchorEvent
+
+    ShowAnchorEvent::ShowAnchorEvent(const Url& url, const std::optional<float> scroll)
+        :
+        url{ url },
+        scroll{ scroll }
+    {
     }
 
     // BrowserPage
@@ -303,7 +336,26 @@ namespace ClaFi::Browser
         }
     }
 
+    void BrowserPage::setAnchor(const std::wstring_view anchor) const
+    {
+        m_browserControl.setTabAnchor(m_tab, *this, anchor);
+    }
+
     // BrowserControl
+
+    // Written while the pages still stand; the base takes them down after this. The entries are
+    // what the next run restores the tabs from, and a scroll made since the last move is read
+    // off the page here.
+    BrowserControl::~BrowserControl()
+    {
+        if (!m_settings)
+            return;
+        for (const BrowserTab& tab : tabs())
+        {
+            if (tab.page())
+                storeTabSettings(tab);
+        }
+    }
 
     void BrowserControl::initialize(BrowserSettings& settings)
     {
@@ -324,8 +376,11 @@ namespace ClaFi::Browser
         for (const Dom::Section& tabEntry : settings.openTabs())
         {
             const std::wstring tabId = (tabEntry / ConfigNames::id).get<std::wstring>();
-            const std::wstring tabUrl = (tabEntry / ConfigNames::path).get<std::wstring>();
-            BrowserTab* newTab = restoreTab(tabId, Url::parse(tabUrl));
+            const Visit visit{
+                .url = Url::parse((tabEntry / ConfigNames::path).get<std::wstring>()),
+                .scroll = (tabEntry / ConfigNames::scroll).get<float>()
+            };
+            BrowserTab* newTab = restoreTab(tabId, visit);
             if (!newTab)
                 continue;
             if (!tabToSelect || tabId == selectedTabId)
@@ -383,15 +438,16 @@ namespace ClaFi::Browser
         addTab(*findPageData(url.path()), url.anchor(), select);
     }
 
-    BrowserTab* BrowserControl::restoreTab(const std::wstring_view id, const Url& url)
+    BrowserTab* BrowserControl::restoreTab(const std::wstring_view id, const Visit& visit)
     {
-        PageData* pageData = m_homePageData.findOrAdd(url.path(), m_addPageDataCallback);
+        PageData* pageData = m_homePageData.findOrAdd(visit.url.path(), m_addPageDataCallback);
         if (!pageData)
             return nullptr;
         BrowserTab& tab = m_tabs.add<BrowserTab>();
         tab.setId(*this, id);
         tab.setPageData(pageData);
-        tab.m_anchor = url.anchor();
+        tab.m_anchor = visit.url.anchor();
+        tab.m_scroll = visit.scroll;
         // The view state under this tab was written for this very page by the run that stored it,
         // so the first page shown here reads it rather than being handed the page's own source.
         tab.m_onRestoredPage = true;
@@ -432,8 +488,13 @@ namespace ClaFi::Browser
     {
         BrowserTab& tab = *currentTab();
         readHistory(tab);
-        const Url left = tab.url();
-        const TabMove move = moveTab(tab, pageData, anchor, initiator);
+        const Visit left = visitOf(tab);
+        // A move to the url the tab stands at keeps the scroll the tab knows - a restored tab's
+        // first show, a page built again. Any other move, and a tab opened on a url, is a first
+        // arrival.
+        const bool sameUrl = tab.pageData() == &pageData && tab.anchor() == anchor;
+        const std::optional<float> scroll = sameUrl ? tab.m_scroll : std::nullopt;
+        const TabMove move = moveTab(tab, pageData, anchor, initiator, scroll);
         if (move == TabMove::Refused)
             return;
 
@@ -499,15 +560,18 @@ namespace ClaFi::Browser
         Dom::Section& tabEntry = m_settings->tabEntry(tab.id());
         (tabEntry / ConfigNames::title).set(tab.pageData()->title);
         (tabEntry / ConfigNames::path).set(tab.url().str());
+        (tabEntry / ConfigNames::scroll).set(pageScroll(tab));
     }
 
-    // The view state is saved while the entry it writes to is still listed.
+    // The view state is saved while the entry it writes to is still listed. The tab is taken off
+    // its page before the page goes, so nothing the page says as it goes down reaches the tab.
     void BrowserControl::deleteTabSettings(BrowserTab& tab)
     {
-        if (tab.page())
+        if (RichControl* page = tab.page())
         {
             saveViewState(tab);
-            tab.page()->deleteSelf();
+            tab.setPage(nullptr);
+            page->deleteSelf();
         }
         m_settings->deleteTabEntry(tab.id());
     }
@@ -653,7 +717,7 @@ namespace ClaFi::Browser
             if (offset == 0)
                 return;
             const BrowserTab* tab = currentTab();
-            event.claim({ .enabled = tab && tab->historyUrl(offset) });
+            event.claim({ .enabled = tab && tab->historyVisit(offset) });
         });
 
         // Deferred for the reason Open is: a presenter standing on the page goes down with it.
@@ -724,7 +788,7 @@ namespace ClaFi::Browser
     }
 
     BrowserControl::TabMove BrowserControl::moveTab(BrowserTab& tab, PageData& pageData,
-        const std::wstring_view anchor, Control& initiator)
+        const std::wstring_view anchor, Control& initiator, const std::optional<float> scroll)
     {
         const bool samePage = tab.pageData() == &pageData;
         // Going to the page already open is not leaving it, and must not raise the question.
@@ -735,22 +799,55 @@ namespace ClaFi::Browser
         tab.setPageData(&pageData);
         if (urlChanged)
             tab.m_anchor = anchor;
-        selectPage(&tab, urlChanged);
+        tab.m_scroll = scroll;
+        selectPage(&tab, urlChanged, scroll);
         return urlChanged ? TabMove::Moved : TabMove::Stayed;
+    }
+
+    Visit BrowserControl::visitOf(const BrowserTab& tab) const
+    {
+        return { .url = tab.url(), .scroll = pageScroll(tab) };
+    }
+
+    // Everything a tab shows was put there by BrowserTab::createPage, which takes an IsBrowserPage.
+    float BrowserControl::pageScroll(const BrowserTab& tab) const
+    {
+        const auto* page = static_cast<const BrowserPage*>(tab.page());
+        return page ? page->scrollPosition() : tab.m_scroll.value_or(0.0f);
+    }
+
+    // A step to the url the selection just made is a step that goes nowhere, and goes as a
+    // replace drops it.
+    void BrowserControl::setTabAnchor(BrowserTab& tab, const BrowserPage& page,
+        const std::wstring_view anchor)
+    {
+        if (tab.page() != &page || tab.anchor() == anchor)
+            return;
+
+        readHistory(tab);
+        tab.m_anchor = anchor;
+        if (tab.dropStepsToHere())
+        {
+            storeHistory(tab);
+            invalidateHistoryState();
+        }
+        storeTabSettings(tab);
     }
 
     void BrowserControl::travel(const std::ptrdiff_t offset, Control& initiator)
     {
         BrowserTab* tab = currentTab();
-        const Url* target = tab ? tab->historyUrl(offset) : nullptr;
+        const Visit* target = tab ? tab->historyVisit(offset) : nullptr;
         if (!target)
             return;
 
         // Copied out of the stacks, which the page's handlers may rewrite during the move.
-        const Url destination = *target;
-        const Url left = tab->url();
-        PageData& pageData = *findPageData(destination.path());
-        if (moveTab(*tab, pageData, destination.anchor(), initiator) == TabMove::Refused)
+        const Visit destination = *target;
+        const Visit left = visitOf(*tab);
+        PageData& pageData = *findPageData(destination.url.path());
+        const TabMove move = moveTab(*tab, pageData, destination.url.anchor(), initiator,
+            destination.scroll);
+        if (move == TabMove::Refused)
             return;
 
         tab->recordTravel(left, offset);
@@ -776,13 +873,13 @@ namespace ClaFi::Browser
         Button& button = historyButton(direction);
         Menu menu{ button };
         std::ptrdiff_t offset = direction;
-        while (const Url* url = tab->historyUrl(offset))
+        while (const Visit* visit = tab->historyVisit(offset))
         {
-            PageData& pageData = *findPageData(url->path());
+            PageData& pageData = *findPageData(visit->url.path());
             Text line{ pageData.displayTitle() };
-            if (!url->anchor().empty())
+            if (!visit->url.anchor().empty())
             {
-                line << InkGrade::Muted << L" - " << url->anchor();
+                line << InkGrade::Muted << L" - " << visit->url.anchor();
             }
             menu.add(
                 line,
@@ -810,15 +907,15 @@ namespace ClaFi::Browser
 
         tab.m_historyRead = true;
         const Dom::Section& tabConfig = m_settings->tabConfig(tab.id());
-        tab.m_backUrls = urlsIn(tabConfig, ConfigNames::backUrls);
-        tab.m_forwardUrls = urlsIn(tabConfig, ConfigNames::forwardUrls);
+        tab.m_backVisits = visitsIn(tabConfig, ConfigNames::backVisits);
+        tab.m_forwardVisits = visitsIn(tabConfig, ConfigNames::forwardVisits);
     }
 
     void BrowserControl::storeHistory(const BrowserTab& tab) const
     {
         Dom::Section& tabConfig = m_settings->tabConfig(tab.id());
-        storeUrls(tabConfig, ConfigNames::backUrls, tab.backUrls());
-        storeUrls(tabConfig, ConfigNames::forwardUrls, tab.forwardUrls());
+        storeVisits(tabConfig, ConfigNames::backVisits, tab.backVisits());
+        storeVisits(tabConfig, ConfigNames::forwardVisits, tab.forwardVisits());
     }
 
     void BrowserControl::acceptPageName(PageData& pageData, AcceptEditEvent& event)
@@ -874,7 +971,8 @@ namespace ClaFi::Browser
         return false;
     }
 
-    void BrowserControl::selectPage(BrowserTab* tab, const bool urlChanged)
+    void BrowserControl::selectPage(BrowserTab* tab, const bool urlChanged,
+        const std::optional<float> scroll)
     {
         m_selectedPageData = tab ? tab->pageData() : nullptr;
         bool anchorToShow = false;
@@ -893,18 +991,18 @@ namespace ClaFi::Browser
             m_pageControl.setCurrentItem(nullptr);
         pagePathChanged();
         if (anchorToShow)
-            showAnchor(*tab);
+            showAnchor(*tab, scroll);
     }
 
     // Everything a tab shows was put there by BrowserTab::createPage, which takes an IsBrowserPage.
-    void BrowserControl::showAnchor(BrowserTab& tab)
+    void BrowserControl::showAnchor(BrowserTab& tab, const std::optional<float> scroll)
     {
         auto* page = static_cast<BrowserPage*>(tab.page());
         if (!page)
             return;
 
         const Url url = tab.url();
-        ShowAnchorEvent event{ url };
+        ShowAnchorEvent event{ url, scroll };
         page->emitEvent(event);
     }
 
@@ -915,7 +1013,7 @@ namespace ClaFi::Browser
         if (tab)
             goTo(*tab->pageData(), tab->anchor(), *tab);
         else
-            selectPage(nullptr, false);
+            selectPage(nullptr, false, std::nullopt);
 
         // Even if the page has not been changed, we still have to realign items,
         // because the close button on non-selected tabs can be hidden while aligning
@@ -1010,6 +1108,21 @@ namespace ClaFi::Browser
         m_homePageData.title.clear();
         initPageData(m_homePageData);
         addTab();
+    }
+
+    // The scroll is read ahead of the page going, and the tab is taken off the page first, as
+    // deleteTabSettings takes it. The page built again arrives at that scroll through goTo's rule
+    // for a move to the url the tab stands at.
+    void BrowserControl::rebuildPage(BrowserTab& tab)
+    {
+        if (RichControl* page = tab.page())
+        {
+            tab.m_scroll = pageScroll(tab);
+            tab.setPage(nullptr);
+            page->deleteSelf();
+        }
+        if (tab.selected() && tab.pageData())
+            goTo(*tab.pageData(), tab.anchor(), tab);
     }
 
     void BrowserControl::pagePathChanged()

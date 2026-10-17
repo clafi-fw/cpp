@@ -135,7 +135,8 @@ namespace SeeDocs_App
         std::optional<Excerpt> excerpt;
         std::optional<CommentSite> site;
         std::optional<Command> command;
-        std::wstring anchor;   // what a url names the row by - a member's name; empty for none
+        // What a url names the row by: a member's name, else what the first cell says.
+        std::wstring anchor;
     };
 
     export using TableRows = std::vector<TableRow>;
@@ -154,6 +155,8 @@ namespace SeeDocs_App
         Runs label;
         Runs tooltip;   // the label in full, where the label is short for it
         std::optional<PageKind> pageKind;   // the kind of page the label opens, which marks it
+        // The type whose members the rows are, as the label spells it; empty for the page's own.
+        std::wstring owner;
         LabelPlacement placement{ LabelPlacement::Above };
         bool folded{ false };   // the rows start folded away under the label
         TableRows rows;

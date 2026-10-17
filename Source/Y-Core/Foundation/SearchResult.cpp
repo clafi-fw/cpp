@@ -311,7 +311,7 @@ namespace ClaFi
 
         // **Shown last**: a holder keeping a selection moves it, and what hears of the move may ask
         // this result again, which reads everything anew.
-        const bool revealed = reveal(holder);
+        const bool revealed = holder.reveal(*m_container);
         holder.showFound(part, next.range);
         // What was hidden, or built since the last layout, is scrolled to once it is laid out.
         if (revealed || !holder.form().contentAligned())
@@ -329,18 +329,4 @@ namespace ClaFi
         return true;
     }
 
-    // From the container down, so that an outer body is opened ahead of one inside it.
-    bool SearchResult::reveal(Control& control)
-    {
-        Control* parent = control.parent();
-        if (&control == m_container || !parent)
-            return false;
-        bool revealed = reveal(*parent);
-        if (!control.visible() && parent->childSearch(control) == ChildSearch::Revealed)
-        {
-            parent->revealChild(control);
-            revealed = true;
-        }
-        return revealed;
-    }
 }

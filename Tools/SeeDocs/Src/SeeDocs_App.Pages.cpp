@@ -1828,6 +1828,7 @@ namespace SeeDocs_App
                 if (isEmpty(group))
                     continue;
                 group.label = { plain(std::wstring{ k_fromLabel }), code(base.spelling) };
+                group.owner = base.spelling;
                 result.groups.push_back(std::move(group));
             }
             if (hasOwn && result.groups.size() > 1)

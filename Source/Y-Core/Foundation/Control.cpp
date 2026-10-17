@@ -1112,6 +1112,21 @@ namespace ClaFi
         form().scrollIntoViewOnAlign(*this);
     }
 
+    // From the host down, so that an outer body is opened ahead of one inside it.
+    bool Control::reveal(const Control& host)
+    {
+        Control* parent = m_parent;
+        if (this == &host || !parent)
+            return false;
+        bool revealed = parent->reveal(host);
+        if (!visible() && parent->childSearch(*this) == ChildSearch::Revealed)
+        {
+            parent->revealChild(*this);
+            revealed = true;
+        }
+        return revealed;
+    }
+
     bool Control::enabled(const bool deep) const
     {
         bool result = state().enabled;

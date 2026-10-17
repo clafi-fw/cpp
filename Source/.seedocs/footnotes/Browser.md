@@ -57,12 +57,48 @@ rebuilt:
 Selecting a tab whose page exists raises nothing, so the page keeps its place. A goTo to the url
 the tab is already on raises nothing either. An empty anchor means the page itself.
 
+**The scroll says whether the tab has stood here before.** Back, Forward, a tab restored from the
+settings and a page built again (see BrowserControl rebuildPage) carry the scroll the page stood
+at, and the page is put back there once it is laid out. A first arrival - a link followed, a
+tab opened on a url - carries none, and the page shows the anchor.
+
 **Send a pick of one of the page's anchors through the browser** as a url, and show the anchor when
-this event names it. Then the url a tab stores always matches what its page shows.
+this event names it. Then the url a tab stores always matches what its page shows. A pick that is a
+selection on the page rather than a move goes through BrowserPage setAnchor.
+
+## Visit
+
+What a tab's history holds per step: the url, and how far the page stood scrolled as the tab left
+it, read through BrowserPage scrollPosition. The tab's entry in the settings holds the same of
+where the tab stands.
+
+## BrowserPage setAnchor
+
+**A selection is not a move.** The tab's url takes the anchor, the entry is stored, and nothing
+travels: the history is left as it stands, but for a nearest entry naming the url now on screen,
+which goes as a replace drops it. No ShowAnchorEvent is raised - the page knows where it is. So
+the url a tab leaves by a link carries the item the user was on, and Back brings it back.
+
+A page going down with its tab already off it is not heard: what a dying page says of its
+selection is not the tab's.
+
+## BrowserPage scrollPosition
+
+Answered unscaled, so a value written by one run reads the same at another scale. Asked as the tab
+leaves the page, as the tab's entry is stored, and in the browser's destructor for every page still
+standing - a scroll made after the last move reaches the settings that way. A page that scrolls
+nothing leaves the default.
+
+## BrowserControl rebuildPage
+
+**For a page whose source changed under it.** The page's scroll is read, the page goes, and the
+selected tab's page is built again at the url and the scroll - an ordinary ShowAnchorEvent with the
+scroll carried. Nothing is recorded. A tab not selected only loses its page, and gets it back, at
+that scroll, as it is selected.
 
 ## HistoryEntry
 
-A tab keeps a back stack of 50 urls at most, and a forward stack.
+A tab keeps a back stack of 50 visits at most, and a forward stack - see Visit.
 
 `Replace` suits a page stepping through its anchors a key at a time, so the walk leaves one entry.
 An entry a replace leaves naming the url on screen is dropped. `Push`, the default, suits every
@@ -79,9 +115,9 @@ of several steps moves the urls passed over to the other stack, in visiting orde
 - A mouse side button travels from anywhere inside the browser.
 - A right mouse click on Back or Forward lists its stack, nearest first.
 
-**Entries are urls**, so travelling to a page a fetch dropped builds it again. A rename rewrites
-the entries at or under the page, in every tab. The stacks live in the tab's own file, read when the
-tab is first selected.
+**Entries are visits**, a url each, so travelling to a page a fetch dropped builds it again. A
+rename rewrites the entries at or under the page, in every tab. The stacks live in the tab's own
+file, read when the tab is first selected.
 
 ## resetToHome
 
@@ -91,8 +127,9 @@ fetched afresh, and the new tab is selected.
 
 ## BrowserSettings
 
-**The application config** holds the selected tab's id and an entry per open tab - id, title, url
-and what the application adds. A tab not yet opened shows from that entry alone.
+**The application config** holds the selected tab's id and an entry per open tab - id, title, url,
+the scroll its page stands at and what the application adds. A tab not yet opened shows from that
+entry alone.
 
 **Each tab's own file** holds the rest - the browser's history (k_tabFileSchema) and the
 application's tab schema. It sits in the OpenTabs folder beside the config file, named by the tab's
