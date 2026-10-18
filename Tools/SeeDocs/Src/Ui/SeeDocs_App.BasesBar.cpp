@@ -83,12 +83,6 @@ namespace SeeDocs_App
         m_bar{ bar },
         m_node{ node }
     {
-        onContextPopup([this](ContextPopupEvent& event) {
-            const std::wstring_view target = targetOf(m_node);
-            if (target.empty())
-                return;
-            m_bar.askMenu(*this, std::wstring{ target }, event);
-        });
     }
 
     void BaseCrumb::getMainText(GetTextEvent& event) const
@@ -203,7 +197,16 @@ namespace SeeDocs_App
     {
         for (const BaseNode& base : bases)
         {
-            m_crumbs.push_back(&add<BaseCrumb>(*this, base));
+            BaseCrumb& newCrumb = add<BaseCrumb>(*this, base);
+            m_crumbs.push_back(&newCrumb);
+            newCrumb.onContextPopup([this, &newCrumb](ContextPopupEvent& event) {
+                // event.control could also be the dropdown button - it's "onNestedContextPopup" actually
+                //BaseCrumb* crumb = static_cast<BaseCrumb*>(event.control);
+                const std::wstring_view target = targetOf(newCrumb.node());
+                if (target.empty())
+                    return;
+                askMenu(newCrumb, std::wstring{ target }, event);
+            });
             addCrumbs(base.bases);
         }
     }
@@ -303,7 +306,7 @@ namespace SeeDocs_App
         emitEvent(event);
     }
 
-    void BasesBar::askMenu(Control& crumb, std::wstring target, ContextPopupEvent& popup)
+    void BasesBar::askMenu(Control& crumb, std::wstring target, ContextPopupEvent& popup) const
     {
         BaseLinkContextPopupEvent event{ crumb, std::move(target), popup };
         emitEvent(event);

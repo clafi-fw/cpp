@@ -40,21 +40,22 @@ namespace SeeDocs_App
 
     export class BasesBar;
 
-    // One base on the bar: its spelling, and behind the mark before it the types standing on it.
+    /// One base on the bar: its spelling, and behind the mark before it the types standing on it.
     class BaseCrumb : public DropdownControlBase
     {
     public:
         BaseCrumb(const CreateParams&, BasesBar&, const BaseNode&);
     public:
         std::wstring_view diagnosticText() const override { return L"BaseCrumb"; }
+        const BaseNode& node() const { return m_node; }
     protected:
         void getMainText(GetTextEvent&) const override;
         void showDropdown(Control& initiator) override;
         void adjustPaint(AdjustPaintEvent&) override;
         void click(ClickEvent&) override;
-        // The mark sits on the crumb's face, as a path crumb's does.
+        /// The mark sits on the crumb's face, as a path crumb's does.
         [[nodiscard]] Ink dropdownMarkInk() const override { return InkWell::textInk(); }
-        // The mark points back toward the type the way up came from, and turns down into its list.
+        /// The mark points back toward the type the way up came from, and turns down into its list.
         [[nodiscard]] DropdownMarkTurn dropdownMarkTurn() const override;
     private:
         BasesBar& m_bar;
@@ -108,7 +109,7 @@ namespace SeeDocs_App
         // The widest a crumb may stay for the bar to come to no more than the width.
         [[nodiscard]] float capFor(float width, float leastCrumb) const;
         void choose(std::wstring target);
-        void askMenu(Control& crumb, std::wstring target, ContextPopupEvent&);
+        void askMenu(Control& crumb, std::wstring target, ContextPopupEvent&) const;
     private:
         static constexpr float k_leastCrumb = 48.0f;   // what a narrowed crumb keeps of itself
         static constexpr int k_capSteps = 24;          // halvings of the range the cap is found in

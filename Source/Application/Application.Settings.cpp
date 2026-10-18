@@ -91,7 +91,7 @@ namespace ClaFi
     // **The gap down a group**, from one row to the next. The gap **across** a row - a caption and
     // what it names - is the one above, and the two are different questions: a row reads as one
     // thing by standing close, and two rows read as two by standing apart.
-    constexpr float k_rowSpacing{ 6.0f };
+    constexpr float k_rowSpacing{ 10.0f };
     // The room a section holds its options in, under its heading.
     constexpr Padding k_groupPadding{ 12.0f };
 
