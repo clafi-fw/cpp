@@ -41,7 +41,7 @@ namespace ClaFi::Controls
         DECLARE_EVENT(CanFocusItemEvent, OnCanFocusItem, onCanFocusItem)
         // Raised after the current item has changed.
         DECLARE_EVENT(CurrentItemChangeEvent, OnCurrentItemChange, onCurrentItemChange)
-    public:
+    protected:
         // The one item this container treats as current - the page a PageControl shows, the tab
         // a TabStrip has open, the item the focus goes to when the container is entered. Current
         // is not focused: it stays current while the focus is somewhere else entirely, which is

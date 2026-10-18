@@ -21,6 +21,9 @@ namespace ClaFi::Controls
     public:
         using StackBase::StackBase;
         using StackBase::add;
+        using StackBase::currentItem;
+        using StackBase::setCurrentItem;
+
         std::wstring_view diagnosticText() const override { return L"PageControl"; }
         // Whether the pages nobody is looking at count towards this control's size.
         [[nodiscard]] PageSizing pageSizing() const { return m_pageSizing; }

@@ -196,7 +196,7 @@ namespace Themes_App
 
     void ColorHarmonyItem::dropdown(DropdownEvent& event)
     {
-        static_cast<StackPanel*>(parent())->setCurrentItem(this);
+        static_cast<SingleSelectionStackView*>(parent())->setCurrentItem(this);
         event.executeDropdown<DropDownPanel>(*this);
     }
 
@@ -224,7 +224,7 @@ namespace Themes_App
 
     void ColorHarmonyItem::dropDown(Control& dropDownButton)
     {
-        static_cast<StackPanel*>(parent())->setCurrentItem(this);
+        static_cast<SingleSelectionStackView*>(parent())->setCurrentItem(this);
 
         Form<DropDownPanel> menuForm{ form().createPopup<DropDownPanel>(&dropDownButton, *this) };
 

@@ -112,7 +112,7 @@ namespace MillScene_App
 
         // The backstage's Scene page, refilled every time that page is built: a pick repaints the
         // button it left as well as the one it took, and the stack is what the preview returns to.
-        SingleSelectionView* m_themeLanes{ nullptr };
+        SingleSelectionStackView* m_themeLanes{ nullptr };
         std::vector<Control*> m_themeButtons{};
         // The chart draws the benchmark above; it wears the scene's own colours, which is why it
         // is held rather than added and forgotten.
@@ -302,7 +302,7 @@ void MillSceneForm::pickSceneTheme(std::size_t index)
 void MillSceneForm::buildScenePage(AppMenuPage& page)
 {
     StackPanel& group = page.addGroup(L"Scene Theme");
-    SingleSelectionView& lanes = group.add<SingleSelectionView>(
+    SingleSelectionStackView& lanes = group.add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
         LaneSize{ k_themeLaneSize },
         Spacing{ k_themeLaneSpacing, 0.0f },

@@ -371,7 +371,7 @@ namespace SeeDocs_App
 
         PageHead& m_head{ createTopBar<PageHead>() };
 
-        ScrollBoxWith<StackPanel>& m_pageBox{ createBody<ScrollBoxWith<StackPanel>>(
+        ScrollBoxWith<SingleSelectionStackView>& m_pageBox{ createBody<ScrollBoxWith<SingleSelectionStackView>>(
             HostProps{
                 ScrollBars::Vertical
             },

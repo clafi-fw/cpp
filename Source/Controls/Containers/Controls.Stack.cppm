@@ -334,6 +334,8 @@ namespace ClaFi::Controls
         using StackPanelBase::reserve;
         using StackPanelBase::controls;
         using StackPanelBase::clearControls;
+        using StackPanelBase::currentItem;
+        using StackPanelBase::setCurrentItem;
     public:
         template <typename... Args>
         explicit StackViewBase(const CreateParams&, Args&&...);
@@ -380,7 +382,7 @@ namespace ClaFi::Controls
         Control* m_previewItem{ nullptr };
     };
 
-    export class SingleSelectionView : public StackViewBase
+    export class SingleSelectionStackView : public StackViewBase
     {
         using StackViewBase::StackViewBase;
     };

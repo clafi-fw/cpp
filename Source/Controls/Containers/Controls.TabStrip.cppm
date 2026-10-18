@@ -107,7 +107,7 @@ namespace ClaFi::Controls
         ScopedEventConnection m_pageConnection{};
     };
 
-    using TabStripBaseClass = StackPanelBase;
+    using TabStripBaseClass = SingleSelectionStackView;
 
     // A row of tabs, sharing the room between them.
     export class TabStripBase : public TabStripBaseClass, public IFittableList

@@ -1252,7 +1252,7 @@ namespace SeeDocs_App
 
     const Control* PageView::selectedAnchored() const
     {
-        const StackPanel& host = m_pageBox.body();
+        const SingleSelectionStackView& host = m_pageBox.body();
         for (const Control* item = host.currentItem(); item && item != &host;
             item = item->parent())
         {

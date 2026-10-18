@@ -370,7 +370,7 @@ namespace Themes_App
             Spacing{ 8.0f }
         ) };
 
-        StackPanel& m_harmonyStack{ m_harmonyPanel.createBody<StackPanel>(
+        SingleSelectionStackView& m_harmonyStack{ m_harmonyPanel.createBody<SingleSelectionStackView>(
             Orientation::HorizontalWrap,
             Interactivity::ActiveContainer,
             Padding{ 12.0f, 4.0f },

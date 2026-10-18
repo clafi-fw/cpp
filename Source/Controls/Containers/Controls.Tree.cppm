@@ -125,7 +125,7 @@ namespace ClaFi::Controls
     };
 
     // Rows nested in branches, each level stepped in one mark slot; a node's header is a row too.
-    using TreeViewBase = SingleSelectionView;
+    using TreeViewBase = SingleSelectionStackView;
     export class TreeView : public TreeViewBase
     {
         friend TreeItem;
