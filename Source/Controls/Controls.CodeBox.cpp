@@ -507,14 +507,14 @@ namespace ClaFi::Controls
         applyIndentEdit(Syntax::pasteEdit(lines, pasted, indentUnitInUse()), EditKind::Automatic);
     }
 
-    void CodeBox::editContextPopup(EditContextPopupEvent& event)
+    void CodeBox::adjustContextPopup(AdjustContextPopupEvent& event)
     {
         if (readOnly() == ReadOnly::No)
         {
             event.actions.push_back(nullptr);
             event.actions.push_back(&StdActions::reindent);
         }
-        TextBox::editContextPopup(event);
+        TextBox::adjustContextPopup(event);
     }
 
     DrawTextResult CodeBox::drawText(PaintEvent& event, const FloatRect& textBounds,

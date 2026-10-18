@@ -270,6 +270,7 @@ namespace SeeDocs_App
         // The button opens the fact's source, greyed with a tooltip while no editor is set for it.
         void connectSource(Button&, const Fact&);
         void connectFolder(Button&, const Fact&);   // its click opens the fact's folder
+        void connectFullValue(Grids::Row&, const Fact&);   // the whole path in hint and editor
         // The row's hint cell opens on the comment's words and writes them back.
         void connectHintCell(Grids::Row&, const TableRow&, TagValue hintColumn);
         // The row's menu edits its footnote, or adds one where it has none.

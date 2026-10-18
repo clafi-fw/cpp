@@ -526,7 +526,8 @@ SeeDocs is a browser of the framework's own kind:
 ### The tree
 
 Down the left, under each project's node, stands a tree of the sources' folders, named as they stand
-on disk. The page of the row clicked shows on the right.
+on disk. The page of the row clicked shows on the right, and Open in new tab on a row's menu
+opens it in a tab behind the one shown.
 
 - Each folder holds the folders under it, then its modules by their full names.
 - Each module holds the types it exports, controls first.
@@ -562,7 +563,8 @@ A page's trees start closed, and a node's rows are built the first time it opens
 #### Source and Open in editor
 
 The source fact is the file and line a type, a method, a function or a constant stands at, and a
-module's interface file.
+module's interface file. It names the file by its path under its source's folder, and its tooltip
+and the cell's editor give the whole path.
 
 - **Open in editor**, at the row's end, runs the command line Settings keeps for the file's
   language. While there is none, it stands greyed, its tooltip naming Settings.
@@ -581,8 +583,8 @@ module's interface file.
 
 A folder's page:
 
-- gives its path on disk - one under each source holding it, with an Open folder button that shows
-  it in the desktop's file manager
+- gives its source as a module does, a row under each source holding it, with an Open folder button
+  that shows it in the desktop's file manager
 - says what it holds at every depth
 - leads with the folders directly under its own, as the tree lists and marks them, each with what it
   holds at every depth
@@ -650,8 +652,9 @@ A type's page holds, in this order:
 - A republished method stands under the access its using-declaration gives it.
 
 **Restated defaults.** A base's property whose default a type below restates shows that value in its
-Default cell, then the type handing it, linked, and `fixed` where the caller's own value loses to
-it. The declared default stays on the declaring type's own page.
+Default cell. The cell ends, past a flex space and in the SubBody style, with `by` and the type
+handing it, linked and joined to `by` by a non-breaking space, and `fixed` where the caller's own
+value loses to it. The declared default stays on the declaring type's own page.
 
 **A property's getter and setter are its row**, and stand in no methods grid.
 

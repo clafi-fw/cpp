@@ -169,7 +169,7 @@ namespace ClaFi::Controls
         // A paste of several lines moved as one block to where the language places it.
         void textPasted(const TextRange&) override;
         // Reindent joins the edit menu of a box that can be typed into.
-        void editContextPopup(EditContextPopupEvent&) override;
+        void adjustContextPopup(AdjustContextPopupEvent&) override;
         // The guides first, on the layout the text is drawn from, so a selection band covers them.
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
     private:

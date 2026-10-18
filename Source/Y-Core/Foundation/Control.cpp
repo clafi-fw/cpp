@@ -408,9 +408,9 @@ namespace ClaFi
 
     }
 
-    // EditContextPopupEvent
+    // AdjustContextPopupEvent
 
-    EditContextPopupEvent::EditContextPopupEvent(Control& control, FormBase& form,
+    AdjustContextPopupEvent::AdjustContextPopupEvent(Control& control, FormBase& form,
         ActionList& actions, FloatPoint* mousePos)
         :
         ContextPopupEvent{ control, form, mousePos },
@@ -1868,7 +1868,7 @@ namespace ClaFi
         emitEvent(event);
     }
 
-    void Control::editContextPopup(EditContextPopupEvent& event)
+    void Control::adjustContextPopup(AdjustContextPopupEvent& event)
     {
         emitEvent(event);
     }

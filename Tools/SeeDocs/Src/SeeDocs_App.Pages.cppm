@@ -91,6 +91,7 @@ namespace SeeDocs_App
     {
         std::wstring label;
         Runs value;
+        std::wstring fullValue;   // a path value written whole, for the hint and the editor
         std::optional<SourcePlace> source;   // what an editor opens for it; none for most facts
         std::optional<std::filesystem::path> folder;   // what the desktop's file manager opens
     };
@@ -126,7 +127,8 @@ namespace SeeDocs_App
     export struct TableRow
     {
         Cells cells;
-        Runs qualifier;   // what the first cell names is - a type's kind - set at the cell's end
+        // Words set at a cell's end, by its index - a type's kind, the type handing a default.
+        Cells qualifiers;
         const Type* type{ nullptr };
         // The kind of page the first cell opens, which marks the cell where no type does.
         std::optional<PageKind> pageKind;
@@ -366,7 +368,7 @@ namespace SeeDocs_App
     // The folder a file of the surface stands in, as a path under the root.
     export [[nodiscard]] std::wstring folderOf(std::wstring_view relativeFile);
 
-    // A folder's page: its path on disk, what stands under it at every depth counted, the folders
+    // A folder's page: its source, what stands under it at every depth counted, the folders
     // directly under it, each linked, as the tree lists them, then its own modules' exports.
     export [[nodiscard]] Page folderPage(const Surface&, Notes&, const ContentsFolders&,
         std::wstring_view path, const SourceRoots&);
@@ -374,15 +376,15 @@ namespace SeeDocs_App
     export [[nodiscard]] Page homePage(const Surface&, Notes&, const ContentsFolders&,
         std::wstring_view title);
     export [[nodiscard]] Page modulePage(const Surface&, Notes&, const ContentsFolder&,
-        const ContentsModule&);
+        const ContentsModule&, const SourceRoots&);
     // The page of a function the module exports, every overload of the name on it, or of a
     // constant it exports, the declaration as written.
     export [[nodiscard]] Page exportPage(const Surface&, Notes&, const ContentsFolder&,
-        const ContentsModule&, std::wstring_view name);
-    export [[nodiscard]] Page typePage(const Surface&, Notes&, const Type&);
+        const ContentsModule&, std::wstring_view name, const SourceRoots&);
+    export [[nodiscard]] Page typePage(const Surface&, Notes&, const Type&, const SourceRoots&);
     // The page of every method of the type with that name, a signature each.
     export [[nodiscard]] Page methodPage(const Surface&, Notes&, const Type&,
-        std::wstring_view name);
+        std::wstring_view name, const SourceRoots&);
     // The names the type's own methods stand under, one per name in declaration order: its
     // constructors and destructor in, a property's getter and setter out.
     export [[nodiscard]] std::vector<std::wstring_view> methodNames(const Type&);

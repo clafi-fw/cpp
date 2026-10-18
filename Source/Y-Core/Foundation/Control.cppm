@@ -303,11 +303,11 @@ namespace ClaFi
         FloatPoint* mousePos;
     };
 
-    // A control is about to show its own built-in edit menu. See Control-Foundation
-    export class EditContextPopupEvent : public ContextPopupEvent
+    // A control is about to show its own built-in menu. See Control-Foundation
+    export class AdjustContextPopupEvent : public ContextPopupEvent
     {
     public:
-        EditContextPopupEvent(Control&, FormBase&, ActionList&, FloatPoint* = nullptr);
+        AdjustContextPopupEvent(Control&, FormBase&, ActionList&, FloatPoint* = nullptr);
         // The commands the menu is about to show. Add to it, drop from it or reorder it - what
         // is left is what opens. A separator that would lead, trail or double up is dropped as
         // the menu is built, so an edit here does not have to tidy them.
@@ -686,8 +686,8 @@ namespace ClaFi
         DECLARE_EVENT(MouseMoveEvent, OnMouseMove, onMouseMove)
         // The control being asked for a context menu.
         DECLARE_EVENT(ContextPopupEvent, OnContextPopup, onContextPopup)
-        // The control about to show its own edit menu.
-        DECLARE_EVENT(EditContextPopupEvent, OnEditContextPopup, onEditContextPopup)
+        // The control about to show its own built-in menu.
+        DECLARE_EVENT(AdjustContextPopupEvent, OnAdjustContextPopup, onAdjustContextPopup)
         // A side button of the mouse pressed over this control.
         DECLARE_EVENT(SideClickEvent, OnSideClick, onSideClick)
         // The control being asked what state it is in.
@@ -1318,7 +1318,7 @@ namespace ClaFi
         virtual void hoverLeave();
         //
         virtual void nestedContextPopup(ContextPopupEvent&);
-        virtual void editContextPopup(EditContextPopupEvent&);
+        virtual void adjustContextPopup(AdjustContextPopupEvent&);
         virtual void nestedSideClick(SideClickEvent&);
         //
         virtual void nestedKeyDown(KeyDownEvent&);

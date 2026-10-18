@@ -36,6 +36,8 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_setterPrefix = L"set";
         constexpr std::wstring_view k_constWord = L"const";
         constexpr std::wstring_view k_fixedWord = L"fixed";
+        constexpr std::wstring_view k_byWord = L"by\u00A0";   // kept on the name's line
+        constexpr std::wstring_view k_valueMark = L"=\u00A0";   // kept on the value's line
         constexpr std::wstring_view k_sourceJoin = L" \u203A ";
         constexpr std::wstring_view k_publicMethods = L"Public methods";
         constexpr std::wstring_view k_protectedMethods = L"Protected methods";
@@ -47,6 +49,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_exportsColumn = L"Exports";
         constexpr std::wstring_view k_projectWord = L"project";
         constexpr std::wstring_view k_folderWord = L"folder";
+        constexpr std::wstring_view k_sourceLabel = L"source";
         constexpr std::wstring_view k_moduleWord = L"module";
         constexpr std::wstring_view k_headerWord = L"header";
         constexpr std::wstring_view k_functionWord = L"function";
@@ -196,11 +199,6 @@ namespace SeeDocs_App
             });
         }
 
-        [[nodiscard]] std::wstring fileLineOf(const Surface& surface, const Place& place)
-        {
-            return surface.files()[place.file].relative + L":" + std::to_wstring(place.line);
-        }
-
         [[nodiscard]] std::wstring countOf(const std::size_t value, const std::wstring_view noun)
         {
             return std::to_wstring(value) + L" " + std::wstring{ noun } + (value == 1 ? L"" : L"s");
@@ -208,9 +206,9 @@ namespace SeeDocs_App
 
         // Runs
 
-        [[nodiscard]] Run plain(std::wstring text)
+        [[nodiscard]] Run plain(std::wstring text, std::wstring link = {})
         {
-            return { .text = std::move(text) };
+            return { .text = std::move(text), .link = std::move(link) };
         }
 
         [[nodiscard]] Run code(std::wstring text, std::wstring link = {})
@@ -399,7 +397,7 @@ namespace SeeDocs_App
         {
             if (value.empty())
                 return {};
-            return { muted(L"= " + value) };
+            return { muted(std::wstring{ k_valueMark } + value) };
         }
 
         // The kind a type reads as in a table, after its name - a control before anything else.
@@ -757,14 +755,35 @@ namespace SeeDocs_App
             page.facts.push_back({ .label = std::move(label), .value = std::move(value) });
         }
 
-        void addSourceFact(Page& page, std::wstring where, const Place& place,
-            const SourceLanguage language)
+        // Empty where the project no longer reads the file's source.
+        [[nodiscard]] std::wstring fullPathOf(const SourceRoots& roots, const SourceFile& file)
         {
+            if (file.root >= roots.size())
+                return {};
+            return (roots[file.root] / file.path).lexically_normal().wstring();
+        }
+
+        // A file by its path under its source's folder, atLine after it as `:42` or empty.
+        void addSourceFact(Page& page, const SourceRoots& roots, const SourceFile& file,
+            const std::wstring_view atLine, const SourcePlace& source)
+        {
+            std::wstring fullValue = fullPathOf(roots, file);
+            if (!fullValue.empty())
+                fullValue += atLine;
             page.facts.push_back({
-                .label = L"source",
-                .value = { code(std::move(where)) },
-                .source = SourcePlace{ .place = place, .language = language }
+                .label = std::wstring{ k_sourceLabel },
+                .value = { code(file.relative + std::wstring{ atLine }) },
+                .fullValue = std::move(fullValue),
+                .source = source
             });
+        }
+
+        // The file and line a declaration stands at.
+        void addPlaceFact(Page& page, const Surface& surface, const SourceRoots& roots,
+            const Place& place, const SourceLanguage language)
+        {
+            addSourceFact(page, roots, surface.files()[place.file],
+                L":" + std::to_wstring(place.line), { .place = place, .language = language });
         }
 
         // What a reader calls the unit a declaration stands in: a header, which a limited read
@@ -791,8 +810,8 @@ namespace SeeDocs_App
             return nullptr;
         }
 
-        // The folder on disk, under every source holding a file at or below it.
-        void addFolderPaths(Page& page, const Surface& surface, const SourceRoots& roots,
+        // The folder under every source holding a file at or below it.
+        void addFolderSources(Page& page, const Surface& surface, const SourceRoots& roots,
             const std::wstring_view path)
         {
             std::vector<bool> holds(roots.size(), false);
@@ -811,8 +830,9 @@ namespace SeeDocs_App
                 const std::filesystem::path onDisk =
                     (roots[root] / std::filesystem::path{ path }).lexically_normal();
                 page.facts.push_back({
-                    .label = L"path",
-                    .value = { code(onDisk.wstring()) },
+                    .label = std::wstring{ k_sourceLabel },
+                    .value = { code(std::wstring{ path }) },
+                    .fullValue = onDisk.wstring(),
                     .folder = onDisk
                 });
             }
@@ -820,7 +840,8 @@ namespace SeeDocs_App
 
         // The head of a type page
 
-        void addTypeHead(Page& page, const Surface& surface, const Type& type)
+        void addTypeHead(Page& page, const Surface& surface, const SourceRoots& roots,
+            const Type& type)
         {
             page.title = type.name;
             page.badges.push_back(muted(std::wstring{ kindWord(type.kind) }));
@@ -838,8 +859,7 @@ namespace SeeDocs_App
             page.leadSite = siteOf(type);
             addFact(page, L"namespace", { code(type.nameSpace) });
             addFact(page, moduleWordOf(surface, type.module), { code(type.module, type.module) });
-            addSourceFact(page, fileLineOf(surface, type.place), type.place,
-                surface.languageOf(type.module));
+            addPlaceFact(page, surface, roots, type.place, surface.languageOf(type.module));
             if (type.target.empty())
                 return;
             if (type.kind == TypeKind::Concept)
@@ -1500,13 +1520,13 @@ namespace SeeDocs_App
             return fixed.restatement ? fixed : nearest;
         }
 
-        // A restated value cell: the value, the type handing it, and fixed where the caller's own
-        // value loses to it.
-        [[nodiscard]] Runs restatedCell(const RestatedDefault& restated)
+        // What a restated value's cell ends with: by the type handing it, fixed where it wins.
+        [[nodiscard]] Runs qualifierOf(const RestatedDefault& restated)
         {
-            Runs runs = valueCell(restated.restatement->value);
-            runs.push_back(muted(std::wstring{ k_separator }));
-            runs.push_back(nameRun(*restated.by));
+            Runs runs = {
+                muted(std::wstring{ k_byWord }),
+                plain(restated.by->name, restated.by->qualifiedName)
+            };
             if (restated.restatement->fixed)
             {
                 runs.push_back(muted(std::wstring{ k_separator }));
@@ -1526,12 +1546,14 @@ namespace SeeDocs_App
                 if (!takes(filter, property.access, property.name))
                     continue;
                 Runs value = valueCell(property.defaultValue);
+                Runs defaultQualifier;
                 if (property.form == PropertyForm::Required)
                     value = { muted(L"required") };
                 if (const RestatedDefault restated = restatedDefault(property, below);
                     restated.restatement)
                 {
-                    value = restatedCell(restated);
+                    value = valueCell(restated.restatement->value);
+                    defaultQualifier = qualifierOf(restated);
                 }
                 Runs spelled = { typeRun(surface, property.type, type.nameSpace) };
                 for (const std::wstring& accepted : property.accepts)
@@ -1542,6 +1564,7 @@ namespace SeeDocs_App
                 rows.push_back({
                     .cells = { { code(property.name) }, std::move(spelled), std::move(value),
                         hintRuns(surface, property.comment, type.nameSpace) },
+                    .qualifiers = { {}, {}, std::move(defaultQualifier) },
                     .excerpt = memberExcerpt(surface, notes, property.comment, property.name,
                         type),
                     .site = siteOf(property.comment, property.place, property.name),
@@ -2200,7 +2223,7 @@ namespace SeeDocs_App
                 rows.push_back({
                     .cells = { { nameRun(*type) },
                         hintRuns(surface, type->comment, type->nameSpace) },
-                    .qualifier = qualifierOf(*type),
+                    .qualifiers = { qualifierOf(*type) },
                     .type = type,
                     .site = siteOf(*type)
                 });
@@ -2565,27 +2588,27 @@ namespace SeeDocs_App
             return result;
         }
 
-        void addExportFacts(Page& page, const Surface& surface, const std::wstring_view nameSpace,
-            const ContentsModule& module, const Place& place)
+        void addExportFacts(Page& page, const Surface& surface, const SourceRoots& roots,
+            const std::wstring_view nameSpace, const ContentsModule& module, const Place& place)
         {
             addFact(page, L"namespace", { code(std::wstring{ nameSpace }) });
             addFact(page, std::wstring{ module.header ? k_headerWord : k_moduleWord },
                 { code(module.name, module.name) });
-            addSourceFact(page, fileLineOf(surface, place), place, surface.languageOf(module.name));
+            addPlaceFact(page, surface, roots, place, surface.languageOf(module.name));
         }
 
         // A constant's page: what it is after the title, its hint under it, where it is
         // declared, then its declaration as written with its note.
         void fillConstantPage(Page& page, const Surface& surface, Notes& notes,
-            const std::wstring_view folder, const ContentsModule& module,
-            const Variable& variable)
+            const SourceRoots& roots, const std::wstring_view folder,
+            const ContentsModule& module, const Variable& variable)
         {
             const Field& field = variable.field;
             const std::wstring_view kind = field.isConstant ? k_constantWord : k_variableWord;
             page.badges.push_back(muted(std::wstring{ kind }));
             page.lead = hintRuns(surface, field.comment, variable.nameSpace);
             page.leadSite = siteOf(field.comment, field.place, field.name);
-            addExportFacts(page, surface, variable.nameSpace, module, field.place);
+            addExportFacts(page, surface, roots, variable.nameSpace, module, field.place);
             const FoundNote found = noteFor(surface, notes, field.comment, field.name, folder,
                 field.name);
             const SourceLanguage language = surface.languageOf(variable.module);
@@ -3034,7 +3057,7 @@ namespace SeeDocs_App
         page.surface = &surface;
         page.title = folderNameOf(path);
         page.badges.push_back(muted(std::wstring{ k_folderWord }));
-        addFolderPaths(page, surface, roots, path);
+        addFolderSources(page, surface, roots, path);
         addFolderContents(page, surface, notes, folders, path);
         showSectionsOnce(page);
         return page;
@@ -3057,7 +3080,7 @@ namespace SeeDocs_App
     }
 
     Page modulePage(const Surface& surface, Notes& notes, const ContentsFolder& folder,
-        const ContentsModule& module)
+        const ContentsModule& module, const SourceRoots& roots)
     {
         Page page;
         const std::wstring word{ module.header ? k_headerWord : k_moduleWord };
@@ -3070,8 +3093,8 @@ namespace SeeDocs_App
             addFact(page, word, { code(module.name) });
         if (const Module* unit = interfaceOf(surface, module.name))
         {
-            addSourceFact(page, surface.files()[unit->file].relative,
-                { .file = unit->file, .line = 1 }, unit->language);
+            addSourceFact(page, roots, surface.files()[unit->file], {},
+                { .place = { .file = unit->file, .line = 1 }, .language = unit->language });
         }
         if (!module.types.empty())
         {
@@ -3086,7 +3109,7 @@ namespace SeeDocs_App
     }
 
     Page exportPage(const Surface& surface, Notes& notes, const ContentsFolder& folder,
-        const ContentsModule& module, const std::wstring_view name)
+        const ContentsModule& module, const std::wstring_view name, const SourceRoots& roots)
     {
         Page page;
         page.surface = &surface;
@@ -3111,7 +3134,7 @@ namespace SeeDocs_App
         }
         if (first)
         {
-            addExportFacts(page, surface, overloads.front().nameSpace, module, first->place);
+            addExportFacts(page, surface, roots, overloads.front().nameSpace, module, first->place);
             addOverloads(page, surface, notes, k_functionWord, std::move(overloads));
             showSectionsOnce(page);
             return page;
@@ -3120,7 +3143,7 @@ namespace SeeDocs_App
         {
             if (variable->field.name == name)
             {
-                fillConstantPage(page, surface, notes, folder.path, module, *variable);
+                fillConstantPage(page, surface, notes, roots, folder.path, module, *variable);
                 break;
             }
         }
@@ -3129,7 +3152,7 @@ namespace SeeDocs_App
     }
 
     Page methodPage(const Surface& surface, Notes& notes, const Type& type,
-        const std::wstring_view name)
+        const std::wstring_view name, const SourceRoots& roots)
     {
         Page page;
         page.surface = &surface;
@@ -3152,7 +3175,7 @@ namespace SeeDocs_App
             if (overloads.empty())
             {
                 kind = function.kind;
-                addSourceFact(page, fileLineOf(surface, function.place), function.place, language);
+                addPlaceFact(page, surface, roots, function.place, language);
             }
             // A constructor's name is its type's, and so is the section that name heads.
             std::wstring heading = function.kind == FunctionKind::Constructor
@@ -3232,13 +3255,13 @@ namespace SeeDocs_App
         };
     }
 
-    Page typePage(const Surface& surface, Notes& notes, const Type& type)
+    Page typePage(const Surface& surface, Notes& notes, const Type& type, const SourceRoots& roots)
     {
         Page page;
         page.kind = PageKind::Type;
         page.surface = &surface;
         page.type = &type;
-        addTypeHead(page, surface, type);
+        addTypeHead(page, surface, roots, type);
         page.footnoteHome = typeFootnoteHome(surface, notes, type);
         const DerivedIndex derived = derivedIndexOf(surface);
         const ReachedBases bases = addTypeBases(page, surface, derived, type);

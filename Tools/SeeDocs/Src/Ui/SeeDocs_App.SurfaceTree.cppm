@@ -31,17 +31,26 @@ namespace SeeDocs_App
         Contents    // a folder, a module or a type of its surface
     };
 
-    // A row of the surface tree was clicked. The surface has an Event of its own.
+    // Which tab the page a picked row names opens in.
+    export enum class PickTab
+    {
+        Shown,   // the tab shown goes to it
+        New      // a new tab, behind the one shown
+    };
+
+    // A row of the surface tree was picked. The surface has an Event of its own.
     export class TreePickEvent : public ::ClaFi::Event
     {
     public:
-        TreePickEvent(ProjectId, RowKind, std::wstring_view, const ContentsModule*, const Type*);
+        TreePickEvent(ProjectId, RowKind, std::wstring_view, const ContentsModule*, const Type*,
+            PickTab);
     public:
         ProjectId project;              // the project the row stands in
         RowKind kind;
         std::wstring_view folder;       // the path of the folder the row stands in
         const ContentsModule* module;   // null for a folder's row
         const Type* type;               // null for a folder's or a module's row
+        PickTab tab;
     };
 
     // A node of the surface tree was opened or closed, by the user or by a follow.
@@ -65,13 +74,14 @@ namespace SeeDocs_App
     // **The open projects as a tree**, a node each: its options row and a line, then its folders,
     // modules and types, read off the project's contents tree, which every tree shares. A node's
     // rows are made the first time it opens, so a tree costs the rows it has shown. A click on a
-    // row picks what it names.
+    // row picks what it names, and Open in new tab on the row's menu picks it for a new tab.
     export class SurfaceTree : public TreeView
     {
     public:
-        using TreeView::TreeView;
+        template<typename... Args>
+        explicit SurfaceTree(const CreateParams&, Args&&...);
     public:
-        // Connects a handler raised when a row is clicked.
+        // Connects a handler raised when a row is clicked, or opened in a new tab from its menu.
         template<typename F>
         EventConnection onPick(F&& callback);
         // Connects a handler raised when a node opens or closes, other than by restoreRows.
@@ -98,6 +108,11 @@ namespace SeeDocs_App
         [[nodiscard]] OpenRows openRows(ProjectId) const;
         // Opens the project's nodes named, each that names a row; raises no toggle.
         void restoreRows(ProjectId, const OpenRows&);
+    protected:
+        // Holds the row the menu is asked for while it runs, so Open in new tab is about that row.
+        void nestedContextPopup(ContextPopupEvent&) override;
+        // Open in new tab leads the tree's own commands on a row a pick opens.
+        void adjustContextPopup(AdjustContextPopupEvent&) override;
     private:
         // The controls a row of the contents is shown by, none until its holder's rows are made.
         struct MadeRow
@@ -122,7 +137,15 @@ namespace SeeDocs_App
         };
         // Held by pointer: a row's click handler holds its project's rows.
         using Projects = std::vector<std::unique_ptr<ProjectRows>>;
+        // The row a menu is up for, as a pick of it names it.
+        struct MenuRow
+        {
+            const ProjectRows* rows{ nullptr };
+            RowKind kind{ RowKind::Home };
+            std::size_t index{ 0 };   // the row of the contents, for RowKind::Contents
+        };
     private:
+        void connectActions();   // claims Open in new tab while a menu is up on a row
         [[nodiscard]] ProjectRows* rowsOf(ProjectId) const;
         // Makes the rows under the project's node: the options row, the line and the top rows.
         void fillProject(ProjectRows&);
@@ -134,8 +157,10 @@ namespace SeeDocs_App
         void clearRows(ProjectRows&);
         // A node the user opens or closes says so, a node opening with no rows asks for them.
         void connectNode(ProjectRows&, TreeNode&, std::optional<std::size_t> index);
-        void pick(const ProjectRows&, std::size_t index);
-        void pickRow(ProjectId, RowKind);   // the project's own node or its options row
+        void pick(const ProjectRows&, std::size_t index, PickTab);
+        void pickRow(ProjectId, RowKind, PickTab);   // the project's own node or its options row
+        // The row the control is or stands in, where it is one a pick opens.
+        [[nodiscard]] std::optional<MenuRow> menuRowOf(const Control&) const;
         // Makes the row current, the project's node opened over it, and scrolls it into view.
         void showRow(ProjectRows&, Control& row);
         [[nodiscard]] bool holdsCurrentRow(const ProjectRows&) const;
@@ -148,11 +173,20 @@ namespace SeeDocs_App
 
         Projects m_projects{};
         bool m_restoring{ false };   // opening nodes the user did not open
+        std::optional<MenuRow> m_menuRow{};   // the row the menu that is up is about
     };
 
 
     //-------------------------------------------------------------------------
 
+
+    template<typename... Args>
+    SurfaceTree::SurfaceTree(const CreateParams& params, Args&&... args)
+        :
+        TreeView{ params, std::forward<Args>(args)... }
+    {
+        connectActions();
+    }
 
     template<typename F>
     EventConnection SurfaceTree::onPick(F&& callback)

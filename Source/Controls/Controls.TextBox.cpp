@@ -379,9 +379,9 @@ namespace ClaFi::Controls
         // handler here adjusts it rather than replacing it. Each action answers for its own
         // state, so an item the box cannot run right now arrives disabled without anything here
         // sorting them.
-        EditContextPopupEvent editEvent{ *this, event.form, items, event.mousePos };
-        editContextPopup(editEvent);
-        if (editEvent.propagationStopped())
+        AdjustContextPopupEvent adjustEvent{ *this, event.form, items, event.mousePos };
+        adjustContextPopup(adjustEvent);
+        if (adjustEvent.propagationStopped())
             return;
 
         Menu menu{ *this };

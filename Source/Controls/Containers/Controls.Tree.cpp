@@ -207,20 +207,26 @@ namespace ClaFi::Controls
     }
 
     // The application has first refusal, and a handler that stops the event has replaced the
-    // menu outright. Stopped here before the menu runs, so nothing above raises a second menu
-    // behind this one. The menu stands on the row it was asked for - the one under the pointer,
-    // or the current row from the keyboard - rather than on the tree, whose bounds run past the
-    // window the moment it scrolls.
+    // menu outright; one on AdjustContextPopupEvent adjusts the tree's commands instead, and a
+    // tree with no node has none of its own. Stopped here before a menu runs, so nothing above
+    // raises a second menu behind this one. The menu stands on the row it was asked for - the one
+    // under the pointer, or the current row from the keyboard - rather than on the tree, whose
+    // bounds run past the window the moment it scrolls.
     void TreeView::nestedContextPopup(ContextPopupEvent& event)
     {
         TreeViewBase::nestedContextPopup(event);
-        if (event.propagationStopped() || m_nodes.empty())
+        if (event.propagationStopped())
+            return;
+        ActionList items;
+        if (!m_nodes.empty())
+            items = { &m_expandAll, &m_collapseAll, &m_collapseOthers };
+        AdjustContextPopupEvent adjustEvent{ *event.control, event.form, items, event.mousePos };
+        adjustContextPopup(adjustEvent);
+        if (adjustEvent.propagationStopped() || items.empty())
             return;
         event.stopPropagation();
         Menu menu{ *event.control };
-        menu.add(m_expandAll);
-        menu.add(m_collapseAll);
-        menu.add(m_collapseOthers);
+        menu.addActions(items);
         menu.execute();
     }
 

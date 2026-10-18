@@ -149,6 +149,8 @@ namespace SeeDocs_App
                     return false;
                 if (left[i].folder.has_value() != right[i].folder.has_value())
                     return false;
+                if (left[i].fullValue.empty() != right[i].fullValue.empty())
+                    return false;
             }
             return true;
         }
@@ -695,6 +697,8 @@ namespace SeeDocs_App
                 else if (column == k_factValue || column == k_factAcross)
                     writeRuns(event.text(), fact.value);
             });
+            if (!fact.fullValue.empty())
+                connectFullValue(row, fact);
         }
         connectLinks(grid);
         m_parts.push_back(&grid);
@@ -1156,11 +1160,11 @@ namespace SeeDocs_App
                         event.text() << rowIcon(*icon) << k_cellIconGap;
                 }
                 writeRuns(event.text(), row.cells[column]);
-                // The qualifier stands at the cell's end, as a tree row's kind word does.
-                if (column == 0 && !row.qualifier.empty())
+                // A qualifier stands at its cell's end, as a tree row's kind word does.
+                if (column < row.qualifiers.size() && !row.qualifiers[column].empty())
                 {
                     event.text() << FlexSpace{ k_kindGap } << TextStyleId::SubBody;
-                    writeRuns(event.text(), row.qualifier);
+                    writeRuns(event.text(), row.qualifiers[column]);
                     event.text() << PopTextStyle{};
                 }
             });
@@ -1327,6 +1331,18 @@ namespace SeeDocs_App
         });
     }
 
+    void PageView::connectFullValue(Grids::Row& row, const Fact& fact)
+    {
+        row.onGetCellTooltip([&fact](Grids::GetCellTooltipEvent& event) {
+            if (event.column().tag().value == k_factValue)
+                event.text() << fact.fullValue;
+        });
+        row.onGetCellEditorText([&fact](Grids::GetCellEditorTextEvent& event) {
+            if (event.column().tag().value == k_factValue)
+                event.text = Text{ fact.fullValue };
+        });
+    }
+
     // **The cell shows more than the comment holds** - its types linked, a missing hint marked, an
     // event's payload named after it - so the editor opens on the comment's own words.
     void PageView::connectHintCell(Grids::Row& gridRow, const TableRow& row,
@@ -1415,7 +1431,7 @@ namespace SeeDocs_App
                 editFootnote(m_footnotes[index]);
             });
         });
-        shown.onEditContextPopup([](EditContextPopupEvent& event) {
+        shown.onAdjustContextPopup([](AdjustContextPopupEvent& event) {
             event.actions.push_back(nullptr);
             event.actions.push_back(&Actions::editFootnote);
         });

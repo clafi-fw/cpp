@@ -298,9 +298,9 @@ namespace ClaFi::Controls
         // that cannot be edited, and a handler here adjusts it rather than replacing it. Each
         // action answers for its own state, so a command the view cannot run right now arrives
         // disabled without anything here sorting them.
-        EditContextPopupEvent editEvent{ *this, event.form, items, event.mousePos };
-        editContextPopup(editEvent);
-        if (editEvent.propagationStopped())
+        AdjustContextPopupEvent adjustEvent{ *this, event.form, items, event.mousePos };
+        adjustContextPopup(adjustEvent);
+        if (adjustEvent.propagationStopped())
             return;
 
         // **No command strip.** The strip across the top of a menu compresses a long edit menu into

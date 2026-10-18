@@ -4,6 +4,8 @@ import SeeDocs_App.Icons;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
+import ClaFi.Browser.Actions;
+
 import ClaFi.Controls.Tree;
 import ClaFi.Controls.Base.ExpanderBase;
 
@@ -23,14 +25,15 @@ namespace SeeDocs_App
 
     TreePickEvent::TreePickEvent(const ProjectId pickedProject, const RowKind pickedKind,
         const std::wstring_view pickedFolder, const ContentsModule* pickedModule,
-        const Type* pickedType)
+        const Type* pickedType, const PickTab pickedTab)
         :
         ::ClaFi::Event{},
         project{ pickedProject },
         kind{ pickedKind },
         folder{ pickedFolder },
         module{ pickedModule },
-        type{ pickedType }
+        type{ pickedType },
+        tab{ pickedTab }
     {
     }
 
@@ -60,7 +63,7 @@ namespace SeeDocs_App
         rows.node = &addNode(projectText(name));
         rows.node->header().setExpanded(false);
         rows.node->header().onClick([this, id](ClickEvent&) {
-            pickRow(id, RowKind::Home);
+            pickRow(id, RowKind::Home, PickTab::Shown);
         });
         m_projects.push_back(std::move(made));
         connectNode(rows, *rows.node, std::nullopt);
@@ -240,6 +243,44 @@ namespace SeeDocs_App
         m_restoring = false;
     }
 
+    // A command taken from the menu runs before the menu returns, so the row is held for as long
+    // as anything can ask about it.
+    void SurfaceTree::nestedContextPopup(ContextPopupEvent& event)
+    {
+        m_menuRow = menuRowOf(*event.control);
+        TreeView::nestedContextPopup(event);
+        m_menuRow.reset();
+    }
+
+    void SurfaceTree::adjustContextPopup(AdjustContextPopupEvent& event)
+    {
+        if (m_menuRow.has_value())
+        {
+            const ActionList leading = { &Browser::Actions::openInNewTab, nullptr };
+            event.actions.insert(event.actions.begin(), leading.begin(), leading.end());
+        }
+        TreeView::adjustContextPopup(event);
+    }
+
+    // Claimed only while a menu is up on a row, so the click always finds the row held, and
+    // anywhere else the browser answers the command for its page.
+    void SurfaceTree::connectActions()
+    {
+        onGetActionState([this](GetActionStateEvent& event) {
+            if (&event.action == &Browser::Actions::openInNewTab && m_menuRow.has_value())
+                event.claim({});
+        });
+        onActionClick([this](ActionClickEvent& event) {
+            if (&event.action != &Browser::Actions::openInNewTab)
+                return;
+            const MenuRow& row = *m_menuRow;
+            if (row.kind == RowKind::Contents)
+                pick(*row.rows, row.index, PickTab::New);
+            else
+                pickRow(row.rows->id, row.kind, PickTab::New);
+        });
+    }
+
     SurfaceTree::ProjectRows* SurfaceTree::rowsOf(const ProjectId id) const
     {
         for (const std::unique_ptr<ProjectRows>& rows : m_projects)
@@ -261,7 +302,7 @@ namespace SeeDocs_App
         rows.options = &node.addItem(
             Text{ rowIcon(RowIcon::Options), Space{ k_iconGap }, k_optionsTitle });
         rows.options->onClick([this, id](ClickEvent&) {
-            pickRow(id, RowKind::Options);
+            pickRow(id, RowKind::Options, PickTab::Shown);
         });
         rows.divider = &node.addDivider();
         rows.divider->setVisible(!rows.contents->empty());
@@ -312,7 +353,7 @@ namespace SeeDocs_App
 
         ProjectRows* holderRows = &rows;
         const auto picked = [this, holderRows, index](ClickEvent&) {
-            pick(*holderRows, index);
+            pick(*holderRows, index, PickTab::Shown);
         };
         if (made.item)
         {
@@ -376,17 +417,37 @@ namespace SeeDocs_App
         });
     }
 
-    void SurfaceTree::pick(const ProjectRows& rows, const std::size_t index)
+    void SurfaceTree::pick(const ProjectRows& rows, const std::size_t index, const PickTab tab)
     {
         const ContentsRow& row = rows.contents->rows()[index];
-        TreePickEvent event{ rows.id, RowKind::Contents, row.folder, row.module, row.type };
+        TreePickEvent event{ rows.id, RowKind::Contents, row.folder, row.module, row.type, tab };
         emitEvent(event);
     }
 
-    void SurfaceTree::pickRow(const ProjectId id, const RowKind kind)
+    void SurfaceTree::pickRow(const ProjectId id, const RowKind kind, const PickTab tab)
     {
-        TreePickEvent event{ id, kind, {}, nullptr, nullptr };
+        TreePickEvent event{ id, kind, {}, nullptr, nullptr, tab };
         emitEvent(event);
+    }
+
+    // A node's header holds its mark and its text but none of the rows under it, so one row at
+    // most holds the control.
+    std::optional<SurfaceTree::MenuRow> SurfaceTree::menuRowOf(const Control& control) const
+    {
+        for (const std::unique_ptr<ProjectRows>& rows : m_projects)
+        {
+            if (rows->node->header().containsNested(control))
+                return MenuRow{ .rows = rows.get(), .kind = RowKind::Home };
+            if (rows->options && rows->options->containsNested(control))
+                return MenuRow{ .rows = rows.get(), .kind = RowKind::Options };
+            for (std::size_t i = 0; i != rows->made.size(); ++i)
+            {
+                const MadeRow& made = rows->made[i];
+                if ((made.item || made.node) && rowOf(made).containsNested(control))
+                    return MenuRow{ .rows = rows.get(), .kind = RowKind::Contents, .index = i };
+            }
+        }
+        return std::nullopt;
     }
 
     void SurfaceTree::showRow(ProjectRows& rows, Control& row)

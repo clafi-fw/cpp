@@ -681,9 +681,9 @@ form-&gt;<span class="fn">onClose</span>([](<span class="tp">FormCloseEvent</spa
             and a handler attached to one nobody raises is silently never called.</p>
             <p>So <strong>two handlers that mean different things get two event types.</strong> The type is what a
             reader sees where the handler is written, and the only thing that says which of the two they are on.</p>
-            <p><code>ContextPopupEvent</code> and <code>EditContextPopupEvent</code> are the worked example. One
+            <p><code>ContextPopupEvent</code> and <code>AdjustContextPopupEvent</code> are the worked example. One
             gesture - a right-click on a text box - but two audiences: a caller replacing the control's menu
-            outright, and a caller adjusting the standard edit menu the control would otherwise show. Two
+            outright, and a caller adjusting the built-in menu the control would otherwise show. Two
             intentions, two types, and each connect site says which one it means.</p>
 
             <h2 id="reference">Reference</h2>

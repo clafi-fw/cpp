@@ -245,10 +245,11 @@ so a control that acts on a double click stops it.
 a plain press. A third press nobody handles arrives as that plain press, so ignoring this event
 loses nothing.
 
-## EditContextPopupEvent
+## AdjustContextPopupEvent
 
 **A handler adjusts the built-in menu here**, through `actions`. To replace the menu outright, stop
-ContextPopupEvent, which comes first.
+ContextPopupEvent, which comes first. Its control is what the menu stands on - a text box, a tree's
+row.
 
 ## DestroyEvent
 

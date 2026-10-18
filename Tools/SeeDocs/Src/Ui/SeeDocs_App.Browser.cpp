@@ -1016,18 +1016,23 @@ namespace SeeDocs_App
         const ShownProject* project = projectOf(event.project);
         if (!project)
             return;
+        std::wstring path;
         switch (event.kind)
         {
             case RowKind::Home:
-                goTo(Url{ homePath(*project) });
-                return;
+                path = homePath(*project);
+                break;
             case RowKind::Options:
-                goTo(Url{ optionsPath(*project) });
-                return;
+                path = optionsPath(*project);
+                break;
             case RowKind::Contents:
-                goTo(Url{ pathOf(*project, event.folder, event.module, event.type) });
-                return;
+                path = pathOf(*project, event.folder, event.module, event.type);
+                break;
         }
+        if (event.tab == PickTab::New)
+            addTab(Url{ path }, SelectTab::No);
+        else
+            goTo(Url{ path });
     }
 
     // The tree stands apart from the page a pick's move takes down, so the move needs no wait.
@@ -1264,21 +1269,19 @@ namespace SeeDocs_App
         OpenProject& open = project.open;
         if (target.isHome())
             return homePageOf(project);
+        const SourceRoots roots = open.project.sourceRoots();
         if (target.isFolder())
-        {
-            return folderPage(open.surface, open.notes, project.contents, target.folder,
-                open.project.sourceRoots());
-        }
+            return folderPage(open.surface, open.notes, project.contents, target.folder, roots);
         if (!target.exportName.empty())
         {
             return exportPage(open.surface, open.notes, *target.contents, *target.module,
-                target.exportName);
+                target.exportName, roots);
         }
         if (!target.type)
-            return modulePage(open.surface, open.notes, *target.contents, *target.module);
+            return modulePage(open.surface, open.notes, *target.contents, *target.module, roots);
         if (target.method.empty())
-            return typePage(open.surface, open.notes, *target.type);
-        return methodPage(open.surface, open.notes, *target.type, target.method);
+            return typePage(open.surface, open.notes, *target.type, roots);
+        return methodPage(open.surface, open.notes, *target.type, target.method, roots);
     }
 
     // The home links to the project's options page by path, ahead of its folders.
