@@ -410,8 +410,15 @@ namespace ClaFi::PlatformImplementation::Windows
 
     HRESULT STDMETHODCALLTYPE CustomInlineObject::GetBreakConditions(DWRITE_BREAK_CONDITION* breakBefore, DWRITE_BREAK_CONDITION* breakAfter)
     {
-        // An inline object breaks like the text around it. A control that must not be broken at
-        // all says so once, with WordWrap::No.
+        // A flex space wraps with the word after it. See TextEngine-Types#flexspace
+        if (m_icon.isFlexSpace)
+        {
+            *breakBefore = DWRITE_BREAK_CONDITION_CAN_BREAK;
+            *breakAfter = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
+            return S_OK;
+        }
+        // Any other inline object breaks like the text around it. A control that must not be
+        // broken at all says so once, with WordWrap::No.
         *breakBefore = DWRITE_BREAK_CONDITION_NEUTRAL;
         *breakAfter = DWRITE_BREAK_CONDITION_NEUTRAL;
         return S_OK;

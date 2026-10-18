@@ -1520,7 +1520,7 @@ namespace SeeDocs_App
         {
             page.facts.push_back({
                 .label = std::wstring{ label },
-                .value = { Run{ .text = source.path.wstring(), .style = RunStyle::Code } }
+                .value = { Run{ .text = source.path.wstring(), .style = RunStyle::Path } }
             });
             label = {};
         }
@@ -1947,7 +1947,7 @@ namespace SeeDocs_App
     }
 
     // The mark of what the name is - a member's line keeps the room blank - a member's type muted
-    // before it, the typed words in the accent and the kind at the line's end; the tooltip is the
+    // before it, the typed words in the spot and the kind at the line's end; the tooltip is the
     // declaration's words and where it stands.
     DropListLine SurfaceBrowser::lineOf(const ListedLine& listed, const NameHit& hit,
         const bool namesProject) const
@@ -1969,7 +1969,7 @@ namespace SeeDocs_App
         if (hit.start.has_value() && *hit.start + hit.length <= name.size())
         {
             text << name.substr(0, *hit.start);
-            text << InkWell::accentInk() << name.substr(*hit.start, hit.length) << PopColor{};
+            text << InkWell::spotInk() << name.substr(*hit.start, hit.length) << PopColor{};
             text << name.substr(*hit.start + hit.length);
         }
         else

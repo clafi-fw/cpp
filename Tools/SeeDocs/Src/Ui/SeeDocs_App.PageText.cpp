@@ -136,6 +136,10 @@ namespace SeeDocs_App
                 case RunStyle::Code:
                     text << TextStyleId::Code << run.text << PopTextStyle{};
                     break;
+                case RunStyle::Path:
+                    text << TextStyleId::Code << InkWell::spotInk() << run.text << PopColor{}
+                        << PopTextStyle{};
+                    break;
                 case RunStyle::Muted:
                     text << InkGrade::Muted << run.text << PopColor{};
                     break;
@@ -277,7 +281,8 @@ namespace SeeDocs_App
 
     // The runs are the one declaration cut round its links, and the tokens are lexed over the
     // whole of it, so a token is clipped to the run it is written in and one reaching past the
-    // run's end goes on in the next.
+    // run's end goes on in the next. A linked token keeps its ink, since a colour pushed inside a
+    // link wins over the link's accent.
     void writeSignature(Text& text, const Runs& runs, const bool links,
         const SourceLanguage language)
     {
@@ -291,14 +296,9 @@ namespace SeeDocs_App
         for (const Run& run : runs)
         {
             const std::size_t end = at + run.text.size();
-            if (links && !run.link.empty())
-            {
-                text << PushLink{ run.link } << run.text << PopLink{};
-                while (next < inked.size() && inked[next].end <= end)
-                    ++next;
-                at = end;
-                continue;
-            }
+            const bool linked = links && !run.link.empty();
+            if (linked)
+                text << PushLink{ run.link };
             std::size_t plain = at;
             while (next < inked.size() && inked[next].start < end)
             {
@@ -315,6 +315,8 @@ namespace SeeDocs_App
             }
             if (plain < end)
                 text << source.substr(plain, end - plain);
+            if (linked)
+                text << PopLink{};
             at = end;
         }
         text << PopTextStyle{};

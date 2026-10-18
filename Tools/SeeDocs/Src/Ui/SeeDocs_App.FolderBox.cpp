@@ -128,7 +128,7 @@ namespace SeeDocs_App
             DropListLine line;
             line.text << rowIcon(RowIcon::Folder) << Space{ k_iconGap };
             if (!leaf.empty())
-                line.text << InkWell::accentInk() << name.substr(0, leaf.size()) << PopColor{};
+                line.text << InkWell::spotInk() << name.substr(0, leaf.size()) << PopColor{};
             line.text << name.substr(leaf.size());
             lines.push_back(std::move(line));
         }

@@ -2052,6 +2052,10 @@ namespace ClaFi
         // --- **Resolve tab-stops and flex-spaces line-by-line** ---
         const std::span<const NativeLineMetrics> built = std::span<const NativeLineMetrics>{ lines }
             .subspan(lineStart);
+        // The room a flex space takes is known in the paint, which fills the box, and at a stated
+        // break width in any phase - lines broken at one stand in that width wherever they are
+        // measured or drawn.
+        const bool fillsFlexSpace = m_eventPhase == EventPhase::Paint || m_breakWidth > 0.0f;
         for (const NativeLineMetrics& line : built)
         {
             float accumulatedShift = 0.0f;
@@ -2085,7 +2089,7 @@ namespace ClaFi
             }
 
             // Pass 2: Distribute remaining space amongst FlexSpace Fillers
-            if (!lineFillers.empty() && m_eventPhase == EventPhase::Paint)
+            if (!lineFillers.empty() && fillsFlexSpace)
             {
                 float totalUsedWidth = line.width + accumulatedShift;
                 // **Short of the box by the fit tolerance.** Filled to the box exactly, the line

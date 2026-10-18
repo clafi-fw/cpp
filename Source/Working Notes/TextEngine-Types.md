@@ -8,6 +8,20 @@ The author's side of the footnote of the same name.
 time, and a line filled to the box exactly can come back from that build a hair wider than the
 box - which a wrapping text breaks at the gap, and a one-line box then collapses.
 
+**The gap stands in the text as U+FFFC**, a contingent break, which both breakers may cut on either
+side of. Cut after, the gap trails its line and fills nothing, and the words land at the start of
+the next line; cut before, it leads the next line and fills it. A greedy breaker cuts after it
+while the gap's floor fits and before it once the line is full, so the words moved between the two
+edges as a cell narrowed. Each backend states the rule to its breaker: DirectWrite through
+CustomInlineObject::GetBreakConditions - can break before, may not break after - and the Linux
+layout by writing LINEBREAK_ALLOWBREAK before the gap and LINEBREAK_NOBREAK on it over what
+set_linebreaks_utf32 answered.
+
+**A stated break width fills in the Calculate phase** because TooltipLabel's own layout never
+enters the Paint one - WithTextLayout states no phase, and the over-text hint is measured and
+drawn from the lines broken at the cell's width. Filled only in the paint, the hint measured the
+gap at its floor and showed the words at the left.
+
 ## LineFade
 
 The collapse line's overrun is its own width and everything appended to it, less the room its

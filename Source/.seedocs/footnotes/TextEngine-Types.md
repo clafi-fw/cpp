@@ -32,6 +32,14 @@ has one number, and the column counts along the whole of it. For the row, see Te
 **minWidth is the gap's width on a full line**, one with no room to spare. To hold the two sides
 apart there, state minWidth rather than writing a space beside the gap.
 
+**The gap wraps with the word after it.** A line may break before the gap and never right after
+it, so the words it holds at a line's end stand at the end of the next line when they wrap. A
+blank written between the gap and the word is a break of its own, and the word wraps alone.
+
+**A measurement fills the gap where the width is stated.** Lines broken at a stated width - see
+TextLayout::setBreakWidth - measure the gap as it is drawn, so a hint repeating a cell's lines puts
+the words where the cell has them. Measured at no stated width, the gap is its minWidth.
+
 ## LineFade
 
 lineFadeSpan turns `overrun` into the width of the fade.

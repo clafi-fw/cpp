@@ -367,6 +367,10 @@ Constants = [ =[ Name, Namespace, Type, Value, Constant, Declaration, Module, Fi
 `SeeDocs` opens projects, as many at once as are asked for: the ones left open last time, and the
 one its command line's folder stands for. It shows each project's database and footnotes as pages.
 
+**The theme's spot marks what stands apart from the interface** - the mark of a project and of the
+root that lists them, a path, the letters a search has typed, the types in a declaration and a
+footnote's mark. The accent marks what answers to the interface: a link, the focus, a selection.
+
 ### The application menu
 
 **New project** opens a window of its own over the main one.
@@ -464,7 +468,7 @@ project window's box for where to store the project.
 - The list holds the folders in the folder the text names up to its last separator, whose names
   start with what follows it - case aside, by name, at most 200.
 - Folders whose names start with a dot are listed only once a dot is typed.
-- Each is marked as the tree marks a folder, the letters typed in the accent.
+- Each is marked as the tree marks a folder, the letters typed in the spot.
 - A source's editor reads a path typed relative from the project's folder. The New project window's
   box lists only a path from a root.
 - A server named alone, as `\\server\` is, lists nothing, its shares being looked up over the
@@ -759,6 +763,9 @@ writer puts words in - and only in C++ sources.
 hint, in a note's prose or code, or in a signature - bare or qualified, as `Control` or
 `Grids::Row` - links wherever the surface has a page for it.
 
+**A link in a declaration keeps the declaration's colours** - a type is coloured as a type, and
+underlined while the pointer is over it. Everywhere else a link is drawn in the accent.
+
 **A link to an alias, a struct, a union or an enum previews its declaration** in its tooltip,
 coloured.
 
@@ -888,7 +895,7 @@ The box drops a list as it is typed into.
   - Search "row" in all projects
 - **The ten best names** follow, under a divider. Each carries the mark of what it is - a member's
   line leaves the mark's room blank - a member's type muted before it, the words typed in the
-  accent, and its kind at the line's end.
+  spot, and its kind at the line's end.
 - **A tooltip** beside the list holds the current line's hint and where it stands.
 
 A search that would search what the one above it does is left out: a project's home and its options

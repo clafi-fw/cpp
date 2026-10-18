@@ -15,6 +15,7 @@ namespace SeeDocs_App
     {
         Plain,
         Code,      // a name, a type or a signature
+        Path,      // a file's or a folder's, as code in the spot ink
         Muted,
         Bold,
         Missing    // what the surface ought to state and does not - a hint, a base

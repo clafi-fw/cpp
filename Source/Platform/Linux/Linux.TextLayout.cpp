@@ -207,6 +207,16 @@ namespace ClaFi::Platform::Linux
 
         g_breaks.resize(m_textLength);
         set_linebreaks_utf32(reinterpret_cast<const utf32_t*>(params.text.data()), m_textLength, "en", g_breaks.data());
+        // A flex space wraps with the word after it. See TextEngine-Types#flexspace
+        for (const std::pair<std::size_t, BakedInlineObject>& object : params.inlineObjects)
+        {
+            if (!object.second.isFlexSpace)
+                continue;
+            const std::size_t at = object.first;
+            g_breaks[at] = LINEBREAK_NOBREAK;
+            if (at > 0)
+                g_breaks[at - 1] = LINEBREAK_ALLOWBREAK;
+        }
 
         breakLines(params);
         placeLines();

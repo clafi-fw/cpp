@@ -813,7 +813,7 @@ namespace ClaFi::Controls
         }
     }
 
-    // The part typed so far in the accent, the rest in the text's own ink, and the kind muted at
+    // The part typed so far in the spot, the rest in the text's own ink, and the kind muted at
     // the end of the line - a flex space lands every kind on the list's right edge. The tooltip is
     // the signature in the code style and the sentence under it; a keyword, or an entry that says
     // no more than its name, has none.
@@ -822,7 +822,7 @@ namespace ClaFi::Controls
         DropListLine line{};
         const std::wstring_view name = item.name;
         if (typed)
-            line.text << InkWell::accentInk() << name.substr(0, typed) << PopColor{};
+            line.text << InkWell::spotInk() << name.substr(0, typed) << PopColor{};
         line.text << name.substr(typed);
         line.text << FlexSpace{ k_kindGap } << InkWell::textInk(InkGrade::Muted)
             << Syntax::completionKindName(item.kind) << PopColor{};

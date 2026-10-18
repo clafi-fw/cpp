@@ -34,14 +34,14 @@ namespace SeeDocs_App
         constexpr float k_flapFill = 0.2f;   // the open folder's flap, tinted rather than filled
         constexpr float k_haloWidth = 3.2f;  // the band cleared around the spark, in strokes
 
-        // Strong ink holds the body, the accent marks the part that names the kind, and the
-        // surface clears a band round a part that crosses another.
+        // Strong ink holds the body, the accent names the kind and the spot marks the projects.
         struct Inks
         {
             Color body{};
             Color accent{};
             Color accentSoft{};
-            Color surface{};
+            Color spot{};
+            Color surface{};   // clears a band round a part that crosses another
         };
 
         // How one icon is drawn: the canvas, its inks and the grid's place in the control.
@@ -69,6 +69,7 @@ namespace SeeDocs_App
                 event.textRgb(InkGrade::Strong),
                 accent,
                 accent.withOpacity(k_softFill),
+                event.spotRgb(InkGrade::Strongest),
                 event.surfaceRgb()
             };
         }
@@ -162,7 +163,7 @@ namespace SeeDocs_App
             path.close();
         }
 
-        // A house, its door in the accent.
+        // A house, its door in the spot.
         void paintHome(const Drawing& drawing)
         {
             PixelPath door;
@@ -171,7 +172,7 @@ namespace SeeDocs_App
             door.lineTo(8.2f, 8.4f);
             door.lineTo(8.2f, 12.0f);
             door.close();
-            drawing.fill(door, drawing.inks.accent);
+            drawing.fill(door, drawing.inks.spot);
 
             PixelPath house;
             house.moveTo(1.8f, 7.0f);
@@ -207,7 +208,7 @@ namespace SeeDocs_App
             band.lineTo(box.right, bandBottom);
             band.lineTo(box.left, bandBottom);
             band.close();
-            drawing.fill(band, drawing.inks.accent);
+            drawing.fill(band, drawing.inks.spot);
 
             PixelPath folder;
             Icons::FolderIcon::addOutline(folder, box);

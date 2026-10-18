@@ -216,6 +216,11 @@ namespace SeeDocs_App
             return { .text = std::move(text), .style = RunStyle::Code, .link = std::move(link) };
         }
 
+        [[nodiscard]] Run pathRun(std::wstring text)
+        {
+            return { .text = std::move(text), .style = RunStyle::Path };
+        }
+
         [[nodiscard]] Run muted(std::wstring text)
         {
             return { .text = std::move(text), .style = RunStyle::Muted };
@@ -772,7 +777,7 @@ namespace SeeDocs_App
                 fullValue += atLine;
             page.facts.push_back({
                 .label = std::wstring{ k_sourceLabel },
-                .value = { code(file.relative + std::wstring{ atLine }) },
+                .value = { pathRun(file.relative + std::wstring{ atLine }) },
                 .fullValue = std::move(fullValue),
                 .source = source
             });
@@ -831,7 +836,7 @@ namespace SeeDocs_App
                     (roots[root] / std::filesystem::path{ path }).lexically_normal();
                 page.facts.push_back({
                     .label = std::wstring{ k_sourceLabel },
-                    .value = { code(std::wstring{ path }) },
+                    .value = { pathRun(std::wstring{ path }) },
                     .fullValue = onDisk.wstring(),
                     .folder = onDisk
                 });
