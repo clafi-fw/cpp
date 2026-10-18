@@ -34,7 +34,7 @@ namespace SeeDocs_App
         NameKind kind{ NameKind::Type };
         std::wstring_view kindWord;   // what its row calls its kind - control before a type's own
         std::wstring name;     // as its row spells it - an event by its alias, a folder by its own
-        Names spellings;       // what else finds it - a type's qualified name, an event's struct
+        Names spellings;       // what else finds it - an event's struct, a folder's path
         std::wstring owner;    // what a two-part query's first part is found in
         std::wstring nameSpace;   // what the names its hint holds are read in
         const Type* type{ nullptr };               // the type, or a member's

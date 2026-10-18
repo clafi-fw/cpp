@@ -856,8 +856,10 @@ every member a type's page lists: its properties, its events, its methods and it
   for it.
 - A method or a function is one name, however many overloads it has.
 
-A name is found by every spelling it has: what its row shows - an event by its alias - and a type's
-qualified name, an event's struct and its method, a folder's path and a module's whole name.
+A name is found by every spelling it has: what its row shows - an event by its alias - and an
+event's struct and its method, a folder's path and a module's whole name. A type is found by its
+own name alone, never by the namespace or the module it stands in - its namespace counts only as a
+query's first part.
 
 ### Matching and ranking
 

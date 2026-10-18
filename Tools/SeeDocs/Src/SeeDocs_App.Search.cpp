@@ -848,7 +848,7 @@ namespace SeeDocs_App
             .kind = NameKind::Type,
             .kindWord = type.isControl ? k_controlWord : kindWord(type.kind),
             .name = type.name,
-            .spellings = { type.qualifiedName },
+            .spellings = {},
             .owner = std::wstring{ scopeOf(type.qualifiedName) },
             .nameSpace = type.nameSpace,
             .type = &type,
