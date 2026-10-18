@@ -25,9 +25,9 @@ forEachRow.
 **A grid follows the user as a container of its own**, keeping the selected cell and answering
 the keys inside it: the arrows, Home, End, PageUp and PageDown. Built with Interactivity::None it
 stands in the container above it instead - a page holding the one selected item: its rows are
-that container's items, the selection goes where the container's item goes, the four keys that
-address a container are the container's, and Up and Down travel on past the first and the last
-row into the rest of it - see StackBase.
+that container's items, the selection goes where the container's item goes, the keys that address
+a container - Ctrl+Home, Ctrl+End and the page keys - are the container's, and Up and Down travel
+on past the first and the last row into the rest of it - see StackBase.
 
 **The arrows read the cells as a table.** The edges the cells share are its lines - bands down,
 columns across - and a merged cell, a group's span or an expander's header covers more than one
@@ -38,7 +38,8 @@ the nearest band ahead holding anything, at the column nearest the line.
 
 - Left and Right rest at the ends of a line. Up and Down hand the key on past the first and the
   last row.
-- Home and End go to the ends of the band the selected cell is on.
+- Home and End go to the ends of the band the selected cell is on, in every grid. Ctrl+Home and
+  Ctrl+End go to the first and the last row of a grid that is a container of its own.
 - A selection scrolled out of view is still where a key moves from.
 
 ## RowGroupSpan

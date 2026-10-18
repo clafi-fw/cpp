@@ -830,7 +830,8 @@ A page holds one selected item - a row of one of its grids, a section's header o
 and the keys walk the page as one.
 
 - **Up and Down** move over rows, headers and boxes alike, from one section into the next.
-- **Home and End** go to the page's first and last item.
+- **Home and End** go to the ends of a row; Ctrl+Home and Ctrl+End to the page's first and last
+  item.
 - **PageUp and PageDown** go a screenful on.
 - **Left and Right** stay on the row or the header.
 - **Tab** leaves the page as a whole.

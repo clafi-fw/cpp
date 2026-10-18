@@ -283,9 +283,10 @@ namespace ClaFi::Controls::Grids
         case Keys::Home:
         case Keys::End:
             {
-                // Home, End and the page keys address a container. A grid standing in one leaves
-                // them to it, and the selection leaves the grid with them.
-                if (interactivity() != Interactivity::ActiveContainer)
+                // The ends of the line are the row's wherever the grid stands. Under Ctrl the keys
+                // address a container, as the page keys do: a grid standing in one leaves them to
+                // it, and the selection leaves the grid with them.
+                if (event.modifiers.ctrl && interactivity() != Interactivity::ActiveContainer)
                     break;
                 const ScrollDirection edge = event.key == Keys::Home
                     ? ScrollDirection::ToBegin
@@ -303,6 +304,7 @@ namespace ClaFi::Controls::Grids
         case Keys::Prior:
         case Keys::Next:
             {
+                // The page keys address a container, and a grid standing in one leaves them to it.
                 if (interactivity() != Interactivity::ActiveContainer)
                     break;
                 const ScrollDirection direction = event.key == Keys::Next
@@ -562,7 +564,7 @@ namespace ClaFi::Controls::Grids
         const std::size_t bestIndex = table.endStop(table.bandAt(line), toBegin);
         // The outermost grid answers these keys whenever the selection is in its field, so a
         // press at the edge of the line rests there. Letting it travel on hands it to the focus
-        // navigator, which answers with the first or last row of the grid.
+        // navigator, which answers with an end of the container the grid is or stands in.
         if (bestIndex == sourceIndex || bestIndex == k_maxSize)
             return true;
 

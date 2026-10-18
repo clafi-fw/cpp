@@ -53,6 +53,13 @@ Two things moved with it:
   navigator once took such a key and searched around the selected row; it now hands a grid's
   arrows back as nothing - see GridBase navigationNeighbour.
 
+## GridBase nestedKeyDown Home and End
+
+2026-10-18, Oj: "Home/End without modifiers in a grid row should go to the first and last cell in
+that row" - in a grid standing in a page as much as in one that is a container of its own. Of
+the four keys that addressed the container in a None grid (2026-10-16), only Ctrl+Home, Ctrl+End
+and the page keys still do.
+
 ## RowExpander navigationEntry
 
 2026-10-18. Up from a footnote box under a SeeDocs table landed on the section's header instead
