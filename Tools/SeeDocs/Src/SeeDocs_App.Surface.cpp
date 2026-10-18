@@ -58,6 +58,8 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_richControl = L"RichControl";
         // How many aliases a spelling is followed through before it is given up as circular.
         constexpr std::size_t k_aliasDepth = 8;
+        // How deep a look-up runs inside the base walks of others before it gives up.
+        constexpr std::size_t k_lookUpDepth = 8;
 
         [[nodiscard]] std::optional<std::wstring_view> knownKind(const std::wstring_view type)
         {
@@ -124,6 +126,21 @@ namespace SeeDocs_App
             if (cut == std::wstring_view::npos)
                 return {};
             return nameSpace.substr(0, cut);
+        }
+
+        // The scope a scope stands in, a template's arguments read past - empty at the top.
+        [[nodiscard]] std::wstring_view outerScope(const std::wstring_view scope)
+        {
+            const std::wstring_view bare = bareName(scope);
+            if (bare.size() == scope.size())
+                return {};
+            return scope.substr(0, scope.size() - bare.size() - k_scope.size());
+        }
+
+        // Whether a type is declared inside another rather than at a namespace's scope.
+        [[nodiscard]] bool isNested(const Type& type)
+        {
+            return bareName(type.name).size() != type.name.size();
         }
 
         // Whether a namespace is that one or stands inside it.
@@ -275,6 +292,11 @@ namespace SeeDocs_App
             || kind == TypeKind::Enum || kind == TypeKind::Interface;
     }
 
+    std::wstring_view Type::enclosingScope() const
+    {
+        return outerScope(qualifiedName);
+    }
+
     std::size_t Surface::addFile(SourceFile file)
     {
         m_files.push_back(std::move(file));
@@ -370,32 +392,32 @@ namespace SeeDocs_App
     }
 
     const Type* Surface::resolve(const std::wstring_view spelled,
-        const std::wstring_view nameSpace) const
+        const std::wstring_view scope) const
     {
         std::wstring_view name = plainType(withoutArguments(spelled));
-        std::wstring_view from = nameSpace;
+        std::wstring_view from = scope;
         for (std::size_t depth = 0; depth != k_aliasDepth; ++depth)
         {
             const Type* type = lookUp(name, from);
             if (!type || type->kind != TypeKind::Alias)
                 return type;
             name = plainType(withoutArguments(type->target));
-            from = type->nameSpace;
+            from = type->enclosingScope();
         }
         return nullptr;
     }
 
     const Type* Surface::named(const std::wstring_view spelled,
-        const std::wstring_view nameSpace) const
+        const std::wstring_view scope) const
     {
-        return lookUp(plainType(withoutArguments(spelled)), nameSpace);
+        return lookUp(plainType(withoutArguments(spelled)), scope);
     }
 
     const Type* Surface::publicType(const std::wstring_view spelled,
-        const std::wstring_view nameSpace) const
+        const std::wstring_view scope) const
     {
         std::wstring_view name = plainType(withoutArguments(spelled));
-        std::wstring_view from = nameSpace;
+        std::wstring_view from = scope;
         for (std::size_t depth = 0; depth != k_aliasDepth; ++depth)
         {
             const Type* type = lookUp(name, from);
@@ -404,7 +426,7 @@ namespace SeeDocs_App
             if (type->kind != TypeKind::Alias)
                 return nullptr;
             name = plainType(withoutArguments(type->target));
-            from = type->nameSpace;
+            from = type->enclosingScope();
         }
         return nullptr;
     }
@@ -416,16 +438,16 @@ namespace SeeDocs_App
     }
 
     std::wstring Surface::resolvedBase(const std::wstring_view spelled,
-        std::wstring_view nameSpace) const
+        std::wstring_view scope) const
     {
         std::wstring result = std::wstring{ spelled };
         for (std::size_t depth = 0; depth != k_aliasDepth; ++depth)
         {
-            const Type* type = lookUp(plainType(withoutArguments(result)), nameSpace);
+            const Type* type = lookUp(plainType(withoutArguments(result)), scope);
             if (!type || type->kind != TypeKind::Alias || type->isPublic())
                 return result;
             result = type->target;
-            nameSpace = type->nameSpace;
+            scope = type->enclosingScope();
         }
         return result;
     }
@@ -442,7 +464,7 @@ namespace SeeDocs_App
         struct Spelled
         {
             std::wstring text;
-            std::wstring nameSpace;
+            std::wstring scope;
             std::wstring module;    // the unit spelling it, whose uses say which library it means
         };
         std::vector<Spelled> queue;
@@ -454,11 +476,11 @@ namespace SeeDocs_App
             queue.pop_back();
             const std::wstring_view head = plainType(withoutArguments(spelled.text));
             const std::wstring key =
-                spelled.nameSpace + std::wstring{ k_scope } + std::wstring{ head };
+                spelled.scope + std::wstring{ k_scope } + std::wstring{ head };
             if (!seen.insert(key).second)
                 continue;
 
-            const Type* found = lookUp(head, spelled.nameSpace);
+            const Type* found = lookUp(head, spelled.scope);
             // The libraries answer for a class the tree does not declare, and only for one.
             if (!found)
             {
@@ -470,7 +492,8 @@ namespace SeeDocs_App
             }
             if (found->kind == TypeKind::Alias)
             {
-                queue.push_back({ found->target, found->nameSpace, found->module });
+                queue.push_back({ found->target, std::wstring{ found->enclosingScope() },
+                    found->module });
                 continue;
             }
             const std::wstring_view bare = bareName(found->name);
@@ -488,19 +511,20 @@ namespace SeeDocs_App
                 const auto parameter = std::ranges::find(parameters, baseHead);
                 if (parameter == parameters.end())
                 {
-                    queue.push_back({ base, found->nameSpace, found->module });
+                    queue.push_back({ base, std::wstring{ found->enclosingScope() },
+                        found->module });
                     continue;
                 }
                 const std::size_t index =
                     static_cast<std::size_t>(parameter - parameters.begin());
                 if (index < arguments.size())
-                    queue.push_back({ arguments[index], spelled.nameSpace, spelled.module });
+                    queue.push_back({ arguments[index], spelled.scope, spelled.module });
             }
         }
         return false;
     }
 
-    std::wstring Surface::valueKindOf(const std::wstring_view type, std::wstring_view nameSpace,
+    std::wstring Surface::valueKindOf(const std::wstring_view type, std::wstring_view scope,
         bool& optional) const
     {
         optional = false;
@@ -525,13 +549,13 @@ namespace SeeDocs_App
             if (const std::optional<std::wstring_view> known = knownKindOf(head))
                 return std::wstring{ *known };
 
-            const Type* found = lookUp(head, nameSpace);
+            const Type* found = lookUp(head, scope);
             if (!found)
                 return std::wstring{ k_unknownKind };
             if (found->kind == TypeKind::Alias)
             {
                 spelled = std::wstring{ plainType(found->target) };
-                nameSpace = found->nameSpace;
+                scope = found->enclosingScope();
                 continue;
             }
             if (found->kind == TypeKind::Defined)
@@ -615,9 +639,12 @@ namespace SeeDocs_App
         {
             type.isControl = reachesControl(type);
             for (Property& property : type.properties)
-                property.valueKind = valueKindOf(property.type, type.nameSpace, property.optional);
+            {
+                property.valueKind =
+                    valueKindOf(property.type, type.qualifiedName, property.optional);
+            }
             std::erase_if(type.restatements, [&](Restatement& restatement) {
-                return !settleRestatement(restatement, type.nameSpace);
+                return !settleRestatement(restatement, type.qualifiedName);
             });
         }
     }
@@ -790,44 +817,61 @@ namespace SeeDocs_App
             shiftPlace(problem.place);
     }
 
-    // A qualified spelling is matched by its tail; a bare one through the namespaces enclosing
-    // the caller, and then among every type of that name, the one declared nearest the caller.
-    const Type* Surface::lookUp(std::wstring_view bare, const std::wstring_view nameSpace) const
+    // **A name is looked up the way C++ looks it up**, then among the types of that name at a
+    // namespace's scope, the one nearest. See README#names
+    const Type* Surface::lookUp(std::wstring_view spelled, std::wstring_view scope,
+        const std::size_t depth) const
     {
-        if (bare.starts_with(k_scope))
-            bare.remove_prefix(k_scope.size());
-        if (bare.empty())
-            return nullptr;
-
-        if (bare.find(k_scope) == std::wstring_view::npos)
+        if (spelled.starts_with(k_scope))
         {
-            std::wstring_view prefix = nameSpace;
-            while (true)
-            {
-                const std::wstring qualified = prefix.empty()
-                    ? std::wstring{ bare }
-                    : std::wstring{ prefix } + std::wstring{ k_scope } + std::wstring{ bare };
-                if (const Type* type = typeNamed(qualified))
-                    return type;
-                if (prefix.empty())
-                    break;
-                prefix = enclosing(prefix);
-            }
+            spelled.remove_prefix(k_scope.size());
+            scope = {};
         }
-
-        const auto found = m_byBareName.find(std::wstring{ bareName(bare) });
+        if (spelled.empty())
+            return nullptr;
+        const std::wstring_view bare = bareName(spelled);
+        const auto found = m_byBareName.find(std::wstring{ bare });
         if (found == m_byBareName.end())
             return nullptr;
 
+        if (bare.size() == spelled.size())
+        {
+            const bool nestedNamesake = std::ranges::any_of(found->second,
+                [this](const std::size_t index) {
+                    return isNested(m_types[index]);
+                });
+            std::wstring_view prefix = scope;
+            while (true)
+            {
+                const std::wstring qualified = prefix.empty()
+                    ? std::wstring{ spelled }
+                    : std::wstring{ prefix } + std::wstring{ k_scope } + std::wstring{ spelled };
+                if (const Type* type = typeNamed(qualified))
+                    return type;
+                const Type* owner = nestedNamesake ? typeNamed(prefix) : nullptr;
+                if (owner)
+                {
+                    if (const Type* inherited = inheritedType(*owner, spelled, depth))
+                        return inherited;
+                }
+                if (prefix.empty())
+                    break;
+                prefix = outerScope(prefix);
+            }
+        }
+
+        const std::wstring tail = std::wstring{ k_scope } + std::wstring{ spelled };
         const Type* nearest = nullptr;
         std::size_t nearestShare = 0;
         for (const std::size_t index : found->second)
         {
             const Type& type = m_types[index];
-            const std::wstring tail = std::wstring{ k_scope } + std::wstring{ bare };
-            if (type.qualifiedName != bare && !type.qualifiedName.ends_with(tail))
+            // Outside the scopes it is seen in, a nested type is named with its outer type.
+            if (spelled.size() < type.name.size())
                 continue;
-            const std::size_t share = sharedPrefix(type.nameSpace, nameSpace);
+            if (type.qualifiedName != spelled && !type.qualifiedName.ends_with(tail))
+                continue;
+            const std::size_t share = sharedPrefix(type.nameSpace, scope);
             if (!nearest || share > nearestShare)
             {
                 nearest = &type;
@@ -837,21 +881,88 @@ namespace SeeDocs_App
         return nearest;
     }
 
+    // A base that is one of a template's parameters stands for the argument the spelling reaching
+    // the template gave it, read where that spelling is - which is how a mixin hands its host on.
+    const Type* Surface::inheritedType(const Type& owner, const std::wstring_view name,
+        const std::size_t depth) const
+    {
+        if (depth == k_lookUpDepth)
+            return nullptr;
+
+        struct Reached
+        {
+            const Type* type{ nullptr };
+            std::wstring spelling;   // what reached it, its template arguments included
+            std::wstring scope;      // where that spelling is read
+        };
+        std::deque<Reached> pending;
+        pending.push_back({
+            .type = &owner,
+            .spelling = owner.name,
+            .scope = owner.nameSpace
+        });
+        std::set<const Type*> seen = { &owner };
+        while (!pending.empty())
+        {
+            const Reached reached = std::move(pending.front());
+            pending.pop_front();
+            const Names parameters = templateParameterNames(reached.type->templateParameters);
+            const Names arguments = argumentsOf(reached.spelling);
+            for (const std::wstring& base : reached.type->bases)
+            {
+                std::wstring spelling = base;
+                std::wstring scope{ reached.type->enclosingScope() };
+                const auto parameter =
+                    std::ranges::find(parameters, plainType(withoutArguments(base)));
+                if (parameter != parameters.end())
+                {
+                    const std::size_t index =
+                        static_cast<std::size_t>(parameter - parameters.begin());
+                    if (index >= arguments.size())
+                        continue;
+                    spelling = arguments[index];
+                    scope = reached.scope;
+                }
+                const Type* type = nullptr;
+                for (std::size_t step = 0; step != k_aliasDepth; ++step)
+                {
+                    type = lookUp(plainType(withoutArguments(spelling)), scope, depth + 1);
+                    if (!type || type->kind != TypeKind::Alias)
+                        break;
+                    spelling = type->target;
+                    scope = type->enclosingScope();
+                }
+                if (!type || type->kind == TypeKind::Alias || !seen.insert(type).second)
+                    continue;
+                const std::wstring qualified =
+                    type->qualifiedName + std::wstring{ k_scope } + std::wstring{ name };
+                if (const Type* nested = typeNamed(qualified))
+                    return nested;
+                pending.push_back({
+                    .type = type,
+                    .spelling = std::move(spelling),
+                    .scope = std::move(scope)
+                });
+            }
+        }
+        return nullptr;
+    }
+
     // A construction - Padding{ 4.0f } - is of the type it opens with. A qualified name alone is
     // an enum's member, of the enum, or a class's constant, of the constant's declared type. A
     // bare name alone is a constant: one of the file's own the scanner has typed already, else one
     // the tree exports, of its declared type.
     bool Surface::settleRestatement(Restatement& restatement,
-        const std::wstring_view nameSpace) const
+        const std::wstring_view scope) const
     {
         const std::wstring& value = restatement.value;
         if (value.ends_with(L'}') || value.ends_with(L')'))
-            return named(restatement.type, nameSpace) != nullptr;
-        const std::size_t scope = value.rfind(k_scope);
-        if (scope == std::wstring::npos)
+            return named(restatement.type, scope) != nullptr;
+        const std::size_t lastScope = value.rfind(k_scope);
+        if (lastScope == std::wstring::npos)
         {
             if (!restatement.type.empty())
-                return named(restatement.type, nameSpace) != nullptr;
+                return named(restatement.type, scope) != nullptr;
             for (const Variable& variable : m_variables)
             {
                 if (variable.field.name != value)
@@ -861,18 +972,18 @@ namespace SeeDocs_App
             }
             return false;
         }
-        const Type* owner = resolve(restatement.type, nameSpace);
+        const Type* owner = resolve(restatement.type, scope);
         if (!owner)
             return false;
         if (owner->kind == TypeKind::Enum)
             return true;
-        const std::wstring member = value.substr(scope + k_scope.size());
+        const std::wstring member = value.substr(lastScope + k_scope.size());
         for (const Field& field : owner->fields)
         {
             if (!field.isStatic || field.name != member)
                 continue;
             restatement.type = std::wstring{ plainType(field.type) };
-            return named(restatement.type, owner->nameSpace) != nullptr;
+            return named(restatement.type, owner->qualifiedName) != nullptr;
         }
         return false;
     }

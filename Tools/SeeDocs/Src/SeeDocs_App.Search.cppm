@@ -36,7 +36,7 @@ namespace SeeDocs_App
         std::wstring name;     // as its row spells it - an event by its alias, a folder by its own
         Names spellings;       // what else finds it - an event's struct, a folder's path
         std::wstring owner;    // what a two-part query's first part is found in
-        std::wstring nameSpace;   // what the names its hint holds are read in
+        std::wstring scope;    // where the names its hint holds are read
         const Type* type{ nullptr };               // the type, or a member's
         const ContentsModule* module{ nullptr };   // where it is declared; null for a folder
         std::wstring folder;   // the path of the folder it stands in, or a folder's own

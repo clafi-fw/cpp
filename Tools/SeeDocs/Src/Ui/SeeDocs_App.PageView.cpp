@@ -256,7 +256,8 @@ namespace SeeDocs_App
         }
 
         // A page wears the mark its tree row does - a folder's the folder, a header's the
-        // module's - and the root wears home's; a member's page has none, as its crumb has none.
+        // module's - and the root wears home's; a member's page and a list have none, as their
+        // crumbs have none.
         [[nodiscard]] std::optional<RowIcon> iconOf(const PageKind kind, const Type* type)
         {
             switch (kind)
@@ -275,6 +276,7 @@ namespace SeeDocs_App
                     return std::nullopt;
                 case PageKind::Search:
                     return RowIcon::Search;
+                case PageKind::List:
                 case PageKind::Member:
                     break;
             }
@@ -444,6 +446,18 @@ namespace SeeDocs_App
                 addSignatures(section);
                 continue;
             }
+            // A table with no heading is what the page is about, and its title already names it.
+            if (section.kind == SectionKind::Table && section.heading.empty())
+            {
+                StackPanel& body = m_pageBox.body().add<StackPanel>(
+                    Orientation::Vertical,
+                    Padding{ 0.0f },
+                    Spacing{ 0.0f }
+                );
+                m_parts.push_back(&body);
+                addTable(body, section.table);
+                continue;
+            }
             Expander& expander = addSection(section);
             switch (section.kind)
             {
@@ -454,7 +468,11 @@ namespace SeeDocs_App
                     addTree(expander, section.branches, section.treeOpen);
                     break;
                 case SectionKind::Table:
-                    addTable(expander, section.table);
+                    addTable(expander.createBody<StackPanel>(
+                        Orientation::Vertical,
+                        Padding{ 0.0f },
+                        Spacing{ 0.0f }
+                    ), section.table);
                     break;
                 case SectionKind::Signature:
                     break;
@@ -846,13 +864,8 @@ namespace SeeDocs_App
     // any row has a footnote and the buttons where any has a command, a header where the table
     // asks for one, and under it a slot per footnote. The hints are typed over where the page
     // writes its words back.
-    void PageView::addTable(Expander& expander, const Table& table)
+    void PageView::addTable(StackPanel& body, const Table& table)
     {
-        StackPanel& body = expander.createBody<StackPanel>(
-            Orientation::Vertical,
-            Padding{ 0.0f },
-            Spacing{ 0.0f }
-        );
         Grids::Grid& grid = body.add<Grids::Grid>(
             themeMetrics().page,
             UiElement::Section,
@@ -1062,6 +1075,8 @@ namespace SeeDocs_App
         {
             Grids::RowExpander& groupExpander = grid.addExpander();
             ExpanderHeader& header = groupExpander.header();
+            header.setTextFormat(TextFormat{ TextStyleId::SubSection });
+            header.setVerticalTextAnchor(VerticalTextAnchor::Center);
             Text label;
             writeLabel(label, group);
             header.setHeaderText(label);

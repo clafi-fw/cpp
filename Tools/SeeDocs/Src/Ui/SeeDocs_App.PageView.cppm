@@ -229,7 +229,7 @@ namespace SeeDocs_App
         [[nodiscard]] Expander& addSection(const Section&);
         void addProse(Expander&, const Section&);
         void addTree(Expander&, const Branches&, bool nodesOpen);
-        void addTable(Expander&, const Table&);
+        void addTable(StackPanel& body, const Table&);   // the grid, and the footnotes under it
         void addSignatures(const Section&);
         void addCommands();
         // Under the tree or a node of it: a branch with nothing under it is an item, any other

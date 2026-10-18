@@ -236,7 +236,7 @@ namespace SeeDocs_App
         struct ShownProject;
         // What a path names, read off its segments: the root for none, else a project by its
         // segment, and in it its options page, or the folders down from its root as far as they
-        // go - its home for none - then a module of the last folder, a type of
+        // go - its home for none - then a list of the last folder, or a module of it, a type of
         // that or a function or a constant of the module, and a method of the type. A segment
         // nothing answers for makes the path one no project open carries.
         struct Target
@@ -250,6 +250,7 @@ namespace SeeDocs_App
             std::wstring_view exportName{};     // a function or a constant of the module
             std::wstring_view method{};
             std::wstring search{};              // what a search page searches for
+            std::optional<ListKind> list{};     // a list of the folder's
             std::size_t depth{ 0 };   // segments of the path
             bool projectOptions{ false };   // the project's options page
             bool searching{ false };   // a search page - a folder's, a project's, or the root's

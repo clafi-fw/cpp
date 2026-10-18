@@ -55,6 +55,9 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_functionWord = L"function";
         constexpr std::wstring_view k_constantWord = L"constant";
         constexpr std::wstring_view k_variableWord = L"variable";
+        constexpr std::wstring_view k_listWord = L"list";
+        constexpr std::wstring_view k_underWord = L"under ";
+        constexpr wchar_t k_folderSeparator = L'/';
         constexpr std::wstring_view k_signatureJoin = L"\n";   // after the template head
         constexpr std::wstring_view k_tooltipJoin = L" ";      // the same on a tooltip's one line
         constexpr std::size_t k_maxTreeDepth = 16;   // what a base chain is followed to
@@ -115,6 +118,11 @@ namespace SeeDocs_App
                     { L"Name" }, { L"Type" }, { .name = L"Value", .maxLines = k_valueLines },
                     { L"Hint", true, true }
                 },
+                .header = false
+            };
+            // A list's modules and folders, each beside a folder's path.
+            const ColumnSet placed = {
+                .columns = { { L"Name" }, { L"Folder", true } },
                 .header = false
             };
         }
@@ -319,7 +327,7 @@ namespace SeeDocs_App
         // The run with every name in it the surface has a page for linked to it, cut round each;
         // the names left out are never linked - a template's parameters.
         void linkNamesIn(Runs& out, const Run& run, const Surface& surface,
-            const std::wstring_view nameSpace, const Names& leftOut)
+            const std::wstring_view scope, const Names& leftOut)
         {
             const std::wstring_view text = run.text;
             std::size_t plainStart = 0;
@@ -333,7 +341,7 @@ namespace SeeDocs_App
                 });
                 if (left)
                     continue;
-                const Type* type = surface.publicType(name, nameSpace);
+                const Type* type = surface.publicType(name, scope);
                 if (!type)
                     continue;
                 if (span->start != plainStart)
@@ -367,7 +375,7 @@ namespace SeeDocs_App
         // The runs with the types they name linked; a run already linked, a muted one and a
         // missing one stand as they are.
         [[nodiscard]] Runs linkNames(const Surface& surface, const Runs& runs,
-            const std::wstring_view nameSpace, const Names& leftOut = {})
+            const std::wstring_view scope, const Names& leftOut = {})
         {
             Runs linked;
             for (const Run& run : runs)
@@ -377,16 +385,16 @@ namespace SeeDocs_App
                 if (asIs)
                     linked.push_back(run);
                 else
-                    linkNamesIn(linked, run, surface, nameSpace, leftOut);
+                    linkNamesIn(linked, run, surface, scope, leftOut);
             }
             return linked;
         }
 
         // A spelled type, linked to its page where the surface has one.
         [[nodiscard]] Run typeRun(const Surface& surface, const std::wstring& spelled,
-            const std::wstring_view nameSpace)
+            const std::wstring_view scope)
         {
-            const Type* type = surface.publicType(spelled, nameSpace);
+            const Type* type = surface.publicType(spelled, scope);
             if (type)
                 return code(spelled, type->qualifiedName);
             return code(spelled);
@@ -418,7 +426,7 @@ namespace SeeDocs_App
         // The words of a note line: backticks set a run in code, a pair of ** sets one bold, and
         // a type named in any of them is linked.
         [[nodiscard]] Runs inlineRuns(const std::wstring& text, const Surface& surface,
-            const std::wstring_view nameSpace)
+            const std::wstring_view scope)
         {
             Runs runs;
             std::wstring words;
@@ -456,16 +464,16 @@ namespace SeeDocs_App
                 ++i;
             }
             flush();
-            return linkNames(surface, runs, nameSpace);
+            return linkNames(surface, runs, scope);
         }
 
-        // The hint read as a note line is, in a namespace. A tree read by loose rules owes no
-        // hint, so one it does not give is nothing rather than missing.
+        // The hint read as a note line is, in a scope. A tree read by loose rules owes no hint,
+        // so one it does not give is nothing rather than missing.
         [[nodiscard]] Runs hintRuns(const Surface& surface, const Comment& comment,
-            const std::wstring_view nameSpace)
+            const std::wstring_view scope)
         {
             if (!comment.text.empty())
-                return inlineRuns(comment.text, surface, nameSpace);
+                return inlineRuns(comment.text, surface, scope);
             if (surface.hintRules() == HintRules::Loose)
                 return {};
             return { missing(std::wstring{ k_noHint }) };
@@ -483,14 +491,14 @@ namespace SeeDocs_App
 
         // The lines of a section as blocks: paragraphs between blank lines, a heading inside the
         // section as a subheading, four-space lines as code, dashed lines as bullets; the types
-        // named in any of them read in the namespace and link.
+        // named in any of them read in the scope and link.
         [[nodiscard]] Blocks blocksOf(const Lines& lines, const Surface& surface,
-            const std::wstring_view nameSpace)
+            const std::wstring_view scope)
         {
             Blocks blocks;
             std::wstring paragraph;
             const auto runsOf = [&](const std::wstring& text) {
-                return inlineRuns(text, surface, nameSpace);
+                return inlineRuns(text, surface, scope);
             };
             const auto flush = [&]() {
                 if (!paragraph.empty())
@@ -535,7 +543,7 @@ namespace SeeDocs_App
                         block.lines.push_back(blank
                             ? Runs{}
                             : linkNames(surface, { code(lines[i].substr(k_codeFence.size())) },
-                                nameSpace));
+                                scope));
                         ++i;
                     }
                     blocks.push_back(std::move(block));
@@ -700,9 +708,9 @@ namespace SeeDocs_App
         }
 
         // A found section as the words a page shows, named by where they come from, the types
-        // they name read in the namespace of the declaration they belong to.
+        // they name read in the scope of the declaration they belong to.
         [[nodiscard]] std::optional<Excerpt> excerptOf(const FoundNote& found,
-            const Surface& surface, const std::wstring_view nameSpace)
+            const Surface& surface, const std::wstring_view scope)
         {
             if (!found.section)
                 return std::nullopt;
@@ -716,7 +724,7 @@ namespace SeeDocs_App
                 excerpt.source += k_separator;
                 excerpt.source += k_matchedByName;
             }
-            excerpt.blocks = blocksOf(found.section->lines, surface, nameSpace);
+            excerpt.blocks = blocksOf(found.section->lines, surface, scope);
             return excerpt;
         }
 
@@ -727,7 +735,7 @@ namespace SeeDocs_App
         {
             const std::wstring heading = footnoteHeading(owner.name, name);
             return excerptOf(noteFor(surface, notes, comment, name, owner.folder, heading), surface,
-                owner.nameSpace);
+                owner.qualifiedName);
         }
 
         // Sections
@@ -743,11 +751,15 @@ namespace SeeDocs_App
             return page.sections.back();
         }
 
-        // A table of rows under one heading or none, counted in the heading's tooltip.
+        // A table of rows under one heading or none, counted in the heading's tooltip; an empty
+        // heading stands the table on the page bare.
         Section& addTableSection(Page& page, std::wstring heading, const ColumnSet& columnSet,
             TableGroups groups)
         {
-            Section& section = addSection(page, SectionKind::Table, { plain(std::move(heading)) });
+            Runs headingRuns;
+            if (!heading.empty())
+                headingRuns.push_back(plain(std::move(heading)));
+            Section& section = addSection(page, SectionKind::Table, std::move(headingRuns));
             section.table.columns = columnSet.columns;
             section.table.header = columnSet.header;
             section.table.groups = std::move(groups);
@@ -768,23 +780,25 @@ namespace SeeDocs_App
             return (roots[file.root] / file.path).lexically_normal().wstring();
         }
 
-        // A file by its path under its source's folder, atLine after it as `:42` or empty.
-        void addSourceFact(Page& page, const SourceRoots& roots, const SourceFile& file,
+        // A file by its path in the project's tree, atLine after it as `:42` or empty.
+        void addSourceFact(Page& page, const PathRoots& roots, const SourceFile& file,
             const std::wstring_view atLine, const SourcePlace& source)
         {
-            std::wstring fullValue = fullPathOf(roots, file);
+            std::wstring fullValue = fullPathOf(roots.folders, file);
             if (!fullValue.empty())
                 fullValue += atLine;
+            std::wstring value = treePath(roots.project, file.relative);
+            value += atLine;
             page.facts.push_back({
                 .label = std::wstring{ k_sourceLabel },
-                .value = { pathRun(file.relative + std::wstring{ atLine }) },
+                .value = { pathRun(std::move(value)) },
                 .fullValue = std::move(fullValue),
                 .source = source
             });
         }
 
         // The file and line a declaration stands at.
-        void addPlaceFact(Page& page, const Surface& surface, const SourceRoots& roots,
+        void addPlaceFact(Page& page, const Surface& surface, const PathRoots& roots,
             const Place& place, const SourceLanguage language)
         {
             addSourceFact(page, roots, surface.files()[place.file],
@@ -816,27 +830,27 @@ namespace SeeDocs_App
         }
 
         // The folder under every source holding a file at or below it.
-        void addFolderSources(Page& page, const Surface& surface, const SourceRoots& roots,
+        void addFolderSources(Page& page, const Surface& surface, const PathRoots& roots,
             const std::wstring_view path)
         {
-            std::vector<bool> holds(roots.size(), false);
+            std::vector<bool> holds(roots.folders.size(), false);
             for (const SourceFile& file : surface.files())
             {
-                if (file.root >= roots.size())
+                if (file.root >= roots.folders.size())
                     continue;
                 const std::wstring folder = folderOf(file.relative);
                 if (folder == path || standsUnder(folder, path))
                     holds[file.root] = true;
             }
-            for (std::size_t root = 0; root != roots.size(); ++root)
+            for (std::size_t root = 0; root != roots.folders.size(); ++root)
             {
                 if (!holds[root])
                     continue;
                 const std::filesystem::path onDisk =
-                    (roots[root] / std::filesystem::path{ path }).lexically_normal();
+                    (roots.folders[root] / std::filesystem::path{ path }).lexically_normal();
                 page.facts.push_back({
                     .label = std::wstring{ k_sourceLabel },
-                    .value = { pathRun(std::wstring{ path }) },
+                    .value = { pathRun(treePath(roots.project, path)) },
                     .fullValue = onDisk.wstring(),
                     .folder = onDisk
                 });
@@ -845,7 +859,7 @@ namespace SeeDocs_App
 
         // The head of a type page
 
-        void addTypeHead(Page& page, const Surface& surface, const SourceRoots& roots,
+        void addTypeHead(Page& page, const Surface& surface, const PathRoots& roots,
             const Type& type)
         {
             page.title = type.name;
@@ -860,7 +874,7 @@ namespace SeeDocs_App
                 page.badges.push_back(muted(std::wstring{ k_separator } + L"template <"
                     + type.templateParameters + L">"));
             }
-            page.lead = hintRuns(surface, type.comment, type.nameSpace);
+            page.lead = hintRuns(surface, type.comment, type.qualifiedName);
             page.leadSite = siteOf(type);
             addFact(page, L"namespace", { code(type.nameSpace) });
             addFact(page, moduleWordOf(surface, type.module), { code(type.module, type.module) });
@@ -875,7 +889,7 @@ namespace SeeDocs_App
             const bool equated = type.kind == TypeKind::Alias || type.kind == TypeKind::Defined;
             const std::wstring_view join = equated ? k_aliasJoin : k_baseJoin;
             Runs line = { muted(std::wstring{ join }) };
-            const Runs target = linkNames(surface, { code(type.target) }, type.nameSpace,
+            const Runs target = linkNames(surface, { code(type.target) }, type.enclosingScope(),
                 templateParameterNames(type.templateParameters));
             line.insert(line.end(), target.begin(), target.end());
             page.titleLines.push_back(std::move(line));
@@ -990,51 +1004,51 @@ namespace SeeDocs_App
             ReachedBases reached;
         };
 
-        // A base's spelling and the namespace it is read in.
+        // A base's spelling and the scope it is read in.
         struct BaseReading
         {
             std::wstring spelling;
-            std::wstring_view nameSpace;
+            std::wstring_view scope;
         };
 
         // Along a type's bases, a node each into the list given: a base that is one of the type's
         // template parameters stands for the argument the spelling gave it, which is how a mixin
         // hands its host on.
         void addBaseNodes(BaseWalk& walk, BaseNodes& into, const Surface& surface,
-            const Type& type, std::wstring_view spelled, std::wstring_view nameSpace,
+            const Type& type, std::wstring_view spelled, std::wstring_view scope,
             std::size_t depth, const Flow& flow);
 
         // Where a base spelled inside a type is read from on the chain: a template parameter of
         // the type stands for the argument the chain's spelling gave it, read where the chain is;
-        // nothing where the spelling gives no argument for it.
+        // nothing where the spelling gives no argument for it. Any other base is read in baseScope.
         [[nodiscard]] std::optional<BaseReading> readBase(const Type& type,
-            const std::wstring_view spelled, const std::wstring_view nameSpace,
-            const std::wstring& base)
+            const std::wstring_view spelled, const std::wstring_view scope,
+            const std::wstring& base, const std::wstring_view baseScope)
         {
             const Names parameters = templateParameterNames(type.templateParameters);
             const std::wstring_view head = plainType(withoutArguments(base));
             const auto parameter = std::ranges::find(parameters, head);
             if (parameter == parameters.end())
-                return BaseReading{ .spelling = base, .nameSpace = type.nameSpace };
+                return BaseReading{ .spelling = base, .scope = baseScope };
             const Names arguments = argumentsOf(spelled);
             const std::size_t index = static_cast<std::size_t>(parameter - parameters.begin());
             if (index >= arguments.size())
                 return std::nullopt;
-            return BaseReading{ .spelling = arguments[index], .nameSpace = nameSpace };
+            return BaseReading{ .spelling = arguments[index], .scope = scope };
         }
 
         // The type a reading names, a private alias followed to what it names.
         [[nodiscard]] const Type* typeOf(const Surface& surface, const BaseReading& reading)
         {
-            return surface.resolve(surface.resolvedBase(reading.spelling, reading.nameSpace),
-                reading.nameSpace);
+            return surface.resolve(surface.resolvedBase(reading.spelling, reading.scope),
+                reading.scope);
         }
 
         // What a type hands its bases: its method names over what reached it, its
         // using-declarations after those of the types below, the constructors as they reached it.
         // A Delphi constructor is inherited as a method is, and hides as one does.
         [[nodiscard]] Flow flowFrom(const Surface& surface, const Type& type,
-            const std::wstring_view spelled, const std::wstring_view nameSpace, const Flow& into)
+            const std::wstring_view spelled, const std::wstring_view scope, const Flow& into)
         {
             const SourceLanguage language = surface.languageOf(type.module);
             const bool constructorsHide = language == SourceLanguage::Pascal;
@@ -1051,7 +1065,7 @@ namespace SeeDocs_App
             for (const Using& declaration : type.usings)
             {
                 const std::optional<BaseReading> reading =
-                    readBase(type, spelled, nameSpace, declaration.base);
+                    readBase(type, spelled, scope, declaration.base, type.qualifiedName);
                 const Type* base = reading ? typeOf(surface, *reading) : nullptr;
                 if (base)
                     flow.usings.push_back({ .base = base, .declaration = &declaration });
@@ -1141,8 +1155,8 @@ namespace SeeDocs_App
             const BaseReading& reading, const std::size_t depth, const Flow& flow)
         {
             const std::wstring resolvedSpelling =
-                surface.resolvedBase(reading.spelling, reading.nameSpace);
-            const Type* type = surface.resolve(resolvedSpelling, reading.nameSpace);
+                surface.resolvedBase(reading.spelling, reading.scope);
+            const Type* type = surface.resolve(resolvedSpelling, reading.scope);
             if (type && isNested(*type))
                 return;
             BaseNode node{ .text = baseText(resolvedSpelling, type), .type = type };
@@ -1158,7 +1172,7 @@ namespace SeeDocs_App
                 {
                     walk.way.push_back({ .type = type, .spelling = resolvedSpelling });
                     addBaseNodes(walk, node.bases, surface, *type, resolvedSpelling,
-                        reading.nameSpace, depth + 1, beyond);
+                        reading.scope, depth + 1, beyond);
                     walk.way.pop_back();
                 }
             }
@@ -1166,14 +1180,14 @@ namespace SeeDocs_App
         }
 
         void addBaseNodes(BaseWalk& walk, BaseNodes& into, const Surface& surface,
-            const Type& type, const std::wstring_view spelled, const std::wstring_view nameSpace,
+            const Type& type, const std::wstring_view spelled, const std::wstring_view scope,
             const std::size_t depth, const Flow& flow)
         {
-            const Flow outward = flowFrom(surface, type, spelled, nameSpace, flow);
+            const Flow outward = flowFrom(surface, type, spelled, scope, flow);
             for (const std::wstring& base : type.bases)
             {
                 const std::optional<BaseReading> reading =
-                    readBase(type, spelled, nameSpace, base);
+                    readBase(type, spelled, scope, base, type.enclosingScope());
                 if (reading)
                 {
                     addBaseNode(walk, into, surface, *reading, depth, outward);
@@ -1198,7 +1212,7 @@ namespace SeeDocs_App
             if (!derives(type))
                 return walk;
             walk.way.push_back({ .type = &type, .spelling = type.name });
-            addBaseNodes(walk, walk.bases, surface, type, type.name, type.nameSpace, 0,
+            addBaseNodes(walk, walk.bases, surface, type, type.name, type.enclosingScope(), 0,
                 Flow{ .constructors = true });
             return walk;
         }
@@ -1217,13 +1231,13 @@ namespace SeeDocs_App
                 if (base && std::ranges::find(bases, base) == bases.end())
                     bases.push_back(base);
             };
+            const std::wstring_view scope = type.enclosingScope();
             for (const std::wstring& spelled : type.bases)
             {
                 if (isTemplateParameter(type, spelled))
                     continue;
-                const std::wstring resolvedSpelling =
-                    surface.resolvedBase(spelled, type.nameSpace);
-                const Type* direct = surface.resolve(resolvedSpelling, type.nameSpace);
+                const std::wstring resolvedSpelling = surface.resolvedBase(spelled, scope);
+                const Type* direct = surface.resolve(resolvedSpelling, scope);
                 if (!direct)
                     continue;
                 add(direct);
@@ -1238,7 +1252,7 @@ namespace SeeDocs_App
                     const std::size_t index =
                         static_cast<std::size_t>(parameter - parameters.begin());
                     if (index < arguments.size())
-                        add(surface.resolve(arguments[index], type.nameSpace));
+                        add(surface.resolve(arguments[index], scope));
                 }
             }
             return bases;
@@ -1324,8 +1338,8 @@ namespace SeeDocs_App
                     if (isTemplateParameter(type, spelled))
                         continue;
                     const std::wstring resolvedSpelling =
-                        surface.resolvedBase(spelled, type.nameSpace);
-                    if (surface.resolve(resolvedSpelling, type.nameSpace))
+                        surface.resolvedBase(spelled, type.enclosingScope());
+                    if (surface.resolve(resolvedSpelling, type.enclosingScope()))
                         continue;
                     TypeList& standing = index[unknownBaseKey(resolvedSpelling)];
                     if (std::ranges::find(standing, &type) == standing.end())
@@ -1402,7 +1416,7 @@ namespace SeeDocs_App
         {
             std::optional<Excerpt> excerpt = excerptOf(
                 noteFor(surface, notes, type.comment, type.name, type.folder, type.name), surface,
-                type.nameSpace);
+                type.qualifiedName);
             if (!excerpt.has_value())
                 return;
             Section& section = addSection(page, SectionKind::Note,
@@ -1560,15 +1574,15 @@ namespace SeeDocs_App
                     value = valueCell(restated.restatement->value);
                     defaultQualifier = qualifierOf(restated);
                 }
-                Runs spelled = { typeRun(surface, property.type, type.nameSpace) };
+                Runs spelled = { typeRun(surface, property.type, type.qualifiedName) };
                 for (const std::wstring& accepted : property.accepts)
                 {
                     spelled.push_back(muted(L" | "));
-                    spelled.push_back(typeRun(surface, accepted, type.nameSpace));
+                    spelled.push_back(typeRun(surface, accepted, type.qualifiedName));
                 }
                 rows.push_back({
                     .cells = { { code(property.name) }, std::move(spelled), std::move(value),
-                        hintRuns(surface, property.comment, type.nameSpace) },
+                        hintRuns(surface, property.comment, type.qualifiedName) },
                     .qualifiers = { {}, {}, std::move(defaultQualifier) },
                     .excerpt = memberExcerpt(surface, notes, property.comment, property.name,
                         type),
@@ -1589,8 +1603,8 @@ namespace SeeDocs_App
             {
                 if (!takes(filter, event.access, event.alias))
                     continue;
-                Runs hint = hintRuns(surface, event.comment, type.nameSpace);
-                if (const Type* payload = surface.resolve(event.type, type.nameSpace);
+                Runs hint = hintRuns(surface, event.comment, type.qualifiedName);
+                if (const Type* payload = surface.resolve(event.type, type.qualifiedName);
                     payload && !payload->fields.empty())
                 {
                     std::wstring carries = L" - carries ";
@@ -1604,7 +1618,7 @@ namespace SeeDocs_App
                 }
                 rows.push_back({
                     .cells = { { code(event.alias) },
-                        { typeRun(surface, event.type, type.nameSpace) }, std::move(hint) },
+                        { typeRun(surface, event.type, type.qualifiedName) }, std::move(hint) },
                     .excerpt = memberExcerpt(surface, notes, event.comment, event.type, type),
                     .site = siteOf(event.comment, event.place, event.type),
                     .anchor = event.alias
@@ -1756,7 +1770,7 @@ namespace SeeDocs_App
                 leftOut.push_back(std::move(name));
             const std::wstring spelled =
                 spelledSignature(function, join, surface.languageOf(owner.module));
-            return linkNames(surface, { code(spelled) }, owner.nameSpace, leftOut);
+            return linkNames(surface, { code(spelled) }, owner.qualifiedName, leftOut);
         }
 
         // A free function as code, linked as a method's is.
@@ -1805,7 +1819,7 @@ namespace SeeDocs_App
                     });
                     group.rows.push_back({
                         .cells = { { code(function.name, memberLink(owner, function.name)) },
-                            hintRuns(surface, comment, owner.nameSpace) },
+                            hintRuns(surface, comment, owner.qualifiedName) },
                         .tooltip = std::move(signature),
                         .language = language,
                         .site = siteOf(holder)
@@ -1818,7 +1832,7 @@ namespace SeeDocs_App
                     std::make_move_iterator(signature.end()));
                 if (!known->second.commented && !comment.text.empty())
                 {
-                    row.cells[1] = hintRuns(surface, comment, owner.nameSpace);
+                    row.cells[1] = hintRuns(surface, comment, owner.qualifiedName);
                     row.site = siteOf(holder);
                     known->second.commented = true;
                 }
@@ -1855,7 +1869,10 @@ namespace SeeDocs_App
                 TableGroup group = groupOf(*base.type, &base);
                 if (isEmpty(group))
                     continue;
-                group.label = { plain(std::wstring{ k_fromLabel }), code(base.spelling) };
+                const std::wstring link = base.type->isPublic()
+                    ? base.type->qualifiedName
+                    : std::wstring{};
+                group.label = { plain(std::wstring{ k_fromLabel }), plain(base.spelling, link) };
                 group.owner = base.spelling;
                 result.groups.push_back(std::move(group));
             }
@@ -2019,7 +2036,7 @@ namespace SeeDocs_App
         {
             Runs code;
             const Function* holder{ nullptr };   // whose comment speaks for it: its own or a base's
-            std::wstring_view nameSpace;         // where its words are read
+            std::wstring_view scope;             // where its words are read
             std::wstring_view folder;            // where a note named after it is looked for
             std::wstring heading;                // what that note's section is headed
             std::optional<Access> access;        // none for a free function
@@ -2071,7 +2088,7 @@ namespace SeeDocs_App
             const Overload& leading = commented == overloads.end()
                 ? overloads.front()
                 : *commented;
-            page.lead = hintRuns(surface, leading.holder->comment, leading.nameSpace);
+            page.lead = hintRuns(surface, leading.holder->comment, leading.scope);
             page.leadSite = siteOf(*leading.holder);
             // The section named after the name is the name's, and stands under the leading one.
             for (Overload& overload : overloads)
@@ -2085,11 +2102,11 @@ namespace SeeDocs_App
                 Signature signature{
                     .code = std::move(overload.code),
                     .language = overload.language,
-                    .excerpt = excerptOf(found, surface, overload.nameSpace)
+                    .excerpt = excerptOf(found, surface, overload.scope)
                 };
                 if (&overload != &leading)
                 {
-                    signature.lead = hintRuns(surface, holder.comment, overload.nameSpace);
+                    signature.lead = hintRuns(surface, holder.comment, overload.scope);
                     signature.site = siteOf(holder);
                 }
                 signatureSection(page, overload.access).signatures.push_back(std::move(signature));
@@ -2105,8 +2122,9 @@ namespace SeeDocs_App
             {
                 group.rows.push_back({
                     .cells = { { code(field.name) },
-                        { typeRun(surface, field.type, type.nameSpace) }, valueCell(field.value),
-                        hintRuns(surface, field.comment, type.nameSpace) },
+                        { typeRun(surface, field.type, type.qualifiedName) },
+                        valueCell(field.value),
+                        hintRuns(surface, field.comment, type.qualifiedName) },
                     .excerpt = memberExcerpt(surface, notes, field.comment, field.name, type),
                     .site = siteOf(field.comment, field.place, field.name),
                     .anchor = field.name
@@ -2128,7 +2146,7 @@ namespace SeeDocs_App
             {
                 group.rows.push_back({
                     .cells = { { code(member.name) }, valueCell(member.value),
-                        hintRuns(surface, member.comment, type.nameSpace) },
+                        hintRuns(surface, member.comment, type.qualifiedName) },
                     .excerpt = memberExcerpt(surface, notes, member.comment, member.name, type),
                     .site = memberSite(type, member),
                     .anchor = member.name
@@ -2153,10 +2171,10 @@ namespace SeeDocs_App
         [[nodiscard]] bool isPropertyOf(const Surface& surface, const Type& owner,
             const Property& property, const Type& type)
         {
-            if (surface.resolve(property.type, owner.nameSpace) == &type)
+            if (surface.resolve(property.type, owner.qualifiedName) == &type)
                 return true;
             return std::ranges::any_of(property.accepts, [&](const std::wstring& accepted) {
-                return surface.resolve(accepted, owner.nameSpace) == &type;
+                return surface.resolve(accepted, owner.qualifiedName) == &type;
             });
         }
 
@@ -2171,7 +2189,7 @@ namespace SeeDocs_App
         [[nodiscard]] bool hasEventOf(const Surface& surface, const Type& owner, const Type& type)
         {
             return std::ranges::any_of(owner.events, [&](const Event& event) {
-                return surface.resolve(event.type, owner.nameSpace) == &type;
+                return surface.resolve(event.type, owner.qualifiedName) == &type;
             });
         }
 
@@ -2227,7 +2245,7 @@ namespace SeeDocs_App
             {
                 rows.push_back({
                     .cells = { { nameRun(*type) },
-                        hintRuns(surface, type->comment, type->nameSpace) },
+                        hintRuns(surface, type->comment, type->qualifiedName) },
                     .qualifiers = { qualifierOf(*type) },
                     .type = type,
                     .site = siteOf(*type)
@@ -2455,53 +2473,90 @@ namespace SeeDocs_App
             section.tooltip += L" in " + countOf(moduleCount, k_moduleWord);
         }
 
-        // What stands under a path at every depth, counted: controls, types, modules, the folders
-        // - every one on the way down, with modules in it or not - and under the strict rules the
-        // types without a hint.
-        void addHoldings(Page& page, const Surface& surface, const ContentsFolders& folders,
+        // A module standing under a path, and the folder it stands in.
+        struct HeldModule
+        {
+            const ContentsModule* module{ nullptr };
+            std::wstring_view folder;
+        };
+
+        using HeldModules = std::vector<HeldModule>;
+        using FolderPaths = std::set<std::wstring_view>;
+
+        // What stands under a path at every depth, its views into the folders it is read from.
+        struct Holdings
+        {
+            TypeList types;
+            HeldModules modules;
+            FolderPaths folders;
+        };
+
+        // **The holds row counts what the lists list**, so a list is as long as its figure: the
+        // types and modules of the path's folder and of every folder under it, and the folders -
+        // every one on the way down, with modules in it or not.
+        [[nodiscard]] Holdings holdingsOf(const ContentsFolders& folders,
             const std::wstring_view path)
         {
-            std::size_t controls = 0;
-            std::size_t types = 0;
-            std::size_t modules = 0;
-            std::size_t withoutHint = 0;
-            std::set<std::wstring_view> below;
+            Holdings result;
             for (const ContentsFolder& folder : folders)
             {
                 if (folder.path != path && !standsUnder(folder.path, path))
                     continue;
                 for (const ContentsModule& module : folder.modules)
                 {
-                    for (const Type* type : module.types)
-                    {
-                        ++types;
-                        if (type->isControl)
-                            ++controls;
-                        if (type->comment.text.empty())
-                            ++withoutHint;
-                    }
+                    result.modules.push_back({ .module = &module, .folder = folder.path });
+                    result.types.insert(result.types.end(), module.types.begin(),
+                        module.types.end());
                 }
-                modules += folder.modules.size();
                 for (std::wstring_view way = folder.path; standsUnder(way, path);)
                 {
-                    below.insert(way);
-                    const std::size_t slash = way.rfind(L'/');
+                    result.folders.insert(way);
+                    const std::size_t slash = way.rfind(k_folderSeparator);
                     way = slash == std::wstring_view::npos
                         ? std::wstring_view{}
                         : way.substr(0, slash);
                 }
             }
+            return result;
+        }
+
+        // A figure of the holds row, linked to the list it counts; a figure of none links nowhere.
+        [[nodiscard]] Run figureOf(const std::size_t count, const std::wstring_view noun,
+            const std::wstring_view path, const ListKind kind)
+        {
+            Run result = plain(countOf(count, noun));
+            if (count != 0)
+                result.link = listLink(path, kind);
+            return result;
+        }
+
+        // What stands under a path at every depth, counted, each figure linked to its list:
+        // controls, types, modules, the folders, and under the strict rules the types without a
+        // hint.
+        void addHoldings(Page& page, const Surface& surface, const ContentsFolders& folders,
+            const std::wstring_view path)
+        {
+            const Holdings holdings = holdingsOf(folders, path);
+            const std::size_t controls = static_cast<std::size_t>(std::ranges::count_if(
+                holdings.types, [](const Type* type) {
+                    return type->isControl;
+                }));
+            const std::size_t withoutHint = static_cast<std::size_t>(std::ranges::count_if(
+                holdings.types, [](const Type* type) {
+                    return type->comment.text.empty();
+                }));
             Runs figures = {
-                plain(countOf(controls, L"control")),
+                figureOf(controls, k_controlWord, path, ListKind::Controls),
                 muted(std::wstring{ k_separator }),
-                plain(countOf(types, L"type")),
+                figureOf(holdings.types.size(), L"type", path, ListKind::Types),
                 muted(std::wstring{ k_separator }),
-                plain(countOf(modules, L"module"))
+                figureOf(holdings.modules.size(), k_moduleWord, path, ListKind::Modules)
             };
-            if (!below.empty())
+            if (!holdings.folders.empty())
             {
                 figures.push_back(muted(std::wstring{ k_separator }));
-                figures.push_back(plain(countOf(below.size(), k_folderWord)));
+                figures.push_back(figureOf(holdings.folders.size(), k_folderWord, path,
+                    ListKind::Folders));
             }
             if (withoutHint != 0 && surface.hintRules() == HintRules::Strict)
             {
@@ -2528,6 +2583,204 @@ namespace SeeDocs_App
             addContents(page, surface, *own);
         }
 
+        // Lists
+
+        // How a list is spelled: its url's segment and its title.
+        struct ListSpelling
+        {
+            std::wstring_view segment;
+            std::wstring_view title;
+        };
+
+        constexpr auto k_listKinds = std::to_array<ListKind>({
+            ListKind::Controls,
+            ListKind::Types,
+            ListKind::Modules,
+            ListKind::Folders
+        });
+
+        [[nodiscard]] ListSpelling spellingOf(const ListKind kind)
+        {
+            switch (kind)
+            {
+                case ListKind::Controls:
+                    return { L".controls", L"Controls" };
+                case ListKind::Types:
+                    return { L".types", L"Types" };
+                case ListKind::Modules:
+                    return { L".modules", L"Modules" };
+                case ListKind::Folders:
+                    return { L".folders", L"Folders" };
+            }
+            return {};
+        }
+
+        // By name regardless of case, then as spelled, then by the qualified name, so the names a
+        // list holds more than once stand together.
+        [[nodiscard]] bool listsTypeBefore(const Type& left, const Type& right)
+        {
+            const auto key = [](const Type& type) {
+                return std::tuple{ lowered(type.name), std::wstring_view{ type.name },
+                    std::wstring_view{ type.qualifiedName } };
+            };
+            return key(left) < key(right);
+        }
+
+        using NameParts = std::vector<std::wstring_view>;
+        using Namespaces = std::vector<NameParts>;
+
+        // A namespace's parts, outermost first; none for the global namespace.
+        [[nodiscard]] NameParts namespaceParts(const std::wstring_view nameSpace)
+        {
+            NameParts result;
+            std::wstring_view rest = nameSpace;
+            while (!rest.empty())
+            {
+                const std::size_t cut = rest.find(k_scope);
+                result.push_back(rest.substr(0, cut));
+                rest = cut == std::wstring_view::npos
+                    ? std::wstring_view{}
+                    : rest.substr(cut + k_scope.size());
+            }
+            return result;
+        }
+
+        // How many leading parts every one of the namespaces has alike.
+        [[nodiscard]] std::size_t sharedLength(const Namespaces& namespaces)
+        {
+            std::size_t result = 0;
+            while (true)
+            {
+                for (const NameParts& parts : namespaces)
+                {
+                    if (parts.size() == result || parts[result] != namespaces.front()[result])
+                        return result;
+                }
+                ++result;
+            }
+        }
+
+        // The parts from one on, each followed by ::, and :: alone where none are left.
+        [[nodiscard]] std::wstring scopeFrom(const NameParts& parts, const std::size_t from)
+        {
+            std::wstring result;
+            for (std::size_t at = from; at < parts.size(); ++at)
+                result.append(parts[at]).append(k_scope);
+            if (result.empty())
+                result = k_scope;
+            return result;
+        }
+
+        // **A name a list holds more than once reads apart by its namespace**, written before it
+        // from the last part the namesakes share - Grids::Cell, Grids::Dt::Cell. A row stands
+        // where its type does, and the namesakes stand together.
+        void addScopes(TableRows& rows, const TypeList& types)
+        {
+            for (std::size_t first = 0; first < types.size();)
+            {
+                std::size_t end = first + 1;
+                while (end < types.size() && types[end]->name == types[first]->name)
+                    ++end;
+                if (end - first > 1)
+                {
+                    Namespaces namespaces;
+                    for (std::size_t at = first; at != end; ++at)
+                        namespaces.push_back(namespaceParts(types[at]->nameSpace));
+                    const std::size_t shared = sharedLength(namespaces);
+                    const std::size_t from = shared == 0 ? 0 : shared - 1;
+                    for (std::size_t at = first; at != end; ++at)
+                    {
+                        Runs& name = rows[at].cells.front();
+                        name.insert(name.begin(), muted(scopeFrom(namespaces[at - first], from)));
+                    }
+                }
+                first = end;
+            }
+        }
+
+        // The types by name, each with its kind at its name cell's end where the list shows it.
+        [[nodiscard]] TableRows typeListRows(const Surface& surface, TypeList types,
+            const bool showsKind)
+        {
+            std::ranges::sort(types, [](const Type* left, const Type* right) {
+                return listsTypeBefore(*left, *right);
+            });
+            TableRows rows = typeRows(surface, types);
+            if (!showsKind)
+            {
+                for (TableRow& row : rows)
+                    row.qualifiers.clear();
+            }
+            addScopes(rows, types);
+            return rows;
+        }
+
+        // The modules by name, each beside the folder it stands in.
+        [[nodiscard]] TableRows moduleListRows(HeldModules modules,
+            const std::wstring_view projectName)
+        {
+            const auto key = [](const HeldModule& held) {
+                return std::tuple{ lowered(held.module->shownName),
+                    std::wstring_view{ held.module->shownName }, held.folder };
+            };
+            std::ranges::sort(modules, [&key](const HeldModule& left, const HeldModule& right) {
+                return key(left) < key(right);
+            });
+            TableRows rows;
+            for (const HeldModule& held : modules)
+            {
+                rows.push_back({
+                    .cells = {
+                        { plain(held.module->shownName, held.module->name) },
+                        { muted(treePath(projectName, held.folder)) }
+                    },
+                    .pageKind = PageKind::Module
+                });
+            }
+            return rows;
+        }
+
+        // The folders by name, a name several hold as the tree lists them, each beside its path.
+        [[nodiscard]] TableRows folderListRows(const FolderPaths& folders,
+            const std::wstring_view projectName)
+        {
+            std::vector<std::wstring_view> paths(folders.begin(), folders.end());
+            std::ranges::sort(paths, [](const std::wstring_view left,
+                const std::wstring_view right) {
+                const std::wstring leftName = lowered(folderNameOf(left));
+                const std::wstring rightName = lowered(folderNameOf(right));
+                if (leftName != rightName)
+                    return leftName < rightName;
+                return listsBefore(left, right);
+            });
+            TableRows rows;
+            for (const std::wstring_view path : paths)
+            {
+                rows.push_back({
+                    .cells = {
+                        { plain(folderNameOf(path), std::wstring{ path }) },
+                        { muted(treePath(projectName, path)) }
+                    },
+                    .pageKind = PageKind::Folder
+                });
+            }
+            return rows;
+        }
+
+        // The title line of a list: under the folder's path in the project's tree, linked to it.
+        [[nodiscard]] Runs listPlaceOf(const std::wstring_view path,
+            const std::wstring_view projectName)
+        {
+            return {
+                muted(std::wstring{ k_underWord }),
+                {
+                    .text = treePath(projectName, path),
+                    .style = RunStyle::Path,
+                    .link = std::wstring{ path }
+                }
+            };
+        }
+
         // The pages of a module's functions and constants
 
         // Whether a token's words stand as written in linked code: a comment's and a literal's.
@@ -2548,7 +2801,7 @@ namespace SeeDocs_App
         // A declaration as written, as code: the names it spells linked as a signature's are, the
         // words of its comments and its literals left as they stand.
         [[nodiscard]] Runs declarationRuns(const Surface& surface, const std::wstring_view written,
-            const std::wstring_view nameSpace, const SourceLanguage language)
+            const std::wstring_view scope, const SourceLanguage language)
         {
             const Syntax::Language& lexer = lexerOf(language);
             Runs result;
@@ -2556,7 +2809,7 @@ namespace SeeDocs_App
             const auto linkPending = [&]() {
                 if (pending.empty())
                     return;
-                linkNamesIn(result, code(std::move(pending)), surface, nameSpace, {});
+                linkNamesIn(result, code(std::move(pending)), surface, scope, {});
                 pending.clear();
             };
             Syntax::StateStrings strings;
@@ -2593,7 +2846,7 @@ namespace SeeDocs_App
             return result;
         }
 
-        void addExportFacts(Page& page, const Surface& surface, const SourceRoots& roots,
+        void addExportFacts(Page& page, const Surface& surface, const PathRoots& roots,
             const std::wstring_view nameSpace, const ContentsModule& module, const Place& place)
         {
             addFact(page, L"namespace", { code(std::wstring{ nameSpace }) });
@@ -2605,7 +2858,7 @@ namespace SeeDocs_App
         // A constant's page: what it is after the title, its hint under it, where it is
         // declared, then its declaration as written with its note.
         void fillConstantPage(Page& page, const Surface& surface, Notes& notes,
-            const SourceRoots& roots, const std::wstring_view folder,
+            const PathRoots& roots, const std::wstring_view folder,
             const ContentsModule& module, const Variable& variable)
         {
             const Field& field = variable.field;
@@ -2746,7 +2999,7 @@ namespace SeeDocs_App
                 lines.push_back(std::wstring{ k_templateWord } + L"<" + type.templateParameters
                     + L">");
             }
-            const std::wstring name{ bareName(type.name) };
+            const std::wstring& name = type.name;
             if (type.kind == TypeKind::Alias)
             {
                 lines.push_back(L"using " + name + L" = " + type.target + L";");
@@ -2801,7 +3054,7 @@ namespace SeeDocs_App
         // such field shows nothing.
         [[nodiscard]] std::optional<Lines> pascalPreview(const Type& type)
         {
-            std::wstring name{ bareName(type.name) };
+            std::wstring name = type.name;
             if (!type.templateParameters.empty())
                 name += L"<" + type.templateParameters + L">";
             const std::wstring equals = name + L" = ";
@@ -3054,8 +3307,16 @@ namespace SeeDocs_App
         return result;
     }
 
+    std::wstring treePath(const std::wstring_view projectName, const std::wstring_view path)
+    {
+        std::wstring result{ projectName };
+        if (!path.empty())
+            result.append(1, k_folderSeparator).append(path);
+        return result;
+    }
+
     Page folderPage(const Surface& surface, Notes& notes, const ContentsFolders& folders,
-        const std::wstring_view path, const SourceRoots& roots)
+        const std::wstring_view path, const PathRoots& roots)
     {
         Page page;
         page.kind = PageKind::Folder;
@@ -3084,8 +3345,91 @@ namespace SeeDocs_App
         return page;
     }
 
+    std::wstring_view listSegment(const ListKind kind)
+    {
+        return spellingOf(kind).segment;
+    }
+
+    std::optional<ListKind> listKindOf(const std::wstring_view segment)
+    {
+        for (const ListKind kind : k_listKinds)
+        {
+            if (spellingOf(kind).segment == segment)
+                return kind;
+        }
+        return std::nullopt;
+    }
+
+    std::wstring_view listTitle(const ListKind kind)
+    {
+        return spellingOf(kind).title;
+    }
+
+    std::wstring listLink(const std::wstring_view path, const ListKind kind)
+    {
+        std::wstring result{ path };
+        if (!result.empty())
+            result += k_folderSeparator;
+        result.append(spellingOf(kind).segment);
+        return result;
+    }
+
+    std::optional<ListLink> readListLink(const std::wstring_view link)
+    {
+        const std::size_t slash = link.rfind(k_folderSeparator);
+        const bool atRoot = slash == std::wstring_view::npos;
+        const std::optional<ListKind> kind = listKindOf(atRoot ? link : link.substr(slash + 1));
+        if (!kind.has_value())
+            return std::nullopt;
+        return ListLink{
+            .folder = atRoot ? std::wstring_view{} : link.substr(0, slash),
+            .kind = *kind
+        };
+    }
+
+    // **Controls is the types narrowed to the controls**, each of which wears its mark, so a row
+    // carries no kind word. Modules and folders stand beside a folder's path, having no hint. The
+    // list stands on the page bare, the head saying what it is and where.
+    Page listPage(const Surface& surface, const ContentsFolders& folders,
+        const std::wstring_view path, const ListKind kind, const std::wstring_view projectName)
+    {
+        const ListSpelling spelling = spellingOf(kind);
+        Holdings holdings = holdingsOf(folders, path);
+        TableRows rows;
+        const ColumnSet* columns = &Columns::types;
+        switch (kind)
+        {
+            case ListKind::Controls:
+                std::erase_if(holdings.types, [](const Type* type) {
+                    return !type->isControl;
+                });
+                rows = typeListRows(surface, std::move(holdings.types), false);
+                break;
+            case ListKind::Types:
+                rows = typeListRows(surface, std::move(holdings.types), true);
+                break;
+            case ListKind::Modules:
+                rows = moduleListRows(std::move(holdings.modules), projectName);
+                columns = &Columns::placed;
+                break;
+            case ListKind::Folders:
+                rows = folderListRows(holdings.folders, projectName);
+                columns = &Columns::placed;
+                break;
+        }
+
+        Page page;
+        page.kind = PageKind::List;
+        page.surface = &surface;
+        page.title = std::wstring{ spelling.title };
+        page.badges.push_back(muted(std::wstring{ k_listWord }));
+        page.titleLines.push_back(listPlaceOf(path, projectName));
+        addRowsSection(page, {}, *columns, std::move(rows));
+        return page;
+    }
+
     Page modulePage(const Surface& surface, Notes& notes, const ContentsFolder& folder,
-        const ContentsModule& module, const SourceRoots& roots)
+        const ContentsModule& module, const PathRoots& roots)
     {
         Page page;
         const std::wstring word{ module.header ? k_headerWord : k_moduleWord };
@@ -3114,24 +3458,24 @@ namespace SeeDocs_App
     }
 
     Page exportPage(const Surface& surface, Notes& notes, const ContentsFolder& folder,
-        const ContentsModule& module, const std::wstring_view name, const SourceRoots& roots)
+        const ContentsModule& module, const std::wstring_view name, const PathRoots& roots)
     {
         Page page;
         page.surface = &surface;
         page.title = std::wstring{ name };
         page.footnoteHome = folderFootnoteHome(surface, notes, folder.path);
         Overloads overloads;
-        const Function* first = nullptr;
+        const FreeFunction* first = nullptr;
         for (const FreeFunction* free : module.functions)
         {
             if (free->function.name != name)
                 continue;
             if (!first)
-                first = &free->function;
+                first = free;
             overloads.push_back({
                 .code = signatureRuns(surface, *free, k_signatureJoin),
                 .holder = &free->function,
-                .nameSpace = free->nameSpace,
+                .scope = free->nameSpace,
                 .folder = folder.path,
                 .heading = std::wstring{ name },
                 .language = surface.languageOf(free->module)
@@ -3139,7 +3483,7 @@ namespace SeeDocs_App
         }
         if (first)
         {
-            addExportFacts(page, surface, roots, overloads.front().nameSpace, module, first->place);
+            addExportFacts(page, surface, roots, first->nameSpace, module, first->function.place);
             addOverloads(page, surface, notes, k_functionWord, std::move(overloads));
             showSectionsOnce(page);
             return page;
@@ -3157,7 +3501,7 @@ namespace SeeDocs_App
     }
 
     Page methodPage(const Surface& surface, Notes& notes, const Type& type,
-        const std::wstring_view name, const SourceRoots& roots)
+        const std::wstring_view name, const PathRoots& roots)
     {
         Page page;
         page.surface = &surface;
@@ -3189,7 +3533,7 @@ namespace SeeDocs_App
             overloads.push_back({
                 .code = signatureRuns(surface, type, function, k_signatureJoin),
                 .holder = &commentHolder(function, above, language),
-                .nameSpace = type.nameSpace,
+                .scope = type.qualifiedName,
                 .folder = type.folder,
                 .heading = std::move(heading),
                 .access = function.access,
@@ -3228,15 +3572,15 @@ namespace SeeDocs_App
     }
 
     Runs hintRunsOf(const Surface& surface, const Comment& comment,
-        const std::wstring_view nameSpace)
+        const std::wstring_view scope)
     {
-        return hintRuns(surface, comment, nameSpace);
+        return hintRuns(surface, comment, scope);
     }
 
     Runs noteRunsOf(const Surface& surface, const std::wstring& text,
-        const std::wstring_view nameSpace)
+        const std::wstring_view scope)
     {
-        return inlineRuns(text, surface, nameSpace);
+        return inlineRuns(text, surface, scope);
     }
 
     std::wstring memberLink(const Type& type, const std::wstring_view member)
@@ -3260,7 +3604,7 @@ namespace SeeDocs_App
         };
     }
 
-    Page typePage(const Surface& surface, Notes& notes, const Type& type, const SourceRoots& roots)
+    Page typePage(const Surface& surface, Notes& notes, const Type& type, const PathRoots& roots)
     {
         Page page;
         page.kind = PageKind::Type;

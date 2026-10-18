@@ -113,6 +113,22 @@ lexer (`ClaFi.Core.Syntax`) and read declaration by declaration over the tokens.
 A nested type is an entry of its own, named `Outer::Inner`. Types are keyed by qualified name, so
 `Grids::Grid` and `Grids::Dt::Grid` are two entries.
 
+### Names
+
+**A name is read where it is written**, and looked up the way C++ looks it up. A type's members,
+its hint and its footnote are read inside the type. Its bases, and what an alias or an enum's base
+names, are read in the scope the type is declared in.
+
+- **A bare name** is looked for in that scope, then in each scope around it out to the global one.
+  A type's scope holds the types nested in it and the ones nested in its bases. A mixin's base is
+  the argument its spelling hands it.
+- **A type nested in another is named with its outer type everywhere else** -
+  `ShadowPainter::Design`. A bare `Design` in another type's hint names nothing.
+- **Where no scope holds a bare name**, it names the type of that name declared at a namespace's
+  scope, the one nearest.
+- **A qualified name** is matched by its tail: `Grids::Row` names `ClaFi::Controls::Grids::Row`.
+  One that opens with `::` is looked for from the global scope.
+
 ### Restated properties
 
 **A constructor restates a base's property by handing the base a value for it.** A pack reads the
@@ -539,7 +555,7 @@ opens it in a tab behind the one shown.
 
 **Each tab has a tree of its own**, which follows wherever the tab goes:
 
-- to the folder's node, for a folder's search
+- to the folder's node, for a folder's search or list
 - to the project's own node, for a page the tree has no row for, a project's search, or a page gone
 
 The nodes a tree has open and how far it is scrolled are the tab's. The open nodes are kept with the
@@ -567,8 +583,12 @@ A page's trees start closed, and a node's rows are built the first time it opens
 #### Source and Open in editor
 
 The source fact is the file and line a type, a method, a function or a constant stands at, and a
-module's interface file. It names the file by its path under its source's folder, and its tooltip
-and the cell's editor give the whole path.
+module's interface file. It names the file by its path in the project's tree, and its tooltip and
+the cell's editor give the whole path.
+
+**A path in the project's tree starts with the project's name** - `ClaFi/Controls/Button.cppm` -
+then the folders under the source's folder, wherever a page or the search box writes one: source
+rows, the lists, the search page and the search box's tooltips.
 
 - **Open in editor**, at the row's end, runs the command line Settings keeps for the file's
   language. While there is none, it stands greyed, its tooltip naming Settings.
@@ -589,7 +609,7 @@ A folder's page:
 
 - gives its source as a module does, a row under each source holding it, with an Open folder button
   that shows it in the desktop's file manager
-- says what it holds at every depth
+- says what it holds at every depth, each figure linked to its list
 - leads with the folders directly under its own, as the tree lists and marks them, each with what it
   holds at every depth
 - where the folder holds modules of its own, goes on with **Modules**
@@ -598,6 +618,24 @@ Modules is one grid holding a row per module, closed, the module's name linked t
 stand the module's types, its functions and its constants, each run beside its word - Types,
 Functions, Constants. Each row carries its hint, which runs over the cells its row leaves empty
 before it.
+
+#### Lists
+
+The figures a folder's page counts - its controls, types, modules and folders - each open a list of
+everything of that kind under the folder at every depth, as many rows as the figure counts. The
+project's home counts and lists the whole project the same way. A figure of none stays plain text.
+
+- The head names the list and, on its second row, the path of the folder it stands under. The row
+  stays with the title while the list scrolls.
+- The list is one grid, standing on the page with no expander round it, by name regardless of case.
+- A type's row carries its kind at the end of its name cell, as the Modules grid has it. The
+  controls list leaves the kind out - every row's mark says it.
+- A name the list holds more than once is written after its namespace, from the last part the
+  namesakes share: `Grids::Cell` and `Grids::Dt::Cell`, `::` alone for the global namespace.
+- A module and a folder stand beside a folder's path - the one the module stands in, the folder's
+  own.
+- Its url is its folder's with `/.controls`, `/.types`, `/.modules` or `/.folders` after it, a dot
+  segment as the options page's. The tree follows it to its folder's node.
 
 #### Module pages
 
@@ -761,7 +799,7 @@ writer puts words in - and only in C++ sources.
 
 **A type's name on a page is a link to its page**, in a grid cell as in prose. A type named in a
 hint, in a note's prose or code, or in a signature - bare or qualified, as `Control` or
-`Grids::Row` - links wherever the surface has a page for it.
+`Grids::Row` - links wherever the surface has a page for it, read where it is written as Names says.
 
 **A link in a declaration keeps the declaration's colours** - a type is coloured as a type, and
 underlined while the pointer is over it. Everywhere else a link is drawn in the accent.
@@ -773,6 +811,7 @@ coloured.
   fields, a line each in braces; an enum's head over its members the same way.
 - In Delphi: the name and an equals sign before what an alias or a built type stands for; a record's
   public fields down to its `end`; an enum's members in brackets on one line.
+- A nested type is named with its outer type in both: `struct ShadowPainter::Design`.
 - A link to a struct holding no such field keeps the link's own tooltip.
 
 **Following a link**

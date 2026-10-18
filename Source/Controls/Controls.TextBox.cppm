@@ -173,9 +173,10 @@ namespace ClaFi::Controls
         // that takes no input takes no caret either, so the arrow is the honest answer while it
         // is disabled.
         [[nodiscard]] CursorShape cursor() const override;
-        // The caret, not the box. A text box long enough to need scrolling is taller than the
-        // viewport holding it, and the whole of it is on screen the moment its first line is, so
-        // its own bounds name a scroll that is answered before the caret is anywhere near view.
+        // The caret while the box is in edit mode, the box otherwise. A box taller than the
+        // viewport holding it is on screen the moment its first line is, so its own bounds name a
+        // scroll answered before the caret is anywhere near view; out of edit mode the caret is
+        // not in use, and a box landed on is shown whole.
         [[nodiscard]] FloatRect scrollHotspot() const override;
         // The caret, not the box, and for the same reason as scrollHotspot: what the commands in
         // the menu act on is the caret and the selection around it, so a menu dropped under a box
@@ -512,7 +513,7 @@ namespace ClaFi::Controls
     FloatRect TextBox::scrollHotspot() const
     {
         // Placed or not is the range's start: a whole-text selection holds k_maxSize as its length.
-        if (m_editProps.selRange.start == k_maxSize)
+        if (!isInEditMode() || m_editProps.selRange.start == k_maxSize)
             return TextBoxBase::scrollHotspot();
 
         const FloatRect textBounds = textBoundsInControl();
@@ -526,7 +527,7 @@ namespace ClaFi::Controls
     FloatRect TextBox::contextMenuAnchor() const
     {
         // A box that was never given a caret has no place inside itself to name, and the whole
-        // box is then the honest answer - the same test scrollHotspot makes above.
+        // box is then the honest answer.
         if (m_editProps.selRange.start == k_maxSize)
             return TextBoxBase::contextMenuAnchor();
 

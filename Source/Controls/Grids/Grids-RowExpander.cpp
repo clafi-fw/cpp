@@ -100,6 +100,36 @@ namespace ClaFi::Controls::Grids
             event.state.selected = false;
     }
 
+    // The header stacks above the body, so a step from above lands on the header and one from
+    // below in the body. A step from a side lands where its line runs: on the header while the
+    // line is above the header's foot, in the body under it.
+    Control* RowExpander::navigationEntry(const NavigationStep& step)
+    {
+        Control& head = *m_controls[k_head];
+        Control& body = *m_controls[k_body];
+        const bool headFirst = step.vertical()
+            ? step.forward()
+            : (step.line - form().contentOriginOfControl(this)).y < head.bottom();
+        Control& first = headFirst ? head : body;
+        Control& second = headFirst ? body : head;
+        if (first.holdsNavigationStop())
+            return &first;
+        return second.holdsNavigationStop() ? &second : nullptr;
+    }
+
+    // Down from the header goes on into the body and Up from the body back to the header; every
+    // other step leaves the expander.
+    Control* RowExpander::navigationNeighbour(const Control& child, const NavigationStep& step)
+    {
+        if (!step.vertical())
+            return nullptr;
+        const bool fromHead = &child == m_controls[k_head].get();
+        if (fromHead != step.forward())
+            return nullptr;
+        Control& target = *m_controls[fromHead ? k_body : k_head];
+        return target.holdsNavigationStop() ? &target : nullptr;
+    }
+
     ChildSearch RowExpander::childSearch(const Control& child) const
     {
         if (&child == m_controls[k_body].get())

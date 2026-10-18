@@ -53,6 +53,16 @@ Two things moved with it:
   navigator once took such a key and searched around the selected row; it now hands a grid's
   arrows back as nothing - see GridBase navigationNeighbour.
 
+## RowExpander navigationEntry
+
+2026-10-18. Up from a footnote box under a SeeDocs table landed on the section's header instead
+of the last row. The navigator enters the grid at its last child holding a stop, the RowExpander,
+and asked it where a step from below lands; Control::navigationEntry's default answers the first
+stop in reading order whichever way the step comes, which is the header. The override states
+the layout alignContent makes: header over body. PageDown then stopped on every section header:
+the steps of a page press walk navigationNeighbour, and the default leaves the expander from its
+header. The neighbour override states the same layout for a step inside.
+
 ## RowCell
 
 Everything the walk knows of one cell and no more. A property of the row as a whole - whether the

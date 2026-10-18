@@ -45,6 +45,11 @@ namespace ClaFi::Controls::Grids
         [[nodiscard]] const Control* headedBody() const override { return m_controls[k_body].get(); }
         RowExpander* asRowExpander() override { return this; }
         RowStop navigationStop() override;
+        // From above at the header, from below in the body, from a side where the line runs.
+        [[nodiscard]] Control* navigationEntry(const NavigationStep&) override;
+        // Down from the header goes on into the body, Up from the body back to the header.
+        [[nodiscard]] Control* navigationNeighbour(const Control& child,
+            const NavigationStep&) override;
         // declines selection
         void getControlState(GetStateEvent&) const override;
         // The body is read shut or open, and opened to show a match in it.

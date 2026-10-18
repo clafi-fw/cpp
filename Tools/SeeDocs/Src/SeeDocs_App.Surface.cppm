@@ -246,6 +246,8 @@ namespace SeeDocs_App
         Place place;
         Comment comment;
         [[nodiscard]] bool opensScope() const;
+        // The scope it is declared in: its namespace, or the type it is nested in.
+        [[nodiscard]] std::wstring_view enclosingScope() const;
         // Whether the type is part of the surface: exported, and not private to a class.
         [[nodiscard]] bool isPublic() const { return exported && access != Access::Private; }
     };
@@ -398,26 +400,25 @@ namespace SeeDocs_App
 
         [[nodiscard]] const Type* typeNamed(std::wstring_view qualifiedName) const;
         [[nodiscard]] Type* typeNamed(std::wstring_view qualifiedName);
-        // The type a name spelled inside a namespace stands for: the namespace's own, an
-        // enclosing namespace's, or the one type of that bare name anywhere. Aliases are followed.
+        // The type a name spelled in a scope stands for, aliases followed. See README#names
         [[nodiscard]] const Type* resolve(std::wstring_view spelled,
-            std::wstring_view nameSpace) const;
-        // The type a name spelled inside a namespace names, an alias as itself.
+            std::wstring_view scope) const;
+        // The type a name spelled in a scope names, an alias as itself.
         [[nodiscard]] const Type* named(std::wstring_view spelled,
-            std::wstring_view nameSpace) const;
-        // The public type a name spelled inside a namespace names, a private alias followed.
+            std::wstring_view scope) const;
+        // The public type a name spelled in a scope names, a private alias followed.
         [[nodiscard]] const Type* publicType(std::wstring_view spelled,
-            std::wstring_view nameSpace) const;
+            std::wstring_view scope) const;
         // The language the module is written in; C++ for a module the surface does not hold.
         [[nodiscard]] SourceLanguage languageOf(std::wstring_view module) const;
         // A base's spelling with an alias the database does not carry replaced by what it names,
         // followed until the spelling names a type the database does carry.
         [[nodiscard]] std::wstring resolvedBase(std::wstring_view spelled,
-            std::wstring_view nameSpace) const;
+            std::wstring_view scope) const;
         // Whether the base chain reaches Control or TControl, template arguments walked as bases.
         [[nodiscard]] bool reachesControl(const Type&) const;
         // What a designer shows a property of the type as.
-        [[nodiscard]] std::wstring valueKindOf(std::wstring_view type, std::wstring_view nameSpace,
+        [[nodiscard]] std::wstring valueKindOf(std::wstring_view type, std::wstring_view scope,
             bool& optional) const;
         // A type's properties with one entry per place a value lands: several bindings on one
         // target are one property accepting several spellings.
@@ -440,10 +441,14 @@ namespace SeeDocs_App
         // or taken out there.
         void shiftLines(std::size_t file, std::size_t fromLine, std::ptrdiff_t count);
     private:
-        [[nodiscard]] const Type* lookUp(std::wstring_view bare, std::wstring_view nameSpace) const;
+        [[nodiscard]] const Type* lookUp(std::wstring_view spelled, std::wstring_view scope,
+            std::size_t depth = 0) const;
+        // The type of that name nested in one of the type's bases, the nearest base first.
+        [[nodiscard]] const Type* inheritedType(const Type& owner, std::wstring_view name,
+            std::size_t depth) const;
         // Whether the restatement's spelling names a type the surface holds, which is then its
         // type: a construction's, an enum's member's, a constant's declared one.
-        [[nodiscard]] bool settleRestatement(Restatement&, std::wstring_view nameSpace) const;
+        [[nodiscard]] bool settleRestatement(Restatement&, std::wstring_view scope) const;
         // Answers the namespace the declaration a re-publication names stands in, and moves the
         // declaration into the re-publication's own; nothing where the surface holds none.
         std::optional<std::wstring> moveRepublished(const Republication&);

@@ -282,7 +282,7 @@ namespace SeeDocs_App
             ++resolved;
         if (!method.empty())
             ++resolved;
-        if (searching)
+        if (searching || list)
             ++resolved;
         return depth > resolved;
     }
@@ -725,7 +725,7 @@ namespace SeeDocs_App
         data.title = titleOf(data, target);
         const bool hasList = target.isRoot()
             || (target.project && !target.isGone() && !target.projectOptions && !target.searching
-                && target.method.empty() && target.exportName.empty()
+                && !target.list && target.method.empty() && target.exportName.empty()
                 && (!target.type || !methodNames(*target.type).empty()));
         if (hasList)
             data.fetchState = FetchState::HasChildren;
@@ -744,7 +744,7 @@ namespace SeeDocs_App
             data.fetchState = FetchState::Fetched;
             return;
         }
-        if (target.isGone() || target.projectOptions || target.searching)
+        if (target.isGone() || target.projectOptions || target.searching || target.list)
             return;
         const ShownProject& project = *target.project;
         if (target.isFolder())
@@ -823,11 +823,12 @@ namespace SeeDocs_App
         m_trees.setCurrentItem(tabTree.box);
         showTreeWidth(tab);
         SurfaceTree& tree = *tabTree.tree;
+        const bool standsForFolder = target.searching || target.list;
         if (!target.project)
             tree.setCurrentItem(nullptr);
         else if (target.projectOptions)
             tree.followOptions(target.project->id);
-        else if (target.isHome() || target.isGone() || (target.searching && target.folder.empty()))
+        else if (target.isHome() || target.isGone() || (standsForFolder && target.folder.empty()))
             tree.followHome(target.project->id);
         else
             tree.follow(target.project->id, target.folder, target.module, target.type);
@@ -924,10 +925,12 @@ namespace SeeDocs_App
             result.search = unescapedQuery(segments[next].substr(k_searchPrefix.size()));
             return result;
         }
+        if (next + 1 == segments.size())
+            result.list = listKindOf(segments[next]);
         const Folders::const_iterator folder = project->folders.find(result.folder);
         if (folder != project->folders.end())
             result.contents = folder->second;
-        if (next == segments.size() || !result.contents)
+        if (next == segments.size() || !result.contents || result.list)
             return result;
 
         // A header's segment is its file name, and the folders before it make its name.
@@ -1217,6 +1220,8 @@ namespace SeeDocs_App
             return target.project->open.project.name;
         if (target.projectOptions)
             return std::wstring{ k_optionsTitle };
+        if (target.list)
+            return std::wstring{ listTitle(*target.list) };
         const std::size_t folders = target.folderDepth + 1;
         if (target.depth <= folders)
             return folderNameOf(data.name);
@@ -1233,7 +1238,7 @@ namespace SeeDocs_App
             return RowIcon::Home;
         if (target.searching)
             return RowIcon::Search;
-        if (!target.project || target.isGone() || !target.method.empty()
+        if (!target.project || target.isGone() || target.list || !target.method.empty()
             || !target.exportName.empty())
         {
             return std::nullopt;
@@ -1267,9 +1272,17 @@ namespace SeeDocs_App
             return std::nullopt;
         const ShownProject& project = *target.project;
         OpenProject& open = project.open;
+        if (target.list)
+        {
+            return listPage(open.surface, project.contents, target.folder, *target.list,
+                open.project.name);
+        }
         if (target.isHome())
             return homePageOf(project);
-        const SourceRoots roots = open.project.sourceRoots();
+        const PathRoots roots = {
+            .project = open.project.name,
+            .folders = open.project.sourceRoots()
+        };
         if (target.isFolder())
             return folderPage(open.surface, open.notes, project.contents, target.folder, roots);
         if (!target.exportName.empty())
@@ -1566,10 +1579,20 @@ namespace SeeDocs_App
         return property || event || field || member;
     }
 
-    // A member that has no page of its own is a row of its type's page, which the anchor names.
+    // A member that has no page of its own is a row of its type's page, which the anchor names. A
+    // list stands under its folder's path, the root's under the home's.
     std::optional<Url> SurfaceBrowser::urlIn(const ShownProject& project,
         const std::wstring_view target) const
     {
+        if (const std::optional<ListLink> list = readListLink(target))
+        {
+            const std::wstring folder{ list->folder };
+            if (!folder.empty() && !project.folders.contains(folder))
+                return std::nullopt;
+            std::wstring path = pathOf(project, folder, nullptr, nullptr);
+            path.append(1, ConfigNames::pathSeparator).append(listSegment(list->kind));
+            return Url{ path };
+        }
         const Targets::const_iterator found = project.targets.find(std::wstring{ target });
         if (found != project.targets.end())
         {
@@ -1985,18 +2008,15 @@ namespace SeeDocs_App
         if (entry.comment && !entry.comment->text.empty())
         {
             writeRuns(line.tooltip, hintRunsOf(listed.project->open.surface, *entry.comment,
-                entry.nameSpace));
+                entry.scope));
             line.tooltip << k_endLine;
         }
-        std::wstring place = entry.folder;
+        std::wstring place = treePath(listed.project->open.project.name, entry.folder);
         if (entry.module && entry.kind != NameKind::Module)
         {
-            if (!place.empty())
-                place += k_sourceJoin;
+            place += k_sourceJoin;
             place += entry.module->shownName;
         }
-        if (place.empty())
-            place = listed.project->open.project.name;
         line.tooltip << InkGrade::Muted << place << PopColor{};
         return line;
     }

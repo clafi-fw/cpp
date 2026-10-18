@@ -116,6 +116,7 @@ namespace SeeDocs_App
         Projects,   // the root, listing the projects open
         Project,    // a project's home
         Folder,     // a folder of sources
+        List,       // a folder's controls, types, modules or folders, at every depth
         Module,     // a module or a header
         Type,
         Member,     // a method, a function or a constant
@@ -217,7 +218,7 @@ namespace SeeDocs_App
     export struct Section
     {
         SectionKind kind{ SectionKind::Table };
-        Runs heading;
+        Runs heading;   // none for a table standing on the page without an expander
         std::wstring tooltip;   // over the heading: what the section holds, counted; empty for none
         Excerpt excerpt;
         Branches branches;
@@ -259,8 +260,8 @@ namespace SeeDocs_App
         Runs scope;     // before the title, in its style - a method's type and ::
         std::wstring title;
         Runs badges;    // what the title is - the kind, control, template
-        // Under the title, the C++ way: a colon before an enum's underlying type, an equals sign
-        // before what an alias stands for.
+        // Under the title: the C++ way, a colon before an enum's base or an equals sign before
+        // what an alias stands for, or the folder a list stands under.
         std::vector<Runs> titleLines;
         BaseNodes bases;   // a class's ways up, under the title lines
         Runs lead;      // the hint
@@ -368,24 +369,64 @@ namespace SeeDocs_App
         std::wstring_view path);
     // The folder a file of the surface stands in, as a path under the root.
     export [[nodiscard]] std::wstring folderOf(std::wstring_view relativeFile);
+    // A path in a project's tree as a page writes it: under the project's name.
+    export [[nodiscard]] std::wstring treePath(std::wstring_view projectName,
+        std::wstring_view path);
 
-    // A folder's page: its source, what stands under it at every depth counted, the folders
-    // directly under it, each linked, as the tree lists them, then its own modules' exports.
+    // Where a page's paths start: the project for a path in its tree, the folders for a whole one.
+    export struct PathRoots
+    {
+        std::wstring project;   // the project's name
+        SourceRoots folders;    // the sources' folders, a root each
+    };
+
+    // A folder's page: its source, what stands under it at every depth counted and linked to its
+    // lists, the folders directly under it as the tree lists them, then its own modules' exports.
     export [[nodiscard]] Page folderPage(const Surface&, Notes&, const ContentsFolders&,
-        std::wstring_view path, const SourceRoots&);
+        std::wstring_view path, const PathRoots&);
     // The page of the tree's root: what a folder's page says of the root, where it holds any.
     export [[nodiscard]] Page homePage(const Surface&, Notes&, const ContentsFolders&,
         std::wstring_view title);
+
+    // What a folder's list holds: every one of the kind standing under the folder, at any depth.
+    export enum class ListKind
+    {
+        Controls,
+        Types,
+        Modules,
+        Folders
+    };
+
+    // The segment a list's url ends with: a dot ahead of the kind, as no folder or module is named.
+    export [[nodiscard]] std::wstring_view listSegment(ListKind);
+    export [[nodiscard]] std::optional<ListKind> listKindOf(std::wstring_view segment);
+    export [[nodiscard]] std::wstring_view listTitle(ListKind);   // Controls, Types and so on
+    // The link to a folder's list: the folder's path, a slash, the list's segment.
+    export [[nodiscard]] std::wstring listLink(std::wstring_view path, ListKind);
+
+    // The folder and the list a list link names, the folder a view into the link.
+    export struct ListLink
+    {
+        std::wstring_view folder;
+        ListKind kind{ ListKind::Controls };
+    };
+
+    // A link cut at its last slash; nothing for one naming no list.
+    export [[nodiscard]] std::optional<ListLink> readListLink(std::wstring_view link);
+    // A folder's list, by name, as long as the figure its holds row counts it with, under the
+    // folder's path - the project's name for the root's. See README
+    export [[nodiscard]] Page listPage(const Surface&, const ContentsFolders&,
+        std::wstring_view path, ListKind, std::wstring_view projectName);
     export [[nodiscard]] Page modulePage(const Surface&, Notes&, const ContentsFolder&,
-        const ContentsModule&, const SourceRoots&);
+        const ContentsModule&, const PathRoots&);
     // The page of a function the module exports, every overload of the name on it, or of a
     // constant it exports, the declaration as written.
     export [[nodiscard]] Page exportPage(const Surface&, Notes&, const ContentsFolder&,
-        const ContentsModule&, std::wstring_view name, const SourceRoots&);
-    export [[nodiscard]] Page typePage(const Surface&, Notes&, const Type&, const SourceRoots&);
+        const ContentsModule&, std::wstring_view name, const PathRoots&);
+    export [[nodiscard]] Page typePage(const Surface&, Notes&, const Type&, const PathRoots&);
     // The page of every method of the type with that name, a signature each.
     export [[nodiscard]] Page methodPage(const Surface&, Notes&, const Type&,
-        std::wstring_view name, const SourceRoots&);
+        std::wstring_view name, const PathRoots&);
     // The names the type's own methods stand under, one per name in declaration order: its
     // constructors and destructor in, a property's getter and setter out.
     export [[nodiscard]] std::vector<std::wstring_view> methodNames(const Type&);
@@ -397,10 +438,10 @@ namespace SeeDocs_App
     // A declaration's hint as its row reads it: code and bold marks read, the types the surface
     // has a page for linked, and a missing one said so where the rules owe one.
     export [[nodiscard]] Runs hintRunsOf(const Surface&, const Comment&,
-        std::wstring_view nameSpace);
+        std::wstring_view scope);
     // A line of a note as a page reads it: code and bold marks read, the types linked.
     export [[nodiscard]] Runs noteRunsOf(const Surface&, const std::wstring& text,
-        std::wstring_view nameSpace);
+        std::wstring_view scope);
 
     // The link to a member's page: the type's qualified name, ::, the member's name.
     export [[nodiscard]] std::wstring memberLink(const Type&, std::wstring_view member);

@@ -459,6 +459,7 @@ are placed before a step moves among them.
 - GridBase - null for an arrow, which the grid has walked over its field already. The steps of a
   page press walk the rows.
 - TreeNode - Right from the header of an open node goes to its rows.
+- RowExpander - Down from the header into its rows, Up from the rows back to the header.
 
 ## Control navigationEntry
 
@@ -469,6 +470,8 @@ such child in reading order, whichever way the step comes.
   across them, the item of the near lane nearest the line.
 - PanelBase - from above or below, the first row from that edge holding a stop. From a side, the
   row nearest the line, from that side.
+- RowExpander - from above, its header; from below, its rows. From a side, the header while the
+  line runs above the header's foot, the rows under it.
 
 
 ## Input

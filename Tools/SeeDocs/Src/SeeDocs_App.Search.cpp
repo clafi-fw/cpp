@@ -158,7 +158,8 @@ namespace SeeDocs_App
             {
                 if (isTemplateParameter(type, spelled))
                     continue;
-                const Type* base = surface.resolve(withoutArguments(spelled), type.nameSpace);
+                const Type* base =
+                    surface.resolve(withoutArguments(spelled), type.enclosingScope());
                 if (!base || !bases.insert(base).second)
                     continue;
                 addBases(surface, *base, bases, depth + 1);
@@ -389,11 +390,12 @@ namespace SeeDocs_App
         {
             if (!entry.comment)
                 return {};
-            return hintRunsOf(surface, *entry.comment, entry.nameSpace);
+            return hintRunsOf(surface, *entry.comment, entry.scope);
         }
 
-        [[nodiscard]] TableRow nameRow(const Surface& surface, const NameHit& hit)
+        [[nodiscard]] TableRow nameRow(const SearchedProject& project, const NameHit& hit)
         {
+            const Surface& surface = *project.surface;
             const NamedEntry& entry = *hit.entry;
             TableRow row;
             row.cells.push_back(nameCell(entry));
@@ -410,10 +412,8 @@ namespace SeeDocs_App
                     row.cells.push_back(hintCell(surface, entry));
                     break;
                 case NameKind::Folder:
-                    row.cells.push_back({ muted(entry.folder) });
-                    break;
                 case NameKind::Module:
-                    row.cells.push_back({ muted(entry.folder) });
+                    row.cells.push_back({ muted(treePath(project.name, entry.folder)) });
                     break;
                 case NameKind::Function:
                 case NameKind::Constant:
@@ -455,7 +455,7 @@ namespace SeeDocs_App
             for (const NameHit& hit : hits)
             {
                 const std::size_t kind = static_cast<std::size_t>(hit.entry->kind);
-                keep(sections[kind], index, nameRow(*project.surface, hit), spell);
+                keep(sections[kind], index, nameRow(project, hit), spell);
             }
         }
 
@@ -744,7 +744,7 @@ namespace SeeDocs_App
                     .name = std::wstring{ name },
                     .spellings = { way },
                     .owner = std::wstring{ parentOf(way) },
-                    .nameSpace = {},
+                    .scope = {},
                     .type = nullptr,
                     .module = nullptr,
                     .folder = way,
@@ -765,7 +765,7 @@ namespace SeeDocs_App
             .name = module.shownName,
             .spellings = module.header ? Names{ module.name } : Names{},
             .owner = folder.path,
-            .nameSpace = {},
+            .scope = {},
             .type = nullptr,
             .module = &module,
             .folder = folder.path,
@@ -793,7 +793,7 @@ namespace SeeDocs_App
                 .name = function.name,
                 .spellings = {},
                 .owner = free->nameSpace,
-                .nameSpace = free->nameSpace,
+                .scope = free->nameSpace,
                 .type = nullptr,
                 .module = &module,
                 .folder = folder.path,
@@ -810,7 +810,7 @@ namespace SeeDocs_App
                 .name = variable->field.name,
                 .spellings = {},
                 .owner = variable->nameSpace,
-                .nameSpace = variable->nameSpace,
+                .scope = variable->nameSpace,
                 .type = nullptr,
                 .module = &module,
                 .folder = folder.path,
@@ -835,7 +835,7 @@ namespace SeeDocs_App
                 .name = name,
                 .spellings = {},
                 .owner = type.qualifiedName,
-                .nameSpace = type.nameSpace,
+                .scope = type.qualifiedName,
                 .type = &type,
                 .module = &module,
                 .folder = folder.path,
@@ -850,7 +850,7 @@ namespace SeeDocs_App
             .name = type.name,
             .spellings = {},
             .owner = std::wstring{ scopeOf(type.qualifiedName) },
-            .nameSpace = type.nameSpace,
+            .scope = type.qualifiedName,
             .type = &type,
             .module = &module,
             .folder = folder.path,

@@ -247,6 +247,10 @@ never selected, so the selected rule stops at the rows inside it.
 **Shut over the selected cell, its header stands for the cell** - the stop the next key moves on
 from, and the current item of the container the grid stands in.
 
+**Entered from above, it lands the focus on its header; entered from below, in its rows** - see
+Control navigationEntry. Shut, it has only the header to land on. The steps of a page press walk
+it the same way: Down from the header into the rows, Up from the rows back to the header.
+
 ## RowNewItem
 
 Add it with GridBase::addNewItemRow, or NewItem in a design. A grid holds one, and rows added later

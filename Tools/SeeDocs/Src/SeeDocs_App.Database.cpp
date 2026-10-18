@@ -476,7 +476,7 @@ namespace SeeDocs_App
             {
                 bases.push_back(isTemplateParameter(type, base)
                     ? base
-                    : surface.resolvedBase(base, type.nameSpace));
+                    : surface.resolvedBase(base, type.enclosingScope()));
             }
             entry.setList(Keys::bases, bases);
             entry.setText(Keys::target, type.target);

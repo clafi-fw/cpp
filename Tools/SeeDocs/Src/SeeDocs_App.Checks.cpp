@@ -272,7 +272,7 @@ namespace SeeDocs_App
                         m_report.add(Level::Error, event.place, L"connect method is " + event.method
                             + L", " + expected + L" is what the alias says");
                     }
-                    if (!m_surface.resolve(event.type, type.nameSpace))
+                    if (!m_surface.resolve(event.type, type.qualifiedName))
                     {
                         m_report.add(Level::Warning, event.place,
                             L"no declaration found for event type " + event.type);
@@ -299,7 +299,7 @@ namespace SeeDocs_App
                     const std::wstring_view head = plainType(withoutArguments(base));
                     if (std::ranges::find(parameters, head) != parameters.end())
                         continue;
-                    if (m_surface.resolve(base, type.nameSpace))
+                    if (m_surface.resolve(base, type.enclosingScope()))
                         continue;
                     if (!unknown.empty())
                         unknown += L", ";
@@ -359,7 +359,7 @@ namespace SeeDocs_App
                 }
                 for (const std::wstring& base : current->bases)
                 {
-                    if (const Type* parent = m_surface.resolve(base, current->nameSpace))
+                    if (const Type* parent = m_surface.resolve(base, current->enclosingScope()))
                         queue.push_back(parent);
                 }
             }

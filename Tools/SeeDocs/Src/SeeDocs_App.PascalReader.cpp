@@ -2174,11 +2174,11 @@ namespace SeeDocs_App
         // Whether a type, followed through the aliases the tree declares, is a method type:
         // procedure ... of object, function ... of object, or reference to.
         [[nodiscard]] MethodType methodTypeOf(const Surface& surface, std::wstring spelled,
-            std::wstring nameSpace)
+            std::wstring scope)
         {
             for (std::size_t depth = 0; depth != k_aliasDepth; ++depth)
             {
-                const Type* type = surface.named(spelled, nameSpace);
+                const Type* type = surface.named(spelled, scope);
                 if (!type)
                     return MethodType::Unknown;
                 if (type->kind != TypeKind::Alias && type->kind != TypeKind::Defined)
@@ -2193,7 +2193,7 @@ namespace SeeDocs_App
                 if (routine)
                     return MethodType::No;
                 spelled = type->target;
-                nameSpace = type->nameSpace;
+                scope = type->enclosingScope();
             }
             return MethodType::Unknown;
         }
@@ -2206,7 +2206,8 @@ namespace SeeDocs_App
         {
             if (!property.type.empty())
             {
-                const MethodType answer = methodTypeOf(surface, property.type, owner.nameSpace);
+                const MethodType answer =
+                    methodTypeOf(surface, property.type, owner.qualifiedName);
                 if (answer != MethodType::Unknown)
                     return answer == MethodType::Yes;
                 if (isListed(Syntax::Languages::pascal.types, plainType(property.type)))
@@ -2232,7 +2233,7 @@ namespace SeeDocs_App
             std::set<const Type*> seen;
             for (const std::wstring& base : type.bases)
             {
-                if (const Type* found = surface.resolve(base, type.nameSpace))
+                if (const Type* found = surface.resolve(base, type.enclosingScope()))
                     pending.push_back(found);
             }
             for (std::size_t i = 0; i != pending.size(); ++i)
@@ -2253,7 +2254,7 @@ namespace SeeDocs_App
                 }
                 for (const std::wstring& above : base->bases)
                 {
-                    if (const Type* found = surface.resolve(above, base->nameSpace))
+                    if (const Type* found = surface.resolve(above, base->enclosingScope()))
                         pending.push_back(found);
                 }
             }

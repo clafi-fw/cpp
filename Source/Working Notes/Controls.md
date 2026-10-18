@@ -52,6 +52,14 @@ it, so the list is placed on a box that has been laid out. It is hidden rather t
 destroyed when nothing matches, and sized by what it lists: AutoFit, at least as wide as the
 box, under it.
 
+## TextBox scrollHotspot
+
+2026-10-18. A PageDown landing on a SeeDocs footnote showed its first line at the bottom of the
+view: the hotspot was the caret whenever one had been placed, and the caret of a box the keys
+land on stands on its first line. Oj's rule: out of edit mode the caret is not in use, so the
+hotspot is the caret in edit mode only. A press enters edit mode before the release asks for
+the scroll, so a mouse click on a half-shown box still shows the caret alone.
+
 ## HexView
 
 **Only the lines the viewport reaches are shaped.** The view states its whole height through
